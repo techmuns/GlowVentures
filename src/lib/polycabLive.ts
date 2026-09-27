@@ -305,6 +305,15 @@ export function paymentDateWhy(action: PolycabAction, all: readonly PolycabActio
 }
 
 /**
+ * THE SOURCES A TABLE'S OWN FIGURES CAME FROM, and no others. `feeds` is the
+ * builder's statement of which view each source supplies; a store written
+ * before it existed lists every source, as the page used to.
+ */
+export function sourcesFor(view: string, sources: PolycabLive["sources"] = POLYCAB_LIVE.sources): PolycabLive["sources"] {
+  return sources.filter((s) => !Array.isArray(s.feeds) || s.feeds.includes(view));
+}
+
+/**
  * THE HOLDING COLUMN'S CAPTION, COUNTED RATHER THAN CLAIMED. It read "carried
  * by two independent sources" over twelve quarters of which six were carried
  * by one. The counts come off the store's own `witnesses`.
@@ -326,6 +335,23 @@ export function holdingWhy(q: PolycabQuarter): string {
   if (q.holdingRefused === true) return "the two sources disagreed on this quarter by more than 0.05pp, so neither figure is published";
   if (q.holdingRefused === false) return "no source this page reads carried a promoter-holding figure for this quarter";
   return "no promoter-holding figure is published for this quarter — either no source carried one or the two disagreed, and this stored record does not say which";
+}
+
+/**
+ * WHY A QUARTER'S GROUP PLEDGE IS A DASH, as a claim about what THIS PAGE READS
+ * rather than about the disclosures. It read "no source published an encumbrance
+ * figure for this quarter" — but the listed company files its promoter
+ * encumbrance every quarter; what is missing is that the one source this page
+ * reads for the pledge carries only its most recent quarters, and the company's
+ * own filing is not read here at all.
+ */
+export function pledgeWhy(q: PolycabQuarter, quarters: readonly PolycabQuarter[], sourceName: string): string {
+  const carried = quarters.filter((x) => x.pledgePct !== null).map((x) => x.asOf).sort();
+  const own = "and the company's own quarterly encumbrance disclosure is not read by this page — so this is not a statement that no pledge was disclosed";
+  if (carried.length && q.asOf < carried[0]) {
+    return `the pledge comes from one source here (${sourceName}), whose record reaches back only ${carried.length} quarter${carried.length === 1 ? "" : "s"} — this quarter is older — ${own}`;
+  }
+  return `the pledge's one source here (${sourceName}) carried no figure for this quarter, ${own}`;
 }
 
 /** How stale is the committed store, in whole days? Null where it cannot be told. */

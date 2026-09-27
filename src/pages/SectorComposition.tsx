@@ -32,7 +32,12 @@ import { Auditable } from "@/components/Auditable";
 import { returnFormula, weightFormula } from "@/lib/auditFormulas";
 import { AbsentCell } from "@/components/Absent";
 
-const LIVE_CELL = "Recalculated from live prices. Cost basis comes from the ledger; this figure is worked out from it, so it has no workbook cell to trace to.";
+/**
+ * WHERE A LIVE FIGURE'S COST COMES FROM (FS-24). It read "Cost basis comes from
+ * the ledger … it has no workbook cell to trace to" — the words of a
+ * workbook-sourced cockpit. This book is read from statements.
+ */
+const LIVE_CELL = "Recalculated from live prices. The cost basis is the statements'; this figure is worked out from a live quote, so no statement prints it.";
 
 /**
  * WHY A COMPANY SHARE CAN HAVE NO SECTOR — the reason that used to live in this
@@ -336,6 +341,30 @@ export function SectorComposition() {
     : sleeveClasses.map((c) => assetClassLabel(c.key)).join(" and ");
   const excludedMV = sum(excluded.map((c) => c.mv)) + sleeveMV;
 
+  /**
+   * WHY THE CARD'S CONTENTS HAVE NO SECTOR, SAID OF WHAT IT CARRIES (FS-24). It
+   * read "a fund holds many companies, so none has a sector of its own" over a
+   * list whose largest part is Cash — the liquid and arbitrage funds the family
+   * counts as cash, their cash lines and the mandates' own cash — none of which
+   * is a fund holding companies. Each clause is stated only where the card
+   * carries what it is about.
+   */
+  const excludedWhy = (() => {
+    const FUND_SECTIONS = new Set(["AIF", "Mutual Fund", "ETF"]);
+    const fund = excluded.some((c) => FUND_SECTIONS.has(c.key));
+    const cash = excluded.some((c) => c.key === "Cash") || sleeveRows.length > 0;
+    const other = excluded.some((c) => c.key !== "Cash" && !FUND_SECTIONS.has(c.key));
+    const clauses = [
+      fund && "a fund's units are a share of a portfolio rather than of one company",
+      cash && "what the family counts as cash is money",
+      other && "the rest is neither a share in a company nor a fund",
+    ].filter(Boolean) as string[];
+    if (!clauses.length) return "Nothing is left out: every holding here is a share in a company.";
+    const said = clauses.length === 1 ? clauses[0]
+      : `${clauses.slice(0, -1).join(", ")}, and ${clauses[clauses.length - 1]}`;
+    return `Excluded rather than folded in — ${said}, so none has a sector of its own.`;
+  })();
+
   const [view, setView] = useViewParam<SectorView>(SECTOR_VIEWS);
   /** The donut, the source line and the sector table read Consolidated on the Compare tab too. */
   const consolidatedView = view !== "direct";
@@ -579,6 +608,11 @@ export function SectorComposition() {
    * ₹14 Cr of liquid-fund paper sat in the derived half ON the page. So the
    * hover names what the residual really is, each part summed from the book or
    * the store, and anything none of them names is stated rather than absorbed.
+   *
+   * ONE PART IS COUNTED AND NEVER NAMED (PC-11): a fund the family holds also
+   * discloses the ring-fenced holding, and that line sat inside "no line in
+   * their filings accounts for" as though it were a scheme's cash. It is a
+   * line, so it is a part of its own; the fence is why it carries no name.
    */
   const restParts = (() => {
     const notOnPage = portfolio.totalValue - measuredMV - derivedMV;
@@ -590,13 +624,16 @@ export function SectorComposition() {
     const otherRows = heldConsolidated.filter((x) => !isCompanyShare(x) && !isFundVehicle(x) && x.assetClass !== "Cash");
     const other = sum(otherRows.map((x) => x.marketValue));
     const floor = sum(droppedHoldings(consolidated).negligible.map((x) => x.marketValue));
-    const named = exposure.skippedValue + exposure.unaccountedValue + arb + cash + other + floor;
+    const named = exposure.skippedValue + exposure.unaccountedValue + exposure.fencedValue + arb + cash + other + floor;
     const unnamed = notOnPage - named;
     const parts = [
       exposure.skippedValue > 0 && `${money(exposure.skippedValue)} in funds whose portfolio this book cannot read — ${
         aif.length} AIF ${aif.length === 1 ? "holding, which files" : "holdings, which file"} none${
         unresolved > 0 ? `, and ${unresolved} ${unresolved === 1 ? "scheme" : "schemes"} the store does not resolve` : ""}`,
       exposure.unaccountedValue > 0 && `${money(exposure.unaccountedValue)} of the disclosed funds that no line in their filings accounts for — a scheme's own cash, a gold or silver ETF's metal, rounding`,
+      // PC-11: the ring-fenced holding a fund also discloses — a line of its
+      // filing, so its own part, and never named.
+      exposure.fencedValue > 0 && `${money(exposure.fencedValue)} a fund discloses of the one holding the family keep out of every portfolio total`,
       arb > 0 && `${money(arb)} in the arbitrage funds the family counts as cash, which are not looked through`,
       cash > 0 && `${money(cash)} of the book's own cash`,
       other > 0 && `${money(other)} of ${[...new Set(otherRows.map((x) => assetClassLabel(x.assetClass)))].join(", ")}, neither a share nor a fund`,
@@ -751,7 +788,7 @@ export function SectorComposition() {
           holds many companies, so none has a sector of its own". */}
       <Figure label="Not a company share" value={fmtFromBase(excludedMV, { compact: true })}>
         <span data-sector-excluded
-          title="Excluded rather than folded in — a fund holds many companies, so none has a sector of its own.">
+          title={excludedWhy}>
           {excluded.length === 0 && sleeveRows.length === 0 ? "none" : excluded.map((c, i) => (
             <Fragment key={c.key}>
               {i > 0 && (i === excluded.length - 1 && sleeveRows.length === 0 ? " and " : ", ")}

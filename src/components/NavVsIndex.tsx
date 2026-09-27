@@ -147,7 +147,10 @@ export function NavVsIndex() {
   const model = useMemo(() => {
     if (!portfolio) return null;
     const book = navIndexSeries(portfolio.navHistory);
-    const stats = navCoverageStats(BOOK_NAV_COVERAGE, portfolio);
+    // THE STATEMENT BOOK, because the series is struck on statement marks — a
+    // live or NAV-overlaid total beside a series level divides one basis by
+    // another (MNT-25). See `navCoverageStats`.
+    const stats = navCoverageStats(BOOK_NAV_COVERAGE, statementPortfolio ?? portfolio);
     const dates = book.map((p) => p.date);
     const bookFrom = dates[0] ?? null;
     const bookTo = dates[dates.length - 1] ?? null;
@@ -270,7 +273,7 @@ export function NavVsIndex() {
         return r ? { date: r.date, level: r.nav as number } : null;
       })(),
     };
-  }, [portfolio, index, range]);
+  }, [portfolio, statementPortfolio, index, range]);
 
   if (!model || !portfolio) return null;
   const {
@@ -367,16 +370,30 @@ export function NavVsIndex() {
    * card, and still read by `check:pages` at its new address.
    */
   const lastNav = model.book[model.book.length - 1].nav;
+  /**
+   * THE SERIES IS A STATEMENT LEVEL, SO ITS DENOMINATOR IS THE STATEMENT BOOK
+   * (MNT-25). The current value of holdings is on today's prices — AMFI's
+   * published NAVs, live quotes where the feed answers, and funds valued from a
+   * depository's own units that no statement marks — so it is named beside the
+   * statement figure where the two differ, rather than standing in for it.
+   */
+  const statementBook = stats.consolidatedValue;
+  const liveDiffers = Math.abs(portfolio.totalValue - statementBook) > 1;
   const basisHover = [
     bookRet == null
-      ? `The book's own series over ${bookFrom} → ${bookTo} carries no return.`
+      // Unreachable while the card needs two dated points to render, and it
+      // still names its cause rather than printing a bare absence (MNT-23).
+      ? `The book's own series over ${bookFrom} → ${bookTo} carries no return: a return needs two dated points of one panel, and the series has ${model.book.length}.`
       : indexRet != null
         ? `Over the book's own window, ${bookFrom} → ${bookTo}: the book ${fmtPct(bookRet, { sign: true })} net of capital flows, ${bench.label} ${fmtPct(indexRet, { sign: true })} over the same dates. Hover the chart for both lines at any date.`
         : `Over the book's own window, ${bookFrom} → ${bookTo}: the book ${fmtPct(bookRet, { sign: true })} net of capital flows. ${indexState === "loading" ? `The ${bench.label} history is still loading.` : `No ${bench.label} line is drawn, so there is no comparison figure.`}`,
-    `${model.dates.length} dated points, ${cov.from} → ${cov.to} · ${stats.coveredCount} of ${stats.accountsTotal} accounts, ${fmtFromBase(lastNav, { compact: true })} of the ${fmtFromBase(stats.consolidatedValue, { compact: true })} book · the book and ${bench.label} lines rebased to 100 at ${cov.from}${navAnchor && navAnchor.date !== cov.from ? `; the line with capital left in starts on the book's at ${navAnchor.date}, where the panel is complete` : ""}.`,
+    `${model.dates.length} dated points, ${cov.from} → ${cov.to} · ${stats.coveredCount} of ${stats.accountsTotal} accounts, ${fmtFromBase(lastNav, { compact: true })} of the ${fmtFromBase(statementBook, { compact: true })} the statements value${liveDiffers ? ` (the current value of holdings, ${fmtFromBase(portfolio.totalValue, { compact: true })}, is on today's prices)` : ""} · the book and ${bench.label} lines rebased to 100 at ${cov.from}${navAnchor && navAnchor.date !== cov.from ? `; the line with capital left in starts on the book's at ${navAnchor.date}, where the panel is complete` : ""}.`,
     "Each point holds every account at its most recent mark on or before that date, and counts a holding two accounts both report once.",
     panelLast > panelFirst && completeFrom
-      ? `The panel grows from ${panelFirst} to ${panelLast} accounts over the window and is complete from ${completeFrom}. Each step is measured over the accounts valued at both of its ends, so an account arriving contributes nothing — and the dashed NAV line starts where the panel does.`
+      // "VALUED AT BOTH OF ITS ENDS" COUNTED A CARRIED MARK AS A VALUATION
+      // (MNT-24): the 31 May → 25 Jun step is flat because its four accounts
+      // are carried at their 31 May marks, which no statement restated.
+      ? `The panel grows from ${panelFirst} to ${panelLast} accounts over the window and is complete from ${completeFrom}. Each step is measured over the accounts in the panel at both of its ends — each held at its most recent mark on or before that date, so a step in which none of them published a new statement is flat — and an account arriving contributes nothing. The dashed NAV line starts where the panel is complete, on the book's own line.`
       : "",
     unproven.length > 0
       // A MOVE, SUMMED OVER THE STEPS — never an account's standing value, and

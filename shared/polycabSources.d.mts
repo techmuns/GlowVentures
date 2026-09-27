@@ -155,5 +155,16 @@ export declare function mergePromoterQuarters(tickertape: unknown, screener: unk
   disagreed: string[];
 } | null;
 
+/**
+ * Is the corporate-action record this run fetched WHOLE? It must not have lost
+ * a row a previous refresh stored (such rows are kept in `merged`), and it must
+ * reach the newest ex-date the short recent-actions record names.
+ */
+export declare function actionsRecordCheck(
+  fetched: ParsedAction[] | null,
+  previous: ParsedAction[] | null | undefined,
+  shortTable: unknown,
+): { whole: boolean; why: string | null; merged: ParsedAction[] | null };
+
 /** `2026-06-30` → `Jun 2026`. */
 export declare function quarterLabel(iso: unknown): string | null;

@@ -180,7 +180,11 @@ export function trancheTable(
       rows.push({
         move: m, date: m.date, label: m.label, amount: m.amount,
         invested: m.invested, units: m.units,
-        navAtEntry: m.invested / m.units,
+        // What BOUGHT the units over the units it bought. `invested` is every
+        // rupee paid (VD-24) and the statement's own charges on that
+        // contribution were not unit-buying money, so they come back out here —
+        // a stamp duty does not move a unit price.
+        navAtEntry: (m.invested - (m.charges ?? 0)) / m.units,
         value, returnPct, valuedAt: end,
         // This tranche's OWN contribution date, which is the whole reason a
         // tranche can annualise where the position around it cannot.
@@ -300,6 +304,49 @@ export function carriedCostNote(c: CarriedCost, money: (v: number) => string): s
     + `fresh purchase at that day's NAV, so its statements print the cost as ${money(c.printed)}. `
     + `The ${money(Math.abs(gap))} between the two is the ${gap >= 0 ? "growth" : "fall in value"} the fund booked at the switch; `
     + `the switch itself moved no money in or out.`;
+}
+
+/**
+ * A COST ON THE GROSS-PAID BASIS (VD-24): every rupee the family paid in, where
+ * the fund's statement costs the units at what bought them — its contributions
+ * LESS the stamp duty and charges it prints against them. `build-book` restates
+ * it (`grossPaidCost`) only where the net and the charges add to the paid figure
+ * to the paisa, and keeps the statement's net as `printedCostBasis`.
+ *
+ * Summed over the constituents that REPORT a cost, on both sides, exactly as
+ * `carriedCostOf` is, so `paid` is the row's own Invested figure. Null where no
+ * constituent's cost is on this basis.
+ */
+export type GrossPaidCost = {
+  /** Every rupee paid in — the book's own cost. */
+  paid: number;
+  /** What the statements print instead: the net that bought units. */
+  printed: number;
+  /** The stamp duty and charges between the two. */
+  charges: number;
+};
+
+export function grossPaidOf(ps: Position[]): GrossPaidCost | null {
+  if (!ps.some((p) => p.costBasisSource === "gross-paid")) return null;
+  let paid = 0, printed = 0;
+  for (const p of ps) {
+    if (p.costBasis === null) continue;
+    paid += p.costBasis;
+    printed += p.printedCostBasis ?? p.costBasis;
+  }
+  return { paid, printed, charges: paid - printed };
+}
+
+/**
+ * WHY THIS INVESTED FIGURE IS A LITTLE ABOVE THE ONE THE STATEMENT PRINTS. The
+ * charges are a few thousand rupees on crores, so a compact figure would print
+ * both costs identically: `exact` prints the two that differ in full.
+ */
+export function grossPaidNote(g: GrossPaidCost, exact: (v: number) => string): string {
+  return `This is every rupee PAID IN, stamp duty and charges included: ${exact(g.paid)}. `
+    + `The fund's statements cost these units at ${exact(g.printed)} — what bought units after the `
+    + `${exact(g.charges)} of stamp duty and charges they print against the same contributions. `
+    + `The book counts what was paid, the basis Helios, Active Momentum, Founders and Delphi print.`;
 }
 
 /**

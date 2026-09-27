@@ -1139,6 +1139,20 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
         invested: self.length ? r2(sum(self.map((r) => r.netAmount)))
           : amount === null ? null
           : r2(amount - (gross.length ? charge : 0)),
+        /**
+         * THE CHARGES THE STATEMENT PRINTS AGAINST THIS CONTRIBUTION (VD-24) —
+         * Sanshi's stamp-duty rows on the same date, or the setup expense and
+         * stamp duty a self-contained row prints beside its own net (3P). What
+         * the family PAID is `invested + charges`; `invested` stays what bought
+         * units, which is what the Transactions card's hover names. NULL where
+         * the row prints a net and no charge line (Buoyant's reinvested
+         * distribution), and for a running-balance day with no gross row, where
+         * no charge can be tied to what moved.
+         */
+        charges: self.length
+          ? (self.some((r) => isNum(r.expenses)) ? r2(sum(self.map((r) => (isNum(r.expenses) ? r.expenses : 0)))) : null)
+          : amount === null || !gross.length ? null
+          : r2(charge),
         units: units === null ? null : units,
         security: named?.security ?? null,
         securityKey: named?.securityKey ?? null,
@@ -1655,9 +1669,71 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
     // carries no float residue and regenerates byte-identically. It stays an
     // independently-summed figure rather than a copy of `quantity`, which would
     // make any check comparing the two a tautology.
-    out[k] = { accountId, securityKey, moves, units: Math.round(allotted * 1e3) / 1e3 };
+    /**
+     * EVERY RUPEE PAID, WITH THE CHARGE INSIDE IT NAMED (VD-24). A tranche's
+     * `invested` is what the family paid for it — the net that bought units plus
+     * the charges the statement prints against it — so the tranche panel, the
+     * position's cost and the Transactions card's Purchase column all read one
+     * figure. `navAtEntry` takes the charge back out (`tranches.ts`), so the
+     * unit price a contribution shows is still the one the statement prints.
+     * A copy, never the capital move itself: `BOOK_CAPITAL_MOVES` keeps
+     * `invested` as the net its own hover names.
+     */
+    const paid = moves.map((m) => (isNum(m.charges) && m.charges > 0 && isNum(m.invested)
+      ? { ...m, invested: r2(m.invested + m.charges) } : m));
+    out[k] = { accountId, securityKey, moves: paid, units: Math.round(allotted * 1e3) / 1e3 };
   }
   return out;
+}
+
+/**
+ * ── A COST IS EVERY RUPEE PAID IN (VD-24) ────────────────────────────────────
+ *
+ * Stamp duty was treated two ways: netted out of Sanshi's cost, carried inside
+ * Helios's, Active Momentum's, Founders' and Delphi's. A holding whose tranches
+ * name a printed charge is costed at what was PAID — Σ the tranches' `invested`
+ * — and keeps the statement's own net beside it as `printedCostBasis`, a CHECK
+ * and never a source.
+ *
+ * ONE GATE, AND IT IS THE STATEMENT'S: the net the tranches bought units with
+ * (paid less the printed charges) must be the holding's printed cost TO THE
+ * PAISA. That is what says the two figures describe the same money; without it
+ * a restated cost would be a figure nothing on the page reconciles, and the
+ * holding keeps the statement's cost with the reason named.
+ */
+function grossPaidCost(positions, positionTranches, notes) {
+  for (const tr of Object.values(positionTranches)) {
+    if (tr.basis === "fifo" || tr.moves.some((m) => m.carriedFrom)) continue;
+    const charges = sum(tr.moves.map((m) => (isNum(m.charges) ? m.charges : 0)));
+    if (!(charges > 0)) continue;
+    const p = positions.find((x) => x.accountId === tr.accountId && x.securityKey === tr.securityKey);
+    if (!p || !isNum(p.costBasis) || p.costBasisSource) continue;
+    const label = `${p.security} in ${p.accountId}`;
+    const paid = r2(sum(tr.moves.map((m) => (isNum(m.invested) ? m.invested : NaN))));
+    if (!Number.isFinite(paid)) {
+      notes.push(`cost not restated to what was paid for ${label}: a contribution behind it prints no amount`);
+      continue;
+    }
+    const net = r2(paid - charges);
+    const inr = (n) => r2(n).toLocaleString("en-IN");
+    if (Math.abs(net - p.costBasis) > 0.01) {
+      notes.push(`cost not restated to what was paid for ${label}: its contributions bought units with ${inr(net)} after `
+        + `${inr(charges)} of printed charges, against the ${inr(p.costBasis)} the statement prints as its cost — the two do not `
+        + "describe the same money to the paisa, so the statement's cost stands");
+      continue;
+    }
+    p.printedCostBasis = r2(p.costBasis);
+    p.costBasis = paid;
+    p.costBasisSource = "gross-paid";
+    if (isNum(p.avgCost) && p.quantity > 0) p.avgCost = Math.round((paid / p.quantity) * 1e4) / 1e4;
+    if (isNum(p.marketValue)) {
+      p.unrealizedPnL = r2(p.marketValue - paid);
+      p.returnPct = r2(fifoReturnPct(p.marketValue, paid, p.realizedPnL, p.costOfUnitsSold));
+    }
+    notes.push(`cost of ${label} is what was paid in, ${inr(paid)}: the statement prints ${inr(p.printedCostBasis)} — what `
+      + `bought units after ${inr(charges)} of the stamp duty and charges it prints against the same contributions — and `
+      + "that figure is kept beside it as the check");
+  }
 }
 
 // ── The value bridge: it adds up, or it is withheld (A-12) ───────────────────
@@ -2715,7 +2791,10 @@ function build(docs) {
          * restated it and `carryCostThroughSwitches` carried the family's own
          * cost through — set there, after the tranches, never here; "fifo"
          * where units LEFT the holding and its cost is that of the units still
-         * held after the fund's own unit record was matched first-in, first-out.
+         * held after the fund's own unit record was matched first-in, first-out;
+         * "gross-paid" where the tranches name a printed charge and the cost is
+         * what was PAID, charge included (`grossPaidCost`, set after the
+         * tranches, VD-24).
          */
         costBasisSource,
         /** The statement's own cost, kept beside a cost this book carried — a CHECK, never a source. */
@@ -2741,6 +2820,10 @@ function build(docs) {
         ltCostBasis,
         daysToLT,
         heldSince,
+        // The date the statement PRINTS its price or value as struck at, which
+        // need not be the account's as-of: ICICI's NSDL balance is at 31 Mar and
+        // its values "Prices as on 30-Mar-2026". Only where printed; never the as-of.
+        priceAsOf: h.priceAsOn ?? undefined,
         accruedIncome: h.accruedIncome ?? cp?.accruedIncome ?? null,
         dividendReceived: dividendByKey.get(h.securityKey) ?? null,
         positionIrrPct: cp?.positionIrrPct ?? null,
@@ -3121,11 +3204,25 @@ function build(docs) {
     const src = register ?? bank;
     const flows = [];
     if (src) {
+      // A CLASS SWITCH IS NOT A FLOW HERE EITHER (XA-23) — the rule
+      // `datedCapitalElsewhere` applies to the dated capital record, on the
+      // same witness: the fund's own reclassification record, same date, same
+      // rupees. Buoyant 103473's register prints its 1 June switch as
+      // "Security in" and "Security out" of ₹22.53 Cr; the two legs cancel, so
+      // no rate moves, but a count of "dated flows" read 4 where two payments
+      // were made.
+      const switchLeg = (c, move) => switchesHere.some((r) => r.date === c.date && Math.abs(r.amount - Math.abs(move)) <= 1);
+      let legs = 0;
       for (const c of src.cashFlows ?? []) {
         if (!c.date) continue;
         const move = c.kind === "capital-register" ? c.amount : c.depositWithdrawal;
         if (!isNum(move) || move === 0) continue;
+        if (switchLeg(c, move)) { legs += 1; continue; }
         flows.push({ date: c.date, amount: r2(-move), description: c.description });
+      }
+      if (legs) {
+        notes.push(`account ${accountNo}: ${legs} cash-flow row(s) are the legs of a class switch the fund's own `
+          + "reclassification record prints on the same date for the same rupees — not money moving, so not a flow");
       }
     }
 
@@ -3571,6 +3668,7 @@ function build(docs) {
   // of the book, is untouched — this moves cost and the three figures derived
   // from it, on the positions a switch restated and nowhere else.
   carryCostThroughSwitches(positions, positionTranches, reclassifications, accountBridges, notes);
+  grossPaidCost(positions, positionTranches, notes);
   // TWO PATHS TO ONE COST, AND THEY MUST AGREE. A class switch with no sale is
   // carried above by `carryCostThroughSwitches`; FIFO ran over the same unit
   // record and reached its own answer independently. They are different code

@@ -305,12 +305,78 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
   const out = BOOK_CAPITAL_MOVES.find((m) => m.accountId === id && m.direction === "out");
   if (!p || !out) skip("C4 3P", "no B3 position or no redemption in this drop");
   else {
-    const netIn = movesIn(id).reduce((s, m) => s + ((m as { invested?: number }).invested ?? 0), 0);
-    near("C4 3P: cost of units sold = every rupee invested, net of charges", p.costOfUnitsSold, netIn, 0.01);
+    // EVERY RUPEE PAID IN, GROSS (VD-24): a cost is what the family paid, and
+    // 3P's setup expense and stamp duty were paid — the net is what bought units
+    // after the fund took them. The move's `amount` is the gross row.
+    const grossIn = movesIn(id).reduce((s, m) => s + (m.amount ?? 0), 0);
+    near("C4 3P: cost of units sold = every rupee paid in, gross", p.costOfUnitsSold, grossIn, 0.01);
+    // …and the gate that licenses it, off the ARCHIVE row by row: the net the
+    // fund invested plus the charges the SAME row prints is the gross, to the
+    // paisa. Without it the gross would be a figure nothing on the page
+    // reconciles, and the check above would pass on any amount column.
+    const p3rows = (JSON.parse(fs.readFileSync(path.join(process.cwd(), "public/audit",
+      "3p-investment-managers-3000048-2026-07-31-holdings", "document.json"), "utf8")).cashFlows ?? [])
+      .filter((c: { kind?: string; netAmount?: unknown }) => c.kind === "contribution" && isNum(c.netAmount)) as
+      { amount: number; netAmount: number; expenses: number | null }[];
+    ok("C4 3P: net + the row's printed charges = gross, on every subscription", p3rows.length > 0
+      && p3rows.every((c) => isNum(c.expenses) && Math.abs(c.netAmount + c.expenses - c.amount) <= 0.01),
+      `${p3rows.length} row(s), ${p3rows.reduce((t, c) => t + (c.expenses ?? 0), 0).toFixed(2)} of charges`);
     near("C4 3P: realised + cost sold = the redemption the bank received", (p.realizedPnL ?? 0) + (p.costOfUnitsSold ?? 0), out.amount ?? 0, 0.01);
     ok("C4 3P: held at nothing, with a return", p.quantity === 0 && p.marketValue === 0 && isNum(p.returnPct) && p.returnPct! > 0,
       `${p.returnPct}%`);
   }
+}
+
+// C4b. WHAT A BUY LOT COSTS — THE RULE, AND A WITNESS THAT IS NOT THE RULE.
+//
+// `fifoFromCashFlows` costs a self-contained contribution at the NET the fund
+// invested plus the CHARGES the same row prints, and counts the charges as nil
+// only on a row that prints none. On this book that happens to equal the larger
+// of the row's gross and its net on every buy row — 3P (net + charges = gross)
+// and Buoyant (a net ABOVE its gross, the ₹58,861.66 Gain Distr. reinvested,
+// charges null). The larger-of is asserted as a WITNESS only: written as the
+// rule it would pick whichever figure a future layout printed larger.
+{
+  const dir = path.join(process.cwd(), "public/audit");
+  const buys = fs.readdirSync(dir).map((d) => path.join(dir, d, "document.json")).filter((f) => fs.existsSync(f))
+    .flatMap((f) => ((JSON.parse(fs.readFileSync(f, "utf8")).cashFlows ?? []) as
+      { kind?: string; units?: unknown; amount?: unknown; netAmount?: unknown; expenses?: unknown; notes?: string }[])
+      .filter((c) => c.kind === "contribution" && isNum(c.units) && (c.units as number) > 0 && isNum(c.netAmount)));
+  const rule = (c: typeof buys[number]) => (c.netAmount as number) + (isNum(c.expenses) ? c.expenses : 0);
+  const witness = (c: typeof buys[number]) => Math.max(isNum(c.amount) ? c.amount : -Infinity, c.netAmount as number);
+  ok("C4b every buy row: net + printed charges agrees with the larger of gross and net (a witness)", buys.length > 0
+    && buys.every((c) => Math.abs(rule(c) - witness(c)) <= 0.01), `${buys.length} buy row(s)`);
+  const charged = buys.filter((c) => isNum(c.expenses) && (c.expenses as number) > 0);
+  const reinvested = buys.filter((c) => !isNum(c.expenses) && isNum(c.amount) && (c.netAmount as number) > (c.amount as number) + 0.01);
+  ok("C4b …a row that prints charges is costed at its gross (3P)", charged.length > 0
+    && charged.every((c) => isNum(c.amount) && Math.abs(rule(c) - (c.amount as number)) <= 0.01), `${charged.length} row(s)`);
+  ok("C4b …and a row printing a net above its gross and no charge line keeps its net (Buoyant's reinvested distribution)",
+    reinvested.length > 0 && reinvested.every((c) => Math.abs(rule(c) - (c.netAmount as number)) <= 0.01),
+    `${reinvested.length} row(s), ${reinvested.map((c) => ((c.netAmount as number) - (c.amount as number)).toFixed(2)).join(", ")} above gross`);
+  // And the engine itself, on 3P's own record: the lots it bought add to the gross.
+  const p3 = JSON.parse(fs.readFileSync(path.join(dir, "3p-investment-managers-3000048-2026-07-31-holdings", "document.json"), "utf8"));
+  const run = fifoFromCashFlows(p3.cashFlows);
+  const bought = run?.ledger ? (run.ledger.costSold as number) : NaN;
+  const gross3p = (p3.cashFlows as { kind?: string; netAmount?: unknown; amount?: number }[])
+    .filter((c) => c.kind === "contribution" && isNum(c.netAmount)).reduce((t, c) => t + (c.amount ?? 0), 0);
+  near("C4b the lot engine, run on 3P's own record, sells lots costing the gross paid", bought, gross3p, 0.01);
+
+  // WHERE THE RULE AND THE WITNESS WOULD PART — constructed, because on this
+  // book they never do, so a larger-of written as the rule would pass every
+  // check above. A row that prints a gross and a net with NO charge line
+  // between them costs its units at the net that bought them (charges nil);
+  // a larger-of would cost them at the gross. And a row whose printed charges
+  // do not bridge its gross to its net is costed at what the rule says —
+  // net + charges — never at whichever figure is larger.
+  const lot = (row: Record<string, unknown>) => {
+    const r = fifoFromCashFlows([
+      { kind: "contribution", date: "2025-01-01", securityKey: "x", units: 10, description: "Subscription", ...row },
+      { kind: "withdrawal", date: "2025-06-01", securityKey: "x", units: -10, amount: -120, description: "Redemption" },
+    ]);
+    return r?.ledger ? (r.ledger.costSold as number) : NaN;
+  };
+  near("C4b constructed: a gross and a net with no charge line is costed at the net, never the larger", lot({ amount: 100, netAmount: 99, expenses: null }), 99, 0.001);
+  near("C4b constructed: net + printed charges, even where they fall short of the gross", lot({ amount: 100, netAmount: 98, expenses: 1 }), 99, 0.001);
 }
 
 // C5. LKP — A SALE AFTER THE HOLDING STATEMENT IS NOT BOOKED INTO IT.

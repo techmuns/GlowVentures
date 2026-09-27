@@ -241,6 +241,14 @@ export type BookFigures = {
   costed: number;
   /** Struck only where the cost side covers essentially the whole value. */
   returnPct: number | null;
+  /**
+   * WHAT THAT RETURN DIVIDES BY (DL-16) — FIFO's capital deployed: the cost of
+   * the units held (the Cost column) plus what the units already redeemed cost.
+   * Null wherever `returnPct` is. It differs from `cost` exactly where a fund
+   * has redeemed units, and there a reader dividing Value − Cost by Cost gets a
+   * figure the row does not print, so the page names this beside the return.
+   */
+  deployed: number | null;
   asOf: string[];
   /** Every capital account's committed − called = still to call. Null where none can be struck. */
   ties: boolean | null;
@@ -702,9 +710,14 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     // stays in the return and what those units cost stays in its denominator —
     // Neo Infra's capital redemption above all. Over the same held set, behind
     // the same coverage gate.
-    returnPct: cost != null && cost > 0 && pnl != null && value != null && value > 0
-      && costedValue >= value * COST_COVERAGE_MIN
-      ? fifoTotals(held.map((f) => f.position!)).returnPct : null,
+    ...(() => {
+      const fifo = cost != null && cost > 0 && pnl != null && value != null && value > 0
+        && costedValue >= value * COST_COVERAGE_MIN
+        ? fifoTotals(held.map((f) => f.position!)) : null;
+      return fifo?.returnPct != null
+        ? { returnPct: fifo.returnPct, deployed: fifo.deployed }
+        : { returnPct: null, deployed: null };
+    })(),
     // Only the folios that carry a figure here — never an income-only VIEW,
     // and on a consolidated row never the second statement of a holding
     // counted once (PM-C7).

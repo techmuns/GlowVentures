@@ -21,7 +21,7 @@ import { holdingValuation } from "@/lib/valuedAt";
 import { isinAbsentWords } from "@/lib/schemeMatch";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { depositoryUnitsGist, describeDepositoryUnits, fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
-import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
+import { carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote } from "@/lib/tranches";
 import { BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import type { Position } from "@/lib/types";
 
@@ -762,6 +762,9 @@ export function StockInfo() {
    */
   const carried = cost === null ? null : carriedCostOf(drows, BOOK_POSITION_TRANCHES);
   const carriedWhy = carried ? carriedCostNote(carried, (v) => money(v)) : "";
+  /** …and a cost on the gross-paid basis, the Monitor's words again (VD-24). */
+  const gross = cost === null || carried ? null : grossPaidOf(drows);
+  const grossWhy = gross ? grossPaidNote(gross, (v) => fmtFromBase(v)) : "";
 
   /**
    * THE MARK, AND WHY IT IS NOT `rows[0]`.
@@ -828,6 +831,15 @@ export function StockInfo() {
    */
   const markedRow = rows.find((r) => r.currentPrice != null);
   const markDate = markedRow ? accIdx.get(markedRow.accountId)?.asOf ?? portfolio.asOf : portfolio.asOf;
+  /**
+   * THE DAY THE MARK IS PRICED, where the statement prices its balances on
+   * another day (VD-17): ICICI's NSDL statement counts shares at 31 Mar 2026
+   * and values them "Prices as on 30-Mar-2026". The line gives the pricing day
+   * — the one the price is of — and the hover names both.
+   */
+  const markPriced = markedRow?.priceAsOf && markedRow.priceAsOf !== markDate ? markedRow.priceAsOf : null;
+  const markLineDate = markPriced ? fmtDate(markPriced) : markDate;
+  const markPricedClause = markPriced ? `, at its ${fmtDate(markPriced)} prices` : "";
   const priceNote: { line: string; tip: string } = exited
     ? unchecked
       ? { line: "no direct holding", tip: "No statement in this book reports a current holding in this name, so none marks it today — and whether your funds hold it could not be checked." }
@@ -873,8 +885,8 @@ export function StockInfo() {
         // did not price. "No NSE symbol" is true of it and beside the point: no
         // fund was ever going to have an intraday quote, so the line says whose
         // NAV this is instead of why a quote is missing.
-        line: `the NAV on the statement of ${markDate}`,
-        tip: `The NAV the manager struck, as the statement of ${markDate} prints it. A fund resolves no NSE trading symbol, so it never carries a live quote — and this one has no daily NAV in AMFI's published file either.`,
+        line: `the NAV on the statement of ${markDate}${markPriced ? `, priced ${markLineDate}` : ""}`,
+        tip: `The NAV the manager struck, as the statement of ${markDate} prints it${markPricedClause}. A fund resolves no NSE trading symbol, so it never carries a live quote — and this one has no daily NAV in AMFI's published file either.`,
       }
     : (() => {
         // WHY IT IS NOT LIVE, and the causes are different facts: a name with
@@ -894,8 +906,8 @@ export function StockInfo() {
           : quotesStatus === "unavailable" ? ["price feed down", "the price feed did not respond"]
           : ["no live quote", `the price feed returned no quote for ${sym}`];
         return {
-          line: `statement mark, ${markDate} · ${short}`,
-          tip: `The mark the statement of ${markDate} prints — not a live quote, because ${why}.`,
+          line: `statement mark, ${markLineDate} · ${short}`,
+          tip: `The mark the statement of ${markDate} prints${markPricedClause} — not a live quote, because ${why}.`,
         };
       })();
   // WHAT THE STATEMENT SAYS ABOUT THIS MARK AND THE MARK DOES NOT (VD-16,
@@ -1042,19 +1054,37 @@ export function StockInfo() {
                 ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement prices these units — they are ${describeDepositoryUnits(r.depositoryUnits, portfolio.accounts)} — and their value is those units at this NAV.`
                 : r.navPriced
                 ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}, which is newer than the ${providerOf(accIdx, r)} statement's own mark and replaces it. Only the value moves: quantity, cost and every dated figure stay as the statement printed them.`
-                : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>
+                : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}${
+                    // The day its prices are of, where the statement names one
+                    // apart from its balances' (VD-17).
+                    r.priceAsOf && r.priceAsOf !== accIdx.get(r.accountId)?.asOf ? `, at its ${fmtDate(r.priceAsOf)} prices` : ""}.`}
+                data-cmp-priced={r.priceAsOf && r.priceAsOf !== accIdx.get(r.accountId)?.asOf ? r.priceAsOf : undefined}>
                 {price(r.currentPrice)}
               </span>}
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-400"
           data-cost-carried={r.costBasisSource === "carried-through-switch" ? (r.costBasis ?? undefined) : undefined}
-          data-cost-printed={r.costBasisSource === "carried-through-switch" ? r.printedCostBasis : undefined}>
+          data-cost-printed={r.costBasisSource === "carried-through-switch" ? r.printedCostBasis : undefined}
+          data-cost-gross={r.costBasisSource === "gross-paid" ? (r.costBasis ?? undefined) : undefined}
+          data-cost-gross-printed={r.costBasisSource === "gross-paid" ? r.printedCostBasis : undefined}>
           {r.costBasisSource === "carried-through-switch"
             ? <span title={carriedCostNote(carriedCostOf([r], BOOK_POSITION_TRANCHES)!, (v) => money(v))}>{money(r.costBasis)}</span>
+            : r.costBasisSource === "gross-paid"
+            ? <span title={grossPaidNote(grossPaidOf([r])!, (v) => fmtFromBase(v))}>{money(r.costBasis)}</span>
+            : r.costBasis === null
+            /* `money()` returns a BARE dash for a null, and §2 forbids one
+               (DSM-D4): the row names whose statement reports no cost. */
+            ? <AbsentCell reason={`no cost on the ${providerOf(accIdx, r)} statement for this holding`} />
             : money(r.costBasis)}
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
-        <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>
+        <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>
+          {r.unrealizedPnL === null
+            ? <AbsentCell reason={r.costBasis === null
+                ? `needs a cost — no cost on the ${providerOf(accIdx, r)} statement for this holding`
+                : "the statement reports no unrealised figure for this holding"} />
+            : money(r.unrealizedPnL, true)}
+        </td>
         {/* WHICH RETURN, stated in the cell. `measuredReturn` is the one place
             the methodology lives (Stage 10af). */}
         <td className="px-4 py-2.5 text-right mono" data-stock-return
@@ -1616,6 +1646,7 @@ export function StockInfo() {
           value={avgCost === null ? <AbsentValue /> : <span className="mono" data-stock-avg-cost={avgCost}>{price(avgCost)}</span>}
           sub={cost === null ? <span className="text-slate-500">{costWhy}</span>
             : carried ? <span title={carriedWhy} data-stock-cost-carried={carried.paid}>invested {money(cost)} &middot; as paid, across a class switch</span>
+            : gross ? <span title={grossWhy} data-stock-cost-gross={gross.paid}>invested {money(cost)} &middot; as paid, stamp duty included</span>
             : costedShare ? <span data-stock-cost-covers={costedShare}
                 title={`A cost is reported for ${costedShare}; the rest are held in an account whose statement reports none, so the average is over the ${costedShare.split(" of ")[0]} that have one.`}>
                 invested {money(cost)} &middot; on {costedShare}</span>
@@ -1939,8 +1970,8 @@ export function StockInfo() {
                           </td>
                           <td className="px-4 py-2 text-[13px] text-slate-300">{t.account}</td>
                           <td className="px-4 py-2 text-right mono text-slate-300">{fmtNum(t.qty)}</td>
-                          <td className="px-4 py-2 text-right mono text-slate-400">{price(t.rate)}</td>
-                          <td className="px-4 py-2 text-right mono text-slate-200">{fmtFromBase(t.amount, { compact: true })}</td>
+                          <td className="px-4 py-2 text-right mono text-slate-400">{t.rate == null ? <AbsentCell reason="this trade row reports no unit price and no settled amount on its statement" /> : price(t.rate)}</td>
+                          <td className="px-4 py-2 text-right mono text-slate-200">{t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}</td>
                         </Tr>
                       ))}
                     </tbody>

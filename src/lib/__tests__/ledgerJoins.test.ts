@@ -296,5 +296,42 @@ console.log("\n── MT-12: a sale with no realised figure says WHY, off the ac
     `${totals.realizedOf}/${totals.sells}`);
 }
 
+console.log("\n── DSM-D9: a trade whose statement prints no price and no amount is absent, never ₹0 ──");
+{
+  // The subject: a security the tape carries on exactly ONE dated row, with a
+  // printed price and a settled amount — so stripping those two figures is the
+  // only change, and the row cannot vanish into or out of the dedupe. Every copy
+  // of the row, on every issue, is stripped alike for the same reason.
+  const count = new Map<string, number>();
+  for (const t of txn.txns) count.set(t.securityKey, (count.get(t.securityKey) ?? 0) + 1);
+  const key = [...count].find(([k, n]) => n === 1
+    && txn.txns.some((t) => t.securityKey === k && t.amount != null && t.price != null && t.qty > 0))?.[0];
+  if (!key) ok("the tape carries a single priced trade to strip", false, "no subject on this archive; re-derive it");
+  else {
+    type Row = { securityKey?: string; unitPrice?: number | null; net?: number | null; gross?: number | null;
+      printed?: { settlementAmount?: number | null } | null };
+    const rows = (docs as unknown as { transactions?: Row[] }[]).flatMap((d) => d.transactions ?? []).filter((r) => r.securityKey === key);
+    const saved = rows.map((r) => ({ r, unitPrice: r.unitPrice, net: r.net, gross: r.gross,
+      settle: r.printed ? r.printed.settlementAmount : undefined }));
+    const before = await L.loadStockLedger(key);
+    for (const r of rows) { r.unitPrice = null; r.net = null; r.gross = null; if (r.printed) r.printed.settlementAmount = null; }
+    const bare = await L.loadStockLedger(key);
+    for (const x of saved) {
+      x.r.unitPrice = x.unitPrice; x.r.net = x.net; x.r.gross = x.gross;
+      if (x.r.printed) x.r.printed.settlementAmount = x.settle;
+    }
+    const after = await L.loadStockLedger(key);
+    const one = bare?.txns ?? [];
+    ok("a trade with no printed price and no settled amount carries NULL for both — never a ₹0 that reads as a trade struck at nothing",
+      rows.length > 0 && one.length === 1 && one[0].rate === null && one[0].amount === null && one[0].qty > 0,
+      `${key}: ${JSON.stringify(one.map((t) => ({ rate: t.rate, amount: t.amount, qty: t.qty })))}`);
+    ok("…and the same row with its figures back carries them again, so the null came from the statement and nothing else",
+      !!before && !!after && before.txns.length === 1 && after.txns.length === 1
+        && after.txns[0].amount !== null && after.txns[0].amount === before.txns[0].amount
+        && after.txns[0].rate !== null && after.txns[0].rate === before.txns[0].rate,
+      `${key}: ${before?.txns[0]?.amount} → ${after?.txns[0]?.amount}`);
+  }
+}
+
 console.log(fails ? `\n${fails} failed` : "\nall ledger-join checks passed");
 process.exit(fails ? 1 : 0);

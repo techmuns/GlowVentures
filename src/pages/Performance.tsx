@@ -22,7 +22,7 @@ import { fifoTotals } from "@/lib/fifo";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { AccountBridge, ReturnSeries } from "@/lib/types";
 import { measuredAccountsReturn, accountHasOpeningValue } from "@/lib/returns";
-import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS } from "@/data/glowData";
+import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_UNDATED_CAPITAL } from "@/data/glowData";
 import { capitalMovesWithCalls } from "@/lib/tranches";
 
 // NAV & Performance — built from what these statements actually carry.
@@ -129,6 +129,24 @@ const bridgeTotalsOf = (accounts: readonly { accountId: string }[]) => {
  */
 const CAPITAL_RECORD_COUNT = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS)
   .reduce<Record<string, number>>((m, x) => { m[x.accountId] = (m[x.accountId] ?? 0) + 1; return m; }, {});
+/**
+ * CAPITAL NO DATED ROW CARRIES, NAMED BESIDE THE RATE IT IS MISSING FROM
+ * (VD-25). An account's printed totals can move by money its dated record never
+ * prints a day for — Carnelian 3517383 prints ₹30,690 of net capital out
+ * between two of its marks and dates none of it. A money-weighted rate needs a
+ * date for every rupee, and inventing one is the fabrication this book refuses,
+ * so the amount is named, with the two marks it sits between, and never dated.
+ */
+const undatedFor = (accountId: string, from: string | null, to: string | null) =>
+  BOOK_UNDATED_CAPITAL.filter((u) => u.accountId === accountId && u.undated !== 0
+    && (!from || u.to > from) && (!to || u.from < to));
+
+const undatedSentence = (us: readonly { from: string; to: string; undated: number; evidence: string[] }[],
+  money: (n: number) => string, who?: string) => us.map((u) =>
+  `${money(Math.abs(u.undated))} of ${who ? `${who}'s ` : ""}net capital ${u.undated < 0 ? "out" : "in"} between ${u.from} and ${u.to} `
+  + `is printed in ${who ? "its" : "this account's"} ${u.evidence.map(bridgeReportName).join(", ")} and dated in none of them, `
+  + "so it is in none of this rate's flows. No day is assumed for it.").join(" ");
+
 const acctLabel = (a: { owner?: string | null; provider: string; accountNo: string }) =>
   `${a.owner ?? a.accountNo} · ${a.provider.split(" ")[0]} ${a.accountNo}`;
 
@@ -245,6 +263,7 @@ export function Performance() {
       pct: part ? one.annPct : null,
       toDate: part ? one.toDatePct : null,
       windowDays: part ? one.windowDays : null,
+      undated: part ? undatedFor(a.accountId, one.windowStart, a.asOf) : [],
       reason: !flows.length
         ? recorded > 0
           ? `no opening-value flow series here · its ${recorded} dated capital movement${recorded === 1 ? " is" : "s are"} on the Transactions card`
@@ -284,6 +303,10 @@ export function Performance() {
     return: (x) => x.toDate,
   });
   const measurable = xirrByAccount.filter((x) => measuredIds.has(x.account.accountId));
+  // Every rupee a pooled account's printed totals carry and no dated row does —
+  // named in the pooled figure's hover as it is on the account's own row.
+  const consUndated = measurable.flatMap((x) => x.undated.map((u) => ({
+    ...u, who: `${x.account.provider.split(" ")[0]} ${x.account.accountNo}` })));
   const unmeasurable = xirrByAccount.filter((x) => !measuredIds.has(x.account.accountId));
   const measuredFlows = mw.parts.flatMap((x) => x.flows);
   const measuredMV = mw.measuredMV;
@@ -721,6 +744,15 @@ export function Performance() {
                       : <>
                           <span className={(x.toDate ?? 0) >= 0 ? "text-gain" : "text-loss"}
                             title={annualisedNote(x.pct, x.windowDays, [x.account.accountId])}>{fmtPct(x.toDate, { sign: true, decimals: 1 })}</span>
+                          {/* NAMED, NEVER DATED (VD-25): capital the account's
+                              printed totals carry and no dated row does. */}
+                          {x.undated.length > 0 && (
+                            <span className="block cursor-help text-[10px] font-sans text-amber-400"
+                              data-xirr-undated={x.undated.reduce((t, u) => t + u.undated, 0)}
+                              title={undatedSentence(x.undated, money)}>
+                              {money(Math.abs(x.undated.reduce((t, u) => t + u.undated, 0)))} undated · not in these flows
+                            </span>
+                          )}
                         </>}
                   </td>
                 </Tr>
@@ -748,7 +780,9 @@ export function Performance() {
                         ? "no account's statements carry both dated flows and an opening portfolio value to measure against"
                         : "the pooled flows and their statement values do not solve for a single rate"} />
                     : <span className={consolidatedTotalReturn >= 0 ? "text-gain" : "text-loss"}
-                        title={annualisedNote(consolidatedXirr, consWindowDays, mw.parts.map((x) => x.accountId))}>
+                        data-xirr-undated={consUndated.reduce((t, u) => t + u.undated, 0)}
+                        title={[annualisedNote(consolidatedXirr, consWindowDays, mw.parts.map((x) => x.accountId)),
+                          ...consUndated.map((u) => undatedSentence([u], money, u.who))].filter(Boolean).join(" ")}>
                         {fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
                 </td>
               </tr>

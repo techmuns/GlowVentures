@@ -208,10 +208,17 @@ const isNum = (v) => typeof v === "number" && Number.isFinite(v);
  * Here rather than in `build-book` so the suite can run the same record through
  * the same function and hold the book to it.
  *
- * WHAT BUYS A LOT is the money that bought the units: a self-contained
- * contribution's printed NET (what the fund invested after its charges — the
- * same figure the position's own cost is built from), or an allotment's amount.
- * A contribution that is a RUNNING BALANCE is refused, because differencing a
+ * WHAT BUYS A LOT is every rupee the family paid for its units (VD-24): a
+ * self-contained contribution's printed NET — what the fund invested — plus the
+ * CHARGES the same row prints (3P's setup expense and stamp duty, which its
+ * reader ties to the paisa: gross − charges = net). A row that prints a net and
+ * NO charge line carries `expenses: null`, and only there does it count as nil:
+ * Buoyant's 1 Apr deposit prints a net of ₹1,00,58,861.66 against a ₹1 Cr gross
+ * because the ₹58,861.66 Gain Distr. of that day was reinvested — money that
+ * bought units, not a charge. The rule is stated as the statement prints it and
+ * never as the larger of gross and net, which would pick whichever figure a
+ * future layout happened to print larger. An allotment's amount is its own. A
+ * contribution that is a RUNNING BALANCE is refused, because differencing a
  * cumulative figure is how ₹22 Cr gets invented (see `capitalMovesFrom`). A
  * distribution is income; where it was reinvested, the allotment it funded is
  * the purchase.
@@ -231,7 +238,10 @@ export function fifoFromCashFlows(cashFlows) {
       if (!isNum(c.netAmount)) {
         return { ledger: null, reason: `the ${c.date} contribution prints a running balance rather than what it bought, so its units carry no cost of their own` };
       }
-      events.push({ order: 0, date: c.date, kind: "buy", cls: c.securityKey, units: c.units, amount: c.netAmount, label: c.description });
+      // Net plus the charges the row prints; null charges only on a row that
+      // prints no charge line (see above).
+      const paid = Math.round((c.netAmount + (isNum(c.expenses) ? c.expenses : 0)) * 100) / 100;
+      events.push({ order: 0, date: c.date, kind: "buy", cls: c.securityKey, units: c.units, amount: paid, label: c.description });
     } else if (c.kind === "allotment" && c.units > 0) {
       if (!isNum(c.amount)) return { ledger: null, reason: `the ${c.date} allotment prints no amount` };
       events.push({ order: 0, date: c.date, kind: "buy", cls: c.securityKey, units: c.units, amount: c.amount, label: c.description });

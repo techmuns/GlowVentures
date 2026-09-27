@@ -16,7 +16,7 @@ import {
 } from "@/lib/lookthrough";
 import { schemeReturns, breakAfter, stepWords } from "@/lib/schemeReturns";
 import { fundNavFor } from "@/lib/fundNavs";
-import { schemeMatchWords } from "@/lib/schemeMatch";
+import { optionWords, schemeMatchWords } from "@/lib/schemeMatch";
 import type { ValuedBy } from "@/lib/valuedAt";
 
 /**
@@ -268,7 +268,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
           <div className="label-xs">Plan</div>
           <div className="mt-1.5 text-[15px] font-semibold capitalize text-slate-100" data-lt-plan>
-            {p.plan ?? DASH}{p.option ? <span className="text-slate-400"> · {p.option}</span> : null}
+            {p.plan ?? DASH}{(() => {
+              // The store's placeholder "unknown" is not an option (DSM-D5).
+              const o = optionWords(p.option);
+              return o ? <span className="text-slate-400"> · <span className={o.tip ? "normal-case" : undefined} title={o.tip ?? undefined}>{o.text}</span></span> : null;
+            })()}
           </div>
           <div className="mt-1 text-[11px] text-slate-500">
             <span data-lt-plan-source title={sm.planTip}>{sm.planSource}</span>

@@ -270,8 +270,16 @@ export type Position = {
    * is that of the units still held after the fund's own unit record was
    * matched first-in, first-out (`shared/fifo.mjs`). The sold units' cost and
    * gain are `costOfUnitsSold` and `realizedPnL`, never folded into the cost.
+   *
+   * "gross-paid" means the statement costed the holding at what bought units —
+   * its contributions LESS the stamp duty and charges it prints against them —
+   * and the book carries every rupee the family PAID instead (VD-24), the same
+   * basis Helios, Active Momentum, Founders and Delphi already print. Licensed
+   * only where the net and the charges add to the paid figure to the paisa;
+   * the statement's net stays beside it as `printedCostBasis`. See
+   * `grossPaidCost` in `scripts/build-book.mjs`.
    */
-  costBasisSource?: "opening-position" | "carried-through-switch" | "fifo";
+  costBasisSource?: "opening-position" | "carried-through-switch" | "fifo" | "gross-paid";
   /**
    * The cost the statement's own cost column prints, kept ONLY where the book's
    * cost differs from it (`costBasisSource`) — a CHECK beside the figure, never
@@ -325,6 +333,15 @@ export type Position = {
    * in ./analytics, which renders it absent rather than guessing the window.
    */
   heldSince: string | null;
+  /**
+   * ISO date the STATEMENT says its price or value is struck at — which need
+   * not be its account's `asOf`: ICICI's NSDL balance is at 31 Mar 2026 and its
+   * values are "Prices as on 30-Mar-2026". Present only where the statement
+   * prints one, and never inferred from the as-of. A STATEMENT-basis fact: once
+   * a live quote or a published NAV has moved the price (`live`, `navPriced`),
+   * it no longer dates the figure on screen.
+   */
+  priceAsOf?: string | null;
   dividendReceived: number | null; // INR, cumulative
   /** Income accrued but not yet received, carried separately from market value. */
   accruedIncome?: number | null;
@@ -751,6 +768,14 @@ export type CapitalMove = {
    * paid never change. `BOOK_CAPITAL_MOVES` itself never carries it.
    */
   carriedFrom?: { security: string | null; securityKey: string | null; units: number; switchedOn: string };
+  /**
+   * THE CHARGES THE STATEMENT PRINTS AGAINST THIS CONTRIBUTION (VD-24) — stamp
+   * duty, a setup expense. What the family PAID is `invested + charges` on a
+   * capital move; on a TRANCHE move (`BOOK_POSITION_TRANCHES`) `invested` is
+   * already the paid figure and the charge is named inside it, so the unit price
+   * is `(invested − charges) ÷ units`. Null where the row prints no charge line.
+   */
+  charges?: number | null;
 };
 
 /**

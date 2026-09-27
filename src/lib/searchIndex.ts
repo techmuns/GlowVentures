@@ -52,7 +52,7 @@
 import type { Account, CapitalMove, Position } from "./types";
 import { accountIndex, type AccountIndex } from "./accounts";
 import {
-  currentHoldings, dedupedPositions, isMandateHeld, mandateLabel, bucketLabel,
+  currentHoldings, dedupedPositions, isFundVehicle, isMandateHeld, mandateLabel, bucketLabel,
   isRedeemedToNil, negligibleKeys, readerClassOf, sum,
 } from "./analytics";
 import { groupKeyFor, groupLabelFor, GROUP_AXES } from "./groupAxis";
@@ -61,6 +61,7 @@ import { fundMarketSideOf } from "./aifCategory";
 import { NAV } from "./nav";
 import { printedSpellings } from "./securityLabel";
 import { schemeNamesOf, schemeStem } from "./reviewGaps";
+import { schemeNameFor } from "./schemeLabel";
 import { displaySecurity } from "./format";
 
 export type SearchKind =
@@ -542,7 +543,17 @@ export function buildSearchIndex(input: {
   const out: SearchEntry[] = [];
   const current = currentHoldings(consolidated);
   const bookMV = sum(current.map((p) => p.marketValue));
-  const pctOfBook = (v: number) => (bookMV > 0 ? `${((v / bookMV) * 100).toFixed(v / bookMV >= 0.001 ? 1 : 2)}% of the book` : "");
+  /**
+   * A SHARE OF THE BOOK, AT A PRECISION THAT CANNOT READ AS NOTHING (SC-D1).
+   * `toFixed(2)` printed "0.00% of the book" beside ₹98,742 of Blue Ashva; a
+   * non-zero holding is "under 0.01%", and a measured nil carries no share.
+   */
+  const pctOfBook = (v: number) => {
+    if (!(bookMV > 0) || v === 0) return "";
+    const pct = (v / bookMV) * 100;
+    if (Math.abs(pct) < 0.01) return `under 0.01% of the book`;
+    return `${pct.toFixed(Math.abs(pct) >= 0.1 ? 1 : 2)}% of the book`;
+  };
   const small = negligibleKeys(positions);
   // Accounts whose dated capital record carries money coming back (SC-C5).
   const redeemedOnRecord = new Set((input.capitalMoves ?? []).filter((m) => m.direction === "out").map((m) => m.accountId));
@@ -553,10 +564,30 @@ export function buildSearchIndex(input: {
     if (small.has(p.securityKey)) continue;          // the family's ₹1,000 floor
     byKey.set(p.securityKey, [...(byKey.get(p.securityKey) ?? []), p]);
   }
+  /**
+   * ONE SCHEME UNDER TWO KEYS (SC-D3). The AMC folio and a depository name one
+   * ISIN two ways — Helios Flexi Cap is `Helios Flexi Cap Fund - Direct Growth`
+   * and `HELIOS FCF D-GROW` — and after Stage 10az both READ ALIKE, so the list
+   * showed two identical labels with no hint they are one scheme. They stay two
+   * rows (merging them is the extractor's job, `docs/BOOK-REPORT.md`), and each
+   * now says so.
+   */
+  const isinOfKey = (key: string, rows: readonly Position[]) =>
+    schemeNameFor(key)?.isin ?? rows.find((p) => p.isin)?.isin ?? null;
+  const keysByIsin = new Map<string, number>();
+  for (const [key, rows] of byKey) {
+    const isin = isinOfKey(key, rows);
+    if (isin) keysByIsin.set(isin, (keysByIsin.get(isin) ?? 0) + 1);
+  }
   for (const [key, rows] of byKey) {
     const head = rows[0];
     const mv = sum(rows.map((p) => p.marketValue));
     const closed = rows.every((p) => isRedeemedToNil(p));
+    // A BALANCE LINE IS NOT A HOLDING (SC-D3): a mandate's `Tax Deducted at
+    // Source` at a measured ₹0 is a running balance on the statement, not a
+    // thing the family own, and offering it as one put "₹0 · 0.00% of the
+    // book" in the list. A redemption to nil is different and stays findable.
+    if (!closed && mv === 0 && !rows.some((p) => isFundVehicle(p))) continue;
     const raw = positions.filter((p) => p.securityKey === key);
     const accountsHolding = new Set(raw.map((p) => p.accountId)).size;
     const owners = [...new Set(raw.map((p) => idx.get(p.accountId)?.owner).filter(Boolean))] as string[];
@@ -576,6 +607,10 @@ export function buildSearchIndex(input: {
      * at nil units and nothing else. So the claim is struck on the record.
      */
     const onRecord = closed && raw.some((p) => redeemedOnRecord.has(p.accountId));
+    const isin = isinOfKey(key, rows);
+    const twin = isin && (keysByIsin.get(isin) ?? 0) > 1
+      ? `one of ${keysByIsin.get(isin)} rows for ISIN ${isin} — the statements name it ${keysByIsin.get(isin)} ways`
+      : null;
     out.push({
       id: `holding:${key}`, kind: "holding", chip,
       label: head.security,
@@ -584,7 +619,8 @@ export function buildSearchIndex(input: {
           ? "Redeemed — no longer held · the redemption is on Transactions"
           : "Redeemed to nil units — no longer held · no statement in this book dates the redemption"
         : [categories.join(" + "), money(mv), pctOfBook(mv),
-          accountsHolding === 1 ? `1 account · ${owners[0] ?? ""}` : `${accountsHolding} accounts · ${owners.length} member${owners.length === 1 ? "" : "s"}`]
+          accountsHolding === 1 ? `1 account · ${owners[0] ?? ""}` : `${accountsHolding} accounts · ${owners.length} member${owners.length === 1 ? "" : "s"}`,
+          twin]
           .filter(Boolean).join(" · "),
       // A redeemed fund whose redemption is on the dated record opens the tab it
       // is on; one with no dated record opens its own page, which shows the
@@ -631,29 +667,46 @@ export function buildSearchIndex(input: {
     // and the money is on the Transactions tab ONLY where the family's dated
     // capital record carries it (3P's folio); the HDFC folio's statements print
     // two schemes at nil units and no dated movement at all (SC-C5).
-    const allClosed = rows.length > 0 && rows.every((p) => isRedeemedToNil(p));
+    const empty = accountEmptiness(a, rows);
+    const allClosed = rows.length > 0 && empty?.kind === "redeemed";
     const onRecord = allClosed && redeemedOnRecord.has(a.accountId);
+    /**
+     * WHAT THE ROW COUNTS IS WHAT THE DASHBOARD LISTS (SC-D2): the holdings
+     * under the family's ₹1,000 floor are left out of the count and the value
+     * alike, as the Portfolio Monitor leaves them out, and so is a position
+     * redeemed to nil. "23 holdings" over a demat counted EFPL's ₹60 preference
+     * line and Everest Fleet's ₹580 among them.
+     */
+    const listed = rows.filter((p) => !small.has(p.securityKey) && !isRedeemedToNil(p));
+    const listedMV = sum(listed.map((p) => p.marketValue));
     const href = onRecord ? "/monitor?show=transactions"
       : keys.length === 1 ? `/stock/${encodeURIComponent(keys[0])}`
       : keys.length === 0 && side === "private" ? "/private-market"
       : `/family?entity=${encodeURIComponent(a.owner)}`;
-    const what = allClosed
-      ? onRecord ? "every holding redeemed — the money is on Transactions"
-        : "every holding redeemed to nil units — no statement in this book dates the redemption"
-      : rows.length
+    // A REDEEMED ACCOUNT AND AN UNVALUED ONE SAY DIFFERENT THINGS (SC-D3): the
+    // Hedged Equity strategy is redeemed to a nil balance — a measured zero —
+    // where India SME publishes no NAV. `accountEmptiness` is the one rule, the
+    // chat context reads it too.
+    const what = empty?.kind === "redeemed"
+      ? rows.length
+        ? onRecord ? "every holding redeemed — the money is on Transactions"
+          : "every holding redeemed to nil units — no statement in this book dates the redemption"
+        : "redeemed to a nil balance — a measured zero"
+      : empty?.kind === "unvalued" ? "holds no valued position — no statement in this book values it"
+      : listed.length
         // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. On the live
         // basis a transaction-only demat values the cash-equivalent funds its
         // depository reports and nothing else on that statement (Stage 10ce),
         // so its total must not read as the account's — the words lead,
         // because this line is truncated to one row.
-        ? `${a.partialValuation ? "partly valued · " : ""}${rows.length} holding${rows.length === 1 ? "" : "s"} · ${money(mv)} ${valueBasisOf(rows, a.asOf)}`
-      : "holds no valued position";
+        ? `${a.partialValuation ? "partly valued · " : ""}${listed.length} holding${listed.length === 1 ? "" : "s"} · ${money(listedMV)} ${valueBasisOf(listed, a.asOf)}`
+        : `every holding here is under the ₹1,000 floor, so none is listed`;
     out.push({
       id: `account:${a.accountId}`, kind: "account", chip: "Account",
       label: `${a.provider} · ${a.accountNo}`,
       // The statement's own date rides in `valueBasisOf` wherever a value is
       // printed; a row with no value still says whose statement it is.
-      detail: `${a.owner} · ${what}` + ((allClosed || !rows.length) && a.asOf ? ` · statement of ${a.asOf}` : ""),
+      detail: `${a.owner} · ${what}` + (!listed.length && a.asOf ? ` · statement of ${a.asOf}` : ""),
       href,
       names: [],
       codes: [a.accountNo],

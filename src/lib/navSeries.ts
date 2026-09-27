@@ -308,10 +308,14 @@ export type NavCoverageStats = {
   accountsTotal: number;
   perAccountValue: number;
   /**
-   * The book's CONSOLIDATED total. It is BELOW `perAccountValue` by exactly the
-   * value reported under two members, because a per-account sum does not dedupe
-   * and a consolidated one does. Both are carried so the page can state the gap
-   * rather than let a reader find it by adding.
+   * The book's CONSOLIDATED total ON THE STATEMENT BASIS — the portfolio the
+   * caller passes, which must be `statementPortfolio` wherever it is set beside
+   * a series level (MNT-25). The series is struck on statement marks, so a
+   * NAV-overlaid or live total as its denominator divides one basis by another;
+   * on this drop the live book also carries funds valued from depository units
+   * that no statement marks at all. It is BELOW `perAccountValue` by exactly
+   * the value reported under two members, because a per-account sum does not
+   * dedupe and a consolidated one does.
    */
   consolidatedValue: number;
   /** Covered accounts with a step no statement settles — see `NavPoint.unreportedFlowValue` for its move. */

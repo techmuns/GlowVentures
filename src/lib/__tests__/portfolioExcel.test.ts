@@ -10,7 +10,7 @@
 // market value. Nothing in `npm run build`, `check:pages` or `check:family`
 // looks inside the file — it is a download.
 //
-// ── THE SHEET IS THE SCREEN IT EXPORTS (B-08, A-03, MSX-9/10/17/18/19) ──────
+// ── THE SHEET IS THE SCREEN IT EXPORTS (B-08, A-03, MSX-9/10/17/18/19/22) ───
 //
 // The page hands the export `portfolio.positions` — the book with the published
 // NAV overlaid (`applyFundNavs`) and every row, closed ones included. This suite
@@ -33,8 +33,8 @@
 //     cost, average and gain over the costed lines alone;
 //   • WHICH DATE — a line under the title naming the blend of statement dates
 //     and NAVs, each row's own basis, and a reason for every blank figure;
-//   • AND THE TAPE — a zero kept a zero, and an archive that did not answer
-//     never exported as a sheet with no trades.
+//   • AND THE TAPE — the units as printed, a zero kept a zero, and an archive
+//     that did not answer never exported as a sheet with no trades.
 //
 // The column ORDER is written out as a literal, because it is the thing being
 // asserted. A test that read the order off the file it is checking could not
@@ -99,8 +99,12 @@ const navMV = (p: Position) => { const e = navOf(p); return e ? p.quantity * e.n
  * NAV they were valued at when the page built them. Null for a statement mark.
  */
 const navDateOf = (p: Position) => navOf(p)?.date ?? (p.depositoryUnits ? p.navDate ?? null : null);
-/** The date a line's value is struck: AMFI's date for a NAV, else its own statement's. */
-const valueDateOfLine = (p: Position) => navDateOf(p) ?? ACC.get(p.accountId)?.asOf ?? null;
+/**
+ * The date a line's value is struck: AMFI's date for a NAV, else the day its own
+ * statement prices — `priceAsOf` where the statement names one apart from its
+ * balances' date (VD-17: ICICI's NSDL statement of 31 Mar prices at 30 Mar).
+ */
+const valueDateOfLine = (p: Position) => navDateOf(p) ?? p.priceAsOf ?? ACC.get(p.accountId)?.asOf ?? null;
 /** A fund vehicle the fund still prices while the family holds none of its units. */
 const FUND = new Set(["AIF", "Mutual Fund", "ETF"]);
 const redeemed = (p: Position) => FUND.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
@@ -205,7 +209,7 @@ function solveXirr(accountIds: readonly string[]): number | null {
 // ── THE SHEETS ──────────────────────────────────────────────────────────────
 const TXNS: Txn[] = [
   { date: "2026-08-13", security: "Shoppers Stop Ltd", securityKey: "shoppers-stop", side: "Buy",
-    qty: 3860, price: 421.5, amount: 1627000, realized: null, account: "AJAY JAISINGHANI · V.E.C 128005",
+    qty: 3859.667, price: 421.5049, amount: 1629797.03, realized: null, account: "AJAY JAISINGHANI · V.E.C 128005",
     ownerId: "ajay" } as unknown as Txn,
   { date: "2026-08-10", security: "Aditya Birla Capital Ltd", securityKey: "aditya-birla-capital", side: "Sell",
     qty: 50369, price: 407.75, amount: 20537000, realized: 11600000, account: "AJAY T JAISINGHANI · Carnelian 3517383",
@@ -566,7 +570,8 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
 {
   const asOfLine = String(holdings.getRow(headerRowOf(holdings) - 1).getCell(1).value ?? "");
   const lines = firstOfGroup(NAV_SET.held);
-  const stmtDates = lines.filter((p) => !navDateOf(p)).map((p) => ACC.get(p.accountId)?.asOf ?? "").filter(Boolean).sort();
+  // Each statement line's own value date — the day its statement PRICES (VD-17).
+  const stmtDates = lines.filter((p) => !navDateOf(p)).map((p) => valueDateOfLine(p) ?? "").filter(Boolean).sort();
   const navDates = [...new Set(lines.map((p) => navDateOf(p)).filter((d): d is string => !!d))].sort();
   ok("the line under the title dates the figures: the statement range, the NAV date, and no live quote",
      stmtDates.length > 0 && navDates.length > 0
@@ -639,6 +644,21 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   eq("a buy's realised is a dash, a flat sale's is a zero", columnUnder(txnSheet, "Realized P&L (₹)", lastTx), [DASH, TXNS[1].realized, 0, DASH]);
   eq("a price or amount printed as nil is a zero, never a dash",
      [columnUnder(txnSheet, "Price (₹)", lastTx)[3], columnUnder(txnSheet, "Amount (₹)", lastTx)[3]], [0, 0]);
+  // MSX-22: the units as printed, not rounded in the cell.
+  eq("the units are stored as printed, never rounded", columnUnder(txnSheet, "Qty", lastTx), TXNS.map((t) => t.qty));
+  const fracCell = txnSheet.getRow(headerRowOf(txnSheet) + 1).getCell(headersOf(txnSheet).indexOf("Qty") + 1);
+  ok("...and a fractional count is displayed with its decimals", /0\.0/.test(String(fracCell.numFmt)), String(fracCell.numFmt));
+  // The Holdings sheet stores its unit counts as summed; a fund's fractional
+  // units are displayed with their decimals too, never as a rounded count.
+  const hq = headersOf(holdings).indexOf("Qty") + 1;
+  const fracRows: number[] = [];
+  for (let r = headerRowOf(holdings) + 1; r <= dataLast; r++) {
+    const v = holdings.getRow(r).getCell(hq).value;
+    if (typeof v === "number" && Math.abs(v - Math.round(v)) > 1e-6) fracRows.push(r);
+  }
+  ok("a fractional holding's units are displayed with their decimals",
+     fracRows.length > 0 && fracRows.every((r) => /0\.0/.test(String(holdings.getRow(r).getCell(hq).numFmt))),
+     `${fracRows.length} fractional rows`);
   ok("a blank realised says why", /Realized P&L — a purchase realises nothing/.test(String(columnUnder(txnSheet, "Notes", lastTx)[0])));
 
   // MSX-19: an archive that did not answer is never a sheet with no trades.
@@ -680,6 +700,10 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     const last = h + data.txns.length;
     const recs = recordsOf(ws, last);
     eq("every dated row is written, and nothing after them", [recs.length, ws.rowCount], [data.txns.length, last]);
+    const qtyOff = data.txns.filter((t, i) => recs[i]["Qty"] !== t.qty);
+    const frac = data.txns.filter((t) => !Number.isInteger(t.qty));
+    ok("every Qty cell holds the units exactly as the statement printed them",
+       frac.length > 0 && qtyOff.length === 0, qtyOff.slice(0, 3).map((t) => `${t.security} ${t.qty}`).join("; ") || `${frac.length} fractional counts kept`);
     const fig = (v: number | null, cell: unknown) => (v === null ? cell === DASH : cell === v);
     const figOff = data.txns.filter((t, i) => !fig(t.price, recs[i]["Price (₹)"]) || !fig(t.amount, recs[i]["Amount (₹)"]) || !fig(t.realized, recs[i]["Realized P&L (₹)"]));
     ok("price, amount and realised are the tape's own figures — a zero a zero, an absence a dash",

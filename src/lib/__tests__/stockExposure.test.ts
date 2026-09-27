@@ -126,7 +126,7 @@ const cash = sum(ded.filter((p) => p.assetClass === "Cash").map((p) => p.marketV
  */
 const floorOut = droppedHoldings(ded.filter(isFundVehicle));
 const floored = sum([...floorOut.closed, ...floorOut.negligible].map((p) => p.marketValue));
-const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + cash + floored;
+const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ex.fencedValue + cash + floored;
 /**
  * THE STRONGEST ASSERTION HERE. The stock axis draws a table covering less than
  * half the book, so a reader is owed a statement of where the rest is — and that
@@ -137,7 +137,7 @@ const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ca
  */
 near("the five buckets rebuild the book's own NAV, to the rupee", buckets, BOOK_SUMMARY.totalValue, 1);
 console.log(`     measured ${CR(measured)} + derived ${CR(ex.total)} + opaque ${CR(ex.skippedValue)}`
-  + ` + unaccounted ${CR(ex.unaccountedValue)} + cash ${CR(cash)} + under the floor ₹${floored.toFixed(2)} = ${CR(buckets)}`);
+  + ` + unaccounted ${CR(ex.unaccountedValue)} + fenced ₹${ex.fencedValue.toFixed(2)} + cash ${CR(cash)} + under the floor ₹${floored.toFixed(2)} = ${CR(buckets)}`);
 ok("...where the floor's term is specks and redeemed nils, never money",
   floorOut.closed.every((p) => p.marketValue === 0)
     && floored < NEGLIGIBLE_VALUE_FLOOR * new Set(floorOut.negligible.map((p) => p.securityKey)).size,
@@ -146,7 +146,7 @@ ok("...and the table covers less than the book, which is why the statement is ow
   measured + ex.total < BOOK_SUMMARY.totalValue * 0.75,
   `${CR(measured + ex.total)} of ${CR(BOOK_SUMMARY.totalValue)}`);
 ok("every bucket is non-negative — a partition, not a subtraction that overshot",
-  [measured, ex.total, ex.skippedValue, ex.unaccountedValue, cash].every((v) => v >= 0));
+  [measured, ex.total, ex.skippedValue, ex.unaccountedValue, ex.fencedValue, cash].every((v) => v >= 0));
 eq("the vehicles split into covered and skipped with none lost",
   ex.covered + ex.skipped.length, vehicles.length);
 near("...and their values do too", ex.disclosedValue + ex.skippedValue,
@@ -340,6 +340,46 @@ const unfenced = await loadStockExposure(vehicles, isinToBookKey, undefined, boo
 ok("...and dropping the fence really would put it back",
   unfenced.status === "ok" && [...unfenced.byKey.values()].some((e) => /polycab/i.test(e.name)),
   "so the guard above is exercised, not merely present");
+
+console.log("\n── the fenced line is a term of its own, never 'unaccounted' (PC-11) ──");
+/**
+ * A FUND THE FAMILY HOLDS DISCLOSES THE RING-FENCED COMPANY, and the fence keeps
+ * that line out of every row — correctly. It is still a LINE of the filing, so
+ * it is not part of what "no line accounts for" means (a scheme's own cash, a
+ * metal ETF's metal, rounding), which is where it used to sit. Re-derived here
+ * off the committed store and `BOOK_POLYCAB`, on the loader's own rules — a
+ * positive weight, the same ISIN once per fund — and never read back off the
+ * loader.
+ */
+const storeIndex = JSON.parse(readFileSync(path.join(STORE, "index.json"), "utf8")) as {
+  schemes?: Record<string, { schemecode: string }>;
+};
+let fencedWant = 0, fencedLines = 0;
+for (const v of vehicles) {
+  const m = storeIndex.schemes?.[v.securityKey];
+  if (!m) continue;
+  let pf: { holdings?: { isin?: string | null; name: string; pctAum: number }[] } | null = null;
+  try { pf = JSON.parse(readFileSync(path.join(STORE, `${m.schemecode}.json`), "utf8")); } catch { pf = null; }
+  const seen = new Set<string>();
+  for (const h of pf?.holdings ?? []) {
+    if (!(h.pctAum > 0)) continue;
+    const isin = (h.isin ?? "").trim().toUpperCase() || null;
+    const key = securityKeyOf(h.name);
+    if (!(isin && ringFenced.isins.has(isin)) && !ringFenced.keys.has(key)) continue;
+    const on = isin ?? `name:${key}`;
+    const value = (v.marketValue * h.pctAum) / 100;
+    if (!(value > 0) || seen.has(on)) continue;
+    seen.add(on); fencedWant += value; fencedLines += 1;
+  }
+}
+ok("this book's funds disclose the ring-fenced company, so the term has a subject",
+  fencedLines > 0 && fencedWant > 0, `${fencedLines} line(s), ₹${fencedWant.toFixed(2)}`);
+near("the fenced line is counted as its own term, to the rupee", ex.fencedValue, fencedWant, 1);
+ok("...and it is in exactly one bucket: taken out of the partition, the partition breaks",
+  Math.abs(buckets - ex.fencedValue - BOOK_SUMMARY.totalValue) > 1,
+  "so the term is load-bearing rather than a zero added for show");
+ok("...and no row of the index carries it",
+  ![...ex.byKey.values()].some((e) => e.rows.some((r) => r.instruments.some((i) => ringFenced.isins.has((i.isin ?? "").trim().toUpperCase())))));
 
 console.log("\n── one company, one row: the family's own question ──");
 /**
@@ -540,6 +580,6 @@ ok("every skipped vehicle carries its own value, so a caller can state the size"
 // the filing accounted for: its cash, a metal ETF's metal, a line carrying
 // neither an ISIN nor a usable name, and the disclosure's own rounding.
 near("what no disclosed line accounted for is exactly the disclosed value the rows do not reach",
-  ex.unaccountedValue, ex.disclosedValue - ex.total, 0.01);
+  ex.unaccountedValue, ex.disclosedValue - ex.total - ex.fencedValue, 0.01);
 
 process.exit(fails ? 1 : 0);

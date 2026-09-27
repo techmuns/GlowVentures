@@ -413,6 +413,12 @@ type ColSpec = {
   /** How a row names this column's value. See `writeRow`. */
   key: string;
   header: string; width: number; numFmt?: string; align?: "left" | "right" | "center"; signed?: boolean;
+  /**
+   * A number format chosen from the VALUE, where one format cannot show every
+   * value faithfully — a unit count is whole on most rows and fractional on a
+   * few, and `#,##0` would display 3,859.667 units as 3,860.
+   */
+  numFmtFor?: (v: unknown) => string | undefined;
 };
 
 /** The header row sits under the title and the two lines that describe the sheet. */
@@ -465,7 +471,8 @@ function headerRow(ws: ExcelJS.Worksheet, cols: ColSpec[], rowIdx: number) {
 
 function styleDataCell(cell: ExcelJS.Cell, c: ColSpec, value: unknown, zebra: boolean, signedVal?: number) {
   cell.value = value as any;
-  if (c.numFmt) cell.numFmt = c.numFmt;
+  const fmt = c.numFmtFor?.(value) ?? c.numFmt;
+  if (fmt) cell.numFmt = fmt;
   const color = c.signed && typeof signedVal === "number"
     ? (signedVal > 0 ? C.gain : signedVal < 0 ? C.loss : C.text)
     : C.text;
@@ -529,6 +536,16 @@ const MONEY_SIGNED = '+#,##0;-#,##0;0';
 const PRICE = "#,##0.00";
 const PCT = '+0.0"%";-0.0"%";0.0"%"';
 const QTY = "#,##0";
+/**
+ * A UNIT COUNT IS STORED AS PRINTED AND DISPLAYED THE SAME WAY (MSX-22). The
+ * cell used to hold `Math.round(qty)`, so 3,859.667 Shoppers Stop shares became
+ * 3,860 in the VALUE — a reader's own Qty × Price then missed the Amount beside
+ * it. Whole counts keep `#,##0`; a fractional one shows the decimals the
+ * statement printed (up to four), never a rounded figure.
+ */
+const QTY_FRAC = "#,##0.0###";
+const qtyFormat = (v: unknown) =>
+  typeof v === "number" && Math.abs(v - Math.round(v)) > 1e-9 ? QTY_FRAC : QTY;
 
 /**
  * The line that dates a sheet's figures: how many rows are valued on each
@@ -587,7 +604,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
    */
   const cols: ColSpec[] = [
     { key: "security", header: "Security", width: 34 },
-    { key: "qty", header: "Qty", width: 14, numFmt: QTY, align: "right" },
+    { key: "qty", header: "Qty", width: 14, numFmt: QTY, numFmtFor: qtyFormat, align: "right" },
     { key: "avgCost", header: "Avg Cost (₹)", width: 13, numFmt: PRICE, align: "right" },
     { key: "cmp", header: "CMP (₹)", width: 12, numFmt: PRICE, align: "right" },
     { key: "marketValue", header: "Market Value (₹)", width: 18, numFmt: MONEY, align: "right" },
@@ -836,7 +853,7 @@ function buildTransactions(wb: ExcelJS.Workbook, input: TxnInput, nowMs: number)
     { key: "date", header: "Date", width: 12, align: "left" },
     { key: "security", header: "Security", width: 34 },
     { key: "side", header: "Type", width: 8, align: "center" },
-    { key: "qty", header: "Qty", width: 14, numFmt: QTY, align: "right" },
+    { key: "qty", header: "Qty", width: 14, numFmt: QTY, numFmtFor: qtyFormat, align: "right" },
     { key: "price", header: "Price (₹)", width: 12, numFmt: PRICE, align: "right" },
     { key: "amount", header: "Amount (₹)", width: 18, numFmt: MONEY, align: "right" },
     { key: "realized", header: "Realized P&L (₹)", width: 18, numFmt: MONEY_SIGNED, align: "right", signed: true },
@@ -900,7 +917,9 @@ function buildTransactions(wb: ExcelJS.Workbook, input: TxnInput, nowMs: number)
       date: t.date,
       security: displaySecurity(t.security),
       side: t.side,
-      qty: Math.round(t.qty),
+      // THE UNITS AS PRINTED — the display format does the rounding a reader
+      // sees, and the value stays the one Qty × Price × Amount ties on.
+      qty: t.qty,
       price: t.price ?? DASH,
       amount: t.amount ?? DASH,
       realized: t.realized ?? DASH,

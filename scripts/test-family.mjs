@@ -62,6 +62,7 @@ const SUITES = [
   ["realised lots", "src/lib/__tests__/realisedLots.test.ts"],
   ["nav capital proof", "src/lib/__tests__/navProof.test.ts"],
   ["carried cost", "src/lib/__tests__/carriedCost.test.ts"],
+  ["gross paid", "src/lib/__tests__/grossPaid.test.ts"],
   ["value bridge", "src/lib/__tests__/valueBridge.test.ts"],
   ["clubbed figures", "src/lib/__tests__/clubbedFigures.test.ts"],
   ["ledger joins", "src/lib/__tests__/ledgerJoins.test.ts"],

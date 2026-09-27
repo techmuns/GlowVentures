@@ -425,6 +425,45 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
   eq("nothing held: value is absent, not ₹0", fig.value, null);
 }
 
+// ── [D] DL-16: WHAT A ROW'S FIFO RETURN DIVIDES BY ───────────────────────────
+//
+// `deployed` is the cost of the units held plus what the units already
+// redeemed cost — written out here from each position's own fields, never
+// through `fifoTotals`, which is what the model calls. It must differ from the
+// Cost column EXACTLY where a holding redeemed units, and on this book that is
+// Neo Infra's capital redemption — load-bearing, or the page's "on ₹X" marker
+// is a claim nothing here could fail.
+{
+  const priv = byFund.sections.private;
+  const held = folios.filter((f) => f.section === "private" && f.position && f.counted);
+  const sold = held.reduce((t, f) => t + (f.position!.costOfUnitsSold ?? 0), 0);
+  const costHeld = held.reduce((t, f) => t + (f.cost ?? 0), 0);
+  ok("a private holding here has redeemed units (so the denominator differs from the Cost column)", sold > 1, `₹${sold.toFixed(2)}`);
+  near("the band's deployed is the cost held plus what the redeemed units cost", priv.deployed, costHeld + sold);
+  near("…and the total's is the same", byFund.privateTotal.deployed, costHeld + sold);
+  ok("…and it is NOT the Cost column", priv.deployed != null && priv.cost != null && Math.abs(priv.deployed - priv.cost) > 1);
+  const gain = held.reduce((t, f) => t + (f.position!.marketValue - (f.cost ?? 0)) + (f.position!.realizedPnL ?? 0), 0);
+  near("the band's HPR is its FIFO gain over that denominator", priv.returnPct, (gain / (costHeld + sold)) * 100, 1e-6);
+  for (const g of byFund.sections.private.groups) {
+    const gs = g.folios.filter((f) => f.position && f.counted);
+    const gSold = gs.reduce((t, f) => t + (f.position!.costOfUnitsSold ?? 0), 0);
+    if (g.returnPct == null) { ok(`${g.label}: no return, so no denominator`, g.deployed == null); continue; }
+    near(`${g.label}: deployed = its Cost + what its redeemed units cost`, g.deployed, (g.cost ?? 0) + gSold);
+  }
+}
+
+// ── [D] THE DOUBLE COUNT'S HOLDINGS, COUNTED OFF THE ROWS ────────────────────
+{
+  const scope = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
+  const groups = new Map<string, number>();
+  for (const p of scope.rows) if (p.dedupeGroup) groups.set(p.dedupeGroup, (groups.get(p.dedupeGroup) ?? 0) + 1);
+  const twice = [...groups.values()].filter((n) => n > 1);
+  ok("the scope counts the holdings reported on more than one statement", scope.doubleCountedHoldings === twice.length,
+    `${scope.doubleCountedHoldings} vs ${twice.length}`);
+  ok("…and how many statements report each", JSON.stringify([...scope.doubleCountedStatements].sort()) === JSON.stringify([...twice].sort()));
+  ok("…and on this book there is a double count to count", twice.length > 0 && scope.doubleCounted > 1);
+}
+
 if (fails) {
   console.log(`\n${fails} failure(s)`);
   process.exit(1);

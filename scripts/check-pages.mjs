@@ -813,6 +813,7 @@ const SECURITY_AXIS_BOOK = (() => {
     // from an aggregator's copy, and the non-AIF funds the store carries no
     // filing for — re-derived here, never read back off the page.
     let withLines = 0, aggregatorLines = 0, notInStore = 0;
+    let fencedValue = 0;
     for (const v of vehicles.values()) {
       const pf = portfolios.get(v.key) ?? null;
       if (!pf) {
@@ -835,7 +836,15 @@ const SECURITY_AXIS_BOOK = (() => {
         const isin = (h.isin ?? "").trim().toUpperCase() || null;
         const nameKey = securityKeyOf(h.name);
         if (!nameKey && !isin) continue;
-        if (isFenced(isin, h.name)) continue;
+        if (isFenced(isin, h.name)) {
+          // THE FENCED LINE IS ITS OWN TERM (PC-11): counted on the loader's
+          // rules — a positive share, the same ISIN once per fund — and never a
+          // part of what no line accounts for.
+          const on = isin ?? `name:${nameKey}`;
+          const fv = (v.mv * h.pctAum) / 100;
+          if (fv > 0 && !seenHere.has(on)) { seenHere.add(on); fencedValue += fv; }
+          continue;
+        }
         const ik = issuerKey(h.name);
         const key = isin ? (isinToBookKey.get(isin) ?? prefixKey.get(issuerOf(isin)) ?? ik) : (nameToKey.get(ik) ?? ik);
         const dedupeOn = isin ?? `name:${nameKey}`;
@@ -1065,6 +1074,12 @@ const SECURITY_AXIS_BOOK = (() => {
        */
       smallDroppedCount: smallRows.length,
       smallDroppedValue: smallValue,
+      // [D] MSX-23: the part of the floor that is company shares — all a
+      // company-share total can leave out.
+      smallDroppedShares: {
+        count: smallRows.filter((p) => p.assetClass === "Equity").length,
+        value: smallRows.filter((p) => p.assetClass === "Equity").reduce((a, p) => a + p.marketValue, 0),
+      },
       smallDroppedKeys: [...smallKeys],
       measured, measuredCr: measured / 1e7,
       derived, derivedCr: derived / 1e7,
@@ -1074,7 +1089,9 @@ const SECURITY_AXIS_BOOK = (() => {
       // whole monthly filing now, so a scheme's debt sleeve is INSIDE `derived`
       // and this remainder is what NO LINE in the filing accounted for — its
       // cash, a metal ETF's metal, and the disclosure's own rounding.
-      unaccountedCr: (disclosedValue - derived) / 1e7,
+      unaccountedCr: (disclosedValue - derived - fencedValue) / 1e7,
+      // …AND THE RING-FENCED LINE A FUND DISCLOSES, A TERM OF ITS OWN (PC-11).
+      fencedValue, fencedCr: fencedValue / 1e7,
       cashCr: cash / 1e7,
       cashRuleCr: cashRule / 1e7, liquidThroughCr: liquidThrough / 1e7,
       mandateCashCr: mandateCash / 1e7, categoryCashCr: categoryCash / 1e7,
@@ -1591,6 +1608,11 @@ const SECTOR_DERIVED_REST = [
     if (!aif || !sectorNear(aif, B.opaqueCr * 1e7) || aifN !== B.aifCount || unresolved !== unresolvedWant) return false;
     const unacc = part(/of the disclosed funds that no line in their filings accounts for/);
     if (!unacc || !sectorNear(unacc, B.unaccountedCr * 1e7)) return false;
+    // THE FENCED LINE A FUND DISCLOSES IS ITS OWN PART, AND IS NEVER NAMED
+    // (PC-11): it is a line of the filing, not something no line accounts for.
+    if (/polycab/i.test(x)) return false;
+    const fencedPart = part(/a fund discloses of the one holding the family keep out of every portfolio total/);
+    if (B.fencedValue > 0 ? !sectorNear(fencedPart, B.fencedValue) : !!fencedPart) return false;
     const arb = first(part(/in the arbitrage funds the family counts as cash/));
     const own = first(part(/of the book's own cash/));
     const cashV = (arb?.v ?? 0) + (own?.v ?? 0), cashHalf = (arb?.half ?? 0) + (own?.half ?? 0);
@@ -2558,6 +2580,8 @@ const CAPITAL_BOOK = (() => {
       paidOf: n("paid"),
       uncalledOf: n("undrawn"),
       callCount: cs.reduce((t, c) => t + (c.calls?.length ?? 0), 0),
+      /** Every dated call's own amount, in rupees, as the statement prints it (PM-D2). */
+      callAmounts: cs.flatMap((c) => (c.calls ?? []).map((k) => Number(k.amount))),
       /** Uncalled summed as printed, in Cr — the figure the client questioned. */
       uncalledCr: cs.reduce((t, c) => t + (c.undrawn ?? 0), 0) / 1e7,
       /** And the other path, over the accounts that print a called line only. */
@@ -3065,9 +3089,23 @@ const PM_RETURN_BOOK = (() => {
     const bookSold = costed.reduce((t, p) => t + fifoOf(p.costOfUnitsSold), 0);
     const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis), 0);
     const bookRealised = costed.reduce((t, p) => t + fifoOf(p.realizedPnL), 0);
+    // THE POOL'S RECORDS HELD UNDER A YEAR, and the pool without them (PM-D3):
+    // each record's own window is its first call to its own valuation.
+    const subYear = pooledIn.filter((f) => f.window != null && f.window < 365);
+    const restIn = pooledIn.filter((f) => !subYear.includes(f));
+    const restWindow = restIn.length
+      ? days(restIn.map((f) => f.flows.filter((x) => x.kind === "call").map((x) => x.date).sort()[0]).sort()[0],
+        restIn.map((f) => f.flows.filter((x) => x.kind === "value").map((x) => x.date).sort().pop()).sort().pop())
+      : null;
     return {
       funds, byKey: new Map(funds.map((f) => [f.key, f])),
       pooledCovers: pooledIn.length, pooled, pooledWindow,
+      subYear: subYear.map((f) => ({ key: f.key, security: f.security, days: f.window })),
+      pooledWithoutSubYear: subYear.length && restIn.length && restWindow >= 365
+        ? irr(restIn.flatMap((f) => f.flows)) : null,
+      /** FIFO's denominator over the whole private book, and the Cost column's part of it (DL-16). */
+      bookDeployed: bookCost + bookSold,
+      bookCost,
       footHpr: bookCost + bookSold > 0 ? ((bookPnL + bookRealised) / (bookCost + bookSold)) * 100 : null,
       footHprHeld: bookCost > 0 ? (bookPnL / bookCost) * 100 : null,
       /** Whether any private holding here has redeemed units — what makes the FIFO claims bite. */
@@ -3996,6 +4034,35 @@ const CARRIED_BOOK = (() => {
 })();
 
 /**
+ * THE COSTS ON THE GROSS-PAID BASIS (VD-24) — derived, never typed. Every
+ * position `build-book` restated to what the family PAID, with the statement's
+ * net kept beside it as `printedCostBasis`. `charges` is their sum, which the
+ * page must account for in full: the two figures differ by thousands on crores,
+ * so a check struck at compact precision could not tell them apart.
+ */
+const GROSS_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const pos = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(pos)) return null;
+    const gp = pos.filter((p) => p.costBasisSource === "gross-paid"
+      && typeof p.costBasis === "number" && typeof p.printedCostBasis === "number");
+    const byKey = new Map();
+    for (const p of gp) (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).get(p.securityKey)).push(p);
+    const keys = [...byKey.keys()].sort((a, b) =>
+      byKey.get(b).reduce((x, p) => x + p.costBasis, 0) - byKey.get(a).reduce((x, p) => x + p.costBasis, 0));
+    return {
+      keys,
+      charges: gp.reduce((a, p) => a + (p.costBasis - p.printedCostBasis), 0),
+      positions: gp.map((p) => ({ key: p.securityKey, accountId: p.accountId, paid: p.costBasis, printed: p.printedCostBasis })),
+    };
+  } catch { return null; }
+})();
+/** Every full-precision rupee figure a hover prints, as numbers. */
+const rupeesIn = (title) => [...String(title ?? "").matchAll(/₹\s*(-?[\d,]+(?:\.\d+)?)(?!\d|[.,]\d|\s*(?:Cr|L)\b)/g)]
+  .map((x) => Number(x[1].replace(/,/g, "")));
+
+/**
  * THE HISTORY THAT CARRIES TWO PAYMENTS AT ONE ENTRY NAV — the subject of the
  * "same NAV, same return" claim, which used to ride on whichever history was
  * largest. It was Sanshi Class E's (two members at 109.4462 on one day) for as
@@ -4798,6 +4865,56 @@ const FAMILY_RETURN_COLUMNS = [
 ];
 
 /**
+ * ── A ROW THAT IS NOT A COMPANY SHARE SAYS WHY IT HAS NO SECTOR (FS-20, FS-23) ─
+ *
+ * A cash line fell through to the page's sector lookup and printed
+ * "Unclassified" — the word for a company no tier could place — and every
+ * fund's dash said this book "does not carry" its scheme's disclosure, false of
+ * the mutual funds whose filings the look-through reads. And the sector mix's
+ * bar tooltip labelled every bar "NAV" over a chart of company shares only.
+ *
+ * Each row is matched to the book by its own `key@account` handle, and what it
+ * IS comes from the book and the committed cash map, never from the page.
+ */
+const FE_ROW_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions) || !CASH_EQ_KEYS) return null;
+    return new Map(positions.map((p) => [`${p.securityKey}@${p.accountId}`,
+      { cls: p.assetClass, cash: p.assetClass === "Cash" || CASH_EQ_KEYS.has(p.securityKey) }]));
+  } catch { return null; }
+})();
+const FE_SECTOR_CELLS = [
+  ["every holding that is not a company share renders its Sector as an absence naming why — cash as cash, an AIF as a fund with no portfolio to join, never \"Unclassified\" (FS-20)", (t, ctx) => {
+    if (!FE_ROW_BOOK) return { notChecked: "the book could not be read on this run" };
+    const cells = ctx?.feSectors?.sectorCells;
+    if (!Array.isArray(cells) || !cells.length) return false;
+    let nonShares = 0, cash = 0;
+    const ok = cells.every((c) => {
+      const b = FE_ROW_BOOK.get(`${c.key}@${c.account}`);
+      if (!b) return false;
+      if (b.cls === "Equity") return c.text !== "—" && !c.title;
+      nonShares += 1;
+      if (c.text !== "—" || !c.title || /does not carry/i.test(c.title)) return false;
+      if (b.cash) { cash += 1; return /^counted as cash — money rather than a company, so it has no sector$/.test(c.title); }
+      if (b.cls === "AIF") return /^a fund is not a company, so it has no sector of its own — and an AIF files no portfolio this book can join/.test(c.title);
+      if (b.cls === "Mutual Fund" || b.cls === "ETF") return /^a fund is not a company, so it has no sector of its own — any company its filing discloses is placed on Sector Composition's Consolidated view$/.test(c.title);
+      return /^not a share in a company/.test(c.title);
+    });
+    if (!ok) return false;
+    if (!nonShares) return { notChecked: "this entity holds company shares only" };
+    return cash > 0 || { notChecked: "this entity's table carries no cash line" };
+  }],
+  ["the sector mix's bar tooltip names what the bars are — company-share value, never the entity's NAV (FS-23)", (t, ctx) => {
+    const fe = ctx?.feSectors;
+    if (!fe) return false;
+    // The walk hovers the first bar; a chart of company shares must answer.
+    if (typeof fe.barTip !== "string" || !fe.barTip) return false;
+    return /Company-share value/.test(fe.barTip) && !/\bNAV\b/.test(fe.barTip);
+  }],
+];
+/**
  * ── WHAT THE HOLDINGS TABLES FILE UNDER EACH SECTION, OUTSIDE COMPANY SHARES ─
  *
  * (FS-7.) Sector Composition's Direct Equity card names what it leaves out;
@@ -4927,6 +5044,9 @@ const FENCED = (() => {
         accountId: p.accountId,
         shares: Number.isFinite(p.quantity) ? p.quantity : null,
         asOf: byId.get(p.accountId)?.asOf ?? null,
+        // The date the row's statement PRINTS its values at — `build-book`'s
+        // field, held below against the statement's own text in the archive.
+        priceAsOf: p.priceAsOf ?? null,
       })),
     };
   } catch { return null; }
@@ -4935,15 +5055,17 @@ const FENCED = (() => {
 /**
  * WHAT THE FENCED DEMAT'S OWN STATEMENT PRINTS, read out of the audit archive —
  * the document the page's statement columns come from, and the only witness to
- * the claim the page makes about it: whether it prints a balance type per row
- * (the "Account Description" column, where a pre-IPO lock-in and a pending demat
- * are named). Found through the manifest on the fenced accounts' own ids and
- * dates, never a typed document key.
+ * two claims the page makes about it: the date its VALUES are struck at (its own
+ * "Prices as on …", which need not be its balance date), and whether it prints a
+ * balance type per row (the "Account Description" column, where a pre-IPO
+ * lock-in and a pending demat are named). Found through the manifest on the
+ * fenced accounts' own ids and dates, never a typed document key.
  */
 const POLYCAB_STATEMENT_BOOK = (() => {
   try {
     if (!FENCED) return null;
     const manifest = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+    const MON = { Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06", Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12" };
     const out = [];
     for (const b of FENCED.balances) {
       if (!b.asOf) continue;
@@ -4951,8 +5073,10 @@ const POLYCAB_STATEMENT_BOOK = (() => {
       if (!doc) continue;
       const pages = JSON.parse(readFileSync(new URL(`../public/audit/${doc.docKey}/pages.json`, import.meta.url), "utf8"));
       const text = (pages.pages ?? []).map((p) => p.text ?? "").join("\n");
+      const pm = /Prices as on (\d{1,2})-([A-Z][a-z]{2})-(\d{4})/.exec(text);
       out.push({
         accountId: b.accountId, asOf: b.asOf,
+        pricesAsOn: pm && MON[pm[2]] ? `${pm[3]}-${MON[pm[2]]}-${pm[1].padStart(2, "0")}` : null,
         // The header prints the column over two lines: "Account" above, "Description" below.
         balanceTypeColumn: /\bAccount\s*\n[^\n]*\bBalance\b[^\n]*\n\s*Description\b/.test(text),
         lockInRows: (text.match(/IPO Shares\//g) ?? []).length,
@@ -5017,10 +5141,14 @@ const POLYCAB_LIVE_BOOK = (() => {
       quarters,
       latest,
       quote: d.quote ?? null,
-      // The names the sources line must credit, read off the store the page
-      // reads — never typed, because the builder decides which sources carried
-      // a figure on a given run.
-      sources: Array.isArray(d.sources) ? d.sources.map((x) => String(x.name ?? "")).filter(Boolean) : [],
+      // The sources the line must credit and which of the page's tables each
+      // one feeds, read off the store the page reads — never typed, because the
+      // builder decides which sources carried a figure on a given run. A source
+      // with no `feeds` is from a store written before the field and is
+      // credited everywhere, exactly as the page always did.
+      sourceFeeds: Array.isArray(d.sources)
+        ? d.sources.map((x) => ({ name: String(x.name ?? ""), feeds: Array.isArray(x.feeds) ? x.feeds.map(String) : null })).filter((x) => x.name)
+        : [],
       // Every action, for the per-row payment-date reason.
       actions,
       retrievedAt: String(d.retrievedAt ?? ""),
@@ -5099,16 +5227,26 @@ const polycabViewChecks = (expected) => [
  * total is said in words. Read off the line's own node, so a sentence that
  * moved elsewhere on the page cannot satisfy it.
  */
-const POLYCAB_SOURCES_CHECK = ["the sources line names every source, the refresh date, and that none of it is in a total", (_t, ctx) => {
+const polycabSourcesCheck = (view) => [`the sources line under the ${view} table credits exactly the sources that feed it, the refresh date, and that none of it is in a total`, (_t, ctx) => {
   if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
   const d = ctx?.polycabDom;
   if (!d) return { notChecked: "the DOM probe did not run" };
   const line = d.sources;
   if (!line) return false;
   const day = POLYCAB_LIVE_BOOK.retrievedAt.slice(0, 10);
-  return /^Sources:/.test(line)
-    && POLYCAB_LIVE_BOOK.sources.length > 0
-    && POLYCAB_LIVE_BOOK.sources.every((n) => line.includes(n))
+  /**
+   * CREDITED PER TABLE. The line listed BSE, Tickertape and Screener under both
+   * tables, so a corporate-action record only BSE supplies was credited to two
+   * aggregators that carry nothing on it. Re-expressed off the store's own
+   * `feeds`: the names the line lists must be exactly the sources that feed this
+   * table — every one of them, and no other.
+   */
+  const feeds = (s) => !s.feeds || s.feeds.includes(view);
+  const want = POLYCAB_LIVE_BOOK.sourceFeeds.filter(feeds).map((s) => s.name);
+  const listed = /^Sources:\s*(.*?)\.\s+Refreshed daily/.exec(line)?.[1]?.split(/,\s*/).map((s) => s.trim()).filter(Boolean) ?? null;
+  if (!listed) return false;
+  return want.length > 0
+    && listed.length === want.length && want.every((n) => listed.includes(n))
     && /in no total anywhere in this book/i.test(line)
     && /Last refreshed/i.test(line)
     // THE DATE IS REQUIRED, NOT EXCUSED. A store with no refresh date is a
@@ -5855,7 +5993,7 @@ const M2_BOOK = (() => {
       });
       const annualised = periods.filter((k) => /^cagr$/i.test(f.returns[k].kind ?? ""));
       const statementAsOf = [...new Set((byKey.get(key) ?? []).map((p) => acc.get(p.accountId)?.asOf).filter(Boolean))].sort()[0] ?? null;
-      return { key, schemecode: e.schemecode, periods, crossing, annualised, steps, statementAsOf, nav: f.nav ?? null,
+      return { key, schemecode: e.schemecode, periods, crossing, annualised, steps, statementAsOf, nav: f.nav ?? null, plan: f.plan ?? null, option: f.option ?? null,
         holdingsN: Array.isArray(f.holdings) ? f.holdings.length : null };
     };
     const held = Object.keys(idx.schemes ?? {}).filter((k) => byKey.has(k));
@@ -5940,9 +6078,17 @@ const M2_BOOK = (() => {
     const valuedOf = (key) => {
       const d = onceEach(byKey.get(key) ?? []);
       if (!d.length) return null;
-      const dates = d.map((p) => (p.navPriced ? p.navDate : acc.get(p.accountId)?.asOf ?? null));
+      // …and a statement mark on the day its statement PRICES, where that is
+      // named apart from the balances' date (`priceAsOf`, VD-17).
+      const dates = d.map((p) => (p.navPriced ? p.navDate : p.priceAsOf ?? acc.get(p.accountId)?.asOf ?? null));
       const kinds = new Set(d.map((p) => (p.navPriced ? "nav" : "statement")));
-      return { at: new Set(dates).size === 1 ? dates[0] : null, by: kinds.size === 1 ? [...kinds][0] : "mixed", dates: new Set(dates).size };
+      // The balances' own date, where a statement prices on another day — the
+      // one date the page must name BESIDE the one the value is struck at.
+      const drawn = new Set(d
+        .filter((p) => !p.navPriced && p.priceAsOf && p.priceAsOf !== acc.get(p.accountId)?.asOf)
+        .map((p) => acc.get(p.accountId)?.asOf).filter(Boolean));
+      return { at: new Set(dates).size === 1 ? dates[0] : null, by: kinds.size === 1 ? [...kinds][0] : "mixed", dates: new Set(dates).size,
+        balances: drawn.size === 1 ? [...drawn][0] : null };
     };
     // A held scheme the fund store matched on its NAME, not on the holding's
     // own ISIN — Active Momentum, whose rows carry none (DSM-C5, VD-19).
@@ -6708,8 +6854,8 @@ const ROUTES = [
   // `FIFO_BOOK`. Derived from the book, never typed.
   ["mandate-fifo", () => (FIFO_BOOK?.worst ? `/mandate/${encodeURIComponent(FIFO_BOOK.worst.accountId)}` : "/mandate/none-resolved-from-the-book")],
   // A MANDATE WHOSE ACCOUNT ISSUES A CAPITAL GAIN STATEMENT, and whose manager
-  // both bought a line without selling it and sold one without buying
-  // (DSM-C10) — the case the "no capital gain statement covers this account"
+  // both bought a line without selling it and sold one without buying (DSM-C10,
+  // DSM-D8) — the case the "no capital gain statement covers this account"
   // reason was false on. Derived in `TXN_T_BOOK`, never typed; every line opened.
   ["mandate-trades-realised", () => (TXN_T_BOOK?.cgMandate ? `/mandate/${encodeURIComponent(TXN_T_BOOK.cgMandate.accountId)}` : "/mandate/none-resolved-from-the-book")],
   /**
@@ -6825,6 +6971,10 @@ const ROUTES = [
   // and neither is the set this page used to show — a check on one says nothing
   // about the other.
   ["sectors-direct", "/sectors?view=direct"],
+  // …AND THE SAME VIEW WITH THE QUOTE FEED FULFILLED (FS-24): a live-priced
+  // figure's hover — where its cost comes from — only renders where a quote
+  // has landed, and the plain walk serves no feed.
+  ["sectors-direct-live", "/sectors?view=direct"],
   // …AND THE THIRD TAB, which is not a third set: it reads both at once, so the
   // claims about it — the default pick, the two sets' figures tying — have no
   // subject on either of the other two addresses.
@@ -6997,6 +7147,7 @@ const ROUTES = [
   // the page a reader opens with the fund's own statement in hand, which prints
   // a different cost. Derived (`CARRIED_BOOK`), so the next drop picks its own.
   ["stock-carried", () => (CARRIED_BOOK?.rows[0] ? `/stock/${encodeURIComponent(CARRIED_BOOK.rows[0].key)}` : "/stock/no-cost-carried-through-a-switch-in-the-book")],
+  ["stock-gross", () => (GROSS_BOOK?.keys[0] ? `/stock/${encodeURIComponent(GROSS_BOOK.keys[0])}` : "/stock/no-cost-on-the-gross-paid-basis-in-the-book")],
   // THE FUND THE CLIENT POINTED AT — *"the return on this AIF is a lot higher
   // than what we are showing"* — where each whole folio shows the XIRR its own
   // fact sheet prints (Stage 10cf). Derived (`DATED_CAPITAL_BOOK`), so a drop
@@ -7549,7 +7700,47 @@ const XA_BOOK = (() => {
       var auditShort = best;
     } catch { ledger = null; }
     return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size } : null, history, counts, sectors, fifo, valuation, twrr,
-      cg: cgHarvest, drawdown, historyCapital, historyPanel, ledger, auditShort: typeof auditShort === "undefined" ? null : auditShort };
+      cg: cgHarvest, drawdown, historyCapital, historyPanel, ledger, auditShort: typeof auditShort === "undefined" ? null : auditShort,
+      returnsD: (() => {
+        // ── Return & Drawdown's gain count and contributors (XA-24 / XA-25),
+        // over the deduped book the page reads, with a cost to measure against.
+        // A statement row's return is the book's own, as generated (and so as
+        // rounded: a cash sleeve's ₹0.01 of P&L is a 0.00% return, which is not
+        // a gain). A NAV-priced row's is FIFO's, struck here from its fields —
+        // never this file's overlaid `returnPct`, which divides by cost alone.
+        const realisedOf = (x) => (typeof x.realizedPnL === "number" ? x.realizedPnL : 0);
+        const soldOf = (x) => (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
+        const retOf = (x) => (x.navPriced
+          ? ((x.marketValue - x.costBasis + realisedOf(x)) / (x.costBasis + soldOf(x))) * 100
+          : x.returnPct);
+        const pr = deduped.filter(isPricedRaw);
+        const by = new Map();
+        for (const x of pr) {
+          const e = by.get(x.securityKey) ?? { key: x.securityKey, pnl: 0, accounts: new Set() };
+          e.pnl += x.unrealizedPnL + realisedOf(x);
+          e.accounts.add(x.accountId);
+          by.set(x.securityKey, e);
+        }
+        const ranked = [...by.values()].sort((a, b) => b.pnl - a.pnl);
+        const shape = (e) => ({ key: e.key, accounts: e.accounts.size });
+        return {
+          priced: pr.length,
+          winners: pr.filter((x) => retOf(x) > 0).length,
+          unrealWinners: pr.filter((x) => x.unrealizedPnL > 0).length,
+          top: ranked.slice(0, 10).map(shape),
+          bottom: [...ranked].reverse().slice(0, 10).map(shape),
+          // Position by position, as the list used to be drawn: the load-bearing
+          // premise is that some security repeats among its top ten.
+          positionsInTop: [...pr].sort((a, b) => (b.unrealizedPnL + realisedOf(b)) - (a.unrealizedPnL + realisedOf(a)))
+            .slice(0, 10).map((x) => x.securityKey),
+        };
+      })(),
+      auditChips: (() => {
+        try {
+          const man = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+          return man.map((f) => ({ fileKey: f.fileKey, parts: String(f.label ?? "").split(" · "), fy: f.fy ?? "" }));
+        } catch { return null; }
+      })() };
   } catch { return null; }
 })();
 /**
@@ -7768,7 +7959,7 @@ const NAV_SERIES_BOOK = (() => {
 })();
 
 /**
- * ── /performance, RE-DERIVED FROM THE BOOK (A-12, CK-A3, XA-14, XA-21) ──
+ * ── /performance, RE-DERIVED FROM THE BOOK (A-12, CK-A3, XA-14, XA-21, VD-25) ──
  *
  * The value bridge and the money-weighted table, restated here off
  * `glowData.ts` by the checker's own arithmetic — never by importing the page
@@ -7786,9 +7977,10 @@ const PERF_BOOK = (() => {
     const stmt = statementBookPositions(src);
     const live = bookArray(src, "BOOK_POSITIONS");
     const flowsBy = bookObject(src, "BOOK_ACCOUNT_CASH_FLOWS");
+    const undated = bookArray(src, "BOOK_UNDATED_CAPITAL");
     const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
     const commitments = bookArray(src, "BOOK_COMMITMENTS");
-    if (!bridgesBy || !accounts || !stmt || !live || !flowsBy || !moves || !commitments) return null;
+    if (!bridgesBy || !accounts || !stmt || !live || !flowsBy || !undated || !moves || !commitments) return null;
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const num = (v) => typeof v === "number" && Number.isFinite(v);
     const r2 = (v) => Math.round(v * 100) / 100;
@@ -7846,6 +8038,12 @@ const PERF_BOOK = (() => {
     };
     const closes = measured.map((id) => perAccount.get(id).asOf).sort();
     const windowStart = measured.flatMap((id) => perAccount.get(id).flows.map((f) => f.date)).sort()[0] ?? null;
+    const undatedFor = (id) => {
+      if (!measured.includes(id)) return 0;
+      const to = perAccount.get(id).asOf;
+      return r2(undated.filter((u) => u.accountId === id && u.undated !== 0 && (!windowStart || u.to > windowStart) && u.from < to)
+        .reduce((t, u) => t + u.undated, 0));
+    };
     // The family's dated capital record per account, as the Transactions card
     // reads it: the statements' own capital movements, else a drawdown fund's
     // dated calls.
@@ -7866,7 +8064,7 @@ const PERF_BOOK = (() => {
       rateStatement: solve(measured, (x) => x.stmtMV),
       firstClose: closes[0] ?? null, lastClose: closes[closes.length - 1] ?? null,
       bookNewest: accounts.map((a) => a.asOf).filter(Boolean).sort().pop() ?? null,
-      capitalRecord,
+      undatedFor, capitalRecord,
       measuredQuoted: measured.some((id) => perAccount.get(id).symbols),
       navPricedGap: [...perAccount].filter(([, x]) => !x.unvalued && Math.abs(x.liveMV - x.stmtMV) > 1e5).map(([id]) => id),
       basisLabel: { "since-inception": /^since inception/i, "financial-year-to-date": /^fy to date/i, "window": /^window/i },
@@ -7982,7 +8180,7 @@ const PERF_BRIDGE = [
 ];
 
 /**
- * ── /performance's MONEY-WEIGHTED TABLE, ON THE STATEMENT (CK-A3, XP-15, XA-14) ──
+ * ── /performance's MONEY-WEIGHTED TABLE, ON THE STATEMENT (CK-A3, XP-15, XA-14, VD-25) ──
  *
  * Each account closes on the value its own STATEMENT strikes on its own date —
  * never a live or NAV-priced figure dated to a statement weeks older — and the
@@ -8059,6 +8257,22 @@ const PERF_MW = [
       }
       return /no performance summary|nothing is valued|do not solve/i.test(r.returnText);
     });
+  }],
+  ["capital no dated row carries is named beside the rate it is missing from, and never dated (VD-25)", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d || !d.cons) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B) return false;
+    const want = new Map(B.measured.map((id) => [id, B.undatedFor(id)]));
+    const total = [...want.values()].reduce((s, v) => s + v, 0);
+    if (Math.abs(total) < 1) return { notChecked: "every rupee the pooled accounts' totals carry is dated in this book" };
+    const rowsOk = d.xirr.every((r) => {
+      const w = want.get(r.id) ?? 0;
+      if (Math.abs(w) < 1) return r.undated == null;
+      return Math.abs(Number(r.undated) - w) <= 1 && /dated in none of them/i.test(r.undatedTitle ?? "")
+        && /no day is assumed/i.test(r.undatedTitle ?? "") && /undated · not in these flows/i.test(r.returnText);
+    });
+    return rowsOk && Math.abs(Number(d.cons.undated) - total) <= 1 && /dated in none of them/i.test(d.cons.returnTitle ?? "");
   }],
   ["a rate over less than a year is named an extrapolation beside the managers' own since-inception returns (XA-14, XA-29)", (t, ctx) => {
     const d = ctx?.perfDom;
@@ -8290,7 +8504,7 @@ const TXN_SECTIONS = (() => {
 })();
 
 /**
- * ── WHAT THE TRANSACTIONS TABLE MUST SAY, DERIVED FROM THE BOOK (MT-6…MT-16, DSM-C10) ──
+ * ── WHAT THE TRANSACTIONS TABLE MUST SAY, DERIVED FROM THE BOOK (MT-6…MT-18) ──
  *
  * The Transactions tab's labels and reasons were wrong in ways no figure on the
  * page could show: a purchase span that ran to a TDS outflow, a value column
@@ -8652,6 +8866,9 @@ const txnTTableChecks = () => [
   }],
   ["an own-account security row's Capital cells say it is the family's own broking — never a mandate's ledger",
     (t, ctx) => txnOwnBrokingCapital(ctx)],
+  /** MT-18: a dash names its cause, in the table and in every opened panel. */
+  ["no dash in the dated table or its panels is without a reason", (t, ctx) =>
+    txnTReady(ctx) && ctx.txnT.bare.length === 0],
 ];
 
 /** With every row and every dealt line open: the realised reasons, line by line. */
@@ -8744,6 +8961,8 @@ const txnTRealisedChecks = () => [
         && !x.some((y) => /security bought/.test(y) || y === "bought" || y === "sold");
     });
   }],
+  ["no dash in the dated table or its opened panels is without a reason", (t, ctx) =>
+    txnTReady(ctx) && ctx.txnT.bare.length === 0],
 ];
 
 /** MT-16, on a fiscal year that ends before the transaction statements begin. */
@@ -8795,10 +9014,20 @@ const txnTLateWindowChecks = () => [
         && /inside the date window/.test(p.label.title) && /not the whole record/.test(p.label.title);
     });
   }],
+  ["no dash in the windowed table or its opened panels is without a reason", (t, ctx) =>
+    txnTReady(ctx) && ctx.txnT.bare.length === 0],
 ];
 
-/** DSM-C10, on a mandate's own "What the manager traded" card, every line open. */
+/** DSM-C10 and DSM-D8, on a mandate's own "What the manager traded" card, every line open. */
 const mgrTradeChecks = () => [
+  ["a side the manager never traded says so — never a bare dash (DSM-D8)", (t, ctx) => {
+    const M = ctx?.mgrT;
+    if (!M || !M.rows.length) return false;
+    const nb = M.rows.filter((r) => r.buys === 0), ns = M.rows.filter((r) => r.sells === 0);
+    return M.bare.length === 0 && nb.length > 0 && ns.length > 0
+      && nb.every((r) => /nothing of this security was bought/.test(r.bought?.dash ?? ""))
+      && ns.every((r) => /nothing of this security was sold/.test(r.sold?.dash ?? "") && /nothing was realised/.test(r.realised?.dash ?? ""));
+  }],
   ["a line's realised dash names its own cause — never 'no capital gain statement' in an account that issues one (DSM-C10)", (t, ctx) => {
     const M = ctx?.mgrT;
     if (!M || !TXN_T_BOOK) return false;
@@ -9199,6 +9428,8 @@ const CALL_POSTS = [];
 let CALL_WALK = null;
 /** The Research card's sub-tabs, clicked in turn — see `stock-research`. */
 let RESEARCH_WALK = null;
+/** The sector mix's bar tooltip on Family & Entities, read under the pointer (FS-23). */
+let FE_BAR_TIP = null;
 /**
  * EVERY allocation row's address, in the order Morning CIO drew them.
  *
@@ -10808,6 +11039,63 @@ const CHILD_REALISED_C = [
   }],
 ];
 
+/**
+ * ── [D] THE FLOOR SAYS WHICH TOTALS IT TAKES FROM, ON THIS VIEW (MSX-23) ────
+ * On the Security view the row totals are company shares alone, so only the
+ * specks that are company shares leave them, while the weight base and the
+ * partition leave out all of it. Every figure is `SECURITY_AXIS_BOOK`'s.
+ */
+const floorReachChecks = (axis) => [
+  [`[D] the footer's floor sentence says which totals leave the specks out on this view (MSX-23, ${axis})`, (t, ctx) => {
+    const b = SECURITY_AXIS_BOOK;
+    if (!b) return false;
+    if (!b.smallDroppedCount) return { notChecked: "no holding in this book falls under the floor" };
+    const tt = (ctx?.titles ?? []).find((x) => /dropped automatically at the family's instruction/i.test(x ?? "")) ?? "";
+    const m = /(\d+) holdings? worth under .*? (?:is|are) dropped automatically at the family's instruction — ₹([\d,]+(?:\.\d+)?) in total/i.exec(tt);
+    if (!m || Number(m[1]) !== b.smallDroppedCount || Math.abs(Number(m[2].replace(/,/g, "")) - b.smallDroppedValue) >= 1) return false;
+    if (axis === "category") return /which is what this figure and every total beside it leave out/i.test(tt);
+    const sh = b.smallDroppedShares;
+    if (/every total beside it/i.test(tt) || !/weight base and the Total exposure partition leave out/i.test(tt)) return false;
+    if (!sh.count) return /leave out none of it, because every one of them is a fund/i.test(tt);
+    const s2 = /leave out only the ₹([\d,]+(?:\.\d+)?) of it that is company shares \((\d+) holdings?\)/i.exec(tt);
+    return !!s2 && Number(s2[2]) === sh.count && Math.abs(Number(s2[1].replace(/,/g, "")) - sh.value) < 1;
+  }],
+];
+/**
+ * ── [D] A ROUTE HELD MORE THAN ONCE IS A PLURAL IN WORDS (MH-17) ────────────
+ * The chevron's hover read "₹1 Cr through 2 manager's mandates" — a possessive
+ * with an "s" stuck on. Two mandates are "discretionary mandates", never
+ * "managers'", which would claim two managers where one runs both. Load-bearing:
+ * the book must hold a company through two or more mandates, counted here from
+ * `glowData.ts`, or the claim has no subject.
+ */
+const MULTI_MANDATE_COMPANIES = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    if (!accounts.length || !positions.length) return null;
+    const pms = new Set(accounts.filter((a) => a.engagement === "PMS").map((a) => a.accountId));
+    const small = smallKeysOf(positions);
+    const by = new Map();
+    for (const p of positions) {
+      if (p.assetClass !== "Equity" || small.has(p.securityKey) || !pms.has(p.accountId)) continue;
+      if (!by.has(p.securityKey)) by.set(p.securityKey, new Set());
+      by.get(p.securityKey).add(p.accountId);
+    }
+    return [...by.values()].filter((s) => s.size >= 2).length;
+  } catch { return null; }
+})();
+const ROUTE_WORDS_D = [
+  ["a route held more than once is pluralised in words — never \"2 manager's mandates\" (MH-17)", (t, ctx) => {
+    if (MULTI_MANDATE_COMPANIES === null) return false;
+    const tips = (ctx?.titles ?? []).filter((x) => /^(Held through \d+ accounts?:|Show how this name is held|Hide how this name is held)/.test(x ?? ""));
+    if (!tips.length) return false;
+    if (tips.some((x) => /\b\d+ manager's mandates\b/.test(x))) return false;
+    if (!MULTI_MANDATE_COMPANIES) return { notChecked: "no company in this book is held through two or more mandates" };
+    return tips.some((x) => /\b\d+ discretionary mandates\b/.test(x));
+  }],
+];
 /**
  * ── ONE NOUN PER COUNT (MH-06) ──────────────────────────────────────────────
  *
@@ -13271,6 +13559,21 @@ function mandateDateChecks() {
 }
 
 /**
+ * ── A DASH ON A STATEMENT ROW SAYS WHY (DSM-D4) ────────────────────────────
+ *
+ * Position by account printed a bare dash for a row's Invested and Unrealised
+ * wherever the statement reports no cost — `money()` returns a bare dash for a
+ * null, and §2 forbids one. Every dashed cell on a statement row must carry its
+ * cause, and the route must draw at least one, or the check asserts nothing.
+ */
+const rowDashChecks = () => [
+  ["every dash on a statement row of Position by account names its cause", (t, ctx) => {
+    const d = ctx?.stockM2?.posDash;
+    return Array.isArray(d) && d.length > 0 && d.every((x) => typeof x === "string" && /\S/.test(x));
+  }],
+];
+
+/**
  * ── /corporate-actions: CURRENT HOLDINGS, AND EVERY DASH SAYS WHY (DL-15) ────
  *
  * The page drew two company shares under the ₹1,000 floor, printed a computed
@@ -13649,7 +13952,7 @@ const qtyChecks = (keyOf) => [
   // with what that means, is the title's hover — the phrase under the table
   // is gone, and asserted gone so a rewording cannot bring the line back.
   ["the table says these are depository movements and not trades — the kind in its title, the caveat in its hover",
-    (t, ctx) => /Depository quantity through the year/i.test(t)
+    (t, ctx) => /Depository quantity over the statement window/i.test(t)
       && !/depository movements, not trades/i.test(t)
       && (ctx?.titles ?? []).some((x) => /depository movements, not trades/i.test(x) && /no\s+price, amount or gain/i.test(x))],
   /**
@@ -13817,6 +14120,163 @@ const PM_OVERLAP_HINT = ["the 'Counted once' line says what it does in its hover
   return ov.every((o) => /counts (?:it|each) once/i.test(o.hint ?? "") && !/counts (?:it|each) once/i.test(o.text));
 }];
 
+
+/**
+ * ── [D] WHAT A FIGURE DIVIDES BY, ADDS TO AND ROUNDS TO ─────────────────────
+ *
+ * Four figures on this page were right and could not be checked by a reader
+ * from what the page printed. Each claim below is struck on the page's own
+ * handles and held to the book as `glowData.ts` states it — never to the
+ * helper that drew the figure.
+ */
+/** The shown HPR cell of a row — under the methodology or the Absolute column. */
+const pmHprCell = (cells) => Object.entries(cells ?? {})
+  .find(([col, c]) => /^ret:/.test(col) && c?.retShown === "1" && (c.retTag === "HPR" || col === "ret:absolute"))?.[1] ?? null;
+/**
+ * DL-16 — THE FOOTER'S HPR IS FIFO, SO ITS DENOMINATOR IS NOT A COLUMN. Its own
+ * columns gave ₹1.995 Cr ÷ ₹8.62 Cr = 23.1% beside a printed 22.8%, because
+ * FIFO also divides by what Neo Infra's redeemed units cost. The denominator is
+ * on the figure now, and its two parts are its hover: struck on the total, and
+ * — where the Absolute column is drawn — on every fund row, which must carry it
+ * exactly where the book says the fund redeemed units, and nowhere else.
+ */
+const PM_DEPLOYED_CHECK = ["an HPR struck over more than its Cost column names what it divides by, on the figure (DL-16)", (t, ctx) => {
+  const pv = ctx?.pmView, B = PM_RETURN_BOOK;
+  if (!pv || !B) return false;
+  if (!B.redeemed) return { notChecked: "no private holding in this book has redeemed units, so every HPR divides by its own Cost column" };
+  const near = (a, b) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 2;
+  const tc = pmHprCell((pv.totals ?? [])[0]?.cells);
+  if (!tc || !near(Number(tc.deployed), B.bookDeployed)) return false;
+  if (!pmClose(pmMoney(tc.deployedText), B.bookDeployed / 1e7)) return false;
+  const figs = [...String(tc.deployedTitle ?? "").matchAll(/₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?/g)].map((x) => pmMoney(x[0]));
+  if (!/Cost column/i.test(tc.deployedTitle ?? "")
+    || !figs.some((v) => pmClose(v, B.bookCost / 1e7))
+    || !figs.some((v) => pmClose(v, (B.bookDeployed - B.bookCost) / 1e7))) return false;
+  // THE FUND ROWS, where the Absolute column is drawn: the marker exactly on
+  // the funds that redeemed units, at their own cost + cost of units sold.
+  if (!(pv.heads ?? []).includes("ret:absolute")) return true;
+  const rows = ctx?.pmReturn?.rows ?? [];
+  let redeemedChecked = 0;
+  const ok = rows.every((r) => {
+    const f = B.byKey.get(r.key);
+    const c = r.cells.find((x) => x.measure === "absolute");
+    if (!f || !c || !c.shown) return true;
+    const want = f.soldCost > 1 && f.cost != null ? f.cost + f.soldCost : null;
+    if (want == null) return c.deployed == null;
+    redeemedChecked++;
+    return near(Number(c.deployed), want);
+  });
+  return ok && redeemedChecked === B.funds.filter((f) => f.soldCost > 1 && f.cost != null && f.hpr != null).length
+    && redeemedChecked > 0;
+}];
+/** …and the Unrealised tile's hover names the same denominator (DL-16). */
+const PM_PNL_HOVER_CHECK = ["the Unrealised tile's hover names what its FIFO return divides by (DL-16)", (t, ctx) => {
+  const d = ctx?.tileStrip?.details?.pnl ?? "";
+  const B = PM_RETURN_BOOK;
+  if (!d || !B) return false;
+  if (!B.redeemed) return /no unit here has been redeemed/i.test(d);
+  const dep = cr(new RegExp(String.raw`over the\s*` + CR + String.raw`\s*deployed`, "i").exec(d)?.[1]);
+  const cost = cr(new RegExp(String.raw`the\s*` + CR + String.raw`\s*these statements report as cost`, "i").exec(d)?.[1]);
+  const sold = crU(...(/and\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*that the units already redeemed cost/i.exec(d) ?? []).slice(1));
+  return /FIFO/.test(d)
+    && pmClose(dep, B.bookDeployed / 1e7) && pmClose(cost, B.bookCost / 1e7)
+    && pmClose(sold, (B.bookDeployed - B.bookCost) / 1e7);
+}];
+/**
+ * PM-D1 — BY OWNER THE WEIGHT COLUMN ADDS TO MORE THAN 100%, AND ITS HEADING
+ * SAYS BY HOW MUCH. Members are printed over the one consolidated private value,
+ * so the column adds to printed ÷ consolidated and the Counted once line takes
+ * back the double count. Both percentages held to the book's own folios.
+ */
+const PM_WEIGHT_OWNERS_CHECK = ["by owner, the Weight heading says what its column adds to and what the Counted once line takes back (PM-D1)", (t, ctx) => {
+  const title = ctx?.pmView?.headTitles?.weight ?? "";
+  const F = PM_FOLIO_BOOK;
+  if (!F) return false;
+  if (!F.dup.length) return { notChecked: "no private holding in this book is reported twice, so the column adds to 100%" };
+  const printed = [...F.printed.values()].reduce((a, b) => a + b, 0);
+  const once = [...F.consolidated.values()].reduce((a, b) => a + b, 0);
+  const gap = F.dup.reduce((a, r) => a + r.gap, 0);
+  const sum = Number(/add to ([\d.]+)%/i.exec(title)?.[1]);
+  const back = Number(/takes back ([\d.]+)%/i.exec(title)?.[1]);
+  return once > 0 && Math.abs(sum - (printed / once) * 100) <= 0.06 && Math.abs(back - (gap / once) * 100) <= 0.06;
+}];
+/** …and on the fund view, where the fund rows add to 100%, it does not say so. */
+const PM_WEIGHT_FUNDS_CHECK = ["by fund, the Weight heading claims no column total above 100% (PM-D1)", (t, ctx) => {
+  const title = ctx?.pmView?.headTitles?.weight;
+  if (title == null) return false;
+  return /same denominator on every row/i.test(title) && !/add to [\d.]+%/i.test(title);
+}];
+/**
+ * PM-D2 — A DATED CALL IS PRINTED TO THE RUPEE. Sky Capital's ₹1,35,000 call
+ * read "₹1.4 L", a figure its own letter does not carry. Every row's amount
+ * must carry no compact suffix, and the rows are the book's own calls, amount
+ * for amount — a multiset, so a row printed twice and one dropped cannot pass
+ * by summing alike — with the footer their exact sum.
+ */
+const PM_CALL_RUPEES_CHECK = ["every dated call is printed to the rupee, and the rows are the book's own calls (PM-D2)", (t, ctx) => {
+  const pv = ctx?.pmView, C = CAPITAL_BOOK;
+  if (!pv || !C?.callAmounts) return false;
+  const texts = pv.callAmounts ?? [];
+  if (!texts.length || texts.length !== C.callAmounts.length) return false;
+  if (texts.some((x) => /\d\s*(?:Cr|L|K)\b/.test(x))) return false;
+  const rupees = (x) => Number(String(x).replace(/[^\d.]/g, ""));
+  const got = texts.map(rupees).sort((a, b) => a - b);
+  const want = [...C.callAmounts].map((v) => Math.round(v)).sort((a, b) => a - b);
+  if (!got.every((v, i) => Math.abs(v - want[i]) <= 1)) return false;
+  const foot = /₹([\d,]+(?:\.\d+)?)(?!\s*(?:Cr|L|K)\b)/.exec(pv.callFoot ?? "");
+  return !!foot && Math.abs(rupees(foot[1]) - want.reduce((a, b) => a + b, 0)) <= 1;
+}];
+/** …and the realised tile's hover reconciles a redemption in rupees, not in rounded lakh. */
+const PM_REALISED_RUPEES_CHECK = ["the realised hover reconciles each redemption to the rupee (PM-D2)", (t, ctx) => {
+  const d = ctx?.tileStrip?.details?.realised ?? "";
+  const B = PM_RETURN_BOOK;
+  if (!d || !B) return false;
+  if (!B.redeemed) return { notChecked: "no private holding in this book has redeemed units" };
+  const figs = [...d.matchAll(/(?:\bfor|cost of|gain of)\s*([+−-]?)₹([\d,]+(?:\.\d+)?)(\s*(?:Cr|L|K)\b)?/g)];
+  if (!figs.length || figs.some((x) => x[3])) return false;
+  const rupees = figs.map((x) => Number(x[2].replace(/,/g, "")));
+  // Each fund that redeemed units: the cost FIFO books them at, to the rupee.
+  return B.funds.filter((f) => f.soldCost > 1).every((f) => rupees.some((v) => Math.abs(v - Math.round(f.soldCost)) <= 1));
+}];
+/**
+ * PM-D3 — THE POOLED XIRR NAMES THE RECORD HELD UNDER A YEAR, AND THE POOL
+ * WITHOUT IT. On this book one 165-day holding carries half of the +21.1%; the
+ * pool is annualised (its window is over a year), so the figure stands, and
+ * its hover says whose it mostly is. Both halves held to the book's own flows.
+ */
+const PM_SUBYEAR_CHECK = ["the pooled XIRR names each record held under a year, and what the pool reads without it (PM-D3)", (t, ctx) => {
+  const pv = ctx?.pmView, B = PM_RETURN_BOOK;
+  if (!pv || !B) return false;
+  const c = (pv.totals ?? [])[0]?.cells?.["ret:xirr"];
+  if (!c) return false;
+  // NOTHING TO POOL is a fact about the book; a pool the checker could not
+  // solve is a finding. They are never the same abstention.
+  if (!B.pooledCovers) return { notChecked: "no private fund in this book carries a complete dated record, so nothing is pooled" };
+  if (B.pooled == null) return false;
+  if (B.pooledWindow < 365) return { notChecked: "the private book's pool spans under a year, so no annual rate is struck" };
+  if (!B.subYear.length) return c.subYear == null;
+  const days = (c.subYear ?? "").split(" ").filter(Boolean).map(Number).sort((a, b) => a - b);
+  const want = B.subYear.map((x) => x.days).sort((a, b) => a - b);
+  if (days.length !== want.length || !days.every((d, i) => d === want[i])) return false;
+  const title = c.title ?? "";
+  if (!B.subYear.every((x) => new RegExp(`has been held ${x.days} days`).test(title))) return false;
+  if (B.pooledWithoutSubYear == null) return c.withoutSub == null && !/Without (?:it|them), the pool reads/i.test(title);
+  const said = signedPctOf(/Without (?:it|them), the pool reads ([+\-−]?[\d.]+%)/i.exec(title)?.[1]);
+  return Math.abs(Number(c.withoutSub) - B.pooledWithoutSubYear) <= 0.06 && Math.abs(said - B.pooledWithoutSubYear) <= 0.06;
+}];
+/** The value-as-printed tile's count of the holdings behind the double count, off the book. */
+const PM_RAW_HOLDINGS_CHECK = ["the value-as-printed tile counts the holdings behind the double count off the book", (t, ctx) => {
+  const d = ctx?.tileStrip?.details?.raw ?? "";
+  const F = PM_FOLIO_BOOK;
+  if (!d || !F) return false;
+  if (!F.dup.length) return /No private holding here is reported on more than one statement/i.test(d);
+  const WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  const n = (w) => (WORDS.includes(w) ? WORDS.indexOf(w) : Number(w));
+  const m = /of it is (\w+) holdings? reported on (\w+) statements?/i.exec(d);
+  const each = [...new Set(F.dup.map((r) => r.statements))];
+  if (!m || n(m[1].toLowerCase()) !== F.dup.length) return false;
+  return each.length === 1 ? n(m[2].toLowerCase()) === each[0] : /more than one statement each/i.test(d);
+}];
 
 /**
  * ── A FUND THAT IS NOT PRIVATE MARKET IS NOT A ROW OF THIS TABLE ─────────────
@@ -15036,7 +15496,9 @@ const VALUE_WINDOW_BOOK = (() => {
       && !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null));
     const byKey = new Map();
     for (const p of onRows) {
-      const d = p.navPriced && p.navDate ? p.navDate : asOf.get(p.accountId) ?? null;
+      // A statement mark is struck on the day it PRICES — `priceAsOf` where the
+      // statement names one apart from its balances' date (VD-17).
+      const d = p.navPriced && p.navDate ? p.navDate : p.priceAsOf ?? asOf.get(p.accountId) ?? null;
       const e = byKey.get(p.securityKey) ?? { dates: new Set(), since: [] };
       e.dates.add(d);
       if (p.heldSince) e.since.push(p.heldSince);
@@ -15943,6 +16405,42 @@ const NAV_RECON = [
       && Math.abs(book - NAV_RECON_BOOK.once) <= 0.01
       && Math.abs(cur - COSTED_BOOK.totalValue) <= 1
       && Math.abs(book / 1e7 + steps.reduce((a, x) => a + signedCr(x), 0) - cur / 1e7) <= tie;
+  }],
+];
+
+/**
+ * THE NAV CARD'S BASIS HOVER, CLAIM BY CLAIM (MNT-24, MNT-25). The statement
+ * book is `glowData.ts`'s own, deduped here, and the current value is the live
+ * book `COSTED_BOOK` already carries — never the component's own figure, which
+ * is the thing under test.
+ */
+const NAV_BASIS = [
+  ["the NAV card's share of the book is struck on the statement book, with the current value named apart (MNT-25)", (t, ctx) => {
+    const head = navBasis(ctx);
+    if (head == null) return navBasisMissing(ctx);
+    if (!NAV_RECON_BOOK || !COSTED_BOOK) return false;
+    const m = /accounts, ₹[\d,.]+\s*(?:Cr|L|K)? of the (₹[\d,.]+\s*(?:Cr|L|K)?) the statements value( \(the current value of holdings, (₹[\d,.]+\s*(?:Cr|L|K)?), is on today's prices\))?/.exec(head);
+    if (!m) return false;
+    const stmt = money2cr(m[1]);
+    const book = NAV_RECON_BOOK.once / 1e7, live = COSTED_BOOK.totalValue / 1e7;
+    if (!(Math.abs(stmt - book) <= compactTieCr(book))) return false;
+    // Load-bearing only where the two books differ, which they do on this one
+    // (the published NAVs and the depository's cash funds): a card struck on
+    // the live book prints the live figure where the statement one belongs.
+    if (Math.abs(live - book) <= 2 * compactTieCr(book)) {
+      return m[2] ? false : notChecked("the statement and live books agree on this run, so the two bases cannot be told apart");
+    }
+    return !!m[2] && Math.abs(money2cr(m[3]) - live) <= compactTieCr(live);
+  }],
+  ["the NAV card's panel steps hold each account at its latest mark, never 'valued at both of its ends' (MNT-24)", (t, ctx) => {
+    if (!NAV_SERIES_BOOK) return notChecked("the book's NAV series could not be read on this run");
+    if (NAV_SERIES_BOOK.panelFirst >= NAV_SERIES_BOOK.panelLast) {
+      return notChecked("this book's panel does not grow inside the series");
+    }
+    const why = (ctx?.titles ?? []).find((x) => /The panel grows from/i.test(x));
+    if (!why) return false;
+    return !/valued at both of its ends/i.test(why)
+      && /measured over the accounts in the panel at both of its ends — each held at its most recent mark on or before that date, so a step in which none of them published a new statement is flat/.test(why);
   }],
 ];
 
@@ -17957,6 +18455,38 @@ const PRETAX_KEY = (() => {
   return s[0]?.securityKey ?? null;
 })();
 const PLEDGED_ABSL = NOTE_BOOK.some((p) => p.securityKey === "absl-liqf-d-growth" && p.accountId === "motilal-oswal-financial-services-demat-1201090012838320" && p.marketValue > 0);
+/**
+ * How many valued statement rows PRICE on another day than their balances are
+ * drawn (VD-17) — ICICI's NSDL statement of 31 Mar prices at the 30 Mar close —
+ * off the book's own `priceAsOf` and each account's as-of, never typed.
+ */
+const PRICED_OTHER_DAY_PAIRS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const asOf = new Map((bookArray(src, "BOOK_ACCOUNTS") ?? []).map((a) => [a.accountId, a.asOf]));
+    return new Set(NOTE_BOOK
+      .filter((p) => p.priceAsOf && !p.navPriced && p.marketValue > 0 && asOf.get(p.accountId) && p.priceAsOf !== asOf.get(p.accountId))
+      .map((p) => `${asOf.get(p.accountId)}|${p.priceAsOf}`));
+  } catch { return new Set(); }
+})();
+const PRICED_OTHER_DAY = PRICED_OTHER_DAY_PAIRS.size;
+/**
+ * The (balances' day, pricing day) pairs a hover names, as ISO dates — read
+ * off "as of 31 Mar 2026, priced as of 30 Mar 2026". The month is matched on
+ * its first three letters, so ICU's "Sept" reads as September.
+ */
+const PRICED_PAIR_RE = /as of (\d{1,2}) (\w{3,4}) (\d{4}), priced as of (\d{1,2}) (\w{3,4}) (\d{4})/;
+const MONTHS3 = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+function pricedPairOf(title) {
+  const m = PRICED_PAIR_RE.exec(title ?? "");
+  if (!m) return null;
+  const iso = (d, mon, y) => {
+    const i = MONTHS3.indexOf(mon.slice(0, 3).toLowerCase());
+    return i < 0 ? null : `${y}-${String(i + 1).padStart(2, "0")}-${String(+d).padStart(2, "0")}`;
+  };
+  const a = iso(m[1], m[2], m[3]), b = iso(m[4], m[5], m[6]);
+  return a && b ? `${a}|${b}` : null;
+}
 
 const INVARIANTS = {
   /**
@@ -18209,6 +18739,12 @@ const INVARIANTS = {
       const ph = istPhase(q.fetchedAt);
       return /need not be today/i.test(t) && (!ph || dmyRe(ph.istDate).test(t));
     }],
+    ["the day move says it is DERIVED, never that it is the exchange's own printed change", (_t, ctx) => {
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const t = d.dayTitle ?? "";
+      return /DERIVED/.test(t) && !/as the exchange publishes it/i.test(t);
+    }],
     ["the block at CMP names the statement's date under its heading, and both dates — and the gap — in its hover", (_t, ctx) => {
       if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
       const q = POLYCAB_LIVE_BOOK?.quote;
@@ -18223,6 +18759,74 @@ const INVARIANTS = {
       if (!ph) return true;
       const gap = Math.round(Math.abs(Date.parse(`${ph.istDate}T00:00:00Z`) - Date.parse(`${dates[0]}T00:00:00Z`)) / 86400e3);
       return dmyRe(ph.istDate).test(why) && why.includes(`${gap.toLocaleString("en-IN")} days apart`);
+    }],
+    /**
+     * EACH DEMAT ROW IS DATED BY ITS OWN STATEMENT, and a total over several says
+     * whether they share one. The multi-row path struck the entitlement and its
+     * `*` on the FIRST row's date while summing every row's shares, and its
+     * footer had no date at all — a total of balances reported on different days
+     * with nothing saying so. One demat carries the holding today, so the footer
+     * branch has no subject on this book; `polycabLive.test.ts` constructs a
+     * second balance and holds the arithmetic to it.
+     */
+    ["each demat row is dated by its own statement, and a total over several names whether they share a date", (_t, ctx) => {
+      if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const byAcct = new Map(FENCED.balances.map((b) => [b.accountId, b.asOf]));
+      const rowsOk = d.holdingRows.length > 0 && d.holdingRows.every((r) => {
+        const asOf = byAcct.get(r.account);
+        return asOf ? dmyRe(asOf).test(r.asOf ?? "") : false;
+      });
+      if (d.holdingRows.length < 2) return rowsOk;
+      const dates = [...new Set(FENCED.balances.map((b) => b.asOf).filter(Boolean))];
+      const foot = d.holdingFootAsOf ?? "";
+      return rowsOk && (dates.length === 1 ? dmyRe(dates[0]).test(foot) : foot.includes(`${dates.length} dates — blended`));
+    }],
+    /**
+     * THE MARK'S HOVER NAMES THE STATEMENT'S PRICING DATE APART FROM ITS BALANCE
+     * DATE. The balance is as of 31 Mar 2026 and the depository struck its values
+     * at "Prices as on 30-Mar-2026". The hover once said the mark was "as of the
+     * statement's date", and then — while the book could not carry the pricing
+     * date — only that it "need not be the balance date". The book carries it now
+     * (`priceAsOf`), so the claim is the date itself, each date in its own role.
+     *
+     * THREE PATHS TO ONE DATE, and none is typed here: the statement's own text
+     * in the audit archive (`POLYCAB_STATEMENT_BOOK`, read by this file's own
+     * regex), `build-book`'s `priceAsOf` on `BOOK_POLYCAB` (`FENCED`), and the
+     * rendered hover. The first two must agree row for row — a reader that
+     * stopped reading the date, or a book that stopped carrying it, fails there —
+     * and every row's Mark hover, and the heading's where the rows share one pair,
+     * must name the book's pricing date as the PRICING date and the account's
+     * as-of as the BALANCE date. Where no statement prints a pricing date, the
+     * hover must assert none, in the wording that makes no date claim.
+     */
+    ["the mark's hover names the statement's pricing date apart from its balance date, both off the book", (_t, ctx) => {
+      if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+      const d = ctx?.polycabDom;
+      if (!d) return false; // a missing probe is a finding, not an abstention
+      if (!POLYCAB_STATEMENT_BOOK) return false; // the fenced statement must be in the archive to witness the date
+      for (const s of POLYCAB_STATEMENT_BOOK) {
+        const b = FENCED.balances.find((x) => x.accountId === s.accountId && x.asOf === s.asOf);
+        if (!b || (b.priceAsOf ?? null) !== (s.pricesAsOn ?? null)) return false;
+      }
+      const rows = d.holdingRows ?? [];
+      if (rows.length !== FENCED.balances.length || rows.some((r) => r.markTitle == null)) return false;
+      const note = d.noteTitleOf?.mark ?? "";
+      const statementDate = /as of the statement(?:['’]s)? date/i;
+      if (!/divided by the units it prints/i.test(note) || statementDate.test(note)) return false;
+      const dated = FENCED.balances.filter((b) => b.priceAsOf);
+      if (!dated.length) {
+        return /need not be the balance date/i.test(note) && rows.every((r) => /need not be the balance date/i.test(r.markTitle));
+      }
+      const names = (t, b) => new RegExp(String.raw`balance as of ${dmyRe(b.asOf).source}`, "i").test(t)
+        && new RegExp(String.raw`valued at the ${dmyRe(b.priceAsOf).source} session`, "i").test(t);
+      for (const b of dated) {
+        const r = rows.find((x) => x.account === b.accountId);
+        if (!r || !names(r.markTitle, b) || statementDate.test(r.markTitle)) return false;
+      }
+      const pairs = new Set(FENCED.balances.map((b) => `${b.asOf}|${b.priceAsOf}`));
+      return pairs.size === 1 && dated.length === FENCED.balances.length ? names(note, dated[0]) : /each row/i.test(note);
     }],
     /**
      * THIS DEMAT'S PLEDGE REASON MAY NOT DENY WHAT THE STATEMENT PRINTS. It said
@@ -18379,7 +18983,7 @@ const INVARIANTS = {
         return x.exDate < dated[0] ? /older than any it dates/.test(t) : (/covers this period/.test(t) && !/older than any it dates/.test(t));
       });
     }],
-    POLYCAB_SOURCES_CHECK,
+    polycabSourcesCheck("actions"),
   ],
   /**
    * ── THE PROMOTER GROUP, AS IT DISCLOSES ITSELF ──────────────────────────────
@@ -18463,7 +19067,29 @@ const INVARIANTS = {
         && /% of group holding/i.test(n.groupPledge ?? "") && /Promoter Holding Pledged/.test(h.groupPledge ?? "")
         && /own holding/i.test(h.groupPledge ?? "");
     }],
-    POLYCAB_SOURCES_CHECK,
+    /**
+     * A DASHED GROUP PLEDGE IS A STATEMENT ABOUT WHAT THIS PAGE READS. It said
+     * "no source published an encumbrance figure for this quarter" — false of a
+     * listed company that files one every quarter. The reach it names is counted
+     * off the store.
+     */
+    ["a dashed group pledge says what this page reads, never that no source published one", (_t, ctx) => {
+      const qs = POLYCAB_LIVE_BOOK?.quarters;
+      if (!qs?.length) return { notChecked: "the store carries no promoter quarter" };
+      const rows = ctx?.polycabDom?.quarterCells;
+      if (!rows) return { notChecked: "the DOM probe did not run" };
+      const dashed = qs.filter((q) => q.pledgePct === null);
+      if (!dashed.length) return { notChecked: "every stored quarter carries a pledge figure" };
+      const carried = qs.filter((q) => q.pledgePct !== null).map((q) => q.asOf).sort();
+      return dashed.every((q) => {
+        const r = rows.find((x) => x.asOf === q.asOf);
+        if (!r || r.pledge !== "—") return false;
+        const t = r.pledgeTitle ?? "";
+        if (/no source published/i.test(t) || !/company's own quarterly encumbrance disclosure is not read/.test(t)) return false;
+        return carried.length && q.asOf < carried[0] ? t.includes(`reaches back only ${carried.length} quarter`) : true;
+      });
+    }],
+    polycabSourcesCheck("promoter"),
   ],
   /**
    * ── THE YEAR'S TRADING IS FIVE LINES, NOT FOUR HUNDRED ─────────────────────
@@ -19134,7 +19760,7 @@ const INVARIANTS = {
      */
 
 
-    // ── THE LABELS AND REASONS, HELD TO THE BOOK (MT-6…MT-15) ────────────────
+    // ── THE LABELS AND REASONS, HELD TO THE BOOK (MT-6…MT-18) ────────────────
     ...txnTTableChecks(),
   ],
 
@@ -20391,6 +21017,40 @@ const INVARIANTS = {
    * PAID and must name the statement's own figure, and the Avg cost tile must
    * say its basis — each against `CARRIED_BOOK`.
    */
+  /**
+   * ── THE COMPANY PAGE OF A COST ON THE GROSS-PAID BASIS (VD-24) ──────────
+   *
+   * Sanshi's statements cost its units at what bought them, net of the stamp
+   * duty they print; the book carries every rupee paid. A reader holding that
+   * statement sees a different figure, so every account row's Invested and the
+   * Avg cost tile must say which this is — in full, because at compact
+   * precision the two print identically.
+   */
+  "stock-gross": [
+    ...stockTabChecks("position"),
+    ["the book carries a cost restated to what was paid", () => !!GROSS_BOOK && GROSS_BOOK.keys.length > 0],
+    ["every gross-paid account row shows what was paid, and names the statement's net and the charges in full",
+      (t, ctx) => {
+        const key = GROSS_BOOK?.keys[0];
+        const want = (GROSS_BOOK?.positions ?? []).filter((p) => p.key === key);
+        const cells = ctx.costGross?.cells ?? [];
+        return want.length > 0 && cells.length === want.length && want.every((w) => cells.some((c) => {
+          const named = rupeesIn(c.title);
+          return Math.abs(c.paid - w.paid) <= 0.01 && c.printed !== null && Math.abs(c.printed - w.printed) <= 0.01
+            && /PAID IN/.test(c.title ?? "")
+            && [w.paid, w.printed, w.paid - w.printed].every((v) => named.some((n) => Math.abs(n - v) <= 0.01));
+        }));
+      }],
+    ["the Avg cost tile says its cost is what was paid, stamp duty included",
+      (t, ctx) => {
+        const key = GROSS_BOOK?.keys[0];
+        const want = (GROSS_BOOK?.positions ?? []).filter((p) => p.key === key);
+        const tile = ctx.costGross?.tile;
+        const paid = want.reduce((a, p) => a + p.paid, 0);
+        return want.length > 0 && !!tile && Math.abs(tile.paid - paid) <= 0.01
+          && /as paid, stamp duty included/.test(tile.text) && /PAID IN/.test(tile.title ?? "");
+      }],
+  ],
   "stock-carried": [
     ...stockTabChecks("position"),
     ...stockLayoutChecks(),
@@ -20601,8 +21261,9 @@ const INVARIANTS = {
     // the fund name. Either way it must be the statement's word, not ours.
     return CAPITAL_SIDES.outLabels.some((l) => t.includes(l));
   }],
-    // The capital panels are OPEN on this route: their headings (MT-15).
-    ...txnTRealisedChecks().filter(([d]) => /capital drill-down heads/.test(d)),
+    // The capital panels are OPEN on this route: their headings (MT-15) and
+    // every dash inside them (MT-18).
+    ...txnTRealisedChecks().filter(([d]) => /capital drill-down heads|without a reason/.test(d)),
   ],
   /**
    * THE MANAGERS' OWN DEALING, WHICH IS NO LONGER A TAB.
@@ -21624,6 +22285,17 @@ const INVARIANTS = {
         && /change in the unit/i.test(ctx.stockM2.refusedTip ?? "")],
     ["the card no longer calls its returns complete", (t) => !/returns (above )?are complete/i.test(t)],
     /**
+     * AN OPTION THE STORE DOES NOT STATE IS SAID AS THAT (DSM-D5). The Plan
+     * tile printed the store's placeholder — "Regular · Unknown" — as though it
+     * were the scheme's option. Re-derived off the scheme file itself.
+     */
+    ["an option the fund store does not state reads as not stated, never as the word 'unknown'", (t, ctx) => {
+      const m = ctx?.stockM2?.ltMatch, ub = M2_BOOK?.unitBreak;
+      if (!m || !ub) return false;
+      if (!/^unknown$/i.test(ub.option ?? "")) return { notChecked: "the store states this scheme's option" };
+      return /option not stated/i.test(m.plan ?? "") && !/unknown/i.test(m.plan ?? "");
+    }],
+    /**
      * ONE NAV PER PAGE (DSM-B5). AMFI's daily file carries no NAV for this
      * holding's ISIN, so the card falls back to the fund store's own — and must
      * say whose it is rather than calling it AMFI's.
@@ -21779,6 +22451,7 @@ const INVARIANTS = {
         && /no live quote|price feed|no NSE symbol|fetching live price|no per-unit price in the book|AMFI NAV|NAV on the statement|do not agree|held back|cannot be priced live/i
           .test(ctx.stockMark?.caption ?? "")],
     ...realisedTileChecks(() => NO_COST_KEY),
+    ...rowDashChecks(),
     ...stockTabChecks("position"),
     /**
      * THE VALUE SAYS WHEN IT WAS STRUCK (VD-17). This holding sits on the ICICI
@@ -21788,8 +22461,13 @@ const INVARIANTS = {
     ["the Holding value names the date its value is struck, and by what", (t, ctx) => {
       const v = ctx?.stockM2?.valued, want = NO_COST_KEY ? M2_BOOK?.valuedOf(NO_COST_KEY) : null;
       if (!v || !want || !want.at) return false;
-      return v.at === want.at && v.by === want.by && /statement mark ·/i.test(v.text ?? "") && /not today's/i.test(v.tip ?? "");
+      // A statement that prices on another day than its balances says both
+      // (ICICI NSDL: balances 31 Mar, prices 30 Mar), never one standing for both.
+      const both = !want.balances || (/counts its balances at/i.test(v.tip ?? "") && /prices them as of/i.test(v.tip ?? ""));
+      return v.at === want.at && v.by === want.by && /statement mark ·/i.test(v.text ?? "") && /not today's/i.test(v.tip ?? "") && both;
     }],
+    ["this holding's statement prices on another day than its balances, so the tile has both to name (VD-17)", () =>
+      !!(NO_COST_KEY && M2_BOOK?.valuedOf(NO_COST_KEY)?.balances)],
   ],
   /**
    * `/stock/<the ring-fenced key>` LANDS ON THE POLYCAB PAGE, NOT ON A ₹0.
@@ -21808,7 +22486,7 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC, ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
-  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_RANGE_HOVERS],
+  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-tiles-dense": [
     /**
@@ -22750,6 +23428,16 @@ const INVARIANTS = {
       const said = Number(/The (\d+) largest names/i.exec(t)?.[1] ?? NaN);
       return c != null && Number.isFinite(said) && c.names === said;
     }],
+    /**
+     * ...TO THE DECIMAL BOTH PRINT (DL-17). The card printed 61% over a page
+     * printing 60.5%; it prints one decimal now, and the two must be one figure.
+     */
+    ["its share of the book is the Top-10 figure, to the decimal both print (DL-17)", (t, ctx) => {
+      const pct = CIO_FIGURES.get("top10Pct"), sh = ctx?.drilldown?.share;
+      if (!Number.isFinite(pct) || !sh) return false;
+      const m = /^([\d.]+)% of the/.exec(sh.text);
+      return !!m && m[1].includes(".") && Number(m[1]) === pct;
+    }],
   ],
   /**
    * LISTED AND PRIVATE ARE ONE SPLIT, so each half is checked against the NAV
@@ -23451,6 +24139,9 @@ const INVARIANTS = {
    * another rendering of itself.
    */
   "private-market": [
+    // [D] — DL-16, PM-D1, PM-D2 and the double count's holdings (the two tile
+    // claims are FULL_STRIP_ONLY: their tiles are not on the default strip).
+    PM_DEPLOYED_CHECK, PM_PNL_HOVER_CHECK, PM_WEIGHT_FUNDS_CHECK, PM_REALISED_RUPEES_CHECK, PM_RAW_HOLDINGS_CHECK,
     /**
      * ── THE CLIENT ASKED WHAT TWO OF THESE TILES MEAN, AND THEN ASKED FOR THE
      *    ANSWER TO BE SHORT ────────────────────────────────────────────────────
@@ -24594,6 +25285,7 @@ const INVARIANTS = {
    * fails the other.
    */
   "private-market-returns": [
+    PM_DEPLOYED_CHECK, PM_SUBYEAR_CHECK,
     /**
      * PM-C1 — THE HPR IS VALUE AGAINST WHAT THE UNITS COST, AND SAYS SO. Its
      * hovers said "over the capital paid in", which is a different figure on
@@ -24630,6 +25322,7 @@ const INVARIANTS = {
     PM_MEMBER_RETURN_CHECK,
   ],
   "private-market-owners": [
+    PM_WEIGHT_OWNERS_CHECK,
     PM_MEMBER_COVER_CHECK,
     ...pmViewChecks("owners"),
     ...PM_TABLE_CHECKS,
@@ -24694,6 +25387,7 @@ const INVARIANTS = {
    * there, which is an abstention and reads as a clean run.
    */
   "private-market-transactions": [
+    PM_CALL_RUPEES_CHECK,
     ...pmViewChecks("transactions"),
     /**
      * PM-4d — THE WINDOWS ARE GONE FROM THIS TAB, AND STAY GONE.
@@ -25294,10 +25988,24 @@ const INVARIANTS = {
       return !!cash && crU(cash[1], cash[2]) + 0.1 >= B.arbMV / 1e7;
     }],
     // WHY THE CLASSES ARE LEFT OUT IS THE LIST'S HOVER since Stage 10cp, and
-    // the sentence is gone from its face.
-    ["the excluded card says why in its hover, not on its face", (t, ctx) =>
-      !/excluded rather than folded in/i.test(t) && !/none has a sector of its own/i.test(t)
-      && (ctx?.titles ?? []).some((x) => /^Excluded rather than folded in — a fund holds many companies, so none has a sector of its own/.test(x))],
+    // the sentence is gone from its face. …AND IT IS TRUE OF WHAT THE CARD
+    // CARRIES (FS-24): "a fund holds many companies" was said over a list whose
+    // largest part is Cash, so each class the face lists needs its own clause.
+    ["the excluded card says why in its hover, not on its face — a reason true of every class it lists (FS-24)", (t, ctx) => {
+      if (/excluded rather than folded in/i.test(t) || /none has a sector of its own/i.test(t)) return false;
+      const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*([^\n]*)/i.exec(t);
+      if (!card) return false;
+      const x = (ctx?.titles ?? []).find((s) => /^Excluded rather than folded in — /.test(s));
+      if (!x || !/, so none has a sector of its own\.$/.test(x) || /a fund holds many companies/.test(x)) return false;
+      const face = card[1];
+      const fund = /\b(?:AIF|Mutual Fund|ETF) ₹/.test(face);
+      // Cash on the face, or the arbitrage funds the book says it must carry
+      // there (the check above holds the face to that).
+      const cash = /\bCash ₹/.test(face) || /inside\s+the PMS mandates/i.test(face) || (CASH_INSTRUCTION_BOOK?.arbMV ?? 0) > 0;
+      return (fund || cash)
+        && (!fund || x.includes("a fund's units are a share of a portfolio rather than of one company"))
+        && (!cash || x.includes("what the family counts as cash is money"));
+    }],
     ["the excluded card's total ties to the classes it lists", (t) => {
       const card = /Not a company share\s*\n\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*\n\s*([^\n]*)/i.exec(t);
       if (!card) return false;
@@ -25383,6 +26091,14 @@ const INVARIANTS = {
    * comparison keyed to the wrong sector, or to the wrong set, renders perfectly
    * well-formed cells — only the relations between them can see it.
    */
+  "sectors-direct-live": [
+    ["a live-priced figure says where its cost comes from — the statements, never a ledger or a workbook cell (FS-24)", (t, ctx) => {
+      const live = (ctx?.titles ?? []).filter((x) => /^Recalculated from live prices/.test(x));
+      // The quote feed is fulfilled on this route, so a live figure must be drawn.
+      if (!live.length) return false;
+      return live.every((x) => /the statements'/.test(x) && !/ledger|workbook/i.test(x));
+    }],
+  ],
   "sectors-compare": [
     ...sectorLayoutChecks("compare"),
     ["the left half is the donut and its picker, and neither the sector table nor the partition is drawn on this tab", (t, ctx) => {
@@ -25686,9 +26402,13 @@ const INVARIANTS = {
         // The SUBJECT of that sentence is the scope's own — a sentence reading
         // "Stocks and ETFs" over a set that no longer holds the ETFs would be
         // the caption-that-widens failure this card has already paid for.
-        const m = /Direct equity is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
-          ?? /Direct equity is\s*([+-]\d+\.\d+)%/.exec(t);
-        return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
+        // A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20). The sign may be
+        // a real U+2212 minus, which `[+-]` alone does not match; and a gap
+        // printed as "%" — which reads as a return — fails rather than passing.
+        const m = /Direct equity is\s*([+−-]?)(\d+\.\d+)\s*pts\s*against the\s*\n?\s*Nifty 500 today/.exec(t);
+        if (!m) return false;
+        const v = (m[1] === "−" || m[1] === "-" ? -1 : 1) * Number(m[2]);
+        return Math.abs(v - 11) < 0.03 && !/Direct equity is\s*[+−-]?\d+\.\d+%/.test(t);
       }],
     /**
      * THE MOVERS SET IS DIRECT EQUITY, CHECKED ON A COUNT RATHER THAN ON NAMES.
@@ -25821,8 +26541,13 @@ const INVARIANTS = {
       (t, ctx) => moversGainersAreDirectEquity(ctx?.cioLayout?.text)],
     ["…and the day's move is still the fixture's exact +10.00%, 11.00 points over the Nifty 500",
       (t) => {
-        const m = /Direct equity is\s*([+-]\d+\.\d+)%/.exec(t);
-        return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
+        // A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20), as on `cio-live`:
+        // the same sentence, so the same reading — a real U+2212 minus allowed,
+        // and a gap printed as "%", which reads as a return, a failure.
+        const m = /Direct equity is\s*([+−-]?)(\d+\.\d+)\s*pts\s*against the/.exec(t);
+        if (!m) return false;
+        const v = (m[1] === "−" || m[1] === "-" ? -1 : 1) * Number(m[2]);
+        return Math.abs(v - 11) < 0.03 && !/Direct equity is\s*[+−-]?\d+\.\d+%/.test(t);
       }],
   ],
   "cio-nav-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...CIO_LIVE_NAV, ...NAV_BENCH, ...NAV_BENCH_LIVE],
@@ -25890,6 +26615,23 @@ const INVARIANTS = {
     // VD-16 / VD-18: a pre-tax mark and a cash line whose every unit is pledged
     // say so in the CMP marker's hover on the category table. The premise is
     // the BOOK's: it holds Sanshi, and the ABSL Liquid line on Bharat's demat.
+    /**
+     * A VALUE PRICED ON ANOTHER DAY THAN ITS BALANCES SAYS BOTH (VD-17). The
+     * ICICI NSDL statement counts shares at 31 Mar and prices them at the
+     * 30 Mar close. It prints a value and no rate, so its rows have no ◦
+     * marker: the date rides on the price cell's own absence, and a row with
+     * a per-unit mark carries it on the marker. Either hover names both days,
+     * derived from the book's own `priceAsOf` rather than typed. A book with
+     * no such row has no subject, and says so rather than passing.
+     */
+    ["a statement value priced on another day than its balances names both dates in its price cell's hover (VD-17)", (t, ctx) => {
+      if (!PRICED_OTHER_DAY) return { notChecked: "no statement in this book prices on another day than its balances" };
+      // The two dates must be the BOOK's pair — its balances' day and its
+      // pricing day — never one date named twice, which a value dated at its
+      // balances' day would print.
+      const named = (ctx?.titles ?? []).map(pricedPairOf).filter(Boolean);
+      return named.length > 0 && named.every((p) => PRICED_OTHER_DAY_PAIRS.has(p));
+    }],
     ["a pre-tax NAV and a pledged cash line say so in the CMP marker's hover (VD-16, VD-18)", (t, ctx) => {
       if (!PRETAX_KEY || !PLEDGED_ABSL) return false;
       const ts = ctx?.titles ?? [];
@@ -26021,6 +26763,26 @@ const INVARIANTS = {
      * from the restated figure at that precision or the check could not tell
      * the two apart.
      */
+    /**
+     * …AND A COST ON THE GROSS-PAID BASIS (VD-24). The row's Invested is every
+     * rupee paid; the statement's net is below it by the stamp duty it prints.
+     * The cells together must account for every rupee of those charges the book
+     * restated — struck on the handles, and on the full-precision figures the
+     * hover prints, because at the row's compact precision the two are one label.
+     */
+    ["a cost on the gross-paid basis shows what was PAID, and names the statement's net and the charges in full",
+      (t, ctx) => {
+        if (!GROSS_BOOK) return false;
+        const cells = ctx.costGross?.cells ?? [];
+        if (!GROSS_BOOK.positions.length) return cells.length === 0;
+        const charges = cells.reduce((a, c) => a + (c.paid - (c.printed ?? c.paid)), 0);
+        return cells.length > 0 && Math.abs(charges - GROSS_BOOK.charges) <= 0.05
+          && cells.every((c) => {
+            const named = rupeesIn(c.title);
+            return c.printed !== null && /PAID IN/.test(c.title ?? "")
+              && [c.paid, c.printed, c.paid - c.printed].every((v) => named.some((n) => Math.abs(n - v) <= 0.01));
+          });
+      }],
     ["a cost carried through a class switch shows what was PAID, and names the statement's figure",
       (t, ctx) => {
         if (!CARRIED_BOOK) return false;
@@ -26668,7 +27430,7 @@ const INVARIANTS = {
     // ── WHAT THE FOOTER AND THE BANDS ARE STRUCK OVER, AND THE SECTOR COLUMN
     // (MH-04, MH-05, MH-06, MH-07) — every expectation `MONITOR_BASIS_BOOK`'s.
     ...footBasisChecks("all"),
-    ...footCChecks("all"), ...FOOT_C_NO_OVERLAP, ...ROW_REASONS_C,
+    ...footCChecks("all"), ...FOOT_C_NO_OVERLAP, ...ROW_REASONS_C, ...floorReachChecks("category"),
     ...SECTION_REALISED,
     ...SECTION_COUNTS,
     ...sectionTotalsTie("category"),
@@ -27542,7 +28304,7 @@ const INVARIANTS = {
     // ── THE FOOTER ON THIS AXIS IS STRUCK OVER THE COMPANY SHARES THE ROWS ARE,
     // and names that set; the Sector column is the shared index (MH-04 – MH-07).
     ...footBasisChecks("companies"),
-    ...footCChecks("companies"), ...DERIVED_ONLY_C,
+    ...footCChecks("companies"), ...DERIVED_ONLY_C, ...floorReachChecks("security"), ...ROUTE_WORDS_D,
     ...sectorCellChecks("security"),
   ],
   /**
@@ -28530,6 +29292,7 @@ const INVARIANTS = {
    */
   "family-entity": [
     ...familyUnvaluedChecks(() => FAMILY_ENTITY),
+    ...FE_SECTOR_CELLS,
     // The two routes are separate headings, and a mandate names itself between them.
     ["the drill-down sections by route, not by asset class alone",
       (t) => /DIRECT EQUITY/i.test(t) && /PMS MANDATES/i.test(t)],
@@ -29209,6 +29972,10 @@ const INVARIANTS = {
   "monitor-security-picklist": pickListChecks("the security axis", true),
   "stock-qty": [
     ...qtyChecks(() => QTY_BOOK?.tableKey),
+    // DSM-D7 — the card covers the statement's window (1 Apr → 31 Jul on every
+    // window this book carries), not a year, and says so in its title.
+    ["the quantity card is titled for the statement window it covers, never 'the year'", (t, ctx) =>
+      !/quantity through the year/i.test(t) && /Depository quantity over the statement window/i.test(t)],
     ...stockTabChecks("activity"),
     ...stockActivityChecks(),
     // A ROUTE THAT RESOLVED NOTHING MUST NOT PASS. With no window in the book
@@ -29731,7 +30498,7 @@ const INVARIANTS = {
       /on\s+₹[\d.,]+\s*(?:Cr|L)?\s+paid in since/i.test(t)],
   ],
   /**
-   * ── WHAT THE MANAGER TRADED, EVERY LINE OPEN (DSM-C10) ───────────
+   * ── WHAT THE MANAGER TRADED, EVERY LINE OPEN (DSM-C10, DSM-D8) ───────────
    *
    * A mandate whose account issues a capital gain statement, so no line on it
    * may say "no capital gain statement covers this account" — the reason that
@@ -30495,6 +31262,34 @@ const INVARIANTS = {
       return Math.abs(deepest - d.pct) < 1e-6
         && (!d.trough || rows.some((r) => r.attrs.date === d.trough && Math.abs(Number(r.attrs["from-peak"]) - d.pct) < 1e-6));
     }],
+    /**
+     * XA-24 / XA-25. "Names in profit" counted POSITIONS on `unrealizedPnL > 0`
+     * — 177 where Morning CIO's own predicate, a FIFO return above zero, gives
+     * 175 — and the contributors list mapped positions, so one fund held in
+     * four accounts took four of its ten places.
+     */
+    ["the gain count is Morning CIO's — a FIFO return above zero — over the holdings with a cost", (t, ctx) => {
+      const r = XA_BOOK?.returnsD;
+      if (!r) return { notChecked: "the book could not be re-derived from glowData.ts" };
+      if (r.unrealWinners === r.winners) return { notChecked: "the two predicates agree on this book" };
+      const el = xaEl(ctx, "returns-hit");
+      return !!el && Number(el.attrs.winners) === r.winners && Number(el.attrs.priced) === r.priced
+        && !/Names in profit/i.test(t);
+    }],
+    ["a contributor or detractor is a security, once, however many accounts hold it", (t, ctx) => {
+      const r = XA_BOOK?.returnsD;
+      if (!r) return { notChecked: "the book could not be re-derived from glowData.ts" };
+      // LOAD-BEARING: position by position, some security repeats among the top.
+      if (new Set(r.positionsInTop).size === r.positionsInTop.length) return { notChecked: "no security is held in two accounts among the largest contributors" };
+      const top = (ctx?.xa ?? []).filter((x) => x.xa === "returns-contributors-row");
+      const bottom = (ctx?.xa ?? []).filter((x) => x.xa === "returns-detractors-row");
+      const same = (got, want) => got.length === want.length
+        && got.every((g, i) => g.attrs.key === want[i].key && Number(g.attrs.accounts) === want[i].accounts);
+      return same(top, r.top) && same(bottom, r.bottom) && new Set(top.map((x) => x.attrs.key)).size === top.length
+        // The cards' subtitle is their title's hover since #95 (Stage 10cp), so
+        // the old "By unrealised P&L" is looked for there as well as on the page.
+        && ![t, ...(ctx?.titles ?? [])].some((x) => /By unrealised P&L/.test(x));
+    }],
     // STRUCK ON THE HOVERS AS WELL AS THE FACE. A page's subtitle is its
     // title's hover since #95 (Stage 10cp), so a check reading the page text
     // alone could no longer see the sentence either way — the wrong one
@@ -30566,6 +31361,7 @@ const INVARIANTS = {
   "family-partial": [
     ...unvaluedLinesChecks(),
     ...familyUnvaluedChecks(() => CASH_INSTRUCTION_BOOK?.partialOwner),
+    ...FE_SECTOR_CELLS,
     // THE LINE SAYS "PARTLY VALUED" AND WHAT IS; THE NOTE IS THE HOVER ON ITS
     // NAME (Stage 10cf). What is NOT valued is read from that hover — a line
     // that dropped it would leave a reader taking the valued part for the whole.
@@ -30867,8 +31663,8 @@ const INVARIANTS = {
   performance: [
     // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its lists' footer reconciles
     // to the statement book and the current value step by step, as on `cio-nav`,
-    // and its range hovers say the same things there.
-    ...NAV_RECON, ...NAV_RANGE_HOVERS,
+    // and its basis hover and range hovers say the same things there.
+    ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS,
     // XA-12: the basis pill reads STATEMENT over a Current Value tile that
     // carries AMFI's published NAV on every fund it prices.
     ...xaNavBasisChecks(),
@@ -30885,7 +31681,7 @@ const INVARIANTS = {
       (t) => /to date · not annualised/i.test(t) && /money-weighted return to date, per account · not annualised/i.test(t)],
     /**
      * THE VALUE BRIDGE AND THE MONEY-WEIGHTED TABLE, HELD TO THE BOOK (A-12,
-     * CK-A3, XA-14, XA-21). This page is on the STATEMENT basis now, so
+     * CK-A3, XA-14, XA-21, VD-25). This page is on the STATEMENT basis now, so
      * the demat the live book values in part keeps its statement's own reason
      * here rather than a "partial" figure — asserted, inverted, in PERF_MW.
      */
@@ -31193,6 +31989,30 @@ const INVARIANTS = {
   ],
 
   /**
+   * ── A DOCUMENT CHIP SAYS WHICH DOCUMENT IT OPENS (XA-26) ─────────────────
+   *
+   * Every chip read its date alone — 42 of them "2026-07-31". Each now names
+   * the provider, the account, the report type and the date, and a repeat of
+   * all four is numbered, so no two chips read alike. Struck against the
+   * archive's own manifest, read here rather than off the page.
+   */
+  audit: [
+    ["every document chip names its account, its report type and its date, and no two read alike", (t, ctx) => {
+      const want = XA_BOOK?.auditChips;
+      if (!want?.length) return { notChecked: "the audit manifest could not be read" };
+      const got = (ctx?.xa ?? []).filter((x) => x.xa === "audit-chip");
+      if (got.length !== want.length) return false;
+      const texts = got.map((g) => g.text.trim());
+      return new Set(texts).size === texts.length && want.every((w) => {
+        const g = got.find((x) => x.attrs.file === w.fileKey);
+        if (!g) return false;
+        const [, account, type] = w.parts;
+        return (!account || g.text.includes(account)) && (!type || g.text.includes(type)) && (!w.fy || g.text.includes(w.fy));
+      });
+    }],
+  ],
+
+  /**
    * ── A SHORT ROW IS NOT PLACED BY POSITION (XA-20) ────────────────────────
    *
    * The extracted tables keep a row's cells in printed order and drop the
@@ -31263,6 +32083,8 @@ const FULL_STRIP_ONLY = new Set([
   "the distributions hover names each part on its own basis, and the letter it counts with another (B-10)",
   "the distributions hover reconciles with each fund's XIRR, in the XIRR's own figures (B-10)",
   "the multiple's refusal counts the accounts the distributions tile counts (B-10)",
+  "the realised hover reconciles each redemption to the rupee (PM-D2)",
+  "the value-as-printed tile counts the holdings behind the double count off the book",
 ]);
 
 /**
@@ -31694,6 +32516,7 @@ for (const theme of THEMES) {
         || name === "stock-sold-after" || name === "corporate-actions-live") await installLiveMocks(page);
       if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
+      if (name === "sectors-direct-live") await installLiveMocks(page);
       // THE ALERTS WALKS. The store is seeded before the app boots, and the live
       // fixture is installed on the two that assert a quoted price; the no-feed
       // walk deliberately gets none, because that is its whole subject.
@@ -32520,6 +33343,28 @@ for (const theme of THEMES) {
       }
       if (name === "returns") {
         await page.waitForSelector('[data-returns-sector-source]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
+      }
+      /**
+       * THE SECTOR MIX'S BAR TOOLTIP, READ WHERE A READER SEES IT (FS-23). It
+       * labelled every bar "NAV" over a chart of company shares only — a figure
+       * the card's own title says is not the entity's NAV. A tooltip exists
+       * only under the pointer, so the walk hovers the first bar, reads what the
+       * tooltip says, and moves the pointer away again.
+       */
+      FE_BAR_TIP = null;
+      if (name === "family-entity" || name === "family-partial") {
+        const bar = page.locator("main .recharts-bar-rectangle").first();
+        if (await bar.count()) {
+          await bar.hover({ force: true }).catch(() => {});
+          await page.waitForTimeout(350);
+          FE_BAR_TIP = await page.evaluate(() => {
+            const w = [...document.querySelectorAll("main .recharts-tooltip-wrapper")]
+              .find((e) => getComputedStyle(e).visibility !== "hidden" && (e.textContent ?? "").trim());
+            return w ? (w.textContent ?? "").replace(/\s+/g, " ").trim() : null;
+          });
+          await page.mouse.move(0, 0);
+          await page.waitForTimeout(150);
+        }
       }
       /**
        * THE RESEARCH CARD'S SUB-TABS, CLICKED THE WAY A READER DOES.
@@ -33441,7 +34286,7 @@ for (const theme of THEMES) {
         });
       }
       /**
-       * THE MANAGER'S DEALING, EVERY LINE OPEN (DSM-C10). The card
+       * THE MANAGER'S DEALING, EVERY LINE OPEN (DSM-C10, DSM-D8). The card
        * reads the dated tape from the audit archive at runtime, so the walk
        * waits for its first line rather than for a clock — a card that never
        * draws still reaches the invariants, which then fail on what they find.
@@ -34391,7 +35236,7 @@ for (const theme of THEMES) {
        * kind of cells, and a money-weighted row closed on a NAV-priced value and
        * one closed on its statement print the same kind of figure — so every
        * claim about either is struck on the attributes the page writes beside
-       * them (A-12, CK-A3, XA-14, XA-21), and a reason in a `title` is
+       * them (A-12, CK-A3, XA-14, XA-21, VD-25), and a reason in a `title` is
        * read off the element because `innerText` cannot see it.
        */
       const perfDom = FAST ? null : await page.evaluate(() => {
@@ -34423,10 +35268,12 @@ for (const theme of THEMES) {
             flows: txt(c[1]), mvText: txt(c[2]), mvReason: c[2]?.querySelector("[title]")?.getAttribute("title") ?? null,
             terminal: txt(c[3]), returnText: txt(c[4]),
             returnTitle: c[4]?.querySelector("span[title]")?.getAttribute("title") ?? null,
+            undated: tr.querySelector("[data-xirr-undated]")?.getAttribute("data-xirr-undated") ?? null,
+            undatedTitle: tr.querySelector("[data-xirr-undated]")?.getAttribute("title") ?? null,
           };
         });
         const cons = document.querySelector("tr[data-xirr-consolidated]");
-        const consRet = cons?.cells[4]?.querySelector("span[title]") ?? null;
+        const consRet = cons?.cells[4]?.querySelector("[data-xirr-undated]") ?? null;
         return {
           cols, cells, rows,
           totals: tot ? { tied: Number(tot.getAttribute("data-tied")), all: Number(tot.getAttribute("data-all")), text: txt(tot) } : null,
@@ -34435,7 +35282,7 @@ for (const theme of THEMES) {
             mv: cons.getAttribute("data-mv"), book: cons.getAttribute("data-book"), first: cons.getAttribute("data-first"),
             last: cons.getAttribute("data-last"), pct: cons.getAttribute("data-pct"), toDate: cons.getAttribute("data-todate"),
             days: cons.getAttribute("data-days"), text: txt(cons), terminal: txt(cons.cells[3]),
-            returnTitle: consRet?.getAttribute("title") ?? null,
+            returnTitle: consRet?.getAttribute("title") ?? null, undated: consRet?.getAttribute("data-xirr-undated") ?? null,
           } : null,
           partialMarkers: document.querySelectorAll("[data-partial-valuation]").length,
           tileTitle: [...document.querySelectorAll("[title]")].map((e) => e.getAttribute("title"))
@@ -34822,7 +35669,7 @@ for (const theme of THEMES) {
         };
       });
       /**
-       * ── THE TRANSACTIONS TABLE, CELL BY CELL, WITH EVERY REASON (MT-6…MT-16) ──
+       * ── THE TRANSACTIONS TABLE, CELL BY CELL, WITH EVERY REASON (MT-6…MT-18) ──
        *
        * Each main-table cell is read under the column its header names — the
        * header's `th[data-col]` order is the reader's, and `Tr` permutes a row's
@@ -34901,9 +35748,19 @@ for (const theme of THEMES) {
         const foot = table.querySelector("tr[data-dated-total]");
         const footCells = foot ? Object.fromEntries([...foot.querySelectorAll("[data-foot-cell]")].map((td) =>
           [td.getAttribute("data-foot-cell"), { text: t(td), title: ti(td), dash: dashOf(td) }])) : null;
+        /** Every dash in the table and its panels that names no reason at all. */
+        const bare = [];
+        for (const td of table.querySelectorAll("td")) {
+          for (const el of [td, ...td.querySelectorAll("*")]) {
+            if (el.children.length !== 0 || el.textContent.trim() !== "—") continue;
+            let ok = false;
+            for (let x = el; x && x !== td.parentElement; x = x.parentElement) if (ti(x).trim()) { ok = true; break; }
+            if (!ok) bare.push(t(td.closest("tr")).slice(0, 90));
+          }
+        }
         return {
           framing: ti(document.querySelector("[data-txn-framing]")),
-          heads, rows, panels,
+          heads, rows, panels, bare,
           foot: foot ? {
             label: { text: t(foot.cells[0]), title: ti(foot.cells[0]) },
             cells: footCells,
@@ -34912,10 +35769,10 @@ for (const theme of THEMES) {
         };
       });
       /**
-       * ── WHAT THE MANAGER TRADED, ON A MANDATE'S OWN PAGE (DSM-C10) ──
+       * ── WHAT THE MANAGER TRADED, ON A MANDATE'S OWN PAGE (DSM-C10, DSM-D8) ──
        *
        * The same shape for `ManagerTrades`: each line's counts off its own
-       * handles, its Realized cell with the reason its dash
+       * handles, each Bought / Sold / Realized cell with the reason its dash
        * carries, and the dated tranches under an opened line.
        */
       const mgrT = FAST ? null : await page.evaluate(() => {
@@ -34930,7 +35787,17 @@ for (const theme of THEMES) {
           for (let x = d; x && x !== el.parentElement; x = x.parentElement) { const v = ti(x).trim(); if (v) return v; }
           return "";
         };
+        const bare = [];
+        for (const td of table.querySelectorAll("td")) {
+          for (const el of [td, ...td.querySelectorAll("*")]) {
+            if (el.children.length !== 0 || el.textContent.trim() !== "—") continue;
+            let ok = false;
+            for (let x = el; x && x !== td.parentElement; x = x.parentElement) if (ti(x).trim()) { ok = true; break; }
+            if (!ok) bare.push(t(td.closest("tr")).slice(0, 90));
+          }
+        }
         return {
+          bare,
           rows: [...table.querySelectorAll("tr[data-manager-row]")].map((tr) => {
             const c = (n) => { const td = tr.querySelector(`[data-trade-cell="${n}"]`); return td ? { text: t(td), dash: dashOf(td) } : null; };
             const ro = tr.querySelector("[data-realised-of]");
@@ -34942,7 +35809,7 @@ for (const theme of THEMES) {
             return {
               key: tr.getAttribute("data-manager-row"), buys: Number(tr.getAttribute("data-buys")), sells: Number(tr.getAttribute("data-sells")),
               staggeredTitle: ti(tr.querySelector("[data-staggered-title]")),
-              realised: c("realised"),
+              bought: c("bought"), sold: c("sold"), realised: c("realised"),
               realisedOf: ro ? { of: ro.getAttribute("data-realised-of"), title: ti(ro) } : null,
               tranches,
             };
@@ -35065,6 +35932,19 @@ for (const theme of THEMES) {
        * `title` is not in `innerText`, which is the trap the cost-cell reasons
        * already needed `ctx.titles` for.
        */
+      const costGross = FAST ? null : await page.evaluate(() => ({
+        cells: [...document.querySelectorAll("[data-cost-gross]")].map((el) => ({
+          paid: Number(el.getAttribute("data-cost-gross")),
+          printed: el.hasAttribute("data-cost-gross-printed") ? Number(el.getAttribute("data-cost-gross-printed")) : null,
+          text: (el.innerText ?? "").trim(),
+          title: el.getAttribute("title") ?? el.querySelector("[title]")?.getAttribute("title") ?? null,
+        })),
+        tile: (() => {
+          const el = document.querySelector("[data-stock-cost-gross]");
+          return el ? { paid: Number(el.getAttribute("data-stock-cost-gross")), text: (el.innerText ?? "").trim(),
+            title: el.getAttribute("title") } : null;
+        })(),
+      }));
       const costCarried = FAST ? null : await page.evaluate(() => ({
         cells: [...document.querySelectorAll("[data-cost-carried]")].map((el) => ({
           paid: Number(el.getAttribute("data-cost-carried")),
@@ -35637,9 +36517,18 @@ for (const theme of THEMES) {
             return { list, sleeve: Number(el.getAttribute("data-fe-sleeve-mv")),
               title: el.getAttribute("title") ?? el.closest("[title]")?.getAttribute("title") ?? "" };
           })(),
+          // Each holdings row's Sector cell as a reader sees it (FS-20): the
+          // text, and the reason a dash carries in its hover.
+          sectorCells: [...document.querySelectorAll("main table tr[data-fe-holding-key]")].map((tr) => {
+            const td = tr.querySelector("[data-fe-sector-cell]");
+            return { key: tr.getAttribute("data-fe-holding-key"), account: tr.getAttribute("data-fe-holding-account"),
+              text: (td?.textContent ?? "").trim(),
+              title: td?.querySelector("[title]")?.getAttribute("title") ?? td?.getAttribute("title") ?? null };
+          }),
           footNote: document.querySelector("main [data-fe-foot-note]")?.getAttribute("title") ?? null,
         };
       });
+      if (feSectors) feSectors.barTip = FE_BAR_TIP;
       /**
        * THE PRIVATE BOOK'S VIEW TOGGLE, AND WHICH TABLE IT DREW.
        *
@@ -35677,6 +36566,17 @@ for (const theme of THEMES) {
               capCover: td.querySelector("[data-cap-cover]")?.getAttribute("data-cap-cover") ?? null,
               capUnit: td.querySelector("[data-cap-cover]")?.getAttribute("data-cap-unit") ?? null,
               asOfAttr: td.getAttribute("data-as-of"),
+              // A RETURN CELL'S OWN FIGURES (DL-16, PM-D3): what an HPR divides
+              // by where that is not the Cost column, and — on a pooled XIRR —
+              // the records held under a year and the pool without them.
+              retShown: td.getAttribute("data-return-shown"),
+              retPct: td.getAttribute("data-return-pct"),
+              retTag: td.getAttribute("data-return-tag"),
+              deployed: td.querySelector("[data-return-deployed]")?.getAttribute("data-return-deployed") ?? null,
+              deployedText: txt(td.querySelector("[data-return-deployed]")) || null,
+              deployedTitle: td.querySelector("[data-return-deployed]")?.getAttribute("title") ?? null,
+              subYear: td.getAttribute("data-return-subyear"),
+              withoutSub: td.getAttribute("data-return-without-subyear"),
             };
             i += span; width += span;
           }
@@ -35688,6 +36588,10 @@ for (const theme of THEMES) {
         const wrap = table?.parentElement;
         const foot = document.querySelector("main table[data-pm-table='transactions'] tfoot tr");
         return {
+          // EACH HEADING'S OWN HOVER, by the column it heads — where what a
+          // column adds to lives since the notes under the labels went (PM-D1).
+          headTitles: table ? Object.fromEntries([...table.querySelectorAll("thead tr:last-child > th")]
+            .map((th) => [th.getAttribute("data-col"), th.getAttribute("title")])) : {},
           views: [...document.querySelectorAll("main [data-pm-view]")]
             .map((e) => ({ key: e.getAttribute("data-pm-view"), active: e.getAttribute("aria-selected") === "true", title: e.getAttribute("title") })),
           viewCount: Number(document.querySelector("main [data-pm-view-count]")?.getAttribute("data-pm-view-count") ?? NaN),
@@ -35866,6 +36770,8 @@ for (const theme of THEMES) {
               shown: td.getAttribute("data-return-shown") === "1",
               text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
               titles: titles(td),
+              // What an HPR divides by, where it is not the row's Cost (DL-16).
+              deployed: td.querySelector("[data-return-deployed]")?.getAttribute("data-return-deployed") ?? null,
             })),
           })),
           foot: [...document.querySelectorAll("main [data-return-foot]")].map((td) => ({
@@ -36419,6 +37325,10 @@ for (const theme of THEMES) {
             return v ? { at: v.getAttribute("data-lt-valued-at") || null, by: v.getAttribute("data-lt-valued-by") || null, text: txt(v) } : null;
           })(),
           isinAbsent: (() => { const e = document.querySelector("[data-stock-isin-absent]"); return e ? { text: txt(e), tip: e.getAttribute("title") } : null; })(),
+          // Every dashed cell on a statement row of Position by account, and
+          // the cause it names — null where the dash names none (DSM-D4).
+          posDash: [...document.querySelectorAll("tr[data-account-row] td")]
+            .filter((td) => (td.innerText ?? "").trim() === "—").map((td) => tipOf(td)),
           // The mandate page's one basis pill and its header (DSM-C2), and the
           // Invested tile's reconciliation (DSM-C6).
           mandateBasis: (() => {
@@ -36503,8 +37413,13 @@ for (const theme of THEMES) {
             pledge: cellOf(tr, "pledge")?.innerText.trim() ?? null,
             pledgeTitle: tipOf(cellOf(tr, "pledge")),
             price: cellOf(tr, "price")?.innerText.trim() ?? null,
+            asOf: cellOf(tr, "asOf")?.innerText.trim() ?? null,
+            // `null` where the cell is not there at all — a Mark cell that lost
+            // its handle is a finding, not a row with no hover.
+            markTitle: cellOf(tr, "mark") ? tipOf(cellOf(tr, "mark")) ?? "" : null,
           })),
           holdingFoot: document.querySelector("main [data-polycab-holding-foot]")?.innerText ?? null,
+          holdingFootAsOf: document.querySelector('main [data-polycab-holding-foot] [data-cell="asOf"]')?.innerText.trim() ?? null,
           noteOf: {
             price: txt('main [data-polycab-table="holding"] th[data-col="price"] [data-col-note]'),
             pledge: txt('main [data-polycab-table="holding"] th[data-col="pledge"] [data-col-note]'),
@@ -36515,7 +37430,7 @@ for (const theme of THEMES) {
           /* THE REASON UNDER EACH HEADING — the note's own `title`, which is not in
              `innerText`, so a basis a reader hovers for is read where it lives. */
           noteTitleOf: Object.fromEntries([
-            ["price", "holding", "price"], ["marketValue", "holding", "marketValue"],
+            ["price", "holding", "price"], ["mark", "holding", "mark"], ["marketValue", "holding", "marketValue"],
             ["pledge", "holding", "pledge"], ["groupHolding", "promoter", "holding"], ["groupPledge", "promoter", "pledge"],
           ].map(([k, table, col]) => [k,
             document.querySelector(`main [data-polycab-table="${table}"] th[data-col="${col}"] [data-col-note]`)?.getAttribute("title") ?? null])),
@@ -36534,6 +37449,8 @@ for (const theme of THEMES) {
           })),
           quarterCells: [...document.querySelectorAll("main [data-polycab-quarter-row]")].map((tr) => ({
             asOf: tr.getAttribute("data-polycab-quarter-row"),
+            pledge: cellOf(tr, "pledge")?.innerText.trim() ?? null,
+            pledgeTitle: tipOf(cellOf(tr, "pledge")),
             sources: cellOf(tr, "sources")?.innerText.trim() ?? null,
           })),
           sources: txt("main [data-polycab-sources]"),
@@ -37172,7 +38089,9 @@ for (const theme of THEMES) {
         // the figure a reader clicked rather than to a literal written here.
         const num = (label, re) => { const v = Number(re.exec(text)?.[1] ?? NaN); if (Number.isFinite(v)) CIO_FIGURES.set(label, v); };
         num("crossHeld", /Cross-held\s*\n?\s*([\d,]+)/i);
-        num("top10Pct", /Top-10 conc\.?\s*\n?\s*(\d+)%/i);
+        // ONE DECIMAL NOW (DL-17): the tile printed 61% over a page printing
+        // 60.5%. Captured to the decimal so the drill-down is held to it.
+        num("top10Pct", /Top-10 conc\.?\s*\n?\s*(\d+(?:\.\d+)?)%/i);
         const wl = /Winners\s*\/\s*losers\s*\n?\s*([\d,]+)\s*\/\s*([\d,]+)/i.exec(text);
         if (wl) { CIO_FIGURES.set("winners", cr(wl[1])); CIO_FIGURES.set("losers", cr(wl[2])); }
         grab("listed", new RegExp(String.raw`^Listed (₹[\d,.]+\s*(?:Cr|L|K)?)`, "im"));
@@ -38135,7 +39054,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -1092,10 +1092,17 @@ export const daysBetween = (fromISO: string, toISO: string) =>
  * on ONE date — a live quote today, a published NAV on AMFI's date, a
  * statement mark on its statement's date — and the window ends there.
  *
+ * A STATEMENT MARK IS STRUCK ON THE DAY IT PRICES, which need not be the day
+ * its balances are drawn: ICICI's NSDL statement counts shares at 31 Mar 2026
+ * and values them "Prices as on 30-Mar-2026", and Helios's folio at 7 Aug
+ * prices at the 6 Aug NAV. `Position.priceAsOf` carries that date where the
+ * statement prints one, and is never inferred from the as-of; where it is
+ * absent the statement's own date stands (VD-17).
+ *
  * `nowMs` is passed in, never read here, so a page and its suite agree.
  */
 export function valueDateOf(
-  p: { live?: boolean; navPriced?: boolean; navDate?: string; quoteAgeS?: number | null },
+  p: { live?: boolean; navPriced?: boolean; navDate?: string; quoteAgeS?: number | null; priceAsOf?: string | null },
   statementAsOf: string | null | undefined,
   nowMs: number,
 ): string | null {
@@ -1107,7 +1114,7 @@ export function valueDateOf(
     return new Date(at + 19_800_000).toISOString().slice(0, 10);
   }
   if (p.navPriced && p.navDate) return p.navDate;
-  return statementAsOf ?? null;
+  return p.priceAsOf ?? statementAsOf ?? null;
 }
 
 /**

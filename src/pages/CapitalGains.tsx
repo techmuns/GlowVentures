@@ -303,9 +303,13 @@ export function CapitalGains() {
       // `RealisedByClass` row is an AGGREGATE over several securities
       // (`r.securities` is a list), so there is no single key to test for a
       // cash equivalent and inventing one would file a whole row on one of its
-      // members. Measured, it costs nothing: seven of this book's eight rows
-      // are mandates and short-circuit above, and the eighth is LKP's Equity
-      // aggregate, which carries no cash equivalent to be misfiled.
+      // members. Measured, it costs one lot and no rupee: seven of this book's
+      // eight rows are mandates and short-circuit above, and the eighth is
+      // LKP's Equity aggregate, which DOES include a cash equivalent — one
+      // Nippon India ETF Liquid BeES lot, realised ₹0 — so Direct Equity's lot
+      // count carries it. The row lists securities but no key to test, which is
+      // how the book files it (`BOOK_REALISED_BY_CLASS`); the split belongs in
+      // the builder, not in a guess here.
       const held = acc && isMandateHeld(acc.engagement) ? MANDATE_BUCKET
         : r.assetClass ? holdingBucket({ assetClass: r.assetClass }, acc?.engagement)
         : null;

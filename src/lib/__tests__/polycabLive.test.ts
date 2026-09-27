@@ -37,16 +37,18 @@
 // the company declared one.
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { readFileSync } from "node:fs";
 import { BOOK_POLYCAB, BOOK_ACCOUNTS } from "@/data/glowData";
 import { POLYCAB_LIVE } from "@/data/polycabLive";
 import {
   dividendActions, shareCountActions, unclassifiedActions, shareActionsMeasuredNil,
   latestPromoter, entitlements, markedValue, effectiveQuote,
-  quoteDating, statementDates, paymentDateWhy, witnessCounts, holdingWhy,
+  quoteDating, blockShares, statementDates, balanceReportedOn, paymentDateWhy,
+  sourcesFor, witnessCounts, holdingWhy, pledgeWhy, type StatementBalance,
 } from "@/lib/polycabLive";
 import {
   classifyAction, parseQuote, parseIdentity, parseTickertapeHoldings, pageIdentity, mergePaymentDates,
-  sessionPhase, settledQuote, mergePromoterQuarters,
+  sessionPhase, settledQuote, mergePromoterQuarters, actionsRecordCheck,
 } from "../../../shared/polycabSources.mjs";
 
 let fails = 0;
@@ -223,6 +225,36 @@ console.log("\n── the entitlement is DERIVED, and says what it assumes ─�
     ent.every((e) => JSON.stringify(e.statementDates) === JSON.stringify([...asOfs].sort())));
   ok("no entitlement is produced where the share count is unknown",
     entitlements([{ shares: null, asOf: asOfs[0] }]).every((e) => e.amount === null));
+}
+
+console.log("\n── a second demat is a second balance, never folded into the first one's date ──");
+
+/**
+ * THE MULTI-ROW PATH, ON CONSTRUCTED BALANCES — the book has one demat today, so
+ * this is the only place it can be exercised. The page used to take the FIRST
+ * row's date for every figure while summing every row's shares: two demats
+ * reported on different days would have been totalled as if one statement
+ * struck them both.
+ */
+{
+  const two: StatementBalance[] = [{ shares: 100, asOf: "2026-03-31" }, { shares: 50, asOf: "2026-06-30" }];
+  const div = dividendActions().find((a) => a.amountPerShare !== null && a.exDate);
+  if (div) {
+    const e2 = entitlements(two).find((e) => e.action === div);
+    ok("the entitlement sums every balance's shares", !!e2 && e2.amount === 150 * (div.amountPerShare as number),
+      `${e2?.amount} vs ${150 * (div.amountPerShare as number)}`);
+    ok("…names BOTH statement dates", !!e2 && JSON.stringify(e2.statementDates) === JSON.stringify(["2026-03-31", "2026-06-30"]));
+    ok("…and is reported on an ex-date only where EVERY balance is dated on it",
+      !balanceReportedOn("2026-03-31", two) && balanceReportedOn("2026-03-31", [{ shares: 1, asOf: "2026-03-31" }, { shares: 2, asOf: "2026-03-31" }]));
+  } else {
+    ok("the store carries a dated dividend to exercise the multi-row path on", false);
+  }
+  ok("a balance that reports no share count contributes nothing rather than zero",
+    blockShares([{ shares: null, asOf: "2026-03-31" }, { shares: 7, asOf: "2026-03-31" }]) === 7
+    && blockShares([{ shares: null, asOf: "2026-03-31" }]) === null);
+  ok("the statement dates are distinct and ordered",
+    JSON.stringify(statementDates([{ shares: 1, asOf: "2026-06-30" }, { shares: 1, asOf: "2026-03-31" }, { shares: 1, asOf: "2026-06-30" }]))
+      === JSON.stringify(["2026-03-31", "2026-06-30"]));
 }
 
 console.log("\n── the live layer may move the PRICE and nothing else ──");
@@ -449,6 +481,23 @@ console.log("\n── the promoter holding is counted by its witnesses, never cl
     ok("a stored quarter that does not record which says it cannot tell",
       /does not say which/.test(holdingWhy({ ...base, holdingPct: null, holdingRefused: null })));
   }
+  /**
+   * THE PLEDGE'S DASH IS A STATEMENT ABOUT WHAT THIS PAGE READS. It said "no
+   * source published an encumbrance figure", which is false of a listed company
+   * that files one every quarter.
+   */
+  const carried = qs.filter((q) => q.pledgePct !== null);
+  const dashed = qs.filter((q) => q.pledgePct === null);
+  const source = POLYCAB_LIVE.sources.find((s) => s.feeds?.includes("promoter") && /tickertape/i.test(s.name))?.name ?? "Tickertape";
+  ok("no dashed pledge claims that no source published one",
+    dashed.every((q) => !/no source published/i.test(pledgeWhy(q, qs, source))));
+  ok("every dashed pledge says the company's own disclosure is not read by this page",
+    dashed.every((q) => /company's own quarterly encumbrance disclosure is not read/.test(pledgeWhy(q, qs, source))));
+  const older = dashed.filter((q) => carried.length && q.asOf < carried.map((x) => x.asOf).sort()[0]);
+  ok("a pledge older than the source's reach names that reach, counted off the store",
+    older.every((q) => pledgeWhy(q, qs, source).includes(`reaches back only ${carried.length} quarter`)
+      && pledgeWhy(q, qs, source).includes(source)),
+    `${older.length} older quarter(s), ${carried.length} carried`);
   /** A parser that took a figure on another basis for this one is the defect PC-07 names. */
   const otherBasis = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
     props: { pageProps: { securitySummary: { holdings: { holdings: [
@@ -458,6 +507,30 @@ console.log("\n── the promoter holding is counted by its witnesses, never cl
   const parsed = parseTickertapeHoldings(otherBasis) as { pledgePct: number | null }[] | null;
   ok("the pledge is read from the group-holding basis the column is headed with",
     parsed?.[0]?.pledgePct === 0.4, JSON.stringify(parsed));
+}
+
+console.log("\n── a whole record is checked, never assumed from a non-empty one (PC-14) ──");
+{
+  const a = (exDate: string, purpose = "Dividend - Rs. - 10.0000") => ({
+    exDate, kind: "dividend" as const, purpose, amountPerShare: 10, ratio: null,
+    recordDate: null, bookClosureFrom: null, bookClosureTo: null, paymentDate: null,
+  });
+  const recent = [{ Ex_date: "19 Jun 2026" }];
+  const full = [a("2026-06-19"), a("2025-06-24")];
+  ok("an empty fetch is never whole", actionsRecordCheck([], null, recent).whole === false);
+  ok("a fetch that reaches the newest recent action and loses nothing is whole",
+    actionsRecordCheck(full, full, recent).whole === true);
+  const lost = actionsRecordCheck([a("2026-06-19")], full, recent);
+  ok("a fetch that lost a row a previous refresh stored is NOT whole — and the lost row is kept",
+    lost.whole === false && (lost.merged ?? []).some((x) => x.exDate === "2025-06-24"), lost.why ?? "");
+  ok("a fetch that stops short of the exchange's most recent action is NOT whole",
+    actionsRecordCheck([a("2025-06-24")], null, recent).whole === false);
+  ok("with no recent-actions record to check against, the claim is not made",
+    actionsRecordCheck(full, full, null).whole === false && actionsRecordCheck(full, full, []).whole === false);
+  ok("a row the exchange rewords is the same row — still whole",
+    actionsRecordCheck([a("2026-06-19", "Final Dividend - Rs. - 10.0000"), a("2025-06-24")], full, recent).whole === true);
+  ok("the committed record claims to be whole only where it carries an action at all",
+    !POLYCAB_LIVE.actionsComplete || (POLYCAB_LIVE.corporateActions?.length ?? 0) > 0);
 }
 
 console.log("\n── a dashed payment date names its own cause (PC-08) ──");
@@ -481,6 +554,22 @@ console.log("\n── a dashed payment date names its own cause (PC-08) ──")
     `${dashedStore.length} dashed payment date(s)`);
 }
 
+console.log("\n── each table credits the sources its own figures came from (PC-18) ──");
+{
+  const srcs = POLYCAB_LIVE.sources;
+  ok("every stored source says which of the page's tables it feeds",
+    srcs.length > 0 && srcs.every((s) => Array.isArray(s.feeds) && s.feeds.length > 0));
+  const actions = sourcesFor("actions"), promoter = sourcesFor("promoter");
+  ok("the corporate-actions line credits only the sources that feed it",
+    actions.length > 0 && actions.every((s) => s.feeds?.includes("actions")));
+  ok("…so a promoter-only source is never credited for the dividends",
+    srcs.filter((s) => !s.feeds?.includes("actions")).every((s) => !actions.includes(s)));
+  ok("the promoter line credits the promoter sources, and only them",
+    promoter.length > 0 && promoter.every((s) => s.feeds?.includes("promoter")));
+  ok("a source stored before `feeds` existed is credited everywhere, as the page always did",
+    sourcesFor("actions", [{ name: "x", url: "u", carries: "c" }]).length === 1);
+}
+
 console.log("\n── the committed store and report are what the builder renders from the store ──");
 {
   /**
@@ -495,6 +584,22 @@ console.log("\n── the committed store and report are what the builder render
   });
   ok("the builder's offline re-render of the committed store changes nothing",
     r.status === 0 && /No change\./.test(r.stdout), `${r.status} ${(r.stdout + r.stderr).trim().slice(0, 300)}`);
+  /**
+   * …AND WHAT IT RENDERS SAYS WHAT THE STORE CARRIES. The report printed a dash
+   * in its Record column over the five book-closure windows the exchange DID
+   * publish, and raw floats (`61.461685149737356%`) where the page prints two
+   * decimals. Struck on the committed report against the committed store, so a
+   * renderer reverted AND regenerated still fails.
+   */
+  const doc = readFileSync(path.join(root, "docs/POLYCAB-LIVE.md"), "utf8");
+  const rows = doc.split("\n").filter((l) => /^\| \d{4}-\d{2}-\d{2} \|/.test(l));
+  const windows = (POLYCAB_LIVE.corporateActions ?? []).filter((x) => !x.recordDate && x.bookClosureFrom && x.bookClosureTo);
+  ok("the report prints the book-closure window wherever the exchange published one instead of a record date",
+    windows.every((x) => rows.some((l) => l.startsWith(`| ${x.exDate} |`) && l.includes(`book closure ${x.bookClosureFrom} → ${x.bookClosureTo}`))),
+    `${windows.length} window(s)`);
+  const pcts = doc.match(/-?\d[\d.]*%/g) ?? [];
+  ok("the report prints every percentage at two decimals, never a raw float",
+    pcts.length > 0 && pcts.every((p) => /^-?\d+\.\d{2}%$/.test(p)), pcts.filter((p) => !/^-?\d+\.\d{2}%$/.test(p)).join(", "));
 }
 
 /** A run that published nothing at all is a finding, not a pass. */

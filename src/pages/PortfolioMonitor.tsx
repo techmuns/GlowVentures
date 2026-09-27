@@ -33,7 +33,7 @@ import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VAC
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
 import {
   trancheTable, trancheKey, capitalRollup, capitalMovesWithCalls, capitalReturn, capitalReturnCoverage,
-  carriedCostOf, carriedCostNote, boughtNavOf,
+  carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote, boughtNavOf,
   type TrancheTable, type TrancheRow, type CapitalSide, type CapitalGroup,
 } from "@/lib/tranches";
 // THE TWO DATED RECORDS, MERGED INTO ONE ROW SET — and the two money blocks
@@ -1155,8 +1155,11 @@ export function PortfolioMonitor() {
    *
    * IT MOVES NO MONEY. Measured on this book: 5 rows across 2 accounts, every
    * one of them ₹0 of market value and no reported cost. What changes is the row
-   * count and the section counts, and the rows are NAMED under the table rather
-   * than silently gone — this book shows what it can and names the rest.
+   * count and the section counts. They are not named on this table — the note
+   * that named them went at Stage 10ax, and the sweep asserts it stays gone —
+   * but they are not silently gone either: `/holdings` counts what it leaves
+   * out in its row-count hover, and the money a redemption returned is on
+   * Transactions under Sells (MH-17).
    */
 
   const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, footCover, rawMV, weightBase, weightCount, bucketTotals, smallDropped, realisedFacts, dupCost, dupPnl, markDates } = useMemo(() => {
@@ -1181,7 +1184,13 @@ export function PortfolioMonitor() {
      * reader can only find by accident.
      */
     const small = droppedHoldings(positions).negligible;
-    const smallDropped = { count: small.length, value: sum(small.map((x) => x.marketValue)) };
+    /* WHAT THE FLOOR TAKES FROM WHICH TOTAL (MSX-23). On the Security view the
+       row totals are company shares alone, so only the specks that ARE company
+       shares leave them; the weight base and the partition leave out all of
+       it. "Every total beside it" said the whole amount of both. */
+    const smallShares = small.filter(isCompanyShare);
+    const smallDropped = { count: small.length, value: sum(small.map((x) => x.marketValue)),
+      shareCount: smallShares.length, shareValue: sum(smallShares.map((x) => x.marketValue)) };
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => sectorOfPos(p) === sector);
     /**
@@ -1397,9 +1406,10 @@ export function PortfolioMonitor() {
        * different decisions about one company and must read as two rows — one
        * under Direct Equity, one under the mandate that chose it — rather than
        * silently landing under whichever route the first lot happened to take.
-       * No name in this drop is held both ways (measured: zero of 175 distinct
-       * equity names), so nothing on screen moves today; the key is what stops a
-       * future drop merging them without a word.
+       * ICICI Bank is held both ways in this drop — Ankita's own demat and
+       * Goldstandard's Aristos mandate — and it is two rows, one under Direct
+       * Equity and one inside the mandate, which is this key doing its job. It
+       * carries no realised figure, so no money moves between them (MH-17).
        */
       /**
        * ── ONE ROW PER FUND, NOT PER UNIT CLASS ──────────────────────────────
@@ -2780,7 +2790,12 @@ export function PortfolioMonitor() {
       e.mv += v.marketValue; e.n += 1;
       return acc.set(v.route, e);
     }, new Map<string, { route: string; mv: number; n: number }>()).values()].sort((a, b) => b.mv - a.mv);
-    const parts = by.map((g) => `${money(g.mv)} through ${g.n === 1 ? "" : `${g.n} `}${g.route}${g.n === 1 || g.route === ROUTE_LABEL.unknown ? "" : "s"}`);
+    // "2 manager's mandates" is not a plural (MH-17): two mandates are
+    // "discretionary mandates" — never "managers'", which would claim two
+    // managers where one manager runs both (Goldstandard's Aristos for two members).
+    const routeWord = (route: string, n: number) => n === 1 || route === ROUTE_LABEL.unknown ? route
+      : route === ROUTE_LABEL.mandate ? "discretionary mandates" : `${route}s`;
+    const parts = by.map((g) => `${money(g.mv)} through ${g.n === 1 ? "" : `${g.n} `}${routeWord(g.route, g.n)}`);
     const joined = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
     const gap = sum(vs.map((v) => v.marketValue)) - r.marketValue;
     return `: ${joined}${gap >= 1 ? `, as the statements print it, of which ${money(gap)} is one holding reported twice` : ""}`;
@@ -2943,7 +2958,7 @@ export function PortfolioMonitor() {
         cmp: v.splitMarks.length > 1
           ? <span data-cmp-split={v.splitMarks.length}><AbsentCell reason={splitMarkReason(v.splitMarks.map((x) => fmtFromBase(x)))} /></span>
           : v.currentPrice === null
-          ? <AbsentCell reason="marked at a total value, not a per-unit price" />
+          ? <AbsentCell reason={totalValueNote(v.valuedAt, v.positions, accIdx)} />
           : <>{fmtFromBase(v.currentPrice)}{!v.live && (
               <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
                 title={v.navPriced
@@ -2956,12 +2971,13 @@ export function PortfolioMonitor() {
                       : "")
                   // The line's OWN statement date (C-01), not the book's newest —
                   // and a quote the corporate-action check held back is named
-                  // as that, never as "no live price" (DL-9).
+                  // as that, never as "no live price" (DL-9). A statement that
+                  // prices on another day than its balances says both (VD-17).
                   : (() => {
                     const wh = withheldOf(v.positions);
                     const lead = wh ? `A live quote arrived and the corporate-action check held it back — ${wh.reason}. The mark` : "No live price — the mark";
                     return v.valuedAt
-                      ? `${lead} from this statement as of ${fmtDate(v.valuedAt)}.`
+                      ? statementMarkNote(`${lead} from this statement`, v.valuedAt, v.positions, accIdx)
                       : `${wh ? `A live quote arrived and the corporate-action check held it back — ${wh.reason}. The marks` : "No live price — the marks"} its statements print, dated differently.`;
                   })()}
                 data-cmp-withheld={withheldOf(v.positions) ? "1" : undefined}>◦</span>
@@ -3867,6 +3883,15 @@ export function PortfolioMonitor() {
                   const carried = r.costNA ? null : carriedCostOf(r.trancheSet, BOOK_POSITION_TRANCHES);
                   const carriedWhy = carried ? carriedCostNote(carried, (v) => fmtFromBase(v, { compact: true })) : "";
                   /**
+                   * …AND A COST ON THE GROSS-PAID BASIS SAYS SO TOO (VD-24).
+                   * Sanshi's statements net the stamp duty out of what they
+                   * print as cost and the book carries every rupee paid; the two
+                   * differ by thousands on crores, so the hover prints both in
+                   * full — a compact figure would print them identically.
+                   */
+                  const gross = r.costNA || carried ? null : grossPaidOf(r.trancheSet);
+                  const grossWhy = gross ? grossPaidNote(gross, (v) => fmtFromBase(v)) : "";
+                  /**
                    * WHAT A PARTLY COSTED ROW'S COST FIGURES COVER (A-02), and why
                    * an uncosted one has none — in the cell, never a bare dash.
                    * ICICI Bank is the book's case: 7,000 of 21,500 shares carry a
@@ -4035,6 +4060,8 @@ export function PortfolioMonitor() {
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
                           data-cost-carried={carried ? carried.paid : undefined}
                           data-cost-printed={carried ? carried.printed : undefined}
+                          data-cost-gross={gross ? gross.paid : undefined}
+                          data-cost-gross-printed={gross ? gross.printed : undefined}
                           data-invested-capital={capitalNote ? investedOf(r) ?? undefined : undefined}
                           data-invested-cost-held={capitalNote ? r.costBasis ?? undefined : undefined}>
                           {r.costNA ? <AbsentCell reason={noCostWhy} />
@@ -4042,6 +4069,8 @@ export function PortfolioMonitor() {
                             ? <span title={capitalNote}>{fmtFromBase(investedOf(r), { compact: true })}</span>
                             : carriedWhy
                             ? <span title={carriedWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
+                            : grossWhy
+                            ? <span title={grossWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
                             : coverNote
                             ? <span title={coverNote}>{fmtFromBase(r.costBasis, { compact: true })}<span className="ml-1 text-[10px] text-amber-400/80">◦</span></span>
                             : fmtFromBase(r.costBasis, { compact: true })}
@@ -4086,7 +4115,7 @@ export function PortfolioMonitor() {
                             : r.splitMarks && r.splitMarks.length > 1
                             ? <span data-cmp-split={r.splitMarks.length}><AbsentCell reason={splitMarkReason(r.splitMarks.map((v) => fmtFromBase(v)))} /></span>
                             : r.currentPrice === null
-                            ? <AbsentCell reason="marked at a total value, not a per-unit price" />
+                            ? <AbsentCell reason={totalValueNote(r.valuedAt, r.trancheSet, accIdx)} />
                             : r.live
                             ? fmtFromBase(r.currentPrice)
                             : <>{fmtFromBase(r.currentPrice)}
@@ -4105,7 +4134,7 @@ export function PortfolioMonitor() {
                                       ? `A live quote arrived for this security and the corporate-action check held it back — ${rowWithheld.reason}. `
                                       : "No live price for this security — ")
                                       + (r.valuedAt
-                                        ? `${rowWithheld ? "Showing" : "showing"} the mark from its statement as of ${fmtDate(r.valuedAt)}.`
+                                        ? statementMarkNote(`${rowWithheld ? "Showing" : "showing"} the mark from its statement`, r.valuedAt, r.trancheSet, accIdx)
                                         : `${rowWithheld ? "Showing" : "showing"} the mark its statements print; they are dated differently, and each line in the row's expansion carries its own date.`))}
                                   data-cmp-withheld={rowWithheld ? "1" : undefined}
                                   data-statement-note={statementNoteForSet(r.trancheSet)?.short}>◦</span></>}
@@ -4394,7 +4423,11 @@ export function PortfolioMonitor() {
                 <TrFoot view={holdView} className="px-2 py-1.5 text-slate-200"
                   data-footer-total=""
                   labelTitle={(smallDropped.count > 0
-                        ? `Total · ${rows.length} rows. ${smallDropped.count} holding${smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} ${smallDropped.count === 1 ? "is" : "are"} dropped automatically at the family's instruction — ${fmtFromBase(smallDropped.value)} in total, which is what this figure and every total beside it leave out. Nothing is missing: the book still carries them and the statements still report them.`
+                        ? `Total · ${rows.length} rows. ${smallDropped.count} holding${smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} ${smallDropped.count === 1 ? "is" : "are"} dropped automatically at the family's instruction — ${fmtFromBase(smallDropped.value)} in total${bySecurity
+                          ? `. On this view that is what the weight base and the Total exposure partition leave out; the company-share totals on this row leave out ${smallDropped.shareCount
+                              ? `only the ${fmtFromBase(smallDropped.shareValue)} of it that is company shares (${smallDropped.shareCount} holding${smallDropped.shareCount === 1 ? "" : "s"}), because the rest are funds, which are not rows here`
+                              : "none of it, because every one of them is a fund, which is not a row here"}`
+                          : ", which is what this figure and every total beside it leave out"}. Nothing is missing: the book still carries them and the statements still report them.`
                         : `Total · ${rows.length} rows. No holding in this book falls under the ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} floor.`)
                     + (dupGap > 0
                         ? ` The rows above are each member's statement as printed, so they add to ${money(rawMV)}; this total counts a holding two members both report once, at ${money(totMV)} — a ${money(dupGap)} overlap.`
@@ -4794,6 +4827,35 @@ export function PortfolioMonitor() {
  * agree by construction and this is the one a figure is struck over.
  */
 /** A fund's unit class out of a security name — `A1` — or null where it prints none. */
+/**
+ * THE ◦ MARKER'S SENTENCE FOR A STATEMENT MARK (VD-17). The mark is struck on
+ * its statement's PRICING day (`valueDateOf`), and where that is not the day
+ * the statement draws its balances, both are named: ICICI's NSDL statement
+ * counts shares at 31 Mar 2026 and prices them at the 30 Mar close. Dated by
+ * the pricing day alone it would read "its statement as of 30 Mar" about a
+ * statement of 31 Mar; dated by the balance day, a price a day older than said.
+ */
+function statementMarkNote(lead: string, valuedAt: string, ps: readonly Position[], accIdx: AccountIndex): string {
+  const drawn = [...new Set(ps
+    .filter((x) => !x.live && !x.navPriced && x.priceAsOf && x.priceAsOf !== accIdx.get(x.accountId)?.asOf)
+    .map((x) => accIdx.get(x.accountId)?.asOf)
+    .filter((d): d is string => !!d))];
+  return drawn.length === 1
+    ? `${lead} as of ${fmtDate(drawn[0])}, priced as of ${fmtDate(valuedAt)}.`
+    : `${lead} as of ${fmtDate(valuedAt)}.`;
+}
+
+/**
+ * THE PRICE CELL OF A HOLDING MARKED AT A TOTAL VALUE (VD-17). An NSDL
+ * statement prints a value and no rate, so the row has no per-unit mark and no
+ * ◦ marker to carry its date. The absence says when that value was struck, and
+ * names both days where the statement prices on another day than its balances.
+ */
+function totalValueNote(valuedAt: string | null, ps: readonly Position[], accIdx: AccountIndex): string {
+  const base = "marked at a total value, not a per-unit price";
+  return valuedAt ? `${base}. ${statementMarkNote("Its statement values it", valuedAt, ps, accIdx)}` : base;
+}
+
 function classOfName(security: string | null | undefined): string | null {
   return security ? (splitFundClass(security)?.cls ?? null) : null;
 }
@@ -5572,6 +5634,15 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   const accByPA = useMemo(() => new Map(accountsReg.map((a) => [acctKey(a.provider, a.accountNo), a])), [accountsReg]);
   /** Accounts the WHOLE record funds — the book fact a narrowed count must not be read as. */
   const fundedInBook = useMemo(() => new Set(CAPITAL_RECORD.map((m) => m.accountId)).size, []);
+  /**
+   * An account whose positions are all fund units redeemed to nil, at a NAV the
+   * fund still publishes — the one case "₹0, measured" is true of on its own terms.
+   */
+  const redeemedToNil = useMemo(() => {
+    const by = new Map<string, Position[]>();
+    for (const p of positionsReg) (by.get(p.accountId) ?? by.set(p.accountId, []).get(p.accountId)!).push(p);
+    return new Set([...by].filter(([, ps]) => ps.length > 0 && ps.every((p) => isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null)).map(([id]) => id));
+  }, [positionsReg]);
 
   /** What each return column covers, over EVERY row drawn — a manager's dealing carries no return on the family's money. */
   const retCov = (measure: ReturnMeasure) => {
@@ -6016,7 +6087,9 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                             title={r.value == null ? undefined : [
                               asOfOf(r) ? `As of ${fmtDate(asOfOf(r)!)} — the date of the statement that values this account. Each account is valued on its own statement's date, so this column is not one "today".` : null,
                               r.value === 0
-                                ? "This account holds nothing today: its own statement reports zero units at a NAV the fund still publishes, so the ₹0 is what was measured rather than a figure this book is missing."
+                                ? (redeemedToNil.has(r.accountId ?? "")
+                                  ? "This account holds nothing today: its own statement reports zero units at a NAV the fund still publishes, so the ₹0 is what was measured rather than a figure this book is missing."
+                                  : "The positions this account's statement reports sum to ₹0 — a measured zero, not a missing figure.")
                                 : null,
                             ].filter(Boolean).join(" ") || undefined}>
                             {r.value === null
@@ -6160,9 +6233,9 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                                                 : money(m.amount)) : ""}
                                             </td>
                                             <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-slate-400">
-                                              {m.units === null ? <span className="text-slate-600">—</span> : fmtNum(m.units)}
+                                              {m.units === null ? <AbsentCell reason="the statement prints no unit count against this movement" /> : fmtNum(m.units)}
                                             </td>
-                                            <td className="px-3 py-1.5 text-slate-400">{m.security ?? <span className="text-slate-600">—</span>}</td>
+                                            <td className="px-3 py-1.5 text-slate-400">{m.security ?? <AbsentCell reason="the statement names no security against this movement" />}</td>
                                           </Tr>
                                         ))}
                                         {/* A PAYOUT THE FUND PRINTS ONLY AS A TOTAL is still

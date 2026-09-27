@@ -530,8 +530,10 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                      Capital invested tile already cost this page once — so the
                      subject is the scope's own, and it moves with the tab. */
                   <p className="mt-3 border-t border-ink-700 pt-2 text-[11.5px] text-slate-400" data-testid="movers-vs-index"
-                    title={`Struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(portfolio.totalValue, { compact: true })} book. Both are one session, and neither is a return over any longer window.`}>
-                    {SCOPE.subject} {SCOPE.verb} <strong className={changeColor(gap)}>{fmtPct(gap, { sign: true })}</strong> against the
+                    title={`Struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(portfolio.totalValue, { compact: true })} book. Both are one session, and neither is a return over any longer window. The gap is the difference between two percentages, so it is in percentage points rather than a percentage of anything.`}>
+                    {/* A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20), not a
+                        percentage of anything — "+11.00%" read as a return. */}
+                    {SCOPE.subject} {SCOPE.verb} <strong className={changeColor(gap)}>{`${gap > 0 ? "+" : gap < 0 ? "−" : ""}${fmtNum(Math.abs(gap), 2)} pts`}</strong> against the
                     Nifty 500 today
                   </p>
                 );

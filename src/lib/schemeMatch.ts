@@ -1,5 +1,5 @@
 /**
- * HOW A HOLDING WAS JOINED TO ITS SCHEME, SAID AS IT HAPPENED (DSM-C5, VD-19).
+ * HOW A HOLDING WAS JOINED TO ITS SCHEME, SAID AS IT HAPPENED (DSM-C5, VD-19, D5).
  *
  * The fund card's match pill read "matched on name+plan" while its own hover
  * said "Matched from this holding's own ISIN", the Plan tile's caption said
@@ -61,4 +61,15 @@ export function isinAbsentWords(fundOnly: boolean, storeIsin?: string | null): {
       ? ` The fund store matches the scheme another way and carries ${storeIsin} as the scheme's own ISIN — not one read off this family's statement.`
       : ""}`,
   };
+}
+
+/**
+ * A PLAN'S OPTION, WHERE THE STORE DOES NOT STATE ONE (D5). The DSP gold and
+ * silver ETFs read "PLAN Regular · Unknown": the store's placeholder printed as
+ * though it were an option. Null where there is no option to show.
+ */
+export function optionWords(option: string | null | undefined): { text: string; tip: string | null } | null {
+  if (!option || !option.trim()) return null;
+  if (/^unknown$/i.test(option.trim())) return { text: "option not stated", tip: "The fund store does not state this scheme's option (growth or IDCW)." };
+  return { text: option, tip: null };
 }

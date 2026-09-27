@@ -73,7 +73,7 @@ import {
   BSE_API, BSE_SCRIP, NSE_SYMBOL, BROWSER_HEADERS,
   parseCorporateActions, parseQuote, parseIdentity, mergePaymentDates,
   parseTickertapeHoldings, parseScreenerPromoter, pageIdentity,
-  sessionPhase, settledQuote, mergePromoterQuarters,
+  sessionPhase, settledQuote, mergePromoterQuarters, actionsRecordCheck,
 } from "../shared/polycabSources.mjs";
 
 const CHECK = process.argv.includes("--check");
@@ -98,17 +98,25 @@ const SCREENER_URL = `https://www.screener.in/company/${NSE_SYMBOL}/consolidated
 const TICKERTAPE_URL = "https://www.tickertape.in/stocks/polycab-india-POLC";
 
 /**
- * THE SOURCES — this file's own constants, never fetched, which is why the
- * offline re-render may restate them.
+ * THE SOURCES, AND WHICH TABLE ON THE PAGE EACH ONE FEEDS.
+ *
+ * `feeds` names the page's own views, so the sources line under a table credits
+ * the sources that table's figures came from and no others. It used to list all
+ * three under both company-level tables — Tickertape and Screener credited
+ * beneath a corporate-action record only BSE supplies, which is a caption
+ * asserting a provenance the figures under it do not have. These are this
+ * file's own constants, never fetched, which is why the offline re-render may
+ * restate them.
  */
 const SOURCES = [
   {
     name: "BSE (exchange)",
     url: `https://www.bseindia.com/stock-share-price/polycab-india-ltd/${NSE_SYMBOL.toLowerCase()}/${BSE_SCRIP}/`,
     carries: "identity, last traded price, the full corporate-action record",
+    feeds: ["holding", "actions"],
   },
-  { name: "Tickertape", url: TICKERTAPE_URL, carries: "promoter holding and promoter pledge, per quarter — gated on the book's own ISIN" },
-  { name: "Screener", url: SCREENER_URL, carries: "promoter holding, per quarter — the second witness" },
+  { name: "Tickertape", url: TICKERTAPE_URL, carries: "promoter holding and promoter pledge, per quarter — gated on the book's own ISIN", feeds: ["promoter"] },
+  { name: "Screener", url: SCREENER_URL, carries: "promoter holding, per quarter — the second witness", feeds: ["promoter"] },
 ];
 
 const notes = [];
@@ -157,7 +165,8 @@ function stored() {
  *
  * Only fields its OWN record establishes are added, and no fetched figure moves:
  *
- *   sources          this file's constants, never fetched — restated as they stand.
+ *   sources          this file's constants, never fetched — restated with the
+ *                    `feeds` that say which table each one supplies.
  *   quote.fetchedAt  the quote's fetch time. A run that fetched the quote records
  *                    no quote failure in its notes, and `retrievedAt` moves only
  *                    when a figure moved — so where the stored notes record no
@@ -279,21 +288,38 @@ async function main() {
   } else if (prev?.quote) quote = prev.quote;
 
   // ── CORPORATE ACTIONS — the whole record since listing. ──────────────────
+  /**
+   * "WHOLE" IS NOW A CHECK, NOT A NON-EMPTY RESPONSE. `actionsComplete` used to
+   * be set by the fetch returning at least one row, so a truncated response was
+   * published as complete as easily as a whole one — and the page's strongest
+   * sentence, that no bonus, split or spin-off has ever been declared, rests on
+   * that flag. `actionsRecordCheck` requires the record to have lost no row a
+   * previous refresh stored and to reach the newest action the exchange's
+   * recent-actions record names; see its note in `shared/polycabSources.mjs`.
+   */
   let actions = null, actionsComplete = false;
   if (identity) {
+    let fetched = null;
     try {
-      const rows = await get(`${BSE_API}/DefaultData/w?ddlcategorys=E&ddlindustrys=&segment=0&strSearch=S&Fdate=&TDate=&Purposecode=&scripcode=${BSE_SCRIP}`);
-      actions = parseCorporateActions(rows);
-      if (!actions?.length) throw new Error("the exchange returned no corporate action at all");
-      actionsComplete = true;
-      // The payment date lives on a second, SHORTER endpoint and only ever
-      // fills an empty field. Its failure costs a date, never a row.
-      try {
-        const ca = await get(`${BSE_API}/CorporateAction/w?scripcode=${BSE_SCRIP}`);
-        actions = mergePaymentDates(actions, ca?.Table2 ?? []);
-      } catch (e) { note("warn", "payment-dates", `payment dates did not refresh — ${e.message}`); }
+      fetched = parseCorporateActions(await get(`${BSE_API}/DefaultData/w?ddlcategorys=E&ddlindustrys=&segment=0&strSearch=S&Fdate=&TDate=&Purposecode=&scripcode=${BSE_SCRIP}`));
+      if (!fetched?.length) throw new Error("the exchange returned no corporate action at all");
     } catch (e) {
       note("fail", "corporate-actions", `the corporate-action record did not refresh — ${e.message}`);
+      fetched = null;
+    }
+    if (fetched) {
+      // The recent-actions record: the payment dates, AND the witness that the
+      // whole record reaches the present. Its failure costs a date and the
+      // "whole" claim, never a row.
+      let recent = null;
+      try { recent = (await get(`${BSE_API}/CorporateAction/w?scripcode=${BSE_SCRIP}`))?.Table2 ?? []; }
+      catch (e) { note("warn", "payment-dates", `payment dates did not refresh — ${e.message}`); }
+      const check = actionsRecordCheck(fetched, prev?.corporateActions ?? null, recent);
+      actions = check.merged;
+      actionsComplete = check.whole;
+      if (!check.whole) note("warn", "corporate-actions", `the record is published but NOT as complete — ${check.why}`);
+      if (recent) actions = mergePaymentDates(actions, recent);
+    } else {
       actions = prev?.corporateActions ?? null;
       actionsComplete = false;
       if (actions) note("info", "corporate-actions", "the stored record is kept, and is NOT republished as complete.");
@@ -518,7 +544,8 @@ export interface PolycabLive {
   actionsComplete: boolean;
   promoterQuarters: PolycabQuarter[] | null;
   promoterAgreement: { compared: number; disagreed: number } | null;
-  sources: { name: string; url: string; carries: string }[];
+  /** \`feeds\` names the page's views each source supplies, so a table credits only its own. */
+  sources: { name: string; url: string; carries: string; feeds?: string[] }[];
   notes: { severity: string; rule: string; detail: string }[];
   retrievedAt: string;
 }
@@ -567,35 +594,56 @@ function renderReport(o) {
         + "\n\"unreported rather than confirmed\" wording.\n"
       : `**${share}** share-count action(s) are on the record; each is listed below with its ratio.\n`);
   }
-  L.push("| Ex-date | Kind | Per share | Ratio | Record | Payment | The exchange's own words |");
+  // THE RECORD COLUMN PRINTS WHAT THE EXCHANGE PUBLISHED — a record date where
+  // it gives one, and otherwise the book-closure window it gave instead. A dash
+  // over a window the store carries is the absence rule run backwards, which the
+  // page fixed at Stage 10bt and this report had kept.
+  const record = (r) => r.recordDate
+    ?? (r.bookClosureFrom ? `book closure ${r.bookClosureFrom}${r.bookClosureTo ? ` → ${r.bookClosureTo}` : ""}` : "—");
+  L.push("| Ex-date | Kind | Per share | Ratio | Record / book closure | Payment | The exchange's own words |");
   L.push("| --- | --- | ---: | --- | --- | --- | --- |");
   for (const r of a) {
-    L.push(`| ${r.exDate ?? "—"} | ${r.kind} | ${r.amountPerShare ?? "—"} | ${r.ratio ?? "—"} | ${r.recordDate ?? "—"} | ${r.paymentDate ?? "—"} | ${r.purpose} |`);
+    L.push(`| ${r.exDate ?? "—"} | ${r.kind} | ${r.amountPerShare ?? "—"} | ${r.ratio ?? "—"} | ${record(r)} | ${r.paymentDate ?? "—"} | ${r.purpose} |`);
   }
   L.push("");
 
   L.push("## Promoter holding and pledge\n");
   if (o.promoterQuarters?.length) {
     const ag = o.promoterAgreement;
-    L.push(ag ? `${ag.compared} quarter(s) are carried by BOTH witnesses; **${ag.disagreed}** disagree.\n` : "");
-    L.push("A quarter where the two disagree beyond 0.05pp publishes **neither** figure, which");
-    L.push("is why a `—` in the holding column is a refusal rather than a gap. The pledge has");
-    L.push("ONE witness (screener prints no pledge row for this scrip) and is published as such.\n");
-    L.push("| Quarter | As of | Promoter holding | Promoter pledge |");
-    L.push("| --- | --- | ---: | ---: |");
-    for (const q of o.promoterQuarters) {
-      L.push(`| ${q.quarter} | ${q.asOf ?? "—"} | ${q.holdingPct === null ? "—" : q.holdingPct + "%"} | ${q.pledgePct === null ? "—" : q.pledgePct + "%"} |`);
+    const qs = o.promoterQuarters;
+    const both = qs.filter((q) => q.witnesses >= 2).length;
+    const one = qs.filter((q) => q.witnesses === 1).length;
+    L.push(`Of ${qs.length} quarter(s), **${both}** are carried by BOTH sources and **${one}** by one`
+      + `${ag ? `; ${ag.compared} were compared and **${ag.disagreed}** disagree` : ""}.\n`);
+    L.push("Where both carry a quarter they must agree within 0.05pp, or **neither** figure is");
+    L.push("published — a refusal, marked as one. A quarter only one source carries is published");
+    L.push("on that source alone, unchecked against a second. The promoter holding is a share of");
+    L.push("Polycab's total equity. The pledge has ONE source — Tickertape's \"Promoter Holding");
+    L.push("Pledged\", the pledged part of the promoter group's own holding (Screener prints no pledge");
+    L.push("row for this scrip) — and is published as such.\n");
+    L.push("| Quarter | As of | Promoter holding (% of total shares) | Pledged (% of the group's holding) | Sources |");
+    L.push("| --- | --- | ---: | ---: | ---: |");
+    // Two decimals, the precision the page prints — a raw float here read as a
+    // measurement to fifteen places that no disclosure makes.
+    const pct = (v) => (v === null ? "—" : `${v.toFixed(2)}%`);
+    for (const q of qs) {
+      const held = q.holdingPct === null ? (q.holdingRefused === true ? "— (refused: the two disagreed)" : "—") : pct(q.holdingPct);
+      L.push(`| ${q.quarter} | ${q.asOf ?? "—"} | ${held} | ${pct(q.pledgePct)} | ${q.witnesses} |`);
     }
     L.push("");
   } else {
     L.push("No promoter series was published this run.\n");
   }
 
-  L.push("## The live quote\n");
+  L.push("## The stored quote\n");
   if (o.quote) {
+    const ph = sessionPhase(o.quote.fetchedAt);
     L.push("| | |");
     L.push("| --- | ---: |");
     L.push(`| Last traded | ${o.quote.ltp} |`);
+    L.push(`| Fetched | ${ph
+      ? `${o.quote.fetchedAt} — ${ph.istTime} IST on ${ph.istDate}, ${ph.inSession ? "during trading hours, so possibly an intraday price" : "outside trading hours, so the last session's close"}`
+      : "not recorded, so the price is undated"} |`);
     L.push(`| Previous close | ${o.quote.prevClose ?? "—"} |`);
     L.push(`| Day change | ${o.quote.change ?? "—"} (${o.quote.changePct === null ? "—" : o.quote.changePct.toFixed(2) + "%"}) |`);
     L.push(`| Open / high / low | ${o.quote.open ?? "—"} / ${o.quote.high ?? "—"} / ${o.quote.low ?? "—"} |\n`);
@@ -608,9 +656,9 @@ function renderReport(o) {
   }
 
   L.push("## Sources\n");
-  L.push("| Source | Carries | URL |");
-  L.push("| --- | --- | --- |");
-  for (const s of o.sources) L.push(`| ${s.name} | ${s.carries} | ${s.url} |`);
+  L.push("| Source | Carries | Credited under the page's | URL |");
+  L.push("| --- | --- | --- | --- |");
+  for (const s of o.sources) L.push(`| ${s.name} | ${s.carries} | ${(s.feeds ?? []).join(", ") || "—"} | ${s.url} |`);
   L.push("");
   L.push("NSE would be the natural second exchange witness and refuses every request from");
   L.push("the harvest environment (HTTP 403, Akamai, with and without a cookie bootstrap).");
