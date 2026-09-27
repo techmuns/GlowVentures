@@ -8,15 +8,16 @@ import { StockLink } from "@/components/StockLink";
 import {
   sum, sumOrNull, consolidatedMarketValue, isCompanyShare, excludedClasses, assetClassLabel, currentHoldings,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE, DIRECT_EQUITY_BUCKET, costCoversSet,
-  holdingBucket, bucketLabel, MANDATE_BUCKET,
+  holdingBucket, bucketLabel, MANDATE_BUCKET, droppedHoldings, isFundVehicle, CASH_EQUIVALENT_KEYS,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { fifoTotals } from "@/lib/fifo";
-import { companyExposure, type CompanyExposure } from "@/lib/lookthrough";
+import { companyExposure, companySymbol, type CompanyExposure } from "@/lib/lookthrough";
+import { isArbitrageFund } from "@/lib/fundNavs";
 import { UNCLASSIFIED } from "@/lib/sectors";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
-import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
+import { fmtPct, fmtCurrency, changeColor, fmtDate } from "@/lib/format";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import type { Position } from "@/lib/types";
@@ -48,11 +49,47 @@ const LIVE_CELL = "Recalculated from live prices. Cost basis comes from the ledg
  * document does not report it" would be true of one document and silent about
  * the other.
  */
-const unclassifiedWhy = (consolidatedView: boolean) =>
-  "Left unclassified rather than assigned a sector we would have to guess. These are shares in companies, so the sector "
-  + (consolidatedView
-    ? "exists — neither the family's own statement nor any fund disclosure that names this company printed one."
-    : "exists; the statement simply does not report it. A depository prints an ISIN, a quantity and a rate and no industry at all.");
+const unclassifiedWhy = (consolidatedView: boolean, mix?: IssuerMix) => {
+  if (!consolidatedView) {
+    return "Left unclassified rather than assigned a sector we would have to guess. These are shares in companies, so the sector "
+      + "exists; the statement simply does not report it. A depository prints an ISIN, a quantity and a rate and no industry at all.";
+  }
+  const base = "Left unclassified rather than assigned a sector we would have to guess: neither the family's own statement nor any "
+    + "fund disclosure that names these issuers printed one, and screener.in placed none of them.";
+  if (!mix) return base;
+  const n = mix.shares + mix.debtOnly + mix.other;
+  const parts = [
+    mix.debtOnly > 0 && `${mix.debtOnly} ${mix.debtOnly === 1 ? "is" : "are"} reached only through debt paper — ${DEBT_PAPER} — `
+      + "where a fund's filing prints a credit rating in place of an industry",
+    mix.shares > 0 && `${mix.shares} ${mix.shares === 1 ? "is a share" : "are shares"}, whose sector exists and no source here reports`,
+    mix.other > 0 && `${mix.other} ${mix.other === 1 ? "is a line" : "are lines"} a fund's filing classes as neither equity nor debt`,
+  ].filter(Boolean);
+  return parts.length ? `${base} Of these ${n}, ${parts.join("; ")}.` : base;
+};
+
+/**
+ * ── WHAT A CONSOLIDATED ROW IS HELD AS (FS-13) ──────────────────────────────
+ *
+ * Since Stage 10as a Consolidated row is an ISSUER, reached through a share, a
+ * bond, a CD or a bill alike — so "companies" is true of some rows and false of
+ * the rest (the Government of India's T-bills are a row), and "these are shares
+ * in companies, so the sector exists" was false of every row reached only
+ * through debt paper, where a fund's filing prints a credit RATING in the
+ * column a share's industry sits in. Counted off each row's own classes — the
+ * statement reports a share; a filing says what each line it discloses is —
+ * never inferred from a name.
+ */
+type IssuerMix = { shares: number; debtOnly: number; other: number };
+function issuerMix(list: readonly CompanyExposure[]): IssuerMix {
+  const mix: IssuerMix = { shares: 0, debtOnly: 0, other: 0 };
+  for (const e of list) {
+    if (e.classes.includes("Equity")) mix.shares += 1;
+    else if (e.classes.includes("Debt")) mix.debtOnly += 1;
+    else mix.other += 1;
+  }
+  return mix;
+}
+const DEBT_PAPER = "bonds, CDs, commercial paper, bills";
 
 /** Why Consolidated strikes no return: its value is part measured, part derived. */
 const CONSOLIDATED_RETURN_WHY = "This view's value is the shares the statements report plus a DERIVED share of what the funds disclose, and no document reports a cost for the second. A return struck over it would divide a part-measured gain by a cost covering part of its own numerator. Direct Equity is measured end to end and carries one where its holdings report a cost.";
@@ -87,7 +124,7 @@ const CONSOLIDATED_RETURN_WHY = "This view's value is the shares the statements 
 type SectorView = "consolidated" | "direct" | "compare";
 const SECTOR_VIEWS: readonly ViewDef<SectorView>[] = [
   { key: "consolidated", label: "Consolidated",
-    title: "Every company this family is exposed to — the shares their statements report, plus their share of what their funds disclose holding." },
+    title: "Every issuer this family is exposed to — the shares their statements report, plus their share of every instrument their funds disclose: shares, bonds, CDs, commercial paper and bills." },
   { key: "direct", label: "Direct Equity",
     title: "Shares bought in the family's own demat and broking accounts only — nothing a discretionary manager chose, and no fund." },
   { key: "compare", label: "Compare sectors",
@@ -123,6 +160,15 @@ type SectorRow = {
   returnWhy: string | null;
   /** The largest company (Consolidated) or holding (Direct Equity). */
   top: string | null;
+  /**
+   * …and its key, and whether the family holds it ONLY inside a fund (FS-14).
+   * Ranked on total exposure, the largest issuer in a sector can be one no
+   * statement reports — the book's own Materials, Communication Services and
+   * Real Estate rows are each headed by one — and a column called "Top
+   * holding" over it asserted a position the fence says it is not.
+   */
+  topKey: string | null;
+  topDerivedOnly: boolean;
 };
 
 /**
@@ -164,6 +210,8 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
           measured, derived, cost: null, pnl: null, returnPct: null, realised: null, deployed: null,
           costed: 0, holdings: positions.length, uncostedMV: null, returnWhy: CONSOLIDATED_RETURN_WHY,
           top: byValue[0]?.name ?? null,
+          topKey: byValue[0]?.key ?? null,
+          topDerivedOnly: !!byValue[0] && byValue[0].positions.length === 0,
         };
       }
       const costedRows = positions.filter((x) => typeof x.costBasis === "number" && !x.costUnavailable);
@@ -176,7 +224,7 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
       // alone. `fifoTotals` is the one place a set becomes a return.
       const fifo = fifoTotals(positions);
       const returnPct = covered && fifo.returnPct !== null ? fifo.returnPct : null;
-      const topHolding = [...positions].sort((a, b) => b.marketValue - a.marketValue)[0]?.security ?? null;
+      const topPos = [...positions].sort((a, b) => b.marketValue - a.marketValue)[0] ?? null;
       return {
         key, mv: v.mv, count: positions.length, weight: tot > 0 ? v.mv / tot : 0,
         measured, derived, cost, pnl, returnPct, realised: fifo.realised, deployed: fifo.deployed,
@@ -185,7 +233,9 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
           : costedRows.length === 0
             ? "No holding in this sector reports a cost — a depository statement carries a value and no basis, so there is nothing to strike a return against."
             : `A cost is reported for ${costedRows.length} of the ${positions.length} holdings in this sector, and a return over those few printed beside the value of all of them would describe neither.`,
-        top: topHolding,
+        top: topPos?.security ?? null,
+        topKey: topPos?.securityKey ?? null,
+        topDerivedOnly: false,
       };
     })
     .sort((a, b) => b.mv - a.mv);
@@ -347,9 +397,12 @@ export function SectorComposition() {
       else if (e.sectorFrom === "vendor") vendor += 1;
       else unplaced.push(e);
     }
-    const unplacedMV = unplaced.reduce((a, e) => a + e.total, 0);
+    // ON THE VIEW'S OWN BASIS: Direct Equity values a row at what the family's
+    // own statements report, so its unplaced figure must not carry the derived
+    // rupees their funds add to the same company on the Consolidated view.
+    const unplacedMV = unplaced.reduce((a, e) => a + (consolidatedView ? e.total : e.measured), 0);
     return { book, disc, vendor, unplaced, unplacedMV };
-  }, [entries]);
+  }, [entries, consolidatedView]);
   const axisFmt = (v: number) => fmtCurrency(v, displayCurrency, { compact: true });
   /**
    * WHAT A SECTOR OPENS INTO. Direct Equity expands to the POSITIONS behind it,
@@ -390,15 +443,6 @@ export function SectorComposition() {
     for (const [key, rows] of Object.entries(holdingsBySector)) m[key] = rows.some((x) => x.live);
     return m;
   }, [consolidatedView, holdingsBySector]);
-  const topHolding = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const s of sectors) {
-      m[s.key] = consolidatedView
-        ? companiesBySector[s.key]?.[0]?.name ?? "—"
-        : holdingsBySector[s.key]?.[0]?.security ?? "—";
-    }
-    return m;
-  }, [consolidatedView, sectors, holdingsBySector, companiesBySector]);
 
   /**
    * THE TABLE'S OWN ORDER. `sectors` keeps the chart's ordering — the donut reads
@@ -412,7 +456,7 @@ export function SectorComposition() {
     weight: (x) => x.mv,
     count: (x) => x.count,
     return: (x) => x.returnPct,
-    top: (x) => topHolding[x.key] ?? null,
+    top: (x) => x.top,
   });
 
   /**
@@ -440,6 +484,127 @@ export function SectorComposition() {
   });
   const consByKey = new Map(consSectors.map((s) => [s.key, s]));
   const directByKey = new Map(directSectors.map((s) => [s.key, s]));
+
+  /** What the Consolidated rows are held as, and the Unclassified ones (FS-13). */
+  const consMix = issuerMix(consEntries);
+  const unclassMix = issuerMix(consEntries.filter((e) => (e.sector || UNCLASSIFIED) === UNCLASSIFIED));
+  /** The own-account holdings are statement lines: how many companies they are. */
+  const ownCompanies = new Set(ownRows.map((x) => x.securityKey)).size;
+  const donutWhy = consolidatedView
+    ? `Each counted once — an issuer two of the family's statements both report, or several of their funds disclose, is one row here, never two: ${
+      consMix.shares} reached through shares, the family's own or a fund's; ${
+      consMix.debtOnly} only through the debt paper a fund discloses — ${DEBT_PAPER}${
+      consMix.other > 0 ? `; ${consMix.other} only through lines a fund's filing classes as neither equity nor debt` : ""}.`
+    /* FS-21: this view counts HOLDINGS, so the hover says what a holding is. A
+       company held in two of the family's own accounts is two lines here. */
+    : `Each counted once — a holding two of the family's statements both report is one row here, never two. A company held in two of their own accounts is two holdings: ${
+      ownCompanies} ${ownCompanies === 1 ? "company" : "companies"} across these ${ownRows.length}.`;
+
+  /**
+   * WHY EACH UNPLACED ROW IS UNPLACED, by the cause that is true of it (FS-13).
+   * "No NSE symbol resolves" is the cause for a share; for an issuer reached
+   * only through debt paper the cause is that a filing prints a credit rating
+   * where an industry would be, and a T-bill is not a company missing a symbol.
+   */
+  const unplacedMix = issuerMix(sectorFrom.unplaced);
+  const unplacedShares = sectorFrom.unplaced.filter((e) => e.classes.includes("Equity"));
+  const sharesNoSymbol = unplacedShares.filter((e) => !companySymbol(e)).length;
+  const sharesNoVendorSector = unplacedShares.length - sharesNoSymbol;
+  const unplacedCauses = [
+    unplacedMix.debtOnly > 0 && `${unplacedMix.debtOnly} reached only through debt paper — ${DEBT_PAPER} — whose filings print a credit rating where an industry would be`,
+    sharesNoSymbol > 0 && `${sharesNoSymbol} ${sharesNoSymbol === 1 ? "share" : "shares"} for which no NSE symbol resolves, so nothing keys the screener.in lookup`,
+    sharesNoVendorSector > 0 && `${sharesNoVendorSector} ${sharesNoVendorSector === 1 ? "share" : "shares"} whose NSE symbol the committed screener.in lookup gives no sector for`,
+    unplacedMix.other > 0 && `${unplacedMix.other} ${unplacedMix.other === 1 ? "line" : "lines"} a fund's filing classes as neither equity nor debt`,
+  ].filter(Boolean);
+
+  /**
+   * ── WHAT THE DERIVED HALF IS MADE OF, AND ITS TWO DATES (FS-13, FS-15) ─────
+   *
+   * Every instrument a fund discloses, so it is shares AND debt paper — and the
+   * look-through of the liquid funds the holdings tables count as cash is in it.
+   * Two dates meet in every derived rupee: the fund's value (AMFI's NAV where
+   * one is published, the statement's mark otherwise) times what the fund held
+   * at its own portfolio disclosure, which is a month or two older. Neither was
+   * on the page; the figure sat under nothing that said when it is from.
+   */
+  const derivedParts = (() => {
+    let shares = 0, debt = 0, other = 0, inCashFunds = 0;
+    const byDate = new Map<string, number>();
+    const funds = new Set<string>();
+    if (exposure.status === "ok") {
+      for (const x of exposure.byKey.values()) {
+        for (const r of x.rows) {
+          funds.add(r.fundKey);
+          byDate.set(r.holdingsAsOf ?? "", (byDate.get(r.holdingsAsOf ?? "") ?? 0) + r.value);
+          if (CASH_EQUIVALENT_KEYS[r.fundKey]) inCashFunds += r.value;
+          for (const i of r.instruments) {
+            if (i.assetClass === "Equity") shares += i.value;
+            else if (i.assetClass === "Debt") debt += i.value;
+            else other += i.value;
+          }
+        }
+      }
+    }
+    const asOfOf = new Map(portfolio.accounts.map((a) => [a.accountId, a.asOf]));
+    const marks = new Map<string, { nav: boolean; value: number }>();
+    for (const x of heldConsolidated) {
+      if (!funds.has(x.securityKey)) continue;
+      const nav = !!(x.navPriced && x.navDate);
+      const d = nav ? x.navDate! : asOfOf.get(x.accountId) ?? "";
+      const k = `${nav ? "nav" : "stmt"}:${d}`;
+      const e = marks.get(k) ?? { nav, value: 0 };
+      e.value += x.marketValue;
+      marks.set(k, e);
+    }
+    const dated = (iso: string) => (iso ? fmtDate(iso) : "an undated disclosure");
+    const valuedAt = [...marks.entries()].sort((a, b) => b[1].value - a[1].value)
+      .map(([k, e]) => `${e.nav ? "AMFI's NAV of" : "its statement's mark of"} ${dated(k.slice(k.indexOf(":") + 1))}${marks.size > 1 ? ` (${money(e.value)})` : ""}`);
+    const heldAt = [...byDate.entries()].sort((a, b) => b[1] - a[1])
+      .map(([d, v]) => `${dated(d)} (${money(v)})`);
+    const join = (l: string[]) => (l.length <= 1 ? l.join("") : `${l.slice(0, -1).join(", ")} and ${l[l.length - 1]}`);
+    return { shares, debt, other, inCashFunds, byDate, valuedAt: join(valuedAt), heldAt: join(heldAt) };
+  })();
+  const derivedWhy = exposure.status === "ok"
+    ? `DERIVED: their units' share of every instrument ${exposure.covered} of ${exposure.considered} funds disclose — ${
+      money(derivedParts.shares)} in shares, ${money(derivedParts.debt)} in ${DEBT_PAPER}${
+      derivedParts.other > 0 ? `, ${money(derivedParts.other)} in lines their filings class as neither` : ""}${
+      derivedParts.inCashFunds > 0 ? `; ${money(derivedParts.inCashFunds)} of it is inside the liquid funds the holdings tables count as cash` : ""
+      }. Two dates meet in it: each fund at ${derivedParts.valuedAt}, times what it held at its own portfolio disclosure — ${derivedParts.heldAt}.`
+    : undefined;
+
+  /**
+   * ── WHAT "NOT ON THIS PAGE" IS, ITEMISED (FS-13) ───────────────────────────
+   *
+   * It read "undisclosed vehicles, non-equity and cash" while ₹15 Cr of debt and
+   * ₹14 Cr of liquid-fund paper sat in the derived half ON the page. So the
+   * hover names what the residual really is, each part summed from the book or
+   * the store, and anything none of them names is stated rather than absorbed.
+   */
+  const restParts = (() => {
+    const notOnPage = portfolio.totalValue - measuredMV - derivedMV;
+    if (exposure.status !== "ok") return null;
+    const aif = exposure.skipped.filter((sk) => /^an AIF files/.test(sk.reason));
+    const unresolved = exposure.skipped.length - aif.length;
+    const arb = sum(heldConsolidated.filter((x) => isArbitrageFund(x)).map((x) => x.marketValue));
+    const cash = sum(heldConsolidated.filter((x) => x.assetClass === "Cash").map((x) => x.marketValue));
+    const otherRows = heldConsolidated.filter((x) => !isCompanyShare(x) && !isFundVehicle(x) && x.assetClass !== "Cash");
+    const other = sum(otherRows.map((x) => x.marketValue));
+    const floor = sum(droppedHoldings(consolidated).negligible.map((x) => x.marketValue));
+    const named = exposure.skippedValue + exposure.unaccountedValue + arb + cash + other + floor;
+    const unnamed = notOnPage - named;
+    const parts = [
+      exposure.skippedValue > 0 && `${money(exposure.skippedValue)} in funds whose portfolio this book cannot read — ${
+        aif.length} AIF ${aif.length === 1 ? "holding, which files" : "holdings, which file"} none${
+        unresolved > 0 ? `, and ${unresolved} ${unresolved === 1 ? "scheme" : "schemes"} the store does not resolve` : ""}`,
+      exposure.unaccountedValue > 0 && `${money(exposure.unaccountedValue)} of the disclosed funds that no line in their filings accounts for — a scheme's own cash, a gold or silver ETF's metal, rounding`,
+      arb > 0 && `${money(arb)} in the arbitrage funds the family counts as cash, which are not looked through`,
+      cash > 0 && `${money(cash)} of the book's own cash`,
+      other > 0 && `${money(other)} of ${[...new Set(otherRows.map((x) => assetClassLabel(x.assetClass)))].join(", ")}, neither a share nor a fund`,
+      floor > 0 && `${money(floor)} in holdings under the ₹1,000 floor, which no table draws`,
+      Math.abs(unnamed) >= 1 && `and ${money(unnamed)} that none of these names`,
+    ].filter(Boolean) as string[];
+    return { notOnPage, parts, aif: aif.length, arb, cash, floor, unnamed };
+  })();
 
   const toggle = (key: string) => setExpanded((prev) => {
     const next = new Set(prev);
@@ -477,8 +642,11 @@ export function SectorComposition() {
         <div className="mt-0.5 text-[11px] text-slate-500"
           data-donut-count={consolidatedView ? entries.length : ownRows.length}
           data-donut-basis="each counted once"
-          title="Each counted once — a company two of the family's statements both report is one row here, never two.">
-          {consolidatedView ? entries.length : ownRows.length} {consolidatedView ? "companies" : "holdings"}
+          {...(consolidatedView ? {
+            "data-donut-shares": consMix.shares, "data-donut-debt": consMix.debtOnly, "data-donut-other": consMix.other,
+          } : { "data-donut-companies": ownCompanies })}
+          title={donutWhy}>
+          {consolidatedView ? entries.length : ownRows.length} {consolidatedView ? "issuers" : "holdings"}
         </div>
       </div>
     </div>
@@ -504,9 +672,10 @@ export function SectorComposition() {
       {sectorFrom.vendor > 0 && <span><span className="mono text-slate-200">{sectorFrom.vendor}</span> from screener.in</span>}
       {sectorFrom.unplaced.length > 0 && (
         <span className="text-slate-500"
-          title={`No NSE symbol resolves for these, so nothing keys the lookup — ${
-            sectorFrom.unplaced.length} companies: ${
-            sectorFrom.unplaced.map((e) => e.name).join(", ")}`}>
+          data-unplaced-debt={unplacedMix.debtOnly}
+          data-unplaced-nosymbol={sharesNoSymbol}
+          title={`${sectorFrom.unplaced.length} ${consolidatedView ? "issuers" : "companies"} placed by none of the three sources — ${
+            unplacedCauses.join("; ")}: ${sectorFrom.unplaced.map((e) => e.name).join(", ")}`}>
           <span className="mono">{sectorFrom.unplaced.length}</span> unplaced ·{" "}
           <span className="mono">{fmtFromBase(sectorFrom.unplacedMV, { compact: true })}</span>
         </span>
@@ -538,7 +707,7 @@ export function SectorComposition() {
           /* "DERIVED, not a position" and "no part of the book's NAV" are the
              fence, in words rather than a tooltip — and they are ALL the line
              says now (Stage 10cp); how it is derived is its hover. */
-          : <span title={`Their units' share of what ${exposure.covered} of ${exposure.considered} funds disclose.`}>
+          : <span title={derivedWhy} data-sector-derived>
               DERIVED, not a position · <span className="text-slate-300">no part of the book&rsquo;s NAV</span>
             </span>}
       </Figure>
@@ -547,8 +716,10 @@ export function SectorComposition() {
           ? fmtFromBase(portfolio.totalValue - measuredMV - derivedMV, { compact: true })
           : <span className="text-slate-500">—</span>}>
         {exposure.status === "ok"
-          ? <span title={`The rest of the ${fmtFromBase(portfolio.totalValue, { compact: true })} book. No sector applies to it. These three figures cover every rupee.`}>
-              Undisclosed vehicles, non-equity and cash
+          ? <span data-sector-rest
+              title={`The rest of the ${fmtFromBase(portfolio.totalValue, { compact: true })} book, and no sector applies to it: ${
+                (restParts?.parts ?? []).join("; ")}. These three figures cover every rupee.`}>
+              AIFs, cash and what no filing names
             </span>
           : <>Measurable once the funds&rsquo; disclosures answer.</>}
       </Figure>
@@ -665,7 +836,7 @@ export function SectorComposition() {
                     return (
                       <li key={s.key}>
                         <button type="button" onClick={() => togglePick(s.key)} aria-pressed={on} data-sector-pick={s.key}
-                          title={s.key === UNCLASSIFIED ? unclassifiedWhy(true) : undefined}
+                          title={s.key === UNCLASSIFIED ? unclassifiedWhy(true, unclassMix) : undefined}
                           className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-[12.5px] transition-colors ${on
                             ? "bg-champagne-500/15 text-slate-100"
                             : "text-slate-400 hover:bg-ink-700/40 hover:text-slate-200"}`}>
@@ -716,7 +887,7 @@ export function SectorComposition() {
                     <CompareGroup span={compare.length + 1}>Consolidated — total exposure</CompareGroup>
                     <CompareRow label="Total exposure" keys={compare} render={(k) => {
                       const s = consByKey.get(k);
-                      return s ? money(s.mv) : <AbsentCell reason="no company this family is exposed to sits in this sector" />;
+                      return s ? money(s.mv) : <AbsentCell reason="no issuer this family is exposed to sits in this sector" />;
                     }} />
                     <CompareRow label="Weight of total exposure" keys={compare} render={(k) => {
                       const s = consByKey.get(k);
@@ -739,8 +910,16 @@ export function SectorComposition() {
                       return s.derived > 0 ? money(s.derived)
                         : <AbsentCell reason="no fund this store can read discloses a company in this sector at a value" />;
                     }} />
-                    <CompareRow label="Companies" keys={compare} render={(k) => consByKey.get(k)?.count ?? <AbsentCell reason="no exposure in this sector" />} />
-                    <CompareRow label="Largest company" keys={compare} plain render={(k) => consByKey.get(k)?.top ?? <AbsentCell reason="no exposure in this sector" />} />
+                    <CompareRow label="Issuers" keys={compare} render={(k) => consByKey.get(k)?.count ?? <AbsentCell reason="no exposure in this sector" />} />
+                    <CompareRow label="Largest exposure" keys={compare} plain render={(k) => {
+                      const s = consByKey.get(k);
+                      if (!s?.top) return <AbsentCell reason="no exposure in this sector" />;
+                      /* FS-14: an issuer the family holds only inside a fund says so. */
+                      return s.topDerivedOnly
+                        ? <span title={`${s.top} — held only inside the family's funds: the largest exposure in this sector, and no position of theirs.`}>
+                            {s.top} <span className="text-[10.5px] text-champagne-400/90">derived</span></span>
+                        : s.top;
+                    }} />
 
                     <CompareGroup span={compare.length + 1}>Direct Equity — the family&rsquo;s own shares</CompareGroup>
                     <CompareRow label="Value" keys={compare} render={(k) => {
@@ -780,7 +959,7 @@ export function SectorComposition() {
         ) : (
           <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}
             title={<span data-card-title-hint title={consolidatedView
-              ? "Click a sector for the companies in it — what the statements report and what the funds disclose."
+              ? "Click a sector for the issuers in it — what the statements report and what the funds disclose."
               : "Click a sector for its holdings."}>Sector breakdown</span>}>
             <div className="mt-3 min-h-0 flex-1 overflow-auto">
               <table className="min-w-full text-[13px]" data-sector-table>
@@ -789,9 +968,13 @@ export function SectorComposition() {
                     <SortHeader col="sector" view={sectorView} align="left" pad="px-3 py-2">Sector</SortHeader>
                     <SortHeader col="value" view={sectorView} pad="px-3 py-2">Value</SortHeader>
                     <SortHeader col="weight" view={sectorView} pad="px-3 py-2">Weight</SortHeader>
-                    <SortHeader col="count" view={sectorView} pad="px-3 py-2">{consolidatedView ? "Companies" : "Positions"}</SortHeader>
+                    <SortHeader col="count" view={sectorView} pad="px-3 py-2">{consolidatedView ? "Issuers" : "Positions"}</SortHeader>
                     <SortHeader col="return" view={sectorView} pad="px-3 py-2">Return</SortHeader>
-                    <SortHeader col="top" view={sectorView} align="left" pad="px-3 py-2">Top holding</SortHeader>
+                    <SortHeader col="top" view={sectorView} align="left" pad="px-3 py-2"
+                      title={consolidatedView
+                        ? "The largest issuer in the sector by total exposure, reported plus derived. One the family holds only inside a fund is marked derived: an exposure, not a position."
+                        : "The largest own-account holding in the sector."}>
+                      {consolidatedView ? "Largest exposure" : "Largest holding"}</SortHeader>
                   </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/70">
@@ -824,7 +1007,7 @@ export function SectorComposition() {
                                 at it — which would silently reshape every row-based
                                 check on this page. */}
                             <span className="flex items-center gap-2 whitespace-nowrap font-medium text-slate-100"
-                              title={s.key === UNCLASSIFIED ? unclassifiedWhy(consolidatedView) : undefined}>
+                              title={s.key === UNCLASSIFIED ? unclassifiedWhy(consolidatedView, consolidatedView ? unclassMix : undefined) : undefined}>
                               <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                               <span className="h-2.5 w-2.5 rounded-sm" style={{ background: colorOf(s.key) }} />
                               {s.key}
@@ -832,13 +1015,15 @@ export function SectorComposition() {
                           </td>
                           <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap" title={liveBySector[s.key] ? LIVE_CELL : undefined}>
                             {liveBySector[s.key] ? fmtFromBase(s.mv, { compact: true })
-                              : <Auditable formula={{ title: "Sector value", excel: "= Σ market value of the sector's holdings", plain: consolidatedView ? "Every company in this sector, added up — what the statements report plus the family's share of what their funds disclose." : "Every holding in this sector, added up.", worked: `= ${money(s.mv)} across ${s.count} ${consolidatedView ? "companies" : "holdings"}` }}>{fmtFromBase(s.mv, { compact: true })}</Auditable>}
+                              : <Auditable formula={{ title: "Sector value", excel: "= Σ market value of the sector's holdings", plain: consolidatedView ? "Every issuer in this sector, added up — what the statements report plus the family's share of every instrument their funds disclose." : "Every holding in this sector, added up.", worked: `= ${money(s.mv)} across ${s.count} ${consolidatedView ? "issuers" : "holdings"}` }}>{fmtFromBase(s.mv, { compact: true })}</Auditable>}
                           </td>
                           <td className="px-3 py-2 text-right mono text-slate-400" title={liveBySector[s.key] ? LIVE_CELL : undefined}>
                             {liveBySector[s.key] ? `${(s.weight * 100).toFixed(1)}%`
                               : <Auditable formula={weightFormula(s.mv, totalMV, s.weight * 100, money,
                                   /* The denominator is THIS page's set, not the book. */
-                                  "the company shares on this page")}>{`${(s.weight * 100).toFixed(1)}%`}</Auditable>}
+                                  consolidatedView
+                                    ? "the issuers on this page — the shares the statements report plus the derived share of every instrument the funds disclose"
+                                    : "the family's own company shares on this page")}>{`${(s.weight * 100).toFixed(1)}%`}</Auditable>}
                           </td>
                           <td className="px-3 py-2 text-right mono text-slate-400" data-cell="count">{s.count}</td>
                           {/* A RETURN ONLY WHERE ITS OWN COLUMNS CAN CARRY ONE. Refused
@@ -861,7 +1046,16 @@ export function SectorComposition() {
                               : liveBySector[s.key] ? fmtPct(s.returnPct, { sign: true })
                               : <Auditable formula={{ title: "Sector return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ (cost held + cost of units sold) × 100", plain: "Every holding in this sector reports a cost. This is everything they have produced — the unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out — over every rupee that bought a unit of them.", worked: `= (${money(s.pnl)} + ${money(s.realised ?? 0)}) ÷ ${money(s.deployed)} × 100 = ${fmtPct(s.returnPct, { sign: true })}` }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}
                           </td>
-                          <td className="px-3 py-2 text-left text-[12px] text-slate-400"><span className="block max-w-[170px] truncate" title={topHolding[s.key]}>{topHolding[s.key]}</span></td>
+                          <td className="px-3 py-2 text-left text-[12px] text-slate-400" data-cell="top"
+                            data-top-key={s.topKey ?? ""} data-top-derived={s.topDerivedOnly ? "true" : "false"}>
+                            {s.top === null ? <AbsentCell reason="no issuer in this sector" /> : <>
+                              <span className={`inline-block ${s.topDerivedOnly ? "max-w-[130px]" : "max-w-[170px]"} truncate align-bottom`}
+                                title={s.topDerivedOnly
+                                  ? `${s.top} — the family holds it only inside their funds, so it is the largest exposure here and no position of theirs: no statement reports it.`
+                                  : s.top}>{s.top}</span>
+                              {s.topDerivedOnly && <>{" "}<span className="text-[10.5px] text-champagne-400/90" data-top-derived-mark>derived</span></>}
+                            </>}
+                          </td>
                         </Tr>
                         {isOpen && (
                           <tr className="bg-ink-900/50">
@@ -876,7 +1070,7 @@ export function SectorComposition() {
                                     <table className="min-w-full text-[12px]" data-sector-companies>
                                       <thead className="sticky top-0 bg-ink-800">
                                         <Tr view={companyView} className="border-b border-ink-700/70">
-                                          <SortHeader col="company" view={companyView} align="left" pad="px-3 py-1.5">Company</SortHeader>
+                                          <SortHeader col="company" view={companyView} align="left" pad="px-3 py-1.5">Issuer</SortHeader>
                                           <SortHeader col="measured" view={companyView} pad="px-3 py-1.5">Direct + PMS</SortHeader>
                                           <SortHeader col="derived" view={companyView} pad="px-3 py-1.5"
                                             title="DERIVED, not a position: the AMC disclosed what the fund holds and this is the family's units' share of it. It is no part of the book's NAV — the fund's own value already stands for it there.">Via funds · derived</SortHeader>
@@ -890,12 +1084,12 @@ export function SectorComposition() {
                                             <td className="px-3 py-1.5 text-slate-200">
                                               {e.positions.length > 0
                                                 ? <StockLink securityKey={e.key} name={e.name} />
-                                                : <span title="The family holds this company only inside a fund, so the book carries no position for it and it has no page of its own.">{e.name}</span>}
+                                                : <span title={`The family holds this issuer only inside a fund${e.classes.includes("Equity") ? "" : ", through its debt paper rather than a share"}, so the book carries no position for it and it has no page of its own.`}>{e.name}</span>}
                                             </td>
                                             <td className="px-3 py-1.5 text-right mono text-slate-100">
                                               {e.positions.length > 0
                                                 ? fmtFromBase(e.measured, { compact: true })
-                                                : <AbsentCell reason="No statement in this book reports this company as a holding — the family owns it only through a fund, and what a fund holds is disclosed by the AMC rather than reported about this family." />}
+                                                : <AbsentCell reason="No statement in this book reports this issuer as a holding — the family owns it only through a fund, and what a fund holds is disclosed by the AMC rather than reported about this family." />}
                                             </td>
                                             <td className="px-3 py-1.5 text-right mono text-champagne-400/90">
                                               {e.derived > 0

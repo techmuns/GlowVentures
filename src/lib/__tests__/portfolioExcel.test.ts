@@ -10,7 +10,7 @@
 // market value. Nothing in `npm run build`, `check:pages` or `check:family`
 // looks inside the file — it is a download.
 //
-// ── THE SHEET IS THE SCREEN IT EXPORTS (B-08, A-03, MSX-9/10/18) ────────────
+// ── THE SHEET IS THE SCREEN IT EXPORTS (B-08, A-03, MSX-9/10/17/18/19) ──────
 //
 // The page hands the export `portfolio.positions` — the book with the published
 // NAV overlaid (`applyFundNavs`) and every row, closed ones included. This suite
@@ -30,12 +30,18 @@
 //     family's rule on their dated payments — XIRR re-solved here from the
 //     record the tab's index holds — with the measure named on the row;
 //   • WHICH PRICE — one mark or none on a row that clubs several lines, and
-//     cost, average and gain over the costed lines alone.
+//     cost, average and gain over the costed lines alone;
+//   • WHICH DATE — a line under the title naming the blend of statement dates
+//     and NAVs, each row's own basis, and a reason for every blank figure;
+//   • AND THE TAPE — a zero kept a zero, and an archive that did not answer
+//     never exported as a sheet with no trades.
 //
 // The column ORDER is written out as a literal, because it is the thing being
 // asserted. A test that read the order off the file it is checking could not
 // fail — this repo's own recurring lesson.
 import ExcelJS from "exceljs";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import {
   BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY,
   BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
@@ -47,7 +53,7 @@ import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { buildDatedCapital } from "@/lib/datedCapital";
 import { displaySecurity, DASH } from "@/lib/format";
 import type { Position } from "@/lib/types";
-import type { Txn } from "@/lib/ledger";
+import type { Txn, TxnData } from "@/lib/ledger";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -204,6 +210,15 @@ const TXNS: Txn[] = [
   { date: "2026-08-10", security: "Aditya Birla Capital Ltd", securityKey: "aditya-birla-capital", side: "Sell",
     qty: 50369, price: 407.75, amount: 20537000, realized: 11600000, account: "AJAY T JAISINGHANI · Carnelian 3517383",
     ownerId: "ajay" } as unknown as Txn,
+  // A sale that realised exactly nothing is a MEASURED zero — never a dash.
+  { date: "2026-08-09", security: "Test Flat Sale Ltd", securityKey: "test-flat-sale", side: "Sell",
+    qty: 10, price: 100, amount: 1000, realized: 0, account: "AJAY T JAISINGHANI · Carnelian 3517383",
+    ownerId: "ajay" } as unknown as Txn,
+  // …and a statement that prints a price of nil prints a figure: `|| DASH` sent
+  // it to the same dash as a price nobody printed.
+  { date: "2026-08-08", security: "Test Nil Price Credit Ltd", securityKey: "test-nil-price", side: "Buy",
+    qty: 5, price: 0, amount: 0, realized: null, account: "AJAY T JAISINGHANI · Carnelian 3517383",
+    ownerId: "ajay" } as unknown as Txn,
 ];
 
 const wb = buildPortfolioWorkbook(PAGE, PAGE_ACCOUNTS, TXNS, NOW);
@@ -270,14 +285,16 @@ const notesUnderTotal = [1, 2, 3].map((d) => String(holdings.getRow(footerRow + 
 // "Reorder the columns so the money reads first and Sector / Entity close the
 // table" — applied to the workbook as well as the tab. The Measure column rides
 // beside the Return it names (the tab prints that tag inside the cell); YTD is
-// gone because the tab's table has none (Stage 10af).
+// gone because the tab's table has none (Stage 10af); Priced as of and Notes
+// are the tab's hovers, which a workbook has no other way to carry.
 eq("Holdings columns: money first, descriptors last", headersOf(holdings), [
   "Security", "Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)",
   "Weight of book", "Unreal. P&L (₹)", "Return", "Measure",
   "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities",
+  "Priced as of", "Notes",
 ]);
-eq("Transactions columns: Entity closes the row", headersOf(txnSheet), [
-  "Date", "Security", "Type", "Qty", "Price (₹)", "Amount (₹)", "Realized P&L (₹)", "Entity",
+eq("Transactions columns: Entity closes the figures, Notes the row", headersOf(txnSheet), [
+  "Date", "Security", "Type", "Qty", "Price (₹)", "Amount (₹)", "Realized P&L (₹)", "Entity", "Notes",
 ]);
 
 // ── 2. THE ROWS ARE THE ONES THE TAB DRAWS (B-08 / MSX-9) ───────────────────
@@ -362,7 +379,7 @@ for (const h of ["Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)", "We
   const cells = columnUnder(holdings, h, dataLast);
   ok(`every cell under "${h}" is a figure or an em dash`, cells.length > 0 && cells.every(numericOrDash), `${cells.length} rows`);
 }
-for (const h of ["Security", "Measure", "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities"]) {
+for (const h of ["Security", "Measure", "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities", "Priced as of", "Notes"]) {
   const cells = columnUnder(holdings, h, dataLast);
   ok(`every cell under "${h}" is a descriptor, never a figure`,
      cells.length > 0 && cells.every((v) => typeof v === "string" && v !== "" && !/^-?[\d.]+$/.test(v)),
@@ -425,6 +442,11 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   ok("...and the book carries one the rule annualises, so the guard can fail", annualised > 0, `${annualised} annualised`);
   const sheetCagr = ROWS.filter((r) => r["Measure"] === "CAGR").length;
   eq("exactly those rows are annualised, and no other", sheetCagr, annualised);
+  // THE WINDOW IS THE ROW'S OWN, never the book's newest date (2026-08-29): an
+  // annualised row names both ends of it.
+  const cagrRows = ROWS.filter((r) => r["Measure"] === "CAGR");
+  ok("an annualised row states its window in Notes", cagrRows.length > 0
+     && cagrRows.every((r) => /Annualised over the \d+ days from \d{4}-\d\d-\d\d, the oldest unit still held, to its valuation on \d{4}-\d\d-\d\d/.test(String(r["Notes"]))));
 }
 
 // ── 5b. A ROW THAT IS WHOLE ACCOUNTS TAKES THE RULE ON ITS PAYMENTS (MSX-10) ─
@@ -458,7 +480,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     const got = row[0];
     const pctOk = want.pct === null ? got?.["Return"] === DASH : typeof got?.["Return"] === "number" && near(got["Return"] as number, want.pct, 1e-6);
     const tagOk = want.pct === null ? got?.["Measure"] === DASH : got?.["Measure"] === want.tag;
-    if (row.length !== 1 || !pctOk || !tagOk) {
+    if (row.length !== 1 || !pctOk || !tagOk || (want.pct !== null && !String(got["Notes"]).includes(want.note))) {
       wrong.push(`${key}: want ${want.pct?.toFixed(4)} ${want.tag} (${want.note}), got ${row.map((r) => `${r["Return"]} ${r["Measure"]}`).join(" / ") || "no row"}`);
     }
   }
@@ -506,7 +528,8 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     if (row.length !== 1) { bad.push(`${key}: ${row.length} rows`); continue; }
     if (marks.length > 1) {
       split++;
-      if (row[0]["CMP (₹)"] !== DASH) {
+      const notes = String(row[0]["Notes"]);
+      if (row[0]["CMP (₹)"] !== DASH || !marks.every((m) => notes.includes(rupees(Number(m))))) {
         bad.push(`${key}: CMP ${row[0]["CMP (₹)"]} over marks ${marks.join(" / ")}`);
       }
     } else if (marks.length === 1) {
@@ -516,7 +539,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
       }
     }
   }
-  ok("a row whose lines disagree on a mark prints no CMP; one that agrees prints it",
+  ok("a row whose lines disagree on a mark prints no CMP and names the marks; one that agrees prints it",
      split > 0 && bad.length === 0, bad.join("; ") || `${split} split, ${single} agreeing`);
 
   // COST OVER THE COSTED LINES, on a constructed pair — this book's partly
@@ -535,22 +558,147 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   const prow = recordsOf(pw, footerRowOf(pw) - 1);
   ok("a partly costed row's average cost and P&L are struck over the costed units alone",
      direct.length === 2 && prow.length === 1 && prow[0]["Avg Cost (₹)"] === 100 && prow[0]["Unreal. P&L (₹)"] === 2000
-       && prow[0]["CMP (₹)"] === 120,
+       && prow[0]["CMP (₹)"] === 120 && /struck over the costed units alone/.test(String(prow[0]["Notes"])),
      prow.map((r) => `${r["Avg Cost (₹)"]} / ${r["Unreal. P&L (₹)"]} / ${r["CMP (₹)"]}`).join("; "));
 }
 
-// ── 7. THE TRANSACTIONS TAPE ─────────────────────────────────────────────────
+// ── 7. WHAT DATE, WHAT BASIS, AND WHY A CELL IS BLANK (MSX-17) ──────────────
+{
+  const asOfLine = String(holdings.getRow(headerRowOf(holdings) - 1).getCell(1).value ?? "");
+  const lines = firstOfGroup(NAV_SET.held);
+  const stmtDates = lines.filter((p) => !navDateOf(p)).map((p) => ACC.get(p.accountId)?.asOf ?? "").filter(Boolean).sort();
+  const navDates = [...new Set(lines.map((p) => navDateOf(p)).filter((d): d is string => !!d))].sort();
+  ok("the line under the title dates the figures: the statement range, the NAV date, and no live quote",
+     stmtDates.length > 0 && navDates.length > 0
+       && asOfLine.includes(`${stmtDates[0]} → ${stmtDates[stmtDates.length - 1]}`)
+       && navDates.every((d) => asOfLine.includes(d)) && /no row at a live quote/.test(asOfLine),
+     asOfLine.slice(0, 160));
+  const count = (re: RegExp) => Number(asOfLine.match(re)?.[1] ?? 0);
+  const bases = count(/(\d+) rows? at statement marks/) + count(/(\d+) rows? at AMFI/)
+    + count(/(\d+) rows? at live quotes/) + count(/(\d+) rows? mixing/);
+  eq("...and the rows it counts per basis are every row", bases, nRows);
+
+  // EACH ROW'S OWN BASIS AND DATE, checked on the rows that carry one security.
+  const priced = columnUnder(holdings, "Priced as of", dataLast).map(String);
+  ok("every row says how and when it is priced",
+     priced.every((v) => /^(Statement|AMFI NAV|Live quote) (\d{4}-\d\d-\d\d|undated)( \+ (Statement|AMFI NAV|Live quote) (\d{4}-\d\d-\d\d|undated))*$/.test(v)));
+  const navKeys = new Set(lines.filter((p) => navDateOf(p)).map((p) => p.securityKey));
+  eq("a row is on AMFI's NAV exactly where the page priced its scheme at one",
+     priced.filter((v) => v.startsWith("AMFI NAV")).length, navKeys.size);
+  const byName = new Map<string, Position[]>();
+  for (const p of PAGE) if (NAV_SET.held.includes(RAW[PAGE.indexOf(p)])) {
+    const n = displaySecurity(p.security);
+    (byName.get(n) ?? byName.set(n, []).get(n)!).push(RAW[PAGE.indexOf(p)]);
+  }
+  let checked = 0;
+  const offDate: string[] = [];
+  for (const r of ROWS) {
+    const ps = byName.get(String(r["Security"]));
+    if (!ps || ps.length !== 1 || ROWS.filter((x) => x["Security"] === r["Security"]).length !== 1) continue;
+    const p = ps[0];
+    const want = `${navDateOf(p) ? "AMFI NAV" : "Statement"} ${valueDateOfLine(p)}`;
+    checked++;
+    if (r["Priced as of"] !== want) offDate.push(`${r["Security"]}: ${r["Priced as of"]} vs ${want}`);
+  }
+  ok("...and names the date its own statement or NAV is struck on, never the book's newest",
+     checked > 50 && offDate.length === 0, offDate.slice(0, 3).join("; ") || `${checked} rows`);
+
+  // A BLANK FIGURE IS NEVER SILENT: its column is named in the row's Notes.
+  const LABEL: Record<string, string> = { "Avg Cost (₹)": "Avg Cost", "CMP (₹)": "CMP", "Unreal. P&L (₹)": "Unreal. P&L", "Return": "Return" };
+  const silent: string[] = [];
+  for (const r of ROWS) for (const [h, label] of Object.entries(LABEL)) {
+    if (r[h] === DASH && !String(r["Notes"]).includes(label)) silent.push(`${r["Security"]} · ${h}`);
+  }
+  ok("every blank figure names its column and its reason in Notes", silent.length === 0,
+     silent.slice(0, 4).join("; ") || `${ROWS.length} rows`);
+  // A DEPOSITORY'S OWN UNITS SAY WHAT THEY ARE: a closing balance off a
+  // transaction statement, valued at AMFI's NAV — no statement priced them, and
+  // a reader must not take them for a statement mark replaced.
+  const depoNames = new Set(DEPO.map((p) => displaySecurity(PAGE[RAW.indexOf(p)].security)));
+  const depoRows = ROWS.filter((r) => depoNames.has(String(r["Security"])));
+  const unsaid = depoRows.filter((r) => !/Qty — (these|some of these) units are a depository's own closing balance of \d{4}-\d\d-\d\d, on an account that sent a transaction statement and no holding statement — no statement priced them/.test(String(r["Notes"])));
+  ok("a row carrying a depository's own closing units says so, and that no statement priced them",
+     DEPO.length > 0 && depoRows.length > 0 && unsaid.length === 0,
+     unsaid.map((r) => String(r["Security"])).join("; ") || `${depoRows.length} rows over ${DEPO.length} depository lines`);
+  // A cost nobody reported names WHOSE statement it is, never one cause for all.
+  const providers = [...new Set(BOOK_ACCOUNTS.map((a) => a.provider))];
+  const costless = ROWS.filter((r) => r["Avg Cost (₹)"] === DASH && r["Unreal. P&L (₹)"] === DASH);
+  const unnamed = costless.filter((r) => !/reported by/.test(String(r["Notes"])) || !providers.some((pv) => String(r["Notes"]).includes(pv)));
+  ok("a cost-less row names the statement it came from", costless.length > 0 && unnamed.length === 0,
+     unnamed.slice(0, 3).map((r) => String(r["Security"])).join("; ") || `${costless.length} rows`);
+}
+
+// ── 8. THE TRANSACTIONS TAPE ─────────────────────────────────────────────────
 {
   const lastTx = headerRowOf(txnSheet) + TXNS.length;
   eq("the tape's Entity column carries the account label", columnUnder(txnSheet, "Entity", lastTx), TXNS.map((t) => t.account));
   eq("...and Type carries the side, not the entity", columnUnder(txnSheet, "Type", lastTx), TXNS.map((t) => t.side));
   eq("...and Amount carries the amount", columnUnder(txnSheet, "Amount (₹)", lastTx), TXNS.map((t) => t.amount));
-  // The sell realised a gain and the buy realised nothing: an em dash, never a 0,
-  // which would report a buy as having broken even.
-  eq("a trade with no realised figure is an em dash, not a zero", columnUnder(txnSheet, "Realized P&L (₹)", lastTx), [DASH, TXNS[1].realized]);
+  // A buy realised nothing: an em dash, never a 0 — and a sale that realised
+  // exactly nothing is a measured zero, never a dash.
+  eq("a buy's realised is a dash, a flat sale's is a zero", columnUnder(txnSheet, "Realized P&L (₹)", lastTx), [DASH, TXNS[1].realized, 0, DASH]);
+  eq("a price or amount printed as nil is a zero, never a dash",
+     [columnUnder(txnSheet, "Price (₹)", lastTx)[3], columnUnder(txnSheet, "Amount (₹)", lastTx)[3]], [0, 0]);
+  ok("a blank realised says why", /Realized P&L — a purchase realises nothing/.test(String(columnUnder(txnSheet, "Notes", lastTx)[0])));
+
+  // MSX-19: an archive that did not answer is never a sheet with no trades.
+  const nul = buildPortfolioWorkbook(PAGE, PAGE_ACCOUNTS, null, NOW).getWorksheet("Transactions")!;
+  const nh = headerRowOf(nul);
+  const nulText = [1, 2, 3, nh + 1].map((r) => String(nul.getRow(r).getCell(1).value ?? "")).join(" | ");
+  ok("an unreachable archive says so above the table and in it, and claims no tape",
+     /did not answer/.test(String(nul.getRow(nh - 1).getCell(1).value)) && /did not answer/.test(String(nul.getRow(nh + 1).getCell(1).value))
+       && /not a statement that there were none/.test(nulText) && !/full dated/.test(nulText) && nul.rowCount === nh + 1,
+     nulText.slice(0, 200));
+  const emp = buildPortfolioWorkbook(PAGE, PAGE_ACCOUNTS, [], NOW).getWorksheet("Transactions")!;
+  ok("a bare empty tape says it was handed nothing, not that nothing traded",
+     /No trades were handed to this export/.test(String(emp.getRow(headerRowOf(emp) + 1).getCell(1).value)));
 }
 
-// ── 8. THE FAMILY'S TWO AXES TRAVEL WITH THE SHEET ─────────────────────────
+// ── 9. …AND ON THE REAL TAPE, THROUGH THE REAL LOADER ───────────────────────
+// The runtime ledger reads `public/audit/` in the browser; served off disk here
+// (the ledgerJoins suite's arrangement) so the sheet is checked on every row the
+// page would export, not on a fixture.
+{
+  const ROOT = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures", "../../../..");
+  const PUB = path.join(ROOT, "public");
+  (globalThis as { fetch?: unknown }).fetch = async (u: unknown) => {
+    const rel = String(u).replace(/^\/+/, "");
+    try {
+      const t = readFileSync(path.join(PUB, rel), "utf8");
+      return { ok: true, status: 200, json: async () => JSON.parse(t) };
+    } catch {
+      return { ok: false, status: 404, json: async () => null };
+    }
+  };
+  (import.meta as { env?: Record<string, string> }).env ??= { BASE_URL: "/" };
+  const L = await import("@/lib/ledger");
+  const data: TxnData | null = await L.loadTransactions();
+  ok("the committed archive loads through the real loader", !!data && data.txns.length > 0, `${data?.txns.length ?? 0} rows`);
+  if (data) {
+    const ws = buildPortfolioWorkbook(PAGE, PAGE_ACCOUNTS, data, NOW).getWorksheet("Transactions")!;
+    const h = headerRowOf(ws);
+    const last = h + data.txns.length;
+    const recs = recordsOf(ws, last);
+    eq("every dated row is written, and nothing after them", [recs.length, ws.rowCount], [data.txns.length, last]);
+    const fig = (v: number | null, cell: unknown) => (v === null ? cell === DASH : cell === v);
+    const figOff = data.txns.filter((t, i) => !fig(t.price, recs[i]["Price (₹)"]) || !fig(t.amount, recs[i]["Amount (₹)"]) || !fig(t.realized, recs[i]["Realized P&L (₹)"]));
+    ok("price, amount and realised are the tape's own figures — a zero a zero, an absence a dash",
+       figOff.length === 0, figOff.slice(0, 3).map((t) => t.security).join("; ") || `${data.txns.length} rows`);
+    const whyOff = data.txns.filter((t, i) => t.realized === null
+      && !(String(recs[i]["Notes"]).includes("Realized P&L —") && (!t.realizedNote || String(recs[i]["Notes"]).includes(t.realizedNote))));
+    ok("every blank realised carries the ledger's own reason", whyOff.length === 0,
+       whyOff.slice(0, 3).map((t) => t.security).join("; ") || `${data.txns.filter((t) => t.realized === null).length} blank`);
+    const sub = String(ws.getRow(h - 2).getCell(1).value ?? "");
+    ok("the subtitle names the window, which accounts issue a tape, and the allotments it leaves out",
+       (!data.periodFrom || sub.includes(`${data.periodFrom} → ${data.periodTo}`))
+         && sub.includes(`${data.accounts.length} account`) && sub.includes(`${data.accountsWithout.length} do`)
+         && (data.ownAllotments.length === 0 || sub.includes(`${data.ownAllotments.length} row`))
+         && !/full dated/.test(sub),
+       sub.slice(0, 220));
+  }
+}
+
+// ── 10. THE FAMILY'S TWO AXES TRAVEL WITH THE SHEET ─────────────────────────
 // The tab can only be sectioned one way at a time; the workbook carries all
 // three axes as columns so a reader can pivot on whichever they want. Both must
 // carry the family's own vocabulary and NEVER a blank.
@@ -566,6 +714,20 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
      cCells.length > 0 && cCells.every((v) => typeof v === "string" && classes.has(v)), `${new Set(cCells.map(String)).size} distinct`);
   ok("the sheet distinguishes more than one basket", new Set(bCells.map(String)).size > 1);
   ok("...and more than one family asset class", new Set(cCells.map(String)).size > 1);
+}
+
+// ── 11. …AND THE PAGE HANDS THE SHEET THE LOADER'S WHOLE ANSWER (MSX-19) ────
+// Sections 8 and 9 hold the builder to both cases, and neither can see what the
+// page passes it. Handed `data?.txns ?? []`, the sheet loses the window and the
+// accounts it states, and an archive that did not answer exports as "no trades
+// were handed to this export" rather than as the failure it is. A source check,
+// crude on purpose: the download is not on any screen a sweep can read.
+{
+  const ROOT = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures", "../../../..");
+  const page = readFileSync(path.join(ROOT, "src/pages/PortfolioMonitor.tsx"), "utf8");
+  const call = /exportPortfolioExcel\(\s*positions\s*,\s*portfolio\.accounts\s*,\s*([^)]*)\)/.exec(page);
+  ok("the Portfolio Monitor's Export hands the sheet the loader's whole answer, null included",
+     !!call && call[1].trim() === "data", call ? call[1].trim() : "no exportPortfolioExcel call found");
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");

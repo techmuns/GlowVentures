@@ -217,12 +217,62 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
  */
 export function fifoBasisNote(t: FifoTotals, money: (n: number) => string): string {
   if (t.returnPct === null || t.gain === null || t.deployed === null) return "";
-  const parts = [`FIFO: (unrealised ${money(t.unrealised ?? 0)} + realised ${money(t.realised ?? 0)}) ÷ capital deployed ${money(t.deployed)}`];
-  if (t.wholeMandates.length) {
-    parts.push(`${t.wholeMandates.length} whole mandate(s) are struck on their capital since inception — value plus withdrawals less what was paid in — so their realised includes every sale since inception and the income less fees`);
+  const n = t.wholeMandates.length;
+  /**
+   * A SET THAT IS WHOLE MANDATES AND NOTHING ELSE IS A RETURN ON CAPITAL, NOT
+   * LOT FIFO (DL-7) — and it said lot FIFO. Carnelian's 19.91% is (value +
+   * withdrawn − paid in) ÷ paid in: the capital bridge, which carries income and
+   * fees, because a mandate's lots are not all on record. The old last clause,
+   * "capital deployed is the cost of the units still held plus the cost of the
+   * units already sold", was false of every such set. It is named for what it
+   * is here, and the lot clause is kept only for the holdings it describes.
+   */
+  if (n > 0 && Math.abs(t.deployed - t.wholeContributed) <= 1) {
+    return `Return on capital, not lot FIFO: (value ${money(t.marketValue)} + withdrawn ${money(t.wholeWithdrawn)} − paid in ${money(t.wholeContributed)}) ÷ paid in ${money(t.wholeContributed)}`
+      + ` · ${n === 1 ? "a whole mandate is" : `${n} whole mandates are`} struck on the capital since inception, so the gain carries every sale the manager made and the income less fees; its lots are not all on record`;
   }
-  parts.push("capital deployed is the cost of the units still held plus the cost of the units already sold");
+  const parts = [`FIFO: (unrealised ${money(t.unrealised ?? 0)} + realised ${money(t.realised ?? 0)}) ÷ capital deployed ${money(t.deployed)}`];
+  if (n) {
+    parts.push(`${n === 1 ? "1 whole mandate enters" : `${n} whole mandates enter`} on ${n === 1 ? "its" : "their"} capital since inception — value plus withdrawals less what was paid in — so ${n === 1 ? "its" : "their"} realised includes every sale since inception and the income less fees, and ${n === 1 ? "its" : "their"} capital deployed is the capital paid in`);
+  }
+  parts.push(n
+    ? "for every other holding, capital deployed is the cost of the units still held plus the cost of the units already sold"
+    : "capital deployed is the cost of the units still held plus the cost of the units already sold");
   return parts.join(" · ");
+}
+
+/**
+ * ── THE WINDOW A HOLDING'S REALISED FIGURE COVERS (DL-10) ────────────────────
+ *
+ * A holding's realised gain is what its account's CAPITAL GAIN STATEMENT
+ * reports, and that statement covers a window — most from 1 Apr 2026, Molecule's
+ * June alone — or, for a fund folio, what the fund's own dated unit record
+ * shows since the first allotment. The hover read "matched first-in, first-out
+ * by the statement that sold them" and named no window, so a ₹0 there read as
+ * "never sold a unit" where it means "sold none inside the window". The words
+ * say which record, and over what dates.
+ */
+export function realisedWindowNote(
+  /** The capital gain statement window of each account behind the figure. */
+  windows: readonly { from: string | null; to: string | null }[],
+  /** How many accounts' realised comes from a fund's own dated unit record instead. */
+  fromRecord: number,
+  fmtDate: (d: string) => string,
+): string {
+  const span = (w: { from: string | null; to: string | null }) =>
+    w.from && w.to ? `${fmtDate(w.from)} – ${fmtDate(w.to)}` : w.to ? `to ${fmtDate(w.to)}` : "an undated window";
+  const by = new Map<string, number>();
+  for (const w of windows) by.set(span(w), (by.get(span(w)) ?? 0) + 1);
+  const parts: string[] = [];
+  if (by.size === 1) {
+    parts.push(`over the window of ${windows.length === 1 ? "this account's" : "these accounts'"} capital gain statement, ${[...by.keys()][0]}; a sale before it is on no statement in this book and is not in this figure`);
+  } else if (by.size > 1) {
+    parts.push(`over each account's capital gain statement window — ${[...by].map(([k, c]) => `${k} (${c} ${c === 1 ? "account" : "accounts"})`).join("; ")} — and a sale before its window is not in this figure`);
+  }
+  if (fromRecord > 0) {
+    parts.push(`${fromRecord === 1 ? "one fund folio's" : `${fromRecord} fund folios'`} from the fund's own dated unit record, every allotment and redemption since the first`);
+  }
+  return `Realised on units already sold, matched first-in, first-out, ${parts.join("; and ") || "by the record that sold them"}.`;
 }
 
 /**

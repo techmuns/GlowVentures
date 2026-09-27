@@ -188,6 +188,14 @@ export type NavMoverModel = {
   /** Every holding in scope, priced or not. */
   scopeValue: number;
   scopeNames: number;
+  /**
+   * THE LIQUID FUNDS AND LIQUID ETFs THIS CARD DOES NOT COVER (MNT-15). The
+   * family's rule files them under Cash whatever wrapper the statement typed
+   * (Stage 10av), so they are out of "ETFs & mutual funds" by the bucket — and
+   * a coverage line reading "of the ₹113 Cr held" read as all of the family's
+   * funds while ₹14 Cr of them were elsewhere. Named, never silently dropped.
+   */
+  cashFunds: { value: number; names: number };
   /** The NAV dates the rows span, newest first. More than one is normal. */
   navDates: string[];
   /** Newest and oldest NAV date across the rows. */
@@ -244,6 +252,9 @@ export function navMoverModel(
   const inScope = (p: Position) =>
     (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accIdx, p)));
   const scope = positions.filter(inScope);
+  const cashFundRows = positions.filter((p) =>
+    (p.assetClass === "Mutual Fund" || p.assetClass === "ETF")
+    && holdingBucket(p, engagementOf(accIdx, p)) === "Cash");
 
   type Acc = Omit<NavMover, "keys" | "move" | "unitRatio" | "inDayFigure" | "valueBasis"> & { navValue: number; stValue: number };
   const byScheme = new Map<string, Acc>();
@@ -367,6 +378,10 @@ export function navMoverModel(
     olderValue: older.reduce((a, r) => a + r.value, 0),
     scopeValue: scope.reduce((a, p) => a + p.marketValue, 0),
     scopeNames: new Set(scope.map((p) => p.securityKey)).size,
+    cashFunds: {
+      value: cashFundRows.reduce((a, p) => a + p.marketValue, 0),
+      names: new Set(cashFundRows.map((p) => p.securityKey)).size,
+    },
     navDates: dates,
     newestNavDate: newest,
     oldestNavDate: dates[dates.length - 1] ?? null,

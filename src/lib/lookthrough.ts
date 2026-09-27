@@ -697,6 +697,15 @@ export type CompanyExposure = {
   sectorFrom: "book" | "disclosure" | "vendor" | null;
   /** The book rows behind `measured`, for a drill-down. Empty on a derived-only company. */
   positions: Position[];
+  /**
+   * WHAT THE FAMILY HOLD THIS ISSUER AS (FS-13): `Equity` where a statement
+   * reports a share of it, and each class its funds' filings give the lines
+   * they disclose — `Equity`, `Debt`, `Other`. Since Stage 10as a row is an
+   * ISSUER, reached through a share, a bond, a CD or a bill alike, so a
+   * caption that calls every row a company, or says the non-equity is off the
+   * page, has to be able to count which is which.
+   */
+  classes: string[];
 };
 
 /**
@@ -709,6 +718,15 @@ function symbolFor(key: string, positions: Position[]): string | null {
   return KEY_TO_SYMBOL[key] ?? null;
 }
 
+/**
+ * The symbol a company resolves to, for a page that says WHY the vendor tier
+ * placed nothing (FS-13): with no symbol nothing keys the screener.in lookup,
+ * which is a different cause from a lookup that holds no sector for one — and a
+ * different cause again from an issuer reached only through debt paper.
+ */
+export const companySymbol = (e: Pick<CompanyExposure, "key" | "positions">): string | null =>
+  symbolFor(e.key, e.positions);
+
 export function companyExposure(
   /** Consolidated COMPANY SHARES — a sector is a property of a company. */
   positions: Position[],
@@ -719,10 +737,11 @@ export function companyExposure(
     const e = byKey.get(p.securityKey) ?? {
       key: p.securityKey, name: p.security, isin: p.isin ?? null,
       measured: 0, derived: 0, total: 0,
-      sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[],
+      sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
     };
     e.measured += p.marketValue;
     e.positions.push(p);
+    if (!e.classes.includes("Equity")) e.classes.push("Equity");
     if (!e.isin && p.isin) e.isin = p.isin;
     if (e.sectorFrom !== "book" && p.sector && p.sector !== UNCLASSIFIED) {
       e.sector = p.sector; e.sectorFrom = "book";
@@ -734,9 +753,10 @@ export function companyExposure(
       const e = byKey.get(x.key) ?? {
         key: x.key, name: x.name, isin: x.isin,
         measured: 0, derived: 0, total: 0,
-        sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[],
+        sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
       };
       e.derived += x.total;
+      for (const c of x.classes) if (!e.classes.includes(c)) e.classes.push(c);
       if (!e.isin && x.isin) e.isin = x.isin;
       if (e.sectorFrom === null && x.sector) { e.sector = x.sector; e.sectorFrom = "disclosure"; }
       byKey.set(x.key, e);
@@ -762,7 +782,7 @@ export function companyExposure(
     const hit = symbol ? VENDOR_SECTORS[symbol] : undefined;
     if (hit && hit.gics && hit.gics !== UNCLASSIFIED) { e.sector = hit.gics; e.sectorFrom = "vendor"; }
   }
-  for (const e of byKey.values()) e.total = e.measured + e.derived;
+  for (const e of byKey.values()) { e.total = e.measured + e.derived; e.classes.sort(); }
   return [...byKey.values()].sort((a, b) => b.total - a.total);
 }
 

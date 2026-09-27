@@ -9,8 +9,10 @@
 // would have hidden, a panel that grew under a raw level), the suite ASSERTS
 // the book exercises it, so it cannot pass by accident on a book where the
 // right and the wrong answer coincide.
-import { BOOK_CAPITAL_GAINS } from "@/data/glowData";
+import { BOOK_CAPITAL_GAINS, BOOK_NAV_HISTORY } from "@/data/glowData";
 import { estimateRealisedTax } from "@/lib/taxEstimate";
+import { bookDrawdown, maxDrawdown } from "@/lib/drawdown";
+import type { NavPoint } from "@/lib/types";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -107,6 +109,70 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
     !!x && x.setOff === 0 && x.setOffWithheld && near(x.tax, 400_000 * LT), x ? `${inr(x.tax)}` : "missing");
   ok("…while the same figures inside one year do",
     !!y && near(y.setOff, 100_000) && !y.setOffWithheld && near(y.tax, 300_000 * LT), y ? `${inr(y.tax)}` : "missing");
+}
+
+// ── 2. THE DRAWDOWN IS STRUCK ON THE CHAINED LINK, NEVER ON THE LEVEL (XA-17)
+//
+// On this book a drawdown struck on the raw level AGREES with the one struck on
+// the link: the deepest fall sits inside the complete-panel window with no
+// external capital in it. So the page can never see the difference, and this
+// is where it is held — on a constructed series whose level and link part.
+{
+  const pt = (date: string, nav: number, linkOpen: number | null, linkClose: number | null, flowIn = 0): NavPoint =>
+    ({ period: date, date, nav, linkOpen, linkClose, flowIn });
+  // A fall, then a deposit that lifts the LEVEL above its old high while the
+  // holdings go on falling: 100 → 90 → 150, with 70 of new money in the last.
+  const hist = [
+    pt("2026-01-31", 100, null, null),
+    pt("2026-02-28", 90, 100, 90),
+    pt("2026-03-31", 150, 90, 150, 70),
+  ];
+  // Re-expressed: the links are 90/100 and (150 − 70)/90, so the index runs
+  // 100 → 90 → 80 — a 20% fall to the last point, never recovered.
+  const { drawdown: d } = bookDrawdown(hist);
+  ok("the drawdown is struck on the chained link: 100 → 90 → 80 is −20%", near(d?.pct, -20, 1e-9), `${d?.pct}`);
+  ok("…its trough is where the index bottomed, not where the level did", d?.troughDate === "2026-03-31", String(d?.troughDate));
+  ok("…and a deposit is not a recovery", d?.recoveredOn === null, String(d?.recoveredOn));
+  // LOAD-BEARING: struck on the level the same series reads −10%, recovered.
+  const onLevel = maxDrawdown(hist.map((p) => ({ date: p.date, index: p.nav })));
+  ok("the level would have said otherwise, so the case can tell them apart",
+    !!onLevel && !near(onLevel.pct, d?.pct, 1e-6) && onLevel.recoveredOn === "2026-03-31",
+    `level ${onLevel?.pct} recovered ${onLevel?.recoveredOn}`);
+
+  // A peak is dated where its level was FIRST reached; an interval that
+  // measured nothing repeats the level and is not a new high.
+  const flat = maxDrawdown([
+    { date: "a", index: 100 }, { date: "b", index: 110 }, { date: "c", index: 110 }, { date: "d", index: 99 },
+  ]);
+  ok("a peak is dated where its level was first reached", flat?.peakDate === "b" && near(flat?.pct, -10, 1e-9),
+    `${flat?.peakDate} ${flat?.pct}`);
+  const up = maxDrawdown([{ date: "a", index: 100 }, { date: "b", index: 101 }]);
+  ok("an index that never fell is a MEASURED nil with no trough", up?.pct === 0 && up.troughDate === null && up.peakDate === null);
+  ok("one level is not a path", maxDrawdown([{ date: "a", index: 100 }]) === null);
+
+  // On the book: the index re-expressed off each point's own link fields, and
+  // the peak-to-trough struck here, never through `navIndexSeries`.
+  const nav = BOOK_NAV_HISTORY as NavPoint[];
+  const idx: { date: string; v: number }[] = [];
+  let v = 100;
+  nav.forEach((n, i) => {
+    if (i > 0) {
+      const open = n.linkOpen ?? nav[i - 1].nav, close = n.linkClose ?? n.nav;
+      if (open > 0) v *= (close - (n.flowIn ?? 0)) / open;
+    }
+    idx.push({ date: n.date, v });
+  });
+  let worst = 0, peakAt = "", troughAt = "", hi = idx[0];
+  for (const q of idx.slice(1)) {
+    if (q.v > hi.v) { hi = q; continue; }
+    const f = (q.v / hi.v - 1) * 100;
+    if (f < worst) { worst = f; peakAt = hi.date; troughAt = q.date; }
+  }
+  const book = bookDrawdown(nav).drawdown;
+  ok("the book's dated series has a path to fall along", nav.length >= 2 && worst < 0, `${nav.length} points, ${worst.toFixed(4)}%`);
+  ok("the book's drawdown is its link index's own peak-to-trough",
+    !!book && near(book.pct, worst, 1e-9) && book.peakDate === peakAt && book.troughDate === troughAt,
+    `${book?.pct} ${book?.peakDate}→${book?.troughDate} against ${worst} ${peakAt}→${troughAt}`);
 }
 
 process.exit(fails ? 1 : 0);

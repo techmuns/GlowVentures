@@ -9959,6 +9959,10 @@ its wording says so — *"the statement names Category I and Category II and
 commits to neither"* — because a statement naming two and a statement naming
 none send a reader to different documents.
 
+*(Corrected at Stage 10cv: "Category I/II" was the READER's phrase. Each trust's
+statement prints a blank "Sebi Reg. no.-" line and no category. The holding is
+still not stated, now for the true reason, and sits under Private Equity.)*
+
 **AND `III` MUST NEVER BE READ AS `I`** — that would file ₹297.78 Cr, 84% of the
 AIF book, under the wrong heading, silently. Two things prevent it, and
 **reintroducing the bug proved the first draft of this paragraph credited the
@@ -10007,6 +10011,12 @@ Measured, and the sections partition the row to the rupee:
 | Category not stated | 3 | ₹16.69 Cr |
 | **Total** | **11** | **₹352.35 Cr** |
 
+*(Corrected at Stage 10cv. Founders prints no SEBI category — "Category II" was
+its reader's words — and Neo Infra's statement prints Category II on its
+manager block, which its reader dropped. The sections read Category II ₹18.1 Cr
+(Delphi, declared; Neo Infra; 360 ONE), Category III ₹297.8 Cr, Private Equity
+₹3.6 Cr and Category not stated ₹32.8 Cr (both Founders folios, Blue Ashva).)*
+
 **MORNING CIO'S ALLOCATION TABLE IS UNTOUCHED.** The AIF row is still ₹352.35 Cr
 and no headline figure moves, which is what makes this a clubbing of a
 drill-down rather than a re-measurement of the book.
@@ -10023,6 +10033,10 @@ I folios (₹4.73 Cr drawn), 5 Category II (₹13.50 Cr), 1 not stated** — the
 standing rule that a figure existing for some accounts is shown for those and
 the rest are named. Their money is in no total on the page, and the note says
 drawn capital is what was PAID rather than what the stake is worth.
+
+*(Corrected at Stages 10ct and 10cv: 7 folios, not 10 — Category I ×4 and
+Category not stated ×3, ₹18.2 Cr drawn. India SME's statements print no SEBI
+category; "Category II" was its reader's.)*
 
 **THE SECTIONING FOLLOWS THE ROWS, NOT THE ADDRESS.** It applies only where
 every row is an AIF holding, so a drill-down mixing an AIF with a mutual fund —
@@ -14460,6 +14474,12 @@ on the book today:
 | Private equity — Baring PE, Transition Venture | ₹3.60 Cr | |
 | No category printed — Delphi, Neo Infra, Blue Ashva | ₹16.69 Cr | |
 
+
+*(Corrected at Stage 10cv: Founders prints no category — "Category II" was its
+reader's — and Neo Infra's statement does print Category II, on its manager
+block. Neither moves a side: the family's own placing decides both since Stage
+10bw.)*
+
 It is the SAME FAILURE this file already records one iteration earlier —
 `listedValue: totalValue, privateValue: 0`, "true when every account in the book
 was a listed-equity mandate, and false the moment the AIF statements got a
@@ -14497,6 +14517,10 @@ applies to money*. *(The family have since SAID where Founders goes — it inves
 in listed Indian equities — and their word outranks the category now; the review
 is still not a tier, and the statement still says Category II. See Stage 10bw.)*
 
+
+*(Corrected at Stage 10cv: Founders' statement prints no category; "Category II
+by its statement" was its reader's. The review's `Equity` stands against no
+printed category.)*
 **AND `null` IS A THIRD ANSWER, NEVER A DEFAULT.** Three funds print no category
 (₹16.69 Cr). Filing them private claims they are private capital; filing them
 listed claims the opposite; both are claims no document makes. So
@@ -16620,6 +16644,10 @@ word for word — *"a capital-call/drawdown structure tells you how the investor
 funds the vehicle; it does not tell you whether the fund invests in private or
 public assets"* — which is exactly why a public-market fund does not belong on a
 private-market page.
+
+*(Corrected at Stage 10cv: Founders' statement prints no SEBI category;
+"Category II" was its reader's. The family's placing is what puts it on the
+listed side, as before.)*
 
 **`FAMILY_MARKET_SIDE` in `shared/aifCategory.mjs` is that answer, committed.**
 Ten entries: India SME, Baring, Transition Venture, Neo Infra and Sky Capital
@@ -19043,6 +19071,10 @@ alone**, and says so (`corroboration: null`). It is a FILL-ONLY tier: it applies
 only where both printed fields are silent, so a statement that prints a category
 always wins, and the AIF drill-down's chip says "declared by the family" on the
 two rows it placed.
+
+*(Corrected at Stage 10cv: Neo Infra's statement does print its category —
+`AIF -Category-II No : IN/AIF2/22-23/1042`, on its manager block — and its
+reader reads it now. The declared tier places Delphi alone.)*
 
 **THE CATEGORY DECIDES THE DRILL-DOWN SECTION, NOT THE SIDE OF THE BOOK — and
 that is the merge with Stage 10bw, which is the right answer rather than a
@@ -24363,6 +24395,49 @@ counted-once checks on `private-market-owners`. The last is this change's
 held-back mandate branch: no mandate on this book has some shares held back and
 some live · `build-book` twice, byte-identical · every `replay:*`,
 `rekey:archive` and `reconcile:review` a no-op with `--check`.
+
+### Stage 10cv — THE FIGURE AUDIT, PART C: EVERY FIGURE NAMES ITS DATE, ITS SET AND ITS BASIS
+
+*"Audit every calculation on the dashboard and fix every logical error, so the
+client never finds one."*
+
+The C group of `docs/FIGURE-AUDIT.md`: twelve themes of a label or a basis that
+did not describe its figure. No figure is re-measured here; what changed is what
+the words beside each figure say. Stacked on Stage 10cu.
+
+| | Was | Now |
+| --- | --- | --- |
+| C-01 | a mark dated by the book's newest date (29 Aug, two quantity-only demats) | each figure names the date its value is struck on; the basis pill splits statement, NAV and live |
+| C-02 | three AIF categories no statement prints | read off the statements: Neo Infra's printed Category II is read, and Founders, India SME and Transition Venture print none |
+| C-03 | coverage unstated | each total names the set and the share of it that reports |
+| C-04 – C-12 | captions on Private Market, the Monitor, Transactions, search, Polycab, Extras, the stock and mandate pages, the Excel export, Family & Sectors | each describes the figure beside it, and a dash names its cause |
+| CK-C5, DSM-C9 | two definitions of a side of the book, and of a mandate share's sector | one each (`SIDE_NOTE`, `companySectorIndex`) |
+| XP-13 | every drill-down's footer counted the whole book's 5 closed rows and 6 specks | each counts its own set's (AIF 3 closed; Mutual Fund 1 closed, 4 specks) |
+| XP-16 | Capital Gains' Lots total printed "7 of 51 accounts" | 212 lots, the bucket table's figure; the account count is its hover |
+| VD-16, VD-18 | Sanshi and Carnelian Amritkaal marked at pre-tax NAV, and ABSL Liquid all pledged, with nothing on screen | said in a few words on the price tile and the Monitor's price cell, each held to its statement's own text (`statementNotes.ts`) |
+
+**A CHECK THAT HAD NOT RUN SINCE STAGE 10ct.** Stage 10ct added a second
+`"capital-gains"` key to `INVARIANTS`; an object literal keeps the later of two
+keys, so Stage 10cp's missing-data band checks were dropped and nothing said so.
+The two blocks are one, and `check:pages` now reads its own source and refuses to
+run on a repeated key.
+
+**CLAUDE.md said four funds printed a category they do not.** Seven passages
+(Stages 10aw, 10bp, 10bw, 10cd) carry a correction note where they stood.
+
+**What moved.** `glowData.ts`: the engagement strings of 3P, India SME ×3,
+Founders ×2, Neo Infra and Transition Venture ×2; `BOOK-REPORT.md`: Delphi is the
+only family-declared category. No total moves.
+
+**Guards.** Five new suites in `test:family` (`statementNotes`, `valuedAt`,
+`navCard`, `schemeMatch`, `mandateCapital`) and one in `test:ingest`
+(`categoryWords`), cases in the existing suites, eleven new `check:pages` routes
+and `scripts/dev/one-definition-bug.sh`, eighteen cases, each firing its own
+check. Case 14 is the checker refusing to run on a repeated route key.
+
+**Not fixed, and why.** Which NAV to value Sanshi at is the family's call (about
+₹11 Cr lower post-tax). Capturing each demat line's pledged balance needs a reader
+change; the one pledged line is named instead.
 
 ### Stage 10k — News & Announcements: REMOVED
 

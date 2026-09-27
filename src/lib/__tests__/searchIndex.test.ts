@@ -17,12 +17,16 @@
 //     missing field.
 //
 // Every expectation is derived from `glowData.ts` on the run.
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_CAPITAL_MOVES } from "@/data/glowData";
 import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRedeemedToNil, isCashEquivalent, sum } from "@/lib/analytics";
-import { depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
+import { accountIndex } from "@/lib/accounts";
+import { groupKeyFor, groupLabelFor } from "@/lib/groupAxis";
+import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
+import { applyCorporateActionQuotes } from "@/lib/corporateActions";
+import { applyQuotes } from "@/lib/quotes";
 import { parseDrilldown } from "@/lib/drilldown";
 import { NAV } from "@/lib/nav";
-import { buildSearchIndex, searchEntries, scoreText, looksLikeQuestion, normSearch } from "@/lib/searchIndex";
+import { buildSearchIndex, fencedIdentityOf, searchEntries, scoreText, looksLikeQuestion, normSearch } from "@/lib/searchIndex";
 import { labelledAccounts, labelledPositions, labelVariants, securityLabel } from "@/lib/securityLabel";
 import { REVIEW_GAPS } from "@/data/reviewGaps";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
@@ -46,27 +50,61 @@ const money = (n: number) => `₹${(n / 1e7).toFixed(2)} Cr`;
  */
 const positions = labelledPositions(BOOK_POSITIONS);
 const consolidated = dedupedPositions(positions);
-const index = buildSearchIndex({ positions, consolidated, accounts: labelledAccounts(BOOK_ACCOUNTS), money });
+const accounts = labelledAccounts(BOOK_ACCOUNTS);
+const index = buildSearchIndex({
+  positions, consolidated, accounts, money,
+  capitalMoves: BOOK_CAPITAL_MOVES, fenced: fencedIdentityOf(BOOK_POLYCAB),
+});
+/**
+ * AND THE INDEX THE TOP BAR ACTUALLY BUILDS ON THE LIVE BOOK — assembled as
+ * `PortfolioContext` assembles it: the labelled rows through the
+ * corporate-action layer, the depository's cash rows (Stage 10ce) through the
+ * quote overlay, AMFI's published NAVs over all of them, and the registry with
+ * its partial-valuation notes. What a row says about its figure's basis and
+ * date (SC-C2, SC-C3) is only testable on the figures the screen shows.
+ */
+const DEP = depositoryCashHoldings();
+const screenPositions = applyFundNavs([
+  ...applyCorporateActionQuotes(positions, accounts, null, null).positions, ...applyQuotes(DEP, null)]);
+const screenAccounts = withPartialValuation(accounts, partialValuationNotes(DEP));
+const screenIndex = buildSearchIndex({
+  positions: screenPositions, consolidated: dedupedPositions(screenPositions), accounts: screenAccounts, money,
+  capitalMoves: BOOK_CAPITAL_MOVES, fenced: fencedIdentityOf(BOOK_POLYCAB),
+});
 const top = (q: string) => searchEntries(index, q, 10)[0]?.entry;
 const topN = (q: string, n: number) => searchEntries(index, q, 10).slice(0, n).map((h) => h.entry);
 
 console.log("── every holding is findable, once ──");
 {
   const small = negligibleKeys(BOOK_POSITIONS);
+  const rowsOf = (k: string) => consolidated.filter((p) => p.securityKey === k);
+  const isClosed = (k: string) => rowsOf(k).every((p) => isRedeemedToNil(p));
   const keys = new Set(consolidated.filter((p) => !small.has(p.securityKey)).map((p) => p.securityKey));
   const holdings = index.filter((e) => e.kind === "holding");
   ok("one holding entry per security above the floor", holdings.length === keys.size, `${holdings.length} vs ${keys.size}`);
   ok("no holding under the family's ₹1,000 floor is offered", [...small].every((k) => !index.some((e) => e.id === `holding:${k}`)));
-  // A HELD position opens its own page; a REDEEMED one opens the tab its
-  // redemption is on — its own page would show a measured nil and little else.
+  /**
+   * A HELD position opens its own page. A REDEEMED one opens the Transactions
+   * tab ONLY where the family's dated capital record carries money coming back
+   * for its account (SC-C5) — 3P's Full Units Redemption is there, the HDFC
+   * folio's schemes print nil units and no dated movement anywhere — and
+   * otherwise its own page, and its line says which.
+   */
+  const outOnRecord = new Set(BOOK_CAPITAL_MOVES.filter((m) => m.direction === "out").map((m) => m.accountId));
   const current = new Set(currentHoldings(consolidated).map((p) => p.securityKey));
+  const onRecord = (k: string) => BOOK_POSITIONS.some((p) => p.securityKey === k && outOnRecord.has(p.accountId));
   const wrong = holdings.filter((e) => {
     const key = e.id.slice("holding:".length);
-    const closed = consolidated.filter((p) => p.securityKey === key).every((p) => isRedeemedToNil(p));
-    return closed ? e.href !== "/monitor?show=transactions" : e.href !== `/stock/${encodeURIComponent(key)}` || !current.has(key);
+    if (!isClosed(key)) return e.href !== `/stock/${encodeURIComponent(key)}` || !current.has(key);
+    return onRecord(key)
+      ? e.href !== "/monitor?show=transactions" || !/on Transactions/.test(e.detail)
+      : e.href !== `/stock/${encodeURIComponent(key)}` || /Transactions/.test(e.detail) || !/no statement in this book dates/.test(e.detail);
   });
-  ok("every held position opens its holding page, every redeemed one the Transactions tab", wrong.length === 0,
-    wrong.slice(0, 3).map((e) => `${e.label} → ${e.href}`).join("; "));
+  ok("every held position opens its holding page; a redeemed one says where its redemption is only where it is", wrong.length === 0,
+    wrong.slice(0, 3).map((e) => `${e.label} → ${e.href} · ${e.detail}`).join("; "));
+  const closedKeys = [...keys].filter(isClosed);
+  ok("…and this book has a redemption on the record AND one with none, so both branches are exercised",
+    closedKeys.some(onRecord) && closedKeys.some((k) => !onRecord(k)), closedKeys.join(", "));
 }
 
 console.log("── an identifier lands on its own row, first — every one of them ──");
@@ -210,12 +248,118 @@ console.log("── a review's spelling of a held scheme finds the scheme (SC-B4
     top("direct equity")?.kind === "category");
 }
 
+console.log("── what a row says about its figure is true of the figure (SC-C2…C7) ──");
+{
+  const idx = accountIndex(BOOK_ACCOUNTS);
+  const label = groupLabelFor("category");
+  // SC-C4 — a holding filed under two categories names both, largest first.
+  const sc = dedupedPositions(screenPositions);
+  const byKey = new Map<string, typeof sc>();
+  for (const p of sc) byKey.set(p.securityKey, [...(byKey.get(p.securityKey) ?? []), p]);
+  const multi = [...byKey].filter(([, rows]) => new Set(rows.map((p) => groupKeyFor("category", idx, p))).size > 1);
+  const catWrong = multi.filter(([k, rows]) => {
+    const by = new Map<string, number>();
+    for (const p of rows) { const g = groupKeyFor("category", idx, p); by.set(g, (by.get(g) ?? 0) + Math.abs(p.marketValue)); }
+    const held = [...by].filter(([, v]) => v > 0);
+    const want = (held.length ? held : [...by]).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([g]) => label(g)).join(" + ");
+    const e = screenIndex.find((x) => x.id === `holding:${k}`);
+    return !e || !e.detail.startsWith(`${want} · `);
+  }).map(([k]) => k);
+  ok("a holding filed under two categories names each that holds some of it, largest first — never whichever row sorts first",
+    multi.length > 0 && catWrong.length === 0, `${multi.length} such: ${catWrong.join(", ") || multi.map(([k]) => k).join(", ")}`);
+  // …and a category a holding's rows are filed under but that holds NONE of its
+  // value is not named — the book's "Cash" line is PMS cash sleeves plus two
+  // nil Buoyant lines filed under Cash, and "PMS mandates + Cash" said the Cash
+  // category held some of the ₹9.51 Cr.
+  const zeroCats = [...byKey].flatMap(([k, rows]) => {
+    const by = new Map<string, number>();
+    for (const p of rows) { const g = groupKeyFor("category", idx, p); by.set(g, (by.get(g) ?? 0) + Math.abs(p.marketValue)); }
+    const pos = [...by].filter(([, v]) => v > 0);
+    return pos.length ? [...by].filter(([, v]) => v === 0).map(([g]) => ({ k, g: label(g) })) : [];
+  });
+  const zeroNamed = zeroCats.filter(({ k, g }) => (screenIndex.find((e) => e.id === `holding:${k}`)?.detail ?? "")
+    .split(" · ")[0].split(" + ").includes(g));
+  ok("…and a category holding none of the value is not named", zeroCats.length > 0 && zeroNamed.length === 0,
+    `${zeroCats.length} such: ${zeroNamed.map((x) => `${x.k}→${x.g}`).join(", ") || zeroCats.map((x) => `${x.k}/${x.g}`).join(", ")}`);
+
+  // SC-C2 — a member's figure is Family & Entities', not "as the statements print it".
+  const owners = [...new Set(BOOK_ACCOUNTS.map((a) => a.owner))];
+  const persons = owners.map((o) => screenIndex.find((e) => e.id === `person:${o}`));
+  ok("a member's row names the page its figure is, and claims no statement basis",
+    persons.every((e) => !!e && /as Family & Entities shows it/.test(e.detail) && !/statements print/.test(e.detail)));
+
+  // SC-C3 — an account valued at AMFI's NAV says so, with the NAV's date; one on
+  // its statement's marks says so, with the statement's.
+  const accountRows = BOOK_ACCOUNTS.filter((a) => !isMandateHeld(a.engagement)).map((a) => {
+    const rows = screenPositions.filter((p) => p.accountId === a.accountId && p.marketValue !== 0);
+    const e = screenIndex.find((x) => x.id === `account:${a.accountId}`);
+    return { a, rows, e };
+  }).filter((r) => r.rows.length > 0 && r.e);
+  const allNav = accountRows.filter((r) => r.rows.every((p) => p.navPriced && !p.live));
+  const allStmt = accountRows.filter((r) => r.rows.every((p) => !p.navPriced && !p.live));
+  const navWrong = allNav.filter((r) => {
+    const d = [...new Set(r.rows.map((p) => p.navDate))].sort().pop();
+    return !r.e!.detail.includes(`AMFI's NAV of ${d}`) || !r.e!.detail.includes(`statement of ${r.a.asOf}`);
+  });
+  const stmtWrong = allStmt.filter((r) => !r.e!.detail.includes(`statement's marks of ${r.a.asOf}`) || /AMFI/.test(r.e!.detail));
+  ok("an account valued at AMFI's NAV names the NAV's date beside its statement's", allNav.length > 0 && navWrong.length === 0,
+    `${allNav.length}: ${navWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
+  ok("…and one on its statement's marks says so, with that date", allStmt.length > 0 && stmtWrong.length === 0,
+    `${allStmt.length}: ${stmtWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
+
+  // SC-C6 — a figure result opens a page that SHOWS the figure.
+  const fig = (id: string) => index.find((e) => e.id === id)?.href ?? "";
+  ok("the money-weighted return opens Morning CIO with its own tile on screen",
+    /^\/cio\?(.*&)?tiles=([^&]*,)?mwr(,|&|$)/.test(fig("fig:xirr")), fig("fig:xirr"));
+  ok("…and Distributions opens Private Market with the Distributions tile on screen",
+    /^\/private-market\?(.*&)?tiles=([^&]*,)?distributed(,|&|$)/.test(fig("fig:distributions")), fig("fig:distributions"));
+
+  // SC-C7 — no word claims a holding the book does not have, and a word the
+  // book DOES earn is answered. "arbitrage" belongs on the Cash row exactly
+  // while that row holds an arbitrage fund — re-expressed here from the book
+  // each index is built over, never read off the builder: the statement book
+  // holds none, the live book values the one a depository reports (Stage 10ce).
+  const cashIdsOf = (xs: typeof index) => xs.filter((e) => e.kind === "category" && e.id.endsWith(":Cash")).map((e) => e.id);
+  for (const [basis, ix, rows] of [["statement", index, positions], ["live", screenIndex, screenPositions]] as const) {
+    const holds = currentHoldings(dedupedPositions([...rows]))
+      .some((p) => groupKeyFor("category", idx, p) === "Cash" && /\barbitrage\b/i.test(p.security));
+    const arb = searchEntries(ix, "arbitrage", 10).map((h) => h.entry);
+    const reached = arb.filter((e) => cashIdsOf(ix).includes(e.id));
+    ok(`on the ${basis} book 'arbitrage' reaches the Cash row exactly when that row holds an arbitrage fund (${holds ? "it does" : "it does not"})`,
+      holds ? reached.length > 0 : reached.length === 0, arb.map((e) => e.id).join(", "));
+  }
+  // …and the two books differ here, or the check above passes over one branch.
+  const holdsOn = (rows: readonly typeof positions[number][]) => currentHoldings(dedupedPositions([...rows]))
+    .some((p) => groupKeyFor("category", idx, p) === "Cash" && /\barbitrage\b/i.test(p.security));
+  ok("…and one book holds an arbitrage fund while the other does not, so both branches are exercised",
+    holdsOn(screenPositions) && !holdsOn(positions));
+  ok("…and 'net worth' is not answered with the Current Value of Holdings", top("net worth")?.id !== "fig:book", top("net worth")?.id);
+  ok("…and the Transactions tab no longer promises every redemption", !/every dated/.test(index.find((e) => e.id === "view:transactions")?.detail ?? "every dated"));
+}
+
 console.log("── the ring-fence ──");
 {
   const keys = new Set(BOOK_POLYCAB.map((p) => p.securityKey));
   const isins = new Set(BOOK_POLYCAB.map((p) => p.isin).filter(Boolean));
-  ok("the ring-fenced holding is in no entry",
-    !index.some((e) => [...keys].some((k) => e.id.includes(k) || e.href.includes(k)) || e.codes.some((c) => isins.has(c))));
+  ok("the ring-fenced holding is in no entry but the Polycab page's own",
+    !index.some((e) => e.id !== "page:/polycab"
+      && ([...keys].some((k) => e.id.includes(k) || e.href.includes(k)) || e.codes.some((c) => isins.has(c)))));
+  // PC-05 — the company's full name and its ISIN reach the PAGE, first, and
+  // nothing outside it: "Nothing in this book matches" about a ₹12,351 Cr
+  // holding was the BSE defect again.
+  // Derived from the statement's own name, never typed: the company's short
+  // name ("Polycab India"), its full name without the depository's furniture
+  // ("Polycab India Limited") and its ISIN.
+  const fencedFull = BOOK_POLYCAB[0]?.security.replace(/\s*-\s*EQ\b.*$/i, "").trim();
+  const fencedName = fencedFull?.split(/\s+/).slice(0, 2).join(" ");
+  for (const q of [fencedName, fencedFull, [...isins][0]].filter((x): x is string => !!x)) {
+    const got = searchEntries(index, q, 10).map((h) => h.entry);
+    ok(`'${q}' finds the Polycab page first, and nothing outside it`,
+      got.length > 0 && got[0].id === "page:/polycab"
+        && got.every((e) => (e.kind === "page" || e.kind === "view") && (e.href === "/polycab" || e.href.startsWith("/polycab?"))),
+      got.map((e) => `${e.kind}:${e.label}`).join(", "));
+  }
   // THE PAGE FIRST, THEN ONLY ITS OWN TABS. Every hit must open the Polycab
   // page itself — a holding, an account or a figure anywhere else is the leak
   // the fence exists to stop — and there must be at least one hit, so an empty

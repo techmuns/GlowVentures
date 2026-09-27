@@ -206,6 +206,70 @@ export function parseQuote(hdr) {
 }
 
 /**
+ * WHERE A FETCH FELL AGAINST BSE'S TRADING DAY, IN INDIA TIME.
+ *
+ * `getScripHeaderData` answers with a last-traded price and NO session date, so
+ * the only thing this book can know about which session a stored price belongs
+ * to is WHEN it was fetched. The equity session runs 09:00 (pre-open) to 16:00
+ * IST (the closing and post-closing sessions), Monday to Friday. A price
+ * fetched inside that window may be an intraday figure; one fetched outside it
+ * is the last session's close.
+ *
+ * EXCHANGE HOLIDAYS ARE NOT KNOWN HERE — nothing this file reads publishes the
+ * calendar — so a fetch inside the window on a holiday is reported `inSession`,
+ * and the page says the price MAY be intraday. That errs towards the weaker
+ * claim, never the stronger one: calling a settled close "possibly intraday"
+ * misleads nobody, and calling an intraday price "the last close" is the defect
+ * this function exists for (a store committed at 09:39 IST once did exactly
+ * that). India keeps no daylight saving, so the offset is a constant.
+ */
+export function sessionPhase(iso) {
+  const t = Date.parse(String(iso ?? ""));
+  if (!Number.isFinite(t)) return null;
+  const ist = new Date(t + 330 * 60000);
+  const day = ist.getUTCDay();
+  const mins = ist.getUTCHours() * 60 + ist.getUTCMinutes();
+  const weekday = day >= 1 && day <= 5;
+  const pad = (n) => String(n).padStart(2, "0");
+  return {
+    inSession: weekday && mins >= 9 * 60 && mins < 16 * 60,
+    weekday,
+    istDate: `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(ist.getUTCDate())}`,
+    istTime: `${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`,
+  };
+}
+
+/**
+ * WHICH QUOTE THE DAILY STORE KEEPS — only a settled session, where it can.
+ *
+ * The workflow runs after the close, so the price it stores is a close; a run
+ * started by hand DURING the session (09:00–16:00 IST on a weekday) would
+ * otherwise commit an intraday price that the page then called "the last
+ * settled close". Where a settled close is already stored, a mid-session fetch
+ * keeps it; where none is, the intraday price is stored WITH its fetch time,
+ * and the page labels it as possibly intraday rather than as a close. Moved out
+ * of the builder so the rule can be exercised without the network.
+ */
+export function settledQuote(fresh, fetchedAt, prevQuote) {
+  const quote = { ...fresh, fetchedAt };
+  const phase = sessionPhase(fetchedAt);
+  const prevPhase = sessionPhase(prevQuote?.fetchedAt);
+  if (phase?.inSession && prevQuote && prevPhase && !prevPhase.inSession) {
+    return {
+      quote: prevQuote,
+      note: { severity: "info", text: `fetched during trading hours (${phase.istTime} IST, ${phase.istDate}), so it may be intraday; the stored close, fetched ${prevPhase.istTime} IST on ${prevPhase.istDate}, is kept — only a settled session is stored.` },
+    };
+  }
+  if (phase?.inSession) {
+    return {
+      quote,
+      note: { severity: "warn", text: `fetched during trading hours (${phase.istTime} IST, ${phase.istDate}) with no settled close stored, so it is published with its fetch time and the page labels it as possibly intraday.` },
+    };
+  }
+  return { quote, note: null };
+}
+
+/**
  * IDENTITY, AND THE FIELD THE GATE IS STRUCK ON.
  *
  * `ComHeadernew` returns the ISIN, the security id and the scrip code together.
@@ -270,12 +334,17 @@ export function parseTickertapeHoldings(html) {
     // `typeof === "number"` rather than `num()`: these arrive already typed, and
     // an absent key must stay absent instead of being coerced through a string.
     const holdingPct = typeof v.pmPctT === "number" ? v.pmPctT : null;
-    // The promoter-specific pledge where the block carries it, falling back to
-    // the whole-book pledged figure only where it does not. Both are published
-    // by the same document and the page names which one it got.
-    const pledgePct =
-      typeof v.pmPctP === "number" ? v.pmPctP :
-      typeof v.plPctT === "number" ? v.plPctT : null;
+    // "Promoter Holding Pledged" ALONE, and NO FALLBACK. This used to fall back
+    // to `plPctT` ("Pledged") where a block carried no `pmPctP` — but the two
+    // are struck on DIFFERENT BASES: the `…T` fields (`pmPctT`, `plPctT`,
+    // `uPlPctT`) are shares of the company's TOTAL equity, and pledged plus
+    // unpledged is the promoter holding; `pmPctP` is the pledged part of the
+    // promoter group's OWN holding. A column that could hold either, row by
+    // row, is a percentage whose denominator changes under the reader — and the
+    // store recorded only "tickertape", so which one a figure was could not be
+    // told afterwards. A quarter whose block carries no `pmPctP` has no pledge
+    // on this basis, so it is null rather than a figure on the other one.
+    const pledgePct = typeof v.pmPctP === "number" ? v.pmPctP : null;
     if (!asOf || (holdingPct === null && pledgePct === null)) continue;
     out.push({ asOf, holdingPct, pledgePct });
   }
@@ -381,3 +450,69 @@ export function quarterEndIso(q) {
   const e = END[m[1].toLowerCase()];
   return e ? `${m[2]}-${e}` : null;
 }
+
+/**
+ * THE TWO PROMOTER WITNESSES, JOINED ON THE QUARTER END — one definition, so the
+ * builder and its test cannot disagree about what "two sources carried it" is.
+ *
+ * WHERE BOTH CARRY A QUARTER THEY ARE COMPARED, AND A DISAGREEMENT PUBLISHES
+ * NEITHER. Screener prints two decimals and tickertape full precision, so they
+ * are reconciled at 0.05pp; the finer figure is the one stored. A quarter ONE
+ * source carries is published on that source alone ("never empty a figure you
+ * could not cross-check"), and the store says so rather than implying two.
+ *
+ * `witnesses` IS COUNTED BEFORE ANY REFUSAL. It is how many sources CARRIED a
+ * holding figure for the quarter — a refused quarter was carried by two, and
+ * counting the nulled side as absent would print "1" beside a dash that is a
+ * refusal between two. `holdingRefused` is what tells a refused quarter from one
+ * no source carried: they look identical as a null and send a reader to
+ * completely different places, so the page words them apart.
+ *
+ * AND A QUARTER THE FIRST WITNESS CARRIED WITHOUT A HOLDING FIGURE (a block with
+ * only a pledge) TAKES THE SECOND WITNESS'S HOLDING. The inline version this
+ * replaced left it null, which dropped a published holding on the one source
+ * that had it.
+ */
+export function mergePromoterQuarters(tickertape, screener) {
+  const byIso = new Map();
+  for (const q of Array.isArray(tickertape) ? tickertape : []) {
+    if (!q?.asOf) continue;
+    byIso.set(q.asOf, {
+      asOf: q.asOf, quarter: quarterLabel(q.asOf),
+      holdingPct: null, pledgePct: q.pledgePct ?? null,
+      pledgeSource: typeof q.pledgePct === "number" ? "tickertape" : null,
+      tt: typeof q.holdingPct === "number" ? q.holdingPct : null, sc: null,
+    });
+  }
+  for (const q of Array.isArray(screener) ? screener : []) {
+    const iso = quarterEndIso(q?.quarter);
+    if (!iso) continue;
+    const sc = typeof q.holdingPct === "number" ? q.holdingPct : null;
+    const e = byIso.get(iso);
+    if (e) e.sc = sc;
+    else byIso.set(iso, { asOf: iso, quarter: q.quarter, holdingPct: null, pledgePct: null, pledgeSource: null, tt: null, sc });
+  }
+  if (!byIso.size) return null;
+  const rows = [...byIso.values()].sort((a, b) => b.asOf.localeCompare(a.asOf));
+  const disagreed = [];
+  let compared = 0;
+  const quarters = rows.map((r) => {
+    let holdingPct = r.tt ?? r.sc;
+    let holdingRefused = false;
+    if (r.tt !== null && r.sc !== null) {
+      compared++;
+      if (Math.abs(r.tt - r.sc) > 0.05) {
+        disagreed.push(`${r.quarter}: ${r.tt} vs ${r.sc}`);
+        holdingPct = null;
+        holdingRefused = true;
+      }
+    }
+    return {
+      asOf: r.asOf, quarter: r.quarter, holdingPct, pledgePct: r.pledgePct, pledgeSource: r.pledgeSource,
+      witnesses: (r.tt !== null ? 1 : 0) + (r.sc !== null ? 1 : 0),
+      holdingRefused,
+    };
+  });
+  return { quarters, compared, disagreed };
+}
+

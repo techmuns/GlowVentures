@@ -35,13 +35,19 @@
 // derived from both on this run or written as a RELATION that survives either
 // moving. A literal share count or dividend here would fail the first morning
 // the company declared one.
-import { BOOK_POLYCAB } from "@/data/glowData";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { BOOK_POLYCAB, BOOK_ACCOUNTS } from "@/data/glowData";
 import { POLYCAB_LIVE } from "@/data/polycabLive";
 import {
   dividendActions, shareCountActions, unclassifiedActions, shareActionsMeasuredNil,
   latestPromoter, entitlements, markedValue, effectiveQuote,
+  quoteDating, statementDates, paymentDateWhy, witnessCounts, holdingWhy,
 } from "@/lib/polycabLive";
-import { classifyAction, parseQuote, parseIdentity, parseTickertapeHoldings, pageIdentity, mergePaymentDates } from "../../../shared/polycabSources.mjs";
+import {
+  classifyAction, parseQuote, parseIdentity, parseTickertapeHoldings, pageIdentity, mergePaymentDates,
+  sessionPhase, settledQuote, mergePromoterQuarters,
+} from "../../../shared/polycabSources.mjs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -114,6 +120,23 @@ ok("the parser yields null rather than 0 for a quarter carrying no figures",
   ok("…and a quarter that PUBLISHES 0 keeps its measured zero",
     at("2026-03-31")?.pledgePct === 0, JSON.stringify(at("2026-03-31")));
 }
+/**
+ * THE PLEDGE IS STRUCK ON ONE BASIS. `pmPctP` ("Promoter Holding Pledged") is a
+ * share of the group's OWN holding; `plPctT` ("Pledged") is a share of the
+ * company's TOTAL equity. The parser used to fall back to the second where a
+ * block lacked the first, so one column could hold either basis row by row —
+ * and the store recorded only "tickertape", so which was which was lost.
+ */
+{
+  const otherBasis = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+    props: { pageProps: { securitySummary: { holdings: { holdings: [
+      { date: "2026-06-30T00:00:00.000Z", data: { pmPctT: 61.5, plPctT: 1.2, uPlPctT: 60.3 } },
+    ] } } } },
+  })}</script>`;
+  const parsed = parseTickertapeHoldings(otherBasis) as { pledgePct: number | null }[] | null;
+  ok("a block carrying only the total-equity `Pledged` field yields NO pledge, never a figure on the other basis",
+    parsed?.[0]?.pledgePct === null, JSON.stringify(parsed));
+}
 
 console.log("\n── a measured nil is gated on a COMPLETE record ──");
 
@@ -166,21 +189,40 @@ console.log("\n── the entitlement is DERIVED, and says what it assumes ─�
  * is set from the dates rather than defaulted, in both directions.
  */
 {
-  const asOf = "2026-03-31";
-  const ent = entitlements(bookShares, asOf);
+  // The statement date comes off the BOOK — the ring-fenced rows' own accounts —
+  // never typed: a literal here would pass the day a second statement landed.
+  const asOfs = [...new Set(fenced.map((p) => BOOK_ACCOUNTS.find((a) => a.accountId === p.accountId)?.asOf ?? null))];
+  const balances = fenced.map((p) => ({
+    shares: typeof p.quantity === "number" ? p.quantity : null,
+    asOf: BOOK_ACCOUNTS.find((a) => a.accountId === p.accountId)?.asOf ?? null,
+  }));
+  ok("the book states a report date for the ring-fenced demat", asOfs.length > 0 && asOfs.every((d) => !!d), asOfs.join(", "));
+  const ent = entitlements(balances);
   ok("an entitlement is struck for every declared dividend", ent.length === dividendActions().length);
   ok("each amount is the declared per-share times the book's own share count",
     ent.every((e) => e.amount === null
       ? e.action.amountPerShare === null
       : Math.abs(e.amount - (e.action.amountPerShare as number) * bookShares) < 0.01));
-  ok("an ex-date the statement does not span is flagged, not silently multiplied",
-    ent.every((e) => e.exDateWithinStatement === (!!e.action.exDate && e.action.exDate <= asOf)));
-  const after = ent.filter((e) => !e.exDateWithinStatement);
-  ok("…and this book actually exercises that branch",
-    after.length > 0 || dividendActions().every((a) => (a.exDate ?? "") <= asOf),
-    `${after.length} action(s) fall outside the statement's date`);
+  /**
+   * THE FLAG IS TWO-SIDED. A statement of holding is a snapshot, so it reports
+   * the balance on ITS OWN DATE and on no other — before it as much as after it.
+   * This used to be `exDate <= asOf`, which left seven ex-dates from 2019 to 2025
+   * unmarked as if a 31 Mar 2026 statement vouched for the balance on each.
+   * Re-expressed here from the dates alone rather than read back off the helper.
+   */
+  ok("an ex-date is unmarked only where every statement is dated ON it — before and after alike",
+    ent.every((e) => e.balanceReportedOnExDate === (!!e.action.exDate && balances.every((b) => b.asOf === e.action.exDate))));
+  const before = ent.filter((e) => !!e.action.exDate && asOfs.every((d) => (e.action.exDate as string) < (d as string)));
+  const afterRows = ent.filter((e) => !!e.action.exDate && asOfs.every((d) => (e.action.exDate as string) > (d as string)));
+  ok("…and this book exercises the BEFORE branch, which the one-sided rule left unmarked",
+    before.length > 0 && before.every((e) => !e.balanceReportedOnExDate),
+    `${before.length} ex-date(s) before the statement, ${before.filter((e) => e.balanceReportedOnExDate).length} unmarked`);
+  ok("…and the after branch stays marked",
+    afterRows.every((e) => !e.balanceReportedOnExDate), `${afterRows.length} ex-date(s) after it`);
+  ok("each entitlement names the statement dates its share count came from",
+    ent.every((e) => JSON.stringify(e.statementDates) === JSON.stringify([...asOfs].sort())));
   ok("no entitlement is produced where the share count is unknown",
-    entitlements(null, asOf).every((e) => e.amount === null));
+    entitlements([{ shares: null, asOf: asOfs[0] }]).every((e) => e.amount === null));
 }
 
 console.log("\n── the live layer may move the PRICE and nothing else ──");
@@ -281,6 +323,178 @@ ok("the promoter figures are percentages of the GROUP, never of this book",
     qs.every((q, i) => i === 0 || qs[i - 1].asOf >= q.asOf));
   ok("the latest promoter row is the newest carrying a figure",
     latest === null || (latest.holdingPct !== null || latest.pledgePct !== null));
+}
+
+console.log("\n── when was the price on screen fetched, and was the market open (PC-02, PC-03) ──");
+
+/**
+ * INDIA TIME IS UTC+5:30 WITH NO DAYLIGHT SAVING, so these are arithmetic on a
+ * fixed offset and the expectations are exact. BSE trades 09:00–16:00 IST on a
+ * weekday (pre-open and the closing session included); holidays are not known,
+ * which is why the page says a price fetched inside those hours MAY be intraday.
+ */
+{
+  const cases: [string, boolean, string, string][] = [
+    ["2026-09-22T15:56:39.171Z", false, "2026-09-22", "21:26"], // a weekday evening — the last session's close
+    ["2026-09-22T04:09:20.027Z", true, "2026-09-22", "09:39"],  // mid-morning, in session
+    ["2026-09-26T06:00:00.000Z", false, "2026-09-26", "11:30"], // a Saturday
+    ["2026-09-23T03:00:00.000Z", false, "2026-09-23", "08:30"], // before the open
+    ["2026-09-23T10:29:00.000Z", true, "2026-09-23", "15:59"],  // the last minute in
+    ["2026-09-23T10:30:00.000Z", false, "2026-09-23", "16:00"], // the first minute out
+    ["2026-09-22T20:00:00.000Z", false, "2026-09-23", "01:30"], // crosses midnight into the NEXT India day
+  ];
+  for (const [iso, inSession, d, t] of cases) {
+    const ph = sessionPhase(iso);
+    ok(`${iso} is ${inSession ? "in" : "out of"} session, at ${t} IST on ${d}`,
+      ph?.inSession === inSession && ph?.istDate === d && ph?.istTime === t, JSON.stringify(ph));
+  }
+  ok("an unparseable timestamp has no phase, never a guessed one",
+    sessionPhase("not a date") === null && sessionPhase(null) === null && sessionPhase(undefined) === null);
+}
+
+{
+  const q = POLYCAB_LIVE.quote;
+  if (!q) ok("the store carries a quote to date", false, "no quote in the store");
+  else {
+    const at = (fetchedAt: string | null | undefined) => ({ quote: { ...q, fetchedAt } }) as Pick<typeof POLYCAB_LIVE, "quote">;
+    const stored = { status: "stored", reason: "the market is shut" } as const;
+    ok("a stored price fetched after the close is the last session's close",
+      quoteDating(stored, at("2026-09-22T15:56:39.171Z")).basis === "close");
+    ok("a stored price fetched MID-SESSION is marked possibly intraday — never called a close",
+      quoteDating(stored, at("2026-09-22T04:09:20.027Z")).basis === "intraday");
+    ok("a stored price with no fetch time is undated — never called a close",
+      quoteDating(stored, at(null)).basis === "undated" && quoteDating(stored, at(undefined)).basis === "undated");
+    ok("a live price fetched in session is live",
+      quoteDating({ status: "live", quote: q, retrievedAt: "2026-09-23T05:00:00.000Z" }).basis === "live");
+    ok("a live price fetched after the close is that session's close, not 'live'",
+      quoteDating({ status: "live", quote: q, retrievedAt: "2026-09-23T12:00:00.000Z" }).basis === "close");
+    const loading = quoteDating({ status: "loading" }, at("2026-09-22T15:56:39.171Z"));
+    ok("while the live price is fetching, the date shown is the stored price's own",
+      loading.basis === "fetching" && loading.istDate === "2026-09-22" && loading.istTime === "21:26", JSON.stringify(loading));
+    /**
+     * THE COMMITTED QUOTE MUST CARRY ITS OWN DATE. A price with no date under a
+     * column reading "last close" is the defect itself: nothing on the page could
+     * say which session's close it was.
+     */
+    const ph = sessionPhase(q.fetchedAt ?? null);
+    const quoteFailed = (POLYCAB_LIVE.notes ?? []).some((n) => n.rule === "quote" && n.severity === "fail");
+    ok("the stored quote carries the moment it was fetched, and it parses — or the notes say the fetch failed",
+      ph !== null || quoteFailed, String(q.fetchedAt));
+  }
+}
+
+{
+  const q = POLYCAB_LIVE.quote;
+  if (q) {
+    const after = "2026-09-22T15:56:39.171Z", during = "2026-09-23T05:00:00.000Z";
+    const settled = { ...q, fetchedAt: after };
+    const keep = settledQuote({ ...q, ltp: q.ltp + 1 }, during, settled);
+    ok("a fetch during trading hours keeps the settled close already stored",
+      keep.quote === settled && keep.note?.severity === "info", JSON.stringify(keep.note));
+    const none = settledQuote({ ...q, ltp: q.ltp + 1 }, during, null);
+    ok("…and with no settled close stored, keeps the intraday price WITH its fetch time, and warns",
+      none.quote.fetchedAt === during && none.quote.ltp === q.ltp + 1 && none.note?.severity === "warn");
+    const undatedPrev = settledQuote({ ...q, ltp: q.ltp + 1 }, during, { ...q, fetchedAt: null });
+    ok("…and an UNDATED stored price is not treated as a settled close",
+      undatedPrev.quote.fetchedAt === during && undatedPrev.note?.severity === "warn");
+    const close = settledQuote({ ...q, ltp: q.ltp + 1 }, "2026-09-23T12:00:00.000Z", settled);
+    ok("a fetch after the close replaces the stored close, with no note",
+      close.quote.fetchedAt === "2026-09-23T12:00:00.000Z" && close.quote.ltp === q.ltp + 1 && close.note === null);
+  }
+}
+
+console.log("\n── the promoter holding is counted by its witnesses, never claimed (PC-06, PC-07) ──");
+{
+  const tt = [
+    { asOf: "2026-06-30", holdingPct: 61.5, pledgePct: 0 },
+    { asOf: "2026-03-31", holdingPct: 61.6, pledgePct: 0 },
+  ];
+  const sc = [
+    { quarter: "Jun 2026", holdingPct: 61.52 },
+    { quarter: "Mar 2026", holdingPct: 61.9 },
+    { quarter: "Dec 2025", holdingPct: 61.7 },
+  ];
+  const m = mergePromoterQuarters(tt, sc);
+  const by = new Map((m?.quarters ?? []).map((q) => [q.asOf, q]));
+  const jun = by.get("2026-06-30"), mar = by.get("2026-03-31"), dec = by.get("2025-12-31");
+  ok("a quarter both carry and agree on is published, with TWO witnesses",
+    jun?.holdingPct === 61.5 && jun?.witnesses === 2 && jun?.holdingRefused === false, JSON.stringify(jun));
+  ok("a quarter they disagree on is refused — and still records that both carried it",
+    mar?.holdingPct === null && mar?.holdingRefused === true && mar?.witnesses === 2, JSON.stringify(mar));
+  ok("a quarter only one carries has ONE witness, never 'two independent sources'",
+    dec?.witnesses === 1 && dec?.holdingPct === 61.7 && dec?.holdingRefused === false, JSON.stringify(dec));
+  ok("…and its pledge is absent — never the other source's zero",
+    dec?.pledgePct === null && dec?.pledgeSource === null);
+  ok("compared counts only the overlap, and disagreed names the refused quarter",
+    m?.compared === 2 && m?.disagreed.length === 1, JSON.stringify({ compared: m?.compared, disagreed: m?.disagreed }));
+}
+{
+  const qs = POLYCAB_LIVE.promoterQuarters ?? [];
+  const wc = witnessCounts(qs);
+  ok("every stored quarter records how many sources carried it",
+    qs.length > 0 && qs.every((q) => q.witnesses === 1 || q.witnesses === 2), `${qs.length} quarter(s)`);
+  ok("the witness counts partition the stored quarters", wc.both + wc.one === wc.total && wc.total === qs.length, JSON.stringify(wc));
+  ok("the store's own agreement count is exactly its two-witness quarters",
+    POLYCAB_LIVE.promoterAgreement === null || POLYCAB_LIVE.promoterAgreement.compared === wc.both,
+    `${POLYCAB_LIVE.promoterAgreement?.compared} compared against ${wc.both} two-witness quarter(s)`);
+  ok("every stored quarter says whether its holding was refused",
+    qs.every((q) => q.holdingRefused === true || q.holdingRefused === false || q.holdingRefused === null));
+  const base = qs[0];
+  if (base) {
+    ok("a refused holding says the two sources disagreed",
+      /disagreed/.test(holdingWhy({ ...base, holdingPct: null, holdingRefused: true })));
+    ok("a holding no source carried says so — and does not claim a disagreement",
+      !/disagreed/.test(holdingWhy({ ...base, holdingPct: null, holdingRefused: false }))
+      && /no source/.test(holdingWhy({ ...base, holdingPct: null, holdingRefused: false })));
+    ok("a stored quarter that does not record which says it cannot tell",
+      /does not say which/.test(holdingWhy({ ...base, holdingPct: null, holdingRefused: null })));
+  }
+  /** A parser that took a figure on another basis for this one is the defect PC-07 names. */
+  const otherBasis = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+    props: { pageProps: { securitySummary: { holdings: { holdings: [
+      { date: "2026-06-30T00:00:00.000Z", data: { pmPctT: 61.5, pmPctP: 0.4, plPctT: 1.2 } },
+    ] } } } },
+  })}</script>`;
+  const parsed = parseTickertapeHoldings(otherBasis) as { pledgePct: number | null }[] | null;
+  ok("the pledge is read from the group-holding basis the column is headed with",
+    parsed?.[0]?.pledgePct === 0.4, JSON.stringify(parsed));
+}
+
+console.log("\n── a dashed payment date names its own cause (PC-08) ──");
+{
+  const mk = (exDate: string, paymentDate: string | null) => ({ exDate, paymentDate, kind: "dividend" }) as never;
+  const all = [mk("2025-06-24", "2025-07-31"), mk("2024-07-09", null), mk("2023-06-21", "2023-07-30"), mk("2019-06-18", null)];
+  ok("a dash INSIDE the span the record dates says it covered the period and printed no date",
+    /covers this period/.test(paymentDateWhy(all[1], all)));
+  ok("a dash OLDER than every dated row says the record does not reach it",
+    /older than any it dates/.test(paymentDateWhy(all[3], all)));
+  ok("a record that dated nothing says so, rather than guessing a reach",
+    /carried no date for any action/.test(paymentDateWhy(all[1], [mk("2024-07-09", null)])));
+  // The same two branches, struck on the committed record.
+  const store = POLYCAB_LIVE.corporateActions ?? [];
+  const dated = store.filter((x) => x.paymentDate && x.exDate).map((x) => x.exDate as string).sort();
+  const dashedStore = store.filter((x) => x.kind === "dividend" && !x.paymentDate && x.exDate);
+  ok("on the committed record every dashed payment date carries the reason its position implies",
+    dashedStore.every((x) => (dated.length && (x.exDate as string) < dated[0])
+      ? /older than any it dates/.test(paymentDateWhy(x, store))
+      : /covers this period|carried no date/.test(paymentDateWhy(x, store))),
+    `${dashedStore.length} dashed payment date(s)`);
+}
+
+console.log("\n── the committed store and report are what the builder renders from the store ──");
+{
+  /**
+   * `--offline --check` fetches nothing: it re-renders `polycabLive.ts` and
+   * `docs/POLYCAB-LIVE.md` from the committed record through the builder's own
+   * renderers and reports whether either would change. A renderer edited without
+   * regenerating — or a hand-edited generated file — fails here.
+   */
+  const root = path.resolve(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures", "../../../..");
+  const r = spawnSync(process.execPath, [path.join(root, "scripts/build-polycab-live.mjs"), "--offline", "--check"], {
+    cwd: root, encoding: "utf8",
+  });
+  ok("the builder's offline re-render of the committed store changes nothing",
+    r.status === 0 && /No change\./.test(r.stdout), `${r.status} ${(r.stdout + r.stderr).trim().slice(0, 300)}`);
 }
 
 /** A run that published nothing at all is a finding, not a pass. */

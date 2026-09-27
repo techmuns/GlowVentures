@@ -99,9 +99,11 @@ eq("null names nothing", categoriesNamedIn(null), []);
 eq("an empty string names nothing", categoriesNamedIn(""), []);
 
 // ── A PHRASE NAMING TWO CATEGORIES RESOLVES TO NEITHER ──────────────────────
-// Transition Venture Capital's account reads `Category I/II AIF — drawdown`.
-// That is the issuer declining to commit, and picking one would be this book
-// inventing the answer the document withheld.
+// A statement reading `Category I/II` is the issuer declining to commit, and
+// picking one would be this book inventing the answer the document withheld.
+// Constructed, because NO STATEMENT IN THIS BOOK PRINTS ONE: the account that
+// used to carry this phrase was Transition Venture's, and its reader wrote it —
+// both statements print a blank `Sebi Reg. no.-` and no category at all.
 console.log("\n── ambiguity ──");
 eq("Category I/II names both", categoriesNamedIn("Category I/II AIF — drawdown"), [CATEGORY_I, CATEGORY_II]);
 {
@@ -147,10 +149,13 @@ ok("a fund whose own name says venture capital",
 // listed-equity growth fund under a discipline neither claims.
 ok("a drawdown fund is not private equity by itself", !readsAsPrivateEquity(
   { security: "Neo Infra Income Opportunities Fund I — Class A5" },
-  { providerEngagement: "drawdown fund — the statement prints a capital commitment, dated drawdowns and a quarterly NAV" } as Account));
+  { providerEngagement: "drawdown fund — the statement prints a capital commitment, dated drawdowns and a quarterly NAV; its manager block prints the SEBI registration \"AIF -Category-II No : IN/AIF2/22-23/1042\"" } as Account));
+// A REAL Category II engagement, not the Founders string this used to borrow —
+// Founders prints no category, and its "Category II AIF - drawdown…" was its
+// reader's invention (the figure audit, PM-C3's sibling).
 ok("a Category II AIF is not private equity by itself", !readsAsPrivateEquity(
-  { security: "Motilal Oswal Founders Fund Series II — Class G1" },
-  { providerEngagement: "Category II AIF - drawdown, with a commitment and called capital" } as Account));
+  { security: "360 ONE Special Opportunities Fund - Series 8 — Class A3" },
+  { providerEngagement: "Category II AIF — pass-through" } as Account));
 ok("the word `venture` alone is not enough",
   !readsAsPrivateEquity({ security: "Venture Technologies Limited" }, undefined));
 
@@ -257,19 +262,35 @@ console.log("\n── the family's declared categories ──");
   ok("every declaration is Category II, as they said",
     keys.every((k) => DECLARED_AIF_CATEGORY[k].category === CATEGORY_II));
 
-  // LOAD-BEARING: every declared fund's own statement must be SILENT, or the
-  // declaration is overriding a printed category — a conflict to show a human,
-  // never a value to take. Checked on every position the book carries under
-  // each key, against the account it sits in.
+  // LOAD-BEARING: a declaration may only ever FILL a silent statement. Where
+  // a declared fund's own paperwork prints a category, it must AGREE with the
+  // declaration — a disagreement is a conflict to show a human, never a value
+  // to take — and the read must say the STATEMENT answered it, not the family.
+  //
+  // Neo Infra is that case since the figure audit: its statement prints
+  // `AIF -Category II` on its SEBI registration line, which the reader used to
+  // drop, so the category now comes off the document and the family's word is
+  // a corroboration. Delphi's statement is still silent and still reads the
+  // declaration — and at least one declared fund must, or nothing live
+  // exercises the declared tier at all.
+  let readFromFamily = 0;
   for (const k of keys) {
     const rows = BOOK_POSITIONS.filter((p) => p.securityKey === k);
     ok(`${k} is in the book`, rows.length > 0);
     for (const p of rows) {
       const a = accts.get(p.accountId);
       const printed = [...categoriesNamedIn(p.security), ...categoriesNamedIn(a?.providerEngagement)];
-      ok(`…and no printed field names its category (${p.accountId})`, printed.length === 0, printed.join(","));
       const r = aifCategoryOf(accts, p);
-      eq(`…so it reads the declared category (${p.accountId})`, [r.category, r.source, r.why], [CATEGORY_II, "family", null]);
+      if (printed.length === 0) {
+        readFromFamily += 1;
+        eq(`…its statement is silent, so it reads the declared category (${p.accountId})`,
+          [r.category, r.source, r.why], [CATEGORY_II, "family", null]);
+      } else {
+        ok(`…its statement prints a category, and it AGREES with the declaration (${p.accountId})`,
+          printed.every((c) => c === DECLARED_AIF_CATEGORY[k].category), printed.join(","));
+        eq(`…so the statement answers it, not the family (${p.accountId})`,
+          [r.category, r.source, r.why], [CATEGORY_II, "statement", null]);
+      }
       eq(`…files under that section`, aifSectionOf(accts, p), CATEGORY_II);
       // THE SIDE IS NOT THE DECLARATION'S TO DECIDE. The family's own placing
       // (`FAMILY_MARKET_SIDE`, Stage 10bw) outranks any category: Delphi is a
@@ -281,6 +302,9 @@ console.log("\n── the family's declared categories ──");
         placed != null && p.marketSide === placed, `${p.marketSide} vs placed ${placed}`);
     }
   }
+
+  ok("at least one declared fund still reads the family's declaration (the tier is exercised live)",
+    readFromFamily > 0, `${readFromFamily} position(s)`);
 
   // THE STATEMENT WINS. A declaration never reaches a fund whose paperwork
   // prints a category — constructed, because no declared fund here prints one.

@@ -5,8 +5,9 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue, sumOrNull, currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR } from "@/lib/analytics";
-import { fmtPct } from "@/lib/format";
+import { sum, consolidatedMarketValue, sumOrNull, currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, dedupedPositions } from "@/lib/analytics";
+import { fmtPct, fmtDate } from "@/lib/format";
+import { valuationBasis, navBasisLabel, navBasisTitle } from "@/lib/valuationBasis";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -130,6 +131,32 @@ const CAPITAL_RECORD_COUNT = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMM
   .reduce<Record<string, number>>((m, x) => { m[x.accountId] = (m[x.accountId] ?? 0) + 1; return m; }, {});
 const acctLabel = (a: { owner?: string | null; provider: string; accountNo: string }) =>
   `${a.owner ?? a.accountNo} · ${a.provider.split(" ")[0]} ${a.accountNo}`;
+
+/** The report a return block came from, in words — a report TYPE is a filename token, not a label. */
+const REPORT_LABEL: Record<string, string> = {
+  "fact-sheet": "Fact sheet",
+  "performance-history": "Performance history",
+  "performance-benchmark": "Performance vs benchmark",
+  "investor-report": "SEBI investor report",
+  "performance-summary": "Performance summary",
+  "appraisal": "Appraisal",
+};
+const reportLabel = (t: string) => REPORT_LABEL[t] ?? t;
+/** The statement date is the `<asOf>` segment of `<provider>-<accountNo>-<asOf>-<reportType>`. */
+const reportDate = (docKey: string): string | null => /-(\d{4}-\d{2}-\d{2})-[a-z-]+$/.exec(docKey)?.[1] ?? null;
+/**
+ * A PERIOD A REPORT DOES NOT PRINT, even where the book carries a figure in
+ * its field. The performance-vs-benchmark report prints one row per MONTH of
+ * the financial year and the cumulative year to date — nothing else — and its
+ * reader writes the last month's row into both `mtd` and `qtd` (every such
+ * block in this book carries the two equal, against fact sheets of the same
+ * account and date whose quarter figure differs). A month's return under a
+ * heading that says "quarter to date" is a figure the document never printed,
+ * so the cell names that instead of showing it; the reader is the place to fix
+ * it, and until it is, this is the one period refused.
+ */
+const UNPRINTED: Record<string, readonly string[]> = { "performance-benchmark": ["qtd"] };
+const unprinted = (reportType: string, period: string) => (UNPRINTED[reportType] ?? []).includes(period);
 
 export function Performance() {
   const { portfolio, statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
@@ -312,24 +339,41 @@ export function Performance() {
   const consWindowDays = daysTo(lastClose);
   const consolidatedTotalReturn = totalReturnFromXirr(consolidatedXirr, consWindowDays);
 
-  // ── Time-weighted returns, per account, from each manager's own report ──
-  const twrr = accounts.map((a) => {
-    const blocks = BOOK_ACCOUNT_RETURNS[a.accountId] ?? [];
-    // The fact sheet is what the manager publishes to the client; the
-    // performance appraisal restates it on a trailing vocabulary. Prefer the
-    // fact sheet, and name whichever report the figures came from.
-    const block = blocks.find((b) => b.reportType === "fact-sheet") ?? blocks[0] ?? null;
-    const series = (block?.series ?? []) as ReturnSeries[];
-    return {
-      account: a,
-      block,
-      portfolio: series.find((s) => !s.isBenchmark) ?? null,
-      benchmark: series.find((s) => s.isBenchmark) ?? null,
-    };
-  });
-  // A column is worth a heading only if some account publishes it.
+  /**
+   * ── TIME-WEIGHTED RETURNS: EVERY REPORT THAT PUBLISHES ONE, EACH NAMED ────
+   *
+   * This took ONE block per account — the fact sheet, else the first — and
+   * dashed every period that block lacked with "<provider> does not publish a
+   * <period> figure". That was false wherever another report of the SAME date
+   * prints it: Carnelian's financial year to date (+26.98%) is on its
+   * performance-vs-benchmark report, V.E.C's and Buoyant's one-year figures and
+   * Goldstandard's trailing months on their performance histories, and the 6m
+   * column vanished entirely because no fact sheet prints one. So every block
+   * the book carries is drawn, each under the report it came from, its own date
+   * and its fee basis where the report states one — never merged into another
+   * report's row, because two reports of one account are two documents and a
+   * figure must stay beside the one that printed it. A dash names THAT report.
+   */
+  const twrr = accounts.map((a) => ({
+    account: a,
+    blocks: (BOOK_ACCOUNT_RETURNS[a.accountId] ?? []).map((b) => {
+      const series = b.series as ReturnSeries[];
+      return {
+        block: b,
+        date: reportDate(b.source),
+        // The portfolio's own series first, then each benchmark it is set
+        // against — the order the reader reads a pair in.
+        rows: [...series.filter((x) => !x.isBenchmark), ...series.filter((x) => x.isBenchmark)],
+      };
+    }).filter((b) => b.rows.length > 0),
+  }));
+  // How many MANAGERS publish one — the consolidated row's reason names them,
+  // and a count typed into prose went stale the day a fourth manager's
+  // statements arrived.
+  const twrrManagers = new Set(twrr.filter((t) => t.blocks.length).map((t) => t.account.provider)).size;
+  // A column is worth a heading only if some report prints it.
   const livePeriods = PERIODS.filter((per) =>
-    twrr.some((t) => t.portfolio && t.portfolio[per.key] !== null));
+    twrr.some((t) => t.blocks.some((b) => b.rows.some((x) => x[per.key] !== null && !unprinted(b.block.reportType, per.key)))));
 
   const top10Val = sum(consolidatedWeights.slice(0, 10));
   const top10 = listedMV > 0 ? (top10Val / listedMV) * 100 : 0;
@@ -347,6 +391,11 @@ export function Performance() {
     `The ${heldCount} left are the current holdings Morning CIO counts; the value above is struck over every consolidated row, which the dropped ones move by ${money(listedMV - sum(heldSet.map((x) => x.marketValue)))}.`,
   ].filter(Boolean).join(" ");
   const bridgeOf = (accountId: string): AccountBridge[] => BOOK_ACCOUNT_BRIDGES[accountId] ?? [];
+  // The Current Value tile sums the consolidated book, AMFI's published NAV
+  // included on every scheme it prices; the basis pill cannot say so, because
+  // a NAV never sets the live flag. This pill does, beside it.
+  const vb = valuationBasis(consolidated, portfolio.accounts,
+    statementPortfolio ? dedupedPositions(statementPortfolio.positions) : undefined);
 
   return (
     <div>
@@ -354,6 +403,18 @@ export function Performance() {
         subtitle="Time-weighted returns as each manager publishes them, the value bridge from opening to closing, and a money-weighted return over the real dated flows."
         right={<div className="flex items-center gap-2">
           <BasisPill liveText="Live prices" hint="Current value of holdings and embedded return are rebuilt from live prices where a quote exists; the managers' returns and the bridge are as reported." />
+          {vb.nav.rows > 0 && (
+            <Pill tone="info">
+              <span data-xa="nav-basis" data-nav-from={vb.nav.from ?? ""} data-nav-to={vb.nav.to ?? ""}
+                data-nav-schemes={vb.nav.schemes} data-nav-rows={vb.nav.rows} data-nav-value={vb.nav.value}
+                data-nav-printed={vb.nav.statementValue ?? ""} data-nav-marked={vb.nav.markedValue}
+                data-units-value={vb.units.value} data-units-rows={vb.units.rows}
+                data-units-from={vb.units.from ?? ""} data-units-to={vb.units.to ?? ""}
+                title={navBasisTitle(vb, (n) => fmtFromBase(n, { compact: true }), fmtDate)}>
+                {navBasisLabel(vb, fmtDate)}
+              </span>
+            </Pill>
+          )}
           <Pill tone="info">{accounts.length} accounts</Pill>
         </div>} />
 
@@ -425,8 +486,10 @@ export function Performance() {
 
       {/* ── TWRR grid ── */}
       <Card className="mt-5" title="Time-weighted return"
-        subtitle="As each manager publishes it — portfolio against that manager's own benchmark"
-        right={<Pill tone="info">{twrr.filter((t) => t.portfolio).length} of {accounts.length} accounts</Pill>}>
+        // A card's subtitle is its title's hover (Stage 10cp): XA-15's wording
+        // — every report, under its own date — goes there, not under the title.
+        subtitle="As each manager publishes it — every report that prints one is drawn, each under its own date, portfolio against that manager's own benchmark. Since inception is annualised only where the report says so (p.a.); otherwise it is the return over the whole period (abs)."
+        right={<Pill tone="info">{twrr.filter((t) => t.blocks.length).length} of {accounts.length} accounts</Pill>}>
         <div className="overflow-x-auto">
           {/* Exempt, declared — the same class as `ReturnsTable`: the columns
               after Account and Series are the manager's own period sequence
@@ -437,6 +500,7 @@ export function Performance() {
             <thead className="label-xs border-b border-ink-700">
               <tr>
                 <th className="px-3 py-2 text-left">Account</th>
+                <th className="px-3 py-2 text-left">Report</th>
                 <th className="px-3 py-2 text-left">Series</th>
                 {livePeriods.map((per) => (
                   <th key={per.key} className="px-3 py-2 text-right" title={per.title}>{per.label}</th>
@@ -445,42 +509,69 @@ export function Performance() {
             </thead>
             <tbody>
               {twrr.flatMap((t) => {
-                if (!t.portfolio || !t.block) {
+                if (!t.blocks.length) {
                   return [(
                     <tr key={t.account.accountId} className="border-t border-ink-700/60">
                       <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(t.account)}</td>
-                      <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 1}>
+                      <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 2}>
                         {DASH} no time-weighted return series in this account's statements
                       </td>
                     </tr>
                   )];
                 }
-                const rows = [t.portfolio, t.benchmark].filter(Boolean) as ReturnSeries[];
-                return rows.map((s, i) => (
-                  <tr key={`${t.account.accountId}-${s.series}`} className={i === 0 ? "border-t border-ink-700/60" : ""}>
-                    <td className="px-3 py-2.5 font-medium text-slate-100">{i === 0 ? acctLabel(t.account) : ""}</td>
+                return t.blocks.flatMap((b, bi) => b.rows.map((s, i) => (
+                  <tr key={`${t.account.accountId}-${b.block.source}-${s.series}-${i}`}
+                    className={i === 0 ? (bi === 0 ? "border-t border-ink-700/60" : "border-t border-dashed border-ink-700/60") : ""}>
+                    <td className="px-3 py-2.5 font-medium text-slate-100">{bi === 0 && i === 0 ? acctLabel(t.account) : ""}</td>
+                    <td className="px-3 py-2.5 text-[11.5px] text-slate-400">
+                      {i === 0 && (
+                        <span data-xa="twrr-block" data-account={t.account.accountId} data-report={b.block.reportType}
+                          data-date={b.date ?? ""} data-series={b.rows.length}>
+                          {reportLabel(b.block.reportType)}
+                          {b.date ? <> · {fmtDate(b.date)}</> : null}
+                          {s.feeBasis === "after" || s.feeBasis === "before" ? <> · {s.feeBasis} fees</> : null}
+                        </span>
+                      )}
+                    </td>
                     <td className={`px-3 py-2.5 ${s.isBenchmark ? "text-slate-400" : "text-slate-200"}`}>
                       {s.series}{s.isBenchmark ? " (benchmark)" : ""}
                     </td>
                     {livePeriods.map((per) => {
                       const v = s[per.key];
+                      const shown = v !== null && !unprinted(b.block.reportType, per.key);
+                      // SINCE INCEPTION SAYS WHICH RETURN IT IS. A report annualises
+                      // only past a year, so the same column holds rates (p.a.) and
+                      // holding-period returns (abs) — unmarked, a reader compares
+                      // one account's 19.83% p.a. with another's 7.17% over 228 days.
+                      const siTag = per.key === "si" && shown
+                        ? (s.siAnnualised === true ? " p.a." : s.siAnnualised === false ? " abs" : "")
+                        : "";
+                      // The dash's reason names THE REPORT, never the manager:
+                      // another report of the same account and date may print
+                      // the figure this one does not, and it is drawn above.
+                      const reason = shown ? "" : v !== null
+                        ? `the ${reportLabel(b.block.reportType).toLowerCase()} prints one row per month and the year to date — it prints no quarter-to-date figure, and the month's return is not one`
+                        : `the ${reportLabel(b.block.reportType).toLowerCase()}${b.date ? ` of ${fmtDate(b.date)}` : ""} prints no ${per.label} figure`;
                       return (
-                        <td key={per.key} className="px-3 py-2.5 text-right mono">
-                          {v === null
-                            ? <AbsentCell reason={`${t.account.provider.split(" ")[0]} does not publish a ${per.label} figure`} />
-                            : <span className={v >= 0 ? "text-gain" : "text-loss"}>
-                                {fmtPct(v, { sign: true, decimals: 2 })}
+                        <td key={per.key} className="px-3 py-2.5 text-right mono"
+                          data-xa="twrr-cell" data-account={t.account.accountId} data-report={b.block.reportType}
+                          data-date={b.date ?? ""} data-series={s.series} data-period={per.key}
+                          data-value={shown ? String(v) : ""} data-reason={reason}>
+                          {!shown
+                            ? <AbsentCell reason={reason} />
+                            : <span className={(v as number) >= 0 ? "text-gain" : "text-loss"}>
+                                {fmtPct(v, { sign: true, decimals: 2 })}{siTag && <span className="text-[10.5px] text-slate-500">{siTag}</span>}
                               </span>}
                         </td>
                       );
                     })}
                   </tr>
-                ));
+                )));
               })}
               <tr className="border-t-2 border-ink-600">
                 <td className="px-3 py-2.5 font-semibold text-slate-200">Consolidated</td>
-                <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 1}
-                  title="Time-weighted returns cannot be consolidated across these accounts: the managers publish different periods, against different benchmarks, from different inception dates. The money-weighted return above is the consolidated figure this book does support.">
+                <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 2}
+                  title={`Time-weighted returns cannot be consolidated across these accounts: the ${twrrManagers} managers publish different periods, against different benchmarks, from different inception dates. The money-weighted return on this page is the consolidated figure this book does support.`}>
                   {DASH} not consolidated — the managers publish different periods and benchmarks
                 </td>
               </tr>

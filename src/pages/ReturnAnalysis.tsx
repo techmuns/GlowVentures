@@ -8,7 +8,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { fmtPct, changeColor } from "@/lib/format";
+import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -16,25 +16,34 @@ import { useTableView, sortRows } from "@/lib/tableView";
 const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
 const RA_ACCOUNT_COLS = ["account", "names", "cost", "pnl", "return", "best", "worst"] as const;
 const RA_CONTRIB_COLS = ["security", "pnl", "return", "contrib"] as const;
-import { sum, isPriced, unpriced, isCompanyShare, bucketLabel, readerClassOf } from "@/lib/analytics";
+const RA_DD_COLS = ["date", "index", "interval", "fromPeak"] as const;
+import { sum, isPriced, unpriced, isCompanyShare, bucketLabel, dedupedPositions, readerClassOf } from "@/lib/analytics";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { fifoTotals } from "@/lib/fifo";
 import { BasisPill } from "@/components/BasisPill";
+import { valuationBasis, dateSpan, navBasisLabel, navBasisTitle } from "@/lib/valuationBasis";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { stockHref } from "@/lib/auditFormulas";
+import { bookDrawdown } from "@/lib/drawdown";
+import { BOOK_NAV_COVERAGE } from "@/data/glowData";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
 const GAIN = "#10b981", LOSS = "#ef4444";
 
 // Return & Drawdown — the return half, built from what the book carries.
 //
-// DRAWDOWN IS GONE, AND SAYS SO. A drawdown is peak-to-trough of a VALUATION
-// SERIES: it needs the book's value at many dates. This corpus carries two dated
-// values per account and nothing between them, so there is no peak to fall from.
-// The page previously drew a drawdown area against a seeded placeholder
-// benchmark — an axis with a shape on it and no measurement behind it. That is
-// replaced by a statement of exactly which document would produce one.
+// DRAWDOWN IS MEASURED ON THE BOOK'S DATED NAV SERIES. A drawdown is
+// peak-to-trough of a VALUATION SERIES, and this page said the corpus carries
+// "two dated values per account" — the premise Stage 10p measured and
+// overturned for the NAV chart. `BOOK_NAV_HISTORY` is a dated series, chained
+// on the link (`navIndexSeries`): each interval over the accounts valued at
+// both its ends, net of the capital that entered it, so an account arriving and
+// a deposit landing are not falls. `bookDrawdown` strikes `maxDrawdown` on that
+// index — never on the level — and the card says what it cannot see — a fall and recovery inside one interval,
+// and every account that publishes no series. (Before that, the page drew a
+// drawdown area against a seeded placeholder benchmark — an axis with a shape
+// on it and no measurement behind it.)
 //
 // WHAT IS REAL HERE. Every position carries a cost basis, a market value and
 // therefore a return. That supports a genuine distribution, a
@@ -44,8 +53,9 @@ const GAIN = "#10b981", LOSS = "#ef4444";
 // discretionary mandates alone; the ends of this one are a venture-fund capital
 // account and the family's own broking account, and neither is a manager.
 //
-// All of it is point-in-time on the statements' own marks, which is stated
-// rather than dressed up as a time series.
+// All of it is point-in-time — on the statements' own marks, and on AMFI's
+// published NAV for every scheme it prices (`valuationBasis` says which, with
+// the dates) — which is stated rather than dressed up as a time series.
 
 /** Return bands, lowest first so the axis reads left to right. */
 const BANDS = [
@@ -72,7 +82,7 @@ const acctEnd = (a: { provider: string; accountNo: string }) =>
   `${a.provider.split(" ")[0]} ${a.accountNo}`;
 
 export function ReturnAnalysis() {
-  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
   const sectorView = useTableView("returns-sectors", RA_SECTOR_COLS);
   const accountView = useTableView("returns-accounts", RA_ACCOUNT_COLS);
   /**
@@ -277,6 +287,19 @@ export function ReturnAnalysis() {
   if (!portfolio || !model) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const m = model;
+  // What this page's values are struck on — the statements' marks, and AMFI's
+  // published NAV for every scheme it prices. The subtitle said "on the
+  // statements' own marks" over both; the basis pill reads STATEMENT whenever
+  // no live quote is in, because a NAV never sets the live flag.
+  const vb = valuationBasis(consolidated, portfolio.accounts,
+    statementPortfolio ? dedupedPositions(statementPortfolio.positions) : undefined);
+  // THE BOOK'S OWN DATED SERIES, chained on the link — the one `/history`
+  // and Morning CIO's NAV chart are drawn from, so the three cannot disagree.
+  const { index: ddIndex, drawdown: dd } = bookDrawdown(portfolio.navHistory ?? []);
+  const ddCovered = BOOK_NAV_COVERAGE.covered.length;
+  const ddNote = dd
+    ? `On the book's dated NAV series — ${dd.points} statement dates, ${fmtDate(dd.from)} → ${fmtDate(dd.to)}, chained over the accounts valued at both ends of each interval and net of the external capital that entered it. It covers the ${ddCovered} accounts that publish a series; between statement dates each is held at its latest mark, so a fall and recovery inside one interval is not seen.`
+    : "";
   const sectorRows = m ? sortRows(m.sectors, sectorView.sort, {
     sector: (x) => x.label,
     pnl: (x) => x.pnl,
@@ -307,9 +330,23 @@ export function ReturnAnalysis() {
   return (
     <div>
       <PageHeader eyebrow="Analytics" title="Return &amp; Drawdown"
-        subtitle="Where the book's return comes from, name by name and sector by sector. Point-in-time, on the statements' own marks."
+        subtitle={vb.nav.rows
+          ? `Where the book's return comes from, name by name and sector by sector. Point-in-time — on the statements' own marks, and on AMFI's published NAV of ${dateSpan(vb.nav, fmtDate)} for the ${vb.nav.schemes} scheme${vb.nav.schemes === 1 ? "" : "s"} it prices.`
+          : "Where the book's return comes from, name by name and sector by sector. Point-in-time, on the statements' own marks."}
         right={<div className="flex items-center gap-2">
           <BasisPill liveText="Live prices" hint="Returns are FIFO — unrealised gain on what is held plus realised gain on units already sold, over the cost of both — rebuilt from live prices where a quote exists; cost basis is as the statements report it." />
+          {vb.nav.rows > 0 && (
+            <Pill tone="info">
+              <span data-xa="nav-basis" data-nav-from={vb.nav.from ?? ""} data-nav-to={vb.nav.to ?? ""}
+                data-nav-schemes={vb.nav.schemes} data-nav-rows={vb.nav.rows} data-nav-value={vb.nav.value}
+                data-nav-printed={vb.nav.statementValue ?? ""} data-nav-marked={vb.nav.markedValue}
+                data-units-value={vb.units.value} data-units-rows={vb.units.rows}
+                data-units-from={vb.units.from ?? ""} data-units-to={vb.units.to ?? ""}
+                title={navBasisTitle(vb, (n) => fmtFromBase(n, { compact: true }), fmtDate)}>
+                {navBasisLabel(vb, fmtDate)}
+              </span>
+            </Pill>
+          )}
           <Pill tone="info">{m.priced.length} priced positions</Pill>
         </div>} />
 
@@ -346,10 +383,25 @@ export function ReturnAnalysis() {
           title={m.unrated.length ? `${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no cost basis and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : undefined}
           icon={<Scale className="h-4 w-4" />} />
 
-        <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}
-          sub="needs a valuation series"
-          hint="Peak-to-trough needs the book's value at many dates; this corpus carries two per account."
-          icon={<TrendingDown className="h-4 w-4" />} />
+        {dd ? (
+          <StatTile label="Maximum drawdown"
+            value={<span className={dd.pct < 0 ? "text-loss" : "text-slate-300"} data-xa="returns-drawdown"
+                data-value={dd.pct} data-peak={dd.peakDate ?? ""} data-trough={dd.troughDate ?? ""}
+                data-recovered={dd.recoveredOn ?? ""} data-points={dd.points}>
+                {fmtPct(dd.pct, { decimals: 2 })}
+              </span>}
+            sub={dd.pct < 0
+              ? `${fmtDate(dd.peakDate!)} → ${fmtDate(dd.troughDate!)} · ${dd.recoveredOn ? `recovered ${fmtDate(dd.recoveredOn)}` : "not yet recovered"}`
+              : "a measured nil — the dated series never fell"}
+            hint={`On the dated NAV series of the ${ddCovered} accounts that publish one`}
+            title={ddNote}
+            icon={<TrendingDown className="h-4 w-4" />} />
+        ) : (
+          <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}
+            sub="needs a valuation series"
+            hint="Peak-to-trough needs the book's value at two or more dates, and no account here publishes a dated series."
+            icon={<TrendingDown className="h-4 w-4" />} />
+        )}
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5 items-start">
@@ -535,14 +587,20 @@ export function ReturnAnalysis() {
         </Card>
       </div>
 
-      <Card className="mt-5" title="Drawdown" subtitle="Peak-to-trough decline in the book's value">
-        <AbsentSection
-          what="No drawdown can be computed for this book"
-          needs={`A drawdown is the largest peak-to-trough fall in the book's VALUE, which needs that value at
-            many dates. Each account's statements carry two — the opening and closing figures on the performance
-            summary — so there is no peak to fall from. A periodic (monthly or quarterly) valuation statement per
-            account, or a daily NAV feed from the managers, is what this needs. Nothing here is drawn against a
-            placeholder series.`} />
+      <Card className="mt-5" title="Drawdown"
+        // A CARD'S SUBTITLE IS ITS TITLE'S HOVER (Stage 10cp), and the line
+        // that stood under the table — how the series is chained — goes there
+        // with the rest of `ddNote`, never back under the table.
+        subtitle={dd ? `Peak-to-trough on the book's dated NAV series, rebased to 100 at ${fmtDate(dd.from)}. ${ddNote}` : "Peak-to-trough decline in the book's value"}>
+        {dd ? (
+          <DrawdownTable index={ddIndex} />
+        ) : (
+          <AbsentSection
+            what="No drawdown can be computed for this book"
+            needs={`A drawdown is the largest peak-to-trough fall in the book's VALUE, which needs that value at two or
+              more dates. No account in this book publishes more than one dated valuation, so there is no series to
+              fall along. A periodic valuation statement per account is what this needs.`} />
+        )}
       </Card>
     </div>
   );
@@ -584,6 +642,64 @@ function ContribTable({ rows, money, storageKey }: {
               <td className={`px-2 py-2 text-right mono ${changeColor(r.pnl)}`}>{money(r.pnl, true)}</td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.returnPct)}`}>{fmtPct(r.returnPct, { sign: true, decimals: 1 })}</td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.contribPct)}`}>{fmtPct(r.contribPct, { sign: true, decimals: 2 })}</td>
+            </Tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
+ * The dated index behind the drawdown tile, one row per statement date — the
+ * interval's own chained change and the fall from the running peak — so a
+ * reader can find the peak and the trough the tile names.
+ */
+function DrawdownTable({ index }: { index: { date: string; index: number }[] }) {
+  const view = useTableView("returns-drawdown", RA_DD_COLS);
+  let peak = -Infinity;
+  const rows = index.map((x, i) => {
+    peak = Math.max(peak, x.index);
+    return {
+      date: x.date,
+      index: x.index,
+      interval: i > 0 && index[i - 1].index > 0 ? (x.index / index[i - 1].index - 1) * 100 : null,
+      fromPeak: peak > 0 ? (x.index / peak - 1) * 100 : null,
+    };
+  });
+  const shown = sortRows(rows, view.sort, {
+    date: (r) => r.date,
+    index: (r) => r.index,
+    interval: (r) => r.interval,
+    fromPeak: (r) => r.fromPeak,
+  });
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-sm">
+        <thead className="border-b border-ink-700">
+          <Tr view={view}>
+            <SortHeader col="date" view={view} align="left">Statement date</SortHeader>
+            <SortHeader col="index" view={view}>Index</SortHeader>
+            <SortHeader col="interval" view={view}>Interval</SortHeader>
+            <SortHeader col="fromPeak" view={view}>From peak</SortHeader>
+          </Tr>
+        </thead>
+        <tbody className="divide-y divide-ink-700/70">
+          {shown.map((r) => (
+            <Tr view={view} key={r.date}>
+              <td className="px-4 py-2 text-slate-200" data-xa="returns-dd-row" data-date={r.date}
+                data-from-peak={r.fromPeak ?? ""} data-interval={r.interval ?? ""}>{fmtDate(r.date)}</td>
+              <td className="px-4 py-2 text-right mono text-slate-300">{r.index.toFixed(2)}</td>
+              <td className="px-4 py-2 text-right mono">
+                {r.interval === null
+                  ? <AbsentCell reason="the first point has nothing before it to change from" />
+                  : <span className={changeColor(r.interval)}>{fmtPct(r.interval, { sign: true, decimals: 2 })}</span>}
+              </td>
+              <td className="px-4 py-2 text-right mono">
+                {r.fromPeak === null
+                  ? <AbsentCell reason="no peak to measure from" />
+                  : <span className={r.fromPeak < 0 ? "text-loss" : "text-slate-500"}>{fmtPct(r.fromPeak, { decimals: 2 })}</span>}
+              </td>
             </Tr>
           ))}
         </tbody>

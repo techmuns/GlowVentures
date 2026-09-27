@@ -99,6 +99,8 @@ export type SectionableTxn = {
   accountNo: string;
   securityKey: string;
   assetClass: string | null;
+  /** The ISIN a document states for this trade (`Txn.isin`), where one does. */
+  isin?: string | null;
 };
 
 export type TxnSections = {
@@ -122,16 +124,52 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
   // deliberately no name tier.
   const classOf = new Map<string, string>();
   const byAccount = new Map<string, Position[]>();
+  /**
+   * ── THE ONE BOOK SECURITY AN ISIN NAMES (MT-10) ────────────────────────────
+   *
+   * LKP prints its Liquid BeES sale as `NIPPON INDIA ETF LIQUID BEES` with no
+   * ISIN, and the book carries the same units as `NIP ETNF1D RTLIQBEES`, ISIN
+   * INF732E01037 — two spellings, two keys. On its own key the trade had no book
+   * position to take a class from, so the Holdings table filed the holding under
+   * Cash and this table filed its sale under Direct Equity. The capital gain lot
+   * that settles the sale prints the ISIN (`ledger.ts` carries it as
+   * `isinFrom: "lot"`), and the ISIN names exactly one book security.
+   *
+   * CLASSIFICATION ONLY, AND ONLY WHERE THE IDENTIFIER IS UNAMBIGUOUS. The trade
+   * keeps its own `securityKey` — nothing here rewrites an identity — and it is
+   * filed through the book security only where EXACTLY ONE book key carries the
+   * ISIN. None or several, and it falls back to its own key as before. There is
+   * no name tier of any kind.
+   */
+  const keysByIsin = new Map<string, Set<string>>();
+  const classesOfKey = new Map<string, Set<string>>();
   for (const p of positions) {
     classOf.set(`${p.accountId}|${p.securityKey}`, p.assetClass);
     (byAccount.get(p.accountId) ?? byAccount.set(p.accountId, []).get(p.accountId)!).push(p);
+    if (p.isin) (keysByIsin.get(p.isin) ?? keysByIsin.set(p.isin, new Set()).get(p.isin)!).add(p.securityKey);
+    (classesOfKey.get(p.securityKey) ?? classesOfKey.set(p.securityKey, new Set()).get(p.securityKey)!).add(p.assetClass);
   }
+  /** The single book key an ISIN names, where it names one other than the trade's own. */
+  const bookKeyOf = (t: SectionableTxn): string | null => {
+    if (!t.isin) return null;
+    const ks = keysByIsin.get(t.isin);
+    if (!ks || ks.size !== 1) return null;
+    const k = [...ks][0];
+    return k === t.securityKey ? null : k;
+  };
 
   const forTxn = (axis: GroupAxis, t: SectionableTxn): string => {
     const acc = byPA.get(acctKey(t.provider, t.accountNo));
     if (!acc) return TXN_UNSECTIONED;
     const accountId = acc.accountId;
-    const stated = t.assetClass ?? classOf.get(`${accountId}|${t.securityKey}`) ?? null;
+    const bookKey = bookKeyOf(t);
+    // Through the book security, its class is the book's: this account's own
+    // position first, else the one class every book row of that key agrees on,
+    // else what the statement stated. Otherwise, exactly as before.
+    const bookClasses = bookKey ? classesOfKey.get(bookKey) : undefined;
+    const stated = bookKey
+      ? (classOf.get(`${accountId}|${bookKey}`) ?? (bookClasses?.size === 1 ? [...bookClasses][0] : null) ?? t.assetClass)
+      : (t.assetClass ?? classOf.get(`${accountId}|${t.securityKey}`) ?? null);
     /**
      * A CLASS THIS MODEL DOES NOT CARRY IS AS ABSENT AS NO CLASS AT ALL, AND
      * ABSENT IS PASSED THROUGH RATHER THAN SHORT-CIRCUITED HERE.
@@ -150,7 +188,7 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
      * correctly for a null; letting it is the fix.
      */
     const assetClass = isAssetClass(stated) ? stated : null;
-    const what: Classifiable = { assetClass, securityKey: t.securityKey, accountId };
+    const what: Classifiable = { assetClass, securityKey: bookKey ?? t.securityKey, accountId };
     return groupKeyFor(axis, idx, what);
   };
 

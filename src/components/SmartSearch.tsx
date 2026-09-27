@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, CornerDownLeft, Clock } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { buildSearchIndex, searchEntries, type SearchEntry, type SearchHit } from "@/lib/searchIndex";
+import { buildSearchIndex, fencedIdentityOf, searchEntries, type SearchEntry, type SearchHit } from "@/lib/searchIndex";
+import { BOOK_CAPITAL_MOVES, BOOK_POLYCAB } from "@/data/glowData";
 import { AbsentFromBook } from "@/components/Absent";
 
 // ── THE SEARCH BOX IN THE TOP BAR ────────────────────────────────────────────
@@ -87,6 +88,12 @@ export function SmartSearch() {
   const index = useMemo(
     () => (portfolio ? buildSearchIndex({
       positions: portfolio.positions, consolidated, accounts: portfolio.accounts, money: (n) => fmtFromBase(n, { compact: true }),
+      // Whether a redemption is really on the Transactions tab (SC-C5) — the
+      // family's own dated capital record, which that tab draws.
+      capitalMoves: BOOK_CAPITAL_MOVES,
+      // The ring-fenced security's IDENTITY for the Polycab page's own entry
+      // (PC-05) — its name and codes, never a quantity or a value.
+      fenced: fencedIdentityOf(BOOK_POLYCAB),
     }) : []),
     [portfolio, consolidated, fmtFromBase],
   );

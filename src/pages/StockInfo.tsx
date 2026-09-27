@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useParams } from "react-router-dom";
 import { Wallet, Layers, TrendingUp, Coins, Activity, Tag } from "lucide-react";
 import { Card } from "@/components/Card";
@@ -16,6 +17,8 @@ import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/f
 import { fifoBasisNote, realisedReason } from "@/lib/fifo";
 import { liveWithheldReason } from "@/lib/corporateActions";
 import { realisedTile } from "@/lib/stockRealised";
+import { holdingValuation } from "@/lib/valuedAt";
+import { isinAbsentWords } from "@/lib/schemeMatch";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { depositoryUnitsGist, describeDepositoryUnits, fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
 import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
@@ -838,8 +841,8 @@ export function StockInfo() {
       }
     : cmp === null
     ? {
-        line: "reported at a total value, not a price per unit",
-        tip: "No statement marks this holding per unit — it is reported at a total value, so there is no price to show. Its value is on the Position tab.",
+        line: "no per-unit price in the book — valued as a total",
+        tip: "The book carries this holding's value as a total and no price per unit, so there is no price to show. Its value is on the Position tab.",
       }
     : navMark
     ? {
@@ -895,6 +898,10 @@ export function StockInfo() {
           tip: `The mark the statement of ${markDate} prints — not a live quote, because ${why}.`,
         };
       })();
+  // WHAT THE STATEMENT SAYS ABOUT THIS MARK AND THE MARK DOES NOT (VD-16,
+  // VD-18): a pre-tax NAV, or units that are all pledged. A few words on the
+  // line, the statement's sentence in the hover; no figure of its own.
+  const markNote = statementNoteForSet(rows);
   const buys = (led?.txns ?? []).filter((t) => t.side === "Buy");
   const firstBought = buys.length ? buys[buys.length - 1].date : null;
   const lastAdded = buys.length ? buys[0].date : null;
@@ -906,6 +913,16 @@ export function StockInfo() {
    *  scheme's unit is compared with, since a statement drawn before the change
    *  counts the earlier unit (DSM-A2, `FundLookthrough`). */
   const statementAsOfEarliest = [...new Set(rows.map((r) => accIdx.get(r.accountId)?.asOf).filter((d): d is string => !!d))].sort()[0] ?? null;
+  /**
+   * WHEN, AND BY WHAT, THE VALUE IS STRUCK (VD-17, DSM-C4). A holding the ICICI
+   * NSDL statement marks is worth what it was on 31 March, and the Holding value
+   * tile printed it undated beside figures the live feed moves every minute;
+   * the fund card dated the family's holding by its statement while the value
+   * it multiplied was AMFI's NAV of a later day. `holdingValuation` is the one
+   * answer for both — the date `valueDateOf` gives each row, or none where the
+   * rows are struck on different dates.
+   */
+  const valuation = holdingValuation(drows, (id) => accIdx.get(id)?.asOf, nowMs);
 
   /**
    * ── THE POSITION TABLE, BY ROUTE ───────────────────────────────────────────
@@ -1017,7 +1034,7 @@ export function StockInfo() {
             `price()`, which returns a BARE dash — an absence names its cause. */}
         <td className="px-4 py-2.5 text-right mono text-slate-400" data-cmp={r.currentPrice ?? ""}>
           {r.currentPrice === null
-            ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />
+            ? <AbsentCell reason="the book carries this row's value as a total and no price per unit, so there is no mark to show" />
             : <span title={r.depositoryUnits
                 /* NO STATEMENT MARKS THESE UNITS, so the sentence that says a
                    NAV "replaces" one would be false here. Which of the two
@@ -1241,7 +1258,7 @@ export function StockInfo() {
               {marks.length > 1
                 ? <AbsentCell reason={`the statements reporting this holding do not agree on a mark — ${marks.join(" and ")}. No one price covers the rows, and a weighted mean of them is a figure no statement printed`} />
                 : marks.length === 0
-                ? <AbsentCell reason="no statement reports a per-unit price for this holding — it is marked at a total value" />
+                ? <AbsentCell reason="the book carries no per-unit price for this holding — only its total value" />
                 : marks[0]}
             </td>
           ),
@@ -1478,9 +1495,10 @@ export function StockInfo() {
           {sectorChip}
           {isin
             ? <span className="mono text-[11px] text-slate-500">{isin}</span>
-            : !resolving && <span className="text-[11px] text-slate-600" title={fundOnly
-                ? "No fund filing that discloses this company carries an ISIN for it."
-                : "This provider reports no ISIN for this holding."}>no ISIN reported</span>}
+            : !resolving && (() => {
+                const w = isinAbsentWords(fundOnly, fundNavFor({ securityKey })?.isin ?? null);
+                return <span className="text-[11px] text-slate-600" data-stock-isin-absent title={w.tip}>{w.text}</span>;
+              })()}
           {sym && <span className="mono text-[11px] text-slate-500">{sym}</span>}
           {/* WHAT THE PILL CLAIMS DEPENDS ON WHICH OF THREE THINGS THIS IS, and
               while the look-through has not answered a no-row page cannot tell
@@ -1573,7 +1591,9 @@ export function StockInfo() {
             redeemed to nil still HAS rows and keeps its measured zero. */}
         <Kpi label="Holding value"
           value={exited ? <AbsentValue /> : fmtFromBase(mv, { compact: true })}
-          sub={exited ? <span className="text-slate-500">{unchecked ? "no direct holding" : "no current holding — fully exited"}</span> : `${weight.toFixed(1)}% of book`}
+          sub={exited ? <span className="text-slate-500">{unchecked ? "no direct holding" : "no current holding — fully exited"}</span>
+            : <span data-stock-valued-at={valuation.at ?? ""} data-stock-valued-by={valuation.by ?? ""} title={valuation.why}>
+                {weight.toFixed(1)}% of book{valuation.words ? ` · ${valuation.words}` : ""}</span>}
           icon={<Wallet className="h-4 w-4" />} />
         {/* THE SAME TYPED NOUN, ONE TILE OVER. `/stock/:securityKey` serves every
             holding, so "shares held" was printed under the quantity of an AIF
@@ -1607,7 +1627,8 @@ export function StockInfo() {
         <Kpi label={fundVehicle ? "NAV" : "CMP"}
           value={<span data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>{cmp ?? <AbsentValue />}</span>}
           delta={live && !cmpSplit ? dayPct : null}
-          sub={<span className="text-slate-500" data-stock-mark-note title={priceNote.tip}>{priceNote.line}</span>}
+          sub={<span className="text-slate-500" data-stock-mark-note data-statement-note={markNote?.short}
+            title={markNote ? `${priceNote.tip} ${markNote.note}` : priceNote.tip}>{priceNote.line}{markNote ? ` · ${markNote.short}` : ""}</span>}
           icon={<Tag className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
@@ -1960,7 +1981,8 @@ export function StockInfo() {
                 <CorporateActionReturns securityKey={securityKey} />
               </>
             ) : schemeHalves ? (
-              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest} />
+              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
+                valuedAt={valuation.at} valuedBy={valuation.by} valuedDates={valuation.dates} />
             ) : (
               <Card className="mt-5" title={`Price history & returns — not applicable to ${notACompanyLabel}`}>
                 <AbsentSection
@@ -1995,7 +2017,8 @@ export function StockInfo() {
                     resolves. It answers the question the card below has to refuse
                     for a company-shaped page: "what am I holding through this". */}
                 {lookThroughHoldings && (
-                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest} />
+                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
+                valuedAt={valuation.at} valuedBy={valuation.by} valuedDates={valuation.dates} />
                 )}
                 {/* ONE SHORT CARD, BY DECISION. A fund or a balance has no PE, no
                     balance sheet, no concall and no insider filing — absent

@@ -25,6 +25,33 @@ import { fmtNum, fmtPct, changeColor } from "@/lib/format";
 /** 60s, matching the Function's own cache: a faster poll cannot see new data. */
 const POLL_MS = 60_000;
 
+/**
+ * ── "LIVE" AND "TODAY" ARE CLAIMS ABOUT A SESSION, AND THE FEED NAMES IT ─────
+ *
+ * The strip read "NSE · live" and the movers tile "NSE indices · today" whatever
+ * the session was. Before 09:15 IST, at weekends and on holidays the feed
+ * returns the LAST COMPLETED session's level and move by design (trap 3 in
+ * `functions/api/indices.js`), so both labels asserted a live, same-day move
+ * that is a day or more old (MNT-19). Every index carries the session its level
+ * belongs to; the label is struck on it.
+ *
+ * `today` is the INDIAN date, because the session is the exchange's: at 01:00
+ * IST the UTC date is still yesterday's and a UTC comparison would call last
+ * night's close "today".
+ */
+export function istDate(t: number = Date.now()): string {
+  return new Date(t + 5.5 * 3600e3).toISOString().slice(0, 10);
+}
+
+/** The newest session the resolved indices carry, and whether it is today's. */
+export function indexSession(feed: Pick<IndexFeed, "indices"> | null, now: number = Date.now()):
+  { date: string | null; today: boolean } {
+  const dates = (feed?.indices ?? []).filter((q) => q.ok && q.level != null)
+    .map((q) => q.sessionDate).filter((d): d is string => !!d).sort();
+  const date = dates.length ? dates[dates.length - 1] : null;
+  return { date, today: date != null && date === istDate(now) };
+}
+
 function Cell({ q }: { q: IndexQuote }) {
   const up = (q.changePct ?? 0) > 0;
   const title = q.ok
@@ -108,7 +135,13 @@ export function IndexStrip() {
       {state === "ok" && feed && (
         <span className="ml-auto shrink-0 pl-4 text-[10px] text-slate-500"
           title={`${feed.source} · ${feed.resolved} of ${feed.requested} indices resolved · fetched ${new Date(feed.fetchedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}>
-          {feed.resolved < feed.requested ? `${feed.resolved}/${feed.requested} live` : "NSE · live"}
+          {(() => {
+            const sess = indexSession(feed);
+            // "live" only where the levels are today's session; otherwise the
+            // session they are from, named.
+            const when = sess.today || !sess.date ? "live" : `close ${sess.date}`;
+            return feed.resolved < feed.requested ? `${feed.resolved}/${feed.requested} ${when}` : `NSE · ${when}`;
+          })()}
         </span>
       )}
     </div>

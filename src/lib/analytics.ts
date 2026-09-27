@@ -5,6 +5,9 @@
 // this" are two different questions the account string cannot answer on its own.
 import type { Account, FundInvestment, Position, StartupInvestment } from "./types";
 import { accountIndex, custodyLabelOf, ownerOf } from "./accounts";
+// Straight from the shared read rather than through `./aifCategory`, which
+// imports `isMandateHeld` from here: the one sentence is all this file needs.
+import { MARKET_SIDE_UNPLACED } from "../../shared/aifCategory.mjs";
 
 export const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -141,24 +144,41 @@ export type MarketSideRow = {
   why: string;
 };
 
+/**
+ * ── WHAT EACH SIDE OF THE BOOK IS, IN THE RULE THE BOOK FOLLOWS NOW (CK-C5) ──
+ *
+ * ONE definition, read by every surface that says what a side is: the hovers on
+ * Upload History and Data Refresh (through `marketSides`), and the facets and
+ * side tiles on Morning CIO and `/holdings` (through `SIDE_NOTE`, which
+ * `drilldown.ts` re-exports). Two copies stood here once, and the one these
+ * hovers read still described the rule before Stage 10bw — "the Category III
+ * AIFs … Category I or II" — when the SEBI category alone placed a fund.
+ *
+ * The family have since placed their funds themselves, and their word outranks
+ * the category (`FAMILY_MARKET_SIDE`): Motilal Oswal's Founders Fund prints no
+ * category and invests in listed equities, so it is listed; Delphi is Category
+ * II by the family's own declaration and is listed; Neo Infra prints Category II
+ * on its registration line and is private. `shared/aifCategory.mjs` is the
+ * order — the family's placing, then a fund whose own name says private equity
+ * or venture, then the category its statement prints — and these say that order.
+ */
+export const SIDE_NOTE = {
+  listed: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the AIFs that trade"
+    + " listed securities — placed there by the family's own word for each fund, or by the Category III its"
+    + " statement prints where they have not said.",
+  private: "Private capital: unlisted holdings, structured products, and the AIFs that invest privately — placed"
+    + " there by the family's own word for each fund, by a fund whose own name says private equity or venture,"
+    + " or by the Category I or II its statement prints.",
+  unplaced: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; one line from the`
+    + " family, or the fund's own SEBI registration, would settle each one.",
+} as const;
+
 export function marketSides(positions: Position[]): MarketSideRow[] {
   const s = publicPrivateSplit(positions);
   return ([
-    {
-      key: "listed", label: "Listed", value: s.listed,
-      why: "Money invested in listed markets — company shares, mutual funds, ETFs, cash, and the"
-        + " Category III AIFs whose own statements say they trade listed securities.",
-    },
-    {
-      key: "private", label: "Private", value: s.private,
-      why: "Private capital — unlisted holdings, structured products, and the AIFs whose statements"
-        + " print Category I or II or name their own discipline as private equity or venture.",
-    },
-    {
-      key: "unplaced", label: "Not placed", value: s.unplaced,
-      why: "No statement for these funds prints a SEBI category, so this book places them on neither"
-        + " side. They are in the total and on neither half of it.",
-    },
+    { key: "listed", label: "Listed", value: s.listed, why: SIDE_NOTE.listed },
+    { key: "private", label: "Private", value: s.private, why: SIDE_NOTE.private },
+    { key: "unplaced", label: "Not placed", value: s.unplaced, why: SIDE_NOTE.unplaced },
   ] as MarketSideRow[]).filter((r) => r.value !== 0);
 }
 
@@ -1330,6 +1350,14 @@ export type ReturnInput = {
   heldSince: string | null;
   assetClass: string | null | undefined;
   costNA?: boolean;
+  /**
+   * THE ROW'S OWN COST AND VALUE, where the caller has them — what tells a NIL
+   * LINE apart from a depository holding (MH-15). Buoyant's cash sleeve reports a
+   * cost of ₹0 and a value of ₹0: it is not a holding whose custodian never
+   * recorded a cost, and the depository reason on it was a wrong cause.
+   */
+  costBasis?: number | null;
+  marketValue?: number;
   /** See `Holdable.valuedAt`. */
   valuedAt?: string | null;
   /**
@@ -1338,6 +1366,13 @@ export type ReturnInput = {
    * which has no cash flows of its own and keeps every rule below unchanged.
    */
   capital?: RowCapital | null;
+  /**
+   * A COMPANY ONLY A FUND HOLDS (MSX-12). No statement reports it as a holding
+   * of the family's, so no measure has a figure of theirs to strike — and the
+   * depository reason every other costless row carries would name a custody
+   * account that does not exist.
+   */
+  measuredNA?: boolean;
 };
 
 /**
@@ -1376,6 +1411,25 @@ export type MeasuredReturn =
 
 const NO_COST_RETURN =
   "no statement in this book reports a cost for this holding, so it has no return to strike — it is held through a depository account that records what is held and not what it cost";
+/**
+ * A LINE THAT HOLDS NOTHING (MH-15). Its statement reports a nil balance at a
+ * cost of ₹0 — Buoyant's cash sleeves, a TDS line — so there is no gain and
+ * nothing to divide one by. It is not the depository case: the statement DID
+ * report its cost, and it is zero.
+ */
+const NIL_LINE_RETURN =
+  "this line holds nothing: its statement reports a nil balance at a cost of ₹0, so there is no gain and nothing to divide one by";
+const isNilLine = (p: ReturnInput): boolean => !p.costNA && p.costBasis === 0 && (p.marketValue ?? 0) === 0;
+/** Why a return is absent where no cost stands behind it — the cause that is true of THIS row. */
+const noCostReasonOf = (p: ReturnInput): string => isNilLine(p) ? NIL_LINE_RETURN : NO_COST_RETURN;
+/**
+ * "This row is one whole account" — the fact an undated whole-account row's
+ * return states in the methodology's note and in the CAGR column's refusal
+ * (MH-09, MH-18), in one wording.
+ */
+const wholeAccountsOf = (n: number): string => n === 1 ? "This row is one whole account" : `This row is ${n} whole accounts`;
+const DERIVED_ONLY_RETURN =
+  "no statement in this book reports this company as a holding — the family reaches it only through funds whose filings name it — so there is no cost or value of the family's own to strike a return on";
 const NO_HOLDING_XIRR =
   "a money-weighted return (XIRR) needs every cash flow for this holding — each tranche's date and amount — and the statements in this book cover the current period only, so no per-holding XIRR can be struck. The per-account money-weighted return is on the Performance page.";
 export const noCalendarReason = (asOf: string) =>
@@ -1403,7 +1457,7 @@ function capitalCompound(returnPct: number, cap: Extract<RowCapital, { dated: tr
  */
 function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>, noCost: boolean): MeasuredReturn {
   if (cap.days < YEAR_DAYS) {
-    return noCost ? { shown: false, tag: "XIRR", reason: NO_COST_RETURN } : capitalSubYear(p.returnPct as number, cap);
+    return noCost ? { shown: false, tag: "XIRR", reason: noCostReasonOf(p) } : capitalSubYear(p.returnPct as number, cap);
   }
   if (cap.annualPct == null) return { shown: false, tag: "XIRR", reason: "these dated payments and this value do not solve to a rate" };
   return { shown: true, pct: cap.annualPct, tag: "XIRR",
@@ -1422,10 +1476,19 @@ function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>
  * `cagr` delegate to `holdingReturn` so the annualisation guard is defined once.
  */
 export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: string): MeasuredReturn {
+  if (p.measuredNA) return { shown: false, tag: returnMeasureDef(measure).tag, reason: DERIVED_ONLY_RETURN };
   const noCost = !!p.costNA || p.returnPct === null || p.returnPct === undefined;
+  /**
+   * A LINE THAT HOLDS NOTHING HAS NO RETURN ON ANY MEASURE (MH-15). With every
+   * measure its own column, the CAGR, XIRR, YTD and CY cells beside its HPR gave
+   * the generic reasons — no cost reported, a cash-flow history missing, no
+   * earlier window — about a line whose statement reports a cost of ₹0 and holds
+   * nothing. The cause true of this row is the same in every column.
+   */
+  if (noCost && isNilLine(p)) return { shown: false, tag: returnMeasureDef(measure).tag, reason: NIL_LINE_RETURN };
 
   if (measure === "absolute") {
-    if (noCost) return { shown: false, tag: "HPR", reason: NO_COST_RETURN };
+    if (noCost) return { shown: false, tag: "HPR", reason: noCostReasonOf(p) };
     return { shown: true, pct: p.returnPct as number, tag: "HPR" };
   }
 
@@ -1438,8 +1501,20 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
       return { shown: false, tag: "CAGR",
         reason: "the money went in and came out over several dates, so a single-start compound rate would treat all of it as invested on the first date — the money-weighted rate for this row is XIRR" };
     }
-    if (noCost) return { shown: false, tag: "CAGR", reason: NO_COST_RETURN };
+    if (noCost) return { shown: false, tag: "CAGR", reason: noCostReasonOf(p) };
     return capitalCompound(p.returnPct as number, cap, "CAGR");
+  }
+
+  /**
+   * …AND AN UNDATED WHOLE ACCOUNT IS NOT ANNUALISED ON A PURCHASE DATE EITHER
+   * (MH-09). Its CAGR cell said annualising "needs to know when this holding was
+   * bought" — the promise the methodology's note stopped making: an account's
+   * annual rate is a money-weighted XIRR over the family's dated payments, and
+   * the reason this one has none is the account's own.
+   */
+  if (measure === "cagr" && cap && !cap.dated) {
+    return { shown: false, tag: "CAGR",
+      reason: `${wholeAccountsOf(cap.accountIds.length)}, and an account is not annualised on a purchase date: its annual rate is a money-weighted XIRR over the family's dated payments, and ${cap.reason.replace(/\.$/, "")}` };
   }
 
   if (measure === "cagr") {
@@ -1475,7 +1550,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   }
 
   // ── auto: the methodology ──────────────────────────────────────────────────
-  if (noCost) return { shown: false, tag: "AUTO", reason: NO_COST_RETURN };
+  if (noCost) return { shown: false, tag: "AUTO", reason: noCostReasonOf(p) };
   /**
    * A ROW THAT IS WHOLE ACCOUNTS ON A DATED RECORD takes the family's rule on
    * its dated payments — the rule the Transactions card applies to the same
@@ -1491,6 +1566,18 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
         note: `Several dated payments call for XIRR, and ${x.reason} — so this is the holding-period return.` };
     }
     return capitalCompound(p.returnPct as number, cap, "CAGR");
+  }
+  /**
+   * A ROW THAT IS WHOLE ACCOUNTS WITH NO DATED RECORD (MH-09, MH-18, DL-8).
+   * Its hover read "No purchase date on file … a holding a year or older is
+   * shown as CAGR once a date is known" — which promises something that cannot
+   * happen: an ACCOUNT is never annualised on a purchase date. Its annual rate is
+   * a money-weighted XIRR over the family's dated payments, and the reason this
+   * one has none is the account's own (`datedCapital.ts`).
+   */
+  if (cap && !cap.dated) {
+    return { shown: true, pct: p.returnPct as number, tag: "HPR",
+      note: `${wholeAccountsOf(cap.accountIds.length)}, so this is its total return — cumulative, not annualised: an account's annual rate is a money-weighted XIRR over the family's dated payments, and ${cap.reason.replace(/\.$/, "")}.` };
   }
   const end = windowEnd(p, asOf);
   const heldDays = p.heldSince && end ? daysBetween(p.heldSince, end) : null;
@@ -1514,7 +1601,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
     note: p.heldSince && end === null
       ? `Total return on cost — ${MIXED_VALUE_DATES}.`
       : heldDays === null
-      ? "No purchase date on file, so this is the total return on cost; a holding a year or older is shown as CAGR once a date is known."
+      ? "No lot register dates the units this row holds, so this is the total return on cost, not annualised — a holding of a year or more shows as CAGR where its lots are dated."
       : `Held ${heldDays} days to its valuation on ${end} — under a year, so this is the total return on cost.` };
 }
 

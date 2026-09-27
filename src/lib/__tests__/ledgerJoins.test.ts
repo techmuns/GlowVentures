@@ -210,5 +210,91 @@ console.log("\n── A-07: a window that cuts a record withholds its gain ─�
   ok("with no window, no row is windowed", whole.every((g) => !g.windowed));
 }
 
+console.log("\n── MT-10: a sale borrows the ISIN its own lot prints, and files where the holding does ──");
+{
+  const { sectionsFor } = await import("@/lib/txnAxis");
+  const { groupKeyFor, GROUP_AXES } = await import("@/lib/groupAxis");
+  const { accountIndex } = await import("@/lib/accounts");
+  const idx = accountIndex(BOOK_ACCOUNTS);
+  // RE-EXPRESSED OFF THE DOCUMENTS: every capital-gain lot's (account, key,
+  // sale date) and the ISIN it prints — never through the ledger.
+  const lotIsin = new Map<string, Set<string>>();
+  for (const d of manifest.filter((m) => m.reportType === "capital-gain")) {
+    for (const l of docOf(d.docKey).capitalGains ?? []) {
+      if (!l.isin || !l.saleDate) continue;
+      const k = `${d.accountNo}|${l.securityKey}@${l.saleDate}`;
+      (lotIsin.get(k) ?? lotIsin.set(k, new Set()).get(k)!).add(l.isin);
+    }
+  }
+  const lent = txn.txns.filter((t) => t.isinFrom === "lot");
+  ok("some sales borrow an ISIN from their own lot (the rule has work to do)", lent.length > 0, `${lent.length} sales`);
+  ok("only a SALE borrows one — a buy has no lot to borrow from",
+    txn.txns.every((t) => t.isinFrom !== "lot" || t.side === "Sell"));
+  ok("every borrowed ISIN is the one its lot prints, for that account, key and date, and the lot prints only one",
+    lent.every((t) => { const is = lotIsin.get(`${t.accountNo}|${t.securityKey}@${t.date}`); return !!is && is.size === 1 && is.has(t.isin ?? ""); }));
+  // THE CASE ITSELF: a sale whose own key has NO book position and whose
+  // borrowed ISIN names exactly one book security, re-found off the book.
+  const bookKeys = new Map<string, Set<string>>();
+  for (const p of BOOK_POSITIONS) if (p.isin) (bookKeys.get(p.isin) ?? bookKeys.set(p.isin, new Set()).get(p.isin)!).add(p.securityKey);
+  const held = new Set(BOOK_POSITIONS.map((p) => p.securityKey));
+  const joined = lent.filter((t) => !held.has(t.securityKey) && bookKeys.get(t.isin ?? "")?.size === 1);
+  ok("the book carries a sale the ISIN re-files (Liquid BeES on LKP, on this drop)", joined.length > 0,
+    joined.map((t) => `${t.security} ${t.date}`).join("; "));
+  const sec = sectionsFor(BOOK_ACCOUNTS, BOOK_POSITIONS);
+  for (const t of joined) {
+    const key = [...bookKeys.get(t.isin!)!][0];
+    const acc = BOOK_ACCOUNTS.find((a) => a.provider === t.provider && a.accountNo === t.accountNo);
+    const holding = BOOK_POSITIONS.find((p) => p.securityKey === key && p.accountId === acc?.accountId)
+      ?? BOOK_POSITIONS.find((p) => p.securityKey === key)!;
+    for (const axis of GROUP_AXES) {
+      const want = groupKeyFor(axis, idx, { ...holding, accountId: acc?.accountId ?? holding.accountId });
+      ok(`${t.security}'s sale files where its holding does — ${axis}`, sec.forTxn(axis, t) === want, `${sec.forTxn(axis, t)} vs ${want}`);
+    }
+    ok(`…and on the category axis that is Cash, as the Holdings table puts it`, sec.forTxn("category", t) === "Cash", sec.forTxn("category", t));
+    ok("…while its own key is untouched", t.securityKey !== key, `${t.securityKey} stays; the book's is ${key}`);
+  }
+}
+
+console.log("\n── MT-12: a sale with no realised figure says WHY, off the account's own statement ──");
+{
+  // RE-EXPRESSED: each account's capital-gain window and absence, off the
+  // book's own `BOOK_CAPITAL_GAINS`, joined on provider + account number.
+  const acctOf = new Map(BOOK_ACCOUNTS.map((a) => [`${a.provider}|${a.accountNo}`, a.accountId]));
+  const cgOf = new Map((BOOK_CAPITAL_GAINS as { accountId?: string; absent?: string | null; periodFrom?: string | null; periodTo?: string | null }[])
+    .filter((e) => e.accountId).map((e) => [e.accountId!, e]));
+  const sells = txn.txns.filter((t) => t.side === "Sell");
+  const missing = sells.filter((t) => t.realized == null);
+  const expectBasis = (t: typeof sells[number]) => {
+    const e = cgOf.get(acctOf.get(`${t.provider}|${t.accountNo}`) ?? "");
+    if (e?.absent) return "no-statement";
+    if (e && ((e.periodTo && t.date > e.periodTo) || (e.periodFrom && t.date < e.periodFrom))) return "outside-window";
+    return null;
+  };
+  const wrong = missing.filter((t) => {
+    const want = expectBasis(t);
+    if (t.realizedBasis === "sibling") return false;
+    return want ? t.realizedBasis !== want : t.realizedBasis !== "no-lot";
+  });
+  ok("every unrealised sale's cause is the one its account's statement supports", wrong.length === 0,
+    wrong.slice(0, 5).map((t) => `${t.security} ${t.date}: ${t.realizedBasis}`).join("; ") || `${missing.length} sales checked`);
+  ok("…and no sale in an account that issues one is told the account issues none",
+    missing.every((t) => !/no capital gain statement is issued/.test(t.realizedNote ?? "") || expectBasis(t) === "no-statement"));
+  const after = missing.filter((t) => t.realizedBasis === "outside-window");
+  ok("the sales after their account's statement window are named as such (LKP's Ather and Pricol, on this drop)",
+    after.length > 0 && after.every((t) => /falls (after|before) it/.test(t.realizedNote ?? "")),
+    after.map((t) => `${t.security} ${t.date}`).join("; "));
+  // A SIBLING IS COVERED: its day's sale carries the figure on exactly one row.
+  const day = (t: typeof sells[number]) => `${t.accountNo}|${t.securityKey}@${t.date}`;
+  const sib = sells.filter((t) => t.realizedBasis === "sibling");
+  ok("every sibling's day-sale carries its figure on exactly one other row", sib.length > 0 && sib.every((t) =>
+    sells.filter((x) => day(x) === day(t) && x.realized != null).length === 1), `${sib.length} siblings`);
+  const { rollup, rollupTotals } = await import("@/lib/txnRollup");
+  const totals = rollupTotals(rollup(txn.txns, BOOK_ACCOUNTS, "auto"));
+  const counted = sells.filter((t) => t.realized != null).length + sib.length;
+  ok("the coverage count counts a sibling as covered — k of n is the sales whose gain IS in the figure",
+    totals.realizedOf === counted && totals.sells === sells.length && counted > sells.filter((t) => t.realized != null).length,
+    `${totals.realizedOf}/${totals.sells}`);
+}
+
 console.log(fails ? `\n${fails} failed` : "\nall ledger-join checks passed");
 process.exit(fails ? 1 : 0);

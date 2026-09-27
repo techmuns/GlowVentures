@@ -8,6 +8,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { holdingBucket, bucketLabel, currentHoldings, DIRECT_EQUITY_BUCKET, MANDATE_BUCKET } from "@/lib/analytics";
 import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
+import { indexSession } from "@/components/IndexStrip";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
 import { symbolCoverage, symbolsFor } from "@/lib/quotes";
 
@@ -254,6 +255,18 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       const prev = r.marketValue - r.dayChange;
       return { ...r, dayChangePct: prev > 0 ? (r.dayChange / prev) * 100 : r.dayChangePct };
     });
+    /**
+     * THE DATES OF THE QUANTITIES THE DAY'S PRICE MOVE IS MULTIPLIED BY (MNT-16).
+     * A live price is today's; the number of shares it moves is what each
+     * account's statement last reported, and on this book that runs from
+     * 31 Mar (ICICI NSDL, LKP) to 31 Jul (the Motilal demats). The basis pill
+     * that carried the staleness was removed from Morning CIO at the family's
+     * request (Stage 10ao), so the span is stated on the tile it qualifies.
+     */
+    const qtyDates = [...new Set(scope
+      .filter((p) => typeof p.dayChange === "number" && Number.isFinite(p.dayChange))
+      .map((p) => accts.get(p.accountId)?.asOf)
+      .filter((d): d is string => !!d))].sort();
 
     const movedValue = rows.reduce((a, r) => a + r.marketValue, 0);
     const dayChange = rows.reduce((a, r) => a + r.dayChange, 0);
@@ -279,7 +292,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       ? (a: Row, b: Row) => Math.abs(b.dayChange) - Math.abs(a.dayChange)
       : (a: Row, b: Row) => Math.abs(b.dayChangePct) - Math.abs(a.dayChangePct);
     return {
-      rows, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols,
+      rows, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols, qtyDates,
       pricedNames: rows.length, distinct, unpriceable: cov.withoutSymbol,
       gainers: [...gainers].sort(cmp).slice(0, TOP_N),
       losers: [...losers].sort(cmp).slice(0, TOP_N),
@@ -372,6 +385,14 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
         <p className="mb-4 text-[11.5px] text-slate-500" data-movers-refreshing
           title="The figures below are the last complete round of prices; a newer round is in flight and replaces them when it settles.">Refreshing prices</p>
       )}
+      {/* A FAILED ROUND OVER A CACHED SNAPSHOT (MNT-18). The session's last
+          snapshot stays applied when a fetch fails, so these figures are real
+          and dated — and a reader must be told they are not this minute's. */}
+      {quotesStatus === "unavailable" && model.rows.length > 0 && (
+        <p className="mb-4 text-[11.5px] text-amber-500/80" data-testid="movers-cached">
+          The quote feed did not answer this round — these are the last prices it returned{clock ? ` at ${clock}` : ""}, cached this session.
+        </p>
+      )}
 
       {/*
         AN EMPTY CARD MID-FETCH IS NOT AN ABSENCE, AND MUST NOT SAY IT IS.
@@ -424,7 +445,12 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
             ? `No ${SCOPE.noun} move today — the quote feed did not respond`
             : `No ${SCOPE.noun} holding carries a day change right now`}
           needs={quotesStatus === "unavailable"
-            ? "A day change needs a live price AND the previous close behind it, and the quote feed did not respond. Every holding is showing its statement mark; nothing has been substituted. The top bar names the failure."
+            /* SCOPED TO THIS CARD'S SET (MNT-8). "Every holding is showing its
+               statement mark" read as a claim about the book, and the book's
+               mutual funds are on AMFI's published NAV whether or not the quote
+               feed answers. The direct-equity holdings this card covers are all
+               company shares, which no NAV reaches — so for THEM it is true. */
+            ? "A day change needs a live price AND the previous close behind it, and the quote feed did not respond. Every direct-equity holding is showing its statement mark; nothing has been substituted for a live price. The top bar names the failure."
             : `A day change needs a live price and a previous close. ${model.unpriceable} of the ${model.distinct} securities in this scope resolve to no NSE symbol and can never have one. Shares a discretionary manager picked are not counted here — ${model.excludedRows.length ? "they are named below the lists" : "this card covers what the family holds directly"}.`} />
       ) : (
         <>
@@ -442,7 +468,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                   struck over the priced subset and a reader will compare it with
                   an index; the scope has to be visible at the same glance. */}
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500" data-testid="movers-coverage"
-                title={`The move is struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.pricedNames} of ${model.distinct} ${SCOPE.noun} names — the rest carry no live quote and are not counted either way.`}>
+                title={`The move is struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.pricedNames} of ${model.distinct} ${SCOPE.noun} names — the rest carry no live quote and are not counted either way.${model.qtyDates.length ? ` The share counts are as of ${model.qtyDates.length === 1 ? model.qtyDates[0] : `${model.qtyDates[0]} to ${model.qtyDates[model.qtyDates.length - 1]}`}, the date of the statement that printed each.` : ""}${clock ? ` Quotes as of ${clock}.` : ""}`}>
                 {/* THE VALUE THIS PERCENTAGE COVERS, BESIDE THE VALUE IT DOES
                     NOT. A name count alone hides how much of a scope a figure
                     stands on: the mutual-fund tab prices ONE of 20 schemes and
@@ -454,14 +480,20 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                     most-repeated defect. */}
                 {/* THE FACE IS THE TWO FIGURES; WHY THE REST ARE NOT COUNTED IS
                     THE HOVER — the family asked for the lines that explain the
-                    card to go, and a count is not an explanation. */}
+                    card to go, and a count is not an explanation. The share
+                    counts' own date rides in the hover beside it (MNT-15): a
+                    day's move is today's price on a quantity a statement
+                    printed, and that statement has a date. */}
                 {fmtFromBase(model.movedValue, { compact: true })} of {fmtFromBase(model.scopeValue, { compact: true })} held
-                {" "}· {model.pricedNames} of {model.distinct} names{clock ? ` · ${clock}` : ""}
+                {" "}· {model.pricedNames} of {model.distinct} names{clock ? ` · quotes ${clock}` : ""}
               </p>
             </div>
 
             <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4 sm:col-span-1 lg:col-span-2">
-              <div className="label-xs">NSE indices · today</div>
+              {/* THE SESSION THE LEVELS ARE FROM (MNT-19): "today" only where it is. */}
+              <div className="label-xs" data-testid="movers-index-session">
+                NSE indices · {(() => { const sess = indexSession(indices); return sess.today || !sess.date ? "today" : `session ${sess.date}`; })()}
+              </div>
               {!indices && indexState === "loading" ? (
                 <p className="mt-2 text-[11.5px] text-slate-500">Fetching index levels…</p>
               ) : !indices ? (

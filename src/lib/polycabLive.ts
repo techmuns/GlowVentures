@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { POLYCAB_LIVE, type PolycabAction, type PolycabQuarter, type PolycabQuote } from "@/data/polycabLive";
+import { POLYCAB_LIVE, type PolycabAction, type PolycabLive, type PolycabQuarter, type PolycabQuote } from "@/data/polycabLive";
+import { sumOrNull } from "@/lib/analytics";
+import { sessionPhase } from "../../shared/polycabSources.mjs";
+
+export { sessionPhase };
 
 /**
  * THE LIVE COMPANY-LEVEL RECORD BEHIND THE RING-FENCED HOLDING.
@@ -91,6 +95,56 @@ export function effectiveQuote(state: LiveState): { quote: PolycabQuote | null; 
   return { quote: POLYCAB_LIVE.quote, live: false };
 }
 
+/**
+ * WHICH SESSION THE PRICE ON SCREEN BELONGS TO, AND HOW THE PAGE MAY DESCRIBE IT.
+ *
+ * The exchange's header quote carries NO session date, so the price was shown
+ * beside a statement dated 31 Mar 2026 with no date of its own, and labelled
+ * "the last settled close" / "live" without anything checking either word. Both
+ * are claims about a TIME, so both are now struck on one:
+ *
+ *   live       the endpoint answered AND its answer was fetched inside trading
+ *              hours. Outside them it is the last session's close, fetched
+ *              just now — never "live", which a weekend reader would take for
+ *              a price that is moving.
+ *   close      the stored price, fetched outside trading hours.
+ *   intraday   the stored price, fetched DURING trading hours — possibly an
+ *              intraday figure, never called a settled close.
+ *   undated    the store records no fetch time, so nothing dates the price and
+ *              the page says so rather than inheriting another figure's date.
+ *   fetching   the live answer is still on its way; the dating is the stored
+ *              price's, because that is the figure on screen meanwhile.
+ *
+ * Exchange holidays are not known (see `sessionPhase`), so a holiday fetch
+ * inside trading hours is described as possibly intraday — the weaker claim.
+ */
+export type QuoteBasis = "live" | "close" | "intraday" | "undated" | "fetching";
+export interface QuoteDating {
+  basis: QuoteBasis;
+  /** When the price on screen was fetched, ISO — null where nothing records it. */
+  fetchedAt: string | null;
+  /** That moment in India time, `YYYY-MM-DD` / `HH:MM`. */
+  istDate: string | null;
+  istTime: string | null;
+  /** Whether that moment fell inside trading hours. Null where undated. */
+  inSession: boolean | null;
+}
+export function quoteDating(state: LiveState, stored: Pick<PolycabLive, "quote"> = POLYCAB_LIVE): QuoteDating {
+  const at = (iso: string | null | undefined) => {
+    const ph = sessionPhase(iso);
+    return ph
+      ? { fetchedAt: String(iso), istDate: ph.istDate, istTime: ph.istTime, inSession: ph.inSession }
+      : { fetchedAt: null, istDate: null, istTime: null, inSession: null };
+  };
+  if (state.status === "live") {
+    const d = at(state.retrievedAt);
+    return { ...d, basis: d.inSession === null ? "undated" : d.inSession ? "live" : "close" };
+  }
+  const d = at(stored.quote?.fetchedAt ?? null);
+  if (state.status === "loading") return { ...d, basis: "fetching" };
+  return { ...d, basis: d.inSession === null ? "undated" : d.inSession ? "intraday" : "close" };
+}
+
 /** Cash actions, newest first. */
 export function dividendActions(): PolycabAction[] {
   return (POLYCAB_LIVE.corporateActions ?? []).filter((a) => a.kind === "dividend");
@@ -136,45 +190,142 @@ export function latestPromoter(): PolycabQuarter | null {
   return qs.find((q) => q.holdingPct !== null || q.pledgePct !== null) ?? null;
 }
 
+/**
+ * ONE STATEMENT'S BALANCE: the shares it reports and the date it reports them
+ * at. The holding table is written over a COLLECTION of these, so a second
+ * promoter statement — dated differently — is a second balance, never folded
+ * into the first one's date.
+ */
+export interface StatementBalance { shares: number | null; asOf: string | null }
+
+/** The share count behind every figure struck on the block: `sumOrNull`, never `?? 0`. */
+export function blockShares(balances: readonly StatementBalance[]): number | null {
+  return sumOrNull(balances.map((b) => b.shares));
+}
+
+/** The distinct statement dates the block's share count is taken from, oldest first. */
+export function statementDates(balances: readonly StatementBalance[]): string[] {
+  return [...new Set(balances.map((b) => b.asOf).filter((d): d is string => !!d))].sort();
+}
+
+/**
+ * DOES A STATEMENT IN THIS BOOK REPORT THE BALANCE HELD ON THIS DATE?
+ *
+ * A statement of holding is a SNAPSHOT: it reports the balance on its own date
+ * and says nothing about any other day, before it or after it. So the answer is
+ * yes only where EVERY balance behind the figure is dated on exactly that day —
+ * one demat reported on the date and another not is a figure half-measured.
+ */
+export function balanceReportedOn(date: string | null, balances: readonly StatementBalance[]): boolean {
+  return !!date && balances.length > 0 && balances.every((b) => b.asOf === date);
+}
+
 export interface Entitlement {
   action: PolycabAction;
-  /** Per-share × the share count the statement reports. DERIVED, never received. */
+  /** Per-share × the share count the statements report. DERIVED, never received. */
   amount: number | null;
-  /** Did the statement's own date fall on or after the ex-date? */
-  exDateWithinStatement: boolean;
+  /**
+   * Does a statement report the balance held ON the ex-date? True only where
+   * every statement behind the share count is dated on the ex-date — which, on
+   * a book holding one snapshot, is almost never.
+   */
+  balanceReportedOnExDate: boolean;
+  /** The statement dates the share count was taken from. */
+  statementDates: string[];
 }
 
 /**
  * WHAT THIS HOLDING WOULD HAVE BEEN ENTITLED TO — DERIVED, AND NEVER "RECEIVED".
  *
  * The exchange states a dividend PER SHARE. The rupee figure for this holding is
- * that times a share count, and the share count comes from ONE statement dated
- * at one moment. A snapshot is not a history: this book can say what was held on
- * the statement's own date and cannot say what was held on an ex-date three
- * months either side of it.
+ * that times a share count, and the share count comes from a statement dated at
+ * one moment. A snapshot is not a history: this book can say what was held on
+ * the statement's own date and cannot say what was held on an ex-date either
+ * side of it.
  *
- * So every row carries `exDateWithinStatement`, and the page renders the amount
- * as an ENTITLEMENT with the assumption stated rather than as income. It is
- * never summed into `dividendReceived`, never added to any book total, and never
- * called "received" — because whether the money arrived, and what TDS came off
- * it, is a bank and statement fact that no exchange record can answer.
+ * THE FLAG IS TWO-SIDED, AND IT WAS NOT. It used to be `exDate <= statementAsOf`
+ * — so seven ex-dates from 2019 to 2025 rendered as if the 31 Mar 2026 statement
+ * vouched for the balance on each, and only the one ex-date AFTER it was marked.
+ * The statement reports nothing about 2019 exactly as it reports nothing about
+ * June 2026; the store's own promoter series fell 1.96pp and 1.49pp right after
+ * two of those ex-dates, which is precisely where the balance is uncertain. Now
+ * an ex-date is unmarked only where a statement is dated ON it.
+ *
+ * The amount is rendered as an ENTITLEMENT with the assumption stated rather
+ * than as income. It is never summed into `dividendReceived`, never added to any
+ * book total, and never called "received" — because whether the money arrived,
+ * and what TDS came off it, is a bank and statement fact that no exchange record
+ * can answer.
  *
  * This is the same standing the fund look-through has: a derived figure rendered
  * beside measured ones, marked as derived in words rather than in a tooltip, and
  * in no total on the page.
  */
-export function entitlements(shares: number | null, statementAsOf: string | null): Entitlement[] {
+export function entitlements(balances: readonly StatementBalance[]): Entitlement[] {
+  const shares = blockShares(balances);
+  const dates = statementDates(balances);
   return dividendActions().map((action) => ({
     action,
     amount: shares !== null && action.amountPerShare !== null ? shares * action.amountPerShare : null,
-    exDateWithinStatement:
-      !!statementAsOf && !!action.exDate && action.exDate <= statementAsOf,
+    balanceReportedOnExDate: balanceReportedOn(action.exDate, balances),
+    statementDates: dates,
   }));
 }
 
 /** The live (or last settled) value of the block, at the mark actually on screen. */
 export function markedValue(shares: number | null, quote: PolycabQuote | null): number | null {
   return shares !== null && quote && typeof quote.ltp === "number" ? shares * quote.ltp : null;
+}
+
+/** Whole days from `from` to `to` (both `YYYY-MM-DD`); positive when `to` is later. */
+export function daysBetween(from: string, to: string): number | null {
+  const a = Date.parse(`${from}T00:00:00Z`), b = Date.parse(`${to}T00:00:00Z`);
+  return Number.isFinite(a) && Number.isFinite(b) ? Math.round((b - a) / 86400000) : null;
+}
+
+/**
+ * WHY A DIVIDEND'S PAYMENT DATE IS A DASH — ON THIS ROW, NOT FOR THE TABLE.
+ *
+ * The payment date comes from the exchange's SHORT recent-actions record,
+ * joined on the ex-date. It used to carry one reason for every dash — "covers
+ * only its most recent actions" — which was true of the three oldest rows and
+ * FALSE of 9 Jul 2024, whose neighbours on both sides (2023, 2025) carry a date:
+ * that record did cover it and printed no date against its ex-date. So the
+ * reason is struck against the rows that DID get a date: a dashed row older than
+ * all of them is outside what the record reaches; one inside the span is a row
+ * the record covered without a date for this ex-date.
+ */
+export function paymentDateWhy(action: PolycabAction, all: readonly PolycabAction[]): string {
+  const dated = all.filter((a) => a.paymentDate && a.exDate).map((a) => a.exDate as string).sort();
+  if (!dated.length) return "the exchange's payment-date record carried no date for any action on the last refresh";
+  if (action.exDate && action.exDate < dated[0]) {
+    return "the exchange's payment-date record reaches back only to its most recent actions, and this one is older than any it dates";
+  }
+  return "the exchange's payment-date record covers this period but printed no payment date against this ex-date";
+}
+
+/**
+ * THE HOLDING COLUMN'S CAPTION, COUNTED RATHER THAN CLAIMED. It read "carried
+ * by two independent sources" over twelve quarters of which six were carried
+ * by one. The counts come off the store's own `witnesses`.
+ */
+export function witnessCounts(quarters: readonly PolycabQuarter[]): { total: number; both: number; one: number } {
+  return {
+    total: quarters.length,
+    both: quarters.filter((q) => q.witnesses >= 2).length,
+    one: quarters.filter((q) => q.witnesses === 1).length,
+  };
+}
+
+/**
+ * WHY A QUARTER'S PROMOTER HOLDING IS A DASH. A refusal and a quarter no source
+ * carried are both a null, and they send a reader to different places: the
+ * first to two sources that disagree, the second to a disclosure nobody read.
+ */
+export function holdingWhy(q: PolycabQuarter): string {
+  if (q.holdingRefused === true) return "the two sources disagreed on this quarter by more than 0.05pp, so neither figure is published";
+  if (q.holdingRefused === false) return "no source this page reads carried a promoter-holding figure for this quarter";
+  return "no promoter-holding figure is published for this quarter — either no source carried one or the two disagreed, and this stored record does not say which";
 }
 
 /** How stale is the committed store, in whole days? Null where it cannot be told. */
@@ -186,13 +337,20 @@ export function storeAgeDays(now = Date.now()): number | null {
 
 export const POLYCAB_SOURCES = POLYCAB_LIVE.sources;
 
-/** Memoised view of everything the page needs, so the arithmetic runs once. */
-export function usePolycabLive(shares: number | null, statementAsOf: string | null) {
+/**
+ * Memoised view of everything the page needs, so the arithmetic runs once. It
+ * takes every statement BALANCE rather than one share count and one date: the
+ * first row's date standing for all of them is how a second demat, reported on
+ * another day, would have been blended in silently.
+ */
+export function usePolycabLive(balances: readonly StatementBalance[]) {
   const state = usePolycabQuote();
   const { quote, live } = effectiveQuote(state);
+  const shares = blockShares(balances);
   return useMemo(
     () => ({
       state, quote, live,
+      dating: quoteDating(state),
       dividends: dividendActions(),
       shareActions: shareCountActions(),
       unclassified: unclassifiedActions(),
@@ -206,12 +364,12 @@ export function usePolycabLive(shares: number | null, statementAsOf: string | nu
       complete: POLYCAB_LIVE.actionsComplete === true,
       promoter: latestPromoter(),
       quarters: POLYCAB_LIVE.promoterQuarters ?? [],
-      entitlements: entitlements(shares, statementAsOf),
+      entitlements: entitlements(balances),
       markedValue: markedValue(shares, quote),
       retrievedAt: POLYCAB_LIVE.retrievedAt,
       agreement: POLYCAB_LIVE.promoterAgreement,
       identity: POLYCAB_LIVE.identity,
     }),
-    [state, quote, live, shares, statementAsOf],
+    [state, quote, live, shares, balances],
   );
 }
