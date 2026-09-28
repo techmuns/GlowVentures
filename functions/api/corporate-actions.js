@@ -1,7 +1,7 @@
 import { normalizeActionFeed, validActionFeed, RESEARCH_ACTIONS_URL } from "../../shared/corporateActions.mjs";
 
 // The identical public capture, on an independent transport. Pages cannot
-// always reach the sister Worker (same-zone Worker fetch restrictions).
+// always reach the sister Worker; a source outage must not disable valuation.
 const RESEARCH_MIRROR_URL = "https://raw.githubusercontent.com/techmuns/Glow-Central-Research/main/public/data/corporate-actions.json";
 
 const LIMIT = 16 * 1024 * 1024;
@@ -51,7 +51,7 @@ export async function onRequestGet(context) {
     retained = true;
     for (const [source, address] of [["Research", RESEARCH_ACTIONS_URL], ["Research repository", RESEARCH_MIRROR_URL]]) {
       try {
-        const response = await fetch(address, { signal: AbortSignal.timeout(12_000), redirect: "error" });
+        const response = await fetch(address, { signal: AbortSignal.timeout(12_000), redirect: "manual" });
         if (!response.ok) { await response.body?.cancel(); throw new Error(`HTTP ${response.status}`); }
         const next = normalizeActionFeed(await readBoundedJson(response));
         if (Date.parse(next.capturedAt) > Date.now() + 5 * 60_000) throw new Error("Future capture");

@@ -19,6 +19,7 @@ globalThis.fetch = async (input, options) => {
   calls++;
   assert.equal(String(input), "https://glow-central-research.tech-441.workers.dev/data/corporate-actions.json");
   assert.equal(options?.headers, undefined, "private cookies and holdings must not be forwarded");
+  assert.equal(options?.redirect, "manual", "Cloudflare rejects redirect:error before fetching; redirects must be rejected via HTTP status instead");
   return Response.json(raw);
 };
 assert.equal((await onRequestGet(context("symbols=bad%20symbol"))).status, 400);
@@ -67,6 +68,7 @@ const addresses: string[] = [];
 globalThis.fetch = async (input, options) => {
   addresses.push(String(input));
   assert.equal(options?.headers, undefined);
+  assert.equal(options?.redirect, "manual");
   assert.ok(!String(input).includes("symbols="));
   if (String(input).includes("workers.dev")) return new Response("unavailable", { status: 503 });
   assert.equal(String(input), "https://raw.githubusercontent.com/techmuns/Glow-Central-Research/main/public/data/corporate-actions.json");
@@ -106,3 +108,16 @@ assert.equal(advanced.feed.capturedAt, newerTime, "reachable stale primary must 
 assert.equal(writes, 1, "only the winning capture is cached; no write race");
 assert.equal((lastWritten as { capturedAt: string } | null)?.capturedAt, newerTime);
 console.log("PASS stale-primary recovery and monotonic cache update");
+
+// Cloudflare accepts manual/follow, not the standard redirect:error mode.
+// An unexpected redirect fails closed; the fixed mirror remains eligible.
+globalThis.fetch = async (input, options) => {
+  assert.equal(options?.redirect, "manual");
+  return String(input).includes("workers.dev")
+    ? new Response(null, { status: 302, headers: { Location: "https://untrusted.invalid/" } })
+    : Response.json(newerRaw);
+};
+const redirect = await (await onRequestGet(context())).json();
+assert.equal(redirect.ok, true);
+assert.match(redirect.errors[0].reason, /302/);
+console.log("PASS Cloudflare-compatible fetch and redirect rejection");

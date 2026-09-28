@@ -97,7 +97,10 @@ quantity, cash received, tax deducted, or dividend reinvestment.
 The live incident returned 169 usable quotes while `/api/corporate-actions`
 returned HTTP 503. The September 23 saved capture then exceeded the share-event
 coverage window, suppressing all live valuations and misleadingly emptying the
-movers card. The Research capture itself was current and publicly available.
+movers card. The Research capture itself was current and publicly available. Hosted preview
+verification exposed the exact cause: Cloudflare rejects `redirect: "error"`
+before issuing a fetch. The proxy now uses `manual` and rejects 3xx responses
+explicitly; the platform-specific contract is asserted in the regression suite.
 
 The proxy now tries the identical capture in Research's public GitHub repository
 when the sister Worker fails or carries older source dates. Both routes keep the
