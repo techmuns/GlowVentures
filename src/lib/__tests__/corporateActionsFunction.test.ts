@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { onRequestGet, readBoundedJson } from "../../../functions/api/corporate-actions.js";
 
 const raw = JSON.parse(fs.readFileSync("src/lib/__tests__/fixtures/corporate-actions-source.json", "utf8"));
+Date.now = () => Date.parse(raw.capturedAt);
 const cache = new Map<string, Response>();
 Object.defineProperty(globalThis, "caches", { configurable: true, value: { default: {
   match: async (request: Request) => cache.get(request.url)?.clone(),
@@ -18,6 +19,7 @@ globalThis.fetch = async (input, options) => {
   calls++;
   assert.equal(String(input), "https://glow-central-research.tech-441.workers.dev/data/corporate-actions.json");
   assert.equal(options?.headers, undefined, "private cookies and holdings must not be forwarded");
+  assert.equal(options?.redirect, "manual", "Cloudflare rejects redirect:error before fetching; redirects must be rejected via HTTP status instead");
   return Response.json(raw);
 };
 assert.equal((await onRequestGet(context("symbols=bad%20symbol"))).status, 400);
@@ -58,3 +60,81 @@ await assert.rejects(() => readBoundedJson(new Response(new ReadableStream({ sta
 } }))), /too large/, "chunked responses are bounded too");
 assert.deepEqual(await readBoundedJson(Response.json({ ok: true })), { ok: true });
 console.log("PASS Research proxy isolation, input validation, bounded reads, cache reuse and last-good retention");
+
+// The Sep 28 incident: the sister Worker fails but the identical public
+// Research capture is available from its repository. No holdings go upstream.
+cache.clear();
+const addresses: string[] = [];
+globalThis.fetch = async (input, options) => {
+  addresses.push(String(input));
+  assert.equal(options?.headers, undefined);
+  assert.equal(options?.redirect, "manual");
+  assert.ok(!String(input).includes("symbols="));
+  if (String(input).includes("workers.dev")) return new Response("unavailable", { status: 503 });
+  assert.equal(String(input), "https://raw.githubusercontent.com/techmuns/Glow-Central-Research/main/public/data/corporate-actions.json");
+  return Response.json(raw);
+};
+const mirrored = await (await onRequestGet(context())).json();
+await Promise.all(pending);
+assert.equal(mirrored.ok, true);
+assert.equal(mirrored.retained, false);
+assert.equal(mirrored.feed.capturedAt, raw.capturedAt);
+assert.equal(addresses.length, 2);
+assert.match(mirrored.errors[0].reason, /503/);
+// Broken cache must neither block a fresh fetch nor discard its result.
+Object.defineProperty(globalThis, "caches", { configurable: true, value: { default: {
+  match: async () => { throw new Error("cache read failed"); },
+  put: async () => { throw new Error("cache write failed"); },
+} } });
+assert.equal((await (await onRequestGet(context())).json()).ok, true);
+await Promise.all(pending);
+console.log("PASS independent Research transport fallback and cache-failure isolation");
+
+const newerTime = new Date(Date.parse(raw.capturedAt) + 86_400_000).toISOString();
+const newerRaw = { ...raw, capturedAt: newerTime, sources: {
+  nse: { ...raw.sources.nse, capturedAt: newerTime }, screener: { ...raw.sources.screener, capturedAt: newerTime },
+} };
+Date.now = () => Date.parse(newerTime);
+let writes = 0;
+let lastWritten: { capturedAt: string } | null = null;
+Object.defineProperty(globalThis, "caches", { configurable: true, value: { default: {
+  match: async () => undefined,
+  put: async (_key: Request, value: Response) => { writes++; lastWritten = await value.json(); },
+} } });
+globalThis.fetch = async (input) => Response.json(String(input).includes("workers.dev") ? raw : newerRaw);
+const advanced = await (await onRequestGet(context())).json();
+await Promise.all(pending);
+assert.equal(advanced.feed.capturedAt, newerTime, "reachable stale primary must not hide a fresh mirror");
+assert.equal(writes, 1, "only the winning capture is cached; no write race");
+assert.equal((lastWritten as { capturedAt: string } | null)?.capturedAt, newerTime);
+console.log("PASS stale-primary recovery and monotonic cache update");
+
+// A dated primary is usable evidence, but cannot certify a fresh refresh if
+// the mirror also fails (or returns the same dated capture).
+for (const mirrorFails of [true, false]) {
+  writes = 0;
+  globalThis.fetch = async (input) => {
+    if (mirrorFails && !String(input).includes("workers.dev")) throw new Error("mirror offline");
+    return Response.json(raw);
+  };
+  const dated = await (await onRequestGet(context())).json();
+  await Promise.all(pending);
+  assert.equal(dated.ok, true);
+  assert.equal(dated.retained, true, "old evidence keeps the client's fast retry active");
+  assert.equal(dated.feed.capturedAt, raw.capturedAt);
+  assert.equal(writes, 0, "old evidence must not acquire a fresh cache timestamp");
+}
+console.log("PASS stale primary with failed/stale mirror remains retained and uncached");
+
+// Cloudflare accepts manual/follow, not the standard redirect:error mode.
+// An unexpected redirect fails closed; the fixed mirror remains eligible.
+globalThis.fetch = async (input, options) => {
+  assert.equal(options?.redirect, "manual");
+  return String(input).includes("workers.dev")
+    ? new Response(null, { status: 302, headers: { Location: "https://untrusted.invalid/" } })
+    : Response.json(newerRaw);
+};
+const redirect = await (await onRequestGet(context())).json();
+assert.equal(redirect.ok, true);
+assert.match(redirect.errors[0].reason, /302/);
+console.log("PASS Cloudflare-compatible fetch and redirect rejection");

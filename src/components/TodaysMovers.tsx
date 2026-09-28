@@ -3,13 +3,13 @@ import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { holdingBucket, bucketLabel, currentHoldings, DIRECT_EQUITY_BUCKET, MANDATE_BUCKET } from "@/lib/analytics";
 import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
-import { indexSession } from "@/components/IndexStrip";
+import { indexSession, istDate } from "@/components/IndexStrip";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
+import { dailyMovers, type DailyMover } from "@/lib/dailyMovers";
 import { symbolCoverage, symbolsFor } from "@/lib/quotes";
 
 // ── TODAY'S MOVERS, OVER DIRECT EQUITY ───────────────────────────────────────
@@ -77,14 +77,7 @@ import { symbolCoverage, symbolsFor } from "@/lib/quotes";
 // the feed gave no previous close, and null never enters a sum or a ranking —
 // an unpriced holding must not appear in "today's losers" at ₹0.
 
-type Row = {
-  securityKey: string;
-  security: string;
-  dayChange: number;
-  dayChangePct: number;
-  marketValue: number;
-  entities: string[];
-};
+type Row = DailyMover;
 
 const TOP_N = 6;
 
@@ -126,7 +119,7 @@ const SCOPE = {
  * `cio-filling` route walks, and what a future caller outside the toggle gets.
  */
 export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
-  const { portfolio, consolidated, quotesStatus, quotesAsOf, pendingFor, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, quotesStatus, quoteFeed, corporateActionReturns, refreshQuotes, pendingFor, fmtFromBase } = usePortfolio();
   /**
    * THE DEFAULT IS THE PERCENTAGE MOVE, at the family's request — *"keep % wise
    * as the default view and ₹ wise absolute as the second toggle option."*
@@ -227,34 +220,8 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       }))
       .sort((a, b) => b.mv - a.mv);
 
-    // CONSOLIDATED: each dedupeGroup once, because this is a whole-book figure.
-    // One name reported under two members must move the book once.
-    const byKey = new Map<string, Row>();
-    for (const p of scope) {
-      if (typeof p.dayChange !== "number" || !Number.isFinite(p.dayChange)) continue;
-      if (typeof p.dayChangePct !== "number" || !Number.isFinite(p.dayChangePct)) continue;
-      const owner = accts.get(p.accountId)?.owner ?? null;
-      const cur = byKey.get(p.securityKey);
-      if (cur) {
-        // The same security in several accounts is ONE mover. Its rupee impact
-        // adds; its PERCENTAGE is the value-weighted one, re-derived from the
-        // combined previous close rather than averaged — averaging two percents
-        // over different position sizes is a figure neither statement supports.
-        cur.dayChange += p.dayChange;
-        cur.marketValue += p.marketValue;
-        if (owner && !cur.entities.includes(owner)) cur.entities.push(owner);
-      } else {
-        byKey.set(p.securityKey, {
-          securityKey: p.securityKey, security: p.security,
-          dayChange: p.dayChange, dayChangePct: p.dayChangePct,
-          marketValue: p.marketValue, entities: owner ? [owner] : [],
-        });
-      }
-    }
-    const rows = [...byKey.values()].map((r) => {
-      const prev = r.marketValue - r.dayChange;
-      return { ...r, dayChangePct: prev > 0 ? (r.dayChange / prev) * 100 : r.dayChangePct };
-    });
+    const { rows, session, omitted, observedFrom, observedTo } = dailyMovers(scope, quoteFeed, corporateActionReturns, accts);
+    const impactRows = rows.filter((r) => r.dayChange !== null && r.marketValue !== null);
     /**
      * THE DATES OF THE QUANTITIES THE DAY'S PRICE MOVE IS MULTIPLIED BY (MNT-16).
      * A live price is today's; the number of shares it moves is what each
@@ -268,10 +235,10 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       .map((p) => accts.get(p.accountId)?.asOf)
       .filter((d): d is string => !!d))].sort();
 
-    const movedValue = rows.reduce((a, r) => a + r.marketValue, 0);
-    const dayChange = rows.reduce((a, r) => a + r.dayChange, 0);
-    const prevValue = movedValue - dayChange;
-    const dayPct = prevValue > 0 ? (dayChange / prevValue) * 100 : null;
+    const movedValue = impactRows.reduce((a, r) => a + r.marketValue!, 0);
+    const dayChange = impactRows.length ? impactRows.reduce((a, r) => a + r.dayChange!, 0) : null;
+    const prevValue = movedValue - (dayChange ?? 0);
+    const dayPct = prevValue > 0 && dayChange !== null ? (dayChange / prevValue) * 100 : null;
 
     // COVERAGE IS OVER THE SCOPE, NOT THE BOOK. "159 of 214 distinct names" was
     // true of the whole book and is a claim about a set this card no longer
@@ -285,22 +252,27 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
     // rounds; this scope is 33 and, named as `priority`, lands in one.
     const scopeSymbols = symbolsFor(scope);
 
-    const gainers = rows.filter((r) => r.dayChange > 0);
-    const losers = rows.filter((r) => r.dayChange < 0);
+    const ranked = rank === "impact" ? impactRows : rows;
+    const gainers = ranked.filter((r) => r.dayChangePct > 0);
+    const losers = ranked.filter((r) => r.dayChangePct < 0);
     const flat = rows.length - gainers.length - losers.length;
     const cmp = rank === "impact"
-      ? (a: Row, b: Row) => Math.abs(b.dayChange) - Math.abs(a.dayChange)
+      ? (a: Row, b: Row) => Math.abs(b.dayChange!) - Math.abs(a.dayChange!)
       : (a: Row, b: Row) => Math.abs(b.dayChangePct) - Math.abs(a.dayChangePct);
     return {
-      rows, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols, qtyDates,
+      rows, session, omitted, observedFrom, observedTo, impactNames: impactRows.length, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols, qtyDates,
       pricedNames: rows.length, distinct, unpriceable: cov.withoutSymbol,
       gainers: [...gainers].sort(cmp).slice(0, TOP_N),
       losers: [...losers].sort(cmp).slice(0, TOP_N),
       gainCount: gainers.length, lossCount: losers.length, flat,
-      gainSum: gainers.reduce((a, r) => a + r.dayChange, 0),
-      lossSum: losers.reduce((a, r) => a + r.dayChange, 0),
+      gainSum: gainers.length && gainers.every((r) => r.dayChange !== null) ? gainers.reduce((a, r) => a + r.dayChange!, 0) : null,
+      lossSum: losers.length && losers.every((r) => r.dayChange !== null) ? losers.reduce((a, r) => a + r.dayChange!, 0) : null,
     };
-  }, [portfolio, consolidated, rank]);
+  }, [portfolio, consolidated, rank, quoteFeed, corporateActionReturns]);
+
+  useEffect(() => {
+    if (model && model.impactNames === 0) setRank("pct");
+  }, [model?.impactNames]);
 
   if (!portfolio || !model) return null;
 
@@ -340,7 +312,12 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
   const settling = scopePending.length > 0;
   const landed = model.scopeSymbols.length - scopePending.length;
 
-  const clock = quotesAsOf ? new Date(quotesAsOf).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
+  const sessionLabel = model.session === istDate() ? "today" : model.session ? `session ${model.session}` : "latest available prices";
+  const time = (value: string) => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const firstObserved = model.observedFrom ? time(model.observedFrom) : null;
+  const lastObserved = model.observedTo ? time(model.observedTo) : null;
+  const clock = firstObserved && lastObserved && firstObserved !== lastObserved
+    ? `${firstObserved}–${lastObserved}` : firstObserved;
 
   return (
     /* THE SUBTITLE IS GONE AT THE FAMILY'S REQUEST, AND THE TITLE CARRIES THE
@@ -350,7 +327,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
        reporting exactly that kind of heading. So the scope moves into the
        heading, where it cannot be removed as chrome, and the quote timestamp
        moves to the tile that is actually as-of it. */
-    <Card className="lg:col-span-3" title={`Today\u2019s movers \u00b7 ${SCOPE.label}`}
+    <Card className="lg:col-span-3" title={`${model.session === istDate() ? "Today’s movers" : model.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE.label}`}
       right={
         /* TWO CONTROLS, AND THEY ANSWER DIFFERENT QUESTIONS. The SCOPE toggle
            (owned by `DailyMovers`) switches which MEASUREMENT this card shows —
@@ -367,8 +344,8 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
               the prose a redesign is free to reword — the same contract
               `data-movers-scope` and `data-section` already carry. */}
           {(["pct", "impact"] as const).map((k) => (
-            <button key={k} onClick={() => setRank(k)} aria-pressed={rank === k} data-mover-rank={k}
-              className={["rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+            <button key={k} onClick={() => setRank(k)} disabled={k === "impact" && model.impactNames === 0} aria-pressed={rank === k} data-mover-rank={k}
+              className={["rounded px-2 py-0.5 text-[11px] font-medium transition-colors disabled:opacity-40",
                 rank === k ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
               {k === "impact" ? "By ₹ impact" : "By % move"}
             </button>
@@ -390,7 +367,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           and dated — and a reader must be told they are not this minute's. */}
       {quotesStatus === "unavailable" && model.rows.length > 0 && (
         <p className="mb-4 text-[11.5px] text-amber-500/80" data-testid="movers-cached">
-          The quote feed did not answer this round — these are the last prices it returned{clock ? ` at ${clock}` : ""}, cached this session.
+          The quote feed did not answer this round — showing saved prices{clock ? ` observed ${clock}` : ""}.
         </p>
       )}
 
@@ -405,9 +382,8 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
         repo already records on the company page, where a panel still fetching
         asserted the security has no live quote: THE CAUSE PICKS THE HEADLINE.
 
-        So the three states are separated. Still fetching says so. The feed
-        having failed names the feed. Only a settled feed that priced nothing
-        makes the claim about the book — and by then the claim is true.
+        A failed feed names the service and offers a retry. Missing share
+        verification with valid quotes still renders percentage rankings.
 
         With the snapshot cache behind it (`quoteCache.ts`) the first branch is
         reached only on a genuinely cold open: a reload inside the session
@@ -429,38 +405,30 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           )}
         </div>
       ) : model.rows.length === 0 ? (
-        /* THE CAUSE PICKS THE HEADLINE, and there are three of them here rather
-           than one. A feed that did not respond is a fact about the SERVICE; a
-           scope whose instruments can never be priced intraday is a fact about
-           the INSTRUMENT and no feed will ever change it; anything else is a
-           fact about which of this scope's names resolved a symbol. Collapsing
-           the second into the third would send a reader looking for a quote-feed
-           fix for a mutual fund, which is the confidently-wrong diagnosis this
-           book keeps naming. */
-        /* AND SINCE `needs` IS THE HOVER (Stage 10cp), THE FEED'S FAILURE IS
-           IN THE HEADLINE ITSELF — a reader must not have to hover to learn the
-           service is down rather than the book being short of a symbol. */
-        <AbsentSection
-          what={quotesStatus === "unavailable"
-            ? `No ${SCOPE.noun} move today — the quote feed did not respond`
-            : `No ${SCOPE.noun} holding carries a day change right now`}
-          needs={quotesStatus === "unavailable"
-            /* SCOPED TO THIS CARD'S SET (MNT-8). "Every holding is showing its
-               statement mark" read as a claim about the book, and the book's
-               mutual funds are on AMFI's published NAV whether or not the quote
-               feed answers. The direct-equity holdings this card covers are all
-               company shares, which no NAV reaches — so for THEM it is true. */
-            ? "A day change needs a live price AND the previous close behind it, and the quote feed did not respond. Every direct-equity holding is showing its statement mark; nothing has been substituted for a live price. The top bar names the failure."
-            : `A day change needs a live price and a previous close. ${model.unpriceable} of the ${model.distinct} securities in this scope resolve to no NSE symbol and can never have one. Shares a discretionary manager picked are not counted here — ${model.excludedRows.length ? "they are named below the lists" : "this card covers what the family holds directly"}.`} />
+        <div className="rounded-lg border border-dashed border-ink-600/70 px-6 py-8 text-center" data-testid="movers-unavailable" role="status">
+          <p className="text-sm font-medium text-slate-300">Daily price changes are temporarily unavailable</p>
+          <p className="mt-2 text-xs text-slate-500">
+            {quotesStatus === "unavailable" ? "The quote service did not respond. Retrying automatically."
+              : [...new Set(model.omitted.values())].join(" · ") || "Waiting for comparable market prices."}
+          </p>
+          <button className="mt-3 text-xs text-champagne-400 underline" onClick={refreshQuotes}>Retry prices</button>
+        </div>
       ) : (
         <>
+          {model.rows.length > model.impactNames && (
+            <p className="mb-3 text-xs text-amber-500/90" data-testid="movers-price-only">
+              Share counts await verification for {model.pricedNames - model.impactNames} names. Their exchange % moves are shown; money impact is withheld.
+              {rank === "impact" ? " This ranking includes only names with verified money impact." : ""}
+            </p>
+          )}
           {/* ── The book's own move, and the four indices beside it ───────── */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
-              <div className="label-xs">{SCOPE.label} &middot; today</div>
+              <div className="label-xs">{SCOPE.label} &middot; {sessionLabel}</div>
               <div className={`mt-2 font-display text-[22px] font-bold tabular ${changeColor(model.dayChange)}`}>
                 {fmtFromBase(model.dayChange, { compact: true, sign: true })}
               </div>
+              {model.dayChange === null && <p className="mt-1 text-xs text-slate-500">Money impact awaits verified share counts</p>}
               <div className={`mt-0.5 text-[13px] font-semibold tabular ${changeColor(model.dayPct)}`}>
                 {model.dayPct == null ? DASH : fmtPct(model.dayPct, { sign: true })}
               </div>
@@ -468,7 +436,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                   struck over the priced subset and a reader will compare it with
                   an index; the scope has to be visible at the same glance. */}
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500" data-testid="movers-coverage"
-                title={`The move is struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.pricedNames} of ${model.distinct} ${SCOPE.noun} names — the rest carry no live quote and are not counted either way.${model.qtyDates.length ? ` The share counts are as of ${model.qtyDates.length === 1 ? model.qtyDates[0] : `${model.qtyDates[0]} to ${model.qtyDates[model.qtyDates.length - 1]}`}, the date of the statement that printed each.` : ""}${clock ? ` Quotes as of ${clock}.` : ""}`}>
+                title={`The move is struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.impactNames} of ${model.distinct} ${SCOPE.noun} names — the rest lack a quote or verified share count and are excluded from the money total.${model.qtyDates.length ? ` The share counts are as of ${model.qtyDates.length === 1 ? model.qtyDates[0] : `${model.qtyDates[0]} to ${model.qtyDates[model.qtyDates.length - 1]}`}, the date of the statement that printed each.` : ""}${clock ? ` Quotes as of ${clock}.` : ""}`}>
                 {/* THE VALUE THIS PERCENTAGE COVERS, BESIDE THE VALUE IT DOES
                     NOT. A name count alone hides how much of a scope a figure
                     stands on: the mutual-fund tab prices ONE of 20 schemes and
@@ -484,8 +452,8 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                     counts' own date rides in the hover beside it (MNT-15): a
                     day's move is today's price on a quantity a statement
                     printed, and that statement has a date. */}
-                {fmtFromBase(model.movedValue, { compact: true })} of {fmtFromBase(model.scopeValue, { compact: true })} held
-                {" "}· {model.pricedNames} of {model.distinct} names{clock ? ` · quotes ${clock}` : ""}
+                {model.pricedNames} of {model.distinct} names with price changes · {fmtFromBase(model.movedValue, { compact: true })} of {fmtFromBase(model.scopeValue, { compact: true })} held
+                {" "}· {model.impactNames} of {model.distinct} names with verified impact{clock ? ` · quotes ${clock}` : ""}
               </p>
             </div>
 
@@ -519,9 +487,9 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                   })}
                 </div>
               )}
-              {indices && model.dayPct != null && (() => {
+              {indices && model.dayPct != null && indexSession(indices).date === model.session && (() => {
                 const n500 = indices.indices.find((x) => x.id === "nifty-500");
-                if (!n500 || n500.changePct == null) return null;
+                if (!n500 || n500.changePct == null || n500.sessionDate !== model.session) return null;
                 const gap = model.dayPct - n500.changePct;
                 return (
                   /* "THE PRICED BOOK" WAS TRUE AND IS NOT ANY MORE. This figure
@@ -534,7 +502,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                     {/* A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20), not a
                         percentage of anything — "+11.00%" read as a return. */}
                     {SCOPE.subject} {SCOPE.verb} <strong className={changeColor(gap)}>{`${gap > 0 ? "+" : gap < 0 ? "−" : ""}${fmtNum(Math.abs(gap), 2)} pts`}</strong> against the
-                    Nifty 500 today
+                    Nifty 500 · {sessionLabel}
                   </p>
                 );
               })()}
@@ -577,7 +545,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
 }
 
 function MoverList({ title, tone, rows, total, fmt, rank, noun }: {
-  title: string; tone: "gain" | "loss"; rows: Row[]; total: number;
+  title: string; tone: "gain" | "loss"; rows: Row[]; total: number | null;
   fmt: (n: number | null | undefined, o?: { compact?: boolean; sign?: boolean }) => string;
   rank: "impact" | "pct";
   /** What one holding in the active scope is called — the empty state says it. */
@@ -620,7 +588,7 @@ function MoverList({ title, tone, rows, total, fmt, rank, noun }: {
                 <td className={`py-1.5 pr-3 text-right tabular ${rank === "pct" ? "font-semibold" : ""} ${changeColor(r.dayChangePct)}`}>
                   {fmtPct(r.dayChangePct, { sign: true })}
                 </td>
-                <td className={`py-1.5 text-right tabular ${rank === "impact" ? "font-semibold" : ""} ${changeColor(r.dayChange)}`}>
+                <td title={r.dayChange === null ? "Share count needs verification; the percentage is the exchange price move." : undefined} className={`py-1.5 text-right tabular ${rank === "impact" ? "font-semibold" : ""} ${changeColor(r.dayChange)}`}>
                   {fmt(r.dayChange, { compact: true, sign: true })}
                 </td>
               </tr>
