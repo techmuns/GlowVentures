@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote } from "lucide-react";
+import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -33,7 +33,7 @@ import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 /** The allocation table's columns, in the order its rows write their cells. */
 const ALLOC_COLS = ["section", "invested", "current", "return", "weight"] as const;
 import { useTableView, sortRows } from "@/lib/tableView";
-import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
+import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum, fmtDate } from "@/lib/format";
 import { type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { fifoTotals, investedWithCapital, type FifoTotals } from "@/lib/fifo";
 import { type PrivateSheet, stockHref } from "@/lib/auditFormulas";
@@ -44,10 +44,11 @@ import { BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { costedFigures, VACUOUS_COST_REASON } from "@/lib/clubbedFigures";
 import { NavVsIndex } from "@/components/NavVsIndex";
-import { valuationDates, valuationNote } from "@/components/BasisPill";
+import { valuationDates, valuationNote, dateSpan } from "@/components/BasisPill";
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import { DailyMovers } from "@/components/DailyMovers";
 import { CHART_COLORS } from "@/lib/chartTheme";
+import { INVESTOR_DEFAULT_TILES, investorPeriodReturn } from "@/lib/investorSummary";
 
 // Morning CIO — the whole book in one screen: invested / current / return per
 // bucket, plus capital deployment, concentration and book performance. Every
@@ -199,18 +200,9 @@ const CIO_TABS = [
    */
   { key: "alerts", label: "All alerts", title: "Every price alert you have set, and which have been reached" },
 ] as const;
-/**
- * WHICH TILES THE STRIP OPENS ON, and where a reader's own choice is kept.
- *
- * *"Capital invested and current value of holdings can be a single KPI tile
- * rather than being two separate KPI tiles."* So the default is the six the
- * strip always led with, less one: Current Value of Holdings now carries the
- * capital invested beneath it. Every other metric is one picker away.
- * Versioned, so a set saved against an older catalogue can be retired by
- * bumping it rather than by rendering ids this build does not have.
- */
+// Fresh visits show the investor's value, gain, yearly rate and FYTD return.
+// Keep the storage key: an explicitly customised layout remains the reader's.
 const CIO_TILES_KEY = "glow:cioTiles:v1";
-const CIO_DEFAULT_TILES = ["value", "mwr", "return", "uncalled", "distributions"] as const;
 
 const sectionColor = (axis: GroupAxis, key: string, i: number) => {
   if (key === UNCLASSIFIED) return UNPLACED_COLOR;
@@ -927,6 +919,9 @@ export function MorningCIO() {
       // Where the pool closes — stated in the tile's hover beside the window.
       mwLastClose: mwb.lastClose,
       mwb,
+      periods: (["fytd", "ytd"] as const).map((period) => ({
+        period, ...investorPeriodReturn(statementPortfolio ?? portfolio, today, period),
+      })),
       // THE ONE PLACE THE TILE'S FIGURE IS DECIDED. `moneyWeightedReturn`
       // refuses to annualise a window shorter than a year, so a strong quarter
       // can no longer reach the screen as a yearly rate — see the note on it.
@@ -1005,9 +1000,8 @@ export function MorningCIO() {
    * figure the book does not carry renders an em dash WITH ITS REASON, because
    * an em dash must always name its cause.
    *
-   * NO CAPTION UNDER A FIGURE (Stage 10aa) — the one exception is the value
-   * tile's second FIGURE, the capital invested, which the family asked for when
-   * the two tiles became one.
+   * The investor summary keeps the paired figures, dates and coverage visible.
+   * Detailed methodology stays in the hover and the destination page.
    */
   const absentWhy = (why: string) => <span className="text-slate-500">{why}</span>;
   const pct1 = (v: number | null | undefined, sign = true) =>
@@ -1057,7 +1051,7 @@ export function MorningCIO() {
      * and no explanation.
      */
     {
-      id: "value", label: "Current Value of Holdings", icon: <Briefcase className="h-4 w-4" />,
+      id: "value", label: "Portfolio value", icon: <Briefcase className="h-4 w-4" />,
       href: drilldownHref("book"),
       hrefTitle: `Open every holding in the book — what each is worth today and what was invested in it, each holding two statements both report counted once. The listed, private and not-placed sides, and the holdings whose statement reports a cost, are toggles on that page.${
         (() => { const note = valuationNote(valuationDates(portfolio), (n) => fmtFromBase(n, { compact: true })); return note ? ` ${note}` : ""; })()
@@ -1068,13 +1062,49 @@ export function MorningCIO() {
       value: fmtFromBase(m.totalValue, { compact: true }),
       second: m.totalInvested == null
         ? <span title="No statement in this book reports a cost basis, so there is no capital invested to show.">Invested <span className="text-slate-500">{DASH}</span></span>
-        : <>Invested <span className="mono font-semibold text-slate-100">{fmtFromBase(m.totalInvested, { compact: true })}</span>
+        : <span className="whitespace-normal">Recorded invested <span className="mono font-semibold text-slate-100">{fmtFromBase(m.totalInvested, { compact: true })}</span>
           {/* ITS OWN COVERAGE, ON ITS FACE (DL-11). The value covers every
               holding and Invested the ones that report a cost, so the two are
               not a gain apart — the hover names the figure that is. The counts
               are `costedBookSet`'s, the set the Consolidated return names. */}
-          {m.costedSet.costedCount < m.costedSet.holdings && <span className="whitespace-normal text-slate-400"> · {fmtNum(m.costedSet.costedCount)} of {fmtNum(m.costedSet.holdings)} report a cost</span>}</>,
+          </span>,
+      sub: <>{m.costedSet.costedCount < m.costedSet.holdings && <>{fmtNum(m.costedSet.costedCount)} of {fmtNum(m.costedSet.holdings)} report a cost<br /></>}
+        {(() => {
+          const dates = valuationDates(portfolio);
+          const span = dateSpan([...new Set([...dates.statement, ...dates.nav].map((d) => d.date))].sort());
+          return `${dates.live.count ? "Live quotes" : "Valuations"}${span ? `${dates.live.count ? " + marks" : ""} · ${span}` : ""}`;
+        })()}</>,
     },
+    {
+      id: "gain", label: "Gain / loss", icon: <TrendingUp className="h-4 w-4" />,
+      href: drilldownHref("book", undefined, "costed"),
+      hrefTitle: "Open the holdings this gain is struck over — the ones whose statement reports a cost. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). Return on recorded capital is this gain over the capital deployed. This is the recorded gain, not a complete since-inception total return: separate dividends and fund distributions and sales outside the available statements are not included, except within a whole PMS mandate. It covers the holdings reporting a cost.",
+      value: m.embeddedGain == null ? <AbsentValue />
+        : <span className={changeColor(m.embeddedGain)}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</span>,
+      second: m.gainPct == null ? undefined : <>Return on capital {pct1(m.gainPct)}</>,
+      sub: m.embeddedGain == null ? absentWhy("No recorded cost or gain")
+        : <>Recorded · {fmtNum(m.costedSet.costedCount)} of {fmtNum(m.costedSet.holdings)} holdings<br />Separate income excluded</>,
+    },
+    {
+      id: "annualised", label: "Annualised return", icon: <TrendingUp className="h-4 w-4" />,
+      href: drilldownHref("measured"),
+      hrefTitle: `XIRR over the recorded cash-flow window, not necessarily since inception. Covers ${m.mwb.accountIds.length} of ${m.mwb.bookAccounts} accounts, worth ${money(m.mwb.measuredValue)} on their statements. ${m.bookMW.windowDays == null ? "No dated opening values are available." : `The window is ${m.bookMW.windowDays} days${m.mwLastClose ? `, to ${m.mwLastClose}` : ""}. ${m.bookMW.annualised ? "A genuine annual rate over at least one year." : "NOT ANNUALISED: at least one year of dated history is needed; the shorter-period return remains available under Money-weighted return."}`}`,
+      value: m.bookMW.annualised && m.bookMW.pct != null ? <>{pct1(m.bookMW.pct)} <span className="text-sm">p.a.</span></> : <AbsentValue />,
+      second: <span className="whitespace-normal">XIRR · {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts</span>,
+      sub: m.bookMW.annualised && m.bookMW.pct != null
+        ? <>{m.bookMW.windowDays} days{m.mwLastClose ? ` · to ${fmtDate(m.mwLastClose)}` : ""}</>
+        : <>Insufficient history<br />{m.bookMW.windowDays == null ? "Need dated opening values and cash flows" : `${m.bookMW.windowDays} days recorded · need at least 1 year`}</>,
+    },
+    ...m.periods.map((r): TileMetric => ({
+      id: r.period, label: r.period === "fytd" ? "Return this financial year" : "Return this calendar year",
+      icon: <CalendarDays className="h-4 w-4" />,
+      href: "/performance",
+      hrefTitle: `${r.period.toUpperCase()}: ${fmtDate(r.start)}${r.end ? ` to the latest eligible statement, ${fmtDate(r.end)}` : " onwards"}. Whole-portfolio money-weighted return, not annualised, adjusted for dated contributions and withdrawals. ${r.covered} of ${r.total} accounts have usable opening values and cash flows for this period. ${r.reason ? `${r.reason}. Supply opening valuations at the start of the period and capital movements through matching closing valuations for every account; live prices cannot fill missing history.` : "Gain includes income retained in the accounts or paid out through their recorded withdrawals."}`,
+      value: pct1(r.pct),
+      second: <span className="whitespace-normal">{r.period.toUpperCase()} · since {fmtDate(r.start)}{r.gain != null ? <> · {money(r.gain, true)}</> : null}</span>,
+      sub: r.reason ? <>Insufficient history · {r.covered} of {r.total} accounts<br />{r.reason}</>
+        : <>Through {r.end ? fmtDate(r.end) : "—"} · all {r.total} accounts</>,
+    })),
     /**
      * MONEY-WEIGHTED RETURN — an XIRR over the accounts that publish an opening
      * portfolio value. `moneyWeightedReturn` refuses to annualise a window
@@ -1144,14 +1174,6 @@ export function MorningCIO() {
       hrefTitle: `Open the holdings whose statement reports a cost — the set this figure is summed over — on the Current Value of Holdings page. ${fmtNum(m.noCostCount)} holding${m.noCostCount === 1 ? "" : "s"} report none and sit outside it, a toggle away.${(() => { const note = capitalNote(m.bookWhole); return note ? ` ${note}.` : ""; })()}`,
       value: m.totalInvested == null ? <AbsentValue /> : fmtFromBase(m.totalInvested, { compact: true }),
       sub: m.totalInvested == null ? absentWhy("no statement in this book reports a cost basis") : undefined,
-    },
-    {
-      id: "gain", label: "Total gain", icon: <TrendingUp className="h-4 w-4" />,
-      href: drilldownHref("book", undefined, "costed"),
-      hrefTitle: "Open the holdings this gain is struck over — the ones whose statement reports a cost. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). The Consolidated return is this gain over the capital deployed.",
-      value: m.embeddedGain == null ? <AbsentValue />
-        : <span className={changeColor(m.embeddedGain)}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</span>,
-      sub: m.embeddedGain == null ? absentWhy("no statement in this book reports a cost basis") : undefined,
     },
     {
       id: "committed", label: "Committed to funds", icon: <Landmark className="h-4 w-4" />,
@@ -1399,7 +1421,7 @@ export function MorningCIO() {
           a reader can click, which no amount of matching innerText can make. */}
       <div className="shrink-0">
         <SelectableTiles variant="kpi" page="cio" storageKey={CIO_TILES_KEY}
-          defaults={CIO_DEFAULT_TILES} metrics={cioTiles} />
+          defaults={INVESTOR_DEFAULT_TILES} metrics={cioTiles} />
       </div>
       {/* ── THE PANEL ───────────────────────────────────────────────────────
           ONE OF THE THREE, NEVER TWO. The inactive panels are UNMOUNTED rather
