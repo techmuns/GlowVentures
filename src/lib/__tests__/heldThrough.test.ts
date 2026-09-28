@@ -39,6 +39,7 @@ import {
 } from "@/lib/heldThrough";
 import { bookIsinBridge, familyValue, heldFundVehicles, loadStockExposure, type StockExposureState } from "@/lib/lookthrough";
 import type { Position } from "@/lib/types";
+import { lookthroughCompanies } from "@/lib/recordedHoldings";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -78,8 +79,11 @@ const STORE = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures
 const BOOK: Position[] = LIVE_PRICED;
 const consolidated = dedupedPositions(BOOK);
 const vehicles = heldFundVehicles(consolidated);
-const isinToBookKey = bookIsinBridge(consolidated).index;
-const bookCompanyKeys = new Set(consolidated.filter(isCompanyShare).map((p) => p.securityKey));
+// …over the same companies the page joins to — the valued shares, then the
+// ones a statement records and nothing values (`lookthroughCompanies`).
+const companies = lookthroughCompanies(consolidated);
+const isinToBookKey = bookIsinBridge(companies).index;
+const bookCompanyKeys = new Set(companies.filter(isCompanyShare).map((p) => p.securityKey));
 const fenced = {
   keys: new Set(BOOK_POLYCAB.map((p) => p.securityKey)),
   isins: new Set(BOOK_POLYCAB.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean)),

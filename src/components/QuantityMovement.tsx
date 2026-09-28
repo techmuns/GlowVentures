@@ -93,7 +93,18 @@ const QTY_COLS = ["account", "opening", "in", "out", "ca", "closing", "pledge"] 
  * Both are stated on the row rather than left for the reader to infer from the
  * Position table above not listing the account.
  */
-export function notHeldNote(m: ShareMovement, account: Account | undefined): { label: string; why: string } {
+export function notHeldNote(
+  m: ShareMovement,
+  account: Account | undefined,
+  /**
+   * The reason on the line a statement records for this account and company,
+   * where there is one (Stage 10cy) — a last movement's price, a face value.
+   * It outranks the account's own reason, which the live copy of a partly
+   * valued account no longer carries, and the generic one, which says the
+   * statement prints no rate: false of a Motilal demat, which prints one.
+   */
+  recordedReason?: string | null,
+): { label: string; why: string } {
   if ((m.closing ?? 0) === 0) {
     return {
       label: "Sold out in this window",
@@ -102,7 +113,8 @@ export function notHeldNote(m: ShareMovement, account: Account | undefined): { l
   }
   return {
     label: "Held, and not valued here",
-    why: account?.noPositionsReason
+    why: (recordedReason ? `${recordedReason[0].toUpperCase()}${recordedReason.slice(1)}.` : null)
+      ?? account?.noPositionsReason
       ?? "This account's statement prints the units and no rate, so the book carries no value for them and they are not in the holdings above.",
   };
 }

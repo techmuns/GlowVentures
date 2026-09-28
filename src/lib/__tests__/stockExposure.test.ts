@@ -45,6 +45,7 @@ import { isArbitrageFund } from "@/lib/fundNavs";
 import { bookIsinBridge, heldFundVehicles, issuerKeyOf, issuerNameOf, issuerOf, loadStockExposure, type StockExposureState } from "@/lib/lookthrough";
 import { securityKeyOf } from "@/lib/securityKey";
 import { securityLabel } from "@/lib/securityLabel";
+import { lookthroughCompanies } from "@/lib/recordedHoldings";
 import { UPSTOX_INSTRUMENTS } from "../../../shared/upstoxInstruments.mjs";
 import NSE_SYMBOLS from "@/data/nseSymbols.json";
 
@@ -114,9 +115,18 @@ const vehicles = heldFundVehicles(ded);
  * which is how the listing tier's absence went unnoticed: every company held
  * only through a mandate joined to nothing, and this suite agreed.
  */
-const bridge = bookIsinBridge(ded);
+/**
+ * …OVER THE SAME COMPANIES — the book's valued shares, then the ones a
+ * statement records and nothing values, under the key the live layer files them
+ * by (`lookthroughCompanies`, Stage 10cy). Built off `stocks` alone, a fund's
+ * Kaynes line landed on the filing's spelling here while the page — on a day no
+ * quote had made Ankita's demat line a row — needed the recorded line to put it
+ * on the family's own Kaynes.
+ */
+const companies = lookthroughCompanies(ded);
+const bridge = bookIsinBridge(companies);
 const isinToBookKey = bridge.index;
-const bookCompanyKeys = new Set(stocks.map((p) => p.securityKey));
+const bookCompanyKeys = new Set(companies.map((p) => p.securityKey));
 const ringFenced = {
   keys: new Set(BOOK_POLYCAB.map((p) => p.securityKey)),
   isins: new Set(BOOK_POLYCAB.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean)),
@@ -571,7 +581,9 @@ ok("every key spanning two issuer codes is one company by its filings' own names
  * and a fund row — or this section passes on a book with nothing to bridge.
  */
 const statementOnly = new Map<string, string>();
-for (const p of stocks) { const i = (p.isin ?? "").trim().toUpperCase(); if (i && !statementOnly.has(i)) statementOnly.set(i, p.securityKey); }
+// Every ISIN a STATEMENT printed — valued rows and recorded lines alike — so
+// the only tier missing is the listing's.
+for (const p of companies) { const i = (p.isin ?? "").trim().toUpperCase(); if (i && !statementOnly.has(i)) statementOnly.set(i, p.securityKey); }
 const bare = await loadStockExposure(vehicles, statementOnly, ringFenced, bookCompanyKeys);
 const lostWithout = bare.status === "ok"
   ? [...ex.byKey.keys()].filter((k) => bookCompanyKeys.has(k) && !bare.byKey.has(k)) : [];

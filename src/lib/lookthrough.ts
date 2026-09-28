@@ -413,7 +413,7 @@ export function issuerKeyOf(name: string): string {
  * reassigned: one security under two keys is the defect `build-book` counts,
  * and this must not manufacture it on the derived side.
  */
-export function bookIsinBridge(positions: readonly Position[]): {
+export function bookIsinBridge(positions: readonly Pick<Position, "securityKey" | "isin" | "assetClass">[]): {
   index: Map<string, string>;
   fromListing: number;
   refused: string[];

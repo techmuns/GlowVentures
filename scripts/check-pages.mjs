@@ -717,7 +717,18 @@ const SECURITY_AXIS_BOOK = (() => {
     const dir = new URL("../public/lookthrough/", import.meta.url);
     const idx = JSON.parse(readFileSync(new URL("index.json", dir), "utf8"));
     const isinToBookKey = new Map();
-    for (const p of stocks) {
+    /**
+     * AND THE COMPANIES A STATEMENT RECORDS AND NOTHING VALUES (Stage 10cy),
+     * under the key the live layer files each by, AFTER the book's own rows so
+     * a statement's ISIN still wins. Re-derived through this file's own
+     * `recordedHomes`, never `lookthroughCompanies`. Without them a fund's
+     * Kaynes line stood on the filing's spelling until a quote made Ankita's
+     * demat line a row, and on the book's key after.
+     */
+    const recordedCos = (recordedHomes(src) ?? []).filter((u) => u.assetClass === "Equity")
+      .map((u) => ({ securityKey: u.homeKey, isin: u.isin ?? null }));
+    const joinable = [...stocks, ...recordedCos];
+    for (const p of joinable) {
       const i = (p.isin ?? "").trim().toUpperCase();
       if (i && !isinToBookKey.has(i)) isinToBookKey.set(i, p.securityKey);
     }
@@ -726,13 +737,13 @@ const SECURITY_AXIS_BOOK = (() => {
     // to no fund's line and stood twice. Read off the book key's NSE symbol and
     // that symbol's instrument in the price source's own list, `NSE_EQ|<ISIN>`.
     const nseSym = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
-    for (const k of new Set(stocks.map((p) => p.securityKey))) {
+    for (const k of new Set(joinable.map((p) => p.securityKey))) {
       const inst = nseSym[k] ? UPSTOX_INSTRUMENTS[nseSym[k]] : null;
       if (!inst || !String(inst.key).startsWith("NSE_EQ|")) continue;
       const i = String(inst.key).slice(7).trim().toUpperCase();
       if (/^IN[EF][A-Z0-9]{9}$/.test(i) && !isinToBookKey.has(i)) isinToBookKey.set(i, k);
     }
-    const bookCompanyKeys = new Set(stocks.map((p) => p.securityKey));
+    const bookCompanyKeys = new Set(joinable.map((p) => p.securityKey));
     // THE ISSUER, NOT THE INSTRUMENT. A debt line names its coupon, its
     // maturity and the filer's footnote marks; the row is its issuer.
     const marksOff = (x) => String(x ?? "").replace(/(?:\s*[*#^$@~]+)+\s*$/, "").trim();
@@ -5571,6 +5582,10 @@ const SOLD_ELSEWHERE = (() => {
           heldAccounts: [...new Set(owners.map((p) => p.accountId))] };
       }
     }
+    // WHETHER A ROW OF THIS SWEEP'S BOOK VALUES IT, which decides whether the
+    // category axis may offer it at all: a recorded line no price reaches is no
+    // holding row there (Stage 10cy).
+    if (best) best.valued = positions.some((p) => p.securityKey === best.key && p.marketValue > 0);
     return best;
   } catch { return null; }
 })();
@@ -9599,6 +9614,12 @@ const CRUMB_ALIAS = { "holdings-invested-legacy": () => drilldownPath("book#cost
 const PM_TILE_IDS = [];
 /** What each search-list route found in its list, read off `data-option`. */
 const PICK_OPTIONS = {};
+/**
+ * What the category axis's list answered when the family's own company was
+ * TYPED into it — its options and the recorded holdings its empty note names
+ * (Stage 10cy), read off `data-option` and `data-recorded-key`.
+ */
+const PICK_TYPED = {};
 /** Morning CIO's picker, id and label, read off its open menu on the `cio` walk. */
 const CIO_TILE_OPTIONS = [];
 /**
@@ -10541,23 +10562,37 @@ const UNVALUED_AIF_BOOK = (() => {
  * holds both WITH a reported cost and WITHOUT one, so the rows it matches carry
  * a coverage sentence to check. Only the input is derived here; every claim on
  * `holdings-book-filter` is an identity among figures the page prints.
+ *
+ * GROUPED ON THE WORD, NOT THE KEY (Stage 10cy). The case this found was ICICI
+ * Bank — a mandate's costed rows and Ankita's demat row with no cost — and that
+ * demat row is a recorded line now, carried by no position until a quote
+ * prices it. What the page's search matches is a NAME, so the word is what the
+ * derivation groups on: Borosil Renewables' share in two mandates, with a
+ * cost, and its warrant in a depository, without one. Company shares first,
+ * because that is the case the sentence describes; any class after, so a drop
+ * with no such company still hands the walk a word that exercises the claim.
  */
 const FILTER_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
-    const byKey = new Map();
-    for (const q of positions) {
-      if (q.assetClass !== "Equity" || !(Number(q.marketValue) > 0)) continue;
-      if (!byKey.has(q.securityKey)) byKey.set(q.securityKey, []);
-      byKey.get(q.securityKey).push(q);
-    }
+    const positions = (bookArray(src, "BOOK_POSITIONS") ?? []).filter((q) => Number(q.marketValue) > 0);
     const first = (x) => (String(x ?? "").toLowerCase().match(/[a-z]{4,}/) ?? [""])[0];
-    const cands = [...byKey.values()].filter((rows) => rows.length >= 2
-      && rows.some((q) => q.costBasis != null && !q.costUnavailable) && rows.some((q) => q.costBasis == null)
-      && first(rows[0].security) && rows.every((q) => first(q.security) === first(rows[0].security)))
-      .sort((a, b) => b.reduce((t, q) => t + q.marketValue, 0) - a.reduce((t, q) => t + q.marketValue, 0));
-    return cands.length ? { term: first(cands[0][0].security), key: cands[0][0].securityKey } : null;
+    const pick = (rows) => {
+      const byWord = new Map();
+      for (const q of rows) {
+        const w = first(q.security);
+        if (!w) continue;
+        if (!byWord.has(w)) byWord.set(w, []);
+        byWord.get(w).push(q);
+      }
+      const cands = [...byWord.entries()].filter(([, rs]) => rs.some((q) => q.costBasis != null && !q.costUnavailable)
+        && rs.some((q) => q.costBasis == null))
+        .map(([w, rs]) => ({ term: w, key: rs[0].securityKey, mv: rs.reduce((t, q) => t + Number(q.marketValue), 0) }))
+        .sort((a, b) => b.mv - a.mv || (a.term < b.term ? -1 : 1));
+      return cands[0] ?? null;
+    };
+    const c = pick(positions.filter((q) => q.assetClass === "Equity")) ?? pick(positions);
+    return c ? { term: c.term, key: c.key } : null;
   } catch { return null; }
 })();
 
@@ -18845,11 +18880,29 @@ const pickListChecks = (axis, security = false) => [
     }
     return !ctx.pickOptions.some((o) => fundSpellings.has(sameCompany(o)) && !bookNames.has(sameCompany(o)));
   }]]),
-  ["...and the company the family searched for is ONE option", (t, ctx) => {
+  /**
+   * ONE OPTION WHERE THIS AXIS HAS A ROW FOR IT, AND NONE WHERE IT HAS NOT
+   * (Stage 10cy). The security axis draws the company wherever a fund discloses
+   * it or a row values it; the category axis only where a row values it. A demat
+   * line no price reaches is neither — on the category axis the family's Kaynes
+   * is no holding row until a live quote makes it one, and offering an option
+   * that picks no row is the control-that-looks-live failure.
+   */
+  ["...and the company the family searched for is ONE option wherever it is a row", (t, ctx) => {
     if (ctx.pickOptions == null) return { notChecked: "the list is read on the primary pass only" };
     if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
-    return ctx.pickOptions.filter((o) => securityKeyOf(o) === SOLD_ELSEWHERE.key).length === 1;
+    const n = ctx.pickOptions.filter((o) => securityKeyOf(o) === SOLD_ELSEWHERE.key).length;
+    const rowHere = SOLD_ELSEWHERE.valued || (security && !!SECURITY_AXIS_BOOK?.derivedByKey?.has(SOLD_ELSEWHERE.key));
+    return rowHere ? n === 1 : n === 0;
   }],
+  ...(security ? [] : [["...and where it is no row, typing it names the holding a statement records rather than finding nothing", (t, ctx) => {
+    if (ctx.pickOptions == null) return { notChecked: "the list is read on the primary pass only" };
+    if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
+    if (SOLD_ELSEWHERE.valued) return { notChecked: "a row of this book values the company, so the list offers it and its search needs no note" };
+    const p = ctx.pickTyped;
+    if (!p) return false;
+    return !p.options.some((o) => securityKeyOf(o) === SOLD_ELSEWHERE.key) && p.recorded.includes(SOLD_ELSEWHERE.key);
+  }]]),
 ];
 
 /**
@@ -33600,6 +33653,12 @@ for (const theme of THEMES) {
       }
       // THE KAYNES ROW, OPENED where the family searched for it.
       if (name === "monitor-sold-elsewhere" && SOLD_ELSEWHERE) {
+        // THE LOOK-THROUGH FIRST (Stage 10cy). With no quote feed the family's
+        // Kaynes is a recorded demat line and no position, so its row is the
+        // look-through's DERIVED row and exists only once the filings are read.
+        // Looking for it before then finds nothing, clicks nothing, and fails
+        // three claims about a row the page draws a second later.
+        await page.waitForSelector('[data-lookthrough="ok"], [data-lookthrough="unreachable"]', { timeout: 20000 }).catch(() => {});
         const row = page.locator(`tr[data-security-key="${SOLD_ELSEWHERE.key}"] button`).first();
         if (await row.count()) {
           await row.click();
@@ -33618,10 +33677,39 @@ for (const theme of THEMES) {
        */
       if ((name === "monitor-picklist" || name === "monitor-security-picklist")
         && theme === THEMES[0] && width === WIDTHS[0]) {
+        // On the security axis the list offers what the funds disclose too, and
+        // — since a demat's unpriced line is no position (Stage 10cy) — the
+        // family's own recorded companies only through that join. Read before
+        // the filings land, the list is missing both.
+        if (name === "monitor-security-picklist") {
+          await page.waitForSelector('[data-lookthrough="ok"], [data-lookthrough="unreachable"]', { timeout: 20000 }).catch(() => {});
+        }
         const opener = page.locator("[data-multiselect-toggle='All holdings']").first();
         if (await opener.count()) {
           await opener.click(); await page.waitForTimeout(400);
           PICK_OPTIONS[name] = await page.$$eval("[data-option]", (els) => els.map((e) => e.getAttribute("data-option") ?? ""));
+          /**
+           * …AND THE FAMILY'S OWN COMPANY, TYPED (Stage 10cy). On the category
+           * axis a demat line no price reaches is no holding row, so the list
+           * offers no option for it — and the search's empty note must then
+           * name it as a holding a statement records, or "no holdings match"
+           * reads as the dashboard having lost Ankita's 4,875 Kaynes. The
+           * first long word of the book's key, typed as a reader types it; the
+           * box is emptied again before the list closes, so nothing the note
+           * says reaches the text the route's other checks read.
+           */
+          if (name === "monitor-picklist" && SOLD_ELSEWHERE) {
+            const box = page.locator("[data-multiselect='All holdings'] input").first();
+            const word = SOLD_ELSEWHERE.key.split("-").find((w) => w.length >= 4) ?? SOLD_ELSEWHERE.key;
+            if (await box.count()) {
+              await box.fill(word); await page.waitForTimeout(500);
+              PICK_TYPED[name] = await page.evaluate(() => ({
+                options: [...document.querySelectorAll("[data-option]")].map((e) => e.getAttribute("data-option") ?? ""),
+                recorded: [...document.querySelectorAll("[data-recorded-key]")].map((e) => e.getAttribute("data-recorded-key") ?? ""),
+              }));
+              await box.fill(""); await page.waitForTimeout(300);
+            }
+          }
           await opener.click().catch(() => {}); await page.waitForTimeout(300);
         } else PICK_OPTIONS[name] = [];
       }
@@ -39695,7 +39783,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

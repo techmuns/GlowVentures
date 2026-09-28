@@ -79,6 +79,7 @@ import { useDatedCapital } from "@/lib/useDatedCapital";
 import { pnlFormula, returnFormula, stockHref } from "@/lib/auditFormulas";
 import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
+import { allRecordedLines, recordedLabel, recordedLineFor } from "@/lib/recordedHoldings";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
@@ -1086,7 +1087,11 @@ export function PortfolioMonitor() {
     if (bySecurity && exposure.status === "ok") {
       for (const e of exposure.byKey.values()) {
         if (bookKeys.has(e.key)) continue;
-        mv.set(e.name, (mv.get(e.name) ?? 0) + e.total);
+        // A company the family holds as a RECORDED line is offered under their
+        // own statement's name — the row it picks is labelled the same way
+        // (`labelByKey`), so the option and the row are one string.
+        const name = recordedLabel(e.key) ?? e.name;
+        mv.set(name, (mv.get(name) ?? 0) + e.total);
       }
     }
     return [...mv.keys()].sort((a, b) => (mv.get(b) ?? 0) - (mv.get(a) ?? 0));
@@ -1101,6 +1106,12 @@ export function PortfolioMonitor() {
   const labelByKey = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of positions) if (!m.has(p.securityKey)) m.set(p.securityKey, p.security);
+    // …AND A COMPANY THE FAMILY HOLDS ONLY AS A RECORDED LINE (Stage 10cy) — a
+    // demat's last-movement row the quote feed has not priced yet is no
+    // position, so its derived row would otherwise wear a fund's filing name.
+    for (const l of allRecordedLines()) {
+      if (!m.has(l.homeKey)) m.set(l.homeKey, recordedLabel(l.homeKey) ?? l.security);
+    }
     return m;
   }, [positions]);
   /**
@@ -3054,7 +3065,7 @@ export function PortfolioMonitor() {
     elsewhere.forEach((w, j) => {
       const a = accIdx.get(w.accountId);
       const who = ownerOfAccount(w.accountId);
-      const n = notHeldNote(w, a);
+      const n = notHeldNote(w, a, recordedLineFor(w.accountId, r.securityKey)?.reason);
       const closing = w.closing ?? 0;
       const from = w.periodFrom ? fmtDate(w.periodFrom) : "the window's opening";
       const to = w.periodTo ? fmtDate(w.periodTo) : "its close";

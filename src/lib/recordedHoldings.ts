@@ -78,6 +78,67 @@ export function recordedFor(
   return lines.filter((l) => l.homeKey === home && !carriedBy(l, live));
 }
 
+/**
+ * THE RECORDED LINE AN ACCOUNT HOLDS OF A COMPANY, by the key a page stands
+ * under — so a note about that account's depository window can give the line's
+ * own reason (a last movement's price, a face value) rather than one written
+ * for an account that prints no rate at all.
+ */
+export function recordedLineFor(
+  accountId: string,
+  pageKey: string,
+  lines: readonly RecordedLine[] = RECORDED,
+): RecordedLine | null {
+  const home = homeKeyOf(pageKey, lines);
+  return lines.find((l) => l.accountId === accountId && l.homeKey === home) ?? null;
+}
+
+/**
+ * ── THE COMPANIES A FUND'S LINE MAY JOIN TO (Stage 10cy) ────────────────────
+ *
+ * Every company share the book values, THEN every one a statement records and
+ * nothing values, under the key the live layer would file it by (`homeKey`).
+ *
+ * Without the second half, a company the family holds only as a recorded line
+ * joined to nothing, and the look-through filed its funds' lines under the
+ * FILING's name for it: Ankita's 4,875 Kaynes stood on the Portfolio Monitor as
+ * `kaynes-technology-india` until a live quote made the demat line a row, and
+ * as `kaynes-technology` after — one company under two keys, decided by
+ * whether the quote feed had answered. Its company page drew none of the funds
+ * that hold it, a second page stood for the funds' spelling, and Ajay's window
+ * that sold it out, keyed on the book's own company, reached no row at all.
+ *
+ * The book's rows come FIRST, so a statement's own ISIN still wins, and a
+ * recorded line only fills an ISIN nothing valued carries. Nothing here is a
+ * value: the join decides WHICH ROW a fund's derived share stands on.
+ */
+export function lookthroughCompanies(
+  consolidated: readonly Position[],
+  lines: readonly RecordedLine[] = RECORDED,
+): Array<Pick<Position, "securityKey" | "isin" | "assetClass">> {
+  return [
+    ...consolidated.filter((p) => p.assetClass === "Equity"),
+    ...lines.filter((l) => l.assetClass === "Equity")
+      .map((l) => ({ securityKey: l.homeKey, isin: l.isin ?? null, assetClass: "Equity" as const })),
+  ];
+}
+
+/**
+ * THE NAME A RECORDED COMPANY IS SHOWN UNDER — one of the spellings the
+ * family's own statements printed for it (`securityLabel`), taken from the line
+ * that stands under the home key itself where there is one. A company the family
+ * holds only as a recorded line is still THEIRS, so a row or an option standing
+ * for it wears their statement's name, never a fund's filing: without this the
+ * Portfolio Monitor offered `Kaynes Technology India Limited` — HDFC Balanced
+ * Advantage's spelling — for Ankita's own 4,875 shares, and the company page one
+ * click away named it `Kaynes Technology`.
+ */
+export function recordedLabel(homeKey: string, lines: readonly RecordedLine[] = RECORDED): string | null {
+  const ls = lines.filter((l) => l.homeKey === homeKey);
+  if (!ls.length) return null;
+  return securityLabel(homeKey, (ls.find((l) => l.securityKey === homeKey) ?? ls[0]).security);
+}
+
 export type RecordedGroup = { homeKey: string; label: string; units: number; lines: RecordedLine[] };
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -104,7 +165,7 @@ export function recordedMatching(
   }
   return [...groups].map(([homeKey, ls]) => ({
     homeKey,
-    label: securityLabel(homeKey, (ls.find((l) => l.securityKey === homeKey) ?? ls[0]).security),
+    label: recordedLabel(homeKey, lines) ?? securityLabel(homeKey, ls[0].security),
     units: ls.reduce((a, l) => a + l.quantity, 0),
     lines: ls,
   })).filter((g) => [g.label, ...g.lines.map((l) => l.security)].some((n) => norm(n).includes(q)));
