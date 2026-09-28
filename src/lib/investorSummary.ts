@@ -24,7 +24,13 @@ export function investorPeriodReturn(statement: Portfolio, today: Date, period: 
   const accounts = statement.accounts.filter((a) => {
     const flows = statement.accountCashFlows?.[a.accountId] ?? [];
     const openings = flows.filter((f) => /^opening portfolio value/i.test(f.description ?? ""));
-    return openings.length === 1 && openings[0].date === start && openings[0].amount < 0
+    // A known gap or a partially valued account cannot close a whole-account
+    // return. A null record date is common on performance-summary cash flows;
+    // it does not mean a dated record ending before the valuation is complete.
+    const recordCoversClose = a.capitalRecordTo == null
+      || (validDate(a.capitalRecordTo) && a.capitalRecordTo >= a.asOf);
+    return !a.transactionsOnly && !a.partialValuation && recordCoversClose
+      && openings.length === 1 && openings[0].date === start && openings[0].amount < 0
       && validDate(a.asOf) && a.asOf > start && a.asOf <= now
       && flows.every((f) => validDate(f.date) && f.date >= start && f.date <= a.asOf && Number.isFinite(f.amount));
   });

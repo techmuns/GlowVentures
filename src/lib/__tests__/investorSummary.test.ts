@@ -70,6 +70,12 @@ assert.equal(investorPeriodReturn(book(), new Date(2027, 4, 1), "fytd").covered,
 const laterFlow = book();
 laterFlow.accountCashFlows!.one.push({ date: "2026-09-20", amount: -50 });
 assert.equal(investorPeriodReturn(laterFlow, today, "fytd").pct, null);
+const shortRecord = book();
+shortRecord.accounts[0].capitalRecordTo = "2026-06-01";
+assert.equal(investorPeriodReturn(shortRecord, today, "fytd").pct, null);
+const partiallyValued = book();
+partiallyValued.accounts[0].partialValuation = "One holding has no valuation";
+assert.equal(investorPeriodReturn(partiallyValued, today, "fytd").pct, null);
 const invalidDate = book();
 invalidDate.accounts[0].asOf = "2026-08-bad";
 assert.equal(investorPeriodReturn(invalidDate, today, "fytd").pct, null);
