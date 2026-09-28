@@ -308,13 +308,18 @@ console.log("── what a row says about its figure is true of the figure (SC-C
   }).filter((r) => r.rows.length > 0 && r.e);
   const allNav = accountRows.filter((r) => r.rows.every((p) => p.navPriced && !p.live));
   const allStmt = accountRows.filter((r) => r.rows.every((p) => !p.navPriced && !p.live));
+  // A scheme publishes on its own days, so an account holding several can carry
+  // NAVs of different dates: the row then names the span, first to last, and
+  // never one date as if it priced every scheme in it.
   const navWrong = allNav.filter((r) => {
-    const d = [...new Set(r.rows.map((p) => p.navDate))].sort().pop();
-    return !r.e!.detail.includes(`AMFI's NAV of ${d}`) || !r.e!.detail.includes(`statement of ${r.a.asOf}`);
+    const ds = [...new Set(r.rows.map((p) => p.navDate).filter((x): x is string => !!x))].sort();
+    const when = ds.length === 1 ? ds[0] : `${ds[0]} to ${ds[ds.length - 1]}`;
+    return !ds.length || !r.e!.detail.includes(`AMFI's NAV of ${when}`) || !r.e!.detail.includes(`statement of ${r.a.asOf}`);
   });
+  const navSpans = allNav.filter((r) => new Set(r.rows.map((p) => p.navDate)).size > 1).length;
   const stmtWrong = allStmt.filter((r) => !r.e!.detail.includes(`statement's marks of ${r.a.asOf}`) || /AMFI/.test(r.e!.detail));
   ok("an account valued at AMFI's NAV names the NAV's date beside its statement's", allNav.length > 0 && navWrong.length === 0,
-    `${allNav.length}: ${navWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
+    `${allNav.length} (${navSpans} across several NAV dates): ${navWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
   ok("…and one on its statement's marks says so, with that date", allStmt.length > 0 && stmtWrong.length === 0,
     `${allStmt.length}: ${stmtWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
 

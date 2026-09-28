@@ -164,6 +164,16 @@ changed until the family answers; each is disclosed on screen meanwhile.
 | **FQ-4** | **DSP Gold ETF**: Aarti's statement marks it ₹141.24 and Ankita's ₹151.10 on the same 31 Jul. Which is right? | ₹1.18 Cr on Aarti's lot. |
 | **FQ-5** | **Polycab**: should the page name Bharat's HDFC holding (51,08,911 shares on a scanned statement nothing can read), and should the Muns assistant be told about the ring-fenced holding at all? | Disclosure only. |
 
+### The family's answers, 28 Sep 2026 (Stage 10cx)
+
+| # | Their words | What the dashboard does now |
+| --- | --- | --- |
+| **FQ-1** | *"both are separate investments"* | Both pairs are counted in full. Current value ₹710.39 → ₹713.56 Cr; private value ₹10.62 → ₹13.79 Cr; private cost ₹8.62 → ₹10.36 Cr; the pooled private XIRR 21.1% → 30.1% over 3 of 4 funds; still to call ₹15.23 → ₹15.98 Cr; committed ₹41.23 → ₹42.73 Cr. The answer is `shared/separateInvestments.mjs`. |
+| **FQ-2** | *"keep them pre tax only by default, whatever is in the review file we will follow the same rule and calculation across the dashboard"* | No mark moves. The review values each fund at the NAV its own statement values the holding at, and so does the book. Each fund's price tile now names that basis: pre-tax for Sanshi, Carnelian Bharat Amritkaal and Baring, and post-tax for Founders, Delphi and Buoyant, whose statements print no pre-tax figure. The review values 3P at its post-tax NAV where the book keeps the pre-tax one; every 3P class is redeemed to nil, so both read ₹0. |
+| **FQ-3** | *"keep them unvalued for now"* | Ankita's 94,967 Clean Max shares stay a quantity with no value, and the row's reason names the decision and its date. The answer is `shared/keptUnvalued.mjs`. |
+| **FQ-4** | *"check if the dates are different and if the accounts holding are different or same"* | Two separate holdings: one ISIN, both statements dated 31 Jul 2026, in two members' own demat accounts (Aarti's 1,195,000 units at ₹141.24, Ankita's 205,000 at ₹151.10). One ETF has one price on a day, so at least one mark is wrong. The scheme's own published NAV on 3 Aug, the next business day, was ₹137.73 a unit, on the same basis as the statements (before its 1:10 split). Aarti's ₹141.24 is 2.6% above it and Ankita's ₹151.10 is 9.7% above it, so Ankita's is the one further out. The book keeps each statement's own mark. At ₹141.24, Ankita's lot would read about ₹20.2 L less. |
+| **FQ-5** | *"no, this needs to be a normal holding, on the polycab page we will only show the shares held in the company polycab and relevant information regarding polycab"* | Not acted on: the answer can be read two ways, and one of them would undo the ring-fence. It has gone back to the family. |
+
 ## What cannot be calculated from the documents we have
 
 | Figure | Why not | The document that would fix it |

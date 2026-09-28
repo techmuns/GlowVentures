@@ -21,6 +21,7 @@
     "build-book": "node scripts/build-book.mjs",
     "replay:calls": "node scripts/replay-capital-calls.mjs",
     "replay:owners": "node scripts/replay-owners.mjs",
+    "replay:dedupe": "node scripts/replay-dedupe.mjs",
     "coverage:source": "node scripts/source-coverage.mjs",
     "check:pages": "node scripts/check-pages.mjs",
     "dev:mock-quotes": "node scripts/dev/mock-quotes.mjs",

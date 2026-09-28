@@ -117,6 +117,12 @@ run_case "private-market" "the line under the total's label comes back" sub $P \
   '{totalRow(book.privateTotal, "Private market total", {' \
   '{totalRow(book.privateTotal, <div><div>Private market total</div><div className="text-[11px] font-normal text-slate-500" data-pm-total-sub>each holding counted once · 11 capital accounts — what the capital tiles add to</div></div>, {'
 
+# NO SUBJECT ON THIS BOOK SINCE Stage 10cx. The family confirmed both pairs this
+# book used to count once as separate investments, so no fund row draws a
+# "Counted once" line, and this case sweeps clean by construction rather than
+# because the check is blind. It fires again the day a drop brings a pair still
+# pending the family's answer. The count-once rows are held on a tagged copy of
+# the book in `privateBook.test.ts` and `privateMarket.test.ts` meanwhile.
 run_case "private-market-folios,private-market-owners" "the Counted once sentence is back on its face" sub $P \
   '        hint={grouping === "fund"' \
   '        sub={grouping === "fund"'
@@ -168,8 +174,14 @@ run_case "private-market,private-market-calls-off" "the call header stops saying
 run_case "private-market" "the private band's basis leaves its hover" sub $P \
   '"Each holding counted once. Where two statements' '"Where two statements'
 
+# NO SUBJECT ON THIS BOOK SINCE Stage 10cx. The family confirmed both pairs this
+# book used to count once as separate investments, so no fund row draws a
+# "Counted once" line, and this case sweeps clean by construction rather than
+# because the check is blind. It fires again the day a drop brings a pair still
+# pending the family's answer. The count-once rows are held on a tagged copy of
+# the book in `privateBook.test.ts` and `privateMarket.test.ts` meanwhile.
 run_case "private-market-folios" "the Counted once line's hover stops saying what it does" sub $P \
-  'the row above counts it once, and this line takes the overlap out so the folios add to the row.' \
+  'the row above counts it once${capital ? " — and its capital account once too" : ""}, and this line takes the overlap out so the folios add to the row.' \
   'this line takes the overlap out.'
 
 # ── THE DRAG CARRYING LESS THAN THE WHOLE COLUMN ───────────────────────────

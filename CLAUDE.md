@@ -278,6 +278,19 @@ cash holding's genuinely-zero return both match, and both are correct.
   only ever filling a category both printed fields leave blank; it can never
   overrule a statement, and it decides a fund's AIF drill-down section rather
   than its side. See Stage 10cd.
+- `shared/separateInvestments.mjs` — THE FAMILY'S ANSWER TO WHETHER A PAIR IS
+  ONE HOLDING OR TWO. Figures that coincide on two accounts' statements are
+  evidence of one holding reported twice, never proof, so §4c counts such a
+  pair once until the family answers. `SEPARATE_INVESTMENTS` is their answer,
+  keyed on `securityKey` and the accounts named, with its date; a pair it names
+  is never grouped, and a third account reporting the same figures is a new
+  question. Read by `reconcile.mjs`, `build-book`, `npm run replay:dedupe` and
+  the suites. See Stage 10cx.
+- `shared/keptUnvalued.mjs` — HOLDINGS THE FAMILY HAVE DECIDED TO KEEP
+  UNVALUED where another statement's mark could value them. Keyed on the
+  account the statement names and the ISIN it prints, never on a name; the
+  row's reason says what the statement says and what the family decided. It
+  never values anything. See Stage 10cx.
 - `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
   `build-book` and the app resolve a sector through ONE committed table. Three
   TIERS read it: the family's own statement, a fund's SEBI filing joined on the
@@ -629,7 +642,9 @@ is one row per account, all 51 of them, sorted by value — and the words in the
 right-hand cell are `Account.noPositionsReason`, routed rather than written, so
 an account that changes WHY it is empty changes this table on the next run.
 
-\* the same holding, reported under both CRNs — see §4c. Counted once.
+\* one of two holdings of the same fund whose figures coincide on two accounts'
+statements. The family confirmed on 28 Sep 2026 that each pair is two separate
+investments, so every row is counted in full — see §4c and Stage 10cx.
 
 \*\* **THE FAMILY HAVE SINCE SAID SO, AND POLYCAB IS RING-FENCED.** That row used to
 read ₹12,415.02 Cr, of which **₹12,351.24 Cr was POLYCAB INDIA** — the family's
@@ -639,13 +654,15 @@ question and named the reversal; the family answered it, and the answer is the
 promoter row is out of this column and out of every total below it. See **The
 ring-fence** section.
 
-**Consolidated ₹710.39 Cr**: listed ₹699.76 Cr, private ₹10.62 Cr, and
+**Consolidated ₹713.56 Cr**: listed ₹699.76 Cr, private ₹13.79 Cr, and
 ₹98,742 (Blue Ashva) that nothing places on either side. The split reads the
 family's own placing of a fund first and the SEBI category the statements print
 second — see `shared/aifCategory.mjs`, Stage 10bp and Stage 10bw. *(It was
 listed ₹655.82 Cr · private ₹37.88 Cr · not placed ₹16.69 Cr on the category
 alone; the family then placed Founders and Delphi on the listed side and Neo
-Infra on the private one.)*
+Infra on the private one. It was ₹710.39 Cr, private ₹10.62 Cr, while the two
+pairs below were each counted once; the family then confirmed both are separate
+investments — Stage 10cx.)*
 
 **IT HAS BEEN WRONG TWICE, THE SAME WAY.** It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
@@ -700,15 +717,16 @@ is a MEASURED zero and keeps its zero; contrast the two 360 ONE Alternates
 folios, which no statement values at all and which render `—` with the reason.
 
 
-**Two holdings are reported under two members each, and are counted once.**
-360 ONE Special Opportunities Fund Series 8 Class A3 appears under CRN37702 and
-CRN60117 — the same 9,90,429.684 units on both — and Transition Venture Capital
-Fund I — Class A1 under both Bharat Jaisinghani family trusts (₹1,71,26,374.76
-each). Both rows of each are carried, naming the other through
-`alsoReportedUnder`; the consolidated total counts the `dedupeGroup` once.
-**₹3.17 Cr of double-count in total** — the figure to test any book-wide
-aggregate against. This is check (c) firing on real cases, and it is what the
-policy in §4c was written for.
+**Two funds are reported under two accounts each, and each pair is two
+investments.** 360 ONE Special Opportunities Fund Series 8 Class A3 appears under
+CRN37702 and CRN60117 — the same 9,90,429.684 units on both — and Transition
+Venture Capital Fund I — Class A1 under both Bharat Jaisinghani family trusts
+(7,500 units, ₹1,71,45,962.25 each). Check (c) found both pairs because the
+figures that would have to coincide by chance do coincide, and until 28 Sep 2026
+the policy in §4c counted each once: **₹3.17 Cr** (₹3,17,26,374.76) was left out
+of every consolidated total. The family then answered — *"both are separate
+investments"* — and `shared/separateInvestments.mjs` records it, so neither pair
+is a `dedupeGroup` and every figure counts all four rows. See Stage 10cx.
 
 **AND THE 360 ONE PAIR STOPPED MATCHING ON FIGURES, WHICH COST ₹1.47 Cr.** They
 were byte-identical (₹1,45,80,412.51 each) for as long as both CRNs published to
@@ -2365,14 +2383,23 @@ Distribution. `Account.members: Member[]` holds them; `Account.engagement` is
 An engagement that cannot be read is `unknown` and warns — never Advisory by
 default, which would mislabel both of this book's CRNs.
 
-### 4c. Duplicates: carry both, count once
+### 4c. Duplicates: carry both, count once — until the family answers
 
-*Pending confirmation from the provider — reversible policy, kept in one place.*
+*Reversible policy, kept in one place; answered for both of this book's pairs.*
 The same position can appear on two family members' statements. Neither row is
 suppressed: matching rows share a `dedupeGroup` and carry `alsoReportedUnder`, an
 account view shows each statement as printed, and **consolidated totals count
 each group once** (`dedupedPositions` in `src/lib/analytics.ts`, mirrored by
 `consolidatedValue` in `reconcile.mjs`).
+
+**Figures that coincide are evidence of one holding reported twice, never
+proof**: two members can buy the same units of the same fund on the same terms.
+So count-once is an answer pending, and only the family can give the real one.
+Their answers are `shared/separateInvestments.mjs`: a pair it names is two
+investments, forms no `dedupeGroup`, and is counted in full. On 28 Sep 2026 they
+named both of this book's pairs (Stage 10cx), so on this book the policy tags
+nothing. It stays for the next pair a drop brings. Deleting an entry puts that
+pair back under it: `npm run replay:dedupe`, then `npm run build-book`.
 
 ### 6. One person, one ownerId
 
@@ -17398,6 +17425,10 @@ of 7,500 units each is a question for the family — and the answer is §4c's
 duplicate policy, kept in one place for exactly this reversal, rather than
 anything on this page.
 
+*(Answered on 28 Sep 2026: two investments — see Stage 10cx. The fund row now
+counts both trusts' 7,500 units, at ₹1.5 Cr of cost beside the ₹1.5 Cr both
+trusts paid in.)*
+
 **THE LETTER WAS CHECKED AGAINST MAIN'S TIP AT EACH MERGE, AND MOVED FOUR
 TIMES.** This section was drafted as `10bs`. #71 merged first and kept it, so it
 became `10bt`; while this branch's own checks ran, #70 took `10bt` and #73 took
@@ -24304,6 +24335,10 @@ still to call ₹15.98 → ₹15.23 Cr, committed ₹42.73 → ₹41.23 Cr. Whet
 trusts hold one investment or two is the family's to say (§4c); the hovers say
 what the second statement would add.
 
+*(The family answered at Stage 10cx: two investments. Nothing is counted once on
+this book now, so still to call is ₹15.98 Cr and committed ₹42.73 Cr again.
+`privateCapital` still counts a future pair's capital with its holding.)*
+
 **WHAT MOVED IN THE BOOK.** `BOOK_SUMMARY` did not move. In `glowData.ts`:
 - realised ₹3,87,67,064.88 → ₹3,96,29,296.51 — the Axis Liquid lots now settle
   Green Lantern's sales (₹2,83,865.60 and ₹5,78,366.03), returns 3.18% → 5.49% and
@@ -24484,6 +24519,171 @@ check.
 **Not done, and reported.** The Monitor's lakh rounding (MH-19) needs a change to
 `format.ts` that moves every compact figure on the site; PM-D4, PM-D6 and the
 LIVE_CELL wording are listed in the audit and left for their own change.
+
+### Stage 10cx — THE FAMILY'S FIVE ANSWERS
+
+*"1. both are separate investments · 2. keep them pre tax only by default,
+whatever is in the review file we will follow the same rule and calculation
+across the dashboard · 3. keep them unvalued for now · 4. check if the dates are
+different and if the accounts holding are different or same, that would give
+you an idea if they are separate holdings or same · 5. no, this needs to be a
+normal holding, on the polycab page we will only show the shares held in the
+company polycab and relevant information regarding polycab"* — the family,
+28 Sep 2026, answering FQ-1 to FQ-5 of `docs/FIGURE-AUDIT.md`.
+
+#### FQ-1 — both pairs are two investments, and every figure counts all four rows
+
+| Fund | Accounts | Each |
+| --- | --- | --- |
+| 360 ONE Special Opportunities Fund Series 8 Class A3 | CRN37702 (Ajay), CRN60117 (Bharat) | 9,90,429.684 units |
+| Transition Venture Capital Fund I Class A1 | TVC262 and TVC263, the two family trusts | 7,500 units, ₹1,71,45,962.25 |
+
+- **`shared/separateInvestments.mjs` is the answer**, keyed on the
+  `securityKey` and the accounts named, with its date. Check (c) still finds
+  each pair, because the coincidence is a fact about the statements, but files
+  it under `confirmedSeparate` and never groups it. `duplicateAifEarnings` does
+  the same for the two 360 ONE Alternates income folios: two holdings earn two
+  incomes. A third account reporting the same figures is a new question and is
+  grouped exactly as before.
+- **`npm run replay:dedupe` lands the answer on the committed archive** without
+  the PDF passwords, the seventh faithful partial replay. It changed six
+  documents (the May and June issues of both CRNs, and both trusts' statements)
+  and only `dedupeGroup` and `alsoReportedUnder` on them. Its gate accepts a
+  group untagged as a WHOLE, so an answer can be withdrawn: delete the entry and
+  the replay puts the tags back.
+- **`build-book` refuses a book where a named pair still carries a tag**, and
+  names the rows and the command to run. It prints one note per decision, and
+  one for an entry that matches no holding.
+
+What moved. The listed side (₹699.76 Cr) and the ring-fence did not:
+
+| | Was | Now |
+| --- | ---: | ---: |
+| Current value of holdings | ₹710.39 Cr | ₹713.56 Cr (+₹3,17,26,374.76) |
+| Private value · holdings | ₹10.62 Cr · 4 | ₹13.79 Cr · 6 |
+| Private cost · unrealised | ₹8.62 Cr · ₹2.00 Cr | ₹10.36 Cr · ₹3.43 Cr |
+| Pooled private XIRR, 3 of 4 funds | 21.1% | 30.1% |
+| Private Market still to call · committed | ₹15.23 Cr · ₹41.23 Cr | ₹15.98 Cr · ₹42.73 Cr |
+| NAV series, last point | ₹140.17 Cr | ₹141.63 Cr |
+
+The XIRR rises because Transition Venture (+128.61% in 165 days, shown as HPR
+and unchanged) now carries both trusts' money in the pool.
+
+- **A fund's "tranches" are its distinct call DATES, not its calls.** Both
+  trusts paid ₹75 L on 17 Oct 2025, which is one purchase date. Counted per
+  account, the methodology would have sent Transition Venture to an XIRR under a
+  year and refused it. The note reads "2 calls on one date".
+- **The count-once policy is still tested**, on a tagged copy of the book
+  (`src/lib/__tests__/taggedPairs.ts`), because this book no longer exercises
+  it and the next pair a drop brings would.
+- **The family's own review agrees.** It carries both CRNs and both trusts as
+  separate lines, each with its own purchase and closing. Its Transition
+  Venture figure (₹2.26 Cr) is struck at the fund's 28 Feb valuation of
+  ₹1,290.77 a unit and includes Ankita's own 2,500-unit lot, which no statement
+  in the drop reports; the trusts' statements mark their units at ₹2,286.13 on
+  31 Mar. `npm run reconcile:review` was regenerated: the 360 ONE line now ties
+  exactly, and the residual moves −₹79.38 Cr → −₹76.21 Cr.
+- **The ₹3.17 Cr in earlier stages records the book as it stood** and is left
+  as history. The data-model section, §4c and the accounts table's footnote are
+  in the present tense. `docs/EXTRACTION-REPORT.md` still lists both pairs as
+  check (c) groups: only `npm run extract`, which needs the passwords,
+  regenerates it.
+
+#### FQ-2 — pre-tax by default, the review's rule, and no mark moves
+
+Measured fund by fund, the review values each fund at the NAV its own statement
+values the holding at, and so does the book. So no mark moves. Each fund's price
+tile now names that basis (`src/lib/statementNotes.ts`, each note cited to text
+in its statement's own `pages.json`):
+
+| Chip | Funds | Why |
+| --- | --- | --- |
+| pre-tax NAV | Sanshi Fund-I, Carnelian Bharat Amritkaal | the statement values at a pre-tax NAV |
+| pre-tax value | Baring PE Fund 6 | an unaudited pre-tax redemption value |
+| post-tax NAV | Founders, Delphi, Buoyant | the only NAV the statement prints, so the default cannot apply |
+
+- **Sanshi's note named the wrong thing.** It said the NAV is before tax. The
+  statement's footnote says it is before the manager's annual performance fee.
+  Corrected, and cited.
+- **3P is the one fund where the review and the book differ.** The review uses
+  its post-tax NAV and the book its pre-tax one. Every 3P class is redeemed to
+  nil, so both read ₹0.
+- **A NAV that did not move printed "+0.00%"** on the price tile (Helios). It
+  prints "0.00%" now, through `fmtPct`, as the scheme card does.
+
+#### FQ-3 — Ankita's Clean Max shares stay a quantity
+
+`shared/keptUnvalued.mjs` names the row by its account and ISIN: 94,967 shares
+on Motilal Oswal demat 1201090012838316, which the statement holds in its
+lock-in + freeze balance with no rate. The row's reason says both what the
+statement says and what the family decided, with the date. It values nothing,
+and `build-book` names an entry that reaches no row.
+
+Ajay's ICICI NSDL statement of 31 Mar also holds 94,967 Clean Max shares, as
+"Pre IPO Shares", at ₹1,336.50 (about ₹12.69 Cr). Whether those are the same
+shares moved is for the family to say. The book does not borrow that mark.
+
+#### FQ-4 — the two DSP Gold marks
+
+Two holdings, not one. Both carry ISIN INF740KA1SW3, both statements are dated
+31 Jul 2026, and they are two members' own demats: Aarti's 1,195,000 units at
+₹141.24 and Ankita's 205,000 at ₹151.10. One ETF has one price on a day, so at
+least one mark is wrong. The scheme's own NAV on 3 Aug, the next business day,
+was ₹137.73, on the statements' basis (before its 1:10 split). Aarti's mark is
+2.6% above it and Ankita's 9.7%. The book keeps each statement's own mark. At
+₹141.24, Ankita's lot would read about ₹20.2 L less; the rate is Motilal
+Oswal's to explain.
+
+#### FQ-5 — not acted on
+
+"this needs to be a normal holding" can be read two ways. One is the promoter
+block joining the book, which would undo the ring-fence the family asked for.
+The other is the Polycab page showing only Polycab's own shares and
+information. Nothing changed, and the question is back with the family.
+
+#### Checks
+
+- New suites: `separateInvestments.test.mjs` (ingest), `separateInvestments.test.ts`
+  and `keptUnvalued.test.ts`, and cases in `fundReturns`, `privateBook`,
+  `privateMarket`, `statementNotes`, `marketSide`, `navSeries` and `searchIndex`.
+- `check:pages` has two new routes, `stock-posttax` and `family-kept-unvalued`.
+  `stock-aif-dual` walks the largest pair the family named: it walked the
+  largest dedupe group, and this book has none now.
+- `scripts/dev/family-answers-bug.mjs` puts 13 bugs back one at a time, after a
+  clean control. Every one is caught:
+
+| # | Bug put back | Caught by |
+| --- | --- | --- |
+| 1 | the answer never reached the archive | `build-book` refuses; `replay:dedupe --check` exits 1; 4 ingest checks |
+| 2 | …and `build-book`'s guard removed | 25 suite checks, and PM-C7 on the page |
+| 3 | the duplicate policy ignores the answer | the replay; 15 ingest checks |
+| 4 | the replay's gate judges one holding, not its whole group | 1 ingest check |
+| 5 | a fund row says its pair is pending an answer | 1 page check |
+| 6 | a post-tax-only fund labelled pre-tax | the page check on `stock-posttax`. The suite passes by design: Founders' note names both bases |
+| 7 | Sanshi's note back to "before tax" | 1 suite, 1 page |
+| 8 | the price tile loses its basis chip | 2 page checks |
+| 9 | the reason stops naming the decision | 1 suite, 2 page |
+| 10 | the reason drops what the statement says | 1 page check. The suite passes by construction |
+| 11 | the decision matched on the ISIN alone | 1 suite |
+| 12 | the Family & Entities line loses its hover | 3 page |
+| 13 | the table's account number drifts | 2 suite, 6 page |
+
+**THE OLDER HARNESSES WERE RE-RUN WHERE THE ANSWER TOOK THEIR SUBJECT.**
+`pm-table-bug.sh` cases 4, 5 and 22 still fire: `grouping` also decides how
+capital is attached, so the counted-once path still has something to break.
+Its case 6 had reported NOT A RESULT since Stage 10ct, when the line it patches
+changed; re-anchored, it fails 27 page checks on 6 routes and the suite's
+capital checks.
+
+**FOUR CASES LOST THEIR SUBJECT, AND SAY SO.** `pm-prose-bug.sh`'s two
+"Counted once" cases and `monitor-tree-bug.sh`'s cases 4 and 5 break the line
+that takes a counted-once holding back out of its rows. This book draws no such
+line now, so each sweeps clean, and each is annotated "NO SUBJECT ON THIS BOOK
+SINCE Stage 10cx" rather than deleted: the next pair a drop brings gives them
+one again. Two of their anchors had gone stale in the audit's own PRs, and were
+re-anchored, so a clean sweep is the bug applied and not a patch that never
+landed. The count-once policy itself is still exercised, on the tagged copy of
+the book above.
 
 ### Stage 10k — News & Announcements: REMOVED
 
@@ -25411,6 +25611,17 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   holdings must reproduce the stored ones on security, quantity, printed cost and
   NAV; and `--check` writes nothing and is the control run, which must be a
   no-op. Follow it with `build-book`.
+- `npm run replay:dedupe` re-runs the DUPLICATE POLICY over the committed
+  archive — check (c) and `applyDedupePolicy`, the two functions `reconcile()`
+  calls — so a change to `shared/separateInvestments.mjs` lands without
+  `GLOW_PDF_PASSWORDS`. The SEVENTH faithful partial replay, on the same three
+  rules (see Stage 10cx): only `dedupeGroup` and `alsoReportedUnder` on a
+  holding may change, asserted per document; its gate is struck on the
+  ARCHIVE — a holding's tags on disk must be its group's tag, or no tag on
+  every member of its group, which is what lets an answer be WITHDRAWN; and
+  `--check` writes nothing and is the control run, which must be a no-op.
+  Follow it with `build-book`, which refuses a book where a pair the family
+  called separate still carries a tag.
 - `npm run rekey:archive` re-derives `securityKey` across the committed archive
   from each row's own stored NAME, through the same `securityKeyOf` the extractor
   uses — a faithful partial replay of extraction, not a repair layer. It is how a

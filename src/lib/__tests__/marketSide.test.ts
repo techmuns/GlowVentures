@@ -38,6 +38,7 @@ import { privateScope } from "@/lib/privateMarket";
 import { familyAssetClass } from "@/lib/familyTaxonomy";
 import { isMandateHeld } from "@/lib/analytics";
 import { engagementOf } from "@/lib/accounts";
+import { SEPARATE_INVESTMENTS } from "../../../shared/separateInvestments.mjs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -365,10 +366,16 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
     .filter((p) => p.assetClass === "AIF" && p.marketSide === "listed").map((p) => p.marketValue));
   ok("the book's listed side holds the listed-side AIFs that left this page",
     !!listed && listedAifs > 0 && listed.value >= listedAifs, `listed ${listed?.value}, listed AIFs ${listedAifs}`);
-  // THE WHOLE DOUBLE COUNT IS STILL ON THIS PAGE, which is the page's own
-  // central arithmetic and the one thing a rescope could have taken away.
-  ok("both duplicated holdings are still in the private scope",
-    scope.rows.length - scope.dedupedRows.length === 2, `${scope.rows.length} raw, ${scope.dedupedRows.length} deduped`);
+  // BOTH PAIRS THE FAMILY CONFIRMED SEPARATE ARE STILL ON THIS PAGE, every
+  // statement of each — the one thing a rescope could take away. They were the
+  // page's whole double count until *"both are separate investments"* (28 Sep
+  // 2026, `shared/separateInvestments.mjs`); now each is two holdings, so every
+  // row of each is counted and nothing on the page is counted once.
+  ok("both pairs the family confirmed separate are in the private scope, every statement of each counted",
+    SEPARATE_INVESTMENTS.length > 0
+      && SEPARATE_INVESTMENTS.every((d) => scope.dedupedRows.filter((p) => p.securityKey === d.securityKey).length === d.accounts.length)
+      && scope.rows.length === scope.dedupedRows.length,
+    `${scope.rows.length} raw, ${scope.dedupedRows.length} counted`);
 }
 
 // ── 8. `marketSides` LEAVES OUT A SIDE THE BOOK DOES NOT HAVE ───────────────
