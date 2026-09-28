@@ -17,8 +17,8 @@
 // totals and not the limits produces confident nonsense about cost basis,
 // report dates and the ring-fenced holding — and each of those is a question a
 // family office actually asks.
-import { BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS } from "@/data/glowData";
-import { dedupedPositions, doubleCountedValue, publicPrivateSplit, sum } from "@/lib/analytics";
+import { BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { dedupedPositions, doubleCountedValue, publicPrivateSplit, sum, isCashEquivalent } from "@/lib/analytics";
 import { buildDashboardContext, contextPreamble, contextTickers } from "@/lib/chatContext";
 import { depositoryCashHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 
@@ -184,27 +184,64 @@ ok("the context is a non-empty set of named blocks",
     absent.length > 0 && nil.length > 0, `${absent.length} not valued, ${nil.length} measured nil`);
 }
 
-// ── A-17: units a statement records with no rate are named, and are not cash ──
+// ── A-17 / Stage 10cy: units a statement records and values nowhere are named ──
 //
-// The dashboard values ABSL Balanced Advantage at AMFI's NAV where a sibling
-// statement proves the basis. The context must carry those rows in a block of
-// their own — never inside the cash block, because the fund is not cash.
+// The dashboard values these fund units at AMFI's NAV where a witness puts them
+// on the NAV's basis — the line's own last-movement rate, or a sibling
+// statement's price for the scheme. The context must carry those rows in a
+// block of their own, never inside the transaction-only demat's cash block, and
+// each must say WHAT put it on the basis and whether it counts as cash.
 {
-  type Row = { fund: string; accountId: string; units: number; valueCr: number | null; pricedLikeAccountId: string | null };
-  const b = block<{ rows: Row[]; totalCr: number | null }>("fund_units_a_statement_records_without_a_rate");
+  type Row = { fund: string; accountId: string; units: number; valueCr: number | null;
+    lastMovementRate: number | null; pricedLikeAccountId: string | null; countsAsCash: boolean };
+  const b = block<{ rows: Row[]; totalCr: number | null }>("fund_units_a_holding_statement_records_and_values_nowhere");
   const want = unpricedStatementUnits();
   const cash = block<{ rows: { accountId: string; fund: string }[] }>("cash_valued_from_depository_units");
-  ok("the context names the fund units a statement records and prints no rate for",
+  ok("the context names the fund units a holding statement records and values nowhere",
     !!b && Array.isArray(b.rows) && b.rows.length === want.length
       && want.every((p) => b.rows.some((r) => r.accountId === p.accountId && r.units === p.quantity)),
     `${b?.rows?.length ?? "no block"} vs ${want.length}`);
-  ok("...each names the account whose statement prices the scheme",
-    !!b && b.rows.every((r) => typeof r.pricedLikeAccountId === "string" && r.pricedLikeAccountId.length > 0));
-  ok("...and none of them is filed as cash",
+  ok("...each names what put it on the NAV's basis — its own last-movement rate, or the account whose statement prices the scheme",
+    !!b && b.rows.every((r) => (typeof r.lastMovementRate === "number" && r.lastMovementRate > 0)
+      || (typeof r.pricedLikeAccountId === "string" && r.pricedLikeAccountId.length > 0)));
+  // LOAD-BEARING, BOTH KINDS: a block where every row was one kind would let the
+  // other half of the check above pass over nothing.
+  ok("...and this book carries both kinds of witness",
+    !!b && b.rows.some((r) => typeof r.lastMovementRate === "number") && b.rows.some((r) => !!r.pricedLikeAccountId),
+    `${b?.rows.filter((r) => typeof r.lastMovementRate === "number").length ?? 0} by their own rate, `
+      + `${b?.rows.filter((r) => !!r.pricedLikeAccountId).length ?? 0} by a sibling statement`);
+  // CASH IS SAID PER ROW, AND IT IS THE PAGE'S OWN TEST. A liquid fund on a
+  // Motilal demat counts as cash (the family's instruction); a block claiming
+  // "not cash" of every row would contradict the page's Cash line.
+  ok("...each says whether it counts as cash, exactly as the page files it",
+    !!b && want.every((p) => b.rows.some((r) => r.accountId === p.accountId && r.units === p.quantity
+      && r.countsAsCash === isCashEquivalent(p))),
+    `${b?.rows.filter((r) => r.countsAsCash).length ?? 0} count as cash`);
+  ok("...and none of them is filed in the transaction-only demat's cash block",
     !!cash && want.every((p) => !cash.rows.some((r) => r.accountId === p.accountId && r.fund === p.security))
       && cash.rows.length === depositoryCashHoldings().length);
-  // LOAD-BEARING: this book has such a row, or the three checks pass over nothing.
+  // LOAD-BEARING: this book has such a row, or the checks pass over nothing.
   ok("...and this book has at least one such row", want.length > 0, `${want.length} row(s)`);
+}
+
+// ── Every quantity line is named, with why it carries no value ─────────────
+{
+  type Row = { security: string; accountId: string; units: number; why: string; reportedBy: string | null };
+  const b = block<{ rows: Row[]; count: number }>("holdings_a_statement_records_and_values_nowhere");
+  const why = new Set(["last-movement-price", "face-value", "no-rate"]);
+  ok("the context names every holding a statement records as a quantity",
+    !!b && b.rows.length === BOOK_UNVALUED_HOLDINGS.length && b.count === BOOK_UNVALUED_HOLDINGS.length
+      && BOOK_UNVALUED_HOLDINGS.every((u) => b.rows.some((r) => r.accountId === u.accountId && r.units === u.quantity)),
+    `${b?.rows?.length ?? "no block"} vs ${BOOK_UNVALUED_HOLDINGS.length}`);
+  ok("...each with why it carries no value, in one of the three words the note defines",
+    !!b && b.rows.every((r) => why.has(r.why)));
+  // LOAD-BEARING: the last-movement rows are the whole reason this block exists.
+  ok("...and the last-movement rows are among them",
+    !!b && b.rows.some((r) => r.why === "last-movement-price"),
+    `${b?.rows.filter((r) => r.why === "last-movement-price").length ?? 0} of ${b?.rows.length ?? 0}`);
+  // No row may carry a figure a model could sum: units only.
+  ok("...and no row carries a value a model could add up",
+    !!b && b.rows.every((r) => !Object.keys(r).some((k) => /value|cr$|price|mark/i.test(k))));
 }
 
 // ── NO FABRICATED ZEROS ANYWHERE IN THE CONTEXT ────────────────────────────

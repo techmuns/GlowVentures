@@ -56,7 +56,7 @@
  */
 import { BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { holdingLabel } from "./schemeLabel";
-import { displaySecurity } from "./format";
+import { displayDepositoryName, displaySecurity } from "./format";
 
 type Candidate = { label: string; cased: boolean; value: number };
 
@@ -78,7 +78,12 @@ type Candidate = { label: string; cased: boolean; value: number };
  */
 const PRINTED: readonly { securityKey: string; security: string; marketValue: number }[] = [
   ...BOOK_POSITIONS,
-  ...BOOK_UNVALUED_HOLDINGS.map((u) => ({ securityKey: u.securityKey, security: u.security, marketValue: 0 })),
+  // A recorded line is read the way every page names a depository's line
+  // (`displayDepositoryName`, which only ever removes): ICICI's NSDL statement
+  // prints `ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/`, and read raw the
+  // furniture after the dash survived `displaySecurity` and won rule 2 as the
+  // longest spelling — so the one name for ESDS carried `- Eq New Fv Rs .1/`.
+  ...BOOK_UNVALUED_HOLDINGS.map((u) => ({ securityKey: u.securityKey, security: displayDepositoryName(u.security), marketValue: 0 })),
 ];
 
 const CANONICAL: ReadonlyMap<string, string> = (() => {

@@ -216,8 +216,33 @@ ok("no cell under Avg Cost is null or blank",
       }
     }
   }
-  ok("a row whose lines disagree on a mark prints no CMP; one whose lines agree prints it",
-     split > 0 && bad.length === 0, bad.join("; ") || `${split} split, ${single} agreeing`);
+  // THE SPLIT HALF HAS NO SUBJECT ON THIS BOOK SINCE Stage 10cy — and why is
+  // the finding. Every split this check used to find (DSP Gold at ₹151.10 and
+  // ₹141.24, the two Helios demat rows) was a pair of Motilal "marks" that were
+  // the prices of each line's LAST DEPOSITORY MOVEMENT, not marks at all; the
+  // book carries those lines as quantities now, and what is left agrees. So the
+  // real book is held to the agreeing half, and the split half to a constructed
+  // pair below — never silently dropped, because a row printing one line's mark
+  // over another line's units is the defect A-03 was.
+  ok("a row whose lines agree on a mark prints it, and no real row prints a mark its lines disagree on",
+     single > 0 && bad.length === 0, bad.join("; ") || `${split} split, ${single} agreeing`);
+  {
+    const direct2 = BOOK_ACCOUNTS.filter((a) => a.engagement === "Direct").slice(0, 2);
+    const b = { securityKey: "test-split-mark", security: "Test Split Mark Ltd", assetClass: "Equity",
+      sector: "Industrials", providerSector: null, isin: null, symbol: null, marketSide: "listed" } as unknown as Position;
+    const two: Position[] = [
+      { ...b, accountId: direct2[0].accountId, quantity: 100, costBasis: null, avgCost: null, currentPrice: 120,
+        marketValue: 12000, unrealizedPnL: null, returnPct: null, realizedPnL: null } as unknown as Position,
+      { ...b, accountId: direct2[1].accountId, quantity: 100, costBasis: null, avgCost: null, currentPrice: 130,
+        marketValue: 13000, unrealizedPnL: null, returnPct: null, realizedPnL: null } as unknown as Position,
+    ];
+    const sw = buildPortfolioWorkbook(two, BOOK_ACCOUNTS, []).getWorksheet("Holdings")!;
+    const sh = headersOf(sw);
+    const cmp = sw.getRow(4).getCell(sh.indexOf("CMP (₹)") + 1).value;
+    ok("...and a row whose lines are marked at two prices prints no CMP — on a constructed pair",
+       direct2.length === 2 && String(sw.getRow(4).getCell(1).value) === "Test Split Mark Ltd" && cmp === DASH,
+       `CMP ${String(cmp)} over marks 120 / 130`);
+  }
 
   // COST OVER THE COSTED LINES, on a constructed pair — this book's partly
   // costed holdings all sit across a mandate and a demat, which the sheet

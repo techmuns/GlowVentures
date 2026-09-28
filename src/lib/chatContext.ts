@@ -23,7 +23,7 @@
 // things will answer confidently and wrongly, so `caveats` is not decoration —
 // it is the part that keeps the answers honest, and it is derived too.
 import {
-  BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS,
+  BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS, BOOK_UNVALUED_HOLDINGS,
 } from "@/data/glowData";
 import { depositoryCashHoldings, depositoryFundHoldings, unpricedStatementUnits } from "./fundNavs";
 import {
@@ -228,26 +228,75 @@ export function buildDashboardContext(): ContextBlock[] {
       })),
     },
     /**
-     * FUND UNITS A HOLDING STATEMENT RECORDS AND PRINTS NO RATE FOR.
+     * FUND UNITS A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (A-17, Stage 10cy).
      *
-     * NOT CASH — a hybrid fund, kept out of the block above on purpose. The
-     * dashboard values these at AMFI's NAV only because a sibling statement at
-     * the same depository, on the same date, prices the same scheme on the same
-     * basis (A-17). Told only the statement-basis blocks, a model asked "how
-     * much ABSL Balanced Advantage do I hold" would answer "none" and contradict
+     * The Motilal Oswal holding statements print, against each holding, the
+     * price of its LAST DEPOSITORY MOVEMENT and that price times the movement's
+     * own units — never a valuation of the balance — and ABSL Balanced Advantage
+     * on two of them has no rate at all. So none of these units is in the
+     * statement-basis totals, and the dashboard values them at AMFI's NAV where
+     * a witness puts them on the NAV's basis: the line's own last-movement rate,
+     * or another account's price for the same scheme at the same depository on
+     * the same day. Told only the statement-basis blocks, a model asked "how
+     * much Bandhan Large & Mid Cap do I hold" would answer "none" and contradict
      * the screen.
+     *
+     * AND SOME OF THEM ARE CASH. A liquid fund or a liquid ETF counts as cash
+     * whatever wrapper its statement typed it as (the family's instruction,
+     * `isCashEquivalent`) — so each row says which, rather than the block
+     * claiming "not cash" of a liquid fund the page files under Cash.
      */
     {
-      kind: "fund_units_a_statement_records_without_a_rate",
-      note: "These fund units are on a holding statement that records them and prints no rate, so no statement "
-        + "values them and they are NOT in the statement-basis totals above. The dashboard values them at AMFI's "
-        + "published NAV because another account at the same depository, on the same date, prices the same scheme "
-        + "on the same basis (pricedLikeAccountId). They are not cash. No cost is reported for them.",
+      kind: "fund_units_a_holding_statement_records_and_values_nowhere",
+      note: "These fund units are on a depository holding statement that records their units and values them "
+        + "nowhere: the Motilal Oswal statements' Rate and Value columns are the price of each holding's LAST "
+        + "DEPOSITORY MOVEMENT and that price times the movement's own units, never a valuation of the balance; "
+        + "a few lines print no rate at all. So they are NOT in the statement-basis totals above. The dashboard "
+        + "values them at AMFI's published NAV, only where the units are shown to be on the NAV's basis: by the "
+        + "line's own last-movement rate (lastMovementRate, a price at which these very units moved) or, where "
+        + "none is printed, by another account's price for the same scheme at the same depository on the same "
+        + "day (pricedLikeAccountId). Rows with countsAsCash true are liquid funds or liquid ETFs and count as "
+        + "CASH, the family's own instruction; the rest are not cash. No cost is reported for any of them.",
       totalCr: cr(sum(unpricedStatementUnits().map((p) => p.marketValue))),
-      rows: unpricedStatementUnits().map((p) => ({
-        fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
-        unitsAsOf: p.depositoryUnits?.asOf ?? null, pricedLikeAccountId: p.depositoryUnits?.witnessAccountId ?? null,
-        valueCr: cr(p.marketValue),
+      rows: unpricedStatementUnits().map((p) => {
+        const d = p.depositoryUnits;
+        return {
+          fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
+          unitsAsOf: d?.asOf ?? null,
+          lastMovementRate: d?.kind === "last-movement" ? d.lastMovementRate ?? null : null,
+          lastMovementDate: d?.kind === "last-movement" ? d.lastMovementDate ?? null : null,
+          pricedLikeAccountId: d?.kind === "no-rate" ? d.witnessAccountId ?? null : null,
+          countsAsCash: isCashEquivalent(p),
+          valueCr: cr(p.marketValue),
+        };
+      }),
+    },
+    /**
+     * EVERY HOLDING A STATEMENT RECORDS AS A QUANTITY AND VALUES NOWHERE.
+     *
+     * Units with no value are still the family's, and a model told only the
+     * valued rows would answer "you hold no Kaynes" about 4,875 shares a
+     * statement records. So every quantity line is named with its units and WHY
+     * it carries no value — and the model is told, in words, that none of them
+     * may be valued, estimated or summed: a quantity with no price is exactly
+     * where an invented figure would look most plausible.
+     */
+    {
+      kind: "holdings_a_statement_records_and_values_nowhere",
+      note: "Every holding a statement in this book records as a QUANTITY and values nowhere, with why. None of "
+        + "these is in the statement-basis totals above, and none may be valued, estimated or summed here. why: "
+        + "'last-movement-price' means the statement prints the price of the holding's last depository movement, "
+        + "a transaction price rather than a valuation of the balance; 'face-value' means it prints only the value "
+        + "the units were allotted at; 'no-rate' means it prints units and no price. reportedBy names an account "
+        + "whose own statement already counts the same units, so the line is that holding seen twice, never a "
+        + "second holding. The dashboard values some of these live — fund units at AMFI's NAV (the block above), "
+        + "listed shares at the live quote while the feed prices them — and the rest stay quantities.",
+      count: BOOK_UNVALUED_HOLDINGS.length,
+      rows: BOOK_UNVALUED_HOLDINGS.map((u) => ({
+        security: u.security, accountId: u.accountId, assetClass: u.assetClass, units: u.quantity, asOf: u.asOf,
+        why: typeof u.lastMovementRate === "number" && u.lastMovementRate > 0 ? "last-movement-price"
+          : typeof u.faceValue === "number" ? "face-value" : "no-rate",
+        reportedBy: u.sameUnitsReportedBy ?? null,
       })),
     },
     /**
