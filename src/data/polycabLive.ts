@@ -7,8 +7,12 @@
 //   • Everything from BSE is published only where the ISIN the exchange echoes
 //     equals the ISIN `BOOK_POLYCAB` carries. A wrong scrip code answers with a
 //     complete, correct table about another company.
-//   • The promoter HOLDING has two independent witnesses and a disagreement
-//     publishes neither. The promoter PLEDGE has one, and says so.
+//   • The promoter HOLDING is compared across two sources wherever both carry a
+//     quarter, and a disagreement publishes neither; a quarter only one source
+//     carries is published on that one, and `witnesses` says which kind every
+//     quarter is. The promoter PLEDGE has one source, and says so.
+//   • The stored quote carries `fetchedAt`. BSE's header quote prints no
+//     session date, so the time it was fetched is what dates the price.
 //
 // NOTHING HERE IS IN ANY BOOK TOTAL. It is company-level and public; the
 // family's own holding, its cost and its value stay in `BOOK_POLYCAB`, and the
@@ -34,13 +38,16 @@ export interface PolycabQuarter {
   quarter: string | null;
   /** The quarter END the disclosure is struck at, ISO. */
   asOf: string;
-  /** Null where the two witnesses disagreed — a REFUSAL, not a gap. */
+  /** Null where the two witnesses disagreed (`holdingRefused`) or none carried one. */
   holdingPct: number | null;
+  /** Tickertape's "Promoter Holding Pledged": the pledged part of the group's OWN holding. */
   pledgePct: number | null;
   /** Which source carried the pledge, or null where none did. */
   pledgeSource: string | null;
-  /** How many independent sources carried the holding for this quarter. */
+  /** How many independent sources carried the holding for this quarter, counted before any refusal. */
   witnesses: number;
+  /** True only where both sources carried the quarter and disagreed; null where a stored record cannot say. */
+  holdingRefused?: boolean | null;
 }
 
 export interface PolycabQuote {
@@ -53,6 +60,8 @@ export interface PolycabQuote {
   changePct: number | null;
   printedChange: number | null;
   printedChangePct: number | null;
+  /** When the quote was fetched, ISO. The only date the exchange's header quote gives. */
+  fetchedAt?: string | null;
 }
 
 export interface PolycabLive {
@@ -72,7 +81,8 @@ export interface PolycabLive {
   actionsComplete: boolean;
   promoterQuarters: PolycabQuarter[] | null;
   promoterAgreement: { compared: number; disagreed: number } | null;
-  sources: { name: string; url: string; carries: string }[];
+  /** `feeds` names the page's views each source supplies, so a table credits only its own. */
+  sources: { name: string; url: string; carries: string; feeds?: string[] }[];
   notes: { severity: string; rule: string; detail: string }[];
   retrievedAt: string;
 }
@@ -92,7 +102,8 @@ export const POLYCAB_LIVE: PolycabLive = {
     "change": -21,
     "changePct": -0.2507462686567164,
     "printedChange": -21,
-    "printedChangePct": -0.25
+    "printedChangePct": -0.25,
+    "fetchedAt": "2026-09-23T15:46:09.211Z"
   },
   "corporateActions": [
     {
@@ -192,7 +203,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 61.461685149737356,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 2
+      "witnesses": 2,
+      "holdingRefused": false
     },
     {
       "asOf": "2026-03-31",
@@ -200,7 +212,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 61.49620033165215,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 2
+      "witnesses": 2,
+      "holdingRefused": false
     },
     {
       "asOf": "2025-12-31",
@@ -208,7 +221,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 61.50111672781482,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 2
+      "witnesses": 2,
+      "holdingRefused": false
     },
     {
       "asOf": "2025-09-30",
@@ -216,7 +230,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 61.52122017376783,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 2
+      "witnesses": 2,
+      "holdingRefused": false
     },
     {
       "asOf": "2025-06-30",
@@ -224,7 +239,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 63.01064372395979,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 2
+      "witnesses": 2,
+      "holdingRefused": false
     },
     {
       "asOf": "2025-03-31",
@@ -232,7 +248,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 63.04426316271684,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 2
+      "witnesses": 2,
+      "holdingRefused": false
     },
     {
       "asOf": "2024-12-31",
@@ -240,7 +257,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 63.05,
       "pledgePct": null,
       "pledgeSource": null,
-      "witnesses": 1
+      "witnesses": 1,
+      "holdingRefused": false
     },
     {
       "asOf": "2024-09-30",
@@ -248,7 +266,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 63.06,
       "pledgePct": null,
       "pledgeSource": null,
-      "witnesses": 1
+      "witnesses": 1,
+      "holdingRefused": false
     },
     {
       "asOf": "2024-06-30",
@@ -256,7 +275,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 65.02,
       "pledgePct": null,
       "pledgeSource": null,
-      "witnesses": 1
+      "witnesses": 1,
+      "holdingRefused": false
     },
     {
       "asOf": "2024-03-31",
@@ -264,7 +284,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 65.24,
       "pledgePct": null,
       "pledgeSource": null,
-      "witnesses": 1
+      "witnesses": 1,
+      "holdingRefused": false
     },
     {
       "asOf": "2023-12-31",
@@ -272,7 +293,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 65.78,
       "pledgePct": null,
       "pledgeSource": null,
-      "witnesses": 1
+      "witnesses": 1,
+      "holdingRefused": false
     },
     {
       "asOf": "2023-09-30",
@@ -280,7 +302,8 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 65.91,
       "pledgePct": null,
       "pledgeSource": null,
-      "witnesses": 1
+      "witnesses": 1,
+      "holdingRefused": false
     }
   ],
   "promoterAgreement": {
@@ -291,17 +314,27 @@ export const POLYCAB_LIVE: PolycabLive = {
     {
       "name": "BSE (exchange)",
       "url": "https://www.bseindia.com/stock-share-price/polycab-india-ltd/polycab/542652/",
-      "carries": "identity, last traded price, the full corporate-action record"
+      "carries": "identity, last traded price, the full corporate-action record",
+      "feeds": [
+        "holding",
+        "actions"
+      ]
     },
     {
       "name": "Tickertape",
       "url": "https://www.tickertape.in/stocks/polycab-india-POLC",
-      "carries": "promoter holding and promoter pledge, per quarter — gated on the book's own ISIN"
+      "carries": "promoter holding and promoter pledge, per quarter — gated on the book's own ISIN",
+      "feeds": [
+        "promoter"
+      ]
     },
     {
       "name": "Screener",
       "url": "https://www.screener.in/company/POLYCAB/consolidated/",
-      "carries": "promoter holding, per quarter — the second witness"
+      "carries": "promoter holding, per quarter — the second witness",
+      "feeds": [
+        "promoter"
+      ]
     }
   ],
   "notes": [

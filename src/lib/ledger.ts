@@ -32,7 +32,8 @@ import {
   daySaleKey, lotGroupsOf, daySalesOf, settleSales as settleSalesShared, settledSecurityOf,
   type LotGroup, type DaySale,
 } from "../../shared/lotSettlement.mjs";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES } from "../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_CAPITAL_GAINS } from "../data/glowData";
+import { fmtDate } from "./format";
 
 // Read when a document is fetched, not when the module loads: the family test
 // suites import this module in node, where Vite's `import.meta.env` is set by
@@ -53,6 +54,8 @@ export type ManifestEntry = {
 type ArchiveTxn = {
   date: string | null; settlementDate: string | null; side: "buy" | "sell" | string;
   security: string; securityKey: string; exchange: string | null;
+  /** The ISIN the row prints, where it prints one — most tape rows do not. */
+  isin?: string | null;
   assetClass: string | null;
   quantity: number | null; unitPrice: number | null;
   gross: number | null; charges: number | null; net: number | null;
@@ -98,6 +101,8 @@ const settledAmount = (t: ArchiveTxn): number | null =>
   t.printed?.settlementAmount ?? t.net ?? t.gross ?? null;
 type ArchiveLot = {
   security: string; securityKey: string;
+  /** The ISIN the capital gain statement prints against the lot, where it does. */
+  isin?: string | null;
   saleDate: string | null; purchaseDate: string | null;
   quantity: number | null; saleRate: number | null; saleAmount: number | null;
   purchaseRate: number | null; purchaseAmount: number | null;
@@ -317,6 +322,28 @@ export type Txn = {
   side: "Buy" | "Sell"; qty: number; price: number | null; amount: number | null; realized: number | null;
   /** Why `realized` is absent on this row, when it is. */
   realizedNote?: string;
+  /**
+   * WHY `realized` IS WHAT IT IS, as a fact a rollup can COUNT — never parsed
+   * back out of `realizedNote`. Undefined on a buy, which realises nothing.
+   *
+   *   lot             a capital gain lot settles this sale; the figure is here
+   *   sibling         settled, but the day's figure sits on the FIRST row of
+   *                   that sale — this row's gain IS in every total (MT-12)
+   *   no-statement    the account issues no capital gain statement in this drop
+   *   outside-window  it issues one, and this sale falls outside its window
+   *   no-lot          a statement covers the date and no lot matches the sale
+   */
+  realizedBasis?: "lot" | "sibling" | "no-statement" | "outside-window" | "no-lot";
+  /**
+   * THE ISIN, WHERE A DOCUMENT STATES ONE FOR THIS TRADE (MT-10) — the row's own,
+   * or else the one printed on the capital gain lot that settles THIS sale by
+   * identity (same account, same security key, same date). CLASSIFICATION ONLY:
+   * `txnAxis.ts` may file the trade under the one book security that carries it,
+   * and the row keeps its own `securityKey`. A buy has no lot to borrow from, so
+   * only a sale can carry `isinFrom: "lot"`.
+   */
+  isin: string | null;
+  isinFrom: "row" | "lot" | null;
 };
 export type TxnData = {
   asOf: string; txns: Txn[]; buys: number; sells: number;
@@ -425,6 +452,19 @@ export async function loadTransactions(): Promise<TxnData | null> {
   const { bySale: realised } = settleSales(docs, daySales(docs));
   const txns: Txn[] = [];
   let periodFrom: string | null = null, periodTo: string | null = null;
+  /**
+   * THE ISIN EACH CAPITAL GAIN LOT PRINTS, per lot group (account, security,
+   * sale date). A group whose lots print more than one distinct ISIN lends
+   * none — two identifiers under one key is a conflict, not an answer.
+   */
+  const lotIsins = new Map<string, Set<string>>();
+  for (const { doc: d, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
+    if (!l.saleDate || !l.isin) continue;
+    const k = daySaleKey(d.accountNo, l.securityKey, l.saleDate);
+    (lotIsins.get(k) ?? lotIsins.set(k, new Set()).get(k)!).add(l.isin);
+  }
+  const accountIdOf = new Map(BOOK_ACCOUNTS.map((a) => [`${a.provider}\u0001${a.accountNo}`, a.accountId]));
+  const cgOf = new Map(BOOK_CAPITAL_GAINS.filter((e) => e.accountId).map((e) => [e.accountId!, e]));
   // A DAY'S SALE, NOT A ROW'S.
   //
   // The capital gain statement settles a day's sale of a name against however
@@ -456,6 +496,7 @@ export async function loadTransactions(): Promise<TxnData | null> {
         // the settled amount — the figure the join is struck on — is carried.
         qty: t.quantity ?? 0, price: null, amount, realized: null,
         realizedNote: "the family's own purchase of this fund's units — already in the dated capital record, not the manager's dealing",
+        isin: t.isin ?? null, isinFrom: t.isin ? "row" : null,
       });
       continue;
     }
@@ -467,18 +508,49 @@ export async function loadTransactions(): Promise<TxnData | null> {
     // a capital gain statement. Null renders "—", never 0.
     let realized: number | null = null;
     let realizedNote: string | undefined;
+    let realizedBasis: Txn["realizedBasis"];
+    let lotIsin: string | null = null;
     if (side === "Sell") {
       const v = realised.get(key);
       if (v === undefined) {
-        realizedNote = "no capital gain lot in the statements matches this sale — not on its name, nor on its account, date and amount";
-      } else if (claimed.has(key)) {
-        realizedNote = "this sale's realised gain is shown on its first row for the day — the capital gain statement settles the day's sale, not each printed row";
+        /**
+         * THREE DIFFERENT ABSENCES, AND THE READER NEEDS TO KNOW WHICH (MT-12).
+         * "No capital gain statement covers this account" was printed on LKP's
+         * Ather Energy and Pricol sales while LKP issues one — they fall after
+         * its window — and "no lot matches" was printed on Goldstandard's and
+         * SVAN's, which issue none. Each sends a reader to a different document,
+         * so the cause is read off `BOOK_CAPITAL_GAINS` — the account's own
+         * statement window and its `absent` line — and never assumed.
+         */
+        const cg = cgOf.get(accountIdOf.get(`${d.provider}\u0001${d.accountNo}`) ?? "");
+        if (cg?.absent) {
+          realizedBasis = "no-statement";
+          realizedNote = "no capital gain statement is issued for this account in this drop, so what this sale realised is not reported";
+        } else if (cg && ((cg.periodTo && t.date > cg.periodTo) || (cg.periodFrom && t.date < cg.periodFrom))) {
+          realizedBasis = "outside-window";
+          const after = !!cg.periodTo && t.date > cg.periodTo;
+          realizedNote = `this account's capital gain statement runs ${fmtDate(cg.periodFrom ?? "")} → ${fmtDate(cg.periodTo ?? "")}, and this sale, on ${fmtDate(t.date)}, falls ${after ? "after" : "before"} it — what it realised is not reported ${after ? "yet" : "here"}`;
+        } else {
+          realizedBasis = "no-lot";
+          realizedNote = "no capital gain lot in the statements matches this sale — not on its name, nor on its account, date and amount";
+        }
       } else {
-        claimed.add(key);
-        realized = v.realised;
-        if (v.by === "amount") realizedNote = "matched to its capital gain lots on account, date and the sale amount both statements print, to the paisa — the two statements spell the security differently";
+        if (v.by === "key") {
+          const is = lotIsins.get(v.lotKey);
+          if (is && is.size === 1) lotIsin = [...is][0];
+        }
+        if (claimed.has(key)) {
+          realizedBasis = "sibling";
+          realizedNote = "this sale's realised gain is shown on its first row for the day — the capital gain statement settles the day's sale, not each printed row";
+        } else {
+          claimed.add(key);
+          realizedBasis = "lot";
+          realized = v.realised;
+          if (v.by === "amount") realizedNote = "matched to its capital gain lots on account, date and the sale amount both statements print, to the paisa — the two statements spell the security differently";
+        }
       }
     }
+    const isin = t.isin ?? lotIsin;
     txns.push({
       date: t.date, security: securityLabel(t.securityKey, t.security), securityKey: t.securityKey,
       account, provider: d.provider, accountNo: d.accountNo, ownerId: d.ownerId,
@@ -487,7 +559,8 @@ export async function loadTransactions(): Promise<TxnData | null> {
       // statement reported none, and dividing that by a quantity would put a
       // ₹0 unit price on a trade nobody priced.
       price: t.unitPrice ?? (amount != null && qty > 0 ? amount / qty : null),
-      amount, realized, realizedNote,
+      amount, realized, realizedNote, realizedBasis,
+      isin, isinFrom: t.isin ? "row" : lotIsin ? "lot" : null,
     });
   }
   txns.sort((a, b) => b.date.localeCompare(a.date));   // newest first
@@ -814,7 +887,11 @@ export async function loadSales(): Promise<SalesData | null> {
 // Per-stock ledger: every dated buy / sell for one security, for Stock Info.
 // Matched on securityKey — the archive rows carry a name, not an ISIN.
 // ─────────────────────────────────────────────────────────────────────────────
-export type StockTxn = { date: string; side: "Buy" | "Sell"; account: string; qty: number; rate: number; amount: number };
+/**
+ * `rate` and `amount` are NULL where the statement reports neither a price nor a
+ * settled amount (DSM-D9) — never a ₹0 that reads as a trade struck at nothing.
+ */
+export type StockTxn = { date: string; side: "Buy" | "Sell"; account: string; qty: number; rate: number | null; amount: number | null };
 export type StockLedger = {
   securityKey: string; name: string; txns: StockTxn[];
   /** Null when no capital gain statement covers this name's sells. */
@@ -838,10 +915,13 @@ export async function loadStockLedger(securityKey: string): Promise<StockLedger 
     name = securityLabel(t.securityKey, t.security);
     if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
     if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
-    const qty = t.quantity ?? 0, amount = settledAmount(t) ?? 0;
+    const qty = t.quantity ?? 0, amount = settledAmount(t);
     txns.push({
       date: t.date, side: t.side === "sell" ? "Sell" : "Buy", account, qty,
-      rate: t.unitPrice ?? (qty > 0 ? amount / qty : 0), amount,
+      // Derived only where both halves exist — the rule `loadTransactions`
+      // already applies. `?? 0` put a ₹0 price and a ₹0 amount on a trade whose
+      // statement reported neither (DSM-D9).
+      rate: t.unitPrice ?? (amount != null && qty > 0 ? amount / qty : null), amount,
     });
   }
   txns.sort((a, b) => b.date.localeCompare(a.date));

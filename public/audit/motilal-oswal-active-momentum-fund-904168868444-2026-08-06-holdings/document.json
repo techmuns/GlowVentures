@@ -91,7 +91,7 @@
    "tranAccount": null,
    "buySellAmount": null,
    "income": null,
-   "expenses": null,
+   "expenses": 10709.46,
    "depositWithdrawal": null,
    "credit": null,
    "debit": null,

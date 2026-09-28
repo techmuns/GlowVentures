@@ -19,7 +19,10 @@
 // family's own example is the proof**: the DSP Silver ETF resolves no symbol,
 // because NSE has moved the DSP gold and silver ETFs to ISINs the statements do
 // not carry. A card built on the quote feed cannot answer the question that was
-// asked; the AMFI NAV store already in `public/lookthrough/` can.
+// asked; AMFI's own daily NAV file can (`src/data/fundNavs.ts`, refreshed every
+// morning and the one `applyFundNavs` prices every other surface from), and the
+// look-through store in `public/lookthrough/` answers for the schemes that file
+// does not carry — on this book, the two DSP ETFs.
 //
 // AND AN AIF CANNOT BE ANSWERED BY EITHER, which the family said first: *"AIF
 // में monthly NAV आएगा"*. No AIF folio resolves a scheme in the store and none
@@ -29,9 +32,8 @@
 // ── THE TWO MEASUREMENTS ARE NEVER BLENDED, AND THAT IS THE WHOLE RULE ──────
 //
 // A live quote is intraday TODAY. A published NAV is a SCHEME's last struck NAV
-// against the one before it — dated, and as old as the last store refresh. On
-// this book those are 2026-09-09 against 2026-09-08 while the live feed is
-// today. Summing a NAV move into the quote card's percentage would print a
+// against the one before it — struck after the close for the previous business
+// day, and dated. Summing a NAV move into the quote card's percentage would print a
 // real figure under the wrong day, which is the defect `/api/indices` already
 // cost this repo once ("the level was differenced against itself") and the one
 // a reader cannot see. So this is a SEPARATE card, on its own dates, and every
@@ -62,6 +64,7 @@
 // value is the holding's own statement mark. The card prints both dates.
 import type { Position } from "./types";
 import type { SchemeMatch } from "./lookthrough";
+import { fundNavFor, type FundNav } from "./fundNavs";
 import { holdingBucket } from "./analytics";
 import { engagementOf, type AccountIndex } from "./accounts";
 import { schemeNameFor, composeSchemeLabel } from "./schemeLabel";
@@ -106,6 +109,19 @@ export type NavMover = {
   keys: number;
   /** How many statement rows are behind it. */
   positions: number;
+  /**
+   * WHICH PUBLISHED NAV THIS ROW IS ON — and there is one per scheme, the same
+   * on every surface (B-02).
+   *
+   *   · `amfi` — AMFI's own daily NAV file (`src/data/fundNavs.ts`), the one
+   *     `applyFundNavs` prices every other surface from. Every scheme that file
+   *     carries is on it here too.
+   *   · `lookthrough` — the fund look-through store, ONLY for a scheme AMFI's
+   *     file does not carry. On this book that is the two DSP ETFs, whose
+   *     statement ISINs are not in AMFI's file; no other surface prices them by
+   *     NAV, so their one NAV is this one, and the row says whose it is.
+   */
+  source: "amfi" | "lookthrough";
   /** The published NAV and the one before it, with both dates. */
   nav: number;
   navDate: string;
@@ -113,12 +129,36 @@ export type NavMover = {
   prevNavDate: string;
   /** The scheme's own published move. A fact about the SCHEME. */
   changePct: number;
-  /** What the book values these holdings at — the statement's mark. */
+  /**
+   * What the book values these holdings at: units × AMFI's published NAV where
+   * the overlay priced them (`navPriced`), and the statement's own mark
+   * otherwise. `valueBasis` says which, per row, because the two are dated
+   * differently and one row can carry either.
+   */
   value: number;
+  valueBasis: "nav" | "statement" | "mixed";
   /** DERIVED: the scheme's move applied to that value. `move / value === changePct`. */
   move: number;
   /** The newest statement date behind `value`, so the two bases can be told apart. */
   valueAsOf: string | null;
+  /** Units held across the row's statements. */
+  quantity: number;
+  /**
+   * THE BOOK'S VALUE PER UNIT OVER THIS NAV, where both are known.
+   *
+   * ≈1 where the units and the NAV are the same unit. On the DSP ETFs it is
+   * ≈10: the depository's units and the AMC's NAV unit differ (Stage 10aw), so
+   * `units × NAV` would put ₹20 Cr of gold at ₹2 Cr. Only the PERCENTAGE move is
+   * ever applied, and a row whose ratio is past `UNIT_BASIS_BOUND` says so.
+   */
+  unitRatio: number | null;
+  /**
+   * WHETHER THIS ROW IS IN THE DAY'S FIGURE ON THE TILE. A row struck on an
+   * older day than the newest is listed — with its own date — and kept out of
+   * the tile's sum, which would otherwise add a 9 Sep move into a figure headed
+   * 22 Sep (rule 8).
+   */
+  inDayFigure: boolean;
   /** `isin` · `name` · `name+plan`. Surfaced where it is not the ISIN. */
   matchedVia: string;
   /** Every owner named on a statement behind this row. */
@@ -136,21 +176,46 @@ export type NavMoverSkip = {
 export type NavMoverModel = {
   rows: NavMover[];
   skipped: NavMoverSkip[];
-  /** Σ value over the rows — the denominator the aggregate percentage divides. */
+  /** Σ value over the rows IN THE DAY'S FIGURE — the denominator the aggregate divides. */
   coveredValue: number;
-  /** Σ move over the rows. */
+  /** Σ move over those rows. */
   move: number;
   /** `move / coveredValue`, or null where nothing is covered. */
   changePct: number | null;
+  /** Rows listed on an older published day, and kept out of the figure above. */
+  olderRows: number;
+  olderValue: number;
   /** Every holding in scope, priced or not. */
   scopeValue: number;
   scopeNames: number;
+  /**
+   * THE LIQUID FUNDS AND LIQUID ETFs THIS CARD DOES NOT COVER (MNT-15). The
+   * family's rule files them under Cash whatever wrapper the statement typed
+   * (Stage 10av), so they are out of "ETFs & mutual funds" by the bucket — and
+   * a coverage line reading "of the ₹113 Cr held" read as all of the family's
+   * funds while ₹14 Cr of them were elsewhere. Named, never silently dropped.
+   */
+  cashFunds: { value: number; names: number };
   /** The NAV dates the rows span, newest first. More than one is normal. */
   navDates: string[];
   /** Newest and oldest NAV date across the rows. */
   newestNavDate: string | null;
   oldestNavDate: string | null;
 };
+
+/**
+ * PAST THIS RATIO THE BOOK'S UNITS AND THE PUBLISHED NAV ARE NOT ONE UNIT.
+ * The factor of two `build-fund-navs` gates `usableForValue` on — a claim about
+ * markets (no scheme halves or doubles between two statement dates absent a
+ * corporate action), not a tolerance fitted to the data. Measured: the funds
+ * AMFI prices sit at 0.92–1.14, the DSP ETFs at 9.7 and 12.3.
+ */
+export const UNIT_BASIS_BOUND = 2;
+export const unitBasisDiffers = (r: { unitRatio: number | null }) =>
+  r.unitRatio != null && (r.unitRatio > UNIT_BASIS_BOUND || r.unitRatio < 1 / UNIT_BASIS_BOUND);
+
+/** The one AMFI record a holding resolves to, in the shape this card needs. */
+export type AmfiNav = Pick<FundNav, "schemecode" | "scheme" | "plan" | "nav" | "date" | "prev" | "prevDate" | "changePct">;
 
 /**
  * ── THE ROW IS THE SCHEME, NOT THE `securityKey` ────────────────────────────
@@ -164,21 +229,35 @@ export type NavMoverModel = {
  * sizes, as though they were two decisions.
  *
  * This is a JOIN ON THE IDENTIFIER THE NAV IS PUBLISHED AGAINST, not a name
- * match: the store resolved each securityKey to its schemecode on the ISIN, and
- * this clubs what the store already joined. The book keeps the two keys apart
- * everywhere else, which is correct — they are different holdings in different
- * accounts — and the row says how many it clubs.
+ * match: each source resolved each securityKey to its schemecode on the ISIN,
+ * and this clubs what the source already joined. The book keeps the two keys
+ * apart everywhere else, which is correct — they are different holdings in
+ * different accounts — and the row says how many it clubs.
+ *
+ * ── AND THE NAV IS AMFI'S, THE ONE EVERY OTHER SURFACE PRICES FROM (B-02) ───
+ *
+ * This card read the look-through store's NAVs (9 Sep) while the Portfolio
+ * Monitor, the stock page and the top bar price the same schemes on AMFI's
+ * daily file (22 Sep) — Helios ₹16.22 here, ₹16.15 everywhere else, and a day's
+ * move of the opposite sign. `amfiFor` is now asked FIRST, and the look-through
+ * store answers only for a scheme AMFI's file does not carry.
  */
 export function navMoverModel(
   positions: readonly Position[],
   accIdx: AccountIndex,
-  schemes: Map<string, SchemeMatch>,
+  /** The look-through store — a FALLBACK only. `null` = it did not answer. */
+  schemes: Map<string, SchemeMatch> | null,
+  amfiFor: (securityKey: string) => AmfiNav | null = (k) => fundNavFor({ securityKey: k }),
 ): NavMoverModel {
   const inScope = (p: Position) =>
     (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accIdx, p)));
   const scope = positions.filter(inScope);
+  const cashFundRows = positions.filter((p) =>
+    (p.assetClass === "Mutual Fund" || p.assetClass === "ETF")
+    && holdingBucket(p, engagementOf(accIdx, p)) === "Cash");
 
-  const byScheme = new Map<string, NavMover>();
+  type Acc = Omit<NavMover, "keys" | "move" | "unitRatio" | "inDayFigure" | "valueBasis"> & { navValue: number; stValue: number };
+  const byScheme = new Map<string, Acc>();
   /**
    * The largest holding behind each scheme, so the row can NAME it. Kept beside
    * the rows rather than smuggled onto them as a private field: a `_top` that
@@ -186,87 +265,107 @@ export function navMoverModel(
    * there, and the next reader has to prove it never escapes.
    */
   const topValue = new Map<string, number>();
+  const keysPerScheme = new Map<string, Set<string>>();
   const skipped: NavMoverSkip[] = [];
 
   for (const p of scope) {
-    const m = schemes.get(p.securityKey);
-    const nav = m?.nav;
-    // A HOLDING THE STORE CANNOT PRICE IS NAMED, NEVER ZERO. The three states
-    // are different facts and are worded apart: no scheme resolved at all, a
-    // scheme with no NAV, and a scheme with a NAV but no previous one to
-    // measure a move against. Only the last is a "wait for tomorrow".
-    if (!m) {
+    const a = amfiFor(p.securityKey);
+    const m = a ? null : schemes?.get(p.securityKey) ?? null;
+    // ONE RECORD PER HOLDING, FROM ONE SOURCE, in one shape.
+    const rec = a
+      ? { source: "amfi" as const, schemecode: a.schemecode, scheme: a.scheme, plan: a.plan,
+          nav: a.nav, date: a.date, prev: a.prev ?? null, prevDate: a.prevDate ?? null, changePct: a.changePct,
+          matchedVia: "isin" }
+      : m
+        ? { source: "lookthrough" as const, schemecode: m.schemecode, scheme: m.scheme, plan: m.plan,
+            nav: m.nav?.value ?? null, date: m.nav?.date ?? null, prev: m.nav?.prev ?? null, prevDate: m.nav?.prevDate ?? null,
+            changePct: m.nav?.changePct ?? null, matchedVia: m.matchedVia }
+        : null;
+    // A HOLDING NO SOURCE CAN PRICE IS NAMED, NEVER ZERO. The states are
+    // different facts and are worded apart — no source resolves it at all, the
+    // look-through store did not answer, a scheme with no NAV, and a scheme with
+    // a NAV but no previous one to measure a move against. Only the last is a
+    // "wait for tomorrow".
+    if (!rec) {
       skipped.push({ securityKey: p.securityKey, security: p.security, value: p.marketValue,
-        reason: "no scheme in the NAV store resolves this holding" });
+        reason: schemes === null
+          ? "AMFI's daily NAV file carries no NAV for this scheme, and the look-through store — the only other source of one — did not respond"
+          : "neither AMFI's daily NAV file nor the look-through store resolves this holding" });
       continue;
     }
-    if (nav?.value == null || nav.date == null) {
+    if (rec.nav == null || rec.date == null) {
       skipped.push({ securityKey: p.securityKey, security: p.security, value: p.marketValue,
-        reason: `${m.scheme} resolves, and the store carries no NAV for it` });
+        reason: `${rec.scheme} resolves, and the ${rec.source === "amfi" ? "AMFI file" : "look-through store"} carries no NAV for it` });
       continue;
     }
-    if (nav.prev == null || nav.prevDate == null || nav.changePct == null) {
+    if (rec.prev == null || rec.prevDate == null || rec.changePct == null) {
       skipped.push({ securityKey: p.securityKey, security: p.security, value: p.marketValue,
-        reason: `${m.scheme} has one published NAV and no earlier one to measure a move against` });
+        reason: `${rec.scheme} has one published NAV and no earlier one to measure a move against` });
       continue;
     }
+    const id = `${rec.source}:${rec.schemecode}`;
     const owner = accIdx.get(p.accountId)?.owner ?? null;
     const asOf = accIdx.get(p.accountId)?.asOf ?? null;
-    const cur = byScheme.get(m.schemecode);
+    const onNav = !!p.navPriced;
+    const ks = keysPerScheme.get(id) ?? new Set<string>();
+    ks.add(p.securityKey); keysPerScheme.set(id, ks);
+    const cur = byScheme.get(id);
     if (cur) {
       cur.value += p.marketValue;
+      cur.quantity += p.quantity;
+      if (onNav) cur.navValue += p.marketValue; else cur.stValue += p.marketValue;
       cur.positions += 1;
       if (owner && !cur.entities.includes(owner)) cur.entities.push(owner);
       if (asOf && (!cur.valueAsOf || asOf > cur.valueAsOf)) cur.valueAsOf = asOf;
       // The row NAMES the largest holding behind it and opens that one, so a
       // reader lands on the position they recognise rather than whichever
       // statement happened to sort first.
-      if (p.marketValue > (topValue.get(m.schemecode) ?? -Infinity)) {
-        topValue.set(m.schemecode, p.marketValue);
+      if (p.marketValue > (topValue.get(id) ?? -Infinity)) {
+        topValue.set(id, p.marketValue);
         cur.security = p.security;
         cur.securityKey = p.securityKey;
       }
     } else {
-      byScheme.set(m.schemecode, {
-        schemecode: m.schemecode, plan: m.plan,
-        // THE SAME NAME THIS BOOK SHOWS EVERYWHERE ELSE. The store's own
-        // `scheme` is AMFI's raw listing string (`…Fund-Reg(G)`), which is a
-        // THIRD spelling of a scheme the holdings tables and this card both
-        // name — so it is composed through `schemeLabel` and falls back to the
-        // raw string only where no scheme resolved, which on this card is never.
-        scheme: (() => { const sn = schemeNameFor(p.securityKey); return sn ? composeSchemeLabel(sn) : m.scheme; })(),
+      byScheme.set(id, {
+        schemecode: rec.schemecode, plan: rec.plan, source: rec.source,
+        // THE SAME NAME THIS BOOK SHOWS EVERYWHERE ELSE. The sources' own
+        // `scheme` is AMFI's raw listing string, which is a THIRD spelling of a
+        // scheme the holdings tables and this card both name — so it is
+        // composed through `schemeLabel` and falls back to the raw string only
+        // where no scheme resolved.
+        scheme: (() => { const sn = schemeNameFor(p.securityKey); return sn ? composeSchemeLabel(sn) : rec.scheme; })(),
         security: p.security, securityKey: p.securityKey,
-        keys: 0, positions: 1,
-        nav: nav.value, navDate: nav.date, prevNav: nav.prev, prevNavDate: nav.prevDate,
-        changePct: nav.changePct,
-        value: p.marketValue, move: 0, valueAsOf: asOf,
-        matchedVia: m.matchedVia, entities: owner ? [owner] : [],
+        positions: 1,
+        nav: rec.nav, navDate: rec.date, prevNav: rec.prev, prevNavDate: rec.prevDate,
+        changePct: rec.changePct,
+        value: p.marketValue, valueAsOf: asOf, quantity: p.quantity,
+        navValue: onNav ? p.marketValue : 0, stValue: onNav ? 0 : p.marketValue,
+        matchedVia: rec.matchedVia, entities: owner ? [owner] : [],
       });
-      topValue.set(m.schemecode, p.marketValue);
+      topValue.set(id, p.marketValue);
     }
   }
 
-  // How many of the book's own keys each scheme clubs — counted over the rows
-  // that actually landed, so a skipped holding never inflates it.
-  const keysPerScheme = new Map<string, Set<string>>();
-  for (const p of scope) {
-    const m = schemes.get(p.securityKey);
-    if (!m || !byScheme.has(m.schemecode)) continue;
-    const s = keysPerScheme.get(m.schemecode) ?? new Set<string>();
-    s.add(p.securityKey);
-    keysPerScheme.set(m.schemecode, s);
-  }
+  const dates = [...new Set([...byScheme.values()].map((r) => r.navDate))].sort().reverse();
+  const newest = dates[0] ?? null;
+  const rows: NavMover[] = [...byScheme.entries()].map(([id, r]) => {
+    const { navValue, stValue, ...rest } = r;
+    const perUnit = r.quantity > 0 ? r.value / r.quantity : null;
+    return {
+      ...rest,
+      keys: keysPerScheme.get(id)?.size ?? 1,
+      valueBasis: stValue === 0 ? "nav" : navValue === 0 ? "statement" : "mixed",
+      unitRatio: perUnit != null && r.nav > 0 ? perUnit / r.nav : null,
+      inDayFigure: r.navDate === newest,
+      // DERIVED, and the row ties: move ÷ value is the printed percentage.
+      move: (r.value * r.changePct) / 100,
+    };
+  });
 
-  const rows = [...byScheme.values()].map((r) => ({
-    ...r,
-    keys: keysPerScheme.get(r.schemecode)?.size ?? 1,
-    // DERIVED, and the row ties: move ÷ value is the printed percentage.
-    move: (r.value * r.changePct) / 100,
-  }));
-
-  const coveredValue = rows.reduce((a, r) => a + r.value, 0);
-  const move = rows.reduce((a, r) => a + r.move, 0);
-  const dates = [...new Set(rows.map((r) => r.navDate))].sort().reverse();
+  const day = rows.filter((r) => r.inDayFigure);
+  const older = rows.filter((r) => !r.inDayFigure);
+  const coveredValue = day.reduce((a, r) => a + r.value, 0);
+  const move = day.reduce((a, r) => a + r.move, 0);
 
   return {
     rows, skipped,
@@ -275,10 +374,16 @@ export function navMoverModel(
     // Averaging the rows' percentages would weight a ₹107 residual holding the
     // same as a ₹31 Cr one — a figure neither side supports.
     changePct: coveredValue > 0 ? (move / coveredValue) * 100 : null,
+    olderRows: older.length,
+    olderValue: older.reduce((a, r) => a + r.value, 0),
     scopeValue: scope.reduce((a, p) => a + p.marketValue, 0),
     scopeNames: new Set(scope.map((p) => p.securityKey)).size,
+    cashFunds: {
+      value: cashFundRows.reduce((a, p) => a + p.marketValue, 0),
+      names: new Set(cashFundRows.map((p) => p.securityKey)).size,
+    },
     navDates: dates,
-    newestNavDate: dates[0] ?? null,
+    newestNavDate: newest,
     oldestNavDate: dates[dates.length - 1] ?? null,
   };
 }

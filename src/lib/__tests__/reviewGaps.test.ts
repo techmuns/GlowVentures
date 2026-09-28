@@ -34,6 +34,8 @@ import { REVIEW_GAPS, REVIEW_AS_OF } from "@/data/reviewGaps";
 import { reviewGapsFor, claimableGaps, REVIEW_LINE_ISINS, REVIEW_LINES_KEPT_OUT, reportedByStatement } from "@/lib/reviewGaps";
 import { depositoryFundHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 import { securityKeyOf } from "@/lib/securityKey";
+import SCHEME_NAMES from "@/data/schemeNames.json";
+import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -438,6 +440,74 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
     .filter((p) => REVIEW_GAPS.some((g) => g.name === p) && !REVIEW_LINES_KEPT_OUT.has(p));
   ok("a trust line with no folio in the drop is still claimed", trustLines.length > 0
     && trustLines.every((p) => reviewGapsFor(p).some((g) => g.name === p)), trustLines.join(", "));
+}
+
+// ── 6e. …AND A GAP WHOSE NAME IS A SCHEME THE BOOK REPORTS (SC-B4) ─────────
+//
+// 6b compares the review's name with the name the STATEMENT printed, which for
+// a mutual fund cannot work: the depository clips `WhiteOak Capital Multi Asset
+// Allocation Fund` to `WOC MAAF D-GROW`, and the note told a reader no statement
+// reported a fund the dashboard displays under its full published name. That
+// name is AMFI's, joined on the book's own ISIN — `schemeNames.json`, and AMFI's
+// daily file for Liquid BeES — so the relation is an identifier's, not a
+// resemblance's.
+//
+// RE-EXPRESSED HERE, never imported: the plan and option words and the review's
+// two AMC abbreviations are written out again as one regular expression, so a
+// check that agreed with `schemeStem` by construction is not what passes. And
+// the whole claimable list is compared as a SET, in both directions — a rule
+// that withheld too little leaves a held fund denied, and one that withheld too
+// much swallows a genuine gap such as BSE.
+{
+  type SchemeRec = { name: string; amfiName: string };
+  const schemes = SCHEME_NAMES as Record<string, SchemeRec>;
+  const TAIL = /\b(direct|regular|plan|growth|gr|grw|grow|g|d|dp|option|dd|idcw|dividend|reinvestment|reinvest|payout|daily|weekly|monthly|quarterly|bonus)\b/g;
+  const stem = (n: string) => n.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ")
+    .replace(/\bsl\b/g, "sun life").replace(/\bpru\b/g, "prudential")
+    .replace(TAIL, " ").replace(/\s+/g, " ").trim();
+  const flat = (k: string) => k.replace(/-/g, "");
+  const rel = (k: string, keys: string[]) => keys.some((bk) =>
+    bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
+  // A line a statement RECORDS with no usable price (Stage 10cy) is a holding
+  // the statements report, on both tiers — written out again here rather than
+  // read from the module.
+  const recorded = BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0 && !u.sameUnitsReportedBy);
+  const bookKeys = [...new Set([...BOOK_POSITIONS.map((p) => p.security), ...recorded.map((u) => u.security)]
+    .map((n) => securityKeyOf(n)))].filter(Boolean);
+  const heldBy = new Map<string, string>();
+  for (const key of [...BOOK_POSITIONS.map((p) => p.securityKey), ...recorded.map((u) => u.securityKey)]) {
+    const names = [schemes[key]?.name, schemes[key]?.amfiName,
+      BOOK_FUND_NAVS.find((e) => e.securityKey === key)?.scheme].filter((x): x is string => !!x);
+    for (const n of names) { const k = securityKeyOf(stem(n)); if (k) heldBy.set(k, key); }
+  }
+  const schemeKeys = [...heldBy.keys()];
+  const heldScheme = (g: typeof REVIEW_GAPS[number]) =>
+    [g.name, ...g.aliases].some((s) => { const k = securityKeyOf(stem(s)); return !!k && rel(k, schemeKeys); });
+  // A line a statement reports under an ISIN the name tiers cannot reach is
+  // withheld too (§6c) — that join is held to the statements' own balances and
+  // credits above, so it is taken from there rather than re-derived here.
+  const expected = REVIEW_GAPS.filter((g) => {
+    const k = securityKeyOf(g.name);
+    return !!k && !rel(k, bookKeys) && !heldScheme(g) && !reportedByStatement(g);
+  }).map((g) => g.name).sort();
+  const actual = claimableGaps().map((g) => g.name).sort();
+  const missingFromCode = expected.filter((n) => !actual.includes(n));
+  const extraInCode = actual.filter((n) => !expected.includes(n));
+  ok("the claimable gaps are exactly the ones naming neither a held security nor a held scheme, nor a statement-reported line",
+    missingFromCode.length === 0 && extraInCode.length === 0,
+    `withheld too much: ${missingFromCode.join(", ") || "none"} · withheld too little: ${extraInCode.join(", ") || "none"}`);
+
+  // LOAD-BEARING: the scheme tier must withhold gaps the key tier does not, or
+  // the equality above passes over a tier that does nothing.
+  const bySchemeOnly = REVIEW_GAPS.filter((g) => {
+    const k = securityKeyOf(g.name);
+    return !!k && !rel(k, bookKeys) && heldScheme(g);
+  });
+  ok("…and the scheme tier withholds gaps the statement-name tier cannot see",
+    bySchemeOnly.length > 0, `${bySchemeOnly.length}: ${bySchemeOnly.slice(0, 4).map((g) => g.name).join("; ")}`);
+  const denied = bySchemeOnly.filter((g) => reviewGapsFor(g.name).length > 0).map((g) => g.name);
+  ok("…and not one of them is answered with \"no statement reports it\"", denied.length === 0, denied.join(", "));
+  ok("…while BSE, which no statement reports, still is", reviewGapsFor("BSE Ltd.").some((g) => g.name === "BSE Ltd."));
 }
 
 // ── 7. EVERY SEARCH A READER CAN RUN OVER HOLDINGS IS WIRED TO IT ───────────

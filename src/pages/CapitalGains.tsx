@@ -19,6 +19,7 @@ import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { TreeSectionCell, TREE_ROW } from "@/components/TreeTable";
 import { Pill } from "@/components/Pill";
 import { useTableView, sortRows } from "@/lib/tableView";
+import type { Position } from "@/lib/types";
 
 // Capital Gains & Tax — honest about two holes.
 //
@@ -65,7 +66,7 @@ const daysBetween = (fromIso: string, toIso: string) =>
 const BUCKET_COLS = ["bucket", "lots", "st", "lt", "total"] as const;
 const CG_ACCT_COLS = ["account", "window", "lots", "realST", "realLT", "unrealST", "unrealLT"] as const;
 const HOLD_COLS = ["security", "gain", "turns", "saved"] as const;
-const HARVEST_COLS = ["security", "entity", "loss", "return", "term"] as const;
+const HARVEST_COLS = ["security", "entity", "loss", "return", "marked", "term"] as const;
 
 export function CapitalGains() {
   // STATEMENT BASIS, ALWAYS. This page has to tie to the capital gain statements
@@ -73,7 +74,7 @@ export function CapitalGains() {
   // book would drift its unrealised figures with the market while the realised
   // ones stayed printed, so two halves of the same table would be on two
   // different measurements with nothing on screen to say which.
-  const { statementPortfolio: portfolio, fmtFromBase } = usePortfolio();
+  const { statementPortfolio: portfolio, portfolio: livePortfolio, fmtFromBase } = usePortfolio();
   const [harvestQ, setHarvestQ] = useState("");
   // The "no capital gain statement" band opens here; above the early return,
   // as every hook must be.
@@ -136,6 +137,7 @@ export function CapitalGains() {
   // because a planner covering 7 of 301 positions that does not say so reads as
   // a planner covering the book.
   const datedLots = useMemo(() => p.filter((x) => x.daysToLT != null), [p]);
+  const datedAtLoss = useMemo(() => datedLots.filter((x) => isPriced(x) && x.unrealizedPnL < 0), [datedLots]);
   const datedAccounts = useMemo(() => {
     const byId = new Map((portfolio?.accounts ?? []).map((a) => [a.accountId, a]));
     return [...new Set(datedLots.map((x) => x.accountId))]
@@ -206,8 +208,48 @@ export function CapitalGains() {
     entity: (h) => ownerOf(accIdx, h),
     loss: (h) => h.unrealizedPnL,
     return: (h) => h.returnPct,
+    marked: (h) => accountAsOf.get(h.accountId) ?? null,
   }).slice(0, 30);
   const harvestTotal = sumOrNull(harvest.map((x) => x.unrealizedPnL));
+  /**
+   * ── A LOSS IS ONLY AS CURRENT AS THE MARK IT IS STRUCK ON (XA-22) ────────
+   *
+   * This list is on the statements' own marks, by design — it has to tie to
+   * the PDFs — and those marks are up to five months old. A mutual fund AMFI
+   * has since priced can have turned: Motilal Oswal Active Momentum reads
+   * −₹10,709 on its 6 Aug statement and is a gain of ₹92 L at the NAV of
+   * 22 Sep. So each row names the date its loss is marked at, and a row the
+   * published NAV has turned into a gain says so — kept, because it is the
+   * statement's figure, and never counted as a loss available to book.
+   */
+  const navNow = new Map<string, { pnl: number; date: string }>();
+  for (const x of livePortfolio?.positions ?? []) {
+    if (x.navPriced && typeof x.unrealizedPnL === "number" && x.navDate) {
+      navNow.set(`${x.accountId}|${x.securityKey}`, { pnl: x.unrealizedPnL, date: x.navDate });
+    }
+  }
+  const navTurned = (h: Position) => {
+    const n = navNow.get(`${h.accountId}|${h.securityKey}`);
+    return n && n.pnl >= 0 ? n : null;
+  };
+  const turnedRows = harvest.filter((h) => navTurned(h));
+  /**
+   * ── A DATED LOT HAS A TERM (XA-16) ─────────────────────────────────────────
+   *
+   * The ST/LT cell was an absence on every row — "no lot acquisition date" —
+   * including the three LKP holdings whose broker publishes a lot register
+   * (Transrail −₹8.5 L among them). Those carry each side's cost and the days
+   * their first short-term lot needs to turn long-term, counted from THEIR
+   * account's report date. That is a term, and it is shown; a row with no
+   * dated lot keeps its reason.
+   */
+  const termOf = (h: Position) => {
+    if (h.stCostBasis == null && h.ltCostBasis == null) return null;
+    const hasST = (h.stCostBasis ?? 0) > 0, hasLT = (h.ltCostBasis ?? 0) > 0;
+    const from = accountAsOf.get(h.accountId) ?? asOf;
+    const turns = hasST && h.daysToLT != null ? addDays(from, h.daysToLT) : null;
+    return { hasST, hasLT, from, turns };
+  };
   /**
    * REALISED GAINS, SPLIT BY HOW THE HOLDING WAS RUN — not by what it WAS.
    *
@@ -261,9 +303,13 @@ export function CapitalGains() {
       // `RealisedByClass` row is an AGGREGATE over several securities
       // (`r.securities` is a list), so there is no single key to test for a
       // cash equivalent and inventing one would file a whole row on one of its
-      // members. Measured, it costs nothing: seven of this book's eight rows
-      // are mandates and short-circuit above, and the eighth is LKP's Equity
-      // aggregate, which carries no cash equivalent to be misfiled.
+      // members. Measured, it costs one lot and no rupee: seven of this book's
+      // eight rows are mandates and short-circuit above, and the eighth is
+      // LKP's Equity aggregate, which DOES include a cash equivalent — one
+      // Nippon India ETF Liquid BeES lot, realised ₹0 — so Direct Equity's lot
+      // count carries it. The row lists securities but no key to test, which is
+      // how the book files it (`BOOK_REALISED_BY_CLASS`); the split belongs in
+      // the builder, not in a guess here.
       const held = acc && isMandateHeld(acc.engagement) ? MANDATE_BUCKET
         : r.assetClass ? holdingBucket({ assetClass: r.assetClass }, acc?.engagement)
         : null;
@@ -322,6 +368,7 @@ export function CapitalGains() {
   // (Stage 10bx), so they are named — one click in — and never mixed into the
   // rows a reader is scanning for figures.
   const acctReported = acctRowsShown.filter((c) => !c.absent);
+  const footLots = acctReported.every((c) => c.lots != null) ? acctReported.reduce((n, c) => n + (c.lots ?? 0), 0) : null;
   const acctMissing = acctRowsShown.filter((c) => c.absent);
 
   return (
@@ -353,8 +400,10 @@ export function CapitalGains() {
 
         <StatTile label="Embedded (unrealised) gains"
           {...(unrealisedTotal === null
-            ? absentTile("needs lot acquisition dates",
-              "The short/long-term split needs to know when each lot was bought. No statement in this drop carries lot dates.")
+            ? absentTile(datedLots.length ? "needs every lot's purchase date" : "needs lot acquisition dates",
+              datedLots.length
+                ? `The short/long-term split needs when each lot still held was bought. Only ${datedLots.length} holding${datedLots.length === 1 ? " carries" : "s carry"} dated lots — ${datedAccounts.join(", ")}, from a broker's lot register — and a split over ${datedLots.length === 1 ? "it" : "those"} alone would read as the book's. No other statement here dates the lots still held.`
+                : "The short/long-term split needs to know when each lot was bought. No statement in this drop carries lot dates.")
             : {
               value: fmtFromBase(unrealisedTotal, { compact: true }),
               sub: <>ST {fmtFromBase(totUnrealST ?? 0, { compact: true })} · LT {fmtFromBase(totUnrealLT ?? 0, { compact: true })}</>,
@@ -405,8 +454,13 @@ export function CapitalGains() {
               value: fmtFromBase(totalSaving, { compact: true }),
               sub: `${holdCandidates.length} still short-term${crossed ? ` · ${crossed} already crossed` : ""}`,
             }
-            : absentTile("needs lot acquisition dates",
-              "The planner defers short-term winners past their one-year mark. Without a lot date there is no mark to count to."))}
+            : datedLots.length
+              ? absentTile("no short-term winner to defer",
+                `${datedLots.length} holding${datedLots.length === 1 ? " carries" : "s carry"} a purchase date (${datedAccounts.join(", ")}); ${datedAtLoss.length === datedLots.length
+                  ? (datedLots.length === 1 ? "it is at a loss" : `all ${datedLots.length} are at a loss`)
+                  : `${datedAtLoss.length} at a loss${crossed ? `, ${crossed} already past one year` : ""}`} — so there is no short-term gain to carry past its one-year mark.`)
+              : absentTile("needs lot acquisition dates",
+                "The planner defers short-term winners past their one-year mark. Without a lot date there is no mark to count to."))}
           icon={<Timer className="h-4 w-4" />} />
       </div>
 
@@ -466,7 +520,7 @@ export function CapitalGains() {
                 <TrFoot view={bucketView} className="px-4 py-2.5 text-slate-200"
                   label={<>Total — the canonical figure</>}
                   cells={{
-                    lots: <td key="lots" className="px-4 py-2.5 text-right mono text-slate-400">{byBucket.reduce((s, c) => s + c.lots, 0)}</td>,
+                    lots: <td key="lots" className="px-4 py-2.5 text-right mono text-slate-400" data-cg-bucket-lots>{byBucket.reduce((s, c) => s + c.lots, 0)}</td>,
                     st: <td key="st" className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>{fmtFromBase(totRealST ?? 0, { compact: true, sign: true })}</td>,
                     lt: <td key="lt" className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT ?? 0)}`}>{fmtFromBase(totRealLT ?? 0, { compact: true, sign: true })}</td>,
                     total: <td key="total" className={`px-4 py-2.5 text-right mono ${changeColor(realisedTotal ?? 0)}`}>{fmtFromBase(realisedTotal ?? 0, { compact: true, sign: true })}</td>,
@@ -498,7 +552,7 @@ export function CapitalGains() {
                 <Tr view={acctView} key={c.entity} className="hover:bg-ink-700/40" data-cg-account={c.entity}>
                   <td className="px-4 py-2.5 font-medium text-slate-100">{c.entity}</td>
                   <td className="px-4 py-2.5 text-[11px] text-slate-400">{c.periodFrom} → {c.periodTo}</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">{c.lots ?? DASH}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-400" data-cg-lots={c.lots ?? ""}>{c.lots ?? DASH}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedST ?? 0)}`}>
                     {fmtFromBase(c.realisedST ?? 0, { compact: true, sign: true })}
                   </td>
@@ -533,9 +587,16 @@ export function CapitalGains() {
             </tbody>
             <tfoot className="border-t border-ink-700 font-semibold">
               <TrFoot view={acctView} className="px-4 py-2.5 text-slate-200"
-                label={<>Total</>}
+                label={<span data-cg-foot-accounts={reported.length}
+                  title={`${reported.length} of ${cg.length} accounts issue a capital gain statement; the other ${cg.length - reported.length} are the band above, each with its reason.`}>Total</span>}
                 cells={{
-                  lots: <td key="lots" className="px-4 py-2.5 text-[11px] text-slate-500">{reported.length} of {cg.length} accounts</td>,
+                  /* THE LOTS COLUMN'S TOTAL IS ITS LOTS (XP-16). It printed "7 of
+                     51 accounts" here, a count of a different thing under a
+                     column of lot counts; the bucket table above prints the
+                     same lots and ties. The account coverage is the label's hover. */
+                  lots: footLots === null
+                    ? <td key="lots" className="px-4 py-2.5 text-right mono" data-cg-foot-lots=""><AbsentCell reason="an account's statement prints no lot count" /></td>
+                    : <td key="lots" className="px-4 py-2.5 text-right mono text-slate-400" data-cg-foot-lots={footLots}>{footLots}</td>,
                   realST: (
                     <td key="realST" className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>
                       {totRealST === null ? <AbsentCell /> : fmtFromBase(totRealST, { compact: true, sign: true })}
@@ -566,10 +627,10 @@ export function CapitalGains() {
               needs={datedLots.length
                 ? `Nothing left to defer on the ${datedAccounts.length === 1 ? "one account" : `${datedAccounts.length} accounts`} that publish lot dates. The planner covers ${datedLots.length} position(s) on ${datedAccounts.join(", ")} — the only
                   account(s) here whose broker publishes a LOT REGISTER with dated acquisitions. None of them is
-                  currently a short-term holding at a gain, so there is nothing to defer. The other
-                  ${(portfolio.accounts.length - datedAccounts.length)} accounts issue a CAPITAL REGISTER, which
-                  is a capital-account ledger — contributions, withdrawals, TDS transfers — and carries no
-                  purchase dates, so their lots cannot be aged at all.`
+                  currently a short-term holding at a gain, so there is nothing to defer. No other account's
+                  statements date the lots still held: a managed account's capital register is a capital-account
+                  ledger — contributions, withdrawals, TDS transfers — and a depository, fund or folio statement
+                  reports what is held, not when each unit was bought, so those lots cannot be aged at all.`
                 : `The planner works out how long each lot has left before its gain becomes long-term, which
                   needs the date that lot was bought. The CAPITAL REGISTER these managers issue is a
                   capital-account ledger — contributions, withdrawals, TDS transfers — not a lot register, and no
@@ -611,8 +672,15 @@ export function CapitalGains() {
           ) : (
             <>
               <div className="mb-2 flex items-baseline justify-between px-1">
-                <span className="text-[11.5px] text-slate-400">
+                <span className="text-[11.5px] text-slate-400" data-xa="cg-harvest-caption"
+                  data-rows={harvest.length} data-nav-turned={turnedRows.length}
+                  title={turnedRows.length
+                    ? `On their statements' marks. At AMFI's published NAV ${turnedRows.map((h) => `${h.security} is a gain of ${money(navTurned(h)!.pnl, true)}`).join("; ")} — so ${turnedRows.length === 1 ? "that loss is" : "those losses are"} not there to book now.`
+                    : "On their statements' marks; each row names the date its loss is marked at."}>
+                  {/* A COUNT, NOT A SENTENCE (Stage 10cp): which marks the loss is
+                      struck on is the first line of this caption's own hover. */}
                   {harvest.length} position{harvest.length === 1 ? "" : "s"} underwater
+                  {turnedRows.length > 0 && <> · <span className="text-amber-400">{turnedRows.length} no longer at a loss at AMFI&rsquo;s NAV</span></>}
                 </span>
                 <span className="mono text-[13px] text-loss">{money(harvestTotal, true)}</span>
               </div>
@@ -624,13 +692,24 @@ export function CapitalGains() {
                       <SortHeader col="entity" view={harvestView} align="left">Entity</SortHeader>
                       <SortHeader col="loss" view={harvestView}>Unreal. loss</SortHeader>
                       <SortHeader col="return" view={harvestView}>Return</SortHeader>
+                      <SortHeader col="marked" view={harvestView}>Marked</SortHeader>
                       <SortHeader col="term" view={harvestView} sortable={false}>ST / LT</SortHeader>
                     </Tr>
                   </thead>
                   <tbody className="divide-y divide-ink-700/70">
                     {harvestShown.map((h) => (
                       <Tr view={harvestView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
-                        <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
+                        <td className="px-4 py-2.5 text-slate-100" data-xa="cg-harvest-row" data-key={h.securityKey}
+                          data-account={h.accountId} data-marked={accountAsOf.get(h.accountId) ?? ""}
+                          data-nav-turned={navTurned(h) ? "1" : "0"}>
+                          <StockLink securityKey={h.securityKey} name={h.security} />
+                          {h.assetClass === "AIF" && (
+                            <span className="ml-1.5 text-[10.5px] text-slate-500"
+                              title="An AIF unit is exited by redeeming it with the fund or transferring it. No statement here reports whether this fund permits either before it winds up, so whether this loss can be booked is a question for the fund — not a figure this page can settle.">
+                              AIF unit · exit terms not reported
+                            </span>
+                          )}
+                        </td>
                         <td className="px-4 py-2.5 text-slate-400">{ownerOf(accIdx, h)}</td>
                         <td className="px-4 py-2.5 text-right mono text-loss">
                           {money(h.unrealizedPnL, true)}
@@ -638,13 +717,48 @@ export function CapitalGains() {
                         <td className={`px-4 py-2.5 text-right mono ${changeColor(h.returnPct)}`}>
                           {fmtPct(h.returnPct, { sign: true, decimals: 1 })}
                         </td>
-                        <td className="px-4 py-2.5 text-right mono">
-                          <AbsentCell reason="no lot acquisition date, so the holding period is unknown" />
+                        <td className="px-4 py-2.5 text-right mono text-slate-400 whitespace-nowrap">
+                          {fmtDate(accountAsOf.get(h.accountId) ?? asOf)}
+                          {navTurned(h) && (
+                            <span className="text-amber-400"
+                              title={`AMFI's published NAV of ${fmtDate(navTurned(h)!.date)} values this holding at a gain of ${money(navTurned(h)!.pnl, true)} — the loss beside it is its statement's, and is not there to book now.`}>
+                              {" "}· NAV {money(navTurned(h)!.pnl, true)}
+                            </span>
+                          )}
                         </td>
+                        {(() => {
+                          const term = termOf(h);
+                          if (!term) {
+                            return (
+                              <td className="px-4 py-2.5 text-right mono">
+                                <AbsentCell reason="this account's statements carry no lot acquisition date, so the holding period is unknown" />
+                              </td>
+                            );
+                          }
+                          const label = term.hasST && term.hasLT ? "ST + LT" : term.hasST ? "ST" : term.hasLT ? "LT" : DASH;
+                          const turnsNote = term.turns
+                            ? term.turns <= today
+                              ? ` Its first short-term lot turned long-term on ${fmtDate(term.turns)}, so some or all of it is long-term now.`
+                              : ` Its first short-term lot turns long-term on ${fmtDate(term.turns)}.`
+                            : "";
+                          return (
+                            <td className="px-4 py-2.5 text-right mono whitespace-nowrap" data-xa="cg-term" data-key={h.securityKey}
+                              data-account={h.accountId} data-st={h.stCostBasis ?? ""} data-lt={h.ltCostBasis ?? ""}
+                              data-turns={term.turns ?? ""}
+                              title={`From the broker's lot register, at the statement date (${fmtDate(term.from)}): short-term cost ${money(h.stCostBasis ?? 0)}, long-term cost ${money(h.ltCostBasis ?? 0)}.${turnsNote}`}>
+                              {label}
+                              {term.turns && (
+                                <span className="text-[10.5px] text-slate-500">
+                                  {term.turns <= today ? ` → LT ${fmtDate(term.turns)}` : ` until ${fmtDate(term.turns)}`}
+                                </span>
+                              )}
+                            </td>
+                          );
+                        })()}
                       </Tr>
                     ))}
                     {harvestRows.length === 0 && (
-                      <tr><td colSpan={5} className="py-10 text-center text-sm text-slate-500">
+                      <tr><td colSpan={6} className="py-10 text-center text-sm text-slate-500">
                         No security matches "{harvestQ}".
                       </td></tr>
                     )}

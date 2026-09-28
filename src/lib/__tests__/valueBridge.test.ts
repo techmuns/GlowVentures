@@ -1,4 +1,4 @@
-// A VALUE BRIDGE IS DRAWN ONLY WHERE ITS PARTS MAKE ITS TOTAL (A-12, XA-21).
+// A VALUE BRIDGE IS DRAWN ONLY WHERE ITS PARTS MAKE ITS TOTAL (A-12, XA-21, XA-23).
 //
 // `/performance` drew every column of `BOOK_ACCOUNT_BRIDGES` as opening →
 // capital → gains → costs → closing, and on this book not one financial-year
@@ -17,7 +17,7 @@
 // drew a column that does not add up fails by name.
 import fs from "node:fs";
 import path from "node:path";
-import { BOOK_ACCOUNTS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_ACCOUNT_BRIDGES, BOOK_ACCOUNT_CASH_FLOWS } from "@/data/glowData";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -171,6 +171,28 @@ const dropped = tied.map((b) => {
 ok("the tie rule catches a dropped line, in every column that adds up",
   dropped.length > 0 && dropped.every((x) => x.k && !x.still),
   dropped.filter((x) => !x.k || x.still).map((x) => `${x.b.source}:${x.k}`).join(", ") || `${dropped.length} columns`);
+
+// ── 4. A CLASS SWITCH IS NOT A FLOW (XA-23) ──────────────────────────────────
+// Buoyant 103473's capital register prints its 1 June switch as "Security in"
+// and "Security out" of ₹22.53 Cr; the page counted "Dated flows 4" where two
+// payments were made. The witness is the fund's OWN reclassification record —
+// same account, same date, the same rupees — read off the archive here.
+let legsFound = 0, legsInFlows = 0;
+for (const [accountId, flows] of Object.entries(BOOK_ACCOUNT_CASH_FLOWS)) {
+  const a = acct.get(accountId);
+  const mine = docs.filter((d) => d.provider === a?.provider && d.accountNo === a?.accountNo);
+  const legs = mine.flatMap((d) => (d.cashFlows ?? []).filter((c) => c.kind === "reclassification" && c.date && num(c.amount)));
+  const registerLegs = mine.filter((d) => d.reportType === "capital-register").flatMap((d) => (d.cashFlows ?? [])
+    .filter((c) => c.date && num(c.amount) && legs.some((l) => l.date === c.date && Math.abs(Math.abs(l.amount) - Math.abs(c.amount)) <= 1)));
+  legsFound += registerLegs.length;
+  for (const f of flows as Row[]) {
+    if (legs.some((l) => l.date === f.date && Math.abs(Math.abs(l.amount) - Math.abs(f.amount)) <= 1)) {
+      legsInFlows++; console.log(`  ${accountId}: ${f.date} ${f.amount} "${f.description}" is a class-switch leg`);
+    }
+  }
+}
+ok("no dated flow is the leg of a class switch", legsInFlows === 0, `${legsInFlows} found`);
+ok("…and this book's registers DO print such legs, so the check has a subject", legsFound > 0, `${legsFound} register rows`);
 
 console.log(fails ? `\n${fails} FAILED` : "\nall value-bridge checks pass");
 if (fails) process.exit(1);

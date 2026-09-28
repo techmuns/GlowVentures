@@ -50,7 +50,7 @@ const acct = (o: Partial<Account>): Account => ({
 const txn = (o: Partial<Txn>): Txn => ({
   date: "2026-04-01", security: "Acme Ltd", securityKey: "acme", account: "Ajay · GL 510861",
   provider: "Green Lantern", accountNo: "510861", ownerId: "ajay", assetClass: "Equity",
-  side: "Buy", qty: 10, price: 100, amount: 1000, realized: null, ...o,
+  side: "Buy", qty: 10, price: 100, amount: 1000, realized: null, isin: null, isinFrom: null, ...o,
 });
 const move = (o: Partial<CapitalMove>): CapitalMove => ({
   accountId: "gl", date: "2025-01-16", direction: "in", label: "Initial Contribution",

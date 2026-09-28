@@ -14,7 +14,7 @@ import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
 import { applyFundNavs, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
 import { depositoryShareHoldings, depositoryShareIsins, depositoryShareSymbols, shareCandidates } from "@/lib/depositoryShares";
-import { applyCorporateActionQuotes, fetchCorporateActions, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
+import { applyCorporateActionQuotes, fetchCorporateActions, liveWithheldReason, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
@@ -205,7 +205,21 @@ type Ctx = {
   quotesStatus: QuotesStatus;
   quotesAsOf: string | null;   // when the feed was pulled
   livePriced: number;          // holdings carrying a live price
-  notLive: number;             // holdings still on their statement mark
+  /**
+   * Holdings with an NSE symbol and no quote in this round — still on their
+   * statement mark. NOT the ones the corporate-action check held back: those
+   * DID get a quote, and are counted in `liveWithheld` (DL-9).
+   */
+  notLive: number;
+  /**
+   * Holdings whose live quote ARRIVED and was held back by the corporate-action
+   * check, because pairing it with the statement's share count could be wrong —
+   * sales recorded after the statement, an event the capture cannot allocate, or
+   * the evidence still loading. Each holding's own page names the reason
+   * (`liveWithheldReason`). Folded into `notLive` they read as a feed that did
+   * not answer, which sends a reader to wait for a feed that already did.
+   */
+  liveWithheld: number;
   /** The feeds pricing what is on screen — "Upstox", "muns" — primary first. */
   quoteFeeds: string[];
   /**
@@ -513,21 +527,29 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // no NSE symbol — cash, a receivable, the liquid-fund sweep — is not waiting
   // on the feed; it has nothing to quote. Counting it as "not live" would report
   // a permanent feed shortfall that no token or network would ever close.
-  const { livePriced, notLive, unpriceable } = useMemo(() => {
-    const bySecurity = new Map<string, { live: boolean; hasSymbol: boolean }>();
+  //
+  // `liveWithheld` is split out for the same reason, from the other side: a
+  // security whose quote ARRIVED and was held back by the corporate-action check
+  // is not waiting on the feed either — it is waiting on a share count (DL-9).
+  // Counted where a quote was held back on at least one of its lines and none
+  // of them went live, so the three counts partition the not-live securities.
+  const { livePriced, notLive, liveWithheld, unpriceable } = useMemo(() => {
+    const bySecurity = new Map<string, { live: boolean; hasSymbol: boolean; withheld: boolean }>();
     for (const p of portfolio?.positions ?? []) {
-      const e = bySecurity.get(p.securityKey) ?? { live: false, hasSymbol: false };
+      const e = bySecurity.get(p.securityKey) ?? { live: false, hasSymbol: false, withheld: false };
       e.live = e.live || !!p.live;
       e.hasSymbol = e.hasSymbol || !!symbolFor(p);
+      e.withheld = e.withheld || !!liveWithheldReason(p, corporateActionLayer.returns);
       bySecurity.set(p.securityKey, e);
     }
     const all = [...bySecurity.values()];
     return {
       livePriced: all.filter((e) => e.live).length,
-      notLive: all.filter((e) => !e.live && e.hasSymbol).length,
+      notLive: all.filter((e) => !e.live && e.hasSymbol && !e.withheld).length,
+      liveWithheld: all.filter((e) => !e.live && e.hasSymbol && e.withheld).length,
       unpriceable: all.filter((e) => !e.hasSymbol).length,
     };
-  }, [portfolio]);
+  }, [portfolio, corporateActionLayer]);
 
   // The basis the merged book is actually on. LIVE the moment any position
   // carries a live price — from then on the consolidated total no longer equals
@@ -554,11 +576,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     () => ({
       portfolio, consolidated, statementPortfolio: basePortfolio, basis,
       bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
-      quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
+      quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, liveWithheld, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
       corporateActions, corporateActionsStatus, corporateActionReturns: corporateActionLayer.returns,
     }),
     [portfolio, consolidated, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
-     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
+     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, liveWithheld, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
      corporateActions, corporateActionsStatus, corporateActionLayer],
   );
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;

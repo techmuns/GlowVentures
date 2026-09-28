@@ -509,10 +509,14 @@ const ARCHIVE_KEYS = (() => {
     catch { continue; }
     for (const h of doc.holdings ?? []) {
       if (!h.securityKey) continue;
-      const e = m.get(h.securityKey) ?? { qty: 0, docs: new Set(), faceValue: null };
+      const e = m.get(h.securityKey) ?? { qty: 0, docs: new Set(), faceValue: null, lastMovement: false };
       e.qty += h.quantity ?? 0;
       e.docs.add(d.docKey);
       if (h.faceValue != null) e.faceValue = h.faceValue;
+      // A Motilal CDSL line's rate is the price of its LAST DEPOSITORY
+      // MOVEMENT (Stage 10cy) — a price the statement did print, for a date
+      // that is not the statement's, so "no price published" would be false.
+      if (h.lastMovementRate != null) e.lastMovement = true;
       m.set(h.securityKey, e);
     }
   }
@@ -813,7 +817,8 @@ for (const l of securityLines.sort((a, b) => (b.mv ?? 0) - (a.mv ?? 0))) {
     const am = matchInArchive(l.product);
     const a = am.key ? ARCHIVE_KEYS.get(am.key) : null;
     if (a) {
-      verdict = `in the archive, **not valued** — ${qty(a.qty)} unit(s)${a.faceValue != null ? ` recorded at a face value of ${a.faceValue}` : ", no price published"}`;
+      verdict = `in the archive, **not valued** — ${qty(a.qty)} unit(s)${a.faceValue != null ? ` recorded at a face value of ${a.faceValue}`
+        : a.lastMovement ? ", the statement's rate being the price of its last depository movement, not a mark" : ", no price published"}`;
       unvalued++; l.archive = a;
     } else { verdict = "**no statement in `source/` reports this**"; missing++; notInBook.push(l); }
   }

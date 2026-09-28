@@ -326,6 +326,15 @@ export function extract({ grid, meta = {} }) {
    * 30th's close. `asOf` is the holdings date, because that is what the account
    * registry means by it; the price date is carried separately so the one-day
    * skew is visible rather than assumed away.
+   *
+   * IT RIDES ON EVERY HOLDING, as `priceAsOn` — the normalized shape's own
+   * per-holding pricing date, which the fund and 360 ONE readers already fill
+   * from a column. `makeDocument` carries no document-level price date (the
+   * archive's own warning names `priceAsOf` as discarded), so this reader left
+   * `priceAsOn: null` on all 38 rows and the book dated every mark to the 31st.
+   * The statement prints the date once, in its total row, and it values every
+   * row, so every row carries it. Where no `Prices as on` is printed it is null
+   * — never the title's date, which is a claim about the balance.
    */
   const asOf = toIso((/Statement\s+of\s+Holding\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1]);
   const priceAsOf = toIso((/Prices\s+as\s+on\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1]);
@@ -364,10 +373,10 @@ export function extract({ grid, meta = {} }) {
     warnings,
   };
 
-  return { ...base, ...readHoldings(pages, text, meta, warnings) };
+  return { ...base, ...readHoldings(pages, text, meta, warnings, priceAsOf) };
 }
 
-function readHoldings(pages, text, meta, warnings) {
+function readHoldings(pages, text, meta, warnings, priceAsOf = null) {
   const source = meta.docKey ?? null;
   const bands = bandsFromHeader(pages);
   if (!bands) {
@@ -514,6 +523,12 @@ function readHoldings(pages, text, meta, warnings) {
       marketValue: face ? null : value,
       /** What the depository DID print, so the archive shows the document. */
       faceValue: face ? face.price : null,
+      /**
+       * The date the statement says its values are priced at — the total row's
+       * `Prices as on`. On a par row it dates the depository's own figure,
+       * which this book does not carry as a mark.
+       */
+      priceAsOn: priceAsOf,
       source,
     }));
   }

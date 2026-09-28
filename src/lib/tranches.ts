@@ -180,7 +180,11 @@ export function trancheTable(
       rows.push({
         move: m, date: m.date, label: m.label, amount: m.amount,
         invested: m.invested, units: m.units,
-        navAtEntry: m.invested / m.units,
+        // What BOUGHT the units over the units it bought. `invested` is every
+        // rupee paid (VD-24) and the statement's own charges on that
+        // contribution were not unit-buying money, so they come back out here —
+        // a stamp duty does not move a unit price.
+        navAtEntry: (m.invested - (m.charges ?? 0)) / m.units,
         value, returnPct, valuedAt: end,
         // This tranche's OWN contribution date, which is the whole reason a
         // tranche can annualise where the position around it cannot.
@@ -303,6 +307,49 @@ export function carriedCostNote(c: CarriedCost, money: (v: number) => string): s
 }
 
 /**
+ * A COST ON THE GROSS-PAID BASIS (VD-24): every rupee the family paid in, where
+ * the fund's statement costs the units at what bought them — its contributions
+ * LESS the stamp duty and charges it prints against them. `build-book` restates
+ * it (`grossPaidCost`) only where the net and the charges add to the paid figure
+ * to the paisa, and keeps the statement's net as `printedCostBasis`.
+ *
+ * Summed over the constituents that REPORT a cost, on both sides, exactly as
+ * `carriedCostOf` is, so `paid` is the row's own Invested figure. Null where no
+ * constituent's cost is on this basis.
+ */
+export type GrossPaidCost = {
+  /** Every rupee paid in — the book's own cost. */
+  paid: number;
+  /** What the statements print instead: the net that bought units. */
+  printed: number;
+  /** The stamp duty and charges between the two. */
+  charges: number;
+};
+
+export function grossPaidOf(ps: Position[]): GrossPaidCost | null {
+  if (!ps.some((p) => p.costBasisSource === "gross-paid")) return null;
+  let paid = 0, printed = 0;
+  for (const p of ps) {
+    if (p.costBasis === null) continue;
+    paid += p.costBasis;
+    printed += p.printedCostBasis ?? p.costBasis;
+  }
+  return { paid, printed, charges: paid - printed };
+}
+
+/**
+ * WHY THIS INVESTED FIGURE IS A LITTLE ABOVE THE ONE THE STATEMENT PRINTS. The
+ * charges are a few thousand rupees on crores, so a compact figure would print
+ * both costs identically: `exact` prints the two that differ in full.
+ */
+export function grossPaidNote(g: GrossPaidCost, exact: (v: number) => string): string {
+  return `This is every rupee PAID IN, stamp duty and charges included: ${exact(g.paid)}. `
+    + `The fund's statements cost these units at ${exact(g.printed)} — what bought units after the `
+    + `${exact(g.charges)} of stamp duty and charges they print against the same contributions. `
+    + `The book counts what was paid, the basis Helios, Active Momentum, Founders and Delphi print.`;
+}
+
+/**
  * The per-unit price a CARRIED tranche was bought at, in the class it was
  * bought in — the Allotment NAV the statement prints. Null on a tranche that
  * was bought in the class it is held in, whose `navAtEntry` already is that.
@@ -354,8 +401,20 @@ export type CapitalGroup = {
   committed: number | null;
   /** ...and how much of that promise is still to be called, as its statement prints it. */
   undrawn: number | null;
+  /**
+   * The dated span of EVERY movement in view, both directions — what the table
+   * is ORDERED on ("recent first" means the latest movement of either kind).
+   */
   first: string;
   last: string;
+  /**
+   * ...and the span of the PURCHASES in view alone, which is what "Purchased on"
+   * states (MT-8). Taken over both directions it read "16 Jan 2025 → 25 Jun
+   * 2026" on an account funded once, the second date a TDS-sized outflow, and
+   * ran 3P's to the day of its redemption. Empty where no purchase is in view.
+   */
+  boughtFirst: string;
+  boughtLast: string;
   /** More than one dated contribution. A fact about the count, not a judgement. */
   staggered: boolean;
   /**
@@ -718,6 +777,7 @@ export function capitalRollup(
       : held.reduce((s, p) => s + (p.costBasis ?? 0), 0);
 
     const dates = ms.map((m) => m.date).sort();
+    const boughtDates = ins.map((m) => m.date).sort();
     // BOTH ENDS: the record must reach back to inception AND forward to the date
     // the value beside it is struck on (`recordShortfall`) — the second asked of
     // a capital RECORD only, since a fund's call list is read off the very
@@ -886,6 +946,7 @@ export function capitalRollup(
       committed: c?.committed ?? null,
       undrawn: c?.undrawn ?? null,
       first: dates[0] ?? "", last: dates[dates.length - 1] ?? "",
+      boughtFirst: boughtDates[0] ?? "", boughtLast: boughtDates.at(-1) ?? "",
       staggered: ins.length > 1,
       value,
       valueAsOf: a?.asOf ?? null,

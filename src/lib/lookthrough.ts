@@ -626,7 +626,7 @@ export type StockExposureState =
       /** Value of the funds it could not — the AIF block, and any unresolved scheme. */
       skippedValue: number;
       /**
-       * `disclosedValue - total`: the part of a disclosed fund that NO LINE in
+       * `disclosedValue - total - fencedValue`: the part of a disclosed fund that NO LINE in
        * the filing accounted for — its cash sleeve, a gold or silver ETF's
        * metal, a line carrying neither an ISIN nor a usable name, and the
        * disclosure's own rounding.
@@ -641,6 +641,16 @@ export type StockExposureState =
        * every caller inherits it.
        */
       unaccountedValue: number;
+      /**
+       * THE FAMILY'S SHARE OF A DISCLOSED LINE THE RING-FENCE KEEPS OUT (PC-11).
+       * A fund this family holds discloses the ring-fenced holding's own
+       * company, and the fence is about a security wherever it is reported — so
+       * that line reaches no row. It is still a LINE of the filing, so it is not
+       * part of what `unaccountedValue` says no line accounts for (a scheme's
+       * cash, a metal ETF's metal, rounding), which is where it used to sit. A
+       * caller counts it as its own term and never names it.
+       */
+      fencedValue: number;
     };
 
 /**
@@ -697,6 +707,15 @@ export type CompanyExposure = {
   sectorFrom: "book" | "disclosure" | "vendor" | null;
   /** The book rows behind `measured`, for a drill-down. Empty on a derived-only company. */
   positions: Position[];
+  /**
+   * WHAT THE FAMILY HOLD THIS ISSUER AS (FS-13): `Equity` where a statement
+   * reports a share of it, and each class its funds' filings give the lines
+   * they disclose — `Equity`, `Debt`, `Other`. Since Stage 10as a row is an
+   * ISSUER, reached through a share, a bond, a CD or a bill alike, so a
+   * caption that calls every row a company, or says the non-equity is off the
+   * page, has to be able to count which is which.
+   */
+  classes: string[];
 };
 
 /**
@@ -709,6 +728,15 @@ function symbolFor(key: string, positions: Position[]): string | null {
   return KEY_TO_SYMBOL[key] ?? null;
 }
 
+/**
+ * The symbol a company resolves to, for a page that says WHY the vendor tier
+ * placed nothing (FS-13): with no symbol nothing keys the screener.in lookup,
+ * which is a different cause from a lookup that holds no sector for one — and a
+ * different cause again from an issuer reached only through debt paper.
+ */
+export const companySymbol = (e: Pick<CompanyExposure, "key" | "positions">): string | null =>
+  symbolFor(e.key, e.positions);
+
 export function companyExposure(
   /** Consolidated COMPANY SHARES — a sector is a property of a company. */
   positions: Position[],
@@ -719,10 +747,11 @@ export function companyExposure(
     const e = byKey.get(p.securityKey) ?? {
       key: p.securityKey, name: p.security, isin: p.isin ?? null,
       measured: 0, derived: 0, total: 0,
-      sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[],
+      sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
     };
     e.measured += p.marketValue;
     e.positions.push(p);
+    if (!e.classes.includes("Equity")) e.classes.push("Equity");
     if (!e.isin && p.isin) e.isin = p.isin;
     if (e.sectorFrom !== "book" && p.sector && p.sector !== UNCLASSIFIED) {
       e.sector = p.sector; e.sectorFrom = "book";
@@ -734,9 +763,10 @@ export function companyExposure(
       const e = byKey.get(x.key) ?? {
         key: x.key, name: x.name, isin: x.isin,
         measured: 0, derived: 0, total: 0,
-        sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[],
+        sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
       };
       e.derived += x.total;
+      for (const c of x.classes) if (!e.classes.includes(c)) e.classes.push(c);
       if (!e.isin && x.isin) e.isin = x.isin;
       if (e.sectorFrom === null && x.sector) { e.sector = x.sector; e.sectorFrom = "disclosure"; }
       byKey.set(x.key, e);
@@ -762,7 +792,7 @@ export function companyExposure(
     const hit = symbol ? VENDOR_SECTORS[symbol] : undefined;
     if (hit && hit.gics && hit.gics !== UNCLASSIFIED) { e.sector = hit.gics; e.sectorFrom = "vendor"; }
   }
-  for (const e of byKey.values()) e.total = e.measured + e.derived;
+  for (const e of byKey.values()) { e.total = e.measured + e.derived; e.classes.sort(); }
   return [...byKey.values()].sort((a, b) => b.total - a.total);
 }
 
@@ -858,9 +888,9 @@ const skipReason = (f: HeldFund, indexReason: string | null): string =>
  *     fund's own value already stands for it in the book, so summing both counts
  *     the same money twice — the rule this whole store is fenced by. A caller
  *     that shows it beside the book's own figure must say which is which.
- *   • IT IS EQUITY-ONLY AND PARTIAL. `skipped`, `skippedValue` and
- *     `unaccountedValue` are returned so a caller can state exactly what it does
- *     not cover, rather than implying completeness.
+ *   • IT IS PARTIAL. `skipped`, `skippedValue`, `unaccountedValue` and
+ *     `fencedValue` are returned so a caller can state exactly what it does not
+ *     cover, rather than implying completeness.
  *   • IT IS DATED DIFFERENTLY FROM THE BOOK. A disclosure is monthly; a holding
  *     is valued on its own statement's date. Both ride on every row.
  *
@@ -1126,6 +1156,7 @@ export async function loadStockExposure(
   let total = 0;
   let disclosedValue = 0;
   let skippedValue = 0;
+  let fencedValue = 0;
 
   for (const { f, pf, skip } of loaded) {
     if (!pf) {
@@ -1155,7 +1186,16 @@ export async function loadStockExposure(
       const isin = (h.isin ?? "").trim().toUpperCase() || null;
       const nameKey = securityKeyOf(h.name);
       if (!nameKey && !isin) continue;
-      if (fenced(isin, h.name)) continue;
+      if (fenced(isin, h.name)) {
+        // THE FENCED LINE IS ITS OWN TERM (PC-11), counted on the same rules as
+        // any line here — a positive share, the same ISIN once per fund — and
+        // drawn in no row. It is left out of `total` and out of
+        // `unaccountedValue` both.
+        const fencedOn = isin ?? `name:${nameKey}`;
+        const v = familyValue(f.marketValue, h.pctAum);
+        if (v > 0 && !seenHere.has(fencedOn)) { seenHere.add(fencedOn); fencedValue += v; }
+        continue;
+      }
       const issuerKey = issuerKeyOf(h.name);
       const key = isin
         ? isinToBookKey.get(isin) ?? prefixKey.get(issuerOf(isin)) ?? issuerKey
@@ -1257,6 +1297,7 @@ export async function loadStockExposure(
     skipped,
     disclosedValue,
     skippedValue,
-    unaccountedValue: disclosedValue - total,
+    unaccountedValue: disclosedValue - total - fencedValue,
+    fencedValue,
   };
 }

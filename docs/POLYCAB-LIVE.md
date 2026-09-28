@@ -20,45 +20,49 @@ refreshed. Whatever the store already held is kept and carries its own dates.
 **8** action(s) — **kept from a previous run**, so not republished as complete.
 By kind: 8 dividend.
 
-| Ex-date | Kind | Per share | Ratio | Record | Payment | The exchange's own words |
+| Ex-date | Kind | Per share | Ratio | Record / book closure | Payment | The exchange's own words |
 | --- | --- | ---: | --- | --- | --- | --- |
 | 2026-06-19 | dividend | 47 | — | 2026-06-19 | 2026-07-30 | Final Dividend - Rs. - 47.0000 |
 | 2025-06-24 | dividend | 35 | — | 2025-06-24 | 2025-07-31 | Final Dividend - Rs. - 35.0000 |
-| 2024-07-09 | dividend | 30 | — | — | — | Dividend - Rs. - 30.0000 |
-| 2023-06-21 | dividend | 20 | — | — | 2023-07-30 | Dividend - Rs. - 20.0000 |
-| 2022-06-21 | dividend | 14 | — | — | 2022-07-29 | Dividend - Rs. - 14.0000 |
-| 2021-07-12 | dividend | 10 | — | — | — | Dividend - Rs. - 10.0000 |
+| 2024-07-09 | dividend | 30 | — | book closure 2024-07-10 → 2024-07-16 | — | Dividend - Rs. - 30.0000 |
+| 2023-06-21 | dividend | 20 | — | book closure 2023-06-22 → 2023-06-25 | 2023-07-30 | Dividend - Rs. - 20.0000 |
+| 2022-06-21 | dividend | 14 | — | book closure 2022-06-23 → 2022-06-29 | 2022-07-29 | Dividend - Rs. - 14.0000 |
+| 2021-07-12 | dividend | 10 | — | book closure 2021-07-14 → 2021-07-21 | — | Dividend - Rs. - 10.0000 |
 | 2020-03-12 | dividend | 7 | — | 2020-03-14 | — | Interim Dividend - Rs. - 7.0000 |
-| 2019-06-18 | dividend | 3 | — | — | — | Dividend - Rs. - 3.0000 |
+| 2019-06-18 | dividend | 3 | — | book closure 2019-06-20 → 2019-06-26 | — | Dividend - Rs. - 3.0000 |
 
 ## Promoter holding and pledge
 
-6 quarter(s) are carried by BOTH witnesses; **0** disagree.
+Of 12 quarter(s), **6** are carried by BOTH sources and **6** by one; 6 were compared and **0** disagree.
 
-A quarter where the two disagree beyond 0.05pp publishes **neither** figure, which
-is why a `—` in the holding column is a refusal rather than a gap. The pledge has
-ONE witness (screener prints no pledge row for this scrip) and is published as such.
+Where both carry a quarter they must agree within 0.05pp, or **neither** figure is
+published — a refusal, marked as one. A quarter only one source carries is published
+on that source alone, unchecked against a second. The promoter holding is a share of
+Polycab's total equity. The pledge has ONE source — Tickertape's "Promoter Holding
+Pledged", the pledged part of the promoter group's own holding (Screener prints no pledge
+row for this scrip) — and is published as such.
 
-| Quarter | As of | Promoter holding | Promoter pledge |
-| --- | --- | ---: | ---: |
-| Jun 2026 | 2026-06-30 | 61.461685149737356% | 0% |
-| Mar 2026 | 2026-03-31 | 61.49620033165215% | 0% |
-| Dec 2025 | 2025-12-31 | 61.50111672781482% | 0% |
-| Sep 2025 | 2025-09-30 | 61.52122017376783% | 0% |
-| Jun 2025 | 2025-06-30 | 63.01064372395979% | 0% |
-| Mar 2025 | 2025-03-31 | 63.04426316271684% | 0% |
-| Dec 2024 | 2024-12-31 | 63.05% | — |
-| Sep 2024 | 2024-09-30 | 63.06% | — |
-| Jun 2024 | 2024-06-30 | 65.02% | — |
-| Mar 2024 | 2024-03-31 | 65.24% | — |
-| Dec 2023 | 2023-12-31 | 65.78% | — |
-| Sep 2023 | 2023-09-30 | 65.91% | — |
+| Quarter | As of | Promoter holding (% of total shares) | Pledged (% of the group's holding) | Sources |
+| --- | --- | ---: | ---: | ---: |
+| Jun 2026 | 2026-06-30 | 61.46% | 0.00% | 2 |
+| Mar 2026 | 2026-03-31 | 61.50% | 0.00% | 2 |
+| Dec 2025 | 2025-12-31 | 61.50% | 0.00% | 2 |
+| Sep 2025 | 2025-09-30 | 61.52% | 0.00% | 2 |
+| Jun 2025 | 2025-06-30 | 63.01% | 0.00% | 2 |
+| Mar 2025 | 2025-03-31 | 63.04% | 0.00% | 2 |
+| Dec 2024 | 2024-12-31 | 63.05% | — | 1 |
+| Sep 2024 | 2024-09-30 | 63.06% | — | 1 |
+| Jun 2024 | 2024-06-30 | 65.02% | — | 1 |
+| Mar 2024 | 2024-03-31 | 65.24% | — | 1 |
+| Dec 2023 | 2023-12-31 | 65.78% | — | 1 |
+| Sep 2023 | 2023-09-30 | 65.91% | — | 1 |
 
-## The live quote
+## The stored quote
 
 | | |
 | --- | ---: |
 | Last traded | 8354 |
+| Fetched | 2026-09-23T15:46:09.211Z — 21:16 IST on 2026-09-23, outside trading hours, so the last session's close |
 | Previous close | 8375 |
 | Day change | -21 (-0.25%) |
 | Open / high / low | 8376.65 / 8441.25 / 8343 |
@@ -70,11 +74,11 @@ this repo has already paid for once on the index strip.
 
 ## Sources
 
-| Source | Carries | URL |
-| --- | --- | --- |
-| BSE (exchange) | identity, last traded price, the full corporate-action record | https://www.bseindia.com/stock-share-price/polycab-india-ltd/polycab/542652/ |
-| Tickertape | promoter holding and promoter pledge, per quarter — gated on the book's own ISIN | https://www.tickertape.in/stocks/polycab-india-POLC |
-| Screener | promoter holding, per quarter — the second witness | https://www.screener.in/company/POLYCAB/consolidated/ |
+| Source | Carries | Credited under the page's | URL |
+| --- | --- | --- | --- |
+| BSE (exchange) | identity, last traded price, the full corporate-action record | holding, actions | https://www.bseindia.com/stock-share-price/polycab-india-ltd/polycab/542652/ |
+| Tickertape | promoter holding and promoter pledge, per quarter — gated on the book's own ISIN | promoter | https://www.tickertape.in/stocks/polycab-india-POLC |
+| Screener | promoter holding, per quarter — the second witness | promoter | https://www.screener.in/company/POLYCAB/consolidated/ |
 
 NSE would be the natural second exchange witness and refuses every request from
 the harvest environment (HTTP 403, Akamai, with and without a cookie bootstrap).

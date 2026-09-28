@@ -96,13 +96,29 @@ export type InstrumentRow = {
   boughtOf: number;
   soldOf: number;
   realized: number | null;
-  /** Sells carrying a realised figure, against sells. */
+  /**
+   * Sells whose realised gain is IN the figure, against sells — a sale settled
+   * on a SIBLING row of the same day counts, because its gain is on that day's
+   * first row and so already in the sum (MT-12). Counting it as unreported made
+   * Carnelian read 13/18 over a complete figure.
+   */
   realizedOf: number;
   first: string;
   last: string;
   /** Distinct trade dates — what makes a series a series. */
   days: number;
+  /** ...and per side, so a label can say which side was worked over time (MT-14). */
+  buyDays: number;
+  sellDays: number;
   staggered: boolean;
+  /**
+   * THE ONE SIDE THIS LINE CARRIES, where it carries one (MT-13). Inside a
+   * SECURITY row the second level splits by side — "everything bought of this
+   * name" beside "everything sold" — so each line holds one side of the name
+   * and must say so; its other side is on its sibling line, never "not traded".
+   * Null on a line that carries both, which is every line inside a mandate.
+   */
+  side: "Buy" | "Sell" | null;
   tranches: TrancheRow[];
 };
 
@@ -149,6 +165,60 @@ export type GroupRow = {
 
 /** Sum of the reported values only — null when nothing on this side reported one. */
 const money = (xs: (number | null)[]) => sumOrNull(xs);
+
+/**
+ * ── WHOSE REALISED GAIN IS IN THE FIGURE, AND WHY THE REST IS NOT (MT-12) ──
+ *
+ * A sale's gain is in a realised total where its own row carries it, or where a
+ * SIBLING row of the same day's sale does — the capital gain statement settles
+ * the day, and `ledger.ts` puts that figure on the day's first printed row.
+ */
+export const realisedIsCounted = (t: Txn) =>
+  t.side === "Sell" && (t.realized != null || t.realizedBasis === "sibling");
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * Why a set of SALES carries no realised figure, worded from each sale's own
+ * `realizedBasis` — never one sentence assumed for all of them. The per-sale
+ * sentence is `Txn.realizedNote`; this is the same fact said once for a line
+ * or a row that holds several.
+ */
+export function realisedAbsence(sales: Txn[]): string {
+  const missing = sales.filter((t) => t.side === "Sell" && !realisedIsCounted(t));
+  if (!sales.some((t) => t.side === "Sell")) return "nothing was sold over the window, so nothing was realised";
+  if (!missing.length) return "every sale here carries its realised gain";
+  const notes = new Set(missing.map((t) => t.realizedNote ?? ""));
+  if (notes.size === 1 && missing.length === 1) return missing[0].realizedNote ?? "no capital gain lot in the statements matches this sale";
+  const count = (b: Txn["realizedBasis"]) => missing.filter((t) => t.realizedBasis === b).length;
+  const accts = new Set(missing.map((t) => acctKey(t.provider, t.accountNo))).size;
+  const ns = count("no-statement"), ow = count("outside-window"), nl = count("no-lot");
+  const other = missing.length - ns - ow - nl;
+  const their = accts === 1 ? "this account" : "the accounts these sales were in";
+  if (ns === missing.length) return `no capital gain statement is issued for ${their} in this drop, so what these sales realised is not reported`;
+  if (ow === missing.length) return `these sales fall outside the window of ${accts === 1 ? "this account's" : "their accounts'"} capital gain statement, so what they realised is not reported yet — each sale's own row names the window`;
+  if (nl === missing.length) return "no capital gain lot in the statements matches these sales — not on their names, nor on their account, date and amount";
+  const parts = [
+    ns ? `${plural(ns, "is", "are")} in an account that issues no capital gain statement in this drop` : "",
+    ow ? `${plural(ow, "falls", "fall")} outside its account's capital gain statement window` : "",
+    nl ? `${plural(nl, "matches", "match")} no capital gain lot` : "",
+    other ? `${plural(other, "carries", "carry")} no realised figure on its statement` : "",
+  ].filter(Boolean);
+  return `none of these ${missing.length} sales carries a realised figure — ${parts.join("; ")}`;
+}
+
+/**
+ * What a partial realised figure covers, in words — for the `k/n` beside it,
+ * which on its own reads as "the rest are missing" and does not say why.
+ */
+export function realisedCoverageNote(sales: Txn[]): string {
+  const sells = sales.filter((t) => t.side === "Sell");
+  const counted = sells.filter(realisedIsCounted);
+  const siblings = counted.filter((t) => t.realizedBasis === "sibling").length;
+  const head = `${counted.length} of ${plural(sells.length, "sale", "sales")} carry their realised gain in this figure`
+    + (siblings ? ` — ${siblings} of them on the first row of a day's sale the statement printed across several rows` : "");
+  return counted.length === sells.length ? `${head}.` : `${head}. The other ${sells.length - counted.length}: ${realisedAbsence(sells)}.`;
+}
 
 /**
  * WHICH GROUP A TRADE BELONGS TO.
@@ -201,10 +271,11 @@ function groupOf(t: Txn, acc: Account | undefined, by: GroupBy): { key: string; 
   return { key: `acct:${acctKey(t.provider, t.accountNo)}`, label, sublabel: who || t.accountNo, accountId: acc?.accountId ?? null };
 }
 
-function instrumentRow(key: string, rows: TrancheRow[], sort: TxnSort): InstrumentRow {
+function instrumentRow(key: string, rows: TrancheRow[], sort: TxnSort, side: "Buy" | "Sell" | null = null): InstrumentRow {
   const buys = rows.filter((r) => r.side === "Buy");
   const sells = rows.filter((r) => r.side === "Sell");
   const dates = rows.map((r) => r.date).filter(Boolean).sort();
+  const daysOf = (xs: TrancheRow[]) => new Set(xs.map((r) => r.date).filter(Boolean)).size;
   return {
     key,
     security: rows[0].security,
@@ -218,10 +289,13 @@ function instrumentRow(key: string, rows: TrancheRow[], sort: TxnSort): Instrume
     boughtOf: buys.filter((r) => r.amount != null).length,
     soldOf: sells.filter((r) => r.amount != null).length,
     realized: money(sells.map((r) => r.realized ?? null)),
-    realizedOf: sells.filter((r) => r.realized != null).length,
+    realizedOf: sells.filter(realisedIsCounted).length,
     first: dates[0] ?? "",
     last: dates.at(-1) ?? "",
     days: new Set(dates).size,
+    buyDays: daysOf(buys),
+    sellDays: daysOf(sells),
+    side,
     // Marked per SIDE: eight buys and eight sells of one name is two campaigns,
     // and sixteen rows is not evidence that either was staggered.
     staggered: buys.length >= STAGGERED_MIN || sells.length >= STAGGERED_MIN,
@@ -284,13 +358,16 @@ export function rollup(
 
   const out: GroupRow[] = [];
   for (const [key, g] of groups) {
+    // A SECURITY group's second level is split by side (above), so each of its
+    // lines carries one side and says which.
+    const bySide = key.slice(key.indexOf("\u0000") + 1).startsWith("sec:");
     // ORDERED BY THE MODE, at this level too. "Biggest committed first" is the
     // `size` mode and is no longer the only one: a reader who asked for recent
     // first wants the name the manager last touched at the top of the
     // expansion, not the largest position they built two years ago. An absent
     // amount still sorts last rather than as zero — `sortRows` uses -Infinity.
     const instruments = sortRows(
-      [...g.rows.entries()].map(([k, rows]) => instrumentRow(k, rows, sort)).sort((a, b) => a.key.localeCompare(b.key)),
+      [...g.rows.entries()].map(([k, rows]) => instrumentRow(k, rows, sort, bySide ? rows[0].side : null)).sort((a, b) => a.key.localeCompare(b.key)),
       sort, (i) => (i.bought == null && i.sold == null ? null : (i.bought ?? 0) + (i.sold ?? 0)));
     const all = instruments.flatMap((i) => i.tranches);
     const dates = all.map((r) => r.date).filter(Boolean).sort();

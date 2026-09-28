@@ -74,6 +74,35 @@ ok("…and on no other axis",
   s.forAccount("basket", "f5") === TXN_UNSECTIONED && s.forAccount("assetClass", "f5") === TXN_UNSECTIONED,
   `${s.forAccount("basket", "f5")} / ${s.forAccount("assetClass", "f5")}`);
 
+// ── MT-10: a trade classified through the ONE book security its ISIN names ──
+//
+// LKP's tape prints its Liquid BeES sale under its own spelling, with no ISIN;
+// the book carries those units as `nip-etnf1d-rtliqbees`, which is a CASH
+// equivalent. The capital gain lot that settles the sale prints the ISIN, and
+// `ledger.ts` lends it to the sale. Constructed first — the only way to reach
+// the refusals — with the REAL cash-equivalent key, so the category axis must
+// answer Cash exactly as the Holdings table does for the position.
+{
+  const own = acct("lkp", "Execution");
+  const liquid = { ...pos("lkp", "nip-etnf1d-rtliqbees", "Mutual Fund", 17111.17), isin: "INF732E01037" } as Position;
+  const other = { ...pos("lkp", "some-other-key", "Equity", 1000), isin: "INF732E01037" } as Position;
+  const sale = { provider: own.provider, accountNo: own.accountNo, securityKey: "nippon-india-etf-liquid-bees", assetClass: "Equity", isin: "INF732E01037" };
+  const one = sectionsFor([own], [liquid]);
+  const holdingSection = groupKeyFor("category", accountIndex([own]), liquid);
+  ok("MT-10: a sale whose ISIN names exactly one book security files where that security's holding does",
+    one.forTxn("category", sale) === holdingSection && holdingSection === "Cash", `${one.forTxn("category", sale)} vs ${holdingSection}`);
+  ok("MT-10: …on every axis",
+    GROUP_AXES.every((axis) => one.forTxn(axis, sale) === groupKeyFor(axis, accountIndex([own]), liquid)),
+    GROUP_AXES.map((axis) => `${axis}: ${one.forTxn(axis, sale)}`).join(" · "));
+  ok("MT-10: with no ISIN it falls back to its own key, as before",
+    one.forTxn("category", { ...sale, isin: null }) !== "Cash", one.forTxn("category", { ...sale, isin: null }));
+  const two = sectionsFor([own], [liquid, other]);
+  ok("MT-10: an ISIN two book keys carry is ambiguous and classifies through neither",
+    two.forTxn("category", sale) === one.forTxn("category", { ...sale, isin: null }), two.forTxn("category", sale));
+  ok("MT-10: an ISIN no book key carries changes nothing",
+    one.forTxn("category", { ...sale, isin: "INE000000000" }) === one.forTxn("category", { ...sale, isin: null }));
+}
+
 // ── the book ────────────────────────────────────────────────────────────────
 const book = sectionsFor(BOOK_ACCOUNTS, BOOK_POSITIONS);
 const idx = accountIndex(BOOK_ACCOUNTS);

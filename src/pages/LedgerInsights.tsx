@@ -106,7 +106,19 @@ export function LedgerInsights() {
               nothing for the live layer to mark. */}
           <BasisPill statement liveText="Statement records"
             hint="Transactions, capital gain lots and income events are dated primitives read off the statements. No figure on this page is price-derived, so the live feed does not apply." />
-          {txn ? <Pill tone="info">as of {fmtDate(txn.asOf)}</Pill> : null}
+          {/* THE TAPE'S OWN WINDOW, NOT THE ARCHIVE'S NEWEST DATE (XA-18).
+              `txn.asOf` is the newest statement of ANY kind in the archive —
+              29 Aug, the two trusts' NSDL holding statements, which carry no
+              trade — so "as of 29 Aug" dated a tape that ends on 13 Aug. The
+              window the transaction statements cover is what dates it. */}
+          {txn && window(txn.periodFrom, txn.periodTo) ? (
+            <Pill tone="info">
+              <span data-xa="ledger-window" data-from={txn.periodFrom ?? ""} data-to={txn.periodTo ?? ""}
+                title={`The window the transaction statements cover — every trade on this page falls in it. The archive's newest statement of any kind is dated ${fmtDate(txn.asOf)}, and it dates no trade.`}>
+                tape {window(txn.periodFrom, txn.periodTo)}
+              </span>
+            </Pill>
+          ) : null}
         </span>} />
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -196,10 +208,10 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Transactions" value={fmtNum(data.txns.length)}
           sub={`${fmtNum(data.buys)} buys · ${fmtNum(data.sells)} sells`} icon={<ArrowLeftRight className="h-4 w-4" />} />
-        <StatTile label="Bought" value={fmtFromBase(bought, { compact: true })} sub={`settled cost, over the window${coverage(boughtOf, buys.length)}`} />
+        <StatTile label="Bought" value={fmtFromBase(bought, { compact: true })} sub={`settled cost, ${win ?? "over the statements' windows"}${coverage(boughtOf, buys.length)}`} />
         <StatTile label="Sold"
           {...(data.sells
-            ? { value: fmtFromBase(sold, { compact: true }), sub: `settled proceeds, over the window${coverage(soldOf, sells.length)}` }
+            ? { value: fmtFromBase(sold, { compact: true }), sub: `settled proceeds, ${win ?? "over the statements' windows"}${coverage(soldOf, sells.length)}` }
             : absentTile("no sells over this window", "Every transaction on these statements is a purchase."))} />
         {/* THE STATEMENT FIGURE IS THE HEADLINE. It is the printed primitive —
             what the managers determined and what Capital Gains shows. The

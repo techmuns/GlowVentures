@@ -293,7 +293,11 @@ for (const k of keys) {
 }
 // A check that finds nothing to check must say so rather than pass — golden.mjs's
 // rule. Every Sanshi tranche prints a NAV, so this cannot legitimately be zero.
-ok("the archive actually witnessed some entry NAVs", navChecked >= 10, `${navChecked} matched`);
+// Since VD-24 costs a tranche at every rupee PAID, Sanshi's are gross-costed and
+// their printed NAV is witnessed through the net in the branch above — so the
+// witness is the two counts together, never the plain branch alone.
+ok("the archive actually witnessed some entry NAVs", navChecked + grossCosted >= 10,
+  `${navChecked} matched directly, ${grossCosted} through the net`);
 // ...and the carried ones were set aside by NAME, not lost: exactly the book's
 // own count of tranches carrying a `carriedFrom`, over the same positions.
 const carriedInBook = keys.reduce((a, k) => a + BOOK_POSITION_TRANCHES[k].moves.filter((m) => m.carriedFrom).length, 0);
@@ -301,8 +305,9 @@ ok("every tranche carried through a class switch was set aside for carriedCost.t
   navCarried === carriedInBook, `${navCarried} set aside, ${carriedInBook} in the book`);
 // ...and the gross-costed ones are the ones whose position's printed cost is the
 // gross: exactly the positions whose tranche invested sums to the cost basis
-// while the dated record's net does not. LOAD-BEARING on this book (Helios and
-// Active Momentum), so the branch above cannot pass by never running.
+// while the dated record's net does not. LOAD-BEARING on this book (Helios, Active
+// Momentum and, since VD-24, every Sanshi tranche), so the branch above cannot pass
+// by never running.
 const grossInBook = keys.filter((k) => {
   const tr = BOOK_POSITION_TRANCHES[k];
   return tr.moves.some((m) => m.invested === m.amount && BOOK_CAPITAL_MOVES.some((c) =>
@@ -476,6 +481,25 @@ console.log("\n── a drawdown fund's own calls date the one holding they boug
     callDatesByHolding([{ ...commit, pending: 1e5 }], [fund]).size === 0);
   ok("constructed: no paid-in line at all gets no date",
     callDatesByHolding([{ ...commit, paid: null }], [fund]).size === 0);
+}
+
+// ── MT-8: "Purchased on" is the span of the PURCHASES, not of every movement ──
+// Green Lantern 510861 was funded once, on 16 Jan 2025, and its record's last
+// movement is a TDS-sized outflow eighteen months later; 3P's last is its
+// redemption. The row's recency still runs to its latest movement of either
+// kind, which is what "recent first" orders on.
+{
+  const mv = (date: string, direction: "in" | "out", amount: number) =>
+    ({ ...gateMoves[0], date, direction, amount, invested: direction === "in" ? amount : null, label: direction === "in" ? "Subscription" : "Capital outflow" });
+  const moves = [mv("2025-01-16", "in", 1e8), mv("2026-06-25", "out", 5000)];
+  const acc = [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O" }];
+  const [g] = capitalRollup(moves, acc, gatePos, {});
+  ok("MT-8: the purchase span is the purchases' own — one payment, one date",
+    g.boughtFirst === "2025-01-16" && g.boughtLast === "2025-01-16", `${g.boughtFirst} → ${g.boughtLast}`);
+  ok("MT-8: …while the row's own span still reaches its latest movement, for ordering",
+    g.first === "2025-01-16" && g.last === "2026-06-25", `${g.first} → ${g.last}`);
+  const [o] = capitalRollup(moves, acc, gatePos, {}, "out");
+  ok("MT-8: with no purchase in view, there is no purchase span to state", o.boughtFirst === "" && o.boughtLast === "");
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall passed");

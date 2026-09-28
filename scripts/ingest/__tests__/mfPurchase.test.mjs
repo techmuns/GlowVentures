@@ -39,15 +39,22 @@ const read = (text) => {
   return { flows: out?.cashFlows ?? [], holdings: out?.holdings ?? [], warns: (out?.warnings ?? []).map((w) => w.code ?? w) };
 };
 
-for (const [name, text, gross, net, units, sec] of [
-  ["Helios", HELIOS, 310000000, 309984500.77, 19123041.38, "Helios Flexi Cap Fund - Direct Growth"],
-  ["Active Momentum", MOMENTUM, 214200000, 214189290.54, 15245765.959, "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option"],
+for (const [name, text, gross, net, stamp, units, sec] of [
+  ["Helios", HELIOS, 310000000, 309984500.77, 15499.23, 19123041.38, "Helios Flexi Cap Fund - Direct Growth"],
+  ["Active Momentum", MOMENTUM, 214200000, 214189290.54, 10709.46, 15245765.959, "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option"],
 ]) {
   const { flows, holdings } = read(text);
   ok(`${name}: one dated purchase is read`, flows.length === 1, JSON.stringify(flows));
   const f = flows[0] ?? {};
   ok(`${name}: on 2026-08-06, gross ${gross} and net ${net}`, f.date === "2026-08-06" && f.amount === gross && f.netAmount === net,
     `${f.date} ${f.amount} ${f.netAmount}`);
+  // THE CHARGE IS CARRIED AS PRINTED (Stage 10cy): the Stamp Duty line is VD-24's
+  // `expenses`, so a cost struck on every rupee paid — and the lot engine, which
+  // counts a row's net plus the charges it prints — reads the statement's own
+  // figure. Left null, the engine would cost these units at the net while the
+  // book costs them at the gross: two rules for one purchase.
+  ok(`${name}: the Stamp Duty line is carried as the row's charge, ${stamp}`, f.expenses === stamp
+    && Math.abs(f.netAmount + f.expenses - f.amount) <= 0.005, `expenses ${f.expenses}`);
   ok(`${name}: typed a contribution, with the units allotted`, f.kind === "contribution" && f.units === units);
   ok(`${name}: named as the holding it bought, so it joins that position`,
     f.securityKey === holdings[0]?.securityKey && f.security === sec, `${f.securityKey} vs ${holdings[0]?.securityKey}`);

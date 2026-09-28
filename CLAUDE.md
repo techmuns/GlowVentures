@@ -9967,6 +9967,10 @@ its wording says so — *"the statement names Category I and Category II and
 commits to neither"* — because a statement naming two and a statement naming
 none send a reader to different documents.
 
+*(Corrected at Stage 10cv: "Category I/II" was the READER's phrase. Each trust's
+statement prints a blank "Sebi Reg. no.-" line and no category. The holding is
+still not stated, now for the true reason, and sits under Private Equity.)*
+
 **AND `III` MUST NEVER BE READ AS `I`** — that would file ₹297.78 Cr, 84% of the
 AIF book, under the wrong heading, silently. Two things prevent it, and
 **reintroducing the bug proved the first draft of this paragraph credited the
@@ -10015,6 +10019,12 @@ Measured, and the sections partition the row to the rupee:
 | Category not stated | 3 | ₹16.69 Cr |
 | **Total** | **11** | **₹352.35 Cr** |
 
+*(Corrected at Stage 10cv. Founders prints no SEBI category — "Category II" was
+its reader's words — and Neo Infra's statement prints Category II on its
+manager block, which its reader dropped. The sections read Category II ₹18.1 Cr
+(Delphi, declared; Neo Infra; 360 ONE), Category III ₹297.8 Cr, Private Equity
+₹3.6 Cr and Category not stated ₹32.8 Cr (both Founders folios, Blue Ashva).)*
+
 **MORNING CIO'S ALLOCATION TABLE IS UNTOUCHED.** The AIF row is still ₹352.35 Cr
 and no headline figure moves, which is what makes this a clubbing of a
 drill-down rather than a re-measurement of the book.
@@ -10031,6 +10041,10 @@ I folios (₹4.73 Cr drawn), 5 Category II (₹13.50 Cr), 1 not stated** — the
 standing rule that a figure existing for some accounts is shown for those and
 the rest are named. Their money is in no total on the page, and the note says
 drawn capital is what was PAID rather than what the stake is worth.
+
+*(Corrected at Stages 10ct and 10cv: 7 folios, not 10 — Category I ×4 and
+Category not stated ×3, ₹18.2 Cr drawn. India SME's statements print no SEBI
+category; "Category II" was its reader's.)*
 
 **THE SECTIONING FOLLOWS THE ROWS, NOT THE ADDRESS.** It applies only where
 every row is an AIF holding, so a drill-down mixing an AIF with a mutual fund —
@@ -14468,6 +14482,12 @@ on the book today:
 | Private equity — Baring PE, Transition Venture | ₹3.60 Cr | |
 | No category printed — Delphi, Neo Infra, Blue Ashva | ₹16.69 Cr | |
 
+
+*(Corrected at Stage 10cv: Founders prints no category — "Category II" was its
+reader's — and Neo Infra's statement does print Category II, on its manager
+block. Neither moves a side: the family's own placing decides both since Stage
+10bw.)*
+
 It is the SAME FAILURE this file already records one iteration earlier —
 `listedValue: totalValue, privateValue: 0`, "true when every account in the book
 was a listed-equity mandate, and false the moment the AIF statements got a
@@ -14505,6 +14525,10 @@ applies to money*. *(The family have since SAID where Founders goes — it inves
 in listed Indian equities — and their word outranks the category now; the review
 is still not a tier, and the statement still says Category II. See Stage 10bw.)*
 
+
+*(Corrected at Stage 10cv: Founders' statement prints no category; "Category II
+by its statement" was its reader's. The review's `Equity` stands against no
+printed category.)*
 **AND `null` IS A THIRD ANSWER, NEVER A DEFAULT.** Three funds print no category
 (₹16.69 Cr). Filing them private claims they are private capital; filing them
 listed claims the opposite; both are claims no document makes. So
@@ -16629,6 +16653,10 @@ funds the vehicle; it does not tell you whether the fund invests in private or
 public assets"* — which is exactly why a public-market fund does not belong on a
 private-market page.
 
+*(Corrected at Stage 10cv: Founders' statement prints no SEBI category;
+"Category II" was its reader's. The family's placing is what puts it on the
+listed side, as before.)*
+
 **`FAMILY_MARKET_SIDE` in `shared/aifCategory.mjs` is that answer, committed.**
 Ten entries: India SME, Baring, Transition Venture, Neo Infra and Sky Capital
 private; Carnelian Bharat Amritkaal, Delphi and Founders listed; Sanshi and
@@ -17823,8 +17851,9 @@ formula on the position's own fields for every costed position in the book.
 redemption and 3P's redemption are sales; the position takes FIFO's cost, its
 realised gain and its cost of units sold, `costBasisSource: "fifo"`, and keeps
 the statement's figure as `printedCostBasis`. Neo: ₹4,85,83,720 held + ₹14,16,280
-sold = every rupee drawn. 3P: realised ₹2,56,09,033.87 + cost sold
-₹28,49,73,801.30 = ₹31,05,82,835.17, the redemption on the ICICI advice.
+sold = every rupee drawn. 3P: realised ₹2,55,82,835.17 + cost sold
+₹28,50,00,000 = ₹31,05,82,835.17, the redemption on the ICICI advice. (Stage
+10cw: the cost is what was paid, setup expense and stamp duty included.)
 
 **A SWITCH WITH NO SALE IS MAIN'S CLASS-SWITCH CARRY, AND FIFO CHECKS IT.** Stage
 10bv landed on main while this was being built, with its own Buoyant reader and
@@ -19051,6 +19080,10 @@ alone**, and says so (`corroboration: null`). It is a FILL-ONLY tier: it applies
 only where both printed fields are silent, so a statement that prints a category
 always wins, and the AIF drill-down's chip says "declared by the family" on the
 two rows it placed.
+
+*(Corrected at Stage 10cv: Neo Infra's statement does print its category —
+`AIF -Category-II No : IN/AIF2/22-23/1042`, on its manager block — and its
+reader reads it now. The declared tier places Delphi alone.)*
 
 **THE CATEGORY DECIDES THE DRILL-DOWN SECTION, NOT THE SIDE OF THE BOOK — and
 that is the merge with Stage 10bw, which is the right answer rather than a
@@ -24306,6 +24339,159 @@ The other 2 are this change's counted-once checks on `private-market-owners`,
 which draws members, not funds; they pass on the fund routes · `build-book`
 twice, byte-identical · every `replay:*`, `rekey:archive` and
 `reconcile:review` a no-op with `--check`.
+
+### Stage 10cu — THE FIGURE AUDIT, PART B: ONE FIGURE, WHEREVER IT IS PRINTED
+
+*"Audit every calculation on the dashboard and fix every logical error, so the
+client never finds one."*
+
+The B group of `docs/FIGURE-AUDIT.md`: fifteen figures that read differently on
+two pages, or on two parts of one page. Fourteen are fixed at a shared helper, so
+every surface reads one definition; B-14 is not (below). Stacked on Stage 10ct.
+
+| | Disagreed | Now |
+| --- | --- | --- |
+| B-01 | "the book" was three totals | one book, the current value of holdings: the top bar, Morning CIO, Private Market's value tile and `/holdings`' share line all divide by it; a per-statement set counts each holding once; the NAV card's three lists reconcile to it step by step, naming the double count by its holdings |
+| B-02 | the fund movers priced on the look-through store's 9 Sep NAVs, every other page on AMFI's 22 Sep file | the movers read AMFI's file first; a scheme on another unit basis (the DSP ETFs) applies the percentage only, and says so |
+| B-03 | "what the family holds" counted four ways | `currentHoldings` on Data & Refresh, NAV & Performance, Family & Entities, the Direct Equity movers, the chat and the Excel export, each naming what it leaves out |
+| B-04 | two sectors for one company | the Monitor's Sector column and `?sector=`, Data & Refresh and Return & Drawdown read `companySectorIndex`, the three tiers Sector Composition uses |
+| B-05 | realised in three values | the Monitor footer names its basis, window and the statements' own total; the stock page reads the book's realised, not the ledger's |
+| B-06 | the money-weighted tile opened a page with another return | that page prints the tile's own rate, over the same accounts and window |
+| B-07 | the whole-book return on cost, three rules | FIFO over the costed holdings on the tile, the allocation Total, `/holdings` and the Monitor footer, each naming its set ("on the ₹X of ₹Y that reports a cost") |
+| B-08 | the Excel export differed from the screen | current holdings, the tab's own return with a Measure column, and what it leaves out named under the total |
+| B-09 | Cash ₹11.6 Cr against ₹14.2 Cr on one table | the security axis's cash names its bridge to the Category view's Cash |
+| B-10 | cash paid back ₹49.9 L against ₹58.7 L | Distributions counts each fund once, 360 ONE's letters included, from one build on Private Market and Morning CIO: ₹50 L → ₹57 L |
+| B-11 | "HPR" meant two returns on the Monitor's two tabs | the Transactions return headers name their basis, the capital paid in |
+| B-12 | the search said no statement reports funds the book holds | the note is withheld for a scheme the book holds, joined by ISIN |
+| B-13 | the same class words over two sets | the left-out classes are named by the tables' own sections |
+| B-14 | Helios Flexi Cap under two keys | **not fixed** — see below |
+| B-15 | the assistant answered from another book | the chat reads the screen's book, its counts and Private Market's capital accounts |
+
+**B-14 IS NOT FIXED, AND WHY.** Helios Flexi Cap Fund · Direct is two rows
+because the AMC folio and the depository print the scheme two ways and the key is
+taken from the name. Joining them is an identity change: the depository reader
+would take the name the AMC prints against the same ISIN, and the eight such
+ISINs `docs/BOOK-REPORT.md` lists would re-key the archive. Stage 10cc left fund
+twins apart on purpose. It is a separate change.
+
+**A QUOTE THE CORPORATE-ACTION CHECK HELD BACK SAYS SO (DL-9).** The Monitor's
+price and Day cells, a statement line, a mandate share, the basis pill and the
+top bar said "no live price" for a quote the gate had held back, as if none had
+arrived. They give the gate's own reason now. Found in passing: a mandate share on a
+statement mark carried no not-live flag at all. One branch has no subject on this
+book, a mandate with some shares held back and some live; the harness's control
+says so.
+
+**What moved.** No generated file. On screen: Distributions ₹50 L → ₹57 L on
+Morning CIO; Ajay's Family return +12.49% → +12.88% (current holdings); NAV &
+Performance's FIFO +16.24% → +16.68%, Morning CIO's figure; the Excel footer
+₹840.99 lower (five closed rows and six sub-₹1,000 rows left out, named).
+
+**Guards.** Three new suites (`liveWithheld`, `monitorSectors`, `stockRealised`)
+and cases in eight more; five new `check:pages` routes;
+`scripts/dev/withheld-quote-bug.sh`, thirteen cases, each firing its own check.
+Case 9 fired only after its patch was rewritten: TypeScript refuses `x || true`,
+and a patch that does not build is not a result.
+
+**Verification**, on this branch stacked on Stage 10ct and merged with `main`
+at `f99e738a`: `build` · `test:ingest` (every suite passes; golden 140 passed,
+2 not checked, 0 blocked) · `test:family` (67 suites, 3,186 checks, 0 failed;
+its four not-checked lines are main's) · `check:family` **126/0** ·
+`check:pages` **334 combinations clean**: 167 routes in two themes, Stage
+10ct's 162 and this change's five. Of the 17 invariants not checked, 14 are
+main's four claims with no subject on this book and 2 are Stage 10ct's
+counted-once checks on `private-market-owners`. The last is this change's
+held-back mandate branch: no mandate on this book has some shares held back and
+some live · `build-book` twice, byte-identical · every `replay:*`,
+`rekey:archive` and `reconcile:review` a no-op with `--check`.
+
+### Stage 10cv — THE FIGURE AUDIT, PART C: EVERY FIGURE NAMES ITS DATE, ITS SET AND ITS BASIS
+
+*"Audit every calculation on the dashboard and fix every logical error, so the
+client never finds one."*
+
+The C group of `docs/FIGURE-AUDIT.md`: twelve themes of a label or a basis that
+did not describe its figure. No figure is re-measured here; what changed is what
+the words beside each figure say. Stacked on Stage 10cu.
+
+| | Was | Now |
+| --- | --- | --- |
+| C-01 | a mark dated by the book's newest date (29 Aug, two quantity-only demats) | each figure names the date its value is struck on; the basis pill splits statement, NAV and live |
+| C-02 | three AIF categories no statement prints | read off the statements: Neo Infra's printed Category II is read, and Founders, India SME and Transition Venture print none |
+| C-03 | coverage unstated | each total names the set and the share of it that reports |
+| C-04 – C-12 | captions on Private Market, the Monitor, Transactions, search, Polycab, Extras, the stock and mandate pages, the Excel export, Family & Sectors | each describes the figure beside it, and a dash names its cause |
+| CK-C5, DSM-C9 | two definitions of a side of the book, and of a mandate share's sector | one each (`SIDE_NOTE`, `companySectorIndex`) |
+| XP-13 | every drill-down's footer counted the whole book's 5 closed rows and 6 specks | each counts its own set's (AIF 3 closed; Mutual Fund 1 closed, 4 specks) |
+| XP-16 | Capital Gains' Lots total printed "7 of 51 accounts" | 212 lots, the bucket table's figure; the account count is its hover |
+| VD-16, VD-18 | Sanshi and Carnelian Amritkaal marked at pre-tax NAV, and ABSL Liquid all pledged, with nothing on screen | said in a few words on the price tile and the Monitor's price cell, each held to its statement's own text (`statementNotes.ts`) |
+
+**A CHECK THAT HAD NOT RUN SINCE STAGE 10ct.** Stage 10ct added a second
+`"capital-gains"` key to `INVARIANTS`; an object literal keeps the later of two
+keys, so Stage 10cp's missing-data band checks were dropped and nothing said so.
+The two blocks are one, and `check:pages` now reads its own source and refuses to
+run on a repeated key.
+
+**CLAUDE.md said four funds printed a category they do not.** Seven passages
+(Stages 10aw, 10bp, 10bw, 10cd) carry a correction note where they stood.
+
+**What moved.** `glowData.ts`: the engagement strings of 3P, India SME ×3,
+Founders ×2, Neo Infra and Transition Venture ×2; `BOOK-REPORT.md`: Delphi is the
+only family-declared category. No total moves.
+
+**Guards.** Five new suites in `test:family` (`statementNotes`, `valuedAt`,
+`navCard`, `schemeMatch`, `mandateCapital`) and one in `test:ingest`
+(`categoryWords`), cases in the existing suites, eleven new `check:pages` routes
+and `scripts/dev/one-definition-bug.sh`, eighteen cases, each firing its own
+check. Case 14 is the checker refusing to run on a repeated route key.
+
+**Not fixed, and why.** Which NAV to value Sanshi at is the family's call (about
+₹11 Cr lower post-tax). Capturing each demat line's pledged balance needs a reader
+change; the one pledged line is named instead.
+
+### Stage 10cw — THE FIGURE AUDIT, PART D: THE SMALL ONES, AND WHAT A COST IS
+
+*"Audit every calculation on the dashboard and fix every logical error, so the
+client never finds one."*
+
+The D group of `docs/FIGURE-AUDIT.md`: the cosmetic items — a bare dash, a
+rounding, a hover naming a column the table does not have — and two where the
+words were right and the figure beside them was not quite. Stacked on Stage 10cv.
+
+| | Was | Now |
+| --- | --- | --- |
+| VD-24 | Sanshi's cost was the statement's net of stamp duty, and a reader who paid ₹75 Cr read ₹74,99,62,501.87 | the cost is every rupee paid (`costBasisSource: "gross-paid"`); the statement's net and the charges are in the cell's hover. 3P's realised is struck on the same basis: ₹2,56,09,033.87 → ₹2,55,82,835.17 |
+| VD-17 | ICICI's NSDL statement counts shares at 31 Mar and prices them at the 30 Mar close; the page named one date for both | the value is struck on the pricing day (`priceAsOf`, carried where the statement prints it), and the tile, the Monitor's price cell and each statement line name both |
+| VD-25, XA-23 | a class switch's legs read as dated flows; capital no dated row carries was silent beside the rate it is missing from | the switch is not a flow; the missing capital is named beside the rate |
+| DL-16, PM-D1 – D3 | Private Market figures that did not say what they divide by or round to | each says so, in its hover |
+| FS-20, FS-23, FS-24, PC-11 | a fund's Sector read "Unclassified"; the bar tooltip called company-share value the entity's NAV | a fund says it has no sector; the tooltip names the value it draws |
+| DL-17, DL-18, DSM-D4 – D9, MT-18, MSX-22/23, MH-17, MNT-20 – 25, SC-D1 – D3, XA-24 – 28, PC-12 | a bare dash, "2 manager's mandates", a hover naming a column the table does not have, an FX chip that did not say why it names no source, a nil price left blank in Excel | each dash names its cause, and each figure its unit and precision |
+
+**What moved.** `glowData.ts`: five Sanshi folios' cost rises by what their
+statements net out (₹78,746.09 in all; each return falls by 0.01 point), 3P's
+realised as above, `priceAsOf` on 19 holdings and the ring-fenced Polycab row,
+and `charges` on 42 dated capital moves (16 carry a charge, 8 a measured zero, and
+18 are null because their statement prints no charges line). `BOOK_SUMMARY` does
+not move. The Polycab report and store were regenerated by `npm run build-polycab`,
+which now names its sources per table, and `docs/REVIEW-RECONCILIATION.md` by
+`npm run reconcile:review`: the book's invested at cost reads ₹470.17 Cr, ₹0.01 Cr
+up, from the Sanshi charges.
+
+**THE MONITOR'S DATE CHECK COULD NOT PASS, AND THE FULL SWEEP SAID SO.** The only
+rows priced on another day than their balances are ICICI's NSDL rows, and NSDL
+prints a value and no rate, so they draw no ◦ marker to carry the date. The date
+is on the price cell's own absence now. The check reads both dates and requires
+the book's own pair, because a value dated at its balances' day printed "as of
+31 Mar, priced as of 31 Mar" and passed the first version.
+
+**Guards.** `grossPaid.test.ts` and `nsdlPriceDate.test.mjs` (new), cases in
+twelve more suites, two new `check:pages` routes (`stock-gross`,
+`sectors-direct-live`), and two harnesses, `scripts/dev/cost-date-bug.sh` (eight
+cases) and `scripts/dev/txn-labels-bug.py` (eighteen), each case firing its own
+check.
+
+**Not done, and reported.** The Monitor's lakh rounding (MH-19) needs a change to
+`format.ts` that moves every compact figure on the site; PM-D4, PM-D6 and the
+LIVE_CELL wording are listed in the audit and left for their own change.
 
 ### Stage 10cx — WHAT A STATEMENT GIVES IS ON THE SCREEN, AND A PDF SAYS WHAT IS NOT
 

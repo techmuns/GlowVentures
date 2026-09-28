@@ -96,6 +96,20 @@ export function payoutsFrom(flat, cashFlows, warnFn) {
   return null;
 }
 
+/**
+ * THE STATEMENT'S OWN "Sebi Reg. no." LINE, as a clause for the engagement:
+ * quoted verbatim where it carries a registration, "blank" where it prints the
+ * label and nothing else (both statements in this drop), and nothing at all
+ * where the line is not on the page. Never a category — a registration code is
+ * recorded as printed and is not decoded here.
+ */
+export function sebiRegClause(flat) {
+  const m = /Sebi\s+Reg\.?\s*no\.?\s*[-:]?[ \t]*([^\n]*)/i.exec(flat ?? "");
+  if (!m) return "";
+  const reg = m[1].trim();
+  return reg ? `; its Sebi Reg. no. line prints "${reg.replace(/\s+/g, " ")}"` : "; its Sebi Reg. no. line is blank";
+}
+
 export function extract({ grid, meta }) {
   const warnings = [];
   const source = meta.docKey;
@@ -200,7 +214,17 @@ export function extract({ grid, meta }) {
     asOf,
     strategy: SCHEME,
     engagement: "AIF",
-    providerEngagement: "Category I/II AIF — drawdown",
+    // WHAT THE STATEMENT SAYS THE VEHICLE IS, AND NOTHING IT DOES NOT. This read
+    // "Category I/II AIF — drawdown", which is words the statement never prints:
+    // both statements carry a "Sebi Reg. no.-" line with nothing after it and no
+    // category anywhere, and the AIF drill-down then told a reader "the statement
+    // names Category I and Category II and commits to neither". So no category
+    // is written here; the category read comes back unstated, which is the truth,
+    // and the fund's own name ("Venture Capital") is what files it as private.
+    // The registration line is READ, so the sentence cannot outlive the page: a
+    // later statement that fills it in is quoted verbatim, one that drops the
+    // line says nothing about it, and only a blank one says it is blank.
+    providerEngagement: `drawdown fund — the statement prints a capital commitment, the capital contributed against it and a NAV per unit${sebiRegClause(flat)}`,
     holdings: [holding],
     totals,
     flows,

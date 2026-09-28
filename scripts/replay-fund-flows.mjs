@@ -23,10 +23,14 @@
  * `npm run extract` calls the same function on the same text and writes the
  * same bytes.
  *
- *   1. IT ONLY EVER ADDS A DATED RECORD WHERE NONE WAS ARCHIVED. `cashFlows`
- *      was `[]` on every document this lands on; a document that already
- *      carries one is never rewritten here — that would be a different change,
- *      made by a different reader, for a different reason — and refuses.
+ *   1. IT ONLY EVER ADDS — A DATED RECORD WHERE NONE WAS ARCHIVED, or a
+ *      FIELD to one that was. `cashFlows` was `[]` on every document the first
+ *      pass landed on; a document that already carries one may only gain a
+ *      value where the archive held null — the same rows, in the same order,
+ *      every value already archived coming back unchanged (Stage 10cy: the
+ *      Stamp Duty line Helios and Active Momentum print, now carried as
+ *      `expenses`). A row that would CHANGE a value, or a count that moves, is
+ *      a different change, made by a different reader, and refuses.
  *      Beside it, exactly what `writeArchive` would write for a document with a
  *      dated table: the browsable `transactions.json` section, and that
  *      section's entry in the manifest.
@@ -96,18 +100,28 @@ for (const entry of manifest) {
     refused += 1;
     continue;
   }
-  // RULE 1 — this adds a record where none was archived, and rewrites nothing.
-  if ((doc.cashFlows ?? []).length) {
-    console.error(`REFUSED ${entry.docKey}: ${doc.cashFlows.length} dated row(s) are already archived; this replay `
-      + "only adds a record where none was, and never rewrites one");
-    refused += 1;
-    continue;
+  // RULE 1 — this adds a record where none was archived, or a field to one
+  // that was, and rewrites nothing that was already there.
+  const archived = doc.cashFlows ?? [];
+  let added = [];
+  if (archived.length) {
+    const addsOnly = archived.length === flows.length && archived.every((a, i) =>
+      [...new Set([...Object.keys(a), ...Object.keys(flows[i])])].every((k) => eq(a[k], flows[i][k]) || a[k] == null));
+    if (!addsOnly) {
+      console.error(`REFUSED ${entry.docKey}: ${archived.length} dated row(s) are already archived and the replay would `
+        + "change a value on them or their count; this replay only adds a record, or a field where the archive held none");
+      refused += 1;
+      continue;
+    }
+    added = [...new Set(archived.flatMap((a, i) => Object.keys(flows[i]).filter((k) => a[k] == null && flows[i][k] != null)))];
   }
 
   changed += 1;
   const kinds = flows.reduce((m, c) => ({ ...m, [c.kind]: (m[c.kind] ?? 0) + 1 }), {});
-  console.log(`${CHECK ? "would update" : "updated"} ${entry.docKey.padEnd(52)} dated rows 0 → ${flows.length} `
-    + `(${Object.entries(kinds).map(([k, n]) => `${n} ${k}`).join(", ")})`);
+  console.log(archived.length
+    ? `${CHECK ? "would update" : "updated"} ${entry.docKey.padEnd(52)} ${archived.length} dated row(s) gain ${added.join(", ")}`
+    : `${CHECK ? "would update" : "updated"} ${entry.docKey.padEnd(52)} dated rows 0 → ${flows.length} `
+      + `(${Object.entries(kinds).map(([k, n]) => `${n} ${k}`).join(", ")})`);
   if (CHECK) continue;
 
   write(file, { ...doc, cashFlows: flows });

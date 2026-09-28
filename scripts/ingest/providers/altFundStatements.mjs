@@ -79,6 +79,13 @@ export const PROVIDERS = {
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
 const n = (s) => parseNum(s);
 const isNumLocal = (v) => typeof v === "number" && Number.isFinite(v);
+/**
+ * WHAT THE VEHICLE IS, in the fund's own words. A layout declares it as a
+ * string, or as a function of the statement text where the words are printed
+ * on the page and must be READ rather than assumed (Neo Infra's registration).
+ */
+const engagementOf = (layout, text) =>
+  (typeof layout.providerEngagement === "function" ? layout.providerEngagement(text) : layout.providerEngagement) ?? undefined;
 
 /**
  * Every layout this reader claims, each identified by text only its own issuer
@@ -278,6 +285,14 @@ export function threePFlows(text, warn) {
     // `capitalMovesFrom` takes the magnitude it needs for itself.
     amount: r.gross ?? r.net,
     netAmount: r.gross === null ? null : r.net,
+    // THE CHARGES THE ROW PRINTS — setup expense and stamp duty, the two columns
+    // between the gross and the net that check (1) above ties to the paisa. They
+    // are the difference between every rupee the family paid (the gross) and
+    // what bought units (the net), so a cost struck on what was PAID needs them
+    // as the statement prints them rather than as our subtraction. A printed
+    // dash is a nil on a row that prints the columns; a redemption and a
+    // reclassification print no gross, and carry no charge line at all.
+    expenses: r.gross === null ? null : money((r.setup ?? 0) + (r.stamp ?? 0)),
     units: r.units,
     // The printed running unit balance — carried as the CHECK it is.
     balance: r.balance,
@@ -370,6 +385,13 @@ export function mfPurchaseFlows({ net, heldUnits, security }) {
       // stamp duty. A row that prints no gross carries its net as the amount.
       amount: r.gross ?? r.net,
       netAmount: r.gross === null ? null : r.net,
+      // THE CHARGE THE ROW PRINTS — the Stamp Duty line between the gross and
+      // the net, which check (1) above ties to the paisa. It is carried as the
+      // statement prints it (VD-24's `expenses`, the field 3P's setup expense
+      // and stamp duty ride in), so a cost struck on every rupee PAID reads the
+      // printed charge rather than a subtraction of ours. A gross printed with
+      // no Stamp Duty line is a measured nil; a row with no gross carries none.
+      expenses: r.gross === null ? null : money(r.stamp ?? 0),
       units: r.units,
       balance: r.balance,
       notes: `allotment NAV ${r.nav}`,
@@ -1002,7 +1024,14 @@ const LAYOUTS = [
   {
     key: "founders",
     engagement: "AIF",
-    providerEngagement: "Category II AIF - drawdown, with a commitment and called capital",
+    // NO CATEGORY IS WRITTEN HERE, because none is printed: this statement
+    // carries no SEBI category and no registration number, and no other
+    // document in the archive names one for this fund. This string used to read
+    // "Category II AIF - …", which put a category chip on the fund that traced
+    // to nothing — the Transition Venture defect (PM-C3) in a second reader. The
+    // family place the fund themselves (`FAMILY_MARKET_SIDE`), so its side of
+    // the book does not move; only the claim about its paperwork does.
+    providerEngagement: "drawdown AIF, with a commitment and called capital — the statement prints no SEBI category",
     provider: PROVIDERS.founders,
     match: /Motilal\s+Oswal\s+Founders\s+Fund/i,
     assetClass: "AIF",
@@ -1129,7 +1158,11 @@ const LAYOUTS = [
   {
     key: "threeP",
     engagement: "AIF",
-    providerEngagement: "Category III AIF - unit classes B1/B2/B3",
+    // THE CATEGORY IS NOT ON 3P'S OWN STATEMENT — it is on the family's
+    // DEPOSITORY tape for the same units, which names the scheme "3P INDIA EQUITY
+    // FUND 1-CATEGORY III AIF-CLASS B1" (and B2, B3). So the category is carried
+    // and says where it was printed, rather than reading as the fund's own words.
+    providerEngagement: "Category III AIF — as the depository's scheme name for these units prints it (\"3P INDIA EQUITY FUND 1-CATEGORY III AIF\"); unit classes B1/B2/B3",
     provider: PROVIDERS.threeP,
     match: /3P\s+India\s+Equity\s+Fund/i,
     assetClass: "AIF",
@@ -1166,7 +1199,10 @@ const LAYOUTS = [
   {
     key: "indiaSme",
     engagement: "AIF",
-    providerEngagement: "Category II AIF - drawdown, with a commitment and uncalled capital",
+    // NO CATEGORY IS WRITTEN HERE, for the reason given on the Founders layout:
+    // the statement prints none, and nothing else in the archive names one for
+    // this fund. The family place it private themselves (`FAMILY_MARKET_SIDE`).
+    providerEngagement: "drawdown AIF, with a commitment and uncalled capital — the statement prints no SEBI category",
     provider: PROVIDERS.indiaSme,
     match: /India\s+SME\s+Investments\s+Fund/i,
     assetClass: "AIF",
@@ -1371,7 +1407,20 @@ const LAYOUTS = [
   {
     key: "neoInfra",
     engagement: "AIF",
-    providerEngagement: "drawdown fund — the statement prints a capital commitment, dated drawdowns and a quarterly NAV",
+    /**
+     * THE MANAGER BLOCK PRINTS THE FUND'S SEBI REGISTRATION, CATEGORY INCLUDED —
+     * "Manager to : Neo Infra Income Opportunities Fund · AIF -Category-II No :
+     * IN/AIF2/22-23/1042" — and this string used to leave it out, so the fund
+     * read as "Category not stated" beside a statement that states it. The
+     * registration is quoted VERBATIM (§5 — the provider's own wording), which
+     * is what `shared/aifCategory.mjs` reads the category from; where the line
+     * is not on the page nothing is added and no category is claimed.
+     */
+    providerEngagement: (text) => {
+      const base = "drawdown fund — the statement prints a capital commitment, dated drawdowns and a quarterly NAV";
+      const reg = /AIF\s*-\s*Category\s*-\s*(?:III|II|I)\s+No\s*:\s*IN\/AIF\d\/[\d-]+\/\d+/i.exec(text ?? "");
+      return reg ? `${base}; its manager block prints the SEBI registration "${reg[0].replace(/\s+/g, " ")}"` : base;
+    },
     provider: PROVIDERS.neoInfra,
     match: /Neo\s+Infra\s+Income\s+Opportunities\s+Fund/i,
     /**
@@ -2085,7 +2134,7 @@ export function extract({ grid, meta = {} }) {
       asOf: layout.asOf?.(text) ?? null,
       reportType: "holdings",
       engagement: layout.engagement ?? "unknown",
-      providerEngagement: layout.providerEngagement ?? undefined,
+      providerEngagement: engagementOf(layout, text),
       holdings: [], totals: null, commitment: null,
       // A STATEMENT WITH NO HOLDINGS CAN STILL CARRY ITS OWN DATED RECORD, and
       // an account that holds nothing is exactly where that record is the whole
@@ -2177,7 +2226,7 @@ export function extract({ grid, meta = {} }) {
     // section 5 of CLAUDE.md warns is never to be defaulted - and null is not
     // even in the contract, so the typecheck refused the book outright.
     engagement: layout.engagement ?? "unknown",
-    providerEngagement: layout.providerEngagement ?? undefined,
+    providerEngagement: engagementOf(layout, text),
     holdings,
     cashFlows,
     // BROWSABLE PROVENANCE, so a reader who sees a redemption on the dashboard

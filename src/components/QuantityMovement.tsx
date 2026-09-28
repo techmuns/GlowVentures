@@ -152,7 +152,7 @@ export function QuantityMovement(
 
   return (
     <Card className="mt-5" pad={false}
-      title={<span data-qty-title>Depository quantity through the year</span>}
+      title={<span data-qty-title>Depository quantity over the statement window</span>}
       subtitle={`${movements.length
         ? "Opening, in, out and closing — as the depository statement prints them."
         : "What this holding's depository statement says about its quantity."} ${NOT_TRADES}`}

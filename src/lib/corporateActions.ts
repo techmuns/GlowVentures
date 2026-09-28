@@ -16,6 +16,12 @@ export type ActionReturn = {
   dividendEntitlement: number | null;
   quantityIssues: string[]; incomeIssues: string[]; lines: ActionLine[];
   capturedAt: string | null;
+  /**
+   * WHY A LIVE QUOTE THAT ARRIVED WAS HELD BACK, in the gate's own words — null
+   * where no quote arrived for this security, or where the price went live.
+   * Read it through `liveWithheldReason`; see there.
+   */
+  liveWithheld: string | null;
 };
 export const positionActionKey = (p: Pick<Position, "accountId" | "securityKey">) => `${p.accountId}|${p.securityKey}`;
 export const marketDay = (iso: string) => {
@@ -81,6 +87,7 @@ export function projectActions(p: Position, statementDate: string, through: stri
     openingValue: p.marketValue, closingValue: p.marketValue,
     priceReturnPct: null, totalReturnPct: null, dividendEntitlement: null,
     quantityIssues: [], incomeIssues: [], lines: [], capturedAt: feed?.capturedAt ?? null,
+    liveWithheld: null,
   };
   const qi = result.quantityIssues, di = result.incomeIssues;
   if ((p.realizedLotsAfter ?? 0) > 0) qi.push("Sales are recorded after this statement; a newer holding balance is required");
@@ -167,7 +174,8 @@ export function applyCorporateActionQuotes(
   const returns = new Map<string, ActionReturn>();
   const output = positions.map((p) => {
     if (p.assetClass !== "Equity") return applyQuotes([p], quotes)[0];
-    const q = quotes?.quotes[symbolFor(p) || ""];
+    const sym = symbolFor(p);
+    const q = quotes?.quotes[sym || ""];
     const start = dates.get(p.accountId) || "";
     const end = q ? marketDay(q.tradedAt || quotes!.asOf) : start;
     const plan = projectActions(p, start, end, feed);
@@ -183,6 +191,10 @@ export function applyCorporateActionQuotes(
     if (q && end < start) plan.quantityIssues.push("Quote predates the holding statement");
     if (!feed) plan.quantityIssues.push("Waiting for corporate-action evidence before marking shares live");
     const blocked = plan.quantityIssues.length > 0;
+    // THE GATE'S OWN REASON, kept where the price is decided. A quote that
+    // arrived and was held back is a different fact from a quote that never
+    // came, and every page used to word both as "no quote" (DL-9).
+    plan.liveWithheld = q && blocked ? [...new Set(plan.quantityIssues)].join(". ") : null;
     const f = blocked ? 1 : plan.factor;
     const prepared = { ...p, quantity: p.quantity * f,
       avgCost: p.avgCost === null ? null : p.avgCost / f,
@@ -193,7 +205,14 @@ export function applyCorporateActionQuotes(
       priced = { ...p, live: false };
       plan.adjustedQuantity = p.quantity; plan.factor = 1;
       plan.dividendEntitlement = null;
-      plan.incomeIssues.push(blocked ? "Live valuation withheld pending share reconciliation" : "A live quote is required for the period return");
+      // THE CAUSE PICKS THE WORDS. A security with no NSE symbol can never be
+      // priced live, whatever the evidence says, so "withheld pending share
+      // reconciliation" was the wrong cause on every one of them (DL-15).
+      plan.incomeIssues.push(!sym
+        ? "No NSE symbol resolves for this security, so it cannot be priced live and no period return can be struck"
+        : !q ? "No live quote arrived for this security in this round, so no period return can be struck"
+        : blocked ? "Live valuation withheld pending share reconciliation"
+        : "A live quote is required for the period return");
       for (const line of plan.lines) if (line.status === "adjusted" || line.status === "declared") {
         line.status = "needs-review"; line.reason = "Awaiting a comparable post-action quote";
         line.amount = null; line.quantity = null;
@@ -214,6 +233,30 @@ export function applyCorporateActionQuotes(
     return priced;
   });
   return { positions: output, returns };
+}
+
+/**
+ * ── WHY THIS POSITION'S LIVE PRICE IS HELD BACK, OR NULL ─────────────────────
+ *
+ * The corporate-action gate withholds a live quote that DID arrive wherever
+ * pairing it with the statement's share count could be wrong: a buyback or a
+ * rights issue the feed cannot allocate, sales recorded after the statement,
+ * an event capture that does not reach the quote's day, or the evidence still
+ * loading. Every page that shows a price used to infer "the feed returned no
+ * quote" instead, which sends a reader to wait for a feed that already
+ * answered (DL-9).
+ *
+ * Returns the gate's own sentence for the position, or null where the gate is
+ * not what kept it off a live price — no quote arrived for it, it is not an
+ * equity (funds are never gated), or it went live. One helper so the company
+ * page, the Portfolio Monitor's price hover and the basis pill say the same
+ * words about the same position.
+ */
+export function liveWithheldReason(
+  p: Pick<Position, "accountId" | "securityKey">,
+  returns: ReadonlyMap<string, ActionReturn>,
+): string | null {
+  return returns.get(positionActionKey(p))?.liveWithheld ?? null;
 }
 
 /** Refresh failure retains the dated capture, never converts unknown income to zero. */

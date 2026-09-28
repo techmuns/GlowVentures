@@ -26,9 +26,8 @@
 // one level down.
 import type { Portfolio, Position } from "./types";
 import { accountIndex } from "./accounts";
-import { costCoversSet, currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, sum } from "./analytics";
-import { fifoTotals, type FifoOptions } from "./fifo";
-import { MARKET_SIDE_UNPLACED } from "./aifCategory";
+import { costCoversSet, currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, SIDE_NOTE, sum } from "./analytics";
+import { fifoTotals, type FifoOptions, type FifoTotals } from "./fifo";
 /**
  * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
  * allocation table can be grouped three ways, and a drill-down that re-derived
@@ -38,6 +37,7 @@ import { MARKET_SIDE_UNPLACED } from "./aifCategory";
  */
 import { type GroupAxis, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
 import { measuredAccountsReturn } from "./returns";
+import { xirrPct, moneyWeightedReturn, type MoneyWeighted } from "./bucketXirr";
 
 /** The route the drill-down lives at. Imported, never typed at a call site. */
 export const DRILLDOWN_PATH = "/holdings";
@@ -137,7 +137,18 @@ export type Facet = {
   /** What this set IS, rendered when it is the active one. */
   note: string;
   rows: Position[];
+  /**
+   * WHAT THE CURRENT-HOLDINGS FILTER LEFT OUT OF THIS SET, counted over THIS
+   * set (XP-13). The page's footer names it when this facet is the active one.
+   */
+  excluded: Excluded;
 };
+
+/**
+ * THE CLOSED AND SUB-₹1,000 ROWS ONE SET LEFT OUT — the two counts below, on
+ * one object so a set cannot carry one and forget the other.
+ */
+export type Excluded = { closedExcluded: number; negligibleExcluded: { count: number; value: number } };
 
 /** URL params. `view` is left to `useViewParam`, so the scope takes its own. */
 export const SCOPE_PARAM = "of";
@@ -248,6 +259,12 @@ export type Drilldown = {
    * to the value total and are already skipped by `sumOrNull` in the cost total.
    * Only the COUNTS move, and the page says so rather than letting a reader who
    * arrived from a tile reading 369 wonder where five rows went.
+   *
+   * COUNTED OVER THIS SET, NOT THE BOOK (XP-13). It was the whole book's count
+   * on every page, so the PMS mandates page said five closed positions were not
+   * listed when none of its rows had closed; the three 3P classes are the AIF
+   * row's, HDFC Small Cap the Mutual Fund row's and HDFC Liquid the Cash row's.
+   * A closed row belongs to a set when the set's own test would have kept it.
    */
   closedExcluded: number;
   /**
@@ -273,12 +290,34 @@ export type Drilldown = {
    * empty table renders through `AbsentSection`, never as a frame around nothing.
    */
   absent: { what: string; needs: string } | null;
+  /**
+   * THE MONEY-WEIGHTED TILE'S OWN RATE, on the page that tile opens (B-06).
+   * Set on the `measured` scope only, and struck by `bookMoneyWeighted` — the
+   * function the Morning CIO tile calls — so the page a reader clicks through
+   * to states the figure they clicked rather than a return on cost alone.
+   */
+  moneyWeighted?: BookMoneyWeighted;
 };
+
+/**
+ * What each side of the book is: ONE definition, in `analytics.ts` beside the
+ * `marketSides` that Upload History and Data Refresh read, re-exported here for
+ * the facets below and Morning CIO's side tiles (CK-C5). A second copy here is
+ * how the two came to describe one side two ways.
+ */
+export { SIDE_NOTE };
 
 type Ctx = {
   portfolio: Portfolio;
   /** The consolidated set Morning CIO's figures are struck on. */
   consolidated: Position[];
+  /**
+   * THE STATEMENT BOOK — what the money-weighted rate closes each account on.
+   * Its flows are complete only to each statement's date, so a live value does
+   * not belong at that date. Absent, the live portfolio stands in (as it does
+   * on Morning CIO before the statement book has loaded).
+   */
+  statement?: Portfolio | null;
 };
 
 /**
@@ -314,18 +353,36 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
    */
   const consolidated = currentHoldings(ctx.consolidated);
   const livePositions = currentHoldings(portfolio.positions);
-  // Struck on the DEDUPED set, like the counts it sits beside: the per-account
-  // scope below overrides `closedExcluded` with its own for exactly that reason.
-  const dropped = droppedHoldings(ctx.consolidated);
+  /**
+   * WHAT THE FILTER ABOVE LEFT OUT, COUNTED OVER EACH SET (XP-13).
+   *
+   * It was the whole book's count, printed under every set, so the PMS
+   * mandates page said "5 closed positions are not listed" over a set none of
+   * them belonged to. Each branch below now passes its OWN membership test,
+   * the one that decided its rows, and a dropped row counts against the set
+   * only where that test would have kept it: the three 3P classes on the AIF
+   * row, HDFC Liquid on Cash, the two tiny shares on Direct Equity.
+   *
+   * The dropped rows are taken from the same pool as the set's rows: deduped
+   * for a consolidated set, every statement's own row for the per-account one.
+   */
+  const droppedFrom = { deduped: droppedHoldings(ctx.consolidated), raw: droppedHoldings(portfolio.positions) };
+  const excludedWhere = (belongs: (p: Position) => boolean, basis: "deduped" | "raw" = "deduped"): Excluded => {
+    const d = droppedFrom[basis];
+    const negligible = d.negligible.filter(belongs);
+    return {
+      closedExcluded: d.closed.filter(belongs).length,
+      negligibleExcluded: { count: negligible.length, value: sum(negligible.map((p) => p.marketValue)) },
+    };
+  };
   // `backs` and `lead` were removed from this type at Stage 10ao with the header
   // pill row and the lead paragraph; `crumb` replaced neither — it names the
-  // FIGURE where `backs` named the tiles that link here.
-  const base: Omit<Drilldown, "id" | "key" | "title" | "crumb" | "rows"> = {
+  // FIGURE where `backs` named the tiles that link here. The two exclusion
+  // counts are left to each branch, so none can inherit another set's.
+  const base: Omit<Drilldown, "id" | "key" | "title" | "crumb" | "rows" | keyof Excluded> = {
     deduped: true,
     facets: [],
     activeFacet: "",
-    closedExcluded: dropped.closed.length,
-    negligibleExcluded: { count: dropped.negligible.length, value: sum(dropped.negligible.map((p) => p.marketValue)) },
     absent: null,
   };
 
@@ -339,11 +396,14 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
    * there the page could not say which figure it was answering for.
    */
   const withFacets = (
-    d: Omit<Drilldown, "rows" | "facets" | "activeFacet">,
+    d: Omit<Drilldown, "rows" | "facets" | "activeFacet" | keyof Excluded>,
     facets: Facet[],
   ): Drilldown => {
     const active = facets.find((f) => f.key === scope.facet) ?? facets[0];
-    return { ...d, facets, activeFacet: active?.key ?? "", rows: active?.rows ?? [] };
+    // The footer names what the ACTIVE facet left out, so a reader on the
+    // private half is told about the private half's rows and no other.
+    const excluded = active?.excluded ?? excludedWhere(() => false);
+    return { ...d, ...excluded, facets, activeFacet: active?.key ?? "", rows: active?.rows ?? [] };
   };
 
   switch (scope.id) {
@@ -367,14 +427,15 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
     case "basket":
     case "family-class": {
       const axis = SCOPE_AXIS[scope.id] as GroupAxis;
-      const rows = consolidated.filter((p) => groupKeyFor(axis, accIdx, p) === scope.key);
+      const inRow = (p: Position) => groupKeyFor(axis, accIdx, p) === scope.key;
+      const rows = consolidated.filter(inRow);
       const label = groupLabelFor(axis)(scope.key);
       const noun = GROUP_NOUN[axis].one;
       const decidedBy = axis === "category"
         ? "The bucket is decided by `holdingBucket` — the one function every holdings table on this site groups by — so this list is the row's own arithmetic rather than a second reading of it."
         : `The ${noun} is the FAMILY'S OWN, taken from their consolidated review product by product: no statement in the archive states one, and nothing here is inferred from what the instrument is. A direct stock the review does not name individually is placed by their own stated rule instead, and the allocation row says how much of it was.`;
       return {
-        ...base, id: scope.id, key: scope.key,
+        ...base, ...excludedWhere(inRow), id: scope.id, key: scope.key,
         title: label,
         // The row a reader clicked is labelled with the section's own name, so
         // the crumb and the heading agree here by construction.
@@ -403,30 +464,26 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       // The rate's own account set — `measuredAccountsReturn`, the function the
       // tile's figure comes from — so this page cannot list an account the rate
       // left out, nor leave out one it covered.
-      const ids = measuredAccountsReturn(portfolio, portfolio.accounts).parts.map((x) => x.accountId);
+      const mwb = bookMoneyWeighted(portfolio, ctx.statement ?? null, new Date());
+      const ids = mwb.accountIds;
       const keep = new Set(ids);
       const rows = livePositions.filter((p) => keep.has(p.accountId));
       const outside = livePositions.filter((p) => !keep.has(p.accountId));
-      /* NO WINDOW IS DERIVED HERE ANY MORE. `Drilldown.windowDays` fed the
-         arithmetic card's "N-day window · not annualised" line and nothing
-         else, and the card is gone. The window itself is NOT lost — it is
-         `m.bookMW.windowDays` on Morning CIO, derived by `moneyWeightedReturn`
-         from the same flows, and it is stated in the hover of the tile that
-         prints the rate. That is Stage 10g(ii)'s guard and it must keep a home:
-         this figure once read +99.0% because a 132-day return was compounded
-         onto a year. */
+      /* THE RATE AND ITS WINDOW RIDE ON THE DRILL-DOWN AGAIN (B-06). The
+         arithmetic card that carried them went at Stage 10ao, which left this
+         page printing only a return on cost under a tile that printed a
+         money-weighted rate — two figures for one click. `moneyWeighted` is
+         the same object the tile reads, and its window is `moneyWeightedReturn`'s
+         own: Stage 10g(ii)'s guard, because this figure once read +99.0% when a
+         132-day return was compounded onto a year. */
       return withFacets({
         ...base, id: scope.id, key: "",
         deduped: false,
-        // This scope reads the PER-ACCOUNT set, so its closed count is that
-        // set's — not the deduped one `base` carries.
-        closedExcluded: droppedHoldings(portfolio.positions).closed.length,
-        negligibleExcluded: (() => {
-          const n = droppedHoldings(portfolio.positions).negligible;
-          return { count: n.length, value: sum(n.map((p) => p.marketValue)) };
-        })(),
+        // This scope reads the PER-ACCOUNT set, so each facet's exclusions are
+        // counted over every statement's own row (`"raw"` below).
         title: "Money-weighted return",
         crumb: "Money-weighted return",
+        moneyWeighted: mwb,
         absent: rows.length ? null : {
           what: "No account in this book carries an opening portfolio value",
           needs: "A money-weighted return needs the window's opening valuation as its first flow. No statement in the drop publishes one, so the rate is absent rather than struck on a stake nobody stated.",
@@ -436,11 +493,13 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
           key: "covered", label: "Covered by the rate",
           note: `The holdings of the ${ids.length} account${ids.length === 1 ? "" : "s"} whose statements carry an opening portfolio value.`,
           rows,
+          excluded: excludedWhere((p) => keep.has(p.accountId), "raw"),
         },
         ...(outside.length ? [{
           key: "not-covered", label: "Not covered",
           note: "These accounts publish no opening portfolio value, so no money-weighted rate can be struck on them. Their market value IS in the current value of holdings — they are outside this rate, not outside the book.",
           rows: outside,
+          excluded: excludedWhere((p) => !keep.has(p.accountId), "raw"),
         }] : []),
       ]);
     }
@@ -452,9 +511,10 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       const byKey = new Map<string, number>();
       for (const p of consolidated) byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
       const top = new Set([...byKey.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_NAMES).map(([k]) => k));
-      const rows = consolidated.filter((p) => top.has(p.securityKey));
+      const inTop = (p: Position) => top.has(p.securityKey);
+      const rows = consolidated.filter(inTop);
       return {
-        ...base, id: scope.id, key: "",
+        ...base, ...excludedWhere(inTop), id: scope.id, key: "",
         title: `The ${top.size} largest names`,
         crumb: `Top-${top.size} concentration`,
         rows,
@@ -473,9 +533,12 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         owners.set(p.securityKey, s);
       }
       const shared = new Set([...owners.entries()].filter(([, s]) => s.size >= 2).map(([k]) => k));
-      const rows = consolidated.filter((p) => shared.has(p.securityKey));
+      // A name is cross-held by who holds it NOW, so a closed row does not make
+      // a name cross-held, and counts against this set only where the name is.
+      const isShared = (p: Position) => shared.has(p.securityKey);
+      const rows = consolidated.filter(isShared);
       return {
-        ...base, id: scope.id, key: "",
+        ...base, ...excludedWhere(isShared), id: scope.id, key: "",
         title: `Names held by two or more entities`,
         crumb: "Cross-held names",
         rows,
@@ -500,6 +563,10 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       const flat = priced.filter((p) => (p.returnPct ?? 0) === 0);
       const unmeasured = consolidated.filter((p) => p.costUnavailable);
       const other = [...flat, ...unmeasured];
+      // The two facets' own tests, for what the current-holdings filter left
+      // out of each: the rows above, written as predicates.
+      const inCount = (p: Position) => !p.costUnavailable && (wantWin ? (p.returnPct ?? 0) > 0 : (p.returnPct ?? 0) < 0);
+      const inNeither = (p: Position) => !!p.costUnavailable || (p.returnPct ?? 0) === 0;
       return withFacets({
         ...base, id: scope.id, key: "",
         title: wantWin ? "Holdings showing a gain" : "Holdings showing a loss",
@@ -509,11 +576,12 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
           needs: "This is a measured zero rather than a missing figure: every priced holding in the book falls on the other side or exactly at cost.",
         },
       }, [
-        { key: wantWin ? "winners" : "losers", label: wantWin ? "Showing a gain" : "Showing a loss", note: "", rows },
+        { key: wantWin ? "winners" : "losers", label: wantWin ? "Showing a gain" : "Showing a loss", note: "", rows, excluded: excludedWhere(inCount) },
         ...(other.length ? [{
           key: "neither", label: "In neither count",
           note: "A return of exactly zero is a measurement and belongs under neither heading; a holding whose cost is unavailable has no return to measure. Both are here so the two counts on Morning CIO can be reconciled against the book rather than assumed to cover it.",
           rows: other,
+          excluded: excludedWhere(inNeither),
         }] : []),
       ]);
     }
@@ -546,21 +614,21 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       const sideFacets: Facet[] = [
         ...(listed.length ? [{
           key: "listed", label: "Listed", group: "side" as const,
-          note: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the"
-            + " Category III AIFs whose own statements say they trade listed securities.",
+          note: SIDE_NOTE.listed,
           rows: listed,
+          excluded: excludedWhere((p) => p.marketSide === "listed"),
         }] : []),
         ...(priv.length ? [{
           key: "private", label: "Private", group: "side" as const,
-          note: "Private capital: unlisted holdings, structured products, and the AIFs whose statements"
-            + " print Category I or II or name their own discipline as private equity or venture.",
+          note: SIDE_NOTE.private,
           rows: priv,
+          excluded: excludedWhere(isPrivateClass),
         }] : []),
         ...(unplaced.length ? [{
           key: "unplaced", label: "Not placed", group: "side" as const,
-          note: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; a fund's`
-            + " own SEBI registration or its contribution agreement would settle each one.",
+          note: SIDE_NOTE.unplaced,
           rows: unplaced,
+          excluded: excludedWhere(isUnplacedSide),
         }] : []),
       ];
       /**
@@ -580,14 +648,18 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
        * Offered only where both exist — a toggle to an empty half invites a
        * click into a table that can only be empty.
        */
-      const costed = consolidated.filter((p) => p.costBasis != null);
-      const without = consolidated.filter((p) => p.costBasis == null);
+      // `costedBookSet`'s own predicate (B-07), so the facet the Consolidated
+      // return tile opens is the set that tile's figure is struck over.
+      const costed = costedBookSet(consolidated).costed;
+      const costedIn = new Set(costed);
+      const without = consolidated.filter((p) => !costedIn.has(p));
       const costFacets: Facet[] = costed.length && without.length ? [
         {
           key: "costed", label: "Cost reported", group: "cost",
           note: "The holdings whose statement reports what they cost — the rows Capital invested and the"
             + " Consolidated return are summed over.",
           rows: costed,
+          excluded: excludedWhere(reportsCost),
         },
         {
           key: "no-cost", label: "No cost reported", group: "cost",
@@ -596,6 +668,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
             + " whole of their market value as profit at an infinite return. Measured across the whole audit"
             + " archive, not one of these (account, security) pairs carries a cost on any record type.",
           rows: without,
+          excluded: excludedWhere((p) => !reportsCost(p)),
         },
       ] : [];
       return withFacets({
@@ -610,7 +683,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
           needs: "No statement has been ingested, so there is nothing to list. Ingest a statement and every figure on this site populates itself.",
         },
       }, [
-        { key: "all", label: "All holdings", note: "Every position in the book.", rows: consolidated },
+        { key: "all", label: "All holdings", note: "Every position in the book.", rows: consolidated, excluded: excludedWhere(() => true) },
         ...(split ? sideFacets : []),
         ...costFacets,
       ]);
@@ -687,6 +760,117 @@ export function coveredReturn(set: readonly Position[], opts: FifoOptions = {}) 
   // mandate is struck on its capital since inception.
   const fifo = fifoTotals(set, opts);
   return { covers, pct: covers ? fifo.returnPct : null, fifo };
+}
+
+/**
+ * ── THE WHOLE-BOOK RETURN'S SET, NAMED ON ITS FACE (B-07) ───────────────────
+ *
+ * The whole-book return on cost is struck over the holdings that report a
+ * cost — Stage 10ca's decision, and main records the refusal version (a bare
+ * "—" wherever ₹168 Cr of depository holdings report no cost) as a regression.
+ * WHEREVER IT APPEARS IT NAMES THAT SET ON ITS FACE, not only in a hover:
+ * "on the ₹X of ₹Y that reports a cost · N of M holdings". Morning CIO's
+ * Consolidated return tile, its allocation table's Total row and the Portfolio
+ * Monitor's footer all print this ONE figure over this ONE set, so the set and
+ * its words are built here once.
+ */
+export type CostedBookSet = {
+  /** The current holdings whose statement reports what they cost. */
+  costed: Position[];
+  /** What those are worth — the X in the label. */
+  costedValue: number;
+  /** What every current holding is worth — the Y, the book the top bar shows. */
+  bookValue: number;
+  costedCount: number;
+  holdings: number;
+};
+/** Whether a holding's statement reports what it cost — `costedBookSet`'s test, and the cost facets'. */
+export const reportsCost = (p: Pick<Position, "costBasis" | "costUnavailable">): boolean =>
+  p.costBasis != null && !p.costUnavailable;
+export function costedBookSet(current: readonly Position[]): CostedBookSet {
+  const costed = current.filter(reportsCost);
+  return {
+    costed,
+    costedValue: sum(costed.map((p) => p.marketValue)),
+    bookValue: sum(current.map((p) => p.marketValue)),
+    costedCount: costed.length,
+    holdings: current.length,
+  };
+}
+/** The words, in the reader's currency: "on the ₹X of ₹Y that reports a cost · N of M holdings". */
+export function costedSetLabel(
+  s: Pick<CostedBookSet, "costedValue" | "bookValue" | "costedCount" | "holdings">,
+  money: (n: number) => string,
+): string {
+  return `on the ${money(s.costedValue)} of ${money(s.bookValue)} that reports a cost · ${s.costedCount} of ${s.holdings} holdings`;
+}
+
+/**
+ * ...AND THE RETURN ITSELF, STRUCK ONCE: FIFO over that set (`fifoTotals`),
+ * which is Stage 10ca's one aggregate. Morning CIO's tile and allocation Total
+ * row and the page they open all call this, so the figure a reader clicked is
+ * the figure they land on, and a change to the set moves all of them together.
+ */
+export type BookReturnOnCost = { set: CostedBookSet; fifo: FifoTotals; pct: number | null };
+export function bookReturnOnCost(current: readonly Position[], opts: FifoOptions): BookReturnOnCost {
+  const set = costedBookSet(current);
+  const fifo = fifoTotals(set.costed, opts);
+  return { set, fifo, pct: fifo.returnPct };
+}
+
+/**
+ * ── THE MONEY-WEIGHTED RATE, STRUCK ONCE FOR THE TILE AND THE PAGE (B-06) ───
+ *
+ * Morning CIO's tile and the `?of=measured` page it opens used to be two
+ * computations — the tile over the statement book, the page's account set over
+ * the live one — and the page printed only a return on cost, so a reader who
+ * clicked +26.5% landed on +14.2% and nothing tying the two. Both read this
+ * now: the accounts whose statements carry an opening portfolio value, each
+ * closed on its own statement's value at its own date (`measuredAccountsReturn`
+ * — the flows are complete only to that date), pooled with the fund-of-funds
+ * model's calls and marks where it carries any, and de-annualised by
+ * `moneyWeightedReturn` over the flows' own window, never compounded onto a
+ * year it has not seen (Stage 10g(ii)).
+ */
+export type BookMoneyWeighted = {
+  result: MoneyWeighted;
+  /** The accounts the rate covers, and what their statements value them at. */
+  accountIds: string[];
+  accountNos: string[];
+  measuredValue: number;
+  /** Where the pool closes — the latest statement date among them. */
+  lastClose: string | null;
+  /** Accounts in the book, for "N of M accounts". */
+  bookAccounts: number;
+};
+export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | null, today: Date): BookMoneyWeighted {
+  const mw = measuredAccountsReturn(statement ?? portfolio, portfolio.accounts);
+  const pm = portfolio.privateMarkets;
+  const privateFlows = [
+    ...pm.startups.filter((s) => s.investDate && s.invested > 0)
+      .flatMap((s) => [{ date: new Date(s.investDate!), amount: -s.invested }, { date: today, amount: s.fairValue }]),
+    ...[...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]
+      .filter((f) => f.firstInvest && f.drawn > 0)
+      .flatMap((f) => [{ date: new Date(f.firstInvest!), amount: -f.drawn }, { date: today, amount: f.distributed + f.currentValue }]),
+  ];
+  // The private flows join the SAME per-account parts, each still closing on
+  // its own statement date. The window is the rate's own: its first flow to its
+  // last — with no private flows (this book carries none), exactly the pool's.
+  const flows = [
+    ...mw.parts.flatMap((x) => [...x.flows, { date: x.asOf, amount: x.terminalValue }]),
+    ...privateFlows,
+  ];
+  const annual = mw.parts.length ? xirrPct(flows) : null;
+  const times = flows.map((f) => f.date.getTime());
+  const windowDays = mw.parts.length ? Math.round((Math.max(...times) - Math.min(...times)) / 864e5) : null;
+  return {
+    result: moneyWeightedReturn(annual, windowDays),
+    accountIds: mw.parts.map((x) => x.accountId),
+    accountNos: mw.parts.map((x) => x.accountNo),
+    measuredValue: mw.measuredMV,
+    lastClose: mw.lastClose,
+    bookAccounts: portfolio.accounts.length,
+  };
 }
 
 /**

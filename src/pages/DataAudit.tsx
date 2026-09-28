@@ -18,6 +18,30 @@ type FileMeta = {
 type Cell = string | number | null;
 type Sheet = { name: string; rows: Cell[][] };
 
+/**
+ * A chip names WHICH document it opens — the provider, the account, the report
+ * and its date (XA-26). It read the date alone, so 42 chips said "2026-07-31"
+ * and the only way to tell them apart was to open each one. Where two chips
+ * would still read alike (a statement reissued on the same date), the later is
+ * numbered; its source file is the chip's hover either way.
+ */
+const chipLabel = (f: { label: string; fy: string }) => {
+  const [provider, account, type] = f.label.split(" · ");
+  if (!provider || !account || !type) return [f.label, f.fy].filter(Boolean).join(" · ");
+  return [`${provider.split(" ").slice(0, 2).join(" ")} ${account}`, type, f.fy].filter(Boolean).join(" · ");
+};
+function chipLabels(manifest: readonly { fileKey: string; label: string; fy: string }[]): Map<string, string> {
+  const seen = new Map<string, number>();
+  const out = new Map<string, string>();
+  for (const f of manifest) {
+    const base = chipLabel(f);
+    const n = (seen.get(base) ?? 0) + 1;
+    seen.set(base, n);
+    out.set(f.fileKey, n === 1 ? base : `${base} · #${n}`);
+  }
+  return out;
+}
+
 const BASE = import.meta.env.BASE_URL;
 const VISIBLE_CAP = 200;
 
@@ -134,6 +158,7 @@ export function DataAudit() {
   }, [status, fileKey, sheetKey]);
 
   const currentFile = manifest.find((f) => f.fileKey === fileKey);
+  const labels = useMemo(() => chipLabels(manifest), [manifest]);
   const ncols = useMemo(() => sheet ? sheet.rows.reduce((m, r) => Math.max(m, r.length), 0) : 0, [sheet]);
   // Detect the sheet's column-heading row (the label-heaviest of the first rows) so
   // we can pin it as a header — otherwise a filter (e.g. by ISIN) hides it and the
@@ -201,6 +226,20 @@ export function DataAudit() {
     }));
   }, [sheet, query, headerRowIndex, exact]);
   const visible = showAll ? filtered : filtered.slice(0, VISIBLE_CAP);
+  /**
+   * ── A ROW WITH FEWER CELLS THAN ITS HEADER IS NOT PLACED BY POSITION (XA-20)
+   *
+   * The extracted tables keep a row's cells in printed order and drop the ones
+   * the statement left blank — so Goldstandard's bank-book "Opening Balance"
+   * prints 8 cells against 10 headings, and drawing cell c under heading c put
+   * its balance, ₹3,20,63,226.81, under "expenses". The row's own record in
+   * document.json has it right; this grid cannot say which heading each cell
+   * belongs to, so such a row is shown in printed order across the width, and
+   * says so, rather than as a figure under the wrong heading.
+   */
+  const isShortRow = (row: Cell[]) => !!headerRow && row.length < headerRow.length
+    && row.filter((c) => c !== null && c !== undefined && String(c).trim() !== "").length >= 2;
+  const shortCount = filtered.filter(({ row }) => isShortRow(row)).length;
 
   const totalSheets = manifest.reduce((n, f) => n + f.sheets.length, 0);
   // A partially-parsed document still has sheets worth reading; only a document
@@ -268,7 +307,7 @@ export function DataAudit() {
                 : locked ? "cursor-not-allowed border-ink-700 bg-ink-800/40 text-slate-600"
                 : "border-ink-700 bg-ink-800 text-slate-300 hover:bg-ink-700/60"}`}>
               {locked ? <Lock className="h-3.5 w-3.5" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
-              <span className="font-medium">{f.fy || f.label}</span>
+              <span className="font-medium" data-xa="audit-chip" data-file={f.fileKey}>{labels.get(f.fileKey) ?? f.label}</span>
               {locked && <span className="text-[10px] uppercase tracking-wide">locked</span>}
               {!locked && <span className="text-slate-500">· {f.sheets.length}</span>}
             </button>
@@ -304,6 +343,12 @@ export function DataAudit() {
             Showing <span className="mono text-slate-300">{visible.length.toLocaleString("en-IN")}</span> of{" "}
             <span className="mono text-slate-300">{filtered.length.toLocaleString("en-IN")}</span>
             {query ? ` matching rows` : ` rows`}
+          </span>
+        )}
+        {sheet && shortCount > 0 && (
+          <span className="text-[12px] text-amber-400" data-xa="audit-short-note" data-count={shortCount}
+            title="These rows printed fewer cells than the table has headings, so which heading each cell belongs to is not recorded here. They are shown in printed order across the row rather than placed under a heading by position; each one's normalized record is in the document's own document.json.">
+            · {shortCount.toLocaleString("en-IN")} row{shortCount === 1 ? "" : "s"} with fewer cells than headings, shown unaligned
           </span>
         )}
         {sheet && !showAll && filtered.length > VISIBLE_CAP && (
@@ -383,7 +428,19 @@ export function DataAudit() {
                 )}
               </thead>
               <tbody>
-                {visible.map(({ i, row }) => (
+                {visible.map(({ i, row }) => isShortRow(row) ? (
+                  <tr key={i} className="hover:bg-ink-700/30" data-xa="audit-short-row" data-row={i + 1}
+                    data-cells={row.length} data-cols={headerRow?.length ?? 0}>
+                    <td className="sticky left-0 z-10 border-b border-r border-ink-700 bg-ink-900 px-2 py-1 text-right mono text-[10px] text-slate-600">
+                      {i + 1}
+                    </td>
+                    <td colSpan={ncols} className="border-b border-r border-ink-700/60 px-3 py-1 text-slate-300"
+                      title={`This row printed ${row.length} cells against the table's ${headerRow?.length ?? 0} headings, so which heading each cell belongs to is not recorded — they are shown in printed order rather than placed by position.`}>
+                      <span className="mono">{row.map((c, ci) => fmtCell(c ?? null, colDecimals[ci]).text || "·").join("   ")}</span>
+                      <span className="ml-3 text-[10.5px] text-amber-400">{row.length} of {headerRow?.length ?? 0} cells · placement not recorded</span>
+                    </td>
+                  </tr>
+                ) : (
                   <tr key={i} className="hover:bg-ink-700/30">
                     <td className="sticky left-0 z-10 border-b border-r border-ink-700 bg-ink-900 px-2 py-1 text-right mono text-[10px] text-slate-600">
                       {i + 1}

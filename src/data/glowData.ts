@@ -128,7 +128,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Ajay Jaisinghani",
     "strategy": null,
     "engagement": "AIF",
-    "providerEngagement": "Category III AIF - unit classes B1/B2/B3",
+    "providerEngagement": "Category III AIF — as the depository's scheme name for these units prints it (\"3P INDIA EQUITY FUND 1-CATEGORY III AIF\"); unit classes B1/B2/B3",
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
@@ -403,7 +403,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Ajay Jaisinghani",
     "strategy": null,
     "engagement": "AIF",
-    "providerEngagement": "Category II AIF - drawdown, with a commitment and uncalled capital",
+    "providerEngagement": "drawdown AIF, with a commitment and uncalled capital — the statement prints no SEBI category",
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
@@ -419,7 +419,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Bharat Jaisinghani",
     "strategy": null,
     "engagement": "AIF",
-    "providerEngagement": "Category II AIF - drawdown, with a commitment and uncalled capital",
+    "providerEngagement": "drawdown AIF, with a commitment and uncalled capital — the statement prints no SEBI category",
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
@@ -435,7 +435,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Ankita Jaisinghani",
     "strategy": null,
     "engagement": "AIF",
-    "providerEngagement": "Category II AIF - drawdown, with a commitment and uncalled capital",
+    "providerEngagement": "drawdown AIF, with a commitment and uncalled capital — the statement prints no SEBI category",
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
@@ -619,7 +619,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Ankita Jaisinghani",
     "strategy": null,
     "engagement": "AIF",
-    "providerEngagement": "Category II AIF - drawdown, with a commitment and called capital",
+    "providerEngagement": "drawdown AIF, with a commitment and called capital — the statement prints no SEBI category",
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
@@ -635,7 +635,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Ajay Jaisinghani",
     "strategy": null,
     "engagement": "AIF",
-    "providerEngagement": "Category II AIF - drawdown, with a commitment and called capital",
+    "providerEngagement": "drawdown AIF, with a commitment and called capital — the statement prints no SEBI category",
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
@@ -667,7 +667,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Ajay Jaisinghani",
     "strategy": null,
     "engagement": "AIF",
-    "providerEngagement": "drawdown fund — the statement prints a capital commitment, dated drawdowns and a quarterly NAV",
+    "providerEngagement": "drawdown fund — the statement prints a capital commitment, dated drawdowns and a quarterly NAV; its manager block prints the SEBI registration \"AIF -Category-II No : IN/AIF2/22-23/1042\"",
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
@@ -873,7 +873,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Bharat Jaisinghani Family Trust 2",
     "strategy": "Transition Venture Capital Fund I",
     "engagement": "AIF",
-    "providerEngagement": "Category I/II AIF — drawdown",
+    "providerEngagement": "drawdown fund — the statement prints a capital commitment, the capital contributed against it and a NAV per unit; its Sebi Reg. no. line is blank",
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
@@ -889,7 +889,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Bharat Jaisinghani Family Trust 3",
     "strategy": "Transition Venture Capital Fund I",
     "engagement": "AIF",
-    "providerEngagement": "Category I/II AIF — drawdown",
+    "providerEngagement": "drawdown fund — the statement prints a capital commitment, the capital contributed against it and a NAV per unit; its Sebi Reg. no. line is blank",
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
@@ -997,6 +997,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -1028,6 +1029,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-06-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -1108,9 +1110,9 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasisSource": "fifo",
     "marketValue": 0,
     "unrealizedPnL": 0,
-    "realizedPnL": 25609033.87,
-    "costOfUnitsSold": 284973801.3,
-    "returnPct": 8.99,
+    "realizedPnL": 25582835.17,
+    "costOfUnitsSold": 285000000,
+    "returnPct": 8.98,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -5217,6 +5219,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5245,6 +5248,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5273,6 +5277,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-08-06",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5301,6 +5306,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5329,6 +5335,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5357,6 +5364,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5385,6 +5393,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5413,6 +5422,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5441,6 +5451,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5469,6 +5480,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5497,6 +5509,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5525,6 +5538,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5553,6 +5567,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5581,6 +5596,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -6227,6 +6243,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-06-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -6255,6 +6272,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -6283,6 +6301,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -6329,12 +6348,14 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 6045934.485,
     "avgCost": null,
     "currentPrice": 161.5675,
-    "costBasis": 749962501.87,
+    "costBasis": 750000000,
+    "costBasisSource": "gross-paid",
+    "printedCostBasis": 749962501.87,
     "marketValue": 976826519.91,
-    "unrealizedPnL": 226864018.04,
+    "unrealizedPnL": 226826519.91,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 30.25,
+    "returnPct": 30.24,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6356,12 +6377,14 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 1211186.597,
     "avgCost": null,
     "currentPrice": 161.5675,
-    "costBasis": 149992500.37,
+    "costBasis": 150000000,
+    "costBasisSource": "gross-paid",
+    "printedCostBasis": 149992500.37,
     "marketValue": 195688390.51,
-    "unrealizedPnL": 45695890.14,
+    "unrealizedPnL": 45688390.51,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 30.47,
+    "returnPct": 30.46,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6383,12 +6406,14 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 2341480.851,
     "avgCost": null,
     "currentPrice": 125.3582,
-    "costBasis": 249987500.62,
+    "costBasis": 250000000,
+    "costBasisSource": "gross-paid",
+    "printedCostBasis": 249987500.62,
     "marketValue": 293523824.82,
-    "unrealizedPnL": 43536324.2,
+    "unrealizedPnL": 43523824.82,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 17.42,
+    "returnPct": 17.41,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6410,12 +6435,14 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 1820926.864,
     "avgCost": null,
     "currentPrice": 161.5675,
-    "costBasis": 219989000.54,
+    "costBasis": 220000000,
+    "costBasisSource": "gross-paid",
+    "printedCostBasis": 219989000.54,
     "marketValue": 294202601.1,
-    "unrealizedPnL": 74213600.56,
+    "unrealizedPnL": 74202601.1,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 33.74,
+    "returnPct": 33.73,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6437,12 +6464,14 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 1761264.629,
     "avgCost": null,
     "currentPrice": 161.5675,
-    "costBasis": 204989750.51,
+    "costBasis": 205000000,
+    "costBasisSource": "gross-paid",
+    "printedCostBasis": 204989750.51,
     "marketValue": 284563122.95,
-    "unrealizedPnL": 79573372.44,
+    "unrealizedPnL": 79563122.95,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 38.82,
+    "returnPct": 38.81,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -11630,6 +11659,7 @@ export const BOOK_POLYCAB: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -18538,16 +18568,6 @@ export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
       "date": "2026-06-01",
       "amount": -250000000,
       "description": "Cash Deposits"
-    },
-    {
-      "date": "2026-06-01",
-      "amount": -225353990.9,
-      "description": "Security in"
-    },
-    {
-      "date": "2026-06-01",
-      "amount": 225353990.9,
-      "description": "Security out"
     }
   ],
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
@@ -18798,6 +18818,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Subscription",
     "amount": 50000000,
     "invested": 49985550.72,
+    "charges": 14449.28,
     "units": 499855.507,
     "security": "3P India Equity Fund 1 - Class B1",
     "securityKey": "3p-india-equity-fund-1-class-b1"
@@ -18809,6 +18830,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Initial Contribution",
     "amount": 2500000,
     "invested": 2500000,
+    "charges": null,
     "units": 25000,
     "security": "Neo Infra Income Opportunities Fund I — Class A5",
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
@@ -18820,6 +18842,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "First Drawdown",
     "amount": 7500000,
     "invested": 7500000,
+    "charges": null,
     "units": 75000,
     "security": "Neo Infra Income Opportunities Fund I — Class A5",
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
@@ -18831,6 +18854,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Second Drawdown",
     "amount": 10000000,
     "invested": 10000000,
+    "charges": null,
     "units": 100000,
     "security": "Neo Infra Income Opportunities Fund I — Class A5",
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
@@ -18842,6 +18866,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Subscription",
     "amount": 20000000,
     "invested": 19999000.05,
+    "charges": 999.95,
     "units": 144363.028,
     "security": "3P India Equity Fund 1 - Class B1",
     "securityKey": "3p-india-equity-fund-1-class-b1"
@@ -18853,6 +18878,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 20000000,
     "invested": 20000000,
+    "charges": null,
     "units": 155557.405,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
@@ -18864,6 +18890,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 35000000,
     "invested": 35000000,
+    "charges": null,
     "units": 272225.4587,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
@@ -18875,6 +18902,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Subscription",
     "amount": 10000000,
     "invested": 9999500.02,
+    "charges": 499.98,
     "units": 67543.607,
     "security": "3P India Equity Fund 1 - Class B1",
     "securityKey": "3p-india-equity-fund-1-class-b1"
@@ -18886,6 +18914,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital inflow",
     "amount": 50000000,
     "invested": 50000000,
+    "charges": 0,
     "units": null,
     "security": null,
     "securityKey": null
@@ -18908,6 +18937,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital inflow",
     "amount": 50000000,
     "invested": 50000000,
+    "charges": 0,
     "units": null,
     "security": null,
     "securityKey": null
@@ -18963,6 +18993,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital inflow",
     "amount": 100000000,
     "invested": 100000000,
+    "charges": 0,
     "units": null,
     "security": null,
     "securityKey": null
@@ -18974,6 +19005,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital inflow",
     "amount": 30000000,
     "invested": 30000000,
+    "charges": 0,
     "units": null,
     "security": null,
     "securityKey": null
@@ -19007,6 +19039,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 100000000,
     "invested": 100000000,
+    "charges": null,
     "units": 815373.2761,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -19051,6 +19084,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital inflow",
     "amount": 30000000,
     "invested": 30000000,
+    "charges": 0,
     "units": null,
     "security": null,
     "securityKey": null
@@ -19073,6 +19107,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital inflow",
     "amount": 30000000,
     "invested": 30000000,
+    "charges": 0,
     "units": null,
     "security": null,
     "securityKey": null
@@ -19150,6 +19185,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Initial Contribution",
     "amount": 10000000,
     "invested": 9999500.02,
+    "charges": 499.98,
     "units": 99995,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -19183,6 +19219,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Initial Contribution",
     "amount": 27500000,
     "invested": 27498625.07,
+    "charges": 1374.93,
     "units": 276847.775,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -19205,6 +19242,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Drawdown",
     "amount": 10000000,
     "invested": 9999500.02,
+    "charges": 499.98,
     "units": 91364.524,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -19216,6 +19254,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Drawdown",
     "amount": 27500000,
     "invested": 27498625.07,
+    "charges": 1374.93,
     "units": 251252.442,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -19260,6 +19299,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Subscription",
     "amount": 40000000,
     "invested": 39998000.1,
+    "charges": 1999.9,
     "units": 254130.624,
     "security": "3P India Equity Fund 1 - Class B1",
     "securityKey": "3p-india-equity-fund-1-class-b1"
@@ -19271,6 +19311,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 25000000,
     "invested": 25000000,
+    "charges": null,
     "units": 168006.6462,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
@@ -19326,6 +19367,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 25000000,
     "invested": 25000000,
+    "charges": null,
     "units": 186976.1312,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -19480,6 +19522,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Top Up",
     "amount": 100000000,
     "invested": 99995000.25,
+    "charges": 4999.75,
     "units": 822109.608,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -19491,6 +19534,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Top Up",
     "amount": 150000000,
     "invested": 149992500.37,
+    "charges": 7499.63,
     "units": 1233164.412,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -19623,6 +19667,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Third Drawdown",
     "amount": 7500000,
     "invested": 7500000,
+    "charges": null,
     "units": 75000,
     "security": "Neo Infra Income Opportunities Fund I — Class A5",
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
@@ -19656,6 +19701,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Initial Contribution",
     "amount": 750000000,
     "invested": 749962501.87,
+    "charges": 37498.13,
     "units": 6045934.485,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -19667,6 +19713,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Initial Contribution",
     "amount": 150000000,
     "invested": 149992500.37,
+    "charges": 7499.63,
     "units": 1211186.597,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -19678,6 +19725,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Top Up",
     "amount": 100000000,
     "invested": 99995000.25,
+    "charges": 4999.75,
     "units": 807457.732,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -19744,6 +19792,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Purchase",
     "amount": 7500000,
     "invested": 7500000,
+    "charges": null,
     "units": 7500,
     "security": "Transition Venture Capital Fund I — Class A1",
     "securityKey": "transition-venture-capital-fund-i-class-a1"
@@ -19755,6 +19804,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Purchase",
     "amount": 7500000,
     "invested": 7500000,
+    "charges": null,
     "units": 7500,
     "security": "Transition Venture Capital Fund I — Class A1",
     "securityKey": "transition-venture-capital-fund-i-class-a1"
@@ -19788,6 +19838,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital inflow",
     "amount": 35000000,
     "invested": 35000000,
+    "charges": 0,
     "units": null,
     "security": null,
     "securityKey": null
@@ -19799,6 +19850,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital inflow",
     "amount": 15000000,
     "invested": 15000000,
+    "charges": 0,
     "units": null,
     "security": null,
     "securityKey": null
@@ -19810,6 +19862,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Subscription",
     "amount": 45000000,
     "invested": 44997750.11,
+    "charges": 2249.89,
     "units": 282737.451,
     "security": "3P India Equity Fund 1 - Class B2",
     "securityKey": "3p-india-equity-fund-1-class-b2"
@@ -19821,6 +19874,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 50000000,
     "invested": 50000000,
+    "charges": null,
     "units": 362043.4462,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -19832,6 +19886,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 50000000,
     "invested": 50000000,
+    "charges": null,
     "units": 331782.2205,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
@@ -19898,6 +19953,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Subscription",
     "amount": 120000000,
     "invested": 119994000.3,
+    "charges": 5999.7,
     "units": 767615.745,
     "security": "3P India Equity Fund 1 - Class B3",
     "securityKey": "3p-india-equity-fund-1-class-b3"
@@ -19964,6 +20020,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Initial Contribution",
     "amount": 250000000,
     "invested": 249987500.62,
+    "charges": 12499.38,
     "units": 2341480.851,
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2"
@@ -19986,6 +20043,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 53500000,
     "invested": 53500000,
+    "charges": null,
     "units": 384062.1556,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -20008,6 +20066,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Fourth Drawdown",
     "amount": 7500000,
     "invested": 7500000,
+    "charges": null,
     "units": 75000,
     "security": "Neo Infra Income Opportunities Fund I — Class A5",
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
@@ -20140,6 +20199,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 100000000,
     "invested": 100058861.66,
+    "charges": null,
     "units": 717459.6778,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
@@ -20173,6 +20233,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Fifth Drawdown",
     "amount": 15000000,
     "invested": 15000000,
+    "charges": null,
     "units": 150000,
     "security": "Neo Infra Income Opportunities Fund I — Class A5",
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
@@ -20184,6 +20245,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 250000000,
     "invested": 250000000,
+    "charges": null,
     "units": 1796901.6155,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -20371,6 +20433,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Purchase",
     "amount": 310000000,
     "invested": 309984500.77,
+    "charges": 15499.23,
     "units": 19123041.38,
     "security": "Helios Flexi Cap Fund - Direct Growth",
     "securityKey": "helios-flexi-cap-fund-direct-growth"
@@ -20382,6 +20445,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Purchase",
     "amount": 214200000,
     "invested": 214189290.54,
+    "charges": 10709.46,
     "units": 15245765.959,
     "security": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
     "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option"
@@ -20504,6 +20568,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 20000000,
         "invested": 20000000,
+        "charges": null,
         "units": 170498.1912,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
@@ -20521,6 +20586,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 100000000,
         "invested": 100000000,
+        "charges": null,
         "units": 815373.2761,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -20532,6 +20598,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 25000000,
         "invested": 25000000,
+        "charges": null,
         "units": 186976.1312,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -20543,6 +20610,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 50000000,
         "invested": 50000000,
+        "charges": null,
         "units": 362043.4462,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -20554,6 +20622,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 53500000,
         "invested": 53500000,
+        "charges": null,
         "units": 384062.1556,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -20572,6 +20641,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 35000000,
         "invested": 35000000,
+        "charges": null,
         "units": 296036.5639,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
@@ -20589,6 +20659,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 25000000,
         "invested": 25000000,
+        "charges": null,
         "units": 182701.9063,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
@@ -20606,6 +20677,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 50000000,
         "invested": 50000000,
+        "charges": null,
         "units": 360802.656,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
@@ -20623,6 +20695,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 100000000,
         "invested": 100058861.66,
+        "charges": null,
         "units": 780214.6749,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
@@ -20640,6 +20713,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Cash Deposits",
         "amount": 250000000,
         "invested": 250000000,
+        "charges": null,
         "units": 1796901.6155,
         "security": "Buoyant Opportunities Strategy — Category III — Class A4",
         "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
@@ -20658,6 +20732,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Purchase",
         "amount": 310000000,
         "invested": 310000000,
+        "charges": 15499.23,
         "units": 19123041.38,
         "security": "Helios Flexi Cap Fund - Direct Growth",
         "securityKey": "helios-flexi-cap-fund-direct-growth"
@@ -20676,6 +20751,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Purchase",
         "amount": 214200000,
         "invested": 214200000,
+        "charges": 10709.46,
         "units": 15245765.959,
         "security": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
         "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option"
@@ -20693,7 +20769,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Initial Contribution",
         "amount": 750000000,
-        "invested": 749962501.87,
+        "invested": 750000000,
+        "charges": 37498.13,
         "units": 6045934.485,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -20711,7 +20788,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Initial Contribution",
         "amount": 150000000,
-        "invested": 149992500.37,
+        "invested": 150000000,
+        "charges": 7499.63,
         "units": 1211186.597,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -20729,7 +20807,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Initial Contribution",
         "amount": 250000000,
-        "invested": 249987500.62,
+        "invested": 250000000,
+        "charges": 12499.38,
         "units": 2341480.851,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2"
@@ -20747,7 +20826,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Initial Contribution",
         "amount": 10000000,
-        "invested": 9999500.02,
+        "invested": 10000000,
+        "charges": 499.98,
         "units": 99995,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -20758,7 +20838,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Drawdown",
         "amount": 10000000,
-        "invested": 9999500.02,
+        "invested": 10000000,
+        "charges": 499.98,
         "units": 91364.524,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -20769,7 +20850,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Top Up",
         "amount": 100000000,
-        "invested": 99995000.25,
+        "invested": 100000000,
+        "charges": 4999.75,
         "units": 822109.608,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -20780,7 +20862,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Top Up",
         "amount": 100000000,
-        "invested": 99995000.25,
+        "invested": 100000000,
+        "charges": 4999.75,
         "units": 807457.732,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -20798,7 +20881,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Initial Contribution",
         "amount": 27500000,
-        "invested": 27498625.07,
+        "invested": 27500000,
+        "charges": 1374.93,
         "units": 276847.775,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -20809,7 +20893,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Drawdown",
         "amount": 27500000,
-        "invested": 27498625.07,
+        "invested": 27500000,
+        "charges": 1374.93,
         "units": 251252.442,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -20820,7 +20905,8 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "direction": "in",
         "label": "Top Up",
         "amount": 150000000,
-        "invested": 149992500.37,
+        "invested": 150000000,
+        "charges": 7499.63,
         "units": 1233164.412,
         "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
         "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
@@ -20839,6 +20925,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Purchase",
         "amount": 7500000,
         "invested": 7500000,
+        "charges": null,
         "units": 7500,
         "security": "Transition Venture Capital Fund I — Class A1",
         "securityKey": "transition-venture-capital-fund-i-class-a1"
@@ -20857,6 +20944,7 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
         "label": "Purchase",
         "amount": 7500000,
         "invested": 7500000,
+        "charges": null,
         "units": 7500,
         "security": "Transition Venture Capital Fund I — Class A1",
         "securityKey": "transition-venture-capital-fund-i-class-a1"
@@ -22539,16 +22627,6 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
       "date": "2026-06-01",
       "amount": -250000000,
       "description": "Cash Deposits"
-    },
-    {
-      "date": "2026-06-01",
-      "amount": -225353990.9,
-      "description": "Security in"
-    },
-    {
-      "date": "2026-06-01",
-      "amount": 225353990.9,
-      "description": "Security out"
     },
     {
       "date": "2026-06-05",

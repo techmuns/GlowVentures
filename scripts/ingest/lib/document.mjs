@@ -158,6 +158,13 @@ export function makeHolding(input) {
      *  Different measures, so different fields — never folded together. */
     absoluteYieldPct: num(input.absoluteYieldPct),
     annualizedYieldPct: num(input.annualizedYieldPct),
+    /**
+     * ISO date the statement PRINTS this row's price or value as struck at — a
+     * column on a fund or 360 ONE statement, the total row's `Prices as on` on
+     * ICICI's NSDL one. It need not be the document's `asOf`, and a reader must
+     * leave it null rather than copy that date in. `build-book` carries it to
+     * `Position.priceAsOf`.
+     */
     priceAsOn: input.priceAsOn ?? null,
     /**
      * THE PRICE A DEPOSITORY PRINTS WHERE IT HAS NO PRICE — the face value the

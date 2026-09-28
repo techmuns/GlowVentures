@@ -49,11 +49,11 @@
 // There is no similarity score over whole names — the fuzzy tiers this repo has
 // already refused matched `KIRANAKART TECHNOLOGIES` to `TATA TECHNOLOGIES` —
 // and a near miss is only ever a way to a page, never a join between figures.
-import type { Account, Position, UnvaluedStatementHolding } from "./types";
+import type { Account, CapitalMove, Position, UnvaluedStatementHolding } from "./types";
 import { recordedLines, type RecordedLine } from "./recordedHoldings";
 import { accountIndex, type AccountIndex } from "./accounts";
 import {
-  currentHoldings, dedupedPositions, isMandateHeld, mandateLabel, bucketLabel,
+  currentHoldings, dedupedPositions, isFundVehicle, isMandateHeld, mandateLabel, bucketLabel,
   isRedeemedToNil, negligibleKeys, readerClassOf, sum,
 } from "./analytics";
 import { groupKeyFor, groupLabelFor, GROUP_AXES } from "./groupAxis";
@@ -61,6 +61,9 @@ import { AXIS_SCOPE, drilldownHref } from "./drilldown";
 import { fundMarketSideOf } from "./aifCategory";
 import { NAV } from "./nav";
 import { printedSpellings, securityLabel } from "./securityLabel";
+import { schemeNamesOf, schemeStem } from "./reviewGaps";
+import { schemeNameFor } from "./schemeLabel";
+import { displaySecurity } from "./format";
 
 export type SearchKind =
   | "holding" | "mandate" | "person" | "account"
@@ -88,10 +91,90 @@ export type SearchEntry = {
   closed?: boolean;
   /** A holding a statement records at a quantity and nothing values (Stage 10cy). */
   recorded?: boolean;
+  /**
+   * A SCHEME's published names with the plan and option set aside (SC-B4) —
+   * matched only against a query that carried a plan or option tail of its own.
+   * See `stemmedQuery`.
+   */
+  stems?: string[];
 };
 
 /** A ranked hit, with the tier that matched it — for tests and for the hover. */
 export type SearchHit = { entry: SearchEntry; score: number; matched: string };
+
+/**
+ * ── THE CATEGORY A HOLDING SITS IN, WHEN IT SITS IN MORE THAN ONE (SC-C4) ───
+ *
+ * A security the family holds through two routes is filed under two categories:
+ * ICICI Bank is ₹2.00 Cr of Direct Equity and ₹1.00 Cr inside two Goldstandard
+ * mandates, and the book's "Cash" is ₹9.51 Cr of PMS cash sleeves, which the
+ * category axis files under PMS mandates. The row used to print the category of
+ * whichever statement row sorted FIRST — an attribution decided by array order,
+ * the index-cycled failure in miniature — so ICICI Bank read "PMS mandates" and
+ * Cash read "Cash" over money the Cash category does not contain.
+ *
+ * Every category the rows span, largest share of value first, through the same
+ * `groupKeyFor` the Portfolio Monitor sections on. The chat context reads this
+ * too, so the two surfaces cannot file one holding two ways.
+ */
+export function categoryWordsOf(rows: readonly Position[], idx: AccountIndex): string[] {
+  const by = new Map<string, number>();
+  for (const p of rows) {
+    const k = groupKeyFor("category", idx, p);
+    by.set(k, (by.get(k) ?? 0) + Math.abs(p.marketValue));
+  }
+  const label = groupLabelFor("category");
+  // A category that holds NONE of the value is not one the figure sits in: the
+  // Buoyant folios' nil cash lines are filed under Cash, and "PMS mandates +
+  // Cash · ₹9.51 Cr" would say some of that money is the Cash category's.
+  const held = [...by].filter(([, v]) => v > 0);
+  return (held.length ? held : [...by])
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([k]) => label(k));
+}
+
+/**
+ * THE RING-FENCED SECURITY'S IDENTITY — its printed name, that name without the
+ * depository's furniture, its ISIN and its NSE symbol — and NOTHING ELSE: no
+ * quantity, no value. It is what lets the Polycab PAGE answer a search for the
+ * company (PC-05) without a holding, an account or a figure being built from
+ * the fenced rows.
+ */
+export function fencedIdentityOf(rows: readonly Pick<Position, "security" | "isin" | "symbol">[]): { names: string[]; codes: string[] } {
+  const names = [...new Set(rows.flatMap((p) => [p.security, displaySecurity(p.security)]).filter(Boolean))];
+  const codes = [...new Set(rows.flatMap((p) => [p.isin, p.symbol]).filter((c): c is string => !!c))];
+  return { names, codes };
+}
+
+/**
+ * ── WHAT PRICED AN ACCOUNT'S FIGURE, AND WHEN (SC-C3) ────────────────────────
+ *
+ * An account row printed "₹22.3 Cr · as of 2026-08-06" over a value struck at
+ * AMFI's NAV of 22 September: the statement's date beside a figure that is not
+ * the statement's. The date that matters differs by what priced the rows, so
+ * each is named — the statement's own mark and its date, AMFI's published NAV
+ * and its date, or a live quote — and the statement date still says whose
+ * quantities these are.
+ */
+export function valueBasisOf(rows: readonly Position[], statementAsOf: string | null | undefined): string {
+  const nav = rows.filter((p) => p.navPriced && !p.live && p.marketValue !== 0);
+  const live = rows.filter((p) => p.live && p.marketValue !== 0);
+  const priced = rows.filter((p) => p.marketValue !== 0);
+  const navDates = [...new Set(nav.map((p) => p.navDate).filter((d): d is string => !!d))].sort();
+  const navWords = navDates.length
+    ? `AMFI's NAV of ${navDates.length === 1 ? navDates[0] : `${navDates[0]} to ${navDates[navDates.length - 1]}`}`
+    : "AMFI's published NAV";
+  const stmt = statementAsOf ? `statement of ${statementAsOf}` : "an undated statement";
+  const marks = statementAsOf ? `the statement's marks of ${statementAsOf}` : "an undated statement's marks";
+  if (!priced.length) return stmt;
+  if (live.length === priced.length) return `at live quotes · ${stmt}`;
+  if (nav.length === priced.length) return `at ${navWords} · ${stmt}`;
+  if (nav.length || live.length) {
+    const parts = [nav.length ? `${nav.length} at ${navWords}` : null, live.length ? `${live.length} at live quotes` : null]
+      .filter(Boolean).join(", ");
+    return `${parts}, the rest on ${marks}`;
+  }
+  return `on ${marks}`;
+}
 
 /**
  * ── WHY AN ACCOUNT CARRIES NO VALUED HOLDING — TWO FACTS, NEVER ONE ─────────
@@ -190,6 +273,39 @@ export function scoreText(query: string, text: string): { score: number; tier: s
   return { score: 0, tier: "" };
 }
 
+/**
+ * ── A QUERY THAT NAMES A SCHEME THE WAY A REVIEW DOES (SC-B4) ───────────────
+ *
+ * The family's consolidated review spells a fund with its plan and option
+ * bolted on — `WhiteOak Capital Multi Asset Allocation Fund-Direct(G)`, `Aditya
+ * Birla SL Liquid Fund-(DD)-Direct` — and the dashboard shows the same scheme
+ * as `WhiteOak Capital Multi Asset Allocation Fund · Direct`. Every tier above
+ * needs EVERY typed word in the name, so the review's `(G)`, `(DD)`, `IDCW` and
+ * `SL` put eight held funds in the empty state: measured, WhiteOak, Bandhan
+ * Large & Mid Cap, Kotak Multicap, both Aditya Birla Sun Life liquid lines, its
+ * Balanced Advantage, ICICI Prudential Liquid and Liquid BeES — ₹30 Cr the
+ * family hold, answered "nothing matches".
+ *
+ * So every query is compared a second time, with any such tail set aside,
+ * against each scheme's own published names set aside the same way —
+ * `schemeStem`, the one rule the review-gap note uses to decide it must not
+ * speak about these funds, so the note and the search cannot disagree about
+ * which scheme a spelling names. It runs whether or not the query carried a
+ * tail, because a scheme whose statement label is the depository's clipped one
+ * (`NIP ETNF1D RTLIQBEES`) is found by its full published name no other way.
+ * The names are reached by ISIN, never by resemblance. Discounted, so a scheme
+ * found this way never outranks one the reader named outright, and the hover
+ * says how it was matched.
+ *
+ * Two words must survive the strip: "direct equity" leaves "equity", and a
+ * one-word stem would match half the book's schemes.
+ */
+function stemmedQuery(query: string): string {
+  const stem = schemeStem(query);
+  return stem.split(" ").length < 2 ? "" : stem;
+}
+const STEM_DISCOUNT = 0.8;
+
 /** Kind boosts: small, and only ever a tie-break between two equal tiers. */
 const KIND_BOOST: Record<SearchKind, number> = {
   page: 30, person: 25, view: 20, mandate: 15, holding: 10, figure: 8, category: 6, sector: 4, account: 0,
@@ -200,6 +316,7 @@ export function searchEntries(entries: SearchEntry[], query: string, limit = 10)
   const q = normSearch(query);
   if (!q) return [];
   const code = compact(query).toUpperCase();
+  const qStem = stemmedQuery(query);
   const hits: SearchHit[] = [];
   for (const e of entries) {
     let best = 0, matched = "";
@@ -219,6 +336,13 @@ export function searchEntries(entries: SearchEntry[], query: string, limit = 10)
       const s = scoreText(query, k);
       const v = Math.round(s.score * 0.85);
       if (v > best) { best = v; matched = `${s.tier} · a word for it`; }
+    }
+    if (qStem) {
+      for (const n of e.stems ?? []) {
+        const s = scoreText(qStem, n);
+        const v = Math.round(s.score * STEM_DISCOUNT);
+        if (v > best) { best = v; matched = `${s.tier} · the scheme's published name, plan and option set aside`; }
+      }
     }
     if (!best) continue;
     const weight = e.weight > 0 ? Math.log10(1 + e.weight / 1e5) * 4 : 0;
@@ -302,7 +426,7 @@ const PAGE_WORDS: Record<string, string[]> = {
 const VIEWS: { id: string; label: string; href: string; words: string[]; detail: string }[] = [
   { id: "view:transactions", label: "Transactions", href: "/monitor?show=transactions",
     words: ["trades", "buys", "sells", "bought", "sold", "what i invested", "capital in", "redemptions", "contributions"],
-    detail: "Portfolio Monitor · every dated buy, sell, contribution and redemption, in the same sections as the holdings" },
+    detail: "Portfolio Monitor · the dated buys, sells, contributions and redemptions the statements in this book carry, in the same sections as the holdings" },
   // ALL SECURITIES IS THE MONITOR'S DEFAULT VIEW, so the page entry above opens
   // it too; this keeps its own entry, under the button's own name, for a reader
   // who types what they see. The address names the view rather than leaning on
@@ -355,7 +479,9 @@ const VIEWS: { id: string; label: string; href: string; words: string[]; detail:
 /** Figures — each opens the page that shows it WITH its own explanation. */
 const FIGURES: { id: string; label: string; href: string; words: string[]; detail: string }[] = [
   { id: "fig:book", label: "Current Value of Holdings", href: drilldownHref("book"),
-    words: ["current value", "value", "nav", "net asset value", "total", "worth", "portfolio value", "aum", "net worth"],
+    // Not "net worth" (SC-C7): this figure leaves out the ring-fenced promoter
+    // holding and everything no statement reports, so it is not a net worth.
+    words: ["current value", "value", "nav", "net asset value", "total", "worth", "portfolio value", "aum"],
     detail: "Every holding in the book, counted once, with each figure's basis" },
   { id: "fig:invested", label: "Capital invested", href: drilldownHref("book", undefined, "costed"),
     words: ["invested", "cost", "amount invested", "capital invested", "cost basis"],
@@ -363,9 +489,12 @@ const FIGURES: { id: string; label: string; href: string; words: string[]; detai
   { id: "fig:no-cost", label: "Holdings with no cost reported", href: drilldownHref("book", undefined, "no-cost"),
     words: ["no cost", "missing cost", "cost not reported"],
     detail: "The positions whose statement prints a value and no cost — and why" },
-  { id: "fig:xirr", label: "Money-weighted return (XIRR)", href: drilldownHref("measured"),
+  // Morning CIO with its own tile on screen (SC-C6): `/holdings?of=measured`
+  // lists the accounts behind the rate and deliberately does not state it, so a
+  // result promising "the rate" there opened a page without one.
+  { id: "fig:xirr", label: "Money-weighted return (XIRR)", href: "/cio?tiles=mwr",
     words: ["xirr", "irr", "money weighted", "money-weighted return"],
-    detail: "The accounts that carry dated flows and an opening value, and the rate across them" },
+    detail: "Morning CIO · the money-weighted rate across the accounts that carry dated flows and an opening value" },
   { id: "fig:top", label: "Top 10 names", href: drilldownHref("top-names"),
     words: ["top 10", "top ten", "largest holdings", "biggest holdings", "top holdings", "concentration"],
     detail: "The ten largest names in the book" },
@@ -379,9 +508,11 @@ const FIGURES: { id: string; label: string; href: string; words: string[]; detai
   { id: "fig:uncalled", label: "Uncalled capital", href: "/private-market",
     words: ["uncalled", "dry powder", "undrawn", "still to call", "commitments", "committed", "capital calls", "drawdowns", "due now"],
     detail: "Private Market · what the private funds can still call, fund by fund, with every dated call" },
-  { id: "fig:distributions", label: "Distributions", href: "/private-market",
+  // The Distributions tile itself (SC-C6): Private Market's default tiles and
+  // its table show no distribution figure, so the page alone did not answer.
+  { id: "fig:distributions", label: "Distributions", href: "/private-market?tiles=distributed",
     words: ["distributions", "cash returned", "payouts", "paid back"],
-    detail: "Private Market · the cash the private funds have paid back" },
+    detail: "Private Market · the Distributions tile — the cash the private funds have paid back" },
 ];
 
 /**
@@ -399,14 +530,38 @@ export function buildSearchIndex(input: {
   money: Money;
   /** The lines a statement records at a quantity and no value (`BOOK_UNVALUED_HOLDINGS`). */
   recorded?: readonly UnvaluedStatementHolding[];
+  /**
+   * The family's own dated capital record (`BOOK_CAPITAL_MOVES`) — read only
+   * to decide whether a redemption IS on the Transactions tab before a row says
+   * so (SC-C5). Absent, no row claims it.
+   */
+  capitalMoves?: readonly CapitalMove[];
+  /**
+   * The ring-fenced security's IDENTITY — its name and its codes, never a
+   * figure — so the Polycab PAGE answers a search for the company's full name or
+   * its ISIN (PC-05). It is attached to that page's entry and to nothing else.
+   */
+  fenced?: { names: string[]; codes: string[] };
 }): SearchEntry[] {
   const { positions, consolidated, accounts, money, recorded = [] } = input;
   const idx: AccountIndex = accountIndex(accounts);
   const out: SearchEntry[] = [];
   const current = currentHoldings(consolidated);
   const bookMV = sum(current.map((p) => p.marketValue));
-  const pctOfBook = (v: number) => (bookMV > 0 ? `${((v / bookMV) * 100).toFixed(v / bookMV >= 0.001 ? 1 : 2)}% of the book` : "");
+  /**
+   * A SHARE OF THE BOOK, AT A PRECISION THAT CANNOT READ AS NOTHING (SC-D1).
+   * `toFixed(2)` printed "0.00% of the book" beside ₹98,742 of Blue Ashva; a
+   * non-zero holding is "under 0.01%", and a measured nil carries no share.
+   */
+  const pctOfBook = (v: number) => {
+    if (!(bookMV > 0) || v === 0) return "";
+    const pct = (v / bookMV) * 100;
+    if (Math.abs(pct) < 0.01) return `under 0.01% of the book`;
+    return `${pct.toFixed(Math.abs(pct) >= 0.1 ? 1 : 2)}% of the book`;
+  };
   const small = negligibleKeys(positions);
+  // Accounts whose dated capital record carries money coming back (SC-C5).
+  const redeemedOnRecord = new Set((input.capitalMoves ?? []).filter((m) => m.direction === "out").map((m) => m.accountId));
 
   // ── holdings — one per security, current or closed ────────────────────────
   const byKey = new Map<string, Position[]>();
@@ -414,14 +569,34 @@ export function buildSearchIndex(input: {
     if (small.has(p.securityKey)) continue;          // the family's ₹1,000 floor
     byKey.set(p.securityKey, [...(byKey.get(p.securityKey) ?? []), p]);
   }
+  /**
+   * ONE SCHEME UNDER TWO KEYS (SC-D3). The AMC folio and a depository name one
+   * ISIN two ways — Helios Flexi Cap is `Helios Flexi Cap Fund - Direct Growth`
+   * and `HELIOS FCF D-GROW` — and after Stage 10az both READ ALIKE, so the list
+   * showed two identical labels with no hint they are one scheme. They stay two
+   * rows (merging them is the extractor's job, `docs/BOOK-REPORT.md`), and each
+   * now says so.
+   */
+  const isinOfKey = (key: string, rows: readonly Position[]) =>
+    schemeNameFor(key)?.isin ?? rows.find((p) => p.isin)?.isin ?? null;
+  const keysByIsin = new Map<string, number>();
+  for (const [key, rows] of byKey) {
+    const isin = isinOfKey(key, rows);
+    if (isin) keysByIsin.set(isin, (keysByIsin.get(isin) ?? 0) + 1);
+  }
   for (const [key, rows] of byKey) {
     const head = rows[0];
     const mv = sum(rows.map((p) => p.marketValue));
     const closed = rows.every((p) => isRedeemedToNil(p));
+    // A BALANCE LINE IS NOT A HOLDING (SC-D3): a mandate's `Tax Deducted at
+    // Source` at a measured ₹0 is a running balance on the statement, not a
+    // thing the family own, and offering it as one put "₹0 · 0.00% of the
+    // book" in the list. A redemption to nil is different and stays findable.
+    if (!closed && mv === 0 && !rows.some((p) => isFundVehicle(p))) continue;
     const raw = positions.filter((p) => p.securityKey === key);
     const accountsHolding = new Set(raw.map((p) => p.accountId)).size;
     const owners = [...new Set(raw.map((p) => idx.get(p.accountId)?.owner).filter(Boolean))] as string[];
-    const bucket = groupKeyFor("category", idx, head);
+    const categories = categoryWordsOf(rows, idx);
     // THE CLASS A READER IS SHOWN is `readerClassOf`'s, never the wrapper the
     // statement typed: a liquid or arbitrage fund is Cash on every screen, at
     // the family's instruction (Stage 10ce), and a chip reading "Mutual fund"
@@ -429,24 +604,41 @@ export function buildSearchIndex(input: {
     const cls = readerClassOf(head);
     const chip = cls === "Equity" ? "Stock"
       : cls === "Mutual Fund" ? "Mutual fund" : cls;
+    /**
+     * WHERE A REDEMPTION IS, ONLY WHERE IT IS (SC-C5). "The redemption is on
+     * Transactions" was true of 3P, whose folio's Full Units Redemption is on
+     * the family's dated capital record, and false of the HDFC folio, which
+     * carries no dated movement at all: its statements print the two schemes
+     * at nil units and nothing else. So the claim is struck on the record.
+     */
+    const onRecord = closed && raw.some((p) => redeemedOnRecord.has(p.accountId));
+    const isin = isinOfKey(key, rows);
+    const twin = isin && (keysByIsin.get(isin) ?? 0) > 1
+      ? `one of ${keysByIsin.get(isin)} rows for ISIN ${isin} — the statements name it ${keysByIsin.get(isin)} ways`
+      : null;
     out.push({
       id: `holding:${key}`, kind: "holding", chip,
       label: head.security,
       detail: closed
-        ? `Redeemed — no longer held · the redemption is on Transactions`
-        : [bucketLabel(bucket), money(mv), pctOfBook(mv),
-          accountsHolding === 1 ? `1 account · ${owners[0] ?? ""}` : `${accountsHolding} accounts · ${owners.length} member${owners.length === 1 ? "" : "s"}`]
+        ? onRecord
+          ? "Redeemed — no longer held · the redemption is on Transactions"
+          : "Redeemed to nil units — no longer held · no statement in this book dates the redemption"
+        : [categories.join(" + "), money(mv), pctOfBook(mv),
+          accountsHolding === 1 ? `1 account · ${owners[0] ?? ""}` : `${accountsHolding} accounts · ${owners.length} member${owners.length === 1 ? "" : "s"}`,
+          twin]
           .filter(Boolean).join(" · "),
-      // A redeemed fund's money is on the Transactions tab, where its
-      // redemption is — its holding page would show a measured nil and little else.
-      href: closed ? "/monitor?show=transactions" : `/stock/${encodeURIComponent(key)}`,
+      // A redeemed fund whose redemption is on the dated record opens the tab it
+      // is on; one with no dated record opens its own page, which shows the
+      // measured nil the statements print — the only place the fact is.
+      href: onRecord ? "/monitor?show=transactions" : `/stock/${encodeURIComponent(key)}`,
       // EVERY SPELLING A STATEMENT PRINTED, not only the one shown. The row is
       // named once, but a reader types whichever name they know: the depository
       // prints State Bank of India as `SBI`, and with the two keys joined the
       // label alone left "sbi" finding nothing.
       names: [head.security, ...printedSpellings(key).filter((n) => n !== head.security), key.replace(/-/g, " ")],
       codes: [head.isin, head.symbol].filter((c): c is string => !!c),
-      keywords: [head.sector, bucketLabel(bucket)].filter((s): s is string => !!s && s !== "Unclassified"),
+      stems: [...new Set(schemeNamesOf(key).map(schemeStem).filter(Boolean))],
+      keywords: [head.sector, ...categories].filter((s): s is string => !!s && s !== "Unclassified"),
       weight: Math.abs(mv),
       closed,
     });
@@ -534,24 +726,51 @@ export function buildSearchIndex(input: {
     const keys = [...new Set(rows.filter((p) => p.assetClass !== "Cash").map((p) => p.securityKey))];
     const side = a.engagement === "AIF" ? fundMarketSideOf(a.strategy ?? a.provider, a) : null;
     // AN ACCOUNT WHOSE EVERY HOLDING IS CLOSED is where a redemption lives —
-    // 3P's folio paid out in full, and the money is on the Transactions tab.
-    const allClosed = rows.length > 0 && rows.every((p) => isRedeemedToNil(p));
-    const href = allClosed ? "/monitor?show=transactions"
+    // and the money is on the Transactions tab ONLY where the family's dated
+    // capital record carries it (3P's folio); the HDFC folio's statements print
+    // two schemes at nil units and no dated movement at all (SC-C5).
+    const empty = accountEmptiness(a, rows);
+    const allClosed = rows.length > 0 && empty?.kind === "redeemed";
+    const onRecord = allClosed && redeemedOnRecord.has(a.accountId);
+    /**
+     * WHAT THE ROW COUNTS IS WHAT THE DASHBOARD LISTS (SC-D2): the holdings
+     * under the family's ₹1,000 floor are left out of the count and the value
+     * alike, as the Portfolio Monitor leaves them out, and so is a position
+     * redeemed to nil. "23 holdings" over a demat counted EFPL's ₹60 preference
+     * line and Everest Fleet's ₹580 among them.
+     */
+    const listed = rows.filter((p) => !small.has(p.securityKey) && !isRedeemedToNil(p));
+    const listedMV = sum(listed.map((p) => p.marketValue));
+    const href = onRecord ? "/monitor?show=transactions"
       : keys.length === 1 ? `/stock/${encodeURIComponent(keys[0])}`
       : keys.length === 0 && side === "private" ? "/private-market"
       : `/family?entity=${encodeURIComponent(a.owner)}`;
+    // A REDEEMED ACCOUNT AND AN UNVALUED ONE SAY DIFFERENT THINGS (SC-D3): the
+    // Hedged Equity strategy is redeemed to a nil balance — a measured zero —
+    // where India SME publishes no NAV. `accountEmptiness` is the one rule, the
+    // chat context reads it too.
+    const what = empty?.kind === "redeemed"
+      ? rows.length
+        ? onRecord ? "every holding redeemed — the money is on Transactions"
+          : "every holding redeemed to nil units — no statement in this book dates the redemption"
+        : "redeemed to a nil balance — a measured zero"
+      : empty?.kind === "unvalued" ? "holds no valued position — no statement in this book values it"
+      : listed.length
+        // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. On the live
+        // basis an account whose statement records quantities it does not value
+        // is valued only where a published NAV or a live quote can price them —
+        // a transaction-only demat's funds and shares (Stages 10ce, 10cx), a
+        // Motilal holding statement's last-movement lines (Stage 10cy) — so its
+        // total must not read as the account's: the words lead, because this
+        // line is truncated to one row.
+        ? `${a.partialValuation ? "partly valued · " : ""}${listed.length} holding${listed.length === 1 ? "" : "s"} · ${money(listedMV)} ${valueBasisOf(listed, a.asOf)}`
+        : `every holding here is under the ₹1,000 floor, so none is listed`;
     out.push({
       id: `account:${a.accountId}`, kind: "account", chip: "Account",
       label: `${a.provider} · ${a.accountNo}`,
-      // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. On the live
-      // basis a transaction-only demat values what a published NAV or a live
-      // quote can price — its funds, and its listed shares while the feed prices
-      // them — and nothing else on that statement (Stages 10ce, 10cx), so its
-      // total must not read as the account's — the words lead, because this
-      // line is truncated to one row.
-      detail: `${a.owner} · ${allClosed ? "every holding redeemed — the money is on Transactions"
-        : rows.length ? `${a.partialValuation ? "partly valued · " : ""}${rows.length} holding${rows.length === 1 ? "" : "s"} · ${money(mv)}` : "holds no valued position"}`
-        + (a.asOf ? ` · as of ${a.asOf}` : ""),
+      // The statement's own date rides in `valueBasisOf` wherever a value is
+      // printed; a row with no value still says whose statement it is.
+      detail: `${a.owner} · ${what}` + (!listed.length && a.asOf ? ` · statement of ${a.asOf}` : ""),
       href,
       names: [],
       codes: [a.accountNo],
@@ -570,7 +789,12 @@ export function buildSearchIndex(input: {
     out.push({
       id: `person:${owner}`, kind: "person", chip: /trust/i.test(owner) ? "Trust" : "Family member",
       label: owner,
-      detail: `${accs.length} account${accs.length === 1 ? "" : "s"} · ${money(mv)} as their own statements print it`,
+      // "As their own statements print it" was a basis claim the figure does not
+      // have (SC-C2): the value is Family & Entities', on the dashboard's prices
+      // — AMFI's published NAV where a scheme has one, a live quote where the
+      // feed priced a holding — and it counts a holding two members report
+      // under both, as that page does.
+      detail: `${accs.length} account${accs.length === 1 ? "" : "s"} · ${money(mv)} across their own accounts, as Family & Entities shows it`,
       href: `/family?entity=${encodeURIComponent(owner)}`,
       names: [owner, first],
       codes: [],
@@ -581,10 +805,17 @@ export function buildSearchIndex(input: {
 
   // ── pages and views ───────────────────────────────────────────────────────
   NAV.forEach((n, i) => {
+    // THE RING-FENCED PAGE ANSWERS ITS SECURITY'S OWN NAME AND CODES (PC-05).
+    // "Polycab India" and the ISIN reached nothing, and "Nothing in this book
+    // matches" about a ₹12,351 Cr holding is the BSE defect again. The identity
+    // rides on the PAGE and nowhere else — no holding, account or figure is
+    // built from it, so the fence holds.
+    const fenced = n.to === "/polycab" ? input.fenced : undefined;
     out.push({
       id: `page:${n.to}`, kind: "page", chip: "Page",
       label: n.label, detail: `${n.group} · open the page`, href: n.to,
-      names: [n.label], codes: [], keywords: PAGE_WORDS[n.to] ?? [], weight: NAV.length - i,
+      names: [n.label, ...(fenced?.names ?? [])], codes: [...(fenced?.codes ?? [])],
+      keywords: PAGE_WORDS[n.to] ?? [], weight: NAV.length - i,
     });
   });
   for (const v of VIEWS) {
@@ -594,11 +825,11 @@ export function buildSearchIndex(input: {
 
   // ── categories, baskets, asset classes and the sides of the book ──────────
   for (const axis of GROUP_AXES) {
-    const vals = new Map<string, { n: number; mv: number }>();
+    const vals = new Map<string, { n: number; mv: number; names: string[] }>();
     for (const p of current) {
       const k = groupKeyFor(axis, idx, p);
-      const v = vals.get(k) ?? { n: 0, mv: 0 };
-      v.n++; v.mv += p.marketValue;
+      const v = vals.get(k) ?? { n: 0, mv: 0, names: [] };
+      v.n++; v.mv += p.marketValue; v.names.push(p.security);
       vals.set(k, v);
     }
     const noun = axis === "category" ? "Category" : axis === "basket" ? "Basket" : "Asset class";
@@ -611,7 +842,8 @@ export function buildSearchIndex(input: {
         href: drilldownHref(AXIS_SCOPE[axis], key),
         names: [label, key],
         codes: [],
-        keywords: CATEGORY_WORDS[key] ?? [],
+        keywords: [...(CATEGORY_WORDS[key] ?? []),
+          ...(EARNED_WORDS[key] ?? []).filter((w) => v.names.some((n) => w.held.test(n))).map((w) => w.word)],
         weight: Math.abs(v.mv),
       });
     }
@@ -665,5 +897,23 @@ const CATEGORY_WORDS: Record<string, string[]> = {
   "Mutual Fund": ["mf", "mutual funds", "funds", "schemes"],
   "ETF": ["etfs", "exchange traded funds", "gold etf", "silver etf"],
   "AIF": ["aifs", "alternative investment funds", "category iii", "cat iii", "category ii", "cat ii", "category i", "cat i"],
-  "Cash": ["liquid", "liquid funds", "cash equivalents", "arbitrage"],
+  // "arbitrage" is EARNED, not listed — see `EARNED_WORDS` (SC-C7).
+  "Cash": ["liquid", "liquid funds", "cash equivalents"],
+};
+
+/**
+ * ── A WORD A SECTION ANSWERS ONLY WHILE IT HOLDS WHAT THE WORD NAMES (SC-C7) ─
+ *
+ * The family's rule files an arbitrage fund as cash, so "arbitrage" belongs on
+ * the Cash row — but only while the book holds one there. On the statement
+ * basis it holds none (the review's four are on no holding statement), and
+ * "arbitrage" answering with a Cash row that contains none sent a reader to a
+ * page without the thing they asked for. On the live basis Stage 10ce values
+ * the arbitrage fund a depository reports, and the same word must then find it.
+ * So the word is struck on the section's own holdings, by the name each one
+ * carries — a keyword decides only which row a search reaches, and joins
+ * nothing and moves no money.
+ */
+const EARNED_WORDS: Record<string, { word: string; held: RegExp }[]> = {
+  "Cash": [{ word: "arbitrage", held: /\barbitrage\b/i }],
 };

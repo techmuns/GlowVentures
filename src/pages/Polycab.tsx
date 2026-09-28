@@ -10,7 +10,10 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtCurrency, fmtNum, fmtDate, fmtPct, displaySecurity, changeColor } from "@/lib/format";
 import { sumOrNull } from "@/lib/analytics";
 import { BOOK_POLYCAB, BOOK_ACCOUNTS } from "@/data/glowData";
-import { usePolycabLive, markedValue, POLYCAB_SOURCES } from "@/lib/polycabLive";
+import {
+  usePolycabLive, markedValue, sourcesFor, statementDates, balanceReportedOn, daysBetween,
+  paymentDateWhy, witnessCounts, holdingWhy, pledgeWhy, POLYCAB_SOURCES, type StatementBalance,
+} from "@/lib/polycabLive";
 import type { PolycabAction } from "@/data/polycabLive";
 
 /**
@@ -57,9 +60,11 @@ import type { PolycabAction } from "@/data/polycabLive";
  * An NSDL `Statement of Holding` has five columns — ISIN, scrip name, account
  * description, balance, value. No rate column (so the mark is DERIVED, value ÷
  * units), no cost (a depository holds shares, it did not buy them), and no
- * pledge, lock-in or freeze column. Each of those renders `AbsentCell` with its
- * reason; a ₹0 cost would report the whole value as profit, and a nil pledge on a
- * promoter block is the most consequential zero available to invent.
+ * pledge column — the account description is a BALANCE TYPE, which marks a
+ * lock-in and which this book does not yet read. Each of those renders
+ * `AbsentCell` with its reason; a ₹0 cost would report the whole value as
+ * profit, and a nil pledge on a promoter block is the most consequential zero
+ * available to invent.
  *
  * ── THE SECOND PROMOTER STATEMENT IS NOT MENTIONED HERE, BY REQUEST ────────
  *
@@ -115,8 +120,34 @@ const CELL = "px-2.5 py-2";
 const HEAD = "px-2.5 py-2";
 
 const COST_WHY = "a depository reports no acquisition cost — it holds the shares, it did not buy them, and a ₹0 cost would report the whole value as profit";
-const PLEDGE_WHY = "the NSDL statement behind this holding prints no pledge, lock-in or freeze column — the promoter group's pledge is a group figure, not a statement about this account";
-const MARK_HOW = "The mark is the value the NSDL depository prints, divided by the units it prints — a depository statement carries no rate column. It is a statement figure as of the statement's date, not a live price; the market price is its own column and is never substituted for this one.";
+/**
+ * WHAT THE STATEMENT DOES AND DOES NOT PRINT, SAID EXACTLY. This read "prints no
+ * pledge, lock-in or freeze column", and the statement DOES print a balance type
+ * on every row — its Account Description, which marks the pre-IPO lock-ins on
+ * other holdings of the same statement. What it prints no column for is a
+ * PLEDGE, and it names no pledgee. The description is measured by the reader and
+ * discarded, so the page cannot quote it; whether one plain "Beneficiary" row is
+ * evidence of an unencumbered balance is the family's question, not this page's.
+ */
+const PLEDGE_WHY = "the NSDL statement behind this holding prints no pledge column and names no pledgee — it prints a balance type for each row (its Account Description), which this book does not yet read — so this page makes no claim about a pledge on this account either way; the promoter group's pledge is a group figure, not a statement about this account";
+/**
+ * THE MARK'S DATE IS THE STATEMENT'S PRICING DATE, WHICH NEED NOT BE ITS BALANCE
+ * DATE. This said the mark was "a statement figure as of the statement's date";
+ * the ICICI statement reports its balance at 31 Mar 2026 and values it "Prices
+ * as on 30-Mar-2026". The book carries that pricing date now (`priceAsOf`, off
+ * the reader's own reading of the total row), so the hover names BOTH dates, each
+ * in its own role. Where a statement prints no pricing date the row carries none,
+ * and the hover falls back to saying only that the valuation is at the prices the
+ * statement states — which is true whatever the gap, and asserts no date.
+ */
+const MARK_DERIVED = "The mark is the value the NSDL depository prints, divided by the units it prints — a depository statement carries no rate column.";
+const MARK_NOT_LIVE = "and not a live price; the market price is its own column and is never substituted for this one.";
+const MARK_UNDATED = "at the prices the statement itself states it is struck at — which need not be the balance date in the As-of column —";
+/** "balance as of 31 Mar 2026, valued at the 30 Mar 2026 session's prices", or null where no pricing date was printed. */
+function markWhen(balanceAsOf: string | null | undefined, priceAsOf: string | null | undefined): string | null {
+  if (!priceAsOf) return null;
+  return `balance as of ${balanceAsOf ? fmtDate(balanceAsOf) : "a date the statement does not state"}, valued at the ${fmtDate(priceAsOf)} session's prices`;
+}
 
 /**
  * A CORPORATE ACTION AS A ROW. Dividends carry a derived entitlement on this
@@ -124,7 +155,32 @@ const MARK_HOW = "The mark is the value the NSDL depository prints, divided by t
  * its row has no amount rather than a zero. One table rather than two, because
  * the reader's question — "what has the company done?" — is one question.
  */
-type ActionRow = { action: PolycabAction; amount: number | null; exDateWithinStatement: boolean; cash: boolean };
+type ActionRow = { action: PolycabAction; amount: number | null; balanceReportedOnExDate: boolean; cash: boolean };
+
+/**
+ * THE STATEMENT BALANCES BEHIND THE BLOCK — one per demat row, each with ITS
+ * statement's own date. Built once, at module scope, off the two generated
+ * exports, so the page never takes the first row's date as every row's: a
+ * second promoter statement dated differently is a second balance with its own
+ * date, and every figure struck across them says it blends them.
+ */
+const ACCOUNT_BY_ID = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
+const BALANCES: StatementBalance[] = BOOK_POLYCAB.map((p) => ({
+  shares: typeof p.quantity === "number" ? p.quantity : null,
+  asOf: ACCOUNT_BY_ID.get(p.accountId)?.asOf ?? null,
+}));
+const STATEMENT_DATES = statementDates(BALANCES);
+/**
+ * The column's own hover. One balance date and one pricing date across every
+ * row are named outright; rows dated differently each carry their own pair in
+ * the Mark cell's hover, and the heading says so rather than naming one of them.
+ */
+const MARK_WHENS = [...new Set(BOOK_POLYCAB.map((p) => markWhen(ACCOUNT_BY_ID.get(p.accountId)?.asOf, p.priceAsOf) ?? ""))];
+const MARK_HOW = MARK_WHENS.length === 1 && MARK_WHENS[0]
+  ? `${MARK_DERIVED} It is the statement's own valuation — ${MARK_WHENS[0]} — ${MARK_NOT_LIVE}`
+  : MARK_WHENS.some(Boolean)
+    ? `${MARK_DERIVED} It is the statement's own valuation, at the prices each statement states — each row's hover names its own balance date and pricing date, which need not be the same — ${MARK_NOT_LIVE}`
+    : `${MARK_DERIVED} It is the statement's own valuation, ${MARK_UNDATED} ${MARK_NOT_LIVE}`;
 
 export function Polycab() {
   const { fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
@@ -136,8 +192,7 @@ export function Polycab() {
   const price = (n: number | null | undefined) =>
     typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : null;
 
-  const accById = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
-  const rows = BOOK_POLYCAB.map((p) => ({ p, a: accById.get(p.accountId) }));
+  const rows = BOOK_POLYCAB.map((p) => ({ p, a: ACCOUNT_BY_ID.get(p.accountId) }));
 
   /**
    * `sumOrNull`, NOT `sum(… ?? 0)`. The block is one row today, and the whole
@@ -147,23 +202,61 @@ export function Polycab() {
    */
   const mv = sumOrNull(BOOK_POLYCAB.map((p) => p.marketValue));
   const shares = sumOrNull(BOOK_POLYCAB.map((p) => p.quantity));
-  const first = rows[0];
-  const asOf = first?.a?.asOf ?? null;
+  /** The one statement date, where every row shares one — otherwise null, and the page names them all. */
+  const oneDate = STATEMENT_DATES.length === 1 ? STATEMENT_DATES[0] : null;
+  const datesText = STATEMENT_DATES.map((d) => fmtDate(d)).join(", ");
 
   /**
    * THE COMPANY-LEVEL RECORD, and the live price. `/api/polycab` may move the
    * PRICE and nothing else (§6): a quote is not evidence about a dividend, a
    * pledge or a share count.
    */
-  const live = usePolycabLive(shares, asOf);
+  const live = usePolycabLive(BALANCES);
   const quote = live.quote;
-  const priceBasis = live.state.status === "live" ? "live · BSE"
-    : live.state.status === "loading" ? "fetching" : "last close · BSE";
-  const priceWhy = live.state.status === "live"
-    ? `Last traded on BSE, polled every 60s through /api/polycab and checked against the ISIN this book carries. Retrieved ${live.state.retrievedAt}.`
-    : live.state.status === "loading"
-      ? "Asking the exchange for the current price. The figure shown is the last settled close until it answers."
-      : `The committed daily snapshot — the last settled close on BSE: ${live.state.reason}. It is a real figure with its own date, refreshed each evening by the polycab workflow.`;
+
+  /**
+   * THE PRICE IS DATED, AND ITS BASIS IS STRUCK ON THAT DATE. It used to carry
+   * no date anywhere on this view — beside an "As of 31 Mar 2026" column, which
+   * is the only date a reader would then have — and "last close" / "live" were
+   * asserted whatever time the price was fetched. `live.dating` says when the
+   * figure on screen was fetched, in India time, and whether that was inside
+   * trading hours; the note under the heading carries the date in words.
+   */
+  const dt = live.dating;
+  const fetchedOn = dt.istDate ? fmtDate(dt.istDate) : null;
+  const fetchedWhen = dt.istDate && dt.istTime ? `${dt.istTime} IST on ${fmtDate(dt.istDate)}` : null;
+  const storedWhy = live.state.status === "stored" ? ` (${live.state.reason})` : "";
+  const priceBasis =
+    dt.basis === "live" ? "live · BSE"
+    : dt.basis === "fetching" ? "fetching"
+    : dt.basis === "close" ? `last close · fetched ${fetchedOn}`
+    : dt.basis === "intraday" ? `intraday · fetched ${fetchedOn}`
+    : "undated · BSE";
+  const storedIs =
+    dt.inSession === null ? "It records no fetch time, so the session it belongs to cannot be stated."
+    : dt.inSession ? `It was fetched at ${fetchedWhen}, DURING trading hours, so it may be an intraday price rather than a settled close.`
+    : `It was fetched at ${fetchedWhen}, outside trading hours, so it is the last session's close.`;
+  const priceWhy =
+    dt.basis === "live"
+      ? `Last traded on BSE at ${fetchedWhen}, inside trading hours — polled every 60s through /api/polycab and checked against the ISIN this book carries. On an exchange holiday it would be the last session's close; this page does not know the holiday calendar.`
+      : dt.basis === "fetching"
+        ? `Asking the exchange for the current price. Meanwhile the figure shown is the stored one. ${storedIs}`
+        : live.state.status === "live"
+          ? `Fetched from BSE just now, at ${fetchedWhen} — outside trading hours, so this is the last session's close rather than a moving price. Polled every 60s through /api/polycab and checked against the ISIN this book carries.`
+          : `The committed daily snapshot of BSE's last traded price${storedWhy}. ${storedIs} The exchange's quote prints no session date; the fetch time is what dates it.`;
+
+  /** THE DAY MOVE IS DERIVED, AND IT IS THE MOVE OF THE PRICE'S SESSION — never "today" by default. */
+  const dayWhy = `The price against the previous session's close — DERIVED as last traded less the previous close BSE publishes, rather than taken from the change BSE prints (the daily refresh compares the two and records any gap). It is the move of the session the CMP belongs to${fetchedOn ? ` (fetched ${fetchedOn})` : ""}, which need not be today.`;
+
+  /**
+   * THE BLOCK AT THE MARKET PRICE BLENDS TWO DATES, AND SAYS SO — the
+   * statement's share count and the price's fetch date, both in words under the
+   * heading. No document here reports the balance after the statement, so this
+   * is the statement's shares at a later price, not a measured value.
+   */
+  const gapDays = oneDate && dt.istDate ? daysBetween(oneDate, dt.istDate) : null;
+  const mvNote = oneDate ? `${fmtDate(oneDate)} shares × CMP` : "statement shares × CMP";
+  const mvWhy = `The shares the statement${STATEMENT_DATES.length === 1 ? "" : "s"} report${STATEMENT_DATES.length === 1 ? "s" : ""} at ${datesText || "an unstated date"} times the price under CMP${fetchedOn ? `, fetched ${fetchedOn}` : ""} — two dates${gapDays !== null ? ` ${fmtNum(Math.abs(gapDays))} days apart` : ""}. No document here reports the balance after the statement, so this is the statement's share count at a later price, not a measured value. It is the only figure on this page a live price may move; the statement value beside it stays the book's.`;
 
   const holdingRows = sortRows(rows, holdingView.sort, {
     security: ({ p }) => displaySecurity(p.security),
@@ -188,12 +281,22 @@ export function Polycab() {
    * stated; they are counted under the table instead.
    */
   const actionRowsAll: ActionRow[] = [
-    ...live.entitlements.map((e) => ({ ...e, cash: true })),
+    ...live.entitlements.map((e) => ({ action: e.action, amount: e.amount, balanceReportedOnExDate: e.balanceReportedOnExDate, cash: true })),
     ...live.shareActions.map((a) => ({
       action: a, amount: null, cash: false,
-      exDateWithinStatement: !!asOf && !!a.exDate && a.exDate <= asOf,
+      balanceReportedOnExDate: balanceReportedOn(a.exDate, BALANCES),
     })),
   ];
+  /** Every action the store carries, for the per-row payment-date reason. */
+  const allActions = [...live.dividends, ...live.shareActions, ...live.unclassified];
+  /** The name of the one source the group pledge comes from, read off the store. */
+  const pledgeSrc = live.quarters.find((q) => q.pledgeSource)?.pledgeSource ?? null;
+  const pledgeSourceName = pledgeSrc
+    ? (POLYCAB_SOURCES.find((s) => s.name.toLowerCase() === pledgeSrc.toLowerCase())?.name ?? pledgeSrc)
+    : "the pledge's source";
+  const wc = witnessCounts(live.quarters);
+  /** The promoter sources the builder says fed this table, named off the store — never typed. */
+  const promoterSourceNames = sourcesFor("promoter").map((s) => s.name).join(" and ") || "the sources this page reads";
   /**
    * THE ACTION ROWS SORT ON THE FIGURE, NEVER ON WHAT IS DRAWN. `Action` orders
    * on the exchange's own purpose line rather than on the clipped label, and the
@@ -254,14 +357,19 @@ export function Polycab() {
    * site that is not the family's own paperwork, so a reader has to be able to
    * see which source carried it and when it was last refreshed. One line, where
    * it used to be a paragraph.
+   *
+   * AND IT CREDITS THE SOURCES OF THE TABLE ABOVE IT, NOT ALL THREE. It listed
+   * BSE, Tickertape and Screener under both tables, so a corporate-action record
+   * only BSE supplies was credited to two aggregators that carry nothing on it.
+   * `sourcesFor` reads which view each source feeds off the store.
    */
-  const sourcesLine = (
+  const sourcesLine = (forView: string) => (
     // `data-prose-ok`: PROVENANCE, NOT AN EXPLAINER (Stage 10cp) — the only
     // figures on this site that are not the family's own paperwork, so which
     // source carried them, when, and that they are in no total stay on screen.
     <p className="shrink-0 border-t border-ink-700/60 px-4 py-2 text-[11px] leading-relaxed text-slate-500" data-polycab-sources data-prose-ok="sources">
       Sources:{" "}
-      {POLYCAB_SOURCES.map((s, i) => (
+      {sourcesFor(forView).map((s, i) => (
         <span key={s.url}>
           {i > 0 ? ", " : ""}
           <a className="text-champagne-400 hover:underline" href={s.url} target="_blank" rel="noreferrer" title={s.carries}>{s.name}</a>
@@ -345,15 +453,16 @@ export function Polycab() {
                       the promoter GROUP's is on its own table, and a reader must
                       never take the second for the first. */}
                   <SortHeader col="pledge" view={holdingView} pad={HEAD} note="this demat" noteTitle={PLEDGE_WHY}>Pledged</SortHeader>
-                  {/* THE PRICE'S BASIS, VISIBLE UNDER THE HEADING. Three states,
-                      never two: still fetching is not the same claim as the
-                      exchange refusing, and neither is a fact about the holding. */}
+                  {/* THE PRICE'S BASIS AND ITS DATE, VISIBLE UNDER THE HEADING.
+                      Still fetching is not the same claim as the exchange
+                      refusing, neither is a fact about the holding, and a price
+                      fetched during trading hours is not "the last close". */}
                   <SortHeader col="price" view={holdingView} pad={HEAD} note={priceBasis} noteTitle={priceWhy}>CMP</SortHeader>
-                  <SortHeader col="day" view={holdingView} pad={HEAD}
-                    title="The market price against the previous session's close, as the exchange publishes it.">Day</SortHeader>
-                  {/* §6: the only figure on this page the price feed may move. */}
-                  <SortHeader col="marketValue" view={holdingView} pad={HEAD} note="at CMP"
-                    noteTitle="These shares at the market price shown — the only figure on this page a live price may move. The statement value beside it stays the book's.">Market value</SortHeader>
+                  <SortHeader col="day" view={holdingView} pad={HEAD} title={dayWhy}>Day</SortHeader>
+                  {/* §6: the only figure on this page the price feed may move —
+                      and a blend of the statement's date and the price's, in
+                      words under the heading. */}
+                  <SortHeader col="marketValue" view={holdingView} pad={HEAD} note={mvNote} noteTitle={mvWhy}>Market value</SortHeader>
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
@@ -361,6 +470,12 @@ export function Polycab() {
                   const qty = typeof p.quantity === "number" ? p.quantity : null;
                   const rowMark = qty !== null && qty > 0 ? p.marketValue / qty : null;
                   const atMarket = markedValue(qty, quote);
+                  /* THIS ROW'S TWO DATES, in the Mark cell's hover — its balance
+                     date and the pricing date its own statement prints. */
+                  const when = markWhen(a?.asOf, p.priceAsOf);
+                  const markTitle = when
+                    ? `${when[0].toUpperCase()}${when.slice(1)} — the statement's own value divided by its units, not a live price.`
+                    : `The statement's own value divided by its units, ${MARK_UNDATED} not a live price.`;
                   return (
                     <Tr view={holdingView} key={`${p.securityKey}-${p.accountId}`} className="hover:bg-ink-700/40"
                       data-polycab-demat-row={p.accountId}>
@@ -382,13 +497,13 @@ export function Polycab() {
                         {a ? <><div>{a.provider}</div><div className="mono text-[10.5px] text-slate-500">{a.accountNo}</div></>
                           : <AbsentCell reason="this row's account is not in the registry" />}
                       </td>
-                      <td className={`${CELL} text-slate-400`}>
+                      <td className={`${CELL} text-slate-400`} data-cell="asOf">
                         {a?.asOf ? fmtDate(a.asOf) : <AbsentCell reason="this account states no report date" />}
                       </td>
                       <td className={`${CELL} text-right mono text-slate-200`} data-cell="shares">
                         {qty === null ? <AbsentCell reason="no statement here reports a share count for this row" /> : fmtNum(qty)}
                       </td>
-                      <td className={`${CELL} text-right mono text-slate-400`}>
+                      <td className={`${CELL} text-right mono text-slate-400`} data-cell="mark" title={markTitle}>
                         {price(rowMark) ?? <AbsentCell reason="this row reports no quantity, so a per-share mark cannot be derived from its value" />}
                       </td>
                       <td className={`${CELL} text-right mono text-slate-100`} data-cell="value">{money(p.marketValue)}</td>
@@ -413,12 +528,23 @@ export function Polycab() {
               </tbody>
               {/* A TOTAL OF ONE ROW IS THE ROW AGAIN, so the footer draws only
                   when there is something to add up — the day a second promoter
-                  statement lands, it appears with it. */}
+                  statement lands, it appears with it. AND IT SAYS WHICH DATES IT
+                  ADDS: two demats' statements are rarely struck on one day, and
+                  a total across them with no as-of of its own would blend them
+                  silently. */}
               {rows.length > 1 && (
                 <tfoot className="sticky bottom-0 bg-ink-800" data-polycab-holding-foot>
                   <TrFoot view={holdingView} className="border-t-2 border-ink-600 px-3 py-2 text-left font-semibold text-slate-200"
                     label={<>Total · {rows.length} demats</>}
                     cells={{
+                      asOf: (
+                        <td key="asOf" data-cell="asOf" className="border-t-2 border-ink-600 px-3 py-2 text-left text-slate-400"
+                          title={STATEMENT_DATES.length > 1 ? `These demats' statements are dated ${datesText}; every total in this row adds balances reported on different days.` : undefined}>
+                          {oneDate ? fmtDate(oneDate)
+                            : STATEMENT_DATES.length > 1 ? `${fmtNum(STATEMENT_DATES.length)} dates — blended`
+                            : <AbsentCell reason="no statement here states a report date" />}
+                        </td>
+                      ),
                       shares: <td key="shares" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-200">{shares === null ? <AbsentCell reason="no row reports a share count" /> : fmtNum(shares)}</td>,
                       value: <td key="value" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-100">{money(mv)}</td>,
                       marketValue: <td key="marketValue" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-200">{money(markedValue(shares, quote))}</td>,
@@ -443,7 +569,7 @@ export function Polycab() {
                       title="The record date where the exchange publishes one, and otherwise the book-closure window it published instead.">Record / book closure</SortHeader>
                     <SortHeader col="paid" view={actionView} align="left" pad={HEAD}>Paid</SortHeader>
                     <SortHeader col="entitlement" view={actionView} pad={HEAD}
-                      title="This holding's share count times the declared amount per share. DERIVED — the statement reports a balance on one date and this book cannot say what was held on an ex-date either side of it, so this is an entitlement rather than income and is in no total on this page.">
+                      title="This holding's share count times the declared amount per share. DERIVED — the statement reports a balance on one date and this book cannot say what was held on an ex-date either side of it, so this is an entitlement rather than income and is in no total on this page. A * marks every ex-date on which no statement in this book reports the balance — before the statement as much as after it.">
                       On this block · derived
                     </SortHeader>
                   </Tr>
@@ -456,6 +582,7 @@ export function Polycab() {
                       : null;
                     return (
                       <Tr view={actionView} key={`${a.exDate}-${a.kind}-${i}`} className="hover:bg-ink-700/40"
+                        data-ex-date={a.exDate ?? ""}
                         {...(r.cash ? { "data-polycab-dividend-row": "" } : { "data-polycab-share-row": a.kind })}>
                         <td className={`${CELL} text-slate-300`}>
                           {a.exDate ? fmtDate(a.exDate) : <AbsentCell reason="the exchange records no ex-date for this action" />}
@@ -477,31 +604,44 @@ export function Polycab() {
                             : closure ? <span title="book closure — the exchange published this window instead of a record date">{closure}</span>
                             : <AbsentCell reason="the exchange publishes neither a record date nor a book-closure window for this action" />}
                         </td>
-                        <td className={`${CELL} text-slate-400`}>
-                          {a.paymentDate ? fmtDate(a.paymentDate) : <AbsentCell reason="the exchange's payment-date record covers only its most recent actions" />}
+                        {/* THE DASH SAYS WHY ON THIS ROW. One reason for every dash
+                            was false of the rows the payment record did cover. */}
+                        <td className={`${CELL} text-slate-400`} data-cell="paid">
+                          {a.paymentDate ? fmtDate(a.paymentDate)
+                            : !r.cash ? <AbsentCell reason="a bonus, split or spin-off pays no cash, so it has no payment date" />
+                            : <AbsentCell reason={paymentDateWhy(a, allActions)} />}
                         </td>
                         {/* THE ENTITLEMENT, AND THE ASSUMPTION IT RESTS ON, ON THE
                             CELL. A snapshot is not a history: the share count is
-                            what one statement reported on one date, so an ex-date
-                            the statement does not span is marked rather than
-                            quietly multiplied. */}
-                        <td className={`${CELL} text-right mono text-slate-300`}>
+                            what one statement reported on one date, so every
+                            ex-date that statement is not dated on is marked —
+                            before it as much as after it — rather than quietly
+                            multiplied. */}
+                        <td className={`${CELL} text-right mono text-slate-300`} data-cell="entitlement"
+                          data-reported={r.cash && r.amount !== null ? String(r.balanceReportedOnExDate) : undefined}>
                           {!r.cash
                             ? <AbsentCell reason="a bonus, split or spin-off changes the share count and pays no cash" />
                             : r.amount === null
                               ? <AbsentCell reason="an entitlement needs both a declared amount per share and a share count" />
-                              : (
-                                <span
-                                  className={r.exDateWithinStatement ? "" : "text-slate-500"}
-                                  title={
-                                    r.exDateWithinStatement
-                                      ? `${fmtNum(shares ?? 0)} shares × ${price(a.amountPerShare)} per share, on the balance the statement reports at ${asOf ? fmtDate(asOf) : "its own date"}. Derived, and never a figure for cash received — what actually arrived, and what TDS came off it, is a bank record no exchange can answer.`
-                                      : `This ex-date falls after the statement date (${asOf ? fmtDate(asOf) : "unknown"}), so the balance held on it is NOT reported by any document in this book. The figure is the declared amount applied to the last reported share count, and nothing here says the shares were still held.`
-                                  }
-                                >
-                                  {money(r.amount)}{r.exDateWithinStatement ? "" : " *"}
-                                </span>
-                              )}
+                              : (() => {
+                                const gap = oneDate && a.exDate ? daysBetween(oneDate, a.exDate) : null;
+                                const side = gap === null ? `on a day the statement${STATEMENT_DATES.length === 1 ? " is" : "s are"} not dated`
+                                  : `${fmtNum(Math.abs(gap))} day${Math.abs(gap) === 1 ? "" : "s"} ${gap < 0 ? "before" : "after"} the statement date`;
+                                const basis = `${shares === null ? "the reported share count" : `${fmtNum(shares)} shares`} × ${price(a.amountPerShare)} per share`;
+                                const never = "Derived, and never a figure for cash received — what actually arrived, and what TDS came off it, is a bank record no exchange can answer.";
+                                return (
+                                  <span
+                                    className={r.balanceReportedOnExDate ? "" : "text-slate-500"}
+                                    title={
+                                      r.balanceReportedOnExDate
+                                        ? `${basis}, on the balance the statement reports on the ex-date itself (${datesText}). ${never}`
+                                        : `This ex-date falls ${side} (${datesText || "unknown"}). A statement of holding is a snapshot, so the balance held on the ex-date is NOT reported by any document in this book: ${basis} applies the declared amount to the share count that statement reports, and nothing here says those shares were held on the ex-date. ${never}`
+                                    }
+                                  >
+                                    {money(r.amount)}{r.balanceReportedOnExDate ? "" : " *"}
+                                  </span>
+                                );
+                              })()}
                         </td>
                       </Tr>
                     );
@@ -533,7 +673,7 @@ export function Polycab() {
                 <> {fmtNum(live.unclassified.length)} further action(s) the classifier did not place are listed in <span className="mono">docs/POLYCAB-LIVE.md</span> rather than filed under a kind nothing stated.</>
               )}
             </p>
-            {sourcesLine}
+            {sourcesLine("actions")}
           </>
         )}
 
@@ -549,10 +689,15 @@ export function Polycab() {
                 <thead className="sticky top-0 z-10 bg-ink-800">
                   <Tr view={quarterView} className="border-b border-ink-700">
                     <SortHeader col="quarter" view={quarterView} align="left" pad={HEAD}>Quarter</SortHeader>
-                    <SortHeader col="holding" view={quarterView} pad={HEAD} note="promoter group"
-                      noteTitle="Carried by two independent sources; a quarter where they differ by more than 0.05pp publishes neither — a dash here is a refusal, not a gap.">Promoter holding</SortHeader>
-                    <SortHeader col="pledge" view={quarterView} pad={HEAD} note="group, not this demat"
-                      noteTitle="The promoter GROUP's encumbrance, from one source, which says so. The NSDL statement behind the family's own holding prints no pledge column, so this is not a statement about that account.">Pledged</SortHeader>
+                    {/* EACH PERCENTAGE SAYS WHAT IT IS A PERCENTAGE OF, under its
+                        heading — the holding of all Polycab's shares, the pledge
+                        of the group's own holding — and the holding's caption
+                        COUNTS its witnesses rather than claiming two for every
+                        quarter, which it did over six carried by one. */}
+                    <SortHeader col="holding" view={quarterView} pad={HEAD} note="promoter group · % of all shares"
+                      noteTitle={`The promoter group's holding, as a share of all of Polycab's shares, from ${promoterSourceNames}. Where both carry a quarter they must agree within 0.05pp or neither figure is published — ${fmtNum(wc.both)} of these ${fmtNum(wc.total)} quarters are carried by both — and a quarter only one source carries (${fmtNum(wc.one)} here) is published unchecked against a second. The Sources column counts, per quarter, how many carried it.`}>Promoter holding</SortHeader>
+                    <SortHeader col="pledge" view={quarterView} pad={HEAD} note="group, not this demat · % of group holding"
+                      noteTitle={`${pledgeSourceName}'s “Promoter Holding Pledged” — the pledged part of the promoter GROUP's own holding, from one source, which says so. The NSDL statement behind the family's own holding prints no pledge column, so this is not a statement about that account.`}>Pledged</SortHeader>
                     <SortHeader col="sources" view={quarterView} pad={HEAD}
                       title="How many independent sources carried the holding for this quarter.">Sources</SortHeader>
                   </Tr>
@@ -561,19 +706,19 @@ export function Polycab() {
                   {quarterRows.map((q) => {
                     const latest = q.asOf === latestAsOf;
                     return (
-                      <Tr view={quarterView} key={q.asOf} className="hover:bg-ink-700/40" data-polycab-quarter-row>
+                      <Tr view={quarterView} key={q.asOf} className="hover:bg-ink-700/40" data-polycab-quarter-row={q.asOf}>
                         <td className={`${CELL} text-slate-300`}>{q.quarter ?? fmtDate(q.asOf)}</td>
-                        <td className={`${CELL} text-right mono text-slate-200`} {...(latest ? { "data-polycab-holding": "" } : {})}>
+                        <td className={`${CELL} text-right mono text-slate-200`} data-cell="holding" {...(latest ? { "data-polycab-holding": "" } : {})}>
                           {q.holdingPct === null
-                            ? <AbsentCell reason="the two witnesses disagreed on this quarter by more than 0.05pp, so neither figure is published" />
+                            ? <AbsentCell reason={holdingWhy(q)} />
                             : fmtPct(q.holdingPct)}
                         </td>
-                        <td className={`${CELL} text-right mono text-slate-200`} {...(latest ? { "data-polycab-pledge": "" } : {})}>
+                        <td className={`${CELL} text-right mono text-slate-200`} data-cell="pledge" {...(latest ? { "data-polycab-pledge": "" } : {})}>
                           {q.pledgePct === null
-                            ? <AbsentCell reason="no source published an encumbrance figure for this quarter" />
+                            ? <AbsentCell reason={pledgeWhy(q, live.quarters, pledgeSourceName)} />
                             : fmtPct(q.pledgePct)}
                         </td>
-                        <td className={`${CELL} text-right mono text-slate-500`}>{q.witnesses}</td>
+                        <td className={`${CELL} text-right mono text-slate-500`} data-cell="sources">{q.witnesses}</td>
                       </Tr>
                     );
                   })}
@@ -587,7 +732,7 @@ export function Polycab() {
                 </tbody>
               </table>
             </div>
-            {sourcesLine}
+            {sourcesLine("promoter")}
           </>
         )}
       </Card>

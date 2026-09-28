@@ -27,7 +27,7 @@
 // two agreeing is a cross-check rather than a figure compared with its own
 // copy. Nothing typed here would go stale on the next drop except where a
 // COUNT is what a `?? 0` would move — and those are written as relations.
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY, BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { sum, currentHoldings, dedupedPositions } from "@/lib/analytics";
@@ -36,7 +36,7 @@ import { isValuedByNoStatement, unvaluedAifFolios } from "@/lib/aifCategory";
 import fs from "node:fs";
 import path from "node:path";
 import { schemeCalls, callTotals } from "@/lib/capitalCalls";
-import { bookFolios, privateBook, figuresOf, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
+import { bookFolios, privateBook, figuresOf, privateBookFolios, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
 import type { SchemeCall } from "@/lib/capitalCalls";
 
 let fails = 0;
@@ -69,7 +69,7 @@ const schemes = schemeCalls(
 );
 const folios = bookFolios({
   positions: current, allPositions: BOOK_POSITIONS, accounts: BOOK_ACCOUNTS,
-  commitments, accIdx, schemes,
+  commitments, accIdx, schemes, distributions: BOOK_CORPORATE_ACTIONS,
 });
 const byFund = privateBook(folios, "fund");
 const byOwner = privateBook(folios, "owner");
@@ -323,6 +323,69 @@ console.log("\n── the two sections ──");
     folios.filter((f) => f.position).length, current.filter((p) => p.marketSide === "private").length);
 }
 
+console.log("\n── what the funds paid back: each distribution once, on its own paper's basis (B-10) ──");
+{
+  /**
+   * DERIVED BY A SECOND PATH. A capital account's distribution is its printed
+   * `distributed`, else its non-equalisation payouts, gross — re-expressed here,
+   * never read through `distributionOf`. A letter's is `BOOK_CORPORATE_ACTIONS`'
+   * own amount. And "once" is struck the way every consolidated figure is: of a
+   * dedupe group's accounts, the one `dedupedPositions` keeps stands for the
+   * group — the income-only folios reaching it through the committed join table.
+   */
+  const capDist = (c: (typeof commitments)[number]) => c.distributed != null ? c.distributed
+    : c.payouts == null ? null
+    : c.payouts.filter((p) => p.kind !== "equalisation").reduce((t, p) => t + p.gross, 0);
+  const priv = current.filter((p) => p.marketSide === "private");
+  const kept = new Set(dedupedPositions(priv));
+  const capitalAcc = new Set(commitments.map((c) => c.accountId));
+  const capLeft = new Set<string>();
+  for (const g of new Set(priv.map((p) => p.dedupeGroup).filter(Boolean))) {
+    const members = priv.filter((p) => p.dedupeGroup === g && capitalAcc.has(p.accountId));
+    const stand = members.find((p) => kept.has(p)) ?? members[0];
+    for (const p of members) if (p !== stand) capLeft.add(p.accountId);
+  }
+  const letters = BOOK_CORPORATE_ACTIONS.filter((x) => x.kind === "distribution" && x.amount != null
+    && INCOME_ONLY_VIEWS.some((v) => v.accountId === x.accountId));
+  ok("this book carries a distribution letter on an income-only folio — so the fold's distribution has a subject",
+    letters.length > 0, letters.map((x) => `${x.accountId} ₹${x.amount}`).join("; "));
+  // A letter stands for its holding's group when its view's valued holding is the kept member.
+  const viewKept = (accountId: string) => {
+    const v = INCOME_ONLY_VIEWS.find((x) => x.accountId === accountId);
+    const acc = BOOK_ACCOUNTS.find((a) => a.accountId === accountId);
+    return priv.some((p) => kept.has(p) && p.securityKey === v?.securityKey && accIdx.get(p.accountId)?.ownerId === acc?.ownerId);
+  };
+  const printedWant = sum(commitments.map((c) => capDist(c) ?? 0)) + sum(letters.map((x) => x.amount!));
+  const onceWant = sum(commitments.filter((c) => !capLeft.has(c.accountId)).map((c) => capDist(c) ?? 0))
+    + sum(letters.filter((x) => viewKept(x.accountId)).map((x) => x.amount!));
+  near("counted once: the consolidated total is every counted capital account's plus each holding's letter once",
+    byFund.privateTotal.distributed, onceWant);
+  near("as printed: every statement's and every letter's", figuresOf(folios, false).distributed, printedWant);
+  // THE ONE BUILD BOTH PAGES READ — Private Market's table and Morning CIO's
+  // Distributions tile, which read ₹57 L and ₹50 L while they were two builds.
+  const shared = privateBookFolios({ positions: BOOK_POSITIONS, accounts: BOOK_ACCOUNTS, commitments: BOOK_COMMITMENTS }, BOOK_CORPORATE_ACTIONS);
+  near("…and the one build Morning CIO's tile and this page both read counts the same, once",
+    figuresOf(shared.folios, true).distributed, onceWant);
+  // THE LOAD-BEARING GATE: counting both income-only folios would pass every
+  // relation written between the page's own rows. The two bases must differ by
+  // exactly the letters and capital the consolidated total leaves out.
+  const leftLetters = sum(letters.filter((x) => !viewKept(x.accountId)).map((x) => x.amount!));
+  ok("…and the gap is the second statement's letter, real on this book", leftLetters > 1 && Math.abs(printedWant - onceWant - leftLetters
+    - sum(commitments.filter((c) => capLeft.has(c.accountId)).map((c) => capDist(c) ?? 0))) <= 0.01, `₹${leftLetters}`);
+  ok("each letter's folio says its basis is the letter, and each capital account's its capital account",
+    folios.filter((f) => f.distributed != null).every((f) => f.distributedBasis === (f.viewOf ? "letter" : "capital-account")));
+  ok("the folio left out names the folio that stands for it",
+    folios.filter((f) => f.viewOf && f.distributed != null && !f.distributionCounted)
+      .every((f) => folios.some((x) => x.accountId === f.distributionCountedAs && x.distributionCounted && x.fundKey === f.fundKey)));
+  ok("equalisation is in no distribution figure",
+    commitments.every((c) => c.distributed != null || c.payouts == null
+      || Math.abs((capDist(c) ?? 0) - c.payouts.filter((p) => p.kind === "income" || p.kind === "capital").reduce((t, p) => t + p.gross, 0)) <= 0.01));
+  eq("coverage: the accounts that report one, of those that could",
+    [byFund.privateTotal.distributedOf, byFund.privateTotal.distributionAccounts],
+    [commitments.filter((c) => !capLeft.has(c.accountId) && capDist(c) != null).length + letters.filter((x) => viewKept(x.accountId)).length,
+      commitments.filter((c) => !capLeft.has(c.accountId)).length + letters.filter((x) => viewKept(x.accountId)).length]);
+}
+
 console.log("\n── units never add across funds ──");
 {
   ok("no band or total carries a unit count",
@@ -349,7 +412,8 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
     accountNo: "1", asOf: "2026-07-31", fundKey: key, fundName: key, securityKey: key, category: null,
     position: null, units: null, cost: null, value: null, pnl: null, counted: false,
     alsoCount: 1, alsoReportedUnder: [], capital: c, capitalCounted: true, capitalCountedAs: null,
-    viewOf: null, reason: null,
+    viewOf: null, distributed: null, distributedBasis: null, distributionCounted: true, distributionCountedAs: null,
+    reason: null,
   });
   const fig = figuresOf([
     folio("one", cap({ accountId: "a" })),
@@ -359,6 +423,45 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
   eq("called likewise", [fig.called, fig.calledOf], [60, 1]);
   eq("committed is on every capital account", [fig.committed, fig.capitalAccounts], [200, 2]);
   eq("nothing held: value is absent, not ₹0", fig.value, null);
+}
+
+// ── [D] DL-16: WHAT A ROW'S FIFO RETURN DIVIDES BY ───────────────────────────
+//
+// `deployed` is the cost of the units held plus what the units already
+// redeemed cost — written out here from each position's own fields, never
+// through `fifoTotals`, which is what the model calls. It must differ from the
+// Cost column EXACTLY where a holding redeemed units, and on this book that is
+// Neo Infra's capital redemption — load-bearing, or the page's "on ₹X" marker
+// is a claim nothing here could fail.
+{
+  const priv = byFund.sections.private;
+  const held = folios.filter((f) => f.section === "private" && f.position && f.counted);
+  const sold = held.reduce((t, f) => t + (f.position!.costOfUnitsSold ?? 0), 0);
+  const costHeld = held.reduce((t, f) => t + (f.cost ?? 0), 0);
+  ok("a private holding here has redeemed units (so the denominator differs from the Cost column)", sold > 1, `₹${sold.toFixed(2)}`);
+  near("the band's deployed is the cost held plus what the redeemed units cost", priv.deployed, costHeld + sold);
+  near("…and the total's is the same", byFund.privateTotal.deployed, costHeld + sold);
+  ok("…and it is NOT the Cost column", priv.deployed != null && priv.cost != null && Math.abs(priv.deployed - priv.cost) > 1);
+  const gain = held.reduce((t, f) => t + (f.position!.marketValue - (f.cost ?? 0)) + (f.position!.realizedPnL ?? 0), 0);
+  near("the band's HPR is its FIFO gain over that denominator", priv.returnPct, (gain / (costHeld + sold)) * 100, 1e-6);
+  for (const g of byFund.sections.private.groups) {
+    const gs = g.folios.filter((f) => f.position && f.counted);
+    const gSold = gs.reduce((t, f) => t + (f.position!.costOfUnitsSold ?? 0), 0);
+    if (g.returnPct == null) { ok(`${g.label}: no return, so no denominator`, g.deployed == null); continue; }
+    near(`${g.label}: deployed = its Cost + what its redeemed units cost`, g.deployed, (g.cost ?? 0) + gSold);
+  }
+}
+
+// ── [D] THE DOUBLE COUNT'S HOLDINGS, COUNTED OFF THE ROWS ────────────────────
+{
+  const scope = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
+  const groups = new Map<string, number>();
+  for (const p of scope.rows) if (p.dedupeGroup) groups.set(p.dedupeGroup, (groups.get(p.dedupeGroup) ?? 0) + 1);
+  const twice = [...groups.values()].filter((n) => n > 1);
+  ok("the scope counts the holdings reported on more than one statement", scope.doubleCountedHoldings === twice.length,
+    `${scope.doubleCountedHoldings} vs ${twice.length}`);
+  ok("…and how many statements report each", JSON.stringify([...scope.doubleCountedStatements].sort()) === JSON.stringify([...twice].sort()));
+  ok("…and on this book there is a double count to count", twice.length > 0 && scope.doubleCounted > 1);
 }
 
 if (fails) {

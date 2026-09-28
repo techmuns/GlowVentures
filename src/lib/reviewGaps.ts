@@ -17,10 +17,15 @@
 // sentences, and its generator throws rather than emit a number.
 import { BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { securityKeyOf } from "@/lib/securityKey";
+import { schemeNameFor } from "@/lib/schemeLabel";
+import { fundNavFor } from "@/lib/fundNavs";
 import { REVIEW_GAPS, REVIEW_AS_OF, type ReviewGap } from "@/data/reviewGaps";
 
 export type { ReviewGap };
 export { REVIEW_AS_OF };
+
+/** Every spelling a gap answers to: the review's own name plus its aliases. */
+const spellings = (g: ReviewGap) => [g.name, ...g.aliases];
 
 /**
  * ── A GAP THIS BOOK MAY NOT CLAIM, BECAUSE A NAME LIKE IT IS IN THE BOOK ────
@@ -52,13 +57,83 @@ export { REVIEW_AS_OF };
  * on no statement.
  */
 const flat = (k: string) => k.replace(/-/g, "");
-// A name a statement RECORDS counts as well as one the book values: the Motilal
-// demat's lines are quantities with no usable price (Stage 10cy), and a review
-// line spelling one of them is still a holding the statements report.
+const prefixRelated = (k: string, keys: readonly string[]) => keys.some((bk) =>
+  bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
+// A holding a statement RECORDS counts as well as one the book values: the
+// Motilal demats' lines are quantities with no usable price (Stage 10cy), and a
+// review line spelling one of them is still a holding the statements report.
+const RECORDED = BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0 && !u.sameUnitsReportedBy);
 const BOOK_KEYS = [...new Set([
   ...BOOK_POSITIONS.map((p) => p.security),
-  ...BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0 && !u.sameUnitsReportedBy).map((u) => u.security),
+  ...RECORDED.map((u) => u.security),
 ].map((n) => securityKeyOf(n)))].filter(Boolean);
+
+/**
+ * ── …AND A GAP WHOSE NAME IS A SCHEME THE BOOK HOLDS (SC-B4) ────────────────
+ *
+ * The tier above compares the review's name with the name the STATEMENT
+ * printed, and for a mutual fund that is the one comparison that cannot work: a
+ * depository clips a scheme to its column width, so the book's `WOC MAAF
+ * D-GROW` and the review's `WhiteOak Capital Multi Asset Allocation
+ * Fund-Direct(G)` share no prefix — while the dashboard has displayed that
+ * holding, ₹8.83 Cr across two accounts, under the scheme's own published name
+ * since Stage 10az. Measured, the note told a reader "no statement reports it"
+ * about SEVEN funds the book holds (WhiteOak, both Aditya Birla Sun Life
+ * lines, Bandhan Large & Mid Cap, Kotak Multicap, ICICI Prudential Liquid,
+ * Liquid BeES) and, on the three substring searches, five more — HDFC Balanced
+ * Advantage (both plans are held), ICICI Prudential India Opportunities and
+ * Balanced Advantage, and HDFC Liquid, which a statement reports as redeemed.
+ *
+ * THE SCHEME'S PUBLISHED NAME IS REACHED THROUGH AN IDENTIFIER, never a
+ * resemblance: `schemeNames.json` is AMFI's name joined on the book's own ISIN,
+ * and AMFI's daily file (`fundNavs.ts`) supplies the one scheme the look-through
+ * could not reach — Liquid BeES, on the statement's own ISIN. What is compared
+ * is `schemeStem` of each side: the plan and option words both append taken off
+ * (Direct, Regular, Growth, IDCW, a daily-dividend "(DD)"), and the two AMC
+ * abbreviations the review writes (`SL` for Sun Life, `Pru` for Prudential)
+ * spelt out.
+ *
+ * PLAN- AND OPTION-INSENSITIVE ON PURPOSE, and that is this file's own rule
+ * rather than a loosening of it: the question a note answers is whether a
+ * statement reports THE SCHEME, and a review line for the daily-dividend option
+ * of a fund the book holds in Growth is a line the note must not answer with
+ * "no statement reports it". Suppressing too much costs the silence a reader
+ * already had. The top bar's search finds the held scheme for the same
+ * spelling, through the same stem, so the silence is not left standing there.
+ */
+const PLAN_OPTION_WORDS = new Set([
+  "direct", "regular", "plan", "growth", "gr", "grw", "grow", "g", "d", "dp", "option", "dd", "idcw",
+  "dividend", "reinvestment", "reinvest", "payout", "daily", "weekly", "monthly", "quarterly", "bonus",
+]);
+const AMC_ABBREVIATIONS: Record<string, string> = { sl: "sun life", pru: "prudential" };
+
+/**
+ * A scheme's name with its plan and option set aside and the review's AMC
+ * abbreviations spelt out — the unit a reader means by "the fund". Shared with
+ * the top bar's search so the note and the search cannot disagree about which
+ * scheme a spelling names.
+ */
+export function schemeStem(name: string): string {
+  return name.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim().split(" ")
+    .flatMap((w) => (AMC_ABBREVIATIONS[w] ?? w).split(" "))
+    .filter((w) => !!w && !PLAN_OPTION_WORDS.has(w))
+    .join(" ");
+}
+
+/** Every published name of the scheme behind a holding — reached by ISIN, never by resemblance. */
+export function schemeNamesOf(securityKey: string): string[] {
+  const s = schemeNameFor(securityKey);
+  const n = fundNavFor({ securityKey });
+  return [...new Set([s?.name, s?.amfiName, n?.scheme].filter((x): x is string => !!x))];
+}
+
+/**
+ * Every scheme a statement reports — held OR redeemed, because both are
+ * reported, and one a statement records with no usable price too (Stage 10cy).
+ */
+const HELD_SCHEME_KEYS = [...new Set([...BOOK_POSITIONS.map((p) => p.securityKey), ...RECORDED.map((u) => u.securityKey)]
+  .flatMap((k) => schemeNamesOf(k))
+  .map((n) => securityKeyOf(schemeStem(n))))].filter(Boolean);
 
 /**
  * ── …NOR ONE A STATEMENT REPORTS, WHETHER OR NOT THIS BOOK VALUES IT ────────
@@ -204,8 +279,11 @@ const CLAIMABLE = REVIEW_GAPS.filter((g) => {
   if (reportedByStatement(g)) return false;
   const k = securityKeyOf(g.name);
   if (!k) return false;
-  return !BOOK_KEYS.some((bk) =>
-    bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
+  if (prefixRelated(k, BOOK_KEYS)) return false;
+  return !spellings(g).some((s) => {
+    const sk = securityKeyOf(schemeStem(s));
+    return !!sk && prefixRelated(sk, HELD_SCHEME_KEYS);
+  });
 });
 
 /** The gaps a search may be told about — see `CLAIMABLE` above. */
@@ -219,8 +297,6 @@ export const claimableGaps = () => CLAIMABLE;
  */
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
-/** Every spelling a gap answers to: the review's own name plus its aliases. */
-const spellings = (g: ReviewGap) => [g.name, ...g.aliases];
 
 /**
  * The review lines a reader's search term names, closest first.

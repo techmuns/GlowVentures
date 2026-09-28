@@ -4,17 +4,20 @@ import { ChevronRight, Wallet, Coins, TrendingUp, Layers, Percent } from "lucide
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
-import { BasisPill } from "@/components/BasisPill";
+import { investedReconciliation } from "@/lib/mandateCapital";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf } from "@/lib/analytics";
+import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare } from "@/lib/analytics";
+import { companySectorIndex } from "@/lib/lookthrough";
+import { useStockExposure } from "@/lib/useStockExposure";
+import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
 import { loadTransactions, type Txn } from "@/lib/ledger";
-import { rollup, acctKey } from "@/lib/txnRollup";
+import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN } from "@/lib/txnRollup";
 import { capitalRollup, capitalMovesWithCalls, capitalReturn } from "@/lib/tranches";
 import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
 import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
@@ -214,7 +217,7 @@ const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"
 
 export function MandateHoldings() {
   const { accountId = "" } = useParams();
-  const { portfolio, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus } = usePortfolio();
   const [q, setQ] = useState("");
 
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
@@ -237,6 +240,32 @@ export function MandateHoldings() {
   // no rows), and a hook that runs on some of them and not others is a
   // hooks-order error rather than a conditional table.
   const holdingsView = useTableView("mandate-holdings", MANDATE_COLS);
+  /**
+   * ONE SECTOR PER COMPANY, THE ONE SECTOR COMPOSITION GIVES IT (DSM-C9).
+   *
+   * The Sector column read `r.sector` — the statement's own, and nothing else.
+   * A manager's appraisal prints one for most of its shares, and every name it
+   * does not print one for read "Unclassified" here while Sector Composition,
+   * the Portfolio Monitor, Family & Entities and the company page placed the
+   * same company through the shared three tiers: the statement, then a fund's
+   * SEBI filing joined on the ISIN, then screener.in joined on the NSE symbol.
+   * `companySectorIndex` is that classification, built over every company share
+   * exactly as those pages build it — a company's sector does not depend on
+   * which account a reader opened.
+   *
+   * THE FUND TIER IS NOT LOADED HERE, and that costs nothing: for every company
+   * share this book holds, the filings place no sector the statement and
+   * screener.in do not already place, which `monitorSectors.test.ts` measures
+   * and fails on the day a drop brings one. This page asks no fund question, so
+   * it does not pay for 21 fetches to be told nothing new.
+   */
+  const exposure = useStockExposure(consolidated, false);
+  const companySectors = useMemo(
+    () => companySectorIndex(consolidated.filter(isCompanyShare), exposure),
+    [consolidated, exposure],
+  );
+  const sectorOf = (r: Position) =>
+    isCompanyShare(r) ? companySectors.get(r.securityKey)?.sector || UNCLASSIFIED_SECTOR : r.sector;
 
   const mv = sum(rows.map((r) => r.marketValue));
   // sumOrNull, not sum: a mandate whose statement reports no cost on some row
@@ -260,6 +289,11 @@ export function MandateHoldings() {
     [rows, portfolio],
   );
   const ret = fifo.returnPct;
+  /** The cost held, tied to paid in − taken out + realised — or null. */
+  const reconcile = investedReconciliation({
+    costHeld: cost, uncostedRows: noCost, capital: account?.capital ?? null,
+    realised: fifo.realised ?? null, wholeMandate: fifo.wholeMandates.length > 0,
+  });
   /**
    * THE ACCOUNT'S OWN ROWS, SUMMED ON THE BOOK'S DERIVED BASIS — and that is the
    * whole of what this figure is. It is NOT the manager's printed total, which
@@ -595,7 +629,7 @@ export function MandateHoldings() {
   // would rank a holding whose statement prints no cost among the cheapest.
   const sorted = sortRows([...shown].sort((a, b) => b.marketValue - a.marketValue), holdingsView.sort, {
     security: (r) => r.security,
-    sector: (r) => (readerClassOf(r) === "Cash" ? null : r.sector),
+    sector: (r) => (readerClassOf(r) === "Cash" ? null : sectorOf(r)),
     qty: (r) => r.quantity,
     avgCost: (r) => r.avgCost,
     invested: (r) => r.costBasis,
@@ -630,13 +664,22 @@ export function MandateHoldings() {
                 arrive per account on their own schedule and `portfolio.asOf` is
                 only the latest of them; a mandate page dated by the book would
                 claim a currency this document does not have. */}
-            <Pill>
-              <span title={`Every figure on this page is as ${account.provider} printed it on ${account.asOf}. The book's newest statement is ${portfolio.asOf}; this account's own is what dates this page.`}>
-                statement as of {fmtDate(account.asOf)}
-              </span>
-            </Pill>
+            {(() => {
+              const liveN = rows.filter((r) => r.live).length;
+              const other = portfolio.asOf && portfolio.asOf !== account.asOf
+                ? ` The book's newest statement, ${fmtDate(portfolio.asOf)}, is another account's; this page is dated by its own.` : "";
+              const tip = liveN
+                ? `LIVE basis: ${liveN} of ${rows.length} holdings are marked to a live quote now and the rest keep ${account.provider}'s statement mark of ${fmtDate(account.asOf)}. Quantity, cost, realised gains, dividends and cash flows stay exactly as that statement prints them.${other}`
+                : `Every figure on this page is as ${account.provider} printed it on ${fmtDate(account.asOf)}${quotesStatus === "loading" ? " — live prices are still being fetched" : " — no live price reached any of these holdings"}.${other}`;
+              return (
+                <Pill tone="info">
+                  <span title={tip} data-mandate-asof={account.asOf} data-mandate-basis={liveN ? "live" : "statement"}>
+                    {liveN ? `LIVE · ${liveN} of ${rows.length} marked now · statement ${fmtDate(account.asOf)}` : `STATEMENT · as of ${fmtDate(account.asOf)}`}
+                  </span>
+                </Pill>
+              );
+            })()}
             {account.engagement && <Pill>{account.providerEngagement || account.engagement}</Pill>}
-            <BasisPill liveText={`marked now · statement ${fmtDate(account.asOf)}`} />
           </div>
         </div>
         <div className="text-right">
@@ -659,13 +702,20 @@ export function MandateHoldings() {
               ? <span className="text-slate-500">no row on this statement reports a cost</span>
               : noCost
                 ? <span className="text-slate-500">cost in · {noCost} of {rows.length} rows report none and are skipped</span>
-                : <span>cost in, whole mandate</span>}
+                : <span>cost of holdings</span>}
             {/* THE DATE, AND ITS ABSENCE IS NAMED RATHER THAN LEFT BLANK — a
                 tile that simply stops mentioning when tells a reader nothing
                 about whether to go and find the document. */}
             <span className="text-slate-500">
               {" · "}{fundedNote ?? "no statement dates what was paid in"}
             </span>
+            {reconcile && (
+              <span className="block text-slate-500" data-mandate-invested-reconcile
+                data-paid-in={reconcile.paidIn} data-taken-out={reconcile.takenOut} data-realised={reconcile.realised}
+                title={`What ${account.provider} holds now cost ${money(reconcile.costHeld)}: the ${money(reconcile.paidIn)} paid in, less the ${money(reconcile.takenOut)} taken out, plus the ${money(reconcile.realised, true)} the manager realised and kept invested — gains on shares sold, and income less fees. The capital card below dates every payment; the Return · FIFO tile is struck on what was paid in.`}>
+                = {money(reconcile.paidIn)} paid in{reconcile.takenOut ? <> − {money(reconcile.takenOut)} out</> : null} {reconcile.realised < 0 ? "−" : "+"} {money(Math.abs(reconcile.realised))} realised
+              </span>
+            )}
           </span>}
           icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
@@ -736,7 +786,7 @@ export function MandateHoldings() {
                         ? <span className="text-slate-500" title={isBalance
                             ? "A balance, not a share in a company — no sector applies."
                             : "A cash-equivalent fund, not a share in a company — no sector applies."}>—</span>
-                        : r.sector}
+                        : <span data-mandate-sector={sectorOf(r)} data-mandate-sector-key={r.securityKey}>{sectorOf(r)}</span>}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">
@@ -746,7 +796,7 @@ export function MandateHoldings() {
                       {r.costBasis === null ? <AbsentCell reason="this statement reports no cost for the holding" /> : money(r.costBasis)}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">
-                      {price(r.currentPrice) ?? <AbsentCell reason="this holding is marked at a total value, with no per-unit price anywhere on the statement" />}
+                      {price(r.currentPrice) ?? <AbsentCell reason="the book carries this holding's value as a total, with no price per unit" />}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-200">
                       {money(r.marketValue)}
@@ -1161,47 +1211,61 @@ function ManagerTrades({ account }: { account: Account }) {
                   const isOpen = open.has(ins.key);
                   return (
                     <Fragment key={ins.key}>
-                      <Tr view={tradeView} data-manager-row={ins.key} className="cursor-pointer hover:bg-ink-700/30"
+                      <Tr view={tradeView} data-manager-row={ins.key} data-buys={ins.buys} data-sells={ins.sells} className="cursor-pointer hover:bg-ink-700/30"
                         onClick={() => setOpen((prev) => { const n = new Set(prev); if (n.has(ins.key)) n.delete(ins.key); else n.add(ins.key); return n; })}>
                         <td className="px-3 py-1.5">
                           <div className="flex items-center gap-1.5">
                             <ChevronRight className={`h-3 w-3 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                             <span className="text-slate-200">{ins.security}</span>
-                            {ins.staggered && <Pill>staggered · {ins.days} days</Pill>}
+                            {ins.staggered && <Pill><span data-staggered-title title={ins.buys >= STAGGERED_MIN && ins.sells >= STAGGERED_MIN
+                              ? `Bought over ${ins.buyDays} trading days and sold over ${ins.sellDays} rather than in one go.`
+                              : ins.buys >= STAGGERED_MIN ? `Built up over ${ins.buyDays} trading days rather than in one go.`
+                              : `Sold down over ${ins.sellDays} trading days rather than in one go.`}>staggered · {ins.days} days</span></Pill>}
                           </div>
                         </td>
                         <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
                           {ins.buys + ins.sells}<span className="ml-1 text-[10px] text-slate-500">{ins.buys}B/{ins.sells}S</span>
                         </td>
-                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
-                          {ins.buys === 0 ? <span className="text-slate-600">—</span>
+                        {/* A SIDE THE MANAGER NEVER TRADED SAYS SO (DSM-D8) — a bare
+                            dash read exactly like a figure the statement failed to
+                            print. It is a count of nothing, and its reason says that. */}
+                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap" data-trade-cell="bought">
+                          {ins.buys === 0 ? <AbsentCell reason="nothing of this security was bought over the period — there is no buy row, rather than a missing figure" />
                             : money(ins.bought) ?? <AbsentCell reason="no row on this side reports a settled amount" />}
                         </td>
-                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
-                          {ins.sells === 0 ? <span className="text-slate-600">—</span>
+                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap" data-trade-cell="sold">
+                          {ins.sells === 0 ? <AbsentCell reason="nothing of this security was sold over the period — there is no sell row, rather than a missing figure" />
                             : money(ins.sold) ?? <AbsentCell reason="no row on this side reports a settled amount" />}
                         </td>
-                        <td className="px-3 py-1.5 text-right mono whitespace-nowrap">
+                        {/* THE REASON IS EACH SALE'S OWN (DSM-C10). "No capital gain
+                            statement covers this account" was printed on 67 lines
+                            that sold nothing and on three whose account DOES issue
+                            one; each sale now says which of its causes it is. */}
+                        <td className="px-3 py-1.5 text-right mono whitespace-nowrap" data-trade-cell="realised">
                           {ins.realized === null
-                            ? <AbsentCell reason="no capital gain statement covers this account, so what these sales realised was never reported" />
-                            : <span className={changeColor(ins.realized)}>{money(ins.realized)}</span>}
+                            ? <AbsentCell reason={ins.sells === 0 ? "nothing of this security was sold over the period, so nothing was realised" : realisedAbsence(ins.tranches)} />
+                            : <><span className={changeColor(ins.realized)}>{money(ins.realized)}</span>{ins.realizedOf < ins.sells && <span className="ml-1 text-[10px] text-slate-500" data-realised-of={`${ins.realizedOf}/${ins.sells}`} title={realisedCoverageNote(ins.tranches)}>{ins.realizedOf}/{ins.sells}</span>}</>}
                         </td>
                         <td className="px-3 py-1.5 text-[12px] mono text-slate-500 whitespace-nowrap">
                           {ins.first === ins.last ? fmtDate(ins.first) : `${fmtDate(ins.first)} → ${fmtDate(ins.last)}`}
                         </td>
                       </Tr>
                       {isOpen && ins.tranches.map((t, i) => (
-                        <Tr view={tradeView} key={`${ins.key}::${i}`} data-manager-tranche={ins.key} className="bg-ink-900/40 text-[12px]">
+                        <Tr view={tradeView} key={`${ins.key}::${i}`} data-manager-tranche={ins.key} data-tranche-date={t.date} className="bg-ink-900/40 text-[12px]">
                           <td className="px-3 py-1 pl-8 text-slate-400">
                             {fmtDate(t.date)}
                             <span className={`ml-2 rounded px-1 py-0.5 text-[10px] ${t.side === "Buy" ? "bg-sky-500/15 text-sky-300" : "bg-amber-500/15 text-amber-300"}`}>{t.side}</span>
                             <span className="ml-2 mono text-slate-500">{fmtNum(t.qty)}{t.price !== null && <> @ {fmtFromBase(t.price)}</>}</span>
                           </td>
                           <td />
-                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Buy" ? (money(t.amount) ?? "—") : ""}</td>
-                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Sell" ? (money(t.amount) ?? "—") : ""}</td>
-                          <td className="px-3 py-1 text-right mono whitespace-nowrap">
-                            {t.realized === null
+                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Buy" ? (money(t.amount) ?? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" />) : ""}</td>
+                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Sell" ? (money(t.amount) ?? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" />) : ""}</td>
+                          {/* A PURCHASE REALISES NOTHING — blank, like the other
+                              side's money cell on this row, never a dash that names
+                              "this sale" on a buy. */}
+                          <td className="px-3 py-1 text-right mono whitespace-nowrap" data-tranche-realised={t.side}>
+                            {t.side !== "Sell" ? ""
+                              : t.realized === null
                               ? <AbsentCell reason={t.realizedNote ?? "no capital gain lot in the statements matches this sale"} />
                               : <span className={changeColor(t.realized)}>{money(t.realized)}</span>}
                           </td>

@@ -15,7 +15,7 @@
 // The one figure anchored to the real book is the reconciliation: the rollup's
 // own totals must reproduce the flat tape's, because a rollup that quietly drops
 // a row is exactly what a rollup is for and exactly what nothing else would see.
-import { rollup, rollupTotals, STAGGERED_MIN, acctKey } from "@/lib/txnRollup";
+import { rollup, rollupTotals, STAGGERED_MIN, acctKey, realisedAbsence, realisedCoverageNote } from "@/lib/txnRollup";
 import type { Txn } from "@/lib/ledger";
 import type { Account } from "@/lib/types";
 
@@ -31,7 +31,7 @@ const near = (name: string, a: number | null, b: number | null, tol = 0.01) =>
 const txn = (o: Partial<Txn>): Txn => ({
   date: "2026-04-01", security: "Acme Ltd", securityKey: "acme", account: "A · P 1",
   provider: "Provider A", accountNo: "1", ownerId: "ajay", assetClass: "Equity",
-  side: "Buy", qty: 10, price: 100, amount: 1000, realized: null, ...o,
+  side: "Buy", qty: 10, price: 100, amount: 1000, realized: null, isin: null, isinFrom: null, ...o,
 });
 const acct = (o: Partial<Account>): Account => ({
   accountId: "a", provider: "Provider A", accountNo: "1", owner: "Ajay Jaisinghani",
@@ -68,6 +68,63 @@ const acct = (o: Partial<Account>): Account => ({
 {
   const [g] = rollup([txn({ side: "Sell", realized: null })], [], "manager");
   ok("a group with sells but no realised figure anywhere renders absent", g.realized === null);
+}
+
+// ── MT-12: a SIBLING row's gain is IN the figure, so it is COVERED ────────────
+{
+  const rows = [
+    txn({ side: "Sell", amount: 900, realized: 250, realizedBasis: "lot" }),
+    txn({ side: "Sell", amount: 900, realized: null, realizedBasis: "sibling" }),
+    txn({ side: "Sell", amount: 900, realized: null, realizedBasis: "sibling" }),
+    txn({ side: "Sell", date: "2026-05-02", amount: 100, realized: null, realizedBasis: "no-statement",
+      realizedNote: "no capital gain statement is issued for this account in this drop, so what this sale realised is not reported" }),
+  ];
+  const [g] = rollup(rows, [], "manager");
+  near("the day's figure is counted once", g.realized, 250);
+  ok("MT-12: a sale settled on its day's first row counts as covered — 3 of 4, not 1 of 4",
+    g.realizedOf === 3 && g.sells === 4, `${g.realizedOf} of ${g.sells}`);
+  const note = realisedCoverageNote(g.instruments[0].tranches);
+  ok("MT-12: the coverage note says what the uncovered sale is missing, in its own words",
+    /3 of 4 sales/.test(note) && /no capital gain statement is issued/.test(note), note);
+}
+{
+  const ns = (d: string) => txn({ side: "Sell", date: d, realized: null, realizedBasis: "no-statement",
+    realizedNote: "no capital gain statement is issued for this account in this drop, so what this sale realised is not reported" });
+  const ow = txn({ side: "Sell", date: "2026-08-04", realized: null, realizedBasis: "outside-window",
+    realizedNote: "this account's capital gain statement runs 1 Apr 2025 → 31 Jul 2026, and this sale, on 4 Aug 2026, falls after it — what it realised is not reported yet" });
+  ok("MT-12: sales in an account that issues no statement say so",
+    /no capital gain statement is issued for this account/.test(realisedAbsence([ns("2026-04-01"), ns("2026-04-02")])));
+  ok("MT-12: one sale after its account's window names that window, not a missing statement",
+    /falls after it/.test(realisedAbsence([ow])) && !/no capital gain statement is issued/.test(realisedAbsence([ow])), realisedAbsence([ow]));
+  ok("MT-12: a mix names each cause with its count",
+    /none of these 2 sales/.test(realisedAbsence([ns("2026-04-01"), ow])) && /1 is in an account that issues no/.test(realisedAbsence([ns("2026-04-01"), ow]))
+      && /1 falls outside/.test(realisedAbsence([ns("2026-04-01"), ow])), realisedAbsence([ns("2026-04-01"), ow]));
+  ok("MT-12: a line with no sale says nothing was sold, never that a statement is missing",
+    /nothing was sold/.test(realisedAbsence([txn({ side: "Buy" })])));
+}
+
+// ── MT-13: a security row's lines each hold ONE side, and say which ─────────
+{
+  const rows = [
+    txn({ securityKey: "ather", security: "Ather", side: "Buy", qty: 1240, amount: 1430000 }),
+    txn({ securityKey: "ather", security: "Ather", side: "Sell", qty: 1200, amount: 1670000, date: "2026-08-04" }),
+  ];
+  const [sec] = rollup(rows, [], "instrument");
+  ok("MT-13: a security row opens into a buy line and a sell line",
+    sec.instruments.length === 2 && sec.instruments.some((i) => i.side === "Buy" && i.buys === 1 && i.sells === 0)
+      && sec.instruments.some((i) => i.side === "Sell" && i.sells === 1 && i.buys === 0),
+    sec.instruments.map((i) => `${i.side}:${i.buys}B/${i.sells}S`).join(" "));
+  const [man] = rollup(rows, [], "manager");
+  ok("MT-13: …while a mandate's line carries both sides and is no side line",
+    man.instruments.length === 1 && man.instruments[0].side === null);
+}
+
+// ── MT-14: which side was worked over time ──────────────────────────────────
+{
+  const days = ["2026-04-01", "2026-04-02", "2026-04-03", "2026-04-06", "2026-04-07"];
+  const ins = rollup(days.map((d) => txn({ date: d, side: "Sell" })), [], "manager")[0].instruments[0];
+  ok("MT-14: a sell-down is staggered on its SELL days, with no buy day behind it",
+    ins.staggered && ins.sellDays === 5 && ins.buyDays === 0, `sells over ${ins.sellDays} days, buys over ${ins.buyDays}`);
 }
 
 // ── the group footer is summed FROM the rows it renders ──────────────────────

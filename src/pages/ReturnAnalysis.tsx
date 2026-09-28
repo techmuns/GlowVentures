@@ -8,7 +8,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { fmtPct, changeColor } from "@/lib/format";
+import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -16,23 +16,34 @@ import { useTableView, sortRows } from "@/lib/tableView";
 const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
 const RA_ACCOUNT_COLS = ["account", "names", "cost", "pnl", "return", "best", "worst"] as const;
 const RA_CONTRIB_COLS = ["security", "pnl", "return", "contrib"] as const;
-import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel, readerClassOf } from "@/lib/analytics";
+const RA_DD_COLS = ["date", "index", "interval", "fromPeak"] as const;
+import { sum, isPriced, unpriced, isCompanyShare, bucketLabel, dedupedPositions, readerClassOf } from "@/lib/analytics";
+import { companySectorIndex } from "@/lib/lookthrough";
+import { useStockExposure } from "@/lib/useStockExposure";
 import { fifoTotals } from "@/lib/fifo";
 import { BasisPill } from "@/components/BasisPill";
+import { valuationBasis, dateSpan, navBasisLabel, navBasisTitle } from "@/lib/valuationBasis";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { stockHref } from "@/lib/auditFormulas";
+import { bookDrawdown } from "@/lib/drawdown";
+import { BOOK_NAV_COVERAGE } from "@/data/glowData";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
 const GAIN = "#10b981", LOSS = "#ef4444";
 
 // Return & Drawdown — the return half, built from what the book carries.
 //
-// DRAWDOWN IS GONE, AND SAYS SO. A drawdown is peak-to-trough of a VALUATION
-// SERIES: it needs the book's value at many dates. This corpus carries two dated
-// values per account and nothing between them, so there is no peak to fall from.
-// The page previously drew a drawdown area against a seeded placeholder
-// benchmark — an axis with a shape on it and no measurement behind it. That is
-// replaced by a statement of exactly which document would produce one.
+// DRAWDOWN IS MEASURED ON THE BOOK'S DATED NAV SERIES. A drawdown is
+// peak-to-trough of a VALUATION SERIES, and this page said the corpus carries
+// "two dated values per account" — the premise Stage 10p measured and
+// overturned for the NAV chart. `BOOK_NAV_HISTORY` is a dated series, chained
+// on the link (`navIndexSeries`): each interval over the accounts valued at
+// both its ends, net of the capital that entered it, so an account arriving and
+// a deposit landing are not falls. `bookDrawdown` strikes `maxDrawdown` on that
+// index — never on the level — and the card says what it cannot see — a fall and recovery inside one interval,
+// and every account that publishes no series. (Before that, the page drew a
+// drawdown area against a seeded placeholder benchmark — an axis with a shape
+// on it and no measurement behind it.)
 //
 // WHAT IS REAL HERE. Every position carries a cost basis, a market value and
 // therefore a return. That supports a genuine distribution, a
@@ -42,8 +53,9 @@ const GAIN = "#10b981", LOSS = "#ef4444";
 // discretionary mandates alone; the ends of this one are a venture-fund capital
 // account and the family's own broking account, and neither is a manager.
 //
-// All of it is point-in-time on the statements' own marks, which is stated
-// rather than dressed up as a time series.
+// All of it is point-in-time — on the statements' own marks, and on AMFI's
+// published NAV for every scheme it prices (`valuationBasis` says which, with
+// the dates) — which is stated rather than dressed up as a time series.
 
 /** Return bands, lowest first so the axis reads left to right. */
 const BANDS = [
@@ -70,9 +82,27 @@ const acctEnd = (a: { provider: string; accountNo: string }) =>
   `${a.provider.split(" ")[0]} ${a.accountNo}`;
 
 export function ReturnAnalysis() {
-  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
   const sectorView = useTableView("returns-sectors", RA_SECTOR_COLS);
   const accountView = useTableView("returns-accounts", RA_ACCOUNT_COLS);
+  /**
+   * ── A COMPANY'S SECTOR IS THE ONE SECTOR COMPOSITION DRAWS ────────────────
+   *
+   * The sector table keyed each share on `x.sector` — the family's own
+   * statement and nothing else — so every share a depository reports (an ISIN,
+   * a quantity, a rate and no industry) landed in an "Unclassified" row worth
+   * +₹2.76 Cr of this page's return, and the page's sector split disagreed with
+   * Sector Composition's for the same companies. `companySectorIndex` is the
+   * projection of `companyExposure`'s three tiers — the statement, a fund's SEBI
+   * filing on the ISIN, screener.in on the NSE symbol, a lower tier only ever
+   * filling an empty sector — built over every consolidated company share, as
+   * Family & Entities builds it. No second resolver.
+   */
+  const exposure = useStockExposure(consolidated, true);
+  const companySectors = useMemo(
+    () => companySectorIndex(consolidated.filter(isCompanyShare), exposure),
+    [consolidated, exposure],
+  );
 
   const model = useMemo(() => {
     if (!portfolio) return null;
@@ -109,12 +139,29 @@ export function ReturnAnalysis() {
       return { label: b.label, value: sum(inBand.map((x) => x.marketValue)), names: inBand.length, loss: b.hi <= 0 };
     });
 
-    // Contribution to return: each position's unrealised P&L over the book's
-    // TOTAL cost, so the parts add to the embedded return exactly.
-    const contrib = priced
-      .map((x) => ({
-        key: x.securityKey, security: x.security, pnl: x.unrealizedPnL + realisedOf(x), returnPct: x.returnPct,
-        contribPct: deployed > 0 ? ((x.unrealizedPnL + realisedOf(x)) / deployed) * 100 : 0,
+    // Contribution to return: each SECURITY's FIFO gain — unrealised plus
+    // realised — over the book's total deployed cost, so the parts add to the
+    // embedded return exactly.
+    //
+    // ONE ROW PER SECURITY (XA-25). This mapped every POSITION, so Sanshi
+    // Fund-I Class E — held in four accounts — stood four times under a
+    // "Security" heading, taking four of the ten places. The accounts' gains
+    // are summed and the return re-struck on their summed cost, never averaged.
+    const byKey = new Map<string, { key: string; security: string; pnl: number; cost: number; sold: number; accounts: Set<string> }>();
+    for (const x of priced) {
+      const e = byKey.get(x.securityKey)
+        ?? { key: x.securityKey, security: x.security, pnl: 0, cost: 0, sold: 0, accounts: new Set<string>() };
+      e.pnl += x.unrealizedPnL + realisedOf(x);
+      e.cost += x.costBasis;
+      e.sold += soldOf(x);
+      e.accounts.add(x.accountId);
+      byKey.set(x.securityKey, e);
+    }
+    const contrib = [...byKey.values()]
+      .map((e) => ({
+        key: e.key, security: e.security, pnl: e.pnl, accounts: e.accounts.size,
+        returnPct: e.cost + e.sold > 0 ? (e.pnl / (e.cost + e.sold)) * 100 : 0,
+        contribPct: deployed > 0 ? (e.pnl / deployed) * 100 : 0,
       }))
       .sort((a, b) => b.pnl - a.pnl);
 
@@ -144,15 +191,19 @@ export function ReturnAnalysis() {
     // word — so this table cannot print a class name that Portfolio Monitor,
     // Morning CIO or Exposure & IPS have since relabelled. A sector is the
     // provider's own normalised taxonomy and is never passed through it.
-    const bySector = new Map<string, { pnl: number; cost: number; mv: number; isClass: boolean; deployed: number }>();
+    const bySector = new Map<string, { pnl: number; cost: number; mv: number; isClass: boolean; deployed: number; keys: Set<string> }>();
+    // EVERY HOLDING THAT IS NOT A COMPANY SHARE IS BY CLASS — a fund wrapper,
+    // a private instrument, and a cash row too, whose statement prints the
+    // sector string "Cash" but which is not a company and has no sector.
     for (const x of priced) {
-      const byClass = isFundVehicle(x) || isPrivateClass(x);
+      const byClass = !isCompanyShare(x);
       // The READER'S class: a liquid or arbitrage fund is Cash here as on every
       // other page, never the wrapper its statement typed it as.
-      const secKey = byClass ? readerClassOf(x) : x.sector;
-      const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass, deployed: 0 };
+      const secKey = byClass ? readerClassOf(x) : (companySectors.get(x.securityKey)?.sector || "Unclassified");
+      const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass, deployed: 0, keys: new Set<string>() };
       e.pnl += x.unrealizedPnL + realisedOf(x); e.cost += x.costBasis; e.mv += x.marketValue;
       e.deployed += x.costBasis + soldOf(x);
+      e.keys.add(x.securityKey);
       bySector.set(secKey, e);
     }
     // The wrapper classes this table bucketed BY CLASS, derived from the same
@@ -165,11 +216,23 @@ export function ReturnAnalysis() {
     // sides, because a caption naming "Mutual Fund" over a row headed something
     // else would satisfy a reader and fail the reader's arithmetic.
     const wrapperClasses = [...new Set(
-      priced.filter((x) => isFundVehicle(x) || isPrivateClass(x)).map((x) => bucketLabel(readerClassOf(x))),
+      priced.filter((x) => !isCompanyShare(x)).map((x) => bucketLabel(readerClassOf(x))),
     )].sort();
+    // WHICH TIER PLACED EACH COMPANY IN THIS TABLE, over the companies it
+    // draws, and what none of them could — the same count Family & Entities
+    // and Data & Refresh print, so borrowed evidence is never unmarked.
+    const shareKeys = [...new Set(priced.filter(isCompanyShare).map((x) => x.securityKey))];
+    const placedBy = { book: 0, disclosure: 0, vendor: 0 };
+    let unplaced = 0;
+    for (const k of shareKeys) {
+      const t = companySectors.get(k)?.from ?? null;
+      if (t) placedBy[t]++; else unplaced++;
+    }
+    const sectorSource = { companies: shareKeys.length, ...placedBy, unplaced };
     const sectors = [...bySector.entries()]
       .map(([sector, e]) => ({
         sector, ...e,
+        companies: e.keys.size,
         label: e.isClass ? bucketLabel(sector) : sector,
         returnPct: e.deployed > 0 ? (e.pnl / e.deployed) * 100 : null,
         contribPct: deployed > 0 ? (e.pnl / deployed) * 100 : 0,
@@ -224,9 +287,13 @@ export function ReturnAnalysis() {
     }).sort((a, b) => (b.returnPct ?? -Infinity) - (a.returnPct ?? -Infinity));
 
     const rated = byAccount.filter((a) => a.returnPct !== null);
-    const winners = priced.filter((x) => x.unrealizedPnL > 0);
+    // HOLDINGS SHOWING A GAIN, on Morning CIO's own predicate (XA-24): a FIFO
+    // return above zero. `unrealizedPnL > 0` counted two cash rows at ₹0.01 and
+    // ₹0.10 of P&L, and ignored a holding whose realised loss outweighs its
+    // unrealised gain, so the two pages read 177 and 175 for one question.
+    const winners = priced.filter((x) => x.returnPct > 0);
     return {
-      priced, withoutCost, cost, pnl, dist, contrib, sectors, wrapperClasses, byAccount, winners: winners.length,
+      priced, withoutCost, cost, pnl, dist, contrib, sectors, wrapperClasses, sectorSource, byAccount, winners: winners.length,
       embeddedRet: deployed > 0 ? ((pnl + realised) / deployed) * 100 : null,
       realised, deployed,
       hitRate: priced.length ? (winners.length / priced.length) * 100 : null,
@@ -236,11 +303,24 @@ export function ReturnAnalysis() {
       spreadEnds: rated.length >= 2 ? [rated[0], rated[rated.length - 1]] : null,
       unrated: byAccount.filter((a) => a.returnPct === null).map((a) => a.account.accountNo),
     };
-  }, [portfolio]);
+  }, [portfolio, consolidated, companySectors]);
 
   if (!portfolio || !model) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const m = model;
+  // What this page's values are struck on — the statements' marks, and AMFI's
+  // published NAV for every scheme it prices. The subtitle said "on the
+  // statements' own marks" over both; the basis pill reads STATEMENT whenever
+  // no live quote is in, because a NAV never sets the live flag.
+  const vb = valuationBasis(consolidated, portfolio.accounts,
+    statementPortfolio ? dedupedPositions(statementPortfolio.positions) : undefined);
+  // THE BOOK'S OWN DATED SERIES, chained on the link — the one `/history`
+  // and Morning CIO's NAV chart are drawn from, so the three cannot disagree.
+  const { index: ddIndex, drawdown: dd } = bookDrawdown(portfolio.navHistory ?? []);
+  const ddCovered = BOOK_NAV_COVERAGE.covered.length;
+  const ddNote = dd
+    ? `On the book's dated NAV series — ${dd.points} statement dates, ${fmtDate(dd.from)} → ${fmtDate(dd.to)}, chained over the accounts valued at both ends of each interval and net of the external capital that entered it. It covers the ${ddCovered} accounts that publish a series; between statement dates each is held at its latest mark, so a fall and recovery inside one interval is not seen.`
+    : "";
   const sectorRows = m ? sortRows(m.sectors, sectorView.sort, {
     sector: (x) => x.label,
     pnl: (x) => x.pnl,
@@ -271,9 +351,23 @@ export function ReturnAnalysis() {
   return (
     <div>
       <PageHeader eyebrow="Analytics" title="Return &amp; Drawdown"
-        subtitle="Where the book's return comes from, name by name and sector by sector. Point-in-time, on the statements' own marks."
+        subtitle={vb.nav.rows
+          ? `Where the book's return comes from, name by name and sector by sector. Point-in-time — on the statements' own marks, and on AMFI's published NAV of ${dateSpan(vb.nav, fmtDate)} for the ${vb.nav.schemes} scheme${vb.nav.schemes === 1 ? "" : "s"} it prices.`
+          : "Where the book's return comes from, name by name and sector by sector. Point-in-time, on the statements' own marks."}
         right={<div className="flex items-center gap-2">
           <BasisPill liveText="Live prices" hint="Returns are FIFO — unrealised gain on what is held plus realised gain on units already sold, over the cost of both — rebuilt from live prices where a quote exists; cost basis is as the statements report it." />
+          {vb.nav.rows > 0 && (
+            <Pill tone="info">
+              <span data-xa="nav-basis" data-nav-from={vb.nav.from ?? ""} data-nav-to={vb.nav.to ?? ""}
+                data-nav-schemes={vb.nav.schemes} data-nav-rows={vb.nav.rows} data-nav-value={vb.nav.value}
+                data-nav-printed={vb.nav.statementValue ?? ""} data-nav-marked={vb.nav.markedValue}
+                data-units-value={vb.units.value} data-units-rows={vb.units.rows}
+                data-units-from={vb.units.from ?? ""} data-units-to={vb.units.to ?? ""}
+                title={navBasisTitle(vb, (n) => fmtFromBase(n, { compact: true }), fmtDate)}>
+                {navBasisLabel(vb, fmtDate)}
+              </span>
+            </Pill>
+          )}
           <Pill tone="info">{m.priced.length} priced positions</Pill>
         </div>} />
 
@@ -284,8 +378,14 @@ export function ReturnAnalysis() {
           title="Each holding's own FIFO figures, summed before they are divided: the unrealised gain on what is held plus the realised gain on units already sold, over the cost of both. A whole mandate's income, fees and earlier sales belong to no single name and are not here — Morning CIO strikes a whole mandate on its capital."
           icon={<Percent className="h-4 w-4" />} />
 
-        <StatTile label="Names in profit" value={`${(m.hitRate ?? 0).toFixed(0)}%`}
-          sub={`${m.winners} of ${m.priced.length} positions`} icon={<Target className="h-4 w-4" />} />
+        <StatTile label="Holdings showing a gain"
+          {...(m.hitRate === null
+            ? { value: <span className="text-slate-500">{DASH}</span>, sub: "no holding reports a cost to measure a gain against" }
+            : {
+              value: `${m.hitRate.toFixed(0)}%`,
+              sub: <span data-xa="returns-hit" data-winners={m.winners} data-priced={m.priced.length}>{`${m.winners} of ${m.priced.length} holdings with a cost`}</span>,
+            })}
+          icon={<Target className="h-4 w-4" />} />
 
         {/* SPREAD BETWEEN ACCOUNTS, WHICH IS WHAT IS MEASURED. `rated` is every
             account in the registry that carries a cost basis, and on this book
@@ -310,10 +410,25 @@ export function ReturnAnalysis() {
           title={m.unrated.length ? `${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no cost basis and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : undefined}
           icon={<Scale className="h-4 w-4" />} />
 
-        <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}
-          sub="needs a valuation series"
-          hint="Peak-to-trough needs the book's value at many dates; this corpus carries two per account."
-          icon={<TrendingDown className="h-4 w-4" />} />
+        {dd ? (
+          <StatTile label="Maximum drawdown"
+            value={<span className={dd.pct < 0 ? "text-loss" : "text-slate-300"} data-xa="returns-drawdown"
+                data-value={dd.pct} data-peak={dd.peakDate ?? ""} data-trough={dd.troughDate ?? ""}
+                data-recovered={dd.recoveredOn ?? ""} data-points={dd.points}>
+                {fmtPct(dd.pct, { decimals: 2 })}
+              </span>}
+            sub={dd.pct < 0
+              ? `${fmtDate(dd.peakDate!)} → ${fmtDate(dd.troughDate!)} · ${dd.recoveredOn ? `recovered ${fmtDate(dd.recoveredOn)}` : "not yet recovered"}`
+              : "a measured nil — the dated series never fell"}
+            hint={`On the dated NAV series of the ${ddCovered} accounts that publish one`}
+            title={ddNote}
+            icon={<TrendingDown className="h-4 w-4" />} />
+        ) : (
+          <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}
+            sub="needs a valuation series"
+            hint="Peak-to-trough needs the book's value at two or more dates, and no account here publishes a dated series."
+            icon={<TrendingDown className="h-4 w-4" />} />
+        )}
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5 items-start">
@@ -327,7 +442,7 @@ export function ReturnAnalysis() {
                 <YAxis stroke="#6b6880" fontSize={11} tickFormatter={(v: number) => fmtFromBase(v, { compact: true })} width={78} />
                 <ReferenceLine y={0} stroke="#3a3570" />
                 <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                  formatter={(v: number, _n, o) => [`${fmtFromBase(v as number, { compact: true })} · ${(o?.payload as { names: number })?.names ?? 0} names`, "Market value"]} />
+                  formatter={(v: number, _n, o) => [`${fmtFromBase(v as number, { compact: true })} · ${(o?.payload as { names: number })?.names ?? 0} holdings`, "Market value"]} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {m.dist.map((d, i) => <Cell key={i} fill={d.loss ? LOSS : GAIN} />)}
                 </Bar>
@@ -373,7 +488,8 @@ export function ReturnAnalysis() {
               <tbody>
                 {sectorRows.map((s) => (
                   <Tr view={sectorView} key={s.sector} className="border-t border-ink-700/60">
-                    <td className="px-2 py-2 text-slate-200">{s.label}</td>
+                    <td className="px-2 py-2 text-slate-200" data-xa="returns-sector-row" data-sector={s.sector}
+                      data-class={s.isClass ? "1" : "0"} data-companies={s.companies} data-pnl={s.pnl}>{s.label}</td>
                     <td className={`px-2 py-2 text-right mono ${changeColor(s.pnl)}`}>{money(s.pnl, true)}</td>
                     <td className="px-2 py-2 text-right mono">
                       {s.returnPct === null
@@ -398,13 +514,40 @@ export function ReturnAnalysis() {
               notes under the tables to go. Which classes are bucketed by class
               stays on screen, because that is what makes a row readable. */}
           <p className="mt-2 text-[11px] text-slate-500"
-            title="Contributions are each row's P&L over the book's total cost, so they add to the embedded return exactly. A GICS sector is a property of a company, so every share in a company is bucketed by one — including the shares a discretionary manager chose under a PMS mandate. A fund is a wrapper holding many companies and has no sector of its own, so it appears under its asset class instead; its gain still counts.">
+            title="Contributions are each row's P&L over the book's total cost, so they add to the embedded return exactly. A GICS sector is a property of a company, so every share in a company is bucketed by one — including the shares a discretionary manager chose under a PMS mandate. A fund is a wrapper holding many companies and has no sector of its own, so it appears under its asset class instead — as does anything else that is not a share in a company, cash included; its gain still counts. A company's sector is the one Sector Composition draws: its own statement's, then a fund's filing on the ISIN, then screener.in on the NSE symbol, a lower tier only ever filling a sector the statements left empty.">
             {/* Stage 10cp: the line is the classes alone; that contributions
                 add to the total exactly is the first words of its hover. */}
             {m.wrapperClasses.length > 0
               ? <>Funds by class: <span className="text-slate-400">{m.wrapperClasses.join(", ")}</span></>
               : <>Contributions add to the total return exactly</>}
           </p>
+          {/* WHICH TIER PLACED THE COMPANIES IN THIS TABLE — borrowed evidence
+              is counted where it is used, and `data-status` carries the fetch's
+              own state so a walk can tell a tier still landing from a settled
+              one. Until the funds' filings land, a company only a filing places
+              sits in Unclassified and its row WILL move; the strip says so. */}
+          {m.sectorSource.companies > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400"
+              data-returns-sector-source data-xa="returns-sector-source"
+              data-status={exposure.status}
+              data-from-book={m.sectorSource.book}
+              data-from-disclosure={m.sectorSource.disclosure}
+              data-from-vendor={m.sectorSource.vendor}
+              data-unplaced={m.sectorSource.unplaced}
+              data-companies={m.sectorSource.companies}>
+              <span className="text-slate-500">Sector source</span>
+              <span><span className="mono text-slate-200">{m.sectorSource.book}</span> from a statement in this book</span>
+              {m.sectorSource.disclosure > 0 && <span><span className="mono text-slate-200">{m.sectorSource.disclosure}</span> from a fund&rsquo;s filing</span>}
+              {m.sectorSource.vendor > 0 && <span><span className="mono text-slate-200">{m.sectorSource.vendor}</span> from screener.in</span>}
+              {m.sectorSource.unplaced > 0 && <span className="text-slate-500"><span className="mono">{m.sectorSource.unplaced}</span> unplaced</span>}
+              {exposure.status === "loading" && <span className="text-slate-500">still reading the funds&rsquo; filings</span>}
+              {exposure.status === "unreachable" && (
+                <span className="text-amber-400/80" title="The look-through store did not answer, so no company is placed by a fund's own filing on this visit; those companies sit in Unclassified. Nothing is misplaced by it — that tier only ever fills a sector the statements left empty.">
+                  a fund&rsquo;s filings could not be read
+                </span>
+              )}
+            </div>
+          )}
         </Card>
       </div>
 
@@ -463,29 +606,38 @@ export function ReturnAnalysis() {
       </Card>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
-        <Card title="Largest contributors" subtitle="By unrealised P&amp;L">
+        {/* The P&L is the FIFO gain — unrealised plus realised — which the
+            subtitle used to call "unrealised" after the column stopped being
+            only that. */}
+        <Card title="Largest contributors" subtitle="By FIFO gain — unrealised plus realised, per security">
           <ContribTable rows={m.contrib.slice(0, 10)} money={money} storageKey="returns-contributors" />
         </Card>
-        <Card title="Largest detractors" subtitle="By unrealised P&amp;L">
+        <Card title="Largest detractors" subtitle="By FIFO gain — unrealised plus realised, per security">
           <ContribTable rows={[...m.contrib].reverse().slice(0, 10)} money={money} storageKey="returns-detractors" />
         </Card>
       </div>
 
-      <Card className="mt-5" title="Drawdown" subtitle="Peak-to-trough decline in the book's value">
-        <AbsentSection
-          what="No drawdown can be computed for this book"
-          needs={`A drawdown is the largest peak-to-trough fall in the book's VALUE, which needs that value at
-            many dates. Each account's statements carry two — the opening and closing figures on the performance
-            summary — so there is no peak to fall from. A periodic (monthly or quarterly) valuation statement per
-            account, or a daily NAV feed from the managers, is what this needs. Nothing here is drawn against a
-            placeholder series.`} />
+      <Card className="mt-5" title="Drawdown"
+        // A CARD'S SUBTITLE IS ITS TITLE'S HOVER (Stage 10cp), and the line
+        // that stood under the table — how the series is chained — goes there
+        // with the rest of `ddNote`, never back under the table.
+        subtitle={dd ? `Peak-to-trough on the book's dated NAV series, rebased to 100 at ${fmtDate(dd.from)}. ${ddNote}` : "Peak-to-trough decline in the book's value"}>
+        {dd ? (
+          <DrawdownTable index={ddIndex} />
+        ) : (
+          <AbsentSection
+            what="No drawdown can be computed for this book"
+            needs={`A drawdown is the largest peak-to-trough fall in the book's VALUE, which needs that value at two or
+              more dates. No account in this book publishes more than one dated valuation, so there is no series to
+              fall along. A periodic valuation statement per account is what this needs.`} />
+        )}
       </Card>
     </div>
   );
 }
 
 function ContribTable({ rows, money, storageKey }: {
-  rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number }[];
+  rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number; accounts: number }[];
   money: (n: number, sign?: boolean) => string;
   /** Contributors and detractors are two tables, so each keeps its own order. */
   storageKey: string;
@@ -513,13 +665,74 @@ function ContribTable({ rows, money, storageKey }: {
         </thead>
         <tbody>
           {shown.map((r) => (
-            <Tr view={view} key={`${r.key}-${r.pnl}`} className="border-t border-ink-700/60">
-              <td className="px-2 py-2">
+            <Tr view={view} key={r.key} className="border-t border-ink-700/60">
+              <td className="px-2 py-2" data-xa={`${storageKey}-row`} data-key={r.key} data-pnl={r.pnl} data-accounts={r.accounts}>
                 <a className="text-slate-200 hover:text-accent-400" href={stockHref(r.key)}>{r.security}</a>
+                {r.accounts > 1 && <span className="ml-1.5 text-[10.5px] text-slate-500"
+                  title={`Held in ${r.accounts} accounts; their gains are added and the return is struck on their added cost.`}>
+                  · {r.accounts} accounts</span>}
               </td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.pnl)}`}>{money(r.pnl, true)}</td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.returnPct)}`}>{fmtPct(r.returnPct, { sign: true, decimals: 1 })}</td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.contribPct)}`}>{fmtPct(r.contribPct, { sign: true, decimals: 2 })}</td>
+            </Tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
+ * The dated index behind the drawdown tile, one row per statement date — the
+ * interval's own chained change and the fall from the running peak — so a
+ * reader can find the peak and the trough the tile names.
+ */
+function DrawdownTable({ index }: { index: { date: string; index: number }[] }) {
+  const view = useTableView("returns-drawdown", RA_DD_COLS);
+  let peak = -Infinity;
+  const rows = index.map((x, i) => {
+    peak = Math.max(peak, x.index);
+    return {
+      date: x.date,
+      index: x.index,
+      interval: i > 0 && index[i - 1].index > 0 ? (x.index / index[i - 1].index - 1) * 100 : null,
+      fromPeak: peak > 0 ? (x.index / peak - 1) * 100 : null,
+    };
+  });
+  const shown = sortRows(rows, view.sort, {
+    date: (r) => r.date,
+    index: (r) => r.index,
+    interval: (r) => r.interval,
+    fromPeak: (r) => r.fromPeak,
+  });
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-sm">
+        <thead className="border-b border-ink-700">
+          <Tr view={view}>
+            <SortHeader col="date" view={view} align="left">Statement date</SortHeader>
+            <SortHeader col="index" view={view}>Index</SortHeader>
+            <SortHeader col="interval" view={view}>Interval</SortHeader>
+            <SortHeader col="fromPeak" view={view}>From peak</SortHeader>
+          </Tr>
+        </thead>
+        <tbody className="divide-y divide-ink-700/70">
+          {shown.map((r) => (
+            <Tr view={view} key={r.date}>
+              <td className="px-4 py-2 text-slate-200" data-xa="returns-dd-row" data-date={r.date}
+                data-from-peak={r.fromPeak ?? ""} data-interval={r.interval ?? ""}>{fmtDate(r.date)}</td>
+              <td className="px-4 py-2 text-right mono text-slate-300">{r.index.toFixed(2)}</td>
+              <td className="px-4 py-2 text-right mono">
+                {r.interval === null
+                  ? <AbsentCell reason="the first point has nothing before it to change from" />
+                  : <span className={changeColor(r.interval)}>{fmtPct(r.interval, { sign: true, decimals: 2 })}</span>}
+              </td>
+              <td className="px-4 py-2 text-right mono">
+                {r.fromPeak === null
+                  ? <AbsentCell reason="no peak to measure from" />
+                  : <span className={r.fromPeak < 0 ? "text-loss" : "text-slate-500"}>{fmtPct(r.fromPeak, { decimals: 2 })}</span>}
+              </td>
             </Tr>
           ))}
         </tbody>

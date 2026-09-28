@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, CornerDownLeft, Clock } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { buildSearchIndex, searchEntries, type SearchEntry, type SearchHit } from "@/lib/searchIndex";
+import { buildSearchIndex, fencedIdentityOf, searchEntries, type SearchEntry, type SearchHit } from "@/lib/searchIndex";
+import { BOOK_CAPITAL_MOVES, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { AbsentFromBook } from "@/components/Absent";
-import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 
 // ── THE SEARCH BOX IN THE TOP BAR ────────────────────────────────────────────
 //
@@ -92,6 +92,12 @@ export function SmartSearch() {
       // holding a reader may type (Stage 10cy); the index offers it only where
       // no valued row already stands for it.
       recorded: BOOK_UNVALUED_HOLDINGS,
+      // Whether a redemption is really on the Transactions tab (SC-C5) — the
+      // family's own dated capital record, which that tab draws.
+      capitalMoves: BOOK_CAPITAL_MOVES,
+      // The ring-fenced security's IDENTITY for the Polycab page's own entry
+      // (PC-05) — its name and codes, never a quantity or a value.
+      fenced: fencedIdentityOf(BOOK_POLYCAB),
     }) : []),
     [portfolio, consolidated, fmtFromBase],
   );
