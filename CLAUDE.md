@@ -442,6 +442,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   printed at no rate or at face value. Valued at the live quote on the LIVE
   basis only, and a share the feed has not priced is not a row. The symbol
   comes from identifiers that must agree, never from a name. See Stage 10cx.
+- `src/lib/recordedHoldings.ts` — WHAT A STATEMENT RECORDS AND NOTHING VALUES,
+  filed under one company (`homeKey`), with the look-through's join set
+  (`lookthroughCompanies`), the family's name for it (`recordedLabel`) and an
+  account's own line (`recordedLineFor`). See Stage 10cy.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SelectableTiles`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
@@ -1017,6 +1021,8 @@ hybrid funds. `providers/motilalDemat.mjs`.
 call the family trust. Every one would have filed a statement under the wrong
 member. The account is the `Client ID:` the page prints — and not the UCC
 either, because Ajay's UCC H19119 covers two different demat accounts.
+
+***BOTH COLUMNS ARE THE LAST MOVEMENT'S, NOT A MARK — see Stage 10cy.*** The paragraph below is kept as it was learnt.
 
 **WHICH COLUMN TO BELIEVE HAD TO BE MEASURED.** The statement prints quantity,
 rate and value, and on 22 of 67 rows they do not agree:
@@ -24654,6 +24660,125 @@ removal fails. On the tree merged with main at `40dc9992`:
 - `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
   byte-identically.
 
+### Stage 10cy — THE MOTILAL "RATE" IS THE PRICE OF THE LAST MOVEMENT, NOT A MARK AND NOT A COST
+
+*"I can see in the statement screenshots that you have attached... rate column
+is given... no. of shares is given and the value of the holding... check if
+there is a possibility that these rates are the avg cost of the holdings rather
+than the current prices... Do a thorough audit and tell me the final
+conclusion. If there are logical errors like this one, then find and fix them
+from the root cause."* · *"continue and make me the final pdf for the missing
+data on the dashboard in the same way as previous one"*
+
+(`10cu`–`10cw` are main's figure-audit parts and `10cx` is this branch's own
+earlier stage, so this is `10cy`. Compared as HEADINGS against main's tip.)
+
+#### 1. The conclusion: neither — and the book had it wrong for 43 rows
+
+**THE RATE IS THE PRICE OF THE HOLDING'S LAST DEPOSITORY MOVEMENT, AND "VALUE" IS
+THAT RATE × THE UNITS THAT MOVED THEN.** Measured on the Motilal CDSL holding
+statements against the same accounts' own transaction tapes, 46 rows carry a
+rate (43 in the book, 3 on the excluded 32387399):
+
+| | rows |
+| --- | ---: |
+| the rate and value tie to the last receipt or delivery on the tape | **24** — 9 the whole balance, 10 part received, 5 deliveries out |
+| the holding did not move on the tape, so nothing contradicts it | 22 |
+| contradicted | **0** |
+
+Axis Bank on Ankita's 316: 7,300 shares, rate ₹1,368.25, printed value
+₹21,33,101.75 = **1,559** × 1,368.25 — the 1,559 shares received on 2 Jul 2026.
+Bharat's ICICI Pru Nifty Next 50: printed ₹2,89,85,295.60 = 4,79,889 × 60.40,
+against the 0.048 units he holds today.
+
+**SO "WHICH COLUMN TO BELIEVE" (the demat section above) WAS ANSWERED WRONGLY.**
+It kept quantity × rate as the primitive and called the printed value broken.
+Both are last-movement figures; neither is a mark on the statement date. The
+book valued the 43 rows on 316, 320 and 335 at **₹102.16 Cr**; the value column
+sums to ₹58.51 Cr; neither is what the family held on 31 July.
+
+#### 2. The fix, at the root
+
+- **`motilalDemat.mjs`** carries the rate and value as `lastMovementRate`,
+  `lastMovementValue`, and dates them from the tape — never as a market price.
+  `npm run replay:demat-holdings` lands it without the passwords (`--check` is a
+  no-op); `npm run report:extraction` regenerates the extraction report from the
+  archive.
+- **`build-book`** makes those rows quantity-only (`BOOK_UNVALUED_HOLDINGS`,
+  98 entries, each naming the last movement's date, side and price). The three
+  demats hold no statement-basis position, each with a `noPositionsReason`.
+  **Statement book ₹710.39 Cr → ₹608.23 Cr, 371 → 328 positions.**
+- **The LIVE layer values what can honestly be valued** (`depositoryUnits.kind:
+  "last-movement"`): 22 funds and ETFs at AMFI's NAV (₹50.42 Cr against a
+  printed ₹44.89 Cr; four are specks under the ₹1,000 floor), 16 listed shares at
+  the live quote only, the 3 DSP Gold/Silver ETFs NOT valued (units and NAV on
+  different bases — the basis gate), 2 unlisted lines at face value ₹1 as
+  quantity-only. The ETF allocation bucket is empty on the statement basis, so
+  Morning CIO draws five rows.
+- **`src/lib/recordedHoldings.ts`** files every recorded line under the key the
+  live layer would use (`homeKey`), so a line and the same line once priced are
+  one company. The company page, search and an empty search say *"recorded by a
+  statement, not valued"* rather than *"fully exited"*; a recorded-only fund
+  (the DSP ETFs) is drawn as a fund; the tax card and the quantity table stop
+  treating those accounts as holding nothing.
+- **THE LOOK-THROUGH JOINS RECORDED COMPANIES** (`lookthroughCompanies`), read
+  by `useStockExposure` and the suites alike. Without it Ankita's 4,875 Kaynes
+  stood as `kaynes-technology-india` until a quote arrived and as
+  `kaynes-technology` after — one company under two keys decided by whether the
+  feed answered. A recorded company's row and pick-list option wear the family's
+  own statement name (`recordedLabel`); a held-elsewhere line gives the recorded
+  line's own reason (`recordedLineFor`).
+- **Five builders** (fund NAVs, Upstox instruments, screener sectors, scheme
+  names, look-through) read the recorded lines. Their hosts were blocked from
+  this session, so their outputs were NOT regenerated; the next run fills them.
+- **Today's movers waits on every depository share candidate** in its scope,
+  which this change made larger.
+
+Holdings with a value and no cost on the live dashboard: 66 (was 69) — Ankita
+316 21, Ajay 12539150 16, ICICI NSDL 12, Bharat 320 10, Aarti 335 6, LKP 1.
+Clean Max is two holdings — 94,967 on Ajay's ICICI NSDL and 94,967 on Ankita's
+316 — which is the review's 1,89,934. Stage 10bm's "split marks" on these demats
+are last-movement prices. The ICICI NSDL value column ("Prices as on
+30-Mar-2026") IS a mark, and LKP and HDFC NSDL were audited and are unchanged.
+
+**NOT FIXED, AND NAMED:** the depository windows for the private AIFs TOCF-I and
+VOF-I on 316 are keyed on the transaction statement's spelling.
+
+#### 3. The client PDF
+
+`docs/client/Glow-Ventures-missing-statement-data.pdf`, eight pages, same layout
+as Stage 10cx's. New section 2 shows the three statement images, four funds'
+printed value against today's, and what the dashboard does with the 43 rows;
+the ask table gains a valuation report or CDSL CAS for 316, 320 and 335; the
+no-cost count is 66; section 5 adds the DSP ETF and face-value lines. Every
+review figure is still the review's and reaches no total.
+
+#### 4. The checks
+
+Each derivation the checker re-expresses (`recordedHomes`, `heldAccountRows`,
+`SOLD_ELSEWHERE` with its recorded owners, `M2_BOOK`, `SECURITY_AXIS_BOOK`'s
+joinable set) follows the recorded lines; the walk waits for the look-through
+before it looks for a derived row; the category pick-list asserts the recorded
+company is offered where it is a row and NAMED by the empty note where it is not;
+`FILTER_BOOK` is derived on names. **The two A-02 clubbed-row checks on
+`monitor-security` now ABSTAIN** — no company in the statement book is held
+through a costed and an uncosted line, because ICICI Bank's uncosted 14,500 on
+316 is a recorded line. With a live quote it is a row again and `clubbedFigures`
+still strikes it correctly; a live-mocked route to keep the check a subject is
+the named next step.
+
+**#104 FIXTURES.** Main's #104 discards quotes dated before today, and the
+checker's live fixtures were dated 13 Aug, so every live route read an empty
+feed. This branch stamps quotes, indices and the capture with today's IST date.
+#104's own stale claims (the movers coverage, gap and gainer counts on
+`cio-live`, and an on-face sentence breaking Stage 10cp on five routes) fail
+identically on main and are left to it.
+
+`build` · `tsc` · `test:ingest` (golden 140, 2 not checked, 0 blocked) ·
+`test:family` 0 failed · `check:family` **126/0** · `build-book`
+byte-identical · every `replay:*`, `rekey:archive` and `reconcile:review` a
+no-op with `--check`.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -25581,6 +25706,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   holdings must reproduce the stored ones on security, quantity, printed cost and
   NAV; and `--check` writes nothing and is the control run, which must be a
   no-op. Follow it with `build-book`.
+- `npm run replay:demat-holdings` re-runs the Motilal holding reader over the
+  committed archive and lands the last-movement fields; `--check` is a no-op.
+  `npm run report:extraction` regenerates the extraction report from the
+  archive. See Stage 10cy.
 - `npm run rekey:archive` re-derives `securityKey` across the committed archive
   from each row's own stored NAME, through the same `securityKeyOf` the extractor
   uses — a faithful partial replay of extraction, not a repair layer. It is how a
