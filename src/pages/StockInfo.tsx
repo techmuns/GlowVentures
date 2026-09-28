@@ -992,11 +992,13 @@ export function StockInfo() {
     managedBy: (r: Position) => providerOf(accIdx, r),
     qty: (r: Position) => r.quantity,
     avgCost: (r: Position) => r.avgCost,
-    // The statement's own mark, never `marketValue / quantity`: measured over
-    // this book the two differ on ICICI NFT NT 50 DP G, whose statement prints
-    // a rate of 60.4 against a value column implying 60.4167. The price is a
-    // PRIMITIVE here (§4b) and deriving it would publish a figure the document
-    // does not. An absent mark sorts LAST either way rather than as a zero.
+    // The statement's own mark, never `marketValue / quantity`: the price is a
+    // PRIMITIVE here (§4b), and deriving it would publish a figure the document
+    // does not. (The example this comment once gave — ICICI NFT NT 50 DP G, a
+    // rate of 60.4 beside a value implying 60.4167 — was no mark at all: a
+    // Motilal CDSL rate is the price of the holding's last depository
+    // movement, and its value that price times the movement's units, Stage
+    // 10cy.) An absent mark sorts LAST either way rather than as a zero.
     cmp: (r: Position) => r.currentPrice,
     invested: (r: Position) => r.costBasis,
     current: (r: Position) => r.marketValue,

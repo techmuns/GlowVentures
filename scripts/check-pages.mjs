@@ -359,28 +359,43 @@ function withDepositoryFunds(src, positions) {
 }
 
 /**
- * ── UNITS A HOLDING STATEMENT RECORDS AND PRICES NOWHERE, RE-EXPRESSED (A-17)
+ * ── UNITS A HOLDING STATEMENT RECORDS AND VALUES NOWHERE, RE-EXPRESSED ───────
  *
- * `PortfolioContext` values the ABSL Balanced Advantage units Aarti's and
- * Ankita's 31 July Motilal demat statements record and print no rate for, at
- * AMFI's NAV, on the LIVE basis — so every page drawn on the live portfolio
- * carries rows the generated book does not, and every derivation here that
- * reconciles against a rendered figure must carry them too.
+ * (A-17, widened at Stage 10cy.) The Motilal Oswal CDSL holding statements
+ * print, against most holdings, the price of the holding's LAST DEPOSITORY
+ * MOVEMENT and that price times the movement's own units — never a valuation
+ * of the balance — so every fund on them is a quantity in the book
+ * (`BOOK_UNVALUED_HOLDINGS`), and `PortfolioContext` values those units at
+ * AMFI's NAV on the LIVE basis. Every page drawn on the live portfolio
+ * therefore carries rows the generated book does not, and every derivation
+ * here that reconciles against a rendered figure must carry them too.
  *
  * RE-EXPRESSED FROM `src/lib/fundNavs.ts`'s `unpricedStatementUnits` AND NEVER
- * IMPORTED — the six gates written again off the committed data: a mutual-fund
- * row with an ISIN and units and no fund reporting the same units; a NAV the
- * builder cleared; a witness — the same ISIN, marked per unit on another account
- * at the same depository on the same day; that mark within a factor of two of
- * the NAV; and no position of the ISIN already in the row's own account.
+ * IMPORTED — the seven gates written again off the committed data:
+ *   1. an ISIN and units, and a MUTUAL FUND or an ETF;
+ *   2. no fund's own statement reports the same units;
+ *   3. a NAV the builder cleared for value (a usable entry preferred per ISIN);
+ *   4. a witness price: the row's OWN last-movement rate first; for a mutual
+ *      fund with none, the same ISIN priced per unit on another account at the
+ *      same depository on the same day — a position's mark, else another
+ *      row's last-movement rate. An ETF takes its own rate or nothing;
+ *   5. that price within a factor of two of the NAV;
+ *   6. no position of the ISIN already in the row's own account;
+ *   7. no account of the SAME OWNER carrying the same ISIN at the same units.
+ * It deliberately does not read the page's switch, so turning it off fails a
+ * check by name rather than leaving a stale model agreeing with a changed page.
  */
 function withUnpricedStatementUnits(src, positions) {
   const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
   const accounts = bookArray(src, "BOOK_ACCOUNTS");
   const store = fundNavStore();
   if (!Array.isArray(unvalued) || !Array.isArray(accounts) || !Array.isArray(store)) return [];
+  let keyToSymbol = {};
+  try { keyToSymbol = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8")); } catch { /* none */ }
   const acc = new Map(accounts.map((a) => [a.accountId, a]));
+  const ownerOf = (id) => acc.get(id)?.ownerId ?? acc.get(id)?.owner ?? null;
   const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+  const rateOf = (x) => (typeof x.lastMovementRate === "number" && x.lastMovementRate > 0 ? x.lastMovementRate : null);
   const navByIsin = new Map();
   for (const e of store) {
     const k = String(e.isin).toUpperCase();
@@ -390,28 +405,48 @@ function withUnpricedStatementUnits(src, positions) {
   const out = [];
   for (const u of unvalued) {
     const isin = I(u);
-    if (!isin || u.assetClass !== "Mutual Fund" || !(Number(u.quantity) > 0) || u.sameUnitsReportedBy) continue;
+    const qty = Number(u.quantity);
+    const etf = u.assetClass === "ETF";
+    if (!isin || !(qty > 0) || (u.assetClass !== "Mutual Fund" && !etf)) continue;              // 1
+    if (u.sameUnitsReportedBy) continue;                                                        // 2
     const nav = navByIsin.get(isin);
-    if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;
+    if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                // 3
     const own = acc.get(u.accountId);
     if (!own || !u.asOf) continue;
-    const w = positions.find((p) => I(p) === isin && p.accountId !== u.accountId
-      && acc.get(p.accountId)?.provider === own.provider && acc.get(p.accountId)?.asOf === u.asOf
-      && Number(p.currentPrice) > 0);
-    if (!w) continue;
-    const r = nav.nav / Number(w.currentPrice);
-    if (!(r > 0.5 && r < 2)) continue;
-    if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
+    const ownRate = rateOf(u);
+    let price = ownRate, witnessAccountId = null;
+    if (price === null && !etf) {
+      const sameDay = (id) => acc.get(id)?.provider === own.provider && acc.get(id)?.asOf === u.asOf;
+      const pos = positions.find((p) => I(p) === isin && p.accountId !== u.accountId && sameDay(p.accountId)
+        && Number(p.currentPrice) > 0);
+      const row = pos ? null : unvalued.find((r) => r !== u && I(r) === isin && r.accountId !== u.accountId
+        && sameDay(r.accountId) && rateOf(r) !== null);
+      price = pos ? Number(pos.currentPrice) : row ? rateOf(row) : null;
+      witnessAccountId = pos?.accountId ?? row?.accountId ?? null;
+    }
+    if (price === null) continue;                                                               // 4
+    const r = nav.nav / price;
+    if (!(r > 0.5 && r < 2)) continue;                                                          // 5
+    if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;          // 6
+    const owner = ownerOf(u.accountId);
+    if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - qty) < 0.0005
+      && ownerOf(p.accountId) === owner)) continue;                                              // 7
+    const book = positions.find((p) => p.securityKey === u.securityKey);
     out.push({
-      securityKey: w.securityKey, security: w.security, isin: u.isin, accountId: u.accountId,
-      sector: w.sector, assetClass: "Mutual Fund", marketSide: w.marketSide ?? null,
-      quantity: Number(u.quantity), marketValue: Number(u.quantity) * nav.nav, currentPrice: nav.nav,
+      securityKey: u.securityKey, security: book?.security ?? u.security ?? u.securityKey, isin: u.isin,
+      symbol: book?.symbol ?? keyToSymbol[u.securityKey] ?? null,
+      accountId: u.accountId, sector: book?.sector ?? "Unclassified",
+      assetClass: etf ? "ETF" : "Mutual Fund", marketSide: "listed",
+      quantity: qty, marketValue: qty * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
       navPriced: true, navDate: nav.date,
-      depositoryUnits: { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId: w.accountId },
+      depositoryUnits: ownRate !== null
+        ? { asOf: u.asOf, source: null, kind: "last-movement", lastMovementRate: ownRate,
+          lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null }
+        : { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId },
     });
   }
-  return out;
+  return out.sort((a, b) => b.marketValue - a.marketValue);
 }
 
 /**
@@ -3504,8 +3539,16 @@ const REVIEW_GAP_BOOK = (() => {
      * reader no statement reported a ₹8.61 Cr position sitting one search away.
      */
     const flat = (k) => k.replace(/-/g, "");
-    const bookKeys = [...new Set((bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS") ?? [])
-      .map((p) => securityKeyOf(p.security)))].filter(Boolean);
+    // A holding a statement RECORDS counts as well as one the book values
+    // (Stage 10cy): the Motilal demats' lines are quantities with no usable
+    // price, and a review line spelling one is still a holding a statement
+    // reports. The same set the app's own tier reads — a line another
+    // statement reports at the same units is that statement's, not a second.
+    const gsrcKeys = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const recordedLinesHere = (bookArray(gsrcKeys, "BOOK_UNVALUED_HOLDINGS") ?? [])
+      .filter((u) => (u.quantity ?? 0) > 0 && !u.sameUnitsReportedBy);
+    const bookKeys = [...new Set([...(bookArray(gsrcKeys, "BOOK_POSITIONS") ?? []).map((p) => p.security),
+      ...recordedLinesHere.map((u) => u.security)].map((n) => securityKeyOf(n)))].filter(Boolean);
     const related = (n) => {
       const k = securityKeyOf(n);
       return !!k && bookKeys.some((bk) =>
@@ -3529,12 +3572,13 @@ const REVIEW_GAP_BOOK = (() => {
       .replace(TAIL, " ").replace(/\s+/g, " ").trim();
     const relK = (a, b) => b.startsWith(a) || a.startsWith(b) || flat(b).startsWith(flat(a)) || flat(a).startsWith(flat(b));
     const heldBy = new Map();
-    for (const p of bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS") ?? []) {
-      const names = [schemes[p.securityKey]?.name, schemes[p.securityKey]?.amfiName,
-        navs.find((e) => e.securityKey === p.securityKey)?.scheme].filter(Boolean);
+    for (const heldKey of new Set([...(bookArray(gsrcKeys, "BOOK_POSITIONS") ?? []).map((p) => p.securityKey),
+      ...recordedLinesHere.map((u) => u.securityKey)])) {
+      const names = [schemes[heldKey]?.name, schemes[heldKey]?.amfiName,
+        navs.find((e) => e.securityKey === heldKey)?.scheme].filter(Boolean);
       for (const n of names) {
         const k = securityKeyOf(stem(n));
-        if (k) heldBy.set(k, (heldBy.get(k) ?? new Set()).add(p.securityKey));
+        if (k) heldBy.set(k, (heldBy.get(k) ?? new Set()).add(heldKey));
       }
     }
     const schemeKeysOf = (g) => {
@@ -3559,9 +3603,10 @@ const REVIEW_GAP_BOOK = (() => {
      */
     let depositoryValued = null, depositoryRows = 0, recordedValued = null, recordedRows = 0;
     // EVERY line that join ties, not only the first: the app withholds each of
-    // them (`valuedFromDepository`), so the scheme tier's claimable list below
-    // must too, or it offers the walk a name the note will never answer. The
-    // same for the lines A-17's closing-units join ties.
+    // them (`reportedByStatement` — a statement reports the line, whether or
+    // not this book values it), so the scheme tier's claimable list below must
+    // too, or it offers the walk a name the note will never answer. The same
+    // for the lines A-17's closing-units join ties.
     const depositoryAll = new Set();
     const recordedAll = new Set();
     try {
@@ -10584,8 +10629,9 @@ const PARTIAL_BALANCE_BOOK = (() => {
  * values: `unvaluedStatementLinesOf` (src/lib/accounts.ts) RE-EXPRESSED, never
  * imported. An account with a position in the live book; its
  * BOOK_UNVALUED_HOLDINGS rows less a depository's copy of units a fund reports
- * itself (counted as `elsewhere`) and less a line the live book values at
- * AMFI's NAV (counted as `live`, never listed — the card is "in no total").
+ * itself (counted as `elsewhere`) and less a line the live book values — at
+ * AMFI's NAV on a witness or on its own last-movement rate (Stage 10cy) —
+ * counted as `live`, never listed, because the card is "in no total".
  */
 const UNPRICED_BOOK = (() => {
   try {
@@ -10609,7 +10655,14 @@ const UNPRICED_BOOK = (() => {
       const mine = unvalued.filter((u) => u.accountId === a.accountId);
       if (!mine.length) continue;
       const own = mine.filter((u) => !u.sameUnitsReportedBy);
-      const live = (u) => !!I(u) && rows.some((p) => p.accountId === a.accountId && I(p) === I(u));
+      // Valued live by ANY of the layer's kinds — a line printed with no rate
+      // (witnessed), one printed with its last movement's price (Stage 10cy), a
+      // share with no usable price once the feed prices it — exactly as the
+      // app's `unvaluedStatementLinesOf` tests it. The checker's live model
+      // carries no depository share with no feed, and neither does the page.
+      const liveKinds = new Set(["no-rate", "no-price", "last-movement"]);
+      const live = (u) => !!I(u) && positions.some((p) => p.accountId === a.accountId
+        && liveKinds.has(p.depositoryUnits?.kind) && I(p) === I(u));
       const listed = own.filter((u) => !live(u));
       if (!listed.length) continue;
       byOwner.set(a.owner, [...(byOwner.get(a.owner) ?? []), {
