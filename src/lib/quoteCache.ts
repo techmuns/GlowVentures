@@ -30,7 +30,7 @@
 // is the worst kind of wrong because it is plausible. So a snapshot older than
 // MAX_AGE_MS is discarded rather than shown, and a cold open on a new session
 // falls back to the loading state, which is honest about having nothing yet.
-import type { QuoteFeed } from "./quotes";
+import type { Quote, QuoteFeed } from "./quotes";
 
 const KEY = "glow.quotes.v1";
 
@@ -48,6 +48,8 @@ const MAX_AGE_MS = 12 * 60 * 60 * 1000;
 type Stored = { asOf: string; savedAt: number; feed: QuoteFeed };
 
 const marketDate = (ms: number) => new Date(ms + 19_800_000).toISOString().slice(0, 10);
+const sessionOf = (q?: Quote) => q?.tradedAt && Number.isFinite(Date.parse(q.tradedAt))
+  ? marketDate(Date.parse(q.tradedAt)) : null;
 
 /** A refresh must not renew the lifetime/date of a quote it did not fetch. */
 export function retainQuotes(feed: QuoteFeed | null, now = Date.now()): QuoteFeed | null {
@@ -60,7 +62,7 @@ export function retainQuotes(feed: QuoteFeed | null, now = Date.now()): QuoteFee
     return [[symbol, { ...q, observedAt: new Date(observed).toISOString(), ageS: Math.max(0, Math.round(age / 1000)) }]];
   }));
   if (!Object.keys(quotes).length) return null;
-  return { ...feed, quotes, pending: (feed.pending || []).filter((s) => !quotes[s]),
+  return { ...feed, quotes, pending: feed.pending || [],
     missing: (feed.missing || []).filter((s) => !quotes[s]), fresh: 0, stale: Object.keys(quotes).length };
 }
 
@@ -73,7 +75,11 @@ export function mergeQuoteFeeds(previous: QuoteFeed | null, incoming: QuoteFeed,
     if (old && (Date.parse(old.observedAt!) > Date.parse(q.observedAt!)
       || (old.prevClose! > 0 && !(q.prevClose! > 0)))) quotes[symbol] = old;
   }
-  return { ...incoming, quotes, pending: incoming.pending.filter((s) => !quotes[s]),
+  const incomingSession = Object.values(newer?.quotes || {}).map(sessionOf).filter(Boolean).sort().slice(-1)[0];
+  // A retained pre-open quote may describe Friday while this round is filling
+  // Monday. Only a confirmed same-session observation can satisfy a deferral.
+  return { ...incoming, quotes, pending: incoming.pending.filter((s) => !newer?.quotes[s]
+    && (!incomingSession || sessionOf(quotes[s]) !== incomingSession)),
     missing: incoming.missing.filter((s) => !quotes[s]),
     fresh: Object.values(quotes).filter((q) => q.ageS < 60).length,
     stale: Object.values(quotes).filter((q) => q.ageS >= 60).length };

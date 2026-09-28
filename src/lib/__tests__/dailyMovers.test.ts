@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { dailyMovers } from "../dailyMovers";
-import { applyCorporateActionQuotes, positionActionKey } from "../corporateActions";
+import { applyCorporateActionQuotes, positionActionKey, fetchCorporateActions } from "../corporateActions";
 import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "../../data/glowData";
 import { accountIndex, engagementOf } from "../accounts";
 import { currentHoldings, holdingBucket, DIRECT_EQUITY_BUCKET } from "../analytics";
-import { symbolFor, type QuoteFeed } from "../quotes";
+import { symbolFor, pendingAmong, type QuoteFeed } from "../quotes";
+import { requestDeadline } from "../requestDeadline";
 import type { ActionFeed } from "../../../shared/corporateActions.mjs";
 import { mergeQuoteFeeds, retainQuotes, readCachedQuotes, writeCachedQuotes } from "../quoteCache";
 
@@ -115,3 +116,45 @@ assert.equal(dailyMovers([p, other], mixedSessions, new Map(), owners).session, 
 const future = { ...q, quotes: { [symbol]: { ...q.quotes[symbol], tradedAt: '2026-09-29T10:00:00Z' } } };
 assert.equal(dailyMovers([p], future, new Map(), owners).rows.length, 0);
 console.log('PASS known, missing, mixed and invalid exchange sessions');
+
+const preOpen = mergeQuoteFeeds(null, friday, now);
+const openingRound = { ...q, quotes: { OBSERVATION: q.quotes[symbol] }, pending: [symbol] };
+const opening = mergeQuoteFeeds(preOpen, openingRound, now);
+assert.ok(opening.quotes[symbol], 'last price can remain available elsewhere in the portfolio');
+assert.deepEqual(pendingAmong(opening, [symbol, 'OBSERVATION']), [symbol], 'a previous-session price cannot complete the movers scope');
+assert.deepEqual(pendingAmong(retainQuotes(opening, now), [symbol]), [symbol], 'cache retention must preserve the pending-session verdict');
+const sameSession = mergeQuoteFeeds(initial, openingRound, now);
+assert.deepEqual(pendingAmong(sameSession, [symbol, 'OBSERVATION']), [], 'a confirmed same-session snapshot can satisfy a deferral');
+const unknownRound = { ...openingRound, quotes: { OBSERVATION: undated.quotes[symbol] } };
+assert.deepEqual(pendingAmong(mergeQuoteFeeds(initial, unknownRound, now), [symbol]), [symbol], 'an unknown session cannot certify a retained quote');
+console.log('PASS pending scope across pre-open/session transitions and cache retention');
+
+const nativeTimeout = Object.getOwnPropertyDescriptor(AbortSignal, 'timeout')!;
+const nativeAny = Object.getOwnPropertyDescriptor(AbortSignal, 'any')!;
+try {
+  Object.defineProperty(AbortSignal, 'timeout', { configurable: true, value: undefined });
+  Object.defineProperty(AbortSignal, 'any', { configurable: true, value: undefined });
+  globalThis.fetch = async (_input, options) => {
+    assert.ok(options?.signal instanceof AbortSignal);
+    return Response.json({ ok: true, quotes: q.quotes, asOf: at, feed: saved });
+  };
+  assert.ok(await fetchQuotes([symbol]), 'legacy browser must reach the quote service');
+  assert.ok(await fetchCorporateActions([symbol], [], new AbortController().signal), 'legacy browser must reach the event service');
+  const parent = new AbortController(), child = requestDeadline(1000, parent.signal);
+  parent.abort();
+  assert.equal(child.signal.aborted, true, 'parent cancellation is forwarded');
+  child.dispose();
+  const expired = requestDeadline(5);
+  await new Promise<void>((resolve) => expired.signal.addEventListener('abort', () => resolve(), { once: true }));
+  assert.equal(expired.signal.reason.name, 'TimeoutError', 'fallback deadlines still abort stalled work');
+  expired.dispose();
+  const disposed = requestDeadline(5);
+  disposed.dispose();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(disposed.signal.aborted, false, 'completed requests release their deadline');
+} finally {
+  Object.defineProperty(AbortSignal, 'timeout', nativeTimeout);
+  Object.defineProperty(AbortSignal, 'any', nativeAny);
+  globalThis.fetch = realFetch;
+}
+console.log('PASS legacy-browser deadlines, parent cancellation and cleanup');

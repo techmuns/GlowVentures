@@ -1,5 +1,6 @@
 import type { Account, Position } from "./types";
 import { applyQuotes, symbolFor, type QuoteFeed } from "./quotes";
+import { requestDeadline } from "./requestDeadline";
 import { validActionFeed, type ActionFeed, type ResearchAction } from "../../shared/corporateActions.mjs";
 export type { ActionFeed, ResearchAction } from "../../shared/corporateActions.mjs";
 
@@ -261,13 +262,15 @@ export function liveWithheldReason(
 
 /** Refresh failure retains the dated capture, never converts unknown income to zero. */
 export async function fetchCorporateActions(symbols: string[], isins: string[], signal?: AbortSignal): Promise<{ feed: ActionFeed; retained: boolean } | null> {
+  const deadline = requestDeadline(30_000, signal);
   try {
     const params = new URLSearchParams({ symbols: [...new Set(symbols)].sort().join(","), isins: [...new Set(isins)].sort().join(",") });
-    const response = await fetch(`/api/corporate-actions?${params}`, { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000) });
+    const response = await fetch(`/api/corporate-actions?${params}`, { signal: deadline.signal });
     if (!response.ok) return null;
     const body = await response.json();
     return body.ok && validActionFeed(body.feed) ? { feed: body.feed, retained: !!body.retained } : null;
   } catch { return null; }
+  finally { deadline.dispose(); }
 }
 
 export async function savedCorporateActions(signal?: AbortSignal): Promise<ActionFeed | null> {

@@ -22,6 +22,10 @@ try {
     await page.clock.install({ time: now });
     const errors = []; page.on("pageerror", (e) => errors.push(e.message));
     await page.addInitScript((theme) => localStorage.setItem("glow:theme", theme), theme);
+    await page.addInitScript(() => {
+      Object.defineProperty(AbortSignal, 'timeout', { configurable: true, value: undefined });
+      Object.defineProperty(AbortSignal, 'any', { configurable: true, value: undefined });
+    });
     let mode = "stale", failQuotes = false, quoteCalls = 0, holdRetry = false, releaseRetry, signalRetry;
     await page.route("**/data/corporate-actions.json", (route) => route.fulfill({ json: stale }));
     await page.route("**/api/**", async (route) => {

@@ -21,6 +21,7 @@
 import nseSymbols from "@/data/nseSymbols.json";
 import type { Position } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
+import { requestDeadline } from "./requestDeadline";
 
 const KEY_TO_SYMBOL = nseSymbols as Record<string, string>;
 
@@ -99,7 +100,7 @@ export function pendingAmong(feed: QuoteFeed | null, symbols: readonly string[])
   // A symbol with no quote and no verdict is one this feed never mentioned —
   // treat it as pending, because the alternative is calling a set complete on a
   // response that said nothing about it.
-  return symbols.filter((s) => !feed.quotes[s] && (p.has(s) || !feed.missing.includes(s)));
+  return symbols.filter((s) => p.has(s) || (!feed.quotes[s] && !feed.missing.includes(s)));
 }
 
 /** Why a fetch produced no prices, for the UI and for the console. */
@@ -132,6 +133,7 @@ export async function fetchQuotes(
   opts?: { refresh?: boolean; probe?: boolean; priority?: readonly string[] },
 ): Promise<QuoteFeed | null> {
   if (!symbols.length) return null;
+  const deadline = requestDeadline(45_000);
   try {
     const r = await fetch("/api/quotes", {
       method: "POST",
@@ -146,7 +148,7 @@ export async function fetchQuotes(
         probe: !!opts?.probe,
       }),
       cache: "no-store",
-      signal: AbortSignal.timeout(45_000),
+      signal: deadline.signal,
     });
     const d = await r.json().catch(() => null);
 
@@ -185,7 +187,7 @@ export async function fetchQuotes(
     lastFailure = { failureCode: "NETWORK", upstreamStatus: null, detail: e instanceof Error ? e.message : String(e) };
     console.warn("[quotes] request failed:", lastFailure);
     return null;
-  }
+  } finally { deadline.dispose(); }
 }
 
 /**

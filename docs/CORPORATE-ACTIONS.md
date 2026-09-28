@@ -126,6 +126,10 @@ quotes retry after 15 seconds, and failed event reads retry after 30 seconds.
 The outage notice stays visible while retries are in flight. An old primary
 capture stays marked retained and uncached if the mirror cannot supply a fresh
 capture, keeping recovery on the faster retry schedule.
+Retained quotes only complete a pending symbol when their exchange session
+matches the new round, so a market-opening refresh cannot publish a partial
+ranking. Request deadlines use AbortController with timer/listener cleanup and
+work on browsers that do not implement AbortSignal.timeout or AbortSignal.any.
 
 `npm run test:family` covers the incident, transport/cache failures, account
 aggregation, ex-date guards, malformed quotes, true zero moves and cache expiry.
