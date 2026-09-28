@@ -14,7 +14,7 @@ const owners = accountIndex(BOOK_ACCOUNTS);
 const scope = currentHoldings(BOOK_POSITIONS).filter((p) => holdingBucket(p, engagementOf(owners, p)) === DIRECT_EQUITY_BUCKET && symbolFor(p));
 assert.ok(scope.length > 10);
 const quotes: QuoteFeed = { asOf: at, missing: [], pending: [], fresh: scope.length, stale: 0,
-  quotes: Object.fromEntries(scope.map((p) => [symbolFor(p)!, { price: 110, prevClose: 100, tradedAt: at, ageS: 0,
+  quotes: Object.fromEntries(scope.map((p) => [symbolFor(p)!, { price: (p.currentPrice || 100) * 1.1, prevClose: p.currentPrice || 100, tradedAt: at, ageS: 0,
     open: null, dayLow: null, dayHigh: null, low52: null, high52: null, marketCap: null, volume: null, yearChangePct: null }])) };
 const saved: ActionFeed = JSON.parse(fs.readFileSync("public/data/corporate-actions.json", "utf8"));
 const stale = { ...saved, capturedAt: "2026-09-23T10:00:00Z", verifiedThrough: "2026-09-23" };
@@ -25,8 +25,8 @@ for (const evidence of [null, stale]) {
   assert.ok(result.rows.length > 10, "percent rankings survive missing/stale corporate-action evidence");
   assert.ok(result.rows.every((r) => Math.abs(r.dayChangePct - 10) < 1e-9 && r.dayChange === null));
 }
-const p = { ...scope[0], live: true, dayChange: 1000, dayChangePct: 10, marketValue: 11000 };
-const q = { ...quotes, quotes: { [symbolFor(p)!]: quotes.quotes[symbolFor(p)!] } };
+const p = { ...scope[0], currentPrice: 100, live: true, dayChange: 1000, dayChangePct: 10, marketValue: 11000 };
+const q: QuoteFeed = { ...quotes, quotes: { [symbolFor(p)!]: { ...quotes.quotes[symbolFor(p)!], price: 110, prevClose: 100 } } };
 const second = { ...p, accountId: "second", live: false, dayChange: null };
 const secondPlan = applyCorporateActionQuotes([second], BOOK_ACCOUNTS, q, null).returns;
 const priced = dailyMovers([p, second], q, secondPlan, owners);
@@ -39,6 +39,13 @@ const missingClose = structuredClone(q); missingClose.quotes[symbolFor(p)!].prev
 assert.equal(dailyMovers([p], missingClose, new Map(), owners).rows.length, 0);
 assert.equal(dailyMovers([p], null, new Map(), owners).rows.length, 0);
 assert.equal(dailyMovers([{ ...p, live: false }], q, new Map(), owners).rows.length, 0, "price-identity rejection cannot reappear as a percentage mover");
+for (const evidence of [null, stale]) {
+  const mismapped = { ...q, quotes: { [symbolFor(p)!]: { ...q.quotes[symbolFor(p)!], price: 1, prevClose: 0.9 } } };
+  const withheld = applyCorporateActionQuotes([p], BOOK_ACCOUNTS, mismapped, evidence);
+  assert.ok(withheld.returns.get(positionActionKey(p))?.liveWithheld, "quantity gate bypasses the normal price overlay");
+  assert.equal(dailyMovers(withheld.positions, mismapped, withheld.returns, owners).rows.length, 0,
+    "a wrong ticker must still fail the identity check during an event-feed outage");
+}
 const bad = structuredClone(q); bad.quotes[symbolFor(p)!].price = Infinity;
 assert.equal(dailyMovers([p], bad, new Map(), owners).rows.length, 0);
 const flat = structuredClone(q); flat.quotes[symbolFor(p)!].price = 100;
@@ -97,3 +104,14 @@ const observed = dailyMovers([p, other], mixed, new Map(), owners);
 assert.equal(observed.observedFrom, '2026-09-28T09:00:00.000Z');
 assert.equal(observed.observedTo, '2026-09-28T11:00:00.000Z', 'display actual in-scope observations, never a later refresh or out-of-scope quote');
 console.log('PASS retained mover observation range');
+
+const undated = { ...q, quotes: { [symbol]: { ...q.quotes[symbol], tradedAt: null } } };
+assert.equal(dailyMovers([p], undated, new Map(), owners).rows.length, 1);
+assert.equal(dailyMovers([p], undated, new Map(), owners).session, null, "a fetch date never becomes an exchange session");
+const friday = { ...undated, quotes: { [symbol]: { ...q.quotes[symbol], tradedAt: '2026-09-25T10:00:00Z' } } };
+assert.equal(dailyMovers([p], friday, new Map(), owners).session, '2026-09-25', "Monday observation can still be Friday's trading session");
+const mixedSessions = { ...friday, quotes: { ...friday.quotes, OBSERVATION: undated.quotes[symbol] } };
+assert.equal(dailyMovers([p, other], mixedSessions, new Map(), owners).session, null, "one undated quote prevents an aggregate session claim");
+const future = { ...q, quotes: { [symbol]: { ...q.quotes[symbol], tradedAt: '2026-09-29T10:00:00Z' } } };
+assert.equal(dailyMovers([p], future, new Map(), owners).rows.length, 0);
+console.log('PASS known, missing, mixed and invalid exchange sessions');

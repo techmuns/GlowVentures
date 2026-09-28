@@ -109,6 +109,23 @@ assert.equal(writes, 1, "only the winning capture is cached; no write race");
 assert.equal((lastWritten as { capturedAt: string } | null)?.capturedAt, newerTime);
 console.log("PASS stale-primary recovery and monotonic cache update");
 
+// A dated primary is usable evidence, but cannot certify a fresh refresh if
+// the mirror also fails (or returns the same dated capture).
+for (const mirrorFails of [true, false]) {
+  writes = 0;
+  globalThis.fetch = async (input) => {
+    if (mirrorFails && !String(input).includes("workers.dev")) throw new Error("mirror offline");
+    return Response.json(raw);
+  };
+  const dated = await (await onRequestGet(context())).json();
+  await Promise.all(pending);
+  assert.equal(dated.ok, true);
+  assert.equal(dated.retained, true, "old evidence keeps the client's fast retry active");
+  assert.equal(dated.feed.capturedAt, raw.capturedAt);
+  assert.equal(writes, 0, "old evidence must not acquire a fresh cache timestamp");
+}
+console.log("PASS stale primary with failed/stale mirror remains retained and uncached");
+
 // Cloudflare accepts manual/follow, not the standard redirect:error mode.
 // An unexpected redirect fails closed; the fixed mirror remains eligible.
 globalThis.fetch = async (input, options) => {

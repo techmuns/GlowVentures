@@ -22,14 +22,15 @@ try {
     await page.clock.install({ time: now });
     const errors = []; page.on("pageerror", (e) => errors.push(e.message));
     await page.addInitScript((theme) => localStorage.setItem("glow:theme", theme), theme);
-    let mode = "stale", failQuotes = false, quoteCalls = 0;
+    let mode = "stale", failQuotes = false, quoteCalls = 0, holdRetry = false, releaseRetry, signalRetry;
     await page.route("**/data/corporate-actions.json", (route) => route.fulfill({ json: stale }));
-    await page.route("**/api/**", (route) => {
+    await page.route("**/api/**", async (route) => {
       const path = new URL(route.request().url()).pathname;
       if (path === "/api/corporate-actions") return route.fulfill({ status: mode === "stale" ? 503 : 200,
         json: mode === "stale" ? { ok: false } : { ok: true, retained: false, feed: current } });
       if (path === "/api/quotes") {
         quoteCalls++;
+        if (holdRetry) await new Promise((resolve) => { releaseRetry = resolve; signalRetry(); });
         return route.fulfill({ status: failQuotes ? 503 : 200, json: failQuotes ? { ok: false } : {
           ok: true, quotes, asOf: now.toISOString(), missing: [], pending: [], fresh: Object.keys(quotes).length, stale: 0,
         } });
@@ -53,8 +54,16 @@ try {
     await page.clock.fastForward(61_000);
     await page.locator('[data-testid="movers-cached"]').waitFor();
     assert.ok(await page.locator("[data-mover-row]").count() > 0);
-    failQuotes = false;
+    holdRetry = true;
+    const retryStarted = new Promise((resolve) => { signalRetry = resolve; });
     await page.clock.fastForward(16_000);
+    await retryStarted;
+    assert.ok(releaseRetry, "automatic retry is held in flight");
+    assert.equal(await page.locator('[data-testid="movers-cached"]').isVisible(), true, "retry must not hide the known outage");
+    assert.ok(await page.locator("[data-mover-row]").count() > 0);
+    failQuotes = false;
+    holdRetry = false;
+    releaseRetry();
     await page.locator('[data-testid="movers-cached"]').waitFor({ state: "hidden" });
     // A cold outage reports the service problem and recovers via Retry prices.
     await page.evaluate(() => localStorage.removeItem("glow.quotes.v1"));
@@ -65,6 +74,12 @@ try {
     await page.getByRole("button", { name: "Retry prices" }).click();
     await page.locator('[data-testid="movers-coverage"]').waitFor();
     assert.equal(await page.locator('[data-testid="movers-unavailable"]').count(), 0);
+    // Sources without an exchange timestamp still show useful price changes,
+    // while avoiding a fabricated session claim or index comparison.
+    for (const quote of Object.values(quotes)) quote.tradedAt = null;
+    await page.clock.fastForward(61_000);
+    await page.getByText('Latest price movers · Direct Equity', { exact: true }).waitFor();
+    assert.ok(await page.locator("[data-mover-row]").count() > 0);
     await page.setViewportSize({ width: 1024, height: 900 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     assert.deepEqual(errors, []);

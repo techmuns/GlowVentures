@@ -363,7 +363,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     const symbols = symbolsFor(BOOK_POSITIONS);
     if (!symbols.length) { setQuotesStatus("unavailable"); return 0; }
     inFlight.current = true;
-    setQuotesStatus("loading");
+    // Keep the last failure visible until a successful response replaces it.
+    // A slow retry must not make cached prices appear healthy again.
+    setQuotesStatus((previous) => previous === "unavailable" ? previous : "loading");
     try {
       const feed = await fetchQuotes(symbols, { refresh, priority: PRIORITY_SYMBOLS });
       // THE FILL POLL RUNS ON `pending`, NEVER ON `missing`. A deferred symbol

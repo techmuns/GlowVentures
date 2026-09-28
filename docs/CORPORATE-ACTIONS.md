@@ -113,13 +113,19 @@ of the share-count gate. Rupee impact and the weighted portfolio move still requ
 verified share quantities for every account holding that security. Known share
 actions on the quote's ex-date withhold even the percentage until the close basis
 is known; rejected quote identities stay rejected. The panel names partial impact
-coverage and the trading session, and compares indices only for the same session.
+coverage and the confirmed trading session, and compares indices only for the
+same confirmed session. Sources without exchange timestamps use “Latest price
+movers”; observation times never stand in for exchange sessions. The independent
+price-identity check also runs while share quantities are withheld.
 
 Failed quote rounds retain eligible dated observations and report the failure.
 Partial refreshes cannot renew an old quote's observation time. Retained quotes
 expire at the IST date boundary or after twelve hours; malformed responses and
 missing previous closes never become zero moves. Requests have deadlines, failed
 quotes retry after 15 seconds, and failed event reads retry after 30 seconds.
+The outage notice stays visible while retries are in flight. An old primary
+capture stays marked retained and uncached if the mirror cannot supply a fresh
+capture, keeping recovery on the faster retry schedule.
 
 `npm run test:family` covers the incident, transport/cache failures, account
 aggregation, ex-date guards, malformed quotes, true zero moves and cache expiry.

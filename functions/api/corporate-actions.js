@@ -45,9 +45,10 @@ export async function onRequestGet(context) {
     const candidate = saved ? await saved.json() : null;
     if (validActionFeed(candidate)) feed = candidate;
   } catch { errors.push({ source: "cache", reason: "Saved capture could not be read" }); }
-  let retained = false;
+  const today = new Date(Date.now() + 19_800_000).toISOString().slice(0, 10);
+  let retained = !!feed && (!feed.verifiedThrough || feed.verifiedThrough < today);
   const fetched = Number(saved?.headers.get("x-fetched-at") || 0);
-  if (!feed || Date.now() - fetched > 15 * 60_000) {
+  if (!feed || retained || Date.now() - fetched > 15 * 60_000) {
     retained = true;
     for (const [source, address] of [["Research", RESEARCH_ACTIONS_URL], ["Research repository", RESEARCH_MIRROR_URL]]) {
       try {
@@ -59,11 +60,10 @@ export async function onRequestGet(context) {
           || (feed.verifiedThrough && (!next.verifiedThrough || next.verifiedThrough < feed.verifiedThrough))
           || next.rows.length < feed.rows.length * 0.75)) throw new Error("Regressed capture");
         feed = next;
-        retained = false;
+        retained = !next.verifiedThrough || next.verifiedThrough < today;
         // A reachable but out-of-date deployment should not mask a fresher
         // capture already committed by Research's existing refresh job.
-        const today = new Date(Date.now() + 19_800_000).toISOString().slice(0, 10);
-        if (source === "Research" && (!next.verifiedThrough || next.verifiedThrough < today)) continue;
+        if (retained) continue;
         break;
       } catch (error) {
         errors.push({ source, reason: String(error?.message || "Capture unavailable").slice(0, 160) });

@@ -204,7 +204,7 @@ export async function fetchQuotes(
 // mis-mapped ticker, which then stays on the workbook mark rather than showing a
 // confidently wrong number.
 const SANE_RATIO = 10;
-function priceLooksLikeSameSecurity(live: number, mark: number | null): boolean {
+export function priceLooksLikeSameSecurity(live: number, mark: number | null): boolean {
   if (mark === null || !(mark > 0)) return true;      // no mark to compare against
   const r = live / mark;
   return r <= SANE_RATIO && r >= 1 / SANE_RATIO;

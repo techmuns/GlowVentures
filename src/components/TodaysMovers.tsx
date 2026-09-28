@@ -312,7 +312,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
   const settling = scopePending.length > 0;
   const landed = model.scopeSymbols.length - scopePending.length;
 
-  const sessionLabel = model.session === istDate() ? "today" : `session ${model.session || "unavailable"}`;
+  const sessionLabel = model.session === istDate() ? "today" : model.session ? `session ${model.session}` : "latest available prices";
   const time = (value: string) => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const firstObserved = model.observedFrom ? time(model.observedFrom) : null;
   const lastObserved = model.observedTo ? time(model.observedTo) : null;
@@ -327,7 +327,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
        reporting exactly that kind of heading. So the scope moves into the
        heading, where it cannot be removed as chrome, and the quote timestamp
        moves to the tile that is actually as-of it. */
-    <Card className="lg:col-span-3" title={`${model.session && model.session !== istDate() ? "Latest session movers" : "Today’s movers"} · ${SCOPE.label}`}
+    <Card className="lg:col-span-3" title={`${model.session === istDate() ? "Today’s movers" : model.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE.label}`}
       right={
         /* TWO CONTROLS, AND THEY ANSWER DIFFERENT QUESTIONS. The SCOPE toggle
            (owned by `DailyMovers`) switches which MEASUREMENT this card shows —

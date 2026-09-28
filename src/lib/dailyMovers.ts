@@ -1,5 +1,5 @@
 import type { Position } from "./types";
-import { symbolFor, type QuoteFeed } from "./quotes";
+import { priceLooksLikeSameSecurity, symbolFor, type QuoteFeed } from "./quotes";
 import { marketDay, positionActionKey, type ActionReturn } from "./corporateActions";
 
 export type DailyMover = {
@@ -18,9 +18,11 @@ export function dailyMovers(
   const sessionFor = (p: Position) => {
     const q = quotes?.quotes[symbolFor(p) || ""];
     if (q?.tradedAt && Date.parse(q.tradedAt) > Date.parse(quotes!.asOf) + 300_000) return "";
-    return q ? marketDay(q.tradedAt || q.observedAt || quotes!.asOf) : "";
+    // A fetch timestamp does not identify the exchange session (weekends,
+    // holidays and pre-open quotes may still carry the previous session).
+    return q?.tradedAt && Number.isFinite(Date.parse(q.tradedAt)) ? marketDay(q.tradedAt) : "";
   };
-  const session = scope.map(sessionFor).filter(Boolean).sort().slice(-1)[0] ?? null;
+  const latestSession = scope.map(sessionFor).filter(Boolean).sort().slice(-1)[0] ?? null;
   const rows = new Map<string, DailyMover>();
   const omitted = new Map<string, string>();
   for (const p of scope) {
@@ -30,13 +32,16 @@ export function dailyMovers(
     if (q && (!Number.isFinite(q.price) || q.price <= 0 || !Number.isFinite(q.prevClose) || !(q.prevClose! > 0))) {
       reason = "Previous close or price unavailable";
     }
-    if (q && (!session || sessionFor(p) !== session)) reason = "Quote belongs to an older session";
-    if (q && !p.live && !plan?.liveWithheld) reason = "Quote identity or price needs verification";
+    const quoteSession = sessionFor(p);
+    if (q?.tradedAt && (!quoteSession || quoteSession !== latestSession)) reason = "Quote belongs to an older or invalid session";
+    if (q && ((!p.live && !plan?.liveWithheld) || !priceLooksLikeSameSecurity(q.price, p.currentPrice))) {
+      reason = "Quote identity or price needs verification";
+    }
     // An exchange close may still be on the pre-split basis on the ex-date.
     // Missing share counts don't prevent a price ranking; an unknown price
     // basis does, so this guard applies to percentages as well as rupees.
     if (q && plan?.lines.some(({ action }) => action.type !== "dividend"
-      && (!action.exDate || action.exDate === session))) reason = "Corporate action: previous-close basis needs verification";
+      && (!action.exDate || action.exDate === (quoteSession || marketDay(q.observedAt || quotes!.asOf))))) reason = "Corporate action: previous-close basis needs verification";
     if (reason || !q) { omitted.set(p.securityKey, reason || "Awaiting a quote"); continue; }
     const pct = (q.price / q.prevClose! - 1) * 100;
     if (!Number.isFinite(pct)) { omitted.set(p.securityKey, "Invalid price change"); continue; }
@@ -55,7 +60,9 @@ export function dailyMovers(
   }
   // Never claim a complete security when one account's quote/basis was refused.
   for (const key of omitted.keys()) rows.delete(key);
-  const observations = scope.filter((p) => rows.has(p.securityKey)).map((p) => {
+  const included = scope.filter((p) => rows.has(p.securityKey));
+  const session = included.length && included.every((p) => sessionFor(p) === latestSession) ? latestSession : null;
+  const observations = included.map((p) => {
     const q = quotes!.quotes[symbolFor(p)!];
     return q.observedAt ? Date.parse(q.observedAt) : Date.parse(quotes!.asOf) - (q.ageS || 0) * 1000;
   }).filter(Number.isFinite).sort((a, b) => a - b);
