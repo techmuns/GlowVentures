@@ -263,7 +263,7 @@ export function liveWithheldReason(
 export async function fetchCorporateActions(symbols: string[], isins: string[], signal?: AbortSignal): Promise<{ feed: ActionFeed; retained: boolean } | null> {
   try {
     const params = new URLSearchParams({ symbols: [...new Set(symbols)].sort().join(","), isins: [...new Set(isins)].sort().join(",") });
-    const response = await fetch(`/api/corporate-actions?${params}`, { signal });
+    const response = await fetch(`/api/corporate-actions?${params}`, { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000) });
     if (!response.ok) return null;
     const body = await response.json();
     return body.ok && validActionFeed(body.feed) ? { feed: body.feed, retained: !!body.retained } : null;

@@ -309,8 +309,9 @@ console.log("── what a row says about its figure is true of the figure (SC-C
   const allNav = accountRows.filter((r) => r.rows.every((p) => p.navPriced && !p.live));
   const allStmt = accountRows.filter((r) => r.rows.every((p) => !p.navPriced && !p.live));
   const navWrong = allNav.filter((r) => {
-    const d = [...new Set(r.rows.map((p) => p.navDate))].sort().pop();
-    return !r.e!.detail.includes(`AMFI's NAV of ${d}`) || !r.e!.detail.includes(`statement of ${r.a.asOf}`);
+    const dates = [...new Set(r.rows.map((p) => p.navDate))].sort();
+    const span = dates.length === 1 ? dates[0] : `${dates[0]} to ${dates[dates.length - 1]}`;
+    return !r.e!.detail.includes(`AMFI's NAV of ${span}`) || !r.e!.detail.includes(`statement of ${r.a.asOf}`);
   });
   const stmtWrong = allStmt.filter((r) => !r.e!.detail.includes(`statement's marks of ${r.a.asOf}`) || /AMFI/.test(r.e!.detail));
   ok("an account valued at AMFI's NAV names the NAV's date beside its statement's", allNav.length > 0 && navWrong.length === 0,

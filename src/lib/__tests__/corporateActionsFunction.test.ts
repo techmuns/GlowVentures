@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { onRequestGet, readBoundedJson } from "../../../functions/api/corporate-actions.js";
 
 const raw = JSON.parse(fs.readFileSync("src/lib/__tests__/fixtures/corporate-actions-source.json", "utf8"));
+Date.now = () => Date.parse(raw.capturedAt);
 const cache = new Map<string, Response>();
 Object.defineProperty(globalThis, "caches", { configurable: true, value: { default: {
   match: async (request: Request) => cache.get(request.url)?.clone(),
@@ -58,3 +59,50 @@ await assert.rejects(() => readBoundedJson(new Response(new ReadableStream({ sta
 } }))), /too large/, "chunked responses are bounded too");
 assert.deepEqual(await readBoundedJson(Response.json({ ok: true })), { ok: true });
 console.log("PASS Research proxy isolation, input validation, bounded reads, cache reuse and last-good retention");
+
+// The Sep 28 incident: the sister Worker fails but the identical public
+// Research capture is available from its repository. No holdings go upstream.
+cache.clear();
+const addresses: string[] = [];
+globalThis.fetch = async (input, options) => {
+  addresses.push(String(input));
+  assert.equal(options?.headers, undefined);
+  assert.ok(!String(input).includes("symbols="));
+  if (String(input).includes("workers.dev")) return new Response("unavailable", { status: 503 });
+  assert.equal(String(input), "https://raw.githubusercontent.com/techmuns/Glow-Central-Research/main/public/data/corporate-actions.json");
+  return Response.json(raw);
+};
+const mirrored = await (await onRequestGet(context())).json();
+await Promise.all(pending);
+assert.equal(mirrored.ok, true);
+assert.equal(mirrored.retained, false);
+assert.equal(mirrored.feed.capturedAt, raw.capturedAt);
+assert.equal(addresses.length, 2);
+assert.match(mirrored.errors[0].reason, /503/);
+// Broken cache must neither block a fresh fetch nor discard its result.
+Object.defineProperty(globalThis, "caches", { configurable: true, value: { default: {
+  match: async () => { throw new Error("cache read failed"); },
+  put: async () => { throw new Error("cache write failed"); },
+} } });
+assert.equal((await (await onRequestGet(context())).json()).ok, true);
+await Promise.all(pending);
+console.log("PASS independent Research transport fallback and cache-failure isolation");
+
+const newerTime = new Date(Date.parse(raw.capturedAt) + 86_400_000).toISOString();
+const newerRaw = { ...raw, capturedAt: newerTime, sources: {
+  nse: { ...raw.sources.nse, capturedAt: newerTime }, screener: { ...raw.sources.screener, capturedAt: newerTime },
+} };
+Date.now = () => Date.parse(newerTime);
+let writes = 0;
+let lastWritten: { capturedAt: string } | null = null;
+Object.defineProperty(globalThis, "caches", { configurable: true, value: { default: {
+  match: async () => undefined,
+  put: async (_key: Request, value: Response) => { writes++; lastWritten = await value.json(); },
+} } });
+globalThis.fetch = async (input) => Response.json(String(input).includes("workers.dev") ? raw : newerRaw);
+const advanced = await (await onRequestGet(context())).json();
+await Promise.all(pending);
+assert.equal(advanced.feed.capturedAt, newerTime, "reachable stale primary must not hide a fresh mirror");
+assert.equal(writes, 1, "only the winning capture is cached; no write race");
+assert.equal((lastWritten as { capturedAt: string } | null)?.capturedAt, newerTime);
+console.log("PASS stale-primary recovery and monotonic cache update");

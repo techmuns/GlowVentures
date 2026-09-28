@@ -14,7 +14,7 @@ import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
 import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
 import { applyCorporateActionQuotes, fetchCorporateActions, liveWithheldReason, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
-import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
+import { readCachedQuotes, writeCachedQuotes, mergeQuoteFeeds, retainQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
@@ -188,6 +188,7 @@ type Ctx = {
   fxIsLive: boolean;
   // ── Live quotes ───────────────────────────────────────────────────────────
   quotesStatus: QuotesStatus;
+  quoteFeed: QuoteFeed | null;
   quotesAsOf: string | null;   // when the feed was pulled
   livePriced: number;          // holdings carrying a live price
   /**
@@ -289,7 +290,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       if (controller.signal.aborted) return;
       if (latest) accept(latest.feed);
       setCorporateActionsStatus(latest && !latest.retained ? "current" : held ? "saved" : "unavailable");
-      timer = window.setTimeout(tick, 15 * 60_000);
+      timer = window.setTimeout(tick, latest && !latest.retained ? 15 * 60_000 : 30_000);
     };
     savedCorporateActions(controller.signal).then((saved) => {
       if (controller.signal.aborted) return;
@@ -348,7 +349,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // out prices an earlier round already established.
   const mergeFeed = useCallback((feed: QuoteFeed) => {
     setQuotes((prev) => {
-      const next = prev ? { ...feed, quotes: { ...prev.quotes, ...feed.quotes } } : feed;
+      const next = mergeQuoteFeeds(prev, feed);
       // Kept for the next open. Written from the MERGED feed rather than the
       // round, so a snapshot holds the whole book rather than whichever slice
       // the last call happened to price.
@@ -362,15 +363,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     const symbols = symbolsFor(BOOK_POSITIONS);
     if (!symbols.length) { setQuotesStatus("unavailable"); return 0; }
     inFlight.current = true;
+    setQuotesStatus("loading");
     try {
       const feed = await fetchQuotes(symbols, { refresh, priority: PRIORITY_SYMBOLS });
       // THE FILL POLL RUNS ON `pending`, NEVER ON `missing`. A deferred symbol
       // is answered in seconds; one the upstream cannot price never is, so
       // polling on it held this book at a four-second cadence for the life of
       // the tab while nothing could change.
-      if (feed) { mergeFeed(feed); setQuotesStatus("live"); return feed.pending.length; }
-      setQuotesStatus((s) => (s === "live" ? "live" : "unavailable"));
-      return 0;
+      if (feed && retainQuotes(feed)) { mergeFeed(feed); setQuotesStatus("live"); return feed.pending.length; }
+      setQuotes((previous) => retainQuotes(previous));
+      setQuotesStatus("unavailable");
+      return -1;
     } finally {
       inFlight.current = false;
     }
@@ -386,7 +389,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     const tick = async (refresh = false) => {
       const pending = await loadQuotes(refresh);
       if (!alive) return;
-      timer = window.setTimeout(() => tick(), pending > 0 ? QUOTE_FILL_MS : QUOTE_POLL_MS);
+      timer = window.setTimeout(() => tick(), pending < 0 ? 15_000 : pending > 0 ? QUOTE_FILL_MS : QUOTE_POLL_MS);
     };
     tick();
     const onFocus = () => loadQuotes();
@@ -530,7 +533,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     () => ({
       portfolio, consolidated, statementPortfolio: basePortfolio, basis,
       bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
-      quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, liveWithheld, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
+      quotesStatus, quoteFeed: quotes, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, liveWithheld, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
       corporateActions, corporateActionsStatus, corporateActionReturns: corporateActionLayer.returns,
     }),
     [portfolio, consolidated, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,

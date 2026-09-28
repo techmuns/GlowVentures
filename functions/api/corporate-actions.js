@@ -1,4 +1,8 @@
-import { normalizeActionFeed, RESEARCH_ACTIONS_URL } from "../../shared/corporateActions.mjs";
+import { normalizeActionFeed, validActionFeed, RESEARCH_ACTIONS_URL } from "../../shared/corporateActions.mjs";
+
+// The identical public capture, on an independent transport. Pages cannot
+// always reach the sister Worker (same-zone Worker fetch restrictions).
+const RESEARCH_MIRROR_URL = "https://raw.githubusercontent.com/techmuns/Glow-Central-Research/main/public/data/corporate-actions.json";
 
 const LIMIT = 16 * 1024 * 1024;
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
@@ -33,28 +37,47 @@ export async function onRequestGet(context) {
   // Fetch the market-wide public capture. No holdings, cookies or credentials
   // are forwarded to Research; filtering happens here, behind our own gate.
   const key = new Request(`${url.origin}/__cache/corporate-actions/v1`);
-  const cache = caches.default;
-  const saved = await cache.match(key);
-  let feed = saved ? await saved.json() : null;
+  const errors = [];
+  let cache, saved, feed = null;
+  try {
+    cache = caches.default;
+    saved = await cache.match(key);
+    const candidate = saved ? await saved.json() : null;
+    if (validActionFeed(candidate)) feed = candidate;
+  } catch { errors.push({ source: "cache", reason: "Saved capture could not be read" }); }
   let retained = false;
   const fetched = Number(saved?.headers.get("x-fetched-at") || 0);
   if (!feed || Date.now() - fetched > 15 * 60_000) {
-    try {
-      const response = await fetch(RESEARCH_ACTIONS_URL, { signal: AbortSignal.timeout(20_000), redirect: "error" });
-      if (!response.ok) throw new Error(`Research HTTP ${response.status}`);
-      const next = normalizeActionFeed(await readBoundedJson(response));
-      if (Date.parse(next.capturedAt) > Date.now() + 5 * 60_000) throw new Error("Future capture");
-      if (feed && (Date.parse(next.capturedAt) < Date.parse(feed.capturedAt) || next.rows.length < feed.rows.length * 0.75)) throw new Error("Regressed capture");
-      feed = next;
-      context.waitUntil(cache.put(key, new Response(JSON.stringify(feed), { headers: {
-        "Content-Type": "application/json", "Cache-Control": "public, max-age=604800", "x-fetched-at": String(Date.now()),
-      } })));
-    } catch {
-      if (!feed) return json({ ok: false, reason: "Research feed unavailable; use the dated saved capture" }, 503);
-      retained = true;
+    retained = true;
+    for (const [source, address] of [["Research", RESEARCH_ACTIONS_URL], ["Research repository", RESEARCH_MIRROR_URL]]) {
+      try {
+        const response = await fetch(address, { signal: AbortSignal.timeout(12_000), redirect: "error" });
+        if (!response.ok) { await response.body?.cancel(); throw new Error(`HTTP ${response.status}`); }
+        const next = normalizeActionFeed(await readBoundedJson(response));
+        if (Date.parse(next.capturedAt) > Date.now() + 5 * 60_000) throw new Error("Future capture");
+        if (feed && (Date.parse(next.capturedAt) < Date.parse(feed.capturedAt)
+          || (feed.verifiedThrough && (!next.verifiedThrough || next.verifiedThrough < feed.verifiedThrough))
+          || next.rows.length < feed.rows.length * 0.75)) throw new Error("Regressed capture");
+        feed = next;
+        retained = false;
+        // A reachable but out-of-date deployment should not mask a fresher
+        // capture already committed by Research's existing refresh job.
+        const today = new Date(Date.now() + 19_800_000).toISOString().slice(0, 10);
+        if (source === "Research" && (!next.verifiedThrough || next.verifiedThrough < today)) continue;
+        break;
+      } catch (error) {
+        errors.push({ source, reason: String(error?.message || "Capture unavailable").slice(0, 160) });
+      }
     }
+    if (!feed) return json({ ok: false, reason: "Research feed unavailable; use the dated saved capture", errors }, 503);
+    // Write the winning capture once. Parallel writes for an old deployment
+    // and a newer mirror could otherwise leave the old capture in the cache.
+    // A cache failure must never discard a successfully fetched capture.
+    if (!retained && cache) context.waitUntil(Promise.resolve().then(() => cache.put(key, new Response(JSON.stringify(feed), { headers: {
+      "Content-Type": "application/json", "Cache-Control": "public, max-age=604800", "x-fetched-at": String(Date.now()),
+    } }))).catch(() => {}));
   }
   const wanted = new Set(symbols);
   const identities = new Set(isins);
-  return json({ ok: true, retained, feed: { ...feed, symbols, isins, rows: feed.rows.filter((r) => wanted.has(r.ticker) || identities.has(r.isin)) } });
+  return json({ ok: true, retained, errors, feed: { ...feed, symbols, isins, rows: feed.rows.filter((r) => wanted.has(r.ticker) || identities.has(r.isin)) } });
 }

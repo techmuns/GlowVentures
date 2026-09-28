@@ -47,6 +47,38 @@ const MAX_AGE_MS = 12 * 60 * 60 * 1000;
 /** A stored snapshot, plus when it was written. */
 type Stored = { asOf: string; savedAt: number; feed: QuoteFeed };
 
+const marketDate = (ms: number) => new Date(ms + 19_800_000).toISOString().slice(0, 10);
+
+/** A refresh must not renew the lifetime/date of a quote it did not fetch. */
+export function retainQuotes(feed: QuoteFeed | null, now = Date.now()): QuoteFeed | null {
+  if (!feed || !Number.isFinite(Date.parse(feed.asOf))) return null;
+  const quotes = Object.fromEntries(Object.entries(feed.quotes).flatMap(([symbol, q]) => {
+    if (!q || !Number.isFinite(q.price) || q.price <= 0) return [];
+    const observed = q.observedAt ? Date.parse(q.observedAt) : Date.parse(feed.asOf) - (q.ageS || 0) * 1000;
+    const age = now - observed;
+    if (!Number.isFinite(observed) || age < -60_000 || age > MAX_AGE_MS || marketDate(observed) !== marketDate(now)) return [];
+    return [[symbol, { ...q, observedAt: new Date(observed).toISOString(), ageS: Math.max(0, Math.round(age / 1000)) }]];
+  }));
+  if (!Object.keys(quotes).length) return null;
+  return { ...feed, quotes, pending: (feed.pending || []).filter((s) => !quotes[s]),
+    missing: (feed.missing || []).filter((s) => !quotes[s]), fresh: 0, stale: Object.keys(quotes).length };
+}
+
+export function mergeQuoteFeeds(previous: QuoteFeed | null, incoming: QuoteFeed, now = Date.now()): QuoteFeed {
+  const older = retainQuotes(previous, now);
+  const newer = retainQuotes(incoming, now);
+  const quotes = { ...older?.quotes, ...newer?.quotes };
+  for (const [symbol, q] of Object.entries(newer?.quotes || {})) {
+    const old = older?.quotes[symbol];
+    if (old && (Date.parse(old.observedAt!) > Date.parse(q.observedAt!)
+      || (old.prevClose! > 0 && !(q.prevClose! > 0)))) quotes[symbol] = old;
+  }
+  return { ...incoming, quotes, pending: incoming.pending.filter((s) => !quotes[s]),
+    missing: incoming.missing.filter((s) => !quotes[s]),
+    fresh: Object.values(quotes).filter((q) => q.ageS < 60).length,
+    stale: Object.values(quotes).filter((q) => q.ageS >= 60).length };
+}
+
 /**
  * The last snapshot, or null.
  *
@@ -74,7 +106,11 @@ export function readCachedQuotes(): QuoteFeed | null {
     // The whole snapshot is stale by construction — it was read from storage,
     // not from the feed — so the fresh/stale counters say so rather than
     // carrying the counts from when it was written.
-    return { ...stored.feed, quotes, fresh: 0, stale: Object.keys(quotes).length };
+    // Older snapshots have no observedAt; savedAt is when their stored age was
+    // measured. Keep that anchor while migrating them to per-quote timestamps.
+    return retainQuotes({ ...stored.feed, quotes: Object.fromEntries(Object.entries(quotes).map(([s, q]) =>
+      [s, { ...q, observedAt: q.observedAt || new Date(stored.savedAt - (stored.feed.quotes[s].ageS || 0) * 1000).toISOString() }])),
+      fresh: 0, stale: Object.keys(quotes).length });
   } catch {
     return null;
   }
