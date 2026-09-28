@@ -50,6 +50,7 @@
 // already refused matched `KIRANAKART TECHNOLOGIES` to `TATA TECHNOLOGIES` —
 // and a near miss is only ever a way to a page, never a join between figures.
 import type { Account, Position, UnvaluedStatementHolding } from "./types";
+import { recordedLines, type RecordedLine } from "./recordedHoldings";
 import { accountIndex, type AccountIndex } from "./accounts";
 import {
   currentHoldings, dedupedPositions, isMandateHeld, mandateLabel, bucketLabel,
@@ -470,15 +471,17 @@ export function buildSearchIndex(input: {
    * family's ₹1,000 floor has dropped. A line whose units another account's own
    * statement reports is that account's holding and is not offered twice.
    */
-  const recordedByKey = new Map<string, UnvaluedStatementHolding[]>();
-  for (const u of recorded) {
-    if (u.sameUnitsReportedBy || !(typeof u.quantity === "number" && u.quantity > 0)) continue;
-    if (byKey.has(u.securityKey) || small.has(u.securityKey)) continue;
-    recordedByKey.set(u.securityKey, [...(recordedByKey.get(u.securityKey) ?? []), u]);
+  // Grouped under the company the live layer would file the line under
+  // (`recordedHoldings.ts`), so two statements spelling one company — Clean Max
+  // on a demat and on the NSDL account, NSE's shares on two — are ONE result.
+  const recordedByKey = new Map<string, RecordedLine[]>();
+  for (const l of recordedLines(recorded)) {
+    if (byKey.has(l.homeKey) || small.has(l.homeKey)) continue;
+    recordedByKey.set(l.homeKey, [...(recordedByKey.get(l.homeKey) ?? []), l]);
   }
   for (const [key, lines] of recordedByKey) {
-    const head = lines[0];
-    const units = sum(lines.map((u) => u.quantity ?? 0));
+    const head = lines.find((l) => l.securityKey === key) ?? lines[0];
+    const units = sum(lines.map((u) => u.quantity));
     const accountIds = new Set(lines.map((u) => u.accountId));
     const owners = [...new Set(lines.map((u) => idx.get(u.accountId)?.owner).filter(Boolean))] as string[];
     // A class the statement did not state is not guessed at: the chip says
@@ -487,6 +490,7 @@ export function buildSearchIndex(input: {
     const chip = cls === "Equity" ? "Stock" : cls === "Mutual Fund" ? "Mutual fund" : cls ?? "Holding";
     const label = securityLabel(key, head.security);
     const asOf = lines.map((u) => u.asOf).filter(Boolean).sort().pop();
+    const spellings = [...new Set(lines.flatMap((l) => [...printedSpellings(l.securityKey), l.securityKey.replace(/-/g, " ")]))];
     out.push({
       id: `holding:${key}`, kind: "holding", chip,
       label,
@@ -495,7 +499,8 @@ export function buildSearchIndex(input: {
         asOf ? `as of ${asOf}` : ""]
         .filter(Boolean).join(" · "),
       href: `/stock/${encodeURIComponent(key)}`,
-      names: [label, ...printedSpellings(key).filter((n) => n !== label), key.replace(/-/g, " ")],
+      names: [label, ...printedSpellings(key).filter((n) => n !== label), key.replace(/-/g, " "),
+        ...spellings.filter((n) => n !== label)],
       codes: [...new Set(lines.map((u) => u.isin).filter((c): c is string => !!c))],
       keywords: [bucketLabel(groupKeyFor("category", idx, { assetClass: head.assetClass, securityKey: key, accountId: head.accountId }))]
         .filter((s): s is string => !!s),

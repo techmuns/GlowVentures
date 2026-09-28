@@ -122,6 +122,24 @@ function bookRowFor(isin: string, symbol: string, positions: readonly Position[]
 }
 
 /**
+ * THE BOOK'S KEY FOR A SHARE A RECORDED LINE NAMES: by its ISIN first, else by
+ * the NSE symbol its ISIN resolves where exactly one book key carries it. The
+ * same `bookRowFor` the live candidates file a priced line under, so a line
+ * shown as "recorded, not valued" and the same line once the feed prices it
+ * stand under one company. Null where the book holds no such company.
+ */
+export function bookKeyForShare(
+  isin: string,
+  securityKey: string,
+  positions: readonly Position[] = BOOK_POSITIONS,
+): string | null {
+  const sameIsin = positions.find((p) => isinOf(p) === isin);
+  if (sameIsin) return sameIsin.securityKey;
+  const symbol = symbolByIdentifier(isin, securityKey, positions);
+  return symbol ? bookRowFor(isin, symbol, positions)?.securityKey ?? null : null;
+}
+
+/**
  * The shares a transaction-only account closes above nil, as rows with NO
  * price yet. Five gates, the fund rows' own with the price question changed:
  *   1. the account sent a transaction statement and no holding statement, and

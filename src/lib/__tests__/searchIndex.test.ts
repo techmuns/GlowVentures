@@ -17,6 +17,7 @@
 //     missing field.
 //
 // Every expectation is derived from `glowData.ts` on the run.
+import { recordedLines } from "../recordedHoldings";
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRedeemedToNil, isCashEquivalent, sum } from "@/lib/analytics";
 import { depositoryFundHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
@@ -53,9 +54,9 @@ console.log("── every holding is findable, once ──");
   // …and every key a statement records at a quantity with no valued row
   // standing for it (Stage 10cy) — one entry each, never a second one for a
   // key a valued row already carries.
-  const recordedKeys = new Set(BOOK_UNVALUED_HOLDINGS
-    .filter((u) => !u.sameUnitsReportedBy && (u.quantity ?? 0) > 0 && !keys.has(u.securityKey) && !small.has(u.securityKey))
-    .map((u) => u.securityKey));
+  const recordedKeys = new Set(recordedLines(BOOK_UNVALUED_HOLDINGS)
+    .filter((l) => !keys.has(l.homeKey) && !small.has(l.homeKey))
+    .map((l) => l.homeKey));
   const holdings = index.filter((e) => e.kind === "holding");
   ok("one holding entry per security above the floor, and per recorded-only security",
     holdings.length === keys.size + recordedKeys.size && holdings.filter((e) => e.recorded).length === recordedKeys.size,
@@ -102,11 +103,28 @@ console.log("── a holding a statement records, and nothing values, is still 
   // THE UNITS ARE THE STATEMENT'S: each entry's count is the sum of its own lines.
   const unitsWrong = recordedEntries.filter((e) => {
     const key = e.id.slice("holding:".length);
-    const want = BOOK_UNVALUED_HOLDINGS.filter((u) => u.securityKey === key && !u.sameUnitsReportedBy)
-      .reduce((a, u) => a + (u.quantity ?? 0), 0);
+    const want = recordedLines(BOOK_UNVALUED_HOLDINGS).filter((l) => l.homeKey === key)
+      .reduce((a, l) => a + l.quantity, 0);
     return !e.detail.includes(`${want.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units`);
   });
   ok("every one carries the units its statement lines record", unitsWrong.length === 0, unitsWrong.slice(0, 3).map((e) => `${e.label}: ${e.detail}`).join("; "));
+
+  // ONE COMPANY, ONE RESULT. Two statements spelling one company are one entry,
+  // filed under the key the live layer files a priced line under; a fund keeps
+  // its own key (the extractor join BOOK-REPORT names is left visible).
+  const lines = recordedLines(BOOK_UNVALUED_HOLDINGS);
+  const holdingEntries = index.filter((e) => e.kind === "holding");
+  const nonFundIsins = [...new Set(lines.filter((l) => l.isin && l.assetClass !== "Mutual Fund" && l.assetClass !== "ETF")
+    .map((l) => l.isin!.toUpperCase()))];
+  const split = nonFundIsins.filter((i) => holdingEntries.filter((e) => e.codes.some((c) => c.toUpperCase() === i)).length > 1);
+  ok("no company a statement records stands as two results", nonFundIsins.length > 0 && split.length === 0,
+    split.slice(0, 4).join(", ") || `${nonFundIsins.length} ISINs`);
+  // The four this book first split, by the identifier that joins each.
+  for (const [what, isin] of [["Clean Max", "INE647U01026"], ["National Stock Exchange", "INE721I01024"],
+    ["Everest Fleet preference", "INE0LTR03090"], ["Blue Ashva Varenya", "INF0VGG22429"]] as const) {
+    const hits = holdingEntries.filter((e) => e.codes.some((c) => c.toUpperCase() === isin));
+    ok(`${what} is one result`, hits.length === 1, hits.map((e) => e.id).join(", ") || "none");
+  }
 }
 
 console.log("── an identifier lands on its own row, first — every one of them ──");
