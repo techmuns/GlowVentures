@@ -24685,6 +24685,50 @@ re-anchored, so a clean sweep is the bug applied and not a patch that never
 landed. The count-once policy itself is still exercised, on the tagged copy of
 the book above.
 
+#### Merged with main (#104, #105)
+
+Main moved while this was verified. Neither PR wrote a stage section, so
+`10cx` is still the next free letter, compared as headings against main's tip.
+
+- **One conflict**, in `searchIndex.test.ts`: both sides fixed the same check
+  for an account whose schemes carry NAVs of different dates. This branch's
+  version asserts the exact span the row prints, and is kept.
+- **The probe literal merged without a marker** and was read: 120 keys, none
+  duplicated, every one declared.
+- **#105 moved five capital checks by their NAMES, and two of them had been
+  renamed here.** #105 took Uncalled capital and Distributions off Morning
+  CIO's default strip. It moved the five checks that read those tiles to
+  `cio-return-metrics`, which draws them, by listing their exact text in
+  `CIO_OPTIONAL_CAPITAL_CHECKS`. This branch had reworded two of those checks
+  for the family's answer, so after the merge both ran on `cio-allocation`,
+  where the tiles are not drawn, and failed there. The set now carries the new
+  names, and a name that matches no check throws. That was proved by putting an
+  old name back: the sweep stops and names it. It is Stage 10cl's lesson again:
+  a filter over prose is a filter a rename can move.
+
+#### Verification
+
+On this branch merged with main at `58c6f3d5`:
+
+- `build` · `tsc` · `test:ingest` (every suite passes; golden 140 passed, 2 not
+  checked, 0 blocked) · `test:family` (0 failed; its four NOT CHECKED lines are
+  main's) · `check:family` **126/0**.
+- `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+  byte-identically. `replay:dedupe`, `replay:calls`, `replay:flows`,
+  `replay:owners`, `replay:movements`, `rekey:archive` and `reconcile:review`
+  are each a no-op with `--check`.
+- `check:pages` walked **372 combinations** and found 15 with a finding. One
+  was this branch's: `cio-allocation`, the renamed checks above. It sweeps
+  clean now, and so does `cio-return-metrics`, where those checks run.
+- **The other 14 are main's.** The same 14 routes fail the same invariants on a
+  build of main alone (`58c6f3d5`), walked for this record. Each walks the live
+  quote layer or its absence, which #104 changed, or Morning CIO's strip, which
+  #105 changed: Morning CIO's movers, cached, filling, live, alerts and index
+  routes, `monitor-withheld` and its loading twin, `performance-live`,
+  `sectors-direct-live`, `corporate-actions-live` and `stock-sold-after`. They
+  are named here and not fixed. They are those changes' checks, and rewriting
+  them in this merge would be a change nobody asked for.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
