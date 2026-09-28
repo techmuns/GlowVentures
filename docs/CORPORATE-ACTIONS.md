@@ -91,3 +91,48 @@ Full **since-purchase** dividend-inclusive returns still require a complete
 dated holding/trade history and dividend receipt/entitlement reconciliation.
 The public event calendar alone cannot prove the family's historical eligible
 quantity, cash received, tax deducted, or dividend reinvestment.
+
+## Daily movers resilience (28 September 2026)
+
+The live incident returned 169 usable quotes while `/api/corporate-actions`
+returned HTTP 503. The September 23 saved capture then exceeded the share-event
+coverage window, suppressing all live valuations and misleadingly emptying the
+movers card. The Research capture itself was current and publicly available. Hosted preview
+verification exposed the exact cause: Cloudflare rejects `redirect: "error"`
+before issuing a fetch. The proxy now uses `manual` and rejects 3xx responses
+explicitly; the platform-specific contract is asserted in the regression suite.
+
+The proxy now tries the identical capture in Research's public GitHub repository
+when the sister Worker fails or carries older source dates. Both routes keep the
+same bounded reads, identity filtering, future/regression checks and original
+capture timestamps. Cache failures cannot discard a successful fetch. The
+committed fallback was refreshed from that same September 28 capture.
+
+Percentage movers use exchange price versus exchange previous close, independent
+of the share-count gate. Rupee impact and the weighted portfolio move still require
+verified share quantities for every account holding that security. Known share
+actions on the quote's ex-date withhold even the percentage until the close basis
+is known; rejected quote identities stay rejected. The panel names partial impact
+coverage and the confirmed trading session, and compares indices only for the
+same confirmed session. Sources without exchange timestamps use “Latest price
+movers”; observation times never stand in for exchange sessions. The independent
+price-identity check also runs while share quantities are withheld.
+
+Failed quote rounds retain eligible dated observations and report the failure.
+Partial refreshes cannot renew an old quote's observation time. Retained quotes
+expire at the IST date boundary or after twelve hours; malformed responses and
+missing previous closes never become zero moves. Requests have deadlines, failed
+quotes retry after 15 seconds, and failed event reads retry after 30 seconds.
+The outage notice stays visible while retries are in flight. An old primary
+capture stays marked retained and uncached if the mirror cannot supply a fresh
+capture, keeping recovery on the faster retry schedule.
+Retained quotes only complete a pending symbol when their exchange session
+matches the new round, so a market-opening refresh cannot publish a partial
+ranking. Request deadlines use AbortController with timer/listener cleanup and
+work on browsers that do not implement AbortSignal.timeout or AbortSignal.any.
+
+`npm run test:family` covers the incident, transport/cache failures, account
+aggregation, ex-date guards, malformed quotes, true zero moves and cache expiry.
+After `npm run build` and `npm run preview`, run
+`node scripts/dev/check-daily-movers.mjs` for local light/dark browser checks of
+outage, automatic recovery, cached prices, manual retry and 1024px layout.
