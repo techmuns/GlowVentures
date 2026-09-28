@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { InvestorReturnDetails } from "@/components/InvestorReturnDetails";
 import { Crosshair, Gauge, Percent, Layers } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -177,6 +179,8 @@ const UNPRINTED: Record<string, readonly string[]> = { "performance-benchmark": 
 const unprinted = (reportType: string, period: string) => (UNPRINTED[reportType] ?? []).includes(period);
 
 export function Performance() {
+  const [params] = useSearchParams();
+  const summary = params.get("summary");
   const { portfolio, statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
   const xirrView = useTableView("performance-xirr", XIRR_COLS);
 
@@ -441,6 +445,9 @@ export function Performance() {
           <Pill tone="info">{accounts.length} accounts</Pill>
         </div>} />
 
+      {(summary === "annualised" || summary === "fytd" || summary === "ytd") && (
+        <InvestorReturnDetails statement={statementPortfolio ?? portfolio} kind={summary} money={money} />
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* THE CURRENT HOLDINGS, the set Morning CIO's Positions counts. This
             read "369 of 371 rows", a count of statement ROWS less the double

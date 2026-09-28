@@ -21,6 +21,7 @@
 import nseSymbols from "@/data/nseSymbols.json";
 import type { Position } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
+import { requestDeadline } from "./requestDeadline";
 
 const KEY_TO_SYMBOL = nseSymbols as Record<string, string>;
 
@@ -65,6 +66,8 @@ export type Quote = {
   source?: "upstox" | "muns";
   /** When the price last traded, where the feed says (Upstox does; muns does not). */
   tradedAt?: string | null;
+  /** Original observation time, retained through partial refreshes. */
+  observedAt?: string;
 };
 
 export type QuoteFeed = {
@@ -97,7 +100,7 @@ export function pendingAmong(feed: QuoteFeed | null, symbols: readonly string[])
   // A symbol with no quote and no verdict is one this feed never mentioned —
   // treat it as pending, because the alternative is calling a set complete on a
   // response that said nothing about it.
-  return symbols.filter((s) => !feed.quotes[s] && (p.has(s) || !feed.missing.includes(s)));
+  return symbols.filter((s) => p.has(s) || (!feed.quotes[s] && !feed.missing.includes(s)));
 }
 
 /** Why a fetch produced no prices, for the UI and for the console. */
@@ -130,6 +133,7 @@ export async function fetchQuotes(
   opts?: { refresh?: boolean; probe?: boolean; priority?: readonly string[] },
 ): Promise<QuoteFeed | null> {
   if (!symbols.length) return null;
+  const deadline = requestDeadline(45_000);
   try {
     const r = await fetch("/api/quotes", {
       method: "POST",
@@ -144,13 +148,14 @@ export async function fetchQuotes(
         probe: !!opts?.probe,
       }),
       cache: "no-store",
+      signal: deadline.signal,
     });
     const d = await r.json().catch(() => null);
 
     // The proxy reports ok:false when it resolved nothing. Record why, and log
     // the full per-chunk diagnostics — a silent failure here is what made the
     // last outage take a debugging session to explain.
-    if (!d || !d.ok) {
+    if (!r.ok || !d || !d.ok) {
       lastFailure = {
         failureCode: d?.failureCode ?? (r.ok ? "BAD_RESPONSE" : `HTTP_${r.status}`),
         upstreamStatus: d?.upstreamStatus ?? null,
@@ -159,12 +164,22 @@ export async function fetchQuotes(
       console.warn("[quotes] no live prices:", lastFailure, d ?? "(no body)");
       return null;
     }
+    const wanted = new Set(symbols);
+    const quotes = Object.fromEntries(Object.entries(d.quotes || {}).filter(([symbol, value]) => {
+      const q = value as Quote | null;
+      return wanted.has(symbol) && q && Number.isFinite(q.price) && q.price > 0;
+    })) as Record<string, Quote>;
+    if (!Object.keys(quotes).length) {
+      lastFailure = { failureCode: "NO_VALID_QUOTES", upstreamStatus: r.status, detail: "No usable prices returned" };
+      return null;
+    }
+    const pending: string[] = Array.isArray(d.pending) ? d.pending.filter((s: string) => wanted.has(s) && !quotes[s]) : [];
     lastFailure = null;
     return {
-      quotes: (d.quotes ?? {}) as Record<string, Quote>,
+      quotes,
       asOf: typeof d.asOf === "string" ? d.asOf : new Date().toISOString(),
-      missing: Array.isArray(d.missing) ? d.missing : [],
-      pending: Array.isArray(d.pending) ? d.pending : [],
+      missing: symbols.filter((s) => !quotes[s] && !pending.includes(s)),
+      pending,
       fresh: Number(d.fresh) || 0,
       stale: Number(d.stale) || 0,
     };
@@ -172,7 +187,7 @@ export async function fetchQuotes(
     lastFailure = { failureCode: "NETWORK", upstreamStatus: null, detail: e instanceof Error ? e.message : String(e) };
     console.warn("[quotes] request failed:", lastFailure);
     return null;
-  }
+  } finally { deadline.dispose(); }
 }
 
 /**
@@ -191,7 +206,7 @@ export async function fetchQuotes(
 // mis-mapped ticker, which then stays on the workbook mark rather than showing a
 // confidently wrong number.
 const SANE_RATIO = 10;
-function priceLooksLikeSameSecurity(live: number, mark: number | null): boolean {
+export function priceLooksLikeSameSecurity(live: number, mark: number | null): boolean {
   if (mark === null || !(mark > 0)) return true;      // no mark to compare against
   const r = live / mark;
   return r <= SANE_RATIO && r >= 1 / SANE_RATIO;

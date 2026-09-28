@@ -67,6 +67,7 @@ const PUBLISHERS = [
   // allocation rows are what resolve every holdings drill-down's address, and
   // both moved behind `?tab=allocation` when the page was split into panels.
   ["cio-allocation", (n) => n.startsWith("holdings-")],
+  ["cio-return-metrics", (n) => n.startsWith("holdings-")],
   // The cost-less set is a FACET of the Current Value of Holdings page — where
   // Capital invested now lives — so its address is drawn by that page's toggle
   // and by nothing else. `ONLY=holdings-nocost` without it would walk a
@@ -6470,6 +6471,8 @@ const ROUTES = [
    * cards that draw them — so `PUBLISHERS` names it rather than `cio`.
    */
   ["cio-allocation", "/cio?tab=allocation"],
+  // Optional return tiles still publish figures consumed by the holdings checks.
+  ["cio-return-metrics", "/cio?tab=allocation&tiles=value,return,mwr,uncalled,distributions"],
   /**
    * ── THE STRIP'S CHOICE, SAVED FOR EVERYONE ───────────────────────────────
    *
@@ -7371,6 +7374,9 @@ const ROUTES = [
   // read. The plain walk above asserts it arrives CLOSED.
   ["capital-gains-missing", "/capital-gains"],
   ["performance", "/performance"],
+  ["performance-annualised", "/performance?summary=annualised#investor-return"],
+  ["performance-fytd", "/performance?summary=fytd#investor-return"],
+  ["performance-ytd", "/performance?summary=ytd#investor-return"],
   // The same page with the quote feed live (`installLiveMocks`): nothing on
   // its money-weighted table may move with it (CK-A3).
   ["performance-live", "/performance"],
@@ -15351,8 +15357,8 @@ let CIO_TILE_COUNT = 0;
  */
 const CIO_TILE_PICKER = [
   ...tilePickerChecks({
-    defaults: ["value", "mwr", "return", "uncalled", "distributions"],
-    mustOffer: ["value", "mwr", "return", "uncalled", "distributions", "invested", "gain", "committed",
+    defaults: ["value", "gain", "annualised", "fytd"],
+    mustOffer: ["value", "gain", "annualised", "fytd", "ytd", "mwr", "return", "uncalled", "distributions", "invested", "committed",
       "positions", "names", "top-10", "cross-held", "winners", "losers", "accrued"],
     minMenu: 15,
   }),
@@ -15467,7 +15473,7 @@ const CIO_SHARED = [
      * than a failure and is how a check retires itself in silence.
      */
     ["the NAV tile is renamed, and the old label is gone", (t) =>
-      /CURRENT VALUE OF HOLDINGS/i.test(t) && !/CONSOLIDATED NAV/i.test(t)],
+      /PORTFOLIO VALUE/i.test(t) && !/CONSOLIDATED NAV/i.test(t)],
 
   ["the Book performance card is gone", (t) => !/Book performance/i.test(t)
     && !/Listed vs private, on a like-for-like basis/i.test(t)],
@@ -15480,11 +15486,11 @@ const CIO_SHARED = [
   ["...and the listed/private split it carried is one click from the NAV tile", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     if (!BOOK_HAS_BOTH_HALVES()) return notChecked("this book reports only one of the two halves");
-    const nav = ctx.kpiTiles.find((x) => /current value of holdings/i.test(x.label));
+    const nav = ctx.kpiTiles.find((x) => x.slot === "value");
     return !!nav && /of=book\b/.test(nav.links[0] ?? "");
   }],
-  ["...and the money-weighted return it carried still has its own tile",
-    (t) => /MONEY-WEIGHTED\s*\n?\s*RETURN|XIRR \(ANNUALISED\)/i.test(t)],
+  ["the yearly return has its own tile", (t, ctx) =>
+    ctx?.kpiTiles?.some((x) => x.slot === "annualised" && /annualised return/i.test(x.label))],
   /**
    * ── THE TILES CARRY A LABEL AND A FIGURE, AND NOTHING ELSE ────────────────
    *
@@ -15507,11 +15513,11 @@ const CIO_SHARED = [
    * book, marked `data-kpi-second` so it is told from a caption by what it is
    * rather than by its words. A caption a redesign reintroduces still fails.
    */
-  ["a KPI tile with a figure carries no caption under it", (t, ctx) => {
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    const withFigures = ctx.kpiTiles.filter((x) => !x.absent);
-    if (!withFigures.length) return notChecked("no KPI tile on this run carries a figure");
-    return withFigures.every((x) => x.lines <= 2 + (x.second ? 1 : 0));
+  ["the investor summary exposes valuation dates and the recorded gain's limits", (t, ctx) => {
+    const value = ctx?.kpiTiles?.find((x) => x.slot === "value");
+    const gain = ctx?.kpiTiles?.find((x) => x.slot === "gain");
+    return !!value && /Valuations|Live quotes/.test(value.sub ?? "")
+      && !!gain && /Recorded/.test(gain.sub ?? "") && /Separate income excluded/.test(gain.sub ?? "");
   }],
   ["...and a tile with no figure still names why", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
@@ -15557,9 +15563,10 @@ const CIO_SHARED = [
   ["the value, consolidated-return and money-weighted tiles each open their own set", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const at = (re) => ctx.kpiTiles.find((x) => re.test(x.label))?.links?.[0] ?? "";
-    return at(/current value of holdings/i) === "/holdings?of=book"
-      && /of=book&facet=costed\b/.test(at(/consolidated return/i))
-      && /of=measured\b/.test(at(/money-weighted|xirr/i));
+    return at(/portfolio value/i) === "/holdings?of=book"
+      && /of=book&facet=costed\b/.test(at(/gain \/ loss/i))
+      && at(/annualised return/i) === "/performance?summary=annualised#investor-return"
+      && at(/return this financial year/i) === "/performance?summary=fytd#investor-return";
   }],
   /**
    * ── CURRENT VALUE AND CAPITAL INVESTED ARE ONE TILE AND ONE PAGE ─────────
@@ -15578,7 +15585,7 @@ const CIO_SHARED = [
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const value = ctx.kpiTiles.find((x) => x.slot === "value");
     if (!value) return false;
-    return /^Invested ₹[\d,.]+\s*(?:Cr|L|K)?(?: · \d+ of \d+ reports? a cost)?$/.test(value.second ?? "")
+    return /^Recorded invested ₹[\d,.]+\s*(?:Cr|L|K)?$/.test(value.second ?? "")
       && !ctx.kpiTiles.some((x) => /^capital invested$/i.test(x.label))
       && ctx.kpiTiles.every((x) => x.links.every((h) => !/[?&]of=invested\b/.test(h)));
   }],
@@ -15596,7 +15603,7 @@ const CIO_SHARED = [
     const value = ctx.kpiTiles.find((x) => x.slot === "value");
     if (!value) return false;
     if (COSTED_BOOK.costedCount === COSTED_BOOK.holdings) return { notChecked: "every holding in this book reports a cost, so the invested line covers the whole value" };
-    const m = / · (\d+) of (\d+) reports? a cost$/.exec(value.second ?? "");
+    const m = /(\d+) of (\d+) reports? a cost/.exec(value.sub ?? "");
     return !!m && Number(m[1]) === COSTED_BOOK.costedCount && Number(m[2]) === COSTED_BOOK.holdings;
   }],
   /**
@@ -15681,19 +15688,11 @@ const CIO_SHARED = [
     const titles = ctx?.titles ?? [];
     return titles.some((x) => /NOT IN THIS FIGURE: ₹[\d,.]+\s*(?:Cr|L|K)? of accrued income/i.test(x));
   }],
-  ["the money-weighted tile's hover states its window, and refuses to annualise a short one", (t, ctx) => {
-    const titles = ctx?.titles ?? [];
-    // CASE-INSENSITIVE, because the sub-year branch SHOUTS its sentence — "THE
-    // WINDOW IS 150 DAYS AND THE RATE IS NOT ANNUALISED" — and the annualised
-    // branch does not. A check pinned to one casing fails a page that is right,
-    // which is the trap `label-xs` already sprang once on this sweep.
-    const m = titles.map((x) => /the window is (\d+) days/i.exec(x)).find(Boolean);
-    if (!m) return false;
-    const days = Number(m[1]);
-    const hover = titles.find((x) => /the window is \d+ days/i.test(x)) ?? "";
-    // A rate is only ever called annual beside a window of at least a year.
-    // Anything else is the extrapolation this guard exists to refuse.
-    return days >= 365 ? /genuine annual rate/i.test(hover) : /NOT ANNUALISED/.test(hover);
+  ["the annualised tile states its period and keeps short histories off a yearly scale", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find((x) => x.slot === "annualised");
+    if (!tile || !MWR_BOOK) return false;
+    return (tile.hover ?? "").includes(MWR_BOOK.lastClose)
+      && (MWR_BOOK.windowDays >= 365 ? /p.a./.test(tile.value ?? "") : tile.absent);
   }],
   /**
    * ...AND THE RATE AND ITS WINDOW ARE THE BOOK'S, ON STATEMENT VALUES, TO THE
@@ -15780,11 +15779,12 @@ const CIO_SHARED = [
       // this asserts that the figure a reader clicks opens the set that figure
       // is summed over. Each entry is [what the reader clicks, where it goes].
       const tiles = [
-        [/^current value of holdings$/i, "/holdings?of=book"],
-        [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
+        [/^portfolio value$/i, "/holdings?of=book"],
+        [/^annualised return$/i, "/performance?summary=annualised#investor-return"],
         // Capital invested is part of the value tile's page now, so the return
         // struck on it opens that page on the holdings that report a cost.
-        [/^consolidated return$/i, "/holdings?of=book&facet=costed"],
+        [/^gain \/ loss$/i, "/holdings?of=book&facet=costed"],
+        [/^return this financial year$/i, "/performance?summary=fytd#investor-return"],
       ];
       return tiles.every(([label, href]) =>
         ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === href));
@@ -16029,13 +16029,25 @@ const CIO_BOOK_RETURN = [
     return stOk && Math.abs(nvV - V.navValue / 1e7) <= compactTieCr(nvV) && Number(nv[3]) === V.navCount
       && nv[2].split(/,\s*/).join(",") === V.nav.join(",");
   }],
-  ["the Consolidated return tile is the book's costed set's return, and names that set (B-07)", (t, ctx) => {
-    if (!ctx?.kpiTiles) return false;
+  ["the gain tile pairs the recorded gain with its return and coverage", (t, ctx) => {
     if (!COSTED_BOOK || COSTED_BOOK.pct == null) return false;
-    const tile = ctx.kpiTiles.find((x) => x.slot === "return");
-    if (!tile) return false;   // on the default strip, which is what these two walks open
-    const p = pctIn(tile.value);
-    return !!p && Math.abs(p.v - COSTED_BOOK.pct) <= p.tie && costedLabelIsTheBooks(tile.second);
+    const tile = ctx?.kpiTiles?.find((x) => x.slot === "gain");
+    if (!tile) return false;
+    const p = pctIn(tile.second);
+    return !!p && Math.abs(p.v - COSTED_BOOK.pct) <= p.tie
+      && (tile.sub ?? "").includes(`${COSTED_BOOK.costedCount} of ${COSTED_BOOK.holdings} holdings`);
+  }],
+  ["annualised return never substitutes the short-period percentage", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find((x) => x.slot === "annualised");
+    if (!tile || !MWR_BOOK) return false;
+    if (MWR_BOOK.windowDays >= 365) return /p.a./.test(tile.value ?? "");
+    return tile.absent && /Insufficient history/.test(tile.sub ?? "")
+      && (tile.sub ?? "").includes(`${MWR_BOOK.windowDays} days recorded`);
+  }],
+  ["FYTD shows its start date and names incomplete history", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find((x) => x.slot === "fytd");
+    return !!tile && /FYTD · since 0?1 Apr/.test(tile.second ?? "")
+      && (!tile.absent || /Insufficient history.*accounts/.test(tile.sub ?? ""));
   }],
 ];
 
@@ -16686,6 +16698,15 @@ const CIO_ALLOC = [
       return texts.every(([label, href]) => links.some((l) => label.test(l.text) && l.href === href));
     }],
 ];
+
+// Optional capital tiles retain their figure and destination checks on an explicit layout.
+const CIO_OPTIONAL_CAPITAL_CHECKS = new Set([
+  "the commitment figures open the capital accounts, not a holdings table",
+  "the Uncalled capital tile and the Capital deployment card count each capital account once with its holding, as the page they open does",
+  "...and the tile and the card name the statement they leave out, pending the family's answer",
+  "the Distributions tile and the Capital deployment card count what the page they open counts, each fund once (B-10)",
+  "...and the Distributions tile names what it counts and the letter it counts with another",
+]);
 
 /**
  * ── THE NAV CARD'S RECONCILIATION ADDS ITS OWN PARTS (MNT-4) ──────────────
@@ -22868,9 +22889,17 @@ const INVARIANTS = {
   // "on the dashboard there's only one asset class" — the CIO allocation must
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
-  "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC, ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
+  "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC.filter(([description]) => !CIO_OPTIONAL_CAPITAL_CHECKS.has(description)), ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
+  "cio-return-metrics": [...CIO_MWR, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
+  ...Object.fromEntries(["annualised", "fytd", "ytd"].map((kind) => [`performance-${kind}`, [
+    ["the tile's address opens its own return, period and coverage", (t, ctx) =>
+      ctx?.investorReturn?.kind === kind && !!ctx.investorReturn.value
+        && /Accounts with usable history/.test(ctx.investorReturn.text)
+        && /Period starts/.test(ctx.investorReturn.text)
+        && /Latest eligible valuation/.test(ctx.investorReturn.text)],
+  ]])),
   "cio-tiles-dense": [
     /**
      * THE ROUTE REALLY OPENED THE DENSE STRIP. Without this a renamed metric or
@@ -34859,6 +34888,11 @@ for (const theme of THEMES) {
           options: (el.getAttribute("data-txn-sort-options") ?? "").split(",").filter(Boolean),
         };
       });
+      const investorReturn = FAST ? null : await page.evaluate(() => {
+        const el = document.querySelector("[data-investor-return]");
+        return el ? { kind: el.getAttribute("data-investor-return"), text: el.textContent,
+          value: el.querySelector("[data-investor-return-value]")?.textContent?.trim() } : null;
+      });
       const kpiTiles = FAST ? null : await page.evaluate(() => {
         const strip = document.querySelector('[data-testid="kpi-strip"]');
         if (!strip) return null;
@@ -34872,6 +34906,7 @@ for (const theme of THEMES) {
           // under Current Value of Holdings. A figure, not a caption, and told
           // apart from one by its own handle rather than by its words.
           second: (c.querySelector("[data-kpi-second]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+          sub: (c.querySelector("[data-kpi-sub]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
           // THE TILE'S OWN FIGURE, off its own handle — what a value check
           // reconciles against the book.
           value: (c.querySelector("[data-kpi-value]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
@@ -38480,7 +38515,7 @@ for (const theme of THEMES) {
         for (const l of links) publish(l.href, l.text);
         for (const tile of kpiTiles ?? []) if (tile.links.length === 1) publish(tile.links[0], tile.label);
       }
-      if (name === "cio-allocation" || name === "cio-alloc-basket" || name === "cio-alloc-class") {
+      if (name === "cio-allocation" || name === "cio-return-metrics" || name === "cio-alloc-basket" || name === "cio-alloc-class") {
         for (const h of hrefs) {
           const m = /^\/holdings\?of=([a-z-]+)/.exec(h);
           // FIRST WINS, so the row captured is the allocation table's largest —
@@ -38505,15 +38540,15 @@ for (const theme of THEMES) {
         const m = /^\/holdings\?of=([a-z-]+)(?:&key=[^&]*)?&facet=([a-z-]+)/.exec(h);
         if (m && !CIO_DRILLDOWNS.has(`${m[1]}#${m[2]}`)) CIO_DRILLDOWNS.set(`${m[1]}#${m[2]}`, h);
       }
-      if (name === "cio-allocation" && !FAST) {
+      if ((name === "cio-allocation" || name === "cio-return-metrics") && !FAST) {
         for (const r of cioAllocationRows(text)) CIO_ALLOCATION.set(r.label, r);
         const grab = (label, re) => { const v = money2cr(re.exec(text)?.[1]); if (Number.isFinite(v)) CIO_FIGURES.set(label, v); };
-        grab("nav", new RegExp(String.raw`CURRENT VALUE OF HOLDINGS\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
+        grab("nav", new RegExp(String.raw`(?:PORTFOLIO VALUE|CURRENT VALUE OF HOLDINGS)\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
         // THE VALUE TILE'S SECOND FIGURE — Capital invested is not a tile of its
         // own any more. Case-SENSITIVE on purpose: the allocation table's
         // "INVESTED" column head is the same word in capitals, and it is never
         // followed by a rupee figure.
-        grab("invested", new RegExp(String.raw`\bInvested (₹[\d,.]+\s*(?:Cr|L|K)?)`));
+        grab("invested", new RegExp(String.raw`\b(?:Recorded invested|Invested) (₹[\d,.]+\s*(?:Cr|L|K)?)`));
         grab("no-cost", new RegExp(String.raw`positions? worth (₹[\d,.]+\s*(?:Cr|L|K)?) carry no cost`, "i"));
         grab("measured", new RegExp(String.raw`\d+ of \d+ accounts\s*·\s*(₹[\d,.]+\s*(?:Cr|L|K)?) of `, "i"));
         const counts = /Positions\s*\n?\s*([\d,]+)[\s\S]{0,40}?Distinct names\s*\n?\s*([\d,]+)/i.exec(text);
@@ -39487,7 +39522,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

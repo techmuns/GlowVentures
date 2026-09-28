@@ -127,7 +127,7 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, href, h
             {delta > 0 ? "▲" : delta < 0 ? "▼" : "■"} {Math.abs(delta).toFixed(1)}%
           </span>
         )}
-        {sub && <span className="text-slate-400">{sub}</span>}
+        {sub && <span data-kpi-sub className="text-slate-400">{sub}</span>}
       </div>
       {/* THE TILE'S OWN CONTROL — remove — IN THE BOTTOM CORNER, above the
           click target. In the header it took the width the label needed; down
