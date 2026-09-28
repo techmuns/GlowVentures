@@ -544,8 +544,18 @@ export function StockInfo() {
     : assetClass === "Equity" || assetClass === "Unlisted" ? "shares held"
     : assetClass ? "units held"
     : "held";
-  const notACompany = rows.length > 0 && rows.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
-  const fundVehicle = rows.length > 0 && rows.every(isFundVehicle);
+  /**
+   * WHAT THE HOLDING IS, READ OFF ITS OWN LINES (Stage 10cy) — the statement
+   * rows where there are any, else the lines a statement records and nothing
+   * values. DSP's Gold ETF is an ETF whether or not its NAV cleared the basis
+   * gate: read off valued rows alone, a page holding none was drawn as a
+   * company, with a company price card and company research under an ETF's name.
+   */
+  const subject: Array<{ assetClass: string; securityKey: string; isin?: string | null }> = rows.length > 0
+    ? rows
+    : recorded.map((l) => ({ assetClass: l.assetClass ?? "", securityKey: l.securityKey, isin: l.isin }));
+  const notACompany = subject.length > 0 && subject.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
+  const fundVehicle = subject.length > 0 && subject.every(isFundVehicle);
   /**
    * A LIQUID OR ARBITRAGE FUND IS CASH ON THIS PAGE TOO. The family's rule is
    * that such a fund is classified as nothing but cash, so the Research tab says
@@ -554,12 +564,12 @@ export function StockInfo() {
    * short futures, and reading them as exposure would print stock the family
    * does not carry.
    */
-  const cashFund = fundVehicle && rows.every((r) => isCashEquivalent(r));
-  const arbitrage = rows.some((r) => isArbitrageFund(r));
+  const cashFund = fundVehicle && subject.every((r) => isCashEquivalent(r));
+  const arbitrage = subject.some((r) => isArbitrageFund(r));
   // A mutual fund or an ETF discloses its portfolio monthly and has a published
   // NAV; an AIF does neither. The one test, so the two tabs a scheme fills and
   // the note that refers to them cannot disagree about which schemes they are.
-  const schemeHalves = fundVehicle && canHaveLookthrough(rows[0]);
+  const schemeHalves = fundVehicle && canHaveLookthrough(subject[0]);
   /**
    * AN ARBITRAGE FUND KEEPS ITS PRICE HALF AND LOSES ITS HOLDINGS HALF. The
    * reason it is not looked through is about what it HOLDS — long shares
@@ -951,11 +961,15 @@ export function StockInfo() {
   // Null when the long-term cost is unknown — the bar is hidden rather than
   // drawn at zero, which would read as "none of this is long-term".
   const ltPct = ltCost !== null && cost !== null && cost > 0 ? (ltCost / cost) * 100 : null;
-  const holdingAsOf = rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf : portfolio.asOf;
+  /** A recorded line's statement date is its own — the date its units are counted on. */
+  const recordedAsOf = (l: RecordedLine) => l.asOf ?? accIdx.get(l.accountId)?.asOf ?? null;
+  const holdingAsOf = rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf
+    : (recordedHead && recordedAsOf(recordedHead)) || portfolio.asOf;
   /** The EARLIEST statement date behind this holding — what a change in a
    *  scheme's unit is compared with, since a statement drawn before the change
    *  counts the earlier unit (DSM-A2, `FundLookthrough`). */
-  const statementAsOfEarliest = [...new Set(rows.map((r) => accIdx.get(r.accountId)?.asOf).filter((d): d is string => !!d))].sort()[0] ?? null;
+  const statementAsOfEarliest = [...new Set([...rows.map((r) => accIdx.get(r.accountId)?.asOf), ...recorded.map(recordedAsOf)]
+    .filter((d): d is string => !!d))].sort()[0] ?? null;
   /**
    * WHEN, AND BY WHAT, THE VALUE IS STRUCK (VD-17, DSM-C4). A holding the ICICI
    * NSDL statement marks is worth what it was on 31 March, and the Holding value
@@ -1965,7 +1979,12 @@ export function StockInfo() {
                 </p>
               </Card>
             )}
-            {!exited && !fundOnly && !resolving && !recordedOnly && (
+            {/* A RECORDED LINE IS THE FAMILY'S OWN HOLDING (Stage 10cy) — held in
+                their own demat, and only not valued — so its holding period and
+                tax card is drawn like any other holding's, each figure a dash
+                naming why. It is a company held only inside a fund that has no
+                card: that is the fund's holding, not the family's. */}
+            {!exited && !fundOnly && !resolving && (
               <Card className="mt-5" title="Holding period & tax"
                 subtitle="The long- and short-term cost split, the purchase dates and the dividends recorded for this holding">
                 <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5" data-stock-tax>
@@ -2007,8 +2026,13 @@ export function StockInfo() {
             {/* OPENING, PLUS, MINUS, CLOSING — read off the depository statement,
                 which prints all four. Above the tape deliberately: the family
                 asked for the quantity account first and the dated rows second. */}
+            {/* AN ACCOUNT HOLDING A RECORDED LINE HOLDS IT (Stage 10cy): Ankita's
+                4,875 Kaynes are on the Position table above, "not valued" with
+                the reason. Marking her window "held, and not valued here" too
+                would say it twice, and with the wrong reason for a statement
+                that does print a rate — a last movement's price. */}
             <QuantityMovement movements={moves} unmoved={unmoved} accounts={portfolio.accounts}
-              held={new Set(rows.map((p) => p.accountId))} />
+              held={new Set([...rows, ...recorded].map((p) => p.accountId))} />
 
             {/* Transaction history — on a company held only inside funds, only
                 where the family's own accounts traded it (a name sold out of a
@@ -2106,7 +2130,7 @@ export function StockInfo() {
                 <CorporateActionReturns securityKey={securityKey} />
               </>
             ) : schemeHalves ? (
-              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
+              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={recordedOnly ? null : mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
                 valuedAt={valuation.at} valuedBy={valuation.by} valuedDates={valuation.dates} />
             ) : (
               <Card className="mt-5" title={`Price history & returns — not applicable to ${notACompanyLabel}`}>
@@ -2142,7 +2166,7 @@ export function StockInfo() {
                     resolves. It answers the question the card below has to refuse
                     for a company-shaped page: "what am I holding through this". */}
                 {lookThroughHoldings && (
-                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
+                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={recordedOnly ? null : mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
                 valuedAt={valuation.at} valuedBy={valuation.by} valuedDates={valuation.dates} />
                 )}
                 {/* ONE SHORT CARD, BY DECISION. A fund or a balance has no PE, no

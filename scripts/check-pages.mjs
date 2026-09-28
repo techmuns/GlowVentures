@@ -5548,14 +5548,23 @@ const SOLD_ELSEWHERE = (() => {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const moves = bookObject(src, "BOOK_SHARE_MOVEMENTS");
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    // A SHARE A STATEMENT RECORDS AND PRICES NOTHING IS STILL HELD (Stage 10cy).
+    // Ankita's 4,875 Kaynes on her Motilal demat left BOOK_POSITIONS when the
+    // demat's "Rate" turned out to be the price of the last depository movement
+    // rather than a mark — the line is still hers, recorded with its quantity.
+    // Reading positions alone, the family's own Kaynes case vanished from this
+    // derivation and both routes walked nothing.
+    const recorded = (bookArray(src, "BOOK_UNVALUED_HOLDINGS") ?? [])
+      .filter((u) => u.assetClass === "Equity" && Number(u.quantity) > 0);
     if (!moves || !positions.length) return null;
     const isinOf = (x) => (x?.isin ?? "").trim().toUpperCase();
     let best = null;
     for (const m of Object.values(moves)) {
       const isin = isinOf(m);
       if (!isin || !(m.opening > 0) || m.closing !== 0) continue;
-      if (positions.some((p) => p.accountId === m.accountId && isinOf(p) === isin)) continue;
-      const owners = positions.filter((p) => p.assetClass === "Equity" && isinOf(p) === isin);
+      if ([...positions, ...recorded].some((p) => p.accountId === m.accountId && isinOf(p) === isin)) continue;
+      const owners = [...positions.filter((p) => p.assetClass === "Equity" && isinOf(p) === isin),
+        ...recorded.filter((u) => isinOf(u) === isin)];
       if (!owners.length) continue;
       if (!best || m.opening > best.opening) {
         best = { key: owners[0].securityKey, accountId: m.accountId, opening: m.opening, windowKey: m.securityKey,
@@ -6056,13 +6065,18 @@ const DRILLDOWN_FACET_NOTE = [
 
 const DRILLDOWN_COUNTS = new Map();
 const DRILLDOWN_TOTALS = new Map();
-// SIX, because the book has six buckets. Spare slots are not free: each one is
-// a route that renders a page nobody sees and reports four NOT CHECKED lines
-// every run, which is the noise that trains a reader to skim the report. A
-// SEVENTH bucket does not go unwalked either — the `cio` invariant below fails
+// FIVE, because the book has five buckets. It had six until Stage 10cy: the
+// ETF bucket held the DSP Gold and Silver ETFs at the Motilal statements' Rate,
+// which is the price of each holding's LAST DEPOSITORY MOVEMENT rather than a
+// mark, and with the NAV refused across their 1:10 unit split nothing values
+// them now, so the bucket is empty and Morning CIO draws no ETF row. Spare
+// slots are not free: each one is a route that renders a not-found page nobody
+// sees, and since the drill-down's generic checks landed it FAILS four of them
+// rather than abstaining — noise that trains a reader to skim the report. A
+// SIXTH bucket does not go unwalked either — the `cio` invariant below fails
 // when the table has more rows than this sweep has addresses for, which is a
 // one-line diagnosis naming the fix rather than a silent gap.
-const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6];
+const BUCKET_SLOTS = [1, 2, 3, 4, 5];
 
 /**
  * THE MUTUAL FUND WHOSE LOOK-THROUGH IS WALKED — derived, never typed.
@@ -6095,6 +6109,58 @@ const MF_KEY = (() => {
 })();
 
 /**
+ * ── WHERE A LINE A STATEMENT RECORDS AND NOTHING VALUES STANDS (Stage 10cy) ──
+ *
+ * `recordedLines` (src/lib/recordedHoldings.ts) RE-EXPRESSED, never imported:
+ * each `BOOK_UNVALUED_HOLDINGS` line with units the family holds, filed under
+ * the key a page for its company stands under —
+ *   1. a fund, or a line with no ISIN, keeps its own key;
+ *   2. otherwise the statement book's key for that ISIN, or for the one NSE
+ *      symbol the ISIN resolves to where exactly one key carries it;
+ *   3. otherwise the fullest-named recorded line carrying the same ISIN;
+ *   4. otherwise its own key.
+ * A function declaration, so the derivations above `DEPOSITORY_SHARE_BOOK` can
+ * call it before that constant exists. By identifier only, never by a name.
+ */
+function recordedHomes(src) {
+  const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
+  const stmt = statementBookPositions(src);
+  if (!Array.isArray(unvalued) || !Array.isArray(stmt)) return null;
+  const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+  const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+  const symOf = (p) => p.symbol || symbols[p.securityKey] || null;
+  const symByIsin = new Map();
+  for (const [sym, v] of Object.entries(UPSTOX_INSTRUMENTS)) {
+    if (!String(v.key).startsWith("NSE_EQ|")) continue;
+    const i = String(v.key).split("|")[1]?.trim().toUpperCase();
+    if (i) symByIsin.set(i, sym);
+  }
+  const held = unvalued.filter((u) => !u.sameUnitsReportedBy && typeof u.quantity === "number" && u.quantity > 0);
+  const twin = new Map();
+  for (const u of held) {
+    const i = I(u);
+    if (!i) continue;
+    const t = twin.get(i);
+    if (!t || u.security.length > t.security.length
+      || (u.security.length === t.security.length && u.securityKey < t.securityKey)) twin.set(i, u);
+  }
+  const bookKey = (isin, key) => {
+    const same = stmt.find((p) => I(p) === isin);
+    if (same) return same.securityKey;
+    const answers = new Set([symbols[key], symByIsin.get(isin)].filter(Boolean));
+    if (answers.size !== 1) return null;
+    const sym = [...answers][0];
+    const bySym = [...new Set(stmt.filter((p) => symOf(p) === sym).map((p) => p.securityKey))];
+    return bySym.length === 1 ? bySym[0] : null;
+  };
+  return held.map((u) => {
+    const i = I(u);
+    const own = !i || u.assetClass === "Mutual Fund" || u.assetClass === "ETF";
+    return { ...u, homeKey: own ? u.securityKey : bookKey(i, u.securityKey) ?? twin.get(i)?.securityKey ?? u.securityKey };
+  });
+}
+
+/**
  * ── THE STOCK PAGE'S OWN COUNTS AND THE FUND STORE'S UNIT CHANGES, RE-DERIVED ─
  *
  * Every expectation the M2 checks strike is computed here from `glowData.ts`
@@ -6121,11 +6187,18 @@ const M2_BOOK = (() => {
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const byKey = new Map();
     for (const p of positions) (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).get(p.securityKey)).push(p);
+    // A LINE A STATEMENT RECORDS AND NOTHING VALUES IS AN ACCOUNT THAT HOLDS IT
+    // (Stage 10cy): the page's pill counts it, and so the members and accounts
+    // are struck over both — a line no row of the live model already carries.
+    const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+    const homes = recordedHomes(src) ?? [];
+    const recordedAt = (key) => homes.filter((l) => l.homeKey === key
+      && !positions.some((p) => p.accountId === l.accountId && (I(l) ? I(p) === I(l) : p.securityKey === l.securityKey)));
     const entitiesOf = (key) => {
-      const ps = byKey.get(key) ?? [];
+      const ids = [...(byKey.get(key) ?? []).map((p) => p.accountId), ...recordedAt(key).map((l) => l.accountId)];
       return {
-        accounts: new Set(ps.map((p) => p.accountId)).size,
-        owners: new Set(ps.map((p) => acc.get(p.accountId)?.ownerId ?? `account:${p.accountId}`)).size,
+        accounts: new Set(ids).size,
+        owners: new Set(ids.map((id) => acc.get(id)?.ownerId ?? `account:${id}`)).size,
       };
     };
     const mvOf = (key) => (byKey.get(key) ?? []).reduce((a, p) => a + (Number(p.marketValue) || 0), 0);
@@ -6159,13 +6232,21 @@ const M2_BOOK = (() => {
         return r.startDate && r.endDate && steps.some((b) => b.from.date >= r.startDate && b.to.date <= r.endDate);
       });
       const annualised = periods.filter((k) => /^cagr$/i.test(f.returns[k].kind ?? ""));
-      const statementAsOf = [...new Set((byKey.get(key) ?? []).map((p) => acc.get(p.accountId)?.asOf).filter(Boolean))].sort()[0] ?? null;
+      // …and a recorded line's own statement date (Stage 10cy): a statement that
+      // counts the units and prints no usable price still counts them on its date.
+      const statementAsOf = [...new Set([...(byKey.get(key) ?? []).map((p) => acc.get(p.accountId)?.asOf),
+        ...recordedAt(key).map((l) => l.asOf ?? acc.get(l.accountId)?.asOf)].filter(Boolean))].sort()[0] ?? null;
       return { key, schemecode: e.schemecode, periods, crossing, annualised, steps, statementAsOf, nav: f.nav ?? null, plan: f.plan ?? null, option: f.option ?? null,
         holdingsN: Array.isArray(f.holdings) ? f.holdings.length : null };
     };
-    const held = Object.keys(idx.schemes ?? {}).filter((k) => byKey.has(k));
+    // A SCHEME THE FAMILY HOLDS AS A RECORDED LINE IS HELD (Stage 10cy). DSP's
+    // Gold ETF carries no valued row now — its NAV fails the basis gate and the
+    // demat's rate is a last movement's price — and its page still draws the
+    // scheme card. Ranked by value, then by the units the statements record.
+    const recordedUnitsOf = (key) => recordedAt(key).reduce((a, l) => a + (Number(l.quantity) || 0), 0);
+    const held = Object.keys(idx.schemes ?? {}).filter((k) => byKey.has(k) || recordedUnitsOf(k) > 0);
     const unitBreak = held.map(schemeOf).filter((x) => x && x.steps.length)
-      .sort((a, b) => mvOf(b.key) - mvOf(a.key))[0] ?? null;
+      .sort((a, b) => mvOf(b.key) - mvOf(a.key) || recordedUnitsOf(b.key) - recordedUnitsOf(a.key))[0] ?? null;
     // The scheme card is drawn for a mutual fund or an ETF, never an arbitrage
     // fund (that page draws no look-through at all). The one publishing the most
     // annualised returns, none refused, is where the p.a. marker must bind.
@@ -9783,6 +9864,28 @@ function drilldownCounts(t) {
  */
 const QUOTE_FACTOR = 1.10;
 const INDEX_FACTOR = 0.99;
+
+/**
+ * ── THE LIVE FIXTURE IS STAMPED TODAY, IN IST ──────────────────────────────
+ *
+ * #104 on main keeps a quote only if it was observed in the current IST market
+ * day (`retainQuotes`), titles Today's movers "today" only for today's
+ * session, and strikes the Nifty 500 gap only where the index and the quotes
+ * share one. A fixture dated 13 Aug 2026 therefore had every quote DISCARDED,
+ * and six live routes failed on main's own build — each page correctly
+ * rendering its no-feed state under checks that expected a feed. The quotes
+ * (with a trade time), the index session and the corporate-action capture are
+ * stamped at the moment the page asks, which is what #104's own
+ * `scripts/dev/check-daily-movers.mjs` does with a fixed clock.
+ *
+ * `FIXTURE_DAY` is the IST day the sweep started on, and the re-derivations
+ * below that need the quotes' day read it. A sweep that crosses IST midnight
+ * would split the two, and is not supported.
+ */
+const IST_OFFSET_MS = 19_800_000;
+const istDay = (ms = Date.now()) => new Date(ms + IST_OFFSET_MS).toISOString().slice(0, 10);
+const dayBefore = (day, n = 1) => new Date(Date.parse(day) - n * 86_400_000).toISOString().slice(0, 10);
+const FIXTURE_DAY = istDay();
 const MARK_BY_SYMBOL = (() => {
   const m = new Map();
   try {
@@ -9884,6 +9987,10 @@ const DEPOSITORY_SHARE_BOOK = (() => {
     return out;
   } catch { return null; }
 })();
+/** The depository share rows the live fixture prices — rows on a walk that serves quotes. */
+const PRICED_DEPOSITORY_ROWS = DEPOSITORY_SHARE_BOOK
+  ? DEPOSITORY_SHARE_BOOK.filter((d) => MARK_BY_SYMBOL.has(d.symbol)).length
+  : null;
 
 /**
  * ── WHICH LINES THE CORPORATE-ACTION CHECK HOLDS BACK UNDER THE LIVE FIXTURE ──
@@ -9893,10 +10000,11 @@ const DEPOSITORY_SHARE_BOOK = (() => {
  * pill worded both as "no quote". These are the lines `installLiveMocks`
  * quotes that the gate must still hold back, in two states:
  *
- *   • `answered` — the fixture's capture answers (verified through 23 Sep,
- *     no events) and every quote is dated 13 Aug with no trade time, so a
- *     company share is held back where its statement records sales after its
- *     own date, or where the quote's day is before the statement's;
+ *   • `answered` — the fixture's capture answers (verified through the
+ *     fixture's own day, no events) and every quote is traded that day
+ *     (`FIXTURE_DAY`), so a company share is held back where its statement
+ *     records sales after its own date, or where the quote's day is before the
+ *     statement's;
  *   • `loading` — the capture has not arrived, so EVERY company share the
  *     fixture quotes is held back, waiting for the evidence.
  *
@@ -9916,7 +10024,7 @@ const WITHHELD_BOOK = (() => {
     const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
     if (!positions.length || !accounts.length) return null;
     const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
-    const QUOTE_DAY = "2026-08-13"; // installLiveMocks' `asOf`, with no `tradedAt`
+    const QUOTE_DAY = FIXTURE_DAY; // installLiveMocks' quotes, traded today (IST)
     const quoted = (p) => { const s = p.symbol || symbols[p.securityKey]; return !!s && MARK_BY_SYMBOL.has(s); };
     const closed = (x) => FUND_VEHICLE_CLASSES.has(x.assetClass) && x.quantity === 0 && x.currentPrice != null;
     const small = smallKeysOf(bookArray(src, "BOOK_POSITIONS") ?? []);
@@ -10281,7 +10389,16 @@ const DE_CURRENT_NAMES = (() => {
       if (FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null) continue;
       current.add(p.securityKey);
     }
-    return current.size ? { current: current.size, all: all.size } : null;
+    /* ON A WALK THAT SERVES QUOTES, the listed shares a depository reports with
+       no price (Stages 10cx and 10cy) are Direct Equity rows too — wherever the
+       fixture prices their symbol, which is the only condition on which the
+       page makes a row of one. `live` is the scope the day-move tile counts on
+       those walks; `current` stays the statement book's, which is what a walk
+       with no feed draws. */
+    if (!DEPOSITORY_SHARE_BOOK) return null;
+    const live = new Set(current);
+    for (const d of DEPOSITORY_SHARE_BOOK) if (MARK_BY_SYMBOL.has(d.symbol)) live.add(d.securityKey);
+    return current.size ? { current: current.size, all: all.size, live: live.size } : null;
   } catch { return null; }
 })();
 
@@ -10548,6 +10665,14 @@ const CASH_INSTRUCTION_BOOK = (() => {
     // valued, so they are counted apart (`unpriced`) and never folded in here.
     const depository = positions.filter((p) => p.depositoryUnits && (p.depositoryUnits.kind ?? "closing-balance") === "closing-balance");
     const unpriced = positions.filter((p) => p.depositoryUnits?.kind === "no-rate");
+    // …AND THE LAST-MOVEMENT KIND (Stage 10cy): a fund a Motilal holding
+    // statement records beside the price of its last depository movement, which
+    // is a transaction price and not a valuation, so it too is valued only at
+    // AMFI's NAV and is in no statement-basis figure. Counted over the rows
+    // `/holdings` DRAWS — four of them are specks under the ₹1,000 floor, which
+    // `currentHoldings` keeps off every allocation surface.
+    const lastMovement = positions.filter((p) => p.depositoryUnits?.kind === "last-movement");
+    const onPage = (p) => !closed(p) && !small.has(p.securityKey);
     const partialAccounts = [...new Set(depository.map((p) => p.accountId))];
     const largestArb = outside.filter(isArb).sort((a, b) => b.marketValue - a.marketValue)[0]?.securityKey ?? null;
     const partialOwner = (() => {
@@ -10562,7 +10687,8 @@ const CASH_INSTRUCTION_BOOK = (() => {
       depositoryCount: depository.length, depositoryMV: depository.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
       // EVERY ROW NO STATEMENT PRICES, of both kinds — what `/holdings` names
       // under its statement-basis figure, because neither kind is in it.
-      depositoryAllCount: depository.length + unpriced.length,
+      depositoryAllCount: [...depository, ...unpriced, ...lastMovement].filter(onPage).length,
+      lastMovementCount: lastMovement.filter(onPage).length,
       unpricedLines: unpriced.map((p) => `${p.securityKey}@${p.accountId}`),
       partialAccounts, partialOwner, partialAccountNo,
       // Each depository row as the Monitor's opened tree keys its statement
@@ -11633,18 +11759,19 @@ async function installFillingQuotes(page) {
     // ordered the ask conveniently.
     const cut = Math.max(1, Math.floor(want.length / 3));
     const quotes = {}, missing = [], pending = want.slice(cut);
+    const now = new Date().toISOString(); // see FIXTURE_DAY
     for (const sym of want.slice(0, cut)) {
       const mark = MARK_BY_SYMBOL.get(sym);
       if (!mark) { missing.push(sym); continue; }
       quotes[sym] = {
         price: Math.round(mark * QUOTE_FACTOR * 10000) / 10000, prevClose: mark,
         open: mark, dayLow: mark, dayHigh: mark, low52: null, high52: null,
-        marketCap: null, volume: null, yearChangePct: null, ageS: 0,
+        marketCap: null, volume: null, yearChangePct: null, ageS: 0, tradedAt: now,
       };
     }
     await route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({ ok: true, quotes, asOf: "2026-08-13T10:00:00.000Z", missing, pending, fresh: Object.keys(quotes).length, stale: 0 }),
+      body: JSON.stringify({ ok: true, quotes, asOf: now, missing, pending, fresh: Object.keys(quotes).length, stale: 0 }),
     });
   });
 }
@@ -11656,6 +11783,15 @@ async function installFillingQuotes(page) {
  * ONE round rather than three. Reset per page so a walk reads its own.
  */
 let QUOTE_PRIORITY = null;
+/**
+ * WHETHER THIS WALK SERVES QUOTES — reset per walk and set by
+ * `installLiveMocks`, which the filling and stalled-index fixtures call too. A
+ * count over the live book depends on it: the listed shares a depository
+ * reports with no price (Stages 10cx and 10cy) are rows only where the fixture
+ * prices them, so a walk with no feed has none and a walk with one has
+ * `PRICED_DEPOSITORY_ROWS` more.
+ */
+let QUOTES_SERVED = false;
 
 /**
  * THE STORE, ANSWERING. An in-memory copy of the fixture that applies each
@@ -11916,18 +12052,19 @@ const RESEARCH_BOOK = (() => {
 
 async function installLiveMocks(page, opts = {}) {
   QUOTE_PRIORITY = null;
+  QUOTES_SERVED = true;
   // This fixture measures a pure +10% PRICE move. Keep corporate actions empty
   // and fully covered for its dated window, rather than letting a changing
   // external capture change the expected movers. The dedicated corporate-action
   // browser regression supplies split/dividend events and checks their effects.
   //
   // `captureLagDays` dates the capture that many days BEFORE the quotes' own
-  // day (2026-08-13), which is the 24 Sep 2026 incident: a capture one day old
-  // held every company share off its live price. See `cio-live-capture-lag`.
-  const lagged = typeof opts.captureLagDays === "number"
-    ? new Date(Date.parse("2026-08-13") - opts.captureLagDays * 86_400_000).toISOString().slice(0, 10) : null;
-  const actionFeed = { version: 1, capturedAt: lagged ? `${lagged}T10:00:00.000Z` : "2026-09-23T10:00:00.000Z", requestedFrom: "2020-01-01",
-    requestedTo: "2027-09-23", verifiedThrough: lagged ?? "2026-09-23", symbols: null, isins: [], rows: [],
+  // day (`FIXTURE_DAY`), which is the 24 Sep 2026 incident: a capture one day
+  // old held every company share off its live price. See `cio-live-capture-lag`.
+  // Without it the capture is verified through the quotes' own day.
+  const lagged = typeof opts.captureLagDays === "number" ? dayBefore(FIXTURE_DAY, opts.captureLagDays) : null;
+  const actionFeed = { version: 1, capturedAt: lagged ? `${lagged}T10:00:00.000Z` : new Date().toISOString(), requestedFrom: "2020-01-01",
+    requestedTo: `${Number(FIXTURE_DAY.slice(0, 4)) + 1}${FIXTURE_DAY.slice(4)}`, verifiedThrough: lagged ?? FIXTURE_DAY, symbols: null, isins: [], rows: [],
     sourceUrl: "https://glow-central-research.tech-441.workers.dev/data/corporate-actions.json" };
   await page.route("**/api/corporate-actions?*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, feed: actionFeed }) }));
   await page.route("**/data/corporate-actions.json", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(actionFeed) }));
@@ -11945,13 +12082,14 @@ async function installLiveMocks(page, opts = {}) {
     // that no request was seen; a request that named none records `[]`.
     if (QUOTE_PRIORITY == null) QUOTE_PRIORITY = sentPriority ?? [];
     const quotes = {}, missing = [];
+    const now = new Date().toISOString(); // see FIXTURE_DAY
     for (const s of want) {
       const mark = MARK_BY_SYMBOL.get(s);
       if (!mark) { missing.push(s); continue; }
       quotes[s] = {
         price: Math.round(mark * QUOTE_FACTOR * 10000) / 10000, prevClose: mark,
         open: mark, dayLow: mark, dayHigh: mark, low52: null, high52: null,
-        marketCap: null, volume: null, yearChangePct: null, ageS: 0,
+        marketCap: null, volume: null, yearChangePct: null, ageS: 0, tradedAt: now,
       };
     }
     await route.fulfill({
@@ -11960,10 +12098,11 @@ async function installLiveMocks(page, opts = {}) {
       // `missing`, which is attempted and unservable. This fixture answers
       // everything in one round, so it is empty; `installFillingQuotes` is the
       // one that exercises the other state.
-      body: JSON.stringify({ ok: true, quotes, asOf: "2026-08-13T10:00:00.000Z", missing, pending: [], fresh: Object.keys(quotes).length, stale: 0 }),
+      body: JSON.stringify({ ok: true, quotes, asOf: now, missing, pending: [], fresh: Object.keys(quotes).length, stale: 0 }),
     });
   });
   await page.route("**/api/indices*", async (route) => {
+    const at = Date.now(), session = istDay(at), stamp = new Date(at).toISOString(); // see FIXTURE_DAY
     const indices = MOCK_INDICES.map(([id, label, symbol, name, prev]) => {
       const level = Math.round(prev * INDEX_FACTOR * 100) / 100;
       return {
@@ -11971,15 +12110,15 @@ async function installLiveMocks(page, opts = {}) {
         // The level's OWN session, distinct from the previous close's, because the
         // real Function now names both ends of the move — a fixture missing a
         // field the response carries stops exercising what reads it.
-        level, sessionDate: "2026-08-13", prevClose: prev, prevCloseDate: "2026-08-12",
+        level, sessionDate: session, prevClose: prev, prevCloseDate: dayBefore(session),
         change: Math.round((level - prev) * 100) / 100, changePct: (INDEX_FACTOR - 1) * 100,
         dayHigh: level, dayLow: level, high52: prev * 1.2, low52: prev * 0.8,
-        asOf: "2026-08-13T10:00:00.000Z",
+        asOf: stamp,
       };
     });
     await route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({ ok: true, source: "fixture", fetchedAt: "2026-08-13T10:00:00.000Z", resolved: indices.length, requested: indices.length, indices }),
+      body: JSON.stringify({ ok: true, source: "fixture", fetchedAt: stamp, resolved: indices.length, requested: indices.length, indices }),
     });
   });
   /**
@@ -12260,7 +12399,10 @@ const CAPITAL_RETURN_CHECKS = [
     (t, ctx) => {
       if (!CAPITAL_RECORD_BOOK) return { notChecked: "the book's capital record could not be read" };
       const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-      const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
+      // The statement book, which is the table's own basis (see the identity
+      // check below): an account the live layer values from a depository's
+      // balance is not thereby a redeemed one or an unredeemed one.
+      const pos = statementBookPositions(src) ?? [];
       const valued = new Map();
       for (const p of pos) valued.set(p.accountId, (valued.get(p.accountId) ?? 0) + p.marketValue);
       const closed = [...new Set(CAPITAL_RECORD_BOOK.moves.filter((m) => m.direction === "out").map((m) => m.accountId))]
@@ -15603,8 +15745,14 @@ const CIO_SHARED = [
     const value = ctx.kpiTiles.find((x) => x.slot === "value");
     if (!value) return false;
     if (COSTED_BOOK.costedCount === COSTED_BOOK.holdings) return { notChecked: "every holding in this book reports a cost, so the invested line covers the whole value" };
+    /* ON A WALK THAT SERVES QUOTES the holdings include the listed shares a
+       depository reports with no price, which the fixture prices into rows.
+       None reports a cost, so the costed count does not move and the
+       denominator does. */
+    if (ctx.quotesServed && PRICED_DEPOSITORY_ROWS == null) return false;
+    const holdings = COSTED_BOOK.holdings + (ctx.quotesServed ? PRICED_DEPOSITORY_ROWS : 0);
     const m = /(\d+) of (\d+) reports? a cost/.exec(value.sub ?? "");
-    return !!m && Number(m[1]) === COSTED_BOOK.costedCount && Number(m[2]) === COSTED_BOOK.holdings;
+    return !!m && Number(m[1]) === COSTED_BOOK.costedCount && Number(m[2]) === holdings;
   }],
   /**
    * ...AND NO TILE LINKS AT A SCOPE THAT IS NOW A FACET. `?of=listed`,
@@ -18630,10 +18778,15 @@ const HB_DEPOSITORY = [
     // balance on an account that sent no holding statement, and units a holding
     // statement records with no rate — only the first may say "no holding
     // statement", and a line naming a kind the set does not carry is false.
-    const closing = B.depositoryCount > 0, noRate = B.unpricedLines.length > 0;
+    // And a holding a Motilal statement records beside the price of its last
+    // depository movement (Stage 10cy) is named as exactly that — a transaction
+    // price, never a valuation — wherever the set carries one.
+    const closing = B.depositoryCount > 0, noRate = B.unpricedLines.length > 0, lastMove = B.lastMovementCount > 0;
     return !!h && h.n === B.depositoryAllCount && /AMFI.s NAV/.test(h.text) && !/valued\s+from depository units/.test(h.text)
       && closing === /transaction statement and no holding statement/.test(h.title)
-      && noRate === /prints no rate/.test(h.title) && /not\s+in that figure/.test(h.title);
+      && noRate === /prints no rate/.test(h.title)
+      && lastMove === /last depository movement.*transaction price, not a valuation/.test(h.title)
+      && /not\s+in that figure/.test(h.title);
   }],
 ];
 /**
@@ -20001,7 +20154,13 @@ const INVARIANTS = {
         }
         const dist = new Map(CAPITAL_RECORD_BOOK.commitments.map((c) => [c.accountId, c.distributed]));
         const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-        const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
+        // ON THE STATEMENT BASIS, because the table is: `TransactionsView` reads
+        // `statementPortfolio` (a dated trade is a statement fact, and a live
+        // price is not evidence about it). Struck on the live model, the check
+        // failed a correct page the moment a MUTUAL FUND gained a dated record —
+        // Helios's own purchase (Stage 10cx) set against its published NAV
+        // (₹30.44 Cr) where the row is valued at its statement's ₹31.00 Cr.
+        const pos = statementBookPositions(src) ?? [];
         const value = new Map();
         for (const p of pos) value.set(p.accountId, (value.get(p.accountId) ?? 0) + p.marketValue);
         let checked = 0;
@@ -22836,8 +22995,10 @@ const INVARIANTS = {
       return pill.owners === want.owners && pill.accounts === want.accounts
         && new RegExp(`Held in ${want.owners} entit(y|ies) · ${want.accounts} accounts`).test(pill.text ?? "");
     }],
+    // Every account the table names — a statement row, or a line a statement
+    // records and nothing values (Stage 10cy), which the pill counts too.
     ["the account count is the rows Position by account draws", (t, ctx) =>
-      Number.isFinite(ctx?.accountRows) && ctx.accountRows === M2_BOOK?.entities?.accounts],
+      Number.isFinite(ctx?.heldAccountRows) && ctx.heldAccountRows === M2_BOOK?.entities?.accounts],
     ["no entity count is the account count", (t, ctx) =>
       M2_BOOK?.entities != null && !new RegExp(`Held in ${M2_BOOK.entities.accounts} entities`).test(t)],
   ],
@@ -26894,8 +27055,10 @@ const INVARIANTS = {
       // which Stage 10cp moved there. Each must count the current holdings.
       const face = /held\s*·\s*\d+ of (\d+) names/.exec(t);
       const hover = (ctx?.titles ?? []).map((x) => /^The move is struck on .*?across \d+ of (\d+) direct-equity names/.exec(x)).find(Boolean);
+      // THE LIVE SCOPE, because this walk serves quotes: the depository's
+      // listed shares are rows here wherever the fixture prices them.
       return !!face && !!hover
-        && Number(face[1]) === DE_CURRENT_NAMES.current && Number(hover[1]) === DE_CURRENT_NAMES.current;
+        && Number(face[1]) === DE_CURRENT_NAMES.live && Number(hover[1]) === DE_CURRENT_NAMES.live;
     }],
     /**
      * ...AND THE MOVERS TOGGLE IS THERE WITH A FEED TOO.
@@ -31566,7 +31729,7 @@ const INVARIANTS = {
     ["the entity count is the members whose statements carry it, and the accounts are the rows drawn", (t, ctx) => {
       const want = DUAL_KEY ? M2_BOOK?.entitiesOf(DUAL_KEY) : null;
       const pill = ctx?.stockM2?.pill;
-      const rows = ctx?.accountRows;
+      const rows = ctx?.heldAccountRows;
       if (!want || !pill) return false;
       // NOT an abstention: this route is the dually-reported holding, so a page
       // that drew no account rows at all is the failure this check exists for.
@@ -32940,6 +33103,7 @@ for (const theme of THEMES) {
       // every tab renders the same absent state and a filter that matched
       // nothing would be indistinguishable from one that worked.
       PRICE_REQUESTS = [];
+      QUOTES_SERVED = false;
       if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench") await installLiveMocks(page);
       if (name === "performance-live") await installLiveMocks(page);
       if (name === "monitor-withheld" || name === "monitor-withheld-loading") await installLiveMocks(page);
@@ -36930,6 +37094,15 @@ for (const theme of THEMES) {
       // prints a strategy — so the entity-count check below reads `<tr>`s.
       const accountRows = FAST ? null : await page.evaluate(() =>
         document.querySelectorAll("tr[data-account-row]").length);
+      // …AND EVERY ACCOUNT THE TABLE NAMES, valued or not (Stage 10cy). A line a
+      // statement records and nothing values is a row of the same table under
+      // its own handle — never `data-account-row`, which means a measured
+      // position — and the page's pill counts its account. Distinct ids, so an
+      // account drawn under both handles is one account.
+      const heldAccountRows = FAST ? null : await page.evaluate(() => new Set([
+        ...[...document.querySelectorAll("tr[data-account-row]")].map((e) => e.getAttribute("data-account-row")),
+        ...[...document.querySelectorAll("tr[data-recorded-row]")].map((e) => e.getAttribute("data-recorded-row")),
+      ]).size);
       // WHICH FUNDS THE PRIVATE BOOK DRAWS, by key. A redeemed fund's row is
       // correct in every cell and adds nothing to any total, so no value check
       // on that page can see it.
@@ -39522,7 +39695,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

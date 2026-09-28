@@ -93,10 +93,10 @@ run_case() {
        pages "cio-allocation" ;;
     12) echo "   the PMS drill-down's mandate rows back to the cost held"
        patch src/pages/HoldingsBehind.tsx '? { invested: investedWithCapital(cost, f), capital: f }' '? { invested: cost, capital: f }' || return
-       pages "holdings-row-1,holdings-row-2,holdings-row-3,holdings-row-4,holdings-row-5,holdings-row-6" ;;
+       pages "holdings-row-1,holdings-row-2,holdings-row-3,holdings-row-4,holdings-row-5" ;;
     13) echo "   the capital swap itself returns the cost held, on every surface at once"
        patch src/lib/fifo.ts 'cost === null ? null : cost - f.wholeCostHeld + f.wholeContributed;' 'cost;' || return
-       pages "monitor,cio-allocation,holdings-row-1,holdings-row-2,holdings-row-3,holdings-row-4,holdings-row-5,holdings-row-6" ;;
+       pages "monitor,cio-allocation,holdings-row-1,holdings-row-2,holdings-row-3,holdings-row-4,holdings-row-5" ;;
     *) echo "   no such case"; return ;;
   esac
   restore

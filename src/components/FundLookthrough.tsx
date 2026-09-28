@@ -65,8 +65,12 @@ const PART_TITLE = {
 export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, part, statementAsOf, valuedAt, valuedBy, valuedDates }: {
   securityKey: string;
   name: string;
-  /** What the family's units are worth, for the derived exposure column. */
-  holdingValue: number;
+  /**
+   * What the family's units are worth, for the derived exposure column — NULL
+   * where a statement records the units and nothing values them (Stage 10cy),
+   * so the column is absent with that reason rather than ₹0 on every line.
+   */
+  holdingValue: number | null;
   /** The account's own report date — not the book's newest. */
   asOfHolding: string;
   /** Which half of the scheme to draw — see `PART_TITLE`. */
@@ -99,6 +103,8 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
   }, [securityKey]);
 
   const money = (n: number) => fmtFromBase(n, { compact: true });
+  /** Why the derived column is absent on a holding nothing values. */
+  const UNVALUED_WHY = "Your units here are recorded by a statement that prints no price this book may use, so no value is struck for them — and a look-through figure is that value times the scheme's weight.";
   const pf: FundPortfolio | null = state.status === "ok" ? state.portfolio : null;
   const view = useTableView("fund-lookthrough", FL_COLS);
 
@@ -370,10 +376,12 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
       <div className="mb-3 flex flex-wrap items-center gap-2 text-[11.5px]">
         <Pill>
           <span data-lt-valued-at={valuedAt ?? ""} data-lt-valued-by={valuedBy ?? ""}
-            title={`A scheme discloses its portfolio monthly; the family's units are valued ${valuedBy === "nav" ? "at AMFI's published NAV"
+            title={holdingValue == null
+              ? `A scheme discloses its portfolio monthly. ${UNVALUED_WHY}`
+              : `A scheme discloses its portfolio monthly; the family's units are valued ${valuedBy === "nav" ? "at AMFI's published NAV"
               : valuedBy === "live" ? "at a live quote" : valuedBy === "statement" ? "at their statement's own mark" : "on their own dates"}${valuedAt ? ` of ${fmtDate(valuedAt)}` : ""}. The two rarely coincide, so both are shown rather than one standing for the other — and the look-through column is the family's value on that date times the portfolio's weights.`}>
-            portfolio {p.holdingsAsOf ? fmtDate(p.holdingsAsOf) : DASH} · your holding valued {valuedAt ? fmtDate(valuedAt)
-              : valuedDates && valuedDates > 1 ? `on ${valuedDates} dates` : fmtDate(asOfHolding)}{valuedBy === "nav" ? " (AMFI NAV)" : valuedBy === "live" ? " (live)" : valuedBy === "statement" ? " (statement)" : ""}
+            portfolio {p.holdingsAsOf ? fmtDate(p.holdingsAsOf) : DASH} · {holdingValue == null ? "your holding not valued" : <>your holding valued {valuedAt ? fmtDate(valuedAt)
+              : valuedDates && valuedDates > 1 ? `on ${valuedDates} dates` : fmtDate(asOfHolding)}{valuedBy === "nav" ? " (AMFI NAV)" : valuedBy === "live" ? " (live)" : valuedBy === "statement" ? " (statement)" : ""}</>}
           </span>
         </Pill>
         {p.holdingsSource && (
@@ -437,7 +445,9 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                     {h.sector ?? h.rating ?? <AbsentCell reason="The filing prints no sector for this share and no rating for this instrument — an aggregator's copy carries neither, only the AMC's own does." />}
                   </td>
                   <td className="px-3 py-2 text-right mono text-slate-300">{h.pctAum.toFixed(2)}%</td>
-                  <td className="px-3 py-2 text-right mono text-slate-400">{money(familyValue(holdingValue, h.pctAum))}</td>
+                  <td className="px-3 py-2 text-right mono text-slate-400">{holdingValue == null
+                    ? <AbsentCell reason={UNVALUED_WHY} />
+                    : money(familyValue(holdingValue, h.pctAum))}</td>
                   <td className="px-3 py-2 text-right mono text-slate-500">
                     {h.shares == null
                       ? <AbsentCell reason="The disclosure reports no share count for this row." />
@@ -451,7 +461,9 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                 label={<>{fmtNum(shown.length)} of {fmtNum(rows.length)} disclosed holdings shown</>}
                 cells={{
                   pctAum: <td key="pctAum" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-300">{shown.reduce((a, h) => a + h.pctAum, 0).toFixed(2)}%</td>,
-                  lookthrough: <td key="lookthrough" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-300">{money(shown.reduce((a, h) => a + familyValue(holdingValue, h.pctAum), 0))}</td>,
+                  lookthrough: <td key="lookthrough" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-300">{holdingValue == null
+                    ? <AbsentCell reason={UNVALUED_WHY} />
+                    : money(shown.reduce((a, h) => a + familyValue(holdingValue, h.pctAum), 0))}</td>,
                   shares: <td key="shares" className="border-t-2 border-ink-600 px-3 py-2" />,
                 }} />
             </tfoot>
@@ -464,7 +476,9 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
           beside a measured one is exactly where this book has been bitten. */}
       {rows.length > 0 && (
       <p className="mt-3 text-[11.5px] text-slate-500"
-        title={`The fund's own value — ${money(holdingValue)} — is what the book carries, and it already stands for everything above; counting both would count the same money twice. The look-through column is this holding's value times the scheme's published weight, so it is an estimate of exposure rather than a position the family can sell. The disclosed weights add to ${weight.toFixed(1)}% of the scheme${p.coveragePct != null ? ` — the AMC states its own coverage at ${p.coveragePct.toFixed(1)}%` : ""}; the rest is what a monthly filing rounds and the cash it does not itemise.`}>
+        title={`${holdingValue == null
+          ? `${UNVALUED_WHY} The look-through column is absent for that reason, never ₹0.`
+          : `The fund's own value — ${money(holdingValue)} — is what the book carries, and it already stands for everything above; counting both would count the same money twice. The look-through column is this holding's value times the scheme's published weight, so it is an estimate of exposure rather than a position the family can sell.`} The disclosed weights add to ${weight.toFixed(1)}% of the scheme${p.coveragePct != null ? ` — the AMC states its own coverage at ${p.coveragePct.toFixed(1)}%` : ""}; the rest is what a monthly filing rounds and the cash it does not itemise.`}>
         <span className="font-medium text-slate-400">None of this is in any total on this site</span>
       </p>
       )}
