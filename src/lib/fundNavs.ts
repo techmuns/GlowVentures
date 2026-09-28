@@ -50,6 +50,7 @@ import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS
 import { isCashEquivalent } from "./analytics";
 import { composeSchemeLabel, holdingLabel, schemeNameFor } from "./schemeLabel";
 import { securityLabel } from "./securityLabel";
+import { symbolForKey } from "./quotes";
 import type { Account, CapitalMove, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
@@ -252,7 +253,10 @@ export function depositoryFundHoldings(
       // on a fourth is one option in a pick-list, not two spellings.
       security: book || schemeNameFor(securityKey) ? securityLabel(securityKey, printed) : labelFromAmfi(nav),
       isin: w.isin,
-      symbol: book?.symbol ?? null,
+      // A liquid ETF the quote feed prices intraday keeps its symbol even where
+      // no book position of it is left to lend one (Stage 10cy moved the Motilal
+      // demats' Liquid BeES out of the positions).
+      symbol: book?.symbol ?? symbolForKey(securityKey),
       accountId: w.accountId,
       memberId: null,
       sector: book?.sector ?? "Unclassified",
@@ -302,46 +306,73 @@ export function depositoryCashHoldings(
 }
 
 /**
- * ── UNITS A HOLDING STATEMENT RECORDS AND PRICES NOWHERE (the figure audit, A-17)
+ * ── UNITS A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (A-17, Stage 10cy)
  *
- * Aarti's and Ankita's 31 July Motilal Oswal demat statements each record units
- * of ABSL Balanced Advantage in FREE balance — 2,42,412.122 and 3,93,095.951 —
- * and print no rate against them. `build-book` rightly carries no position for
- * a row with no mark (a rate nobody printed is not invented), so ₹7.15 Cr of the
- * family's money was on no screen: not in a total, not in a table, not named.
- * Bharat's statement from the SAME depository on the SAME day prices the same
- * scheme, and AMFI publishes its NAV.
+ * The Motilal Oswal CDSL holding statements print every holding's units, and
+ * against most of them a `Rs RATE` and a `Rs VALUE` — which are the price of
+ * the holding's LAST DEPOSITORY MOVEMENT and that price times the movement's own
+ * quantity, never a valuation of the balance (Stage 10cy; the reader reads them
+ * as `lastMovementRate`). So since that correction every fund those statements
+ * carry is a quantity in the book (`BOOK_UNVALUED_HOLDINGS`) and no statement
+ * values it: Ankita's Bandhan, Helios, ICICI and WhiteOak units, Bharat's and
+ * Aarti's ABSL, HDFC and Kotak units, the Liquid BeES on all three. Before A-17
+ * found them, ABSL Balanced Advantage on two of those demats was on no screen at
+ * all for the same reason: a unit count with no price beside it.
  *
- * So the LIVE book values those units at the published NAV — the treatment
- * `depositoryCashHoldings` gives a depository's closing units — and only where
- * a witness proves the units are on the NAV's basis. SIX GATES, each a reason a
- * recorded balance must NOT become a holding:
+ * So the LIVE book values those units at AMFI's published NAV — the treatment
+ * `depositoryFundHoldings` gives a depository's closing units — and only where
+ * a WITNESS proves the units are on the NAV's basis. A unit count and a price
+ * can be on different bases: the DSP Gold ETF's statement units are ten times
+ * the ones its NAV prices. SEVEN GATES, each a reason a recorded balance must
+ * NOT become a holding:
  *
- *   1. the row names an ISIN and a quantity, and is an open-ended MUTUAL FUND —
- *      a scheme's units do not split, where an ETF's can (the DSP gold and
- *      silver break is ten-fold) and an AIF's unit has no NAV AMFI publishes;
+ *   1. the row names an ISIN and units, and is a MUTUAL FUND or an ETF — an
+ *      AIF's unit has no NAV AMFI publishes, and a share has no NAV at all;
  *   2. no fund's own statement reports the same units (`sameUnitsReportedBy`),
  *      which would count one holding twice;
  *   3. AMFI publishes a NAV for the ISIN that the builder cleared for value;
- *   4. THE WITNESS: a position the book carries for the same ISIN, on another
- *      account at the SAME depository whose statement is dated the SAME day,
- *      carrying the statement's own per-unit mark — the depository prints units
- *      on one basis across the accounts it keeps;
- *   5. that mark and the published NAV are on one basis (within a factor of
- *      two, the builder's own gate) — a mark ten times the NAV is a
- *      share-count break, never a price move;
- *   6. the row's own account carries no position of that ISIN already.
+ *   4. THE WITNESS, strongest first:
+ *        - the row's OWN last-movement rate — the price, per unit, at which
+ *          these very units last moved through the depository. A mutual fund's
+ *          units are bought and redeemed at its NAV, so that rate IS a NAV of
+ *          the scheme on the movement's date, struck on the units the statement
+ *          counts;
+ *        - where the statement prints no rate against the row (ABSL Balanced
+ *          Advantage on Ankita's and Aarti's statements), a per-unit price for
+ *          the same ISIN on ANOTHER account at the SAME depository whose
+ *          statement is dated the SAME day — a position's mark, or another row's
+ *          last-movement rate. The depository prints units on one basis across
+ *          the accounts it keeps.
+ *      An ETF takes its OWN rate or nothing: its units split (DSP Gold's ten to
+ *      one), and a witness from another row says nothing about when this row's
+ *      units last moved;
+ *   5. that price and the published NAV are on one basis — within a factor of
+ *      two, the builder's own gate. A price ten times the NAV is a share-count
+ *      break, never a price move;
+ *   6. the row's own account carries no position of that ISIN already;
+ *   7. no account of the SAME OWNER carries the same ISIN at the same units — one
+ *      holding caught on two statements reads exactly like that.
+ *
+ * THE RATE IS A WITNESS AND NOTHING MORE. It is never the price the holding is
+ * valued at — that is AMFI's NAV — and it is carried on the row
+ * (`depositoryUnits.lastMovementRate`) only so a page can say what it is.
  *
  * NO COST, NEVER ZERO: a depository holds the units and did not buy them.
- * LIVE ONLY: no statement marks these units, so `statementPortfolio` — what a
+ * LIVE ONLY: no statement values these units, so `statementPortfolio` — what a
  * page that ties to the PDFs reads — never sees them, and a page that shows one
  * names its units, its witness and its NAV through `describeDepositoryUnits`.
+ *
+ * THE KEY IS THE BOOK'S OWN FOR THE LINE (`securityKey` on the row), so the
+ * same scheme on three demats is one key, and a scheme the book also carries
+ * under a fund's own statement keeps the two keys the book has for it — merging
+ * them here would give a reader one tidy row and leave the reconciler none the
+ * wiser (the eight ISINs `docs/BOOK-REPORT.md` names).
  *
  * ONE SWITCH. `false` takes every row out of every page at once.
  */
 export const VALUE_UNPRICED_STATEMENT_UNITS = true;
 
-/** The factor a statement mark and a published NAV may differ by and still be one basis. */
+/** The factor a statement price and a published NAV may differ by and still be one basis. */
 const BASIS_FACTOR = 2;
 
 export function unpricedStatementUnits(
@@ -351,40 +382,62 @@ export function unpricedStatementUnits(
 ): Position[] {
   if (!VALUE_UNPRICED_STATEMENT_UNITS) return [];
   const acc = new Map(accounts.map((a) => [a.accountId, a]));
+  const ownerOf = (id: string) => acc.get(id)?.ownerId ?? acc.get(id)?.owner ?? null;
   const isinOf = (x: { isin?: string | null }) => x.isin?.trim().toUpperCase() || null;
+  const rateOf = (x: { lastMovementRate?: number | null }) =>
+    typeof x.lastMovementRate === "number" && x.lastMovementRate > 0 ? x.lastMovementRate : null;
   const out: Position[] = [];
   for (const u of unvalued) {
     const isin = isinOf(u);
     const qty = u.quantity;
-    if (!isin || !(typeof qty === "number" && qty > 0) || u.assetClass !== "Mutual Fund") continue; // gate 1
-    if (u.sameUnitsReportedBy) continue;                                                           // gate 2
+    const etf = u.assetClass === "ETF";
+    if (!isin || !(typeof qty === "number" && qty > 0)
+      || (u.assetClass !== "Mutual Fund" && !etf)) continue;                                      // gate 1
+    if (u.sameUnitsReportedBy) continue;                                                         // gate 2
     const nav = BY_ISIN.get(isin);
-    if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                   // gate 3
+    if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                 // gate 3
     const own = acc.get(u.accountId);
     if (!own || !u.asOf) continue;
-    const witness = positions.find((p) => {
-      if (isinOf(p) !== isin || p.accountId === u.accountId) return false;
-      const a = acc.get(p.accountId);
-      return !!a && a.provider === own.provider && a.asOf === u.asOf
-        && typeof p.currentPrice === "number" && p.currentPrice > 0;                               // gate 4
-    });
-    if (!witness) continue;
-    const ratio = nav.nav / (witness.currentPrice as number);
-    if (!(ratio > 1 / BASIS_FACTOR && ratio < BASIS_FACTOR)) continue;                             // gate 5
-    if (positions.some((p) => p.accountId === u.accountId && isinOf(p) === isin)) continue;        // gate 6
+    // Gate 4 — the witness. The row's own rate first; another row's only for a
+    // mutual fund, and only on the same depository's statement of the same day.
+    const ownRate = rateOf(u);
+    let witnessPrice = ownRate;
+    let witnessAccountId: string | null = null;
+    if (witnessPrice === null && !etf) {
+      const sameDay = (id: string) => {
+        const a = acc.get(id);
+        return !!a && a.provider === own.provider && a.asOf === u.asOf;
+      };
+      const pos = positions.find((p) => isinOf(p) === isin && p.accountId !== u.accountId && sameDay(p.accountId)
+        && typeof p.currentPrice === "number" && p.currentPrice > 0);
+      const row = pos ? undefined : unvalued.find((r) => r !== u && isinOf(r) === isin
+        && r.accountId !== u.accountId && sameDay(r.accountId) && rateOf(r) !== null);
+      witnessPrice = pos ? (pos.currentPrice as number) : row ? rateOf(row) : null;
+      witnessAccountId = pos?.accountId ?? row?.accountId ?? null;
+    }
+    if (witnessPrice === null) continue;                                                         // gate 4
+    const ratio = nav.nav / witnessPrice;
+    if (!(ratio > 1 / BASIS_FACTOR && ratio < BASIS_FACTOR)) continue;                           // gate 5
+    if (positions.some((p) => p.accountId === u.accountId && isinOf(p) === isin)) continue;      // gate 6
+    const owner = ownerOf(u.accountId);
+    if (positions.some((p) => isinOf(p) === isin && Math.abs(p.quantity - qty) < 0.0005
+      && ownerOf(p.accountId) === owner)) continue;                                               // gate 7
+    const book = positions.find((p) => p.securityKey === u.securityKey);
     out.push({
-      // THE WITNESS'S KEY, so one scheme is one key and one row wherever the
-      // book already carries it — the name follows the key (#76's rule).
-      securityKey: witness.securityKey,
-      security: securityLabel(witness.securityKey, witness.security),
+      securityKey: u.securityKey,
+      // The book's ONE name for the key (#76's rule, `securityLabel`), which
+      // reads the book's quantity rows as well as its positions.
+      security: securityLabel(u.securityKey, u.security),
       isin: u.isin,
-      symbol: witness.symbol ?? null,
+      // A liquid ETF the quote feed prices intraday is priced that way here too,
+      // as its siblings on the other demats are; a scheme resolves no symbol.
+      symbol: book?.symbol ?? symbolForKey(u.securityKey),
       accountId: u.accountId,
       memberId: null,
-      sector: witness.sector,
+      sector: book?.sector ?? "Unclassified",
       providerSector: null,
-      assetClass: "Mutual Fund",
-      marketSide: witness.marketSide ?? null,
+      assetClass: etf ? "ETF" : "Mutual Fund",
+      marketSide: "listed",
       quantity: qty,
       marketValue: qty * nav.nav,
       costBasis: null,
@@ -402,7 +455,12 @@ export function unpricedStatementUnits(
       positionIrrPct: null,
       navPriced: true,
       navDate: nav.date,
-      depositoryUnits: { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId: witness.accountId },
+      depositoryUnits: ownRate !== null
+        ? {
+          asOf: u.asOf, source: null, kind: "last-movement",
+          lastMovementRate: ownRate, lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null,
+        }
+        : { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId },
     });
   }
   return out.sort((a, b) => b.marketValue - a.marketValue);
@@ -423,6 +481,15 @@ export function describeDepositoryUnits(
   d: NonNullable<Position["depositoryUnits"]>,
   accounts: readonly Account[] | ReadonlyMap<string, Account> = BOOK_ACCOUNTS,
 ): string {
+  if (d.kind === "last-movement") {
+    // The statement's own printed figure, quoted the way the book's own reasons
+    // quote it (`BOOK_UNVALUED_HOLDINGS`), so the two can be read side by side.
+    const rate = typeof d.lastMovementRate === "number" ? `${printedRupees(d.lastMovementRate)} a unit` : "a price per unit";
+    const when = d.lastMovementDate
+      ? `, on a ${d.lastMovementSide ?? "movement"} of ${d.lastMovementDate}`
+      : ", older than the account's transaction statement";
+    return `holdings the depository's holding statement of ${d.asOf ?? "its date"} records beside the price of their last depository movement — ${rate}${when} — a transaction price, not a valuation of the balance`;
+  }
   if (d.kind === "no-price") {
     return `shares the depository's holding statement of ${d.asOf ?? "its date"} records with no usable price — no rate, or only the face value they were allotted at`;
   }
@@ -431,9 +498,14 @@ export function describeDepositoryUnits(
     const w = !id ? undefined
       : "get" in accounts ? accounts.get(id) : accounts.find((a) => a.accountId === id);
     const witness = w ? `${w.owner}'s ${w.provider} ${w.accountNo}` : "another account at the same depository";
-    return `units the depository's holding statement of ${d.asOf ?? "its date"} records and prints no rate for — ${witness} statement of the same day prices the same scheme, which is what puts them on the published NAV's basis`;
+    return `units the depository's holding statement of ${d.asOf ?? "its date"} records and prints no rate for — ${witness} statement of the same day prints a per-unit price for the same scheme, which puts them on the published NAV's basis`;
   }
   return `a depository's own closing balance of ${d.asOf ?? "its statement date"}, on an account that sent a transaction statement and no holding statement`;
+}
+
+/** A statement's own printed rupee figure, as `build-book`'s reasons print one (`₹1,368.25`). */
+function printedRupees(n: number): string {
+  return `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 3 })}`;
 }
 
 /**
@@ -447,10 +519,11 @@ export function depositoryUnitsGist(rows: readonly Pick<Position, "depositoryUni
   const kinds = new Set(rows.flatMap((r) => r.depositoryUnits ? [r.depositoryUnits.kind ?? "closing-balance"] : []));
   const phrase = {
     "closing-balance": "a depository's own closing balance, on an account that sent a transaction statement and no holding statement",
+    "last-movement": "holdings a depository's holding statement records beside the price of their last depository movement — a transaction price, not a valuation",
     "no-rate": "units a depository's holding statement records and prints no rate for",
     "no-price": "shares a depository's holding statement records with no usable price",
   } as const;
-  const present = (["closing-balance", "no-rate", "no-price"] as const).filter((k) => kinds.has(k)).map((k) => phrase[k]);
+  const present = (["closing-balance", "last-movement", "no-rate", "no-price"] as const).filter((k) => kinds.has(k)).map((k) => phrase[k]);
   if (present.length <= 1) return present[0] ?? phrase["closing-balance"];
   return `either ${present.slice(0, -1).join(", ")}, or ${present[present.length - 1]}`;
 }
@@ -531,43 +604,94 @@ export function depositoryBalancesOf(
  * It names each KIND that is valued, because they come from different prices: a
  * fund at the NAV AMFI published after a close, a listed share at the live quote
  * — which exists only while the feed prices it, so the sentence says so.
+ *
+ * TWO KINDS OF ACCOUNT, AND TWO SENTENCES, because "this account sent no holding
+ * statement" is true of one and false of the other:
+ *   - a TRANSACTION-ONLY account (the closing-balance rows): what it holds is
+ *     the depository's closing balances, sorted by `depositoryBalancesOf`;
+ *   - an account whose HOLDING statement values none of what it records (the
+ *     three Motilal Oswal demats since Stage 10cy, whose statements print only
+ *     the price of each holding's last depository movement): what it holds is
+ *     the statement's own lines (`BOOK_UNVALUED_HOLDINGS`). An account the
+ *     statement basis DOES value (ICICI's NSDL demat, with ESDS beside it) has
+ *     no reason to replace and gets no note — its unvalued lines are listed
+ *     line by line where a page lists them.
  */
 export function partialValuationNotes(
   valued: readonly Position[],
   movements: Readonly<Record<string, ShareMovement>> = BOOK_SHARE_MOVEMENTS,
   positions: readonly Position[] = BOOK_POSITIONS,
+  unvalued: readonly UnvaluedStatementHolding[] = BOOK_UNVALUED_HOLDINGS,
+  /** Listed shares the live quote WOULD value (priced or not), so one the feed has not priced is named as that rather than as unpriceable. */
+  quotable: readonly Pick<Position, "accountId" | "isin" | "securityKey">[] = [],
 ): Map<string, string> {
-  const by = new Map<string, Position[]>();
+  const byTape = new Map<string, Position[]>();
+  const byStatement = new Map<string, Position[]>();
+  const statementValued = new Set(positions.map((p) => p.accountId));
   for (const p of valued) {
-    // Every sentence below is about an account that sent a transaction statement
-    // and NO holding statement. A row valued on an account that did send one —
-    // a fund it prints no rate for, a share it prints no usable price for — is
+    const kind = p.depositoryUnits?.kind ?? "closing-balance";
+    // Every sentence in the first branch is about an account that sent a
+    // transaction statement and NO holding statement; a row of another kind is
     // not that account, and the note would say something false about it.
-    if ((p.depositoryUnits?.kind ?? "closing-balance") !== "closing-balance") continue;
-    const list = by.get(p.accountId) ?? [];
+    const into = kind === "closing-balance" ? byTape
+      // …and the second is about an account whose holding statement values
+      // NONE of what it records. One the statement basis values keeps its own
+      // registry entry: nothing there says "values nothing".
+      : statementValued.has(p.accountId) ? null : byStatement;
+    if (!into) continue;
+    const list = into.get(p.accountId) ?? [];
     list.push(p);
-    by.set(p.accountId, list);
+    into.set(p.accountId, list);
   }
   const notes = new Map<string, string>();
   const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
   const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
-  for (const [accountId, rows] of by) {
+  const fundClause = (funds: readonly Position[], units: string, asOf: string) => {
+    const cash = funds.filter((r) => isCashEquivalent(r));
+    const navDate = funds.map((r) => r.navDate).filter(Boolean).sort().pop() ?? "its publication date";
+    return `its ${n(funds.length, "fund")}${cash.length ? ` (${cash.length === funds.length ? (cash.length === 1 ? "a liquid or arbitrage fund" : "all liquid and arbitrage funds") : `${cash.length} of them liquid and arbitrage funds`} the family counts as cash)` : ""} ${funds.length === 1 ? "is" : "are"} valued at ${units} (${asOf}) × AMFI's published NAV (${navDate})`;
+  };
+  for (const [accountId, rows] of byTape) {
     const balances = depositoryBalancesOf(accountId, rows, positions, movements);
     const funds = rows.filter((r) => r.navPriced);
-    const cash = funds.filter((r) => isCashEquivalent(r));
     const shares = rows.filter((r) => !r.navPriced);
     const notValued = balances.filter((b) => !b.valued && !b.reportedBy).length;
     const elsewhere = balances.filter((b) => b.reportedBy).length;
     const asOf = rows.map((r) => r.depositoryUnits?.asOf).filter(Boolean).sort().pop() ?? "its statement date";
-    const navDate = funds.map((r) => r.navDate).filter(Boolean).sort().pop() ?? "its publication date";
     const parts: string[] = [];
-    if (funds.length) parts.push(`its ${n(funds.length, "fund")}${cash.length ? ` (${cash.length === funds.length ? (cash.length === 1 ? "a liquid or arbitrage fund" : "all liquid and arbitrage funds") : `${cash.length} of them liquid and arbitrage funds`} the family counts as cash)` : ""} ${funds.length === 1 ? "is" : "are"} valued at the depository's own closing units (${asOf}) × AMFI's published NAV (${navDate})`);
+    if (funds.length) parts.push(fundClause(funds, "the depository's own closing units", asOf));
     if (shares.length) parts.push(`its ${n(shares.length, "listed share")} ${shares.length === 1 ? "is" : "are"} valued at the same closing units × the live quote, and only while the quote feed prices ${shares.length === 1 ? "it" : "them"}`);
     const rest: string[] = [];
     if (notValued) rest.push(`${n(notValued, "other holding")} on that statement ${notValued === 1 ? "has" : "have"} no price this book can use and ${notValued === 1 ? "is" : "are"} not valued`);
     if (elsewhere) rest.push(`${n(elsewhere, "more balance")} ${elsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, valued there`);
     notes.set(accountId,
       `this account sent a transaction statement and no holding statement. ${cap(parts.join("; "))}${rest.length ? `; ${rest.join("; ")}` : "; nothing else on that statement is held"}. What would value all of it is the account's own holding statement from its custodian`);
+  }
+  const isin = (x: { isin?: string | null }) => x.isin?.trim().toUpperCase() || null;
+  for (const [accountId, rows] of byStatement) {
+    const lines = unvalued.filter((u) => u.accountId === accountId);
+    // A statement line is VALUED where a live row of this account carries its
+    // ISIN, or its key where it prints none.
+    const valuedLine = (u: UnvaluedStatementHolding) => rows.some((r) =>
+      (isin(u) ? isin(r) === isin(u) : r.securityKey === u.securityKey));
+    const elsewhere = lines.filter((u) => u.sameUnitsReportedBy && !valuedLine(u)).length;
+    const open = lines.filter((u) => !u.sameUnitsReportedBy && !valuedLine(u));
+    const waiting = open.filter((u) => quotable.some((q) => q.accountId === accountId
+      && (isin(u) ? isin(q) === isin(u) : q.securityKey === u.securityKey))).length;
+    const notValued = open.length - waiting;
+    const funds = rows.filter((r) => r.navPriced);
+    const shares = rows.filter((r) => !r.navPriced);
+    const asOf = rows.map((r) => r.depositoryUnits?.asOf).filter(Boolean).sort().pop() ?? "its statement date";
+    const moved = lines.filter((u) => typeof u.lastMovementRate === "number" && u.lastMovementRate > 0).length;
+    const parts: string[] = [];
+    if (funds.length) parts.push(fundClause(funds, "the statement's own units", asOf));
+    if (shares.length) parts.push(`its ${n(shares.length, "listed share")} ${shares.length === 1 ? "is" : "are"} valued at the statement's units × the live quote, and only while the quote feed prices ${shares.length === 1 ? "it" : "them"}`);
+    const rest: string[] = [];
+    if (waiting) rest.push(`${n(waiting, "more listed share")} ${waiting === 1 ? "is" : "are"} valued the same way once the quote feed prices ${waiting === 1 ? "it" : "them"}, and ${waiting === 1 ? "is" : "are"} not valued until then`);
+    if (notValued) rest.push(`${n(notValued, "other holding")} on that statement ${notValued === 1 ? "has" : "have"} no price this book can use and ${notValued === 1 ? "is" : "are"} not valued`);
+    if (elsewhere) rest.push(`${n(elsewhere, "more holding")} ${elsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, valued there`);
+    notes.set(accountId,
+      `this account's holding statement of ${asOf} records ${n(lines.length, "holding")} as quantities and values none of them${moved ? ` — beside ${moved === lines.length ? "each" : `${moved} of them`} it prints only the price of the holding's last depository movement, a transaction price` : ""}. ${cap(parts.join("; "))}${rest.length ? `; ${rest.join("; ")}` : "; nothing else on that statement is held"}. What would value all of it on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement`);
   }
   return notes;
 }

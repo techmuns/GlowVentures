@@ -384,15 +384,26 @@ export type Position = {
    *   - `no-price` (Stage 10cx): a LISTED SHARE the account's holding statement
    *     records with no usable price — no rate, or only the face value it was
    *     allotted at — valued at the live quote, and only while the feed prices
-   *     it (`src/lib/depositoryShares.ts`).
+   *     it (`src/lib/depositoryShares.ts`);
+   *   - `last-movement` (Stage 10cy): the account's holding statement prints a
+   *     rate against the units, and that rate is the price of the holding's
+   *     LAST DEPOSITORY MOVEMENT — a receipt or a delivery, on
+   *     `lastMovementDate` where the account's transaction statement dates it —
+   *     never a valuation of the balance. A fund is valued at AMFI's NAV and a
+   *     listed share at the live quote; the rate is kept here only as what it
+   *     is, and as the witness that a fund's units are on the NAV's basis.
    * `describeDepositoryUnits` in `fundNavs.ts` is the one place the sentence is
    * chosen.
    */
   depositoryUnits?: {
     asOf: string | null;
     source: string | null;
-    kind?: "closing-balance" | "no-rate" | "no-price";
+    kind?: "closing-balance" | "no-rate" | "no-price" | "last-movement";
     witnessAccountId?: string | null;
+    /** `last-movement` only: the statement's rate, the date it moved at, and which way. */
+    lastMovementRate?: number | null;
+    lastMovementDate?: string | null;
+    lastMovementSide?: "receipt" | "delivery" | null;
   };
 };
 

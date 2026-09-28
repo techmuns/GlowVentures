@@ -76,9 +76,33 @@ const glow = readFileSync(join(ROOT, "src/data/glowData.ts"), "utf8");
 const positions = bookArray(glow, "BOOK_POSITIONS") ?? die("no BOOK_POSITIONS in glowData.ts");
 const bridge = JSON.parse(readFileSync(join(ROOT, "src/data/nseSymbols.json"), "utf8"));
 
+/**
+ * …AND EVERY SHARE A STATEMENT RECORDS WITHOUT VALUING IT, which the dashboard
+ * prices at the live quote: a holding statement's lines the book carries as
+ * quantities (`BOOK_UNVALUED_HOLDINGS` — since Stage 10cy that is every share on
+ * the Motilal Oswal CDSL statements, whose printed rate is a last movement's
+ * price and not a valuation), and a transaction-only account's closing balances
+ * (Stage 10cx). Asked off positions alone, this map would drop those symbols on
+ * its next run and the quote feed would stop pricing them through Upstox with
+ * nothing failing anywhere. The ring-fenced holding is in none of these arrays.
+ */
+const recorded = bookArray(glow, "BOOK_UNVALUED_HOLDINGS") ?? [];
+const txOnly = new Set((bookArray(glow, "BOOK_ACCOUNTS") ?? [])
+  .filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
+const movementsSrc = (() => {
+  const i = glow.indexOf("export const BOOK_SHARE_MOVEMENTS");
+  const a = i < 0 ? -1 : glow.indexOf("= {", i);
+  const b = a < 0 ? -1 : glow.indexOf("\n};", a);
+  return a < 0 || b < 0 ? {} : JSON.parse(glow.slice(a + 2, b + 2));
+})();
+const closing = Object.values(movementsSrc).filter((w) => txOnly.has(w.accountId)
+  && w.reason == null && typeof w.closing === "number" && w.closing > 0);
+
 /** symbol → { names, isins } — the book's own evidence about each symbol. */
 const asked = new Map();
-for (const p of positions) {
+for (const p of [...positions,
+  ...recorded.filter((u) => typeof u.quantity === "number" && u.quantity > 0 && !u.sameUnitsReportedBy),
+  ...closing]) {
   const sym = p.symbol || bridge[p.securityKey];
   if (!sym) continue;
   const e = asked.get(sym) ?? { names: new Set(), isins: new Set() };

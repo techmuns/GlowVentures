@@ -24,6 +24,8 @@ import {
 import { describeDepositoryUnits, depositoryUnitsGist } from "../fundNavs";
 import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import type { QuoteFeed } from "../quotes";
+import type { ActionFeed } from "../corporateActions";
+import { validActionFeed } from "../../../shared/corporateActions.mjs";
 import { isCashEquivalent } from "../analytics";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SHARE_MOVEMENTS, BOOK_CAPITAL_MOVES } from "@/data/glowData";
@@ -151,27 +153,32 @@ ok("a holding with no units is never repriced",
   after.every((p, i) => (before[i].quantity > 0) || p.marketValue === before[i].marketValue));
 
 /**
- * ── AND THE MARK IN THE BOOK IS A PRIMITIVE, WHICH THE PAGE CAN NO LONGER SHOW
+ * ── A LAST DEPOSITORY MOVEMENT'S PRICE IS NEVER A MARK IN THE BOOK (Stage 10cy)
  *
- * `check:pages` carried a route for this — the one holding whose statement
- * prints a rate its own value column contradicts (ICICI NFT NT 50 DP G: 60.4
- * against an implied 60.4167). The NAV overlay sets `marketValue = quantity ×
- * NAV`, so on every overlaid holding the two are equal BY CONSTRUCTION and
- * that holding is itself overlaid — the rendered page can no longer witness the
- * distinction at all, and a route asserting it would pass trivially.
+ * This block used to assert that one holding's printed rate was NOT its value
+ * over quantity — ICICI NFT NT 50 DP G, 60.4 against an implied 60.4167 — as
+ * the proof that the ingest READS a rate rather than deriving it. Both halves
+ * of that turned out to be something else. The implied figure was a rounding
+ * artefact of a DERIVED value (₹2.90 on 0.048 units), and the rate was the
+ * price of the depository movement that took the rest of the holding OUT: the
+ * three Motilal Oswal holding statements print, beside a balance, the rate and
+ * value of the holding's last movement, never a valuation of the balance.
  *
- * The claim is still true of the BOOK, which is where it was always about: the
- * ingest READS the printed rate rather than deriving it (§4b). So it is
- * asserted here, against `glowData.ts`, and the route was retired rather than
- * left unable to fail.
+ * Those rows left `BOOK_POSITIONS` for `BOOK_UNVALUED_HOLDINGS`, as quantities
+ * carrying the movement's price as `lastMovementRate`. So the claim here is the
+ * one that change makes, struck from both ends: the book carries such lines,
+ * and none of them is also a position valued at anything.
  */
-console.log("── the book's own mark is read, not derived ──");
-const primitive = BOOK_POSITIONS.filter((p) =>
-  typeof p.currentPrice === "number" && p.quantity > 0
-  && Math.abs((p.currentPrice as number) - p.marketValue / p.quantity) >= 0.005);
-ok("at least one holding's printed rate is NOT its value over quantity",
-  primitive.length > 0,
-  primitive.map((p) => `${p.securityKey} ${p.currentPrice} vs ${(p.marketValue / p.quantity).toFixed(4)}`).join("; ") || "none — the ingest may have started deriving it");
+console.log("── a depository's last-movement price is never a book mark ──");
+const lastMoved = BOOK_UNVALUED_HOLDINGS.filter((u) => typeof u.lastMovementRate === "number" && u.lastMovementRate > 0);
+ok("the Motilal holding statements' last-movement prices are in the book, as quantities, so the claim below has a subject",
+  lastMoved.length > 0, `${lastMoved.length} line(s)`);
+const markedAtMovement = BOOK_POSITIONS.filter((p) =>
+  lastMoved.some((u) => u.accountId === p.accountId && u.securityKey === p.securityKey));
+ok("no book position stands where its statement printed only a last movement's price",
+  markedAtMovement.length === 0, markedAtMovement.map((p) => `${p.accountId} ${p.securityKey}`).join("; "));
+ok("...and the ICICI index fund this block was once anchored on is one of them — a delivery out, 0.048 units left",
+  lastMoved.some((u) => u.security === "ICICI NFT NT 50 DP G" && Math.abs((u.quantity ?? NaN) - 0.048) < 1e-9 && u.lastMovementRate === 60.4));
 
 // ── the depository's cash, valued where no statement marks it ──────────────
 /**
@@ -400,20 +407,66 @@ ok("an equity balance no identifier resolves to a symbol is no candidate — not
   noSymbol.map((w) => w.securityKey).join("; "));
 ok("no candidate carries a price or a cost before a feed answers",
   CAND.every((p) => p.currentPrice === null && p.costBasis === null && p.costUnavailable === true && !p.navPriced));
+/**
+ * THE COMMITTED CAPTURE IS THE CORPORATE-ACTION EVIDENCE these rows are gated
+ * on, exactly as the page first paints from it (`savedCorporateActions`). A
+ * share is a row only once a capture has answered AND no split, bonus or other
+ * share event since the balance was counted is unaccounted for.
+ */
+const CAPTURE_RAW: unknown = JSON.parse(readFileSync(path.join(process.cwd(), "public", "data", "corporate-actions.json"), "utf8"));
+ok("the committed corporate-action capture is on disk and well formed", validActionFeed(CAPTURE_RAW));
+const CAPTURE = CAPTURE_RAW as ActionFeed;
 ok("with no feed, no share is a row — never at a zero or a guessed price",
-  depositoryShareHoldings(null).length === 0);
+  depositoryShareHoldings(null, CAPTURE).length === 0);
 const one = CAND[0];
 const feedOf = (sym: string, price: number): QuoteFeed => ({
   quotes: { [sym]: { price, prevClose: price / 1.01, open: null, dayLow: null, dayHigh: null, low52: null, high52: null,
     marketCap: null, volume: null, yearChangePct: null, ageS: 0, source: "upstox" } },
   asOf: "2026-09-25T10:00:00Z", missing: [], pending: [], fresh: 1, stale: 0,
 });
-const priced = one?.symbol ? depositoryShareHoldings(feedOf(one.symbol, 250)) : [];
+ok("a feed that prices a share makes no row while no corporate-action capture has answered — a split since the balance was counted could not be ruled out",
+  !!one?.symbol && depositoryShareHoldings(feedOf(one.symbol, 250), null).length === 0);
+const priced = one?.symbol ? depositoryShareHoldings(feedOf(one.symbol, 250), CAPTURE) : [];
 ok("a feed that prices one share makes exactly that share a row",
   priced.length === 1 && priced[0].isin === one?.isin, priced.map((p) => p.symbol).join("; "));
 ok("...at its closing units × the quote, live, with no cost and no NAV",
   priced.length === 1 && priced[0].marketValue === (one?.quantity ?? 0) * 250 && priced[0].live === true
     && priced[0].costBasis === null && priced[0].unrealizedPnL === null && !priced[0].navPriced);
+/**
+ * THE GATE ITSELF, on constructed captures: a split between the balance's date
+ * and the quote's is projected (twice the units, at the quote), and an event
+ * whose effect on the units the capture cannot state leaves the share no row —
+ * never a pre-split count at a post-split price.
+ */
+const oneDate = BOOK_ACCOUNTS.find((a) => a.accountId === one?.accountId)?.asOf ?? "";
+const withAction = (type: string, factor: number | null): ActionFeed => ({
+  ...CAPTURE,
+  rows: [...CAPTURE.rows, {
+    id: `test:${one?.symbol}|${type}`, ticker: one?.symbol ?? "", isin: one?.isin ?? null, company: one?.security ?? "",
+    type, exDate: "2026-08-20", recordDate: null, purpose: `constructed ${type}`, source: "test", sourceUrl: null,
+    factor, cashPerShare: null, issue: null,
+  }],
+});
+const tradedFeed = (sym: string, price: number): QuoteFeed => {
+  const f = feedOf(sym, price);
+  return { ...f, quotes: { [sym]: { ...f.quotes[sym], tradedAt: "2026-09-25T09:30:00Z" } } };
+};
+ok("the constructed events fall between the balance's date and the quote's, so they are the gate's to decide",
+  !!oneDate && oneDate < "2026-08-20" && "2026-08-20" < "2026-09-25", oneDate);
+const split = one?.symbol ? depositoryShareHoldings(tradedFeed(one.symbol, 125), withAction("split", 2)) : [];
+ok("a 1:2 split since the statement is projected: twice the units at the quote, never the old count at the new price",
+  split.length === 1 && split[0].quantity === (one?.quantity ?? 0) * 2 && split[0].marketValue === (one?.quantity ?? 0) * 2 * 125,
+  split.map((p) => `${p.quantity} × ${p.currentPrice} = ${p.marketValue}`).join("; "));
+const rights = one?.symbol ? depositoryShareHoldings(tradedFeed(one.symbol, 250), withAction("rights", null)) : [];
+ok("an event the capture cannot state the units of — a rights issue — leaves the share no row",
+  rights.length === 0, rights.map((p) => p.symbol).join("; "));
+ok("...and every candidate passes the committed capture on a quote two days after it, so the gate is not what leaves this book's shares unvalued",
+  (() => {
+    const quotes: QuoteFeed["quotes"] = {};
+    for (const p of shareCandidates()) if (p.symbol) quotes[p.symbol] = { ...feedOf(p.symbol, 100).quotes[p.symbol], tradedAt: "2026-09-25T09:30:00Z" };
+    const all: QuoteFeed = { ...feedOf("X", 1), quotes };
+    return depositoryShareHoldings(all, CAPTURE).length === shareCandidates().filter((p) => !!p.symbol).length;
+  })());
 const notesShare = partialValuationNotes([...FUNDS, ...priced]);
 const withShare = notesShare.get(one?.accountId ?? "") ?? "";
 ok("the account's note names the share and that it is valued only while the quote feed prices it",
@@ -450,11 +503,27 @@ ok("ESDS on Ajay's ICICI NSDL account is a candidate at its 330,898 shares, name
   !!esds && esds.accountId === "icici-bank-nsdl-demat-49794950" && esds.quantity === 330898 && esds.symbol === "ESDS"
     && esds.security === "ESDS Software Solution Limited",
   esds ? `${esds.accountId} ${esds.quantity} ${esds.symbol} "${esds.security}"` : "missing");
-ok("every such candidate is an equity ISIN a holding statement records with no price, and says so in its kind",
-  NP.length > 0 && NP.every((p) => p.depositoryUnits?.kind === "no-price" && !txOnly.has(p.accountId)
-    && BOOK_UNVALUED_HOLDINGS.some((u) => u.accountId === p.accountId && u.isin?.toUpperCase() === p.isin?.toUpperCase()
-      && u.quantity === p.quantity && u.assetClass === "Equity")),
-  NP.map((p) => `${p.symbol} ${p.accountId}`).join("; "));
+// WHAT THE STATEMENT PRINTED BESIDE IT decides the kind: no rate (or face
+// value) is `no-price`, and the price of the holding's last depository movement
+// (the Motilal statements, Stage 10cy) is `last-movement` — a price the
+// statement DID print, of a movement rather than of the balance.
+const unvaluedLineOf = (p: Position) => BOOK_UNVALUED_HOLDINGS.find((u) => u.accountId === p.accountId
+  && u.isin?.toUpperCase() === p.isin?.toUpperCase() && u.quantity === p.quantity && u.assetClass === "Equity");
+ok("every such candidate is an equity ISIN a holding statement records with no usable price, and says which in its kind",
+  NP.length > 0 && NP.every((p) => {
+    const u = unvaluedLineOf(p);
+    if (!u || txOnly.has(p.accountId)) return false;
+    const moved = typeof u.lastMovementRate === "number" && u.lastMovementRate > 0;
+    return moved
+      ? p.depositoryUnits?.kind === "last-movement" && p.depositoryUnits.lastMovementRate === u.lastMovementRate
+        && (p.depositoryUnits.lastMovementDate ?? null) === (u.lastMovementDate ?? null)
+      : p.depositoryUnits?.kind === "no-price";
+  }),
+  NP.map((p) => `${p.symbol} ${p.depositoryUnits?.kind} ${p.accountId}`).join("; "));
+ok("...and the last-movement kind is in use, so the three Motilal statements' shares reach this layer at all",
+  NP.some((p) => p.depositoryUnits?.kind === "last-movement"));
+ok("...and the movement's price is never the price a candidate carries",
+  NP.every((p) => p.currentPrice === null && p.marketValue === 0));
 ok("...and none carries a price, a cost or a NAV before a feed answers",
   NP.every((p) => p.currentPrice === null && p.costBasis === null && p.costUnavailable === true && !p.navPriced && p.marketValue === 0));
 ok("the page's list of what is not valued reads both routes' candidates",
@@ -473,7 +542,7 @@ const npFeed = (sym: string, price: number): QuoteFeed => ({
     marketCap: null, volume: null, yearChangePct: null, ageS: 0, source: "upstox" } },
   asOf: "2026-09-25T10:00:00Z", missing: [], pending: [], fresh: 1, stale: 0,
 });
-const esdsPriced = depositoryShareHoldings(npFeed("ESDS", 400));
+const esdsPriced = depositoryShareHoldings(npFeed("ESDS", 400), CAPTURE);
 ok("a feed pricing ESDS makes it a row at its statement's units × the quote, live, with no cost",
   esdsPriced.length === 1 && esdsPriced[0].isin === "INE0DRI01029" && esdsPriced[0].marketValue === 330898 * 400
     && esdsPriced[0].live === true && esdsPriced[0].costBasis === null,

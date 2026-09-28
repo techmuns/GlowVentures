@@ -175,10 +175,13 @@ export function unvaluedHoldingsOf(
  *     here would say the family holds units nothing values while the table above
  *     carries them. It is left out and counted in `reportedElsewhere`.
  *   - a line the LIVE book values — a fund at AMFI's published NAV
- *     (`unpricedStatementUnits`, a `no-rate` row) or a listed share at the live
- *     quote (`unpricedStatementShareCandidates`, a `no-price` row, only while the
- *     feed prices it) — comes back with `valuedLive` set, so a page can say it IS
- *     in the live figures and how, and that no statement values it.
+ *     (`unpricedStatementUnits`) or a listed share at the live quote
+ *     (`unpricedStatementShareCandidates`, only while the feed prices it) —
+ *     comes back with `valuedLive` set, so a page can say it IS in the live
+ *     figures and how, and that no statement values it. Such a row is `no-rate`
+ *     or `no-price` where the statement printed nothing usable beside it, and
+ *     `last-movement` where it printed only the price of the holding's last
+ *     depository movement (the Motilal Oswal statements, Stage 10cy).
  *
  * Nothing here is summed into a value: `quantity` is units, not money.
  */
@@ -213,7 +216,8 @@ export function unvaluedStatementLinesOf(
     const lines = mine.filter((u) => !u.sameUnitsReportedBy).map((row) => ({
       row,
       valuedLive: positions.find((p) => p.accountId === a.accountId
-        && (p.depositoryUnits?.kind === "no-rate" || p.depositoryUnits?.kind === "no-price")
+        && (p.depositoryUnits?.kind === "no-rate" || p.depositoryUnits?.kind === "no-price"
+          || p.depositoryUnits?.kind === "last-movement")
         && !!isin(row) && isin(p) === isin(row)) ?? null,
     }));
     lines.sort((x, y) => Number(!!y.valuedLive) - Number(!!x.valuedLive) || x.row.security.localeCompare(y.row.security));

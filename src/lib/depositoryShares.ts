@@ -19,6 +19,19 @@
 // reach `statementPortfolio`, and never stand in the live book at a guessed
 // price.
 //
+// ── AND ONLY WHERE NO SPLIT OR BONUS SINCE THE STATEMENT IS UNACCOUNTED FOR ─
+//
+// A balance counted on 31 July and a price quoted in September are two dates,
+// and a split or bonus between them makes the pair a wrong figure — a
+// pre-split count at a post-split price. The statement's own positions have
+// always gone through the corporate-action gate for exactly that
+// (`applyCorporateActionQuotes`), and so do these rows now: a share the capture
+// shows a split or bonus for is valued on the projected units where the chain
+// is clean, and is NOT a row where it is not. Before Stage 10cy the
+// transaction-only account's shares took the quote directly — a gap the three
+// Motilal holding statements' shares would have widened once they joined this
+// path.
+//
 // ── WHICH SHARE THIS IS: THE ISIN, NEVER A NAME ─────────────────────────────
 //
 // The depository prints the ISIN. The NSE symbol comes from a book position of
@@ -40,8 +53,21 @@
 // and never in `statementPortfolio`. Its `depositoryUnits.kind` is `no-price`,
 // because its account DID send a holding statement and the sentence a page
 // shows must say so.
+//
+// ── AND EVERY SHARE THE THREE MOTILAL HOLDING STATEMENTS RECORD (Stage 10cy) ─
+//
+// Those statements print a `Rs RATE` and a `Rs VALUE` beside most holdings, and
+// both are the holding's LAST DEPOSITORY MOVEMENT — its price and that price
+// times the movement's own quantity — never a valuation of the balance. So the
+// book carries every one of those shares as a quantity (`BOOK_UNVALUED_HOLDINGS`,
+// with the movement's price as `lastMovementRate`), and they come here on the
+// same terms as Clean Max: the live quote, only while the feed prices it. Their
+// kind is `last-movement`, because the statement DID print a price against them
+// and a page must say what that price was rather than that there was none. The
+// movement's price is never the price a row is valued at.
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
-import { applyQuotes, symbolFor, symbolForKey, type QuoteFeed } from "./quotes";
+import { symbolFor, symbolForKey, type QuoteFeed } from "./quotes";
+import { applyCorporateActionQuotes, type ActionFeed } from "./corporateActions";
 import { securityLabel } from "./securityLabel";
 import { displayDepositoryName } from "./format";
 import type { Account, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
@@ -164,8 +190,9 @@ export function depositoryShareCandidates(
 
 /**
  * The listed shares a HOLDING statement records with no usable price — no rate,
- * or only the face value they were allotted at — as rows with NO price yet.
- * Five gates:
+ * only the face value they were allotted at, or only the price of the holding's
+ * last depository movement (the Motilal Oswal statements, Stage 10cy) — as rows
+ * with NO price yet. Five gates:
  *   1. an EQUITY line of `BOOK_UNVALUED_HOLDINGS` with an `INE…` ISIN and
  *      units — the statement's own record that the account holds it;
  *   2. not the depository's copy of units another statement reports
@@ -234,13 +261,47 @@ export function unpricedStatementShareCandidates(
       dividendReceived: null,
       accruedIncome: null,
       positionIrrPct: null,
-      depositoryUnits: { asOf: u.asOf, source: null, kind: "no-price" },
+      // WHAT THE STATEMENT PRINTED BESIDE IT, said exactly. A last-movement
+      // price is a price the statement DID print — of a movement, not of the
+      // balance — and a page must say so rather than that it printed none.
+      depositoryUnits: typeof u.lastMovementRate === "number" && u.lastMovementRate > 0
+        ? {
+          asOf: u.asOf, source: null, kind: "last-movement",
+          lastMovementRate: u.lastMovementRate, lastMovementDate: u.lastMovementDate ?? null,
+          lastMovementSide: u.lastMovementSide ?? null,
+        }
+        : { asOf: u.asOf, source: null, kind: "no-price" },
     });
   }
   return out;
 }
 
-const CANDIDATES = [...depositoryShareCandidates(), ...unpricedStatementShareCandidates()];
+/**
+ * THE TWO ROUTES AS ONE LIST, EACH HOLDING ONCE. Each route refuses a share the
+ * BOOK already carries at the same units under the same owner; neither could
+ * see the other. A holding caught mid-transfer between two accounts of one
+ * owner — a closing balance on the transaction-only demat, and the same units
+ * recorded on a holding statement — would be two candidates and, once priced,
+ * the same shares counted twice. The first is kept. Measured on this book it
+ * drops nothing, which is exactly when a double count is invisible.
+ */
+export function combinedShareCandidates(
+  lists: readonly (readonly Position[])[],
+  accounts: readonly Account[] = BOOK_ACCOUNTS,
+): Position[] {
+  const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+  const kept: Position[] = [];
+  for (const p of lists.flat()) {
+    const owner = ownerOf.get(p.accountId) ?? null;
+    const isin = isinOf(p);
+    if (kept.some((k) => isinOf(k) === isin && Math.abs(k.quantity - p.quantity) < 0.0005
+      && (ownerOf.get(k.accountId) ?? null) === owner)) continue;
+    kept.push(p);
+  }
+  return kept;
+}
+
+const CANDIDATES = combinedShareCandidates([depositoryShareCandidates(), unpricedStatementShareCandidates()]);
 
 /** Every share either route could value, priced or not — for a page naming what is not valued. */
 export const shareCandidates = (): readonly Position[] => CANDIDATES;
@@ -250,9 +311,30 @@ export const depositoryShareSymbols = (): string[] =>
   [...new Set(CANDIDATES.map((p) => p.symbol).filter((s): s is string => !!s))];
 
 /**
+ * The ISINs the corporate-action capture must be asked about for these shares —
+ * the capture is filtered to what is asked for, and a share outside it cannot
+ * pass the gate (`Security outside the saved feed's coverage`).
+ */
+export const depositoryShareIsins = (): string[] =>
+  [...new Set(CANDIDATES.map((p) => isinOf(p)).filter((s): s is string => !!s))];
+
+/**
  * The candidates the feed priced, at the live quote — and ONLY those. A share
  * the feed did not price is not a row at a guessed or zero price.
+ *
+ * THROUGH THE CORPORATE-ACTION GATE, like every statement share: a split or
+ * bonus since the balance was counted is projected where its chain is clean,
+ * and where it is not — or where no capture has answered yet — the share is
+ * not a row. The gate's per-holding RETURNS are not kept: a period return is
+ * struck against the statement's own valuation of the holding, and no
+ * statement values these.
  */
-export function depositoryShareHoldings(feed: QuoteFeed | null, candidates: readonly Position[] = CANDIDATES): Position[] {
-  return applyQuotes([...candidates], feed).filter((p) => p.live === true && p.marketValue > 0);
+export function depositoryShareHoldings(
+  feed: QuoteFeed | null,
+  actions: ActionFeed | null,
+  candidates: readonly Position[] = CANDIDATES,
+  accounts: readonly Account[] = BOOK_ACCOUNTS,
+): Position[] {
+  return applyCorporateActionQuotes([...candidates], [...accounts], feed, actions).positions
+    .filter((p) => p.live === true && p.marketValue > 0);
 }
