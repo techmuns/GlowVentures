@@ -157,7 +157,9 @@ if (!base || !base.usableForValue) {
   const wit = { ...BOOK_POSITIONS.find((p) => I(p) === isin)!, accountId: "t-w", currentPrice: base.nav * 0.97 } as Position;
   const row: UnvaluedStatementHolding = {
     accountId: "t-u", ownerId: "t", securityKey: "t-scheme", security: "T SCHEME", isin,
-    assetClass: "Mutual Fund", quantity: 1000, faceValue: null, asOf: "2026-07-31", sameUnitsReportedBy: null, reason: "test",
+    assetClass: "Mutual Fund", quantity: 1000, faceValue: null,
+    lastMovementRate: null, lastMovementValue: null, lastMovementDate: null, lastMovementSide: null,
+    asOf: "2026-07-31", sameUnitsReportedBy: null, reason: "test",
   };
   const accs = [mk("t-u"), mk("t-w")];
   const run = (u: Partial<UnvaluedStatementHolding>, as = accs, ps: Position[] = [wit]) =>

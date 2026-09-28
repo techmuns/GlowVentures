@@ -545,7 +545,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 41 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
+    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 41 holding(s) as quantities, 23 of them with the price of their last depository movement — a transaction price, not a valuation of the balance; 6 at the face value they were allotted at; 12 with no rate at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -561,7 +561,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 14 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
+    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 14 holding(s) as quantities, 14 of them with the price of their last depository movement — a transaction price, not a valuation of the balance. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
@@ -577,7 +577,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 7 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
+    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 7 holding(s) as quantities, 6 of them with the price of their last depository movement — a transaction price, not a valuation of the balance; 1 with no rate at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
@@ -9938,6 +9938,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 347,
     "faceValue": 100,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-08-29",
     "sameUnitsReportedBy": null,
     "reason": "the HDFC Bank (NSDL demat) statement of 2026-08-29 records 347 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -9951,6 +9955,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 347,
     "faceValue": 100,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-08-29",
     "sameUnitsReportedBy": null,
     "reason": "the HDFC Bank (NSDL demat) statement of 2026-08-29 records 347 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -9964,6 +9972,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 636,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 636 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -9977,6 +9989,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 48,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 48 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -9990,6 +10006,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 378788,
     "faceValue": 5,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 378788 unit(s) at their face value of 5, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10003,6 +10023,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 330898,
     "faceValue": 1,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 330898 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10016,6 +10040,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 710,
     "faceValue": 1,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 710 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10029,6 +10057,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 100,
     "faceValue": 1,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 100 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10042,6 +10074,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 67500,
     "faceValue": 1000,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 67500 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10055,6 +10091,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 107,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 107 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10068,6 +10108,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 32017,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 32017 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10081,6 +10125,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 177981,
     "faceValue": 1,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 177981 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10094,6 +10142,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 75000,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 75000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10107,6 +10159,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 125000,
     "faceValue": 1,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 125000 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10120,6 +10176,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 17000,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 17000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10133,6 +10193,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 90000,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 90000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10146,6 +10210,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 71400,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 71400 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10159,6 +10227,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 59000,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 59000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10172,6 +10244,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 24800,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 24800 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10185,6 +10261,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 15000,
     "faceValue": 1000,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": "sky-capital-rising-titans-fund-SKY022",
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 15000 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10198,6 +10278,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 171879,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 171879 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10211,6 +10295,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 165566,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 165566 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10224,6 +10312,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 148000,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 148000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10237,6 +10329,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 4000,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 4000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10250,6 +10346,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Unlisted",
     "quantity": 55,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 55 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10263,6 +10363,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 32791,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-03-31",
     "sameUnitsReportedBy": null,
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 32791 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10276,6 +10380,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 81000,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-06-30",
     "sameUnitsReportedBy": null,
     "reason": "the fund's own statement of 2026-06-30 reports 81000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
@@ -10289,6 +10397,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 27000,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-06-30",
     "sameUnitsReportedBy": null,
     "reason": "the fund's own statement of 2026-06-30 reports 27000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
@@ -10302,6 +10414,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 27000,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-06-30",
     "sameUnitsReportedBy": null,
     "reason": "the fund's own statement of 2026-06-30 reports 27000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
@@ -10315,6 +10431,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 1416918.692,
     "faceValue": 100,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 1416918.692 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10328,6 +10448,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 393095.951,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10341,9 +10465,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 7300,
     "faceValue": null,
+    "lastMovementRate": 1368.25,
+    "lastMovementValue": 2133101.75,
+    "lastMovementDate": "2026-07-02",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,368.25 a unit, on a receipt of 1,559 unit(s) on 2026-07-02 — not a valuation of the 7,300 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10354,6 +10482,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 252.5,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10367,6 +10499,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 856.736,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10380,9 +10516,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 603,
     "faceValue": null,
+    "lastMovementRate": 1604.2,
+    "lastMovementValue": 24063,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹1,604.2 a unit — not a valuation of the 603 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10393,9 +10533,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 24406.691,
     "faceValue": null,
+    "lastMovementRate": 160.874,
+    "lastMovementValue": 3926402.01,
+    "lastMovementDate": "2026-04-20",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹160.874 a unit, on a receipt of 24,406.691 unit(s) on 2026-04-20 — not a valuation of the 24,406.691 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10406,6 +10550,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 1918953.2,
     "faceValue": 100,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": "buoyant-capital-103472",
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 1918953.2 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10419,6 +10567,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 12993094.825,
     "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": "carnelian-bharat-amritkaal-fund-4551",
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 12993094.825 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10432,6 +10584,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 350980,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10445,9 +10601,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 34500,
     "faceValue": null,
+    "lastMovementRate": 216.15,
+    "lastMovementValue": 6213231.75,
+    "lastMovementDate": "2026-07-02",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹216.15 a unit, on a receipt of 28,745 unit(s) on 2026-07-02 — not a valuation of the 34,500 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10458,6 +10618,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 94967,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10471,9 +10635,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "ETF",
     "quantity": 205000,
     "faceValue": null,
+    "lastMovementRate": 151.1,
+    "lastMovementValue": 545319.9,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹151.1 a unit — not a valuation of the 2,05,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10484,9 +10652,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "ETF",
     "quantity": 123000,
     "faceValue": null,
+    "lastMovementRate": 276.82,
+    "lastMovementValue": 29619740,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹276.82 a unit — not a valuation of the 1,23,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10497,9 +10669,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 60,
     "faceValue": null,
+    "lastMovementRate": 1,
+    "lastMovementValue": 60,
+    "lastMovementDate": "2026-05-26",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1 a unit, on a receipt of 60 unit(s) on 2026-05-26 — not a valuation of the 60 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10510,9 +10686,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 580,
     "faceValue": null,
+    "lastMovementRate": 1,
+    "lastMovementValue": 60,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹1 a unit — not a valuation of the 580 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10523,9 +10703,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 30000,
     "faceValue": null,
+    "lastMovementRate": 331.3,
+    "lastMovementValue": 8084382.6,
+    "lastMovementDate": "2026-07-02",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹331.3 a unit, on a receipt of 24,402 unit(s) on 2026-07-02 — not a valuation of the 30,000 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10536,9 +10720,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 37755.485,
     "faceValue": null,
+    "lastMovementRate": 517.054,
+    "lastMovementValue": 4347000.17,
+    "lastMovementDate": "2026-07-27",
+    "lastMovementSide": "delivery",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹517.054 a unit, on a delivery of 8,407.246 unit(s) on 2026-07-27 — not a valuation of the 37,755.485 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10549,9 +10737,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 5100984.835,
     "faceValue": null,
+    "lastMovementRate": 14.18,
+    "lastMovementValue": 42397880.11,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹14.18 a unit — not a valuation of the 51,00,984.835 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10562,9 +10754,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 14500,
     "faceValue": null,
+    "lastMovementRate": 1379.1,
+    "lastMovementValue": 7365773.1,
+    "lastMovementDate": "2026-07-02",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,379.1 a unit, on a receipt of 5,341 unit(s) on 2026-07-02 — not a valuation of the 14,500 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10575,9 +10771,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 993739.133,
     "faceValue": null,
+    "lastMovementRate": 40.25,
+    "lastMovementValue": 39998000.1,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹40.25 a unit — not a valuation of the 9,93,739.133 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10588,6 +10788,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 27000,
     "faceValue": 1000,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": "india-sme-investments-177302",
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 27000 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10601,9 +10805,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 9000,
     "faceValue": null,
+    "lastMovementRate": 820.95,
+    "lastMovementValue": 550857.45,
+    "lastMovementDate": "2026-07-02",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹820.95 a unit, on a receipt of 671 unit(s) on 2026-07-02 — not a valuation of the 9,000 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10614,9 +10822,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 5250,
     "faceValue": null,
+    "lastMovementRate": 941.15,
+    "lastMovementValue": 4065768,
+    "lastMovementDate": "2026-07-02",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹941.15 a unit, on a receipt of 4,320 unit(s) on 2026-07-02 — not a valuation of the 5,250 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10627,9 +10839,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 8000,
     "faceValue": null,
+    "lastMovementRate": 236.25,
+    "lastMovementValue": 236250,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹236.25 a unit — not a valuation of the 8,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10640,6 +10856,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 78.686,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10653,9 +10873,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 16250,
     "faceValue": null,
+    "lastMovementRate": 300.15,
+    "lastMovementValue": 4877437.5,
+    "lastMovementDate": "2026-07-02",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹300.15 a unit, on a receipt of 16,250 unit(s) on 2026-07-02 — not a valuation of the 16,250 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10666,9 +10890,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 4875,
     "faceValue": null,
+    "lastMovementRate": 3358.7,
+    "lastMovementValue": 16373662.5,
+    "lastMovementDate": "2026-07-07",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹3,358.7 a unit, on a receipt of 4,875 unit(s) on 2026-07-07 — not a valuation of the 4,875 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10679,6 +10907,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 0.003,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10692,6 +10924,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 9514997.798,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": "motilal-oswal-founders-fund-90410016093",
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10705,6 +10941,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 75000,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10718,9 +10958,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "ETF",
     "quantity": 257.411,
     "faceValue": null,
+    "lastMovementRate": 999.99,
+    "lastMovementValue": 197,
+    "lastMovementDate": "2026-07-27",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹999.99 a unit, on a receipt of 0.197 unit(s) on 2026-07-27 — not a valuation of the 257.411 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10731,6 +10975,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 16000,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10744,9 +10992,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 13500,
     "faceValue": null,
+    "lastMovementRate": 361.75,
+    "lastMovementValue": 4883625,
+    "lastMovementDate": "2026-07-02",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹361.75 a unit, on a receipt of 13,500 unit(s) on 2026-07-02 — not a valuation of the 13,500 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10757,6 +11009,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 1820926.864,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": "sanshi-fund-9069671554",
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10770,9 +11026,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 27750,
     "faceValue": null,
+    "lastMovementRate": 1044.25,
+    "lastMovementValue": 2284819,
+    "lastMovementDate": "2026-07-22",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,044.25 a unit, on a receipt of 2,188 unit(s) on 2026-07-22 — not a valuation of the 27,750 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10783,6 +11043,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 12899.355,
     "faceValue": 1000,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 12899.355 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10796,6 +11060,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 2500,
     "faceValue": 1000,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 2500 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -10809,6 +11077,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 1225000,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -10822,9 +11094,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 3915742.08,
     "faceValue": null,
+    "lastMovementRate": 15.336,
+    "lastMovementValue": 60051820.54,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹15.336 a unit — not a valuation of the 39,15,742.08 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -10835,9 +11111,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 12000,
     "faceValue": null,
+    "lastMovementRate": 420.35,
+    "lastMovementValue": 5044200,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹420.35 a unit — not a valuation of the 12,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10848,9 +11128,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 183499.511,
     "faceValue": null,
+    "lastMovementRate": 108.65,
+    "lastMovementValue": 19937221.76,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹108.65 a unit — not a valuation of the 1,83,499.511 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10861,9 +11145,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 264720.521,
     "faceValue": null,
+    "lastMovementRate": 454.566,
+    "lastMovementValue": 120332948.35,
+    "lastMovementDate": "2026-07-01",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹454.566 a unit, on a receipt of 2,64,720.521 unit(s) on 2026-07-01 — not a valuation of the 2,64,720.521 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10874,9 +11162,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 11900,
     "faceValue": null,
+    "lastMovementRate": 170.6,
+    "lastMovementValue": 34120,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹170.6 a unit — not a valuation of the 11,900 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10887,9 +11179,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 1469.627,
     "faceValue": null,
+    "lastMovementRate": 570.133,
+    "lastMovementValue": 15000000.25,
+    "lastMovementDate": "2026-07-13",
+    "lastMovementSide": "delivery",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹570.133 a unit, on a delivery of 26,309.651 unit(s) on 2026-07-13 — not a valuation of the 1,469.627 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10900,9 +11196,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 2407981.455,
     "faceValue": null,
+    "lastMovementRate": 15.74,
+    "lastMovementValue": 10071654.85,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹15.74 a unit — not a valuation of the 24,07,981.455 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10913,9 +11213,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 602441.424,
     "faceValue": null,
+    "lastMovementRate": 39.29,
+    "lastMovementValue": 23669923.55,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹39.29 a unit — not a valuation of the 6,02,441.424 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10926,9 +11230,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 0.048,
     "faceValue": null,
+    "lastMovementRate": 60.4,
+    "lastMovementValue": 28985295.6,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹60.4 a unit — not a valuation of the 0.048 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10939,9 +11247,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 0.629,
     "faceValue": null,
+    "lastMovementRate": 57.356,
+    "lastMovementValue": 2413311.06,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹57.356 a unit — not a valuation of the 0.629 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10952,9 +11264,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 0.43,
     "faceValue": null,
+    "lastMovementRate": 268.815,
+    "lastMovementValue": 115.59,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹268.815 a unit — not a valuation of the 0.43 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10965,9 +11281,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 146856.943,
     "faceValue": null,
+    "lastMovementRate": 86.47,
+    "lastMovementValue": 9999999.98,
+    "lastMovementDate": "2026-06-22",
+    "lastMovementSide": "delivery",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹86.47 a unit, on a delivery of 1,15,647.045 unit(s) on 2026-06-22 — not a valuation of the 1,46,856.943 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10978,9 +11298,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 0.39,
     "faceValue": null,
+    "lastMovementRate": 137.62,
+    "lastMovementValue": 53.67,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹137.62 a unit — not a valuation of the 0.39 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -10991,9 +11315,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "ETF",
     "quantity": 3828.05,
     "faceValue": null,
+    "lastMovementRate": 999.99,
+    "lastMovementValue": 2924.97,
+    "lastMovementDate": "2026-07-27",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹999.99 a unit, on a receipt of 2.925 unit(s) on 2026-07-27 — not a valuation of the 3,828.05 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -11004,9 +11332,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 48000,
     "faceValue": null,
+    "lastMovementRate": 1792.85,
+    "lastMovementValue": 22028747.95,
+    "lastMovementDate": "2026-05-29",
+    "lastMovementSide": "delivery",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,792.85 a unit, on a delivery of 12,287 unit(s) on 2026-05-29 — not a valuation of the 48,000 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -11017,9 +11349,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 1366820.78,
     "faceValue": null,
+    "lastMovementRate": 15.336,
+    "lastMovementValue": 20961563.48,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹15.336 a unit — not a valuation of the 13,66,820.78 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
@@ -11030,6 +11366,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 242412.122,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
@@ -11043,9 +11383,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 132634.709,
     "faceValue": null,
+    "lastMovementRate": 160.874,
+    "lastMovementValue": 21337476.18,
+    "lastMovementDate": "2026-04-20",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹160.874 a unit, on a receipt of 1,32,634.709 unit(s) on 2026-04-20 — not a valuation of the 1,32,634.709 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
@@ -11056,9 +11400,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "ETF",
     "quantity": 1195000,
     "faceValue": null,
+    "lastMovementRate": 141.24,
+    "lastMovementValue": 19562022.48,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹141.24 a unit — not a valuation of the 11,95,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
@@ -11069,9 +11417,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 21012.887,
     "faceValue": null,
+    "lastMovementRate": 409.572,
+    "lastMovementValue": 12726630.76,
+    "lastMovementDate": "2026-04-16",
+    "lastMovementSide": "delivery",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹409.572 a unit, on a delivery of 31,073 unit(s) on 2026-04-16 — not a valuation of the 21,012.887 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
@@ -11082,9 +11434,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Mutual Fund",
     "quantity": 612631.862,
     "faceValue": null,
+    "lastMovementRate": 20.77,
+    "lastMovementValue": 12724363.77,
+    "lastMovementDate": "2026-04-20",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹20.77 a unit, on a receipt of 6,12,631.862 unit(s) on 2026-04-20 — not a valuation of the 6,12,631.862 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
@@ -11095,9 +11451,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "ETF",
     "quantity": 7679.495,
     "faceValue": null,
+    "lastMovementRate": 999.99,
+    "lastMovementValue": 5866.94,
+    "lastMovementDate": "2026-07-27",
+    "lastMovementSide": "receipt",
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹999.99 a unit, on a receipt of 5.867 unit(s) on 2026-07-27 — not a valuation of the 7,679.495 unit(s) held, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
@@ -11108,9 +11468,13 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "Equity",
     "quantity": 180000,
     "faceValue": null,
+    "lastMovementRate": 502.2,
+    "lastMovementValue": 2259900,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹502.2 a unit — not a valuation of the 1,80,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
@@ -11121,6 +11485,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 2053614.026,
     "faceValue": 100,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 2053614.026 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -11134,6 +11502,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 3416657.416,
     "faceValue": 100,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": "buoyant-capital-103473",
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 3416657.416 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -11147,6 +11519,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 17000,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the fund's own statement of 2026-07-31 reports 17000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
@@ -11160,6 +11536,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 285,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the fund's own statement of 2026-07-31 reports 285 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
@@ -11173,6 +11553,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 15000,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the fund's own statement of 2026-07-31 reports 15000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
@@ -11186,6 +11570,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 7500,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the fund's own statement of 2026-07-31 reports 7500 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
@@ -11199,6 +11587,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "assetClass": "AIF",
     "quantity": 7500,
     "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the fund's own statement of 2026-07-31 reports 7500 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
@@ -20565,9 +20957,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|bndh-l-and-mcf-dp-gr": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr",
     "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT PL - GROWTH",
     "isin": "INF194K01V89",
     "periodFrom": "2026-04-01",
@@ -20655,9 +21047,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|icici-pru-amc-ltd-icici-pru-mf-icici-pru-india-opportunities-fund-direct-plan-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|icici-ioppf-d-grw": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "icici-pru-amc-ltd-icici-pru-mf-icici-pru-india-opportunities-fund-direct-plan-growth",
+    "securityKey": "icici-ioppf-d-grw",
     "security": "ICICI PRU AMC LTD#ICICI PRU MF-ICICI PRU INDIA OPPORTUNITIES FUND-DIRECT PLAN-GROWTH",
     "isin": "INF109KC1RH9",
     "periodFrom": "2026-04-01",
@@ -20709,9 +21101,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|icici-liqf-d-growth": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth",
+    "securityKey": "icici-liqf-d-growth",
     "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD LIQUID FUND-DIRECT-GROWTH",
     "isin": "INF109K01Q49",
     "periodFrom": "2026-04-01",
@@ -20763,9 +21155,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|kaynes-technology-india-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012539150|kaynes-technology": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "kaynes-technology-india-limited-equity-shares",
+    "securityKey": "kaynes-technology",
     "security": "KAYNES TECHNOLOGY INDIA LIMITED # EQUITY SHARES",
     "isin": "INE918Z01012",
     "periodFrom": "2026-04-01",
@@ -20799,9 +21191,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|kotak-mahindra-amc-ltd-kotak-mf-kotak-multicap-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|kotak-mtcf-d-grow": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "kotak-mahindra-amc-ltd-kotak-mf-kotak-multicap-fund-direct-growth",
+    "securityKey": "kotak-mtcf-d-grow",
     "security": "KOTAK MAHINDRA AMC LTD#KOTAK MF-KOTAK MULTICAP FUND-DIRECT-GROWTH",
     "isin": "INF174KA1HV3",
     "periodFrom": "2026-04-01",
@@ -20997,9 +21389,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|onesource-specialty-pharma-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012539150|onesource-special": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "onesource-specialty-pharma-limited-equity-shares",
+    "securityKey": "onesource-special",
     "security": "ONESOURCE SPECIALTY PHARMA LIMITED # EQUITY SHARES",
     "isin": "INE013P01021",
     "periodFrom": "2026-04-01",
@@ -21249,9 +21641,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|axis-bank-limited-new-equity-shares-of-rs-2-after-subdivision": {
+  "motilal-oswal-financial-services-demat-1201090012838316|axis-bank": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "axis-bank-limited-new-equity-shares-of-rs-2-after-subdivision",
+    "securityKey": "axis-bank",
     "security": "AXIS BANK LIMITED # NEW EQUITY SHARES OF RS.2/- AFTER SUBDIVISION",
     "isin": "INE238A01034",
     "periodFrom": "2026-04-01",
@@ -21285,9 +21677,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838316|bndh-l-and-mcf-dp-gr": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr",
     "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT PL - GROWTH",
     "isin": "INF194K01V89",
     "periodFrom": "2026-04-01",
@@ -21339,9 +21731,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|city-union-bank-limited-new-equity-shares-of-re-1-after-split": {
+  "motilal-oswal-financial-services-demat-1201090012838316|city-union": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "city-union-bank-limited-new-equity-shares-of-re-1-after-split",
+    "securityKey": "city-union",
     "security": "CITY UNION BANK LIMITED - NEW EQUITY SHARES OF RE. 1/- AFTER SPLIT",
     "isin": "INE491A01021",
     "periodFrom": "2026-04-01",
@@ -21357,9 +21749,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|everest-fleet-pvt-ltd-0-001-div-unsec-cum-part-non-red-ccps-aftr-sub-div-sr-b-rd-18-04-2043": {
+  "motilal-oswal-financial-services-demat-1201090012838316|efpl-pref-18042043": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "everest-fleet-pvt-ltd-0-001-div-unsec-cum-part-non-red-ccps-aftr-sub-div-sr-b-rd-18-04-2043",
+    "securityKey": "efpl-pref-18042043",
     "security": "EVEREST FLEET PVT LTD#0.001% (DIV) UNSEC CUM PART NON RED CCPS AFTR SUB-DIV SR B-RD 18-04-2043",
     "isin": "INE0LTR03090",
     "periodFrom": "2026-04-01",
@@ -21375,9 +21767,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|hdfc-amc-ltd-hdfc-mf-hdfc-balanced-advantage-fund-regular-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838316|hdfc-baf-r-grow": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "hdfc-amc-ltd-hdfc-mf-hdfc-balanced-advantage-fund-regular-growth",
+    "securityKey": "hdfc-baf-r-grow",
     "security": "HDFC AMC LTD#HDFC MF-HDFC BALANCED ADVANTAGE FUND-REGULAR-GROWTH",
     "isin": "INF179K01830",
     "periodFrom": "2026-04-01",
@@ -21501,9 +21893,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838316|icici-liqf-d-growth": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth",
+    "securityKey": "icici-liqf-d-growth",
     "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD LIQUID FUND-DIRECT-GROWTH",
     "isin": "INF109K01Q49",
     "periodFrom": "2026-04-01",
@@ -21537,9 +21929,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|indian-bank-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012838316|indian-bank": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "indian-bank-equity-shares",
+    "securityKey": "indian-bank",
     "security": "INDIAN BANK - EQUITY SHARES",
     "isin": "INE562A01011",
     "periodFrom": "2026-04-01",
@@ -21555,9 +21947,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|indusind-bank-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012838316|indusind-bank": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "indusind-bank-limited-equity-shares",
+    "securityKey": "indusind-bank",
     "security": "INDUSIND BANK LIMITED EQUITY SHARES",
     "isin": "INE095A01012",
     "periodFrom": "2026-04-01",
@@ -21573,9 +21965,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|kaynes-technology-india-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012838316|kaynes-technology": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "kaynes-technology-india-limited-equity-shares",
+    "securityKey": "kaynes-technology",
     "security": "KAYNES TECHNOLOGY INDIA LIMITED # EQUITY SHARES",
     "isin": "INE918Z01012",
     "periodFrom": "2026-04-01",
@@ -21609,9 +22001,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|rbl-bank-limited-equity-shares-of-re-10-after-split": {
+  "motilal-oswal-financial-services-demat-1201090012838316|rbl-bnk": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "rbl-bank-limited-equity-shares-of-re-10-after-split",
+    "securityKey": "rbl-bnk",
     "security": "RBL BANK LIMITED # EQUITY SHARES OF RE. 10/- AFTER SPLIT",
     "isin": "INE976G01028",
     "periodFrom": "2026-04-01",
@@ -21645,9 +22037,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|the-federal-bank-limited-new-equity-shares-of-rs-2-after-sub-division": {
+  "motilal-oswal-financial-services-demat-1201090012838316|federal-bank": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "the-federal-bank-limited-new-equity-shares-of-rs-2-after-sub-division",
+    "securityKey": "federal-bank",
     "security": "THE FEDERAL BANK LIMITED # NEW EQUITY SHARES OF RS.2/- AFTER SUB DIVISION",
     "isin": "INE171A01029",
     "periodFrom": "2026-04-01",
@@ -21717,9 +22109,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838320|aditya-birla-sun-life-amc-ltd-absl-mf-absl-liquid-fund-diran-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838320|absl-liqf-d-growth": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
-    "securityKey": "aditya-birla-sun-life-amc-ltd-absl-mf-absl-liquid-fund-diran-growth",
+    "securityKey": "absl-liqf-d-growth",
     "security": "ADITYA BIRLA SUN LIFE AMC LTD#ABSL MF-ABSL LIQUID FUND DIRAN-GROWTH",
     "isin": "INF209K01VA3",
     "periodFrom": "2026-04-01",
@@ -21753,9 +22145,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838320|hdfc-amc-ltd-hdfc-mf-hdfc-balanced-advantage-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838320|hdfc-baf-d-grow": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
-    "securityKey": "hdfc-amc-ltd-hdfc-mf-hdfc-balanced-advantage-fund-direct-growth",
+    "securityKey": "hdfc-baf-d-grow",
     "security": "HDFC AMC LTD#HDFC MF-HDFC BALANCED ADVANTAGE FUND-DIRECT-GROWTH",
     "isin": "INF179K01WA6",
     "periodFrom": "2026-04-01",
@@ -21807,9 +22199,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838320|icici-pru-amc-ltd-icicipru-mf-icici-pru-balance-advantage-fund-dir-pl-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838320|icici-pru-baf-dp-grw": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
-    "securityKey": "icici-pru-amc-ltd-icicipru-mf-icici-pru-balance-advantage-fund-dir-pl-growth",
+    "securityKey": "icici-pru-baf-dp-grw",
     "security": "ICICI PRU AMC LTD#ICICIPRU MF-ICICI PRU BALANCE ADVANTAGE FUND-DIR PL-GROWTH",
     "isin": "INF109K012B0",
     "periodFrom": "2026-04-01",
@@ -21861,9 +22253,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838320|onesource-specialty-pharma-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012838320|onesource-special": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
-    "securityKey": "onesource-specialty-pharma-limited-equity-shares",
+    "securityKey": "onesource-special",
     "security": "ONESOURCE SPECIALTY PHARMA LIMITED # EQUITY SHARES",
     "isin": "INE013P01021",
     "periodFrom": "2026-04-01",
@@ -21915,9 +22307,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838335|bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838335|bndh-l-and-mcf-dp-gr": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
-    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr",
     "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT PL - GROWTH",
     "isin": "INF194K01V89",
     "periodFrom": "2026-04-01",
@@ -21933,9 +22325,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838335|icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838335|icici-liqf-d-growth": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
-    "securityKey": "icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth",
+    "securityKey": "icici-liqf-d-growth",
     "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD LIQUID FUND-DIRECT-GROWTH",
     "isin": "INF109K01Q49",
     "periodFrom": "2026-04-01",
@@ -21951,9 +22343,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838335|kotak-mahindra-amc-ltd-kotak-mf-kotak-multicap-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838335|kotak-mtcf-d-grow": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
-    "securityKey": "kotak-mahindra-amc-ltd-kotak-mf-kotak-multicap-fund-direct-growth",
+    "securityKey": "kotak-mtcf-d-grow",
     "security": "KOTAK MAHINDRA AMC LTD#KOTAK MF-KOTAK MULTICAP FUND-DIRECT-GROWTH",
     "isin": "INF174KA1HV3",
     "periodFrom": "2026-04-01",

@@ -38,14 +38,16 @@
 //               that left 0.048 units behind, which no reading of the column
 //               as a valuation can produce
 //
-// Measured over all 56 priced rows against the same account's own transaction
-// tape, which runs from 1 April: on 30 rows value ÷ rate is exactly the
-// quantity of the LAST movement the tape prints (20 a part of the holding, 10
-// the whole of it), and the other 26 do not move on the tape at all, so their
-// last movement predates it. Not one row contradicts the reading. Seven rates
-// are the price of a movement OUT — five sales or redemptions on the tape, and
-// two ICICI index funds whose balance (0.048 and 0.629 units) is smaller than
-// the movement the value describes.
+// Measured over all 46 rows that print a rate other than an AIF's face value,
+// against the same account's own transaction tape, which runs from 1 April: on
+// 24 rows value ÷ rate is exactly the quantity of the LAST receipt or delivery
+// the tape prints (9 the whole balance, 10 a part of it received, 5 a delivery
+// out), and the other 22 do not move on the tape at all, so their last
+// movement predates it. Not one row contradicts the reading. Seven rates are
+// the price of a movement OUT — the five deliveries on the tape, and two ICICI
+// index funds whose balance (0.048 and 0.629 units) is smaller than the
+// movement the value describes. Three of the 46 are on account 32387399, which
+// is not in the book, so the book carries 43.
 //
 // That is also what made the document look BROKEN. Its value column ties to
 // its printed total to the rupee because the total is the sum of those movement

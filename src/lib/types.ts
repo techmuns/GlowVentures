@@ -1098,6 +1098,15 @@ export type RealisedByClass = {
  * holding seen from two sides, so a screen listing these must not list it twice.
  * `faceValue` is set only where the statement prints one.
  *
+ * `lastMovementRate` / `lastMovementValue` are what a CDSL holding statement
+ * prints in its rate and value columns: the price of the holding's LAST
+ * DEPOSITORY MOVEMENT and that price times the movement's own quantity (Stage
+ * 10cy) — a transaction price, never a valuation of the balance, which is why
+ * the row is a quantity. `lastMovementDate` / `lastMovementSide` are that
+ * movement, read off the same account's transaction statement where its
+ * quantity times the rate reproduces the printed value; null where the tape
+ * does not show it (it moved before the tape starts), which the reason says.
+ *
  * NAMED APART FROM `UnvaluedHolding` in `accounts.ts`, which is an ACCOUNT that
  * carries no position (Stage 10bp). This is one statement LINE — a security and
  * its units — inside an account that may carry positions besides.
@@ -1111,6 +1120,10 @@ export type UnvaluedStatementHolding = {
   assetClass: AssetClass | null;
   quantity: number | null;
   faceValue: number | null;
+  lastMovementRate: number | null;
+  lastMovementValue: number | null;
+  lastMovementDate: string | null;
+  lastMovementSide: "receipt" | "delivery" | null;
   /** The holdings statement's own date — the quantity is as of this day. */
   asOf: string | null;
   sameUnitsReportedBy: string | null;
