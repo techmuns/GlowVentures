@@ -17,7 +17,7 @@
 //     missing field.
 //
 // Every expectation is derived from `glowData.ts` on the run.
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRedeemedToNil, isCashEquivalent, sum } from "@/lib/analytics";
 import { depositoryFundHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
 import { parseDrilldown } from "@/lib/drilldown";
@@ -42,7 +42,7 @@ const money = (n: number) => `₹${(n / 1e7).toFixed(2)} Cr`;
  */
 const positions = labelledPositions(BOOK_POSITIONS);
 const consolidated = dedupedPositions(positions);
-const index = buildSearchIndex({ positions, consolidated, accounts: labelledAccounts(BOOK_ACCOUNTS), money });
+const index = buildSearchIndex({ positions, consolidated, accounts: labelledAccounts(BOOK_ACCOUNTS), money, recorded: BOOK_UNVALUED_HOLDINGS });
 const top = (q: string) => searchEntries(index, q, 10)[0]?.entry;
 const topN = (q: string, n: number) => searchEntries(index, q, 10).slice(0, n).map((h) => h.entry);
 
@@ -50,19 +50,63 @@ console.log("── every holding is findable, once ──");
 {
   const small = negligibleKeys(BOOK_POSITIONS);
   const keys = new Set(consolidated.filter((p) => !small.has(p.securityKey)).map((p) => p.securityKey));
+  // …and every key a statement records at a quantity with no valued row
+  // standing for it (Stage 10cy) — one entry each, never a second one for a
+  // key a valued row already carries.
+  const recordedKeys = new Set(BOOK_UNVALUED_HOLDINGS
+    .filter((u) => !u.sameUnitsReportedBy && (u.quantity ?? 0) > 0 && !keys.has(u.securityKey) && !small.has(u.securityKey))
+    .map((u) => u.securityKey));
   const holdings = index.filter((e) => e.kind === "holding");
-  ok("one holding entry per security above the floor", holdings.length === keys.size, `${holdings.length} vs ${keys.size}`);
+  ok("one holding entry per security above the floor, and per recorded-only security",
+    holdings.length === keys.size + recordedKeys.size && holdings.filter((e) => e.recorded).length === recordedKeys.size,
+    `${holdings.length} vs ${keys.size} + ${recordedKeys.size}`);
   ok("no holding under the family's ₹1,000 floor is offered", [...small].every((k) => !index.some((e) => e.id === `holding:${k}`)));
   // A HELD position opens its own page; a REDEEMED one opens the tab its
   // redemption is on — its own page would show a measured nil and little else.
   const current = new Set(currentHoldings(consolidated).map((p) => p.securityKey));
-  const wrong = holdings.filter((e) => {
+  const wrong = holdings.filter((e) => !e.recorded).filter((e) => {
     const key = e.id.slice("holding:".length);
     const closed = consolidated.filter((p) => p.securityKey === key).every((p) => isRedeemedToNil(p));
     return closed ? e.href !== "/monitor?show=transactions" : e.href !== `/stock/${encodeURIComponent(key)}` || !current.has(key);
   });
   ok("every held position opens its holding page, every redeemed one the Transactions tab", wrong.length === 0,
     wrong.slice(0, 3).map((e) => `${e.label} → ${e.href}`).join("; "));
+}
+
+console.log("── a holding a statement records, and nothing values, is still findable (Stage 10cy) ──");
+{
+  /**
+   * The Motilal CDSL demat's rate and value belong to each holding's LAST
+   * DEPOSITORY MOVEMENT, so its rows are quantities in the book, valued on the
+   * live basis only while a quote or a published NAV answers. With nothing
+   * valuing Kaynes the search found no Kaynes at all. A missing premise is a
+   * FAILURE here, never an abstention: an empty set would let every claim
+   * below pass by asserting nothing.
+   */
+  const recordedEntries = index.filter((e) => e.kind === "holding" && e.recorded);
+  ok("the book records holdings that nothing values", recordedEntries.length > 0, String(recordedEntries.length));
+  const valuedKeys = new Set(positions.map((p) => p.securityKey));
+  const twice = recordedEntries.filter((e) => valuedKeys.has(e.id.slice("holding:".length)));
+  ok("…and none is offered for a key a valued row already stands for", twice.length === 0, twice.map((e) => e.label).join("; "));
+  const figure = recordedEntries.filter((e) => !/^Not valued · /.test(e.detail) || /₹/.test(e.detail));
+  ok("every one says it is not valued, and states no figure", figure.length === 0, figure.slice(0, 3).map((e) => e.detail).join("; "));
+  const opens = recordedEntries.filter((e) => e.href !== `/stock/${encodeURIComponent(e.id.slice("holding:".length))}`);
+  ok("every one opens its own holding page", opens.length === 0, opens.map((e) => e.href).join("; "));
+  // A line whose units another account's own statement reports is that
+  // account's holding, seen from the custodian's side — never an entry of its own.
+  const onlyMirrored = new Set(BOOK_UNVALUED_HOLDINGS.filter((u) => u.sameUnitsReportedBy).map((u) => u.securityKey));
+  for (const u of BOOK_UNVALUED_HOLDINGS) if (!u.sameUnitsReportedBy) onlyMirrored.delete(u.securityKey);
+  for (const k of valuedKeys) onlyMirrored.delete(k);
+  ok("a custodian's copy of units a fund reports is not offered as a holding of its own",
+    [...onlyMirrored].every((k) => !index.some((e) => e.id === `holding:${k}`)), [...onlyMirrored].join(", "));
+  // THE UNITS ARE THE STATEMENT'S: each entry's count is the sum of its own lines.
+  const unitsWrong = recordedEntries.filter((e) => {
+    const key = e.id.slice("holding:".length);
+    const want = BOOK_UNVALUED_HOLDINGS.filter((u) => u.securityKey === key && !u.sameUnitsReportedBy)
+      .reduce((a, u) => a + (u.quantity ?? 0), 0);
+    return !e.detail.includes(`${want.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units`);
+  });
+  ok("every one carries the units its statement lines record", unitsWrong.length === 0, unitsWrong.slice(0, 3).map((e) => `${e.label}: ${e.detail}`).join("; "));
 }
 
 console.log("── an identifier lands on its own row, first — every one of them ──");
@@ -211,12 +255,19 @@ console.log("── on the LIVE book: a cash equivalent is named Cash, and a par
   const dep = depositoryFundHoldings();
   const livePositions = [...BOOK_POSITIONS, ...dep];
   const liveAccounts = withPartialValuation(BOOK_ACCOUNTS, partialValuationNotes(dep));
-  const live = buildSearchIndex({ positions: livePositions, consolidated: dedupedPositions(livePositions), accounts: liveAccounts, money });
+  const live = buildSearchIndex({ positions: livePositions, consolidated: dedupedPositions(livePositions), accounts: liveAccounts, money, recorded: BOOK_UNVALUED_HOLDINGS });
   // A missing premise is a FAILURE, never an abstention: an empty set would
   // let every assertion below pass by asserting nothing.
   ok("the live book carries depository-valued cash equivalents to search", dep.some((p) => isCashEquivalent(p)), `${dep.length} rows`);
   ok("…and every one of them is findable", dep.every((p) => live.some((e) => e.id === `holding:${p.securityKey}`)),
     dep.filter((p) => !live.some((e) => e.id === `holding:${p.securityKey}`)).map((p) => p.security).join("; "));
+  // A LINE THE LIVE LAYER VALUES IS OFFERED ONCE, AS THE VALUED ROW: the
+  // statement's recorded entry must give way the moment a price answers.
+  const both = dep.filter((p) => live.some((e) => e.id === `holding:${p.securityKey}` && e.recorded));
+  ok("…each as its valued row, never as the statement's unvalued line", both.length === 0,
+    both.map((p) => p.security).join("; "));
+  ok("…and a key is never offered twice on the live book",
+    new Set(live.filter((e) => e.kind === "holding").map((e) => e.id)).size === live.filter((e) => e.kind === "holding").length);
   const cashEntries = live.filter((e) => e.kind === "holding" && isCashEquivalent({ securityKey: e.id.slice("holding:".length) }));
   const misnamed = cashEntries.filter((e) => e.chip !== "Cash");
   ok("every liquid and arbitrage fund chips as Cash, never as its wrapper", cashEntries.length > 0 && misnamed.length === 0,

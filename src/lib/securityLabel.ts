@@ -54,15 +54,36 @@
  * `docs/BOOK-REPORT.md` names. This changes what a row is CALLED, never which
  * row a position is in.
  */
-import { BOOK_POSITIONS } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { holdingLabel } from "./schemeLabel";
 import { displaySecurity } from "./format";
 
 type Candidate = { label: string; cased: boolean; value: number };
 
+/**
+ * EVERY LINE A STATEMENT PRINTED A NAME ON — a position, and a holding the book
+ * carries as a quantity and no value (Stage 10cy).
+ *
+ * The Motilal CDSL demat prints a rate and a value that belong to each
+ * holding's LAST DEPOSITORY MOVEMENT, so its 43 rows are recorded quantities
+ * now rather than positions. Read off positions alone this table lost 32 keys'
+ * names — Kaynes among them, and the depository's `SBI` spelling of State Bank
+ * of India, which is what people type. A recorded line is a statement's own
+ * spelling exactly as a position is, so it is a candidate on the same rule; it
+ * carries no value, and the value is only rule 3's tie-break. Measured against
+ * main, this chooses the same name for every key but one: Everest Fleet, whose
+ * ICICI NSDL line prints the name in full (`EVEREST FLEET PRIVATE LIMITED -
+ * EQ …`) where the Motilal demat clips it to `EVEREST FLEET-EQ1/`, so it wins
+ * rule 2.
+ */
+const PRINTED: readonly { securityKey: string; security: string; marketValue: number }[] = [
+  ...BOOK_POSITIONS,
+  ...BOOK_UNVALUED_HOLDINGS.map((u) => ({ securityKey: u.securityKey, security: u.security, marketValue: 0 })),
+];
+
 const CANONICAL: ReadonlyMap<string, string> = (() => {
   const byKey = new Map<string, Map<string, Candidate>>();
-  for (const p of BOOK_POSITIONS) {
+  for (const p of PRINTED) {
     const label = holdingLabel(p.securityKey, p.security);
     const labels = byKey.get(p.securityKey) ?? new Map<string, Candidate>();
     const c = labels.get(label) ?? { label, cased: false, value: 0 };
@@ -100,7 +121,7 @@ export function securityLabel(securityKey: string, printedName: string): string 
 /** Every spelling the book's statements printed for each key, display-cased. */
 const SPELLINGS: ReadonlyMap<string, readonly string[]> = (() => {
   const m = new Map<string, Set<string>>();
-  for (const p of BOOK_POSITIONS) {
+  for (const p of PRINTED) {
     const s = m.get(p.securityKey) ?? new Set<string>();
     s.add(holdingLabel(p.securityKey, p.security));
     m.set(p.securityKey, s);

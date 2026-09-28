@@ -359,6 +359,33 @@ function main() {
     wanted.set(p.securityKey, cur);
   }
 
+  /**
+   * A FUND A STATEMENT RECORDS AT A QUANTITY AND NO VALUE IS STILL A FUND THE
+   * FAMILY HOLDS (Stage 10cy).
+   *
+   * The Motilal CDSL demat prints a rate and a value that belong to each
+   * holding's LAST DEPOSITORY MOVEMENT, not to the statement date, so those
+   * rows are `BOOK_UNVALUED_HOLDINGS` now rather than positions. The live layer
+   * values them at the scheme's published NAV, and this store is what joins
+   * them to a scheme: the NAV-movers card reads its `nav`, and the stock axis
+   * looks through its holdings. Read off positions alone, the next full run
+   * would ask for 5 of this book's 22 schemes and DELETE the other 17 files —
+   * measured, not reasoned about. Nothing here values them, so they carry
+   * `mv: 0` and the report counts them apart; a line whose units another
+   * account's own statement reports is that account's, and is not asked twice.
+   */
+  const recordedFunds = (bookArray(src, "BOOK_UNVALUED_HOLDINGS") ?? [])
+    .filter((u) => LOOKTHROUGH_CLASSES.has(u.assetClass) && !u.sameUnitsReportedBy
+      && typeof u.quantity === "number" && u.quantity > 0);
+  for (const u of recordedFunds) {
+    const cur = wanted.get(u.securityKey) ?? {
+      securityKey: u.securityKey, name: u.security, isin: u.isin ?? null, assetClass: u.assetClass, mv: 0,
+      recordedOnly: true,
+    };
+    if (!cur.isin && u.isin) cur.isin = u.isin;
+    wanted.set(u.securityKey, cur);
+  }
+
   const navDoc = readJson(navPath);
   const funds = navDoc.funds ?? [];
   if (funds.length < 500) { console.error(`mf-latest-nav.json carries only ${funds.length} funds — refusing to resolve against a truncated file.`); process.exit(1); }
@@ -560,6 +587,7 @@ function main() {
   const cr = (n) => `₹${(n / 1e7).toFixed(2)} Cr`;
   const coveredMv = resolved.reduce((a, b) => a + b.mv, 0);
   const totalMv = [...wanted.values()].reduce((a, b) => a + b.mv, 0);
+  const recordedOnly = [...wanted.values()].filter((w) => w.recordedOnly).length;
   const noHoldings = [...out.values()].filter((v) => v.counts.holdings === 0);
   const wholeCount = [...out.values()].filter((v) => v.section === "Whole portfolio").length;
   const lines = [
@@ -572,7 +600,7 @@ function main() {
     "AMFI's daily file over AmfiBeas's own base, and holdings from the AMC's",
     "monthly disclosure. It is kept out of every book total for that reason.",
     "",
-    `- schemes the book holds: **${wanted.size}**`,
+    `- schemes the book holds: **${wanted.size}**${recordedOnly ? ` — ${recordedOnly} of them recorded by a statement at a quantity and no value, so ₹0 in the figures below` : ""}`,
     `- resolved: **${resolved.length}** (${cr(coveredMv)} of ${cr(totalMv)}) — ${resolved.filter((r) => r.matchedVia === "isin").length} on ISIN, ${resolved.filter((r) => r.matchedVia !== "isin").length} on name`,
     `- unresolved: **${unresolved.length}**`,
     `- covering the AMC's WHOLE portfolio (every asset class): **${wholeCount}** — the rest carry the equity read of the same filing`,

@@ -49,7 +49,7 @@
 // There is no similarity score over whole names — the fuzzy tiers this repo has
 // already refused matched `KIRANAKART TECHNOLOGIES` to `TATA TECHNOLOGIES` —
 // and a near miss is only ever a way to a page, never a join between figures.
-import type { Account, Position } from "./types";
+import type { Account, Position, UnvaluedStatementHolding } from "./types";
 import { accountIndex, type AccountIndex } from "./accounts";
 import {
   currentHoldings, dedupedPositions, isMandateHeld, mandateLabel, bucketLabel,
@@ -59,7 +59,7 @@ import { groupKeyFor, groupLabelFor, GROUP_AXES } from "./groupAxis";
 import { AXIS_SCOPE, drilldownHref } from "./drilldown";
 import { fundMarketSideOf } from "./aifCategory";
 import { NAV } from "./nav";
-import { printedSpellings } from "./securityLabel";
+import { printedSpellings, securityLabel } from "./securityLabel";
 
 export type SearchKind =
   | "holding" | "mandate" | "person" | "account"
@@ -85,6 +85,8 @@ export type SearchEntry = {
   weight: number;
   /** A position the family no longer holds — findable, ranked below any held one. */
   closed?: boolean;
+  /** A holding a statement records at a quantity and nothing values (Stage 10cy). */
+  recorded?: boolean;
 };
 
 /** A ranked hit, with the tier that matched it — for tests and for the hover. */
@@ -394,8 +396,10 @@ export function buildSearchIndex(input: {
   consolidated: Position[];
   accounts: Account[];
   money: Money;
+  /** The lines a statement records at a quantity and no value (`BOOK_UNVALUED_HOLDINGS`). */
+  recorded?: readonly UnvaluedStatementHolding[];
 }): SearchEntry[] {
-  const { positions, consolidated, accounts, money } = input;
+  const { positions, consolidated, accounts, money, recorded = [] } = input;
   const idx: AccountIndex = accountIndex(accounts);
   const out: SearchEntry[] = [];
   const current = currentHoldings(consolidated);
@@ -444,6 +448,59 @@ export function buildSearchIndex(input: {
       keywords: [head.sector, bucketLabel(bucket)].filter((s): s is string => !!s && s !== "Unclassified"),
       weight: Math.abs(mv),
       closed,
+    });
+  }
+
+  // ── holdings a statement records at a quantity, and nothing values ────────
+  /**
+   * A HOLDING THE FAMILY OWNS IS FINDABLE WHETHER OR NOT ANYTHING VALUES IT
+   * (Stage 10cy).
+   *
+   * The Motilal CDSL demat prints a rate and a value that belong to each
+   * holding's LAST DEPOSITORY MOVEMENT, not to the statement date, so its rows
+   * are quantities in the book — valued on the live basis only while a quote or
+   * a published NAV answers. With nothing valuing Kaynes the search found no
+   * Kaynes at all, which a family who hold 4,875 shares of it reads as the
+   * dashboard having lost it. So a key no valued row stands for is offered from
+   * the statement's own line: its units and whose they are, and "Not valued"
+   * where a figure would be — never the last movement's price, which is the
+   * figure this change stopped passing off as a mark.
+   *
+   * Only where no valued row already stands for the key, and not a key the
+   * family's ₹1,000 floor has dropped. A line whose units another account's own
+   * statement reports is that account's holding and is not offered twice.
+   */
+  const recordedByKey = new Map<string, UnvaluedStatementHolding[]>();
+  for (const u of recorded) {
+    if (u.sameUnitsReportedBy || !(typeof u.quantity === "number" && u.quantity > 0)) continue;
+    if (byKey.has(u.securityKey) || small.has(u.securityKey)) continue;
+    recordedByKey.set(u.securityKey, [...(recordedByKey.get(u.securityKey) ?? []), u]);
+  }
+  for (const [key, lines] of recordedByKey) {
+    const head = lines[0];
+    const units = sum(lines.map((u) => u.quantity ?? 0));
+    const accountIds = new Set(lines.map((u) => u.accountId));
+    const owners = [...new Set(lines.map((u) => idx.get(u.accountId)?.owner).filter(Boolean))] as string[];
+    // A class the statement did not state is not guessed at: the chip says
+    // only that it is a holding.
+    const cls = head.assetClass ? readerClassOf({ assetClass: head.assetClass, securityKey: key }) : null;
+    const chip = cls === "Equity" ? "Stock" : cls === "Mutual Fund" ? "Mutual fund" : cls ?? "Holding";
+    const label = securityLabel(key, head.security);
+    const asOf = lines.map((u) => u.asOf).filter(Boolean).sort().pop();
+    out.push({
+      id: `holding:${key}`, kind: "holding", chip,
+      label,
+      detail: ["Not valued", `${units.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units`,
+        accountIds.size === 1 ? `1 account · ${owners[0] ?? ""}` : `${accountIds.size} accounts · ${owners.length} member${owners.length === 1 ? "" : "s"}`,
+        asOf ? `as of ${asOf}` : ""]
+        .filter(Boolean).join(" · "),
+      href: `/stock/${encodeURIComponent(key)}`,
+      names: [label, ...printedSpellings(key).filter((n) => n !== label), key.replace(/-/g, " ")],
+      codes: [...new Set(lines.map((u) => u.isin).filter((c): c is string => !!c))],
+      keywords: [bucketLabel(groupKeyFor("category", idx, { assetClass: head.assetClass, securityKey: key, accountId: head.accountId }))]
+        .filter((s): s is string => !!s),
+      weight: 0,
+      recorded: true,
     });
   }
 
