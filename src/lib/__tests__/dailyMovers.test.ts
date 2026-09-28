@@ -86,3 +86,14 @@ try {
   assert.equal(await fetchQuotes([symbol]), null, "HTTP failure cannot masquerade as a successful refresh");
 } finally { globalThis.fetch = realFetch; }
 console.log("PASS malformed/partial quote response validation and request deadline");
+
+const other = { ...p, securityKey: 'observation-test', symbol: 'OBSERVATION' };
+const mixed = { ...q, asOf: '2026-09-28T12:00:00Z', quotes: {
+  [symbol]: { ...q.quotes[symbol], observedAt: '2026-09-28T09:00:00Z' },
+  OBSERVATION: { ...q.quotes[symbol], observedAt: '2026-09-28T11:00:00Z' },
+  OUTSIDE: { ...q.quotes[symbol], observedAt: '2026-09-28T12:00:00Z' },
+} };
+const observed = dailyMovers([p, other], mixed, new Map(), owners);
+assert.equal(observed.observedFrom, '2026-09-28T09:00:00.000Z');
+assert.equal(observed.observedTo, '2026-09-28T11:00:00.000Z', 'display actual in-scope observations, never a later refresh or out-of-scope quote');
+console.log('PASS retained mover observation range');

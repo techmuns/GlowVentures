@@ -55,5 +55,11 @@ export function dailyMovers(
   }
   // Never claim a complete security when one account's quote/basis was refused.
   for (const key of omitted.keys()) rows.delete(key);
-  return { rows: [...rows.values()], session, omitted };
+  const observations = scope.filter((p) => rows.has(p.securityKey)).map((p) => {
+    const q = quotes!.quotes[symbolFor(p)!];
+    return q.observedAt ? Date.parse(q.observedAt) : Date.parse(quotes!.asOf) - (q.ageS || 0) * 1000;
+  }).filter(Number.isFinite).sort((a, b) => a - b);
+  return { rows: [...rows.values()], session, omitted,
+    observedFrom: observations.length ? new Date(observations[0]).toISOString() : null,
+    observedTo: observations.length ? new Date(observations[observations.length - 1]).toISOString() : null };
 }

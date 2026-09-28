@@ -119,7 +119,7 @@ const SCOPE = {
  * `cio-filling` route walks, and what a future caller outside the toggle gets.
  */
 export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
-  const { portfolio, consolidated, quotesStatus, quotesAsOf, quoteFeed, corporateActionReturns, refreshQuotes, pendingFor, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, quotesStatus, quoteFeed, corporateActionReturns, refreshQuotes, pendingFor, fmtFromBase } = usePortfolio();
   /**
    * THE DEFAULT IS THE PERCENTAGE MOVE, at the family's request — *"keep % wise
    * as the default view and ₹ wise absolute as the second toggle option."*
@@ -220,7 +220,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       }))
       .sort((a, b) => b.mv - a.mv);
 
-    const { rows, session, omitted } = dailyMovers(scope, quoteFeed, corporateActionReturns, accts);
+    const { rows, session, omitted, observedFrom, observedTo } = dailyMovers(scope, quoteFeed, corporateActionReturns, accts);
     const impactRows = rows.filter((r) => r.dayChange !== null && r.marketValue !== null);
     /**
      * THE DATES OF THE QUANTITIES THE DAY'S PRICE MOVE IS MULTIPLIED BY (MNT-16).
@@ -260,7 +260,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       ? (a: Row, b: Row) => Math.abs(b.dayChange!) - Math.abs(a.dayChange!)
       : (a: Row, b: Row) => Math.abs(b.dayChangePct) - Math.abs(a.dayChangePct);
     return {
-      rows, session, omitted, impactNames: impactRows.length, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols, qtyDates,
+      rows, session, omitted, observedFrom, observedTo, impactNames: impactRows.length, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols, qtyDates,
       pricedNames: rows.length, distinct, unpriceable: cov.withoutSymbol,
       gainers: [...gainers].sort(cmp).slice(0, TOP_N),
       losers: [...losers].sort(cmp).slice(0, TOP_N),
@@ -313,7 +313,11 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
   const landed = model.scopeSymbols.length - scopePending.length;
 
   const sessionLabel = model.session === istDate() ? "today" : `session ${model.session || "unavailable"}`;
-  const clock = quotesAsOf ? new Date(quotesAsOf).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
+  const time = (value: string) => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const firstObserved = model.observedFrom ? time(model.observedFrom) : null;
+  const lastObserved = model.observedTo ? time(model.observedTo) : null;
+  const clock = firstObserved && lastObserved && firstObserved !== lastObserved
+    ? `${firstObserved}–${lastObserved}` : firstObserved;
 
   return (
     /* THE SUBTITLE IS GONE AT THE FAMILY'S REQUEST, AND THE TITLE CARRIES THE
@@ -363,7 +367,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           and dated — and a reader must be told they are not this minute's. */}
       {quotesStatus === "unavailable" && model.rows.length > 0 && (
         <p className="mb-4 text-[11.5px] text-amber-500/80" data-testid="movers-cached">
-          The quote feed did not answer this round — these are the last prices it returned{clock ? ` at ${clock}` : ""}, cached this session.
+          The quote feed did not answer this round — showing saved prices{clock ? ` observed ${clock}` : ""}.
         </p>
       )}
 
