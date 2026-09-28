@@ -16546,10 +16546,20 @@ const CIO_ALLOC = [
 const CIO_OPTIONAL_CAPITAL_CHECKS = new Set([
   "the commitment figures open the capital accounts, not a holdings table",
   "the Uncalled capital tile and the Capital deployment card count each capital account once with its holding, as the page they open does",
-  "...and the tile and the card name the statement they leave out, pending the family's answer",
+  "...and the tile and the card name any statement they leave out, pending the family's answer — and, leaving none out, name no pair",
   "the Distributions tile and the Capital deployment card count what the page they open counts, each fund once (B-10)",
-  "...and the Distributions tile names what it counts and the letter it counts with another",
+  "...and the Distributions tile names what it counts and any letter it counts with another",
 ]);
+// A NAME HERE THAT MATCHES NO CHECK MOVES THAT CHECK BACK IN SILENCE. The set is
+// keyed on each check's text, so when Stage 10cx reworded two of these for the
+// family's answer, both ran on the default strip, where their tiles are not
+// drawn, and failed there for a reason that was not theirs. Worded the other
+// way, a rename would stop a check running at all. Every name must be a check.
+{
+  const names = new Set(CIO_ALLOC.map(([description]) => description));
+  const stale = [...CIO_OPTIONAL_CAPITAL_CHECKS].filter((n) => !names.has(n));
+  if (stale.length) throw new Error(`CIO_OPTIONAL_CAPITAL_CHECKS names no check in CIO_ALLOC: ${stale.join(" · ")}`);
+}
 
 /**
  * ── THE NAV CARD'S RECONCILIATION ADDS ITS OWN PARTS (MNT-4) ──────────────
