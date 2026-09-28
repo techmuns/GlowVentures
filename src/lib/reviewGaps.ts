@@ -52,7 +52,13 @@ export { REVIEW_AS_OF };
  * on no statement.
  */
 const flat = (k: string) => k.replace(/-/g, "");
-const BOOK_KEYS = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security)))].filter(Boolean);
+// A name a statement RECORDS counts as well as one the book values: the Motilal
+// demat's lines are quantities with no usable price (Stage 10cy), and a review
+// line spelling one of them is still a holding the statements report.
+const BOOK_KEYS = [...new Set([
+  ...BOOK_POSITIONS.map((p) => p.security),
+  ...BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0 && !u.sameUnitsReportedBy).map((u) => u.security),
+].map((n) => securityKeyOf(n)))].filter(Boolean);
 
 /**
  * ── …NOR ONE A STATEMENT REPORTS, WHETHER OR NOT THIS BOOK VALUES IT ────────

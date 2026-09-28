@@ -10,7 +10,11 @@
 // never 0.00%, never an empty chart frame with axes drawn around nothing.
 import type { ReactNode } from "react";
 import { Info } from "lucide-react";
+import { Link } from "react-router-dom";
 import { REVIEW_AS_OF, reviewGapsFor } from "@/lib/reviewGaps";
+import { recordedMatching } from "@/lib/recordedHoldings";
+import { usePortfolio } from "@/context/PortfolioContext";
+import { fmtNum } from "@/lib/format";
 
 /** The em dash every absent figure uses. Imported, never typed inline. */
 export const DASH = "—";
@@ -102,9 +106,32 @@ export function AbsentCell({ reason }: { reason?: string }) {
  * review.
  */
 export function AbsentFromBook({ query, className = "" }: { query: string; className?: string }) {
+  const { portfolio } = usePortfolio();
   const gaps = reviewGapsFor(query);
-  if (!gaps.length) return null;
+  // WHAT A STATEMENT RECORDS AND NOTHING VALUES comes first: it is the family's
+  // own paperwork, where the review is a cross-check (Stage 10cy).
+  const recorded = recordedMatching(query, portfolio?.positions ?? []);
+  if (!gaps.length && !recorded.length) return null;
   return (
+    <>
+    {recorded.length > 0 && (
+      <div data-recorded-match className={`rounded-md border border-dashed border-ink-600/70 bg-ink-800/40 px-3 py-2.5 text-left ${className}`}>
+        <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-400">
+          <Info className="h-3.5 w-3.5" aria-hidden />
+          recorded by a statement · not valued
+        </div>
+        <ul className="space-y-1">
+          {recorded.map((g) => (
+            <li key={g.homeKey} data-recorded-key={g.homeKey} className="text-xs leading-snug text-slate-300"
+              title={g.lines.map((l) => l.reason.charAt(0).toUpperCase() + l.reason.slice(1)).join("\n\n")}>
+              <Link to={`/stock/${encodeURIComponent(g.homeKey)}`} className="font-semibold text-slate-100 hover:text-champagne-400">{g.label}</Link>
+              <span className="text-slate-400"> · {fmtNum(g.units, Number.isInteger(g.units) ? 0 : 3)} units</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+    {gaps.length > 0 && (
     <div data-absent-from-book className={`rounded-md border border-dashed border-ink-600/70 bg-ink-800/40 px-3 py-2.5 text-left ${className}`}>
       <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-400">
         <Info className="h-3.5 w-3.5" aria-hidden />
@@ -135,5 +162,7 @@ export function AbsentFromBook({ query, className = "" }: { query: string; class
         Review as at {REVIEW_AS_OF} · a cross-check, not a source
       </div>
     </div>
+    )}
+    </>
   );
 }

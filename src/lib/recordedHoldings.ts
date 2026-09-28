@@ -22,6 +22,7 @@
  */
 import { BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS } from "../data/glowData";
 import { bookKeyForShare } from "./depositoryShares";
+import { securityLabel } from "./securityLabel";
 import type { Position, UnvaluedStatementHolding } from "./types";
 
 export type RecordedLine = UnvaluedStatementHolding & { quantity: number; homeKey: string };
@@ -75,4 +76,36 @@ export function recordedFor(
 ): RecordedLine[] {
   const home = homeKeyOf(pageKey, lines);
   return lines.filter((l) => l.homeKey === home && !carriedBy(l, live));
+}
+
+export type RecordedGroup = { homeKey: string; label: string; units: number; lines: RecordedLine[] };
+
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * THE RECORDED HOLDINGS A SEARCH NAMES, one per company, where the live book
+ * has no row for it. A search that finds no option says so, and must not stay
+ * silent about a holding a statement records: "No holdings match Kaynes" to a
+ * family holding 4,875 shares of it reads as the dashboard having lost them.
+ * Matched on any spelling a statement printed, by substring — never fuzzily.
+ */
+export function recordedMatching(
+  query: string,
+  live: readonly Position[],
+  lines: readonly RecordedLine[] = RECORDED,
+): RecordedGroup[] {
+  const q = norm(query);
+  if (q.length < 2) return [];
+  const liveKeys = new Set(live.map((p) => p.securityKey));
+  const groups = new Map<string, RecordedLine[]>();
+  for (const l of lines) {
+    if (liveKeys.has(l.homeKey) || carriedBy(l, live)) continue;
+    groups.set(l.homeKey, [...(groups.get(l.homeKey) ?? []), l]);
+  }
+  return [...groups].map(([homeKey, ls]) => ({
+    homeKey,
+    label: securityLabel(homeKey, (ls.find((l) => l.securityKey === homeKey) ?? ls[0]).security),
+    units: ls.reduce((a, l) => a + l.quantity, 0),
+    lines: ls,
+  })).filter((g) => [g.label, ...g.lines.map((l) => l.security)].some((n) => norm(n).includes(q)));
 }
