@@ -677,7 +677,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         // THE TILE'S OWN LABEL, which the family renamed from "Consolidated
         // NAV" at Stage 10aq — and the crumb has to follow it, or the line a
         // reader lands on names a tile the dashboard no longer has.
-        crumb: "Current Value of Holdings",
+        crumb: "Portfolio value",
         absent: consolidated.length ? null : {
           what: "The book carries no holding",
           needs: "No statement has been ingested, so there is nothing to list. Ingest a statement and every figure on this site populates itself.",

@@ -269,6 +269,25 @@ reached.
 
 ---
 
+## Investor summary defaults
+
+Morning CIO opens with four tiles: **Portfolio value** (with recorded invested
+capital), **Gain / loss** (with return on recorded capital), **Annualised return**,
+and **Return this financial year** (FYTD from 1 April). Calendar YTD from 1 January
+and the other metrics remain available in each tile's selector. Saved custom
+layouts and explicit `?tiles=` links continue to take precedence.
+
+Valuation dates and cost coverage stay visible. Recorded gain excludes separate
+income and sales outside the available statements, so it is not labelled a full
+since-inception total return. Annualised XIRR requires at least one year of dated
+history and states its statement-account coverage, excluding separately modelled
+private investments. FYTD/YTD require every account's opening value at the period
+boundary, a complete dated record through the close, and matching closing dates;
+partial history renders **Insufficient history**, never the partial panel's rate
+as the whole portfolio's. Fully redeemed accounts include their recorded proceeds.
+Live prices cannot fill cash-flow history gaps. Each return tile opens an
+addressable detail view with the same calculation, dates, and coverage.
+
 ## Verification
 
 ### Corporate actions and dividend-inclusive returns
