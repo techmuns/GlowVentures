@@ -48,7 +48,7 @@ import { valuationDates, valuationNote, dateSpan } from "@/components/BasisPill"
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import { DailyMovers } from "@/components/DailyMovers";
 import { CHART_COLORS } from "@/lib/chartTheme";
-import { INVESTOR_DEFAULT_TILES, investorPeriodReturn } from "@/lib/investorSummary";
+import { INVESTOR_DEFAULT_TILES, investorPeriodReturn, investorAnnualReturn } from "@/lib/investorSummary";
 
 // Morning CIO — the whole book in one screen: invested / current / return per
 // bucket, plus capital deployment, concentration and book performance. Every
@@ -919,6 +919,7 @@ export function MorningCIO() {
       // Where the pool closes — stated in the tile's hover beside the window.
       mwLastClose: mwb.lastClose,
       mwb,
+      annual: investorAnnualReturn(statementPortfolio ?? portfolio),
       periods: (["fytd", "ytd"] as const).map((period) => ({
         period, ...investorPeriodReturn(statementPortfolio ?? portfolio, today, period),
       })),
@@ -1087,18 +1088,17 @@ export function MorningCIO() {
     },
     {
       id: "annualised", label: "Annualised return", icon: <TrendingUp className="h-4 w-4" />,
-      href: drilldownHref("measured"),
-      hrefTitle: `XIRR over the recorded cash-flow window, not necessarily since inception. Covers ${m.mwb.accountIds.length} of ${m.mwb.bookAccounts} accounts, worth ${money(m.mwb.measuredValue)} on their statements. ${m.bookMW.windowDays == null ? "No dated opening values are available." : `The window is ${m.bookMW.windowDays} days${m.mwLastClose ? `, to ${m.mwLastClose}` : ""}. ${m.bookMW.annualised ? "A genuine annual rate over at least one year." : "NOT ANNUALISED: at least one year of dated history is needed; the shorter-period return remains available under Money-weighted return."}`}`,
-      value: m.bookMW.annualised && m.bookMW.pct != null ? <>{pct1(m.bookMW.pct)} <span className="text-sm">p.a.</span></> : <AbsentValue />,
-      second: <span className="whitespace-normal">XIRR · {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts</span>,
-      sub: m.bookMW.annualised && m.bookMW.pct != null
-        ? <>{m.bookMW.windowDays} days{m.mwLastClose ? ` · to ${fmtDate(m.mwLastClose)}` : ""}</>
-        : <>Insufficient history<br />{m.bookMW.windowDays == null ? "Need dated opening values and cash flows" : `${m.bookMW.windowDays} days recorded · need at least 1 year`}</>,
+      href: "/performance?summary=annualised#investor-return",
+      hrefTitle: `XIRR over statement accounts only, excluding separately modelled private investments. Covers ${m.annual.covered} of ${m.annual.total} accounts, worth ${money(m.annual.measuredValue)}. ${m.annual.start ? `Recorded window ${m.annual.start} to ${m.annual.end}. ` : ""}${m.annual.reason ?? "Annualised over at least one year."} Open the same return, dates and coverage in NAV & Performance.`,
+      value: m.annual.pct != null ? <>{pct1(m.annual.pct)} <span className="text-sm">p.a.</span></> : <AbsentValue />,
+      second: <span className="whitespace-normal">XIRR · {m.annual.covered} of {m.annual.total} accounts</span>,
+      sub: m.annual.reason ? <>{m.annual.issueLabel}<br />{m.annual.reason}</>
+        : <>{m.annual.windowDays} days{m.annual.end ? ` · to ${fmtDate(m.annual.end)}` : ""}</>,
     },
     ...m.periods.map((r): TileMetric => ({
       id: r.period, label: r.period === "fytd" ? "Return this financial year" : "Return this calendar year",
       icon: <CalendarDays className="h-4 w-4" />,
-      href: "/performance",
+      href: `/performance?summary=${r.period}#investor-return`,
       hrefTitle: `${r.period.toUpperCase()}: ${fmtDate(r.start)}${r.end ? ` to the latest eligible statement, ${fmtDate(r.end)}` : " onwards"}. Whole-portfolio money-weighted return, not annualised, adjusted for dated contributions and withdrawals. ${r.covered} of ${r.total} accounts have usable opening values and cash flows for this period. ${r.reason ? `${r.reason}. Supply opening valuations at the start of the period and capital movements through matching closing valuations for every account; live prices cannot fill missing history.` : "Gain includes income retained in the accounts or paid out through their recorded withdrawals."}`,
       value: pct1(r.pct),
       second: <span className="whitespace-normal">{r.period.toUpperCase()} · since {fmtDate(r.start)}{r.gain != null ? <> · {money(r.gain, true)}</> : null}</span>,
