@@ -7,8 +7,8 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 7,10,38,79,231.16 |
-| Positions | 371 |
+| Consolidated market value | 6,08,22,61,481.65 |
+| Positions | 328 |
 | Accounts | 51 |
 | Owners | 6 |
 | Newest as-of | 2026-08-29 |
@@ -44,9 +44,9 @@ Generated — **do not edit by hand**.
 | 904168868444 | Motilal Oswal Active Momentum Fund | Ankita Jaisinghani | — | 2026-08-06 | 1 | 21,41,89,290.53 |
 | 9049241536 | Motilal Oswal Delphi Equity Fund | Ajay Jaisinghani | — | 2026-06-30 | 1 | 11,12,87,535.35 |
 | 1201090012539150 | Motilal Oswal Financial Services (demat) | Ajay Jaisinghani | — | 2026-07-31 | 0 | 0 |
-| 1201090012838316 | Motilal Oswal Financial Services (demat) | Ankita Jaisinghani | — | 2026-07-31 | 23 | 38,38,37,353.18 |
-| 1201090012838320 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani | — | 2026-07-31 | 14 | 32,82,55,048.02 |
-| 1201090012838335 | Motilal Oswal Financial Services (demat) | Aarti Jaisinghani | — | 2026-07-31 | 6 | 30,95,25,348.31 |
+| 1201090012838316 | Motilal Oswal Financial Services (demat) | Ankita Jaisinghani | — | 2026-07-31 | 0 | 0 |
+| 1201090012838320 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani | — | 2026-07-31 | 0 | 0 |
+| 1201090012838335 | Motilal Oswal Financial Services (demat) | Aarti Jaisinghani | — | 2026-07-31 | 0 | 0 |
 | 1201090037359311 | Motilal Oswal Financial Services (demat) | Ajay Jaisinghani | — | 2026-07-31 | 0 | 0 |
 | 1201090037436848 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani | — | 2026-07-31 | 0 | 0 |
 | 90410016093 | Motilal Oswal Founders Fund | Ankita Jaisinghani | — | 2026-07-31 | 1 | 10,99,00,127.57 |
@@ -74,9 +74,9 @@ Generated — **do not edit by hand**.
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
 | Ajay Jaisinghani | 22 | 177 | 3,49,53,95,274.55 |
-| Ankita Jaisinghani | 11 | 112 | 1,66,41,40,924.34 |
-| Bharat Jaisinghani | 10 | 73 | 65,54,25,614.31 |
-| Aarti Jaisinghani | 2 | 7 | 1,28,63,51,868.22 |
+| Ankita Jaisinghani | 11 | 89 | 1,28,03,03,571.16 |
+| Bharat Jaisinghani | 10 | 59 | 32,71,70,566.29 |
+| Aarti Jaisinghani | 2 | 1 | 97,68,26,519.91 |
 | Bharat Jaisinghani Family Trust 2 | 3 | 1 | 1,71,45,962.25 |
 | Bharat Jaisinghani Family Trust 3 | 3 | 1 | 1,71,45,962.25 |
 
@@ -94,9 +94,9 @@ single entry in `shared/owners.mjs`, if the family says it should be.
 | 1038104611 | Aditya Birla Sun Life Mutual Fund | HOPE INDIA TRUST | 7,98,563.95 | holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 | 4295974 | Kotak Mahindra Mutual Fund | Hope India Trust | 7,77,205.81 | holder Hope India Trust is filed by the AMC as Trust, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 | 70413280453 | Mirae Asset Mutual Fund | HOPE INDIA TRUST | 9,41,106.71 | holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
-| 1201090032387399 | Motilal Oswal Financial Services (demat) | AARTI AJAY JAISINGHANI | 8,22,70,772.93 | this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book. |
+| 1201090032387399 | Motilal Oswal Financial Services (demat) | AARTI AJAY JAISINGHANI | — | this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book. |
 
-Together they carry **8,55,57,677.53** across 5 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
+Together they carry **32,86,904.6** across 4 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
 
 ## Ring-fenced: the promoter holding, on its own page
 
@@ -112,7 +112,7 @@ page alone. `BOOK_POLYCAB` is its only reader; remove its key from
 | --- | --- | --- | --- | ---: | ---: |
 | POLYCAB INDIA LIMITED - EQ | Ajay Jaisinghani | ICICI Bank (NSDL demat) 49794950 | 2026-03-31 | 1,39,01,229 | 1,23,51,24,19,665 |
 
-Together **1,23,51,24,19,665**, excluded from the 7,10,38,79,231.16 consolidated market value above.
+Together **1,23,51,24,19,665**, excluded from the 6,08,22,61,481.65 consolidated market value above.
 
 ## The family's own dated investments
 
@@ -143,18 +143,18 @@ A per-contribution breakdown is published for **12** position(s), of which **5**
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 6,09,64,74,221.55 | 85.82% |
-| Financials | 25,85,86,623.95 | 3.64% |
-| Health Care | 19,08,15,090.8 | 2.69% |
-| Consumer Discretionary | 18,37,36,315.22 | 2.59% |
-| Industrials | 14,49,38,189.09 | 2.04% |
-| Cash | 11,57,87,076.72 | 1.63% |
-| Information Technology | 7,17,77,377.78 | 1.01% |
-| Materials | 2,39,34,566.25 | 0.34% |
-| Consumer Staples | 2,28,13,806.84 | 0.32% |
-| Communication Services | 1,10,42,228.2 | 0.16% |
-| Utilities | 99,62,509.52 | 0.14% |
-| Real Estate | 57,37,600 | 0.08% |
+| Unclassified | 5,07,48,56,472.04 | 83.44% |
+| Financials | 25,85,86,623.95 | 4.25% |
+| Health Care | 19,08,15,090.8 | 3.14% |
+| Consumer Discretionary | 18,37,36,315.22 | 3.02% |
+| Industrials | 14,49,38,189.09 | 2.38% |
+| Cash | 11,57,87,076.72 | 1.90% |
+| Information Technology | 7,17,77,377.78 | 1.18% |
+| Materials | 2,39,34,566.25 | 0.39% |
+| Consumer Staples | 2,28,13,806.84 | 0.38% |
+| Communication Services | 1,10,42,228.2 | 0.18% |
+| Utilities | 99,62,509.52 | 0.16% |
+| Real Estate | 57,37,600 | 0.09% |
 
 ## Unclassified sectors
 
@@ -324,18 +324,19 @@ never guessed into the nearest plausible bucket.
 - account 1201090012539150: no time-weighted return series in any statement
 - account 1201090012539150: no flow block in any statement, so no value bridge
 - account 1201090012539150: no external capital movements found, so no money-weighted return series
-- account 1201090012838316 (Motilal Oswal Financial Services (demat)) carries 18 of 41 holding(s) with NO market value, so they are in the archive and out of every total: 3P India Equity Fund 1 — Class B3 (1416918.692 unit(s), recorded at a face value of 100); ABSL BAL ADV-GROWTH (393095.951 unit(s), no price published); BAVF Series 20 — Class C6 (856.736 unit(s), no price published); Buoyant Opportunities Strategy — Class A4 (1918953.2 unit(s), recorded at a face value of 100); Baring Private Equity India Fund 6 — Class A1 (252.5 unit(s), no price published); Carnelian Bharat Amritkaal Fund — Class A2 (12993094.825 unit(s), recorded at a face value of 10); CHEELIZZA IND-EQ1/ (350980 unit(s), no price published); CLEAN MAX ENV-EQ 1/ (94967 unit(s), no price published); India SME Investments Fund II — Class A2 (27000 unit(s), recorded at a face value of 1000); ITF — Class A (78.686 unit(s), no price published); MIRAE LCF D-GROW (0.003 unit(s), no price published); Motilal Oswal Founders Fund Series II — Class G1 (9514997.798 unit(s), no price published); NATIONAL STOCK EX-EQ (75000 unit(s), no price published); PVC-II — Class A1 (16000 unit(s), no price published); Sanshi Fund-I — Class E (1820926.864 unit(s), no price published); TOCF-I — Class A2 (12899.355 unit(s), recorded at a face value of 1000); Transition Venture Capital Fund I — Class A1 (2500 unit(s), recorded at a face value of 1000); VOF I — Class A2 (1225000 unit(s), no price published). A depository records the value a security was allotted at where it holds no price for it, and that is not a mark: carried, it would state a valuation nobody struck. The remaining 23 row(s) on the same statement ARE marked and are in the book.
+- account 1201090012838316 (Motilal Oswal Financial Services (demat)) contributes no market value: its statement of 2026-07-31 carries 41 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account 1201090012838316: no time-weighted return series in any statement
 - account 1201090012838316: no flow block in any statement, so no value bridge
 - account 1201090012838316: no external capital movements found, so no money-weighted return series
+- account 1201090012838320 (Motilal Oswal Financial Services (demat)) contributes no market value: its statement of 2026-07-31 carries 14 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account 1201090012838320: no time-weighted return series in any statement
 - account 1201090012838320: no flow block in any statement, so no value bridge
 - account 1201090012838320: no external capital movements found, so no money-weighted return series
-- account 1201090012838335 (Motilal Oswal Financial Services (demat)) carries 1 of 7 holding(s) with NO market value, so they are in the archive and out of every total: ABSL BAL ADV-GROWTH (242412.122 unit(s), no price published). A depository records the value a security was allotted at where it holds no price for it, and that is not a mark: carried, it would state a valuation nobody struck. The remaining 6 row(s) on the same statement ARE marked and are in the book.
+- account 1201090012838335 (Motilal Oswal Financial Services (demat)) contributes no market value: its statement of 2026-07-31 carries 7 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account 1201090012838335: no time-weighted return series in any statement
 - account 1201090012838335: no flow block in any statement, so no value bridge
 - account 1201090012838335: no external capital movements found, so no money-weighted return series
-- account 1201090032387399 (Motilal Oswal Financial Services (demat)) is NOT in the book: this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book. Value on its own statement: 8,22,70,772.931.
+- account 1201090032387399 (Motilal Oswal Financial Services (demat)) is NOT in the book: this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book.
 - account 1201090037359311 (Motilal Oswal Financial Services (demat)) contributes no market value: its statement of 2026-07-31 carries 2 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account 1201090037359311: no time-weighted return series in any statement
 - account 1201090037359311: no flow block in any statement, so no value bridge
@@ -450,15 +451,15 @@ never guessed into the nearest plausible bucket.
 - the custodian reports 2053614.026 unit(s) of 3P India Equity Fund 1 — Class B3 on motilal-oswal-financial-services-demat-1201090037359311 (2026-07-31) with no value, and the same owner's 3P Investment Managers account(s) carry 0 unit(s) of 3P India Equity Fund 1 - Class B1 (3p-investment-managers-3000048); 0 unit(s) of 3P India Equity Fund 1 - Class B2 (3p-investment-managers-3000048); 0 unit(s) of 3P India Equity Fund 1 - Class B3 (3p-investment-managers-3000048). Both are listed as printed: two statements that do not agree on a unit count are not assumed to describe one holding.
 - 1 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, 1,23,51,24,19,665 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - 2 holding(s) reported under more than one member: both rows are carried, and 3,17,26,374.76 is excluded from the consolidated total so each is counted once
-- market side: listed 6,99,76,25,652.26 over 364 holding(s), private 10,61,54,836.9 over 4, and 98,742 over 1 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
+- market side: listed 5,97,60,07,902.75 over 321 holding(s), private 10,61,54,836.9 over 4, and 98,742 over 1 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
 - market side: 14 AIF holding(s) placed by the family's own classification of what the fund invests in; 4 of them, in 3 fund(s), differ from what the printed SEBI category alone would say — Motilal Oswal Founders Fund Series II — Class G1 (Category II → listed: listed Indian equities); Motilal Oswal Wealth Delphi Equity Fund (no category printed → listed: Category III equity managers, as a fund of funds); Neo Infra Income Opportunities Fund I — Class A5 (no category printed → private: operating road and renewable infrastructure assets). The statement's category is unchanged; only the side is taken from the family.
 - market side: 1 fund(s) print NO SEBI category and the family have not classified them, so they are on neither side and are counted apart rather than defaulted to one: BLUE ASHVA VARENYA FUND - BAVF-SER20-C6 - Restricted Transferability. Putting them private would claim they are private capital and putting them listed would claim the opposite, and no document in this archive makes either claim. One line from the family, or a fund's own SEBI registration, settles each one.
 - market side: 2 holding(s) take a SEBI category the FAMILY declared, because no statement for them prints one — Motilal Oswal Wealth Delphi Equity Fund; Neo Infra Income Opportunities Fund I — Class A5. A declaration only ever fills a category the statements leave empty and never overrides one they print; which side of the book each sits on is the family's own placing, noted above.
-- navHistory: 12 dated point(s) from 2026-05-31 to 2026-08-13 (74 days), over the 13 account(s) that publish MORE THAN ONE dated valuation (₹140.17 Cr at the last point, each dedupeGroup counted once). 23 account(s) publish exactly one dated valuation and 15 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-07-10; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
+- navHistory: 12 dated point(s) from 2026-05-31 to 2026-08-13 (74 days), over the 13 account(s) that publish MORE THAN ONE dated valuation (₹140.17 Cr at the last point, each dedupeGroup counted once). 20 account(s) publish exactly one dated valuation and 18 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-07-10; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
 - navHistory: the capital moving between each covered account's marks is established by the statements themselves — printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, hdfc-mutual-fund-16180583. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
 - account carnelian-asset-management-and-advisors-pvt-ltd-3517383: its printed capital totals (fact-sheet, performance-history, performance-summary) move by -30690 between 2026-07-10 and 2026-08-10 and its dated record carries 0 over the same days — -30690 moved on a day no statement in this drop prints. The NAV series nets it inside that step, which needs no date; the money-weighted return cannot, and names it rather than assuming a day.
-- attribution: 13 account(s) publish a valued holdings statement at two or more dates, so 268 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-08-13 the covered set runs ₹126.28 Cr → ₹140.17 Cr, of which price ₹2.54 Cr, trading ₹8.37 Cr, bought in ₹10.72 Cr, sold out ₹8.23 Cr. Largest detractor Jammu Kashmir Bank Ltd ₹-106.04 L. It covers ₹140.17 Cr of the book's ₹710.39 Cr; every other account publishes one statement, and one statement is a level rather than a change.
-- unrealised short/long-term split is populated on 3 of 371 position(s), across 1 of 51 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- attribution: 13 account(s) publish a valued holdings statement at two or more dates, so 268 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-08-13 the covered set runs ₹126.28 Cr → ₹140.17 Cr, of which price ₹2.54 Cr, trading ₹8.37 Cr, bought in ₹10.72 Cr, sold out ₹8.23 Cr. Largest detractor Jammu Kashmir Bank Ltd ₹-106.04 L. It covers ₹140.17 Cr of the book's ₹608.23 Cr; every other account publishes one statement, and one statement is a level rather than a change.
+- unrealised short/long-term split is populated on 3 of 328 position(s), across 1 of 51 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - realised is NULL, not ₹0, on BELRISE INDUSTRIES LIMITED (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on CAPRI GLOBAL CAPITAL LIMITED (lkp-securities-98245): every one of its 2 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Electronics Mart India Limited (lkp-securities-98245): every one of its 3 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
@@ -481,5 +482,5 @@ never guessed into the nearest plausible bucket.
 - cost carried through the class switch for BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 in buoyant-capital-103473: 460058861.66 was paid for these units, against the 475353990.9 the statement's cost column prints, which restarts cost at the switch-day NAV. The 15295129.24 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (15295129.24) — and it is part of this holding's unrealised gain, because no money left the fund.
 - FIFO agrees with the class-switch carry on BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 (buoyant-capital-103472): both hold 24,85,00,000 of cost in the units still held, and the unit record shows none sold.
 - FIFO agrees with the class-switch carry on BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 (buoyant-capital-103473): both hold 46,00,58,861.66 of cost in the units still held, and the unit record shows none sold.
-- share movements: 89 holding-window(s) from the demat statements, 89 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 23 join a position this book carries; 39 close at nil, securities the account sold out of during the window; 19 close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; 8 sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change. 1 demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.
-- share movements: 10 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (3 close at nil; 7 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 4 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.
+- share movements: 89 holding-window(s) from the demat statements, 89 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 join a position this book carries; 39 close at nil, securities the account sold out of during the window; 19 close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; 31 sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change. 1 demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.
+- share movements: 9 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (0 close at nil; 9 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 4 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.

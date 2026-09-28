@@ -171,6 +171,25 @@ export function makeHolding(input) {
      * the column instead, or a reader has to open the PDF to find out.
      */
     faceValue: num(input.faceValue),
+    /**
+     * THE PRICE OF A HOLDING'S LAST DEPOSITORY MOVEMENT — a transaction price,
+     * NOT a valuation, which is why it too has a field of its own rather than
+     * being dropped into `marketPrice`.
+     *
+     * The Motilal Oswal CDSL holding statement prints `Rs RATE` and `Rs VALUE`
+     * beside every balance, and both describe the holding's LAST MOVEMENT —
+     * the rate that credit or debit went through at, and that rate times the
+     * movement's OWN quantity. Read as a 31 July mark, it valued ₹102 Cr of the
+     * book at the price of each holding's last movement — a price from before
+     * the tape's 1 April start, on an unknown day, for 26 of the 56 priced rows,
+     * and a SALE price where the last movement was a sale. See
+     * `motilalDemat.mjs` for the measurement.
+     * `lastMovementValue` is the statement's `Rs VALUE`, kept because
+     * value ÷ rate is the quantity of that movement: the witness the tape is
+     * checked against, never a figure summed into anything.
+     */
+    lastMovementRate: num(input.lastMovementRate),
+    lastMovementValue: num(input.lastMovementValue),
 
     // ── DERIVED — filled by deriveHolding(); null until then ────────────────
     marketValue: null,
