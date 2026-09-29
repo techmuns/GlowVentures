@@ -24778,6 +24778,10 @@ under `10cx` first, so this is `10cy`. Compared as HEADINGS against main's tip.)
 section shows the family's own statement beside the dashboard and names the one
 document that would fill the gap:
 
+*(Stage 10cz added a section on the Motilal rate, as section 2, so the PDF is
+eight pages now and its no-cost count is 65. The table below is the seven-page
+version this stage built.)*
+
 | Section | What it says |
 | --- | --- |
 | 1 | 41 review lines at ₹231 Cr are on no statement they sent. Example: BSE Ltd. Most sit on Ajay's demat 1201090012539150 (a transaction statement only) and his HDFC Bank demat (no statement at all) |
