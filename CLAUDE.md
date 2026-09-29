@@ -24767,12 +24767,24 @@ through a costed and an uncosted line, because ICICI Bank's uncosted 14,500 on
 still strikes it correctly; a live-mocked route to keep the check a subject is
 the named next step.
 
+**THE SEARCH CHECK LEARNT THE RECORDED STATE.** It required a ₹ figure on every
+holding row not redeemed; with no live quote, Ankita's 4,875 Kaynes is found
+from the demat's own line as "Not valued · 4,875 units", correctly with none. A
+holding row with no figure must now be recorded and not valued, struck on the
+BOOK: its key a company `recordedHomes` names (`RECORDED_HOME_UNITS`), its units
+the statements' own sum, and no ₹ at all. `absent-name-bug.sh` cases 18–20 put
+the last movement's price back, drop the units, and have a valued holding say
+"Not valued"; each fires.
+
 **#104 FIXTURES.** Main's #104 discards quotes dated before today, and the
 checker's live fixtures were dated 13 Aug, so every live route read an empty
 feed. This branch stamps quotes, indices and the capture with today's IST date.
-#104's own stale claims (the movers coverage, gap and gainer counts on
-`cio-live`, and an on-face sentence breaking Stage 10cp on five routes) fail
-identically on main and are left to it.
+**MEASURED ON MAIN, NOT ASSUMED**: main's own build at `ddb7170d`, swept with
+only these fixture dates applied, fails the same 11 invariants on the same six
+Morning CIO routes as this branch — #104's movers coverage, gap and gainer
+counts on `cio-live`, the capture-lag claim, the no-feed and scope claims on
+`cio`, and an on-face sentence ("Share counts await verification…") breaking
+Stage 10cp on five routes. They are main's and are left to it.
 
 `build` · `tsc` · `test:ingest` (golden 140, 2 not checked, 0 blocked) ·
 `test:family` 0 failed · `check:family` **126/0** · `build-book`
