@@ -24729,6 +24729,13 @@ On this branch merged with main at `58c6f3d5`:
   are named here and not fixed. They are those changes' checks, and rewriting
   them in this merge would be a change nobody asked for.
 
+**Then main gained one daily Polycab refresh (`ddb7170d`)**, which touches no
+file here. On that tree `build`, `test:family` (0 failed) and `build-book`
+(byte-identical) were re-run, and the three Polycab routes and this change's
+own routes walk clean: 20 combinations. One abstention is new and is the
+refresh's: it kept only the six quarters tickertape carries, each with a pledge
+figure, so `polycab-promoter` has no dashed pledge to check.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
