@@ -8,7 +8,7 @@ book total, and it is deliberately NOT a statement about what the family's
 own demat reports — that distinction is the whole design and is set out at
 the top of `scripts/build-polycab-live.mjs`.
 
-Retrieved `2026-09-28T18:56:35.055Z`.
+Retrieved `2026-09-29T17:15:14.252Z`.
 
 ## Identity — the gate everything else passed
 
@@ -33,7 +33,7 @@ By kind: 8 dividend.
 
 ## Promoter holding and pledge
 
-Of 6 quarter(s), **0** are carried by BOTH sources and **6** by one; 0 were compared and **0** disagree.
+Of 12 quarter(s), **6** are carried by BOTH sources and **6** by one; 6 were compared and **0** disagree.
 
 Where both carry a quarter they must agree within 0.05pp, or **neither** figure is
 published — a refusal, marked as one. A quarter only one source carries is published
@@ -44,12 +44,18 @@ row for this scrip) — and is published as such.
 
 | Quarter | As of | Promoter holding (% of total shares) | Pledged (% of the group's holding) | Sources |
 | --- | --- | ---: | ---: | ---: |
-| Jun 2026 | 2026-06-30 | 61.46% | 0.00% | 1 |
-| Mar 2026 | 2026-03-31 | 61.50% | 0.00% | 1 |
-| Dec 2025 | 2025-12-31 | 61.50% | 0.00% | 1 |
-| Sep 2025 | 2025-09-30 | 61.52% | 0.00% | 1 |
-| Jun 2025 | 2025-06-30 | 63.01% | 0.00% | 1 |
-| Mar 2025 | 2025-03-31 | 63.04% | 0.00% | 1 |
+| Jun 2026 | 2026-06-30 | 61.46% | 0.00% | 2 |
+| Mar 2026 | 2026-03-31 | 61.50% | 0.00% | 2 |
+| Dec 2025 | 2025-12-31 | 61.50% | 0.00% | 2 |
+| Sep 2025 | 2025-09-30 | 61.52% | 0.00% | 2 |
+| Jun 2025 | 2025-06-30 | 63.01% | 0.00% | 2 |
+| Mar 2025 | 2025-03-31 | 63.04% | 0.00% | 2 |
+| Dec 2024 | 2024-12-31 | 63.05% | — | 1 |
+| Sep 2024 | 2024-09-30 | 63.06% | — | 1 |
+| Jun 2024 | 2024-06-30 | 65.02% | — | 1 |
+| Mar 2024 | 2024-03-31 | 65.24% | — | 1 |
+| Dec 2023 | 2023-12-31 | 65.78% | — | 1 |
+| Sep 2023 | 2023-09-30 | 65.91% | — | 1 |
 
 ## The stored quote
 
@@ -81,5 +87,4 @@ That is recorded rather than worked around; nothing above needs it.
 ## This run's findings
 
 - **fail** `identity` — BSE identity refused — HTTP 403. Nothing from the exchange is published this run.
-- **warn** `screener` — the second promoter witness did not refresh — fetch failed
-- **warn** `promoter-agreement` — only one witness answered; the holding is published unchecked against a second.
+- **info** `promoter-agreement` — 6 quarter(s) carried by both witnesses; all agree within 0.05pp.
