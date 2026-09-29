@@ -5646,6 +5646,26 @@ const SEARCH_NAMES = (() => {
 })();
 
 /**
+ * ── WHAT A STATEMENT RECORDS UNDER EACH COMPANY, AND NOTHING VALUES (Stage 10cy) ─
+ *
+ * `recordedHomes` summed per home key: the units the search's "Not valued"
+ * row for that company must say the family holds. Re-expressed from
+ * `BOOK_UNVALUED_HOLDINGS`, never read off the page, so the row's units are
+ * checked by a second path — and a key missing here is a row that claims to be
+ * recorded when no statement records it.
+ */
+const RECORDED_HOME_UNITS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const homes = recordedHomes(src);
+    if (!homes) return null;
+    const by = new Map();
+    for (const l of homes) by.set(l.homeKey, (by.get(l.homeKey) ?? 0) + (Number(l.quantity) || 0));
+    return by;
+  } catch { return null; }
+})();
+
+/**
  * ── EVERY AIF FUND THE FAMILY HOLDS, BY FUND ───────────────────────────────
  *
  * The client named a company inside "Vikas Khemani's fund" — Carnelian Bharat
@@ -22342,12 +22362,37 @@ const INVARIANTS = {
       return real.length > 0 && real[0].href === "/polycab" && real[0].kind === "page"
         && real.every((x) => (x.kind === "page" || x.kind === "view") && (x.href === "/polycab" || x.href.startsWith("/polycab?")));
     }],
-    ["every result says what it is and where it goes, and a holding says what it is worth", () => {
+    /**
+     * A HOLDING SAYS WHAT IT IS WORTH — OR, WHERE A STATEMENT RECORDS IT AND
+     * NOTHING VALUES IT, THAT IT IS NOT VALUED AND HOW MANY UNITS IT IS (Stage
+     * 10cy). A Motilal demat's "Rate" is the price of the holding's last
+     * movement, so those lines are quantities; with no live quote a company
+     * held only there — Ankita's 4,875 Kaynes — is found from the statement's
+     * own line, "Not valued · 4,875 units", with no ₹ because nothing on this
+     * page values it. So a holding row with no figure must be one of the two
+     * states that have none: redeemed, or recorded and not valued. The second is
+     * struck on the BOOK — the row's key is a company `recordedHomes` names, and
+     * its units are the statements' own sum — never on its words alone, so a
+     * valued holding that lost its figure cannot pass by saying "Not valued".
+     * And a "Not valued" row carries no ₹ at all: the last movement's price is
+     * the figure Stage 10cy stopped passing off as a mark.
+     */
+    ["every result says what it is and where it goes, and a holding says what it is worth — or that nothing values it, and the units a statement records", () => {
       if (!SEARCH) return false;
       const rows = Object.values(SEARCH.results).flatMap((r) => r.rows ?? []).filter((x) => x.kind !== "ask");
       if (!rows.length) return false;
-      return rows.every((x) => x.kind && x.href?.startsWith("/") && x.detail.length > 0)
-        && rows.filter((x) => x.kind === "holding" && !/redeemed/i.test(x.detail)).every((x) => /₹[\d,.]+/.test(x.detail));
+      if (!rows.every((x) => x.kind && x.href?.startsWith("/") && x.detail.length > 0)) return false;
+      const unitsIn = (d) => {
+        const m = /([\d,]+(?:\.\d+)?)\s+units?\b/.exec(d);
+        return m ? Number(m[1].replace(/,/g, "")) : NaN;
+      };
+      return rows.filter((x) => x.kind === "holding" && !/redeemed/i.test(x.detail)).every((x) => {
+        if (!/^Not valued\b/.test(x.detail)) return /₹[\d,.]+/.test(x.detail);
+        if (/₹/.test(x.detail)) return false;
+        const want = RECORDED_HOME_UNITS?.get((x.id ?? "").replace(/^holding:/, ""));
+        // Printed to at most three decimals, Indian-grouped.
+        return typeof want === "number" && want > 0 && Math.abs(unitsIn(x.detail) - want) <= 0.0005;
+      });
     }],
     ["the list paints over the page, not under it — a short list, a tall one and the one carrying the note", () => {
       const g = SEARCH?.geometry, t = SEARCH?.geometryTall;

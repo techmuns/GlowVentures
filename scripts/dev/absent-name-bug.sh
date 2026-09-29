@@ -35,6 +35,7 @@ FILES=(
   "src/pages/FamilyEntities.tsx"
   "src/pages/HoldingsBehind.tsx"
   "src/lib/reviewGaps.ts"
+  "src/lib/searchIndex.ts"
   "src/data/reviewGaps.ts"
   "src/lib/__tests__/reviewGaps.test.ts"
   "scripts/review-reconcile.mjs"
@@ -145,7 +146,7 @@ py() { python3 - "$@"; }
 # every bug below as "fired" — the harness measuring itself rather than the
 # checks.
 echo "════════ CONTROL: no patch"
-npm run build >/dev/null 2>&1 && ONLY=$ROUTES npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | sed 's/^/   /'
+npm run build >/dev/null 2>&1 && ONLY=$ROUTES,search npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | sed 's/^/   /'
 # …and the suite, because several cases below read it too: a suite already
 # failing would report each of them as "fired".
 if node scripts/test-family.mjs >/dev/null 2>&1; then echo "   SUITE clean"; else echo "   SUITE FAILS WITH NO PATCH — every suite verdict below is void"; fi
@@ -376,6 +377,46 @@ s = open(p, encoding="utf-8").read()
 old = ".flatMap((c) => balancesOn(reviewOn, isins)"
 if s.count(old) != 1: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, ".flatMap((c) => balancesOn(c.date, isins)", 1))
+PY
+
+# ── 18–20. A HOLDING A STATEMENT RECORDS AND NOTHING VALUES (Stage 10cy) ────
+# With no live quote the top bar's search finds Ankita's 4,875 Kaynes from the
+# demat statement's own line: "Not valued · 4,875 units", and no ₹. These walk
+# the `search` route, where the check strikes that row on the book.
+ROUTES=search
+
+# The last movement's price printed as the row's figure — the one Stage 10cy
+# stopped passing off as a mark.
+run_case "a recorded holding's search row prints its last movement's price" py <<'PY'
+import sys
+p = "src/lib/searchIndex.ts"
+s = open(p, encoding="utf-8").read()
+old = 'detail: ["Not valued", `${units.toLocaleString'
+if s.count(old) != 1: sys.exit(1)
+new = 'detail: ["Not valued", head.lastMovementRate != null ? `₹${head.lastMovementRate}` : "", `${units.toLocaleString'
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# The units dropped: the row says it is not valued and not what is held.
+run_case "a recorded holding's search row drops its units" py <<'PY'
+import sys
+p = "src/lib/searchIndex.ts"
+s = open(p, encoding="utf-8").read()
+old = 'detail: ["Not valued", `${units.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units`,'
+if s.count(old) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, 'detail: ["Not valued",', 1))
+PY
+
+# A VALUED holding that lost its figure and says "Not valued", with its units:
+# its words are the recorded state's, and only the book can tell them apart.
+run_case "a valued holding loses its figure and says it is not valued" py <<'PY'
+import sys
+p = "src/lib/searchIndex.ts"
+s = open(p, encoding="utf-8").read()
+old = ': [categories.join(" + "), money(mv), pctOfBook(mv),'
+if s.count(old) != 1: sys.exit(1)
+new = ': ["Not valued", `${sum(rows.map((p) => p.quantity)).toLocaleString("en-IN", { maximumFractionDigits: 3 })} units`, categories.join(" + "),'
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
 echo ""
