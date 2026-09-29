@@ -19,9 +19,9 @@ export const BOOK_AS_OF = "2026-08-29";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-08-29",
   "listedValue": 6997625652.26,
-  "privateValue": 106154836.9,
+  "privateValue": 137881211.66,
   "unplacedValue": 98742,
-  "totalValue": 7103879231.16,
+  "totalValue": 7135605605.92,
   "positionsCount": 371,
   "entitiesCount": 6,
   "startupsCount": 0,
@@ -1000,11 +1000,7 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null,
-    "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-2",
-    "alsoReportedUnder": [
-      "bharat-jaisinghani"
-    ]
+    "positionIrrPct": null
   },
   {
     "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
@@ -1032,11 +1028,7 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-06-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null,
-    "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-2",
-    "alsoReportedUnder": [
-      "ajay-jaisinghani"
-    ]
+    "positionIrrPct": null
   },
   {
     "securityKey": "3p-india-equity-fund-1-class-b1",
@@ -10167,11 +10159,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null,
-    "dedupeGroup": "dg-transition-venture-capital-fund-i-class-a1-2",
-    "alsoReportedUnder": [
-      "bharat-jaisinghani-family-trust-3"
-    ]
+    "positionIrrPct": null
   },
   {
     "securityKey": "transition-venture-capital-fund-i-class-a1",
@@ -10199,11 +10187,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null,
-    "dedupeGroup": "dg-transition-venture-capital-fund-i-class-a1-2",
-    "alsoReportedUnder": [
-      "bharat-jaisinghani-family-trust-2"
-    ]
+    "positionIrrPct": null
   },
   {
     "securityKey": "amrutanjan-health-care",
@@ -11641,7 +11625,7 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "faceValue": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 holds every one of these shares in its lock-in + freeze balance, none of them free, and prints no rate for them — and the family decided on 2026-09-28 to keep them unvalued (\"keep them unvalued for now\") rather than borrow a mark from another statement, so they carry a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -11941,7 +11925,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-05-31",
     "date": "2026-05-31",
-    "nav": 258517429.62,
+    "nav": 272925903.53,
     "accountsOnDate": 4,
     "accountsCarried": 0,
     "flowIn": 0,
@@ -11954,143 +11938,143 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-06-25",
     "date": "2026-06-25",
-    "nav": 434782762.27,
+    "nav": 449191236.18,
     "accountsOnDate": 2,
     "accountsCarried": 4,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 258517429.62,
-    "linkClose": 258517429.62,
+    "linkOpen": 272925903.53,
+    "linkClose": 272925903.53,
     "linkAccounts": 4,
     "panelComplete": false
   },
   {
     "period": "2026-06-30",
     "date": "2026-06-30",
-    "nav": 465733110.82,
+    "nav": 480313523.33,
     "accountsOnDate": 5,
     "accountsCarried": 2,
     "flowIn": -986,
     "unreportedFlowValue": 0,
-    "linkOpen": 434782762.27,
-    "linkClose": 454484862.16,
+    "linkOpen": 449191236.18,
+    "linkClose": 469065274.67,
     "linkAccounts": 6,
     "panelComplete": false
   },
   {
     "period": "2026-07-01",
     "date": "2026-07-01",
-    "nav": 465733110.82,
+    "nav": 480313523.33,
     "accountsOnDate": 1,
     "accountsCarried": 7,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 465733110.82,
-    "linkClose": 465733110.82,
+    "linkOpen": 480313523.33,
+    "linkClose": 480313523.33,
     "linkAccounts": 7,
     "panelComplete": false
   },
   {
     "period": "2026-07-06",
     "date": "2026-07-06",
-    "nav": 623698819.65,
+    "nav": 638279232.16,
     "accountsOnDate": 2,
     "accountsCarried": 8,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 465733110.82,
-    "linkClose": 465733110.82,
+    "linkOpen": 480313523.33,
+    "linkClose": 480313523.33,
     "linkAccounts": 8,
     "panelComplete": false
   },
   {
     "period": "2026-07-10",
     "date": "2026-07-10",
-    "nav": 1282497077.78,
+    "nav": 1297077490.29,
     "accountsOnDate": 3,
     "accountsCarried": 10,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 623698819.65,
-    "linkClose": 623698819.65,
+    "linkOpen": 638279232.16,
+    "linkClose": 638279232.16,
     "linkAccounts": 10,
     "panelComplete": true
   },
   {
     "period": "2026-07-27",
     "date": "2026-07-27",
-    "nav": 1278682507.9,
+    "nav": 1293262920.41,
     "accountsOnDate": 2,
     "accountsCarried": 11,
     "flowIn": -9559,
     "unreportedFlowValue": 0,
-    "linkOpen": 1282497077.78,
-    "linkClose": 1278682507.9,
+    "linkOpen": 1297077490.29,
+    "linkClose": 1293262920.41,
     "linkAccounts": 13,
     "panelComplete": true
   },
   {
     "period": "2026-07-31",
     "date": "2026-07-31",
-    "nav": 1287047117.03,
+    "nav": 1301627529.54,
     "accountsOnDate": 4,
     "accountsCarried": 9,
     "flowIn": -22945,
     "unreportedFlowValue": 0,
-    "linkOpen": 1278682507.9,
-    "linkClose": 1287047117.03,
+    "linkOpen": 1293262920.41,
+    "linkClose": 1301627529.54,
     "linkAccounts": 13,
     "panelComplete": true
   },
   {
     "period": "2026-08-06",
     "date": "2026-08-06",
-    "nav": 1287047117.03,
+    "nav": 1301627529.54,
     "accountsOnDate": 1,
     "accountsCarried": 12,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 1287047117.03,
-    "linkClose": 1287047117.03,
+    "linkOpen": 1301627529.54,
+    "linkClose": 1301627529.54,
     "linkAccounts": 13,
     "panelComplete": true
   },
   {
     "period": "2026-08-10",
     "date": "2026-08-10",
-    "nav": 1282278705.95,
+    "nav": 1296859118.46,
     "accountsOnDate": 1,
     "accountsCarried": 12,
     "flowIn": -30690,
     "unreportedFlowValue": 0,
-    "linkOpen": 1287047117.03,
-    "linkClose": 1282278705.95,
+    "linkOpen": 1301627529.54,
+    "linkClose": 1296859118.46,
     "linkAccounts": 13,
     "panelComplete": true
   },
   {
     "period": "2026-08-11",
     "date": "2026-08-11",
-    "nav": 1291777593.71,
+    "nav": 1306358006.22,
     "accountsOnDate": 2,
     "accountsCarried": 11,
     "flowIn": -65735,
     "unreportedFlowValue": 0,
-    "linkOpen": 1282278705.95,
-    "linkClose": 1291777593.71,
+    "linkOpen": 1296859118.46,
+    "linkClose": 1306358006.22,
     "linkAccounts": 13,
     "panelComplete": true
   },
   {
     "period": "2026-08-13",
     "date": "2026-08-13",
-    "nav": 1401702103.89,
+    "nav": 1416282516.4,
     "accountsOnDate": 2,
     "accountsCarried": 11,
     "flowIn": 112393342,
     "unreportedFlowValue": 0,
-    "linkOpen": 1291777593.71,
-    "linkClose": 1401702103.89,
+    "linkOpen": 1306358006.22,
+    "linkClose": 1416282516.4,
     "linkAccounts": 13,
     "panelComplete": true
   }
@@ -12703,15 +12687,15 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [
 export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
   "to": "2026-08-13",
-  "openValue": 1262794977.89,
-  "closeValue": 1401702103.89,
+  "openValue": 1277203451.8,
+  "closeValue": 1416282516.4,
   "priceEffect": 25377438.66,
   "tradeEffect": 83708255.64,
   "enteredValue": 107178344.42,
   "exitedValue": 82274047.36,
-  "undecomposedValue": 4917134.63,
-  "bookValue": 7103879231.16,
-  "coveredBookValue": 1401702103.89,
+  "undecomposedValue": 5089073.23,
+  "bookValue": 7135605605.92,
+  "coveredBookValue": 1416282516.4,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -12735,17 +12719,17 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "from": "2026-05-31",
       "to": "2026-06-30",
       "days": 30,
-      "openValue": 0,
-      "closeValue": 0,
+      "openValue": 14408473.91,
+      "closeValue": 14580412.51,
       "priceEffect": 0,
       "tradeEffect": 0,
       "enteredValue": 0,
       "exitedValue": 0,
-      "undecomposedValue": 0,
+      "undecomposedValue": 171938.6,
       "rowsHeld": 0,
       "rowsEntered": 0,
       "rowsExited": 0,
-      "rowsUnpriced": 0
+      "rowsUnpriced": 1
     },
     {
       "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
@@ -17500,6 +17484,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "to": "2026-07-31",
       "openValue": 14408473.91,
       "closeValue": 14668362.66,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 990429.684,
+      "closeQty": 990429.684,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+      "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
+      "accountId": "360-one-private-wealth-60117",
+      "from": "2026-05-31",
+      "to": "2026-06-30",
+      "openValue": 14408473.91,
+      "closeValue": 14580412.51,
       "openPrice": null,
       "closePrice": null,
       "openQty": 990429.684,

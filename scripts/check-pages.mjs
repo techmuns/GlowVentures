@@ -24,7 +24,7 @@
 // Usage:  npm run build && npx vite preview --port 4173 &  then  npm run check:pages
 //         WIDTHS=1440,1280,1024 npm run check:pages   (responsive sweep)
 import { chromium } from "playwright-core";
-import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, readdirSync } from "node:fs";
 // The book's own normalisation, so the checker keys a disclosed name exactly as
 // the extractor keyed a position — the same file both sides of the app read.
 import { securityKeyOf, stripDepositoryTail } from "../shared/securityKey.mjs";
@@ -35,6 +35,16 @@ import { UPSTOX_INSTRUMENTS } from "../shared/upstoxInstruments.mjs";
 // below in `fundSideOf`, so this sweep and the book are two derivations of one
 // rule and can disagree.
 import { FAMILY_MARKET_SIDE } from "../shared/aifCategory.mjs";
+// THE FAMILY'S "SEPARATE INVESTMENTS" (28 Sep 2026), read the same way: as the
+// committed table, never through `separateInvestmentFor`. Which account a named
+// entry means is matched below against `glowData.ts`'s own accounts, so the
+// sweep and the ingest are two readings of one decision.
+import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
+// AND THE FAMILY'S "KEEP THEM UNVALUED" (28 Sep 2026), read as the committed
+// table and never through `keptUnvaluedFor` / `keptUnvaluedReason`: the row it
+// names is found in `glowData.ts` by account and ISIN below, and what the card
+// must SAY is struck against the statement's own fact and the family's words.
+import { KEPT_UNVALUED } from "../shared/keptUnvalued.mjs";
 import { resolveSector } from "../shared/sectors.mjs";
 import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registerRead.mjs";
 import * as XLSX from "xlsx";
@@ -1898,7 +1908,25 @@ const AXIS_VENUE_BOOK = (() => {
       const groups = new Set(ps.filter((x) => x.dedupeGroup).map((x) => x.dedupeGroup));
       if (accts.size > 1 && groups.size > 0) { overlapKey = key; break; }
     }
-    return { statements: rest.length, pairs: pairs.size, overlapKey };
+    /**
+     * ...OR, WHERE THE BOOK COUNTS NO HOLDING ONCE, THE FAMILY'S OWN PAIR.
+     * *"both are separate investments"* (28 Sep 2026) took both dedupe groups
+     * out of this book, so `overlapKey` is null and the walk would fall back to
+     * whichever row is held through the most accounts — a clubbed fund, on this
+     * book, whose chevron lists unit classes rather than routes, so the hover
+     * the route-subtotal check reads is not drawn at all. The pair the family
+     * called separate is the row whose hover used to name "one holding reported
+     * twice" and now must not: the same row, the opposite claim. Largest first,
+     * from the committed decision read as data.
+     */
+    let separateKey = null, separateMv = -1;
+    for (const d of SEPARATE_INVESTMENTS) {
+      const ps = byKey.get(d.securityKey) ?? [];
+      if (new Set(ps.map((x) => x.accountId)).size < 2 || ps.some((x) => x.dedupeGroup)) continue;
+      const mv = ps.reduce((a, x) => a + (Number(x.marketValue) || 0), 0);
+      if (mv > separateMv) { separateKey = d.securityKey; separateMv = mv; }
+    }
+    return { statements: rest.length, pairs: pairs.size, overlapKey, separateKey };
   } catch { return null; }
 })();
 
@@ -3018,12 +3046,17 @@ const PM_RETURN_BOOK = (() => {
       const hprHeld = cost != null && cost > 0 && costCoversAll ? ((mv - cost) / cost) * 100 : null;
       let gap = false, unknown = false, withAccount = 0;
       const flows = [];
+      // THE DATES money went in on, never the calls: two members paying one
+      // call on the same day is ONE purchase date (Transition Venture's two
+      // trusts, since the family said they are separate investments).
       const calls = new Set();
+      const valuations = new Set();
       let paidOut = 0, first = null, valuedAt = null;
       for (const p of g) {
         const v = acc.get(p.accountId)?.asOf ?? null;
         if (!v) { gap = true; continue; }
         valuedAt = !valuedAt || v > valuedAt ? v : valuedAt;
+        valuations.add(v);
         const c = capital.get(p.accountId);
         if (!c) { unknown = true; continue; }
         withAccount++;
@@ -3038,7 +3071,7 @@ const PM_RETURN_BOOK = (() => {
         }
         for (const k of cs) {
           flows.push({ date: k.date, amount: -k.amount, kind: "call" });
-          calls.add(`${p.accountId}|${k.date}`);
+          calls.add(k.date);
           first = !first || k.date < first ? k.date : first;
         }
         if (c.payouts == null) { unknown = true; continue; }
@@ -3060,20 +3093,24 @@ const PM_RETURN_BOOK = (() => {
         ? irr(flows.filter((x) => x.kind !== "payout"))
         : null;
       const tranches = calls.size;
+      // ONE START AND ONE END: every call on one date and every folio valued on
+      // one date — the only record a single-period figure describes exactly.
+      const oneEntry = tranches === 1 && valuations.size <= 1;
       // THE FAMILY'S RULE, re-expressed: a gap → the holding-period return; more
-      // than one call or cash paid back → XIRR where it can be annualised;
-      // one call, nothing back, a year or more → CAGR; anything else → HPR.
+      // than one purchase date, folios valued on different dates, or cash paid
+      // back → XIRR where it can be annualised; one date, nothing back, a year
+      // or more → CAGR; anything else → HPR.
       let auto;
       if (hpr == null) auto = null;
       else if (!complete && gap) auto = "HPR";
-      else if (tranches > 1 || paidOut > 0) auto = !unknown && window != null && window >= 365 && rate != null ? "XIRR" : "HPR";
+      else if (!oneEntry || paidOut > 0) auto = !unknown && window != null && window >= 365 && rate != null ? "XIRR" : "HPR";
       else auto = !unknown && window != null && window >= 365 && 1 + hpr / 100 > 0 ? "CAGR" : "HPR";
       // AND WHAT THE XIRR COLUMN MAY SHOW: the rate where the record is
       // complete and spans a year; the holding-period return, TAGGED, where one
-      // call and nothing back sits under a year; otherwise a dash.
+      // entry and nothing back sits under a year; otherwise a dash.
       const xirr = !complete || rate == null ? { shown: false }
         : window >= 365 ? { shown: true, tag: null, pct: rate }
-        : tranches === 1 && paidOut === 0 && hpr != null ? { shown: true, tag: "HPR", pct: hpr }
+        : oneEntry && paidOut === 0 && hpr != null ? { shown: true, tag: "HPR", pct: hpr }
         : { shown: false };
       funds.push({ key, security: g[0].security, mv, cost, soldCost, hpr, hprHeld, auto, xirr, complete, rate, rateNoPayouts, window, tranches, paidOut, flows });
     }
@@ -4125,6 +4162,41 @@ const DUAL_KEY = (() => {
       if (!best || e.mv > best.mv) best = e;
     }
     return best?.key ?? null;
+  } catch { return null; }
+})();
+
+/**
+ * THE FAMILY'S OWN "SEPARATE INVESTMENTS", AS A PAGE TO WALK.
+ *
+ * *"both are separate investments"* (28 Sep 2026) took the only two dedupe
+ * groups this book carried out of it, so `DUAL_KEY` is null here and
+ * `stock-aif-dual` would walk a not-found address — asserting nothing about the
+ * page the answer changed most. That page is the one where a holding two
+ * statements report is drawn as two rows: before the answer the Total counted
+ * it once and a line said so; now the Total is the rows' own sum and no such
+ * line may be drawn. So the route walks the largest pair the decision names —
+ * read off the committed table as DATA, each named account matched against
+ * `glowData.ts`'s own by the provider and the number its statement prints, and
+ * every row of the security required untagged. Null where no entry reaches two
+ * rows, which the route then says out loud.
+ */
+const SEPARATE_KEY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    let best = null;
+    for (const d of SEPARATE_INVESTMENTS) {
+      const ids = new Set(accounts
+        .filter((a) => d.accounts.some((n) => n.provider === a.provider && String(n.accountNo) === String(a.accountNo)))
+        .map((a) => a.accountId));
+      const all = positions.filter((p) => p.securityKey === d.securityKey);
+      const named = all.filter((p) => ids.has(p.accountId));
+      if (named.length < 2 || all.some((p) => p.dedupeGroup)) continue;
+      const mv = all.reduce((a, p) => a + (Number(p.marketValue) || 0), 0);
+      if (!best || mv > best.mv) best = { key: d.securityKey, mv, rows: all.length };
+    }
+    return best;
   } catch { return null; }
 })();
 
@@ -7047,6 +7119,11 @@ const ROUTES = [
   // NOTHING VALUES, chosen so the same card also counts a line valued live.
   ["family-unvalued-lines", () => (UNPRICED_BOOK?.ownerId
     ? `/family?entity=${encodeURIComponent(UNPRICED_BOOK.ownerId)}` : "/family?entity=none-resolved-from-the-book")],
+  // …AND THE MEMBER WHOSE CARD CARRIES A ROW THE FAMILY DECIDED TO KEEP
+  // UNVALUED (FQ-3): the account and the row are found in the book off the
+  // family's own table, so a drifted key walks a page with no such line and fails.
+  ["family-kept-unvalued", () => (KEPT_UNVALUED_BOOK?.[0]?.ownerId
+    ? `/family?entity=${encodeURIComponent(KEPT_UNVALUED_BOOK[0].ownerId)}` : "/family?entity=none-resolved-from-the-book")],
   // …AND ITS PRICE TAB, which keeps the scheme's own NAV half: the reason for
   // not looking through a hedged book is about what the fund HOLDS, and says
   // nothing against the fund's own published price (see `lookThroughHoldings`).
@@ -7103,7 +7180,12 @@ const ROUTES = [
   // either reads correctly or contradicts itself on one screen: the pill said
   // "Held in 1 entity" over a table listing two, because a per-owner COUNT was
   // taken from the deduped set.
-  ["stock-aif-dual", () => (DUAL_KEY ? `/stock/${encodeURIComponent(DUAL_KEY)}` : "/stock/no-holding-reported-twice-in-the-book")],
+  // A holding two statements report: counted once where the book tags it, and
+  // — since the family's answer — the pair they called separate investments.
+  ["stock-aif-dual", () => {
+    const key = DUAL_KEY ?? SEPARATE_KEY?.key ?? null;
+    return key ? `/stock/${encodeURIComponent(key)}` : "/stock/no-holding-reported-twice-in-the-book";
+  }],
   /**
    * ...AND THE TWO QUANTITY-ACCOUNT STATES. `stock-qty` is the held name whose
    * depository statement prints the most blocks — the worst case for a TOTAL
@@ -7162,6 +7244,8 @@ const ROUTES = [
   // account reports draws no Total row at all (a total of one row is the row).
   // VD-16: the largest Sanshi Fund-I line, whose statement marks it at pre-tax NAV.
   ["stock-pretax", () => { const k = PRETAX_KEY; return k ? `/stock/${encodeURIComponent(k)}` : "/stock/no-sanshi-holding-in-the-book"; }],
+  // FQ-2: the largest fund whose statement prints only a post-tax NAV.
+  ["stock-posttax", () => { const k = POSTTAX_KEY; return k ? `/stock/${encodeURIComponent(k)}` : "/stock/no-post-tax-fund-in-the-book"; }],
   ["stock-cmp-agree", () => (CMP_BOOK.agreedKey ? `/stock/${encodeURIComponent(CMP_BOOK.agreedKey)}` : "/stock/no-holding-several-statements-mark-alike-in-the-book")],
   // ...and the holding the most mandates hold, where the line under the name
   // must collapse to a count rather than list every mandate (`MANY_MANDATES`).
@@ -8784,11 +8868,20 @@ const txnTTableChecks = () => [
    * MT-7 — a family question, so the figures stand as each statement prints
    * them; what may not stand is a per-account sum that says nothing about a
    * holding two of its rows both report. The excess is struck off the book.
+   *
+   * The family answered it for this book: *"both are separate investments"*
+   * (28 Sep 2026), so no holding is tagged as reported twice and the per-account
+   * sum IS the Holdings table's. Then the total may name no pair and carry no
+   * excess — a positive claim, because a "family's to say" line over a question
+   * the family has answered is false.
    */
   ["the Value total names the holding two account rows both report, and how much more it counts than the Holdings table", (t, ctx) => {
     if (!txnTReady(ctx) || !ctx.txnT.foot) return false;
     const D = TXN_T_BOOK.doubled;
-    if (!D.length) return { notChecked: "no holding is reported by two account rows on this book" };
+    if (!D.length) {
+      const v = ctx.txnT.foot.cells?.value;
+      return !!v && ctx.txnT.foot.doubled == null && !/family's to say|both report/i.test(v.title ?? "");
+    }
     const v = ctx.txnT.foot.cells?.value;
     const min = D.reduce((a, d) => a + d.excessMin, 0), max = D.reduce((a, d) => a + d.excessMax, 0);
     const got = Number(ctx.txnT.foot.doubled);
@@ -10368,6 +10461,41 @@ const UNPRICED_BOOK = (() => {
 })();
 
 /**
+ * THE ROW THE FAMILY DECIDED TO KEEP UNVALUED (FQ-3, 28 Sep 2026) — Ankita's
+ * 94,967 Clean Max shares, which Ankita's Motilal Oswal demat statement holds in its
+ * lock-in + freeze balance with no rate.
+ *
+ * Found by the ACCOUNT the table names (provider and account number, as
+ * printed) and the ISIN, in `glowData.ts`'s own accounts and unvalued rows —
+ * never by a name. The route walks that account's owner, whose Family &
+ * Entities card lists the row under the account; `null` for every field is a
+ * failure on that route, never an abstention, because the table always names
+ * a row.
+ */
+const KEPT_UNVALUED_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    return KEPT_UNVALUED.map((d) => {
+      const acc = accounts.filter((a) => a.provider === d.provider && String(a.accountNo) === String(d.accountNo));
+      const a = acc.length === 1 ? acc[0] : null;
+      const rows = a ? unvalued.filter((u) => u.accountId === a.accountId && u.isin === d.isin) : [];
+      const row = rows.length === 1 ? rows[0] : null;
+      return {
+        decided: d.decided, words: d.words,
+        accountId: a?.accountId ?? null, ownerId: a?.ownerId ?? null, owner: a?.owner ?? null,
+        securityKey: row?.securityKey ?? null, quantity: row?.quantity ?? null,
+        // THE CONVERSE: the LIVE book must value no row of that account and ISIN,
+        // the depository overlays included — the decision is not to borrow a mark.
+        valuedLive: a ? positions.filter((p) => p.accountId === a.accountId && p.isin === d.isin).length : null,
+      };
+    });
+  } catch { return null; }
+})();
+
+/**
  * HOW MANY HOLDINGS CAN HONESTLY CARRY AN INVESTED-ON DATE.
  *
  * Two sources, and both are the HOLDING'S OWN: a lot register's acquisition date
@@ -10902,12 +11030,25 @@ const FOOT_C_NO_OVERLAP = [
  * members both report once. The footer AND the bands say by how much —
  * `MONITOR_BASIS_BOOK.entity`, the cost of the positions a dedupe drops.
  */
+/**
+ * AND ON THIS BOOK THERE IS NO OVERLAP TO NAME. *"both are separate
+ * investments"* (28 Sep 2026) took the only two pairs out of the dedupe, so the
+ * by-entity rows and the totals are one set: every claim below then asserts
+ * the footer and the bands name NO overlap and the Weight column adds to 100%
+ * — a positive claim struck on the page, never an abstention, because a
+ * sentence about a double count the family has ruled out would be false.
+ */
+const noEntityOverlap = (c) => !!c?.foot?.invested
+  && c.foot.invested.overlap === null && (c.foot.pnl?.overlap ?? null) === null
+  && (c.sections ?? []).every((x) => x.investedOverlap === null && x.pnlOverlap === null)
+  && !/counts a holding two members both report once|of gain twice/i.test(`${c.foot.invested.title ?? ""} ${c.foot.pnl?.title ?? ""}`)
+  && (c.sections ?? []).every((x) => !/counts a holding two members both report once/i.test(x.investedTitle ?? ""));
 const ENTITY_OVERLAP_C = [
   ["[C] the by-entity footer names the Invested overlap, to the rupee (MH-12)", (t, ctx) => {
     const e = MONITOR_BASIS_BOOK?.entity;
     const inv = ctx?.monitorC?.foot?.invested;
     if (!e || !inv) return false;
-    if (!(e.dupCost > 1)) return { notChecked: "no holding in this book is reported by two members" };
+    if (!(e.dupCost > 1)) return noEntityOverlap(ctx?.monitorC);
     return inv.overlap !== null && Math.abs(inv.overlap - e.dupCost) <= 1
       && /this total counts a holding two members both report once — a ₹[\d,.]+\s*(Cr|L|K)? overlap/i.test(inv.title ?? "");
   }],
@@ -10915,7 +11056,7 @@ const ENTITY_OVERLAP_C = [
     const e = MONITOR_BASIS_BOOK?.entity;
     const c = ctx?.monitorC;
     if (!e || !c?.sections?.length) return false;
-    if (!(e.dupCost > 1)) return { notChecked: "no holding in this book is reported by two members" };
+    if (!(e.dupCost > 1)) return noEntityOverlap(c);
     const with_ = c.sections.filter((x) => x.investedOverlap !== null);
     return with_.length > 0
       && Math.abs(with_.reduce((a, x) => a + x.investedOverlap, 0) - e.dupCost) <= 1
@@ -10925,7 +11066,8 @@ const ENTITY_OVERLAP_C = [
     const e = MONITOR_BASIS_BOOK?.entity;
     const c = ctx?.monitorC;
     if (!e || !c?.foot?.pnl) return false;
-    if (!(e.dupCost > 1) || Math.abs(e.dupPnl) < 1) return { notChecked: "no gain in this book is reported by two members" };
+    if (!(e.dupCost > 1)) return noEntityOverlap(c);
+    if (Math.abs(e.dupPnl) < 1) return { notChecked: "the holding two members report carries no gain" };
     const bands = c.sections.filter((x) => x.pnlOverlap !== null);
     return c.foot.pnl.overlap !== null && Math.abs(c.foot.pnl.overlap - e.dupPnl) <= 1
       && Math.abs(bands.reduce((a, x) => a + x.pnlOverlap, 0) - e.dupPnl) <= 1
@@ -10935,7 +11077,7 @@ const ENTITY_OVERLAP_C = [
     const e = MONITOR_BASIS_BOOK?.entity;
     const w = ctx?.monitorC?.foot?.weight;
     if (!e || !w) return false;
-    if (!(e.rawMV - e.dedMV > 1)) return { notChecked: "no holding in this book is reported by two members" };
+    if (!(e.rawMV - e.dedMV > 1)) return w.text === "100.0%" && !/and not to 100%/i.test(w.title ?? "");
     const m = /the column adds to ([\d.]+)% and not to 100%/i.exec(w.title ?? "");
     return !!m && Math.abs(Number(m[1]) - (e.rawMV / e.dedMV) * 100) <= 0.051 && w.text === "100.0%";
   }],
@@ -14117,11 +14259,16 @@ const PM_BAND_HINTS = (grouping) => ["each band keeps its counts on its face and
  * and the sentence is the hover. PM-1 and PM-6 hold its FIGURES to the book;
  * this holds the words to their new home and asserts them gone from the face.
  */
-const PM_OVERLAP_HINT = ["the 'Counted once' line says what it does in its hover, not on its face", (t, ctx) => {
+const PM_OVERLAP_HINT = ["the 'Counted once' line says what it does in its hover, not on its face — and is drawn only where a holding is counted once", (t, ctx) => {
   const pv = ctx?.pmView;
   if (!pv) return { notChecked: "the private-view probe did not run" };
-  if (!PM_FOLIO_BOOK?.dup?.length) return { notChecked: "no private holding in this book is reported twice" };
+  if (!PM_FOLIO_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
   const ov = pv.overlaps ?? [];
+  // *"both are separate investments"* (28 Sep 2026) left no private holding
+  // counted once on this book, so no line may take anything back: a Counted
+  // once line over a holding the family has said is two investments subtracts
+  // money they own. A positive claim, never an abstention.
+  if (!PM_FOLIO_BOOK.dup.length) return ov.length === 0;
   if (!ov.length) return false;
   return ov.every((o) => /counts (?:it|each) once/i.test(o.hint ?? "") && !/counts (?:it|each) once/i.test(o.text));
 }];
@@ -14198,7 +14345,17 @@ const PM_WEIGHT_OWNERS_CHECK = ["by owner, the Weight heading says what its colu
   const title = ctx?.pmView?.headTitles?.weight ?? "";
   const F = PM_FOLIO_BOOK;
   if (!F) return false;
-  if (!F.dup.length) return { notChecked: "no private holding in this book is reported twice, so the column adds to 100%" };
+  if (!F.dup.length) {
+    // NOTHING IS COUNTED ONCE (this book, since the family's answer), so the
+    // members' rows add to 100% and the heading claims no more: asserted on the
+    // rows' own printed weights, at their printing precision, and on the words.
+    const owners = (ctx?.pmView?.groups ?? []).filter((g) => g.kind === "owner" && g.section === "private");
+    const w = owners.map((g) => Number(/(-?[\d.]+)\s*%/.exec(g.cells?.weight?.text ?? "")?.[1]));
+    if (!owners.length || w.some((x) => !Number.isFinite(x))) return false;
+    const sum = w.reduce((a, b) => a + b, 0);
+    return /same denominator on every row/i.test(title) && !/add to [\d.]+%|takes back/i.test(title)
+      && Math.abs(sum - 100) <= 0.05 * (owners.length + 1);
+  }
   const printed = [...F.printed.values()].reduce((a, b) => a + b, 0);
   const once = [...F.consolidated.values()].reduce((a, b) => a + b, 0);
   const gap = F.dup.reduce((a, r) => a + r.gap, 0);
@@ -14568,9 +14725,12 @@ const PM_TABLE_CHECKS = [
    * PM-A1 — THE PAIR IS THE FAMILY'S TO CALL, AND THE ROW SAYS SO. Every fund
    * row a second statement also reports — a `dedupeGroup` on the book's own
    * private positions, derived here — carries the pending note under its name,
-   * and no other row does.
+   * and no other row does. *"both are separate investments"* (28 Sep 2026)
+   * left no such group on this book, so here the claim is that NO row carries
+   * the note: a question the family answered, printed as pending, is a false
+   * statement about their book.
    */
-  ["every fund reported twice says, on its row, that the pair is pending the family's answer", (t, ctx) => {
+  ["a fund row says its pair is pending the family's answer exactly where a second statement is still counted once — since their answer, on no row", (t, ctx) => {
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     if (!CAPITAL_BOOK?.twiceKeys) return false;
@@ -16172,42 +16332,61 @@ const CIO_ALLOC = [
      * ── …AND COUNTS EACH CAPITAL ACCOUNT ONCE WITH ITS HOLDING, AS THAT PAGE DOES ─
      *
      * Private Market counts a capital account on the basis its holding is
-     * counted (PM-A2): Transition Venture Fund I is one holding under both
-     * family trusts, so its second trust's capital is in none of that page's
-     * tiles. This card and the Uncalled capital tile open that page, and summed
-     * as printed they read ₹15.98 Cr still to call over a page printing
-     * ₹15.23 Cr. Struck against `CAPITAL_BOOK.once`, derived off the book by
-     * the dedupe rule itself — and the as-printed register must genuinely
-     * differ, or a card that ignored the rule would pass as one that applied it.
+     * counted (PM-A2): where one holding is reported by two statements, only
+     * one of them brings its capital into that page's tiles. This card and the
+     * Uncalled capital tile open that page, so they count what it counts.
+     * Struck against `CAPITAL_BOOK.once`, derived off the book by the dedupe
+     * rule itself.
+     *
+     * ON THIS BOOK NOTHING IS LEFT OUT. *"both are separate investments"*
+     * (28 Sep 2026) untagged the only pair that carried capital — Transition
+     * Venture Fund I under both family trusts — so every capital account
+     * counts, and the register as printed IS the page's figure. The claim is
+     * then that the tile and the card print that whole figure: a positive
+     * claim, never an abstention. Where a later pair is counted once, the
+     * as-printed register must genuinely differ, or a card that ignored the
+     * rule would pass as one that applied it.
      */
     ["the Uncalled capital tile and the Capital deployment card count each capital account once with its holding, as the page they open does", (t, ctx) => {
       const once = CAPITAL_BOOK?.once;
       if (!once) return false;
-      if (!once.leftOut.length) return notChecked("no private holding in this book is reported by two statements, so counted once and as printed coincide");
       const tile = ctx?.kpiTiles?.find((x) => x.slot === "uncalled");
       const card = ctx?.deployLink;
       if (!tile || !card) return false;
       const money = (txt) => { const m = /₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(txt ?? ""); return m ? crU(m[1], m[2]) : NaN; };
       const fig = (label) => money(new RegExp(label + String.raw`\s*(₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?)`, "i").exec(card.text)?.[1]);
       const near = (a, b) => Number.isFinite(a) && Math.abs(a - b) <= 0.06;
-      const differs = Math.abs(CAPITAL_BOOK.uncalledCr - once.uncalledCr) > 0.15;
-      return differs && near(money(tile.value), once.uncalledCr)
+      const shown = near(money(tile.value), once.uncalledCr)
         && near(fig("uncalled capital"), once.uncalledCr) && near(fig("Fund commitments"), once.committedCr);
+      if (!once.leftOut.length) {
+        // Nothing counted once: the page's figure and the register as printed
+        // are one number, and the tile and the card print it.
+        return shown && Math.abs(CAPITAL_BOOK.uncalledCr - once.uncalledCr) <= 0.005
+          && Math.abs(CAPITAL_BOOK.committedCr - once.committedCr) <= 0.005;
+      }
+      const differs = Math.abs(CAPITAL_BOOK.uncalledCr - once.uncalledCr) > 0.15;
+      return differs && shown;
     }],
     /**
-     * ...AND EACH SAYS WHAT IT LEFT OUT. A figure counted once is a decision the
-     * family has not yet made (§4c), so the tile and the card name the second
-     * statement, whose capital it is counted with, that the pair is pending
-     * their answer — and, on the tile, what it would add if it is two
-     * investments. The same function writes Private Market's hovers.
+     * ...AND EACH SAYS WHAT IT LEFT OUT — AND, LEAVING NOTHING OUT, NAMES NO
+     * PAIR. A figure counted once is a decision the family has not made (§4c),
+     * so the tile and the card name the second statement, whose capital it is
+     * counted with, that the pair is pending their answer — and, on the tile,
+     * what it would add if it is two investments. Where no capital account is
+     * left out (this book, since the family answered), neither may carry that
+     * sentence: a question the family has answered, printed as pending, is a
+     * false statement about their book. The same function writes Private
+     * Market's hovers.
      */
-    ["...and the tile and the card name the statement they leave out, pending the family's answer", (t, ctx) => {
+    ["...and the tile and the card name any statement they leave out, pending the family's answer — and, leaving none out, name no pair", (t, ctx) => {
       const once = CAPITAL_BOOK?.once;
       if (!once) return false;
-      if (!once.leftOut.length) return notChecked("no private holding in this book is reported by two statements");
       const tile = ctx?.kpiTiles?.find((x) => x.slot === "uncalled");
       const hint = ctx?.deployLink?.hint ?? "";
       if (!tile) return false;
+      if (!once.leftOut.length) {
+        return ![tile.hover ?? "", hint].some((h) => /pending the family's answer|if two, add|second statement/i.test(h));
+      }
       const names = (h) => once.leftOut.every((x) => h.includes(x.accountNo) && h.includes(x.countedAsNo))
         && /pending the family's answer/i.test(h);
       return names(tile.hover ?? "") && /if two, add ₹/i.test(tile.hover ?? "") && names(hint);
@@ -16216,12 +16395,14 @@ const CIO_ALLOC = [
      * ── …AND ITS DISTRIBUTIONS ARE THE PAGE'S, EACH FUND ONCE (B-10) ──────────
      *
      * Private Market counts each fund's distribution once — a capital account's
-     * own total, or an income-only folio's letters (360 ONE's two CRNs report one
-     * ₹7,15,619 between them) — and read ₹57 L while this tile and this card,
-     * summing the capital accounts alone, read ₹50 L. Struck against
-     * `DIST_BOOK.once`, derived off the book by a second path, at the figure's
-     * own printing precision — and the capital accounts alone must genuinely
-     * differ from it, or a tile that ignored the letters would pass.
+     * own total, or an income-only folio's letters — and once read ₹57 L while
+     * this tile and this card, summing the capital accounts alone, read ₹50 L.
+     * Since *"both are separate investments"* (28 Sep 2026) each of 360 ONE's
+     * two CRNs is its own holding, so each one's ₹7,15,619 letter counts and the
+     * page reads ₹64.2 L. Struck against `DIST_BOOK.once`, derived off the book
+     * by a second path, at the figure's own printing precision — and the
+     * capital accounts alone must genuinely differ from it, or a tile that
+     * ignored the letters would pass.
      */
     ["the Distributions tile and the Capital deployment card count what the page they open counts, each fund once (B-10)", (t, ctx) => {
       if (!DIST_BOOK) return false;
@@ -16243,16 +16424,20 @@ const CIO_ALLOC = [
     /**
      * …AND THE TILE SAYS WHAT IT COUNTS ONCE, IN THE PAGE'S OWN WORDS: how many
      * of the accounts that could report a distribution do, and each letter it
-     * counts with another, pending the family's answer (§4c).
+     * counts with another, pending the family's answer (§4c). Where it counts
+     * every letter (this book, since the family said the two CRNs are two
+     * investments), it names no pair: `every` over no letters is true of any
+     * hover, so the absence is asserted rather than left to pass by default.
      */
-    ["...and the Distributions tile names what it counts and the letter it counts with another", (t, ctx) => {
+    ["...and the Distributions tile names what it counts and any letter it counts with another", (t, ctx) => {
       if (!DIST_BOOK) return false;
       const h = ctx?.kpiTiles?.find((x) => x.slot === "distributions")?.hover ?? "";
       if (!h) return false;
       const cov = /(\d+) of the (\d+) private-market accounts that could report one do/i.exec(h);
       const also = DIST_BOOK.letters.filter((l) => !l.counted);
       return !!cov && Number(cov[1]) === DIST_BOOK.reportedOf && Number(cov[2]) === DIST_BOOK.accountsOf
-        && also.every((l) => h.includes(` ${l.accountNo} reports`) && h.includes(`${l.countedAs}'s`) && /pending the family's answer/i.test(h));
+        && also.every((l) => h.includes(` ${l.accountNo} reports`) && h.includes(`${l.countedAs}'s`) && /pending the family's answer/i.test(h))
+        && (also.length > 0 || !/pending the family's answer|counted with|if two, add|second statement/i.test(h));
     }],
     /**
      * AND THE TOTAL ROW'S RETURN TIES TO THE SET IT NAMES (B-07).
@@ -16361,10 +16546,20 @@ const CIO_ALLOC = [
 const CIO_OPTIONAL_CAPITAL_CHECKS = new Set([
   "the commitment figures open the capital accounts, not a holdings table",
   "the Uncalled capital tile and the Capital deployment card count each capital account once with its holding, as the page they open does",
-  "...and the tile and the card name the statement they leave out, pending the family's answer",
+  "...and the tile and the card name any statement they leave out, pending the family's answer — and, leaving none out, name no pair",
   "the Distributions tile and the Capital deployment card count what the page they open counts, each fund once (B-10)",
-  "...and the Distributions tile names what it counts and the letter it counts with another",
+  "...and the Distributions tile names what it counts and any letter it counts with another",
 ]);
+// A NAME HERE THAT MATCHES NO CHECK MOVES THAT CHECK BACK IN SILENCE. The set is
+// keyed on each check's text, so when Stage 10cx reworded two of these for the
+// family's answer, both ran on the default strip, where their tiles are not
+// drawn, and failed there for a reason that was not theirs. Worded the other
+// way, a rename would stop a check running at all. Every name must be a check.
+{
+  const names = new Set(CIO_ALLOC.map(([description]) => description));
+  const stale = [...CIO_OPTIONAL_CAPITAL_CHECKS].filter((n) => !names.has(n));
+  if (stale.length) throw new Error(`CIO_OPTIONAL_CAPITAL_CHECKS names no check in CIO_ALLOC: ${stale.join(" · ")}`);
+}
 
 /**
  * ── THE NAV CARD'S RECONCILIATION ADDS ITS OWN PARTS (MNT-4) ──────────────
@@ -16405,17 +16600,29 @@ const NAV_RECON = [
     if (/above the current value/i.test(h)) return false;
     const rupees = (x) => (x == null ? NaN : Number(String(x).replace(/[₹,\s]/g, "")));
     const per = rupees(/the three lists sum to (₹[\d,.]+)/.exec(h)?.[1]);
-    const m = /Counting once the (₹[\d,.]+) that two accounts both report gives the consolidated statement book, (₹[\d,.]+); that is (\d+) holdings?, each on two accounts' statements\./.exec(h);
     const cur = rupees(/The current value of holdings, (₹[\d,.]+),/.exec(h)?.[1]);
-    if (!m || !Number.isFinite(per) || !Number.isFinite(cur)) return false;
-    const doubled = rupees(m[1]), book = rupees(m[2]);
-    // …AND THE GAP IS NAMED FROM ITS CAUSE: the holdings the footer says two
-    // accounts both report are exactly the book's own reported-twice holdings,
-    // and the hover counts them. A footer that inferred the gap by subtraction
-    // and named nobody satisfied every figure above.
     const keys = (ctx?.navListRows?.twiceKeys ?? "").split(" ").filter(Boolean);
-    if (!NAV_RECON_BOOK.keys.length || Number(m[3]) !== NAV_RECON_BOOK.keys.length
-      || keys.join(" ") !== NAV_RECON_BOOK.keys.join(" ")) return false;
+    let doubled, book;
+    if (NAV_RECON_BOOK.keys.length) {
+      const m = /Counting once the (₹[\d,.]+) that two accounts both report gives the consolidated statement book, (₹[\d,.]+); that is (\d+) holdings?, each on two accounts' statements\./.exec(h);
+      if (!m || !Number.isFinite(per) || !Number.isFinite(cur)) return false;
+      doubled = rupees(m[1]); book = rupees(m[2]);
+      // …AND THE GAP IS NAMED FROM ITS CAUSE: the holdings the footer says two
+      // accounts both report are exactly the book's own reported-twice
+      // holdings, and the hover counts them. A footer that inferred the gap by
+      // subtraction and named nobody satisfied every figure above.
+      if (Number(m[3]) !== NAV_RECON_BOOK.keys.length || keys.join(" ") !== NAV_RECON_BOOK.keys.join(" ")) return false;
+    } else {
+      // …AND WHERE THE BOOK COUNTS NO HOLDING ONCE — since *"both are separate
+      // investments"* (28 Sep 2026) it counts none — the lists ARE the
+      // statement book, the footer says so in those words, and names no
+      // holding as reported twice. Struck on the book, so a footer still
+      // subtracting the family's pair fails rather than abstaining.
+      const m = /No holding is reported by two accounts, so the lists and the consolidated statement book agree, (₹[\d,.]+)\./.exec(h);
+      if (!m || !Number.isFinite(per) || !Number.isFinite(cur)) return false;
+      doubled = 0; book = rupees(m[1]);
+      if (keys.length || /two accounts both report|each on two accounts' statements/i.test(h)) return false;
+    }
     // The steps from the book to the current value, each as its figure prints.
     const nav = /that book plus ([+−-]?₹[\d,.]+\s*(?:Cr|L|K)?) from AMFI/.exec(h)?.[1];
     const dep = /(₹[\d,.]+\s*(?:Cr|L|K)?) of \d+ cash-equivalent funds?/.exec(h)?.[1];
@@ -18474,6 +18681,34 @@ const NOTE_BOOK = (() => {
 const PRETAX_KEY = (() => {
   const s = NOTE_BOOK.filter((p) => /^sanshi-fund-i/.test(p.securityKey) && p.marketValue > 0).sort((a, b) => b.marketValue - a.marketValue);
   return s[0]?.securityKey ?? null;
+})();
+/**
+ * FQ-2 (28 Sep 2026): *"keep them pre tax only by default, whatever is in the
+ * review file we will follow the same rule and calculation across the
+ * dashboard."* A fund whose own statement prints ONLY a post-tax NAV is where
+ * that default cannot apply, and its price tile must say so rather than read as
+ * the default. The subject is derived off the ARCHIVE, never off the notes
+ * table under test: the largest held fund one of whose own account's statements
+ * says its NAV is post-tax, or net of taxes, and none of which prints a pre-tax
+ * figure.
+ */
+const POSTTAX_KEY = (() => {
+  try {
+    const dir = new URL("../public/audit/", import.meta.url);
+    const docs = readdirSync(dir);
+    const flat = (d) => { try { return JSON.stringify(JSON.parse(readFileSync(new URL(`${d}/pages.json`, dir), "utf8"))).replace(/\\n/g, " ").replace(/\s+/g, " "); } catch { return ""; } };
+    const byAccount = new Map();
+    const postTaxOnly = (accountId) => {
+      if (byAccount.has(accountId)) return byAccount.get(accountId);
+      const texts = docs.filter((d) => d.startsWith(`${accountId}-`)).map(flat);
+      const v = texts.some((t) => /NAV reported is post tax NAV|net of all expenses and taxes/i.test(t)) && !texts.some((t) => /pre[ -]?tax/i.test(t));
+      byAccount.set(accountId, v);
+      return v;
+    };
+    const s = NOTE_BOOK.filter((p) => p.marketValue > 0 && /^(AIF|Mutual Fund)$/.test(p.assetClass ?? "") && postTaxOnly(p.accountId))
+      .sort((a, b) => b.marketValue - a.marketValue);
+    return s[0]?.securityKey ?? null;
+  } catch { return null; }
 })();
 const PLEDGED_ABSL = NOTE_BOOK.some((p) => p.securityKey === "absl-liqf-d-growth" && p.accountId === "motilal-oswal-financial-services-demat-1201090012838320" && p.marketValue > 0);
 /**
@@ -22131,6 +22366,12 @@ const INVARIANTS = {
      *
      * ANCHORED ON THE CARD. The strip above it carries a tile headed NAV on a
      * fund's page too, so a search for the first "NAV" line reads the tile.
+     *
+     * A DAY THE NAV DID NOT MOVE IS A MEASURED ZERO, printed "0.00%" — a zero
+     * has no direction, so `fmtPct` gives it no sign. Helios publishes its NAV
+     * to two decimals and printed 15.92 on 24 AND 25 Sep 2026; this check
+     * required a sign and failed that correct page. Any other figure still
+     * needs its sign.
      */
     ["the NAV, its change and the previous NAV's own date all render", (t) => {
       const c = t.search(/The scheme — NAV and returns/i);
@@ -22140,7 +22381,7 @@ const INVARIANTS = {
       if (i < 0) return false;
       const block = rest.slice(i, i + 320);
       return /\d+\.\d{2,4}/.test(block)
-        && /[+-]\d+\.\d\d%/.test(block)
+        && /(?:[+−-]\d+\.\d\d|\b0\.00)%/.test(block)
         && /since [\d,.]+ on \d{1,2} \w{3,} \d{4}/i.test(block);
     }],
     // THE PLAN IS THE FAMILY'S OWN, resolved from the holding's ISIN — plans
@@ -24346,14 +24587,18 @@ const INVARIANTS = {
      * OWN COUNTED-ONCE BASIS.
      *
      * The tile summed the capital accounts' distribution totals alone, so the
-     * ₹7,15,619 360 ONE's letters report paying on the Special Opportunities
-     * units was in no figure — and the two letters, one per CRN on one holding
-     * counted once, are a pair the tile must count ONCE. `DIST_BOOK` re-derives
-     * the figure off glowData by a second path (the letter's own holder and
-     * fund, never the view table), and the bound is the tile's own printing
-     * precision reproduced — half its last printed digit, never a tolerance.
-     * The letter counted twice reads ₹64 L, the letters dropped ₹50 L, and
-     * equalisation folded in ₹66 L; each lands outside it.
+     * ₹7,15,619 each of 360 ONE's letters reports paying on the Special
+     * Opportunities units was in no figure. `DIST_BOOK` re-derives the figure
+     * off glowData by a second path (the letter's own holder and fund, never
+     * the view table), and the bound is the tile's own printing precision
+     * reproduced — half its last printed digit, never a tolerance.
+     *
+     * The two letters were a pair counted ONCE until *"both are separate
+     * investments"* (28 Sep 2026): each CRN is its own holding now, so each
+     * letter counts and the tile reads ₹64.2 L. The load-bearing half is that
+     * the letters are IN it — the capital accounts alone read ₹50 L, one
+     * letter ₹57 L, and equalisation folded in ₹73 L; each lands outside the
+     * bound.
      */
     ["the distributions tile is each fund's distribution once, letters included (B-10)", (t, ctx) => {
       const tile = ctx?.tileStrip?.texts?.distributed ?? "";
@@ -24364,9 +24609,11 @@ const INVARIANTS = {
       const scale = unit === "CR" ? 1 : unit === "L" ? 0.01 : unit === "K" ? 0.0001 : 1e-7;
       const shown = cr(m[1]) * scale;
       const bound = 0.5 * 10 ** -(m[2]?.length ?? 0) * scale;
+      const capsAlone = DIST_BOOK.parts.filter((x) => x.basis === "capital-account").reduce((a, x) => a + x.amount, 0);
       return Math.abs(shown - DIST_BOOK.once / 1e7) <= bound + 1e-9
-        // …and the pair is real on this book, or "once" and "as printed" are one figure.
-        && DIST_BOOK.printed - DIST_BOOK.once > 1;
+        // …and the letters are really in it, or a tile summing the capital
+        // accounts alone would pass as one that counted them.
+        && DIST_BOOK.parts.some((x) => x.basis === "letter") && DIST_BOOK.once - capsAlone > 1;
     }],
     /**
      * …AND THE HOVER NAMES EVERY PART ON ITS OWN PAPER'S BASIS. A letter says
@@ -24390,6 +24637,9 @@ const INVARIANTS = {
         && /Equalisation is not a distribution/i.test(d)
         && DIST_BOOK.letters.filter((l) => !l.counted).every((l) =>
           d.includes(` ${l.accountNo} reports`) && d.includes(`counted with`) && d.includes(`${l.countedAs}'s`))
+        // …and where every letter counts, the hover names no pair: `every` over
+        // no letters is true of any hover, so the absence is asserted.
+        && (DIST_BOOK.letters.some((l) => !l.counted) || !/counted with|pending the family's answer|if two, add|second statement/i.test(d))
         && !!cov && Number(cov[1]) === DIST_BOOK.reportedOf && Number(cov[2]) === DIST_BOOK.accountsOf;
     }],
     /**
@@ -24492,10 +24742,16 @@ const INVARIANTS = {
     }],
     /**
      * PM-C7 — A FUND ROW IS DATED BY THE STATEMENTS IT COUNTS. The 360 ONE row
-     * read "30 Jun → 31 Jul 2026" while its value is CRN37702's 31 Jul mark
-     * alone — the 30 Jun date belongs to the second statement, which the row
-     * does not count. Held to the book: the kept holding's report date and any
+     * read "30 Jun → 31 Jul 2026" while its value was CRN37702's 31 Jul mark
+     * alone — the 30 Jun date belonged to the second statement, which the row
+     * did not count. Held to the book: the kept holdings' report dates and any
      * capital account the row counts.
+     *
+     * Since *"both are separate investments"* (28 Sep 2026) the row COUNTS
+     * both CRNs, so "30 Jun → 31 Jul" is now its true span. The claim keeps a
+     * subject either way: a fund row whose counted statements are dated on
+     * more than one day must be on the page, or a cell that printed one date
+     * for every row would pass.
      */
     ["each fund row is dated by the statements it counts (PM-C7)", (t, ctx) => {
       const pv = ctx?.pmView;
@@ -24504,8 +24760,8 @@ const INVARIANTS = {
       const rows = (pv.groups ?? []).filter((g) => g.kind === "fund" && g.section === "private");
       if (!rows.length) return false;
       return rows.every((g) => (g.cells?.asOf?.asOfAttr ?? "") === (PM_C_BOOK.fundDates.get(g.key) ?? "__none__"))
-        // The fund this finding was about must be on the page to be checked.
-        && rows.some((g) => (CAPITAL_BOOK?.twiceKeys ?? []).includes(g.key));
+        // …and a row whose counted statements span more than one date is on the page.
+        && rows.some((g) => (PM_C_BOOK.fundDates.get(g.key) ?? "").includes(" "));
     }],
     /**
      * VD-6 — A STATEMENT THE DEPOSITORY HAS SINCE OVERTAKEN SAYS SO, ON THE
@@ -24840,7 +25096,7 @@ const INVARIANTS = {
      * statements in their hand; each hover names the account by the number its
      * own statement prints, and the rupee amount is the book's, per tile.
      */
-    ["each capital tile names the statement it counts once, what it would add, and that the pair is pending the family's answer", (t, ctx) => {
+    ["a capital tile names any statement it counts once, what it would add, and that the pair is pending the family's answer — and, counting none once, names no pair", (t, ctx) => {
       if (!CAPITAL_BOOK) return false;
       const once = CAPITAL_BOOK.once;
       const d = ctx?.tileStrip?.details ?? {};
@@ -25192,8 +25448,9 @@ const INVARIANTS = {
    *
    * The walk presses Expand all, so every section and every fund is open and
    * every folio is a row of the table. PM-1 lives here — the folios behind a
-   * fund add to MORE than the row, by exactly the double count the "Counted
-   * once" line under them names — and so does the claim the family's first
+   * fund add to the row, less only a double count a "Counted once" line under
+   * them names (none on this book since the family said both pairs are
+   * separate investments) — and so does the claim the family's first
    * screenshot was about: the folios are rows of the one table, in its columns.
    */
   "private-market-folios": [
@@ -25236,8 +25493,8 @@ const INVARIANTS = {
       }) && kids.length === PM_FOLIO_BOOK.rows + allViews;
     }],
     /**
-     * PM-1 — THE LINES ADD TO MORE THAN THE ROW, BY THE DOUBLE COUNT THE
-     * "COUNTED ONCE" LINE NAMES.
+     * PM-1 — THE LINES ADD TO THE ROW, LESS ONLY THE DOUBLE COUNT A "COUNTED
+     * ONCE" LINE NAMES.
      *
      * The folios' own values, the row's value and the adjust line's figure are
      * three renderings, and each is held to the book: the folios to its PRINTED
@@ -25246,12 +25503,32 @@ const INVARIANTS = {
      * printing precision. A "Counted once" line on a fund held in one folio
      * would describe a gap that row does not have, so the count of lines is the
      * book's own count of duplicated funds.
+     *
+     * AND ON THIS BOOK THERE IS NO GAP. *"both are separate investments"*
+     * (28 Sep 2026): the two funds reported by two statements each are two
+     * holdings each, so each fund row is the SUM of its lines and no line takes
+     * anything back. Held on every such fund, and one must be on the page, or
+     * the claim passes over nothing.
      */
-    ["the folios behind a fund add to more than the fund, by the double count the 'Counted once' line names", (t, ctx) => {
+    ["the folios behind a fund add to the fund, less only the double count a 'Counted once' line names", (t, ctx) => {
       const pv = ctx?.pmView;
       if (!pv) return { notChecked: "the private-view probe did not run" };
       if (!PM_FOLIO_BOOK) return { notChecked: "the private book could not be read from glowData.ts" };
-      if (!PM_FOLIO_BOOK.dup.length) return { notChecked: "no private holding in this book is reported twice" };
+      if (!PM_FOLIO_BOOK.dup.length) {
+        if ((pv.overlaps ?? []).length) return false;
+        const multi = [...PM_FOLIO_BOOK.statements.entries()].filter(([, n]) => n > 1).map(([k]) => k);
+        if (!multi.length) return { notChecked: "no private fund in this book is reported by more than one statement" };
+        return multi.every((k) => {
+          const g = pv.groups.find((x) => x.key === k && x.section === "private");
+          if (!g) return false;
+          const lines = pv.children.filter((c) => c.group === k && !c.viewOf);
+          const sum = lines.reduce((a, c) => a + (Number(c.value) || 0), 0);
+          const want = PM_FOLIO_BOOK.printed.get(k) ?? NaN;
+          return lines.length === PM_FOLIO_BOOK.statements.get(k)
+            && Math.abs(sum - want) <= 1 && Math.abs(Number(g.value) - want) <= 1
+            && Math.abs((PM_FOLIO_BOOK.consolidated.get(k) ?? NaN) - want) <= 1;
+        });
+      }
       const ov = pv.overlaps;
       if (ov.length !== PM_FOLIO_BOOK.dup.length) return false;
       return ov.every((o) => {
@@ -25309,9 +25586,10 @@ const INVARIANTS = {
    * does NOT dedupe: the member rows add to the PRINTED total, the "Counted
    * once" line at the foot of the private section names the difference, and
    * the private total is the CONSOLIDATED one — three figures that must
-   * reconcile, each against the book. This and PM-1 assert the same ₹3.17 Cr
-   * from opposite ends, and a build that deduped everything passes one and
-   * fails the other.
+   * reconcile, each against the book. This and PM-1 asserted the same ₹3.17 Cr
+   * from opposite ends; since *"both are separate investments"* (28 Sep 2026)
+   * the printed and consolidated totals are one figure, and both assert that
+   * no line takes anything back.
    */
   "private-market-returns": [
     PM_DEPLOYED_CHECK, PM_SUBYEAR_CHECK,
@@ -29004,6 +29282,10 @@ const INVARIANTS = {
       const sumLines = d.lines.reduce((a, l) => a + l.mv, 0) / 1e7;
       if (!(Math.abs(sumParts - sumLines) <= bound + 1e-9)) return false;
       const twice = /reported twice/.test(tip);
+      // Where the book counts no holding once, the walk opens the family's own
+      // separate pair — and a walk that drifted to some other row would leave
+      // this claim with nothing to say about the row it was written for.
+      if (!AXIS_VENUE_BOOK?.overlapKey && AXIS_VENUE_BOOK?.separateKey && d.key !== AXIS_VENUE_BOOK.separateKey) return false;
       return d.overlap ? twice : !twice;
     }],
     ["the row a reader clicks really opens", (t, ctx) => {
@@ -29303,8 +29585,15 @@ const INVARIANTS = {
     }],
     // ...and a subtotal that counts less than the rows above it says so, rather
     // than leaving the reader to find the difference by adding the column.
-    ["a section that collapses a duplicate names what it collapsed",
-      (t) => /reported twice, counted once/i.test(t)],
+    // …and, since *"both are separate investments"* (28 Sep 2026) left no
+    // holding in this book reported twice, NO section names a collapse: the
+    // claim follows the book, so it is a positive one either way.
+    ["a section that collapses a duplicate names what it collapsed — and none names one where the book has none",
+      (t) => {
+        const e = MONITOR_BASIS_BOOK?.entity;
+        if (!e) return false;
+        return e.dropped > 0 ? /reported twice, counted once/i.test(t) : !/reported twice, counted once/i.test(t);
+      }],
   ],
   // Audit: the per-entity money-weighted return must be measured over accounts
   // that carry an opening portfolio value only. Closing an owner's WHOLE market
@@ -30866,6 +31155,26 @@ const INVARIANTS = {
       if (!PRETAX_KEY) return false;
       return /pre-tax NAV/.test(t) && (ctx?.titles ?? []).some((x) => /post-tax NAV/.test(x) && /pre-tax NAV/.test(x));
     }],
+    // The statement's footnote says its NAV is before the manager's annual
+    // PERFORMANCE FEE. The hover said "tax" until FQ-2 sent it back to the page.
+    ["the price tile's hover names the performance fee Sanshi's NAV is before, as its statement does (FQ-2)", (t, ctx) => {
+      const tip = ctx?.stockMark?.tip ?? "";
+      return /performance fee/.test(tip) && /family's default/.test(tip) && !/without accounting for tax/i.test(tip);
+    }],
+  ],
+  /**
+   * FQ-2: the exception to the family's pre-tax default. A fund whose statement
+   * prints only a post-tax NAV says so on its price tile — the chip, and the
+   * hover saying the default cannot apply. A missing subject is a failure.
+   */
+  "stock-posttax": [
+    ...stockTabChecks("position"),
+    ["a fund whose statement prints only a post-tax NAV names that basis on its price tile, and says the pre-tax default cannot apply (FQ-2)", (t, ctx) => {
+      if (!POSTTAX_KEY) return false;
+      const cap = ctx?.stockMark?.caption ?? "";
+      const tip = ctx?.stockMark?.tip ?? "";
+      return /post-tax NAV/.test(cap) && !/pre-tax NAV/.test(cap) && /pre-tax default cannot apply/.test(tip);
+    }],
   ],
   "stock-cmp-agree": [
     ...stockTabChecks("position"),
@@ -31181,7 +31490,8 @@ const INVARIANTS = {
     // now counts MEMBERS, held to the book's own `ownerId`s, and its account
     // count (named where the two differ) to the rows drawn.
     ["the entity count is the members whose statements carry it, and the accounts are the rows drawn", (t, ctx) => {
-      const want = DUAL_KEY ? M2_BOOK?.entitiesOf(DUAL_KEY) : null;
+      const key = DUAL_KEY ?? SEPARATE_KEY?.key ?? null;
+      const want = key ? M2_BOOK?.entitiesOf(key) : null;
       const pill = ctx?.stockM2?.pill;
       const rows = ctx?.accountRows;
       if (!want || !pill) return false;
@@ -31196,11 +31506,25 @@ const INVARIANTS = {
     // own sum and the Total — and the reason is that line's hover. The count
     // is held to the account rows drawn, so a line naming a different number
     // of statements than the table lists fails.
-    ["the rows-vs-total gap is named where a holding is reported twice — its figures on the face, its reason in the hover",
+    //
+    // AND WHERE THE FAMILY HAVE SAID BOTH ARE THEIR OWN, THE OPPOSITE HOLDS. No
+    // holding in this book is counted once since *"both are separate
+    // investments"* (28 Sep 2026), so on that pair the Total is the rows' own
+    // sum — struck against the BOOK's rows, so a Total that still counted one
+    // statement once fails — and the line, and the hover behind it, are gone.
+    ["the rows-vs-total gap is named where a holding is counted once — and where the family count both, the Total is the rows' own sum and no such line is drawn",
       (t, ctx) => {
-        const m = /One holding on (\d+) statements · rows ₹[\d,.]+\s*(?:Cr|L|K)? · counted once in the Total, ₹[\d,.]+/i.exec(t);
-        return !!m && Number(m[1]) === ctx?.accountRows
-          && (ctx?.titles ?? []).some((x) => /Both rows are shown as printed, and the Total counts the holding once/i.test(x));
+        if (DUAL_KEY) {
+          const m = /One holding on (\d+) statements · rows ₹[\d,.]+\s*(?:Cr|L|K)? · counted once in the Total, ₹[\d,.]+/i.exec(t);
+          return !!m && Number(m[1]) === ctx?.accountRows
+            && (ctx?.titles ?? []).some((x) => /Both rows are shown as printed, and the Total counts the holding once/i.test(x));
+        }
+        if (!SEPARATE_KEY) return false;
+        const foot = (ctx?.heldTable?.feet ?? []).find((f) => f.kind === "measured");
+        return !/One holding on \d+ statements|counted once in the Total/i.test(t)
+          && !(ctx?.titles ?? []).some((x) => /the Total counts the holding once/i.test(x))
+          && ctx?.accountRows === SEPARATE_KEY.rows
+          && !!foot && Number.isFinite(foot.value) && Math.abs(foot.value - SEPARATE_KEY.mv) <= 1;
       }],
     // A holding its statement marks at a TOTAL value has no per-unit price. This
     // headline read "₹0" for exactly that reason (`currentPrice ?? 0`), which is
@@ -31385,6 +31709,55 @@ const INVARIANTS = {
       if (!d) return { notChecked: "the probe did not run" };
       const w = UNPRICED_BOOK?.byOwner.get(unpricedOwnerOf(ctx)) ?? [];
       return w.some((g) => g.live > 0) && (d.unvaluedLines ?? []).some((g) => g.live > 0);
+    }],
+  ],
+  /**
+   * FQ-3 — *"keep them unvalued for now"* (the family, 28 Sep 2026), about
+   * Ankita's 94,967 Clean Max shares. Ankita's card must carry the line, as a
+   * QUANTITY, and its hover must say both halves of why it has no value: what
+   * the STATEMENT says (the shares sit in its lock-in + freeze balance, none
+   * free, with no rate) and what the FAMILY decided (with its date and their
+   * words) — and must state no rupee figure, because the decision is not to
+   * borrow the ₹1,336.50 mark another statement prints for the same company.
+   *
+   * The statement half is struck on the statement's OWN column words, not on
+   * the table's `why`, so a reason rebuilt from the table cannot satisfy it by
+   * construction; the family half on the table's data (date and words), which
+   * is what the decision IS. A route whose subject did not resolve FAILS.
+   */
+  "family-kept-unvalued": [
+    ...unvaluedLinesChecks(),
+    ["the family's kept-unvalued row is a line on its owner's card, under its own account, as a quantity", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      const K = KEPT_UNVALUED_BOOK?.[0];
+      if (!K?.accountId || !K.securityKey || !(K.quantity > 0)) return false;
+      const g = (d.unvaluedLines ?? []).find((x) => x.account === K.accountId);
+      const l = g?.lines.find((x) => x.key === K.securityKey);
+      const qty = Number(K.quantity).toLocaleString("en-IN", { maximumFractionDigits: 3 });
+      return !!l && l.text.includes(`${qty} units`);
+    }],
+    ["...its hover says the statement holds them locked in, none free, with no rate, and that the family decided to keep them unvalued, on its date and in their words", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      const K = KEPT_UNVALUED_BOOK?.[0];
+      if (!K?.accountId || !K.securityKey) return false;
+      const l = (d.unvaluedLines ?? []).find((x) => x.account === K.accountId)?.lines.find((x) => x.key === K.securityKey);
+      const why = l?.why ?? "";
+      return /lock-?in/i.test(why) && /freeze/i.test(why) && /none of them free|nil free|free balance (?:of )?nil/i.test(why)
+        && /no rate/i.test(why)
+        && why.includes(K.decided) && why.includes(K.words)
+        && /quantity and no value/i.test(why) && !/₹|\bRs\.?\s?\d/.test(why);
+    }],
+    ["...the decision reaches that one line and no other, and nothing in the live book values that account's row", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      const K = KEPT_UNVALUED_BOOK?.[0];
+      if (!K?.accountId) return false;
+      const carrying = (d.unvaluedLines ?? []).flatMap((g) => g.lines.map((l) => ({ ...l, account: g.account })))
+        .filter((l) => l.why.includes(K.words));
+      return carrying.length === 1 && carrying[0].account === K.accountId && carrying[0].key === K.securityKey
+        && K.valuedLive === 0;
     }],
   ],
   "family-partial": [
@@ -33214,11 +33587,14 @@ for (const theme of THEMES) {
        */
       if (name === "monitor-category-drill") {
         const pick = await page.evaluate((want) => {
+          // A CLUBBED FUND IS NOT A CANDIDATE: its chevron opens its unit
+          // classes, not the accounts and routes this walk reads.
           const rows = [...document.querySelectorAll("tbody tr[data-venues]")]
-            .filter((r) => !r.hasAttribute("data-mandate"));
+            .filter((r) => !r.hasAttribute("data-mandate") && !r.querySelector("[data-fund-classes]"));
           const of = (r) => ({ key: r.getAttribute("data-security-key"), venues: Number(r.getAttribute("data-venues")) });
           // THE BOOK'S OWN OVERLAP ROW FIRST — the one case where the row's
-          // market value and its lines' printed sum genuinely differ.
+          // market value and its lines' printed sum genuinely differ — and,
+          // where it counts none once, the family's own separate pair.
           const named = want && rows.find((r) => r.getAttribute("data-security-key") === want);
           if (named) return of(named);
           let best = null;
@@ -33227,7 +33603,7 @@ for (const theme of THEMES) {
             if (!best || c.venues > best.venues) best = c;
           }
           return best;
-        }, AXIS_VENUE_BOOK?.overlapKey ?? null);
+        }, AXIS_VENUE_BOOK?.overlapKey ?? AXIS_VENUE_BOOK?.separateKey ?? null);
         if (pick?.key) {
           const btn = page.locator(`tr[data-security-key="${pick.key}"] td:first-child button`).first();
           if (await btn.count()) { await btn.click(); await page.waitForTimeout(600); }
@@ -35249,6 +35625,9 @@ for (const theme of THEMES) {
           summaryTitle: e.querySelector("summary")?.getAttribute("title") ?? "",
           lines: [...e.querySelectorAll("[data-unvalued-line]")].map((l) => ({
             key: l.getAttribute("data-unvalued-line"), why: l.getAttribute("title") ?? "",
+            // The line's face — the security and its quantity. `textContent`,
+            // because a closed <details> has no `innerText`.
+            text: (l.textContent ?? "").replace(/\s+/g, " ").trim(),
           })),
         })),
         partialAccounts: [...document.querySelectorAll("[data-partial-account]")].map((e) => ({

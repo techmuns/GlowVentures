@@ -858,7 +858,9 @@ export function StockInfo() {
       }
     : navMark
     ? {
-        line: `AMFI NAV, ${navMark.date}${navMark.changePct == null ? "" : ` · ${navMark.changePct >= 0 ? "+" : ""}${navMark.changePct.toFixed(2)}% on its day`}`,
+        // A day the NAV did not move is a zero, and a zero takes no sign: `fmtPct`,
+        // as the scheme card on Price & returns prints the same move.
+        line: `AMFI NAV, ${navMark.date}${navMark.changePct == null ? "" : ` · ${fmtPct(navMark.changePct, { sign: true, decimals: 2 })} on its day`}`,
         tip: `AMFI's published NAV for ${navMark.scheme}, ${navMark.date}. A fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote — and its move is against the NAV before it, on its own date, not today's.${
           // NO STATEMENT PRICES THESE UNITS, so the tip says whose count they
           // are rather than implying a statement mark that the NAV replaced —

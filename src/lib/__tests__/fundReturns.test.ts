@@ -15,7 +15,11 @@
 //     reads exactly like one that counted it and is lower;
 //   • a fund held in two folios whose calls are paired with the row's
 //     consolidated cost twice, so the two sides of a return describe different
-//     money;
+//     money (exercised on a TAGGED COPY of the book since the family said the
+//     real book's two pairs are separate investments — see §1);
+//   • two members paying ONE call on the same day read as two tranches, which
+//     sends a fund to XIRR and says it was "paid in 2 calls" when the money
+//     went in on one date (§1b);
 //   • a payout dated AFTER the valuation counted as well as the value that
 //     already holds it;
 //   • a sub-year window compounded onto a year — the +99.0% failure of Stage
@@ -33,6 +37,8 @@ import {
   fundDatedRecords, fundMeasuredReturn, pooledFundXirr, fundReturnColumnMeta,
   PM_AGG_NO_MEASURE, PM_RETURN_HINTS, type FundDated,
 } from "@/lib/fundReturns";
+import { SEPARATE_INVESTMENTS } from "../../../shared/separateInvestments.mjs";
+import { withPairsTagged } from "./taggedPairs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -82,15 +88,131 @@ console.log("── the record is built over the row's own folios ──");
   }
   // THE CASE THAT MAKES IT LOAD-BEARING: a fund two folios both report, where
   // the raw rows carry two sets of calls and the row carries one cost.
-  const doubled = funds.find((f) => scope.rows.filter((p) => p.securityKey === f.securityKey).length
-    > scope.dedupedRows.filter((p) => p.securityKey === f.securityKey).length && !dated.get(f.securityKey)!.gap);
-  ok("this book has a fund reported under two folios with a complete dated record", !!doubled);
+  //
+  // THE FAMILY TOOK THE REAL BOOK'S ONLY SUCH FUNDS OUT OF IT — "both are
+  // separate investments", 28 Sep 2026 — so no fund in `scope` is reported
+  // twice any more, and the case is exercised on a copy tagged exactly as the
+  // count-once policy tagged them before (`taggedPairs.ts`). The rule stands
+  // for the next pair a drop brings.
+  const tagged = withPairsTagged(BOOK_POSITIONS, BOOK_ACCOUNTS);
+  ok("the tagged copy reaches every folio the family named, two or more per pair",
+    tagged.pairsFound.every((x) => x.rows >= 2), JSON.stringify(tagged.pairsFound));
+  const tScope = privateScope(currentHoldings(tagged.positions), BOOK_ACCOUNTS);
+  const tFunds = fundRollup(tScope.dedupedRows, idx, tScope.rows);
+  const tDated = fundDatedRecords(tScope.dedupedRows, onPage, idx, money, date);
+  const doubled = tFunds.find((f) => tScope.rows.filter((p) => p.securityKey === f.securityKey).length
+    > tScope.dedupedRows.filter((p) => p.securityKey === f.securityKey).length && !tDated.get(f.securityKey)!.gap);
+  ok("the tagged copy has a fund reported under two folios with a complete dated record", !!doubled);
   if (doubled) {
-    const raw = fundDatedRecords(scope.rows, onPage, idx, money, date).get(doubled.securityKey)!;
+    const raw = fundDatedRecords(tScope.rows, onPage, idx, money, date).get(doubled.securityKey)!;
     const rawCalls = raw.calls.reduce((t, c) => t + c.amount, 0);
-    const rowCalls = dated.get(doubled.securityKey)!.calls.reduce((t, c) => t + c.amount, 0);
+    const rowCalls = tDated.get(doubled.securityKey)!.calls.reduce((t, c) => t + c.amount, 0);
     ok("…built over the RAW rows it would carry the calls twice", rawCalls > rowCalls * 1.9,
       `raw ${money(rawCalls)} vs row ${money(rowCalls)}`);
+    ok("…and over the row's own folios its calls tie to the one holding's cost",
+      doubled.cost != null && Math.abs(rowCalls - doubled.cost) <= 1,
+      `${money(rowCalls)} vs ${doubled.cost == null ? "—" : money(doubled.cost)}`);
+  }
+  // ON THE REAL BOOK each pair the family named is TWO holdings, so its fund
+  // row is built over both folios and carries both folios' calls — one row,
+  // every statement, none dropped as a duplicate.
+  const byAccount = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
+  const named = (accountId: string, dec: (typeof SEPARATE_INVESTMENTS)[number]) => {
+    const a = byAccount.get(accountId);
+    return !!a && dec.accounts.some((n) => n.provider === a.provider && String(n.accountNo) === String(a.accountNo));
+  };
+  let pairsWithCalls = 0;
+  for (const dec of SEPARATE_INVESTMENTS) {
+    const d = dated.get(dec.securityKey);
+    const folios = scope.dedupedRows.filter((p) => p.securityKey === dec.securityKey);
+    ok(`${dec.securityKey.slice(0, 40)}: every folio the family named is a part of its row`,
+      !!d && folios.length === dec.accounts.length && d.parts.length === folios.length
+        && folios.every((p) => named(p.accountId, dec)),
+      `${d?.parts.length ?? 0} parts, ${folios.length} folios, ${dec.accounts.length} named`);
+    if (!d || d.gap) continue;
+    pairsWithCalls++;
+    const callers = new Set(d.calls.map((c) => c.accountId));
+    ok(`${dec.securityKey.slice(0, 40)}: its record carries every folio's own calls`,
+      d.parts.every((part) => callers.has(part.accountId)), [...callers].join(", "));
+  }
+  ok("…and at least one of those pairs has a complete dated record to check", pairsWithCalls > 0, String(pairsWithCalls));
+}
+
+// ── 1b. TWO MEMBERS PAYING ONE CALL ON ONE DAY IS ONE PURCHASE DATE ──────────
+//
+// Transition Venture's two trusts each paid ₹75 L on 17 Oct 2025. Counted as
+// two tranches, the methodology would send the fund to XIRR, its CAGR refusal
+// would read "paid in 2 calls between 17 Oct 2025 and 17 Oct 2025", and the
+// money-weighted cell would refuse a figure that — with every call on one date,
+// both folios valued on one date and nothing paid back — IS the holding-period
+// return. A tranche is a DATE money went in on.
+console.log("── two calls on one date are one purchase date ──");
+{
+  for (const d of dated.values()) {
+    ok(`${d.securityKey.slice(0, 32)}: tranches count the dates money went in on`,
+      d.tranches === new Set(d.calls.map((c) => c.date)).size, `${d.tranches} vs ${new Set(d.calls.map((c) => c.date)).size}`);
+  }
+  const shared = funds.find((f) => {
+    const d = dated.get(f.securityKey)!;
+    return !d.gap && d.calls.length > 1 && d.tranches === 1;
+  });
+  ok("this book has a fund whose several calls all fell on one date", !!shared);
+  if (shared) {
+    const d = dated.get(shared.securityKey)!;
+    const auto = resolve(shared.securityKey, "auto");
+    ok(`${shared.security.slice(0, 28)} auto: not sent to XIRR — one purchase date`, auto.shown && auto.tag !== "XIRR",
+      auto.shown ? `${auto.tag} · ${auto.note}` : auto.reason);
+    ok("…and its note says the calls fell on one date",
+      auto.shown && /all on one date/.test(auto.note ?? "") && !new RegExp(`Paid in ${d.calls.length} calls[^,]`).test(auto.note ?? ""),
+      auto.shown ? auto.note : auto.reason);
+    const young = daysBetween(d.firstCall!, d.valuedAt!) < YEAR_DAYS;
+    const x = resolve(shared.securityKey, "xirr");
+    if (young && d.paidOut === 0) {
+      ok("…under a year with nothing paid back, its money-weighted cell is the HPR, tagged HPR",
+        x.shown && x.tag === "HPR" && Math.abs((x.pct ?? NaN) - (shared.returnPct ?? NaN)) < 1e-9 && /every call on one date/.test(x.note ?? ""),
+        x.shown ? `${x.tag} ${x.pct} · ${x.note}` : x.reason);
+    }
+    const c = resolve(shared.securityKey, "cagr");
+    ok("…and its CAGR never claims calls between two dates",
+      c.shown ? true : !/between (\S+) and \1\b/.test(c.reason), c.shown ? `${c.tag}` : c.reason);
+  }
+}
+
+// ── 1c. ONE START AND ONE END, OR XIRR ───────────────────────────────────────
+//
+// A single-period figure is exact only where every call is on one date AND
+// every folio is valued on one date. Folios valued on different dates are what
+// `pooledXirr` exists for — it closes each on its own date — and a CAGR to the
+// latest one would misdate the value of every earlier folio. No fund in this
+// book reaches that case (the two trusts are valued on the same day), so it is
+// exercised on the same record with one folio's valuation moved.
+console.log("── folios valued on different dates ──");
+{
+  const shared = funds.find((f) => {
+    const d = dated.get(f.securityKey)!;
+    return !d.gap && d.parts.length > 1 && d.tranches === 1 && d.paidOut === 0 && d.payouts !== "unknown";
+  });
+  ok("this book has a multi-folio fund with one call date to build the case from", !!shared);
+  if (shared) {
+    const base = dated.get(shared.securityKey)!;
+    // Moved back a year and a half so the window is over a year either way —
+    // the case where one rate to one date would otherwise be struck.
+    const shift = (iso: string, days: number) => new Date(Date.parse(`${iso}T00:00:00Z`) - days * 864e5).toISOString().slice(0, 10);
+    const early = { ...base, calls: base.calls.map((c) => ({ ...c, date: shift(c.date, 548) })), firstCall: shift(base.firstCall!, 548), lastCall: shift(base.lastCall!, 548) };
+    const same: FundDated = early;
+    const apart: FundDated = { ...early, parts: early.parts.map((p, i) => (i === 0 ? { ...p, valuedAt: shift(p.valuedAt, 31) } : p)) };
+    const cSame = fundMeasuredReturn(shared, same, "cagr", money, date);
+    ok("one call date, one valuation date, over a year → a CAGR from the calls", cSame.shown && cSame.tag === "CAGR"
+      && /the 2 calls, all on/.test(cSame.note ?? ""), cSame.shown ? `${cSame.tag} · ${cSame.note}` : cSame.reason);
+    const aSame = fundMeasuredReturn(shared, same, "auto", money, date);
+    ok("…and the methodology annualises it, saying the calls were on one date", aSame.shown && aSame.tag === "CAGR"
+      && /all on one date/.test(aSame.note ?? ""), aSame.shown ? `${aSame.tag} · ${aSame.note}` : aSame.reason);
+    const cApart = fundMeasuredReturn(shared, apart, "cagr", money, date);
+    ok("folios valued on different dates → no CAGR, and the reason names the dates", !cApart.shown
+      && /valued on different dates/.test(cApart.reason), cApart.shown ? `${cApart.tag} ${cApart.pct}` : cApart.reason);
+    const aApart = fundMeasuredReturn(shared, apart, "auto", money, date);
+    ok("…and the methodology uses XIRR, which closes each folio on its own date", aApart.shown && aApart.tag === "XIRR"
+      && /valued on different dates/.test(aApart.note ?? ""), aApart.shown ? `${aApart.tag} · ${aApart.note}` : aApart.reason);
   }
 }
 
@@ -227,8 +349,14 @@ for (const f of funds) {
   ok(`${f.security.slice(0, 32)}: auto resolves to a concrete measure`, !r.shown || ["HPR", "CAGR", "XIRR"].includes(r.tag),
     r.shown ? r.tag : r.reason);
   const d = dated.get(f.securityKey)!;
-  if (!d.gap && (d.tranches > 1 || d.paidOut > 0)) {
-    ok(`${f.security.slice(0, 32)}: several calls or cash back → XIRR`, r.shown && r.tag === "XIRR", r.shown ? r.tag : r.reason);
+  // The rule, written out rather than read back: several purchase DATES,
+  // folios valued on different dates, or cash paid back → XIRR, wherever the
+  // record spans the year an annual rate needs.
+  const dates = new Set(d.calls.map((c) => c.date)).size;
+  const valuations = new Set(d.parts.map((p) => p.valuedAt)).size;
+  const spansYear = !!d.firstCall && !!d.valuedAt && daysBetween(d.firstCall, d.valuedAt) >= YEAR_DAYS;
+  if (!d.gap && d.payouts !== "unknown" && spansYear && (dates > 1 || valuations > 1 || d.paidOut > 0)) {
+    ok(`${f.security.slice(0, 32)}: several dates or cash back → XIRR`, r.shown && r.tag === "XIRR", r.shown ? r.tag : r.reason);
   }
 }
 

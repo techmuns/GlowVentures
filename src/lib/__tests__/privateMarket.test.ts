@@ -45,6 +45,19 @@
 // raw rows are 6, 5 deduped are 4, and the private value is ₹13.79 Cr raw.
 // BOOK_SUMMARY.privateValue moved with it, which is why the anchor below still
 // holds without being touched.
+//
+// ── AND THE FAMILY ANSWERED THE DUPLICATE QUESTION ─────────────────────────
+//
+// *"both are separate investments"* (28 Sep 2026). 360 ONE Special
+// Opportunities under both CRNs and Transition Venture Fund I under both trusts
+// are each TWO holdings, so nothing on this page is counted once any more: 6 raw
+// rows are 6 deduped, and the ₹3.17 Cr the consolidated total used to leave out
+// is in it (`SEPARATE_INVESTMENTS`, shared/separateInvestments.mjs). The book
+// itself now carries no double count, so every claim below that was struck on
+// one — a fund counting more folios than rows, a per-owner total above the
+// consolidated one — is struck on a TAGGED COPY of the same four rows instead:
+// the policy still stands for the next pair a drop brings, and its arithmetic
+// must still be proven rather than left unexercised.
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
 import { sum, sumOrNull } from "@/lib/analytics";
@@ -54,6 +67,8 @@ import {
   capitalCountedOnce, incomeOnlyViewOf, INCOME_ONLY_VIEWS,
 } from "@/lib/privateMarket";
 import type { Commitment, Position } from "@/lib/types";
+import { SEPARATE_INVESTMENTS } from "../../../shared/separateInvestments.mjs";
+import { withPairsTagged } from "./taggedPairs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -77,7 +92,10 @@ const scope = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
 
 console.log("\n── the private set ──");
 eq("raw private rows", scope.rows.length, 6);
-eq("deduped private rows", scope.dedupedRows.length, 4);
+// NOTHING IS COUNTED ONCE: both pairs the policy used to tag are separate
+// investments on the family's word, so the deduped set is the raw set.
+eq("deduped private rows — the same six, nothing counted once", scope.dedupedRows.length, 6);
+ok("no private row carries a dedupe group", scope.rows.every((p) => !p.dedupeGroup && !(p.alsoReportedUnder ?? []).length));
 eq("accounts in scope", scope.accounts.length, 15);
 // THE FAMILY DECLARED BOTH OF THESE CATEGORY II (`DECLARED_AIF_CATEGORY`), and
 // that decides their AIF drill-down section and nothing else: which SIDE of the
@@ -104,10 +122,24 @@ const rawMV = sum(scope.rows.map((p) => p.marketValue));
 near("deduped private value === BOOK_SUMMARY.privateValue", dedupedMV, BOOK_SUMMARY.privateValue);
 near("raw private value", rawMV, 137881211.66);
 near("double count = raw − deduped", scope.doubleCounted, rawMV - dedupedMV);
-near("the double count is ₹3.17 Cr", scope.doubleCounted, 31726374.76);
-ok("the double count is the WHOLE book's double count",
-  Math.abs(scope.doubleCounted - (sum(BOOK_POSITIONS.map((p) => p.marketValue)) - BOOK_SUMMARY.totalValue)) <= 0.01,
-  "both duplicated holdings in this book are private");
+near("the double count is nil — the family confirmed both pairs separate", scope.doubleCounted, 0);
+ok("…and so is the whole book's: every position is in its consolidated total",
+  Math.abs(sum(BOOK_POSITIONS.map((p) => p.marketValue)) - BOOK_SUMMARY.totalValue) <= 0.01);
+/**
+ * THE ANSWER IS LOAD-BEARING, NOT A LABEL. Each pair the family named holds a
+ * row under every account named, and counting each pair once would take out
+ * exactly the ₹3.17 Cr this page used to leave out — the second statement's
+ * value of each. A table whose key had drifted would match no row and this
+ * would fail rather than pass over nothing.
+ */
+{
+  const pairs = SEPARATE_INVESTMENTS.map((d) => scope.rows.filter((p) => p.securityKey === d.securityKey));
+  ok("each pair the family named is on this page, one row per account named",
+    pairs.every((rows, i) => rows.length === SEPARATE_INVESTMENTS[i].accounts.length),
+    pairs.map((rows) => rows.length).join(" + "));
+  const onceWouldDrop = sum(pairs.map((rows) => sum(rows.map((p) => p.marketValue)) - Math.max(...rows.map((p) => p.marketValue))));
+  near("…and counting each once would drop ₹3.17 Cr the page now counts", onceWouldDrop, 14580412.51 + 17145962.25);
+}
 
 console.log("\n── funds ──");
 const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
@@ -119,8 +151,13 @@ const costedFunds = funds.filter((f) => f.cost != null);
 // ₹4,85,83,720 held — the ₹87,616,647 this read before, less that — and the
 // unrealised gain rises by the same amount. Every rupee drawn is still in the
 // return, as the cost of units sold (`fundReturns.test.ts` §4).
-near("cost", sumOrNull(funds.map((f) => f.cost)), 87616647 - 1416280);
-near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), 18538189.9 + 1416280);
+//
+// AND THE SECOND STATEMENT OF EACH SEPARATE PAIR IS COST TOO (28 Sep 2026):
+// Bharat's 360 ONE units cost ₹98,66,647 and the second trust's Transition
+// Venture units ₹75,00,000, and each adds its own gain — value less that cost.
+near("cost", sumOrNull(funds.map((f) => f.cost)), 87616647 - 1416280 + 9866647 + 7500000);
+near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)),
+  18538189.9 + 1416280 + (14580412.51 - 9866647) + (17145962.25 - 7500000));
 // DERIVED, NOT TYPED. The coverage count is a fact about which holdings are
 // private, and that is exactly what changed — a literal here went stale once
 // already. What a `?? 0` would do is put a figure on rows that report none,
@@ -150,12 +187,15 @@ eq("the folio count adds to the RAW row count, not the deduped one",
   [sum(funds.map((f) => f.folios)), scope.rows.length, scope.dedupedRows.length],
   [scope.rows.length, scope.rows.length, scope.dedupedRows.length]);
 {
-  const dupKeys = new Set(scope.rows.filter((p) => p.dedupeGroup).map((p) => p.securityKey));
-  const dupFunds = funds.filter((f) => dupKeys.has(f.securityKey));
-  ok("this book carries a fund reported under more than one account", dupFunds.length > 0);
-  ok("…and each of them counts MORE folios than deduped rows behind it",
-    dupFunds.every((f) => f.folios > scope.dedupedRows.filter((p) => p.securityKey === f.securityKey).length),
-    "the count is a per-account figure; the value beside it is not");
+  // Each separate pair is ONE fund row over TWO folios and TWO counted rows: the
+  // count and the value beside it are on one basis now, because nothing is
+  // counted once. The inequality this used to assert is proven on a tagged copy
+  // of the same rows below (§ "the count-once policy, on a tagged copy").
+  const pairFunds = funds.filter((f) => SEPARATE_INVESTMENTS.some((d) => d.securityKey === f.securityKey));
+  ok("each separate pair is one fund row over two folios, each counted",
+    pairFunds.length === SEPARATE_INVESTMENTS.length
+      && pairFunds.every((f) => f.folios === 2 && scope.dedupedRows.filter((p) => p.securityKey === f.securityKey).length === 2),
+    pairFunds.map((f) => `${f.securityKey}: ${f.folios}`).join(", "));
 }
 
 console.log("\n── folios (per-account: NOT deduped) ──");
@@ -163,10 +203,7 @@ const folios = folioRows(scope.rows, accIdx);
 eq("folio rows", folios.length, 6);
 near("folio rows add to the RAW total", sum(folios.map((f) => f.position.marketValue)), rawMV);
 const dual = folios.filter((f) => f.alsoCount > 1);
-eq("rows reported under more than one account", dual.length, 4);
-ok("the duplicate count is struck on the raw set, so it exceeds 1",
-  dual.every((f) => f.alsoCount === 2),
-  "over the deduped set this could never exceed 1 — the 'Held in 1 entity' defect");
+eq("rows reported under more than one account — none, both pairs are separate", dual.length, 0);
 // The two 360 ONE marks are NO LONGER equal: each row must keep its own figure.
 const soppy = folios.filter((f) => f.position.securityKey.startsWith("360-one-special-opportunities"));
 eq("360 ONE Special Opportunities is reported twice", soppy.length, 2);
@@ -179,8 +216,11 @@ const owners = ownerRollup(scope.rows, accIdx);
 eq("owners holding a private position", owners.length, 5);
 near("per-owner subtotals add to the RAW total, not the consolidated one",
   sum(owners.map((o) => o.mv)), rawMV);
-ok("and therefore NOT to the consolidated total", Math.abs(sum(owners.map((o) => o.mv)) - dedupedMV) > 1,
-  "deduping here is what once emptied an account holding ₹1.46 Cr");
+// …which on this book IS the consolidated total, nothing being counted once.
+// That the two differ where a pair IS tagged — deduping a per-owner view is
+// what once emptied an account holding ₹1.46 Cr — is proven on the tagged copy
+// below, where it can still happen.
+near("…which is the consolidated total too, nothing being counted once", sum(owners.map((o) => o.mv)), dedupedMV);
 ok("both family trusts are owners in their own right",
   owners.filter((o) => /Family Trust/i.test(o.owner)).length === 2,
   "a trust is a separate taxpayer, not a nickname for the man it is named after");
@@ -341,6 +381,54 @@ console.log("\n── an income-only folio folds only where its units tie ──
   // Another member's holding of the same fund is not this folio's.
   const other = real.filter((p) => accIdx.get(p.accountId)?.ownerId !== acc.ownerId);
   eq("another member's holding of the fund is never this folio's", incomeOnlyViewOf(acc, other, accIdx), null);
+}
+
+console.log("\n── the count-once policy, on a tagged copy ──");
+{
+  /**
+   * THE BOOK NO LONGER CARRIES A DOUBLE COUNT — the family confirmed both pairs
+   * separate — so the claims that were struck on one are struck here, on a copy
+   * of the same rows tagged exactly as `applyDedupePolicy` tagged them before
+   * the answer (`taggedPairs.ts`). The policy is how the next pair a drop
+   * brings is carried until the family answers for it, and one line of
+   * `shared/separateInvestments.mjs` puts either pair back under it — so its
+   * arithmetic is proven, not left unexercised.
+   */
+  const tagged = withPairsTagged(BOOK_POSITIONS, BOOK_ACCOUNTS);
+  ok("the tagged copy reaches two rows of every pair the family named",
+    tagged.pairsFound.length === SEPARATE_INVESTMENTS.length && tagged.pairsFound.every((x) => x.rows >= 2),
+    tagged.pairsFound.map((x) => `${x.securityKey.slice(0, 24)}: ${x.rows}`).join(", "));
+  const t = privateScope(tagged.positions, BOOK_ACCOUNTS);
+  eq("raw private rows are the same six", t.rows.length, scope.rows.length);
+  eq("…and one row of each pair is left out of the counted set", t.dedupedRows.length, scope.rows.length - SEPARATE_INVESTMENTS.length);
+  const counted = sum(t.dedupedRows.map((p) => p.marketValue));
+  near("the double count is the second statement of each pair", t.doubleCounted, tagged.secondStatements);
+  near("…the ₹3.17 Cr the consolidated total used to leave out", t.doubleCounted, 14580412.51 + 17145962.25);
+  const tFunds = fundRollup(t.dedupedRows, accIdx, t.rows);
+  near("the fund rollup ties to the COUNTED total, not the raw one", sum(tFunds.map((f) => f.mv)), counted);
+  eq("the folio count still adds to the raw rows", sum(tFunds.map((f) => f.folios)), t.rows.length);
+  const tagFunds = tFunds.filter((f) => SEPARATE_INVESTMENTS.some((d) => d.securityKey === f.securityKey));
+  ok("…so each tagged fund counts MORE folios than counted rows",
+    tagFunds.length === SEPARATE_INVESTMENTS.length
+      && tagFunds.every((f) => f.folios > t.dedupedRows.filter((p) => p.securityKey === f.securityKey).length),
+    tagFunds.map((f) => `${f.securityKey.slice(0, 24)}: ${f.folios}`).join(", "));
+  const tFolios = folioRows(t.rows, accIdx);
+  eq("folio rows are every statement, never deduped", tFolios.length, t.rows.length);
+  eq("…and each tagged row names the other statement", tFolios.filter((f) => f.alsoCount > 1).length, 2 * SEPARATE_INVESTMENTS.length);
+  const tOwners = ownerRollup(t.rows, accIdx);
+  near("per-owner subtotals add to the RAW total", sum(tOwners.map((o) => o.mv)), sum(t.rows.map((p) => p.marketValue)));
+  ok("…which is above the counted one by exactly the double count",
+    Math.abs(sum(tOwners.map((o) => o.mv)) - counted - t.doubleCounted) <= 0.01);
+  // DEDUPING A PER-OWNER VIEW is what once emptied an account holding ₹1.46 Cr:
+  // the member whose statement the consolidated total leaves out still has it
+  // on that member's own row, at their own statement's figure.
+  const leftOut = tagged.positions.filter((p) => p.dedupeGroup && !t.dedupedRows.includes(p));
+  ok("every member whose statement the counted set leaves out keeps it on their own row",
+    leftOut.length === SEPARATE_INVESTMENTS.length && leftOut.every((p) => {
+      const owner = accIdx.get(p.accountId)?.owner;
+      const row = tOwners.find((o) => o.owner === owner);
+      return !!row && row.mv >= p.marketValue;
+    }), leftOut.map((p) => `${accIdx.get(p.accountId)?.owner}: ${p.marketValue}`).join(", "));
 }
 
 process.exit(fails ? 1 : 0);

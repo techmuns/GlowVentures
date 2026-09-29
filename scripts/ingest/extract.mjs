@@ -969,6 +969,7 @@ async function main() {
     if (report.summary.totalMismatches) console.log(`  ${report.summary.totalMismatches} row-sum vs printed-total mismatch(es).`);
     if (report.summary.crossReportDeltas) console.log(`  ${report.summary.crossReportDeltas} cross-report delta(s).`);
     if (report.summary.suspectedDuplicates) console.log(`  ${report.summary.suspectedDuplicates} suspected duplicate holding(s) across owners — NOT deduped.`);
+    if (report.summary.confirmedSeparateByFamily) console.log(`  ${report.summary.confirmedSeparateByFamily} matching holding(s) the family confirmed as separate investments — counted in full.`);
   }
   console.log(`  public/audit/manifest.json (${manifest.length} document(s))`);
   console.log("  docs/EXTRACTION-REPORT.md");

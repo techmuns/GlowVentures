@@ -30,6 +30,8 @@ import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/m
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
+import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
+import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -2035,6 +2037,8 @@ function build(docs) {
    * `BOOK_UNVALUED_HOLDINGS`; see the push below and the post-loop pass.
    */
   const unvaluedHoldings = [];
+  /** Every row the family's keep-unvalued table reached — checked for dead entries below. */
+  const keptUnvaluedHits = [];
 
   for (const [key, allIssues] of [...byAccount.entries()].sort()) {
     const group = newestPerReportType(allIssues, notes, `account ${key}`);
@@ -2533,7 +2537,14 @@ function build(docs) {
       const custody = CUSTODY_PROVIDERS.has(provider);
       const qty = isNum(h.quantity) ? h.quantity : null;
       const fv = isNum(h.faceValue) ? h.faceValue : null;
-      const reason = custody
+      // THE FAMILY'S DECISION OUTRANKS THE STATEMENT'S OWN REASON, AND KEEPS ITS
+      // FACTS. Where the family have decided a row stays unvalued (Ankita's
+      // locked-in Clean Max shares, 28 Sep 2026) the reason says so, so the
+      // absence reads as chosen rather than missed. It never values the row.
+      const kept = keptUnvaluedFor({ provider, accountNo, isin: h.isin });
+      if (kept) keptUnvaluedHits.push(kept);
+      const reason = kept ? keptUnvaluedReason(kept, holdingsDoc.asOf)
+        : custody
         ? (fv !== null
           ? `the ${provider} statement of ${holdingsDoc.asOf} records ${qty ?? "these"} unit(s) at their face value of ${fv}, `
             + "the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
@@ -3353,6 +3364,17 @@ function build(docs) {
   for (let i = unvaluedHoldings.length - 1; i >= 0; i--) {
     if (RINGFENCED_SECURITY_KEYS.has(unvaluedHoldings[i].securityKey)) unvaluedHoldings.splice(i, 1);
   }
+  // THE FAMILY'S KEEP-UNVALUED TABLE, CHECKED FOR DEAD ENTRIES. An entry that
+  // reaches no row means its account or ISIN drifted, and the row it was about
+  // went back to the statement's own reason without a word. Printed when every
+  // entry reached its row too, so a clean run and a deleted check differ.
+  for (const d of KEPT_UNVALUED) {
+    const n = keptUnvaluedHits.filter((x) => x === d).length;
+    notes.push(n === 1
+      ? `kept unvalued by the family's decision of ${d.decided}: ${d.isin} on ${d.provider} ${d.accountNo} — its reason says so`
+      : `KEPT_UNVALUED entry ${d.isin} on ${d.provider} ${d.accountNo} reached ${n} row(s), not one — `
+        + "check shared/keptUnvalued.mjs against the statement.");
+  }
   {
     const accountById = new Map(accounts.map((a) => [a.accountId, a]));
     const tie = (q, want) => isNum(q) && Math.abs(q - want) <= 0.0005 + Math.abs(want) * 1e-9;
@@ -3489,6 +3511,56 @@ function build(docs) {
   if (doubleCounted) {
     notes.push(`${seenGroups.size} holding(s) reported under more than one member: both rows are carried, `
       + `and ${r2(doubleCounted).toLocaleString("en-IN")} is excluded from the consolidated total so each is counted once`);
+  }
+
+  /**
+   * THE FAMILY'S ANSWERS, NAMED — AND HELD TO THE BOOK.
+   *
+   * "both are separate investments" — the family, 28 Sep 2026, about the two
+   * pairs this book used to count once (`SEPARATE_INVESTMENTS` in
+   * `shared/separateInvestments.mjs`, read by the policy it answers). Named on
+   * every run with each account's row and what counting both adds, because a decision
+   * that changes a consolidated figure must be visible where the figure is
+   * reported, not only where it is made.
+   *
+   * TWO WAYS IT CAN STOP HOLDING, AND BOTH ARE LOUD:
+   *   • a row it names still carries a `dedupeGroup` — the archive was tagged
+   *     before the answer and not replayed, so the consolidated total would count
+   *     the pair once against the family's word. That REFUSES the build rather
+   *     than writing a book that contradicts them (`npm run replay:dedupe`).
+   *   • an account it names holds no such row — the key has drifted (a change to
+   *     `securityKeyOf` the table did not follow) or the holding is gone. A note,
+   *     not a refusal: a redeemed holding is not an error. `separateInvestments
+   *     .test.ts` fails on it for today's book, where both pairs are held.
+   */
+  const separateInvestments = SEPARATE_INVESTMENTS.map((d) => {
+    const rows = d.accounts.map((a) => {
+      const acc = accounts.find((x) => x.provider === a.provider && String(x.accountNo) === String(a.accountNo));
+      const ps = acc ? positions.filter((p) => p.accountId === acc.accountId && p.securityKey === d.securityKey) : [];
+      return { provider: a.provider, accountNo: a.accountNo, accountId: acc?.accountId ?? null, owner: acc?.owner ?? null, positions: ps };
+    });
+    return { ...d, rows };
+  });
+  const stillOnce = separateInvestments.flatMap((d) => d.rows.flatMap((r) => r.positions.filter((p) => p.dedupeGroup)));
+  if (stillOnce.length) {
+    throw new Error(`${stillOnce.length} position(s) the family confirmed as separate investments still carry a dedupeGroup `
+      + `(${stillOnce.map((p) => `${p.security} / ${p.accountId}`).join("; ")}), so the consolidated total would count them `
+      + "once against the family's word. The archive was tagged before the answer: run `npm run replay:dedupe`.");
+  }
+  for (const d of separateInvestments) {
+    const held = d.rows.filter((r) => r.positions.length);
+    const missing = d.rows.filter((r) => !r.positions.length);
+    const value = sum(held.flatMap((r) => r.positions.map((p) => (isNum(p.marketValue) ? p.marketValue : 0))));
+    if (missing.length) {
+      notes.push(`family decision ${d.confirmed} names ${d.securityKey} under ${missing.map((r) => `${r.provider} ${r.accountNo}`).join(" and ")}, `
+        + "and no such holding is in the book there — the key may have drifted from `securityKeyOf`, or the holding has gone. "
+        + "Check SEPARATE_INVESTMENTS in shared/separateInvestments.mjs.");
+    }
+    if (held.length) {
+      notes.push(`separate investments, confirmed by the family on ${d.confirmed}: ${held[0].positions[0].security} under `
+        + `${held.map((r) => `${r.owner ?? r.provider} (${r.accountNo})`).join(" and ")} — each counted in full, `
+        + `${r2(value).toLocaleString("en-IN")} across ${held.length} account(s).`);
+    }
   }
 
   /**
@@ -3697,7 +3769,7 @@ function build(docs) {
     capitalMoves, positionTranches, shareMovements,
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
-    excludedAccounts, unvaluedHoldings,
+    excludedAccounts, unvaluedHoldings, separateInvestments,
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
     // depend on map iteration, and the book must regenerate byte-identically.
@@ -4025,6 +4097,26 @@ function report(book) {
     const accs = book.accounts.filter((a) => a.ownerId === o.ownerId);
     const ps = book.positions.filter((p) => accs.some((a) => a.accountId === p.accountId));
     L.push(`| ${o.displayName} | ${accs.length} | ${ps.length} | ${r2(sum(ps.map((p) => (isNum(p.marketValue) ? p.marketValue : 0)))).toLocaleString("en-IN")} |`);
+  }
+  L.push("");
+  L.push("## Holdings the family confirmed as separate investments");
+  L.push("");
+  L.push("Two accounts' statements carry the same figures for these, which is how a holding reported");
+  L.push("twice looks. The family has said each is a separate investment, so every figure counts both.");
+  L.push("`SEPARATE_INVESTMENTS` in `shared/separateInvestments.mjs` holds the decision.");
+  L.push("");
+  L.push("| Holding | Account | Owner | Units | Market value | Confirmed |");
+  L.push("| --- | --- | --- | ---: | ---: | --- |");
+  for (const d of book.separateInvestments ?? []) {
+    for (const r of d.rows) {
+      if (!r.positions.length) {
+        L.push(`| \`${d.securityKey}\` | ${r.provider} ${r.accountNo} | ${r.owner ?? "—"} | — | — (no such holding in the book) | ${d.confirmed} |`);
+        continue;
+      }
+      for (const p of r.positions) {
+        L.push(`| ${p.security} | ${r.provider} ${r.accountNo} | ${r.owner ?? "—"} | ${isNum(p.quantity) ? p.quantity.toLocaleString("en-IN") : "—"} | ${isNum(p.marketValue) ? r2(p.marketValue).toLocaleString("en-IN") : "—"} | ${d.confirmed} |`);
+      }
+    }
   }
   L.push("");
   L.push("## Read, and deliberately NOT in the book");

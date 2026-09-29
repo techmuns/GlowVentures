@@ -76,10 +76,16 @@ export type FundPart = { accountId: string; valuedAt: string; value: number; cos
  *
  * Built over the row's OWN deduped positions, which is load-bearing: the row's
  * value and cost count each `dedupeGroup` once, so its calls must come from the
- * same folios or the two sides of the return describe different money.
- * Transition Venture's two trusts each hold 7,500 units against a ₹75 L call;
- * the row counts the holding once, and pairing it with BOTH trusts' calls would
- * set ₹1.5 Cr of calls against ₹75 L of cost.
+ * same folios or the two sides of the return describe different money. Where
+ * two statements report ONE holding, the row counts it once, and pairing it
+ * with BOTH accounts' calls would set two calls against one holding's cost.
+ *
+ * (The family have answered for the two pairs this book tagged —
+ * *"both are separate investments"*, 28 Sep 2026 — so Transition Venture's two
+ * trusts are TWO holdings now, each 7,500 units against its own ₹75 L call, and
+ * the row carries both calls because it counts both holdings. The rule is for
+ * the next pair a drop brings, and `fundReturns.test.ts` exercises it on a
+ * tagged copy of the book.)
  */
 export type FundDated = {
   securityKey: string;
@@ -102,7 +108,15 @@ export type FundDated = {
   lastCall: string | null;
   /** The latest valuation date among the row's folios. */
   valuedAt: string | null;
-  /** Distinct dated calls — the family's "tranches". */
+  /**
+   * The family's "tranches": the distinct DATES money went in on, never the
+   * calls. Two family members paying one call on the same day — Transition
+   * Venture's two trusts, ₹75 L each on 17 Oct 2025 — is one purchase date,
+   * and a return compounded from that date credits no rupee with time it was
+   * not invested. So the rule that sends a fund to XIRR ("an XIRR when there
+   * are multiple tranches") reads this, and wording that COUNTS calls reads
+   * `calls.length`.
+   */
   tranches: number;
   /**
    * WHAT THE HOLDING-PERIOD RETURN ALREADY COUNTS OF THE CASH PAID BACK: the
@@ -216,7 +230,7 @@ export function fundDatedRecords(
       firstCall: calls[0]?.date ?? null,
       lastCall: calls[calls.length - 1]?.date ?? null,
       valuedAt,
-      tranches: new Set(calls.map((c) => `${c.accountId}|${c.date}`)).size,
+      tranches: new Set(calls.map((c) => c.date)).size,
       redeemedAtCost,
       gap: gaps[0] ?? null,
     });
@@ -260,6 +274,33 @@ function payoutParts(d: FundDated, money: Money): string {
 }
 
 const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/**
+ * THE CALLS, COUNTED THE WAY A READER COUNTS THEM: "6 calls", or "2 calls on
+ * one date" where several members paid the same call on the same day. That is
+ * ONE purchase date, and a sentence that said "paid in 2 calls" would read as
+ * money going in at two different times — the reason the methodology sends a
+ * fund to XIRR, which is not true of it (see `FundDated.tranches`).
+ */
+function callsPhrase(d: FundDated): string {
+  const n = d.calls.length;
+  const calls = `${n} call${n === 1 ? "" : "s"}`;
+  return n === d.tranches ? calls : `${calls} on ${d.tranches === 1 ? "one date" : `${d.tranches} dates`}`;
+}
+
+/** "One call", or "2 calls, all on one date" — only where every call shares one date. */
+const oneDateCalls = (d: FundDated) => (d.calls.length === 1 ? "one call" : `${d.calls.length} calls, all on one date`);
+
+/**
+ * WHETHER ONE START AND ONE END DESCRIBE ALL THE MONEY — every call on one date
+ * and every folio valued on one date. Only then is a single-period figure (a
+ * CAGR from that date, or the holding-period return standing in for a
+ * money-weighted one under a year) exact. Folios valued on different dates are
+ * what `pooledXirr` exists for: it closes each on its OWN date, where one rate
+ * to the latest date would misdate the value of every earlier one.
+ */
+const valuationDates = (d: FundDated) => [...new Set(d.parts.map((p) => p.valuedAt))].sort();
+const oneEntry = (d: FundDated) => d.tranches === 1 && valuationDates(d).length <= 1;
 
 /**
  * The return to print for ONE FUND ROW, on the measure the reader picked.
@@ -328,7 +369,13 @@ export function fundMeasuredReturn(
     if (d.tranches > 1) {
       return {
         shown: false, tag,
-        reason: `this fund was paid in ${d.tranches} calls between ${date(d.firstCall!)} and ${date(d.lastCall!)}, so there is no one purchase date to compound from — compounding from the first call would credit the later money with time it was not invested. XIRR weights each call by its own date`,
+        reason: `this fund was paid in ${callsPhrase(d)} between ${date(d.firstCall!)} and ${date(d.lastCall!)}, so there is no one purchase date to compound from — compounding from the first call would credit the later money with time it was not invested. XIRR weights each call by its own date`,
+      };
+    }
+    if (!oneEntry(d)) {
+      return {
+        shown: false, tag,
+        reason: `the ${d.parts.length} folios behind this fund are valued on different dates (${valuationDates(d).map(date).join(", ")}), so one annual rate to one end date would misdate the value of every earlier one — XIRR closes each folio on its own date`,
       };
     }
     if (d.payouts === "unknown") {
@@ -348,7 +395,7 @@ export function fundMeasuredReturn(
     if (growth <= 0) return { shown: false, tag, reason: "this fund is worth nothing against its cost, so it has no compound rate — only a total loss" };
     return {
       shown: true, pct: (Math.pow(growth, YEAR_DAYS / days) - 1) * 100, tag,
-      note: `Annualised over the ${days} days from the one call on ${date(d.firstCall!)} to the ${date(d.valuedAt!)} valuation.`,
+      note: `Annualised over the ${days} days from ${d.calls.length === 1 ? "the one call" : `the ${d.calls.length} calls, all`} on ${date(d.firstCall!)} to the ${date(d.valuedAt!)} valuation.`,
     };
   }
 
@@ -378,9 +425,11 @@ export function fundMeasuredReturn(
       note: `${sentence(d?.gap ?? "no dated contribution for this fund is in the book")}. So it cannot be annualised or money-weighted: this is its holding-period return, current value against cost.`,
     };
   }
-  if (d.tranches > 1 || (d.payouts === "measured" && d.paidOut > 0)) {
+  if (!oneEntry(d) || (d.payouts === "measured" && d.paidOut > 0)) {
     const x = xirrOf(f, d, money, date);
-    const why = d.tranches > 1 ? `Paid in ${d.tranches} calls` : `One call, and ${money(d.paidOut)} paid back`;
+    const why = d.tranches > 1 ? `Paid in ${callsPhrase(d)}`
+      : !oneEntry(d) ? `Its ${d.parts.length} folios are valued on different dates`
+      : `${sentence(oneDateCalls(d))}, and ${money(d.paidOut)} paid back`;
     if (x.shown && x.tag === "XIRR") return { ...x, note: `${why}, so the methodology uses XIRR. ${x.note ?? ""}`.trim() };
     return {
       shown: true, pct: hpr, tag: "HPR",
@@ -390,13 +439,13 @@ export function fundMeasuredReturn(
   const days = daysBetween(d.firstCall!, d.valuedAt!);
   if (days >= YEAR_DAYS && d.payouts === "nil") {
     const c = fundMeasuredReturn(f, d, "cagr", money, date);
-    if (c.shown) return { ...c, note: `One call and nothing paid back, held ${days} days — so the methodology annualises it. ${c.note ?? ""}`.trim() };
+    if (c.shown) return { ...c, note: `${sentence(oneDateCalls(d))} and nothing paid back, held ${days} days — so the methodology annualises it. ${c.note ?? ""}`.trim() };
   }
   return {
     shown: true, pct: hpr, tag: "HPR",
     note: days < YEAR_DAYS
-      ? `Paid in one call ${days} days before the ${date(d.valuedAt!)} valuation — under a year, so the methodology shows the holding-period return, not an annual rate.`
-      : `One call, and this book carries no payout record to confirm nothing came back, so the methodology shows the holding-period return.`,
+      ? `Paid in ${d.calls.length === 1 ? "one call" : `${d.calls.length} calls, all on one date,`} ${days} days before the ${date(d.valuedAt!)} valuation — under a year, so the methodology shows the holding-period return, not an annual rate.`
+      : `${sentence(oneDateCalls(d))}, and this book carries no payout record to confirm nothing came back, so the methodology shows the holding-period return.`,
   };
 }
 
@@ -412,7 +461,7 @@ function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date
   }
   const pooled = pooledFundXirr([d]);
   if (!pooled || pooled.pct == null) return { shown: false, tag, reason: "the dated flows do not solve to a rate" };
-  const flowsLine = `${d.tranches} dated call${d.tranches === 1 ? "" : "s"}`
+  const flowsLine = `${d.calls.length} dated call${d.calls.length === 1 ? "" : "s"}${d.calls.length === d.tranches ? "" : ` on ${d.tranches === 1 ? "one date" : `${d.tranches} dates`}`}`
     + (d.paidOut > 0 ? `, ${money(d.paidOut)} paid back (${payoutParts(d, money)})` : ", nothing paid back")
     + ` and the ${date(d.valuedAt!)} value`;
   const after = d.afterValuation.reduce((t, x) => t + x.amount, 0);
@@ -425,14 +474,15 @@ function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date
       note: `Money-weighted across ${flowsLine} — annualised over the ${pooled.windowDays} days since the first call.${afterLine}`,
     };
   }
-  // UNDER A YEAR. With one call and nothing paid back the money-weighted return
-  // over the window IS the holding-period return — the same figure, exactly —
-  // so it is shown and tagged for what it is. Anything else under a year has no
-  // honest single name here and is refused rather than dressed as an XIRR.
-  if (d.tranches === 1 && d.paidOut === 0 && f.returnPct != null) {
+  // UNDER A YEAR. With every call on one date, every folio valued on one date
+  // and nothing paid back, the money-weighted return over the window IS the
+  // holding-period return — the same figure, exactly — so it is shown and
+  // tagged for what it is. Anything else under a year has no honest single
+  // name here and is refused rather than dressed as an XIRR.
+  if (oneEntry(d) && d.paidOut === 0 && f.returnPct != null) {
     return {
       shown: true, pct: f.returnPct, tag: "HPR",
-      note: `The money went in ${pooled.windowDays} days before the valuation — under a year, so an annual rate would be a projection. With one call and nothing paid back, the money-weighted return over that window equals ${HPR_IS}.`,
+      note: `The money went in ${pooled.windowDays} days before the valuation — under a year, so an annual rate would be a projection. With ${d.calls.length === 1 ? "one call" : "every call on one date"} and nothing paid back, the money-weighted return over that window equals ${HPR_IS}.`,
     };
   }
   return {

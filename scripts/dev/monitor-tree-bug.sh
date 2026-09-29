@@ -87,14 +87,21 @@ run_case "a statement line drops a column" sub \
 ' ''
 
 # ── 4 ── the arithmetic line that makes the lines add to the row
+# NO SUBJECT ON THIS BOOK SINCE Stage 10cx: the family confirmed both pairs
+# separate, so no holding is reported twice and no row draws a Counted once line.
+# It sweeps clean by construction, and fires again the day a drop brings a pair
+# still pending the family's answer.
 run_case "the Counted once row is dropped" sub \
   '    if (overlap) {' \
   '    if (overlap && vs.length > 99) {'
 
 # ── 5 ── the lines built from the DEDUPED set (a per-account figure never is)
+# NO SUBJECT ON THIS BOOK SINCE Stage 10cx: with no pair counted once, the
+# deduped set IS every statement, so building the lines from it changes nothing.
+# It fires again the day a drop brings a pair still pending the family's answer.
 run_case "a holding's lines are the deduped set, not every statement" sub \
-  '          venues: venuesOf(ps, accIdx),' \
-  '          venues: venuesOf(dps, accIdx),'
+  '          venues: venuesOf(ps, accIdx, valueDate),' \
+  '          venues: venuesOf(dps, accIdx, valueDate),'
 
 # ── 6 ── a contribution hung from someone else's statement
 run_case "every line's contributions hang from the first line" sub \

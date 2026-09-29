@@ -127,11 +127,13 @@ open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
 # ── 6 ── a capital account attached twice
+# Re-anchored at Stage 10cx: since Stage 10ct the line reads `attached.add(accountId)`,
+# and until then this case reported NOT A RESULT rather than its bug.
 run_case "a capital account is attached twice" suite py <<'PY'
 import sys
 p = "src/lib/privateBook.ts"
 s = open(p, encoding="utf-8").read()
-old = "    if (cap) attached.add(p.accountId);\n"
+old = "    if (cap) attached.add(accountId);\n"
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
 PY
