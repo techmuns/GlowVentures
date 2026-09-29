@@ -54,7 +54,7 @@ const accts = accountIndex(BOOK_ACCOUNTS);
 const cr = (n: number) => `₹${(n / 1e7).toFixed(2)} Cr`;
 
 // THE CARD READS THE LIVE BOOK (`PortfolioContext`), SO THE SUITE DOES (Stage
-// 10cy). Since the three Motilal Oswal holding statements' `Rate` turned out to
+// 10cz). Since the three Motilal Oswal holding statements' `Rate` turned out to
 // be each holding's last depository movement rather than a valuation, their fund
 // balances are carried on the statement basis as quantities with no value — and
 // valued on the live basis at AMFI's NAV. On `BOOK_POSITIONS` this card would
@@ -150,7 +150,7 @@ ok("every skipped holding carries a reason", m.skipped.every((s) => !!s.reason &
     return Math.abs((p.quantity * nav) / p.marketValue - 1) > 0.5;
   });
   if (offenders.length === 0) {
-    // Since Stage 10cy the book has none — the DSP ETFs' "marks" were last
+    // Since Stage 10cz the book has none — the DSP ETFs' "marks" were last
     // depository movements and left it — so the trap is exercised on the
     // constructed ten-fold row under MNT-3 below, whose row must carry the
     // book's value and never units × NAV.
@@ -298,7 +298,7 @@ const amfiFile = (() => {
     const ratio = q > 0 && r.nav > 0 ? v / q / r.nav : null;
     return ratio != null && (ratio > 2 || ratio < 0.5);
   });
-  // THE BOOK'S OWN CASE HAS LEFT THE BOOK (Stage 10cy). The DSP ETFs' "₹151 mark
+  // THE BOOK'S OWN CASE HAS LEFT THE BOOK (Stage 10cz). The DSP ETFs' "₹151 mark
   // over a ₹14.76 NAV" was the price of each balance's LAST DEPOSITORY MOVEMENT,
   // not a mark: both are quantities with no value now, on either basis, and no
   // row the card draws is off one unit basis. So the claim over the book is
@@ -345,7 +345,7 @@ const amfiFile = (() => {
   ok("with the store down, AMFI's schemes are still priced", down.rows.length > 0 && down.rows.every((r) => r.source === "amfi"));
   // NO SCHEME THE CARD DRAWS NEEDS THE STORE ANY MORE: the only ones AMFI's file
   // did not carry were the DSP ETFs, which left the book with their last-movement
-  // "marks" (Stage 10cy). So the branch is exercised the only way it can be —
+  // "marks" (Stage 10cz). So the branch is exercised the only way it can be —
   // with AMFI's file made to miss the largest holding in scope, which must then
   // be NAMED with the store's absence as the reason, never dropped or zeroed.
   const inScopeTop = [...rows].filter((p) => (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p))))

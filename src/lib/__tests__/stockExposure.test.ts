@@ -84,7 +84,7 @@ const STORE = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures
 
 /**
  * THE BOOK THE PAGE READS. `useStockExposure` is handed the LIVE consolidated
- * set (`PortfolioContext`), and since Stage 10cy that differs from the statement
+ * set (`PortfolioContext`), and since Stage 10cz that differs from the statement
  * basis by more than a published NAV: the three Motilal Oswal holding
  * statements' funds are valued there at AMFI's NAV and nowhere on the statement
  * basis, because the rate those statements print is the last depository
@@ -118,7 +118,7 @@ const vehicles = heldFundVehicles(ded);
 /**
  * …OVER THE SAME COMPANIES — the book's valued shares, then the ones a
  * statement records and nothing values, under the key the live layer files them
- * by (`lookthroughCompanies`, Stage 10cy). Built off `stocks` alone, a fund's
+ * by (`lookthroughCompanies`, Stage 10cz). Built off `stocks` alone, a fund's
  * Kaynes line landed on the filing's spelling here while the page — on a day no
  * quote had made Ankita's demat line a row — needed the recorded line to put it
  * on the family's own Kaynes.

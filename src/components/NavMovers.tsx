@@ -349,7 +349,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
           holding dropped in silence is indistinguishable from one that moved
           nothing. The NAMES are on the face and the reason is the line's hover
           (Stage 10cp) — a depository's funds on a transaction-only demat
-          (Stage 10cx) brought two schemes this store never resolved, and the
+          (Stage 10cy) brought two schemes this store never resolved, and the
           reason beside them ran the line past one short line. */}
       {model.skipped.length > 0 && (
         <div className="mt-3 space-y-0.5" data-testid="navmovers-skipped">

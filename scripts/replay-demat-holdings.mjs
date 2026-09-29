@@ -9,7 +9,7 @@
  * The seventh faithful partial replay, after `rekey:archive`,
  * `build-lookthrough --reindex`, `replay:calls`, `replay:movements`,
  * `replay:owners` and `replay:flows`, and it lands the correction to what the
- * CDSL holding statement's `Rs RATE` and `Rs VALUE` columns ARE (Stage 10cy):
+ * CDSL holding statement's `Rs RATE` and `Rs VALUE` columns ARE (Stage 10cz):
  * the price of each holding's LAST DEPOSITORY MOVEMENT and that price times
  * the movement's own quantity, not a 31 July valuation. `npm run extract`
  * needs `GLOW_PDF_PASSWORDS` for eight encrypted statements and

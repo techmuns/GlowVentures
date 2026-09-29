@@ -89,7 +89,7 @@ export type SearchEntry = {
   weight: number;
   /** A position the family no longer holds — findable, ranked below any held one. */
   closed?: boolean;
-  /** A holding a statement records at a quantity and nothing values (Stage 10cy). */
+  /** A holding a statement records at a quantity and nothing values (Stage 10cz). */
   recorded?: boolean;
   /**
    * A SCHEME's published names with the plan and option set aside (SC-B4) —
@@ -647,7 +647,7 @@ export function buildSearchIndex(input: {
   // ── holdings a statement records at a quantity, and nothing values ────────
   /**
    * A HOLDING THE FAMILY OWNS IS FINDABLE WHETHER OR NOT ANYTHING VALUES IT
-   * (Stage 10cy).
+   * (Stage 10cz).
    *
    * The Motilal CDSL demat prints a rate and a value that belong to each
    * holding's LAST DEPOSITORY MOVEMENT, not to the statement date, so its rows
@@ -759,8 +759,8 @@ export function buildSearchIndex(input: {
         // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. On the live
         // basis an account whose statement records quantities it does not value
         // is valued only where a published NAV or a live quote can price them —
-        // a transaction-only demat's funds and shares (Stages 10ce, 10cx), a
-        // Motilal holding statement's last-movement lines (Stage 10cy) — so its
+        // a transaction-only demat's funds and shares (Stages 10ce, 10cy), a
+        // Motilal holding statement's last-movement lines (Stage 10cz) — so its
         // total must not read as the account's: the words lead, because this
         // line is truncated to one row.
         ? `${a.partialValuation ? "partly valued · " : ""}${listed.length} holding${listed.length === 1 ? "" : "s"} · ${money(listedMV)} ${valueBasisOf(listed, a.asOf)}`

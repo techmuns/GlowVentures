@@ -299,7 +299,7 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
       // WHERE A DEPOSITORY LINE'S UNITS CAME FROM — the tab's own words: no
       // statement priced these units, so a reader must not take their value for
       // a statement mark replaced. WHICH depository record it is follows the
-      // line's own kind (Stage 10cy): a transaction-only account's closing
+      // line's own kind (Stage 10cz): a transaction-only account's closing
       // balance, a holding statement's balance beside the price of its LAST
       // MOVEMENT, one printed with no rate, or one with no usable price — and
       // only the first may say the account sent no holding statement.

@@ -62,7 +62,7 @@ type Candidate = { label: string; cased: boolean; value: number };
 
 /**
  * EVERY LINE A STATEMENT PRINTED A NAME ON — a position, and a holding the book
- * carries as a quantity and no value (Stage 10cy).
+ * carries as a quantity and no value (Stage 10cz).
  *
  * The Motilal CDSL demat prints a rate and a value that belong to each
  * holding's LAST DEPOSITORY MOVEMENT, so its 43 rows are recorded quantities

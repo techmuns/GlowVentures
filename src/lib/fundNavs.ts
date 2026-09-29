@@ -136,7 +136,7 @@ export function isArbitrageFund(p: Pick<Position, "securityKey"> & { isin?: stri
  *
  * Whether the dashboard values a depository's own closing units (below): the
  * family's cash-equivalent funds (about ₹64 Cr on this drop), and every other
- * mutual-fund scheme on the same statement (about ₹85 Cr — Stage 10cx). Each
+ * mutual-fund scheme on the same statement (about ₹85 Cr — Stage 10cy). Each
  * adds real holdings to the live book, so each is one constant, and `false`
  * takes its rows out of every page at once.
  */
@@ -201,7 +201,7 @@ function labelFromAmfi(e: FundNav): string {
  *      and arbitrage funds, `isCashEquivalent`) under the first switch, every
  *      other scheme under the second. A share has no NAV (gate 3) and an ETF's
  *      units can split, so neither is valued here. Stage 10ce took only the
- *      cash; Stage 10cx took the rest, because the family asked for the data
+ *      cash; Stage 10cy took the rest, because the family asked for the data
  *      their statements carry to be on the screen;
  *   5. no position the book carries holds the SAME units of the same ISIN,
  *      which is `dropDepositoryDuplicates`' own test: an exact unit match is
@@ -254,7 +254,7 @@ export function depositoryFundHoldings(
       security: book || schemeNameFor(securityKey) ? securityLabel(securityKey, printed) : labelFromAmfi(nav),
       isin: w.isin,
       // A liquid ETF the quote feed prices intraday keeps its symbol even where
-      // no book position of it is left to lend one (Stage 10cy moved the Motilal
+      // no book position of it is left to lend one (Stage 10cz moved the Motilal
       // demats' Liquid BeES out of the positions).
       symbol: book?.symbol ?? symbolForKey(securityKey),
       accountId: w.accountId,
@@ -306,12 +306,12 @@ export function depositoryCashHoldings(
 }
 
 /**
- * ── UNITS A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (A-17, Stage 10cy)
+ * ── UNITS A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (A-17, Stage 10cz)
  *
  * The Motilal Oswal CDSL holding statements print every holding's units, and
  * against most of them a `Rs RATE` and a `Rs VALUE` — which are the price of
  * the holding's LAST DEPOSITORY MOVEMENT and that price times the movement's own
- * quantity, never a valuation of the balance (Stage 10cy; the reader reads them
+ * quantity, never a valuation of the balance (Stage 10cz; the reader reads them
  * as `lastMovementRate`). So since that correction every fund those statements
  * carry is a quantity in the book (`BOOK_UNVALUED_HOLDINGS`) and no statement
  * values it: Ankita's Bandhan, Helios, ICICI and WhiteOak units, Bharat's and
@@ -610,7 +610,7 @@ export function depositoryBalancesOf(
  *   - a TRANSACTION-ONLY account (the closing-balance rows): what it holds is
  *     the depository's closing balances, sorted by `depositoryBalancesOf`;
  *   - an account whose HOLDING statement values none of what it records (the
- *     three Motilal Oswal demats since Stage 10cy, whose statements print only
+ *     three Motilal Oswal demats since Stage 10cz, whose statements print only
  *     the price of each holding's last depository movement): what it holds is
  *     the statement's own lines (`BOOK_UNVALUED_HOLDINGS`). An account the
  *     statement basis DOES value (ICICI's NSDL demat, with ESDS beside it) has

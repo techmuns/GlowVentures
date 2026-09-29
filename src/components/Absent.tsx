@@ -109,7 +109,7 @@ export function AbsentFromBook({ query, className = "" }: { query: string; class
   const { portfolio } = usePortfolio();
   const gaps = reviewGapsFor(query);
   // WHAT A STATEMENT RECORDS AND NOTHING VALUES comes first: it is the family's
-  // own paperwork, where the review is a cross-check (Stage 10cy).
+  // own paperwork, where the review is a cross-check (Stage 10cz).
   const recorded = recordedMatching(query, portfolio?.positions ?? []);
   if (!gaps.length && !recorded.length) return null;
   return (

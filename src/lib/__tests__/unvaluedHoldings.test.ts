@@ -64,7 +64,7 @@ for (const a of BOOK_ACCOUNTS) {
       faceValue: num(h.faceValue) ? h.faceValue : null, custody: /demat/i.test(a.provider),
       // The Motilal Oswal statements print, where they print a rate at all, the
       // price of the holding's LAST DEPOSITORY MOVEMENT and that price times the
-      // movement's own units (Stage 10cy) — archived as such, never as a mark.
+      // movement's own units (Stage 10cz) — archived as such, never as a mark.
       lastMovementRate: num(h.lastMovementRate) && h.lastMovementRate > 0 ? h.lastMovementRate : null,
       lastMovementValue: num(h.lastMovementValue) ? h.lastMovementValue : null,
     });

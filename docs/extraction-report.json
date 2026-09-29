@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T10:31:14.513Z",
+  "generatedAt": "2026-09-29T01:43:40.413Z",
   "summary": {
     "documents": 264,
     "parsed": 199,
@@ -19,8 +19,9 @@
     "datedExplained": 129,
     "datedRounding": 60,
     "crossReportDeltas": 18,
-    "suspectedDuplicates": 3,
+    "suspectedDuplicates": 0,
     "quantityOnlyMatches": 3,
+    "confirmedSeparateByFamily": 3,
     "suspectedDuplicateEarnings": 1,
     "securitiesWithoutSymbol": 26,
     "ownerNamesUnmatched": 2,
@@ -1109,8 +1110,8 @@
   },
   "consolidated": {
     "naive": 133341187317,
-    "deduped": 133280643994.42,
-    "doubleCounted": 60543322.58
+    "deduped": 133341187317,
+    "doubleCounted": 0
   },
   "rowSumChecks": [
     {
@@ -44476,104 +44477,7 @@
       "authoritative": null
     }
   ],
-  "duplicateHoldings": [
-    {
-      "dedupeGroup": "dg-transition-venture-capital-fund-i-class-a1-2",
-      "security": "Transition Venture Capital Fund I — Class A1",
-      "securityKey": "transition-venture-capital-fund-i-class-a1",
-      "quantity": 7500,
-      "totalCost": 7500000,
-      "marketValue": 17145962.25,
-      "owners": [
-        "bharat-jaisinghani-family-trust-3",
-        "bharat-jaisinghani-family-trust-2"
-      ],
-      "occurrences": [
-        {
-          "docKey": "transition-venture-capital-tvc263-2026-03-31-unknown",
-          "owner": "BHARAT JAISINGHANI FAMILY TRUST 3",
-          "ownerId": "bharat-jaisinghani-family-trust-3",
-          "accountNo": "TVC263",
-          "asOf": "2026-03-31",
-          "reportType": "unknown"
-        },
-        {
-          "docKey": "transition-venture-capital-tvc262-2026-03-31-unknown",
-          "owner": "BHARAT JAISINGHANI FAMILY TRUST 2",
-          "ownerId": "bharat-jaisinghani-family-trust-2",
-          "accountNo": "TVC262",
-          "asOf": "2026-03-31",
-          "reportType": "unknown"
-        }
-      ],
-      "doubleCountRisk": 17145962.25,
-      "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
-    },
-    {
-      "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-2",
-      "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
-      "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
-      "quantity": 990429.684,
-      "totalCost": 9866647,
-      "marketValue": 14580412.51,
-      "owners": [
-        "ajay-jaisinghani",
-        "bharat-jaisinghani"
-      ],
-      "occurrences": [
-        {
-          "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
-          "owner": "Mr. AJAY T JAISINGHANI",
-          "ownerId": "ajay-jaisinghani",
-          "accountNo": "37702",
-          "asOf": "2026-06-30",
-          "reportType": "holdings"
-        },
-        {
-          "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
-          "owner": "Mr. Bharat Jaisinghani",
-          "ownerId": "bharat-jaisinghani",
-          "accountNo": "60117",
-          "asOf": "2026-06-30",
-          "reportType": "holdings"
-        }
-      ],
-      "doubleCountRisk": 14580412.51,
-      "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
-    },
-    {
-      "dedupeGroup": "dg-360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii-2",
-      "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
-      "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
-      "quantity": 990429.684,
-      "totalCost": 9866647,
-      "marketValue": 14408473.91,
-      "owners": [
-        "ajay-jaisinghani",
-        "bharat-jaisinghani"
-      ],
-      "occurrences": [
-        {
-          "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
-          "owner": "Mr. AJAY T JAISINGHANI",
-          "ownerId": "ajay-jaisinghani",
-          "accountNo": "37702",
-          "asOf": "2026-05-31",
-          "reportType": "holdings"
-        },
-        {
-          "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
-          "owner": "Mr. Bharat Jaisinghani",
-          "ownerId": "bharat-jaisinghani",
-          "accountNo": "60117",
-          "asOf": "2026-05-31",
-          "reportType": "holdings"
-        }
-      ],
-      "doubleCountRisk": 14408473.91,
-      "resolution": "NOT deduped — both are reported. Decide which statement owns this position."
-    }
-  ],
+  "duplicateHoldings": [],
   "quantityOnlyMatches": [
     {
       "security": "India SME Investments Fund II — Class A2",
@@ -44729,6 +44633,101 @@
       "resolution": "NOT a dedupe group. The only figure these rows share is the quantity, and no statement here values them, so there is nothing to double-count and nothing to collapse. Treat as two real holdings unless a statement says otherwise — a shared unit count alone is not evidence of one."
     }
   ],
+  "confirmedSeparate": [
+    {
+      "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
+      "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+      "quantity": 990429.684,
+      "totalCost": 9866647,
+      "marketValue": 14408473.91,
+      "owners": [
+        "ajay-jaisinghani",
+        "bharat-jaisinghani"
+      ],
+      "confirmed": "2026-09-28",
+      "occurrences": [
+        {
+          "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
+          "owner": "Mr. AJAY T JAISINGHANI",
+          "ownerId": "ajay-jaisinghani",
+          "accountNo": "37702",
+          "asOf": "2026-05-31",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
+          "owner": "Mr. Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "60117",
+          "asOf": "2026-05-31",
+          "reportType": "holdings"
+        }
+      ],
+      "resolution": "NOT a dedupe group. The family confirmed on 2026-09-28 that these are separate investments, one per account, so each is counted in full in every figure. The figures coincide because the holders bought the same thing on the same terms (SEPARATE_INVESTMENTS in shared/separateInvestments.mjs)."
+    },
+    {
+      "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
+      "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+      "quantity": 990429.684,
+      "totalCost": 9866647,
+      "marketValue": 14580412.51,
+      "owners": [
+        "ajay-jaisinghani",
+        "bharat-jaisinghani"
+      ],
+      "confirmed": "2026-09-28",
+      "occurrences": [
+        {
+          "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
+          "owner": "Mr. AJAY T JAISINGHANI",
+          "ownerId": "ajay-jaisinghani",
+          "accountNo": "37702",
+          "asOf": "2026-06-30",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
+          "owner": "Mr. Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "60117",
+          "asOf": "2026-06-30",
+          "reportType": "holdings"
+        }
+      ],
+      "resolution": "NOT a dedupe group. The family confirmed on 2026-09-28 that these are separate investments, one per account, so each is counted in full in every figure. The figures coincide because the holders bought the same thing on the same terms (SEPARATE_INVESTMENTS in shared/separateInvestments.mjs)."
+    },
+    {
+      "security": "Transition Venture Capital Fund I — Class A1",
+      "securityKey": "transition-venture-capital-fund-i-class-a1",
+      "quantity": 7500,
+      "totalCost": 7500000,
+      "marketValue": 17145962.25,
+      "owners": [
+        "bharat-jaisinghani-family-trust-3",
+        "bharat-jaisinghani-family-trust-2"
+      ],
+      "confirmed": "2026-09-28",
+      "occurrences": [
+        {
+          "docKey": "transition-venture-capital-tvc263-2026-03-31-unknown",
+          "owner": "BHARAT JAISINGHANI FAMILY TRUST 3",
+          "ownerId": "bharat-jaisinghani-family-trust-3",
+          "accountNo": "TVC263",
+          "asOf": "2026-03-31",
+          "reportType": "unknown"
+        },
+        {
+          "docKey": "transition-venture-capital-tvc262-2026-03-31-unknown",
+          "owner": "BHARAT JAISINGHANI FAMILY TRUST 2",
+          "ownerId": "bharat-jaisinghani-family-trust-2",
+          "accountNo": "TVC262",
+          "asOf": "2026-03-31",
+          "reportType": "unknown"
+        }
+      ],
+      "resolution": "NOT a dedupe group. The family confirmed on 2026-09-28 that these are separate investments, one per account, so each is counted in full in every figure. The figures coincide because the holders bought the same thing on the same terms (SEPARATE_INVESTMENTS in shared/separateInvestments.mjs)."
+    }
+  ],
   "duplicateAifEarnings": [
     {
       "units": 990429.684,
@@ -44756,8 +44755,9 @@
           "reportType": "statement-of-earnings"
         }
       ],
-      "doubleCountRisk": 738106,
-      "resolution": "NOT netted — both are reported. Any consumer of `aifEarnings` must count this group once."
+      "confirmedSeparate": "2026-09-28",
+      "doubleCountRisk": null,
+      "resolution": "Two incomes, one per folio: the family confirmed on 2026-09-28 that the holdings behind them are separate investments. Any consumer of `aifEarnings` counts both."
     }
   ],
   "unresolved": {

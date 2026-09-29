@@ -66,7 +66,7 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
    * suite so the two cannot build the index differently.
    */
   /*
-   * AND THE COMPANIES A STATEMENT RECORDS AND NOTHING VALUES (Stage 10cy), by
+   * AND THE COMPANIES A STATEMENT RECORDS AND NOTHING VALUES (Stage 10cz), by
    * the key the live layer files them under — so a fund's Kaynes line lands on
    * the family's own Kaynes whether or not a live quote has made that demat
    * line a row yet. See `lookthroughCompanies`.

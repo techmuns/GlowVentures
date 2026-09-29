@@ -300,7 +300,7 @@ export function threePFlows(text, warn) {
   }));
 }
 
-// ── A MUTUAL-FUND FOLIO'S OWN PURCHASE ROWS (Stage 10cx) ──────────────────────
+// ── A MUTUAL-FUND FOLIO'S OWN PURCHASE ROWS (Stage 10cy) ──────────────────────
 //
 // Helios (CAMS) and Motilal Oswal Active Momentum (KFintech) print each purchase
 // as a Gross Purchase, the Stamp Duty taken from it and a dated Net Purchase

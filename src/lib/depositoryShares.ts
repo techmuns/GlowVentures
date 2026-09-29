@@ -1,5 +1,5 @@
 // THE LISTED SHARES A DEPOSITORY REPORTS ON AN ACCOUNT THAT SENT NO HOLDING
-// STATEMENT (Stage 10cx) — the share half of `depositoryFundHoldings`.
+// STATEMENT (Stage 10cy) — the share half of `depositoryFundHoldings`.
 //
 // Ajay's main Motilal Oswal demat sent a TRANSACTION statement and no holding
 // statement, so the book carries no position for it. Its closing balances are
@@ -27,7 +27,7 @@
 // always gone through the corporate-action gate for exactly that
 // (`applyCorporateActionQuotes`), and so do these rows now: a share the capture
 // shows a split or bonus for is valued on the projected units where the chain
-// is clean, and is NOT a row where it is not. Before Stage 10cy the
+// is clean, and is NOT a row where it is not. Before Stage 10cz the
 // transaction-only account's shares took the quote directly — a gap the three
 // Motilal holding statements' shares would have widened once they joined this
 // path.
@@ -54,17 +54,25 @@
 // because its account DID send a holding statement and the sentence a page
 // shows must say so.
 //
-// ── AND EVERY SHARE THE THREE MOTILAL HOLDING STATEMENTS RECORD (Stage 10cy) ─
+// EXCEPT WHERE THE FAMILY HAVE DECIDED OTHERWISE. Ankita's 94,967 Clean Max
+// shares sit in her statement's lock-in + freeze balance, and on 28 Sep 2026
+// the family answered *"keep them unvalued for now"* (Stage 10cx,
+// `shared/keptUnvalued.mjs`). The book's reason for that row names the
+// decision, and this layer reads the SAME table, so no quote values the row
+// either — a price from any source, not only the ICICI statement's mark the
+// question was asked about. ESDS, which no decision names, is still valued.
+//
+// ── AND EVERY SHARE THE THREE MOTILAL HOLDING STATEMENTS RECORD (Stage 10cz) ─
 //
 // Those statements print a `Rs RATE` and a `Rs VALUE` beside most holdings, and
 // both are the holding's LAST DEPOSITORY MOVEMENT — its price and that price
 // times the movement's own quantity — never a valuation of the balance. So the
 // book carries every one of those shares as a quantity (`BOOK_UNVALUED_HOLDINGS`,
 // with the movement's price as `lastMovementRate`), and they come here on the
-// same terms as Clean Max: the live quote, only while the feed prices it. Their
-// kind is `last-movement`, because the statement DID print a price against them
-// and a page must say what that price was rather than that there was none. The
-// movement's price is never the price a row is valued at.
+// same terms as the no-price shares above: the live quote, only while the feed
+// prices it. Their kind is `last-movement`, because the statement DID print a
+// price against them and a page must say what that price was rather than that
+// there was none. The movement's price is never the price a row is valued at.
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { symbolFor, symbolForKey, type QuoteFeed } from "./quotes";
 import { applyCorporateActionQuotes, type ActionFeed } from "./corporateActions";
@@ -72,6 +80,7 @@ import { securityLabel } from "./securityLabel";
 import { displayDepositoryName } from "./format";
 import type { Account, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
 import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
+import { keptUnvaluedFor } from "../../shared/keptUnvalued.mjs";
 
 /**
  * THE ONE SWITCH. `false` takes every quoted depository share out of every page
@@ -209,8 +218,8 @@ export function depositoryShareCandidates(
 /**
  * The listed shares a HOLDING statement records with no usable price — no rate,
  * only the face value they were allotted at, or only the price of the holding's
- * last depository movement (the Motilal Oswal statements, Stage 10cy) — as rows
- * with NO price yet. Five gates:
+ * last depository movement (the Motilal Oswal statements, Stage 10cz) — as rows
+ * with NO price yet. Six gates:
  *   1. an EQUITY line of `BOOK_UNVALUED_HOLDINGS` with an `INE…` ISIN and
  *      units — the statement's own record that the account holds it;
  *   2. not the depository's copy of units another statement reports
@@ -220,6 +229,8 @@ export function depositoryShareCandidates(
  *      one holding caught on two statements mid-transfer reads exactly like
  *      that, and must not be counted twice;
  *   5. an NSE symbol resolves for the ISIN, by identifier (`symbolByIdentifier`).
+ *   6. the family have not decided to keep it unvalued (`shared/keptUnvalued.mjs`,
+ *      read on the row's own account and ISIN, the key `build-book` reads it on).
  *
  * CLEAN MAX IS THE CASE GATE 4 WAS WRITTEN AROUND. Ajay's ICICI NSDL statement
  * carries 94,967 shares of it and Ankita's Motilal Oswal statement another
@@ -227,7 +238,8 @@ export function depositoryShareCandidates(
  * whether these are one holding or two — and the family's own review carries
  * 1,89,934 across "ICICI Bank / MOPWM", exactly twice 94,967. Two owners, two
  * statements, two holdings; a transfer between two accounts of ONE owner would
- * be refused.
+ * be refused. Gate 4 lets Ankita's through, and gate 6 then stops it: the family
+ * decided on 28 Sep 2026 to keep those shares unvalued.
  */
 export function unpricedStatementShareCandidates(
   unvalued: readonly UnvaluedStatementHolding[] = BOOK_UNVALUED_HOLDINGS,
@@ -236,6 +248,7 @@ export function unpricedStatementShareCandidates(
 ): Position[] {
   if (!VALUE_DEPOSITORY_SHARE_UNITS) return [];
   const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+  const accountById = new Map(accounts.map((a) => [a.accountId, a]));
   const out: Position[] = [];
   for (const u of unvalued) {
     const isin = isinOf(u);
@@ -249,6 +262,8 @@ export function unpricedStatementShareCandidates(
       && (ownerOf.get(p.accountId) ?? null) === owner)) continue;                            // gate 4
     const symbol = symbolByIdentifier(isin, u.securityKey, positions);
     if (!symbol) continue;                                                                   // gate 5
+    const acc = accountById.get(u.accountId);
+    if (acc && keptUnvaluedFor({ provider: acc.provider, accountNo: acc.accountNo, isin })) continue;  // gate 6
     const book = bookRowFor(isin, symbol, positions);
     const securityKey = book?.securityKey ?? u.securityKey;
     out.push({

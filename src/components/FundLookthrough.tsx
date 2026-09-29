@@ -67,7 +67,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
   name: string;
   /**
    * What the family's units are worth, for the derived exposure column — NULL
-   * where a statement records the units and nothing values them (Stage 10cy),
+   * where a statement records the units and nothing values them (Stage 10cz),
    * so the column is absent with that reason rather than ₹0 on every line.
    */
   holdingValue: number | null;

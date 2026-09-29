@@ -398,11 +398,11 @@ export type Position = {
    *     records the units and prints no rate for them, and `witnessAccountId`
    *     is the account whose statement — same depository, same day — prices the
    *     same scheme, which is what proves the units are on the NAV's basis;
-   *   - `no-price` (Stage 10cx): a LISTED SHARE the account's holding statement
+   *   - `no-price` (Stage 10cy): a LISTED SHARE the account's holding statement
    *     records with no usable price — no rate, or only the face value it was
    *     allotted at — valued at the live quote, and only while the feed prices
    *     it (`src/lib/depositoryShares.ts`);
-   *   - `last-movement` (Stage 10cy): the account's holding statement prints a
+   *   - `last-movement` (Stage 10cz): the account's holding statement prints a
    *     rate against the units, and that rate is the price of the holding's
    *     LAST DEPOSITORY MOVEMENT — a receipt or a delivery, on
    *     `lastMovementDate` where the account's transaction statement dates it —
@@ -1137,7 +1137,7 @@ export type RealisedByClass = {
  * `lastMovementRate` / `lastMovementValue` are what a CDSL holding statement
  * prints in its rate and value columns: the price of the holding's LAST
  * DEPOSITORY MOVEMENT and that price times the movement's own quantity (Stage
- * 10cy) — a transaction price, never a valuation of the balance, which is why
+ * 10cz) — a transaction price, never a valuation of the balance, which is why
  * the row is a quantity. `lastMovementDate` / `lastMovementSide` are that
  * movement, read off the same account's transaction statement where its
  * quantity times the rate reproduces the printed value; null where the tape

@@ -76,9 +76,9 @@ const NOW = Date.parse("2026-09-23T06:00:00Z");
 // `PortfolioContext` names each holding once (`labelledPositions`) and each
 // strategy (`labelledAccounts`), runs the quote layer — a no-op with no feed —
 // adds the fund units only the LIVE book values at AMFI's NAV — the depository's
-// own funds on the transaction-only demat (Stage 10ce cash, 10cx the rest) and
+// own funds on the transaction-only demat (Stage 10ce cash, 10cy the rest) and
 // the units a holding statement records and values nowhere (A-17, and the three
-// Motilal demats since Stage 10cy, whose Rate is a last-movement price) — and
+// Motilal demats since Stage 10cz, whose Rate is a last-movement price) — and
 // overlays the published NAV. A listed share a statement records is a row only
 // while a quote feed prices it, and this suite has none. That is what
 // `handleExport` passes, so it is what the workbook is built from here.
@@ -549,7 +549,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
       }
     }
   }
-  // THE SPLIT HALF HAS NO SUBJECT ON THIS BOOK SINCE Stage 10cy — and why is
+  // THE SPLIT HALF HAS NO SUBJECT ON THIS BOOK SINCE Stage 10cz — and why is
   // the finding. Every split this check used to find (DSP Gold at ₹151.10 and
   // ₹141.24, the two Helios demat rows) was a pair of Motilal "marks" that were
   // the prices of each line's LAST DEPOSITORY MOVEMENT, not marks at all; the
@@ -649,7 +649,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   ok("every blank figure names its column and its reason in Notes", silent.length === 0,
      silent.slice(0, 4).join("; ") || `${ROWS.length} rows`);
   // A DEPOSITORY'S OWN UNITS SAY WHAT THEY ARE, by the record they came from
-  // (Stage 10cy): a transaction-only account's closing balance, a holding
+  // (Stage 10cz): a transaction-only account's closing balance, a holding
   // statement's balance beside the price of its LAST MOVEMENT, or one printed
   // with no rate. Every kind says no statement priced them and that AMFI's NAV
   // values them — and ONLY the first may say the account sent no holding

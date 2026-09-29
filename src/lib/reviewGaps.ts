@@ -60,7 +60,7 @@ const flat = (k: string) => k.replace(/-/g, "");
 const prefixRelated = (k: string, keys: readonly string[]) => keys.some((bk) =>
   bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
 // A holding a statement RECORDS counts as well as one the book values: the
-// Motilal demats' lines are quantities with no usable price (Stage 10cy), and a
+// Motilal demats' lines are quantities with no usable price (Stage 10cz), and a
 // review line spelling one of them is still a holding the statements report.
 const RECORDED = BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0 && !u.sameUnitsReportedBy);
 const BOOK_KEYS = [...new Set([
@@ -129,7 +129,7 @@ export function schemeNamesOf(securityKey: string): string[] {
 
 /**
  * Every scheme a statement reports — held OR redeemed, because both are
- * reported, and one a statement records with no usable price too (Stage 10cy).
+ * reported, and one a statement records with no usable price too (Stage 10cz).
  */
 const HELD_SCHEME_KEYS = [...new Set([...BOOK_POSITIONS.map((p) => p.securityKey), ...RECORDED.map((u) => u.securityKey)]
   .flatMap((k) => schemeNamesOf(k))
@@ -181,7 +181,7 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
   // record the units and print no rate, and the live book values them at AMFI's
   // NAV (`unpricedStatementUnits`); Bharat's statement prices the same scheme.
   ["Aditya Birla SL Balanced Advantage Fund(G)", ["INF084M01AB8"]],
-  // Stage 10cx — the other mutual funds on Ajay's transaction-only demat. Each
+  // Stage 10cy — the other mutual funds on Ajay's transaction-only demat. Each
   // is tied by units, never by name. The review's own purchases are depository
   // credits unit for unit: twelve weekly Bandhan purchases (1,27,182.131 on
   // 2 Apr 2026 onward), seven Kotak Multicap purchases, and the 34,045.997
@@ -194,7 +194,7 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
   ["ICICI Prudential Equity Savings Fund - Direct Plan", ["INF109KA11J9"]],
   ["Kotak Large & Midcap Fund - Direct- Growth", ["INF174K01LF9"]],
   ["Kotak Multicap Fund-Direct Plan-Growth", ["INF174KA1HV3"]],
-  // Stage 10cx — lines a statement reports, valued or not. Each review closing
+  // Stage 10cy — lines a statement reports, valued or not. Each review closing
   // on 30 June 2026 is the statement's own balance that day, to the unit:
   // Ajay's transaction-only demat walks to 15,772 IFB shares and 32,000 NLC
   // shares by then, and still holds both at 31 July.

@@ -47,11 +47,11 @@ const isM = (p: (typeof BOOK_POSITIONS)[number]) =>
 // it was meant for simply falls into "not classified" and the section still
 // reads correctly. This is the check that makes the map maintainable.
 {
-  // The book AND the depository's funds the live book values (Stage 10cx): two
+  // The book AND the depository's funds the live book values (Stage 10cy): two
   // schemes are held only on the transaction-only demat, so they are no
   // position of the generated book and their entries match a live row.
   // What the family holds: the book, the live layer's depository rows, and every
-  // line a statement records with no usable price (Stage 10cy) — a map entry
+  // line a statement records with no usable price (Stage 10cz) — a map entry
   // for one of those is not a typo.
   const live = new Set([
     ...[...BOOK_POSITIONS, ...depositoryFundHoldings(), ...unpricedStatementUnits(), ...shareCandidates()]

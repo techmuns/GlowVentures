@@ -344,7 +344,7 @@ export function HoldingsBehind() {
    */
   const depositoryRows = rows.filter((r) => r.depositoryUnits);
   // A FUND is valued at AMFI's published NAV and a listed SHARE at the live
-  // quote (Stage 10cx) — two sources, and each is named for the rows it prices.
+  // quote (Stage 10cy) — two sources, and each is named for the rows it prices.
   const depositoryFunds = depositoryRows.filter((r) => r.navPriced);
   const depositoryShares = depositoryRows.filter((r) => !r.navPriced);
   const depositoryHow = [

@@ -16,6 +16,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { PRECEDENCE, PROVIDERS_WITH_PRECEDENCE } from "./precedence.mjs";
 import { OWNERS } from "../../shared/owners.mjs";
+import { SEPARATE_INVESTMENTS, separateInvestmentFor, separateIncomeFor } from "../../shared/separateInvestments.mjs";
+
+// The family's answers are the pipeline's own input, so they are re-exported
+// where the policy they answer lives.
+export { SEPARATE_INVESTMENTS };
 
 /** Money is compared to the paisa; a smaller gap is float noise, not a break. */
 const MONEY_TOLERANCE = 0.01;
@@ -534,14 +539,17 @@ function authoritativeFor(provider, block, field) {
 /**
  * DUPLICATE POLICY — carry both, count once.
  *
- * PENDING CONFIRMATION FROM 360 ONE. This is reversible policy, not a fact, and
- * it lives here alone so it can be changed in one place.
+ * Reversible policy, not a fact, and it lives here alone so it can be changed
+ * in one place. The two pairs it was written for are separate investments, on
+ * the family's word (`SEPARATE_INVESTMENTS` in shared/separateInvestments.mjs),
+ * so on this corpus it groups nothing. It stays for the next pair a drop
+ * brings, which would be pending the family's answer exactly as these were.
  *
- * The 360 ONE Special Opportunities Fund Series 8 Class A3 appears with
- * byte-identical figures under CRN37702 and CRN60117. Rather than suppress
- * either — which would either lose a real holding or invent one — matching rows
- * are given a shared `dedupeGroup` id and each is told which other owners report
- * it. Consequences, applied consistently everywhere downstream:
+ * Where two accounts' statements carry byte-identical figures, rather than
+ * suppress either — which would either lose a real holding or invent one —
+ * matching rows are given a shared `dedupeGroup` id and each is told which
+ * other owners report it. Consequences, applied consistently everywhere
+ * downstream:
  *
  *   • Each owner's ACCOUNT view shows their statement exactly as printed.
  *   • CONSOLIDATED family totals count each dedupeGroup ONCE.
@@ -549,7 +557,7 @@ function authoritativeFor(provider, block, field) {
  *
  * @param docs mutated in place: matching holdings gain dedupeGroup + alsoReportedUnder.
  */
-function applyDedupePolicy(docs, groups) {
+export function applyDedupePolicy(docs, groups) {
   for (const g of groups) {
     for (const occ of g.occurrences) {
       const doc = docs.find((d) => d.docKey === occ.docKey);
@@ -586,7 +594,17 @@ export function consolidatedValue(docs) {
   return { naive: round2(naive), deduped: round2(deduped), doubleCounted: round2(naive - deduped) };
 }
 
-function duplicateHoldings(docs) {
+/** Why a pair the family has answered for is not a dedupe group — its resolution line in the report. */
+const CONFIRMED_SEPARATE = (d) => `NOT a dedupe group. The family confirmed on ${d.confirmed} that these are `
+  + "separate investments, one per account, so each is counted in full in every figure. The figures coincide "
+  + "because the holders bought the same thing on the same terms (SEPARATE_INVESTMENTS in shared/separateInvestments.mjs).";
+
+/**
+ * @param opts.decisions the family's answers to apply — `SEPARATE_INVESTMENTS`
+ *   unless a caller asks for another set. `npm run replay:dedupe` passes `[]`
+ *   to reproduce what the archive carried before an answer, which is its gate.
+ */
+export function duplicateHoldings(docs, { decisions = SEPARATE_INVESTMENTS } = {}) {
   const byFigures = new Map();
   for (const doc of docs) {
     if (doc.status === "failed") continue;
@@ -605,6 +623,7 @@ function duplicateHoldings(docs) {
 
   const out = [];
   const quantityOnly = [];
+  const confirmedSeparate = [];
   for (const [, entries] of byFigures) {
     if (entries.length < 2) continue;
     const owners = new Set(entries.map((e) => e.doc.ownerId ?? e.doc.owner ?? "(unknown)"));
@@ -675,6 +694,31 @@ function duplicateHoldings(docs) {
       continue;
     }
 
+    /**
+     * THE FAMILY HAS ALREADY ANSWERED FOR THESE ACCOUNTS. Detected exactly as
+     * before — the coincidence is a fact about the statements, and the report
+     * still names it — but filed as separate investments and never grouped, so
+     * no row is tagged and every figure counts both.
+     */
+    const decided = separateInvestmentFor(first.securityKey, entries.map((e) => ({ provider: e.doc.provider, accountNo: e.doc.accountNo })), decisions);
+    if (decided) {
+      confirmedSeparate.push({
+        security: first.security,
+        securityKey: first.securityKey,
+        quantity: first.quantity,
+        totalCost: first.totalCost,
+        marketValue: first.marketValue,
+        owners: [...owners],
+        confirmed: decided.confirmed,
+        occurrences: entries.map((e) => ({
+          docKey: e.doc.docKey, owner: e.doc.owner, ownerId: e.doc.ownerId,
+          accountNo: e.doc.accountNo, asOf: e.doc.asOf, reportType: e.doc.reportType,
+        })),
+        resolution: CONFIRMED_SEPARATE(decided),
+      });
+      continue;
+    }
+
     out.push({
       dedupeGroup: `dg-${first.securityKey}-${entries.length}`,
       security: first.security,
@@ -693,7 +737,9 @@ function duplicateHoldings(docs) {
   }
   out.sort((a, b) => (b.doubleCountRisk ?? 0) - (a.doubleCountRisk ?? 0));
   quantityOnly.sort((a, b) => String(a.security).localeCompare(String(b.security)));
-  return { groups: out, quantityOnly };
+  confirmedSeparate.sort((a, b) => String(a.security).localeCompare(String(b.security))
+    || String(a.occurrences[0]?.asOf ?? "").localeCompare(String(b.occurrences[0]?.asOf ?? "")));
+  return { groups: out, quantityOnly, confirmedSeparate };
 }
 
 // ── d) + e) Coverage and unresolved ──────────────────────────────────────────
@@ -714,7 +760,11 @@ function duplicateHoldings(docs) {
  * about the family's affairs, and the same "carry both, count once" policy this
  * file already applies to holdings is the one a future consumer must follow.
  */
-function duplicateAifEarnings(docs) {
+/**
+ * @param opts.decisions the family's answers, as for `duplicateHoldings` — the
+ *   income side of a pair they named is two incomes, not one reported twice.
+ */
+export function duplicateAifEarnings(docs, { decisions = SEPARATE_INVESTMENTS } = {}) {
   const byFigures = new Map();
   for (const doc of docs) {
     if (doc.status === "failed" || !doc.aifEarnings) continue;
@@ -729,6 +779,9 @@ function duplicateAifEarnings(docs) {
     // Two reports of one folio are check (b); this is about DIFFERENT folios.
     if (new Set(entries.map((d) => d.accountNo)).size < 2) continue;
     const first = entries[0].aifEarnings;
+    // The family's answer covers the income side too: two separate holdings earn
+    // two incomes, so a pair it names is counted in full, not once.
+    const decided = separateIncomeFor(entries.map((d) => ({ provider: d.provider, accountNo: d.accountNo })), decisions);
     out.push({
       units: first.units, unitClass: first.class,
       totalIncome: first.totalIncome, netIncome: first.netIncome, tds: first.tds,
@@ -736,8 +789,11 @@ function duplicateAifEarnings(docs) {
       occurrences: entries.map((d) => ({
         docKey: d.docKey, owner: d.owner, accountNo: d.accountNo, asOf: d.asOf, reportType: d.reportType,
       })),
-      doubleCountRisk: isNum(first.totalIncome) ? round2(first.totalIncome) : null,
-      resolution: "NOT netted — both are reported. Any consumer of `aifEarnings` must count this group once.",
+      confirmedSeparate: decided ? decided.confirmed : null,
+      doubleCountRisk: decided ? null : isNum(first.totalIncome) ? round2(first.totalIncome) : null,
+      resolution: decided
+        ? `Two incomes, one per folio: the family confirmed on ${decided.confirmed} that the holdings behind them are separate investments. Any consumer of \`aifEarnings\` counts both.`
+        : "NOT netted — both are reported. Any consumer of `aifEarnings` must count this group once.",
     });
   }
   return out.sort((a, b) => (b.doubleCountRisk ?? 0) - (a.doubleCountRisk ?? 0));
@@ -942,7 +998,7 @@ export function reconcile(docs, opts = {}) {
   const rowSums = docs.flatMap((d) => rowSumChecks(d, docs));
   const derived = docs.flatMap((d) => derivedVsPrinted(d, docs));
   const deltas = crossReportDeltas(docs);
-  const { groups: duplicates, quantityOnly: quantityOnlyMatches } = duplicateHoldings(docs);
+  const { groups: duplicates, quantityOnly: quantityOnlyMatches, confirmedSeparate } = duplicateHoldings(docs);
   const duplicateEarnings = duplicateAifEarnings(docs);
   // Tag the matching rows before any consolidated figure is computed.
   applyDedupePolicy(docs, duplicates);
@@ -973,6 +1029,7 @@ export function reconcile(docs, opts = {}) {
       crossReportDeltas: deltas.length,
       suspectedDuplicates: duplicates.length,
       quantityOnlyMatches: quantityOnlyMatches.length,
+      confirmedSeparateByFamily: confirmedSeparate.length,
       suspectedDuplicateEarnings: duplicateEarnings.length,
       securitiesWithoutSymbol: unres.securitiesWithoutSymbol.length,
       ownerNamesUnmatched: unres.ownerNamesUnmatched.length,
@@ -986,6 +1043,7 @@ export function reconcile(docs, opts = {}) {
     crossReportDeltas: deltas,
     duplicateHoldings: duplicates,
     quantityOnlyMatches,
+    confirmedSeparate,
     duplicateAifEarnings: duplicateEarnings,
     unresolved: unres,
     stitches,
@@ -1029,6 +1087,7 @@ export function renderMarkdown(r) {
   L.push(`| **Derived vs printed deltas** | **${r.summary.derivedVsPrintedDeltas}** |`);
   L.push(`| **Cross-report deltas** | **${r.summary.crossReportDeltas}** |`);
   L.push(`| **Suspected duplicate holdings** | **${r.summary.suspectedDuplicates}** |`);
+  L.push(`| Matching holdings confirmed separate by the family | ${r.summary.confirmedSeparateByFamily ?? 0} |`);
   L.push(`| Securities with no NSE symbol | ${r.summary.securitiesWithoutSymbol} |`);
   L.push(`| Owner names unmatched | ${r.summary.ownerNamesUnmatched} |`);
   L.push(`| Split numbers stitched | ${r.summary.stitchesApplied} |`);
@@ -1179,8 +1238,9 @@ export function renderMarkdown(r) {
   L.push("**Policy — carry both, count once.** Neither row is suppressed: each owner's account view");
   L.push("shows their statement exactly as printed, matching rows share a `dedupeGroup`, and");
   L.push("consolidated family totals count each group ONCE. `alsoReportedUnder` names the other");
-  L.push("owners so the UI can flag it. This is reversible policy, not a fact, and is **pending");
-  L.push("confirmation from the provider** — it lives in one function in `reconcile.mjs`.");
+  L.push("owners so the UI can flag it. This is reversible policy, not a fact, and is **pending the");
+  L.push("family's answer** for each group below — it lives in one function in `reconcile.mjs`, and");
+  L.push("the family's answers are `SEPARATE_INVESTMENTS` in `shared/separateInvestments.mjs`.");
   L.push("");
   if (!r.duplicateHoldings.length) {
     L.push("_None detected._");
@@ -1202,6 +1262,30 @@ export function renderMarkdown(r) {
       L.push("");
     }
   }
+
+  L.push("### Confirmed separate by the family — counted in full");
+  L.push("");
+  L.push("The figures coincide and the family has said these are separate investments, one per");
+  L.push("account. Detected here because the coincidence is a fact about the statements; never grouped,");
+  L.push("so every figure counts each account's holding.");
+  L.push("");
+  if (!(r.confirmedSeparate ?? []).length) {
+    L.push("_None._");
+  } else {
+    for (const d of r.confirmedSeparate) {
+      L.push(`**${esc(d.security)} · ${fmt(d.quantity)} units · ${d.occurrences.length} accounts · confirmed ${esc(d.confirmed)}**`);
+      L.push("");
+      L.push(esc(d.resolution));
+      L.push("");
+      L.push("| Owner | Account | As of | Report | Document |");
+      L.push("| --- | --- | --- | --- | --- |");
+      for (const o of d.occurrences) {
+        L.push(`| ${esc(o.owner)} | ${esc(o.accountNo)} | ${esc(o.asOf)} | ${esc(o.reportType)} | \`${esc(o.docKey)}\` |`);
+      }
+      L.push("");
+    }
+  }
+  L.push("");
 
   L.push("### Matched on QUANTITY ALONE — reported, and NOT deduped");
   L.push("");
@@ -1242,7 +1326,9 @@ export function renderMarkdown(r) {
     for (const d of r.duplicateAifEarnings) {
       L.push(`**Class ${esc(d.unitClass)} · ${fmt(d.units)} units · income ${fmt(d.totalIncome)} · net ${fmt(d.netIncome)}**`);
       L.push("");
-      L.push(`Nothing aggregates \`aifEarnings\` today, so no figure on screen is affected. ${fmt(d.doubleCountRisk)} is what a naive sum across these folios would invent.`);
+      L.push(d.confirmedSeparate
+        ? esc(d.resolution)
+        : `Nothing aggregates \`aifEarnings\` today, so no figure on screen is affected. ${fmt(d.doubleCountRisk)} is what a naive sum across these folios would invent.`);
       L.push("");
       L.push("| Owner | Folio | As of | Report | Document |");
       L.push("| --- | --- | --- | --- | --- |");

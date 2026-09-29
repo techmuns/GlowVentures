@@ -1,4 +1,4 @@
-// A mutual-fund folio's own purchase rows (Stage 10cx), and their four checks.
+// A mutual-fund folio's own purchase rows (Stage 10cy), and their four checks.
 // Run: node scripts/ingest/__tests__/mfPurchase.test.mjs
 //
 // Written against statements in Helios's (CAMS) and Motilal Oswal Active
@@ -48,7 +48,7 @@ for (const [name, text, gross, net, stamp, units, sec] of [
   const f = flows[0] ?? {};
   ok(`${name}: on 2026-08-06, gross ${gross} and net ${net}`, f.date === "2026-08-06" && f.amount === gross && f.netAmount === net,
     `${f.date} ${f.amount} ${f.netAmount}`);
-  // THE CHARGE IS CARRIED AS PRINTED (Stage 10cy): the Stamp Duty line is VD-24's
+  // THE CHARGE IS CARRIED AS PRINTED (Stage 10cz): the Stamp Duty line is VD-24's
   // `expenses`, so a cost struck on every rupee paid — and the lot engine, which
   // counts a row's net plus the charges it prints — reads the statement's own
   // figure. Left null, the engine would cost these units at the net while the

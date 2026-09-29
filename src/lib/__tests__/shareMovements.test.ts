@@ -89,7 +89,7 @@ ok("...and these run the Indian financial year, not the calendar year",
   fyStart.length === all.length, `all start ${all[0]?.periodFrom}`);
 
 // ── 8. THE JOIN REACHES REAL HOLDINGS, and the rest are named ────────────────
-// A window is about UNITS, and since Stage 10cy the units on the three Motilal
+// A window is about UNITS, and since Stage 10cz the units on the three Motilal
 // demats are QUANTITIES in the book (`BOOK_UNVALUED_HOLDINGS`): those statements'
 // `Value` column is the price of each holding's last depository movement, never
 // a valuation, so no position carries them. Joined on positions alone, every
@@ -101,13 +101,13 @@ const held = new Set(carriedRows.map((p) => `${p.accountId}|${p.securityKey}`));
 const qtyOnly = new Set(BOOK_UNVALUED_HOLDINGS.map((u) => `${u.accountId}|${u.securityKey}`));
 const joined = all.filter((m) => held.has(`${m.accountId}|${m.securityKey}`));
 ok("the movements join holdings this book carries, valued or not", joined.length > 0, `${joined.length} of ${all.length}`);
-ok("...and some join a holding the book carries only as a quantity — the last-movement rows of Stage 10cy",
+ok("...and some join a holding the book carries only as a quantity — the last-movement rows of Stage 10cz",
   joined.some((m) => qtyOnly.has(`${m.accountId}|${m.securityKey}`)),
   `${joined.filter((m) => qtyOnly.has(`${m.accountId}|${m.securityKey}`)).length} of ${joined.length}`);
 // THE REST, EACH NAMED FOR WHAT IT IS. "The account no longer holds it" is true
 // of a nil close and false of the other two: a balance on an account that sent
 // only a transaction statement (the tape's closing balance is the only record of
-// it, valued live — Stage 10ce, 10cx), and a depository's copy of AIF units,
+// it, valued live — Stage 10ce, 10cy), and a depository's copy of AIF units,
 // which stays off the fund's page by design. A window in none of the three is a
 // holding the join missed.
 const txnOnly = new Set(BOOK_ACCOUNTS.filter((a) => a.transactionsOnly).map((a) => a.accountId));
@@ -146,7 +146,7 @@ ok("the movement columns' own net equals the two balances' difference", netOff.l
 // the window's ISIN is carried by exactly one company this book holds.
 //
 // Re-derived here from the book's own rows — every position and every quantity
-// line, which is what the builder's join reads since Stage 10cy — never read
+// line, which is what the builder's join reads since Stage 10cz — never read
 // from the builder's notes: a check that reads the builder's own count agrees
 // with it by construction.
 const keysByIsin = new Map<string, Set<string>>();
@@ -179,7 +179,7 @@ ok("...and some of them reach the company only because of the ISIN", respelled.l
 // window" — without it they have nothing to draw and Ajay's Kaynes vanishes.
 //
 // "STILL HOLDS" INCLUDES A QUANTITY LINE. Ankita's 4,875 Kaynes shares are a
-// recorded line since Stage 10cy, not a position — so struck on positions alone
+// recorded line since Stage 10cz, not a position — so struck on positions alone
 // this check stopped seeing the very case it was written for, and went on
 // passing on ICICI Bank and SBI, whose own accounts still record them as lines:
 // the right number for the wrong reason.

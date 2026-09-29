@@ -35,7 +35,7 @@ const ok = (name: string, pass: boolean, detail = "") => {
 type Entry = { name: string; plan: string | null; option: string | null; isin: string; amfiName: string; printed: string | null };
 const MAP = schemeNames as Record<string, Entry>;
 /**
- * WHAT THE PAGES CAN NAME, WHICH SINCE Stage 10cy IS WIDER THAN `BOOK_POSITIONS`.
+ * WHAT THE PAGES CAN NAME, WHICH SINCE Stage 10cz IS WIDER THAN `BOOK_POSITIONS`.
  * The Motilal holding statements' funds are quantity lines on the statement
  * basis (their `Value` column is a last-movement price, never a valuation), and
  * the LIVE basis values them at AMFI's NAV — so a scheme the family holds only

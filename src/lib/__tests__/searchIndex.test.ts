@@ -61,8 +61,8 @@ const index = buildSearchIndex({
  * AND THE INDEX THE TOP BAR ACTUALLY BUILDS ON THE LIVE BOOK — assembled as
  * `PortfolioContext` assembles it: the labelled rows through the
  * corporate-action layer; the funds a depository reports on a transaction-only
- * demat (Stage 10ce cash, 10cx the rest) and the fund units a holding statement
- * records and values nowhere (A-17, Stage 10cy) through the quote overlay; the
+ * demat (Stage 10ce cash, 10cy the rest) and the fund units a holding statement
+ * records and values nowhere (A-17, Stage 10cz) through the quote overlay; the
  * listed shares a statement records, which are rows only while a feed prices
  * them (none here, with no feed); AMFI's published NAVs over all of them; and
  * the registry with its partial-valuation notes. What a row says about its
@@ -95,7 +95,7 @@ console.log("── every holding is findable, once ──");
   const keys = new Set(consolidated.filter((p) => !small.has(p.securityKey)).map((p) => p.securityKey));
   const offered = [...keys].filter((k) => !balanceLine(k));
   // …and every key a statement records at a quantity with no valued row
-  // standing for it (Stage 10cy) — one entry each, never a second one for a
+  // standing for it (Stage 10cz) — one entry each, never a second one for a
   // key a valued row already carries.
   const recordedKeys = new Set(recordedLines(BOOK_UNVALUED_HOLDINGS)
     .filter((l) => !keys.has(l.homeKey) && !small.has(l.homeKey))
@@ -132,7 +132,7 @@ console.log("── every holding is findable, once ──");
     closedKeys.some(onRecord) && closedKeys.some((k) => !onRecord(k)), closedKeys.join(", "));
 }
 
-console.log("── a holding a statement records, and nothing values, is still findable (Stage 10cy) ──");
+console.log("── a holding a statement records, and nothing values, is still findable (Stage 10cz) ──");
 {
   /**
    * The Motilal CDSL demat's rate and value belong to each holding's LAST
@@ -376,24 +376,23 @@ console.log("── what a row says about its figure is true of the figure (SC-C
   }).filter((r) => r.rows.length > 0 && r.e);
   const allNav = accountRows.filter((r) => r.rows.every((p) => p.navPriced && !p.live));
   const allStmt = accountRows.filter((r) => r.rows.every((p) => !p.navPriced && !p.live));
-  // THE DATE IS EVERY DATE THE ROWS' NAVs CARRY. A liquid fund publishes a NAV
-  // on every calendar day and an equity scheme on business days only, so one
-  // demat's funds can be priced at a Sunday's NAV and a Friday's — and naming
-  // only the newest would date a Friday figure to Sunday. One date prints once;
-  // several print as their range, oldest first.
+  // A scheme publishes on its own days, so an account holding several can carry
+  // NAVs of different dates: the row then names the span, first to last, and
+  // never one date as if it priced every scheme in it.
   const navWrong = allNav.filter((r) => {
-    const ds = [...new Set(r.rows.map((p) => p.navDate).filter((d): d is string => !!d))].sort();
-    const words = ds.length === 1 ? `AMFI's NAV of ${ds[0]}` : `AMFI's NAV of ${ds[0]} to ${ds[ds.length - 1]}`;
-    return !ds.length || !r.e!.detail.includes(words) || !r.e!.detail.includes(`statement of ${r.a.asOf}`);
+    const ds = [...new Set(r.rows.map((p) => p.navDate).filter((x): x is string => !!x))].sort();
+    const when = ds.length === 1 ? ds[0] : `${ds[0]} to ${ds[ds.length - 1]}`;
+    return !ds.length || !r.e!.detail.includes(`AMFI's NAV of ${when}`) || !r.e!.detail.includes(`statement of ${r.a.asOf}`);
   });
+  const navSpans = allNav.filter((r) => new Set(r.rows.map((p) => p.navDate)).size > 1).length;
   const stmtWrong = allStmt.filter((r) => !r.e!.detail.includes(`statement's marks of ${r.a.asOf}`) || /AMFI/.test(r.e!.detail));
   ok("an account valued at AMFI's NAV names the NAV's date beside its statement's", allNav.length > 0 && navWrong.length === 0,
-    `${allNav.length}: ${navWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
+    `${allNav.length} (${navSpans} across several NAV dates): ${navWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
   ok("…and one on its statement's marks says so, with that date", allStmt.length > 0 && stmtWrong.length === 0,
     `${allStmt.length}: ${stmtWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
 
   // SC-D2 — an account's count is what the dashboard lists. Struck on the
-  // SCREEN book, because since Stage 10cy every holding under the family's
+  // SCREEN book, because since Stage 10cz every holding under the family's
   // ₹1,000 floor is a fund unit a statement records and only AMFI's NAV values
   // (the Motilal demats' Invesco Contra and ICICI index-fund residues): the
   // statement book carries no speck at all, and a count struck there would pass
@@ -423,7 +422,7 @@ console.log("── what a row says about its figure is true of the figure (SC-C
 
   // SC-D3 — one ISIN under two keys: each row says it is one of two. Struck on
   // the SCREEN book: the depository's `HELIOS FCF D-GROW` is a Motilal line the
-  // statement book records at a quantity only (Stage 10cy), so the AMC folio's
+  // statement book records at a quantity only (Stage 10cz), so the AMC folio's
   // Helios stands alone there, and the pair meets only where AMFI's NAV values
   // the depository's units beside it.
   const twinRows = screenIndex.filter((e) => e.kind === "holding" && /rows for ISIN/.test(e.detail));
@@ -539,8 +538,8 @@ console.log("── on the LIVE book: a cash equivalent is named Cash, and a par
   /**
    * The top bar searches what the PAGE is handed — the live portfolio, which
    * carries the funds a depository reports on an account that sent no holding
-   * statement (Stage 10ce's cash equivalents, Stage 10cx's other funds) and the
-   * fund units a holding statement records and values nowhere (Stage 10cy).
+   * statement (Stage 10ce's cash equivalents, Stage 10cy's other funds) and the
+   * fund units a holding statement records and values nowhere (Stage 10cz).
    * `index` builds from `BOOK_POSITIONS`, which never holds those rows, so it
    * cannot see either rule below: this is `screenIndex`, the one the top bar
    * builds, through the same helpers `PortfolioContext` calls.

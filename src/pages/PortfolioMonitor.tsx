@@ -649,7 +649,7 @@ const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from
  * calls each. What they do not print is WHICH UNITS each call bought.
  */
 // Keyed on the ACCOUNT, for the reason an undated cell gives. `CALL_DATES`
-// above is keyed on the HOLDING and dates one — Stage 10cx's third tier, which
+// above is keyed on the HOLDING and dates one — Stage 10cy's third tier, which
 // fires only where the account's one line with money in it is that fund.
 const ACCOUNT_CALL_DATES = new Map<string, string[]>(BOOK_COMMITMENTS
   .filter((c) => !!c.accountId && (c.calls ?? []).length > 0)
@@ -1106,7 +1106,7 @@ export function PortfolioMonitor() {
   const labelByKey = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of positions) if (!m.has(p.securityKey)) m.set(p.securityKey, p.security);
-    // …AND A COMPANY THE FAMILY HOLDS ONLY AS A RECORDED LINE (Stage 10cy) — a
+    // …AND A COMPANY THE FAMILY HOLDS ONLY AS A RECORDED LINE (Stage 10cz) — a
     // demat's last-movement row the quote feed has not priced yet is no
     // position, so its derived row would otherwise wear a fund's filing name.
     for (const l of allRecordedLines()) {

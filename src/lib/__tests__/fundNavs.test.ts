@@ -153,7 +153,7 @@ ok("a holding with no units is never repriced",
   after.every((p, i) => (before[i].quantity > 0) || p.marketValue === before[i].marketValue));
 
 /**
- * ── A LAST DEPOSITORY MOVEMENT'S PRICE IS NEVER A MARK IN THE BOOK (Stage 10cy)
+ * ── A LAST DEPOSITORY MOVEMENT'S PRICE IS NEVER A MARK IN THE BOOK (Stage 10cz)
  *
  * This block used to assert that one holding's printed rate was NOT its value
  * over quantity — ICICI NFT NT 50 DP G, 60.4 against an implied 60.4167 — as
@@ -274,7 +274,7 @@ ok("...and the CASH rows value none of them — the cash gate still refuses what
   nonCash.every((w) => !DEP.some((p) => p.isin === w.isin)));
 
 /**
- * ── …AND THE OTHER FUNDS ON THAT STATEMENT ARE VALUED TOO (Stage 10cx) ─────
+ * ── …AND THE OTHER FUNDS ON THAT STATEMENT ARE VALUED TOO (Stage 10cy) ─────
  *
  * *"We need to make sure that we are not missing out on any data that the
  * statement has already given us."* The same demat's closing balances carry
@@ -285,7 +285,7 @@ ok("...and the CASH rows value none of them — the cash gate still refuses what
  * valued: its units and its NAV can be on different bases (DSP Gold's ten-fold
  * break), and a depository balance carries no mark to test the basis against.
  */
-console.log("── the depository's other funds, valued at the published NAV (Stage 10cx) ──");
+console.log("── the depository's other funds, valued at the published NAV (Stage 10cy) ──");
 const FUNDS = depositoryFundHoldings();
 const isEtfIsin = (isin: string | null | undefined) => /\bETFs?\b/i.test(navByIsin.get(isin ?? "")?.category ?? "");
 ok("the fund switch is on, so the non-cash rows below are what the live book adds",
@@ -384,7 +384,7 @@ ok("...and names how many of its funds are the family's cash",
  * the LIVE QUOTE, and where the feed did not price it, it is NOT a row. These
  * are struck on constructed feeds, because the live feed is not in this suite.
  */
-console.log("── a depository's listed shares: the live quote, or no row (Stage 10cx) ──");
+console.log("── a depository's listed shares: the live quote, or no row (Stage 10cy) ──");
 const CAND = depositoryShareCandidates();
 ok("the share switch is on", VALUE_DEPOSITORY_SHARE_UNITS === true);
 ok("the same statement carries listed shares a quote could price, so the claims below have a subject",
@@ -488,24 +488,28 @@ ok("...and counts one fewer holding as not valued",
  * price it. The review is the witness that Clean Max is two holdings and not one
  * counted twice: it carries 1,89,934 across ICICI Bank and MOPWM, which is the
  * 94,967 on Ajay's ICICI row plus the 94,967 on Ankita's Motilal one.
+ *
+ * AND THE FAMILY HAVE DECIDED ANKITA'S STAYS UNVALUED (28 Sep 2026, Stage 10cx's
+ * FQ-3, `shared/keptUnvalued.mjs`): her statement holds every one of those shares
+ * in its lock-in + freeze balance and prints no rate, and *"keep them unvalued for
+ * now"* is their answer. So it passes the first five gates and gate 6 stops it —
+ * and that is asserted on the row moved to an account the decision does not name,
+ * which the first five gates let through, so the sixth is what refuses the real one.
  */
-console.log("── a holding statement's listed shares with no usable price (Stage 10cx) ──");
+console.log("── a holding statement's listed shares with no usable price (Stage 10cy) ──");
 const NP = unpricedStatementShareCandidates();
 const npOf = (isin: string) => NP.find((p) => p.isin?.toUpperCase() === isin);
 const cleanMax = npOf("INE647U01026");
 const esds = npOf("INE0DRI01029");
-ok("Clean Max on Ankita's Motilal demat is a candidate at the 94,967 shares its statement prints, under the book's own key",
-  !!cleanMax && cleanMax.accountId === "motilal-oswal-financial-services-demat-1201090012838316"
-    && cleanMax.quantity === 94967 && cleanMax.symbol === "CLEANMAX"
-    && cleanMax.securityKey === "clean-max-enviro-energy-solutions",
-  cleanMax ? `${cleanMax.accountId} ${cleanMax.quantity} ${cleanMax.symbol} ${cleanMax.securityKey}` : "missing");
+ok("Clean Max on Ankita's Motilal demat is NOT a candidate — the family decided on 28 Sep 2026 to keep it unvalued",
+  !cleanMax, cleanMax ? `${cleanMax.accountId} ${cleanMax.quantity} ${cleanMax.symbol}` : "");
 ok("ESDS on Ajay's ICICI NSDL account is a candidate at its 330,898 shares, named without the depository's furniture",
   !!esds && esds.accountId === "icici-bank-nsdl-demat-49794950" && esds.quantity === 330898 && esds.symbol === "ESDS"
     && esds.security === "ESDS Software Solution Limited",
   esds ? `${esds.accountId} ${esds.quantity} ${esds.symbol} "${esds.security}"` : "missing");
 // WHAT THE STATEMENT PRINTED BESIDE IT decides the kind: no rate (or face
 // value) is `no-price`, and the price of the holding's last depository movement
-// (the Motilal statements, Stage 10cy) is `last-movement` — a price the
+// (the Motilal statements, Stage 10cz) is `last-movement` — a price the
 // statement DID print, of a movement rather than of the balance.
 const unvaluedLineOf = (p: Position) => BOOK_UNVALUED_HOLDINGS.find((u) => u.accountId === p.accountId
   && u.isin?.toUpperCase() === p.isin?.toUpperCase() && u.quantity === p.quantity && u.assetClass === "Equity");
@@ -535,8 +539,19 @@ const cmRow = BOOK_UNVALUED_HOLDINGS.find((u) => u.isin?.toUpperCase() === "INE6
 const movedSameOwner = cmRow ? unpricedStatementShareCandidates([{ ...cmRow, accountId: ajayMain, ownerId: "ajay-jaisinghani" }]) : [];
 ok("the same units under the SAME owner in another account are refused — one holding, not two",
   !!cmRow && movedSameOwner.length === 0, movedSameOwner.map((p) => p.accountId).join("; "));
-const kept = cmRow ? unpricedStatementShareCandidates([cmRow]) : [];
-ok("...while the real row, under a different owner, is kept", kept.length === 1);
+// Gate 6 is what refuses the real row: the same row on an account of a
+// DIFFERENT owner that no decision names passes every other gate, at 94,967
+// shares, under the book's own key and the listing's symbol.
+const aartiDemat = "motilal-oswal-financial-services-demat-1201090012838335";
+const cmElsewhere = cmRow ? unpricedStatementShareCandidates([{ ...cmRow, accountId: aartiDemat, ownerId: "aarti-jaisinghani" }]) : [];
+ok("the same row on another owner's account, which no decision names, IS a candidate — so gates 1–5 let it through",
+  cmElsewhere.length === 1 && cmElsewhere[0].quantity === 94967 && cmElsewhere[0].symbol === "CLEANMAX"
+    && cmElsewhere[0].securityKey === "clean-max-enviro-energy-solutions",
+  cmElsewhere.map((p) => `${p.accountId} ${p.quantity} ${p.symbol} ${p.securityKey}`).join("; ") || "none");
+const realRow = cmRow ? unpricedStatementShareCandidates([cmRow]) : [];
+ok("...and the real row, on Ankita's account, is refused by the family's decision (gate 6)",
+  !!cmRow && cmRow.accountId === "motilal-oswal-financial-services-demat-1201090012838316" && realRow.length === 0,
+  realRow.map((p) => p.accountId).join("; "));
 const npFeed = (sym: string, price: number): QuoteFeed => ({
   quotes: { [sym]: { price, prevClose: price / 1.01, open: null, dayLow: null, dayHigh: null, low52: null, high52: null,
     marketCap: null, volume: null, yearChangePct: null, ageS: 0, source: "upstox" } },

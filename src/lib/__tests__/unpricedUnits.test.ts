@@ -42,7 +42,7 @@ for (const e of BOOK_FUND_NAVS) {
 
 // ── the seven gates, written a second time ───────────────────────────────────
 //
-// Stage 10cy: the Motilal statements' printed rate is the price of each
+// Stage 10cz: the Motilal statements' printed rate is the price of each
 // holding's LAST DEPOSITORY MOVEMENT. For a fund that is a NAV of the scheme on
 // the movement's day, struck on the units the statement counts — so a row's OWN
 // rate is its strongest witness, and another row's is used only where it prints
@@ -106,7 +106,7 @@ const absl = got.filter((p) => I(p) === "INF084M01AB8" && p.depositoryUnits?.kin
 ok("...and on this book that includes the ABSL Balanced Advantage units the audit found with no rate — 3,93,095.951 + 2,42,412.122 units",
   absl.length === 2 && Math.abs(absl.reduce((s, p) => s + p.quantity, 0) - 635508.073) < 0.0005,
   `${absl.reduce((s, p) => s + p.quantity, 0).toFixed(3)} units over ${absl.length} account(s)`);
-// Stage 10cy: EVERY fund the three Motilal holding statements carry is now a
+// Stage 10cz: EVERY fund the three Motilal holding statements carry is now a
 // quantity in the book, so the live book values far more than the audit's two.
 const motilalHolding = new Set(BOOK_ACCOUNTS.filter((a) => /motilal oswal/i.test(a.provider) && /demat/i.test(a.provider)
   && !a.transactionsOnly).map((a) => a.accountId));
@@ -198,7 +198,7 @@ if (!base || !base.usableForValue) {
   ok("the ABSL NAV is in the store and usable — the constructed cases need a real one", false);
 } else {
   const isin = "INF084M01AB8";
-  // A witness BUILT here rather than found in the book: since Stage 10cy no
+  // A witness BUILT here rather than found in the book: since Stage 10cz no
   // statement values this scheme at all, so the book has no position to borrow.
   const wit = {
     ...BOOK_POSITIONS[0], securityKey: "t-scheme", security: "T SCHEME", isin, accountId: "t-w",

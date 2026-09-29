@@ -118,7 +118,7 @@ const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i <
 const ENTITY_PARAM = "entity";
 const ALL_ENTITIES = "All";
 /**
- * THE LISTED SHARES A TRANSACTION-ONLY DEMAT REPORTS (Stage 10cx), by account
+ * THE LISTED SHARES A TRANSACTION-ONLY DEMAT REPORTS (Stage 10cy), by account
  * and ISIN — the rows the live quote values while the feed prices them. Built
  * once at module scope, because it reads only the generated book, and so no
  * hook sits after this page's early return.
@@ -603,7 +603,7 @@ export function FamilyEntities() {
       ? `${nU === 1 ? "One account" : `${nU} accounts`} of ${scope}'s ${nU === 1 ? "carries" : "carry"} no valued position in this book, each for the reason its line's hover gives${unvaluedKind ? ` — ${unvaluedKind}` : ""} — so ${nU === 1 ? "it stands" : "they stand"} in no table above.`
       : null,
     nP > 0
-      // Stage 10cx widened what a partly valued account values past its cash
+      // Stage 10cy widened what a partly valued account values past its cash
       // funds — its other mutual funds at AMFI's NAV and its listed shares at
       // the live quote — so the clause names both prices.
       ? `${nU > 0 ? (nP === 1 ? "One more account" : `${nP} more accounts`) : (nP === 1 ? "One account" : `${nP} accounts`)} of ${scope}'s ${nP === 1 ? "is" : "are"} valued only in part: the funds and listed shares ${nP === 1 ? "its" : "their"} own note names are in the ${money(selMV)} — each fund at AMFI's NAV, each listed share at the live quote — and the rest of what ${nP === 1 ? "it holds" : "they hold"} stands in no table above and opens under ${nP === 1 ? "its" : "each one's"} line. ${nP === 1 ? "Its own note, the hover on its line," : "Each one's own note, the hover on its line,"} says which is which.`
@@ -611,7 +611,7 @@ export function FamilyEntities() {
     "A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.",
   ].filter(Boolean).join(" ");
   /**
-   * …AND WHAT IN IT IS NOT VALUED, BALANCE BY BALANCE (Stage 10cx). The note
+   * …AND WHAT IN IT IS NOT VALUED, BALANCE BY BALANCE (Stage 10cy). The note
    * counted them; the family asked to SEE them. `depositoryBalancesOf` is the
    * one classifier the note itself reads, so a balance cannot be counted there
    * and listed differently here. The depository's copy of units a fund's own
@@ -666,7 +666,7 @@ export function FamilyEntities() {
       ...g,
       live: g.lines.filter((l) => l.valuedLive).length,
       // Two prices, two sentences: a fund at AMFI's NAV, a listed share at the
-      // live quote (Stage 10cx, `no-price`).
+      // live quote (Stage 10cy, `no-price`).
       liveQuote: g.lines.filter((l) => l.valuedLive?.depositoryUnits?.kind === "no-price").length,
       lines: g.lines.filter((l) => !l.valuedLive).map((l) => ({
         ...l,

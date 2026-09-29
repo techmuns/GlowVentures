@@ -149,11 +149,11 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
   //
   //   • cash: the arbitrage and liquid funds a depository reports on an account
   //     that sent a transaction statement and no holding statement (Stage 10ce);
-  //   • the same account's other funds, which are not cash (Stage 10cx);
+  //   • the same account's other funds, which are not cash (Stage 10cy);
   //   • fund units a HOLDING statement records and values nowhere — printed
   //     with no rate (A-17), or with the rate of the holding's last depository
   //     movement, which is a transaction price and never a valuation (Stage
-  //     10cy) — at AMFI's NAV; a liquid or arbitrage fund among them is cash,
+  //     10cz) — at AMFI's NAV; a liquid or arbitrage fund among them is cash,
   //     and each row says so;
   //   • listed shares any of those statements records, at the live quote, and
   //     only while the feed prices them.
@@ -432,7 +432,7 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
       })),
     },
     /**
-     * THE OTHER FUNDS ON THE SAME DEPOSITORY STATEMENT (Stage 10cx).
+     * THE OTHER FUNDS ON THE SAME DEPOSITORY STATEMENT (Stage 10cy).
      *
      * NOT CASH — the equity and hybrid schemes on the demat that sent a
      * transaction statement and no holding statement, valued the same way as
@@ -455,7 +455,7 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
       })),
     },
     /**
-     * FUND UNITS A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (A-17, Stage 10cy).
+     * FUND UNITS A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (A-17, Stage 10cz).
      *
      * The three Motilal Oswal holding statements print a `Rate` and a `Value` on
      * every line — and the rate is the price of the holding's LAST DEPOSITORY
@@ -491,7 +491,7 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
       })),
     },
     /**
-     * LISTED SHARES A STATEMENT RECORDS AND ONLY THE LIVE QUOTE VALUES (Stage 10cx, 10cy).
+     * LISTED SHARES A STATEMENT RECORDS AND ONLY THE LIVE QUOTE VALUES (Stage 10cy, 10cz).
      *
      * A transaction-only demat's closing balances, a holding statement's shares
      * printed at no rate or at face value, and the Motilal shares whose printed
@@ -520,7 +520,7 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
       })),
     },
     /**
-     * EVERY LINE A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (Stage 10cy).
+     * EVERY LINE A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (Stage 10cz).
      *
      * Named, so a question about one of them is answered with what the
      * statement actually says — a quantity and a date — and never with its

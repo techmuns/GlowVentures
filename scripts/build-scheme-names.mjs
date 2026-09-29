@@ -172,7 +172,7 @@ function main() {
   const bookSrc = readFileSync(BOOK, "utf8");
   const positions = bookArray(bookSrc, "BOOK_POSITIONS") ?? [];
   /**
-   * AND EVERY LINE THE BOOK CARRIES AS A QUANTITY (Stage 10cy). A fund a
+   * AND EVERY LINE THE BOOK CARRIES AS A QUANTITY (Stage 10cz). A fund a
    * Motilal Oswal holding statement records is a `BOOK_UNVALUED_HOLDINGS` row
    * since the statement's rate turned out to be a last movement's price, not a
    * valuation — and the dashboard still shows it, valued at AMFI's NAV. Read off

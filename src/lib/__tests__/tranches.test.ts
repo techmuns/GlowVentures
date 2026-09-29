@@ -428,7 +428,7 @@ ok("no figure in the moves is non-finite",
     && (m.invested == null || Number.isFinite(m.invested))
     && (m.units == null || Number.isFinite(m.units))));
 
-console.log("\n── a drawdown fund's own calls date the one holding they bought (Stage 10cx) ──");
+console.log("\n── a drawdown fund's own calls date the one holding they bought (Stage 10cy) ──");
 // "Invested on" takes a fund's dated calls only where the account holds that
 // fund and nothing else, its paid-in covers every call and nothing is printed as
 // unpaid. On this book that is five folios; each date list must be the fund's

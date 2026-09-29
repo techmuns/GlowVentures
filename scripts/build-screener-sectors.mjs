@@ -88,9 +88,9 @@ function bookObject(name) {
  * AND EVERY SHARE A STATEMENT RECORDS WITHOUT VALUING IT, which the dashboard
  * values at the live quote and places in a sector like any other: a holding
  * statement's lines the book carries as quantities (`BOOK_UNVALUED_HOLDINGS` —
- * since Stage 10cy every share on the Motilal Oswal CDSL statements, whose
+ * since Stage 10cz every share on the Motilal Oswal CDSL statements, whose
  * printed rate is a last movement's price and not a valuation) and a
- * transaction-only account's closing balances (Stage 10cx). They carry no
+ * transaction-only account's closing balances (Stage 10cy). They carry no
  * statement value, so they add nothing to `mv`. Asked off positions alone this
  * store, which is rewritten whole on every run, would drop their sectors.
  */

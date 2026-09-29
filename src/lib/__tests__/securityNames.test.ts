@@ -56,7 +56,7 @@ eq("...and the clipped Crompton is Crompton",
  */
 const SYM = NSE_SYMBOLS as Record<string, string>;
 /**
- * EVERY LINE A PAGE NAMES A COMPANY ON — a position, and since Stage 10cy a
+ * EVERY LINE A PAGE NAMES A COMPANY ON — a position, and since Stage 10cz a
  * holding a statement records as a quantity and nothing values. The three
  * Motilal Oswal holding statements' 43 rows are that now (their rate is the
  * last depository movement, not a price), and a page draws each under its

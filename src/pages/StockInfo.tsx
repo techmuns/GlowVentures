@@ -445,7 +445,7 @@ export function StockInfo() {
    */
   const bookSector = rows.find((r) => r.sector && r.sector !== UNCLASSIFIED)?.sector ?? null;
   /**
-   * WHAT A STATEMENT RECORDS HERE AND NOTHING VALUES (Stage 10cy) — a demat
+   * WHAT A STATEMENT RECORDS HERE AND NOTHING VALUES (Stage 10cz) — a demat
    * line whose only price was its last depository movement, a par row, a unit
    * count. The family holds them and no row of the live book carries them, so a
    * page with one is never "fully exited". `recordedHoldings.ts` files each
@@ -545,7 +545,7 @@ export function StockInfo() {
     : assetClass ? "units held"
     : "held";
   /**
-   * WHAT THE HOLDING IS, READ OFF ITS OWN LINES (Stage 10cy) — the statement
+   * WHAT THE HOLDING IS, READ OFF ITS OWN LINES (Stage 10cz) — the statement
    * rows where there are any, else the lines a statement records and nothing
    * values. DSP's Gold ETF is an ETF whether or not its NAV cleared the basis
    * gate: read off valued rows alone, a page holding none was drawn as a
@@ -899,7 +899,9 @@ export function StockInfo() {
       }
     : navMark
     ? {
-        line: `AMFI NAV, ${navMark.date}${navMark.changePct == null ? "" : ` · ${navMark.changePct >= 0 ? "+" : ""}${navMark.changePct.toFixed(2)}% on its day`}`,
+        // A day the NAV did not move is a zero, and a zero takes no sign: `fmtPct`,
+        // as the scheme card on Price & returns prints the same move.
+        line: `AMFI NAV, ${navMark.date}${navMark.changePct == null ? "" : ` · ${fmtPct(navMark.changePct, { sign: true, decimals: 2 })} on its day`}`,
         tip: `AMFI's published NAV for ${navMark.scheme}, ${navMark.date}. A fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote — and its move is against the NAV before it, on its own date, not today's.${
           // NO STATEMENT PRICES THESE UNITS, so the tip says whose count they
           // are rather than implying a statement mark that the NAV replaced —
@@ -1012,7 +1014,7 @@ export function StockInfo() {
     // rate of 60.4 beside a value implying 60.4167 — was no mark at all: a
     // Motilal CDSL rate is the price of the holding's last depository
     // movement, and its value that price times the movement's units, Stage
-    // 10cy.) An absent mark sorts LAST either way rather than as a zero.
+    // 10cz.) An absent mark sorts LAST either way rather than as a zero.
     cmp: (r: Position) => r.currentPrice,
     invested: (r: Position) => r.costBasis,
     current: (r: Position) => r.marketValue,
@@ -1132,7 +1134,7 @@ export function StockInfo() {
           {r.currentPrice === null
             ? <AbsentCell reason="the book carries this row's value as a total and no price per unit, so there is no mark to show" />
             : <span title={r.depositoryUnits && !r.navPriced
-                /* A LISTED SHARE A DEPOSITORY REPORTS (Stage 10cx) has no NAV:
+                /* A LISTED SHARE A DEPOSITORY REPORTS (Stage 10cy) has no NAV:
                    its price is the live quote, and the row exists only while
                    the feed prices it. Saying "AMFI's NAV" here would name a
                    source that never priced it. */
@@ -1979,7 +1981,7 @@ export function StockInfo() {
                 </p>
               </Card>
             )}
-            {/* A RECORDED LINE IS THE FAMILY'S OWN HOLDING (Stage 10cy) — held in
+            {/* A RECORDED LINE IS THE FAMILY'S OWN HOLDING (Stage 10cz) — held in
                 their own demat, and only not valued — so its holding period and
                 tax card is drawn like any other holding's, each figure a dash
                 naming why. It is a company held only inside a fund that has no
@@ -2026,7 +2028,7 @@ export function StockInfo() {
             {/* OPENING, PLUS, MINUS, CLOSING — read off the depository statement,
                 which prints all four. Above the tape deliberately: the family
                 asked for the quantity account first and the dated rows second. */}
-            {/* AN ACCOUNT HOLDING A RECORDED LINE HOLDS IT (Stage 10cy): Ankita's
+            {/* AN ACCOUNT HOLDING A RECORDED LINE HOLDS IT (Stage 10cz): Ankita's
                 4,875 Kaynes are on the Position table above, "not valued" with
                 the reason. Marking her window "held, and not valued here" too
                 would say it twice, and with the wrong reason for a statement

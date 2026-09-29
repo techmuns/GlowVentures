@@ -94,7 +94,7 @@ export function recordedLineFor(
 }
 
 /**
- * ── THE COMPANIES A FUND'S LINE MAY JOIN TO (Stage 10cy) ────────────────────
+ * ── THE COMPANIES A FUND'S LINE MAY JOIN TO (Stage 10cz) ────────────────────
  *
  * Every company share the book values, THEN every one a statement records and
  * nothing values, under the key the live layer would file it by (`homeKey`).

@@ -14,7 +14,9 @@
 // ── THE ANCHOR IS A GENERATED FIGURE, NOT A TYPED-IN ONE ────────────────────
 //
 // The strongest assertion here is that the series' LAST POINT equals the covered
-// accounts' own latest valuations, with each `dedupeGroup` counted once. Those
+// accounts' own latest valuations, with each `dedupeGroup` counted once — and
+// since the family answered for this book's two pairs (28 Sep 2026) there is no
+// group left to count once, so the two are equal to the rupee. Those
 // two are produced on different paths inside `navHistoryFrom` — one walks dates
 // and carries marks forward, the other is a per-account roll-up — so agreeing is
 // a real cross-check rather than a figure compared with its own copy, and it
@@ -89,24 +91,33 @@ eq("the series' first and last dates are the coverage window",
   [BOOK_NAV_HISTORY[0].date, BOOK_NAV_HISTORY[BOOK_NAV_HISTORY.length - 1].date],
   [BOOK_NAV_COVERAGE.from, BOOK_NAV_COVERAGE.to]);
 
-// ── The last point ties to the covered accounts, counting duplicates once ───
+// ── The last point ties to the covered accounts, every holding counted ──────
 //
-// Both of this book's duplicated holdings are private and ONE of them — 360 ONE
-// Special Opportunities under CRN37702 and CRN60117 — sits inside the covered
-// set with both CRNs publishing a series. So the per-account sum is ABOVE the
-// series by exactly that holding, and the two must not accidentally agree.
+// 360 ONE Special Opportunities is reported under CRN37702 and CRN60117, and
+// both CRNs publish a series. Until the family answered it was one holding
+// reported twice: the series counted it once and the per-account sum twice, and
+// the two differed by exactly that holding — ₹1.46 Cr. *"both are separate
+// investments"* (28 Sep 2026, `shared/separateInvestments.mjs`): both are
+// counted now, so the series' last point IS the covered accounts' own sum.
+//
+// THE EQUALITY IS LOAD-BEARING ONLY WHILE THE PAIR IS COVERED, so that is
+// asserted first: were either CRN outside the series, the two figures would
+// agree whatever the series did with the pair, and a series still counting it
+// once would pass. The count-once rule itself is `navHistoryFrom`'s, in
+// `build-book.mjs`, and it now has NO SUBJECT on this book. Nothing here can
+// give it one either — the series is generated, not computed at runtime, so a
+// tagged copy of the positions cannot reach it. That is recorded rather than
+// papered over: the rule runs again, untested, on the next pair a drop brings.
 const perAccount = covered.reduce((a, c) => a + c.latestValue, 0);
 const lastPoint = BOOK_NAV_HISTORY[BOOK_NAV_HISTORY.length - 1].nav;
-ok("the series' last point is at or below the covered accounts' per-account sum",
-  lastPoint <= perAccount + 0.01,
-  `series ₹${(lastPoint / 1e7).toFixed(2)} Cr vs per-account ₹${(perAccount / 1e7).toFixed(2)} Cr`);
 {
-  // …and the gap is exactly the duplicated value, not an arbitrary shortfall.
-  // Reconstructed from the per-account series rather than asserted as a literal.
-  const gap = perAccount - lastPoint;
-  ok("the gap between them is a whole holding, or nil", gap === 0 || gap > 1_000_000,
-    `₹${(gap / 1e7).toFixed(4)} Cr — a duplicated holding counted once in the series and twice per account`);
+  const pair = BOOK_ACCOUNTS.filter((a) => a.provider === "360 ONE Private Wealth" && ["37702", "60117"].includes(a.accountNo));
+  ok("both 360 ONE CRNs are in the series — the pair the family confirmed separate",
+    pair.length === 2 && pair.every((a) => covered.some((c) => c.accountId === a.accountId)),
+    pair.map((a) => a.accountId).join(", "));
 }
+near("the series' last point is the covered accounts' per-account sum — nothing in it is counted once",
+  lastPoint, perAccount);
 
 // ── Every covered account's own series is emitted, and agrees ───────────────
 for (const c of covered) {

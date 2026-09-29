@@ -468,7 +468,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   const flat = (k: string) => k.replace(/-/g, "");
   const rel = (k: string, keys: string[]) => keys.some((bk) =>
     bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
-  // A line a statement RECORDS with no usable price (Stage 10cy) is a holding
+  // A line a statement RECORDS with no usable price (Stage 10cz) is a holding
   // the statements report, on both tiers — written out again here rather than
   // read from the module.
   const recorded = BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0 && !u.sameUnitsReportedBy);

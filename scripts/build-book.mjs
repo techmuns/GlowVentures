@@ -30,6 +30,8 @@ import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/m
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
+import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
+import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -1464,7 +1466,7 @@ function shareMovementsFrom(docs, positions, accounts, notes, unvalued = []) {
   /**
    * WHAT A WINDOW JOINS: every holding the book carries, valued or not.
    *
-   * Until Stage 10cy every Motilal Oswal demat row was a POSITION, valued at the
+   * Until Stage 10cz every Motilal Oswal demat row was a POSITION, valued at the
    * rate its statement prints — which turned out to be the price of the
    * holding's last depository movement, not a valuation, so those rows are
    * quantities now (`BOOK_UNVALUED_HOLDINGS`). Joined on positions alone, all 23
@@ -1603,7 +1605,7 @@ function shareMovementsFrom(docs, positions, accounts, notes, unvalued = []) {
  *
  * A CDSL holding statement prints, against each holding, the price of its LAST
  * DEPOSITORY MOVEMENT and that price times the movement's own quantity (Stage
- * 10cy; `motilalDemat.mjs`'s header). It is a transaction price, and a reader
+ * 10cz; `motilalDemat.mjs`'s header). It is a transaction price, and a reader
  * shown it needs to know WHICH transaction and WHEN, or it reads as a mark.
  *
  * The same account's transaction statement prints every receipt and delivery
@@ -2117,6 +2119,8 @@ function build(docs) {
    * `BOOK_UNVALUED_HOLDINGS`; see the push below and the post-loop pass.
    */
   const unvaluedHoldings = [];
+  /** Every row the family's keep-unvalued table reached — checked for dead entries below. */
+  const keptUnvaluedHits = [];
 
   for (const [key, allIssues] of [...byAccount.entries()].sort()) {
     const group = newestPerReportType(allIssues, notes, `account ${key}`);
@@ -2188,7 +2192,7 @@ function build(docs) {
       /**
        * AND AN ACCOUNT WHOSE STATEMENT VALUES NOTHING SAYS SO, rather than
        * leaving a dash to be read as "the pipeline lost it". Motilal Oswal demat
-       * 32387399 was reported here at ₹8.23 Cr until Stage 10cy — the sum of its
+       * 32387399 was reported here at ₹8.23 Cr until Stage 10cz — the sum of its
        * statement's value column, which is the price of each holding's last
        * depository movement times that movement's quantity, not a valuation.
        */
@@ -2637,7 +2641,7 @@ function build(docs) {
        *
        * This branch used to say "prints no rate for this holding" about every
        * custody row without a face value — and 43 Motilal Oswal rows DO print a
-       * rate, which until Stage 10cy this book used as their market price. A
+       * rate, which until Stage 10cz this book used as their market price. A
        * reason that denies what the page prints sends a reader to look for a
        * document they are holding; one that shows the rate without its date
        * reads as a mark. So a row carrying a last-movement rate names it, the
@@ -2648,7 +2652,16 @@ function build(docs) {
       const units = (v) => v.toLocaleString("en-IN", { maximumFractionDigits: 3 });
       const unitsHeld = qty !== null ? units(qty) : "these";
       const money = (v) => `₹${v.toLocaleString("en-IN", { maximumFractionDigits: 3 })}`;
-      const reason = !custody
+      // THE FAMILY'S DECISION OUTRANKS THE STATEMENT'S OWN REASON, AND KEEPS ITS
+      // FACTS. Where the family have decided a row stays unvalued (Ankita's
+      // locked-in Clean Max shares, 28 Sep 2026) the reason says so, so the
+      // absence reads as chosen rather than missed. It never values the row —
+      // and the live layer reads the same table (`src/lib/depositoryShares.ts`),
+      // so no quote values it either.
+      const kept = keptUnvaluedFor({ provider, accountNo, isin: h.isin });
+      if (kept) keptUnvaluedHits.push(kept);
+      const reason = kept ? keptUnvaluedReason(kept, holdingsDoc.asOf)
+        : !custody
         ? `the fund's own statement of ${holdingsDoc.asOf} reports ${qty ?? "these"} unit(s) and no NAV and no valuation — `
           + "there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
         : fv !== null
@@ -3117,7 +3130,7 @@ function build(docs) {
         const facePriced = unvaluedHere.filter((x) => isNum(x.faceValue));
         /**
          * AND A CUSTODY ACCOUNT WHOSE RATES ARE LAST-MOVEMENT PRICES IS A THIRD
-         * STORY (Stage 10cy). Its rows carry a rate that is real — the price its
+         * STORY (Stage 10cz). Its rows carry a rate that is real — the price its
          * last movement went through at — and is not a valuation of the balance.
          * Told the fund story ("this fund publishes no NAV"), a reader asks a fund
          * manager about a demat account; told nothing, they read the rate as a
@@ -3156,7 +3169,7 @@ function build(docs) {
          * AND SAID IN A FIELD, NOT ONLY IN THAT SENTENCE. The dashboard values
          * the funds on such an account from the depository's own closing
          * balance and AMFI's published NAV, and its listed shares at the live
-         * quote (Stage 10cx), and it must find those
+         * quote (Stage 10cy), and it must find those
          * accounts structurally — a rule that matched the prose above would stop
          * matching the first time somebody reworded it. It is set on exactly the
          * case the sentence describes: no holding statement in the drop, and a
@@ -3530,6 +3543,17 @@ function build(docs) {
   for (let i = unvaluedHoldings.length - 1; i >= 0; i--) {
     if (RINGFENCED_SECURITY_KEYS.has(unvaluedHoldings[i].securityKey)) unvaluedHoldings.splice(i, 1);
   }
+  // THE FAMILY'S KEEP-UNVALUED TABLE, CHECKED FOR DEAD ENTRIES. An entry that
+  // reaches no row means its account or ISIN drifted, and the row it was about
+  // went back to the statement's own reason without a word. Printed when every
+  // entry reached its row too, so a clean run and a deleted check differ.
+  for (const d of KEPT_UNVALUED) {
+    const n = keptUnvaluedHits.filter((x) => x === d).length;
+    notes.push(n === 1
+      ? `kept unvalued by the family's decision of ${d.decided}: ${d.isin} on ${d.provider} ${d.accountNo} — its reason says so`
+      : `KEPT_UNVALUED entry ${d.isin} on ${d.provider} ${d.accountNo} reached ${n} row(s), not one — `
+        + "check shared/keptUnvalued.mjs against the statement.");
+  }
   {
     const accountById = new Map(accounts.map((a) => [a.accountId, a]));
     const tie = (q, want) => isNum(q) && Math.abs(q - want) <= 0.0005 + Math.abs(want) * 1e-9;
@@ -3666,6 +3690,56 @@ function build(docs) {
   if (doubleCounted) {
     notes.push(`${seenGroups.size} holding(s) reported under more than one member: both rows are carried, `
       + `and ${r2(doubleCounted).toLocaleString("en-IN")} is excluded from the consolidated total so each is counted once`);
+  }
+
+  /**
+   * THE FAMILY'S ANSWERS, NAMED — AND HELD TO THE BOOK.
+   *
+   * "both are separate investments" — the family, 28 Sep 2026, about the two
+   * pairs this book used to count once (`SEPARATE_INVESTMENTS` in
+   * `shared/separateInvestments.mjs`, read by the policy it answers). Named on
+   * every run with each account's row and what counting both adds, because a decision
+   * that changes a consolidated figure must be visible where the figure is
+   * reported, not only where it is made.
+   *
+   * TWO WAYS IT CAN STOP HOLDING, AND BOTH ARE LOUD:
+   *   • a row it names still carries a `dedupeGroup` — the archive was tagged
+   *     before the answer and not replayed, so the consolidated total would count
+   *     the pair once against the family's word. That REFUSES the build rather
+   *     than writing a book that contradicts them (`npm run replay:dedupe`).
+   *   • an account it names holds no such row — the key has drifted (a change to
+   *     `securityKeyOf` the table did not follow) or the holding is gone. A note,
+   *     not a refusal: a redeemed holding is not an error. `separateInvestments
+   *     .test.ts` fails on it for today's book, where both pairs are held.
+   */
+  const separateInvestments = SEPARATE_INVESTMENTS.map((d) => {
+    const rows = d.accounts.map((a) => {
+      const acc = accounts.find((x) => x.provider === a.provider && String(x.accountNo) === String(a.accountNo));
+      const ps = acc ? positions.filter((p) => p.accountId === acc.accountId && p.securityKey === d.securityKey) : [];
+      return { provider: a.provider, accountNo: a.accountNo, accountId: acc?.accountId ?? null, owner: acc?.owner ?? null, positions: ps };
+    });
+    return { ...d, rows };
+  });
+  const stillOnce = separateInvestments.flatMap((d) => d.rows.flatMap((r) => r.positions.filter((p) => p.dedupeGroup)));
+  if (stillOnce.length) {
+    throw new Error(`${stillOnce.length} position(s) the family confirmed as separate investments still carry a dedupeGroup `
+      + `(${stillOnce.map((p) => `${p.security} / ${p.accountId}`).join("; ")}), so the consolidated total would count them `
+      + "once against the family's word. The archive was tagged before the answer: run `npm run replay:dedupe`.");
+  }
+  for (const d of separateInvestments) {
+    const held = d.rows.filter((r) => r.positions.length);
+    const missing = d.rows.filter((r) => !r.positions.length);
+    const value = sum(held.flatMap((r) => r.positions.map((p) => (isNum(p.marketValue) ? p.marketValue : 0))));
+    if (missing.length) {
+      notes.push(`family decision ${d.confirmed} names ${d.securityKey} under ${missing.map((r) => `${r.provider} ${r.accountNo}`).join(" and ")}, `
+        + "and no such holding is in the book there — the key may have drifted from `securityKeyOf`, or the holding has gone. "
+        + "Check SEPARATE_INVESTMENTS in shared/separateInvestments.mjs.");
+    }
+    if (held.length) {
+      notes.push(`separate investments, confirmed by the family on ${d.confirmed}: ${held[0].positions[0].security} under `
+        + `${held.map((r) => `${r.owner ?? r.provider} (${r.accountNo})`).join(" and ")} — each counted in full, `
+        + `${r2(value).toLocaleString("en-IN")} across ${held.length} account(s).`);
+    }
   }
 
   /**
@@ -3874,7 +3948,7 @@ function build(docs) {
     capitalMoves, positionTranches, shareMovements,
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
-    excludedAccounts, unvaluedHoldings,
+    excludedAccounts, unvaluedHoldings, separateInvestments,
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
     // depend on map iteration, and the book must regenerate byte-identically.
@@ -4202,6 +4276,26 @@ function report(book) {
     const accs = book.accounts.filter((a) => a.ownerId === o.ownerId);
     const ps = book.positions.filter((p) => accs.some((a) => a.accountId === p.accountId));
     L.push(`| ${o.displayName} | ${accs.length} | ${ps.length} | ${r2(sum(ps.map((p) => (isNum(p.marketValue) ? p.marketValue : 0)))).toLocaleString("en-IN")} |`);
+  }
+  L.push("");
+  L.push("## Holdings the family confirmed as separate investments");
+  L.push("");
+  L.push("Two accounts' statements carry the same figures for these, which is how a holding reported");
+  L.push("twice looks. The family has said each is a separate investment, so every figure counts both.");
+  L.push("`SEPARATE_INVESTMENTS` in `shared/separateInvestments.mjs` holds the decision.");
+  L.push("");
+  L.push("| Holding | Account | Owner | Units | Market value | Confirmed |");
+  L.push("| --- | --- | --- | ---: | ---: | --- |");
+  for (const d of book.separateInvestments ?? []) {
+    for (const r of d.rows) {
+      if (!r.positions.length) {
+        L.push(`| \`${d.securityKey}\` | ${r.provider} ${r.accountNo} | ${r.owner ?? "—"} | — | — (no such holding in the book) | ${d.confirmed} |`);
+        continue;
+      }
+      for (const p of r.positions) {
+        L.push(`| ${p.security} | ${r.provider} ${r.accountNo} | ${r.owner ?? "—"} | ${isNum(p.quantity) ? p.quantity.toLocaleString("en-IN") : "—"} | ${isNum(p.marketValue) ? r2(p.marketValue).toLocaleString("en-IN") : "—"} | ${d.confirmed} |`);
+      }
+    }
   }
   L.push("");
   L.push("## Read, and deliberately NOT in the book");

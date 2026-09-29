@@ -49,7 +49,7 @@ const ok = (name: string, pass: boolean, detail = "") => {
 const rs = (n: number) => `₹${n.toFixed(2)}`;
 
 /**
- * THE BOOK THE FLOOR IS APPLIED TO ON A PAGE, WHICH SINCE Stage 10cy IS NOT
+ * THE BOOK THE FLOOR IS APPLIED TO ON A PAGE, WHICH SINCE Stage 10cz IS NOT
  * `BOOK_POSITIONS`. Every speck the family pointed at was a Motilal Oswal demat
  * row, and those statements' `Value` column is the holding's last depository
  * movement rather than a valuation — so the STATEMENT basis carries those rows as
@@ -260,7 +260,7 @@ ok("the floor is ₹1,000, as asked for", NEGLIGIBLE_VALUE_FLOOR === 1000, `${NE
 // drop picks its own and a renamed scheme does not silently retire the case.
 //
 // The ₹54 was the statement's own printed figure (0.39 units × its ₹137.62
-// last-movement rate), which is what the screen showed then. Since Stage 10cy
+// last-movement rate), which is what the screen showed then. Since Stage 10cz
 // that figure is not a valuation, so the page values the units at AMFI's NAV and
 // the row reads a few rupees less — the SAME holding, still a speck. It is found
 // by the value its statement PRINTED (`lastMovementValue` on the recorded line),

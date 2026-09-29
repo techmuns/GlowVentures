@@ -89,7 +89,7 @@ export function SmartSearch() {
     () => (portfolio ? buildSearchIndex({
       positions: portfolio.positions, consolidated, accounts: portfolio.accounts, money: (n) => fmtFromBase(n, { compact: true }),
       // What a statement records at a quantity and nothing values is still a
-      // holding a reader may type (Stage 10cy); the index offers it only where
+      // holding a reader may type (Stage 10cz); the index offers it only where
       // no valued row already stands for it.
       recorded: BOOK_UNVALUED_HOLDINGS,
       // Whether a redemption is really on the Transactions tab (SC-C5) — the

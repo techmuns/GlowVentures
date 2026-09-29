@@ -79,10 +79,10 @@ const bridge = JSON.parse(readFileSync(join(ROOT, "src/data/nseSymbols.json"), "
 /**
  * …AND EVERY SHARE A STATEMENT RECORDS WITHOUT VALUING IT, which the dashboard
  * prices at the live quote: a holding statement's lines the book carries as
- * quantities (`BOOK_UNVALUED_HOLDINGS` — since Stage 10cy that is every share on
+ * quantities (`BOOK_UNVALUED_HOLDINGS` — since Stage 10cz that is every share on
  * the Motilal Oswal CDSL statements, whose printed rate is a last movement's
  * price and not a valuation), and a transaction-only account's closing balances
- * (Stage 10cx). Asked off positions alone, this map would drop those symbols on
+ * (Stage 10cy). Asked off positions alone, this map would drop those symbols on
  * its next run and the quote feed would stop pricing them through Upstox with
  * nothing failing anywhere. The ring-fenced holding is in none of these arrays.
  */

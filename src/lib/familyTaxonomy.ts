@@ -356,7 +356,7 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
     { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "Bandhan Large & Mid Cap Fund - Direct Plan - Growth" },
   "sec:kotak-mtcf-d-grow":
     { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "Kotak Multicap Fund-Direct Plan-Growth" },
-  // Stage 10cx — held only on the transaction-only demat, where the depository
+  // Stage 10cy — held only on the transaction-only demat, where the depository
   // prints the AMC's full name in front of the scheme's, so these keys are the
   // depository's spelling. Each ties to the review by units (`reviewGaps.ts`).
   "sec:kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-large-and-midcap-fund-direct-plan-growth-option":
@@ -374,7 +374,7 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "ICICI Pru Balanced Advantage Fund" },
   "sec:woc-maaf-d-grow":
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "WhiteOak Capital Multi Asset Allocation Fund-Direct(G)" },
-  // Stage 10cx — on the transaction-only demat only; the workbook lists it on
+  // Stage 10cy — on the transaction-only demat only; the workbook lists it on
   // the Liquid basket sheet and the Equity asset-class sheet, like those above.
   "sec:icici-prud-amc-ltd-icici-prud-mf-icici-prud-equity-savings-fund-direct-cumulative":
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "ICICI Prudential Equity Savings Fund - Direct Plan" },

@@ -278,7 +278,7 @@ if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
 PY
 
-# ── 11–17. A LINE A STATEMENT REPORTS IS NEVER CLAIMED ABSENT (Stage 10cx) ──
+# ── 11–17. A LINE A STATEMENT REPORTS IS NEVER CLAIMED ABSENT (Stage 10cy) ──
 # The note says "no statement reports it", which is a claim about the
 # STATEMENTS. The page check derives every review line a statement reports on
 # its own, from the review workbook and the statements, and types each one; the
@@ -379,13 +379,13 @@ if s.count(old) != 1: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, ".flatMap((c) => balancesOn(c.date, isins)", 1))
 PY
 
-# ── 18–20. A HOLDING A STATEMENT RECORDS AND NOTHING VALUES (Stage 10cy) ────
+# ── 18–20. A HOLDING A STATEMENT RECORDS AND NOTHING VALUES (Stage 10cz) ────
 # With no live quote the top bar's search finds Ankita's 4,875 Kaynes from the
 # demat statement's own line: "Not valued · 4,875 units", and no ₹. These walk
 # the `search` route, where the check strikes that row on the book.
 ROUTES=search
 
-# The last movement's price printed as the row's figure — the one Stage 10cy
+# The last movement's price printed as the row's figure — the one Stage 10cz
 # stopped passing off as a mark.
 run_case "a recorded holding's search row prints its last movement's price" py <<'PY'
 import sys

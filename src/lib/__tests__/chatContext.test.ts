@@ -50,8 +50,8 @@ const add = (xs: number[]) => xs.reduce((t, x) => t + x, 0);
 
 // ── THE BOOK THE PAGES READ, assembled as PortfolioContext assembles it ─────
 // The labelled rows through the corporate-action layer; the funds a depository
-// reports on a transaction-only demat (Stage 10ce cash, 10cx the rest) and the
-// fund units a holding statement records and values nowhere (A-17, Stage 10cy)
+// reports on a transaction-only demat (Stage 10ce cash, 10cy the rest) and the
+// fund units a holding statement records and values nowhere (A-17, Stage 10cz)
 // through the quote overlay; the listed shares a statement records, which are
 // rows only while a feed prices them — none here, with no feed; AMFI's
 // published NAVs over all of them; and the live registry with its
@@ -146,7 +146,7 @@ ok("the context is a non-empty set of named blocks",
     s.positions === current.length && s.distinctSecurities === new Set(current.map((p) => p.securityKey)).size,
     `${s.positions} positions, ${s.distinctSecurities} names`);
   // Struck on the rows the SCREEN is built from, not on the statement rows:
-  // since Stage 10cy the live book carries rows the statement basis does not
+  // since Stage 10cz the live book carries rows the statement basis does not
   // (fund units a holding statement records and values nowhere), so it has
   // more rows than `BOOK_POSITIONS` and a comparison against those would fail
   // a builder that is right.
@@ -312,9 +312,9 @@ ok("the context is a non-empty set of named blocks",
     !!sd && sd.rows.length === 0 && sd.totalCr === null && /No holding in this book is valued from a depository/.test(sd.note));
 }
 
-// ── Stage 10cx/10cy: THE REST OF WHAT A STATEMENT'S QUANTITY VALUES ─────────
+// ── Stage 10cy/10cz: THE REST OF WHAT A STATEMENT'S QUANTITY VALUES ─────────
 //
-// The same transaction-only demat carries funds that are NOT cash (Stage 10cx),
+// The same transaction-only demat carries funds that are NOT cash (Stage 10cy),
 // and a statement's listed shares are rows only while a feed prices them. Each
 // has a block of its own; told only the cash, a model asked "how much Bandhan
 // Large & Mid Cap do I hold" would miss the units on this demat and contradict
@@ -488,7 +488,7 @@ ok("the context is a non-empty set of named blocks",
     && w.notCarried.some((x) => x.includes(oldest)), oldest);
 }
 
-// ── A-17 / Stage 10cy: units a statement records and values nowhere are named ──
+// ── A-17 / Stage 10cz: units a statement records and values nowhere are named ──
 //
 // The dashboard values these fund units at AMFI's NAV where a witness puts them
 // on the NAV's basis — the line's own last-movement rate, or a sibling

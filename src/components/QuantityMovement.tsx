@@ -98,7 +98,7 @@ export function notHeldNote(
   account: Account | undefined,
   /**
    * The reason on the line a statement records for this account and company,
-   * where there is one (Stage 10cy) — a last movement's price, a face value.
+   * where there is one (Stage 10cz) — a last movement's price, a face value.
    * It outranks the account's own reason, which the live copy of a partly
    * valued account no longer carries, and the generic one, which says the
    * statement prints no rate: false of a Motilal demat, which prints one.

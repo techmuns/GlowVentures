@@ -361,7 +361,7 @@ function main() {
 
   /**
    * A FUND A STATEMENT RECORDS AT A QUANTITY AND NO VALUE IS STILL A FUND THE
-   * FAMILY HOLDS (Stage 10cy).
+   * FAMILY HOLDS (Stage 10cz).
    *
    * The Motilal CDSL demat prints a rate and a value that belong to each
    * holding's LAST DEPOSITORY MOVEMENT, not to the statement date, so those

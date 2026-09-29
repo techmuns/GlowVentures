@@ -67,7 +67,7 @@ const STORE = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures
 // a suite cannot exercise a join the screen does not make (see their own notes).
 /**
  * THE BOOK THE COMPANY PAGE READS, ON A DAY THE QUOTE FEED ANSWERS. The page's
- * rows are `portfolio.positions` — the LIVE book — and since Stage 10cy the
+ * rows are `portfolio.positions` — the LIVE book — and since Stage 10cz the
  * family's own Motilal demat holdings differ between the two bases: their
  * statement's rate is the last depository movement, never a price, so the funds
  * are valued at AMFI's NAV and the shares only while a quote prices them. Read

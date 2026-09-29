@@ -31,7 +31,7 @@ import {
  * input is committed data. See `depositoryFundHoldings`: the mutual funds on an
  * account that sent only a transaction statement, valued at the depository's
  * closing units × AMFI's published NAV — its liquid and arbitrage funds, the
- * family's cash (Stage 10ce), and its other schemes (Stage 10cx). LIVE
+ * family's cash (Stage 10ce), and its other schemes (Stage 10cy). LIVE
  * portfolio only. The same statement's listed SHARES are valued at the live
  * quote inside the memo below, because they exist only while the feed prices
  * them (`depositoryShares.ts`).
@@ -41,7 +41,7 @@ const DEPOSITORY_FUNDS = depositoryFundHoldings();
  * UNITS A HOLDING STATEMENT RECORDS AND PRICES NOWHERE — valued at AMFI's
  * published NAV on the LIVE basis only, exactly like the depository's cash.
  * The figure audit's A-17 found the first of them (ABSL Balanced Advantage on
- * two Motilal demats); Stage 10cy found that EVERY fund on the three Motilal
+ * two Motilal demats); Stage 10cz found that EVERY fund on the three Motilal
  * holding statements is one, because the `Rs RATE` and `Rs VALUE` those
  * statements print are the holding's LAST DEPOSITORY MOVEMENT — a transaction
  * price and that price times the movement's own units — never a valuation of
@@ -283,8 +283,8 @@ const PRIORITY_SYMBOLS = (() => {
     if (sym) out.add(sym);
   }
   // The listed shares a depository reports — on a transaction-only demat
-  // (Stage 10cx), and on the three Motilal holding statements that price none
-  // of them (Stage 10cy) — are the family's own Direct Equity too, so they land
+  // (Stage 10cy), and on the three Motilal holding statements that price none
+  // of them (Stage 10cz) — are the family's own Direct Equity too, so they land
   // in the same round.
   for (const sym of depositoryShareSymbols()) out.add(sym);
   return [...out];
@@ -461,7 +461,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
      * AND THE DEPOSITORY'S BALANCES JOIN HERE, NEVER IN `basePortfolio`.
      *
      * Those rows have no statement mark at all — a fund's value IS the published
-     * NAV, and a listed share's IS the live quote (Stage 10cx) — so they belong
+     * NAV, and a listed share's IS the live quote (Stage 10cy) — so they belong
      * to the live book alone, and `statementPortfolio` stays exactly what the
      * PDFs print. The funds go through the same two overlays as every other row,
      * so a liquid ETF the quote feed prices intraday is priced here the way its
@@ -486,7 +486,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // `partialValuationNotes` decides WHICH accounts are partly valued: a
     // transaction-only account whose closing balances are valued here, and a
     // holding-statement account that values none of its own holdings (the three
-    // Motilal demats, Stage 10cy) once this layer values some. An account whose
+    // Motilal demats, Stage 10cz) once this layer values some. An account whose
     // statement values holdings of its own — Clean Max's, ESDS's — is not
     // "partly valued" by a row or two added beside them. It is handed the
     // share candidates too, so a share the feed has not priced YET is told

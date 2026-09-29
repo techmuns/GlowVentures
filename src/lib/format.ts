@@ -159,13 +159,13 @@ const NAME_ACRONYMS = new Set([
   "SDL",
   /**
    * NLC — `NLC India Limited`, which a depository TRANSACTION statement prints
-   * in capitals (`NLC INDIA LIMITED # EQTY SHARES`, Stage 10cx). The company's
+   * in capitals (`NLC INDIA LIMITED # EQTY SHARES`, Stage 10cy). The company's
    * name, not an expansion of one; title-cased it read "Nlc India".
    */
   "NLC",
   /**
    * ESDS — `ESDS Software Solution Limited`, which Ajay's ICICI NSDL statement
-   * prints in capitals (Stage 10cx). The company's own name; title-cased it
+   * prints in capitals (Stage 10cy). The company's own name; title-cased it
    * read "Esds Software".
    */
   "ESDS",
@@ -281,7 +281,7 @@ export function displaySecurity(name: string): string {
 
 /**
  * A depository TRANSACTION statement's name for a holding, as a reader should
- * see it (Stage 10cx). CDSL prints `ISSUER#INSTRUMENT` — `NLC INDIA LIMITED #
+ * see it (Stage 10cy). CDSL prints `ISSUER#INSTRUMENT` — `NLC INDIA LIMITED #
  * EQTY SHARES`, `BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT
  * PL - GROWTH` — so a company is the part before the `#`, and a fund is the
  * scheme after it with the fund house's `… MF-` prefix taken off.

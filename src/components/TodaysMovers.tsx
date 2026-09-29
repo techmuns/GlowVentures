@@ -252,7 +252,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
     // from the book being complete. The book is 161 symbols and fills over three
     // rounds; this scope is 33 and, named as `priority`, lands in one.
     //
-    // …AND THE SHARES A DEPOSITORY REPORTS WITH NO PRICE (Stages 10cx and 10cy)
+    // …AND THE SHARES A DEPOSITORY REPORTS WITH NO PRICE (Stages 10cy and 10cz)
     // are in this scope only once the feed prices them: until then there is no
     // row to draw. Waiting on the rows alone would let the card rank the shares
     // that have landed and add the rest a round later, which is the "first shows

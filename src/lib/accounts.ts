@@ -181,7 +181,7 @@ export function unvaluedHoldingsOf(
  *     figures and how, and that no statement values it. Such a row is `no-rate`
  *     or `no-price` where the statement printed nothing usable beside it, and
  *     `last-movement` where it printed only the price of the holding's last
- *     depository movement (the Motilal Oswal statements, Stage 10cy).
+ *     depository movement (the Motilal Oswal statements, Stage 10cz).
  *
  * Nothing here is summed into a value: `quantity` is units, not money.
  */
