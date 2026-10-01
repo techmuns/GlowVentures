@@ -97,6 +97,43 @@ export const PROVIDERS = {
     letterhead: /V\.?\s*E\.?\s*C\s+ASSAGO/i,
     engagement: "PMS",
   },
+  /**
+   * ASK Investment Managers — the `september-2026` delivery, and the first
+   * manager in this book whose mandates are CLOSED. Both of the family's ASK
+   * Indian Entrepreneur Portfolio accounts were withdrawn in full: the fact
+   * sheet as of 08/09/2026 prints a portfolio value of 0 and a single
+   * `BANK · Cash and Equivalent · 0 · 100.00%` line, and the P&L account's
+   * balance sheet balances to the paisa on a nil corpus. So these statements
+   * are a since-inception HISTORY (Sep 2019 → Sep 2026) and a measured nil,
+   * not a live holding.
+   *
+   * Same reporting system as the six above, with two printed differences the
+   * reader has to accept: the files carry no client-code prefix
+   * (`askimpms_10034025_…`), and the account line carries a SECOND number, the
+   * client code, before the name — `Account : 10034025 0034926 - Ajay T
+   * Jaisinghani` (see readIdentity).
+   */
+  ask: {
+    name: "ASK Investment Managers Limited",
+    filePrefix: /^askimpms/i,
+    letterhead: /ASK\s+Investment\s+Managers|ASK\s+Indian\s+Entrepreneur\s+Portfolio|INP000008066/i,
+    engagement: "PMS",
+  },
+  /**
+   * Marathon Trends Advisory — the same delivery, the same reporting system,
+   * and the same position as ASK: every share the mandate bought it had sold
+   * by July 2025. Unlike ASK it sends NO fact sheet, appraisal or bank book —
+   * only the capital gain, dividend, transaction and income-and-expense
+   * statements — so nothing in the drop states what the account is worth today,
+   * and the book says so rather than reading the empty trade tape as a nil.
+   * Its client code (`02AS23`) leads with digits, unlike every code above.
+   */
+  marathon: {
+    name: "Marathon Trends Advisory Pvt Ltd",
+    filePrefix: /^Z1211/,
+    letterhead: /Marathon\s+Trends\s+Advisory/i,
+    engagement: "PMS",
+  },
 };
 
 /**
@@ -482,6 +519,21 @@ function readIdentity(pages) {
     // sector sat in a document the join could not reach. The digits are what
     // keep this safe: the same dash form also carries the fund name
     // ("GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND"), which has none.
+    //
+    // ASK prints a SECOND NUMBER before the name — its own client code — in two
+    // spellings, and the general pattern refuses both because a name may not
+    // start with a digit:
+    //   Account : 10034025 0034926 - Ajay T Jaisinghani      (dated statements)
+    //   Account: 10034025 - 0034926 - Ajay T Jaisinghani     (fact sheet)
+    // The first number is the account (the file name agrees); the second is the
+    // client code and is never read as the account.
+    const ask = /^Account\s*:?\s*(\d{6,})\s*-?\s*(\d{5,})\s*-\s*([A-Za-z][A-Za-z.'\- ]{2,60}?)$/.exec(s);
+    if (ask) {
+      out.accountNo ??= ask[1];
+      out.clientCode ??= ask[2];
+      out.owner ??= trimPersonName(ask[3].replace(/\s+/g, " "));
+      continue;
+    }
     const acct = /^Account\s*:?\s*(\d[\d-]*)(?:\s*-?\s+([A-Za-z][A-Za-z.'\- ]{2,60}?))?(?:\s*-\s*([A-Z]{2,8}\d{3,}))?$/.exec(s);
     if (acct) {
       out.accountNo ??= acct[1];
@@ -499,8 +551,23 @@ function readIdentity(pages) {
       // That report has no reader here anyway; its owner is recovered from the
       // account number instead (see backfillOwners in extract.mjs).
       const nameShaped = (t) => /^[A-Za-z][A-Za-z.']*(?:\s+[A-Za-z][A-Za-z.']*){1,4}$/.test(t);
+      const next = spans[i + 1] ?? "";
+      // The two delivery-specific spellings of the span BENEATH a bare account
+      // number. Each is accepted only in this position — never as a free-floating
+      // span — because a digit-led code is too weak a signal to read anywhere else.
+      //   0034926 - Ajay T Jaisinghani     (ASK's P&L account: code, then name)
+      //   Ajay Jaisinghani - 02AS23        (Marathon: name, then a digit-led code)
+      const askNext = /^(\d{5,})\s*-\s*([A-Za-z][A-Za-z.'\- ]{2,60}?)$/.exec(next);
+      const marathonNext = /^([A-Za-z][A-Za-z.'\- ]{2,60}?)\s*-\s*(\d{2}[A-Z]{2,4}\d{2,4})$/.exec(next);
       if (acct[2]) out.owner ??= trimPersonName(acct[2].replace(/\s+/g, " "));
-      else if (nameShaped(spans[i + 1] ?? "")) out.owner ??= trimPersonName(spans[i + 1]);
+      else if (nameShaped(next)) out.owner ??= trimPersonName(next);
+      else if (askNext) {
+        out.clientCode ??= askNext[1];
+        out.owner ??= trimPersonName(askNext[2].replace(/\s+/g, " "));
+      } else if (marathonNext) {
+        out.clientCode ??= marathonNext[2];
+        out.owner ??= trimPersonName(marathonNext[1].replace(/\s+/g, " "));
+      }
     }
     // Green Lantern / Carnelian: `AJAY T JAISINGHANI - GLC0780`. The DIGITS in
     // the client code are what makes this safe — the same dash form also carries
@@ -520,7 +587,14 @@ function readIdentity(pages) {
   if (inception) out.inceptionDate = toIso(inception[1]);
 
   // Strategy: the scheme line under the account, or the fact sheet's label.
-  const strat = /Strategy\s*:\s*([A-Za-z][A-Za-z0-9 .&'\-]{3,60}?)(?=\s{2,}|\s+Portfolio\s+Holdings|$)/m.exec(text)
+  //
+  // Read off its OWN SPAN first, for the reason the account line is: on ASK's
+  // fact sheet the holdings table's "%Assets" heading wraps, and its last
+  // letter sits on the strategy's printed line — joined, the strategy read
+  // "ASK Indian Entrepreneur Portfolio s". The span is the label alone.
+  const stratSpan = spans.map((s) => /^Strategy\s*:\s*([A-Za-z][A-Za-z0-9 .&'\-]{3,60})$/.exec(s)).find(Boolean);
+  const strat = stratSpan
+    ?? /Strategy\s*:\s*([A-Za-z][A-Za-z0-9 .&'\-]{3,60}?)(?=\s{2,}|\s+Portfolio\s+Holdings|$)/m.exec(text)
     ?? /^\s*([A-Z][A-Za-z ]*(?:CAPITAL LLP - [A-Z ]+|BESPOKE PORTFOLIO|Equity Portfolio))\s*$/m.exec(text);
   if (strat) out.strategy = clean(strat[1]).replace(/\s+/g, " ");
   return out;
@@ -856,6 +930,54 @@ const printedDecimals = (v) => {
   return m ? m[1].length : null;
 };
 
+/**
+ * A BUYBACK IS A DISPOSAL, AND IT MUST BE TESTED BEFORE "BUY".
+ *
+ * ASK's tape prints a company buying back its own shares as `Buyback Shares`:
+ * TCS took 35 of this family's shares at ₹4,500 on 30 March 2022 and 41 at
+ * ₹4,150 on 11 December 2023. A `^buy` test reads that as a PURCHASE — and the
+ * reconciler said so on all four rows, the derived settlement landing exactly
+ * twice the brokerage and STT away from the printed one, because the charges
+ * were added to a sale instead of taken off it. Read as a sale, every one of
+ * the four reproduces its printed settlement to the paisa. The capital gain
+ * statement agrees: it opens with a "Buyback Shares" section.
+ */
+const BUYBACK = /^buy\s*-?\s*back/i;
+
+/**
+ * ROWS THAT ARE NOT TRADES, AND SAY SO IN THEIR OWN DESCRIPTION.
+ *
+ * Each was reported one row at a time as `transaction-side-unknown` — which is
+ * true and says nothing: ASK's two tapes carried 427 such rows, every one of
+ * them understood. They are not trades, so none is emitted as one, and each
+ * kind is reported ONCE per document with its count, so a row this reader
+ * genuinely cannot place still stands out instead of drowning in them.
+ *
+ *   • TDS transfers — `Trf to TDS A/c` moves the tax deducted at source on a
+ *     dividend into the account's TDS ledger and `TDS Trf to Capital A/c` moves
+ *     it on to capital (the "security" is `Tax Deducted at Source`, a quantity
+ *     of rupees at 1.0000). Cash, not shares: the bank book carries every one.
+ *   • Unit movements — `Security in` / `Security out` move units with no
+ *     counterparty and no consideration: Marathon's ITC demerger (ITC out and
+ *     back in at a lower cost, ITC Hotels in), and Buoyant 103473's class
+ *     switch from A1 to A4. A demerger reallocates cost; it sells nothing.
+ */
+const NON_TRADE_ROWS = [
+  {
+    test: /^(?:trf\s+to\s+tds\b|tds\s+trf\s+to\s+capital\b)/i,
+    code: "tds-transfers-are-not-trades",
+    say: (n, labels) => `${n} TDS transfer row(s) (${labels}) — the tax deducted at source on a dividend moving `
+      + "into the account's TDS ledger and on to capital. Cash, not shares: none is a trade, and the bank book "
+      + "carries each one.",
+  },
+  {
+    test: /^security\s+(?:in|out)\b/i,
+    code: "unit-movements-are-not-trades",
+    say: (n, labels) => `${n} unit movement row(s) (${labels}) — units moved in or out with no counterparty and no `
+      + "consideration (a demerger, a class switch or a transfer). None is a trade, so none is emitted as one.",
+  },
+];
+
 function readTransactions(pages, source, warnings) {
   const t = readAcrossPages(pages, TRANSACTION_COLUMNS, {
     minFields: 6, require: ["security", "quantity"], overlapOnly: TRANSACTION_OVERLAP_ONLY,
@@ -864,6 +986,7 @@ function readTransactions(pages, source, warnings) {
   if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
 
   const out = [];
+  const nonTrade = new Map();              // code → { kind, labels: Map<desc, count> }
   let section = null;
   for (const r of t.rows) {
     const date = cellDate(r.fields.tranDate);
@@ -876,12 +999,24 @@ function readTransactions(pages, source, warnings) {
       }
       continue;
     }
-    const side = /^sell/i.test(desc) ? "sell" : /^buy/i.test(desc) ? "buy" : null;
+    const kind = NON_TRADE_ROWS.find((k) => k.test.test(desc));
+    if (kind) {
+      const e = nonTrade.get(kind.code) ?? { kind, labels: new Map() };
+      e.labels.set(desc, (e.labels.get(desc) ?? 0) + 1);
+      nonTrade.set(kind.code, e);
+      continue;
+    }
+    const buyback = BUYBACK.test(desc);
+    const side = buyback || /^sell/i.test(desc) ? "sell" : /^buy/i.test(desc) ? "buy" : null;
     if (!side) { warn(warnings, "transaction-side-unknown", `${date} · ${JSON.stringify(desc)}`); continue; }
     out.push(makeTransaction({
       date,
       settlementDate: cellDate(r.fields.settleDate),
       side,
+      // The statement's own word, where `side` alone hides what happened: a
+      // buyback is a sale to the company itself, and a reader of the tape must
+      // be able to tell it from a sale on the market.
+      description: buyback ? desc : null,
       security: clean(r.fields.security),
       exchange: clean(r.fields.exchange) || null,
       // The section names the instrument type ("Shares - Listed"); a PMS holds
@@ -908,7 +1043,16 @@ function readTransactions(pages, source, warnings) {
       source,
     }));
   }
-  return out.length ? { transactions: out, sheet: toAuditSheet("transactions", Object.keys(t.columns), t.rows) } : null;
+  for (const { kind, labels } of nonTrade.values()) {
+    const n = [...labels.values()].reduce((a, b) => a + b, 0);
+    const named = [...labels].map(([d, c]) => `${c} × ${JSON.stringify(d)}`).join(", ");
+    warn(warnings, kind.code, kind.say(n, named));
+  }
+  // A tape whose every dated row is a known non-trade row was still READ, and
+  // its table was found — it is not "table not found".
+  return out.length || nonTrade.size
+    ? { transactions: out, sheet: toAuditSheet("transactions", Object.keys(t.columns), t.rows) }
+    : null;
 }
 
 /** STATEMENT OF CAPITAL GAIN/LOSS → realised lots, ST/LT as the manager split them. */

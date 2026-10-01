@@ -32,6 +32,13 @@ export const REPORT_TYPES = [
   // The only place in this drop that says which rate the family's AIF income
   // attracts, which is not a detail a "distribution-notice" would carry.
   "statement-of-earnings",
+  // The same reporting system's two since-inception ACCOUNT SUMMARIES. ASK's
+  // PROFIT AND LOSS ACCOUNT (income, expenses and the surplus, with a balance
+  // sheet on its second page) and Marathon's DETAILS OF INCOME AND EXPENSES
+  // (one row: gains by term, dividend, interest, fees, STT). Each is the
+  // manager's own total of what the dated statements beside it itemise — a
+  // CHECK on those statements, and the only document carrying the fees.
+  "profit-and-loss", "income-expense",
   "unknown",
 ];
 
@@ -56,10 +63,11 @@ export function toIso(raw) {
   if ((m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})$/))) {
     const [, d, mo, yy] = m;
     // The capital gain statement prints two-digit years (`07/05/26`) while every
-    // other report prints four. Two digits are read as 20xx: these are 2025-26
-    // statements of a book whose earliest inception is 2025, and no row in the
-    // drop predates 2000. A wider rule would need a pivot year, and a pivot year
-    // guessed here would silently move a trade by a century.
+    // other report prints four. Two digits are read as 20xx: the earliest dated
+    // row in this book is ASK's 2019 inception (its capital gain statement
+    // prints `18/08/20` and `30/03/22`), and no row in the drop predates 2000.
+    // A wider rule would need a pivot year, and a pivot year guessed here would
+    // silently move a trade by a century.
     const y = yy.length === 2 ? `20${yy}` : yy;
     if (Number(mo) >= 1 && Number(mo) <= 12 && Number(d) >= 1 && Number(d) <= 31) return `${y}-${pad(mo)}-${pad(d)}`;
     return null;
@@ -220,6 +228,8 @@ const GOLDSTANDARD_FILE_TYPES = [
   [/bankbook/i, "bank-book"],
   [/expensestmt/i, "expense-statement"],
   [/corporatebenefits/i, "corporate-benefits"],
+  [/profitlossaccount/i, "profit-and-loss"],
+  [/incomeexpense/i, "income-expense"],
 ];
 
 /**
@@ -231,6 +241,18 @@ const GOLDSTANDARD_FILE_TYPES = [
  * account-code prefix because the appraisal carries no letterhead.
  */
 const PMS_FILE = /^[A-Z]{1,8}\d+_\d+_/i;
+// ASK's files carry no client code before the account: `askimpms_10034025_…`.
+const ASK_FILE = /^askimpms_\d+_/i;
+// ASK INVESTMENT MANAGERS' PMS statements, by the three things they print: the
+// house's own name (fact sheet, P&L, balance sheet), its strategy (every
+// statement) and its SEBI PMS registration (every footer). The registration is
+// the strongest: it is issued to ASK Investment Managers Limited and to no one
+// else. ASK's AIF arm prints none of the three.
+const isAsk = (text) => /ASK\s+Investment\s+Managers/i.test(text)
+  || /ASK\s+Indian\s+Entrepreneur\s+Portfolio/i.test(text)
+  || /\bINP000008066\b/.test(text);
+// MARATHON TRENDS ADVISORY prints its letterhead on every statement.
+const isMarathon = (text) => /Marathon\s+Trends\s+Advisory/i.test(text);
 
 /**
  * THE FAMILY'S OWN INVESTMENT REGISTER, matched on a header no custodian prints.
@@ -309,12 +331,25 @@ function matchGoldstandard(text, name) {
     // Buoyant issues from this system TOO, under an `I83_` account code. Its
     // own Category III account statement is a different document family and
     // goes to `altFundStatements.mjs`; see the dispatch note in extract.mjs.
-    || /Buoyant\s+Opportunities\s+Strategy/i.test(text);
-  const byName = PMS_FILE.test(name);
+    || /Buoyant\s+Opportunities\s+Strategy/i.test(text)
+    // ASK Investment Managers and Marathon Trends Advisory issue from this
+    // system too — the same titles (BANK BOOK, STATEMENT OF CAPITAL GAIN/LOSS,
+    // STATEMENT OF DIVIDEND), the same `<code>_<account>_<Report><n>CT` file
+    // names. ASK's dated statements print no house name at all, only the
+    // strategy line and the SEBI registration in the footer, so both are
+    // signatures. The ASK ABSOLUTE RETURN FUND is a different vehicle from a
+    // different arm (ASK Long-Short Fund Managers) and prints none of these,
+    // which is what keeps it out of here; see ISSUER_PROVIDER_RULES.
+    || isAsk(text) || isMarathon(text);
+  const byName = PMS_FILE.test(name) || ASK_FILE.test(name);
   if (!byText && !byName) return null;
 
   // `Account : 12345  Some Owner Name`
-  const provider = /GREEN\s+LANTERN\s+CAPITAL/i.test(text) ? "Green Lantern Capital LLP"
+  // ASK and Marathon are tested FIRST: each is a whole letterhead (or, for ASK,
+  // its strategy and registration), and neither names another house.
+  const provider = isAsk(text) ? "ASK Investment Managers Limited"
+    : isMarathon(text) ? "Marathon Trends Advisory Pvt Ltd"
+    : /GREEN\s+LANTERN\s+CAPITAL/i.test(text) ? "Green Lantern Capital LLP"
     // The AMRITKAAL fund is a Category III AIF, a different vehicle from the
     // PMS mandate, and its statement names Carnelian as its manager — so it has
     // to be tested BEFORE the house rule or it lands in the PMS account.
@@ -329,17 +364,35 @@ function matchGoldstandard(text, name) {
     : /^VEC/i.test(name) ? "V.E.C Assago Capital Management LLP"
     : /^G\d/i.test(name) ? "Goldstandard Wealth Private Limited"
     : /^I83/i.test(name) ? "Buoyant Capital"
+    : ASK_FILE.test(name) ? "ASK Investment Managers Limited"
+    : /^Z1211_/i.test(name) ? "Marathon Trends Advisory Pvt Ltd"
     : null;
   const strategy = /Aristos\s+Equity\s+Portfolio/i.test(text) ? "Aristos Equity Portfolio"
     : /GLC\s+GROWTH\s+FUND/i.test(text) ? "GLC Growth Fund"
     : /CARNELIAN\s+BESPOKE\s+PORTFOLIO/i.test(text) ? "Carnelian Bespoke Portfolio"
     : /V\.?\s*E\.?\s*C\s+ASSAGO\s+Small\s+and\s+Mid-?Cap\s+Growth/i.test(text) ? "V.E.C ASSAGO Small and Mid-Cap Growth"
+    : /ASK\s+Indian\s+Entrepreneur\s+Portfolio/i.test(text) ? "ASK Indian Entrepreneur Portfolio"
+    : /Trend\s+Following\s*-\s*Flexicap\s+Growth/i.test(text) ? "Trend Following - Flexicap Growth"
     : null;
-  const acct = text.match(/Account\s*[:#-]\s*([A-Z0-9-]{2,20})\s+([A-Za-z][A-Za-z.&'\- ]{2,80})/i);
+  // ASK prints TWO numbers before the holder — `Account : 10034025 0034926 -
+  // Ajay T Jaisinghani` (the fact sheet hyphenates both gaps). The first is the
+  // account its file name and every statement carry; the second is the house's
+  // client code. The generic pattern below cannot read it: after the first
+  // number it wants a NAME, finds the client code, and gives up.
+  const askAcct = provider === "ASK Investment Managers Limited"
+    ? text.match(/Account\s*:\s*(\d{6,})\s*-?\s*(\d{5,})\s*-\s*([A-Za-z][A-Za-z.'\- ]{2,60})/i)
+    : null;
+  const acct = askAcct
+    ? [askAcct[0], askAcct[1], askAcct[3]]
+    : text.match(/Account\s*[:#-]\s*([A-Z0-9-]{2,20})\s+([A-Za-z][A-Za-z.&'\- ]{2,80})/i);
   let accountNo = acct ? acct[1] : null;
   // The strategy name sits right after the owner on the same header line, so its
-  // leading token has to stop the name or it reads as part of it.
-  let ownerName = acct ? trimPersonName(acct[2], strategy ? [strategy.split(" ")[0]] : []) : null;
+  // leading token has to stop the name or it reads as part of it. ASK's fact
+  // sheet runs the holdings table into the same line (`… Jaisinghani 1 BANK
+  // Cash and …`), and its other statements run into `ASK Indian Entrepreneur
+  // Portfolio`, so `ASK` stops the name there.
+  const stops = [...(strategy ? [strategy.split(" ")[0]] : []), ...(askAcct ? ["ASK", "Inception", "Sebi"] : [])];
+  let ownerName = acct ? trimPersonName(acct[2], stops) : null;
   // Goldstandard ONLY: its filename repeats the account number twice
   // (`G100023_100024_…` on account 100024), so the second field is the account
   // and is trusted when the text didn't parse. This does NOT generalise — V.E.C
@@ -351,7 +404,16 @@ function matchGoldstandard(text, name) {
     if (fn) accountNo = fn[2];
   }
 
-  const asOf = dateAfter(text, "Report\\s*Date") || dateAfter(text, "As\\s*of") || dateAfter(text, "As\\s*on");
+  let asOf = dateAfter(text, "Report\\s*Date") || dateAfter(text, "As\\s*of") || dateAfter(text, "As\\s*on");
+  // ASK's and Marathon's dated statements carry no `As of` line — only the
+  // window they cover, `From 06/09/2019 to 08/09/2026` — and a statement is as
+  // of the day its window closes. SCOPED to those two houses: every other house
+  // in this book reaches its as-of above, and widening the fallback to them
+  // would move a document key the archive already carries.
+  if (!asOf && (provider === "ASK Investment Managers Limited" || provider === "Marathon Trends Advisory Pvt Ltd")) {
+    const w = text.match(/From\s+(\d{1,2}\/\d{1,2}\/\d{4})\s+to\s+(\d{1,2}\/\d{1,2}\/\d{4})/i);
+    if (w) asOf = toIso(w[2]);
+  }
 
   let reportType = "unknown";
   let matchedBy = "Goldstandard signature";
@@ -585,6 +647,19 @@ const ISSUER_PROVIDER_RULES = [
   [/CARNELIAN\s+BHARAT\s+AMRITKAAL\s+FUND/i, "Carnelian Bharat Amritkaal Fund"],
   [/Motilal\s+Oswal\s+Wealth\s+Delphi\s+Equity\s+Fund|Delphi\s+Emerging\s+Equity\s+Fund/i, "Motilal Oswal Delphi Equity Fund"],
   [/Motilal\s+Oswal\s+Hedged\s+Equity\s+Multi\s+Factor/i, "Motilal Oswal Hedged Equity Multi Factor Strategy"],
+  /**
+   * ASK'S CATEGORY III AIF, NAMED BY ITS OWN STATEMENT'S TITLE.
+   *
+   * Its statement of account names Motilal Oswal Wealth as the DISTRIBUTOR, a
+   * bank in the investor's block and KFintech in its footer, so before this
+   * rule all three folios landed under the bare `Motilal Oswal` issuer rule
+   * below with the investor's BANK ACCOUNT as their account number. It sits
+   * below the depository rules — the family's demat statements carry this fund
+   * as a scrip row (`ASK ALTERNATE INVESTMENT FUND - ASK ABSOLUTE RETURN
+   * FUND…`) — and above the distributor and RTA rules, the band the
+   * `august-2026-d` block above already documents.
+   */
+  [/ASK\s+Absolute\s+Return\s+Fund/i, "ASK Absolute Return Fund"],
   // A bank payment advice, not a statement. `3P_Folio 3000049.pdf` is named for
   // the folio the money went to and is an ICICI receipt for the transfer.
   [/ICICI\s+Bank\s+Advice\s+Receipt/i, "ICICI Bank (payment advice)"],
@@ -721,6 +796,27 @@ export function classify({ fileName, text }) {
       provider, ownerName: null, accountNo: null, asOfDate: null,
       reportType: "unknown", sections: [], familyGroup: null, strategy: null,
       confidence: "high", matchedBy: "non-statement signature",
+    };
+  }
+  /**
+   * ASK ABSOLUTE RETURN FUND prints its folio with NO separator — `Folio Number
+   * 9039917144` — so the generic pattern below finds the investor's BANK account
+   * first (`Account Number : 0651…`) and files the statement under it. The folio
+   * is the account. The holder is the `Name :` that opens the investor block,
+   * cut where the bank block beside it begins (`… Bank & Branch :`); the second
+   * holder and the distributor print `Name :` too and are never followed by it.
+   * It is a single-scheme ACCOUNT STATEMENT — units, NAVs and the dated record —
+   * which is what every other fund this book reads is typed as.
+   */
+  if (provider === "ASK Absolute Return Fund") {
+    const folio = (t.match(/Folio\s+Number\s*:?\s*(\d{6,})/i) || [])[1] || null;
+    const holder = (t.match(/\bName\s*:\s*([A-Za-z][A-Za-z .'-]{2,60}?)\s+Bank\s*&/) || [])[1] || null;
+    const asOfDate = genericAsOf(t) || dateFromName(name);
+    return {
+      provider, ownerName: trimPersonName(holder), accountNo: folio, asOfDate,
+      reportType: "holdings", sections: ["holdings"], familyGroup: null, strategy: null,
+      confidence: folio && asOfDate ? "high" : "medium",
+      matchedBy: "ASK Absolute Return Fund statement of account",
     };
   }
   const reportType = genericReportType(t) || genericReportType(name.replace(/[_-]/g, " "));

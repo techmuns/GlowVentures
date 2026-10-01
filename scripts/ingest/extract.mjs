@@ -25,7 +25,7 @@ import { splitBundle, isKnownReportType } from "./lib/bundle.mjs";
 import { readSpreadsheet } from "./lib/sheet.mjs";
 import { makeDocument, makeDocKey, assertNormalized, deriveDocument, DOCUMENT_FIELDS } from "./lib/document.mjs";
 import { resolveOwner } from "../../shared/owners.mjs";
-import { securityKeyOf } from "../../shared/securityKey.mjs";
+import { securityKeyOf, stripDepositoryTail } from "../../shared/securityKey.mjs";
 import * as pms from "./providers/pmsStatements.mjs";
 import * as threeSixtyOne from "./providers/threeSixtyOne.mjs";
 import * as sanshiFund from "./providers/sanshiFund.mjs";
@@ -733,11 +733,33 @@ function backfillSecurityNames(docs) {
     return a.every((w, i) => b[i].startsWith(w));
   }
 
+  /**
+   * What a name says about the COMPANY, with the depository's description of
+   * its line removed.
+   *
+   * A CDSL transaction statement names a holding `INDIAN BANK - EQUITY SHARES`
+   * or `AXIS BANK LIMITED # NEW EQUITY SHARES OF RS.2/- AFTER SUBDIVISION`: the
+   * company, then the depository's own account of WHICH LINE in its books this
+   * is. Word by word, `INDIAN BANK - EQ` is an abbreviation of the first — EQ is
+   * a prefix of EQUITY — so `abbreviates` alone renamed the holding to it and
+   * keyed it `indian-bank-equity-shares`, splitting Indian Bank from itself.
+   * That rename appeared only once Stage 10ba's reader read every movement row;
+   * a fuller name has to say more about the company, not more about the line.
+   * So the comparison is ALSO made with that description and the furniture
+   * `stripDepositoryTail` already removes taken off both sides, and a name that
+   * is only fuller in its furniture is not fuller.
+   */
+  const DESCRIPTION_TAIL = /\s*(?:[#\-–—]\s*)?(?:NEW\s+)?EQUITY\s+SHARES?\b.*$/i;
+  const companyPart = (s) => stripDepositoryTail(String(s).replace(DESCRIPTION_TAIL, ""));
+
   let renamed = 0;
   for (const d of docs) {
     for (const h of d.holdings ?? []) {
       if (!h.isin) continue;
-      const fuller = [...(byIsin.get(h.isin) ?? [])].filter((n) => n !== h.security && abbreviates(h.security, n));
+      const fuller = [...(byIsin.get(h.isin) ?? [])].filter((n) =>
+        n !== h.security
+        && abbreviates(h.security, n)
+        && abbreviates(companyPart(h.security), companyPart(n)));
       if (fuller.length !== 1) continue;
       h.printedSecurity ??= h.security;
       h.security = fuller[0];

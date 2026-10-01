@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-08-19T11:26:04.549Z",
+  "generatedAt": "2026-10-01T09:04:23.470Z",
   "sourceDir": "source",
   "counts": {
-    "files": 255,
-    "pdfs": 253,
-    "nonPdf": 2,
-    "classified": 235,
-    "unclassified": 20,
-    "encrypted": 13,
-    "fromArchives": 229,
-    "archivesExpanded": 22,
-    "pages": 703
+    "files": 303,
+    "pdfs": 293,
+    "nonPdf": 10,
+    "classified": 259,
+    "unclassified": 44,
+    "encrypted": 16,
+    "fromArchives": 245,
+    "archivesExpanded": 24,
+    "pages": 1464
   },
   "reportTypes": [
     "holdings",
@@ -174,6 +174,20 @@
       "archive": "source/SANSHI FUND.zip",
       "extractedTo": "source/_extracted/SANSHI FUND",
       "files": 5,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/september-2026/Ajay Jaisinghani.zip",
+      "extractedTo": "source/_extracted/september-2026/Ajay Jaisinghani",
+      "files": 8,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/september-2026/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/september-2026/Ankita Jaisinghani",
+      "files": 8,
       "skipped": 0,
       "failed": 0
     },
@@ -4561,6 +4575,178 @@
       "matchedBy": "generic keywords"
     },
     {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_CapitalGain90CT.pdf",
+      "fileName": "Z1211_5110837_CapitalGain90CT.pdf",
+      "bytes": 50884,
+      "size": "49.7 KB",
+      "pages": 10,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ajay Jaisinghani",
+      "accountNo": "5110837",
+      "asOfDate": null,
+      "reportType": "capital-gain",
+      "sections": [
+        "capital-gain"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_DividendStatement_India177CT.pdf",
+      "fileName": "Z1211_5110837_DividendStatement_India177CT.pdf",
+      "bytes": 30110,
+      "size": "29.4 KB",
+      "pages": 5,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ajay Jaisinghani",
+      "accountNo": "5110837",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_IncomeExpenseCSV1538CT.pdf",
+      "fileName": "Z1211_5110837_IncomeExpenseCSV1538CT.pdf",
+      "bytes": 17630,
+      "size": "17.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ajay Jaisinghani",
+      "accountNo": "5110837",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_TransactionStatement_India94CT.pdf",
+      "fileName": "Z1211_5110837_TransactionStatement_India94CT.pdf",
+      "bytes": 41146,
+      "size": "40.2 KB",
+      "pages": 7,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ajay Jaisinghani",
+      "accountNo": "5110837",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_CapitalGain90CT.pdf",
+      "fileName": "Z1211_5110758_CapitalGain90CT.pdf",
+      "bytes": 55222,
+      "size": "53.9 KB",
+      "pages": 11,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ankita Jaisinghani",
+      "accountNo": "5110758",
+      "asOfDate": null,
+      "reportType": "capital-gain",
+      "sections": [
+        "capital-gain"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_DividendStatement_India177CT.pdf",
+      "fileName": "Z1211_5110758_DividendStatement_India177CT.pdf",
+      "bytes": 31149,
+      "size": "30.4 KB",
+      "pages": 5,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ankita Jaisinghani",
+      "accountNo": "5110758",
+      "asOfDate": null,
+      "reportType": "dividend-statement",
+      "sections": [
+        "dividend-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_IncomeExpenseCSV1538CT.pdf",
+      "fileName": "Z1211_5110758_IncomeExpenseCSV1538CT.pdf",
+      "bytes": 17632,
+      "size": "17.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ankita Jaisinghani",
+      "accountNo": "5110758",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_TransactionStatement_India94CT.pdf",
+      "fileName": "Z1211_5110758_TransactionStatement_India94CT.pdf",
+      "bytes": 45200,
+      "size": "44.1 KB",
+      "pages": 8,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ankita Jaisinghani",
+      "accountNo": "5110758",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
       "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT (1).pdf",
       "fileName": "VECBES0004_145052_BankBook178OT (1).pdf",
       "bytes": 70737,
@@ -5367,8 +5553,116 @@
       "sections": [],
       "familyGroup": null,
       "strategy": null,
+      "confidence": "high",
+      "matchedBy": "non-statement signature"
+    },
+    {
+      "path": "source/august-2026-e/Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf",
+      "fileName": "Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf",
+      "bytes": 99169,
+      "size": "96.8 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "ICICI Bank (NSDL demat)",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-03-30",
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
+      "fileName": "HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
+      "bytes": 1469198,
+      "size": "1.4 MB",
+      "pages": 4,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
       "confidence": "low",
       "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+      "fileName": "HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+      "bytes": 108560,
+      "size": "106.0 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "HDFC Bank (NSDL demat)",
+      "ownerName": null,
+      "accountNo": "67786547",
+      "asOfDate": "2026-08-29",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+      "fileName": "HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+      "bytes": 107457,
+      "size": "104.9 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "HDFC Bank (NSDL demat)",
+      "ownerName": null,
+      "accountNo": "67786137",
+      "asOfDate": "2026-08-29",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+      "fileName": "NEW INVESTMENT SHEET.xlsx",
+      "bytes": 80074,
+      "size": "78.2 KB",
+      "pages": 8,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Family investment register (not a statement)",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "non-statement signature"
     },
     {
       "path": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
@@ -5515,6 +5809,564 @@
       "strategy": null,
       "confidence": "medium",
       "matchedBy": "Goldstandard signature + content keywords"
+    },
+    {
+      "path": "source/september-2026/Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
+      "fileName": "Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
+      "bytes": 589180,
+      "size": "575.4 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Motilal Oswal",
+      "ownerName": null,
+      "accountNo": "00841000060394",
+      "asOfDate": "2026-03-31",
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
+      "fileName": "Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
+      "bytes": 589457,
+      "size": "575.6 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Motilal Oswal",
+      "ownerName": null,
+      "accountNo": "06510040008050",
+      "asOfDate": "2026-03-31",
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_BankBook178CT.pdf",
+      "fileName": "askimpms_10032723_BankBook178CT.pdf",
+      "bytes": 861519,
+      "size": "841.3 KB",
+      "pages": 235,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "HDFC",
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_BankBook178CT.xlsx",
+      "fileName": "askimpms_10032723_BankBook178CT.xlsx",
+      "bytes": 900031,
+      "size": "878.9 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_CapitalGain90CT.pdf",
+      "fileName": "askimpms_10032723_CapitalGain90CT.pdf",
+      "bytes": 313437,
+      "size": "306.1 KB",
+      "pages": 49,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_CapitalGain90CT.xlsx",
+      "fileName": "askimpms_10032723_CapitalGain90CT.xlsx",
+      "bytes": 439505,
+      "size": "429.2 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_DividendStatement_India177CT.pdf",
+      "fileName": "askimpms_10032723_DividendStatement_India177CT.pdf",
+      "bytes": 97699,
+      "size": "95.4 KB",
+      "pages": 13,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_DividendStatement_India177CT.xlsx",
+      "fileName": "askimpms_10032723_DividendStatement_India177CT.xlsx",
+      "bytes": 141800,
+      "size": "138.5 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_PortFolioFactSheet6020CT.pdf",
+      "fileName": "askimpms_10032723_PortFolioFactSheet6020CT.pdf",
+      "bytes": 53256,
+      "size": "52.0 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": "2026-09-08",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_ProfitLossAccount1213CT.pdf",
+      "fileName": "askimpms_10032723_ProfitLossAccount1213CT.pdf",
+      "bytes": 57792,
+      "size": "56.4 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": "2026-09-08",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_ProfitLossAccount1213CT.xlsx",
+      "fileName": "askimpms_10032723_ProfitLossAccount1213CT.xlsx",
+      "bytes": 59097,
+      "size": "57.7 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": "2026-09-08",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_TransactionStatement_India94CT.pdf",
+      "fileName": "askimpms_10032723_TransactionStatement_India94CT.pdf",
+      "bytes": 226444,
+      "size": "221.1 KB",
+      "pages": 42,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_TransactionStatement_India94CT.xlsx",
+      "fileName": "askimpms_10032723_TransactionStatement_India94CT.xlsx",
+      "bytes": 295341,
+      "size": "288.4 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_BankBook178CT.pdf",
+      "fileName": "askimpms_10034025_BankBook178CT.pdf",
+      "bytes": 842547,
+      "size": "822.8 KB",
+      "pages": 230,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "HDFC",
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_BankBook178CT.xlsx",
+      "fileName": "askimpms_10034025_BankBook178CT.xlsx",
+      "bytes": 881481,
+      "size": "860.8 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_CapitalGain90CT.pdf",
+      "fileName": "askimpms_10034025_CapitalGain90CT.pdf",
+      "bytes": 301233,
+      "size": "294.2 KB",
+      "pages": 47,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_CapitalGain90CT.xlsx",
+      "fileName": "askimpms_10034025_CapitalGain90CT.xlsx",
+      "bytes": 420060,
+      "size": "410.2 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_DividendStatement_India177CT.pdf",
+      "fileName": "askimpms_10034025_DividendStatement_India177CT.pdf",
+      "bytes": 96644,
+      "size": "94.4 KB",
+      "pages": 13,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_DividendStatement_India177CT.xlsx",
+      "fileName": "askimpms_10034025_DividendStatement_India177CT.xlsx",
+      "bytes": 138503,
+      "size": "135.3 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_PortFolioFactSheet6020CT.pdf",
+      "fileName": "askimpms_10034025_PortFolioFactSheet6020CT.pdf",
+      "bytes": 53486,
+      "size": "52.2 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": "2026-09-08",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_ProfitLossAccount1213CT.pdf",
+      "fileName": "askimpms_10034025_ProfitLossAccount1213CT.pdf",
+      "bytes": 57807,
+      "size": "56.5 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": "2026-09-08",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_ProfitLossAccount1213CT.xlsx",
+      "fileName": "askimpms_10034025_ProfitLossAccount1213CT.xlsx",
+      "bytes": 59111,
+      "size": "57.7 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": "2026-09-08",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_TransactionStatement_India94CT.pdf",
+      "fileName": "askimpms_10034025_TransactionStatement_India94CT.pdf",
+      "bytes": 219353,
+      "size": "214.2 KB",
+      "pages": 40,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_TransactionStatement_India94CT.xlsx",
+      "fileName": "askimpms_10034025_TransactionStatement_India94CT.xlsx",
+      "bytes": 286960,
+      "size": "280.2 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/ATJ - ASK AIF - 9039917111_07042026142531008678.pdf",
+      "fileName": "ATJ - ASK AIF - 9039917111_07042026142531008678.pdf",
+      "bytes": 595412,
+      "size": "581.5 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Motilal Oswal",
+      "ownerName": null,
+      "accountNo": "00841000060394",
+      "asOfDate": "2026-03-31",
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/Portfolio Snap Report_BOUYA387.pdf",
+      "fileName": "Portfolio Snap Report_BOUYA387.pdf",
+      "bytes": 159731,
+      "size": "156.0 KB",
+      "pages": 3,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "ANKITA JAISINGHANI Buoyant Opportunities",
+      "accountNo": "103472",
+      "asOfDate": "2026-08-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
+      "path": "source/september-2026/Portfolio Snap Report_BOUYA388.pdf",
+      "fileName": "Portfolio Snap Report_BOUYA388.pdf",
+      "bytes": 161665,
+      "size": "157.9 KB",
+      "pages": 3,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Buoyant Capital",
+      "ownerName": "AJAY THAKURDAS JAISINGHANI Buoyant Opportunities",
+      "accountNo": "103473",
+      "asOfDate": "2026-08-31",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
     },
     {
       "path": "source/SVAN - AJAY [1E444lq6].pdf",
@@ -5709,6 +6561,182 @@
       "strategy": null,
       "confidence": "low",
       "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_CapitalGain90CT.csv",
+      "fileName": "Z1211_5110837_CapitalGain90CT.csv",
+      "bytes": 38203,
+      "size": "37.3 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_DividendStatement_India177CT.csv",
+      "fileName": "Z1211_5110837_DividendStatement_India177CT.csv",
+      "bytes": 7399,
+      "size": "7.2 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_IncomeExpenseCSV1538CT.csv",
+      "fileName": "Z1211_5110837_IncomeExpenseCSV1538CT.csv",
+      "bytes": 535,
+      "size": "535 B",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_TransactionStatement_India94CT.csv",
+      "fileName": "Z1211_5110837_TransactionStatement_India94CT.csv",
+      "bytes": 17012,
+      "size": "16.6 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_CapitalGain90CT.csv",
+      "fileName": "Z1211_5110758_CapitalGain90CT.csv",
+      "bytes": 43457,
+      "size": "42.4 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_DividendStatement_India177CT.csv",
+      "fileName": "Z1211_5110758_DividendStatement_India177CT.csv",
+      "bytes": 8382,
+      "size": "8.2 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_IncomeExpenseCSV1538CT.csv",
+      "fileName": "Z1211_5110758_IncomeExpenseCSV1538CT.csv",
+      "bytes": 536,
+      "size": "536 B",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_TransactionStatement_India94CT.csv",
+      "fileName": "Z1211_5110758_TransactionStatement_India94CT.csv",
+      "bytes": 19540,
+      "size": "19.1 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
     }
   ],
   "nonPdfFiles": [
@@ -5745,6 +6773,182 @@
       "isPdf": false,
       "fileKind": "Word document",
       "readError": "no Word reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_CapitalGain90CT.csv",
+      "fileName": "Z1211_5110837_CapitalGain90CT.csv",
+      "bytes": 38203,
+      "size": "37.3 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_DividendStatement_India177CT.csv",
+      "fileName": "Z1211_5110837_DividendStatement_India177CT.csv",
+      "bytes": 7399,
+      "size": "7.2 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_IncomeExpenseCSV1538CT.csv",
+      "fileName": "Z1211_5110837_IncomeExpenseCSV1538CT.csv",
+      "bytes": 535,
+      "size": "535 B",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_TransactionStatement_India94CT.csv",
+      "fileName": "Z1211_5110837_TransactionStatement_India94CT.csv",
+      "bytes": 17012,
+      "size": "16.6 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_CapitalGain90CT.csv",
+      "fileName": "Z1211_5110758_CapitalGain90CT.csv",
+      "bytes": 43457,
+      "size": "42.4 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_DividendStatement_India177CT.csv",
+      "fileName": "Z1211_5110758_DividendStatement_India177CT.csv",
+      "bytes": 8382,
+      "size": "8.2 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_IncomeExpenseCSV1538CT.csv",
+      "fileName": "Z1211_5110758_IncomeExpenseCSV1538CT.csv",
+      "bytes": 536,
+      "size": "536 B",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_TransactionStatement_India94CT.csv",
+      "fileName": "Z1211_5110758_TransactionStatement_India94CT.csv",
+      "bytes": 19540,
+      "size": "19.1 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -7098,9 +8302,23 @@
                 ]
               },
               "fileCount": 1
+            },
+            "2026-08-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/september-2026/Portfolio Snap Report_BOUYA387.pdf",
+                    "pages": 3,
+                    "size": "156.0 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
-          "fileCount": 4
+          "fileCount": 5
         },
         "103473": {
           "owner": "AJAY THAKURDAS JAISINGHANI Buoyant Opportunities",
@@ -7175,9 +8393,23 @@
                 ]
               },
               "fileCount": 2
+            },
+            "2026-08-31": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/september-2026/Portfolio Snap Report_BOUYA388.pdf",
+                    "pages": 3,
+                    "size": "157.9 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
-          "fileCount": 6
+          "fileCount": 7
         },
         "(unidentified)": {
           "owner": null,
@@ -7212,7 +8444,7 @@
           "fileCount": 2
         }
       },
-      "fileCount": 12
+      "fileCount": 14
     },
     "Carnelian Bharat Amritkaal Fund": {
       "accounts": {
@@ -8860,6 +10092,197 @@
       },
       "fileCount": 5
     },
+    "(unidentified)": {
+      "accounts": {
+        "5110758": {
+          "owner": "Ankita Jaisinghani",
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "capital-gain": [
+                  {
+                    "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_CapitalGain90CT.pdf",
+                    "pages": 11,
+                    "size": "53.9 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  }
+                ],
+                "dividend-statement": [
+                  {
+                    "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_DividendStatement_India177CT.pdf",
+                    "pages": 5,
+                    "size": "30.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_TransactionStatement_India94CT.pdf",
+                    "pages": 8,
+                    "size": "44.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 3
+            }
+          },
+          "fileCount": 3
+        },
+        "5110837": {
+          "owner": "Ajay Jaisinghani",
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "capital-gain": [
+                  {
+                    "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_CapitalGain90CT.pdf",
+                    "pages": 10,
+                    "size": "49.7 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-gain"
+                    ]
+                  }
+                ],
+                "dividend-statement": [
+                  {
+                    "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_DividendStatement_India177CT.pdf",
+                    "pages": 5,
+                    "size": "29.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "dividend-statement"
+                    ]
+                  }
+                ],
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_TransactionStatement_India94CT.pdf",
+                    "pages": 7,
+                    "size": "40.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 3
+            }
+          },
+          "fileCount": 3
+        },
+        "10032723": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-09-08": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/september-2026/askimpms_10032723_PortFolioFactSheet6020CT.pdf",
+                    "pages": 1,
+                    "size": "52.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "(unidentified)": {
+              "reportTypes": {
+                "transaction-statement": [
+                  {
+                    "path": "source/september-2026/askimpms_10032723_TransactionStatement_India94CT.pdf",
+                    "pages": 42,
+                    "size": "221.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/september-2026/askimpms_10032723_TransactionStatement_India94CT.xlsx",
+                    "pages": 1,
+                    "size": "288.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 3
+        },
+        "10034025": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-09-08": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/september-2026/askimpms_10034025_PortFolioFactSheet6020CT.pdf",
+                    "pages": 1,
+                    "size": "52.2 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
+            "(unidentified)": {
+              "reportTypes": {
+                "transaction-statement": [
+                  {
+                    "path": "source/september-2026/askimpms_10034025_TransactionStatement_India94CT.pdf",
+                    "pages": 40,
+                    "size": "214.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/september-2026/askimpms_10034025_TransactionStatement_India94CT.xlsx",
+                    "pages": 1,
+                    "size": "280.2 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 3
+        }
+      },
+      "fileCount": 12
+    },
     "360 ONE Alternates Asset Management": {
       "accounts": {
         "1000632": {
@@ -8987,6 +10410,137 @@
       },
       "fileCount": 2
     },
+    "Consolidated family review (not a statement)": {
+      "accounts": {
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+                    "pages": 25,
+                    "size": "255.8 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "ICICI Bank (NSDL demat)": {
+      "accounts": {
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-03-30": {
+              "reportTypes": {
+                "transaction-statement": [
+                  {
+                    "path": "source/august-2026-e/Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf",
+                    "pages": 2,
+                    "size": "96.8 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "HDFC Bank (NSDL demat)": {
+      "accounts": {
+        "67786137": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-08-29": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+                    "pages": 1,
+                    "size": "104.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
+        "67786547": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-08-29": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+                    "pages": 1,
+                    "size": "106.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 2
+    },
+    "Family investment register (not a statement)": {
+      "accounts": {
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+                    "pages": 8,
+                    "size": "78.2 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
     "Motilal Oswal Active Momentum Fund": {
       "accounts": {
         "Transaction": {
@@ -9108,6 +10662,113 @@
         }
       },
       "fileCount": 3
+    },
+    "Motilal Oswal": {
+      "accounts": {
+        "00841000060394": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-03-31": {
+              "reportTypes": {
+                "transaction-statement": [
+                  {
+                    "path": "source/september-2026/Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
+                    "pages": 2,
+                    "size": "575.4 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  },
+                  {
+                    "path": "source/september-2026/ATJ - ASK AIF - 9039917111_07042026142531008678.pdf",
+                    "pages": 2,
+                    "size": "581.5 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 2
+        },
+        "06510040008050": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-03-31": {
+              "reportTypes": {
+                "transaction-statement": [
+                  {
+                    "path": "source/september-2026/Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
+                    "pages": 2,
+                    "size": "575.6 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 3
+    },
+    "HDFC": {
+      "accounts": {
+        "10032723": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/september-2026/askimpms_10032723_BankBook178CT.pdf",
+                    "pages": 235,
+                    "size": "841.3 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
+        "10034025": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/september-2026/askimpms_10034025_BankBook178CT.pdf",
+                    "pages": 230,
+                    "size": "822.8 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 2
     },
     "Transition Venture Capital": {
       "accounts": {
@@ -9451,6 +11112,30 @@
       "duplicateTypes": []
     },
     {
+      "provider": "(unidentified)",
+      "account": "5110758",
+      "asOf": "(unidentified)",
+      "fileCount": 3,
+      "reportTypes": [
+        "capital-gain",
+        "dividend-statement",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "(unidentified)",
+      "account": "5110837",
+      "asOf": "(unidentified)",
+      "fileCount": 3,
+      "reportTypes": [
+        "capital-gain",
+        "dividend-statement",
+        "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
       "provider": "Goldstandard Wealth Private Limited",
       "account": "100023",
       "asOf": "2026-04-01",
@@ -9764,6 +11449,30 @@
       ]
     },
     {
+      "provider": "(unidentified)",
+      "account": "10032723",
+      "asOf": "(unidentified)",
+      "fileCount": 2,
+      "reportTypes": [
+        "transaction-statement"
+      ],
+      "duplicateTypes": [
+        "transaction-statement"
+      ]
+    },
+    {
+      "provider": "(unidentified)",
+      "account": "10034025",
+      "asOf": "(unidentified)",
+      "fileCount": 2,
+      "reportTypes": [
+        "transaction-statement"
+      ],
+      "duplicateTypes": [
+        "transaction-statement"
+      ]
+    },
+    {
       "provider": "360 ONE Alternates Asset Management",
       "account": "(unidentified)",
       "asOf": "(unidentified)",
@@ -9773,6 +11482,18 @@
       ],
       "duplicateTypes": [
         "statement-of-earnings"
+      ]
+    },
+    {
+      "provider": "Motilal Oswal",
+      "account": "00841000060394",
+      "asOf": "2026-03-31",
+      "fileCount": 2,
+      "reportTypes": [
+        "transaction-statement"
+      ],
+      "duplicateTypes": [
+        "transaction-statement"
       ]
     },
     {
@@ -10110,6 +11831,46 @@
       "matchedBy": "generic keywords"
     },
     {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_IncomeExpenseCSV1538CT.pdf",
+      "fileName": "Z1211_5110837_IncomeExpenseCSV1538CT.pdf",
+      "bytes": 17630,
+      "size": "17.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ajay Jaisinghani",
+      "accountNo": "5110837",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_IncomeExpenseCSV1538CT.pdf",
+      "fileName": "Z1211_5110758_IncomeExpenseCSV1538CT.pdf",
+      "bytes": 17632,
+      "size": "17.2 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": "Ankita Jaisinghani",
+      "accountNo": "5110758",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
       "path": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
       "fileName": "360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
       "bytes": 111130,
@@ -10130,24 +11891,306 @@
       "matchedBy": "generic keywords"
     },
     {
-      "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-      "fileName": "Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-      "bytes": 261983,
-      "size": "255.8 KB",
-      "pages": 25,
+      "path": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
+      "fileName": "HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
+      "bytes": 1469198,
+      "size": "1.4 MB",
+      "pages": 4,
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "Consolidated family review (not a statement)",
+      "provider": null,
       "ownerName": null,
       "accountNo": null,
+      "asOfDate": null,
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_BankBook178CT.xlsx",
+      "fileName": "askimpms_10032723_BankBook178CT.xlsx",
+      "bytes": 900031,
+      "size": "878.9 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
       "asOfDate": null,
       "reportType": "unknown",
       "sections": [],
       "familyGroup": null,
       "strategy": null,
       "confidence": "low",
-      "matchedBy": "generic keywords"
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_CapitalGain90CT.pdf",
+      "fileName": "askimpms_10032723_CapitalGain90CT.pdf",
+      "bytes": 313437,
+      "size": "306.1 KB",
+      "pages": 49,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_CapitalGain90CT.xlsx",
+      "fileName": "askimpms_10032723_CapitalGain90CT.xlsx",
+      "bytes": 439505,
+      "size": "429.2 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_DividendStatement_India177CT.pdf",
+      "fileName": "askimpms_10032723_DividendStatement_India177CT.pdf",
+      "bytes": 97699,
+      "size": "95.4 KB",
+      "pages": 13,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_DividendStatement_India177CT.xlsx",
+      "fileName": "askimpms_10032723_DividendStatement_India177CT.xlsx",
+      "bytes": 141800,
+      "size": "138.5 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_ProfitLossAccount1213CT.pdf",
+      "fileName": "askimpms_10032723_ProfitLossAccount1213CT.pdf",
+      "bytes": 57792,
+      "size": "56.4 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": "2026-09-08",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10032723_ProfitLossAccount1213CT.xlsx",
+      "fileName": "askimpms_10032723_ProfitLossAccount1213CT.xlsx",
+      "bytes": 59097,
+      "size": "57.7 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10032723",
+      "asOfDate": "2026-09-08",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_BankBook178CT.xlsx",
+      "fileName": "askimpms_10034025_BankBook178CT.xlsx",
+      "bytes": 881481,
+      "size": "860.8 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_CapitalGain90CT.pdf",
+      "fileName": "askimpms_10034025_CapitalGain90CT.pdf",
+      "bytes": 301233,
+      "size": "294.2 KB",
+      "pages": 47,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_CapitalGain90CT.xlsx",
+      "fileName": "askimpms_10034025_CapitalGain90CT.xlsx",
+      "bytes": 420060,
+      "size": "410.2 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_DividendStatement_India177CT.pdf",
+      "fileName": "askimpms_10034025_DividendStatement_India177CT.pdf",
+      "bytes": 96644,
+      "size": "94.4 KB",
+      "pages": 13,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_DividendStatement_India177CT.xlsx",
+      "fileName": "askimpms_10034025_DividendStatement_India177CT.xlsx",
+      "bytes": 138503,
+      "size": "135.3 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_ProfitLossAccount1213CT.pdf",
+      "fileName": "askimpms_10034025_ProfitLossAccount1213CT.pdf",
+      "bytes": 57807,
+      "size": "56.5 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": "2026-09-08",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/askimpms_10034025_ProfitLossAccount1213CT.xlsx",
+      "fileName": "askimpms_10034025_ProfitLossAccount1213CT.xlsx",
+      "bytes": 59111,
+      "size": "57.7 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": "10034025",
+      "asOfDate": "2026-09-08",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/_extracted/august-2026/LKP 1/pASSWORD.docx",
@@ -10182,6 +12225,182 @@
       "isPdf": false,
       "fileKind": "Word document",
       "readError": "no Word reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_CapitalGain90CT.csv",
+      "fileName": "Z1211_5110837_CapitalGain90CT.csv",
+      "bytes": 38203,
+      "size": "37.3 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_DividendStatement_India177CT.csv",
+      "fileName": "Z1211_5110837_DividendStatement_India177CT.csv",
+      "bytes": 7399,
+      "size": "7.2 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_IncomeExpenseCSV1538CT.csv",
+      "fileName": "Z1211_5110837_IncomeExpenseCSV1538CT.csv",
+      "bytes": 535,
+      "size": "535 B",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_TransactionStatement_India94CT.csv",
+      "fileName": "Z1211_5110837_TransactionStatement_India94CT.csv",
+      "bytes": 17012,
+      "size": "16.6 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_CapitalGain90CT.csv",
+      "fileName": "Z1211_5110758_CapitalGain90CT.csv",
+      "bytes": 43457,
+      "size": "42.4 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_DividendStatement_India177CT.csv",
+      "fileName": "Z1211_5110758_DividendStatement_India177CT.csv",
+      "bytes": 8382,
+      "size": "8.2 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_IncomeExpenseCSV1538CT.csv",
+      "fileName": "Z1211_5110758_IncomeExpenseCSV1538CT.csv",
+      "bytes": 536,
+      "size": "536 B",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "not a PDF"
+    },
+    {
+      "path": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_TransactionStatement_India94CT.csv",
+      "fileName": "Z1211_5110758_TransactionStatement_India94CT.csv",
+      "bytes": 19540,
+      "size": "19.1 KB",
+      "pages": null,
+      "fromArchive": true,
+      "encrypted": false,
+      "isPdf": false,
+      "fileKind": "delimited text",
+      "readError": "no CSV reader",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
