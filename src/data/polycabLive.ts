@@ -203,7 +203,7 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 61.461685149737356,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 1,
+      "witnesses": 2,
       "holdingRefused": false
     },
     {
@@ -212,7 +212,7 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 61.49620033165215,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 1,
+      "witnesses": 2,
       "holdingRefused": false
     },
     {
@@ -221,7 +221,7 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 61.50111672781482,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 1,
+      "witnesses": 2,
       "holdingRefused": false
     },
     {
@@ -230,7 +230,7 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 61.52122017376783,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 1,
+      "witnesses": 2,
       "holdingRefused": false
     },
     {
@@ -239,7 +239,7 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 63.01064372395979,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
-      "witnesses": 1,
+      "witnesses": 2,
       "holdingRefused": false
     },
     {
@@ -248,12 +248,66 @@ export const POLYCAB_LIVE: PolycabLive = {
       "holdingPct": 63.04426316271684,
       "pledgePct": 0,
       "pledgeSource": "tickertape",
+      "witnesses": 2,
+      "holdingRefused": false
+    },
+    {
+      "asOf": "2024-12-31",
+      "quarter": "Dec 2024",
+      "holdingPct": 63.05,
+      "pledgePct": null,
+      "pledgeSource": null,
+      "witnesses": 1,
+      "holdingRefused": false
+    },
+    {
+      "asOf": "2024-09-30",
+      "quarter": "Sep 2024",
+      "holdingPct": 63.06,
+      "pledgePct": null,
+      "pledgeSource": null,
+      "witnesses": 1,
+      "holdingRefused": false
+    },
+    {
+      "asOf": "2024-06-30",
+      "quarter": "Jun 2024",
+      "holdingPct": 65.02,
+      "pledgePct": null,
+      "pledgeSource": null,
+      "witnesses": 1,
+      "holdingRefused": false
+    },
+    {
+      "asOf": "2024-03-31",
+      "quarter": "Mar 2024",
+      "holdingPct": 65.24,
+      "pledgePct": null,
+      "pledgeSource": null,
+      "witnesses": 1,
+      "holdingRefused": false
+    },
+    {
+      "asOf": "2023-12-31",
+      "quarter": "Dec 2023",
+      "holdingPct": 65.78,
+      "pledgePct": null,
+      "pledgeSource": null,
+      "witnesses": 1,
+      "holdingRefused": false
+    },
+    {
+      "asOf": "2023-09-30",
+      "quarter": "Sep 2023",
+      "holdingPct": 65.91,
+      "pledgePct": null,
+      "pledgeSource": null,
       "witnesses": 1,
       "holdingRefused": false
     }
   ],
   "promoterAgreement": {
-    "compared": 0,
+    "compared": 6,
     "disagreed": 0
   },
   "sources": [
@@ -290,15 +344,10 @@ export const POLYCAB_LIVE: PolycabLive = {
       "detail": "BSE identity refused — HTTP 403. Nothing from the exchange is published this run."
     },
     {
-      "severity": "warn",
-      "rule": "screener",
-      "detail": "the second promoter witness did not refresh — fetch failed"
-    },
-    {
-      "severity": "warn",
+      "severity": "info",
       "rule": "promoter-agreement",
-      "detail": "only one witness answered; the holding is published unchecked against a second."
+      "detail": "6 quarter(s) carried by both witnesses; all agree within 0.05pp."
     }
   ],
-  "retrievedAt": "2026-09-28T18:56:35.055Z"
+  "retrievedAt": "2026-09-29T17:15:14.252Z"
 };
