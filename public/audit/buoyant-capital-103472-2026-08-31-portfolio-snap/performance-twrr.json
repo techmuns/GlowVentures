@@ -1,0 +1,25 @@
+{
+ "name": "performance-twrr",
+ "rows": [
+  [
+   "period",
+   "portfolio TWRR % (the scheme's, after fees; over a year annualised — as printed)"
+  ],
+  [
+   "1m",
+   2.09
+  ],
+  [
+   "3m",
+   5.87
+  ],
+  [
+   "1y",
+   12.02
+  ],
+  [
+   "since 01/06/24",
+   10.65
+  ]
+ ]
+}

@@ -149,9 +149,12 @@ const AUTHORITATIVE = {
   cashIncome: ["dividend-statement"],
   nonCashIncome: ["corporate-benefits", "statement-of-earnings"],
   // A holdings statement, by whatever name its issuer gives it. `unknown` is
-  // last and is real: the AIF account statements carry no report title this
-  // pipeline recognises, and they are still where those units are valued.
-  holdings: ["appraisal", "investor-report", "holdings", "unknown"],
+  // real: the AIF account statements carry no report title this pipeline
+  // recognises, and they are still where those units are valued.
+  // `profit-and-loss` is last: ASK's two mandates (the september-2026 delivery)
+  // issue no appraisal, and their profit-and-loss account's balance sheet is
+  // where what is left in them is stated (`precedence.mjs` names it the same).
+  holdings: ["appraisal", "investor-report", "holdings", "unknown", "profit-and-loss"],
 } as const;
 
 async function fetchJson<T>(path: string): Promise<T | null> {

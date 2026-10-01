@@ -471,6 +471,9 @@ const READABLE = new Set([
   "performance-summary", "performance-history", "performance-benchmark",
   "transaction-statement", "capital-gain", "dividend-statement", "corporate-benefits",
   "bank-book", "capital-register", "expense-statement", "holdings",
+  // ASK's whole-life P&L account and balance sheet; Marathon's whole-life
+  // income-and-expense row. See readProfitAndLoss and readIncomeExpense.
+  "profit-and-loss", "income-expense",
 ]);
 /** These reports place the geometry at 3pt corridors; measured, not guessed. */
 const LAYOUT = { minColumnGap: 3 };
@@ -588,15 +591,27 @@ function readIdentity(pages) {
 
   // Strategy: the scheme line under the account, or the fact sheet's label.
   //
-  // Read off its OWN SPAN first, for the reason the account line is: on ASK's
-  // fact sheet the holdings table's "%Assets" heading wraps, and its last
-  // letter sits on the strategy's printed line — joined, the strategy read
-  // "ASK Indian Entrepreneur Portfolio s". The span is the label alone.
-  const stratSpan = spans.map((s) => /^Strategy\s*:\s*([A-Za-z][A-Za-z0-9 .&'\-]{3,60})$/.exec(s)).find(Boolean);
-  const strat = stratSpan
-    ?? /Strategy\s*:\s*([A-Za-z][A-Za-z0-9 .&'\-]{3,60}?)(?=\s{2,}|\s+Portfolio\s+Holdings|$)/m.exec(text)
-    ?? /^\s*([A-Z][A-Za-z ]*(?:CAPITAL LLP - [A-Z ]+|BESPOKE PORTFOLIO|Equity Portfolio))\s*$/m.exec(text);
-  if (strat) out.strategy = clean(strat[1]).replace(/\s+/g, " ");
+  // The joined line is the established read, and its OWN SPAN corrects it in
+  // one case only: where the joined read RAN PAST the span. On ASK's fact sheet
+  // the holdings table's "%Assets" heading wraps, and its last letter sits on
+  // the strategy's printed line — joined, the strategy read "ASK Indian
+  // Entrepreneur Portfolio s", while the span is the label alone.
+  //
+  // The span never FILLS a blank, because a span can carry more than the
+  // strategy too: V.E.C's fact sheet prints "Strategy: V.E.C ASSAGO Small and
+  // Mid-Cap Growth Bespoke" as ONE text item, where "Bespoke" is the first word
+  // of the engagement ("Bespoke Discretionary PMS", which every other V.E.C
+  // report prints beside the strategy). The joined read finds nothing on that
+  // line, so the fact sheet carries no strategy and extract.mjs fills it from
+  // the same account's other reports, which print it without "Bespoke". Filled
+  // from the span, one account would stand under two strategy names.
+  const fmt = (m) => (m ? clean(m[1]).replace(/\s+/g, " ") : null);
+  const stratSpan = fmt(spans.map((s) => /^Strategy\s*:\s*([A-Za-z][A-Za-z0-9 .&'\-]{3,60})$/.exec(s)).find(Boolean));
+  const stratJoined = fmt(/Strategy\s*:\s*([A-Za-z][A-Za-z0-9 .&'\-]{3,60}?)(?=\s{2,}|\s+Portfolio\s+Holdings|$)/m.exec(text));
+  const ranPast = stratSpan && stratJoined && stratJoined.length > stratSpan.length && stratJoined.startsWith(stratSpan);
+  const strat = (ranPast ? stratSpan : stratJoined)
+    ?? fmt(/^\s*([A-Z][A-Za-z ]*(?:CAPITAL LLP - [A-Z ]+|BESPOKE PORTFOLIO|Equity Portfolio))\s*$/m.exec(text));
+  if (strat) out.strategy = strat;
   return out;
 }
 
@@ -1672,6 +1687,323 @@ function readReturns(pages, source, { inceptionDate, asOf }) {
   return null;
 }
 
+// ── Label-and-figure statements: ASK's P&L account, Marathon's income and expenses ──
+
+/**
+ * A printed label, normalised for matching: lower case, the statements' own
+ * American spelling of "realized" for either spelling, and every run of
+ * punctuation one space — so `Less : Withdrawals` and `Realized Gain/Loss` are
+ * matched on their words, never on how the report engine spaced the colon.
+ */
+const plNorm = (s) => clean(s).toLowerCase().replace(/realis/g, "realiz").replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * Every printed line, as its words and its figures.
+ *
+ * Read off the row's ITEMS, as the fact sheet's summary is, because the label
+ * and its figure are separate spans: `Capital Contribution | 85,000,000.00`. A
+ * figure is an item `parseNum` reads whole; everything else on the line is its
+ * label, joined. The balance sheet's reserves block splits its label over two
+ * spans (`Add : Reserves and Surplus | - Beginning | 0.00`), which joining keeps
+ * together.
+ */
+function labelledLines(pages) {
+  const out = [];
+  pages.forEach((page, p) => {
+    for (const row of page.rows ?? []) {
+      const items = (row.items ?? []).map((i) => clean(i.text)).filter(Boolean);
+      if (!items.length) continue;
+      const words = [], figures = [];
+      for (const t of items) {
+        const info = parseNumInfo(t);
+        if (info.status === "ok") figures.push(info.value); else words.push(t);
+      }
+      const label = words.join(" ");
+      out.push({ page: p + 1, label, key: plNorm(label), figures });
+    }
+  });
+  return out;
+}
+
+/** The P&L account's headings: a section, and the two sub-sections a subtotal closes. */
+const PL_TOP = new Map([
+  ["income", "income"],
+  ["expenses", "expenses"],
+  ["unrealized gain loss in the value of investments", "unrealized"],
+  ["liabilities", "liabilities"],
+  ["assets", "assets"],
+]);
+const PL_SUB = new Map([
+  ["current liabilities and provisions", { parent: "liabilities", key: "currentLiabilities" }],
+  ["current assets", { parent: "assets", key: "currentAssets" }],
+]);
+/** Every line the account prints under a section, by its label. Nothing else is accepted. */
+const PL_LINES = {
+  income: { "dividend": "dividend", "other income": "otherIncome", "realized gain loss": "realized" },
+  expenses: {
+    "custodian fees": "custodian", "management fees": "management",
+    "securities transaction tax stt": "stt", "other expenses": "otherExpenses",
+  },
+  unrealized: {
+    "at the end of the period": "unrealizedEnd",
+    "at the beginning of the period": "unrealizedBeginning",
+    "net unrealized gain loss during the period": "unrealizedNet",
+  },
+  liabilities: {
+    "capital contribution": "contribution", "less withdrawals": "withdrawals",
+    "add reserves and surplus beginning": "reservesBeginning",
+    "for the period": "reservesPeriod", "ending": "reservesEnding",
+  },
+  assets: { "investments at cost": "investments" },
+};
+const PL_REQUIRED = [
+  "dividend", "otherIncome", "realized", "income.total",
+  "custodian", "management", "stt", "otherExpenses", "expenses.total", "surplus",
+  "unrealizedEnd", "unrealizedBeginning", "unrealizedNet",
+  "contribution", "withdrawals", "reservesBeginning", "reservesPeriod", "reservesEnding",
+  "currentLiabilities.subtotal", "liabilities.total",
+  "investments", "currentAssets.subtotal", "bank", "assets.total",
+];
+
+/**
+ * ASK's PROFIT AND LOSS ACCOUNT: the P&L since 1 April 2019 on page one, the
+ * balance sheet at the as-of date on page two.
+ *
+ * It is the only document ASK sends that states the WHOLE LIFE of the mandate —
+ * every rupee contributed and withdrawn, every gain, every charge — and the
+ * balance sheet closes it to the paisa. So it is read by LABEL, line by line, and
+ * published only if the account's own arithmetic holds on every line:
+ *
+ *   income lines = income TOTAL          expense lines = expenses TOTAL
+ *   income − expenses = SURPLUS          end − beginning = net unrealised
+ *   reserves: beginning + period = ending, and period = SURPLUS
+ *   each sub-section's lines = its (unlabelled) subtotal
+ *   contribution − withdrawals + reserves + current liabilities = liabilities TOTAL
+ *   investments + current assets = assets TOTAL = liabilities TOTAL
+ *
+ * each within half a paisa per figure it sums, which is the statement's own
+ * printing precision. A line this reader does not know, a line printed twice, a
+ * line missing, or one identity that does not hold, and NOTHING is published:
+ * a whole-life figure is exactly the kind a reader cannot check without opening
+ * the PDF, so a partial one is worse than none.
+ *
+ * The holding is the bank balance and only that, and only where the balance
+ * sheet says it is all there is — investments at cost nil, no unrealised gain,
+ * no current liabilities, no other current asset. Both of the family's ASK
+ * mandates are closed: Ajay's balance sheet carries ₹0.34 at the bank, Ankita's
+ * ₹0.01. A measured nil, not an absence.
+ */
+function readProfitAndLoss(pages, source, warnings, window) {
+  const got = {};
+  const subLines = { currentLiabilities: [], currentAssets: [] };
+  const problems = [];
+  const sheetRows = [];
+  let top = null, sub = null;
+  let bankLabel = null;
+  const put = (key, value, label) => {
+    if (key in got) problems.push(`"${label || "(unlabelled)"}" printed twice`);
+    got[key] = value;
+  };
+  for (const line of labelledLines(pages)) {
+    if (!line.figures.length) {
+      if (PL_TOP.has(line.key)) { top = PL_TOP.get(line.key); sub = null; continue; }
+      const s = PL_SUB.get(line.key);
+      if (s && s.parent === top) sub = s.key;
+      // Anything else without a figure is the letterhead, the period, the
+      // account line or the signature — not part of the account.
+      continue;
+    }
+    if (line.figures.length > 1) {
+      problems.push(`"${line.label || "(unlabelled)"}" carries ${line.figures.length} figures on one line`);
+      continue;
+    }
+    const value = line.figures[0];
+    sheetRows.push({ cells: [line.page, sub ?? top ?? "", line.label || "(unlabelled)", value] });
+    if (!line.key) {
+      // An unlabelled figure CLOSES the sub-section it sits under: its subtotal.
+      if (sub) { put(`${sub}.subtotal`, value, ""); sub = null; continue; }
+      // Under the unrealised block the account prints one more unlabelled
+      // figure beside the net. Nothing printed says what it is, so it is kept on
+      // the audit sheet and asserted by nothing.
+      if (top === "unrealized") continue;
+      problems.push(`an unlabelled figure (${value}) outside any sub-section`);
+      continue;
+    }
+    if (line.key === "surplus for the period") { put("surplus", value, line.label); continue; }
+    if (line.key === "total") {
+      if (!top) { problems.push("a TOTAL before any section"); continue; }
+      put(`${top}.total`, value, line.label);
+      sub = null;
+      continue;
+    }
+    if (sub) {
+      // Inside a sub-section every line is summed against the printed subtotal,
+      // so a line is accepted by that identity rather than by its name — except
+      // the bank balance, which is the holding and must be found by name.
+      subLines[sub].push({ key: line.key, label: line.label, value });
+      if (line.key === "balance with banks") { put("bank", value, line.label); bankLabel = line.label; }
+      continue;
+    }
+    const field = PL_LINES[top]?.[line.key];
+    if (!field) { problems.push(`"${line.label}" under ${top ?? "no heading"}`); continue; }
+    put(field, value, line.label);
+  }
+
+  if (problems.length) {
+    warn(warnings, "profit-and-loss-line-not-recognised", `${problems.join("; ")}. Nothing is published from a P&L account this reader cannot account for line by line.`);
+    return null;
+  }
+  const missing = PL_REQUIRED.filter((k) => !(k in got));
+  if (missing.length) {
+    warn(warnings, "profit-and-loss-line-missing", `${missing.join(", ")} not printed. Nothing is published from a P&L account that cannot be closed.`);
+    return null;
+  }
+
+  const g = got;
+  const checks = [
+    ["income lines = income TOTAL", [g.dividend, g.otherIncome, g.realized], g["income.total"]],
+    ["expense lines = expenses TOTAL", [g.custodian, g.management, g.stt, g.otherExpenses], g["expenses.total"]],
+    ["income TOTAL − expenses TOTAL = SURPLUS FOR THE PERIOD", [g["income.total"], -g["expenses.total"]], g.surplus],
+    ["unrealised: end − beginning = net", [g.unrealizedEnd, -g.unrealizedBeginning], g.unrealizedNet],
+    ["reserves: beginning + for the period = ending", [g.reservesBeginning, g.reservesPeriod], g.reservesEnding],
+    ["reserves for the period = SURPLUS FOR THE PERIOD", [g.reservesPeriod], g.surplus],
+    ["current liabilities = their subtotal", subLines.currentLiabilities.map((l) => l.value), g["currentLiabilities.subtotal"]],
+    ["contribution − withdrawals + reserves + current liabilities = liabilities TOTAL",
+      [g.contribution, -g.withdrawals, g.reservesEnding, g["currentLiabilities.subtotal"]], g["liabilities.total"]],
+    ["current assets = their subtotal", subLines.currentAssets.map((l) => l.value), g["currentAssets.subtotal"]],
+    ["investments + current assets = assets TOTAL", [g.investments, g["currentAssets.subtotal"]], g["assets.total"]],
+    ["liabilities TOTAL = assets TOTAL", [g["liabilities.total"]], g["assets.total"]],
+  ];
+  const failed = [];
+  for (const [name, parts, printed] of checks) {
+    const sum = parts.reduce((s, x) => s + x, 0);
+    // Half a paisa for each printed figure the identity touches — the parts and
+    // the total — which is the precision every figure is printed to.
+    const bound = (parts.length + 1) * 0.005 + 1e-9;
+    if (!(Math.abs(sum - printed) <= bound)) failed.push(`${name}: ${round2(sum)} against ${printed} printed`);
+  }
+  if (failed.length) {
+    warn(warnings, "profit-and-loss-does-not-tie", `${failed.join("; ")}. Nothing is published from an account whose own arithmetic does not hold.`);
+    return null;
+  }
+
+  const flows = makeFlows({
+    contribution: g.contribution,
+    withdrawal: g.withdrawals,
+    realized: g.realized,
+    unrealized: g.unrealizedNet,
+    income: round2(g.dividend + g.otherIncome),
+    fees: g.management,
+    expenses: round2(g.custodian + g.stt),
+    otherExpenses: g.otherExpenses,
+    // What the account is worth at the as-of: its assets at cost, less what it
+    // owes, plus the unrealised gain on what it still holds at cost.
+    corpus: round2(g["assets.total"] - g["currentLiabilities.subtotal"] + g.unrealizedEnd),
+    ...window,
+    source,
+  });
+
+  const nil = (v) => Math.abs(v) < 0.005;
+  const otherAssets = subLines.currentAssets.filter((l) => l.key !== "balance with banks");
+  const onlyCash = nil(g.investments) && nil(g.unrealizedEnd) && nil(g["currentLiabilities.subtotal"])
+    && otherAssets.every((l) => nil(l.value));
+  /**
+   * NAMED AS THE BALANCE SHEET PRINTS IT, NEVER "Cash". Nothing here supplies a
+   * name the statement did not print (`stripDepositoryTail`'s rule), and the
+   * difference is not cosmetic: keyed `cash`, this ₹0.34 would join the book's
+   * ₹9.5 Cr of mandate cash sleeves under one securityKey, survive the family's
+   * ₹1,000 floor on THEIR total, and stand on every holdings table as a whole
+   * closed mandate — whose capital since inception would then count in Capital
+   * invested although every rupee of it has been withdrawn. Under its own label
+   * it is the speck it is: measured here, carried into the account's value, and
+   * dropped from the holdings tables by the floor the family asked for.
+   */
+  const holdings = onlyCash
+    ? [makeHolding({
+      security: bankLabel ?? "Balance with Banks", assetClass: "Cash",
+      quantity: g.bank, unitCost: 1, totalCost: g.bank, marketPrice: 1, marketValue: g.bank, source,
+    })]
+    : [];
+  if (!onlyCash) {
+    warn(warnings, "profit-and-loss-not-only-cash",
+      "the balance sheet carries investments, an unrealised gain, a current liability or a current asset other than the bank balance — "
+      + "it states no holding line by line, so no holding is read from it; the flows stand.");
+  }
+  return {
+    flows, holdings,
+    sheet: toAuditSheet("profitAndLoss", ["page", "section", "label", "figure"], sheetRows),
+  };
+}
+
+/** Marathon's INCOME AND EXPENSES columns, by their printed headings. */
+const IE_COLUMNS = new Map([
+  ["client code", "clientCode"], ["client name", "clientName"], ["date until", "dateUntil"],
+  ["st gain loss", "st"], ["lt gain loss", "lt"], ["dividend", "dividend"], ["interest", "interest"],
+  ["management fees", "management"], ["custodian fees", "custodian"], ["other expenses", "other"], ["stt", "stt"],
+]);
+const IE_FIGURES = ["st", "lt", "dividend", "interest", "management", "custodian", "other", "stt"];
+
+/**
+ * Marathon's DETAILS OF INCOME AND EXPENSES — one row, since 1 April 2018: the
+ * short- and long-term gains, dividends, interest and every charge, for the
+ * whole life of a mandate that is now entirely in cash and sends nothing else
+ * that says so.
+ *
+ * Located by its eleven printed headings and read ITEM FOR ITEM beneath them —
+ * the cells merge on this report, the items do not. Exactly one data row, for
+ * THIS account, dated the window's own end; anything else and nothing is read.
+ *
+ * It states no capital and no closing value, so the flows carry neither: a
+ * contribution of nil and a corpus of nil would both be claims this document
+ * never makes.
+ */
+function readIncomeExpense(pages, source, warnings, window, accountNo) {
+  const rowItems = (row) => (row.items ?? []).map((i) => clean(i.text)).filter(Boolean);
+  for (const page of pages) {
+    const rows = page.rows ?? [];
+    for (let r = 0; r < rows.length; r++) {
+      const header = rowItems(rows[r]);
+      const keys = header.map((t) => IE_COLUMNS.get(plNorm(t)));
+      if (keys.length !== IE_COLUMNS.size || keys.some((k) => !k) || new Set(keys).size !== keys.length) continue;
+
+      const problems = [];
+      const data = [];
+      for (const row of rows.slice(r + 1)) {
+        const items = rowItems(row);
+        if (!items.length) continue;
+        if (items.length === header.length) data.push(items);
+        else if (items.some((t) => parseNumInfo(t).status === "ok")) problems.push(`a line of ${items.length} item(s) carrying a figure`);
+      }
+      if (data.length !== 1) problems.push(`${data.length} data row(s) under the headings, not one`);
+      const row = data.length === 1 ? Object.fromEntries(keys.map((k, i) => [k, data[0][i]])) : null;
+      if (row) {
+        if (!accountNo || clean(row.clientCode) !== String(accountNo)) problems.push("the row is for another client code");
+        if (toIso(row.dateUntil) !== window.periodTo) problems.push(`dated ${toIso(row.dateUntil) ?? "?"}, not the window's end ${window.periodTo ?? "?"}`);
+        for (const k of IE_FIGURES) if (parseNumInfo(row[k]).status !== "ok") problems.push(`${k} did not read as a figure`);
+      }
+      if (problems.length) {
+        warn(warnings, "income-expense-row-not-read", `${problems.join("; ")}. Nothing is read from it.`);
+        return null;
+      }
+      const v = Object.fromEntries(IE_FIGURES.map((k) => [k, parseNum(row[k])]));
+      return {
+        flows: makeFlows({
+          realized: round2(v.st + v.lt),
+          income: round2(v.dividend + v.interest),
+          fees: v.management,
+          expenses: round2(v.custodian + v.stt),
+          otherExpenses: v.other,
+          ...window,
+          source,
+        }),
+        sheet: toAuditSheet("incomeExpense", header, data.map((cells) => ({ cells }))),
+      };
+    }
+  }
+  warn(warnings, "income-expense-row-not-read", "no row printed the eleven Income and Expenses headings");
+  return null;
+}
+
 /**
  * Extract one statement.
  * @returns {object} partial normalized document
@@ -1726,7 +2058,9 @@ export function extract({ grid, meta }) {
   }
 
   if (reportType === "fact-sheet") {
-    const s = readSectors(pages, warnings);
+    // Collected apart and added after the summary is read: see the note there.
+    const sectorWarnings = [];
+    const s = readSectors(pages, sectorWarnings);
     if (s) {
       sections.sectors = s.sheet;
       /**
@@ -1757,6 +2091,12 @@ export function extract({ grid, meta }) {
     // Since inception, not since 1 April — the block is headed "Since 26/12/2025".
     flows = readFactSheetSummary(pages, source, { periodFrom: id.inceptionDate, periodTo: id.asOf });
     if (!flows) warn(warnings, "portfolio-summary-not-found", reportType);
+    // A fact sheet whose own summary prints a portfolio value of NIL has no
+    // holdings table to find — a closed mandate (Ankita's ASK account) holds
+    // nothing to list. "No sector table" there is the statement being right,
+    // not the reader failing, and a warning would send the next reader looking
+    // for a table that was never printed. Anywhere else the warning stands.
+    warnings.push(...sectorWarnings.filter((w) => !(w.code === "sector-table-not-found" && flows?.corpus === 0)));
     const t = readTwrr(pages, source, { inceptionDate: id.inceptionDate, asOf: id.asOf });
     if (t) returns = t;
     else warn(warnings, "twrr-table-not-found", reportType);
@@ -1832,6 +2172,17 @@ export function extract({ grid, meta }) {
       primitives: PRECEDENCE[provider?.name]?.holdings?.reportType === "holdings",
     });
     if (r) { holdings = r.holdings; totals = r.totals ?? totals; sections.currentPortfolio = r.sheet; }
+  }
+
+  if (reportType === "profit-and-loss") {
+    // Every refusal names its own cause in a warning from the reader.
+    const r = readProfitAndLoss(pages, source, warnings, window);
+    if (r) { flows = r.flows; holdings = r.holdings; sections.profitAndLoss = r.sheet; }
+  }
+
+  if (reportType === "income-expense") {
+    const r = readIncomeExpense(pages, source, warnings, window, id.accountNo ?? meta.accountNo);
+    if (r) { flows = r.flows; sections.incomeExpense = r.sheet; }
   }
 
   if (!READABLE.has(reportType)) {

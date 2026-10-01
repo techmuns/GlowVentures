@@ -19,11 +19,21 @@
 //          that tells you nothing. So the format is decided by SNIFFING THE
 //          BYTES, never by the extension.
 //
+//   .csv   Plain comma-separated text, which the September 2026 delivery brought
+//          beside every Marathon PDF. RFC 4180: a field may be "quoted", a
+//          quote inside it is doubled, and a quoted field may run over SEVERAL
+//          LINES — Marathon's own office address does, in the header of three of
+//          its four files, so a line-by-line split would shear every row below
+//          it. Recognised by its BYTES like the other two: text with no NUL in
+//          it whose first line carries a comma, after the ZIP, OLE and HTML
+//          signatures have all been ruled out.
+//
 // Everything returns the same shape — a grid of trimmed strings — so a provider
 // reads a sheet the way it reads a PDF page: by locating a header row and
 // matching column labels, never by column index.
 import { inflateRawSync } from "node:zlib";
 import { listEntries, readEntry } from "./unzip.mjs";
+import { parseNum } from "./parseNum.mjs";
 
 /** One sheet: a name and a rectangular grid of strings. */
 export const makeSheet = (name, rows) => ({ name, rows });
@@ -59,7 +69,111 @@ export function sniffFormat(buf) {
   if (buf.length >= 8 && buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0) return "biff";
   const head = buf.slice(0, 2048).toString("latin1").toLowerCase();
   if (/<table|<html|<tr[\s>]|<!doctype html/.test(head)) return "html-table";
+  if (looksLikeCsv(buf)) return "csv";
   return "unknown";
+}
+
+// ── Comma-separated text ─────────────────────────────────────────────────────
+
+/** A UTF-8 byte-order mark, which Excel writes in front of a CSV it saves. */
+const BOM = "\uFEFF";
+
+/**
+ * Is this comma-separated TEXT? Decided on the bytes, and only once every
+ * binary signature above has said no.
+ *
+ * Three tests, each ruling out something that can carry a comma: a NUL byte
+ * means binary (a PDF stream, an image); a `%PDF` header means a PDF whatever its
+ * name says; and the first non-blank line must itself carry a comma, because a
+ * text file with no delimiter on its first line is a note, not a table. A file
+ * that fails is reported "unrecognised" — never parsed as a one-column grid,
+ * which would read as "the export had one column in it".
+ */
+function looksLikeCsv(buf) {
+  const head = buf.subarray(0, 4096);
+  if (!head.length || head.includes(0)) return false;
+  const text = head.toString("latin1").replace(/^\xEF\xBB\xBF/, "");
+  if (text.startsWith("%PDF")) return false;
+  const first = text.split(/\r\n|\r|\n/).find((l) => l.trim());
+  return Boolean(first && first.includes(","));
+}
+
+/**
+ * The text of a CSV: UTF-8 where it is valid UTF-8, Latin-1 where it is not.
+ *
+ * A byte that is not valid UTF-8 would otherwise decode to U+FFFD and a name
+ * would arrive with a replacement character in it — a wrong name that looks
+ * like a rendering glitch. Latin-1 maps every byte to a character, so nothing
+ * is lost; it is only the fallback, because the drop's own exports are UTF-8.
+ */
+function csvText(buf) {
+  let s;
+  try { s = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
+  catch { s = buf.toString("latin1"); }
+  return s.startsWith(BOM) ? s.slice(1) : s;
+}
+
+/**
+ * RFC 4180, and nothing cleverer.
+ *
+ * A field is either bare or "quoted"; inside quotes a doubled quote is one
+ * quote and a comma or a line break is DATA. That last clause is the reason this
+ * is a parser rather than `split(",")`: Marathon's export opens with its office
+ * address as one quoted field running over four lines, and a line-based split
+ * turns that into four short rows that push every real row's columns out of
+ * register.
+ *
+ * Two leniencies, both about where a quote may sit, and neither able to move a
+ * value between columns: a quote in the MIDDLE of a bare field is kept as a
+ * character (`5" display`), and anything after a closing quote up to the next
+ * comma is kept too. An UNTERMINATED quote is an error rather than a grid —
+ * everything after it would otherwise land in one cell, which is the kind of
+ * silent misreading this module exists to refuse.
+ *
+ * @returns {string[][]} the rows, each a list of raw (untrimmed) fields
+ */
+export function parseCsv(text) {
+  const s = String(text ?? "");
+  const rows = [];
+  let row = [];
+  let field = "";
+  let quoted = false;        // inside a quoted field
+  let opened = -1;           // where the open quote was, for the error message
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (s[i + 1] === '"') { field += '"'; i++; } else quoted = false;
+      } else field += ch;
+      continue;
+    }
+    if (ch === '"' && field === "") { quoted = true; opened = i; continue; }
+    if (ch === ",") { row.push(field); field = ""; continue; }
+    if (ch === "\r" || ch === "\n") {
+      if (ch === "\r" && s[i + 1] === "\n") i++;
+      row.push(field); rows.push(row); row = []; field = "";
+      continue;
+    }
+    field += ch;
+  }
+  if (quoted) {
+    const line = s.slice(0, opened).split(/\r\n|\r|\n/).length;
+    throw new Error(`unterminated quoted field opened on line ${line} — the rest of the file would land in one cell`);
+  }
+  // A last line with no line break after it is still a row; a trailing line
+  // break is not an extra empty one.
+  if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+/**
+ * A CSV as ONE sheet, cells trimmed and whitespace-collapsed exactly as the
+ * xlsx reader leaves them — so the address that ran over four lines reads as one
+ * line of text, and a reader written against one format reads the other.
+ */
+export function readCsv(buf) {
+  const rows = parseCsv(csvText(buf)).map((r) => r.map((c) => String(c).replace(/\s+/g, " ").trim()));
+  return [makeSheet("csv", rows)];
 }
 
 // ── HTML tables written as .xls ──────────────────────────────────────────────
@@ -200,6 +314,7 @@ export function readSpreadsheet(input) {
     format = sniffFormat(buf);
     if (format === "xlsx") return { sheets: readXlsx(buf), format, error: null };
     if (format === "html-table") return { sheets: readHtmlTables(buf.toString("utf8")), format, error: null };
+    if (format === "csv") return { sheets: readCsv(buf), format, error: null };
     if (format === "biff") {
       return {
         sheets: [], format,
@@ -275,3 +390,66 @@ export function readRows(rows, header, { stopRe = null, requireField = null } = 
 
 /** A sheet as an audit sheet — the same shape the PDF path writes. */
 export const toAuditSheet = (name, rows) => ({ name, rows: rows.map((r) => r ?? []) });
+
+/**
+ * IS THE EXPORT THE SAME DOCUMENT AS ITS PDF? A WITNESS, NEVER A SECOND SOURCE.
+ *
+ * A manager's reporting system writes the same report twice — a PDF and a
+ * spreadsheet export of the same tables (`askimpms_…_BankBook178CT.pdf` and
+ * `.xlsx`; Marathon's `.pdf` and `.csv`). The PDF is the document this pipeline
+ * reads; read as a second source the export would put every row in the book
+ * twice. What it IS good for is a check: every significant figure it carries
+ * should be a figure the PDF prints. This returns how many were checked, how
+ * many were found, and the ones that were not — a figure the export carries and
+ * the PDF does not print is a disagreement between two renderings of one
+ * statement, and it is named rather than absorbed.
+ *
+ * A figure is SIGNIFICANT when it is a number of magnitude ≥ 1 with a fractional
+ * part: whole numbers (dates, counts, serials, years) coincide by chance. It is
+ * FOUND when the PDF prints a number that agrees with it at the export's own
+ * precision — the two print a figure to different decimals (the export to six,
+ * the page to two or four), so the comparison is made at every precision from
+ * the export's down to two places, and within one unit in the last place there,
+ * which is the PDF's own rounding of the same figure and nothing looser.
+ * Calibrated on the September 2026 delivery: every figure of all eighteen
+ * exports is found.
+ */
+export function witnessCheck(sheets, pdfText) {
+  const NUM = /^\(?[-+]?[\d,]*\d(?:\.\d+)?\)?-?$/;
+  const decs = (t) => (String(t).match(/\.(\d+)/)?.[1] ?? "").length;
+  const idx = new Map();
+  for (const m of String(pdfText ?? "").matchAll(/\(?-?\d[\d,]*(?:\.\d+)?\)?-?/g)) {
+    const v = parseNum(m[0]);
+    if (v == null || !Number.isFinite(v)) continue;
+    const d = decs(m[0]);
+    for (let e = 0; e <= Math.min(d, 6); e++) {
+      if (!idx.has(e)) idx.set(e, new Set());
+      idx.get(e).add(Math.round(Math.abs(v) * 10 ** e));
+    }
+  }
+  const found = (x, dx) => {
+    for (let e = Math.min(dx, 6); e >= Math.min(dx, 2); e--) {
+      const set = idx.get(e);
+      if (!set) continue;
+      const k = Math.round(Math.abs(x) * 10 ** e);
+      if (set.has(k) || (e >= 2 && (set.has(k - 1) || set.has(k + 1)))) return true;
+    }
+    return false;
+  };
+  let checked = 0, matched = 0;
+  const unmatched = [];
+  for (const s of sheets ?? []) {
+    for (const row of s.rows ?? []) {
+      for (const cell of row) {
+        const t = String(cell ?? "").trim().replace(/%$/, "");
+        if (!NUM.test(t)) continue;
+        const v = parseNum(t);
+        if (v == null || !Number.isFinite(v) || Math.abs(v) < 1 || Number.isInteger(v)) continue;
+        checked++;
+        if (found(v, decs(t))) matched++;
+        else if (!unmatched.includes(t)) unmatched.push(t);
+      }
+    }
+  }
+  return { checked, matched, unmatched };
+}

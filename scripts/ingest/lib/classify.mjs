@@ -39,6 +39,13 @@ export const REPORT_TYPES = [
   // manager's own total of what the dated statements beside it itemise — a
   // CHECK on those statements, and the only document carrying the fees.
   "profit-and-loss", "income-expense",
+  // Buoyant's PORTFOLIO SNAP REPORT: its Category III account statement (the
+  // summary row, the deposits, the allotments per class) with a third page the
+  // statement alone does not carry — Current Investments by class, the
+  // since-inception Investment Summary and the TWRR. Its own report type so the
+  // book can decide what it is authoritative for rather than letting a newer
+  // issue silently supersede the account statement it is not.
+  "portfolio-snap",
   "unknown",
 ];
 
@@ -391,7 +398,17 @@ function matchGoldstandard(text, name) {
   // sheet runs the holdings table into the same line (`… Jaisinghani 1 BANK
   // Cash and …`), and its other statements run into `ASK Indian Entrepreneur
   // Portfolio`, so `ASK` stops the name there.
-  const stops = [...(strategy ? [strategy.split(" ")[0]] : []), ...(askAcct ? ["ASK", "Inception", "Sebi"] : [])];
+  // Buoyant prints its holder on the TITLE line with no label after it —
+  // `Account : 103473 AJAY THAKURDAS JAISINGHANI Buoyant Opportunities Strategy
+  // - Investor` once the text is flattened — so the scheme name ran straight
+  // into the owner ("AJAY THAKURDAS JAISINGHANI Buoyant Opportunities"). The
+  // owner still RESOLVED, by the PAN the reader finds, which is exactly how a
+  // polluted name hides; the inventory printed it as the holder.
+  const stops = [
+    ...(strategy ? [strategy.split(" ")[0]] : []),
+    ...(askAcct ? ["ASK", "Inception", "Sebi"] : []),
+    ...(provider === "Buoyant Capital" ? ["Buoyant"] : []),
+  ];
   let ownerName = acct ? trimPersonName(acct[2], stops) : null;
   // Goldstandard ONLY: its filename repeats the account number twice
   // (`G100023_100024_…` on account 100024), so the second field is the account
@@ -421,10 +438,25 @@ function matchGoldstandard(text, name) {
     if (re.test(name.replace(/[^A-Za-z]/g, ""))) { reportType = type; matchedBy = "Goldstandard filename"; break; }
   }
   if (reportType === "unknown") {
-    // Molecule's file is named `Molecule_June_2026_392.pdf` — nothing in it maps
-    // to a report type. Its CONTENT is unmistakable: a fact sheet's own
-    // "Portfolio Holdings" table beside a "Sector Allocation" one.
-    if (/Portfolio\s+Holdings/i.test(text) && /Sector\s+Allocation/i.test(text)) {
+    /**
+     * BUOYANT'S PORTFOLIO SNAP REPORT, on its NAME AND its content — both.
+     *
+     * The content alone cannot decide it: `source/august-2026/reports/BUOYANT -
+     * AJAY.pdf` is the same three pages (summary, transactions, Current
+     * Investments + Investment Summary) and is archived as `holdings`; reading
+     * the content as the rule would re-key a document already in the book. The
+     * file name is what the issuer calls this document, and the content is what
+     * makes the name true — a file merely NAMED a snap that lacks the page the
+     * snap is for keeps whatever it was before.
+     */
+    if (provider === "Buoyant Capital" && /Portfolio[\s_-]*Snap[\s_-]*Report/i.test(name)
+      && /Current\s+Investments/i.test(text) && /Investment\s+Summary/i.test(text)) {
+      reportType = "portfolio-snap";
+      matchedBy = "Buoyant Portfolio Snap Report — file name, and its Current Investments / Investment Summary page";
+    } else if (/Portfolio\s+Holdings/i.test(text) && /Sector\s+Allocation/i.test(text)) {
+      // Molecule's file is named `Molecule_June_2026_392.pdf` — nothing in it maps
+      // to a report type. Its CONTENT is unmistakable: a fact sheet's own
+      // "Portfolio Holdings" table beside a "Sector Allocation" one.
       reportType = "fact-sheet";
       matchedBy = "fact-sheet content (Portfolio Holdings + Sector Allocation)";
     } else {

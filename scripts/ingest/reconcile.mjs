@@ -624,6 +624,13 @@ export function duplicateHoldings(docs, { decisions = SEPARATE_INVESTMENTS } = {
       // the fact sheet contributes security + sector and nothing else, and every
       // one of its rows would otherwise "match" every other fact sheet's.
       if (!isNum(h.quantity) && !isNum(h.marketValue) && !isNum(h.unitCost)) continue;
+      // A holding REDEEMED TO NIL — zero units, zero value — coincides with every
+      // other redeemed holding of the same fund by construction, not by chance:
+      // two members who each sold out of one scheme both print 0 and ₹0. Measured
+      // on the September 2026 delivery, the two ASK Absolute Return folios were
+      // grouped as one holding for exactly that reason. There is nothing left to
+      // count twice, so there is nothing to group.
+      if (h.quantity === 0 && (h.marketValue ?? 0) === 0) continue;
       // Identity is the security plus the figures that would have to coincide
       // by chance for this to be innocent.
       const k = [h.securityKey, h.quantity ?? "-", h.unitCost ?? "-", h.marketValue ?? "-"].join("|");
@@ -946,10 +953,30 @@ function datedTableChecks(docs) {
   }
   for (const [k, e] of lotsByAccount) {
     const [provider, accountNo, window] = k.split("\u0000");
-    const stated = docs.find((d) => d.provider === provider && d.accountNo === accountNo
-      && isNum(d.flows?.realized) && `${d.flows.periodFrom}..${d.flows.periodTo}` === window);
+    const mine = docs.filter((d) => d.provider === provider && d.accountNo === accountNo);
+    let stated = mine.find((d) => isNum(d.flows?.realized) && `${d.flows.periodFrom}..${d.flows.periodTo}` === window);
+    let key = `${accountNo} ${window}`;
+    /**
+     * TWO WHOLE-LIFE WINDOWS ARE ONE WINDOW. ASK's profit-and-loss account runs
+     * from 1 April 2019, the start of the financial year the mandate opened in,
+     * and its capital gain statement from the mandate's own inception on 26 July
+     * 2019 — different strings, the same measurement, because nothing was
+     * realised before the account existed. Matched only where BOTH windows open
+     * on or before the inception the account's own statements print, and close
+     * on the same date; a since-inception figure and a financial-year one are
+     * still different measurements and are still never compared.
+     */
+    if (!stated) {
+      const [from, to] = window.split("..");
+      const inception = mine.map((d) => d.inceptionDate).filter(Boolean).sort()[0] ?? null;
+      if (inception && from && from !== "undefined" && from <= inception) {
+        stated = mine.find((d) => isNum(d.flows?.realized) && d.flows.periodTo === to
+          && !!d.flows.periodFrom && d.flows.periodFrom <= inception);
+        if (stated) key = `${accountNo} ${window} (whole life; statement ${stated.flows.periodFrom}..${to})`;
+      }
+    }
     if (!stated) continue;
-    add(e.doc, "realised gain: lots vs statement", `${accountNo} ${window}`,
+    add(e.doc, "realised gain: lots vs statement", key,
       round2(e.st + e.lt), stated.flows.realized);
   }
   return out;

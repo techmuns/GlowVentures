@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { extractLayout, passwordsFromEnv } from "./lib/layout.mjs";
 import { NON_STATEMENT_PROVIDERS, classify } from "./lib/classify.mjs";
 import { splitBundle, isKnownReportType } from "./lib/bundle.mjs";
-import { readSpreadsheet } from "./lib/sheet.mjs";
+import { readSpreadsheet, witnessCheck } from "./lib/sheet.mjs";
 import { makeDocument, makeDocKey, assertNormalized, deriveDocument, DOCUMENT_FIELDS } from "./lib/document.mjs";
 import { resolveOwner } from "../../shared/owners.mjs";
 import { securityKeyOf, stripDepositoryTail } from "../../shared/securityKey.mjs";
@@ -153,7 +153,10 @@ const BY_PROVIDER_REPORT_TYPE = {
   // `BUOYANT - AJAY.pdf`. Both are that one document family, and both go to the
   // reader written for it — otherwise the statement that carried this account
   // before the PMS set arrived stops being read at all.
-  "Buoyant Capital": { holdings: altFunds, unknown: altFunds },
+  // `portfolio-snap` is the same account statement with a third page — the
+  // classifier types it on its file name AND its page-3 headings — and the same
+  // reader takes it, with that page's own checks (`buoyantSnapCheck`).
+  "Buoyant Capital": { holdings: altFunds, unknown: altFunds, "portfolio-snap": altFunds },
 };
 
 /** Which reader produced a document, for a warning that has to be actionable. */
@@ -169,9 +172,10 @@ const extractorName = (m) => m?.PROVIDER ?? m?.REPORT_TYPE ?? "the extractor";
  * "105 PDFs" and nobody could tell the difference between "all of it" and "all
  * of what we recognised".
  */
-const READABLE = /\.(pdf|xls|xlsx)$/i;
-/** …and which of those go to the workbook reader rather than to pdfjs. */
-const SPREADSHEET = /\.(xls|xlsx)$/i;
+const READABLE = /\.(pdf|xls|xlsx|csv)$/i;
+/** …and which of those go to the workbook reader rather than to pdfjs. The
+ *  format itself is sniffed from the bytes (`lib/sheet.mjs`), never the name. */
+const SPREADSHEET = /\.(xls|xlsx|csv)$/i;
 
 /**
  * A macOS RESOURCE FORK IS NOT A DOCUMENT, and it must not become one.
@@ -752,6 +756,28 @@ function backfillSecurityNames(docs) {
   const DESCRIPTION_TAIL = /\s*(?:[#\-–—]\s*)?(?:NEW\s+)?EQUITY\s+SHARES?\b.*$/i;
   const companyPart = (s) => stripDepositoryTail(String(s).replace(DESCRIPTION_TAIL, ""));
 
+  /**
+   * ONE COMPANY SPELLED TWO WAYS IS STILL ONE CANDIDATE. Two fuller names
+   * against one ISIN were skipped as ambiguous — and the September 2026 ASK
+   * statements print Varun Beverages both as `VARUN BEVERAGES LTD` and as
+   * `Varun Beverages Limited`, so LKP's clipped `VARUN BEVERAGE` stopped being
+   * renamed and its key moved on a document already in the archive. Where every
+   * candidate takes the SAME securityKey they name one company, and the choice
+   * is only which spelling: a cased one beats an all-capitals one (the rule
+   * `securityLabel` applies on screen), then the longest, then the first in
+   * alphabetical order — so the pick never depends on which file was read
+   * first. Candidates that key differently are different companies and stay
+   * ambiguous: nothing is renamed.
+   */
+  function oneCompany(candidates) {
+    if (candidates.length === 1) return candidates[0];
+    if (!candidates.length) return null;
+    const keys = new Set(candidates.map((c) => securityKeyOf(c)));
+    if (keys.size !== 1) return null;
+    const cased = (c) => (/[a-z]/.test(c) ? 1 : 0);
+    return [...candidates].sort((a, b) => cased(b) - cased(a) || b.length - a.length || (a < b ? -1 : a > b ? 1 : 0))[0];
+  }
+
   let renamed = 0;
   for (const d of docs) {
     for (const h of d.holdings ?? []) {
@@ -760,10 +786,11 @@ function backfillSecurityNames(docs) {
         n !== h.security
         && abbreviates(h.security, n)
         && abbreviates(companyPart(h.security), companyPart(n)));
-      if (fuller.length !== 1) continue;
+      const pick = oneCompany(fuller);
+      if (!pick) continue;
       h.printedSecurity ??= h.security;
-      h.security = fuller[0];
-      h.securityKey = securityKeyOf(fuller[0]);
+      h.security = pick;
+      h.securityKey = securityKeyOf(pick);
       renamed++;
       d.securityNameSource = "isin";
     }
@@ -845,6 +872,60 @@ function guardAgainstShrinkingTheArchive(docs) {
   process.exit(1);
 }
 
+/**
+ * The archived record of an export read as a WITNESS of the PDF beside it: the
+ * identity of the document it witnesses, its own rows as browsable sections,
+ * and NO facts — every array empty — so nothing downstream can count a row of
+ * it. `twinOf` names the document; the warnings say what was checked.
+ */
+function witnessDocument(file, grid, primary, pdfRel, pdfText) {
+  const ext = path.extname(file).slice(1).toLowerCase();
+  const { checked, matched, unmatched } = witnessCheck(grid.sheets, pdfText);
+  const warnings = [{
+    code: "witness-of",
+    detail: `this ${ext.toUpperCase()} is the export of ${pdfRel}, which is read as the document (${primary.docKey}); it adds no facts. `
+      + `${matched} of the ${checked} significant figure(s) it carries are printed in that PDF.`,
+  }];
+  if (!checked) {
+    warnings.push({ code: "witness-nothing-checked", detail: "the export carries no figure with a fractional part to check against the PDF, so it witnesses nothing" });
+  } else if (unmatched.length) {
+    warnings.push({
+      code: "witness-mismatch",
+      detail: `${unmatched.length} figure(s) in the export are not printed in ${pdfRel}: ${unmatched.slice(0, 12).join(", ")}${unmatched.length > 12 ? ", …" : ""}. `
+        + "The PDF is the document; the two renderings disagree here and the export is not believed.",
+    });
+  }
+  const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "sheet";
+  const sections = {};
+  for (const sh of grid.sheets ?? []) {
+    let key = `sheet-${slug(sh.name)}`;
+    for (let i = 2; sections[key]; i++) key = `sheet-${slug(sh.name)}-${i}`;
+    sections[key] = { name: sh.name, rows: sh.rows };
+  }
+  const doc = makeDocument({
+    docKey: `${primary.docKey}-${ext}`,
+    provider: primary.provider,
+    accountNo: primary.accountNo,
+    owner: primary.owner,
+    ownerId: primary.ownerId,
+    familyGroup: primary.familyGroup,
+    strategy: primary.strategy,
+    asOf: primary.asOf,
+    reportType: primary.reportType,
+    engagement: primary.engagement,
+    providerEngagement: primary.providerEngagement,
+    sourcePath: rel(file),
+    pages: grid.numPages,
+    sourcePages: null,
+    stitches: [],
+    sections,
+    warnings,
+    status: checked && !unmatched.length ? "ok" : "partial",
+  });
+  doc.twinOf = primary.docKey;
+  return doc;
+}
+
 function writeArchive(docs, grids) {
   fs.rmSync(AUDIT_DIR, { recursive: true, force: true });
   fs.mkdirSync(AUDIT_DIR, { recursive: true });
@@ -898,6 +979,9 @@ function writeArchive(docs, grids) {
       sections: sheets.map((s) => s.key),
       status: doc.status,
       warnings: doc.warnings.length,
+      // A file printing the same text as this document's (read once), and the
+      // document an export witnesses — provenance, never a second source.
+      twinOf: doc.twinOf,
       // ── fields the Data Audit browser reads ──
       fileKey: doc.docKey,
       label: [doc.provider, doc.accountNo, doc.reportType].filter(Boolean).join(" · "),
@@ -944,14 +1028,47 @@ async function main() {
   // encrypted with an identifier that belongs to the family.
   const passwords = passwordsFromEnv();
 
+  /**
+   * AN EXPORT BESIDE ITS PDF IS A WITNESS, NOT A SECOND DOCUMENT.
+   *
+   * A reporting system that writes `X.pdf` writes `X.xlsx` or `X.csv` beside it
+   * — the same report, the same tables. Read as a document of its own the export
+   * either fails on a layout its reader was never written for or, worse,
+   * succeeds and puts every row in the book twice. So a spreadsheet with a PDF of
+   * the same name in the same folder is held back from the readers and archived
+   * after them as a WITNESS of that PDF's document: its rows kept for provenance,
+   * no facts, and every significant figure it carries checked against the
+   * figures the PDF prints (`witnessCheck`).
+   */
+  const stemOf = (f) => path.join(path.dirname(f), path.basename(f, path.extname(f))).toLowerCase();
+  const pdfByStem = new Map();
+  for (const f of files) if (/\.pdf$/i.test(f) && !pdfByStem.has(stemOf(f))) pdfByStem.set(stemOf(f), f);
+  const witnesses = unique.filter((f) => SPREADSHEET.test(f) && pdfByStem.has(stemOf(f)));
+  const toRead = unique.filter((f) => !witnesses.includes(f));
+
+  /**
+   * The text each PDF printed, kept for the witnesses below: a spreadsheet export
+   * is checked against what its PDF PRINTED, not against what a reader made of it.
+   *
+   * Two files printing IDENTICAL text in different bytes (a statement saved under
+   * two names — the ASK Absolute Return Fund folio arrives as "ATJ - …" and
+   * "Aarti J - …", the first holder and the joint holder) are both read, and the
+   * second is filed `-2` exactly as the four such pairs already in the archive
+   * are. That costs nothing in the book: a snapshot is taken once per account and
+   * date, and a dated row printed on two issues is counted once (`datedRowsAcross`).
+   */
+  const fileText = new Map();
+
   const docs = [];
   const grids = new Map();
-  for (const file of unique) {
+  for (const file of toRead) {
     process.stdout.write(`  reading ${rel(file)} … `);
     const bytes = fs.readFileSync(file);
     const grid = SPREADSHEET.test(file)
       ? gridFromSpreadsheet(bytes)
       : await extractLayout(new Uint8Array(bytes), { passwords });
+    const text = (grid.pages ?? []).map((p) => p.text ?? "").join("\n");
+    fileText.set(file, text);
     const produced = extractDocuments(file, grid);
     for (const { doc, grid: partGrid } of produced) {
       grids.set(doc, partGrid);
@@ -968,6 +1085,38 @@ async function main() {
   backfillOwners(docs);
   const renamed = backfillSecurityNames(docs);
   if (renamed) console.log(`  ${renamed} clipped security name(s) resolved to their fuller form via ISIN.`);
+  ensureUniqueDocKeys(docs);
+
+  // The witnesses, now that the documents they witness carry their final keys.
+  const byteDup = new Map(duplicateSources.map((d) => [d.path, d.sameAs]));
+  for (const file of witnesses) {
+    process.stdout.write(`  reading ${rel(file)} … `);
+    const grid = gridFromSpreadsheet(fs.readFileSync(file));
+    let pdf = rel(pdfByStem.get(stemOf(file)));
+    pdf = byteDup.get(pdf) ?? pdf;
+    const primary = docs.find((d) => d.sourcePath === pdf && (d.status === "ok" || d.status === "partial"));
+    if (grid.error || !primary) {
+      // Nothing to witness: the export is read as a document of its own, and
+      // says why — a witness of a PDF nobody could read checks nothing.
+      const produced = extractDocuments(file, grid);
+      for (const { doc, grid: partGrid } of produced) {
+        if (!grid.error) {
+          doc.warnings.push({
+            code: "witness-sibling-unreadable",
+            detail: `${pdf} sits beside this export and would be the document it witnesses, but that PDF produced no readable document; the export is read on its own instead`,
+          });
+        }
+        grids.set(doc, partGrid);
+        docs.push(doc);
+      }
+      console.log(`no readable sibling — read on its own: ${produced.map(({ doc: d }) => d.status).join(", ")}`);
+      continue;
+    }
+    const doc = witnessDocument(file, grid, primary, pdf, fileText.get(path.join(ROOT, pdf)) ?? fileText.get(pdfByStem.get(stemOf(file))) ?? "");
+    grids.set(doc, grid);
+    docs.push(doc);
+    console.log(`witness of ${primary.docKey}: ${doc.status}`);
+  }
   ensureUniqueDocKeys(docs);
   // RECONCILE BEFORE WRITING. The duplicate check (c) does more than report — it
   // TAGS each matching row with its `dedupeGroup` and `alsoReportedUnder`, and

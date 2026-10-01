@@ -1,0 +1,41 @@
+{
+ "name": "account-summary",
+ "rows": [
+  [
+   "series",
+   "isin",
+   "navDate",
+   "units",
+   "grossNav",
+   "grossValuation",
+   "navNetOfFee",
+   "valuationNetOfFee",
+   "navNetOfFeeAndTax",
+   "valuationNetOfFeeAndTax"
+  ],
+  [
+   "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+   "INF0V6R22JL5",
+   "2026-03-31",
+   "-",
+   1087.4566,
+   0,
+   1066.3665,
+   0,
+   1040.2477,
+   0
+  ],
+  [
+   "Total",
+   "",
+   "",
+   "-",
+   "",
+   0,
+   "",
+   0,
+   "",
+   0
+  ]
+ ]
+}

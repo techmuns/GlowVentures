@@ -74,6 +74,7 @@ export const PROVIDERS = {
   amritkaal: "Carnelian Bharat Amritkaal Fund",
   delphi: "Motilal Oswal Delphi Equity Fund",
   hedgedEquity: "Motilal Oswal Hedged Equity Multi Factor Strategy",
+  askArf: "ASK Absolute Return Fund",
 };
 
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
@@ -886,6 +887,568 @@ export function splitRunTogetherTriple(digits) {
   return found.length === 1 ? found[0] : null;
 }
 
+// ── ASK ABSOLUTE RETURN FUND — A STATEMENT OF ACCOUNT, REDEEMED TO NIL ───────
+//
+// ASK's AIF statement of account: one folio, an Account Summary and a dated
+// Transaction Summary. The September 2026 delivery brings two folios and both
+// are REDEEMED IN FULL, which the statement says twice over:
+//
+//   • the Account Summary prints the unit balance as a dash beside a valuation
+//     of 0.00 in all three valuation columns, and its Total row the same;
+//   • the Transaction Summary's own unit counts net to exactly nil — every unit
+//     a Capital Contribution allotted, a Net Return on Capital Contribution
+//     took back.
+//
+// So the holding is a MEASURED zero — quantity 0, marked at the NAV net of fee
+// the statement prints — the way 3P's redeemed classes are (Stage 10ak), and
+// NOT a dash read as null, which is Hedged Equity's case: there the dash stood
+// in for every figure on the row; here it sits beside three printed zero
+// valuations and a dated record that reaches nil. Only where both hold is it
+// read as nil — a dash beside a non-zero valuation refuses the whole summary.
+//
+// THE TRANSACTION SUMMARY IS FIVE DECLARED ROW TYPES, one printed line each,
+// with a long label wrapped above and below the figures:
+//
+//   Capital Contribution                    units   the amount invested
+//   Stamp Duty                              -       (the charge on it)
+//   Return of Capital Contribution          -       (gross, at the NAV net of fee)
+//   Tax on Return of Capital Contribution   -       (the tax withheld from it)
+//   Net Return on Capital Contribution      units   (the cash paid out)
+//
+// It is published ONLY if it ties, and every check is struck on figures the
+// statement prints: on each redemption date the gross less the tax is the net,
+// to the paisa; on the Account Summary's own NAV date the gross and the net are
+// the redeemed units at the NAV net of fee and at the NAV net of fee & tax; and
+// the units the table allots and redeems reach the Account Summary's balance. A
+// row of a type this reader does not declare, or a line of the table nothing
+// read, withholds the whole table rather than publishing it with a row missing.
+//
+// NO REALISED GAIN IS PRINTED, SO NONE IS WRITTEN. What the family made is
+// arithmetic on the dated rows — FIFO over them strikes it (Stage 10ca) — and
+// this reader carries only what the statement prints. NO SEBI CATEGORY IS
+// PRINTED EITHER, so the engagement names none: a category written here would
+// put a chip on the fund that traces to nothing (PM-C3).
+
+/** One series of the fund, named the same on the holding and on every dated
+ *  row that bought or redeemed it — so the two land on one securityKey. */
+export const askArfClassName = (cls, series) => `ASK Absolute Return Fund — Class ${cls} Series ${series}`;
+
+const ARF_SERIES = String.raw`ASK\s+Absolute\s+Return\s+Fund\s*(?:\([^)\n]*\)\s*)?[-–]\s*Class\s+([A-Z]\d?)\s+Series\s+(\d{2}\/\d{2}\/\d{4})\s+(INF[0-9A-Z]{9})`;
+/** `ASK Absolute Return Fund ("ASK ARF") - Class A6 Series 31/01/2025 INF0V6R22JL5
+ *   31 Mar 2026 - 1,087.4566 0.00 1,066.3665 0.00 1,040.2477 0.00` */
+const ARF_SUMMARY_ROW = new RegExp(ARF_SERIES
+  + String.raw`\s+(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})`  // 4 NAV date
+  + String.raw`\s+(-|[\d,]+\.\d+)`                   // 5 units, or a dash
+  + String.raw`\s+([\d,]+\.\d+)\s+([\d,]+\.\d{2})`   // 6 gross NAV, 7 gross valuation
+  + String.raw`\s+([\d,]+\.\d+)\s+([\d,]+\.\d{2})`   // 8 NAV net of fee, 9 valuation net of fee
+  + String.raw`\s+([\d,]+\.\d+)\s+([\d,]+\.\d{2})`,  // 10 NAV net of fee & tax, 11 valuation net of fee & tax
+  "gi");
+/** `Total - 0.00 0.00 0.00` — units, then the three valuation columns. */
+const ARF_TOTAL = /^Total\s+(-|[\d,]+\.\d+)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/im;
+/** `30/09/2025 ASK ARF - Class A6 Series 31/01/2025 INF0V6R22JL5 Return of Capital Contribution - (10,14,94,665.47)` */
+const ARF_TXN = new RegExp(
+  String.raw`^(\d{2}\/\d{2}\/\d{4})\s+ASK\s+ARF\s*[-–]\s*Class\s+([A-Z]\d?)\s+Series\s+(\d{2}\/\d{2}\/\d{4})\s+(INF[0-9A-Z]{9})`
+  + String.raw`(?:\s+(.*?))?\s+(-|[\d,]+\.\d+)\s+(\(?-?[\d,]+\.\d{2}\)?)$`, "i");
+const ARF_DATED = /^\d{2}\/\d{2}\/\d{4}\s+\S/;
+/** The title each page reprints; inside the table it is a page break, not a row. */
+const ARF_RUNNING_TITLE = /^ASK\s+Absolute\s+Return\s+Fund$/i;
+/** The table's own column headings, printed again on a page the table continues onto. */
+const ARF_TXN_HEADER = /^Date\s+Scheme\s*&\s*Series\s+Name\s+Transaction\s+Description\s+Units\s+Amount$/i;
+/** The five row types, DECLARED — anything else withholds the table. */
+const ARF_TYPES = [
+  [/^Capital Contribution$/i, "contribution"],
+  [/^Stamp Duty$/i, "stamp"],
+  [/^Return of Capital Contribution$/i, "gross"],
+  [/^Tax on Return of Capital Contribution(?: Tax on Redemption)?$/i, "tax"],
+  [/^Net Return on Capital Contribution$/i, "net"],
+];
+const arfMoney = (v) => Math.round(v * 100) / 100;
+const arfUnits = (v) => Math.round(v * 1e3) / 1e3;
+const arfDash = (v) => String(v ?? "").trim() === "-";
+
+/**
+ * Everything the statement prints that this reader uses, read once and shared
+ * by the holdings, the dated rows and their checks — so a check can never be
+ * struck on a different reading of the page from the one it licenses.
+ */
+export function askArfParse(text) {
+  const cut = text.search(/^Transaction Summary\s*$/im);
+  const summaryText = cut < 0 ? text : text.slice(0, cut);
+  const series = [...summaryText.matchAll(ARF_SUMMARY_ROW)].map((m) => ({
+    cls: m[1], series: m[2], isin: m[3], navDate: toIso(m[4]),
+    unitsPrinted: m[5].trim(), units: arfDash(m[5]) ? null : n(m[5]),
+    grossNav: n(m[6]), grossValue: n(m[7]),
+    navNetFee: n(m[8]), valueNetFee: n(m[9]),
+    navNetFeeTax: n(m[10]), valueNetFeeTax: n(m[11]),
+  }));
+  const t = ARF_TOTAL.exec(summaryText);
+  const total = t
+    ? { unitsPrinted: t[1].trim(), units: arfDash(t[1]) ? null : n(t[1]), grossValue: n(t[2]), valueNetFee: n(t[3]), valueNetFeeTax: n(t[4]) }
+    : null;
+  return { series, total, ledger: cut < 0 ? null : askArfLedger(text.slice(cut)) };
+}
+
+/**
+ * The Transaction Summary, line by line. A row whose label is too long for its
+ * column prints the figures on the anchor line and the words above and below
+ * it — `Tax on Return of Capital` / the row / `Contribution Tax on Redemption`
+ * — so a row with no words of its own takes the line before it and the line
+ * after it, and each line is claimed by ONE row. A line nothing claimed is
+ * reported, because a figure or a label this reader walked past is exactly
+ * what would make a published table quietly incomplete.
+ */
+function askArfLedger(section) {
+  const lines = section.split("\n").map((l) => l.trim());
+  let end = lines.findIndex((l, i) => i > 0 && /^\d+\.\s+\S/.test(l));
+  if (end < 0) end = lines.length;
+  const body = lines.slice(1, end);
+  // THE PAGE FOOTER. Where the table runs onto a second page, the footer every
+  // page carries — the manager's name and its office — lands inside it, and the
+  // same lines are printed again below the notes, at the foot of the last page.
+  // A line printed inside the table AND again after it has ended is that
+  // footer, never a row's label; anything else still has to be claimed.
+  const furniture = new Set(lines.slice(end).filter(Boolean));
+  const used = new Set();
+  const skip = (l) => !l || ARF_RUNNING_TITLE.test(l) || ARF_TXN_HEADER.test(l) || (furniture.has(l) && !ARF_DATED.test(l));
+  const nearest = (from, step) => {
+    for (let j = from; j >= 0 && j < body.length; j += step) {
+      if (skip(body[j])) continue;
+      return ARF_DATED.test(body[j]) || used.has(j) ? -1 : j;
+    }
+    return -1;
+  };
+  const rows = [];
+  const undeclared = [];
+  body.forEach((line, i) => {
+    if (!ARF_DATED.test(line)) return;
+    used.add(i);
+    const m = ARF_TXN.exec(line);
+    if (!m) { undeclared.push(line.slice(0, 10)); return; }
+    let description = (m[5] ?? "").trim();
+    if (!description) {
+      const before = nearest(i - 1, -1);
+      const after = nearest(i + 1, +1);
+      for (const j of [before, after]) if (j >= 0) used.add(j);
+      description = [before, after].filter((j) => j >= 0).map((j) => body[j]).join(" ").replace(/\s+/g, " ").trim();
+    }
+    const type = ARF_TYPES.find(([re]) => re.test(description))?.[1] ?? null;
+    if (!type) { undeclared.push(`${m[1]} ${description || "(no label)"}`); return; }
+    rows.push({
+      date: toIso(m[1]), cls: m[2], series: m[3], isin: m[4], description, type,
+      unitsPrinted: m[6].trim(), units: arfDash(m[6]) ? null : n(m[6]), amount: n(m[7]),
+    });
+  });
+  const unread = body.filter((l, i) => !skip(l) && !used.has(i));
+  return { rows, undeclared, unread };
+}
+
+/**
+ * THE ACCOUNT SUMMARY TIES OR IT IS NOT PUBLISHED. Each valuation is its units
+ * at its own NAV within the precision the two are printed to (the bound
+ * `threePFlows` holds every 3P row to), a dash is nil only beside valuations of
+ * nil, and the Total row is the rows added up. Returns what failed; empty means
+ * the summary may be published.
+ */
+export function askArfSummaryFails(parsed) {
+  const fails = [];
+  if (!parsed.series.length) return ["no Account Summary row matched the declared column order"];
+  for (const s of parsed.series) {
+    const label = `Class ${s.cls} Series ${s.series}`;
+    const vals = [["gross", s.grossNav, s.grossValue], ["net of fee", s.navNetFee, s.valueNetFee],
+      ["net of fee & tax", s.navNetFeeTax, s.valueNetFeeTax]];
+    if (vals.some(([, nav, v]) => !isNumLocal(nav) || !isNumLocal(v))) {
+      fails.push(`${label}: a NAV or a valuation did not read as a number`);
+      continue;
+    }
+    if (s.units === null && vals.some(([, , v]) => v !== 0)) {
+      fails.push(`${label}: the unit balance prints a dash beside a valuation that is not nil`);
+      continue;
+    }
+    const q = s.units ?? 0;
+    for (const [what, nav, v] of vals) {
+      const bound = Math.abs(q) * 5e-5 + (s.units === null ? 0 : nav * 5e-4) + 0.01;
+      if (Math.abs(q * nav - v) > bound) fails.push(`${label}: ${q} unit(s) at the ${what} NAV ${nav} is not the printed ${v}`);
+    }
+  }
+  const t = parsed.total;
+  if (!t) fails.push("the Account Summary prints no Total row to tie its rows to");
+  else {
+    const sumUnits = arfUnits(parsed.series.reduce((a, s) => a + (s.units ?? 0), 0));
+    if (t.units === null ? sumUnits !== 0 || parsed.series.some((s) => s.units !== null)
+      : Math.abs(sumUnits - t.units) > 0.0005) {
+      fails.push(`the Total row prints ${t.unitsPrinted} unit(s) against ${sumUnits} across the rows`);
+    }
+    for (const [what, k] of [["gross valuation", "grossValue"], ["valuation net of fee", "valueNetFee"],
+      ["valuation net of fee & tax", "valueNetFeeTax"]]) {
+      const sum = arfMoney(parsed.series.reduce((a, s) => a + (s[k] ?? 0), 0));
+      if (Math.abs(sum - t[k]) > 0.01) fails.push(`the Total row's ${what} ${t[k]} is not the rows' ${sum}`);
+    }
+  }
+  return fails;
+}
+
+/**
+ * THE DATED RECORD, published only if every check ties — see the block above.
+ * Returns the cash flows the book reads: one CONTRIBUTION per Capital
+ * Contribution (every rupee paid, the stamp duty included, with the invested
+ * amount and the charge each as printed) and one WITHDRAWAL per redemption
+ * date (the cash paid out, with the gross and the tax in its notes). The
+ * statement prints a redemption's unit count unsigned and its amount in
+ * parentheses; the units are carried signed, out of the folio, because that is
+ * what the row's own amount and label say happened.
+ *
+ * Exported for `__tests__/askArf.test.mjs`, which breaks a synthetic statement
+ * one figure at a time to prove each check can fail.
+ */
+export function askArfFlows(text, warn) {
+  const parsed = askArfParse(text);
+  const L = parsed.ledger;
+  if (!L) return [];
+  if (L.undeclared.length) {
+    warn("transaction-type-not-declared",
+      `${L.undeclared.length} dated row(s) in the Transaction Summary carry a type this reader does not declare `
+      + `(${L.undeclared.join("; ")}); the dated record is withheld rather than published with rows missing from it`);
+    return [];
+  }
+  if (L.unread.length) {
+    warn("transaction-line-not-read",
+      `${L.unread.length} line(s) of the Transaction Summary belong to no row this reader read; the dated record is `
+      + "withheld rather than published with something on the page walked past");
+    return [];
+  }
+  if (!L.rows.length) {
+    warn("dated-table-does-not-tie", "the Transaction Summary is printed but no row of it was read");
+    return [];
+  }
+
+  const fails = [];
+  const seriesOf = new Map(parsed.series.map((s) => [`${s.cls}|${s.series}|${s.isin}`, s]));
+  for (const r of L.rows) {
+    if (!seriesOf.has(`${r.cls}|${r.series}|${r.isin}`)) {
+      fails.push(`${r.date} ${r.description}: Class ${r.cls} Series ${r.series} ${r.isin} is not a series the Account Summary prints`);
+    }
+    if (!isNumLocal(r.amount)) fails.push(`${r.date} ${r.description}: the amount did not read as a number`);
+    const carriesUnits = r.type === "contribution" || r.type === "net";
+    if (carriesUnits !== (r.units !== null)) {
+      fails.push(`${r.date} ${r.description}: ${carriesUnits ? "prints no unit count" : `prints ${r.unitsPrinted} unit(s) where the type carries none`}`);
+    }
+    if (r.type === "contribution" ? !(r.amount > 0) : !(r.amount < 0)) {
+      fails.push(`${r.date} ${r.description}: prints ${r.amount}, the wrong side of nil for the type`);
+    }
+  }
+
+  const flows = [];
+  const keyOf = (r) => `${r.date}|${r.cls}|${r.series}|${r.isin}`;
+  const groups = new Map();
+  for (const r of L.rows) {
+    const g = groups.get(keyOf(r)) ?? { date: r.date, cls: r.cls, series: r.series, isin: r.isin, rows: [] };
+    g.rows.push(r);
+    groups.set(keyOf(r), g);
+  }
+  for (const g of groups.values()) {
+    const of = (type) => g.rows.filter((r) => r.type === type);
+    const [contrib, stamp, gross, tax, net] = ["contribution", "stamp", "gross", "tax", "net"].map(of);
+    const at = `${g.date} Class ${g.cls} Series ${g.series}`;
+    if (contrib.length > 1 || stamp.length > 1 || gross.length > 1 || tax.length > 1 || net.length > 1) {
+      fails.push(`${at}: a row type is printed twice on one date, so which charge belongs to which row is not printed`);
+      continue;
+    }
+    if (stamp.length && !contrib.length) fails.push(`${at}: Stamp Duty with no Capital Contribution beside it`);
+    if ((gross.length || tax.length || net.length) && !(gross.length && net.length)) {
+      fails.push(`${at}: a redemption that does not print both its Return of Capital Contribution and its Net Return`);
+    }
+    if (contrib.length && (gross.length || net.length)) {
+      fails.push(`${at}: a contribution and a redemption on one date and series — which charge is whose is not printed`);
+    }
+    const name = askArfClassName(g.cls, g.series);
+    if (contrib.length) {
+      const c = contrib[0];
+      const charge = stamp.length && isNumLocal(stamp[0].amount) ? arfMoney(Math.abs(stamp[0].amount)) : null;
+      flows.push(makeCashFlow({
+        date: g.date, description: c.description, security: name, isin: g.isin, kind: "contribution",
+        amount: charge === null ? c.amount : arfMoney(c.amount + charge),
+        netAmount: c.amount,
+        expenses: charge,
+        units: c.units,
+        notes: charge === null
+          ? "Capital Contribution as printed; no Stamp Duty row is printed beside it"
+          : `Capital Contribution ${c.amount} and Stamp Duty ${charge}, printed as two rows on this date; the amount is every rupee paid, the two together`,
+      }));
+    }
+    if (gross.length && net.length) {
+      const G = Math.abs(gross[0].amount ?? NaN);
+      const T = tax.length ? Math.abs(tax[0].amount ?? NaN) : 0;
+      const N = Math.abs(net[0].amount ?? NaN);
+      if (Math.abs(arfMoney(G - T) - N) > 0.005) {
+        fails.push(`${at}: Return of Capital Contribution ${G} less tax ${T} is ${arfMoney(G - T)}, against a printed net ${N}`);
+      }
+      const s = seriesOf.get(`${g.cls}|${g.series}|${g.isin}`);
+      const u = net[0].units;
+      if (s && u !== null && s.navDate === g.date) {
+        for (const [what, nav, want] of [["gross", s.navNetFee, G], ["net", s.navNetFeeTax, N]]) {
+          const bound = Math.abs(u) * 5e-5 + nav * 5e-4 + 0.01;
+          if (Math.abs(u * nav - want) > bound) {
+            fails.push(`${at}: ${u} unit(s) at the Account Summary's NAV ${nav} is not the printed ${what} ${want}`);
+          }
+        }
+      }
+      flows.push(makeCashFlow({
+        date: g.date, description: net[0].description, security: name, isin: g.isin, kind: "withdrawal",
+        amount: net[0].amount,
+        units: u === null ? null : -Math.abs(u),
+        notes: `Return of Capital Contribution ${G} less Tax on Return of Capital Contribution ${T} = ${N} paid out; `
+          + "the statement prints the unit count unsigned and the amount in parentheses",
+      }));
+    }
+  }
+
+  // The units the table allots and redeems reach the Account Summary's balance,
+  // series by series — the printed nil the holding stands on.
+  for (const s of parsed.series) {
+    const mine = L.rows.filter((r) => r.cls === s.cls && r.series === s.series && r.isin === s.isin);
+    const run = arfUnits(mine.reduce((a, r) => a + (r.type === "contribution" ? r.units ?? 0 : r.type === "net" ? -(r.units ?? 0) : 0), 0));
+    const want = s.units ?? 0;
+    if (Math.abs(run - want) > 0.0005) {
+      fails.push(`Class ${s.cls} Series ${s.series}: the table's units run to ${run} against the Account Summary's ${s.unitsPrinted}`);
+    }
+  }
+
+  if (fails.length) {
+    warn("dated-table-does-not-tie",
+      "the Transaction Summary is not published for this folio: " + fails.join("; "));
+    return [];
+  }
+  return flows.sort((a, b) => a.date.localeCompare(b.date) || (a.kind === "contribution" ? -1 : 1));
+}
+
+/** The holdings: one per Account Summary series, published only if the summary ties. */
+export function askArfHoldingRows(text, warn) {
+  const parsed = askArfParse(text);
+  const fails = askArfSummaryFails(parsed);
+  if (fails.length) {
+    warn("summary-does-not-tie", "the Account Summary is not published for this folio: " + fails.join("; "));
+    return [];
+  }
+  return parsed.series;
+}
+
+/**
+ * The two printed tables, archived as the statement prints them — only where
+ * each ties, because a section is what a reader checking a figure opens and a
+ * table that did not tie is a reading this reader does not stand behind. The
+ * raw page text is in `pages.json` either way.
+ */
+function askArfSections(text) {
+  const parsed = askArfParse(text);
+  const out = {};
+  if (!askArfSummaryFails(parsed).length) {
+    out["account-summary"] = {
+      name: "account-summary",
+      rows: [["series", "isin", "navDate", "units", "grossNav", "grossValuation", "navNetOfFee", "valuationNetOfFee",
+        "navNetOfFeeAndTax", "valuationNetOfFeeAndTax"],
+      ...parsed.series.map((s) => [askArfClassName(s.cls, s.series), s.isin, s.navDate, s.unitsPrinted, s.grossNav,
+        s.grossValue, s.navNetFee, s.valueNetFee, s.navNetFeeTax, s.valueNetFeeTax]),
+      ["Total", "", "", parsed.total.unitsPrinted, "", parsed.total.grossValue, "", parsed.total.valueNetFee, "",
+        parsed.total.valueNetFeeTax]],
+    };
+  }
+  const quiet = () => {};
+  if (parsed.ledger && askArfFlows(text, quiet).length) {
+    out["transaction-summary"] = {
+      name: "transaction-summary",
+      rows: [["date", "series", "isin", "description", "units", "amount"],
+        ...parsed.ledger.rows.map((r) => [r.date, askArfClassName(r.cls, r.series), r.isin, r.description,
+          r.unitsPrinted, r.amount])],
+    };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/** The second holder the statement prints, or nobody where it prints `NA`. */
+function askArfJointHolders(text) {
+  const m = /Second\s+Holder\s+Name\s*:\s*([^\n]{1,90})/i.exec(text);
+  const name = m ? m[1].split(NEXT_LABEL)[0].trim() : "";
+  return !name || /^(?:N\.?\s*A\.?|-|nil|none)$/i.test(name) ? [] : [name];
+}
+
+/**
+ * BUOYANT'S PORTFOLIO SNAP REPORT — the same holding as the account statement,
+ * reported a second way, and checked against itself before it is believed.
+ *
+ * Page 1 is the account statement's own Account Summary (the row
+ * `BY_SUMMARY_ROW` reads) and its dated record; page 3 is the snap: the
+ * scheme's classification and inception, Current Investments per class in
+ * whole rupees, an Investment Summary since inception, the scheme's TWRR and
+ * the FUND's top holdings. Nothing on page 3 becomes a fact of the book — the
+ * holding is page 1's, units × NAV — but page 3 restates page 1 in round
+ * rupees, so the two must agree before the document is published as ok:
+ *
+ *   1. page 1's units × NAV is its printed value TO THE PAISA, and its Total row
+ *      is its one row;
+ *   2. each class page 3 lists is page 1's cost and value ROUNDED, a class page 1
+ *      does not hold prints 0 0, and page 3's Total is its rows;
+ *   3. Capital Invested + Income Distributed + Withdrawal + Profit / Loss is the
+ *      printed Current Value, which is page 1's value rounded, on page 1's date;
+ *   4. page 3 names the same account as page 1.
+ *
+ * The fund's top holdings and its TWRR are ARCHIVED as sections, as printed —
+ * they describe the scheme, not this family's units, and nothing reads them as
+ * a return or a look-through. Exported for `__tests__/buoyantSnap.test.mjs`.
+ */
+const SNAP_CI_ROW = /^BUOYANT\s+OPPORTUNITIES\s+(-?[\d,]+)\s+(-?[\d,]+)\s*$/i;
+const SNAP_HOLDING = /(?:^|\s)(\d{1,2})\s+([A-Z][A-Za-z0-9 &.,'()/-]*?)\s+(\d+\.\d{2})%(?=\s*$)/gm;
+const snapInt = (s) => (s == null ? null : n(s));
+
+export function buoyantSnapParse(text) {
+  const p3at = text.search(/^Classification\s*:/im);
+  const p3 = p3at < 0 ? "" : text.slice(p3at);
+  const row = BY_SUMMARY_ROW.exec(text);
+  const total1 = /^Total\s+([\d,]+\.\d+)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/im.exec(text);
+  const ciAt = p3.search(/^Current\s+Investments\s*$/im);
+  const chAt = p3.search(/^Current\s+Holdings\s*$/im);
+  const ciBlock = ciAt < 0 ? [] : p3.slice(ciAt, chAt > ciAt ? chAt : undefined).split("\n").map((l) => l.trim());
+  const classes = [];
+  let ciTotal = null;
+  ciBlock.forEach((l, i) => {
+    const m = SNAP_CI_ROW.exec(l);
+    if (m) {
+      const tail = ciBlock.slice(i + 1, i + 4).join(" ");
+      const k = /CLASS\s+([A-Z]\d?)\b/i.exec(tail);
+      classes.push({ cls: k ? k[1].toUpperCase() : null, cost: snapInt(m[1]), value: snapInt(m[2]) });
+    }
+    const t = /^Total\s+(-?[\d,]+)\s+(-?[\d,]+)\s*$/i.exec(l);
+    if (t) ciTotal = { cost: snapInt(t[1]), value: snapInt(t[2]) };
+  });
+  const line = (re) => (re.exec(p3) ?? [])[1] ?? null;
+  const summary = {
+    since: line(/^Since\s+(\d{2}\/\d{2}\/\d{4})\s+Amount/im),
+    capitalInvested: snapInt(line(/^Capital\s+Invested\s+(-?[\d,]+)/im)),
+    incomeDistributed: snapInt(line(/^Income\s+Distributed\s+(-?[\d,]+)/im)),
+    withdrawal: snapInt(line(/^Withdrawal\s+(-?[\d,]+)/im)),
+    profitLoss: snapInt(line(/^Profit\s*\/\s*Loss\s+(-?[\d,]+)/im)),
+    currentValueDate: line(/^Current\s+Value\s*\((\d{2}\/\d{2}\/\d{4})\)/im),
+    currentValue: snapInt(line(/^Current\s+Value\s*\(\d{2}\/\d{2}\/\d{4}\)\s+(-?[\d,]+)/im)),
+  };
+  const twrr = /^Portfolio\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s+(-?[\d.]+)%/im.exec(p3);
+  const hAt = p3.search(/^Current\s+Holdings\s*$/im);
+  const hEnd = p3.search(/^Total\s+100(?:\.0+)?%\s*$/im);
+  const hBlock = hAt < 0 ? "" : p3.slice(hAt, hEnd > hAt ? hEnd : undefined);
+  const fundHoldings = [...hBlock.matchAll(SNAP_HOLDING)].map((m) => ({ sr: Number(m[1]), security: m[2].trim(), pct: n(m[3]) }));
+  return {
+    row: row ? { navDate: toIso(row[1]), units: n(row[2]), cost: n(row[3]), nav: n(row[4]), value: n(row[5]) } : null,
+    total1: total1 ? { units: n(total1[1]), cost: n(total1[2]), value: n(total1[3]) } : null,
+    account1: FIELD(text, "Account", String.raw`(\d{4,})`),
+    asOf1: toIso((/As of\s+(\d{2}\/\d{2}\/\d{4})/i.exec(text) ?? [])[1]),
+    account3: line(/^Account\s*:\s*(\d{4,})\s*-/im),
+    asOf3: toIso(line(/^As\s+of\s+(\d{2}\/\d{2}\/\d{4})/im) ?? (/As of\s+(\d{2}\/\d{2}\/\d{4})(?![\s\S]*As of\s+\d)/i.exec(text) ?? [])[1]),
+    classification: line(/^Classification\s*:\s*([^\n]+)/im)?.trim() ?? null,
+    inception: line(/^Inception\s+Date\s*:\s*(\d{2}\/\d{2}\/\d{4})/im),
+    classes, ciTotal, summary,
+    twrr: twrr ? { m1: n(twrr[1]), m3: n(twrr[2]), y1: n(twrr[3]), since: n(twrr[4]),
+      sinceFrom: line(/^(\d{2}\/\d{2}\/\d{2})\b/m) } : null,
+    fundHoldings,
+    fundHoldingsTotal: hEnd >= 0,
+  };
+}
+
+/** What does not tie, in words; empty means the snap restates page 1 exactly. */
+export function buoyantSnapFails(p, heldClass) {
+  const fails = [];
+  const r = p.row;
+  if (!r) return ["page 1 prints no Account Summary row in the declared column order"];
+  const derived = Math.round(r.units * r.nav * 100) / 100;
+  if (derived !== r.value) fails.push(`page 1: ${r.units} unit(s) × NAV ${r.nav} is ${derived}, not the printed ${r.value}`);
+  if (!p.total1) fails.push("page 1 prints no Total row");
+  else if (p.total1.units !== r.units || p.total1.cost !== r.cost || p.total1.value !== r.value) {
+    fails.push("page 1's Total row is not its one Account Summary row");
+  }
+  if (!p.classes.length) fails.push("page 3 prints no Current Investments row");
+  for (const c of p.classes) {
+    if (!c.cls) { fails.push("a Current Investments row names no class"); continue; }
+    const want = c.cls === heldClass ? { cost: Math.round(r.cost), value: Math.round(r.value) } : { cost: 0, value: 0 };
+    if (c.cost !== want.cost || c.value !== want.value) {
+      fails.push(`page 3 Class ${c.cls}: ${c.cost} / ${c.value} is not page 1's ${want.cost} / ${want.value} rounded`);
+    }
+  }
+  if (!p.classes.some((c) => c.cls === heldClass)) fails.push(`page 3 lists no Class ${heldClass}, the class page 1 holds`);
+  if (!p.ciTotal) fails.push("page 3's Current Investments prints no Total row");
+  else {
+    const sum = p.classes.reduce((a, c) => ({ cost: a.cost + (c.cost ?? 0), value: a.value + (c.value ?? 0) }), { cost: 0, value: 0 });
+    if (sum.cost !== p.ciTotal.cost || sum.value !== p.ciTotal.value) fails.push("page 3's Current Investments Total is not its rows");
+    if (p.total1 && (p.ciTotal.cost !== Math.round(p.total1.cost) || p.ciTotal.value !== Math.round(p.total1.value))) {
+      fails.push("page 3's Current Investments Total is not page 1's Total rounded");
+    }
+  }
+  const s = p.summary;
+  const parts = [s.capitalInvested, s.incomeDistributed, s.withdrawal, s.profitLoss, s.currentValue];
+  if (parts.some((v) => !isNumLocal(v))) fails.push("page 3's Investment Summary did not read as five figures");
+  else {
+    if (s.capitalInvested + s.incomeDistributed + s.withdrawal + s.profitLoss !== s.currentValue) {
+      fails.push(`page 3's Investment Summary does not add up: ${s.capitalInvested} + ${s.incomeDistributed} + ${s.withdrawal} + ${s.profitLoss} is not ${s.currentValue}`);
+    }
+    if (s.currentValue !== Math.round(r.value)) fails.push(`page 3's Current Value ${s.currentValue} is not page 1's ${r.value} rounded`);
+  }
+  if (toIso(s.currentValueDate) !== p.asOf1) fails.push(`page 3's Current Value is dated ${s.currentValueDate}, not the statement's ${p.asOf1}`);
+  if (!p.account3 || p.account3 !== p.account1) fails.push("page 3 does not name the account page 1 names");
+  return fails;
+}
+
+/** The FUND's own top holdings tie only if their serial numbers run 1..N and their weights add to 100. */
+function buoyantSnapHoldingsTie(p) {
+  const h = p.fundHoldings;
+  if (!h.length || !p.fundHoldingsTotal) return false;
+  if (h.some((x, i) => x.sr !== i + 1)) return false;
+  const sum = h.reduce((a, x) => a + x.pct, 0);
+  return Math.abs(sum - 100) <= h.length * 0.005 + 1e-9;
+}
+
+function buoyantSnapCheck(text, holdings, warn) {
+  const held = /CLASS\s+([A-Z]\d?)/i.exec(text)?.[1]?.toUpperCase() ?? null;
+  const p = buoyantSnapParse(text);
+  const fails = holdings.length === 1 ? buoyantSnapFails(p, held) : ["the snap carries more than one Account Summary row"];
+  if (fails.length) warn("snap-does-not-tie", "the Portfolio Snap Report's pages do not restate each other: " + fails.join("; "));
+}
+
+function buoyantSnapSections(text) {
+  const p = buoyantSnapParse(text);
+  const held = /CLASS\s+([A-Z]\d?)/i.exec(text)?.[1]?.toUpperCase() ?? null;
+  if (buoyantSnapFails(p, held).length) return null;
+  const s = p.summary;
+  const out = {
+    "investment-summary": {
+      name: "investment-summary",
+      rows: [["line", "amount (INR, whole rupees, as printed)"],
+        ["Scheme classification", p.classification ?? ""],
+        ["Scheme inception date", p.inception ?? ""],
+        [`Since ${s.since ?? ""}`, ""],
+        ["Capital Invested", s.capitalInvested], ["Income Distributed", s.incomeDistributed],
+        ["Withdrawal", s.withdrawal], ["Profit / Loss", s.profitLoss],
+        [`Current Value (${s.currentValueDate})`, s.currentValue]],
+    },
+    "current-investments": {
+      name: "current-investments",
+      rows: [["class", "cost (INR, whole rupees)", "value (INR, whole rupees)"],
+        ...p.classes.map((c) => [buoyantClassName(c.cls), c.cost, c.value]),
+        ["Total", p.ciTotal.cost, p.ciTotal.value]],
+    },
+  };
+  if (p.twrr) {
+    out["performance-twrr"] = {
+      name: "performance-twrr",
+      rows: [["period", "portfolio TWRR % (the scheme's, after fees; over a year annualised — as printed)"],
+        ["1m", p.twrr.m1], ["3m", p.twrr.m3], ["1y", p.twrr.y1], [`since ${p.twrr.sinceFrom ?? "inception"}`, p.twrr.since]],
+    };
+  }
+  if (buoyantSnapHoldingsTie(p)) {
+    out["fund-holdings"] = {
+      name: "fund-holdings",
+      rows: [["sr", "security (the scheme's holding, as printed)", "% of assets"],
+        ...p.fundHoldings.map((h) => [h.sr, h.security, h.pct])],
+    };
+  }
+  return out;
+}
+
 const LAYOUTS = [
   {
     key: "buoyant",
@@ -921,6 +1484,14 @@ const LAYOUTS = [
     holder: (text) => (/Account\s*:\s*\d{4,}\s+([A-Z][A-Z\s]{6,44}?)\s*(?:\n|Buoyant)/i.exec(text) ?? [])[1],
     /** The deposits, the per-class allotments and the switch — see `buoyantFlows`. */
     flowsFrom: buoyantFlows,
+    /**
+     * The Portfolio Snap Report is this statement with a third page; the
+     * classifier types it `portfolio-snap` (on its file name AND its page-3
+     * headings) and the same row is read, checked against that page.
+     */
+    variants: {
+      "portfolio-snap": { verify: buoyantSnapCheck, sectionsFrom: buoyantSnapSections, okWhenClean: true },
+    },
   },
   {
     key: "founders",
@@ -1556,6 +2127,62 @@ const LAYOUTS = [
     security: "Motilal Oswal Hedged Equity Multi Factor Strategy",
     note: "both classes are REDEEMED TO NIL: Class B2's units were switched out on 31-07-2024 and Class F1's were paid out on 31-07-2025, and the Account Summary prints a dash for units and for valuation on each. The account is carried with no holding rather than a zero-valued one, and the family's consolidated review — struck 30 June 2026 — does not list this fund at all, which agrees",
   }),
+  {
+    /**
+     * ASK ABSOLUTE RETURN FUND — see the block above `askArfClassName`. One
+     * holding per Account Summary series and one dated row per contribution
+     * and per redemption, each published ONLY where the statement's own
+     * arithmetic ties it. Both folios in this archive are REDEEMED TO NIL:
+     * the summary prints a dash for units and 0.00 for every valuation, so the
+     * holding is a MEASURED zero at the NAV net of fee the statement prints,
+     * which is what `isRedeemedToNil` reads as a closed position.
+     */
+    key: "askArf",
+    engagement: "AIF",
+    // NO CATEGORY IS WRITTEN HERE, because none is printed (PM-C3).
+    providerEngagement: "AIF statement of account — the statement prints no SEBI category",
+    provider: PROVIDERS.askArf,
+    match: /ASK\s+Absolute\s+Return\s+Fund/i,
+    assetClass: "AIF",
+    rowsFrom: (text, warn) => askArfHoldingRows(text, warn ?? (() => {})),
+    read: (s) => ({
+      cls: s.cls, series: s.series,
+      isin: s.isin,
+      navDate: s.navDate,
+      // A dash beside valuations of nil is nil — `askArfSummaryFails` has
+      // already refused a dash beside anything else.
+      quantity: s.units ?? 0,
+      // The column the holding is VALUED at: net of fee, before tax — the
+      // basis the statement's own Total row and the family's review carry.
+      marketPrice: s.navNetFee,
+      printedValue: s.valueNetFee,
+    }),
+    security: (_t, r) => askArfClassName(r.cls, r.series),
+    account: (text) => (/Folio\s+Number\s*:?\s*(\d{6,})/i.exec(text) ?? [])[1] ?? null,
+    asOf: (text) => toIso((/Statement\s+Date\s*:\s*(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i.exec(text) ?? [])[1]),
+    // `Name : <first holder>` — and never the `Second Holder Name` or the
+    // `Distributor Name` printed on the same page.
+    holder: (text) => {
+      const m = /(?<!Holder\s{0,3}|Distributor\s{0,3})\bName\s*:\s*([^\n]{1,90})/.exec(text);
+      return m ? m[1].split(NEXT_LABEL)[0].trim() || null : null;
+    },
+    jointHolders: askArfJointHolders,
+    flowsFrom: askArfFlows,
+    sectionsFrom: askArfSections,
+    // The statement's own Total row, which prints a MEASURED 0.00 — the sum of
+    // printed values below would read it as nothing. No cost is printed.
+    totalsFrom: (text, holdings) => {
+      const p = askArfParse(text);
+      return holdings.length && p.total
+        ? { totalMarketValue: p.total.valueNetFee, totalCost: null, positionCount: holdings.length }
+        : null;
+    },
+    infoFrom: (holdings) => holdings.some((h) => h.quantity === 0)
+      ? ["redeemed-to-nil", "every unit of this series has been redeemed: the Account Summary prints a dash for units and 0.00 for every valuation, so the holding is carried as a MEASURED zero at the NAV the statement prints — what the family received is the dated withdrawals, not a value"]
+      : null,
+    note: "valued at the NAV NET OF FEE, before tax — the basis the statement's Total row and the family's consolidated review both carry; the NAV net of fee and tax is printed beside it and kept in the archive. The statement prints no realised gain and no SEBI category, so the book carries neither",
+    okWhenClean: true,
+  },
 ];
 
 /**
@@ -1970,13 +2597,24 @@ export function extract({ grid, meta = {} }) {
   const { owner, pan } = investor(text, layout);
   const holdings = [];
   let commitment = null;
+  // A report the classifier types differently from a plain statement — Buoyant's
+  // Portfolio Snap Report — is the same layout with checks of its own. The
+  // report type is the classifier's, never invented here.
+  const variant = layout.variants?.[meta.reportType] ?? null;
+  const reportType = variant ? meta.reportType : "holdings";
+  const warnFn = (code, detail) => warn(warnings, code, detail);
+  /** Warnings that describe the statement rather than fault the reading. */
+  const INFO = new Set(["statement-basis", "redeemed-to-nil"]);
+  const statusOf = (fallback) => (variant?.okWhenClean ?? layout.okWhenClean)
+    && warnings.every((w) => INFO.has(w.code)) ? "ok" : fallback;
 
   // `rowsFrom` builds the rows itself, for a statement whose holdings are not
   // one regex match each: Sky Capital prints one line per ALLOTMENT and the
   // family holds several in the same series, so the rows are aggregated by
   // series before they become holdings. Everything else keeps the regex path.
+  const before = warnings.length;
   const rows = layout.rowsFrom
-    ? layout.rowsFrom(text)
+    ? layout.rowsFrom(text, warnFn)
     : layout.allRows
     ? [...text.matchAll(layout.row)]
     : [layout.row.exec(text)].filter(Boolean);
@@ -1987,6 +2625,9 @@ export function extract({ grid, meta = {} }) {
     // reason is genuinely unknown.
     const reason = layout.emptyReason?.(text) ?? null;
     if (reason) warn(warnings, "account-holds-nothing", reason);
+    // A layout that built its rows itself and said why it has none has already
+    // diagnosed it; the generic column message would contradict that.
+    else if (warnings.length > before) { /* the reader's own diagnosis stands */ }
     else {
       warn(warnings, "summary-row-not-matched",
         `this document is a ${layout.provider} statement but its summary row did not match the declared column order; nothing is read from it rather than reading the wrong columns`);
@@ -1996,9 +2637,10 @@ export function extract({ grid, meta = {} }) {
       provider: layout.provider, owner, pan,
       accountNo: layout.account?.(text) ?? layout.folio?.(text) ?? null,
       asOf: layout.asOf?.(text) ?? null,
-      reportType: "holdings",
+      reportType,
       engagement: layout.engagement ?? "unknown",
       providerEngagement: engagementOf(layout, text),
+      jointHolders: layout.jointHolders?.(text) ?? undefined,
       holdings: [], totals: null, commitment: null,
       // A STATEMENT WITH NO HOLDINGS CAN STILL CARRY ITS OWN DATED RECORD, and
       // an account that holds nothing is exactly where that record is the whole
@@ -2040,6 +2682,7 @@ export function extract({ grid, meta = {} }) {
   // ties the sum to the printed Total Drawdown; a mismatch is reported, never
   // absorbed.
   if (layout.verify) layout.verify(text, holdings, (code, detail) => warn(warnings, code, detail));
+  if (variant?.verify) variant.verify(text, holdings, warnFn);
 
   // A layout may also carry a DATED table. It is separate from `verify` because
   // it produces rows rather than a verdict — and separate from `row`/`rowsFrom`
@@ -2075,6 +2718,10 @@ export function extract({ grid, meta = {} }) {
     warn(warnings, "no-valuation-published",
       `${layout.provider} publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total.`);
   }
+  const info = layout.infoFrom?.(holdings);
+  if (info) warn(warnings, info[0], info[1]);
+  const ownSections = { ...(layout.sectionsFrom?.(text) ?? {}), ...(variant?.sectionsFrom?.(text) ?? {}) };
+  const printedTotals = layout.totalsFrom?.(text, holdings) ?? null;
 
   return {
     provider: layout.provider,
@@ -2084,35 +2731,40 @@ export function extract({ grid, meta = {} }) {
     // These ARE holdings statements — one scheme, its units and its NAV. Left
     // as `unknown` the docKey reads `…-unknown` and precedence has nothing to
     // key on.
-    reportType: "holdings",
+    reportType,
     // WHAT THE VEHICLE IS, in the fund's own words. Left unset these accounts
     // came out `engagement: "unknown"` with a null providerEngagement, which
     // section 5 of CLAUDE.md warns is never to be defaulted - and null is not
     // even in the contract, so the typecheck refused the book outright.
     engagement: layout.engagement ?? "unknown",
     providerEngagement: engagementOf(layout, text),
+    jointHolders: layout.jointHolders?.(text) ?? undefined,
     holdings,
     cashFlows,
     // BROWSABLE PROVENANCE, so a reader who sees a redemption on the dashboard
     // can open the rows it was read from. A dated table archived only inside
     // `document.json` is provenance the Data Audit page cannot show.
-    sections: cashFlows.length
+    sections: cashFlows.length || Object.keys(ownSections).length
       ? {
-        transactions: {
-          name: "transactions",
-          rows: [["date", "class", "description", "kind", "amount", "net", "units", "balanceUnits"],
-            ...cashFlows.map((c) => [c.date, c.security ?? "", c.description, c.kind,
-              c.amount ?? "", c.netAmount ?? "", c.units ?? "", c.balance ?? ""])],
-        },
+        ...(cashFlows.length ? {
+          transactions: {
+            name: "transactions",
+            rows: [["date", "class", "description", "kind", "amount", "net", "units", "balanceUnits"],
+              ...cashFlows.map((c) => [c.date, c.security ?? "", c.description, c.kind,
+                c.amount ?? "", c.netAmount ?? "", c.units ?? "", c.balance ?? ""])],
+          },
+        } : {}),
+        ...ownSections,
       }
       : undefined,
     commitment,
-    totals: makeTotals({
+    totals: printedTotals ? makeTotals(printedTotals) : makeTotals({
       totalMarketValue: layout.valuesNothing ? null : holdings.reduce((t, h) => t + (h.printed?.marketValue ?? 0), 0) || null,
       totalCost: holdings.reduce((t, h) => t + (h.totalCost ?? 0), 0) || null,
       positionCount: holdings.length,
     }),
     warnings,
+    status: statusOf(undefined),
   };
 }
 

@@ -1,0 +1,215 @@
+{
+ "name": "fund-holdings",
+ "rows": [
+  [
+   "sr",
+   "security (the scheme's holding, as printed)",
+   "% of assets"
+  ],
+  [
+   1,
+   "ICICI BANK LTD",
+   8.33
+  ],
+  [
+   2,
+   "AXIS BANK LTD",
+   6.73
+  ],
+  [
+   3,
+   "SHRIRAM FINANCE LTD",
+   3.83
+  ],
+  [
+   4,
+   "BAJAJ FINANCE LTD",
+   3.75
+  ],
+  [
+   5,
+   "STATE BANK OF INDIA",
+   3.74
+  ],
+  [
+   6,
+   "BHARTI AIRTEL LTD",
+   3.32
+  ],
+  [
+   7,
+   "ONE 97 COMMUNICATIONS LTD",
+   3.25
+  ],
+  [
+   8,
+   "TRENT LTD",
+   3.08
+  ],
+  [
+   9,
+   "ETERNAL LTD",
+   3.02
+  ],
+  [
+   10,
+   "GLENMARK PHARMACEUTICALS LTD",
+   2.91
+  ],
+  [
+   11,
+   "GENUS POWER INFRASTRUCTURES LTD",
+   2.88
+  ],
+  [
+   12,
+   "VEDANTA ALUMINIUM METAL LTD",
+   2.84
+  ],
+  [
+   13,
+   "INTERGLOBE AVIATION LTD",
+   2.82
+  ],
+  [
+   14,
+   "GRANULES INDIA LTD",
+   2.71
+  ],
+  [
+   15,
+   "MAX FINANCIAL SERVICES LTD",
+   2.67
+  ],
+  [
+   16,
+   "HINDUSTAN UNILEVER LTD",
+   2.61
+  ],
+  [
+   17,
+   "RAMKRISHNA FORGINGS LTD",
+   2.58
+  ],
+  [
+   18,
+   "ICICI LOMBARD GENERAL INSURANCE COMPANY LTD",
+   2.46
+  ],
+  [
+   19,
+   "IDFC FIRST BANK LTD",
+   2.3
+  ],
+  [
+   20,
+   "AUROBINDO PHARMA LTD",
+   2.21
+  ],
+  [
+   21,
+   "MARATHON NEXTGEN REALTY LTD",
+   2.14
+  ],
+  [
+   22,
+   "SUPREME INDUSTRIES LTD",
+   1.96
+  ],
+  [
+   23,
+   "LARSEN and TOUBRO LTD",
+   1.92
+  ],
+  [
+   24,
+   "LASER POWER and INFRA LTD",
+   1.89
+  ],
+  [
+   25,
+   "LnT TECHNOLOGY SERVICES LTD",
+   1.76
+  ],
+  [
+   26,
+   "ULTRATECH CEMENT LTD",
+   1.75
+  ],
+  [
+   27,
+   "PVR INOX LTD",
+   1.68
+  ],
+  [
+   28,
+   "AVENUE SUPERMARTS LTD",
+   1.52
+  ],
+  [
+   29,
+   "KAYNES TECHNOLOGY INDIA LTD",
+   1.48
+  ],
+  [
+   30,
+   "INDEGENE LTD",
+   1.45
+  ],
+  [
+   31,
+   "SMARTWORKS COWORKING SPACES LTD",
+   1.34
+  ],
+  [
+   32,
+   "CAMPUS ACTIVEWEAR LTD",
+   1.12
+  ],
+  [
+   33,
+   "VARUN BEVERAGES LTD",
+   1
+  ],
+  [
+   34,
+   "HDFC BANK LTD",
+   0.82
+  ],
+  [
+   35,
+   "LIFE INSURANCE CORPORATION OF INDIA",
+   0.8
+  ],
+  [
+   36,
+   "MANGALAM CEMENT LTD",
+   0.79
+  ],
+  [
+   37,
+   "MANAPPURAM FINANCE LTD",
+   0.65
+  ],
+  [
+   38,
+   "GODAVARI BIOREFINERIES LTD",
+   0.39
+  ],
+  [
+   39,
+   "UNITED BREWERIES LTD",
+   0.38
+  ],
+  [
+   40,
+   "INDUS TOWERS LTD",
+   0
+  ],
+  [
+   41,
+   "Others",
+   7.13
+  ]
+ ]
+}

@@ -1,0 +1,30 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue"
+  ],
+  [
+   "s"
+  ],
+  [
+   "1",
+   "BANK",
+   "Cash and",
+   "0100.00%"
+  ],
+  [
+   "Equivalent"
+  ],
+  [
+   "Total",
+   "0100%"
+  ],
+  [
+   "For further queries related to the portfolio please contact: Sandip Bansal | email: ce@askpms.in"
+  ]
+ ]
+}

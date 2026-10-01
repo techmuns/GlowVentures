@@ -20,20 +20,8 @@
  "status": "partial",
  "warnings": [
   {
-   "code": "transaction-side-unknown",
-   "detail": "2026-05-27 · \"Trf to TDS A/c\""
-  },
-  {
-   "code": "transaction-side-unknown",
-   "detail": "2026-05-27 · \"TDS Trf to Capital A/c\""
-  },
-  {
-   "code": "transaction-side-unknown",
-   "detail": "2026-06-15 · \"Trf to TDS A/c\""
-  },
-  {
-   "code": "transaction-side-unknown",
-   "detail": "2026-06-15 · \"TDS Trf to Capital A/c\""
+   "code": "tds-transfers-are-not-trades",
+   "detail": "4 TDS transfer row(s) (2 × \"Trf to TDS A/c\", 2 × \"TDS Trf to Capital A/c\") — the tax deducted at source on a dividend moving into the account's TDS ledger and on to capital. Cash, not shares: none is a trade, and the bank book carries each one."
   }
  ],
  "holdings": [],
@@ -51,6 +39,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 12408,
    "unitPrice": 407.0048,
    "brokerageRate": 0.3256,
@@ -75,6 +64,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 1773,
    "unitPrice": 564.0896,
    "brokerageRate": 0.4513,
@@ -99,6 +89,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 14541,
    "unitPrice": 171.9253,
    "brokerageRate": 0.1375,
@@ -123,6 +114,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 4415,
    "unitPrice": 339.7698,
    "brokerageRate": 0.2718,
@@ -147,6 +139,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 6000,
    "unitPrice": 587.0843,
    "brokerageRate": 0.4697,
@@ -171,6 +164,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 4376,
    "unitPrice": 457.008,
    "brokerageRate": 0.3656,

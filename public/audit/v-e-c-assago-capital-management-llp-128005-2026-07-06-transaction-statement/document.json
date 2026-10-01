@@ -20,12 +20,8 @@
  "status": "partial",
  "warnings": [
   {
-   "code": "transaction-side-unknown",
-   "detail": "2026-06-15 · \"Trf to TDS A/c\""
-  },
-  {
-   "code": "transaction-side-unknown",
-   "detail": "2026-06-15 · \"TDS Trf to Capital A/c\""
+   "code": "tds-transfers-are-not-trades",
+   "detail": "2 TDS transfer row(s) (1 × \"Trf to TDS A/c\", 1 × \"TDS Trf to Capital A/c\") — the tax deducted at source on a dividend moving into the account's TDS ledger and on to capital. Cash, not shares: none is a trade, and the bank book carries each one."
   }
  ],
  "holdings": [],
@@ -43,6 +39,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 15853,
    "unitPrice": 407.0048,
    "brokerageRate": 0.3256,
@@ -67,6 +64,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 1772,
    "unitPrice": 564.0896,
    "brokerageRate": 0.4513,
@@ -91,6 +89,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 14541,
    "unitPrice": 171.9253,
    "brokerageRate": 0.1375,
@@ -115,6 +114,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 7357,
    "unitPrice": 339.7698,
    "brokerageRate": 0.2718,
@@ -139,6 +139,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 8000,
    "unitPrice": 587.0843,
    "brokerageRate": 0.4697,
@@ -163,6 +164,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 2188,
    "unitPrice": 457.008,
    "brokerageRate": 0.3656,
@@ -187,6 +189,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 1187,
    "unitPrice": 1685,
    "brokerageRate": 1.348,
@@ -211,6 +214,7 @@
    "isin": null,
    "exchange": "NSE",
    "assetClass": "Equity",
+   "description": null,
    "quantity": 3075,
    "unitPrice": 325.2346,
    "brokerageRate": 0.2602,

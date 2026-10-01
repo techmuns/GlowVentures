@@ -25,10 +25,20 @@
 import { readFileSync, writeFileSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const OUT = "docs/SOURCE-COVERAGE.md";
+// Run against the committed tree by default, from wherever it is invoked; the
+// three GLOW_* variables `extract.mjs` honours point it at a scratch run
+// instead, so a new delivery can be accounted for without touching docs/.
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+process.chdir(ROOT);
+const SOURCE_DIR = process.env.GLOW_SOURCE_DIR ?? "source";
+const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? "public/audit";
+const DOCS_DIR = process.env.GLOW_DOCS_DIR ?? "docs";
+const OUT = path.join(DOCS_DIR, "SOURCE-COVERAGE.md");
 
-const manifest = JSON.parse(readFileSync("public/audit/manifest.json", "utf8"));
+const manifest = JSON.parse(readFileSync(path.join(AUDIT_DIR, "manifest.json"), "utf8"));
 const bySource = new Map();
 for (const d of manifest) {
   const k = (d.sourcePath ?? "").replace(/^\.\//, "");
@@ -37,8 +47,18 @@ for (const d of manifest) {
   bySource.get(k).push(d);
 }
 
-const files = execSync("find source -type f ! -name '*.zip' ! -name 'README.md' | sort", { encoding: "utf8", maxBuffer: 1e8 })
-  .trim().split("\n").filter(Boolean);
+const files = execSync(`find ${JSON.stringify(SOURCE_DIR)} -type f ! -name '*.zip' ! -name 'README.md' | sort`, { encoding: "utf8", maxBuffer: 1e8 })
+  .trim().split("\n").filter(Boolean)
+  // The path the manifest records: relative to the repository root.
+  .map((f) => path.relative(ROOT, path.resolve(f)).split(path.sep).join("/"));
+
+/**
+ * A FILE CAN BE READ WITHOUT HAVING A DOCUMENT OF ITS OWN, one more way: a
+ * spreadsheet export beside its PDF is archived as a WITNESS of the PDF's
+ * document (`twinOf`) — its rows kept, no facts. It is read; it is not a second
+ * source. (Two files printing the same text are each read and archived: the
+ * second is filed under a `-2` docKey, exactly like the pairs before it.)
+ */
 
 /**
  * A ZIP DOES NOT SAY WHICH ENCODING ITS FILENAMES ARE IN, so two unzippers
@@ -86,7 +106,7 @@ for (const f of files) {
   byHash.get(h).push(f);
 }
 
-const CLASSES = ["read", "read-via-duplicate", "held-out-by-decision", "not-a-document", "excluded-by-policy", "unread"];
+const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "held-out-by-decision", "not-a-document", "excluded-by-policy", "unread"];
 const rows = [];
 for (const f of files) {
   let docs = bySource.get(f) ?? [];
@@ -97,7 +117,9 @@ for (const f of files) {
   if (docs.length) {
     const heldOut = docs.every((d) => (d.status === "failed")
       && /Family investment register|Consolidated family review/.test(d.provider ?? ""));
-    rows.push({ f, cls: heldOut ? "held-out-by-decision" : "read", docs, note: docs.map((d) => d.docKey).join(", ") });
+    const witness = docs.every((d) => d.twinOf);
+    rows.push({ f, cls: heldOut ? "held-out-by-decision" : witness ? "read-as-witness" : "read", docs,
+      note: witness ? `witness of ${docs.map((d) => d.twinOf).join(", ")}` : docs.map((d) => d.docKey).join(", ") });
     continue;
   }
   if (isResourceFork(f)) { rows.push({ f, cls: "not-a-document", docs: [], note: "macOS AppleDouble resource fork" }); continue; }
@@ -125,6 +147,7 @@ say("| Outcome | Files | What it means |");
 say("| --- | ---: | --- |");
 say(`| Read | ${count("read")} | one or more documents in \`public/audit/\` |`);
 say(`| Read via a byte-identical twin | ${count("read-via-duplicate")} | the pipeline reads each md5 once; the data IS in the archive |`);
+if (count("read-as-witness")) say(`| Read as a witness | ${count("read-as-witness")} | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |`);
 say(`| Held out by decision | ${count("held-out-by-decision")} | read perfectly and deliberately not a source |`);
 say(`| Not a document | ${count("not-a-document")} | macOS \`__MACOSX/._*\` resource forks — checked, not assumed |`);
 say(`| Excluded by policy | ${count("excluded-by-policy")} | the drop's own password notes |`);
@@ -175,6 +198,21 @@ for (const r of rows.filter((x) => x.cls === "read-via-duplicate")) {
   say(`| \`${r.f.replace(/^source\//, "")}\` | \`${r.note.replace("byte-identical to source/", "")}\` |`);
 }
 say();
+
+if (count("read-as-witness")) {
+  say("## Read as a witness of its PDF");
+  say();
+  say("A spreadsheet export written beside a PDF of the same name. The PDF is the document; the");
+  say("export is archived with its rows, carries no facts, and every significant figure in it is");
+  say("checked against the figures the PDF prints (see each document's `witness-of` warning).");
+  say();
+  say("| File | Witness of |");
+  say("| --- | --- |");
+  for (const r of rows.filter((x) => x.cls === "read-as-witness")) {
+    say(`| \`${r.f.replace(/^source\//, "")}\` | ${r.docs.map((d) => `\`${d.twinOf}\` (${d.status})`).join(", ")} |`);
+  }
+  say();
+}
 
 say("## Not a document");
 say();

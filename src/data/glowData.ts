@@ -14,18 +14,18 @@ import type {
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
-export const BOOK_AS_OF = "2026-08-29";
+export const BOOK_AS_OF = "2026-09-09";
 
 export const BOOK_SUMMARY: BookSummary = {
-  "asOf": "2026-08-29",
-  "listedValue": 6997625652.26,
+  "asOf": "2026-09-09",
+  "listedValue": 7013701847.41,
   "privateValue": 137881211.66,
   "unplacedValue": 98742,
-  "totalValue": 7135605605.92,
-  "positionsCount": 371,
+  "totalValue": 7151681801.07,
+  "positionsCount": 373,
   "entitiesCount": 6,
   "startupsCount": 0,
-  "accountsCount": 51
+  "accountsCount": 57
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -137,6 +137,84 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null
   },
   {
+    "accountId": "ask-absolute-return-fund-9039917111",
+    "provider": "ASK Absolute Return Fund",
+    "accountNo": "9039917111",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "AIF",
+    "providerEngagement": "AIF statement of account — the statement prints no SEBI category",
+    "members": [],
+    "asOf": "2026-03-31",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-03-31",
+    "custodian": "ASK Absolute Return Fund",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "ask-absolute-return-fund-9039917144",
+    "provider": "ASK Absolute Return Fund",
+    "accountNo": "9039917144",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": null,
+    "engagement": "AIF",
+    "providerEngagement": "AIF statement of account — the statement prints no SEBI category",
+    "members": [],
+    "asOf": "2026-03-31",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-03-31",
+    "custodian": "ASK Absolute Return Fund",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "provider": "ASK Investment Managers Limited",
+    "accountNo": "10032723",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": "ASK Indian Entrepreneur Portfolio",
+    "engagement": "PMS",
+    "providerEngagement": "Portfolio Management Service",
+    "members": [],
+    "asOf": "2026-09-08",
+    "inceptionDate": "2019-07-26",
+    "capitalRecordTo": "2026-09-08",
+    "custodian": "ASK Investment Managers Limited",
+    "noPositionsReason": null,
+    "capital": {
+      "contributed": 46000000,
+      "withdrawn": 85383320.61,
+      "from": "2019-07-26",
+      "to": "2026-09-08",
+      "source": "ask-investment-managers-limited-10032723-2026-09-08-profit-and-loss"
+    }
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "provider": "ASK Investment Managers Limited",
+    "accountNo": "10034025",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": "ASK Indian Entrepreneur Portfolio",
+    "engagement": "PMS",
+    "providerEngagement": "Portfolio Management Service",
+    "members": [],
+    "asOf": "2026-09-08",
+    "inceptionDate": "2019-09-06",
+    "capitalRecordTo": "2026-09-08",
+    "custodian": "ASK Investment Managers Limited",
+    "noPositionsReason": null,
+    "capital": {
+      "contributed": 85000000,
+      "withdrawn": 151211941.19,
+      "from": "2019-09-06",
+      "to": "2026-09-08",
+      "source": "ask-investment-managers-limited-10034025-2026-09-08-profit-and-loss"
+    }
+  },
+  {
     "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
     "provider": "Baring Private Equity India Fund",
     "accountNo": "AIFM_BPEPF6_0584",
@@ -162,9 +240,9 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Portfolio Management Service",
     "members": [],
-    "asOf": "2026-07-31",
+    "asOf": "2026-08-31",
     "inceptionDate": "2024-06-01",
-    "capitalRecordTo": "2026-07-31",
+    "capitalRecordTo": "2026-08-31",
     "custodian": "Buoyant Capital",
     "noPositionsReason": null
   },
@@ -178,9 +256,9 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "AIF",
     "providerEngagement": "Portfolio Management Service",
     "members": [],
-    "asOf": "2026-07-31",
+    "asOf": "2026-08-31",
     "inceptionDate": "2024-06-01",
-    "capitalRecordTo": "2026-07-31",
+    "capitalRecordTo": "2026-08-31",
     "custodian": "Buoyant Capital",
     "noPositionsReason": null
   },
@@ -458,6 +536,40 @@ export const BOOK_ACCOUNTS: Account[] = [
     "capitalRecordTo": null,
     "custodian": "LKP Securities",
     "noPositionsReason": null
+  },
+  {
+    "accountId": "marathon-trends-advisory-pvt-ltd-5110758",
+    "provider": "Marathon Trends Advisory Pvt Ltd",
+    "accountNo": "5110758",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": "Trend Following - Flexicap Growth",
+    "engagement": "PMS",
+    "providerEngagement": "Portfolio Management Service",
+    "members": [],
+    "asOf": "2026-09-09",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "Marathon Trends Advisory Pvt Ltd",
+    "noPositionsReason": "this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-22. What would fill it is the manager's own holding statement for this account",
+    "capital": null
+  },
+  {
+    "accountId": "marathon-trends-advisory-pvt-ltd-5110837",
+    "provider": "Marathon Trends Advisory Pvt Ltd",
+    "accountNo": "5110837",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": "Trend Following - Flexicap Growth",
+    "engagement": "PMS",
+    "providerEngagement": "Portfolio Management Service",
+    "members": [],
+    "asOf": "2026-09-09",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "Marathon Trends Advisory Pvt Ltd",
+    "noPositionsReason": "this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-23. What would fill it is the manager's own holding statement for this account",
+    "capital": null
   },
   {
     "accountId": "molecule-ventures-llp-7810404",
@@ -1114,6 +1226,120 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025",
+    "security": "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+    "symbol": null,
+    "isin": "INF0V6R22JL5",
+    "accountId": "ask-absolute-return-fund-9039917111",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "marketSide": null,
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 1066.3665,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 8039138.56,
+    "costOfUnitsSold": 200000000,
+    "returnPct": 4.02,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-03-31",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025",
+    "security": "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+    "symbol": null,
+    "isin": "INF0V6R22JL5",
+    "accountId": "ask-absolute-return-fund-9039917144",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "marketSide": null,
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 1066.3665,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 5908505.71,
+    "costOfUnitsSold": 188000000,
+    "returnPct": 3.14,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-03-31",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "balance-with-banks",
+    "security": "Balance with Banks",
+    "symbol": null,
+    "accountId": "ask-investment-managers-limited-10032723",
+    "memberId": null,
+    "sector": "Cash",
+    "providerSector": null,
+    "assetClass": "Cash",
+    "marketSide": "listed",
+    "quantity": 0.01,
+    "avgCost": 1,
+    "currentPrice": 1,
+    "costBasis": 0.01,
+    "marketValue": 0.01,
+    "unrealizedPnL": 0,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 0,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "balance-with-banks",
+    "security": "Balance with Banks",
+    "symbol": null,
+    "accountId": "ask-investment-managers-limited-10034025",
+    "memberId": null,
+    "sector": "Cash",
+    "providerSector": null,
+    "assetClass": "Cash",
+    "marketSide": "listed",
+    "quantity": 0.34,
+    "avgCost": 1,
+    "currentPrice": 1,
+    "costBasis": 0.34,
+    "marketValue": 0.34,
+    "unrealizedPnL": 0,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 0,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
     "securityKey": "baring-private-equity-india-fund-6-class-a1",
     "security": "Baring Private Equity India Fund 6 — Class A1",
     "symbol": null,
@@ -1143,7 +1369,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
-    "security": "BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4",
+    "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "symbol": null,
     "accountId": "buoyant-capital-103472",
     "memberId": null,
@@ -1151,55 +1377,29 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": "Alternative Assets",
     "assetClass": "AIF",
     "marketSide": "listed",
-    "quantity": 1918953.2,
+    "quantity": 1918953.2003,
     "avgCost": 129.4977,
-    "currentPrice": 144.2878,
+    "currentPrice": 147.3008,
     "costBasis": 248500000,
     "costBasisSource": "carried-through-switch",
     "printedCostBasis": 249410446.32,
-    "marketValue": 276881535.53,
-    "unrealizedPnL": 28381535.53,
+    "marketValue": 282663341.57,
+    "unrealizedPnL": 34163341.57,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 11.42,
+    "returnPct": 13.75,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "accruedIncome": null,
-    "dividendReceived": null,
-    "positionIrrPct": null
-  },
-  {
-    "securityKey": "cash",
-    "security": "Cash",
-    "symbol": null,
-    "accountId": "buoyant-capital-103472",
-    "memberId": null,
-    "sector": "Cash",
-    "providerSector": null,
-    "assetClass": "Cash",
-    "marketSide": "listed",
-    "quantity": 0,
-    "avgCost": 1,
-    "currentPrice": 1,
-    "costBasis": 0,
-    "marketValue": 0,
-    "unrealizedPnL": 0,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
+    "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
-    "security": "BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4",
+    "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "symbol": null,
     "accountId": "buoyant-capital-103473",
     "memberId": null,
@@ -1207,48 +1407,22 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": "Alternative Assets",
     "assetClass": "AIF",
     "marketSide": "listed",
-    "quantity": 3416657.417,
+    "quantity": 3416657.4167,
     "avgCost": 134.6517,
-    "currentPrice": 144.2878,
+    "currentPrice": 147.3008,
     "costBasis": 460058861.66,
     "costBasisSource": "carried-through-switch",
     "printedCostBasis": 475353990.9,
-    "marketValue": 492981982.05,
-    "unrealizedPnL": 32923120.39,
+    "marketValue": 503276370.81,
+    "unrealizedPnL": 43217509.15,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 7.16,
+    "returnPct": 9.39,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "accruedIncome": null,
-    "dividendReceived": null,
-    "positionIrrPct": null
-  },
-  {
-    "securityKey": "cash",
-    "security": "Cash",
-    "symbol": null,
-    "accountId": "buoyant-capital-103473",
-    "memberId": null,
-    "sector": "Cash",
-    "providerSector": null,
-    "assetClass": "Cash",
-    "marketSide": "listed",
-    "quantity": 0,
-    "avgCost": 1,
-    "currentPrice": 1,
-    "costBasis": 0,
-    "marketValue": 0,
-    "unrealizedPnL": 0,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
+    "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -11998,7 +12172,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 638279232.16,
     "linkClose": 638279232.16,
     "linkAccounts": 10,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-07-27",
@@ -12011,13 +12185,13 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 1297077490.29,
     "linkClose": 1293262920.41,
     "linkAccounts": 13,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-07-31",
     "date": "2026-07-31",
-    "nav": 1301627529.54,
-    "accountsOnDate": 4,
+    "nav": 2071491047.12,
+    "accountsOnDate": 6,
     "accountsCarried": 9,
     "flowIn": -22945,
     "unreportedFlowValue": 0,
@@ -12029,53 +12203,66 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-08-06",
     "date": "2026-08-06",
-    "nav": 1301627529.54,
+    "nav": 2071491047.12,
     "accountsOnDate": 1,
-    "accountsCarried": 12,
+    "accountsCarried": 14,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 1301627529.54,
-    "linkClose": 1301627529.54,
-    "linkAccounts": 13,
+    "linkOpen": 2071491047.12,
+    "linkClose": 2071491047.12,
+    "linkAccounts": 15,
     "panelComplete": true
   },
   {
     "period": "2026-08-10",
     "date": "2026-08-10",
-    "nav": 1296859118.46,
+    "nav": 2066722636.04,
     "accountsOnDate": 1,
-    "accountsCarried": 12,
+    "accountsCarried": 14,
     "flowIn": -30690,
     "unreportedFlowValue": 0,
-    "linkOpen": 1301627529.54,
-    "linkClose": 1296859118.46,
-    "linkAccounts": 13,
+    "linkOpen": 2071491047.12,
+    "linkClose": 2066722636.04,
+    "linkAccounts": 15,
     "panelComplete": true
   },
   {
     "period": "2026-08-11",
     "date": "2026-08-11",
-    "nav": 1306358006.22,
+    "nav": 2076221523.8,
     "accountsOnDate": 2,
-    "accountsCarried": 11,
+    "accountsCarried": 13,
     "flowIn": -65735,
     "unreportedFlowValue": 0,
-    "linkOpen": 1296859118.46,
-    "linkClose": 1306358006.22,
-    "linkAccounts": 13,
+    "linkOpen": 2066722636.04,
+    "linkClose": 2076221523.8,
+    "linkAccounts": 15,
     "panelComplete": true
   },
   {
     "period": "2026-08-13",
     "date": "2026-08-13",
-    "nav": 1416282516.4,
+    "nav": 2186146033.98,
     "accountsOnDate": 2,
-    "accountsCarried": 11,
+    "accountsCarried": 13,
     "flowIn": 112393342,
     "unreportedFlowValue": 0,
-    "linkOpen": 1306358006.22,
-    "linkClose": 1416282516.4,
-    "linkAccounts": 13,
+    "linkOpen": 2076221523.8,
+    "linkClose": 2186146033.98,
+    "linkAccounts": 15,
+    "panelComplete": true
+  },
+  {
+    "period": "2026-08-31",
+    "date": "2026-08-31",
+    "nav": 2202222228.78,
+    "accountsOnDate": 2,
+    "accountsCarried": 13,
+    "flowIn": 0,
+    "unreportedFlowValue": 5781806.04,
+    "linkOpen": 2186146033.98,
+    "linkClose": 2202222228.78,
+    "linkAccounts": 15,
     "panelComplete": true
   }
 ];
@@ -12112,6 +12299,30 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-06-30",
       "date": "2026-06-30",
       "nav": 14580412.51
+    }
+  ],
+  "buoyant-capital-103472": [
+    {
+      "period": "2026-07-31",
+      "date": "2026-07-31",
+      "nav": 276881535.53
+    },
+    {
+      "period": "2026-08-31",
+      "date": "2026-08-31",
+      "nav": 282663341.57
+    }
+  ],
+  "buoyant-capital-103473": [
+    {
+      "period": "2026-07-31",
+      "date": "2026-07-31",
+      "nav": 492981982.05
+    },
+    {
+      "period": "2026-08-31",
+      "date": "2026-08-31",
+      "nav": 503276370.81
     }
   ],
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
@@ -12292,6 +12503,24 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "flowBasis": "units-unchanged"
     },
     {
+      "accountId": "buoyant-capital-103472",
+      "points": 2,
+      "first": "2026-07-31",
+      "last": "2026-08-31",
+      "latestValue": 282663341.57,
+      "bookValue": 282663341.57,
+      "flowBasis": "unreported"
+    },
+    {
+      "accountId": "buoyant-capital-103473",
+      "points": 2,
+      "first": "2026-07-31",
+      "last": "2026-08-31",
+      "latestValue": 503276370.81,
+      "bookValue": 503276370.81,
+      "flowBasis": "reported"
+    },
+    {
       "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
       "points": 2,
       "first": "2026-07-10",
@@ -12400,25 +12629,39 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 0
     },
     {
+      "accountId": "ask-absolute-return-fund-9039917111",
+      "provider": "ASK Absolute Return Fund",
+      "accountNo": "9039917111",
+      "date": "2026-03-31",
+      "bookValue": 0
+    },
+    {
+      "accountId": "ask-absolute-return-fund-9039917144",
+      "provider": "ASK Absolute Return Fund",
+      "accountNo": "9039917144",
+      "date": "2026-03-31",
+      "bookValue": 0
+    },
+    {
+      "accountId": "ask-investment-managers-limited-10032723",
+      "provider": "ASK Investment Managers Limited",
+      "accountNo": "10032723",
+      "date": "2026-09-08",
+      "bookValue": 0.01
+    },
+    {
+      "accountId": "ask-investment-managers-limited-10034025",
+      "provider": "ASK Investment Managers Limited",
+      "accountNo": "10034025",
+      "date": "2026-09-08",
+      "bookValue": 0.34
+    },
+    {
       "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
       "provider": "Baring Private Equity India Fund",
       "accountNo": "AIFM_BPEPF6_0584",
       "date": "2026-03-31",
       "bookValue": 18842208.74
-    },
-    {
-      "accountId": "buoyant-capital-103472",
-      "provider": "Buoyant Capital",
-      "accountNo": "103472",
-      "date": "2026-07-31",
-      "bookValue": 276881535.53
-    },
-    {
-      "accountId": "buoyant-capital-103473",
-      "provider": "Buoyant Capital",
-      "accountNo": "103473",
-      "date": "2026-07-31",
-      "bookValue": 492981982.05
     },
     {
       "accountId": "carnelian-bharat-amritkaal-fund-4551",
@@ -12598,6 +12841,18 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 0
     },
     {
+      "accountId": "marathon-trends-advisory-pvt-ltd-5110758",
+      "provider": "Marathon Trends Advisory Pvt Ltd",
+      "accountNo": "5110758",
+      "bookValue": 0
+    },
+    {
+      "accountId": "marathon-trends-advisory-pvt-ltd-5110837",
+      "provider": "Marathon Trends Advisory Pvt Ltd",
+      "accountNo": "5110837",
+      "bookValue": 0
+    },
+    {
       "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
       "provider": "Motilal Oswal Financial Services (demat)",
       "accountNo": "1201090012539150",
@@ -12647,8 +12902,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     }
   ],
   "from": "2026-05-31",
-  "to": "2026-08-13",
-  "panelCompleteFrom": "2026-07-10"
+  "to": "2026-08-31",
+  "panelCompleteFrom": "2026-07-31"
 };
 
 /**
@@ -12686,16 +12941,16 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [
  */
 export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
-  "to": "2026-08-13",
-  "openValue": 1277203451.8,
-  "closeValue": 1416282516.4,
-  "priceEffect": 25377438.66,
+  "to": "2026-08-31",
+  "openValue": 2047066969.38,
+  "closeValue": 2202222228.78,
+  "priceEffect": 41453633.45,
   "tradeEffect": 83708255.64,
   "enteredValue": 107178344.42,
   "exitedValue": 82274047.36,
   "undecomposedValue": 5089073.23,
-  "bookValue": 7135605605.92,
-  "coveredBookValue": 1416282516.4,
+  "bookValue": 7151681801.07,
+  "coveredBookValue": 2202222228.78,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -12730,6 +12985,40 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "rowsEntered": 0,
       "rowsExited": 0,
       "rowsUnpriced": 1
+    },
+    {
+      "accountId": "buoyant-capital-103472",
+      "from": "2026-07-31",
+      "to": "2026-08-31",
+      "days": 31,
+      "openValue": 276881535.53,
+      "closeValue": 282663341.57,
+      "priceEffect": 5781805.99,
+      "tradeEffect": 0.04,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 1,
+      "rowsUnpriced": 0
+    },
+    {
+      "accountId": "buoyant-capital-103473",
+      "from": "2026-07-31",
+      "to": "2026-08-31",
+      "days": 31,
+      "openValue": 492981982.05,
+      "closeValue": 503276370.81,
+      "priceEffect": 10294388.8,
+      "tradeEffect": -0.04,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 1,
+      "rowsUnpriced": 0
     },
     {
       "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
@@ -12920,6 +13209,40 @@ export const BOOK_ATTRIBUTION: Attribution = {
     }
   ],
   "rows": [
+    {
+      "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+      "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+      "accountId": "buoyant-capital-103473",
+      "from": "2026-07-31",
+      "to": "2026-08-31",
+      "openValue": 492981982.05,
+      "closeValue": 503276370.81,
+      "openPrice": 144.2878,
+      "closePrice": 147.3008,
+      "openQty": 3416657.417,
+      "closeQty": 3416657.4167,
+      "kind": "held",
+      "priceEffect": 10294388.8,
+      "tradeEffect": -0.04,
+      "returnPct": 2.0882
+    },
+    {
+      "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+      "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+      "accountId": "buoyant-capital-103472",
+      "from": "2026-07-31",
+      "to": "2026-08-31",
+      "openValue": 276881535.53,
+      "closeValue": 282663341.57,
+      "openPrice": 144.2878,
+      "closePrice": 147.3008,
+      "openQty": 1918953.2,
+      "closeQty": 1918953.2003,
+      "kind": "held",
+      "priceEffect": 5781805.99,
+      "tradeEffect": 0.04,
+      "returnPct": 2.0882
+    },
     {
       "securityKey": "pvr-inox",
       "security": "PVR Inox Ltd",
@@ -17511,6 +17834,40 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": null
     },
     {
+      "securityKey": "cash",
+      "security": "Cash",
+      "accountId": "buoyant-capital-103472",
+      "from": "2026-07-31",
+      "to": "2026-08-31",
+      "openValue": 0,
+      "closeValue": null,
+      "openPrice": 1,
+      "closePrice": null,
+      "openQty": 0,
+      "closeQty": null,
+      "kind": "exited",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "cash",
+      "security": "Cash",
+      "accountId": "buoyant-capital-103473",
+      "from": "2026-07-31",
+      "to": "2026-08-31",
+      "openValue": 0,
+      "closeValue": null,
+      "openPrice": 1,
+      "closePrice": null,
+      "openQty": 0,
+      "closeQty": null,
+      "kind": "exited",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
       "securityKey": "bandhan-bank",
       "security": "Bandhan Bank Ltd",
       "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
@@ -18049,6 +18406,60 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Ajay Jaisinghani · ASK 9039917111",
+    "accountId": "ask-absolute-return-fund-9039917111",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ankita Jaisinghani · ASK 9039917144",
+    "accountId": "ask-absolute-return-fund-9039917144",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ankita Jaisinghani · ASK 10032723",
+    "accountId": "ask-investment-managers-limited-10032723",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": 5543531.73,
+    "realisedLT": 37574541.69,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": "2019-07-26",
+    "periodTo": "2026-09-08",
+    "lots": 1101,
+    "source": "ask-investment-managers-limited-10032723-2026-09-08-capital-gain"
+  },
+  {
+    "entity": "Ajay Jaisinghani · ASK 10034025",
+    "accountId": "ask-investment-managers-limited-10034025",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": 10006421.12,
+    "realisedLT": 62637997.09,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": "2019-09-06",
+    "periodTo": "2026-09-08",
+    "lots": 1041,
+    "source": "ask-investment-managers-limited-10034025-2026-09-08-capital-gain"
+  },
+  {
     "entity": "Ankita Jaisinghani · Baring AIFM_BPEPF6_0584",
     "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
     "ownerId": "ankita-jaisinghani",
@@ -18295,6 +18706,32 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "periodTo": "2026-07-31",
     "lots": 10,
     "source": "lkp-securities-98245-2026-07-31-capital-gain"
+  },
+  {
+    "entity": "Ankita Jaisinghani · Marathon 5110758",
+    "accountId": "marathon-trends-advisory-pvt-ltd-5110758",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": -252940.36,
+    "realisedLT": 0,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": "2024-08-06",
+    "periodTo": "2026-09-09",
+    "lots": 132,
+    "source": "marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-capital-gain"
+  },
+  {
+    "entity": "Ajay Jaisinghani · Marathon 5110837",
+    "accountId": "marathon-trends-advisory-pvt-ltd-5110837",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": 12708648.06,
+    "realisedLT": 0,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": "2024-10-07",
+    "periodTo": "2026-09-09",
+    "lots": 115,
+    "source": "marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-capital-gain"
   },
   {
     "entity": "Ajay Jaisinghani · Molecule 7810404",
@@ -18690,6 +19127,48 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
 /** The canonical realised total, split by asset class — the headline nets these. */
 export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
   {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "entity": "Ajay Jaisinghani · ASK 10034025",
+    "assetClass": "Equity",
+    "lots": 840,
+    "realisedST": 2525818.33,
+    "realisedLT": 47501849.29,
+    "securities": [
+      "AARTI INDUSTRIES LTD",
+      "APL APOLLO TUBES LTD",
+      "ASIAN PAINTS LTD",
+      "ASTRAL POLY TECHNIK LTD",
+      "AU SMALL FINANCE BANK LTD",
+      "AVENUE SUPERMARTS LTD",
+      "BAJAJ FINANCE LTD",
+      "BAJAJ FINSERV LTD",
+      "BRITANNIA INDUSTRIES LTD",
+      "DABUR INDIA LTD",
+      "DALMIA BHARAT LTD",
+      "DIVIS LABORATORIES LTD",
+      "DIXON TECHNOLOGIES INDIA LTD",
+      "EICHER MOTORS LTD",
+      "HAVELLS INDIA LTD",
+      "INDUSIND BANK LTD",
+      "KEI INDUSTRIES LTD",
+      "KOTAK MAHINDRA BANK LTD",
+      "M R F LTD",
+      "METROPOLIS HEALTHCARE LTD",
+      "P I INDUSTRIES LTD",
+      "PAGE INDUSTRIES LTD",
+      "PIDILITE INDUSTRIES LTD",
+      "Patanjali Foods Limited",
+      "RELIANCE INDUSTRIES LTD",
+      "SHREE CEMENTS LTD",
+      "SONA BLW PRECISION FORGINGS LTD",
+      "TATA CONSULTANCY SERVICES LTD",
+      "TITAN COMPANY LTD",
+      "TORRENT PHARMACEUTICALS LTD",
+      "TVS MOTOR COMPANY LTD",
+      "VARUN BEVERAGES LTD"
+    ]
+  },
+  {
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
     "entity": "Ajay Jaisinghani · Carnelian 3517383",
     "assetClass": "Equity",
@@ -18727,6 +19206,49 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     ]
   },
   {
+    "accountId": "marathon-trends-advisory-pvt-ltd-5110837",
+    "entity": "Ajay Jaisinghani · Marathon 5110837",
+    "assetClass": "Equity",
+    "lots": 109,
+    "realisedST": 13538788.36,
+    "realisedLT": 0,
+    "securities": [
+      "ABB INDIA LIMITED",
+      "ACTION CONSTRUCTION EQUIPMENT",
+      "APAR INDUSTRIES LTD",
+      "Aditya Birla Sun Life AMC Limited",
+      "BAJAJ FINANCE LIMITED",
+      "BHARAT ELECTRONICS LTD",
+      "BRITANNIA INDUSTRIES LIMITED",
+      "COROMANDEL INTERNATIONAL",
+      "CUMMINS INDIA LTD.",
+      "FEDERAL BANK LIMITED",
+      "FORTIS HEALTHCARE LIMITED",
+      "GODFREY PHILLIPS INDIA LIMITED",
+      "HDFC BANK LIMITED",
+      "ICICI BANK LIMITED",
+      "INDIAN HOTELS COMPANY LIMITED",
+      "ITC Hotels Limited",
+      "ITC LTD",
+      "KEI INDUSTRIES LTD.",
+      "KOTAK MAHINDRA BANK LIMITED",
+      "KPIT Technologies Limited",
+      "LLOYDS METALS AND ENERGY",
+      "MAHINDRA AND MAHINDRA LTD",
+      "Mazagon Dock Shipbuilders Limited",
+      "NARAYANA HRUDAYALAYA",
+      "NATCO PHARMA LIMITED",
+      "PERSISTENT SYSTEMS LTD",
+      "RURAL ELECTRIFICATION",
+      "SHRIRAM FINANCE LIMITED",
+      "SUN PHARMACEUTICALS INDUSTRIES",
+      "TRENT LTD.",
+      "TVS MOTOR COMPANY LIMITED",
+      "VARUN BEVERAGES LTD",
+      "WELSPUN CORP LIMITED"
+    ]
+  },
+  {
     "accountId": "molecule-ventures-llp-7810404",
     "entity": "Ajay Jaisinghani · Molecule 7810404",
     "assetClass": "Equity",
@@ -18749,6 +19271,49 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     ]
   },
   {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "entity": "Ankita Jaisinghani · ASK 10032723",
+    "assetClass": "Equity",
+    "lots": 889,
+    "realisedST": 1413459.05,
+    "realisedLT": 28928123.73,
+    "securities": [
+      "8%Britannia Industries Ltd NCD",
+      "AARTI INDUSTRIES LTD",
+      "APL APOLLO TUBES LTD",
+      "ASIAN PAINTS LTD",
+      "ASTRAL POLY TECHNIK LTD",
+      "AU SMALL FINANCE BANK LTD",
+      "AVENUE SUPERMARTS LTD",
+      "BAJAJ FINANCE LTD",
+      "BAJAJ FINSERV LTD",
+      "BRITANNIA INDUSTRIES LTD",
+      "DABUR INDIA LTD",
+      "DALMIA BHARAT LTD",
+      "DIVIS LABORATORIES LTD",
+      "DIXON TECHNOLOGIES INDIA LTD",
+      "EICHER MOTORS LTD",
+      "HAVELLS INDIA LTD",
+      "INDUSIND BANK LTD",
+      "KEI INDUSTRIES LTD",
+      "KOTAK MAHINDRA BANK LTD",
+      "M R F LTD",
+      "METROPOLIS HEALTHCARE LTD",
+      "P I INDUSTRIES LTD",
+      "PAGE INDUSTRIES LTD",
+      "PIDILITE INDUSTRIES LTD",
+      "Patanjali Foods Limited",
+      "RELIANCE INDUSTRIES LTD",
+      "SHREE CEMENTS LTD",
+      "SONA BLW PRECISION FORGINGS LTD",
+      "TATA CONSULTANCY SERVICES LTD",
+      "TITAN COMPANY LTD",
+      "TORRENT PHARMACEUTICALS LTD",
+      "TVS MOTOR COMPANY LTD",
+      "VARUN BEVERAGES LTD"
+    ]
+  },
+  {
     "accountId": "green-lantern-capital-llp-510854",
     "entity": "Ankita Jaisinghani · Green 510854",
     "assetClass": "Equity",
@@ -18768,6 +19333,52 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
       "Vedanta Iron and Steel Limited",
       "Vedanta Oil and Gas Limited",
       "Vedanta Power Limited"
+    ]
+  },
+  {
+    "accountId": "marathon-trends-advisory-pvt-ltd-5110758",
+    "entity": "Ankita Jaisinghani · Marathon 5110758",
+    "assetClass": "Equity",
+    "lots": 125,
+    "realisedST": 705286.11,
+    "realisedLT": 0,
+    "securities": [
+      "ABB INDIA LIMITED",
+      "ACTION CONSTRUCTION EQUIPMENT",
+      "APAR INDUSTRIES LTD",
+      "Aditya Birla Sun Life AMC Limited",
+      "BAJAJ FINANCE LIMITED",
+      "BHARAT ELECTRONICS LTD",
+      "BRITANNIA INDUSTRIES LIMITED",
+      "COROMANDEL INTERNATIONAL",
+      "CUMMINS INDIA LTD.",
+      "FEDERAL BANK LIMITED",
+      "FORTIS HEALTHCARE LIMITED",
+      "GODFREY PHILLIPS INDIA LIMITED",
+      "HDFC BANK LIMITED",
+      "ICICI BANK LIMITED",
+      "INDIAN HOTELS COMPANY LIMITED",
+      "ITC Hotels Limited",
+      "ITC LTD",
+      "JBM Auto Limited",
+      "KEI INDUSTRIES LTD.",
+      "KOTAK MAHINDRA BANK LIMITED",
+      "KPIT Technologies Limited",
+      "LLOYDS METALS AND ENERGY",
+      "MAHINDRA AND MAHINDRA LTD",
+      "Mazagon Dock Shipbuilders Limited",
+      "NARAYANA HRUDAYALAYA",
+      "NATCO PHARMA LIMITED",
+      "PERSISTENT SYSTEMS LTD",
+      "RURAL ELECTRIFICATION",
+      "SHRIRAM FINANCE LIMITED",
+      "SIEMENS LTD",
+      "SUN PHARMACEUTICALS INDUSTRIES",
+      "TRENT LTD.",
+      "TUBE INVESTMENTS OF INDIA",
+      "TVS MOTOR COMPANY LIMITED",
+      "VARUN BEVERAGES LTD",
+      "WELSPUN CORP LIMITED"
     ]
   },
   {
@@ -18798,6 +19409,29 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     ]
   },
   {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "entity": "Ajay Jaisinghani · ASK 10034025",
+    "assetClass": null,
+    "lots": 201,
+    "realisedST": 7480602.79,
+    "realisedLT": 15136147.8,
+    "securities": [
+      "AARTI PHARMALABS LIMITED",
+      "ADANI PORTS & SPECIAL ECONOMIC",
+      "AFFLE INDIA LTD",
+      "BHARTI AIRTEL LTD",
+      "BRITANNIA INDUSTRIES LTD UNSEC RED",
+      "Bharti Airtel Ltd PP-IN9397D01014",
+      "CARBORUNDUM UNIVERSAL LTD",
+      "CHOLAMANDALAM INVESTMENT AND",
+      "DR REDDYS LABORATORIES LTD",
+      "INTERGLOBE AVIATION LTD",
+      "JSW Infrastructure Limited",
+      "Jio Financial Services Limited",
+      "SUN PHARMACEUTICAL INDUSTRIES LTD"
+    ]
+  },
+  {
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
     "entity": "Ajay Jaisinghani · Carnelian 3517383",
     "assetClass": null,
@@ -18807,6 +19441,53 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "securities": [
       "DSP MUTUAL FUND - DSP S&P BSE"
     ]
+  },
+  {
+    "accountId": "marathon-trends-advisory-pvt-ltd-5110837",
+    "entity": "Ajay Jaisinghani · Marathon 5110837",
+    "assetClass": null,
+    "lots": 6,
+    "realisedST": -830140.3,
+    "realisedLT": 0,
+    "securities": [
+      "CHOLAMANDALAM INVESTMENT",
+      "ORACLE FINANCIAL SERVICES"
+    ]
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "entity": "Ankita Jaisinghani · ASK 10032723",
+    "assetClass": null,
+    "lots": 212,
+    "realisedST": 4130072.68,
+    "realisedLT": 8646417.96,
+    "securities": [
+      "AARTI PHARMALABS LIMITED",
+      "ADANI PORTS & SPECIAL ECONOMIC",
+      "AFFLE INDIA LTD",
+      "BHARTI AIRTEL LTD",
+      "BRITANNIA INDUSTRIES LTD UNSEC RED",
+      "Bharti Airtel Ltd PP-IN9397D01014",
+      "CARBORUNDUM UNIVERSAL LTD",
+      "CHOLAMANDALAM INVESTMENT AND",
+      "DR REDDYS LABORATORIES LTD",
+      "INTERGLOBE AVIATION LTD",
+      "JSW Infrastructure Limited",
+      "Jio Financial Services Limited",
+      "SUN PHARMACEUTICAL INDUSTRIES LTD"
+    ]
+  },
+  {
+    "accountId": "marathon-trends-advisory-pvt-ltd-5110758",
+    "entity": "Ankita Jaisinghani · Marathon 5110758",
+    "assetClass": null,
+    "lots": 7,
+    "realisedST": -958226.47,
+    "realisedLT": 0,
+    "securities": [
+      "CHOLAMANDALAM INVESTMENT",
+      "ORACLE FINANCIAL SERVICES"
+    ]
   }
 ];
 
@@ -18815,6 +19496,185 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
  * Sign: amount < 0 = capital in, > 0 = capital out, per `CashFlow` in types.ts.
  */
 export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
+  "ask-investment-managers-limited-10032723": [
+    {
+      "date": "2019-07-26",
+      "amount": -10000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2019-08-14",
+      "amount": -2500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2019-08-30",
+      "amount": -2500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2019-12-05",
+      "amount": -10000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-04-13",
+      "amount": -2500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-10-23",
+      "amount": 79,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-06",
+      "amount": 2322,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-18",
+      "amount": 26.04,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-12-25",
+      "amount": 2055,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2022-07-29",
+      "amount": -10000000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-10-13",
+      "amount": -2500000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-11-14",
+      "amount": -2500000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-11-21",
+      "amount": -3500000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2024-05-29",
+      "amount": 20000000,
+      "description": "Partial Redemption"
+    },
+    {
+      "date": "2024-08-02",
+      "amount": 65182000,
+      "description": "Full Redemption"
+    },
+    {
+      "date": "2024-10-04",
+      "amount": 99352.1,
+      "description": "Cash Outflow without exit load"
+    }
+  ],
+  "ask-investment-managers-limited-10034025": [
+    {
+      "date": "2019-09-06",
+      "amount": -25000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-02-26",
+      "amount": -5000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-03-02",
+      "amount": -5000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-04-03",
+      "amount": -7500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-08-21",
+      "amount": -2500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-10-20",
+      "amount": 468,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-10-23",
+      "amount": 119,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-06",
+      "amount": 3493,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-18",
+      "amount": 559.24,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-24",
+      "amount": 379,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-12-25",
+      "amount": 3227,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2022-07-29",
+      "amount": -20000000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-10-12",
+      "amount": -10000000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-11-11",
+      "amount": -10000000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2024-05-29",
+      "amount": 35000000,
+      "description": "Partial Redemption"
+    },
+    {
+      "date": "2024-08-02",
+      "amount": 109580000,
+      "description": "Full Redemption"
+    },
+    {
+      "date": "2024-10-04",
+      "amount": 144570.94,
+      "description": "Cash Outflow without exit load"
+    },
+    {
+      "date": "2024-10-28",
+      "amount": 6305000,
+      "description": "Full Redemption"
+    },
+    {
+      "date": "2024-11-18",
+      "amount": 4065,
+      "description": "Full Redemption"
+    }
+  ],
   "buoyant-capital-103473": [
     {
       "date": "2026-04-01",
@@ -19069,6 +19929,1513 @@ export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
  */
 export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
   {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2019-07-26",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 10000000,
+    "invested": 10000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2019-08-14",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 2500000,
+    "invested": 2500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2019-08-30",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 2500000,
+    "invested": 2500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2019-09-06",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 25000000,
+    "invested": 25000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2019-12-05",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 10000000,
+    "invested": 10000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-02-26",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 5000000,
+    "invested": 5000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-03-02",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 5000000,
+    "invested": 5000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-04-03",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 7500000,
+    "invested": 7500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2020-04-13",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 2500000,
+    "invested": 2500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-08-21",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 2500000,
+    "invested": 2500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-10-20",
+    "direction": "out",
+    "label": "Cash Withdrawal · Trf to TDS A/c",
+    "amount": 468,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2020-10-23",
+    "direction": "out",
+    "label": "Cash Withdrawal · Trf to TDS A/c",
+    "amount": 79,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-10-23",
+    "direction": "out",
+    "label": "Cash Withdrawal · Trf to TDS A/c",
+    "amount": 119,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2020-11-05",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2322,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-11-05",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 3493,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2020-11-18",
+    "direction": "out",
+    "label": "Cash Withdrawal · Trf to TDS A/c",
+    "amount": 26.04,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-11-18",
+    "direction": "out",
+    "label": "Cash Withdrawal · Trf to TDS A/c",
+    "amount": 559.24,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-11-24",
+    "direction": "out",
+    "label": "Cash Withdrawal · Trf to TDS A/c",
+    "amount": 379,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2020-12-25",
+    "direction": "out",
+    "label": "Cash Withdrawal · Trf to TDS A/c",
+    "amount": 2055,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2020-12-25",
+    "direction": "out",
+    "label": "Cash Withdrawal · Trf to TDS A/c",
+    "amount": 3227,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-02-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 175.3,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-02-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 278.8,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-03-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 413,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-03-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 653,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-04-21",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 891,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-04-21",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1850.3,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-04-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 404,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-04-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 659,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-04-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 391.28,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-04-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 622.35,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-04-28",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 719.5,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-04-28",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 595.52,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-04-29",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 619,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-04-29",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 979,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-05-05",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 436,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-05-05",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 363,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-05-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2313,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-05-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 3621,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-07-07",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 755,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-07-07",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1208,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-08-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 860,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-08-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1371,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-09-30",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1548,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-09-30",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2424,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-10-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 560,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-10-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 889,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-10-19",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 609,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-10-19",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 969,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-10-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 891,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-10-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1400,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2021-10-26",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 491,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-10-26",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 803,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2021-10-28",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1131,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-01-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 536,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-01-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 879,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-02-08",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1571,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-02-08",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2593,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-02-11",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1269,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-02-11",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2034,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-02-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 847,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-02-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 757,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-02-15",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 787,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-02-15",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1253,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-02-16",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 605,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-02-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 656,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-02-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1085,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-02-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 885.7,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-02-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1448.4,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-02-25",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 797,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-02-25",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1287,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-03-03",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 495,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-03-03",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 810,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-03-17",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 599,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-03-17",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 419,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-03-21",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 751,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-03-21",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1225,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-03-25",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 779,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-03-25",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1261,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-03-28",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1683,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-03-28",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2967.5,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-03-31",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 586,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-07-05",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1512,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-07-05",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2467,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-07-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 919.5,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-07-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1501.5,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-07-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 385,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-07-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 623,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-07-29",
+    "direction": "in",
+    "label": "Additional subscription",
+    "amount": 10000000,
+    "invested": 10000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-07-29",
+    "direction": "in",
+    "label": "Additional subscription",
+    "amount": 20000000,
+    "invested": 20000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-08-02",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 783,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-08-02",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1278,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-08-10",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 419,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-08-11",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 749,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-08-17",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 934,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-08-17",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1526,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-08-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1898,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-08-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 3043,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-09-21",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1917,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-09-21",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 3267,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-09-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 882,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-09-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1505,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-10-06",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 488.7,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-10-07",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 300,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-10-07",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 504,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-10-12",
+    "direction": "in",
+    "label": "Additional subscription",
+    "amount": 10000000,
+    "invested": 10000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-10-13",
+    "direction": "in",
+    "label": "Additional subscription",
+    "amount": 2500000,
+    "invested": 2500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-10-31",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 662,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-11-02",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2275,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-11-02",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 3896,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-11-11",
+    "direction": "in",
+    "label": "Additional subscription",
+    "amount": 10000000,
+    "invested": 10000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-11-14",
+    "direction": "in",
+    "label": "Additional subscription",
+    "amount": 2500000,
+    "invested": 2500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-11-15",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 687,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-11-15",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1264,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-11-21",
+    "direction": "in",
+    "label": "Additional subscription",
+    "amount": 3500000,
+    "invested": 3500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-11-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 330.4,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-11-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 580.6,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2022-12-13",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 350,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-12-13",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 644,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2022-12-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 677,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-02-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 7088,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-02-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 12990,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-02-17",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 760,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-02-17",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1385,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-02-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2266,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-02-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2613,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-03-06",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 658.51,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-03-06",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1093.2,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-03-15",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 643,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-03-15",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 457,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-03-16",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 822,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-03-16",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1503,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-03-23",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 336,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-03-23",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 612,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-03-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 554,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-03-27",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 945,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-03-28",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 740.55,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-03-28",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 828,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "3p-investment-managers-3000048",
     "date": "2023-05-04",
     "direction": "in",
@@ -19079,6 +21446,358 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 499855.507,
     "security": "3P India Equity Fund 1 - Class B1",
     "securityKey": "3p-india-equity-fund-1-class-b1"
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-06-28",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 612,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-07-12",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1162,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-07-12",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2077,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-07-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1434.75,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-07-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2584,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-07-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2333,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-07-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 4157,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-07-31",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 537.34,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-07-31",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 915.55,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-08-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1974,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-08-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 3540,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-08-17",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1220,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-08-17",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2096,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-08-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 693,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-08-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1248,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-08-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 875,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-08-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1559,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-08-23",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1307,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-08-23",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1493,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-08-25",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 571.7,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-08-25",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1025.8,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-08-31",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 345,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-09-01",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1120,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-09-01",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2017.4,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-09-11",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 805.2,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-09-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1373,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-09-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2468,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-09-15",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 667,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-09-29",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 3420,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-09-29",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 6158,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-10-03",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 783,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-10-03",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 765,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
   },
   {
     "accountId": "neo-infra-income-opportunities-fund-9039920536",
@@ -19093,6 +21812,50 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
   },
   {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-10-10",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1664,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-10-10",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2998,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-10-20",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1440,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-10-20",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2636,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "neo-infra-income-opportunities-fund-9039920536",
     "date": "2023-10-24",
     "direction": "in",
@@ -19105,6 +21868,138 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
   },
   {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-11-23",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 875,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-11-23",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1559,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-12-01",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 618,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-12-01",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 445,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2023-12-19",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 347.25,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2023-12-19",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 626.4,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-01-02",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 435,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-01-02",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 765,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-02-16",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2563,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-02-16",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 4566,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-02-21",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 537.34,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-02-21",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 915.55,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "neo-infra-income-opportunities-fund-9039920536",
     "date": "2024-02-26",
     "direction": "in",
@@ -19115,6 +22010,138 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 100000,
     "security": "Neo Infra Income Opportunities Fund I — Class A5",
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-03-05",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1282,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-03-05",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2299,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-03-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 3179,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-03-14",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 4106,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-03-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 937.25,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-03-22",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 878.4,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-03-26",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 360,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-03-26",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 620,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-03-31",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2520,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-03-31",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 4512,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-05-29",
+    "direction": "out",
+    "label": "Partial Redemption",
+    "amount": 20000000,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-05-29",
+    "direction": "out",
+    "label": "Partial Redemption",
+    "amount": 35000000,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
   },
   {
     "accountId": "3p-investment-managers-3000048",
@@ -19153,6 +22180,116 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
   },
   {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-06-26",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2750,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-06-26",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 4926,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-07-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 833,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-07-18",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1481,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-07-23",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 793.3,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-07-23",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1410.15,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-08-02",
+    "direction": "out",
+    "label": "Full Redemption",
+    "amount": 65182000,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-08-02",
+    "direction": "out",
+    "label": "Full Redemption · Trf to TDS A/c",
+    "amount": 109580840.74,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-08-13",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1433,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-08-13",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2549,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "3p-investment-managers-3000048",
     "date": "2024-08-14",
     "direction": "in",
@@ -19163,6 +22300,72 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 67543.607,
     "security": "3P India Equity Fund 1 - Class B1",
     "securityKey": "3p-india-equity-fund-1-class-b1"
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-08-16",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 664,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-08-16",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1120,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-08-21",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 836,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-08-30",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 507.2,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-09-02",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1516,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-09-02",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 2700,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -19177,11 +22380,121 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-09-04",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 482,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-09-04",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 857,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-09-20",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1966.8,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-09-20",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 3555.75,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-09-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 714,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-09-24",
+    "direction": "out",
+    "label": "Trf to TDS A/c",
+    "amount": 1270,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2024-09-24",
     "direction": "out",
     "label": "Capital outflow",
     "amount": 5390,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10032723",
+    "date": "2024-10-04",
+    "direction": "out",
+    "label": "Cash Outflow without exit load",
+    "amount": 99352.1,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-10-04",
+    "direction": "out",
+    "label": "Cash Outflow without exit load",
+    "amount": 144570.94,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-10-28",
+    "direction": "out",
+    "label": "Full Redemption",
+    "amount": 6305000,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "ask-investment-managers-limited-10034025",
+    "date": "2024-11-18",
+    "direction": "out",
+    "label": "Full Redemption",
+    "amount": 4065,
     "invested": null,
     "units": null,
     "security": null,
@@ -19266,6 +22579,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "ask-absolute-return-fund-9039917111",
+    "date": "2025-01-31",
+    "direction": "in",
+    "label": "Capital Contribution",
+    "amount": 200000000,
+    "invested": 199990000.5,
+    "charges": 9999.5,
+    "units": 199990.001,
+    "security": "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+    "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025"
+  },
+  {
+    "accountId": "ask-absolute-return-fund-9039917144",
+    "date": "2025-01-31",
+    "direction": "in",
+    "label": "Capital Contribution",
+    "amount": 188000000,
+    "invested": 187990600.47,
+    "charges": 9399.53,
+    "units": 187990.6,
+    "security": "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+    "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025"
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -19952,6 +23289,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "ask-absolute-return-fund-9039917144",
+    "date": "2025-09-30",
+    "direction": "out",
+    "label": "Net Return on Capital Contribution",
+    "amount": 100000000,
+    "invested": null,
+    "units": -97715.461,
+    "security": "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+    "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025"
+  },
+  {
     "accountId": "sanshi-fund-9039671821",
     "date": "2025-10-03",
     "direction": "in",
@@ -20448,6 +23796,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "ask-absolute-return-fund-9039917111",
+    "date": "2026-03-31",
+    "direction": "out",
+    "label": "Net Return on Capital Contribution",
+    "amount": 208039138.56,
+    "invested": null,
+    "units": -199990.001,
+    "security": "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+    "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025"
+  },
+  {
+    "accountId": "ask-absolute-return-fund-9039917144",
+    "date": "2026-03-31",
+    "direction": "out",
+    "label": "Net Return on Capital Contribution",
+    "amount": 93908505.71,
+    "invested": null,
+    "units": -90275.139,
+    "security": "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+    "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025"
   },
   {
     "accountId": "buoyant-capital-103473",
@@ -22775,7 +26145,279 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
  * everything they own, so their accounts' flows merge here.
  */
 export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
+  "Ankita Jaisinghani": [
+    {
+      "date": "2019-07-26",
+      "amount": -10000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2019-08-14",
+      "amount": -2500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2019-08-30",
+      "amount": -2500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2019-12-05",
+      "amount": -10000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-04-13",
+      "amount": -2500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-10-23",
+      "amount": 79,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-06",
+      "amount": 2322,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-18",
+      "amount": 26.04,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-12-25",
+      "amount": 2055,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2022-07-29",
+      "amount": -10000000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-10-13",
+      "amount": -2500000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-11-14",
+      "amount": -2500000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-11-21",
+      "amount": -3500000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2024-05-29",
+      "amount": 20000000,
+      "description": "Partial Redemption"
+    },
+    {
+      "date": "2024-08-02",
+      "amount": 65182000,
+      "description": "Full Redemption"
+    },
+    {
+      "date": "2024-10-04",
+      "amount": 99352.1,
+      "description": "Cash Outflow without exit load"
+    },
+    {
+      "date": "2026-04-01",
+      "amount": -66656491.25,
+      "description": "Opening portfolio value 2026-04-01"
+    },
+    {
+      "date": "2026-04-01",
+      "amount": -49947276.19,
+      "description": "Opening portfolio value 2026-04-01"
+    },
+    {
+      "date": "2026-04-01",
+      "amount": -43032608.36,
+      "description": "Opening portfolio value 2026-04-01"
+    },
+    {
+      "date": "2026-04-02",
+      "amount": 695,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-04-02",
+      "amount": 1274,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-04-20",
+      "amount": 4774,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-05-27",
+      "amount": 2471,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-06-05",
+      "amount": 3904,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-06-05",
+      "amount": 4477,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-06-09",
+      "amount": 1168,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-06-15",
+      "amount": 2519,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-06-25",
+      "amount": 1257,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-06-30",
+      "amount": 5940,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-07-16",
+      "amount": 1424,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-07-24",
+      "amount": 1680,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-07-27",
+      "amount": 1785,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-07-30",
+      "amount": 6000,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-08-04",
+      "amount": 2400,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-08-07",
+      "amount": 9020,
+      "description": "TDS Trf to Capital A/c"
+    }
+  ],
   "Ajay Jaisinghani": [
+    {
+      "date": "2019-09-06",
+      "amount": -25000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-02-26",
+      "amount": -5000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-03-02",
+      "amount": -5000000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-04-03",
+      "amount": -7500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-08-21",
+      "amount": -2500000,
+      "description": "Cash Deposits"
+    },
+    {
+      "date": "2020-10-20",
+      "amount": 468,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-10-23",
+      "amount": 119,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-06",
+      "amount": 3493,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-18",
+      "amount": 559.24,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-11-24",
+      "amount": 379,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2020-12-25",
+      "amount": 3227,
+      "description": "Cash Withdrawal"
+    },
+    {
+      "date": "2022-07-29",
+      "amount": -20000000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-10-12",
+      "amount": -10000000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2022-11-11",
+      "amount": -10000000,
+      "description": "Additional subscription"
+    },
+    {
+      "date": "2024-05-29",
+      "amount": 35000000,
+      "description": "Partial Redemption"
+    },
+    {
+      "date": "2024-08-02",
+      "amount": 109580000,
+      "description": "Full Redemption"
+    },
+    {
+      "date": "2024-10-04",
+      "amount": 144570.94,
+      "description": "Cash Outflow without exit load"
+    },
+    {
+      "date": "2024-10-28",
+      "amount": 6305000,
+      "description": "Full Redemption"
+    },
+    {
+      "date": "2024-11-18",
+      "amount": 4065,
+      "description": "Full Redemption"
+    },
     {
       "date": "2026-04-01",
       "amount": -312627059.69,
@@ -22906,103 +26548,6 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
       "amount": 6658,
       "description": "TDS Trf to Capital A/c"
     }
-  ],
-  "Ankita Jaisinghani": [
-    {
-      "date": "2026-04-01",
-      "amount": -66656491.25,
-      "description": "Opening portfolio value 2026-04-01"
-    },
-    {
-      "date": "2026-04-01",
-      "amount": -49947276.19,
-      "description": "Opening portfolio value 2026-04-01"
-    },
-    {
-      "date": "2026-04-01",
-      "amount": -43032608.36,
-      "description": "Opening portfolio value 2026-04-01"
-    },
-    {
-      "date": "2026-04-02",
-      "amount": 695,
-      "description": "TDS on Payout"
-    },
-    {
-      "date": "2026-04-02",
-      "amount": 1274,
-      "description": "TDS on Payout"
-    },
-    {
-      "date": "2026-04-20",
-      "amount": 4774,
-      "description": "TDS on Payout"
-    },
-    {
-      "date": "2026-05-27",
-      "amount": 2471,
-      "description": "TDS Trf to Capital A/c"
-    },
-    {
-      "date": "2026-06-05",
-      "amount": 3904,
-      "description": "TDS Trf to Capital A/c"
-    },
-    {
-      "date": "2026-06-05",
-      "amount": 4477,
-      "description": "TDS on Payout"
-    },
-    {
-      "date": "2026-06-09",
-      "amount": 1168,
-      "description": "TDS on Payout"
-    },
-    {
-      "date": "2026-06-15",
-      "amount": 2519,
-      "description": "TDS Trf to Capital A/c"
-    },
-    {
-      "date": "2026-06-25",
-      "amount": 1257,
-      "description": "TDS on Payout"
-    },
-    {
-      "date": "2026-06-30",
-      "amount": 5940,
-      "description": "TDS Trf to Capital A/c"
-    },
-    {
-      "date": "2026-07-16",
-      "amount": 1424,
-      "description": "TDS on Payout"
-    },
-    {
-      "date": "2026-07-24",
-      "amount": 1680,
-      "description": "TDS Trf to Capital A/c"
-    },
-    {
-      "date": "2026-07-27",
-      "amount": 1785,
-      "description": "TDS on Payout"
-    },
-    {
-      "date": "2026-07-30",
-      "amount": 6000,
-      "description": "TDS Trf to Capital A/c"
-    },
-    {
-      "date": "2026-08-04",
-      "amount": 2400,
-      "description": "TDS Trf to Capital A/c"
-    },
-    {
-      "date": "2026-08-07",
-      "amount": 9020,
-      "description": "TDS Trf to Capital A/c"
-    }
   ]
 };
 
@@ -23016,6 +26561,106 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
  * reports' own disclosure. `feeBasis` says whether returns are net of fees.
  */
 export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
+  "ask-investment-managers-limited-10032723": [
+    {
+      "reportType": "fact-sheet",
+      "source": "ask-investment-managers-limited-10032723-2026-09-08-fact-sheet",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": 0,
+          "qtd": 0,
+          "fytd": 0,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 17.45,
+          "siAnnualised": true,
+          "feeBasis": "after"
+        },
+        {
+          "series": "S&P BSE 500 - TRI",
+          "isBenchmark": true,
+          "mtd": 0.21,
+          "qtd": 2.32,
+          "fytd": 14.7,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 21.99,
+          "siAnnualised": true,
+          "feeBasis": "after"
+        },
+        {
+          "series": "NIFTY 50 TRI",
+          "isBenchmark": true,
+          "mtd": 2.41,
+          "qtd": 3.64,
+          "fytd": 11.31,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 18.55,
+          "siAnnualised": true,
+          "feeBasis": "after"
+        }
+      ]
+    }
+  ],
+  "ask-investment-managers-limited-10034025": [
+    {
+      "reportType": "fact-sheet",
+      "source": "ask-investment-managers-limited-10034025-2026-09-08-fact-sheet",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": 0,
+          "qtd": 0,
+          "fytd": 0,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 17.92,
+          "siAnnualised": true,
+          "feeBasis": "after"
+        },
+        {
+          "series": "S&P BSE 500 - TRI",
+          "isBenchmark": true,
+          "mtd": -4.01,
+          "qtd": -2,
+          "fytd": 9.86,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 21.47,
+          "siAnnualised": true,
+          "feeBasis": "after"
+        },
+        {
+          "series": "NIFTY 50 TRI",
+          "isBenchmark": true,
+          "mtd": -1.13,
+          "qtd": 0.05,
+          "fytd": 7.46,
+          "m1": null,
+          "m3": null,
+          "m6": null,
+          "y1": null,
+          "si": 18.33,
+          "siAnnualised": true,
+          "feeBasis": "after"
+        }
+      ]
+    }
+  ],
   "buoyant-capital-103472": [
     {
       "reportType": "fact-sheet",
@@ -24076,6 +27721,140 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
  * Windows are NOT interchangeable and nothing is added across them.
  */
 export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
+  "ask-investment-managers-limited-10032723": [
+    {
+      "reportType": "profit-and-loss",
+      "source": "ask-investment-managers-limited-10032723-2026-09-08-profit-and-loss",
+      "periodFrom": "2019-04-01",
+      "periodTo": "2026-09-08",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 46000000,
+      "withdrawal": 85383320.61,
+      "netCapitalInOut": null,
+      "realized": 43118073.39,
+      "unrealized": 0,
+      "income": 1198342.44,
+      "fees": 4596771.29,
+      "expenses": 331102.43,
+      "closing": 0.01,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": 5221.5,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0.01,
+      "linesTotal": 0,
+      "withheldReason": null
+    },
+    {
+      "reportType": "fact-sheet",
+      "source": "ask-investment-managers-limited-10032723-2026-09-08-fact-sheet",
+      "periodFrom": "2019-07-26",
+      "periodTo": "2026-09-08",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 46000000,
+      "withdrawal": 85383321,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 0,
+      "profit": 39383321,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 0,
+      "withheldReason": null
+    }
+  ],
+  "ask-investment-managers-limited-10034025": [
+    {
+      "reportType": "profit-and-loss",
+      "source": "ask-investment-managers-limited-10034025-2026-09-08-profit-and-loss",
+      "periodFrom": "2019-04-01",
+      "periodTo": "2026-09-08",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 85000000,
+      "withdrawal": 151211941.19,
+      "netCapitalInOut": null,
+      "realized": 72644418.18,
+      "unrealized": 0,
+      "income": 1955481.23,
+      "fees": 7816077.54,
+      "expenses": 566658.84,
+      "closing": 0.34,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": 5221.5,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 0.34,
+      "withheldReason": null
+    },
+    {
+      "reportType": "fact-sheet",
+      "source": "ask-investment-managers-limited-10034025-2026-09-08-fact-sheet",
+      "periodFrom": "2019-09-06",
+      "periodTo": "2026-09-08",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 85000000,
+      "withdrawal": 151212091,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 0,
+      "profit": 66212091,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 0,
+      "withheldReason": null
+    }
+  ],
   "buoyant-capital-103472": [
     {
       "reportType": "fact-sheet",
@@ -24722,6 +28501,74 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "residual": 0.01,
       "linesTotal": 116910162.16,
       "withheldReason": null
+    }
+  ],
+  "marathon-trends-advisory-pvt-ltd-5110758": [
+    {
+      "reportType": "income-expense",
+      "source": "marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-income-expense",
+      "periodFrom": "2018-04-01",
+      "periodTo": "2026-09-09",
+      "basis": "window",
+      "opening": null,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": null,
+      "realized": -252940.31,
+      "unrealized": null,
+      "income": 487171.61,
+      "fees": 684122.01,
+      "expenses": 219788.99,
+      "closing": null,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": 30074.61,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": null,
+      "linesTotal": null,
+      "withheldReason": "The report prints no closing value, so its lines cannot be added up. Not read from this report: gain prior to takeover, accrued income and change in accruals."
+    }
+  ],
+  "marathon-trends-advisory-pvt-ltd-5110837": [
+    {
+      "reportType": "income-expense",
+      "source": "marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-income-expense",
+      "periodFrom": "2018-04-01",
+      "periodTo": "2026-09-09",
+      "basis": "window",
+      "opening": null,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": null,
+      "realized": 12708648.05,
+      "unrealized": null,
+      "income": 966742.3,
+      "fees": 954431.42,
+      "expenses": 386305.43,
+      "closing": null,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": 38874.75,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": null,
+      "linesTotal": null,
+      "withheldReason": "The report prints no closing value, so its lines cannot be added up. Not read from this report: gain prior to takeover, accrued income and change in accruals."
     }
   ],
   "molecule-ventures-llp-7810404": [

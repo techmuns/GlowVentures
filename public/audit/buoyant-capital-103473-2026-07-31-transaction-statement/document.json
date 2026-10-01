@@ -24,12 +24,8 @@
    "detail": "exchange"
   },
   {
-   "code": "transaction-side-unknown",
-   "detail": "2026-06-01 · \"Security in\""
-  },
-  {
-   "code": "transaction-side-unknown",
-   "detail": "2026-06-01 · \"Security out\""
+   "code": "unit-movements-are-not-trades",
+   "detail": "2 unit movement row(s) (1 × \"Security in\", 1 × \"Security out\") — units moved in or out with no counterparty and no consideration (a demerger, a class switch or a transfer). None is a trade, so none is emitted as one."
   }
  ],
  "holdings": [],

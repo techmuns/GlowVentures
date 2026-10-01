@@ -278,7 +278,10 @@ function splitAtHeaderLabels(columns, headerRows, fieldAliases, dataRows = []) {
   if (labels.length < 2) return null;
 
   // The figures this table was measured from, by the column their centre falls in.
-  const figures = dataRows.flatMap((r) => r.items ?? []).map((it) => ({
+  // FIGURES, not text: a description column carries words that can sit under a
+  // label's edge by accident (Buoyant's capital register, `Desc/Notes`), and a
+  // split made on those moved its opening-balance row out of the table.
+  const figures = dataRows.flatMap((r) => r.items ?? []).filter((it) => parseNumInfo(it.text).value !== null).map((it) => ({
     right: it.x + it.width, center: it.x + it.width / 2,
   }));
 

@@ -21,7 +21,7 @@
  "warnings": [
   {
    "code": "depository-movements-are-not-trades",
-   "detail": "5 depository movement(s) read. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
+   "detail": "7 depository movement(s) read across 5 holding(s), 5 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 of the 0 pledge / lock-in row(s) changed a balance, so their exclusion from the in/out totals rests on evidence rather than on the assumption that they are neutral. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
   }
  ],
  "holdings": [],

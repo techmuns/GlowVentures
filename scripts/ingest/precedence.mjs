@@ -147,8 +147,92 @@ export const PRECEDENCE = {
    *
    * The appraisal reports the AIF UNIT, one row under "Alternative Assets". It
    * is not a look-through, so nothing here turns a fund into equities.
+   *
+   * AND THE FUND'S OWN PORTFOLIO SNAPSHOT IS THE SAME FACT AT A LATER DATE. The
+   * `september-2026` delivery carries Buoyant's portfolio snap beside the PMS
+   * set, dated after the appraisal. Both are statements of the units held and
+   * the NAV they are marked at; neither restates the other's window. So the
+   * rule here is the one a snapshot always takes — the NEWEST issue — rather
+   * than a report-type order that would keep showing a month-old appraisal
+   * while a later statement of the same holding sat in the archive (the 360
+   * ONE May/June defect `newestPerReportType` exists for, one report type
+   * over). `newestWins` is honoured by build-book's `authoritative()` and
+   * applies to Buoyant's holdings alone; every other provider keeps the first
+   * report type its rule names.
    */
-  "Buoyant Capital": PMS_REPORTING_SYSTEM,
+  "Buoyant Capital": {
+    ...PMS_REPORTING_SYSTEM,
+    holdings: {
+      reportTypes: ["appraisal", "portfolio-snap"],
+      newestWins: true,
+      note: "the NEWER of the PMS appraisal and the fund's own portfolio snap — two statements of the same units and NAV at different dates; on one date the appraisal wins.",
+    },
+  },
+
+  /**
+   * ASK INVESTMENT MANAGERS — the same reporting system as the block above, but
+   * a different report set, because both of the family's ASK mandates are
+   * CLOSED. There is no appraisal and no current portfolio: a closed mandate
+   * has nothing to appraise. What the delivery carries instead is the account's
+   * PROFIT AND LOSS ACCOUNT, since inception, whose balance sheet closes on the
+   * paisa — Capital Contribution, Withdrawals, every income and expense line
+   * and a closing `Balance with Banks` of ₹0.34 (10034025) and ₹0.01
+   * (10032723). That balance is the account's measured value today, and its
+   * reader emits it as the one holding, only where every balance-sheet line is
+   * cash (see `readProfitAndLoss`).
+   *
+   * The fact sheet still carries the sector, the returns and the benchmark, as
+   * it does for every manager on this system. It also prints the capital in
+   * and out since inception — in whole rupees, ₹149.81 away from the P&L's
+   * paisa-exact withdrawal on 10034025 — which is why the P&L, not the fact
+   * sheet, is what build-book holds the bank book's dated capital to.
+   */
+  "ASK Investment Managers Limited": {
+    holdings:        { reportType: "profit-and-loss", note: "the balance sheet's `Balance with Banks`, published as a holding only where every line of the balance sheet is cash — both mandates are closed." },
+    quantity:        { reportType: "profit-and-loss" },
+    unitCost:        { reportType: "profit-and-loss" },
+    totalCost:       { reportType: "profit-and-loss" },
+    marketPrice:     { reportType: "profit-and-loss" },
+    marketValue:     { reportType: "profit-and-loss", note: "a bank balance; its value is its amount." },
+    gainLoss:        { reportType: "profit-and-loss" },
+    pctAssets:       { reportType: "profit-and-loss" },
+
+    providerSector:  { reportType: "fact-sheet", note: "the sector join, as for every manager on this system." },
+    periodReturns:   { reportType: "fact-sheet", note: "TWRR, since inception." },
+    benchmark:       { reportType: "fact-sheet" },
+    capitalInOut:    { reportType: "fact-sheet", note: "Portfolio Summary, since inception, in whole rupees; the P&L balance sheet's Capital Contribution and Withdrawals are the paisa-exact witness build-book holds the bank book to." },
+    inceptionDate:   { reportType: "fact-sheet" },
+    corpus:          { reportTypes: ["profit-and-loss", "fact-sheet"], note: "a measured nil corpus: ₹0.34 and ₹0.01 of bank balance on the P&L, 0 on the fact sheet." },
+
+    realized:        { reportType: "profit-and-loss", note: "the P&L account, since inception; its capital gain statement's lots tie to it." },
+    unrealized:      { reportType: "profit-and-loss" },
+    income:          { reportType: "profit-and-loss" },
+    expenses:        { reportType: "profit-and-loss" },
+    fees:            { reportType: "profit-and-loss" },
+
+    transactions:    { reportType: "transaction-statement", note: "TDS transfers and unit movements are not trades and are not emitted as trades." },
+    capitalGains:    { reportType: "capital-gain", note: "since inception; ties to its own printed section totals." },
+    dividend:        { reportType: "dividend-statement", note: "cash dividends; ties to its own printed total." },
+    cashFlows:       { reportType: "bank-book", note: "Dep/With and TDS-transfer rows become dated capital only where they reproduce the P&L's Capital Contribution and Withdrawals to the paisa." },
+  },
+
+  /**
+   * MARATHON TRENDS ADVISORY — the same reporting system and the same position
+   * as ASK, with one difference that decides everything: it sends NO holding
+   * statement of any kind. No appraisal, no fact sheet, no balance sheet — only
+   * the capital gain, dividend, transaction and income-and-expense statements.
+   * So nothing here is named for holdings, on purpose: the account's value is
+   * ABSENT, with its reason, rather than read off an empty trade tape as a nil.
+   */
+  "Marathon Trends Advisory Pvt Ltd": {
+    transactions:    { reportType: "transaction-statement", note: "unit movements (a demerger, a transfer) are not trades and are not emitted as trades." },
+    capitalGains:    { reportType: "capital-gain", note: "ties to its own printed total and to the income-and-expense statement's realised gain." },
+    dividend:        { reportType: "dividend-statement", note: "cash dividends; ties to its own printed total." },
+    realized:        { reportType: "income-expense", note: "the income-and-expense statement, from 1 April 2018 — before the account existed." },
+    income:          { reportType: "income-expense" },
+    expenses:        { reportType: "income-expense" },
+    fees:            { reportType: "income-expense" },
+  },
 
   /**
    * MOLECULE VENTURES delivers the whole report set as ONE PDF.
@@ -430,6 +514,11 @@ for (const provider of [
   "Baring Private Equity India Fund",
   "Carnelian Bharat Amritkaal Fund",
   "Motilal Oswal Delphi Equity Fund",
+  // ASK's AIF — a statement of account per folio, from the `september-2026`
+  // delivery, read by altFundStatements.mjs. Its statement prints no SEBI
+  // category, so none is claimed here (Stage 10cv). Not the ASK PMS
+  // mandates above: a different issuer, a different document, a different book.
+  "ASK Absolute Return Fund",
   // Redeemed to nil and carrying no holding — the entry is here anyway, because
   // a provider with no precedence block contributes nothing SILENTLY, and an
   // account that holds nothing and an account nobody wired look identical from
@@ -447,7 +536,7 @@ for (const provider of [
 
 /**
  * Which document should supply `fact` for `provider`?
- * @returns {{ reportTypes: string[], section: string|null, note: string|null } | null}
+ * @returns {{ reportTypes: string[], section: string|null, note: string|null, newestWins: boolean } | null}
  */
 export function sourceFor(provider, fact) {
   const p = PRECEDENCE[provider];
@@ -458,6 +547,10 @@ export function sourceFor(provider, fact) {
     reportTypes: rule.reportTypes ?? [rule.reportType],
     section: rule.section ?? null,
     note: rule.note ?? null,
+    // The NEWEST of the named report types wins rather than the first one
+    // present. Set on one rule only (Buoyant's holdings); every other rule
+    // keeps the report-type order it names.
+    newestWins: rule.newestWins === true,
   };
 }
 
