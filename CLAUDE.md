@@ -25176,6 +25176,23 @@ applied:
 
   Main's build walks all five of those routes clean with no abstention.
 
+#### …and merged once more, on the family's go-ahead
+
+Main moved by seven commits while the PR waited: two fund-NAV refreshes, a
+Polycab refresh, three harvests and #106 (a client-data Excel template in
+`templates/`, which nothing in the app reads). None touches a file this branch
+changes or any code — the refreshes rewrite `src/data/fundNavs.ts`,
+`src/data/polycabLive.ts` and `public/series/` — and main added no stage
+heading. The merge had no conflict.
+
+On that tree (main at `ac819761`): `build`, `test:ingest`, `test:family`,
+`check:family` **126/0**, `build-book` byte-identical, every replay a no-op, and
+CI and Cloudflare green. `check:pages` walked 370 combinations: the same 6
+routes and the same 11 main checks as above, and **25** not checked. The one
+that left is the Polycab pledge line: main's refresh brought back older quarters
+with no pledge figure, so the dashed-pledge check has a subject again, and it
+passes.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
