@@ -29,7 +29,7 @@ ISIN** and never on a name. 14,366 scheme rows read.
 | HELIOS FCF D-GROW | `INF0R8701046` | statement | Flexi Cap Fund | 15.4 | 2026-10-01 | -1.09% |
 | Helios Flexi Cap Fund - Direct Growth | `INF0R8701046` | statement | Flexi Cap Fund | 15.4 | 2026-10-01 | -1.09% |
 | ICICI IOPPF D-GRW | `INF109KC1RH9` | statement | Sectoral/ Thematic | 37.79 | 2026-10-01 | -0.66% |
-| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 421.6595 | 2026-10-01 | +0.04% |
+| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 421.7273 | 2026-10-02 | +0.02% |
 | ICICI NFT NT 50 DP G | `INF109K01Y80` | statement | Index Funds | 64.1855 | 2026-10-01 | -1.10% |
 | ICICI NFT NX 50 R GR | `INF109K01IF1` | statement | Index Funds | 60.6291 | 2026-10-01 | -1.10% |
 | ICICI NIFT50IND DP G | `INF109K012M7` | statement | Index Funds | 237.3337 | 2026-10-01 | -0.88% |
