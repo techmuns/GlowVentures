@@ -33,14 +33,14 @@ import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VAC
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
 import {
   trancheTable, trancheKey, capitalRollup, capitalMovesWithCalls, capitalReturn, capitalReturnCoverage,
-  carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote, boughtNavOf,
+  carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote, boughtNavOf, callDatesByHolding,
   type TrancheTable, type TrancheRow, type CapitalSide, type CapitalGroup,
 } from "@/lib/tranches";
 // THE TWO DATED RECORDS, MERGED INTO ONE ROW SET — and the two money blocks
 // that must never be added. See its header for what that was measured at.
 import { mergeDatedRecords, datedTotals, datedSectionRollup, type DatedRow } from "@/lib/txnLedger";
 import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
-import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_CAPITAL_GAINS } from "@/data/glowData";
+import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_GAINS } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY, type TaxonomySource } from "@/lib/familyTaxonomy";
 // THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
@@ -79,6 +79,7 @@ import { useDatedCapital } from "@/lib/useDatedCapital";
 import { pnlFormula, returnFormula, stockHref } from "@/lib/auditFormulas";
 import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
+import { allRecordedLines, recordedLabel, recordedLineFor } from "@/lib/recordedHoldings";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
@@ -210,25 +211,29 @@ type MandateInfo = {
 /**
  * WHEN A HOLDING'S OWN MONEY WENT IN, over the positions a row sums.
  *
- * Two sources, strongest first, and both are the HOLDING'S OWN dates rather
+ * Three sources, strongest first, and all are the HOLDING'S OWN dates rather
  * than its account's:
  *
  *   • `Position.heldSince` — the acquisition date on a lot register, emitted
  *     only where the lots account for every unit held;
  *   • the position's own tranche record, keyed on (account, security), which is
- *     the dated allotments a fund reports against that very folio.
+ *     the dated allotments a fund reports against that very folio;
+ *   • a drawdown fund's own dated CALLS, where the account holds nothing but
+ *     that fund and its paid-in covers every call (`callDatesByHolding`). A call
+ *     carries no unit count, so it can date the money without splitting it.
+ *     Five folios on this book: Baring, Carnelian Bharat Amritkaal, Delphi and
+ *     both Founders Fund folios.
  *
- * AN ACCOUNT-LEVEL DATE IS DELIBERATELY NOT A THIRD TIER. An account's first
+ * AN ACCOUNT-LEVEL DATE IS DELIBERATELY NOT A FOURTH TIER. An account's first
  * contribution is when the FAMILY funded the account, not when a manager bought
  * the share this row is about — putting it here would print a date under a
  * heading that says something else about it, for every share in a mandate. The
  * account-level record has its own home, on the mandate page and on What I
- * invested.
+ * invested. The calls tier is not that: on an account holding one fund and
+ * nothing else, the account's calls and the holding's purchases are the same
+ * payments, and `callDatesByHolding` refuses every account where they are not.
  *
- * Measured on this book: 10 of 371 positions carry one, and they are ₹208 Cr of
- * ₹714 Cr — 29% of the money, because the dated ones are the large AIF folios.
- *
- * ── AND THAT THIRD TIER CANNOT BE CAUGHT ON THIS BOOK, SO IT IS WRITTEN DOWN ──
+ * ── AND THE ACCOUNT-LEVEL TIER CANNOT BE CAUGHT ON THIS BOOK, SO IT IS WRITTEN DOWN ──
  *
  * Adding it was REINTRODUCED as a bug and the sweep came back clean. Measured,
  * every position in a funded account is already one of three things: in a PMS
@@ -242,6 +247,7 @@ type MandateInfo = {
  * page computing correctly — which is why the rule is stated here rather than
  * left to be inferred from the absence of a test for it.
  */
+const CALL_DATES = callDatesByHolding(BOOK_COMMITMENTS, BOOK_POSITIONS);
 function investedOnOf(ps: Position[]): { first: string; last: string; payments: number } | null {
   const dates: string[] = [];
   for (const p of ps) {
@@ -249,6 +255,8 @@ function investedOnOf(ps: Position[]): { first: string; last: string; payments: 
     const ins = own?.moves.filter((m) => m.direction === "in").map((m) => m.date) ?? [];
     if (ins.length) { dates.push(...ins); continue; }
     if (p.heldSince) { dates.push(p.heldSince); continue; }
+    const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
+    if (called?.length) { dates.push(...called); continue; }
     // ONE UNDATED CONSTITUENT AND THE ROW HAS NO FIRST PAYMENT. Returning the
     // earliest of the rest would name a date the row's own money predates.
     return null;
@@ -640,7 +648,10 @@ const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from
  * Delphi, Carnelian Amritkaal, Neo Infra and Baring, which print 1 to 6 dated
  * calls each. What they do not print is WHICH UNITS each call bought.
  */
-const CALL_DATES = new Map<string, string[]>(BOOK_COMMITMENTS
+// Keyed on the ACCOUNT, for the reason an undated cell gives. `CALL_DATES`
+// above is keyed on the HOLDING and dates one — Stage 10cy's third tier, which
+// fires only where the account's one line with money in it is that fund.
+const ACCOUNT_CALL_DATES = new Map<string, string[]>(BOOK_COMMITMENTS
   .filter((c) => !!c.accountId && (c.calls ?? []).length > 0)
   .map((c) => [c.accountId, (c.calls ?? []).map((x) => x.date).filter((d): d is string => !!d).sort()]));
 /**
@@ -1076,7 +1087,11 @@ export function PortfolioMonitor() {
     if (bySecurity && exposure.status === "ok") {
       for (const e of exposure.byKey.values()) {
         if (bookKeys.has(e.key)) continue;
-        mv.set(e.name, (mv.get(e.name) ?? 0) + e.total);
+        // A company the family holds as a RECORDED line is offered under their
+        // own statement's name — the row it picks is labelled the same way
+        // (`labelByKey`), so the option and the row are one string.
+        const name = recordedLabel(e.key) ?? e.name;
+        mv.set(name, (mv.get(name) ?? 0) + e.total);
       }
     }
     return [...mv.keys()].sort((a, b) => (mv.get(b) ?? 0) - (mv.get(a) ?? 0));
@@ -1091,6 +1106,12 @@ export function PortfolioMonitor() {
   const labelByKey = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of positions) if (!m.has(p.securityKey)) m.set(p.securityKey, p.security);
+    // …AND A COMPANY THE FAMILY HOLDS ONLY AS A RECORDED LINE (Stage 10cz) — a
+    // demat's last-movement row the quote feed has not priced yet is no
+    // position, so its derived row would otherwise wear a fund's filing name.
+    for (const l of allRecordedLines()) {
+      if (!m.has(l.homeKey)) m.set(l.homeKey, recordedLabel(l.homeKey) ?? l.security);
+    }
     return m;
   }, [positions]);
   /**
@@ -2519,7 +2540,7 @@ export function PortfolioMonitor() {
       return "a cash balance is not bought on a date — it is money the account holds, so there is no purchase to date";
     }
     const accts = [...new Set(ps.map((p) => p.accountId))];
-    const calls = accts.flatMap((a) => CALL_DATES.get(a) ?? []).sort();
+    const calls = accts.flatMap((a) => ACCOUNT_CALL_DATES.get(a) ?? []).sort();
     if (calls.length) {
       return `the fund's statements date the capital it called — ${calls.length} call${calls.length === 1 ? "" : "s"}, the first on ${fmtDate(calls[0])} — but not which units each call bought, so no one purchase date stands for this holding; each call is on the Transactions card`;
     }
@@ -3044,7 +3065,7 @@ export function PortfolioMonitor() {
     elsewhere.forEach((w, j) => {
       const a = accIdx.get(w.accountId);
       const who = ownerOfAccount(w.accountId);
-      const n = notHeldNote(w, a);
+      const n = notHeldNote(w, a, recordedLineFor(w.accountId, r.securityKey)?.reason);
       const closing = w.closing ?? 0;
       const from = w.periodFrom ? fmtDate(w.periodFrom) : "the window's opening";
       const to = w.periodTo ? fmtDate(w.periodTo) : "its close";
@@ -3365,7 +3386,7 @@ export function PortfolioMonitor() {
                     figure it belongs to.
                   */}
                   <SortHeader col="investedOn" view={holdView} align="left" pad="px-2 py-1.5"
-                    title="When this holding's own money went in, from a lot register's acquisition date or the fund's own dated allotments against this very folio. It is the HOLDING's date, never its account's: when the family funded a mandate is a fact about the account and is on that mandate's own page. A row that rolls up several holdings shows a date only where every one of them carries one.">Invested on</SortHeader>
+                    title="When this holding's own money went in, from a lot register's acquisition date, the fund's own dated allotments against this very folio, or the capital calls a drawdown fund dates against a folio that holds nothing else. It is the HOLDING's date, never its account's: when the family funded a mandate is a fact about the account and is on that mandate's own page. A row that rolls up several holdings shows a date only where every one of them carries one.">Invested on</SortHeader>
                   <SortHeader col="cmp" view={holdView} pad="px-2 py-1.5">CMP</SortHeader>
                   <SortHeader col="day" view={holdView} pad="px-2 py-1.5">Day</SortHeader>
                   <SortHeader col="mv" view={holdView} pad="px-2 py-1.5">{bySecurity ? "Direct + PMS" : "Market value"}</SortHeader>

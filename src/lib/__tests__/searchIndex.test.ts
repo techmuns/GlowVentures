@@ -17,11 +17,13 @@
 //     missing field.
 //
 // Every expectation is derived from `glowData.ts` on the run.
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_CAPITAL_MOVES } from "@/data/glowData";
+import { recordedLines } from "../recordedHoldings";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_CAPITAL_MOVES, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRedeemedToNil, isCashEquivalent, sum } from "@/lib/analytics";
 import { accountIndex } from "@/lib/accounts";
 import { groupKeyFor, groupLabelFor } from "@/lib/groupAxis";
-import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
+import { applyFundNavs, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
+import { depositoryShareHoldings, shareCandidates } from "@/lib/depositoryShares";
 import { applyCorporateActionQuotes } from "@/lib/corporateActions";
 import { applyQuotes } from "@/lib/quotes";
 import { parseDrilldown } from "@/lib/drilldown";
@@ -52,24 +54,30 @@ const positions = labelledPositions(BOOK_POSITIONS);
 const consolidated = dedupedPositions(positions);
 const accounts = labelledAccounts(BOOK_ACCOUNTS);
 const index = buildSearchIndex({
-  positions, consolidated, accounts, money,
+  positions, consolidated, accounts, money, recorded: BOOK_UNVALUED_HOLDINGS,
   capitalMoves: BOOK_CAPITAL_MOVES, fenced: fencedIdentityOf(BOOK_POLYCAB),
 });
 /**
  * AND THE INDEX THE TOP BAR ACTUALLY BUILDS ON THE LIVE BOOK — assembled as
  * `PortfolioContext` assembles it: the labelled rows through the
- * corporate-action layer, the depository's cash rows (Stage 10ce) through the
- * quote overlay, AMFI's published NAVs over all of them, and the registry with
- * its partial-valuation notes. What a row says about its figure's basis and
- * date (SC-C2, SC-C3) is only testable on the figures the screen shows.
+ * corporate-action layer; the funds a depository reports on a transaction-only
+ * demat (Stage 10ce cash, 10cy the rest) and the fund units a holding statement
+ * records and values nowhere (A-17, Stage 10cz) through the quote overlay; the
+ * listed shares a statement records, which are rows only while a feed prices
+ * them (none here, with no feed); AMFI's published NAVs over all of them; and
+ * the registry with its partial-valuation notes. What a row says about its
+ * figure's basis and date (SC-C2, SC-C3) is only testable on the figures the
+ * screen shows.
  */
-const DEP = depositoryCashHoldings();
+const LIVE_ONLY_FUNDS = [...depositoryFundHoldings(), ...unpricedStatementUnits()];
+const SHARES = depositoryShareHoldings(null, null, undefined, accounts);
 const screenPositions = applyFundNavs([
-  ...applyCorporateActionQuotes(positions, accounts, null, null).positions, ...applyQuotes(DEP, null)]);
-const screenAccounts = withPartialValuation(accounts, partialValuationNotes(DEP));
+  ...applyCorporateActionQuotes(positions, accounts, null, null).positions, ...applyQuotes([...LIVE_ONLY_FUNDS], null), ...SHARES]);
+const screenAccounts = withPartialValuation(accounts,
+  partialValuationNotes([...LIVE_ONLY_FUNDS, ...SHARES], BOOK_SHARE_MOVEMENTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, shareCandidates()));
 const screenIndex = buildSearchIndex({
   positions: screenPositions, consolidated: dedupedPositions(screenPositions), accounts: screenAccounts, money,
-  capitalMoves: BOOK_CAPITAL_MOVES, fenced: fencedIdentityOf(BOOK_POLYCAB),
+  recorded: BOOK_UNVALUED_HOLDINGS, capitalMoves: BOOK_CAPITAL_MOVES, fenced: fencedIdentityOf(BOOK_POLYCAB),
 });
 const top = (q: string) => searchEntries(index, q, 10)[0]?.entry;
 const topN = (q: string, n: number) => searchEntries(index, q, 10).slice(0, n).map((h) => h.entry);
@@ -86,9 +94,16 @@ console.log("── every holding is findable, once ──");
     && rowsOf(k).every((p) => !FUNDS.has(p.assetClass));
   const keys = new Set(consolidated.filter((p) => !small.has(p.securityKey)).map((p) => p.securityKey));
   const offered = [...keys].filter((k) => !balanceLine(k));
+  // …and every key a statement records at a quantity with no valued row
+  // standing for it (Stage 10cz) — one entry each, never a second one for a
+  // key a valued row already carries.
+  const recordedKeys = new Set(recordedLines(BOOK_UNVALUED_HOLDINGS)
+    .filter((l) => !keys.has(l.homeKey) && !small.has(l.homeKey))
+    .map((l) => l.homeKey));
   const holdings = index.filter((e) => e.kind === "holding");
-  ok("one holding entry per security above the floor, a ₹0 balance line aside", holdings.length === offered.length,
-    `${holdings.length} vs ${offered.length}`);
+  ok("one holding entry per security above the floor, a ₹0 balance line aside, and per recorded-only security",
+    holdings.length === offered.length + recordedKeys.size && holdings.filter((e) => e.recorded).length === recordedKeys.size,
+    `${holdings.length} vs ${offered.length} + ${recordedKeys.size}`);
   ok("no holding under the family's ₹1,000 floor is offered", [...small].every((k) => !index.some((e) => e.id === `holding:${k}`)));
   const lines = [...keys].filter(balanceLine);
   ok("…and no ₹0 balance line is offered as a holding, of which this book has some", lines.length > 0
@@ -103,7 +118,7 @@ console.log("── every holding is findable, once ──");
   const outOnRecord = new Set(BOOK_CAPITAL_MOVES.filter((m) => m.direction === "out").map((m) => m.accountId));
   const current = new Set(currentHoldings(consolidated).map((p) => p.securityKey));
   const onRecord = (k: string) => BOOK_POSITIONS.some((p) => p.securityKey === k && outOnRecord.has(p.accountId));
-  const wrong = holdings.filter((e) => {
+  const wrong = holdings.filter((e) => !e.recorded).filter((e) => {
     const key = e.id.slice("holding:".length);
     if (!isClosed(key)) return e.href !== `/stock/${encodeURIComponent(key)}` || !current.has(key);
     return onRecord(key)
@@ -115,6 +130,59 @@ console.log("── every holding is findable, once ──");
   const closedKeys = [...keys].filter(isClosed);
   ok("…and this book has a redemption on the record AND one with none, so both branches are exercised",
     closedKeys.some(onRecord) && closedKeys.some((k) => !onRecord(k)), closedKeys.join(", "));
+}
+
+console.log("── a holding a statement records, and nothing values, is still findable (Stage 10cz) ──");
+{
+  /**
+   * The Motilal CDSL demat's rate and value belong to each holding's LAST
+   * DEPOSITORY MOVEMENT, so its rows are quantities in the book, valued on the
+   * live basis only while a quote or a published NAV answers. With nothing
+   * valuing Kaynes the search found no Kaynes at all. A missing premise is a
+   * FAILURE here, never an abstention: an empty set would let every claim
+   * below pass by asserting nothing.
+   */
+  const recordedEntries = index.filter((e) => e.kind === "holding" && e.recorded);
+  ok("the book records holdings that nothing values", recordedEntries.length > 0, String(recordedEntries.length));
+  const valuedKeys = new Set(positions.map((p) => p.securityKey));
+  const twice = recordedEntries.filter((e) => valuedKeys.has(e.id.slice("holding:".length)));
+  ok("…and none is offered for a key a valued row already stands for", twice.length === 0, twice.map((e) => e.label).join("; "));
+  const figure = recordedEntries.filter((e) => !/^Not valued · /.test(e.detail) || /₹/.test(e.detail));
+  ok("every one says it is not valued, and states no figure", figure.length === 0, figure.slice(0, 3).map((e) => e.detail).join("; "));
+  const opens = recordedEntries.filter((e) => e.href !== `/stock/${encodeURIComponent(e.id.slice("holding:".length))}`);
+  ok("every one opens its own holding page", opens.length === 0, opens.map((e) => e.href).join("; "));
+  // A line whose units another account's own statement reports is that
+  // account's holding, seen from the custodian's side — never an entry of its own.
+  const onlyMirrored = new Set(BOOK_UNVALUED_HOLDINGS.filter((u) => u.sameUnitsReportedBy).map((u) => u.securityKey));
+  for (const u of BOOK_UNVALUED_HOLDINGS) if (!u.sameUnitsReportedBy) onlyMirrored.delete(u.securityKey);
+  for (const k of valuedKeys) onlyMirrored.delete(k);
+  ok("a custodian's copy of units a fund reports is not offered as a holding of its own",
+    [...onlyMirrored].every((k) => !index.some((e) => e.id === `holding:${k}`)), [...onlyMirrored].join(", "));
+  // THE UNITS ARE THE STATEMENT'S: each entry's count is the sum of its own lines.
+  const unitsWrong = recordedEntries.filter((e) => {
+    const key = e.id.slice("holding:".length);
+    const want = recordedLines(BOOK_UNVALUED_HOLDINGS).filter((l) => l.homeKey === key)
+      .reduce((a, l) => a + l.quantity, 0);
+    return !e.detail.includes(`${want.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units`);
+  });
+  ok("every one carries the units its statement lines record", unitsWrong.length === 0, unitsWrong.slice(0, 3).map((e) => `${e.label}: ${e.detail}`).join("; "));
+
+  // ONE COMPANY, ONE RESULT. Two statements spelling one company are one entry,
+  // filed under the key the live layer files a priced line under; a fund keeps
+  // its own key (the extractor join BOOK-REPORT names is left visible).
+  const lines = recordedLines(BOOK_UNVALUED_HOLDINGS);
+  const holdingEntries = index.filter((e) => e.kind === "holding");
+  const nonFundIsins = [...new Set(lines.filter((l) => l.isin && l.assetClass !== "Mutual Fund" && l.assetClass !== "ETF")
+    .map((l) => l.isin!.toUpperCase()))];
+  const split = nonFundIsins.filter((i) => holdingEntries.filter((e) => e.codes.some((c) => c.toUpperCase() === i)).length > 1);
+  ok("no company a statement records stands as two results", nonFundIsins.length > 0 && split.length === 0,
+    split.slice(0, 4).join(", ") || `${nonFundIsins.length} ISINs`);
+  // The four this book first split, by the identifier that joins each.
+  for (const [what, isin] of [["Clean Max", "INE647U01026"], ["National Stock Exchange", "INE721I01024"],
+    ["Everest Fleet preference", "INE0LTR03090"], ["Blue Ashva Varenya", "INF0VGG22429"]] as const) {
+    const hits = holdingEntries.filter((e) => e.codes.some((c) => c.toUpperCase() === isin));
+    ok(`${what} is one result`, hits.length === 1, hits.map((e) => e.id).join(", ") || "none");
+  }
 }
 
 console.log("── an identifier lands on its own row, first — every one of them ──");
@@ -323,15 +391,20 @@ console.log("── what a row says about its figure is true of the figure (SC-C
   ok("…and one on its statement's marks says so, with that date", allStmt.length > 0 && stmtWrong.length === 0,
     `${allStmt.length}: ${stmtWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
 
-  // SC-D2 — an account's count is what the dashboard lists.
-  const small = negligibleKeys(BOOK_POSITIONS);
+  // SC-D2 — an account's count is what the dashboard lists. Struck on the
+  // SCREEN book, because since Stage 10cz every holding under the family's
+  // ₹1,000 floor is a fund unit a statement records and only AMFI's NAV values
+  // (the Motilal demats' Invesco Contra and ICICI index-fund residues): the
+  // statement book carries no speck at all, and a count struck there would pass
+  // by never meeting the rule it exists for.
+  const small = negligibleKeys(screenPositions);
   const countWrong = BOOK_ACCOUNTS.filter((a) => !isMandateHeld(a.engagement)).filter((a) => {
-    const n = BOOK_POSITIONS.filter((p) => p.accountId === a.accountId && !small.has(p.securityKey) && !isRedeemedToNil(p)).length;
-    const e = index.find((x) => x.id === `account:${a.accountId}`);
+    const n = screenPositions.filter((p) => p.accountId === a.accountId && !small.has(p.securityKey) && !isRedeemedToNil(p)).length;
+    const e = screenIndex.find((x) => x.id === `account:${a.accountId}`);
     const m = /· (\d+) holdings? ·/.exec(e?.detail ?? "");
     return n > 0 ? !m || Number(m[1]) !== n : !!m;
   }).map((a) => a.accountNo);
-  const specky = BOOK_ACCOUNTS.filter((a) => BOOK_POSITIONS.some((p) => p.accountId === a.accountId && small.has(p.securityKey)));
+  const specky = BOOK_ACCOUNTS.filter((a) => screenPositions.some((p) => p.accountId === a.accountId && small.has(p.securityKey)));
   ok("an account's count leaves out the holdings under the ₹1,000 floor and the redeemed ones", countWrong.length === 0
     && specky.length > 0, `wrong: ${countWrong.join(", ") || "none"} · accounts holding specks: ${specky.length}`);
 
@@ -347,10 +420,14 @@ console.log("── what a row says about its figure is true of the figure (SC-C
       && unvaluedEmpty.every((a) => /no statement in this book values it/.test(say(a))),
     `${redeemedEmpty.length} redeemed, ${unvaluedEmpty.length} unvalued`);
 
-  // SC-D3 — one ISIN under two keys: each row says it is one of two.
-  const twinRows = index.filter((e) => e.kind === "holding" && /rows for ISIN/.test(e.detail));
+  // SC-D3 — one ISIN under two keys: each row says it is one of two. Struck on
+  // the SCREEN book: the depository's `HELIOS FCF D-GROW` is a Motilal line the
+  // statement book records at a quantity only (Stage 10cz), so the AMC folio's
+  // Helios stands alone there, and the pair meets only where AMFI's NAV values
+  // the depository's units beside it.
+  const twinRows = screenIndex.filter((e) => e.kind === "holding" && /rows for ISIN/.test(e.detail));
   const isinKeys = new Map<string, Set<string>>();
-  for (const p of consolidated) {
+  for (const p of dedupedPositions(screenPositions)) {
     const isin = (SCHEME_NAMES as Record<string, { isin: string }>)[p.securityKey]?.isin ?? p.isin;
     if (isin && !small.has(p.securityKey)) isinKeys.set(isin, (isinKeys.get(isin) ?? new Set()).add(p.securityKey));
   }
@@ -460,21 +537,40 @@ console.log("── on the LIVE book: a cash equivalent is named Cash, and a par
 {
   /**
    * The top bar searches what the PAGE is handed — the live portfolio, which
-   * carries the cash-equivalent funds a depository reports on an account that
-   * sent no holding statement (Stage 10ce). Everything above builds from
-   * `BOOK_POSITIONS`, which never holds those rows, so it cannot see either
-   * rule below. The registry is the one `PortfolioContext` builds, through the
-   * same helper, rather than a copy of it.
+   * carries the funds a depository reports on an account that sent no holding
+   * statement (Stage 10ce's cash equivalents, Stage 10cy's other funds) and the
+   * fund units a holding statement records and values nowhere (Stage 10cz).
+   * `index` builds from `BOOK_POSITIONS`, which never holds those rows, so it
+   * cannot see either rule below: this is `screenIndex`, the one the top bar
+   * builds, through the same helpers `PortfolioContext` calls.
    */
-  const dep = depositoryCashHoldings();
-  const livePositions = [...BOOK_POSITIONS, ...dep];
-  const liveAccounts = withPartialValuation(BOOK_ACCOUNTS, partialValuationNotes(dep));
-  const live = buildSearchIndex({ positions: livePositions, consolidated: dedupedPositions(livePositions), accounts: liveAccounts, money });
+  const dep = LIVE_ONLY_FUNDS;
+  const livePositions = screenPositions;
+  const liveAccounts = screenAccounts;
+  const live = screenIndex;
   // A missing premise is a FAILURE, never an abstention: an empty set would
   // let every assertion below pass by asserting nothing.
-  ok("the live book carries depository-valued cash equivalents to search", dep.length > 0, `${dep.length} rows`);
-  ok("…and every one of them is findable", dep.every((p) => live.some((e) => e.id === `holding:${p.securityKey}`)),
-    dep.filter((p) => !live.some((e) => e.id === `holding:${p.securityKey}`)).map((p) => p.security).join("; "));
+  ok("the live book carries depository-valued cash equivalents to search", dep.some((p) => isCashEquivalent(p)), `${dep.length} rows`);
+  // FINDABLE ABOVE THE FAMILY'S ₹1,000 FLOOR, AND NOT OFFERED BELOW IT. A fund
+  // residue a Motilal statement records — 0.39 units of Invesco Contra, a few
+  // units of two ICICI index funds — is worth tens of rupees at AMFI's NAV, and
+  // the floor (Stage 10ax) keeps it off every list the Portfolio Monitor draws;
+  // the search offering it would be the one screen that did not.
+  const liveSmall = negligibleKeys(livePositions);
+  const above = dep.filter((p) => !liveSmall.has(p.securityKey));
+  const below = dep.filter((p) => liveSmall.has(p.securityKey));
+  ok("…and every one of them above the ₹1,000 floor is findable", above.length > 0
+    && above.every((p) => live.some((e) => e.id === `holding:${p.securityKey}`)),
+    above.filter((p) => !live.some((e) => e.id === `holding:${p.securityKey}`)).map((p) => p.security).join("; ") || `${above.length} rows`);
+  ok("…while one under it is not offered", below.every((p) => !live.some((e) => e.id === `holding:${p.securityKey}`)),
+    below.filter((p) => live.some((e) => e.id === `holding:${p.securityKey}`)).map((p) => p.security).join("; "));
+  // A LINE THE LIVE LAYER VALUES IS OFFERED ONCE, AS THE VALUED ROW: the
+  // statement's recorded entry must give way the moment a price answers.
+  const both = dep.filter((p) => live.some((e) => e.id === `holding:${p.securityKey}` && e.recorded));
+  ok("…each as its valued row, never as the statement's unvalued line", both.length === 0,
+    both.map((p) => p.security).join("; "));
+  ok("…and a key is never offered twice on the live book",
+    new Set(live.filter((e) => e.kind === "holding").map((e) => e.id)).size === live.filter((e) => e.kind === "holding").length);
   const cashEntries = live.filter((e) => e.kind === "holding" && isCashEquivalent({ securityKey: e.id.slice("holding:".length) }));
   const misnamed = cashEntries.filter((e) => e.chip !== "Cash");
   ok("every liquid and arbitrage fund chips as Cash, never as its wrapper", cashEntries.length > 0 && misnamed.length === 0,

@@ -3,6 +3,7 @@ import { BOOK_POLYCAB } from "@/data/glowData";
 import { isCompanyShare } from "@/lib/analytics";
 import { bookIsinBridge, heldFundVehicles, loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
 import type { Position } from "@/lib/types";
+import { lookthroughCompanies } from "@/lib/recordedHoldings";
 
 /**
  * ── THE FUND LOOK-THROUGH, WIRED THE SAME WAY WHEREVER IT IS READ ───────────
@@ -64,9 +65,16 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
    * nothing and stood twice. See `bookIsinBridge`, which is shared with the
    * suite so the two cannot build the index differently.
    */
-  const isinToBookKey = useMemo(() => bookIsinBridge(consolidated).index, [consolidated]);
+  /*
+   * AND THE COMPANIES A STATEMENT RECORDS AND NOTHING VALUES (Stage 10cz), by
+   * the key the live layer files them under — so a fund's Kaynes line lands on
+   * the family's own Kaynes whether or not a live quote has made that demat
+   * line a row yet. See `lookthroughCompanies`.
+   */
+  const companies = useMemo(() => lookthroughCompanies(consolidated), [consolidated]);
+  const isinToBookKey = useMemo(() => bookIsinBridge(companies).index, [companies]);
   const bookCompanyKeys = useMemo(
-    () => new Set(consolidated.filter(isCompanyShare).map((p) => p.securityKey)), [consolidated]);
+    () => new Set(companies.filter(isCompanyShare).map((p) => p.securityKey)), [companies]);
 
   /**
    * THE RING-FENCE, CARRIED ONTO THE DERIVED SIDE.

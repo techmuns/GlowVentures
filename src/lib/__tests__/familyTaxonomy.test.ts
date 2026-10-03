@@ -13,12 +13,14 @@
 // So the assertions below are RELATIONS against the generated book rather than
 // literals. When the next drop moves the book both sides move together, and a
 // map entry that stops matching anything fails loudly instead of going quiet.
+import { allRecordedLines } from "../recordedHoldings";
+import { shareCandidates } from "../depositoryShares";
 import path from "node:path";
 import fs from "node:fs";
 import XLSX from "xlsx";
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
-import { depositoryCashHoldings, isArbitrageFund } from "@/lib/fundNavs";
+import { depositoryCashHoldings, depositoryFundHoldings, isArbitrageFund, unpricedStatementUnits } from "@/lib/fundNavs";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import {
   holdingBucket, MANDATE_BUCKET, dedupedPositions,
@@ -45,7 +47,17 @@ const isM = (p: (typeof BOOK_POSITIONS)[number]) =>
 // it was meant for simply falls into "not classified" and the section still
 // reads correctly. This is the check that makes the map maintainable.
 {
-  const live = new Set(BOOK_POSITIONS.map((p) => productKeyOf(p, isM(p))));
+  // The book AND the depository's funds the live book values (Stage 10cy): two
+  // schemes are held only on the transaction-only demat, so they are no
+  // position of the generated book and their entries match a live row.
+  // What the family holds: the book, the live layer's depository rows, and every
+  // line a statement records with no usable price (Stage 10cz) — a map entry
+  // for one of those is not a typo.
+  const live = new Set([
+    ...[...BOOK_POSITIONS, ...depositoryFundHoldings(), ...unpricedStatementUnits(), ...shareCandidates()]
+      .map((p) => productKeyOf(p, isM(p))),
+    ...allRecordedLines().map((l) => `sec:${l.securityKey}`),
+  ]);
   const dead = Object.keys(FAMILY_TAXONOMY).filter((k) => !live.has(k));
   ok("every map entry matches a holding in the book — a typo would show here",
      dead.length === 0, dead.length ? dead.join(", ") : `${Object.keys(FAMILY_TAXONOMY).length} entries`);
@@ -301,7 +313,7 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
   // That is not circular — the depository rows are built from the depository's
   // OWN balances, so a mistyped key matches no balance and produces no row.
   const keys = Object.keys(CASH_EQUIVALENT_KEYS);
-  const held = new Set([...BOOK_POSITIONS, ...depositoryCashHoldings()].map((p) => p.securityKey));
+  const held = new Set([...BOOK_POSITIONS, ...depositoryCashHoldings(), ...unpricedStatementUnits()].map((p) => p.securityKey));
   const dead = keys.filter((k) => !held.has(k));
   ok("every cash-equivalent key matches a holding the live book carries",
      dead.length === 0, dead.length ? dead.join("; ") : `${keys.length} keys`);
@@ -400,7 +412,7 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
   // would satisfy (f) for ever, including after the rule was deleted — so it is
   // shown to catch the map's own entries when they are taken out of it.
   const selfFound = cashEquivalentCandidates(
-    BOOK_POSITIONS.filter((p) => p.securityKey === "absl-liqf-d-growth")
+    [...BOOK_POSITIONS, ...unpricedStatementUnits()].filter((p) => p.securityKey === "absl-liqf-d-growth")
       .map((p) => ({ ...p, securityKey: "not-in-the-map" })),
   );
   ok("...and the detector is not a pattern that can never match",

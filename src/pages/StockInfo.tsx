@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { statementNoteForSet } from "@/lib/statementNotes";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { Wallet, Layers, TrendingUp, Coins, Activity, Tag } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -38,6 +38,8 @@ import { InvestmentTools } from "@/components/InvestmentTools";
 import { QuantityMovement } from "@/components/QuantityMovement";
 import { CorporateActionReturns } from "@/components/CorporateActionReturns";
 import { PageNav } from "@/components/PageNav";
+import { homeKeyOf, recordedFor, type RecordedLine } from "@/lib/recordedHoldings";
+import { securityLabel } from "@/lib/securityLabel";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { movementsFor, unmovedAccountsFor } from "@/lib/shareMovements";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
@@ -442,7 +444,20 @@ export function StockInfo() {
    * the sector chip above reads the SAME answer rather than a second fetch.
    */
   const bookSector = rows.find((r) => r.sector && r.sector !== UNCLASSIFIED)?.sector ?? null;
-  const isCompanyPage = rows.length === 0 || !rows.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
+  /**
+   * WHAT A STATEMENT RECORDS HERE AND NOTHING VALUES (Stage 10cz) — a demat
+   * line whose only price was its last depository movement, a par row, a unit
+   * count. The family holds them and no row of the live book carries them, so a
+   * page with one is never "fully exited". `recordedHoldings.ts` files each
+   * under the company the live layer would file it under once priced.
+   */
+  const recorded = useMemo(() => recordedFor(securityKey, portfolio?.positions ?? []), [securityKey, portfolio]);
+  const recordedOnly = rows.length === 0 && recorded.length > 0;
+  const recordedUnits = recorded.reduce((a, l) => a + l.quantity, 0);
+  /** A unit count as its statement prints it — a fund's fractional units are not rounded away. */
+  const unitsText = (n: number) => fmtNum(n, Number.isInteger(n) ? 0 : 3);
+  const isCompanyPage = (rows.length === 0 && recorded.length === 0)
+    || ![...rows, ...recorded].every((r) => isFundVehicle({ assetClass: r.assetClass ?? "" }) || r.assetClass === "Cash");
   const exposure = useStockExposure(consolidated, isCompanyPage);
   /**
    * ── A COMPANY THE FAMILY HOLDS ONLY INSIDE ITS FUNDS ───────────────────────
@@ -460,7 +475,7 @@ export function StockInfo() {
    * thing it knows and names what it could not check.
    */
   const fundHit = exposure.status === "ok" ? exposure.byKey.get(securityKey) : undefined;
-  const noBookRows = rows.length === 0;
+  const noBookRows = rows.length === 0 && recorded.length === 0;
   const fundOnly = noBookRows && !!fundHit && fundHit.total > 0;
   const resolving = noBookRows && exposure.status === "loading";
   const unchecked = noBookRows && exposure.status === "unreachable";
@@ -472,8 +487,16 @@ export function StockInfo() {
     ? companySectorIndex(consolidated.filter(isCompanyShare), exposure).get(securityKey) ?? null
     : null), [sectorWanted, exposure, consolidated, securityKey]);
   if (!portfolio) return null;
+  // A key a recorded line stands under by its own spelling opens the company it
+  // is filed under — one company, one page (Clean Max on a demat and on the
+  // NSDL account; NSE's shares on two).
+  const home = homeKeyOf(securityKey);
+  if (rows.length === 0 && home !== securityKey) {
+    return <Navigate to={`/stock/${encodeURIComponent(home)}${window.location.search}`} replace />;
+  }
 
-  const name = rows[0]?.security ?? fundHit?.name ?? led?.name ?? securityKey;
+  const recordedHead = recorded.find((l) => l.securityKey === securityKey) ?? recorded[0];
+  const name = rows[0]?.security ?? (recordedHead ? securityLabel(securityKey, recordedHead.security) : undefined) ?? fundHit?.name ?? led?.name ?? securityKey;
   /**
    * A FUND UNIT IS NOT A COMPANY, AND THIS PAGE MUST NOT RESEARCH IT AS ONE.
    *
@@ -495,7 +518,7 @@ export function StockInfo() {
    * a company whose figures nobody publishes, which is a data gap the research
    * tab is right to report as one.
    */
-  const assetClass = rows[0]?.assetClass ?? null;
+  const assetClass = rows[0]?.assetClass ?? recordedHead?.assetClass ?? null;
   const mandateAllShares = mandateRows.length > 0 && mandateRows.every(isCompanyShare);
   const mandateNoShares = mandateRows.length > 0 && !mandateRows.some(isCompanyShare);
   /** Where none of them is a share and they are all ONE class, the tooltip can
@@ -521,8 +544,18 @@ export function StockInfo() {
     : assetClass === "Equity" || assetClass === "Unlisted" ? "shares held"
     : assetClass ? "units held"
     : "held";
-  const notACompany = rows.length > 0 && rows.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
-  const fundVehicle = rows.length > 0 && rows.every(isFundVehicle);
+  /**
+   * WHAT THE HOLDING IS, READ OFF ITS OWN LINES (Stage 10cz) — the statement
+   * rows where there are any, else the lines a statement records and nothing
+   * values. DSP's Gold ETF is an ETF whether or not its NAV cleared the basis
+   * gate: read off valued rows alone, a page holding none was drawn as a
+   * company, with a company price card and company research under an ETF's name.
+   */
+  const subject: Array<{ assetClass: string; securityKey: string; isin?: string | null }> = rows.length > 0
+    ? rows
+    : recorded.map((l) => ({ assetClass: l.assetClass ?? "", securityKey: l.securityKey, isin: l.isin }));
+  const notACompany = subject.length > 0 && subject.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
+  const fundVehicle = subject.length > 0 && subject.every(isFundVehicle);
   /**
    * A LIQUID OR ARBITRAGE FUND IS CASH ON THIS PAGE TOO. The family's rule is
    * that such a fund is classified as nothing but cash, so the Research tab says
@@ -531,12 +564,12 @@ export function StockInfo() {
    * short futures, and reading them as exposure would print stock the family
    * does not carry.
    */
-  const cashFund = fundVehicle && rows.every((r) => isCashEquivalent(r));
-  const arbitrage = rows.some((r) => isArbitrageFund(r));
+  const cashFund = fundVehicle && subject.every((r) => isCashEquivalent(r));
+  const arbitrage = subject.some((r) => isArbitrageFund(r));
   // A mutual fund or an ETF discloses its portfolio monthly and has a published
   // NAV; an AIF does neither. The one test, so the two tabs a scheme fills and
   // the note that refers to them cannot disagree about which schemes they are.
-  const schemeHalves = fundVehicle && canHaveLookthrough(rows[0]);
+  const schemeHalves = fundVehicle && canHaveLookthrough(subject[0]);
   /**
    * AN ARBITRAGE FUND KEEPS ITS PRICE HALF AND LOSES ITS HOLDINGS HALF. The
    * reason it is not looked through is about what it HOLDS — long shares
@@ -550,7 +583,7 @@ export function StockInfo() {
   const providerSector = rows.find((r) => r.providerSector)?.providerSector ?? null;
   // A fund-held company carries the ISIN its funds' filings print — a third
   // party's identifier, which only ever fills an absence.
-  const isin = rows[0]?.isin ?? (fundOnly ? fundHit?.isin ?? undefined : undefined);
+  const isin = rows[0]?.isin ?? recordedHead?.isin ?? (fundOnly ? fundHit?.isin ?? undefined : undefined);
   /* The holding-level mark is resolved below, once `price` exists — whether
      one can be shown at all is a question about what the RENDERER can
      distinguish, so it cannot be answered before the renderer is defined. */
@@ -605,7 +638,8 @@ export function StockInfo() {
   const costWhy = (() => {
     // No rows at all is a name no statement now holds — there is no cost to
     // miss, and "no statement reports a cost" would send a reader looking.
-    if (drows.length === 0) return unchecked ? "no direct holding" : "no current holding";
+    if (drows.length === 0) return recordedOnly ? "no statement reports a cost for it"
+      : unchecked ? "no direct holding" : "no current holding";
     const who = [...new Set(drows.map((r) => providerOf(accIdx, r)).filter(Boolean))];
     if (who.length === 1) return `no cost on the ${who[0]} statement for this holding`;
     if (who.length > 1) return "no statement for this holding reports a cost";
@@ -680,10 +714,15 @@ export function StockInfo() {
    * registry attributes to nobody counts as its own entity rather than
    * vanishing into another's.
    */
-  const heldAccounts = new Set(rows.map((r) => r.accountId)).size;
-  const heldOwners = new Set(rows.map((r) => accIdx.get(r.accountId)?.ownerId ?? `account:${r.accountId}`)).size;
+  // A recorded line is an account that holds it, valued or not.
+  const heldAccounts = new Set([...rows, ...recorded].map((r) => r.accountId)).size;
+  const heldOwners = new Set([...rows, ...recorded].map((r) => accIdx.get(r.accountId)?.ownerId ?? `account:${r.accountId}`)).size;
   // NO ROW IS NOT THE SAME AS EXITED — see `fundOnly` above.
-  const exited = heldAccounts === 0 && !fundOnly && !resolving;
+  const exited = heldAccounts === 0 && !fundOnly && !resolving && recorded.length === 0;
+  /** Why a recorded line carries no value — each line's own reason, as the book generated it. */
+  const RECORDED_TIP = recorded.length
+    ? `${recorded.length === 1 ? "A statement records" : `${recorded.length} statements record`} ${unitsText(recordedUnits)} units here and none prints a price this book may use — ${recorded.map((l) => l.reason).join("; ")}. A line is valued on the live basis once a quote or a published NAV answers.`
+    : "";
   /**
    * What the account rows carry that the (consolidated) footer beneath them does
    * not. Non-zero only where this name is reported under more than one member,
@@ -844,6 +883,8 @@ export function StockInfo() {
     ? unchecked
       ? { line: "no direct holding", tip: "No statement in this book reports a current holding in this name, so none marks it today — and whether your funds hold it could not be checked." }
       : { line: "no current holding", tip: "This name is fully exited, so no statement marks it today." }
+    : recordedOnly
+    ? { line: "not valued", tip: RECORDED_TIP }
     : cmpSplit
     ? {
         line: `statements do not agree — ${cmpMarks.join(" and ")}`,
@@ -922,11 +963,15 @@ export function StockInfo() {
   // Null when the long-term cost is unknown — the bar is hidden rather than
   // drawn at zero, which would read as "none of this is long-term".
   const ltPct = ltCost !== null && cost !== null && cost > 0 ? (ltCost / cost) * 100 : null;
-  const holdingAsOf = rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf : portfolio.asOf;
+  /** A recorded line's statement date is its own — the date its units are counted on. */
+  const recordedAsOf = (l: RecordedLine) => l.asOf ?? accIdx.get(l.accountId)?.asOf ?? null;
+  const holdingAsOf = rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf
+    : (recordedHead && recordedAsOf(recordedHead)) || portfolio.asOf;
   /** The EARLIEST statement date behind this holding — what a change in a
    *  scheme's unit is compared with, since a statement drawn before the change
    *  counts the earlier unit (DSM-A2, `FundLookthrough`). */
-  const statementAsOfEarliest = [...new Set(rows.map((r) => accIdx.get(r.accountId)?.asOf).filter((d): d is string => !!d))].sort()[0] ?? null;
+  const statementAsOfEarliest = [...new Set([...rows.map((r) => accIdx.get(r.accountId)?.asOf), ...recorded.map(recordedAsOf)]
+    .filter((d): d is string => !!d))].sort()[0] ?? null;
   /**
    * WHEN, AND BY WHAT, THE VALUE IS STRUCK (VD-17, DSM-C4). A holding the ICICI
    * NSDL statement marks is worth what it was on 31 March, and the Holding value
@@ -963,11 +1008,13 @@ export function StockInfo() {
     managedBy: (r: Position) => providerOf(accIdx, r),
     qty: (r: Position) => r.quantity,
     avgCost: (r: Position) => r.avgCost,
-    // The statement's own mark, never `marketValue / quantity`: measured over
-    // this book the two differ on ICICI NFT NT 50 DP G, whose statement prints
-    // a rate of 60.4 against a value column implying 60.4167. The price is a
-    // PRIMITIVE here (§4b) and deriving it would publish a figure the document
-    // does not. An absent mark sorts LAST either way rather than as a zero.
+    // The statement's own mark, never `marketValue / quantity`: the price is a
+    // PRIMITIVE here (§4b), and deriving it would publish a figure the document
+    // does not. (The example this comment once gave — ICICI NFT NT 50 DP G, a
+    // rate of 60.4 beside a value implying 60.4167 — was no mark at all: a
+    // Motilal CDSL rate is the price of the holding's last depository
+    // movement, and its value that price times the movement's units, Stage
+    // 10cz.) An absent mark sorts LAST either way rather than as a zero.
     cmp: (r: Position) => r.currentPrice,
     invested: (r: Position) => r.costBasis,
     current: (r: Position) => r.marketValue,
@@ -990,6 +1037,43 @@ export function StockInfo() {
   });
 
   /** One statement row, as the table has always drawn it. */
+  /** A recorded line is keyed on its account like a row, for the registry's lookups. */
+  const asRow = (l: RecordedLine) => ({ accountId: l.accountId }) as unknown as Position;
+  const recordedRouteOf = (l: RecordedLine) => heldRouteOf(holdingRoute(engagementOf(accIdx, asRow(l)) || null));
+  const recordedIn = (route: HeldRoute) => recorded.filter((l) => recordedRouteOf(l) === route);
+  /**
+   * A LINE A STATEMENT RECORDS AND NOTHING VALUES, as a row of the same table in
+   * the same columns: whose it is, where, and the units. Every money cell is
+   * absent with the line's own reason — never the last movement's price, which
+   * is not a mark of the balance. `data-recorded-row`, never `data-account-row`:
+   * it is not a measured position and no total counts it.
+   */
+  const recordedRow = (l: RecordedLine) => {
+    const eng = engagementOf(accIdx, asRow(l)) || null;
+    const route = holdingRoute(eng);
+    const why = l.reason.charAt(0).toUpperCase() + l.reason.slice(1);
+    return (
+      <Tr view={posView} key={`rec-${l.accountId}-${l.securityKey}`} data-recorded-row={l.accountId}
+        data-held-route={heldRouteOf(route)} data-recorded-units={l.quantity} className="hover:bg-ink-700/40">
+        <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, asRow(l))}</td>
+        <td className="max-w-[20rem] whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
+          <div className="min-w-[12rem]">
+            <div>{providerOf(accIdx, asRow(l))}</div>
+            <div className="text-[10px] text-slate-600">
+              <span title={`${eng || "engagement not stated"} — ${ROUTE_NOTE[route]}`}>via {ROUTE_LABEL[route]}</span>
+            </div>
+          </div>
+        </td>
+        <td className="mono px-4 py-2.5 text-right text-slate-200">{unitsText(l.quantity)}</td>
+        <td className="px-4 py-2.5 text-right"><AbsentCell reason="No statement reports a cost for it." /></td>
+        <td className="px-4 py-2.5 text-right"><AbsentCell reason={why} /></td>
+        <td className="px-4 py-2.5 text-right"><AbsentCell reason="No statement reports a cost for it." /></td>
+        <td className="px-4 py-2.5 text-right text-slate-500" title={why} data-recorded-value>not valued</td>
+        <td className="px-4 py-2.5 text-right"><AbsentCell reason="Not valued, so no gain can be struck." /></td>
+        <td className="px-4 py-2.5 text-right"><AbsentCell reason="Not valued, so no return can be struck." /></td>
+      </Tr>
+    );
+  };
   const measuredRow = (r: Position) => {
     const eng = engagementOf(accIdx, r) || null;
     const route = holdingRoute(eng);
@@ -1049,7 +1133,13 @@ export function StockInfo() {
         <td className="px-4 py-2.5 text-right mono text-slate-400" data-cmp={r.currentPrice ?? ""}>
           {r.currentPrice === null
             ? <AbsentCell reason="the book carries this row's value as a total and no price per unit, so there is no mark to show" />
-            : <span title={r.depositoryUnits
+            : <span title={r.depositoryUnits && !r.navPriced
+                /* A LISTED SHARE A DEPOSITORY REPORTS (Stage 10cy) has no NAV:
+                   its price is the live quote, and the row exists only while
+                   the feed prices it. Saying "AMFI's NAV" here would name a
+                   source that never priced it. */
+                ? `${price(r.currentPrice)} — the live quote. No statement prices these shares — they are ${describeDepositoryUnits(r.depositoryUnits, portfolio.accounts)} — so their value is those shares at this quote, shown only while the quote feed prices them.`
+                : r.depositoryUnits
                 /* NO STATEMENT MARKS THESE UNITS, so the sentence that says a
                    NAV "replaces" one would be false here. Which of the two
                    reasons applies is `describeDepositoryUnits`'s to say. */
@@ -1342,7 +1432,8 @@ export function StockInfo() {
   const measuredRoutes = (["direct", "manager", "other"] as const).filter((r) => ht.sections[r].lines > 0);
   const fundLinesShown = fl.status === "ok" && fl.lines.length > 0;
   /** Sections the All tab draws — a band is chrome, so only where there are two or more. */
-  const allSections = HELD_ROUTES.filter((r) => (r === "fund" ? tabsShown && fundLinesShown : ht.sections[r].lines > 0));
+  const allSections = HELD_ROUTES.filter((r) => (r === "fund" ? tabsShown && fundLinesShown
+    : ht.sections[r].lines > 0 || recordedIn(r).length > 0));
   const bands = heldTab === "all" && allSections.length > 1;
   /** The statement rows on screen, for the "carry both, count once" note. */
   const visibleMeasured = heldTab === "all" ? rows
@@ -1367,9 +1458,12 @@ export function StockInfo() {
   /** Each route tab's figure and whether it has anything to open. */
   const tabInfo = (k: HeldTab): { text: string; value: number | null; lines: number; disabled: boolean; title: string } => {
     if (k === "all") {
-      const lines = rows.length + (fl.status === "ok" ? fl.lines.length : 0);
+      const lines = rows.length + recorded.length + (fl.status === "ok" ? fl.lines.length : 0);
       return {
-        text: ht.total !== null ? money(ht.total) : "", value: ht.total, lines, disabled: false,
+        // A holding only a statement records, and no fund discloses, has no
+        // figure at all — "₹0" would read as a measured holding of nothing.
+        text: recordedOnly && !(fl.status === "ok" && fl.lines.length) ? "not valued"
+          : ht.total !== null ? money(ht.total) : "", value: ht.total, lines, disabled: false,
         title: ht.total !== null && fl.status === "ok" && fl.lines.length > 0
           ? `Every way the family holds ${name}: ${money(whole.mv)} reported by its statements and ${money(fl.derived)} derived inside its funds.`
           : `Every way the family holds ${name}.`,
@@ -1387,6 +1481,11 @@ export function StockInfo() {
         : { text: "none", value: 0, lines: 0, disabled: false, title: `None of the funds this book can read discloses ${name}.` };
     }
     const sec = ht.sections[route];
+    const rec = recordedIn(route);
+    if (!sec.lines && rec.length) {
+      return { text: "not valued", value: null, lines: rec.length, disabled: false,
+        title: `${rec.length === 1 ? "A statement records" : `${rec.length} statements record`} ${name} here, and none prints a price this book may use for it.` };
+    }
     return sec.lines
       ? { text: money(sec.value), value: sec.value, lines: sec.lines, disabled: false, title: `${HELD_ROUTE_NOTE[route]} ${sec.lines} account${sec.lines === 1 ? "" : "s"}.` }
       : { text: "none", value: 0, lines: 0, disabled: true,
@@ -1396,7 +1495,7 @@ export function StockInfo() {
   const heldTabs = tabsShown && (
     <div className="inline-flex shrink-0 flex-wrap items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5"
       role="tablist" aria-label="How this is held" data-held-tabs>
-      {HELD_TABS.filter((v) => v.key !== "other" || ht.sections.other.lines > 0).map((v) => {
+      {HELD_TABS.filter((v) => v.key !== "other" || ht.sections.other.lines > 0 || recordedIn("other").length > 0).map((v) => {
         const f = tabInfo(v.key);
         const on = heldTab === v.key;
         return (
@@ -1622,8 +1721,9 @@ export function StockInfo() {
             nobody made. It is absent with its reason; a holding its fund
             redeemed to nil still HAS rows and keeps its measured zero. */}
         <Kpi label="Holding value"
-          value={exited ? <AbsentValue /> : fmtFromBase(mv, { compact: true })}
+          value={exited || recordedOnly ? <AbsentValue /> : fmtFromBase(mv, { compact: true })}
           sub={exited ? <span className="text-slate-500">{unchecked ? "no direct holding" : "no current holding — fully exited"}</span>
+            : recordedOnly ? <span className="text-slate-500" title={RECORDED_TIP} data-stock-recorded-value>not valued</span>
             : <span data-stock-valued-at={valuation.at ?? ""} data-stock-valued-by={valuation.by ?? ""} title={valuation.why}>
                 {weight.toFixed(1)}% of book{valuation.words ? ` · ${valuation.words}` : ""}</span>}
           icon={<Wallet className="h-4 w-4" />} />
@@ -1633,8 +1733,12 @@ export function StockInfo() {
             asset class the row carries, and an unstated class gets the noun that
             claims nothing. */}
         <Kpi label="Quantity"
-          value={exited ? <AbsentValue /> : fmtNum(qty)}
-          sub={exited ? <span className="text-slate-500">{unchecked ? "no direct holding" : "no current holding"}</span> : qtyNoun}
+          value={exited ? <AbsentValue /> : <span data-stock-qty={recordedOnly ? recordedUnits : qty}>{recordedOnly ? unitsText(recordedUnits) : fmtNum(qty)}</span>}
+          sub={exited ? <span className="text-slate-500">{unchecked ? "no direct holding" : "no current holding"}</span>
+            : recorded.length > 0
+              ? <span title={RECORDED_TIP} data-stock-recorded-units={recordedUnits}>
+                  {recordedOnly ? `${qtyNoun} · not valued` : `${qtyNoun} · +${unitsText(recordedUnits)} not valued`}</span>
+            : qtyNoun}
           icon={<Layers className="h-4 w-4" />} />
         {/* Both of these say WHY when they are absent — see `costWhy`. The dash
             is correct on 60 of this book's positions and it is not the whole
@@ -1778,8 +1882,9 @@ export function StockInfo() {
                           ) : (
                             <Fragment key={route}>
                               {bands && routeBand(route, ht.sections[route].value,
-                                `${ht.sections[route].lines} account${ht.sections[route].lines === 1 ? "" : "s"} · ${route === "direct" ? "the family's own demat or broking" : route === "manager" ? "chosen by a discretionary manager" : "route not stated"}`)}
+                                `${ht.sections[route].lines + recordedIn(route).length} account${ht.sections[route].lines + recordedIn(route).length === 1 ? "" : "s"} · ${route === "direct" ? "the family's own demat or broking" : route === "manager" ? "chosen by a discretionary manager" : "route not stated"}`)}
                               {sortedPositions(ht.sections[route].positions).map(measuredRow)}
+                              {recordedIn(route).map(recordedRow)}
                             </Fragment>
                           ))}
                         </>
@@ -1787,8 +1892,11 @@ export function StockInfo() {
                         fundLinesShown && fl.status === "ok"
                           ? <>{sortedFunds(fl.lines).map(fundRow)}{fundNote()}</>
                           : <>{emptyRoute("fund")}{fundNote()}</>
-                      ) : ht.sections[TAB_ROUTE[heldTab]].lines > 0 ? (
-                        sortedPositions(ht.sections[TAB_ROUTE[heldTab]].positions).map(measuredRow)
+                      ) : ht.sections[TAB_ROUTE[heldTab]].lines > 0 || recordedIn(TAB_ROUTE[heldTab]).length > 0 ? (
+                        <>
+                          {sortedPositions(ht.sections[TAB_ROUTE[heldTab]].positions).map(measuredRow)}
+                          {recordedIn(TAB_ROUTE[heldTab]).map(recordedRow)}
+                        </>
                       ) : (
                         emptyRoute(TAB_ROUTE[heldTab])
                       )}
@@ -1873,6 +1981,11 @@ export function StockInfo() {
                 </p>
               </Card>
             )}
+            {/* A RECORDED LINE IS THE FAMILY'S OWN HOLDING (Stage 10cz) — held in
+                their own demat, and only not valued — so its holding period and
+                tax card is drawn like any other holding's, each figure a dash
+                naming why. It is a company held only inside a fund that has no
+                card: that is the fund's holding, not the family's. */}
             {!exited && !fundOnly && !resolving && (
               <Card className="mt-5" title="Holding period & tax"
                 subtitle="The long- and short-term cost split, the purchase dates and the dividends recorded for this holding">
@@ -1915,8 +2028,13 @@ export function StockInfo() {
             {/* OPENING, PLUS, MINUS, CLOSING — read off the depository statement,
                 which prints all four. Above the tape deliberately: the family
                 asked for the quantity account first and the dated rows second. */}
+            {/* AN ACCOUNT HOLDING A RECORDED LINE HOLDS IT (Stage 10cz): Ankita's
+                4,875 Kaynes are on the Position table above, "not valued" with
+                the reason. Marking her window "held, and not valued here" too
+                would say it twice, and with the wrong reason for a statement
+                that does print a rate — a last movement's price. */}
             <QuantityMovement movements={moves} unmoved={unmoved} accounts={portfolio.accounts}
-              held={new Set(rows.map((p) => p.accountId))} />
+              held={new Set([...rows, ...recorded].map((p) => p.accountId))} />
 
             {/* Transaction history — on a company held only inside funds, only
                 where the family's own accounts traded it (a name sold out of a
@@ -2014,7 +2132,7 @@ export function StockInfo() {
                 <CorporateActionReturns securityKey={securityKey} />
               </>
             ) : schemeHalves ? (
-              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
+              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={recordedOnly ? null : mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
                 valuedAt={valuation.at} valuedBy={valuation.by} valuedDates={valuation.dates} />
             ) : (
               <Card className="mt-5" title={`Price history & returns — not applicable to ${notACompanyLabel}`}>
@@ -2050,7 +2168,7 @@ export function StockInfo() {
                     resolves. It answers the question the card below has to refuse
                     for a company-shaped page: "what am I holding through this". */}
                 {lookThroughHoldings && (
-                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
+                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={recordedOnly ? null : mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest}
                 valuedAt={valuation.at} valuedBy={valuation.by} valuedDates={valuation.dates} />
                 )}
                 {/* ONE SHORT CARD, BY DECISION. A fund or a balance has no PE, no

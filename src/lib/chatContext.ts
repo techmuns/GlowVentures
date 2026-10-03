@@ -35,9 +35,9 @@
 // things will answer confidently and wrongly, so every figure-bearing block
 // says its basis and its date, and `what_this_book_does_not_carry` is derived
 // too.
-import { BOOK_POLYCAB } from "@/data/glowData";
+import { BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import {
-  byEntity, currentHoldings, doubleCountedValue, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, sum, sumOrNull,
+  byEntity, currentHoldings, doubleCountedValue, droppedHoldings, isCashEquivalent, NEGLIGIBLE_VALUE_FLOOR, sum, sumOrNull,
 } from "@/lib/analytics";
 import { accountIndex, type AccountIndex } from "@/lib/accounts";
 import { groupKeyFor, groupLabelFor } from "@/lib/groupAxis";
@@ -142,14 +142,29 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
   // counts below are not deduped, so they are struck on the raw rows through
   // the same verdict `currentHoldings` reached on the consolidated ones.
   const currentRaw = currentHoldings(portfolio.positions);
-  // The rows the dashboard values from a depository's units alone (Stage 10ce) —
-  // on the live book only, so read off the book this context is built from.
-  // Two kinds reach it, and only the first is cash: a depository's closing
-  // balance of an arbitrage or liquid fund on an account that sent no holding
-  // statement, and fund units a holding statement RECORDS and prints no rate for
-  // (A-17's ABSL Balanced Advantage), which are a hybrid fund and never cash.
-  const depositoryCash = currentRaw.filter((p) => !!p.depositoryUnits && p.depositoryUnits.kind !== "no-rate");
-  const unpricedUnits = currentRaw.filter((p) => p.depositoryUnits?.kind === "no-rate");
+  // The rows the dashboard values from a statement's QUANTITY alone — on the
+  // live book only, so read off the book this context is built from. Four sets,
+  // each told apart by what the row is and by what its statement printed, and
+  // each its own block below, because each is valued a different way:
+  //
+  //   • cash: the arbitrage and liquid funds a depository reports on an account
+  //     that sent a transaction statement and no holding statement (Stage 10ce);
+  //   • the same account's other funds, which are not cash (Stage 10cy);
+  //   • fund units a HOLDING statement records and values nowhere — printed
+  //     with no rate (A-17), or with the rate of the holding's last depository
+  //     movement, which is a transaction price and never a valuation (Stage
+  //     10cz) — at AMFI's NAV; a liquid or arbitrage fund among them is cash,
+  //     and each row says so;
+  //   • listed shares any of those statements records, at the live quote, and
+  //     only while the feed prices them.
+  const fromUnits = currentRaw.filter((p) => !!p.depositoryUnits);
+  // A depository row that names no kind is a closing balance: the kind was
+  // added for the rows that are NOT (`partialValuationNotes` reads it the same way).
+  const closingBalance = (p: Position) => (p.depositoryUnits?.kind ?? "closing-balance") === "closing-balance";
+  const depositoryCash = fromUnits.filter((p) => closingBalance(p) && p.assetClass !== "Equity" && isCashEquivalent(p));
+  const depositoryFunds = fromUnits.filter((p) => closingBalance(p) && p.assetClass !== "Equity" && !isCashEquivalent(p));
+  const unpricedUnits = fromUnits.filter((p) => !closingBalance(p) && p.assetClass !== "Equity");
+  const quotedShares = fromUnits.filter((p) => p.assetClass === "Equity");
 
   // ── the report dates, which a consolidated figure blends ───────────────────
   const valuedAsOf = [...new Set(current.filter((p) => p.marketValue !== 0)
@@ -417,27 +432,119 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
       })),
     },
     /**
-     * FUND UNITS A HOLDING STATEMENT RECORDS AND PRINTS NO RATE FOR (A-17).
+     * THE OTHER FUNDS ON THE SAME DEPOSITORY STATEMENT (Stage 10cy).
      *
-     * NOT CASH — a hybrid fund, kept out of the block above on purpose. The
-     * dashboard values these at AMFI's NAV only because a sibling statement at
-     * the same depository, on the same date, prices the same scheme on the same
-     * basis. Read off the book handed in, like the block above: they are INSIDE
-     * the totals of a live book, and a statement-basis book carries none.
+     * NOT CASH — the equity and hybrid schemes on the demat that sent a
+     * transaction statement and no holding statement, valued the same way as
+     * the block above. Told only the cash, a model asked "how much Bandhan Large
+     * & Mid Cap do I hold" would miss the units on this demat and contradict the
+     * screen.
      */
     {
-      kind: "fund_units_a_statement_records_without_a_rate",
+      kind: "funds_valued_from_depository_units",
+      note: depositoryFunds.length
+        ? "These mutual funds are held on an account that sent a transaction statement and no holding statement,"
+          + " so no statement values them: the dashboard values them at the depository's closing units × AMFI's"
+          + " published NAV, and they are INCLUDED in the Current Value of Holdings above. They are not cash. No cost"
+          + " is reported for them. Their units date from the statement's close, their NAV from its own publication date."
+        : "No holding in this book is valued from a depository's closing units, other than the cash above.",
+      totalCr: depositoryFunds.length ? cr(sum(depositoryFunds.map((p) => p.marketValue))) : null,
+      rows: depositoryFunds.map((p) => ({
+        fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
+        unitsAsOf: p.depositoryUnits?.asOf ?? null, valueCr: cr(p.marketValue),
+      })),
+    },
+    /**
+     * FUND UNITS A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (A-17, Stage 10cz).
+     *
+     * The three Motilal Oswal holding statements print a `Rate` and a `Value` on
+     * every line — and the rate is the price of the holding's LAST DEPOSITORY
+     * MOVEMENT, the value that price times that movement's own units: a
+     * transaction, never a valuation of the balance. A line printing no rate at
+     * all (A-17's ABSL Balanced Advantage) is the same case with no witness of
+     * its own. The dashboard values such units at AMFI's NAV where a witness
+     * puts them on the NAV's basis — the line's own last-movement rate, or a
+     * sibling statement's price for the scheme — and each row names which.
+     * A liquid or arbitrage fund among them counts as cash, as the page files
+     * it; the rest do not, and each row says which it is.
+     */
+    {
+      kind: "fund_units_a_holding_statement_records_and_values_nowhere",
       note: unpricedUnits.length
-        ? "These fund units are on a holding statement that records them and prints no rate, so no statement values"
-          + " them. The dashboard values them at AMFI's published NAV because another account at the same depository,"
-          + " on the same date, prices the same scheme on the same basis (pricedLikeAccountId), and they are INCLUDED"
-          + " in the Current Value of Holdings above. They are not cash. No cost is reported for them."
-        : "No holding in this book is valued from fund units a statement records without a rate.",
+        ? "These fund units are on a holding statement that records them and does not value them: its Rate is the"
+          + " price of the holding's last depository movement (a transaction price, lastMovementRate) or it prints"
+          + " no rate at all. The dashboard values them at AMFI's published NAV — where the line's own last-movement"
+          + " rate, or another account's statement at the same depository on the same date (pricedLikeAccountId),"
+          + " shows the units and the NAV are on the same basis — and they are INCLUDED in the Current Value of"
+          + " Holdings above. countsAsCash says whether the row counts as cash (a liquid or arbitrage fund) or not."
+          + " No cost is reported for them."
+        : "No holding in this book is valued from fund units a holding statement records without a valuation.",
       totalCr: unpricedUnits.length ? cr(sum(unpricedUnits.map((p) => p.marketValue))) : null,
       rows: unpricedUnits.map((p) => ({
         fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
-        unitsAsOf: p.depositoryUnits?.asOf ?? null, pricedLikeAccountId: p.depositoryUnits?.witnessAccountId ?? null,
+        unitsAsOf: p.depositoryUnits?.asOf ?? null,
+        lastMovementRate: p.depositoryUnits?.kind === "last-movement" ? p.depositoryUnits.lastMovementRate ?? null : null,
+        lastMovementDate: p.depositoryUnits?.kind === "last-movement" ? p.depositoryUnits.lastMovementDate ?? null : null,
+        pricedLikeAccountId: p.depositoryUnits?.kind === "no-rate" ? p.depositoryUnits.witnessAccountId ?? null : null,
+        countsAsCash: isCashEquivalent(p),
         valueCr: cr(p.marketValue),
+      })),
+    },
+    /**
+     * LISTED SHARES A STATEMENT RECORDS AND ONLY THE LIVE QUOTE VALUES (Stage 10cy, 10cz).
+     *
+     * A transaction-only demat's closing balances, a holding statement's shares
+     * printed at no rate or at face value, and the Motilal shares whose printed
+     * rate is a last-movement price: each is a row only while the quote feed
+     * prices it, so this block is empty on a day the feed does not answer — and
+     * says so, because an empty list must not read as a family holding none.
+     */
+    {
+      kind: "shares_valued_at_the_live_quote_from_a_statement_quantity",
+      note: quotedShares.length
+        ? "These listed shares are recorded by a statement as a quantity it does not value, so the dashboard values"
+          + " them at the live quote only while the feed prices them, and they are INCLUDED in the Current Value of"
+          + " Holdings above. recordedBy says what the statement printed: a transaction-only account's closing balance,"
+          + " a holding statement with no usable price, or a holding statement whose rate is the last depository"
+          + " movement's. No cost is reported for them."
+        : "No share is valued at a live quote from a statement's quantity right now: the quote feed has priced none of"
+          + " them in this book, so they are listed as quantities in the next block and in no total.",
+      totalCr: quotedShares.length ? cr(sum(quotedShares.map((p) => p.marketValue))) : null,
+      rows: quotedShares.map((p) => ({
+        security: p.security, accountId: p.accountId, units: p.quantity, price: p.currentPrice,
+        unitsAsOf: p.depositoryUnits?.asOf ?? null,
+        recordedBy: closingBalance(p) ? "transaction-only-closing-balance"
+          : p.depositoryUnits?.kind === "no-price" ? "holding-statement-no-price"
+          : "holding-statement-last-movement-price",
+        valueCr: cr(p.marketValue),
+      })),
+    },
+    /**
+     * EVERY LINE A HOLDING STATEMENT RECORDS AND VALUES NOWHERE (Stage 10cz).
+     *
+     * Named, so a question about one of them is answered with what the
+     * statement actually says — a quantity and a date — and never with its
+     * printed value, which is a transaction's or a face value and not a
+     * valuation. `shownLiveNow` says whether the dashboard values the line
+     * right now (one of the blocks above); the rest are quantities in no total.
+     */
+    {
+      kind: "holdings_a_statement_records_and_values_nowhere",
+      note: "These lines are on a holding statement as a quantity with no valuation this book can use: 'last-movement-price'"
+        + " means the statement's Rate is the price of the holding's last depository movement; 'face-value' means"
+        + " it prints the face value the shares or units were issued at; 'no-rate' means it prints units and no price."
+        + " reportedBy names an account whose own statement already counts the same units, so the line is that holding"
+        + " seen twice, never a second holding. shownLiveNow says whether the dashboard values the line right now"
+        + " (a fund at AMFI's NAV, a share at the live quote while the feed prices it); a line it does not value is in"
+        + " no total. Never value, estimate or sum these lines yourself.",
+      count: BOOK_UNVALUED_HOLDINGS.length,
+      rows: BOOK_UNVALUED_HOLDINGS.map((u) => ({
+        security: u.security, accountId: u.accountId, assetClass: u.assetClass, units: u.quantity, asOf: u.asOf,
+        why: typeof u.lastMovementRate === "number" && u.lastMovementRate > 0 ? "last-movement-price"
+          : typeof u.faceValue === "number" ? "face-value" : "no-rate",
+        reportedBy: u.sameUnitsReportedBy ?? null,
+        shownLiveNow: fromUnits.some((p) => p.accountId === u.accountId && (
+          u.isin && p.isin ? String(p.isin).toUpperCase() === String(u.isin).toUpperCase() : p.securityKey === u.securityKey)),
       })),
     },
     /**

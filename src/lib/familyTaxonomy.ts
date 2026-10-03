@@ -356,6 +356,11 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
     { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "Bandhan Large & Mid Cap Fund - Direct Plan - Growth" },
   "sec:kotak-mtcf-d-grow":
     { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "Kotak Multicap Fund-Direct Plan-Growth" },
+  // Stage 10cy — held only on the transaction-only demat, where the depository
+  // prints the AMC's full name in front of the scheme's, so these keys are the
+  // depository's spelling. Each ties to the review by units (`reviewGaps.ts`).
+  "sec:kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-large-and-midcap-fund-direct-plan-growth-option":
+    { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "Kotak Large & Midcap Fund - Direct- Growth" },
   // Hybrid and multi-asset funds: the family's EQUITY by exposure, LIQUIDITY by
   // purpose. Both halves come from the workbook — the fund is listed on the
   // Equity sheet AND on the Liquid basket sheet.
@@ -369,6 +374,10 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "ICICI Pru Balanced Advantage Fund" },
   "sec:woc-maaf-d-grow":
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "WhiteOak Capital Multi Asset Allocation Fund-Direct(G)" },
+  // Stage 10cy — on the transaction-only demat only; the workbook lists it on
+  // the Liquid basket sheet and the Equity asset-class sheet, like those above.
+  "sec:icici-prud-amc-ltd-icici-prud-mf-icici-prud-equity-savings-fund-direct-cumulative":
+    { assetClass: "Equity", basket: "Liquidity", reviewProduct: "ICICI Prudential Equity Savings Fund - Direct Plan" },
   // Liquid funds — the family's CASH, not Debt. Their own Cash sheet lists them.
   "sec:absl-liqf-d-growth":
     { assetClass: "Cash", basket: "Liquidity", reviewProduct: "Aditya Birla SL Liquid Fund-Direct (G)" },

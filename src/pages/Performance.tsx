@@ -737,9 +737,9 @@ export function Performance() {
                     {/* `₹0` on an account nobody valued is a claim, not a
                         measurement — see Account.noPositionsReason. ON THE
                         STATEMENT BASIS, and an account whose statements value
-                        nothing keeps THEIR reason: the cash-equivalent funds a
-                        published NAV values on part of one are no figure beside
-                        a statement's terminal date (XA-14). */}
+                        nothing keeps THEIR reason: the funds a published NAV,
+                        and the shares a live quote, value on part of one are no
+                        figure beside a statement's terminal date (XA-14). */}
                     {x.unvalued
                       ? <AbsentCell reason={x.unvalued} />
                       : money(x.mv)}

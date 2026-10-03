@@ -193,6 +193,43 @@ for (const p of positions) {
 }
 
 /**
+ * AND EVERY FUND LINE THE BOOK CARRIES AS A QUANTITY (Stage 10cz). A Motilal
+ * Oswal CDSL holding statement prints a fund's units beside the price of its
+ * LAST DEPOSITORY MOVEMENT, which is not a valuation — so since that correction
+ * those units are `BOOK_UNVALUED_HOLDINGS` rows and not positions, and the
+ * dashboard values them at the NAV this file publishes. Read off positions
+ * alone, this table would drop fifteen of those schemes on its next run and the
+ * dashboard would stop valuing ₹57 Cr of the family's funds the same morning,
+ * with nothing failing anywhere.
+ *
+ * THE LAST MOVEMENT'S PRICE IS THE BASIS WITNESS, exactly as the statement's
+ * rate was when these rows were positions: a mutual fund's units are bought and
+ * redeemed at its NAV, so that rate is a NAV of the scheme on the movement's
+ * date, on the units the depository counts. It checks the BASIS and nothing
+ * else — the price a holding is valued at is the NAV below. A line printing no
+ * rate adds its ISIN and no mark, so the scheme is published for the dashboard
+ * to find and refused for value here unless another mark clears it.
+ *
+ * `from` stays "book": these are lines the book carries, from a holding
+ * statement — not a depository's transaction tape. A line a fund's own
+ * statement already reports (`sameUnitsReportedBy`) is left out, as the
+ * dashboard leaves it out.
+ */
+const unvaluedFunds = (bookArray(glow, "BOOK_UNVALUED_HOLDINGS") ?? [])
+  .filter((u) => (u.assetClass === "Mutual Fund" || u.assetClass === "ETF")
+    && !u.sameUnitsReportedBy && typeof u.quantity === "number" && u.quantity > 0
+    && typeof u.isin === "string" && /^INF/i.test(u.isin));
+for (const u of unvaluedFunds) {
+  const cur = wanted.get(u.securityKey) ?? {
+    key: u.securityKey, name: u.security, bookIsin: null, marks: [], assetClass: u.assetClass, from: "book" };
+  if (!cur.bookIsin) cur.bookIsin = u.isin;
+  if (typeof u.lastMovementRate === "number" && Number.isFinite(u.lastMovementRate) && u.lastMovementRate > 0) {
+    cur.marks.push(u.lastMovementRate);
+  }
+  wanted.set(u.securityKey, cur);
+}
+
+/**
  * THE DEPOSITORY-ONLY FUND UNITS — see the header. Four conditions, each a
  * reason a balance must NOT be priced as a holding:
  *

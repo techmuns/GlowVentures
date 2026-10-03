@@ -1461,20 +1461,47 @@ function lotGain(l) {
  * of the fourteen are that (3P B3 in two demats, Baring 6 A1, Blue Ashva) — the
  * other ten are shares and mutual-fund units no second statement reports.
  */
-function shareMovementsFrom(docs, positions, accounts, notes) {
+function shareMovementsFrom(docs, positions, accounts, notes, unvalued = []) {
   const out = {};
+  /**
+   * WHAT A WINDOW JOINS: every holding the book carries, valued or not.
+   *
+   * Until Stage 10cz every Motilal Oswal demat row was a POSITION, valued at the
+   * rate its statement prints — which turned out to be the price of the
+   * holding's last depository movement, not a valuation, so those rows are
+   * quantities now (`BOOK_UNVALUED_HOLDINGS`). Joined on positions alone, all 23
+   * windows on those three demats lost the holding they describe, and the
+   * Kaynes window on Ajay's main demat lost the only key that bridges it to a
+   * company page (Stage 10cc). A window is about the UNITS, and the units are
+   * still held whether or not anything values them, so the join reads both.
+   *
+   * EXCEPT A DEPOSITORY'S COPY OF AIF UNITS, which stays out of the join exactly
+   * as it stays out of the bridge below: the reader names those rows by the
+   * FUND's own name, so joining one would file the depository's window on the
+   * fund's page, beside the fund's own figure for the same units. A position
+   * outranks a quantity in the same account, which never happens on this book.
+   */
+  const holders = [
+    ...unvalued.filter((u) => u.isin && u.securityKey && u.assetClass !== "AIF"),
+    ...positions,
+  ];
   const byAcctIsin = new Map();
-  for (const p of positions) if (p.isin) byAcctIsin.set(`${p.accountId}|${p.isin}`, p.securityKey);
+  const fromPosition = new Set();
+  for (const p of holders) {
+    if (!p.isin) continue;
+    byAcctIsin.set(`${p.accountId}|${p.isin}`, p.securityKey);
+    if (positions.includes(p)) fromPosition.add(`${p.accountId}|${p.isin}`);
+  }
   const keysByIsin = new Map();
   const aifIsins = new Set();
-  for (const p of positions) {
-    if (!p.isin) continue;
+  for (const p of [...positions, ...unvalued]) {
+    if (!p.isin || !p.securityKey) continue;
     (keysByIsin.get(p.isin) ?? keysByIsin.set(p.isin, new Set()).get(p.isin)).add(p.securityKey);
     if (p.assetClass === "AIF") aifIsins.add(p.isin);
   }
   // THE REGISTRY DECIDES WHICH ACCOUNTS EXIST. Account 32387399's three
   // identifiers give three answers, so it is excluded with the reason and its
-  // ₹8.23 Cr is in no total — and it issues a transaction statement like every
+  // holdings are in no total — and it issues a transaction statement like every
   // other demat, so a window keyed on its own accountId would walk that account
   // back into the book through a side door, attributed to a holder this book
   // has said it cannot establish.
@@ -1492,7 +1519,7 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
     .filter((d) => d.reportType === "holdings" && d.accountNo && d.provider)
     .map((d) => accountIdOf(d.provider, d.accountNo)));
 
-  let blocks = 0, split = 0, joined = 0, unclassified = 0, offRegistry = 0, bridged = 0, ambiguous = 0, collided = 0, overwritten = 0, fundCopy = 0;
+  let blocks = 0, split = 0, joined = 0, joinedQty = 0, unclassified = 0, offRegistry = 0, bridged = 0, ambiguous = 0, collided = 0, overwritten = 0, fundCopy = 0;
   let exited = 0, heldNoHoldings = 0, notCarried = 0, bridgedHeld = 0;
   for (const d of docs) {
     if (d.reportType !== "demat-transactions") continue;
@@ -1512,8 +1539,10 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
       // row a reader asking "what happened to my quantity" is looking for.
       const own = securityKeyOf(row.security ?? "");
       let key = byAcctIsin.get(`${accountId}|${row.isin}`);
-      if (key) joined += 1;
-      else {
+      if (key) {
+        if (fromPosition.has(`${accountId}|${row.isin}`)) joined += 1;
+        else joinedQty += 1;
+      } else {
         // WHAT A WINDOW WITH NO POSITION IN ITS OWN ACCOUNT IS — counted apart,
         // because "the account no longer holds it" is true of a nil close and
         // false of a balance on an account that sent no holding statement.
@@ -1563,12 +1592,57 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
     }
   }
   if (blocks) {
-    notes.push(`share movements: ${blocks} holding-window(s) from the demat statements, ${split} of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. ${joined} join a position this book carries; ${exited} close at nil, securities the account sold out of during the window; ${heldNoHoldings} close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; ${notCarried} sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. ${unclassified} movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.${offRegistry ? ` ${offRegistry} demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.` : ""}`);
+    notes.push(`share movements: ${blocks} holding-window(s) from the demat statements, ${split} of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. ${joined} join a position this book carries and ${joinedQty} a holding it carries as a quantity with no value; ${exited} close at nil, securities the account sold out of during the window; ${heldNoHoldings} close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; ${notCarried} sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. ${unclassified} movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.${offRegistry ? ` ${offRegistry} demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.` : ""}`);
     // PRINTED EVEN AT ZERO: a join that only speaks when it fires is
     // indistinguishable, on a quiet drop, from one that was deleted.
     notes.push(`share movements: ${bridged} window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (${bridged - bridgedHeld} close at nil; ${bridgedHeld} close with units still held on an account that sent no holding statement); ${ambiguous} ISIN(s) the book files under two keys keep the statement's own name rather than picking one; ${fundCopy} window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; ${collided} block(s) would have landed on a key their account already filed and keep their own name instead; ${overwritten} window(s) were overwritten by a second block under one key.`);
   }
   return out;
+}
+
+/**
+ * WHEN A DEPOSITORY'S "RATE" WAS STRUCK — read off the same account's own tape.
+ *
+ * A CDSL holding statement prints, against each holding, the price of its LAST
+ * DEPOSITORY MOVEMENT and that price times the movement's own quantity (Stage
+ * 10cz; `motilalDemat.mjs`'s header). It is a transaction price, and a reader
+ * shown it needs to know WHICH transaction and WHEN, or it reads as a mark.
+ *
+ * The same account's transaction statement prints every receipt and delivery
+ * since the day it starts, in order, with its quantity. So the movement a rate
+ * belongs to can be FOUND rather than assumed: the last receipt or delivery of
+ * that ISIN, where its quantity times the rate reproduces the printed value to
+ * the printed precision — the value to the paisa and the rate to its third
+ * decimal, never a tolerance widened until it fits. Three answers, each said:
+ *
+ *   • the last movement reproduces the value — the price is DATED;
+ *   • the ISIN does not move on the tape — its last movement is older than the
+ *     tape, so the price predates the day the tape starts and no date is given;
+ *   • it moves and the last movement does not reproduce the value — the price
+ *     belongs to some movement the tape does not show, and no date is given.
+ *
+ * A pledge moves no units and carries no price, so only a receipt or a delivery
+ * can be the movement. Measured on this book: 43 rows carry such a rate, 23 are
+ * dated, 20 predate the tape, and none moves without reproducing its value.
+ */
+function lastMovementOf(h, tape) {
+  const rate = isNum(h.lastMovementRate) && h.lastMovementRate > 0 ? h.lastMovementRate : null;
+  if (rate === null) return null;
+  const value = isNum(h.lastMovementValue) ? h.lastMovementValue : null;
+  const moves = (tape?.transactions ?? []).filter((t) => t.isin && t.isin === h.isin
+    && (t.side === "receipt" || t.side === "delivery") && isNum(t.quantity));
+  const last = moves.at(-1) ?? null;
+  const units = last ? Math.abs(last.quantity) : null;
+  const ties = last !== null && value !== null && Math.abs(units * rate - value) <= 0.005 + units * 0.0005;
+  return {
+    rate,
+    value,
+    date: ties ? last.date ?? null : null,
+    side: ties ? last.side : null,
+    units: ties ? units : null,
+    onTape: moves.length > 0,
+    tapeFrom: tape?.periodFrom ?? null,
+  };
 }
 
 /**
@@ -1718,6 +1792,14 @@ function grossPaidCost(positions, positionTranches, notes) {
     }
     const net = r2(paid - charges);
     const inr = (n) => r2(n).toLocaleString("en-IN");
+    // AN AMC FOLIO'S OWN COST COLUMN ALREADY COUNTS THE STAMP DUTY (Helios,
+    // Active Momentum): the statement's cost is every rupee paid, so there is
+    // nothing to restate and no second figure to keep beside it as a check.
+    if (Math.abs(paid - p.costBasis) <= 0.01) {
+      notes.push(`cost of ${label} is what was paid in, ${inr(paid)}, as the statement itself prints it: its own cost `
+        + `column counts the ${inr(charges)} of stamp duty it levied, so nothing is restated`);
+      continue;
+    }
     if (Math.abs(net - p.costBasis) > 0.01) {
       notes.push(`cost not restated to what was paid for ${label}: its contributions bought units with ${inr(net)} after `
         + `${inr(charges)} of printed charges, against the ${inr(p.costBasis)} the statement prints as its cost — the two do not `
@@ -2107,9 +2189,21 @@ function build(docs) {
     const excluded = group.map((d) => d.excludedFromBook).find(Boolean) ?? null;
     if (excluded) {
       const value = group.map((d) => d.totals?.totalMarketValue).find(isNum) ?? null;
-      excludedAccounts.push({ accountId, provider, accountNo, owner: group.map((d) => d.owner).find(Boolean) ?? null, value, reason: excluded });
+      /**
+       * AND AN ACCOUNT WHOSE STATEMENT VALUES NOTHING SAYS SO, rather than
+       * leaving a dash to be read as "the pipeline lost it". Motilal Oswal demat
+       * 32387399 was reported here at ₹8.23 Cr until Stage 10cz — the sum of its
+       * statement's value column, which is the price of each holding's last
+       * depository movement times that movement's quantity, not a valuation.
+       */
+      const heldRows = group.flatMap((d) => d.holdings ?? []);
+      const valueWhy = value === null && heldRows.some((h) => isNum(h.lastMovementRate) && h.lastMovementRate > 0)
+        ? `its statement prints ${heldRows.length} holding(s) as quantities, with the price of each one's last depository movement rather than a valuation, so it states no value`
+        : null;
+      excludedAccounts.push({ accountId, provider, accountNo, owner: group.map((d) => d.owner).find(Boolean) ?? null, value, valueWhy, reason: excluded });
       notes.push(`account ${accountNo} (${provider}) is NOT in the book: ${excluded}`
-        + (value !== null ? ` Value on its own statement: ${value.toLocaleString("en-IN")}.` : ""));
+        + (value !== null ? ` Value on its own statement: ${value.toLocaleString("en-IN")}.` : "")
+        + (valueWhy ? ` Value: none stated — ${valueWhy}.` : ""));
       continue;
     }
     /**
@@ -2532,32 +2626,99 @@ function build(docs) {
      * units, and the face value they were allotted at where it holds no price; a
      * fund's own statement that prints no NAV is a fact about the fund.
      */
+    /**
+     * THE TAPE THAT DATES A DEPOSITORY'S RATE — this account's own transaction
+     * statement, where the drop carries one. See `lastMovementOf`.
+     */
+    const tape = group.find((d) => d.reportType === "demat-transactions") ?? null;
     for (const h of unvalued) {
       if (!h.securityKey) continue;
       const custody = CUSTODY_PROVIDERS.has(provider);
       const qty = isNum(h.quantity) ? h.quantity : null;
       const fv = isNum(h.faceValue) ? h.faceValue : null;
+      /**
+       * A RATE THAT IS THE PRICE OF THE LAST MOVEMENT SAYS SO, AND SAYS WHEN.
+       *
+       * This branch used to say "prints no rate for this holding" about every
+       * custody row without a face value — and 43 Motilal Oswal rows DO print a
+       * rate, which until Stage 10cz this book used as their market price. A
+       * reason that denies what the page prints sends a reader to look for a
+       * document they are holding; one that shows the rate without its date
+       * reads as a mark. So a row carrying a last-movement rate names it, the
+       * movement it belongs to where the tape shows it, and why it values
+       * nothing either way.
+       */
+      const moved = custody ? lastMovementOf(h, tape) : null;
+      const units = (v) => v.toLocaleString("en-IN", { maximumFractionDigits: 3 });
+      const unitsHeld = qty !== null ? units(qty) : "these";
+      const money = (v) => `₹${v.toLocaleString("en-IN", { maximumFractionDigits: 3 })}`;
       // THE FAMILY'S DECISION OUTRANKS THE STATEMENT'S OWN REASON, AND KEEPS ITS
       // FACTS. Where the family have decided a row stays unvalued (Ankita's
       // locked-in Clean Max shares, 28 Sep 2026) the reason says so, so the
-      // absence reads as chosen rather than missed. It never values the row.
+      // absence reads as chosen rather than missed. It never values the row —
+      // and the live layer reads the same table (`src/lib/depositoryShares.ts`),
+      // so no quote values it either.
       const kept = keptUnvaluedFor({ provider, accountNo, isin: h.isin });
       if (kept) keptUnvaluedHits.push(kept);
       const reason = kept ? keptUnvaluedReason(kept, holdingsDoc.asOf)
-        : custody
-        ? (fv !== null
-          ? `the ${provider} statement of ${holdingsDoc.asOf} records ${qty ?? "these"} unit(s) at their face value of ${fv}, `
-            + "the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
-          : `the ${provider} statement of ${holdingsDoc.asOf} prints no rate for this holding, so it carries a quantity and no value`)
-        : `the fund's own statement of ${holdingsDoc.asOf} reports ${qty ?? "these"} unit(s) and no NAV and no valuation — `
-          + "there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth";
+        : !custody
+        ? `the fund's own statement of ${holdingsDoc.asOf} reports ${qty ?? "these"} unit(s) and no NAV and no valuation — `
+          + "there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+        : fv !== null
+        ? `the ${provider} statement of ${holdingsDoc.asOf} records ${qty ?? "these"} unit(s) at their face value of ${fv}, `
+          + "the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+        : moved?.date
+        ? `the ${provider} statement of ${holdingsDoc.asOf} prints the price of this holding's last depository movement — `
+          + `${money(moved.rate)} a unit, on a ${moved.side} of ${units(moved.units)} unit(s) on ${moved.date} — `
+          + `not a valuation of the ${unitsHeld} unit(s) held, so it carries a quantity and no value`
+        : moved && !moved.onTape
+        ? `the ${provider} statement of ${holdingsDoc.asOf} prints the price of this holding's last depository movement, `
+          + `${money(moved.rate)} a unit — not a valuation of the ${unitsHeld} unit(s) held. This account's transaction statement, `
+          + `from ${moved.tapeFrom ?? "its first day"}, does not move it, so that price is older still. It carries a quantity and no value`
+        : moved
+        ? `the ${provider} statement of ${holdingsDoc.asOf} prints the price of a depository movement, ${money(moved.rate)} a unit, `
+          + "that this account's transaction statement does not reproduce, so when it was struck is not known — it is not a valuation "
+          + `of the ${unitsHeld} unit(s) held, so they carry a quantity and no value`
+        : `the ${provider} statement of ${holdingsDoc.asOf} prints no rate for this holding, so it carries a quantity and no value`;
       unvaluedHoldings.push({
         accountId, ownerId, securityKey: h.securityKey, security: h.security, isin: h.isin || null,
-        assetClass: h.assetClass ?? null, quantity: qty, faceValue: fv, asOf: holdingsDoc.asOf ?? null,
+        assetClass: h.assetClass ?? null, quantity: qty, faceValue: fv,
+        lastMovementRate: moved?.rate ?? null, lastMovementValue: moved?.value ?? null,
+        lastMovementDate: moved?.date ?? null, lastMovementSide: moved?.side ?? null,
+        asOf: holdingsDoc.asOf ?? null,
         sameUnitsReportedBy: null, reason,
       });
     }
-    if (unvalued.length && unvalued.length === allHoldings.length) {
+    /**
+     * WHAT EACH UNVALUED ROW PRINTS INSTEAD OF A VALUE, counted — a face value,
+     * the price of the last depository movement, or nothing at all. Three
+     * different things, and the note used to call every one of them "no NAV".
+     */
+    const unvaluedKinds = (() => {
+      const face = unvalued.filter((h) => isNum(h.faceValue)).length;
+      const moved = unvalued.filter((h) => !isNum(h.faceValue) && isNum(h.lastMovementRate) && h.lastMovementRate > 0);
+      const dated = moved.filter((h) => lastMovementOf(h, tape)?.date).length;
+      const bare = unvalued.length - face - moved.length;
+      return [
+        moved.length ? `${moved.length} with the price of their last depository movement (${dated} dated on this account's transaction statement, `
+          + `${moved.length - dated} older than it)` : null,
+        face ? `${face} at the face value they were allotted at` : null,
+        bare ? `${bare} with no rate at all` : null,
+      ].filter(Boolean).join(", ");
+    })();
+    if (unvalued.length && unvalued.length === allHoldings.length && CUSTODY_PROVIDERS.has(provider)) {
+      /**
+       * THE LIVE LAYER IS NAMED ONLY WHERE IT HAS SOMETHING TO VALUE. A row
+       * held at its face value alone (an unlisted preference share) or an AIF
+       * unit (the fund values its own units) is reached by no current price, so
+       * an account holding nothing else is told only that it values nothing.
+       */
+      const priceable = unvalued.some((h) => h.assetClass !== "AIF" && !isNum(h.faceValue));
+      notes.push(`account ${accountNo} (${provider}) contributes no market value on the statement basis: its statement of ${holdingsDoc.asOf} `
+        + `carries ${unvalued.length} holding(s) as quantities — ${unvaluedKinds}. None of those is a valuation of the balance, `
+        + "so the units are in the archive and out of every statement-basis total"
+        + (priceable ? "; the live layer values the ones a current price reaches — a fund at its published NAV, a listed share at its quote." : "."));
+    } else if (unvalued.length && unvalued.length === allHoldings.length) {
       notes.push(`account ${accountNo} (${provider}) contributes no market value: its statement of ${holdingsDoc.asOf} `
         + `carries ${unvalued.length} holding(s) with units and cost and NO NAV, so there is nothing to value them at. `
         + `Units and cost are in the archive; the consolidated total does not include them.`);
@@ -2581,9 +2742,11 @@ function build(docs) {
       notes.push(`account ${accountNo} (${provider}) carries ${unvalued.length} of ${allHoldings.length} holding(s) `
         + `with NO market value, so they are in the archive and out of every total: `
         + `${unvalued.map((h) => `${h.security}${isNum(h.quantity) ? ` (${h.quantity} unit(s)` : " ("}`
-          + `${isNum(h.faceValue) ? `, recorded at a face value of ${h.faceValue}` : ", no price published"})`).join("; ")}. `
-        + "A depository records the value a security was allotted at where it holds no price for it, and that is "
-        + "not a mark: carried, it would state a valuation nobody struck. The remaining "
+          + `${isNum(h.faceValue) ? `, recorded at a face value of ${h.faceValue}`
+            : isNum(h.lastMovementRate) && h.lastMovementRate > 0 ? `, last moved at ${h.lastMovementRate}`
+            : ", no price published"})`).join("; ")}. `
+        + "A depository prints the value a security was allotted at, or the price its last movement went through at, "
+        + "where it holds no mark for it, and neither is a valuation: carried, either would state one nobody struck. The remaining "
         + `${allHoldings.length - unvalued.length} row(s) on the same statement ARE marked and are in the book.`);
     }
 
@@ -2965,8 +3128,23 @@ function build(docs) {
          * A face-valued row is the tell, and it is on the holding itself.
          */
         const facePriced = unvaluedHere.filter((x) => isNum(x.faceValue));
+        /**
+         * AND A CUSTODY ACCOUNT WHOSE RATES ARE LAST-MOVEMENT PRICES IS A THIRD
+         * STORY (Stage 10cz). Its rows carry a rate that is real — the price its
+         * last movement went through at — and is not a valuation of the balance.
+         * Told the fund story ("this fund publishes no NAV"), a reader asks a fund
+         * manager about a demat account; told nothing, they read the rate as a
+         * mark. What would value the balance on the statement's date is a
+         * statement that marks it, which a custodian does issue.
+         */
+        const lastMoved = unvaluedHere.filter((x) => !isNum(x.faceValue) && isNum(x.lastMovementRate) && x.lastMovementRate > 0);
+        const bare = unvaluedHere.length - facePriced.length - lastMoved.length;
         acct.noPositionsReason = facePriced.length === unvaluedHere.length && unvaluedHere.length
           ? `this custody account values nothing: its statement of ${holdingsDoc.asOf} carries ${unvaluedHere.length} holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book`
+          : lastMoved.length && CUSTODY_PROVIDERS.has(provider)
+          ? `this custody account's statement of ${holdingsDoc.asOf} values nothing: it prints ${unvaluedHere.length} holding(s) as quantities, ${lastMoved.length} of them with the price of their last depository movement — a transaction price, not a valuation of the balance`
+            + `${facePriced.length ? `; ${facePriced.length} at the face value they were allotted at` : ""}${bare ? `; ${bare} with no rate at all` : ""}. `
+            + "The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
           : unvaluedHere.length
           ? `this fund publishes no NAV: its statement of ${holdingsDoc.asOf} carries ${unvaluedHere.length} holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth`
           : holdingsDoc
@@ -2988,9 +3166,10 @@ function build(docs) {
           ? `no HOLDING statement for this account is in the drop — only its ${[...new Set(allIssues.map((d) => d.reportType))].sort().join(", ")} statement(s). The tape's closing balances are in the archive as quantities at ${allIssues.map((d) => d.asOf).filter(Boolean).sort().pop() ?? "its own date"} and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian`
           : `no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them.`;
         /**
-         * AND SAID IN A FIELD, NOT ONLY IN THAT SENTENCE. The dashboard values a
-         * cash-equivalent fund on such an account from the depository's own
-         * closing balance and AMFI's published NAV, and it must find those
+         * AND SAID IN A FIELD, NOT ONLY IN THAT SENTENCE. The dashboard values
+         * the funds on such an account from the depository's own closing
+         * balance and AMFI's published NAV, and its listed shares at the live
+         * quote (Stage 10cy), and it must find those
          * accounts structurally — a rule that matched the prose above would stop
          * matching the first time somebody reworded it. It is set on exactly the
          * case the sentence describes: no holding statement in the drop, and a
@@ -3762,7 +3941,7 @@ function build(docs) {
         + `${p.costBasis.toLocaleString("en-IN")} of cost in the units still held, and the unit record shows none sold.`);
     }
   }
-  const shareMovements = shareMovementsFrom(docs, [...positions, ...polycab], accounts, notes);
+  const shareMovements = shareMovementsFrom(docs, [...positions, ...polycab], accounts, notes, unvaluedHoldings);
 
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
@@ -4133,7 +4312,7 @@ function report(book) {
     L.push("| Account | Provider | Holder | Value on its own statement | Why it is out |");
     L.push("| --- | --- | --- | ---: | --- |");
     for (const a of book.excludedAccounts) {
-      L.push(`| ${a.accountNo ?? "—"} | ${a.provider} | ${a.owner ?? "—"} | ${isNum(a.value) ? r2(a.value).toLocaleString("en-IN") : "—"} | ${a.reason.replace(/\s+/g, " ")} |`);
+      L.push(`| ${a.accountNo ?? "—"} | ${a.provider} | ${a.owner ?? "—"} | ${isNum(a.value) ? r2(a.value).toLocaleString("en-IN") : "—"} | ${a.reason.replace(/\s+/g, " ")}${a.valueWhy ? ` No value is stated: ${a.valueWhy}.` : ""} |`);
     }
     const known = book.excludedAccounts.filter((a) => isNum(a.value));
     if (known.length) {
@@ -4141,6 +4320,11 @@ function report(book) {
       L.push(`Together they carry **${r2(sum(known.map((a) => a.value))).toLocaleString("en-IN")}** across `
         + `${known.length} account(s). That figure is stated so nobody has to wonder whether `
         + "the money was missed or excluded.");
+    }
+    const unstated = book.excludedAccounts.filter((a) => !isNum(a.value));
+    if (unstated.length) {
+      L.push("");
+      L.push(`${unstated.length} more account(s) state no value on their own statement, and are named in the table with why.`);
     }
   }
   L.push("");

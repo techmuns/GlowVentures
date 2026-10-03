@@ -28,10 +28,12 @@
 // both on this run or written as a RELATION that survives either moving.
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS } from "@/data/glowData";
+import { BOOK_ACCOUNTS } from "@/data/glowData";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { currentHoldings, dedupedPositions, holdingBucket, isFundVehicle, CASH_EQUIVALENT_KEYS } from "@/lib/analytics";
 import { navMoverModel, isDrastic, unitBasisDiffers, DRASTIC_PCT, NAV_MOVER_BUCKETS } from "@/lib/navMovers";
+import { fundNavFor } from "@/lib/fundNavs";
+import { LIVE_POSITIONS } from "./liveBook";
 import type { SchemeMatch } from "@/lib/lookthrough";
 
 let fails = 0;
@@ -51,7 +53,13 @@ const schemes = new Map<string, SchemeMatch>(Object.entries(store.schemes ?? {})
 const accts = accountIndex(BOOK_ACCOUNTS);
 const cr = (n: number) => `₹${(n / 1e7).toFixed(2)} Cr`;
 
-const rows = currentHoldings(dedupedPositions(BOOK_POSITIONS));
+// THE CARD READS THE LIVE BOOK (`PortfolioContext`), SO THE SUITE DOES (Stage
+// 10cz). Since the three Motilal Oswal holding statements' `Rate` turned out to
+// be each holding's last depository movement rather than a valuation, their fund
+// balances are carried on the statement basis as quantities with no value — and
+// valued on the live basis at AMFI's NAV. On `BOOK_POSITIONS` this card would
+// cover 2 schemes; the page draws 12.
+const rows = currentHoldings(dedupedPositions(LIVE_POSITIONS));
 const m = navMoverModel(rows, accts, schemes);
 
 console.log(`\n${m.rows.length} schemes · ${cr(m.coveredValue)} of ${cr(m.scopeValue)} · ${m.changePct?.toFixed(4)}% · NAV ${m.navDates.join(", ")}`);
@@ -114,8 +122,10 @@ ok("every skipped holding carries a reason", m.skipped.every((s) => !!s.reason &
 // requiring the covered value to be unchanged — the closed rows are ₹0, so a
 // value comparison alone cannot see it; the COUNT is what moves.
 {
-  const unfiltered = navMoverModel(dedupedPositions(BOOK_POSITIONS), accts, schemes);
-  const closed = dedupedPositions(BOOK_POSITIONS).filter((p) =>
+  // The same book the card reads — the live one — unfiltered, so the only
+  // difference from `m` is the redeemed rows `currentHoldings` drops.
+  const unfiltered = navMoverModel(dedupedPositions(LIVE_POSITIONS), accts, schemes);
+  const closed = dedupedPositions(LIVE_POSITIONS).filter((p) =>
     isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null
     && (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p))));
   if (closed.length === 0) {
@@ -140,7 +150,11 @@ ok("every skipped holding carries a reason", m.skipped.every((s) => !!s.reason &
     return Math.abs((p.quantity * nav) / p.marketValue - 1) > 0.5;
   });
   if (offenders.length === 0) {
-    console.log("ok   (no holding in this drop has a unit base that disagrees with its published NAV)");
+    // Since Stage 10cz the book has none — the DSP ETFs' "marks" were last
+    // depository movements and left it — so the trap is exercised on the
+    // constructed ten-fold row under MNT-3 below, whose row must carry the
+    // book's value and never units × NAV.
+    console.log("ok   (no holding in this drop has a unit base that disagrees with its published NAV — see the constructed case under MNT-3)");
   } else {
     ok("the model never values a holding at units × NAV",
       m.rows.every((r) => r.value > 0),
@@ -271,7 +285,7 @@ const amfiFile = (() => {
 }
 
 // ── MNT-3 · A ROW WHOSE UNITS AND NAV ARE NOT ONE UNIT SAYS SO ──────────────
-// The book's value per unit against the NAV, re-derived from BOOK_POSITIONS and
+// The book's value per unit against the NAV, re-derived from the live book and
 // the source each row names — outside a factor of two the row must be flagged,
 // inside it must not. The DSP ETFs are the live case: a ₹151 mark over a ₹14.76
 // NAV, where `units × NAV` would put ₹20 Cr of gold at ₹2 Cr.
@@ -284,11 +298,32 @@ const amfiFile = (() => {
     const ratio = q > 0 && r.nav > 0 ? v / q / r.nav : null;
     return ratio != null && (ratio > 2 || ratio < 0.5);
   });
-  ok("the book's DSP ETFs are on another unit basis — else this check has no subject", indep.length > 0,
-    indep.map((r) => r.security).join(", "));
+  // THE BOOK'S OWN CASE HAS LEFT THE BOOK (Stage 10cz). The DSP ETFs' "₹151 mark
+  // over a ₹14.76 NAV" was the price of each balance's LAST DEPOSITORY MOVEMENT,
+  // not a mark: both are quantities with no value now, on either basis, and no
+  // row the card draws is off one unit basis. So the claim over the book is
+  // struck as it stands — possibly 0 of 0 — and the GUARD is exercised on a
+  // constructed row, the only place it can be: the book's largest in-scope
+  // holding carried at ten times its value must be flagged, and at 1.5 times
+  // must not.
   ok("exactly the rows off one unit basis are flagged",
     flagged.length === indep.length && flagged.every((r) => indep.includes(r)),
-    `flagged ${flagged.map((r) => r.security).join(", ")} · expected ${indep.map((r) => r.security).join(", ")}`);
+    `flagged ${flagged.map((r) => r.security).join(", ") || "none"} · expected ${indep.map((r) => r.security).join(", ") || "none"}`);
+  const top = [...rows].filter((p) => (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p))))
+    .sort((a, b) => b.marketValue - a.marketValue)[0];
+  const at = (f: number) => navMoverModel([{ ...top, marketValue: top.marketValue * f }], accts, schemes).rows;
+  const tenfold = top ? at(10) : [], near1 = top ? at(1.5) : [];
+  ok("constructed: a holding carried at ten times its NAV's value is flagged off one unit basis",
+    !!top && tenfold.length === 1 && unitBasisDiffers(tenfold[0]), top ? `${top.security} ×10 → ratio ${tenfold[0]?.unitRatio?.toFixed(2)}` : "no holding in scope");
+  ok("…and one at 1.5 times is not — the bound is a factor of two, not a tolerance",
+    !!top && near1.length === 1 && !unitBasisDiffers(near1[0]), `ratio ${near1[0]?.unitRatio?.toFixed(2)}`);
+  // THE UNIT TRAP ON THE SAME ROW: its rupee figure is the book's value, never
+  // units × NAV, which is a tenth of it here — the error that once put ₹20 Cr of
+  // gold at ₹2 Cr.
+  const byUnits = top && tenfold[0] ? top.quantity * tenfold[0].nav : NaN;
+  ok("constructed: that row carries the book's value, never units × NAV",
+    !!top && tenfold.length === 1 && Math.abs(tenfold[0].value - top.marketValue * 10) <= 1 && Math.abs(tenfold[0].value - byUnits) > 1,
+    top ? `row ${cr(tenfold[0]?.value ?? NaN)} · book ${cr(top.marketValue * 10)} · units×NAV ${cr(byUnits)}` : "no holding in scope");
 }
 
 // ── MNT-15 · THE LIQUID FUNDS THE CARD LEAVES OUT ARE COUNTED ───────────────
@@ -308,8 +343,20 @@ const amfiFile = (() => {
 {
   const down = navMoverModel(rows, accts, null);
   ok("with the store down, AMFI's schemes are still priced", down.rows.length > 0 && down.rows.every((r) => r.source === "amfi"));
+  // NO SCHEME THE CARD DRAWS NEEDS THE STORE ANY MORE: the only ones AMFI's file
+  // did not carry were the DSP ETFs, which left the book with their last-movement
+  // "marks" (Stage 10cz). So the branch is exercised the only way it can be —
+  // with AMFI's file made to miss the largest holding in scope, which must then
+  // be NAMED with the store's absence as the reason, never dropped or zeroed.
+  const inScopeTop = [...rows].filter((p) => (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p))))
+    .sort((a, b) => b.marketValue - a.marketValue)[0];
+  const missed = inScopeTop
+    ? navMoverModel(rows, accts, null, (k) => (k === inScopeTop.securityKey ? null : fundNavFor({ securityKey: k })))
+    : null;
   ok("…and a scheme only the store could price is named with that reason",
-    down.skipped.some((s) => /look-through store/.test(s.reason) && /did not respond/.test(s.reason)));
+    !!missed && missed.skipped.some((s) => s.securityKey === inScopeTop.securityKey
+      && /look-through store/.test(s.reason) && /did not respond/.test(s.reason)),
+    inScopeTop ? `${inScopeTop.security}, with AMFI's file made to miss it` : "no holding in scope");
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall nav-mover checks passed");

@@ -18,7 +18,9 @@ import {
   DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf, unvaluedStatementLinesOf } from "@/lib/accounts";
-import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { depositoryBalancesOf } from "@/lib/fundNavs";
+import { shareCandidates } from "@/lib/depositoryShares";
 import { fifoTotals } from "@/lib/fifo";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
@@ -29,8 +31,7 @@ import { AbsentCell, AbsentFromBook, AbsentSection, DASH } from "@/components/Ab
 import { ownerMeasuredReturn, measuredAccountsReturn, entityYtdPct } from "@/lib/returns";
 import { moneyWeightedReturn } from "@/lib/bucketXirr";
 import { capitalMovesWithCalls } from "@/lib/tranches";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS } from "@/data/glowData";
-import { fmtNum, fmtPct, changeColor, fmtCurrency, fmtDate } from "@/lib/format";
+import { displayDepositoryName, fmtNum, fmtPct, changeColor, fmtCurrency, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
@@ -116,6 +117,14 @@ const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i <
  */
 const ENTITY_PARAM = "entity";
 const ALL_ENTITIES = "All";
+/**
+ * THE LISTED SHARES A TRANSACTION-ONLY DEMAT REPORTS (Stage 10cy), by account
+ * and ISIN — the rows the live quote values while the feed prices them. Built
+ * once at module scope, because it reads only the generated book, and so no
+ * hook sits after this page's early return.
+ */
+const SHARE_CANDIDATES = new Map(
+  shareCandidates().map((p) => [`${p.accountId}|${(p.isin ?? "").toUpperCase()}`, p] as const));
 
 /**
  * ── WHAT THE ENTITY WEIGHTS DIVIDE BY: ONE BASIS, AND IT IS STATED ──────────
@@ -594,10 +603,48 @@ export function FamilyEntities() {
       ? `${nU === 1 ? "One account" : `${nU} accounts`} of ${scope}'s ${nU === 1 ? "carries" : "carry"} no valued position in this book, each for the reason its line's hover gives${unvaluedKind ? ` — ${unvaluedKind}` : ""} — so ${nU === 1 ? "it stands" : "they stand"} in no table above.`
       : null,
     nP > 0
-      ? `${nU > 0 ? (nP === 1 ? "One more account" : `${nP} more accounts`) : (nP === 1 ? "One account" : `${nP} accounts`)} of ${scope}'s ${nP === 1 ? "is" : "are"} valued only in part: ${nP === 1 ? "its" : "their"} cash-equivalent funds are in the ${money(selMV)}, at AMFI's NAV, and the rest of what ${nP === 1 ? "it holds" : "they hold"} stands in no table above — ${nP === 1 ? "its own note, the hover on its line," : "each one's own note, the hover on its line,"} says which is which.`
+      // Stage 10cy widened what a partly valued account values past its cash
+      // funds — its other mutual funds at AMFI's NAV and its listed shares at
+      // the live quote — so the clause names both prices.
+      ? `${nU > 0 ? (nP === 1 ? "One more account" : `${nP} more accounts`) : (nP === 1 ? "One account" : `${nP} accounts`)} of ${scope}'s ${nP === 1 ? "is" : "are"} valued only in part: the funds and listed shares ${nP === 1 ? "its" : "their"} own note names are in the ${money(selMV)} — each fund at AMFI's NAV, each listed share at the live quote — and the rest of what ${nP === 1 ? "it holds" : "they hold"} stands in no table above and opens under ${nP === 1 ? "its" : "each one's"} line. ${nP === 1 ? "Its own note, the hover on its line," : "Each one's own note, the hover on its line,"} says which is which.`
       : null,
     "A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.",
   ].filter(Boolean).join(" ");
+  /**
+   * …AND WHAT IN IT IS NOT VALUED, BALANCE BY BALANCE (Stage 10cy). The note
+   * counted them; the family asked to SEE them. `depositoryBalancesOf` is the
+   * one classifier the note itself reads, so a balance cannot be counted there
+   * and listed differently here. The depository's copy of units a fund's own
+   * statement reports is left out: it is in the table above, through the fund.
+   */
+  const partlyValuedBalances = partlyValued.map((a) => {
+    const valued = portfolio.positions.filter((p) => p.accountId === a.accountId && p.depositoryUnits);
+    const balances = depositoryBalancesOf(a.accountId, valued);
+    return {
+      account: a,
+      notValued: balances.filter((b) => !b.valued && !b.reportedBy).map((b) => {
+        const isin = (b.window.isin ?? "").toUpperCase();
+        const share = SHARE_CANDIDATES.get(`${a.accountId}|${isin}`);
+        return {
+          window: b.window,
+          // THE BOOK'S OWN NAME for the company where it carries one — the
+          // share's label, else a holding of the same ISIN — and otherwise
+          // the depository's own, with its `#` furniture taken off. Never the
+          // statement's capitals (Stage 10cc).
+          name: share?.security
+            ?? (isin ? portfolio.positions.find((p) => (p.isin ?? "").toUpperCase() === isin)?.security : undefined)
+            ?? displayDepositoryName(b.window.security ?? b.window.securityKey),
+          // Why nothing values it, per balance: a listed share the live quote
+          // prices only while the feed answers, or a holding nothing prices.
+          reason: share
+            ? "A listed share — valued at the live quote only while the quote feed prices it, and the feed has not priced it."
+            : isin.startsWith("INE")
+            ? "The depository prints units and no rate, and this book has no NSE symbol to fetch a live quote with — no statement prices it."
+            : "The depository prints units and no rate, and no published price reaches it — no statement prices it.",
+        };
+      }),
+    };
+  });
   /**
    * AND THE LINES A STATEMENT RECORDS THAT NOTHING VALUES, inside an account
    * the table above DOES value (A-17). The ICICI NSDL demat's par-value rows,
@@ -615,7 +662,19 @@ export function FamilyEntities() {
     // is not LISTED here — it IS in the figure above. It is counted in its
     // account's hover, and an account whose every recorded line is valued that
     // way (Aarti's ABSL units) has nothing to list and draws no line at all.
-    .map((g) => ({ ...g, live: g.lines.filter((l) => l.valuedLive).length, lines: g.lines.filter((l) => !l.valuedLive) }))
+    .map((g) => ({
+      ...g,
+      live: g.lines.filter((l) => l.valuedLive).length,
+      // Two prices, two sentences: a fund at AMFI's NAV, a listed share at the
+      // live quote (Stage 10cy, `no-price`).
+      liveQuote: g.lines.filter((l) => l.valuedLive?.depositoryUnits?.kind === "no-price").length,
+      lines: g.lines.filter((l) => !l.valuedLive).map((l) => ({
+        ...l,
+        // A LISTED share the live quote would value, and the feed has not
+        // priced: its reason says the statement's half and this half both.
+        quoteOnly: SHARE_CANDIDATES.has(`${g.account.accountId}|${(l.row.isin ?? "").toUpperCase()}`),
+      })),
+    }))
     .filter((g) => g.lines.length > 0);
   /** …and the clause the hover adds for them (A-17): an account the table
    *  above DOES value can still record lines nothing values, so the hint that
@@ -1498,14 +1557,34 @@ export function FamilyEntities() {
                     its name, where every other account on this card keeps its
                     reason. */}
                 {partlyValued.map((a) => (
-                  <li key={a.accountId} data-unvalued-account={a.accountId} data-partial-account={a.accountId}>
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-slate-300" title={a.partialValuation ?? undefined} data-unvalued-reason={a.partialValuation ? "" : undefined}>
-                        {a.provider}
-                        <span className="text-slate-500"> · {a.accountNo}</span>
-                      </span>
-                      <span className="text-[11px] text-amber-400/80 whitespace-nowrap">partly valued — only its cash-equivalent funds</span>
-                    </div>
+                  <li key={a.accountId} data-unvalued-account={a.accountId} data-partial-account={a.accountId}
+                    data-partial-not-valued={partlyValuedBalances.find((x) => x.account.accountId === a.accountId)?.notValued.length ?? 0}>
+                    {/* The balances nothing values open under the account, each
+                        with its units and its reason as the line's hover — the
+                        same shape as a valued account's unvalued lines below. */}
+                    <details>
+                      <summary className="flex cursor-pointer items-baseline justify-between gap-3">
+                        <span className="text-slate-300" title={a.partialValuation ?? undefined} data-unvalued-reason={a.partialValuation ? "" : undefined}>
+                          {a.provider}
+                          <span className="text-slate-500"> · {a.accountNo}</span>
+                        </span>
+                        <span className="text-[11px] text-amber-400/80 whitespace-nowrap">
+                          {`partly valued · ${partlyValuedBalances.find((x) => x.account.accountId === a.accountId)?.notValued.length ?? 0} held, not valued`}
+                        </span>
+                      </summary>
+                      <ul className="mt-1 space-y-0.5 pl-3 text-[12px]">
+                        {(partlyValuedBalances.find((x) => x.account.accountId === a.accountId)?.notValued ?? []).map((b) => (
+                          <li key={`${b.window.securityKey}-${b.window.isin ?? ""}`} data-partial-line={b.window.securityKey}
+                            data-partial-units={b.window.closing ?? undefined}
+                            className="flex items-baseline justify-between gap-3" title={b.reason}>
+                            <span className="text-slate-400">{b.name}</span>
+                            <span className="mono whitespace-nowrap text-slate-500">
+                              {`${fmtNum(b.window.closing as number, Number.isInteger(b.window.closing) ? 0 : 3)} units`}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   </li>
                 ))}
                 {/* A VALUED ACCOUNT WHOSE STATEMENT RECORDS MORE THAN IS VALUED —
@@ -1513,13 +1592,16 @@ export function FamilyEntities() {
                     with a quantity and no value, each line's reason its hover. */}
                 {unvaluedLines.map((g) => {
                   const live = g.live;
+                  const liveQuote = g.liveQuote;
+                  const liveNav = live - liveQuote;
                   const notValued = g.lines.length;
                   return (
                     <li key={`lines-${g.account.accountId}`} data-unvalued-lines-account={g.account.accountId}
-                      data-unvalued-lines={notValued} data-unvalued-lines-live={live} data-unvalued-lines-elsewhere={g.reportedElsewhere}>
+                      data-unvalued-lines={notValued} data-unvalued-lines-live={live} data-unvalued-lines-live-quote={liveQuote}
+                      data-unvalued-lines-elsewhere={g.reportedElsewhere}>
                       <details>
                         <summary className="flex cursor-pointer items-baseline justify-between gap-3"
-                          title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${live ? ` ${live} more ${live === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${live === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}`}>
+                          title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${liveNav ? ` ${liveNav} more ${liveNav === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${liveNav === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${liveQuote ? ` ${liveQuote} more ${liveQuote === 1 ? "is a listed share" : "are listed shares"} recorded the same way and valued here at the live quote, only while the quote feed prices ${liveQuote === 1 ? "it" : "them"} — so ${liveQuote === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}`}>
                           <span className="text-slate-300">
                             {g.account.provider}
                             <span className="text-slate-500"> · {g.account.accountNo}</span>
@@ -1531,7 +1613,11 @@ export function FamilyEntities() {
                         <ul className="mt-1 space-y-0.5 pl-3 text-[12px]">
                           {g.lines.map((l) => (
                             <li key={`${l.row.securityKey}-${l.row.isin ?? ""}`} data-unvalued-line={l.row.securityKey}
-                              className="flex items-baseline justify-between gap-3" title={l.row.reason ?? undefined}>
+                              data-unvalued-line-quote-only={l.quoteOnly ? "" : undefined}
+                              className="flex items-baseline justify-between gap-3"
+                              title={[l.row.reason ? `${l.row.reason.charAt(0).toUpperCase()}${l.row.reason.slice(1)}.` : null,
+                                l.quoteOnly ? "A listed share: valued at the live quote only while the quote feed prices it, and the feed has not priced it." : null]
+                                .filter(Boolean).join(" ") || undefined}>
                               <span className="text-slate-400">{l.row.security}</span>
                               <span className="mono whitespace-nowrap text-slate-500">
                                 {l.row.quantity == null ? DASH : `${fmtNum(l.row.quantity, Number.isInteger(l.row.quantity) ? 0 : 3)} units`}

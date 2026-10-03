@@ -171,9 +171,17 @@ function main() {
 
   const bookSrc = readFileSync(BOOK, "utf8");
   const positions = bookArray(bookSrc, "BOOK_POSITIONS") ?? [];
+  /**
+   * AND EVERY LINE THE BOOK CARRIES AS A QUANTITY (Stage 10cz). A fund a
+   * Motilal Oswal holding statement records is a `BOOK_UNVALUED_HOLDINGS` row
+   * since the statement's rate turned out to be a last movement's price, not a
+   * valuation — and the dashboard still shows it, valued at AMFI's NAV. Read off
+   * positions alone, its printed name and ISIN would drop out of this map.
+   */
+  const recorded = bookArray(bookSrc, "BOOK_UNVALUED_HOLDINGS") ?? [];
   /** The book's own printed name and ISIN per securityKey — the third witness. */
   const printed = new Map();
-  for (const p of positions) {
+  for (const p of [...positions, ...recorded]) {
     if (!printed.has(p.securityKey)) printed.set(p.securityKey, { name: p.security, isin: p.isin ?? null });
   }
 

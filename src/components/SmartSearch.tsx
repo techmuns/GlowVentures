@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, CornerDownLeft, Clock } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { buildSearchIndex, fencedIdentityOf, searchEntries, type SearchEntry, type SearchHit } from "@/lib/searchIndex";
-import { BOOK_CAPITAL_MOVES, BOOK_POLYCAB } from "@/data/glowData";
+import { BOOK_CAPITAL_MOVES, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { AbsentFromBook } from "@/components/Absent";
 
 // ── THE SEARCH BOX IN THE TOP BAR ────────────────────────────────────────────
@@ -88,6 +88,10 @@ export function SmartSearch() {
   const index = useMemo(
     () => (portfolio ? buildSearchIndex({
       positions: portfolio.positions, consolidated, accounts: portfolio.accounts, money: (n) => fmtFromBase(n, { compact: true }),
+      // What a statement records at a quantity and nothing values is still a
+      // holding a reader may type (Stage 10cz); the index offers it only where
+      // no valued row already stands for it.
+      recorded: BOOK_UNVALUED_HOLDINGS,
       // Whether a redemption is really on the Transactions tab (SC-C5) — the
       // family's own dated capital record, which that tab draws.
       capitalMoves: BOOK_CAPITAL_MOVES,

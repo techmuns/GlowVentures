@@ -300,6 +300,105 @@ export function threePFlows(text, warn) {
   }));
 }
 
+// ── A MUTUAL-FUND FOLIO'S OWN PURCHASE ROWS (Stage 10cy) ──────────────────────
+//
+// Helios (CAMS) and Motilal Oswal Active Momentum (KFintech) print each purchase
+// as a Gross Purchase, the Stamp Duty taken from it and a dated Net Purchase
+// carrying the NAV, the units allotted and the running unit balance. The reader
+// took the summary row above them and nothing else, so both funds showed no
+// "Invested on" date and no dated record at all while the statement printed it.
+//
+// FOUR CHECKS, AND A TABLE THAT FAILS ONE IS NOT PUBLISHED:
+//   1. gross − stamp duty = the printed net, to the paisa;
+//   2. the net = units × NAV, within the precision the two are printed to;
+//   3. the running units reproduce the printed Balance Units on every row;
+//   4. the last balance is the unit count the Account Summary holds.
+// A dated row carrying a figure that is none of the declared types is NAMED and
+// withholds the table, because a record with a row missing looks exactly like a
+// complete one.
+const MF_GROSS = /^(?:(\d{2}\/\d{2}\/\d{4})\s+)?Gross(?:\s+Ongoing)?\s+Purchase\s+([\d,]+\.\d+)$/i;
+const MF_STAMP = /^(?:(\d{2}\/\d{2}\/\d{4})\s+)?(?:Less:\s*)?Stamp\s+Duty\s+([\d,]+\.\d+)$/i;
+const MF_DATED_FIGURE = /^\d{2}\/\d{2}\/\d{4}\s+.*\d[\d,]*\.\d+/;
+
+/**
+ * `net` matches ONE Net Purchase row and returns `{ date, net, nav, units,
+ * balance }` from it — the column order is the layout's, so each layout
+ * declares its own. `heldUnits` re-reads the Account Summary's unit count, and
+ * `security` names the holding exactly as the summary row does, so the dated
+ * rows join the position they bought.
+ */
+export function mfPurchaseFlows({ net, heldUnits, security }) {
+  return (text, warn) => {
+    const rows = [];
+    let pendingGross = null, pendingStamp = null, undeclared = 0;
+    for (const raw of text.split("\n")) {
+      const line = raw.trim();
+      let m;
+      if ((m = MF_GROSS.exec(line))) { pendingGross = n(m[2]); continue; }
+      if ((m = MF_STAMP.exec(line))) { pendingStamp = n(m[2]); continue; }
+      const r = net(line);
+      if (r) {
+        rows.push({ ...r, gross: pendingGross, stamp: pendingStamp });
+        pendingGross = null; pendingStamp = null;
+        continue;
+      }
+      if (MF_DATED_FIGURE.test(line)) undeclared += 1;
+    }
+    if (!rows.length) return [];
+    if (undeclared) {
+      warn("transaction-type-not-declared",
+        `${undeclared} dated row(s) carry a figure and a transaction type this reader does not declare; `
+        + "the dated record is withheld rather than published with rows missing from it");
+      return [];
+    }
+    const fails = [];
+    const money = (v) => Math.round((v ?? 0) * 100) / 100;
+    let run = 0;
+    for (const r of rows) {
+      if (r.gross !== null && Math.abs(money(r.gross - (r.stamp ?? 0)) - money(r.net)) > 0.01) {
+        fails.push(`${r.date}: ${r.gross} less ${r.stamp ?? 0} stamp duty is not the printed ${r.net}`);
+      }
+      const bound = r.units * 5e-5 + r.nav * 5e-4;
+      if (Math.abs(r.net - r.units * r.nav) > bound + 0.01) {
+        fails.push(`${r.date}: ${r.units} units at ${r.nav} is not the printed ${r.net}`);
+      }
+      run = Math.round((run + r.units) * 1e3) / 1e3;
+      if (r.balance !== null && Math.abs(run - r.balance) > 0.0005) {
+        fails.push(`after ${r.date} the units run to ${run} against a printed balance of ${r.balance}`);
+      }
+    }
+    const held = heldUnits(text);
+    if (held === null || Math.abs(run - held) > 0.0005) {
+      fails.push(`the purchases allot ${run} units against the ${held ?? "unread"} the Account Summary holds`);
+    }
+    if (fails.length) {
+      warn("dated-table-does-not-tie", "the purchase rows are not published for this folio: " + fails.join("; "));
+      return [];
+    }
+    const name = security(text);
+    return rows.map((r) => makeCashFlow({
+      date: r.date,
+      description: "Purchase",
+      security: name,
+      kind: "contribution",
+      // The GROSS is what left the bank; the net is what bought units after the
+      // stamp duty. A row that prints no gross carries its net as the amount.
+      amount: r.gross ?? r.net,
+      netAmount: r.gross === null ? null : r.net,
+      // THE CHARGE THE ROW PRINTS — the Stamp Duty line between the gross and
+      // the net, which check (1) above ties to the paisa. It is carried as the
+      // statement prints it (VD-24's `expenses`, the field 3P's setup expense
+      // and stamp duty ride in), so a cost struck on every rupee PAID reads the
+      // printed charge rather than a subtraction of ours. A gross printed with
+      // no Stamp Duty line is a measured nil; a row with no gross carries none.
+      expenses: r.gross === null ? null : money(r.stamp ?? 0),
+      units: r.units,
+      balance: r.balance,
+      notes: `allotment NAV ${r.nav}`,
+    }));
+  };
+}
+
 // ── BUOYANT'S DATED RECORD — THE DEPOSITS, AND A CLASS SWITCH THAT IS NOT A SALE ─
 //
 // *"The user does not believe this data."* The Portfolio Monitor put Buoyant at
@@ -983,6 +1082,24 @@ const LAYOUTS = [
     folio: (text) => FIELD(text, "FOLIO", String.raw`(\d{6,})`),
     asOf: (text) => toIso((/Portfolio Summary as on\s+(\d{2}\/\d{2}\/\d{4})/i.exec(text) ?? [])[1]),
     holder: (text) => FIELD(text, "Name"),
+    /**
+     * `06/08/2026 Net Purchase ( Transaction Date : 06/08/2026 ) 21,41,89,290.54
+     *  14.0491 15245765.959 15245765.959` — amount, NAV, units, unit balance.
+     */
+    flowsFrom: mfPurchaseFlows({
+      net: (line) => {
+        const m = /^(\d{2}\/\d{2}\/\d{4})\s+Net\s+Purchase(?:\s*\(\s*Transaction\s+Date\s*:\s*\d{2}\/\d{2}\/\d{4}\s*\))?\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)$/i.exec(line);
+        return m ? { date: toIso(m[1]), net: n(m[2]), nav: n(m[3]), units: n(m[4]), balance: n(m[5]) } : null;
+      },
+      heldUnits: (text) => {
+        const m = /(Motilal\s+Oswal\s+Active\s+Momentum\s+Fund[^\n]*?)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)/.exec(text);
+        return m ? n(m[2]) : null;
+      },
+      security: (text) => {
+        const m = /(Motilal\s+Oswal\s+Active\s+Momentum\s+Fund[^\n]*?)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)/.exec(text);
+        return m ? m[1].trim() : null;
+      },
+    }),
   },
   {
     key: "helios",
@@ -1018,6 +1135,25 @@ const LAYOUTS = [
     // CAMS prints the holder on its own line, immediately before the address,
     // with `Joint Holder 2 :` trailing it on the same printed row.
     holder: (text) => (/\n\s*([A-Z][A-Za-z]+(?:\s+[A-Z]\.?[A-Za-z]*){1,3})\s+Joint Holder 2/i.exec(text) ?? [])[1],
+    /**
+     * `06/08/2026 Net Purchase 16.21 309,984,500.77 16.2100 19,123,041.380
+     *  19,123,041.380` — NAV, amount, price, units, balance. The Gross Ongoing
+     * Purchase and Stamp Duty rows above it print no date of their own.
+     */
+    flowsFrom: mfPurchaseFlows({
+      net: (line) => {
+        const m = /^(\d{2}\/\d{2}\/\d{4})\s+Net\s+Purchase\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)$/i.exec(line);
+        return m ? { date: toIso(m[1]), nav: n(m[4]), net: n(m[3]), units: n(m[5]), balance: n(m[6]) } : null;
+      },
+      heldUnits: (text) => {
+        const m = /(\d{2}-\w{3}-\d{4})\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)/.exec(text);
+        return m ? n(m[3]) : null;
+      },
+      security: (text) => {
+        const m = /\/\s*(Helios[^\n]*?)\s*-\s*(INF[0-9A-Z]{9})/i.exec(text);
+        return m ? m[1].replace(/\s*\*\s*/g, " ").replace(/\s+/g, " ").trim() : "Helios Flexi Cap Fund - Direct Growth";
+      },
+    }),
   },
   {
     key: "threeP",

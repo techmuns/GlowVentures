@@ -22,10 +22,6 @@
   {
    "code": "aif-units-carry-face-value-not-nav",
    "detail": "2 AIF holding(s) are carried with units and NO market value, because the rate this statement prints for them is the FACE VALUE the units were issued at rather than a NAV — 3P India Equity Fund 1 — Class B3 (2053614.026 units at a face value of 100); Buoyant Opportunities Strategy — Class A4 (3416657.416 units at a face value of 100). Where the fund itself issues a statement in this book, that is where the valuation comes from."
-  },
-  {
-   "code": "field-not-in-document-contract",
-   "detail": "Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
   }
  ],
  "holdings": [
@@ -52,6 +48,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": null,
    "faceValue": 100,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": null,
    "gainLoss": null,
    "pctGainLoss": null,
@@ -92,6 +90,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": null,
    "faceValue": 100,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": null,
    "gainLoss": null,
    "pctGainLoss": null,

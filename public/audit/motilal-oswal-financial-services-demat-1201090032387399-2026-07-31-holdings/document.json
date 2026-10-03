@@ -24,12 +24,8 @@
    "detail": "the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, and Aarti Jaisinghani's PAN in the registry does not end that way. The name and the PAN name different taxpayers, so the account is not attributed to either."
   },
   {
-   "code": "printed-value-not-quantity-times-rate",
-   "detail": "1 of 3 row(s) print a value that is not their own quantity x rate — e.g. ICICI LIQF D-GROWTH at 46654.378 x 394.625 = 18410983.92 against a printed 11909782.5. The printed column sums to the printed total exactly and still implies impossible prices, so market value is DERIVED and the printed figure is kept only as the check."
-  },
-  {
-   "code": "field-not-in-document-contract",
-   "detail": "Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
+   "code": "rate-is-last-movement-price",
+   "detail": "3 holding(s) print a rate and a value that describe the holding's LAST DEPOSITORY MOVEMENT, not its balance — e.g. ICICI LIQF D-GROWTH: 46654.378 held, rate 394.625, value 11909782.5, which is 30180.000 units, the quantity of that movement. So these carry their units and no market value; the rate and value are kept as `lastMovementRate` / `lastMovementValue`, a transaction price rather than a valuation. The value column sums to the printed Total Holding Valuation of Rs 75769571.51 to the rupee, so every row was read — and that total is a sum of last-movement values, not what the account is worth."
   }
  ],
  "holdings": [
@@ -46,7 +42,7 @@
    "quantity": 46654.378,
    "unitCost": null,
    "totalCost": null,
-   "marketPrice": 394.625,
+   "marketPrice": null,
    "accruedIncome": null,
    "distributedIncome": null,
    "realized": null,
@@ -56,13 +52,15 @@
    "annualizedYieldPct": null,
    "priceAsOn": null,
    "faceValue": null,
-   "marketValue": 18410983.92,
+   "lastMovementRate": 394.625,
+   "lastMovementValue": 11909782.5,
+   "marketValue": null,
    "gainLoss": null,
    "pctGainLoss": null,
-   "pctAssets": 22.38,
+   "pctAssets": null,
    "unrealized": null,
    "printed": {
-    "marketValue": 11909782.5,
+    "marketValue": null,
     "gainLoss": null,
     "pctGainLoss": null,
     "pctAssets": null,
@@ -86,7 +84,7 @@
    "quantity": 1092470.994,
    "unitCost": null,
    "totalCost": null,
-   "marketPrice": 34.507,
+   "marketPrice": null,
    "accruedIncome": null,
    "distributedIncome": null,
    "realized": null,
@@ -96,13 +94,15 @@
    "annualizedYieldPct": null,
    "priceAsOn": null,
    "faceValue": null,
-   "marketValue": 37697896.59,
+   "lastMovementRate": 34.507,
+   "lastMovementValue": 37697896.59,
+   "marketValue": null,
    "gainLoss": null,
    "pctGainLoss": null,
-   "pctAssets": 45.82,
+   "pctAssets": null,
    "unrealized": null,
    "printed": {
-    "marketValue": 37697896.59,
+    "marketValue": null,
     "gainLoss": null,
     "pctGainLoss": null,
     "pctAssets": null,
@@ -126,7 +126,7 @@
    "quantity": 613293.929,
    "unitCost": null,
    "totalCost": null,
-   "marketPrice": 42.658,
+   "marketPrice": null,
    "accruedIncome": null,
    "distributedIncome": null,
    "realized": null,
@@ -136,13 +136,15 @@
    "annualizedYieldPct": null,
    "priceAsOn": null,
    "faceValue": null,
-   "marketValue": 26161892.42,
+   "lastMovementRate": 42.658,
+   "lastMovementValue": 26161892.42,
+   "marketValue": null,
    "gainLoss": null,
    "pctGainLoss": null,
-   "pctAssets": 31.8,
+   "pctAssets": null,
    "unrealized": null,
    "printed": {
-    "marketValue": 26161892.42,
+    "marketValue": null,
     "gainLoss": null,
     "pctGainLoss": null,
     "pctAssets": null,
@@ -157,7 +159,7 @@
  "totals": {
   "equityMarketValue": null,
   "cashValue": null,
-  "totalMarketValue": 82270772.93148999,
+  "totalMarketValue": null,
   "equityCost": null,
   "totalCost": null,
   "gainLoss": null,
@@ -196,5 +198,5 @@
   "AARTI AJAY JAISINGHANI"
  ],
  "stitches": [],
- "derivedPortfolioTotal": 82270772.93
+ "derivedPortfolioTotal": null
 }

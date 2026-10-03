@@ -7,7 +7,8 @@
 // `costedFigures` and `commonMark` are the one place those are struck; this
 // holds them to the GENERATED book, by a second expression, so it moves with
 // the next drop rather than going stale on a literal.
-import { BOOK_POSITIONS, BOOK_ACCOUNTS } from "@/data/glowData";
+import { BOOK_ACCOUNTS } from "@/data/glowData";
+import { LIVE_PRICED } from "./liveBook";
 import { dedupedPositions, currentHoldings, holdingBucket } from "@/lib/analytics";
 import { costedFigures, commonMark, reportsCost } from "@/lib/clubbedFigures";
 import type { Position } from "@/lib/types";
@@ -20,7 +21,17 @@ const ok = (name: string, pass: boolean, detail = "") => {
 const near = (a: number | null, b: number, tol: number) => a !== null && Math.abs(a - b) <= tol;
 
 const eng = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a.engagement]));
-const current = currentHoldings(dedupedPositions(BOOK_POSITIONS as Position[]));
+/**
+ * THE BOOK THE MONITOR CLUBS, ON A DAY THE QUOTE FEED ANSWERS. Since Stage 10cz
+ * the family's own Motilal demat shares are rows only while a quote prices them
+ * (their statement's rate is the last depository movement, never a price), and
+ * those uncosted rows are exactly what ICICI Bank's costed Goldstandard lines are
+ * clubbed with. On the statement basis alone that case left the book and this
+ * suite's load-bearing check passed over nothing — so it reads the live book
+ * with a STUB feed pricing every recorded share (`liveBook.ts`), as `check:pages`
+ * does with its fixture feed. No stubbed price is asserted on.
+ */
+const current = currentHoldings(dedupedPositions(LIVE_PRICED));
 const byKey = new Map<string, Position[]>();
 for (const p of current) byKey.set(p.securityKey, [...(byKey.get(p.securityKey) ?? []), p]);
 
