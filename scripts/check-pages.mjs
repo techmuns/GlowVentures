@@ -534,24 +534,6 @@ function bookObject(src, name) {
 const FUND_ROUTE_ENGAGEMENTS = new Set(["AIF", "Distribution", "Advisory"]);
 
 /**
- * HOW MANY DISCRETIONARY MANDATES THE BOOK HOLDS — read from the generated book.
- *
- * The whole-book drill-down shows each of them as ONE ROW linking to its own
- * page, which is the way into the only look-through this book has. Asserting
- * that by counting links needs a number to count against, and a literal here
- * would be a second source for a figure `build-book` generates.
- */
-const MANDATE_COUNT = (() => {
-  try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const accounts = bookArray(src, "BOOK_ACCOUNTS");
-    const positions = bookArray(src, "BOOK_POSITIONS");
-    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
-    const held = new Set(positions.map((p) => p.accountId));
-    return accounts.filter((a) => a.engagement === "PMS" && held.has(a.accountId)).length || null;
-  } catch { return null; }
-})();
-/**
  * ── WHAT A SCHEME IS CALLED ON SCREEN, DERIVED FROM BOTH GENERATED FILES ────
  *
  *   *"why should everywhere you show me direct plan growth? You're wasting a
@@ -651,6 +633,38 @@ function smallKeysOf(positions) {
   for (const [k, v] of byKey) if (v !== 0 && Math.abs(v) < NEGLIGIBLE_FLOOR) out.add(k);
   return out;
 }
+/**
+ * HOW MANY DISCRETIONARY MANDATES THE BOOK HOLDS — read from the generated book.
+ *
+ * The whole-book drill-down shows each of them as ONE ROW linking to its own
+ * page, which is the way into the only look-through this book has. Asserting
+ * that by counting links needs a number to count against, and a literal here
+ * would be a second source for a figure `build-book` generates.
+ *
+ * A MANDATE IS COUNTED WHERE IT HOLDS SOMETHING THE PAGE DRAWS. That page lists
+ * CURRENT holdings — a fund redeemed to nil is closed, and a security worth
+ * under ₹1,000 across the book is a speck — so a mandate whose every line is
+ * one or the other draws no row. ASK's two discretionary accounts are that
+ * case since the September 2026 delivery: each fact sheet closes at ₹0 and the
+ * statement keeps a bank balance of ₹0.01 and ₹0.34. Counted here, they would
+ * be two links the page is right not to draw. Struck through `smallKeysOf`, the
+ * one copy of the floor in this file, and the closed test beside it — both
+ * re-derived from the book, never imported from `analytics.ts`.
+ */
+const MANDATE_COUNT = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const small = smallKeysOf(positions);
+    const held = new Set(positions
+      .filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null))
+      .filter((p) => !small.has(p.securityKey))
+      .map((p) => p.accountId));
+    return accounts.filter((a) => a.engagement === "PMS" && held.has(a.accountId)).length || null;
+  } catch { return null; }
+})();
 
 const SECURITY_AXIS_BOOK = (() => {
   try {
@@ -8419,8 +8433,14 @@ const PERF_BOOK = (() => {
     const SIGN = { realized: 1, unrealized: 1, gainPriorToTakeover: 1, income: 1, profit: 1,
       fees: -1, expenses: -1, otherExpenses: -1, accruedIncome: 1, changeInAccruals: 1 };
     const OPTIONAL = ["gainPriorToTakeover", "profit", "expenses", "otherExpenses", "accruedIncome", "changeInAccruals"];
+    // ON OR BEFORE, NOT ONLY ON — written again here rather than imported from
+    // `build-book`. ASK's profit and loss account runs from 1 April 2019, the
+    // start of the financial year its mandates opened in (26 July and
+    // 6 September 2019), so it covers each account's whole life. Struck on
+    // equality, both columns read as plain windows with no opening, and the
+    // checker withheld two columns the page is right to draw from a nil.
     const basisOf = (b, inception) => {
-      if (inception && b.periodFrom === inception) return "since-inception";
+      if (inception && b.periodFrom <= inception) return "since-inception";
       const fy = /^(\d{4})-04-01$/.exec(b.periodFrom);
       if (fy && b.periodTo >= b.periodFrom && b.periodTo <= `${Number(fy[1]) + 1}-03-31`) return "financial-year-to-date";
       return "window";
