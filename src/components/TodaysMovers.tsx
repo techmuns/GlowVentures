@@ -12,6 +12,7 @@ import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
 import { dailyMovers, type DailyMover } from "@/lib/dailyMovers";
 import { symbolCoverage, symbolsFor } from "@/lib/quotes";
 import { shareCandidates } from "@/lib/depositoryShares";
+import { liveWithheldReason } from "@/lib/corporateActions";
 
 // ── TODAY'S MOVERS, OVER DIRECT EQUITY ───────────────────────────────────────
 //
@@ -224,6 +225,20 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
     const { rows, session, omitted, observedFrom, observedTo } = dailyMovers(scope, quoteFeed, corporateActionReturns, accts);
     const impactRows = rows.filter((r) => r.dayChange !== null && r.marketValue !== null);
     /**
+     * THE NAMES RANKED BY % MOVE ALONE, AND WHY (Stage 10dc). The corporate-
+     * action gate held their live VALUE back — a sale recorded after the
+     * statement, a share event the capture cannot allocate — so their money
+     * impact is unknown while the exchange's own % move is not. The card ranks
+     * them by % and leaves them out of every rupee figure; the face says how
+     * many, and the hover names them with the gate's own reason, because "share
+     * counts await verification" is not a cause a reader can act on.
+     */
+    const priceOnly = rows.filter((r) => r.dayChange === null);
+    const priceOnlyReasons = [...new Set(priceOnly.flatMap((r) => scope
+      .filter((p) => p.securityKey === r.securityKey)
+      .map((p) => liveWithheldReason(p, corporateActionReturns))
+      .filter((x): x is string => !!x)))];
+    /**
      * THE DATES OF THE QUANTITIES THE DAY'S PRICE MOVE IS MULTIPLIED BY (MNT-16).
      * A live price is today's; the number of shares it moves is what each
      * account's statement last reported, and on this book that runs from
@@ -272,12 +287,17 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       : (a: Row, b: Row) => Math.abs(b.dayChangePct) - Math.abs(a.dayChangePct);
     return {
       rows, session, omitted, observedFrom, observedTo, impactNames: impactRows.length, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols, qtyDates,
+      priceOnlyNames: priceOnly.map((r) => r.security), priceOnlyReasons,
       pricedNames: rows.length, distinct, unpriceable: cov.withoutSymbol,
       gainers: [...gainers].sort(cmp).slice(0, TOP_N),
       losers: [...losers].sort(cmp).slice(0, TOP_N),
       gainCount: gainers.length, lossCount: losers.length, flat,
       gainSum: gainers.length && gainers.every((r) => r.dayChange !== null) ? gainers.reduce((a, r) => a + r.dayChange!, 0) : null,
       lossSum: losers.length && losers.every((r) => r.dayChange !== null) ? losers.reduce((a, r) => a + r.dayChange!, 0) : null,
+      // How many of each side's names carry no money impact — the reason its
+      // total is a dash rather than a sum (Stage 10dc).
+      gainUnknown: gainers.filter((r) => r.dayChange === null).length,
+      lossUnknown: losers.filter((r) => r.dayChange === null).length,
     };
   }, [portfolio, consolidated, rank, quoteFeed, corporateActionReturns]);
 
@@ -426,10 +446,18 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
         </div>
       ) : (
         <>
-          {model.rows.length > model.impactNames && (
-            <p className="mb-3 text-xs text-amber-500/90" data-testid="movers-price-only">
-              Share counts await verification for {model.pricedNames - model.impactNames} names. Their exchange % moves are shown; money impact is withheld.
-              {rank === "impact" ? " This ranking includes only names with verified money impact." : ""}
+          {/* A STATUS ON THE FACE, THE SENTENCE IN THE HOVER (Stage 10dc). The
+              line was a two-sentence paragraph on the card's face, which the
+              family asked to be rid of on every page (Stage 10cp) and which
+              that rule's own check fails on every route that serves quotes.
+              What a reader must SEE is the count and that these names are
+              ranked by % move alone; which names, and the gate's own reason
+              for each, are the hover. */}
+          {model.priceOnlyNames.length > 0 && (
+            <p className="mb-3 text-xs text-amber-500/90" data-testid="movers-price-only"
+              data-price-only={model.priceOnlyNames.length}
+              title={`Share counts await verification for ${model.priceOnlyNames.length} name${model.priceOnlyNames.length === 1 ? "" : "s"} — ${model.priceOnlyNames.join(", ")}. Their exchange % moves are shown; their money impact is withheld and is in no rupee figure on this card.${rank === "impact" ? " This ranking includes only names with verified money impact." : ""}${model.priceOnlyReasons.length ? ` Why: ${model.priceOnlyReasons.map((x) => x.replace(/\.$/, "")).join(". ")}.` : ""}`}>
+              {model.priceOnlyNames.length} name{model.priceOnlyNames.length === 1 ? "" : "s"} {rank === "impact" ? "left out" : "ranked by % move only"} · share count{model.priceOnlyNames.length === 1 ? "" : "s"} unverified
             </p>
           )}
           {/* ── The book's own move, and the four indices beside it ───────── */}
@@ -447,7 +475,9 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                   struck over the priced subset and a reader will compare it with
                   an index; the scope has to be visible at the same glance. */}
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500" data-testid="movers-coverage"
-                title={`The move is struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.impactNames} of ${model.distinct} ${SCOPE.noun} names — the rest lack a quote or verified share count and are excluded from the money total.${model.qtyDates.length ? ` The share counts are as of ${model.qtyDates.length === 1 ? model.qtyDates[0] : `${model.qtyDates[0]} to ${model.qtyDates[model.qtyDates.length - 1]}`}, the date of the statement that printed each.` : ""}${clock ? ` Quotes as of ${clock}.` : ""}`}>
+                title={`${model.impactNames > 0
+                  ? `The move is struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.impactNames} of ${model.distinct} ${SCOPE.noun} names — the rest lack a quote or a verified share count and are excluded from the money total.`
+                  : `No money move is struck: none of the ${model.distinct} ${SCOPE.noun} names has both a live quote and a verified share count, so the ${fmtFromBase(model.scopeValue, { compact: true })} held carries no rupee figure here.`}${model.priceOnlyNames.length ? ` By % move the gainers and losers rank ${model.pricedNames} names, the ${model.priceOnlyNames.length} whose share count is unverified included.` : ""}${model.qtyDates.length ? ` The share counts are as of ${model.qtyDates.length === 1 ? model.qtyDates[0] : `${model.qtyDates[0]} to ${model.qtyDates[model.qtyDates.length - 1]}`}, the date of the statement that printed each.` : ""}${clock ? ` Quotes as of ${clock}.` : ""}`}>
                 {/* THE VALUE THIS PERCENTAGE COVERS, BESIDE THE VALUE IT DOES
                     NOT. A name count alone hides how much of a scope a figure
                     stands on: the mutual-fund tab prices ONE of 20 schemes and
@@ -463,8 +493,18 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                     counts' own date rides in the hover beside it (MNT-15): a
                     day's move is today's price on a quantity a statement
                     printed, and that statement has a date. */}
-                {model.pricedNames} of {model.distinct} names with price changes · {fmtFromBase(model.movedValue, { compact: true })} of {fmtFromBase(model.scopeValue, { compact: true })} held
-                {" "}· {model.impactNames} of {model.distinct} names with verified impact{clock ? ` · quotes ${clock}` : ""}
+                {/* FIGURES ONLY (Stage 10dc). #104 lengthened this into "N of M
+                    names with price changes · … · K of M names with verified
+                    impact", a sentence by Stage 10cp's own measure. The % move
+                    ranks P names and the money total covers K; the line above
+                    names the difference, and the hover says it in words. */}
+                {/* AND NO RUPEE FIGURE OVER AN EMPTY SET. With every name's share
+                    count unverified — the evidence still loading, or a reload
+                    from a saved snapshot — the money total covers nothing, and
+                    "₹0 of ₹64.8 Cr held" read as a measured zero. The count
+                    stays; the value clause is drawn only over names it covers. */}
+                {model.impactNames > 0 && <>{fmtFromBase(model.movedValue, { compact: true })} of {fmtFromBase(model.scopeValue, { compact: true })} held · </>}
+                {model.impactNames} of {model.distinct} names{clock ? ` · quotes ${clock}` : ""}
               </p>
             </div>
 
@@ -526,9 +566,9 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                 screenshot of this card, and a scope tab makes a one-name list an
                 ordinary outcome rather than a rarity. */}
             <MoverList title={`${model.gainCount} gainer${model.gainCount === 1 ? "" : "s"}`} tone="gain" rows={model.gainers}
-              total={model.gainSum} fmt={fmtFromBase} rank={rank} noun={SCOPE.noun} />
+              total={model.gainSum} count={model.gainCount} unknown={model.gainUnknown} fmt={fmtFromBase} rank={rank} noun={SCOPE.noun} />
             <MoverList title={`${model.lossCount} loser${model.lossCount === 1 ? "" : "s"}`} tone="loss" rows={model.losers}
-              total={model.lossSum} fmt={fmtFromBase} rank={rank} noun={SCOPE.noun} />
+              total={model.lossSum} count={model.lossCount} unknown={model.lossUnknown} fmt={fmtFromBase} rank={rank} noun={SCOPE.noun} />
           </div>
           {/* THE EXPLANATORY FOOTER IS GONE AT THE FAMILY'S REQUEST — the ranking
               rationale, the unchanged-name count and the multi-account rule all
@@ -555,8 +595,10 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
   );
 }
 
-function MoverList({ title, tone, rows, total, fmt, rank, noun }: {
+function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }: {
   title: string; tone: "gain" | "loss"; rows: Row[]; total: number | null;
+  /** How many names move this way in all, and how many of them carry no money impact. */
+  count: number; unknown: number;
   fmt: (n: number | null | undefined, o?: { compact?: boolean; sign?: boolean }) => string;
   rank: "impact" | "pct";
   /** What one holding in the active scope is called — the empty state says it. */
@@ -572,9 +614,17 @@ function MoverList({ title, tone, rows, total, fmt, rank, noun }: {
             and on a day when nothing fell, "0 losers · ₹0" reads as a measured
             ₹0 of losses rather than as an empty set. The dash carries the reason;
             the sentence underneath says what was actually measured. */}
+        {/* …AND A LIST WITH A NAME WHOSE MONEY IMPACT IS UNKNOWN HAS NO TOTAL
+            EITHER (Stage 10dc). Ranked by % move, the list includes the names
+            whose share count awaits verification; summing the rest would print a
+            figure over part of the list under a heading counting all of it. So
+            the total is a dash, and its hover says which names it is missing. */}
         {rows.length === 0
           ? <Pill><span title="No priced holding moved this way today, so there is no total to sum.">{DASH}</span></Pill>
-          : <Pill tone={tone}>{fmt(total, { compact: true, sign: true })}</Pill>}
+          : total === null
+            ? <Pill tone={tone}><span data-mover-total-absent={unknown}
+                title={`No total: ${unknown} of these ${count} name${count === 1 ? "" : "s"} ${unknown === 1 ? "has" : "have"} an unverified share count, so ${unknown === 1 ? "its" : "their"} money impact is unknown and is not summed as zero.`}>{DASH}</span></Pill>
+            : <Pill tone={tone}>{fmt(total, { compact: true, sign: true })}</Pill>}
       </div>
       {rows.length === 0 ? (
         <p className="mt-3 text-[11.5px] text-slate-500"
@@ -596,10 +646,13 @@ function MoverList({ title, tone, rows, total, fmt, rank, noun }: {
                     {r.security}
                   </Link>
                 </td>
-                <td className={`py-1.5 pr-3 text-right tabular ${rank === "pct" ? "font-semibold" : ""} ${changeColor(r.dayChangePct)}`}>
+                {/* `data-mover-cell` names each figure, so the sweep can hold a
+                    row's money cell to the book: a name ranked by % alone must
+                    show a dash whose hover says why, never a ₹0 (Stage 10dc). */}
+                <td data-mover-cell="pct" className={`py-1.5 pr-3 text-right tabular ${rank === "pct" ? "font-semibold" : ""} ${changeColor(r.dayChangePct)}`}>
                   {fmtPct(r.dayChangePct, { sign: true })}
                 </td>
-                <td title={r.dayChange === null ? "Share count needs verification; the percentage is the exchange price move." : undefined} className={`py-1.5 text-right tabular ${rank === "impact" ? "font-semibold" : ""} ${changeColor(r.dayChange)}`}>
+                <td data-mover-cell="impact" title={r.dayChange === null ? "Share count needs verification; the percentage is the exchange price move." : undefined} className={`py-1.5 text-right tabular ${rank === "impact" ? "font-semibold" : ""} ${changeColor(r.dayChange)}`}>
                   {fmt(r.dayChange, { compact: true, sign: true })}
                 </td>
               </tr>

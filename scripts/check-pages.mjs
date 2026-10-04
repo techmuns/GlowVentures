@@ -9985,24 +9985,49 @@ function cioAllocationRows(text) {
 }
 
 /**
+ * THE MOVERS CARD'S HEADING, IN THE THREE FORMS #104 GAVE IT (Stage 10dc).
+ * "Today's movers" only where the quotes are today's session; "Latest session
+ * movers" for an earlier one; "Latest price movers" where no session can be
+ * named — which is every walk with no quote feed. Each is followed by the
+ * scope, and the scope is the half these checks hold.
+ *
+ * The checks that sliced the panel on "Today's movers" alone stopped finding
+ * the card the day #104 landed: `sliceBetween` returns "" for a start marker
+ * the page no longer prints, and two of them failed on a correct page while
+ * the gap and gainer checks failed for their own reasons beside them.
+ */
+const MOVERS_HEADING = /(?:Today’s|Latest session|Latest price) movers\s*·\s*Direct Equity/;
+/** The movers card's own text: from its heading to the end of the panel, or "". */
+function moversCard(text) {
+  const m = MOVERS_HEADING.exec(text ?? "");
+  return m ? text.slice(m.index) : "";
+}
+
+/**
  * THE GAINER COUNT ON THE MOVERS CARD, AGAINST DIRECT EQUITY'S OWN PRICED SIZE.
  *
  * Every fixture price is the mark × 1.10, so nothing falls: losers must be nil
  * and the gainers must account for the whole priced scope. This is the check
  * that says the card really covers the set its heading names — a widened scope
  * lands on a different count and cannot pass.
+ *
+ * THE RANKED COUNT, NOT THE VERIFIED ONE (Stage 10dc). Since #104 a name whose
+ * live VALUE the corporate-action gate withholds is still ranked by the
+ * exchange's own % move, so it is a gainer here and in no rupee figure.
+ * `PRICED_DIRECT_EQUITY.ranked` counts it; `.verified` does not, and is what
+ * the tile's own name count is held to.
  */
 function moversGainersAreDirectEquity(text) {
   // `text` is the MOVERS PANEL's own innerText (`ctx.cioLayout.text`), not the
   // page's — see the probe for why the old end-marker could no longer bound it.
-  if (PRICED_DIRECT_EQUITY_NAMES == null) {
+  if (PRICED_DIRECT_EQUITY == null) {
     return { notChecked: "the book could not be read, so the expected count could not be derived" };
   }
-  const card = sliceBetween(text ?? "", "Today’s movers");
+  const card = moversCard(text);
   const g = /(\d+)\s+GAINERS?/i.exec(card);
   const l = /(\d+)\s+LOSERS?/i.exec(card);
   if (!g || !l) return false;
-  return Number(l[1]) === 0 && Number(g[1]) === PRICED_DIRECT_EQUITY_NAMES;
+  return Number(l[1]) === 0 && Number(g[1]) === PRICED_DIRECT_EQUITY.ranked;
 }
 
 /** `₹352.3 Cr` / `₹68.3 L` / `—` -> a number in ₹ Cr, or NaN for an em dash. */
@@ -10459,7 +10484,7 @@ const WITHHELD_PILL = [
  * is the independent check, and a check that imports the helper it is checking
  * agrees with itself by construction.
  */
-const PRICED_DIRECT_EQUITY_NAMES = (() => {
+const PRICED_DIRECT_EQUITY = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
@@ -10486,23 +10511,30 @@ const PRICED_DIRECT_EQUITY_NAMES = (() => {
       if (p.assetClass !== "Equity") return p.assetClass;
       return e === "Direct" || e === "Execution" ? DIRECT_EQUITY_BUCKET : "Equity — how it is held is not stated";
     };
+    /**
+     * TWO SETS SINCE #104 (Stage 10dc). A known sale after the stored balance
+     * stops the gate projecting that balance forward, so the position's live
+     * VALUE is withheld — but the exchange's own % move is still a fact, and the
+     * card ranks the name by it. `ranked` is every name the fixture prices;
+     * `verified` drops a name any of whose positions carries such a sale,
+     * because one withheld account makes the whole name's money impact unknown
+     * (`dailyMovers` sums impact only where every account has one).
+     */
     const count = (keys) => {
-      const names = new Set();
+      const ranked = new Set(), withheld = new Set();
       for (const p of positions) {
         if (!keys.includes(bucket(p))) continue;
-        // A known sale after the stored balance prevents projecting its old
-        // quantity forward, even when the quote endpoint supplies a price.
-        if ((p.realizedLotsAfter ?? 0) > 0) continue;
         const sym = p.symbol || symbols[p.securityKey];
         if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
-        names.add(p.securityKey);
+        ranked.add(p.securityKey);
+        if ((p.realizedLotsAfter ?? 0) > 0) withheld.add(p.securityKey);
       }
       // The depository's listed shares (Stage 10cy) are the family's own Direct
       // Equity, and a row on this walk wherever the fixture prices the symbol.
       if (keys.includes(DIRECT_EQUITY_BUCKET)) {
-        for (const d of DEPOSITORY_SHARE_BOOK ?? []) if (MARK_BY_SYMBOL.has(d.symbol)) names.add(d.securityKey);
+        for (const d of DEPOSITORY_SHARE_BOOK ?? []) if (MARK_BY_SYMBOL.has(d.symbol)) ranked.add(d.securityKey);
       }
-      return names.size;
+      return { ranked: ranked.size, verified: ranked.size - withheld.size, priceOnly: withheld.size, withheldKeys: [...withheld] };
     };
     if (!DEPOSITORY_SHARE_BOOK) return null;
     return count([DIRECT_EQUITY_BUCKET]);
@@ -10513,7 +10545,7 @@ const PRICED_DIRECT_EQUITY_NAMES = (() => {
  * EVERY NSE SYMBOL THE MOVERS CARD'S SCOPE RESOLVES — the exact size of the
  * `priority` list the page must send, and of the set it must wait on.
  *
- * Distinct from `PRICED_DIRECT_EQUITY_NAMES` above, which counts the names the
+ * Distinct from `PRICED_DIRECT_EQUITY` above, which counts the names the
  * FIXTURE can price (25 here against 33 symbols): a direct-equity holding whose
  * statement carries no mark still resolves a symbol, is still asked for, and is
  * still one of the names the card is waiting on. Two different questions, so
@@ -16378,13 +16410,21 @@ const CIO_MWR = CIO_SHARED.filter(([d]) =>
 const CIO_MOVERS = [
   ["with no quote feed, Today's movers states the cause and prints no day change",
     (t, ctx) => {
-      const card = sliceBetween(ctx?.cioLayout?.text ?? "", "Today’s movers");
-      // The headline names the failed feed since Stage 10cp ("No direct-equity
-      // move today — the quote feed did not respond"): the reason under it is
-      // the box's hover now.
-      if (!/No direct-equity (?:holding carries a day change|move today)/.test(card)) return false;
-      if (!/quote feed did not respond|can never have one/.test(card)) return false;
-      return !/DIRECT EQUITY · TODAY/i.test(card);
+      // #104's unavailable state (Stage 10dc): a headline that says the day's
+      // changes are unavailable, the failed service named under it, and a
+      // retry. Before #104 the headline was "No direct-equity move today — the
+      // quote feed did not respond"; a card printing that, or "No direct-equity
+      // holding carries a day change" (a claim about the BOOK, made while the
+      // feed is down), fails.
+      const card = moversCard(ctx?.cioLayout?.text);
+      if (!card) return false;
+      if (!/Daily price changes are temporarily unavailable/.test(card)) return false;
+      if (!/quote service did not respond/i.test(card) || !/Retry prices/.test(card)) return false;
+      if (/No direct-equity holding carries a day change/.test(card)) return false;
+      // …and no figure at all: no day-move tile, no rupee move, no ranking.
+      return !/DIRECT EQUITY · (?:TODAY|SESSION|LATEST)/i.test(card)
+        && !/[+−-]₹[\d,.]/.test(card)
+        && !/\d+\s+(?:GAINERS?|LOSERS?)/i.test(card);
     }],
   /**
    * ── TODAY'S MOVERS IS DIRECT EQUITY, AND THE HEADING SAYS SO ──────────────
@@ -16396,8 +16436,15 @@ const CIO_MOVERS = [
    * is right lives on `cio-live`, where a feed exists.
    */
   ["Today's movers names its scope in the heading and on the tile",
-    (t) => /Today’s movers\s*·\s*Direct Equity/i.test(t)
-      && /DIRECT EQUITY · TODAY|No direct-equity (?:holding carries a day change|move today)/i.test(t)],
+    (t, ctx) => {
+      // The heading in any of #104's three forms, and the scope on the tile
+      // wherever a tile is drawn; with no feed there is no tile, and the card
+      // must be in its unavailable or loading state instead (Stage 10dc).
+      const card = moversCard(ctx?.cioLayout?.text);
+      if (!card) return false;
+      if (/DIRECT EQUITY · /i.test(card)) return /DIRECT EQUITY · (?:TODAY|SESSION \d{4}-\d{2}-\d{2}|LATEST AVAILABLE PRICES)/i.test(card);
+      return /Daily price changes are temporarily unavailable|Fetching prices/.test(card);
+    }],
   /**
    * ...AND THE MOVERS TOGGLE OFFERS EXACTLY THE TWO BRANCHES THE FAMILY NAMED.
    *
@@ -22906,6 +22953,26 @@ const INVARIANTS = {
         const r = CACHED.refreshing;
         return !!r && r.text === "Refreshing prices" && /last complete round of prices/i.test(r.title);
       }],
+    /**
+     * …AND NO RUPEE FIGURE OVER AN EMPTY SET (Stage 10dc). On this reopen the
+     * saved event capture is days behind the cached quotes, so the gate
+     * verifies no share count and the money total covers no name at all. #104's
+     * line printed "₹0 of ₹64.8 Cr held" there — a measured zero standing in for
+     * an absent measurement, which Convention 2 forbids. Where the verified
+     * count is nought the line carries no rupee figure; where it is not, the
+     * value clause must cover that count.
+     */
+    ["...and the coverage line prints no rupee figure over names it does not cover",
+      () => {
+        if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
+        const cov = CACHED.coverage;
+        if (cov == null) return false;
+        const m = /(?:^|·\s*)(\d+) of (\d+) names/.exec(cov);
+        if (!m) return false;
+        if (/₹0\s+of\b/.test(cov)) return false;
+        return Number(m[1]) === 0 ? !/₹/.test(cov)
+          : /₹[\d,.]+\s*(?:Cr|L|K)? of ₹[\d,.]+\s*(?:Cr|L|K)? held/.test(cov);
+      }],
   ],
 
   "cio-index-loading": [
@@ -27456,7 +27523,7 @@ const INVARIANTS = {
      */
     ["the book's day move is +10.00%, struck on the priced subset rather than the whole book",
       (t, ctx) => {
-        const card = sliceBetween(ctx?.cioLayout?.text ?? "", "Today’s movers");
+        const card = moversCard(ctx?.cioLayout?.text);
         // The tile's label is the SCOPE's, and the scope is Direct Equity —
         // *"we will only show direct equity as default."*
         const m = /DIRECT EQUITY · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
@@ -27476,8 +27543,13 @@ const INVARIANTS = {
       // counted is the line's own `title`. Both halves are required — a face
       // that dropped the names, or a hover that stopped naming the scope, fails.
       (t, ctx) => /₹[\d,.]+\s*(?:Cr|L|K)? of ₹[\d,.]+\s*(?:Cr|L|K)? held\s*·\s*\d+ of \d+ names/.test(t)
-        && (ctx?.titles ?? []).some((x) => /^The move is struck on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held, across \d+ of \d+ direct-equity names — the rest carry no live quote/.test(x))
-        && !/across \d+ of \d+ direct-equity names/.test(t)],
+        && (ctx?.titles ?? []).some((x) => /^The move is struck on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held, across \d+ of \d+ direct-equity names — the rest lack a quote or a verified share count/.test(x))
+        && !/across \d+ of \d+ direct-equity names/.test(t)
+        // #104's sentence form of the same line (Stage 10dc): "N of M names
+        // with price changes · … · K of M names with verified impact" reads as
+        // a sentence by Stage 10cp's measure, and is two counts where one is
+        // the tile's and the other is the ranking's.
+        && !/names with (?:price changes|verified impact)/.test(t)],
     /**
      * ALL FOUR INDICES, EACH WITH A LEVEL AND A MOVE — the family named these
      * four. An index that resolved but printed no level would satisfy a check
@@ -27502,7 +27574,9 @@ const INVARIANTS = {
         // A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20). The sign may be
         // a real U+2212 minus, which `[+-]` alone does not match; and a gap
         // printed as "%" — which reads as a return — fails rather than passing.
-        const m = /Direct equity is\s*([+−-]?)(\d+\.\d+)\s*pts\s*against the\s*\n?\s*Nifty 500 today/.exec(t);
+        // "… against the Nifty 500 · today" since #104, which names the session
+        // the two moves are from rather than assuming it (Stage 10dc).
+        const m = /Direct equity is\s*([+−-]?)(\d+\.\d+)\s*pts\s*against the\s*\n?\s*Nifty 500\s*·\s*today/.exec(t);
         if (!m) return false;
         const v = (m[1] === "−" || m[1] === "-" ? -1 : 1) * Number(m[2]);
         return Math.abs(v - 11) < 0.03 && !/Direct equity is\s*[+−-]?\d+\.\d+%/.test(t);
@@ -27515,7 +27589,7 @@ const INVARIANTS = {
      * filter back to the whole book takes it from 33 to 160-odd; putting the
      * ETFs back takes it to 36 — neither can pass, which is what makes this the
      * check that the family's actual request landed. The expectation is derived
-     * from the book on every run (`PRICED_DIRECT_EQUITY_NAMES`), never typed.
+     * from the book on every run (`PRICED_DIRECT_EQUITY.ranked`), never typed.
      */
     ["the gainers are exactly the priced DIRECT EQUITY names, not the whole book",
       (t, ctx) => moversGainersAreDirectEquity(ctx?.cioLayout?.text)],
@@ -27585,6 +27659,39 @@ const INVARIANTS = {
         && Number(face[1]) === DE_CURRENT_NAMES.live && Number(hover[1]) === DE_CURRENT_NAMES.live;
     }],
     /**
+     * THE PARTITION #104 MADE, HELD ON EACH SURFACE THAT PRINTS IT (Stage 10dc).
+     *
+     * Since #104 the card ranks by % move every name the feed prices, and
+     * strikes its rupee figures only over the names whose share count the
+     * corporate-action gate verified. So three counts are printed in three
+     * places: the gainers (every ranked name — `moversGainersAreDirectEquity`),
+     * the tile's money total (the verified names) and the amber line (the
+     * rest). Each is derived from the book here rather than read off another
+     * surface, so a card that folded the price-only names into the money
+     * total, or dropped them from the ranking, lands on a different count on
+     * the surface that changed.
+     */
+    ["the tile's money total covers the verified names, and the rest are counted apart (#104)", (t, ctx) => {
+      if (PRICED_DIRECT_EQUITY == null) return { notChecked: "the book could not be read, so the partition could not be derived" };
+      const { ranked, verified, priceOnly } = PRICED_DIRECT_EQUITY;
+      const face = /held\s*·\s*(\d+) of \d+ names/.exec(t);
+      if (!face || Number(face[1]) !== verified) return false;
+      // The amber line is a count and a status on the face, never the sentence
+      // #104 wrote there; the sentence is its hover.
+      const line = /(\d+) names? ranked by % move only\s*·\s*share counts? unverified/.exec(t);
+      if (priceOnly === 0) return !line;
+      if (!line || Number(line[1]) !== priceOnly) return false;
+      if (/Share counts await verification for \d+ names?\. Their exchange % moves are shown/.test(t)) return false;
+      // The hover names the gate's own reason. On this book that is a sale
+      // recorded after the statement, the one reason the fixture leaves a
+      // priced name unverified — and the reason a reader can act on.
+      const why = (ctx?.titles ?? []).find((x) => new RegExp(`^Share counts await verification for ${priceOnly} names? — `).test(x));
+      if (!why || !/Why: Sales are recorded after this statement/.test(why)) return false;
+      // …and the coverage line's hover says the ranking spans both halves.
+      const cov = (ctx?.titles ?? []).map((x) => /By % move the gainers and losers rank (\d+) names, the (\d+) whose share count is unverified included/.exec(x)).find(Boolean);
+      return !!cov && Number(cov[1]) === ranked && Number(cov[2]) === priceOnly;
+    }],
+    /**
      * ...AND THE MOVERS TOGGLE IS THERE WITH A FEED TOO.
      *
      * Asserted on both walks and not just one: the toggle is a CONTROL and
@@ -27608,12 +27715,78 @@ const INVARIANTS = {
       (t) => !/the other ranking is one click away/.test(t)
         && !/closed unchanged and are in neither list/.test(t)
         && !/never averaged across positions of different sizes/.test(t)],
-    /** The gainers list is populated and ranked, and every row carries both figures. */
+    /**
+     * The gainers list is populated and ranked, and every row carries both
+     * figures — or, for a name ranked by % move alone, the percentage and a dash
+     * whose hover says why (Stage 10dc). Since #104 a name whose share count the
+     * corporate-action gate has not verified is still a gainer, and its money
+     * impact is unknown rather than zero; a row printing "+₹0" there would be a
+     * measured zero standing in for an absent one.
+     */
     ["gainers are listed with a percentage and a rupee impact each",
       (t, ctx) => {
-        const card = sliceBetween(ctx?.cioLayout?.text ?? "", "Today’s movers");
-        const rows = [...card.matchAll(/\t\+10\.00%\t\+₹[\d,.]+\s*(?:Cr|L|K)?/g)];
-        return /\d+ GAINERS/i.test(card) && rows.length >= 3;
+        const card = moversCard(ctx?.cioLayout?.text);
+        const rows = [...card.matchAll(/\t\+10\.00%\t(\+₹[\d,.]+\s*(?:Cr|L|K)?|—)/g)];
+        const dashes = rows.filter((m) => m[1] === "—").length;
+        const priced = rows.length - dashes;
+        if (!/\d+ GAINERS/i.test(card) || rows.length < 3 || priced < 1 || /\t\+10\.00%\t[+−-]?₹0\b/.test(card)) return false;
+        if (dashes === 0) return true;
+        if (PRICED_DIRECT_EQUITY == null) return { notChecked: "the book could not be read, so how many names are ranked by % alone could not be derived" };
+        return dashes <= PRICED_DIRECT_EQUITY.priceOnly
+          && (ctx?.titles ?? []).some((x) => /^Share count needs verification; the percentage is the exchange price move/.test(x));
+      }],
+    /**
+     * …AND A GAINERS TOTAL OVER A NAME WITH NO MONEY IMPACT IS A DASH THAT SAYS
+     * WHY (Stage 10dc). Ranked by % move, the list holds the names whose share
+     * count the corporate-action gate has not verified. Their impact is
+     * unknown, so a sum over the rest would be a figure over part of the list
+     * under a heading counting all of it, and a bare dash names no cause
+     * (Convention 1). Every fixture price is the mark × 1.10, so every ranked
+     * name is a gainer, and both counts are the book's.
+     */
+    ["a gainers total over names with no money impact is a dash naming how many",
+      (t, ctx) => {
+        const g = ctx?.cioLayout?.moverTotals?.gain;
+        if (!g) return false;
+        if (PRICED_DIRECT_EQUITY == null) return { notChecked: "the book could not be read, so how many names carry no money impact could not be derived" };
+        const { ranked, priceOnly } = PRICED_DIRECT_EQUITY;
+        if (priceOnly === 0) return /^\+₹/.test(g.text) && g.absent == null;
+        return g.text === "—" && g.absent === priceOnly
+          && new RegExp(`^No total: ${priceOnly} of these ${ranked} names? ha(?:s|ve) an unverified share count`).test(g.title ?? "");
+      }],
+    /**
+     * EVERY DRAWN ROW'S MONEY CELL IS THE BOOK'S ANSWER FOR THAT NAME (Stage
+     * 10dc), held row by row against the names the book says are withheld. A
+     * name ranked by % alone shows a dash whose hover names the cause; every
+     * other row shows a signed rupee figure, and never a zero, because every
+     * fixture price moves 10% on a holding the ₹1,000 floor keeps.
+     *
+     * THE ROW CHECK ABOVE COULD NOT SEE THIS. It matched "+₹…" or "—" after the
+     * percentage, so a row printing an unsigned "₹0" matched neither pattern and
+     * was skipped rather than failed — and putting `?? 0` back on the money cell
+     * swept clean. This is struck on each row's own cells, keyed on the book.
+     */
+    ["each drawn mover row's money cell is the book's answer for that name: a figure, or a dash that says why",
+      (t, ctx) => {
+        const rows = ctx?.cioLayout?.moverRows;
+        if (!rows) return false;
+        if (PRICED_DIRECT_EQUITY == null) return { notChecked: "the book could not be read, so which names are ranked by % alone could not be derived" };
+        if (rows.length < 3) return false;
+        const withheld = new Set(PRICED_DIRECT_EQUITY.withheldKeys);
+        let drawnWithheld = 0;
+        for (const r of rows) {
+          if (r.pct == null || r.impact == null) return false;
+          if (withheld.has(r.key)) {
+            drawnWithheld++;
+            if (r.impact !== "—" || !/^Share count needs verification; the percentage is the exchange price move/.test(r.impactTitle ?? "")) return false;
+          } else if (!/^[+−-]₹[\d,.]+\s*(?:Cr|L|K)?$/.test(r.impact) || /^[+−-]?₹0(?:\.0+)?\s*(?:Cr|L|K)?$/.test(r.impact)) {
+            return false;
+          }
+        }
+        if (PRICED_DIRECT_EQUITY.priceOnly > 0 && drawnWithheld === 0) {
+          return { notChecked: "no name ranked by % alone is among the rows drawn, so the dash half has no subject on this pass" };
+        }
+        return true;
       }],
     /**
      * NOTHING FELL IN THIS FIXTURE, AND AN EMPTY LIST HAS NO TOTAL. `₹0` beside
@@ -27703,8 +27876,9 @@ const INVARIANTS = {
       if (tabs == null) return notChecked("the toggle probe did not run on this pass");
       if (!tabs.length) return false;
       return tabs.find((x) => x.active)?.key === "funds"
-        // `Today's movers` is this card's own title and nothing else prints it.
-        && !/Today\u2019s movers/i.test(t);
+        // The direct-equity card's own title, in any of #104's three forms
+        // (Stage 10dc) — nothing else prints it.
+        && !MOVERS_HEADING.test(t);
     }],
   ],
   "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("basket"), ...ALLOC_HELD_PILL],
@@ -33858,6 +34032,11 @@ for (const theme of THEMES) {
             const e = document.querySelector("[data-movers-refreshing]");
             return e ? { text: (e.textContent ?? "").replace(/\s+/g, " ").trim(), title: e.getAttribute("title") ?? "" } : null;
           })(),
+          // The coverage line's face, whitespace folded (Stage 10dc).
+          coverage: (() => {
+            const e = document.querySelector('[data-testid="movers-coverage"]');
+            return e ? (e.textContent ?? "").replace(/\s+/g, " ").trim() : null;
+          })(),
         }));
       }
       if (name === "cio-tiles-saved") {
@@ -36083,6 +36262,37 @@ for (const theme of THEMES) {
           sections: [...document.querySelectorAll("main [data-cio-section]")].map((el) => el.getAttribute("data-cio-section")),
           head: { h1: box(h1), tabs: box(document.querySelector("main [data-cio-tabs]")), bar: box(h1?.parentElement?.parentElement) },
           viewportH: de.clientHeight,
+          /* EACH MOVERS LIST'S TOTAL, read off its own pill (Stage 10dc): the
+             figure, and where it is a dash, how many names its hover says carry
+             no money impact. A pill sits on the same line as the list's
+             heading, so the panel's text cannot tell a dash from a figure. */
+          /* EACH DRAWN MOVER ROW, read off its own cells (Stage 10dc): its
+             key, which list it is in, the % move and the money impact with the
+             impact's hover. A row printing "₹0" for a name ranked by % alone
+             was invisible to every text check — "₹0" carries no sign, so a
+             pattern for "+₹" skipped the row instead of failing it. */
+          moverRows: [...document.querySelectorAll("main [data-mover-row]")].map((tr) => {
+            const pct = tr.querySelector('[data-mover-cell="pct"]');
+            const imp = tr.querySelector('[data-mover-cell="impact"]');
+            return {
+              key: tr.getAttribute("data-mover-row"),
+              list: tr.closest('[data-testid^="movers-"]')?.getAttribute("data-testid") ?? null,
+              pct: pct ? (pct.textContent ?? "").trim() : null,
+              impact: imp ? (imp.textContent ?? "").trim() : null,
+              impactTitle: imp?.getAttribute("title") ?? null,
+            };
+          }),
+          moverTotals: Object.fromEntries(["gain", "loss"].map((k) => {
+            const root = document.querySelector(`main [data-testid="movers-${k}"]`);
+            if (!root) return [k, null];
+            const pill = root.firstElementChild?.lastElementChild;
+            const absent = root.querySelector("[data-mover-total-absent]");
+            return [k, {
+              text: (pill?.textContent ?? "").trim(),
+              absent: absent ? Number(absent.getAttribute("data-mover-total-absent")) : null,
+              title: absent?.getAttribute("title") ?? null,
+            }];
+          })),
         };
       });
       /**
