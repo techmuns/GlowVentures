@@ -23,9 +23,9 @@ export const BOOK_SUMMARY: BookSummary = {
   "unplacedValue": 98742,
   "totalValue": 6130064051.56,
   "positionsCount": 330,
-  "entitiesCount": 6,
+  "entitiesCount": 7,
   "startupsCount": 0,
-  "accountsCount": 57
+  "accountsCount": 58
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -692,6 +692,22 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 7 holding(s) as quantities, 6 of them with the price of their last depository movement — a transaction price, not a valuation of the balance; 1 with no rate at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
   },
   {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "provider": "Motilal Oswal Financial Services (demat)",
+    "accountNo": "1201090032387399",
+    "ownerId": "bharat-jaisinghani-family-trust",
+    "owner": "Bharat Jaisinghani Family Trust",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "CDSL depository account — NIN",
+    "members": [],
+    "asOf": "2026-07-31",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "Motilal Oswal Financial Services (demat)",
+    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 3 holding(s) as quantities, 3 of them with the price of their last depository movement — a transaction price, not a valuation of the balance. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
+  },
+  {
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
     "provider": "Motilal Oswal Financial Services (demat)",
     "accountNo": "1201090037359311",
@@ -1082,6 +1098,10 @@ export const BOOK_OWNERS = [
   {
     "ownerId": "bharat-jaisinghani-family-trust-3",
     "displayName": "Bharat Jaisinghani Family Trust 3"
+  },
+  {
+    "ownerId": "bharat-jaisinghani-family-trust",
+    "displayName": "Bharat Jaisinghani Family Trust"
   }
 ];
 
@@ -11664,6 +11684,57 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹502.2 a unit — not a valuation of the 1,80,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "ownerId": "bharat-jaisinghani-family-trust",
+    "securityKey": "icici-liqf-d-growth",
+    "security": "ICICI LIQF D-GROWTH",
+    "isin": "INF109K01Q49",
+    "assetClass": "Mutual Fund",
+    "quantity": 46654.378,
+    "faceValue": null,
+    "lastMovementRate": 394.625,
+    "lastMovementValue": 11909782.5,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹394.625 a unit — not a valuation of the 46,654.378 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "ownerId": "bharat-jaisinghani-family-trust",
+    "securityKey": "inves-arbf-d-grow",
+    "security": "INVES ARBF D-GROW",
+    "isin": "INF205K01KR8",
+    "assetClass": "Mutual Fund",
+    "quantity": 1092470.994,
+    "faceValue": null,
+    "lastMovementRate": 34.507,
+    "lastMovementValue": 37697896.59,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹34.507 a unit — not a valuation of the 10,92,470.994 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "ownerId": "bharat-jaisinghani-family-trust",
+    "securityKey": "kotak-arbfd-dp-grow",
+    "security": "KOTAK ARBFD DP GROW",
+    "isin": "INF174K01LC6",
+    "assetClass": "Mutual Fund",
+    "quantity": 613293.929,
+    "faceValue": null,
+    "lastMovementRate": 42.658,
+    "lastMovementValue": 26161892.42,
+    "lastMovementDate": "2026-07-02",
+    "lastMovementSide": "receipt",
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹42.658 a unit, on a receipt of 6,13,293.929 unit(s) on 2026-07-02 — not a valuation of the 6,13,293.929 unit(s) held, so it carries a quantity and no value"
+  },
+  {
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "3p-india-equity-fund-1-class-b3",
@@ -12600,6 +12671,12 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
       "provider": "Motilal Oswal Financial Services (demat)",
       "accountNo": "1201090012838335",
+      "bookValue": 0
+    },
+    {
+      "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+      "provider": "Motilal Oswal Financial Services (demat)",
+      "accountNo": "1201090032387399",
       "bookValue": 0
     },
     {
@@ -18719,6 +18796,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Bharat Jaisinghani Family Trust · Motilal 1201090032387399",
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "ownerId": "bharat-jaisinghani-family-trust",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ajay Jaisinghani · Motilal 1201090037359311",
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
     "ownerId": "ajay-jaisinghani",
@@ -24794,9 +24885,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|kotak-arbfd-dp-grow": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth",
+    "securityKey": "kotak-arbfd-dp-grow",
     "security": "KOTAK MAHINDRA AMC LTD#KOTAK MAHINDRA MF-KOTAK ARBITRAGE FUND - DIRECT PLAN - GROWTH",
     "isin": "INF174K01LC6",
     "periodFrom": "2026-04-01",
@@ -26017,6 +26108,24 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "unclassified": 0,
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions"
+  },
+  "motilal-oswal-financial-services-demat-1201090032387399|kotak-arbfd-dp-grow": {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "securityKey": "kotak-arbfd-dp-grow",
+    "security": "KOTAK MAHINDRA AMC LTD#KOTAK MAHINDRA MF-KOTAK ARBITRAGE FUND - DIRECT PLAN - GROWTH",
+    "isin": "INF174K01LC6",
+    "periodFrom": "2026-04-01",
+    "periodTo": "2026-07-31",
+    "opening": 0,
+    "closing": 613293.929,
+    "unitsIn": 613293.929,
+    "unitsOut": 0,
+    "corporateAction": 0,
+    "encumbranceMoves": 0,
+    "rows": 1,
+    "unclassified": 0,
+    "reason": null,
+    "source": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-demat-transactions"
   },
   "motilal-oswal-financial-services-demat-1201090037359311|3p-india-equity-fund-3p-india-equity-fund-1-category-iii-aif-class-b1": {
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",

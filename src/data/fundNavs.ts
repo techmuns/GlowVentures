@@ -389,6 +389,24 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "notUsableReason": null
  },
  {
+  "securityKey": "inves-arbf-d-grow",
+  "security": "INVES ARBF D-GROW",
+  "isin": "INF205K01KR8",
+  "isinFrom": "statement",
+  "from": "book",
+  "schemecode": "120401",
+  "scheme": "Invesco India Arbitrage Fund",
+  "plan": "Direct Plan",
+  "option": "Growth",
+  "category": "Hybrid Schemes - Arbitrage Fund",
+  "sebiCategory": "Arbitrage Fund",
+  "nav": 37.4277,
+  "date": "2026-10-01",
+  "changePct": null,
+  "usableForValue": true,
+  "notUsableReason": null
+ },
+ {
   "securityKey": "inves-con-r-growth",
   "security": "INVES CON R GROWTH",
   "isin": "INF205K01189",
@@ -409,11 +427,11 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "notUsableReason": null
  },
  {
-  "securityKey": "kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth",
-  "security": "KOTAK MAHINDRA AMC LTD#KOTAK MAHINDRA MF-KOTAK ARBITRAGE FUND - DIRECT PLAN - GROWTH",
+  "securityKey": "kotak-arbfd-dp-grow",
+  "security": "KOTAK ARBFD DP GROW",
   "isin": "INF174K01LC6",
   "isinFrom": "statement",
-  "from": "depository",
+  "from": "book",
   "schemecode": "119771",
   "scheme": "Kotak Arbitrage Fund",
   "plan": "Direct Plan",
@@ -467,6 +485,24 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "changePct": -1.179256,
   "usableForValue": true,
   "notUsableReason": null
+ },
+ {
+  "securityKey": "mirae-lcf-d-grow",
+  "security": "MIRAE LCF D-GROW",
+  "isin": "INF769K01AX2",
+  "isinFrom": "statement",
+  "from": "book",
+  "schemecode": "118825",
+  "scheme": "Mirae Asset Large Cap Fund",
+  "plan": "Direct Plan",
+  "option": "Growth",
+  "category": "Equity Schemes - Large Cap Fund",
+  "sebiCategory": "Large Cap Fund",
+  "nav": 119.857,
+  "date": "2026-10-01",
+  "changePct": null,
+  "usableForValue": false,
+  "notUsableReason": "no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against"
  },
  {
   "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option",

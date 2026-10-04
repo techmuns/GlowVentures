@@ -8,10 +8,10 @@ ISIN** and never on a name. 14,366 scheme rows read.
 
 | | |
 | --- | ---: |
-| Schemes priced | **25** |
-| …of which identified by the family's own statement | 24 |
+| Schemes priced | **26** |
+| …of which identified by the family's own statement | 25 |
 | …by the look-through's resolved ISIN | 1 |
-| Resolved but **not usable to value a holding** | 0 |
+| Resolved but **not usable to value a holding** | 1 |
 | Named below and not resolved | 3 |
 | Newest published date | 2026-10-04 |
 
@@ -34,7 +34,9 @@ ISIN** and never on a name. 14,366 scheme rows read.
 | ICICI NFT NX 50 R GR | `INF109K01IF1` | statement | Index Funds | 60.6291 | 2026-10-01 | -1.10% |
 | ICICI NIFT50IND DP G | `INF109K012M7` | statement | Index Funds | 237.3337 | 2026-10-01 | -0.88% |
 | ICICI PRU BAF DP GRW | `INF109K012B0` | statement | Dynamic Asset Allocation or Balanced Advantage | 85.11 | 2026-10-01 | -0.67% |
+| INVES ARBF D-GROW | `INF205K01KR8` | statement | Arbitrage Fund | 37.4277 | 2026-10-01 | — |
 | INVES CON R GROWTH | `INF205K01189` | statement | Contra Fund | 127.54 | 2026-10-01 | -0.87% |
+| KOTAK ARBFD DP GROW | `INF174K01LC6` | statement | Arbitrage Fund | 43.3709 | 2026-10-01 | +0.03% |
 | KOTAK MTCF D-GROW | `INF174KA1HV3` | statement | Multi Cap Fund | 20.866 | 2026-10-01 | -1.18% |
 | Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | `INF247L01EP5` | look-through | Sectoral/ Thematic | 14.3684 | 2026-10-01 | -0.76% |
 | NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | Other ETFs | 1000 | 2026-10-04 | +0.00% |
@@ -53,7 +55,6 @@ table's.
 | --- | --- | --- | ---: | --- |
 | BANDHAN AMC LTD#BANDHAN MF-BANDHAN ARBITRAGE FUND - DIRECT PL - GROWTH | `INF194K01Y60` | Arbitrage Fund | 37.9257 | 2026-10-01 |
 | ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD EQUITY SAVINGS FUND DIRECT CUMULATIVE | `INF109KA11J9` | Equity Savings | 24.99 | 2026-10-01 |
-| KOTAK MAHINDRA AMC LTD#KOTAK MAHINDRA MF-KOTAK ARBITRAGE FUND - DIRECT PLAN - GROWTH | `INF174K01LC6` | Arbitrage Fund | 43.3709 | 2026-10-01 |
 | KOTAK MAHINDRA AMC LTD-KOTAK MAHINDRA MF-KOTAK LARGE & MIDCAP FUND-DIRECT PLAN-GROWTH OPTION | `INF174K01LF9` | Large & Mid Cap Fund | 385.69 | 2026-10-01 |
 | MOTILAL OSWAL AMC LTD#MOMF-MOTILAL OSWAL ARBITRAGE FUND-DIRECT-GROWTH | `INF247L01ED1` | Arbitrage Fund | 11.3088 | 2026-10-01 |
 
@@ -61,7 +62,7 @@ table's.
 
 A NAV is shown for these; a holding value is not built on it. Each names why.
 
-_None._
+- **MIRAE LCF D-GROW** (`INF769K01AX2`) — NAV 119.857 on 2026-10-01. no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against
 
 ## Not resolved
 

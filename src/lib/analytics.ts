@@ -670,10 +670,31 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
    */
   "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth":
     "Motilal Oswal Arbitrage Fund - Direct Growth (INF247L01ED1) — AMFI: Hybrid Scheme - Arbitrage Fund; the review's Debt tab, overruled by the family's instruction",
-  "kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth":
-    "Kotak Arbitrage Fund - Direct Growth (INF174K01LC6) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
   "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth":
     "Bandhan Arbitrage Fund - Direct Growth (INF194K01Y60) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
+  /**
+   * THE BHARAT JAISINGHANI FAMILY TRUST'S DEMAT (Stage 10db). Its holding
+   * statement spells two of its three funds the depository's clipped way, and
+   * the third, ICICI Pru Liquid, shares `icici-liqf-d-growth` with the other
+   * demats and is listed above.
+   *
+   * Invesco's units are the 1,092,470.994 the family's 30 June review carries
+   * under the trust on its Debt tab, Liquid basket (Debt row 4; "Transactions
+   * since inception", rows 148–149).
+   *
+   * THE KOTAK KEY IS NOW BOTH ACCOUNTS'. Ajay's Kotak line on demat 12539150
+   * comes from a transaction statement, and a depository window takes the key
+   * the book already carries for its ISIN (Stage 10cc). Before this stage
+   * nothing else carried INF174K01LC6, so his line kept the statement's own
+   * long spelling. The trust's holding statement carries the same ISIN as
+   * `KOTAK ARBFD DP GROW`, so both lines are one scheme under one key. The
+   * trust's units were credited on 2 Jul 2026, after the review was drawn,
+   * which is why the review does not carry them.
+   */
+  "inves-arbf-d-grow":
+    "Invesco India Arbitrage Fund - Direct Growth (INF205K01KR8) — AMFI: Hybrid Scheme - Arbitrage Fund; the review's Debt tab, overruled by the family's instruction",
+  "kotak-arbfd-dp-grow":
+    "Kotak Arbitrage Fund - Direct Growth (INF174K01LC6) — Ajay's demat 12539150 and the trust's demat 32387399 — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
 };
 
 /**

@@ -10848,7 +10848,9 @@ const CASH_MAPPING_BOOK = (() => {
       // in `glowData.ts`; they reach this list through the depository rows the
       // checker's model carries, exactly as the live page does.
       "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth",
-      "kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth",
+      // Stage 10db: Ajay's Kotak line and the trust's share the trust's key,
+      // and the trust's Invesco line is the third arbitrage fund on demat.
+      "kotak-arbfd-dp-grow", "inves-arbf-d-grow",
       "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
     ]);
     const outside = new Set();      // expected under Cash

@@ -175,6 +175,35 @@ export const OWNERS = [
     pans: ["AAETB4534G"],
     aliases: ["Bharat Jaisinghani Family Trust 3"],
   },
+  {
+    /**
+     * A THIRD TRUST, UNNUMBERED — and the holder of Motilal Oswal demat
+     * 1201090032387399 (Stage 10db).
+     *
+     * The family's own two documents name it, apart from Trust 2 and Trust 3:
+     * their investment register files ₹6.77 Cr of liquid and arbitrage funds
+     * under "Bharat Jaisinghani Family Trust" on 1 Jul 2025, and their 30 June
+     * review carries the same two funds under that name, rows of their own
+     * beside the "Trust II" and "Trust III" rows. The depository statement
+     * prints the TRUSTEES on its holder lines, so the account is attributed by
+     * a join on its client ID — `BENEFICIAL_OWNER_BY_CLIENT_ID` in
+     * `scripts/ingest/providers/motilalDemat.mjs`, where the evidence is set out
+     * and checked against the page on every read.
+     *
+     * NO PAN, because no statement prints this trust's PAN unmasked; the
+     * depository prints three characters of it, which can refuse an owner and
+     * never confirm one. `kind` therefore does NOT come from a PAN here, unlike
+     * the two numbered trusts: it rests on the name the family's own register
+     * and review give the holder, and on the depository's own account type,
+     * which is not the `Individual-Resident` every family member's own demat
+     * prints.
+     */
+    ownerId: "bharat-jaisinghani-family-trust",
+    displayName: "Bharat Jaisinghani Family Trust",
+    kind: "trust",
+    pans: [],
+    aliases: ["Bharat Jaisinghani Family Trust"],
+  },
 ];
 
 // Honorifics and suffixes that carry no identity. Stripped from both ends.

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T12:45:58.040Z",
+  "generatedAt": "2026-10-04T17:05:08.767Z",
   "summary": {
     "documents": 307,
     "parsed": 238,
@@ -963,7 +963,7 @@
         "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
         "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Holding.pdf",
         "reasons": [
-          "pan-contradicts-name: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, and Aarti Jaisinghani's PAN in the registry does not end that way. The name and the PAN name different taxpayers, so the account is not attributed to either.",
+          "owner-from-register: client ID 1201090032387399 is attributed to Bharat Jaisinghani Family Trust, not to the \"AARTI AJAY JAISINGHANI\" the page prints as its first holder: the family's investment register records ₹6.77 Cr paid under \"Bharat Jaisinghani Family Trust\" on 1 Jul 2025 into the ICICI Prudential Liquid and Invesco India Arbitrage direct plans (TRUST INVESTMENT, row 17), and their 30 June review carries both funds under that name with closings of 46,654.378 and 1,092,470.994 units, this account's own balances (Transactions since inception, rows 135–137 and 148–149). The holder lines print the trust's trustees.",
           "rate-is-last-movement-price: 3 holding(s) print a rate and a value that describe the holding's LAST DEPOSITORY MOVEMENT, not its balance — e.g. ICICI LIQF D-GROWTH: 46654.378 held, rate 394.625, value 11909782.5, which is 30180.000 units, the quantity of that movement. So these carry their units and no market value; the rate and value are kept as `lastMovementRate` / `lastMovementValue`, a transaction price rather than a valuation. The value column sums to the printed Total Holding Valuation of Rs 75769571.51 to the rupee, so every row was read — and that total is a sum of last-movement values, not what the account is worth."
         ]
       },
@@ -1000,7 +1000,7 @@
         "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-demat-transactions",
         "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation.pdf",
         "reasons": [
-          "pan-contradicts-name: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, and Aarti Jaisinghani's PAN in the registry does not end that way. The name and the PAN name different taxpayers, so the account is not attributed to either.",
+          "owner-from-register: client ID 1201090032387399 is attributed to Bharat Jaisinghani Family Trust, not to the \"AARTI AJAY JAISINGHANI\" the page prints as its first holder: the family's investment register records ₹6.77 Cr paid under \"Bharat Jaisinghani Family Trust\" on 1 Jul 2025 into the ICICI Prudential Liquid and Invesco India Arbitrage direct plans (TRUST INVESTMENT, row 17), and their 30 June review carries both funds under that name with closings of 46,654.378 and 1,092,470.994 units, this account's own balances (Transactions since inception, rows 135–137 and 148–149). The holder lines print the trust's trustees.",
           "depository-movements-are-not-trades: 1 depository movement(s) read across 1 holding(s), 1 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 of the 0 pledge / lock-in row(s) changed a balance, so their exclusion from the in/out totals rests on evidence rather than on the assumption that they are neutral. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
         ]
       },
@@ -187554,6 +187554,10 @@
       {
         "ownerId": "bharat-jaisinghani-family-trust-3",
         "displayName": "Bharat Jaisinghani Family Trust 3"
+      },
+      {
+        "ownerId": "bharat-jaisinghani-family-trust",
+        "displayName": "Bharat Jaisinghani Family Trust"
       }
     ],
     "providersWithPrecedence": [

@@ -72,6 +72,8 @@ const MOVED = new Set([
  */
 const READER_CODES = new Set([
   "client-id-not-read", "owner-unresolved", "pan-contradicts-name",
+  // The client-ID join's two (Stage 10db).
+  "owner-from-register", "beneficial-owner-refused",
   "account-holds-nothing", "no-holding-rows",
   "value-column-does-not-reproduce-total", "rate-is-last-movement-price",
   "aif-units-carry-face-value-not-nav", "no-rate-published",

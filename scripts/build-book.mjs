@@ -1762,12 +1762,15 @@ function shareMovementsFrom(docs, positions, accounts, notes, unvalued = []) {
     (keysByIsin.get(p.isin) ?? keysByIsin.set(p.isin, new Set()).get(p.isin)).add(p.securityKey);
     if (p.assetClass === "AIF") aifIsins.add(p.isin);
   }
-  // THE REGISTRY DECIDES WHICH ACCOUNTS EXIST. Account 32387399's three
-  // identifiers give three answers, so it is excluded with the reason and its
-  // holdings are in no total — and it issues a transaction statement like every
+  // THE REGISTRY DECIDES WHICH ACCOUNTS EXIST. An account excluded with a
+  // reason (`excludedFromBook`) still issues a transaction statement like every
   // other demat, so a window keyed on its own accountId would walk that account
   // back into the book through a side door, attributed to a holder this book
-  // has said it cannot establish.
+  // has said it cannot establish. Demat 32387399 was that account until Stage
+  // 10db: its three identifiers gave three answers, and it is in the registry
+  // now because the family's own register and review name its holder — the
+  // Bharat Jaisinghani Family Trust (`BENEFICIAL_OWNER_BY_CLIENT_ID` in
+  // `providers/motilalDemat.mjs`).
   const known = new Set(accounts.map((a) => a.accountId));
   /**
    * WHICH ACCOUNTS SENT A HOLDING STATEMENT. A window the book carries no
@@ -2482,7 +2485,10 @@ function build(archived) {
        * leaving a dash to be read as "the pipeline lost it". Motilal Oswal demat
        * 32387399 was reported here at ₹8.23 Cr until Stage 10cz — the sum of its
        * statement's value column, which is the price of each holding's last
-       * depository movement times that movement's quantity, not a valuation.
+       * depository movement times that movement's quantity, not a valuation —
+       * and was here at all until Stage 10db, when its holder was established
+       * and it entered the registry. No account takes this branch on this book;
+       * it is kept for the next one a drop cannot attribute.
        */
       const heldRows = group.flatMap((d) => d.holdings ?? []);
       const valueWhy = value === null && heldRows.some((h) => isNum(h.lastMovementRate) && h.lastMovementRate > 0)

@@ -92,6 +92,43 @@
 // (…3D and …4G) it does not match either. Three identifiers, three answers.
 // The account is EXCLUDED with the reason rather than attributed to a guess,
 // by the same mechanism that held folio 1000633 out until its password arrived.
+//
+// ── AND THE FAMILY'S OWN DOCUMENTS NAME THE HOLDER (Stage 10db) ─────────────
+//
+// The paragraph above is kept as it was learnt; its three answers were three
+// readings of ONE fact. The holder lines print the TRUSTEES — Aarti first, Ajay
+// second, Aarti third — of a trust, which is why the PAN that rides with them
+// fits neither: it is the trust's, and the statement prints three characters of
+// it. The family's own two documents say which trust, and it is neither Trust 2
+// nor Trust 3 but the UNNUMBERED "Bharat Jaisinghani Family Trust":
+//
+//   their investment register (`NEW INVESTMENT SHEET.xlsx`, `TRUST INVESTMENT`,
+//   row 17) records ₹6.77 Cr paid on 1 Jul 2025 under that name, into "ICICI
+//   Prudential Liquid Fund Direct G – 3 cr" and "Invesco India Arbitrage Fund
+//   Direct G – 3.77 cr";
+//
+//   their 30 June review (`Transactions since inception`, rows 135–137 and
+//   148–149) carries the same two funds under the same name, with closings of
+//   46,654.378 and 1,092,470.994 units — this statement's balances exactly —
+//   and a sale of 30,180 ICICI units on 10 Sep 2025, the quantity this
+//   statement's last-movement value is struck on (Stage 10cz); and its
+//   `Investorwise Summary` gives the trust a column of its own beside Trust II
+//   and Trust III.
+//
+// And the page agrees with them in three ways the reader checks on every read
+// (`beneficialOwnerOn`): the depository prints `A/C Type: NIN` where every one
+// of the family's own demats prints `Individual-Resident`; the masked PAN fits
+// no taxpayer the registry carries a PAN for; and the trust is a canonical owner
+// of kind `trust`. The contact number and e-mail the page masks are the ones
+// Bharat's own two demats print, not Aarti's, and the UCC (H43383) is the one
+// the holding statement's own file name gives the trust — both checked by hand
+// rather than in code, because a file name is not evidence this reader will
+// rest on and a contact detail is not an identity. If any check the code does
+// make fails, the join is REFUSED with the reason, and the account is read as
+// printed — which excludes it exactly as before.
+//
+// `providers/hdfcNsdl.mjs`'s `BENEFICIAL_OWNER_BY_DP_ACCOUNT` is the precedent:
+// a trustee printed on a trust's demat is not its beneficial owner.
 import { parseNum } from "../lib/parseNum.mjs";
 import { makeHolding, makeTotals, makeTransaction } from "../lib/document.mjs";
 import { toIso } from "../lib/classify.mjs";
@@ -246,6 +283,60 @@ function investor(name, maskedPan) {
 const FIELD = (text, label, stop = "\\s{2,}|$") =>
   (new RegExp(`${label}\\s*:?\\s*(.+?)(?=${stop})`, "m").exec(text) ?? [])[1]?.trim() ?? null;
 
+/**
+ * WHOSE ACCOUNT IT IS, WHERE THE PAGE PRINTS ITS TRUSTEES (Stage 10db).
+ *
+ * Keyed on the CLIENT ID the page prints — never on the file name, three of
+ * which name the wrong member in this drop — and cited to the family's own two
+ * documents (the note at the top of this file sets out what each records).
+ * `beneficialOwnerOn` checks the page against the entry on every read, and a
+ * page the entry does not fit is read as printed, which excludes it exactly as
+ * before.
+ */
+export const BENEFICIAL_OWNER_BY_CLIENT_ID = {
+  "1201090032387399": {
+    owner: "Bharat Jaisinghani Family Trust",
+    via: "the family's investment register records ₹6.77 Cr paid under \"Bharat Jaisinghani Family Trust\" on 1 Jul 2025 into the ICICI Prudential Liquid and Invesco India Arbitrage direct plans (TRUST INVESTMENT, row 17), and their 30 June review carries both funds under that name with closings of 46,654.378 and 1,092,470.994 units, this account's own balances (Transactions since inception, rows 135–137 and 148–149). The holder lines print the trust's trustees.",
+  },
+};
+
+/**
+ * The join, checked against the page: null where no entry names this client
+ * ID, otherwise the owner — or a refusal naming the check the page failed.
+ *
+ * Every check is struck on something the PAGE prints or on the registry, and
+ * none on a file name or a contact detail:
+ *   - the entry names a canonical owner, and that owner is a TRUST — a trustee
+ *     printed on the holder line is only not the owner where the owner is one;
+ *   - the depository's own account type is not a person's (`Individual-…`,
+ *     which every one of the family's own demats prints);
+ *   - the masked PAN fits no OTHER taxpayer the registry carries a PAN for, and
+ *     where the registry ever gains the trust's own PAN, it fits that.
+ */
+export function beneficialOwnerOn({ clientId, acType, maskedPan }, joins = BENEFICIAL_OWNER_BY_CLIENT_ID) {
+  const entry = clientId ? joins[clientId] ?? null : null;
+  if (!entry) return null;
+  const refuse = (why) => ({ owner: null, ownerId: null, named: entry.owner, via: entry.via, refused: why });
+  const { owner, matchedBy } = resolveOwner(entry.owner);
+  if (!owner || matchedBy !== "alias") return refuse(`"${entry.owner}" is not a canonical owner in shared/owners.mjs`);
+  if (owner.kind !== "trust") return refuse(`${owner.displayName} is not a trust in shared/owners.mjs`);
+  if (!acType) return refuse("the page's `A/C Type:` was not read, so it cannot be shown this is not a person's account");
+  if (/^individual/i.test(acType)) return refuse(`the page prints \`A/C Type: ${acType}\`, which is a person's account, not a trust's`);
+  if (!maskedPan) return refuse("the page prints no masked PAN to check the attribution against");
+  const others = OWNERS.filter((o) => o.ownerId !== owner.ownerId
+    && (o.pans ?? []).some((pan) => maskedPanMatches(maskedPan, pan) === true));
+  if (others.length) return refuse(`the masked PAN \`${maskedPan}\` fits ${others.map((o) => o.displayName).join(" and ")}'s PAN in the registry`);
+  const own = (owner.pans ?? []).map((pan) => maskedPanMatches(maskedPan, pan)).filter((v) => v !== null);
+  if (own.length && !own.some(Boolean)) return refuse(`the masked PAN \`${maskedPan}\` does not fit ${owner.displayName}'s own PAN in the registry`);
+  return { owner: owner.displayName, ownerId: owner.ownerId, named: entry.owner, via: entry.via, refused: null };
+}
+
+/** Every warning `identityOf` writes — so a replay can tell its own from the tables'. */
+export const IDENTITY_WARNING_CODES = Object.freeze([
+  "client-id-not-read", "owner-from-register", "beneficial-owner-refused",
+  "owner-unresolved", "pan-contradicts-name",
+]);
+
 /** Which of the two documents is this? The page says, in its own heading. */
 export function reportTypeOf(text) {
   if (/DP Holdings As On/i.test(text)) return "holdings";
@@ -315,15 +406,18 @@ function movementKind(particulars) {
   return "unclassified";
 }
 
-export function extract({ grid, meta = {} }) {
+/**
+ * THE ACCOUNT AND ITS OWNER, FROM INSIDE THE PAGE.
+ *
+ * Shared by `extract()` and by `npm run replay:owners`, so the replay calls the
+ * same function on the same text rather than a copy of it. The warnings are the
+ * identity warnings alone, in the order the reader has always written them —
+ * ahead of anything the tables add. `joins` exists so the replay can read a
+ * page exactly as it was read BEFORE an entry existed, which is the state it
+ * must find on disk to land one.
+ */
+export function identityOf(text, joins = BENEFICIAL_OWNER_BY_CLIENT_ID) {
   const warnings = [];
-  const pages = grid?.pages ?? [];
-  const text = pages.map((p) => p.text).join("\n").replace(/[ \t]+/g, " ");
-  if (!/Motilal Oswal Financial Services Limited/i.test(text)) return null;
-  const reportType = reportTypeOf(text);
-  if (!reportType) return null;
-
-  // ── identity, from inside the page ────────────────────────────────────────
   const clientId = (/Client ID:\s*(\d{10,})/i.exec(text) ?? [])[1] ?? null;
   const ucc = (/UCC Code:\s*(\S+)/i.exec(text) ?? [])[1] ?? null;
   const holderName = (/Client Name:\s*([A-Z][A-Z .]*?)\s+PAN No:/.exec(text) ?? [])[1]?.trim() ?? null;
@@ -331,8 +425,20 @@ export function extract({ grid, meta = {} }) {
   const acType = (/A\/C Type:\s*([A-Za-z-]+)/.exec(text) ?? [])[1] ?? null;
   const second = FIELD(text, "Second Holder");
   const third = FIELD(text, "Third Holder");
+  const printed = { clientId, ucc, holderName, maskedPan, acType, second, third };
 
   if (!clientId) warn(warnings, "client-id-not-read", "no `Client ID:` on the page — the account cannot be keyed, and the FILE NAME is not a substitute: three of these twelve name the wrong member");
+
+  const joined = beneficialOwnerOn({ clientId, acType, maskedPan }, joins);
+  if (joined?.owner) {
+    warn(warnings, "owner-from-register",
+      `client ID ${clientId} is attributed to ${joined.owner}, not to the "${holderName ?? "(not read)"}" the page prints as its first holder: ${joined.via}`);
+    return { ...printed, owner: joined.owner, ownerId: joined.ownerId, excludedFromBook: null, warnings };
+  }
+  if (joined?.refused) {
+    warn(warnings, "beneficial-owner-refused",
+      `client ID ${clientId} has an entry naming ${joined.named} as its holder, and it was not applied: ${joined.refused}. The account is read as printed.`);
+  }
 
   const { owner, ownerId, panAgrees } = investor(holderName, maskedPan);
   if (!owner) {
@@ -343,6 +449,42 @@ export function extract({ grid, meta = {} }) {
       `the page prints \`Client Name: ${holderName}\` with \`PAN No: ${maskedPan}\`, and ${owner}'s PAN in the registry does not end that way. The name and the PAN name different taxpayers, so the account is not attributed to either.`);
   }
 
+  /**
+   * A CONTRADICTION EXCLUDES THE ACCOUNT, AND IT HAS TO SAY SO EXPLICITLY.
+   *
+   * Returning `owner: null` is not enough: `extract.mjs` falls back to the name
+   * the classifier read off the flat text, which is the same name the PAN
+   * contradicts — so the account came back attributed to that person anyway.
+   * `excludedFromBook` is the mechanism the HOPE INDIA TRUST folios already use
+   * and `build-book` honours it before it resolves an owner at all. The
+   * statement stays fully read and fully in the archive; it is only the family
+   * total it stays out of, and it returns the moment the holder is established.
+   */
+  const excludedFromBook = panAgrees === false
+    ? `this account's holder cannot be established: the page prints \`Client Name: ${holderName}\` with \`PAN No: ${maskedPan}\`, which is not ${owner}'s PAN, so the name and the PAN name different taxpayers and it is not summed into anybody's total. An entry in BENEFICIAL_OWNER_BY_CLIENT_ID, once the family's own documents name the holder, puts it in the book.`
+    : null;
+
+  return {
+    ...printed,
+    owner: panAgrees === false ? null : owner,
+    ownerId: panAgrees === false ? null : ownerId,
+    excludedFromBook,
+    warnings,
+  };
+}
+
+export function extract({ grid, meta = {} }) {
+  const warnings = [];
+  const pages = grid?.pages ?? [];
+  const text = pages.map((p) => p.text).join("\n").replace(/[ \t]+/g, " ");
+  if (!/Motilal Oswal Financial Services Limited/i.test(text)) return null;
+  const reportType = reportTypeOf(text);
+  if (!reportType) return null;
+
+  // ── identity, from inside the page ────────────────────────────────────────
+  const id = identityOf(text);
+  warnings.push(...id.warnings);
+
   const asOf = reportType === "holdings"
     ? toIso((/DP Holdings As On:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(text) ?? [])[1]?.replace(/\//g, "-"))
       // An empty account states its date in the sentence that says it is empty.
@@ -351,32 +493,17 @@ export function extract({ grid, meta = {} }) {
   const { periodFrom, periodTo } = reportType === "demat-transactions"
     ? dematPeriod(text) : { periodFrom: null, periodTo: null };
 
-  /**
-   * A CONTRADICTION EXCLUDES THE ACCOUNT, AND IT HAS TO SAY SO EXPLICITLY.
-   *
-   * Returning `owner: null` is not enough: `extract.mjs` falls back to the name
-   * the classifier read off the flat text, which is the same name the PAN
-   * contradicts — so the account came back attributed to Aarti anyway.
-   * `excludedFromBook` is the mechanism the HOPE INDIA TRUST folios already use
-   * and `build-book` honours it before it resolves an owner at all. The
-   * statement stays fully read and fully in the archive; it is only the family
-   * total it stays out of, and it returns the moment a PAN settles the holder.
-   */
-  const excludedFromBook = panAgrees === false
-    ? `this account's holder cannot be established: the page prints \`Client Name: ${holderName}\` with \`PAN No: ${maskedPan}\`, which is not ${owner}'s PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book.`
-    : null;
-
   const base = {
     provider: PROVIDER,
-    accountNo: clientId,
-    owner: panAgrees === false ? null : owner,
-    ownerId: panAgrees === false ? null : ownerId,
-    excludedFromBook,
+    accountNo: id.clientId,
+    owner: id.owner,
+    ownerId: id.ownerId,
+    excludedFromBook: id.excludedFromBook,
     asOf,
     reportType,
     engagement: "Direct",
-    providerEngagement: `CDSL depository account — ${acType ?? "type not read"}`,
-    jointHolders: [second, third].filter(Boolean),
+    providerEngagement: `CDSL depository account — ${id.acType ?? "type not read"}`,
+    jointHolders: [id.second, id.third].filter(Boolean),
     warnings,
   };
 
