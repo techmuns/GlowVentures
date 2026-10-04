@@ -569,10 +569,11 @@ prior one nobody could answer without reading a directory listing by hand — *i
 there a file in `source/` whose data never reached anything?* `scripts/source-coverage.mjs`
 accounts for every leaf file in exactly one class and **exits non-zero if any is
 `unread`**, so a delivery that lands a file nobody reads cannot pass silently.
-Measured today: 252 read, 4 read via a byte-identical twin, 2 held out by
+Measured on the September 2026 delivery (Stage 10da): 277 read, 4 read via a
+byte-identical twin, 18 read as witnesses of the PDF beside them, 2 held out by
 decision, 58 macOS `__MACOSX/._*` resource forks (checked per file for a `%PDF`
 header, never assumed from the path), 2 password notes excluded by policy, and
-**0 unread**. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
+**0 unread** — 361 leaf files. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
 paragraph come from it and from `docs/BOOK-REPORT.md`, and should be re-read from
 them rather than edited to taste.
 
@@ -25322,8 +25323,25 @@ SUITE.**
 - `replay:calls`, `replay:flows`, `replay:owners`, `replay:movements`,
   `replay:dedupe`, `rekey:archive` and `reconcile:review` are each a no-op with
   `--check`.
-- `check:pages`: the full sweep on this tree was still running when these notes
-  were committed; its result follows in the next commit.
+- `check:pages` walked **370 combinations, and 6 have a finding — none of them
+  this change's.** All 11 failing invariants are main's #104 checks on six Morning
+  CIO routes (`cio`, `cio-index-loading`, `cio-cached`, `cio-live`,
+  `cio-live-capture-lag`, `cio-alerts-badge`), the same 11 Stage 10cz measured on
+  main's own build.
+- 32 invariants were not checked, against Stage 10cz's 25. One left the list
+  (`history` no longer abstains) and eight joined it, each read out by name
+  and each evidenced by the book:
+  - **five lost their subject with the Buoyant snap.** A-14 on `cio-allocation`
+    and `monitor`, and MH-15 on `monitor`, `monitor-auto` and `monitor-cagr`.
+    Buoyant's two ₹0 cash lines were this book's only nil costed line, and the
+    31 Aug snaps print none. Both rules are still held on constructed rows:
+    `clubbedFigures.test.ts` for A-14, and `holdingReturn.test.ts` for MH-15,
+    which fails three checks when the nil-line rule is switched off.
+  - **two on `monitor-txn-window-early`**: no fiscal year of the dated capital
+    record ends before the transaction statements begin, because ASK's tapes run
+    from 26 Jul 2019.
+  - **one on `ledger`**: the archive's newest statement is now the tape's own last
+    date, so the two windows cannot be told apart.
 
 ### Stage 10k — News & Announcements: REMOVED
 
