@@ -1,0 +1,25 @@
+{
+ "name": "current-investments",
+ "rows": [
+  [
+   "class",
+   "cost (INR, whole rupees)",
+   "value (INR, whole rupees)"
+  ],
+  [
+   "Buoyant Opportunities Strategy — Category III — Class A1",
+   0,
+   0
+  ],
+  [
+   "Buoyant Opportunities Strategy — Category III — Class A4",
+   249410446,
+   282663342
+  ],
+  [
+   "Total",
+   249410446,
+   282663342
+  ]
+ ]
+}

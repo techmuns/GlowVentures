@@ -313,11 +313,27 @@ function indexByIsin(text) {
 }
 
 // ── what the last run held, for the day change and for idempotence ──────────
+/**
+ * Keyed on the line AND on the scheme. A previous NAV is a fact about the
+ * SCHEME — the ISIN AMFI publishes it against — and not about which of the
+ * book's lines happened to reach that ISIN on the last run. When a new line
+ * reaches an ISIN first (Stage 10db: the Bharat Jaisinghani Family Trust's
+ * demat entered the book holding the Kotak Arbitrage units Ajay's depository
+ * tape also carries), the entry moves to the new line's key, and a lookup on
+ * the key alone dropped the scheme's day change for a day. The key still wins
+ * where it answers: Helios is carried under two keys on one ISIN, and each keeps
+ * its own record.
+ */
 function previous() {
-  if (!existsSync(OUT)) return new Map();
+  if (!existsSync(OUT)) return { byKey: new Map(), byIsin: new Map() };
   const src = readFileSync(OUT, "utf8");
-  const arr = bookArray(src, "BOOK_FUND_NAVS");
-  return new Map((arr ?? []).map((e) => [e.securityKey, e]));
+  const arr = bookArray(src, "BOOK_FUND_NAVS") ?? [];
+  const byIsin = new Map();
+  for (const e of arr) {
+    const k = typeof e.isin === "string" ? e.isin.trim().toUpperCase() : null;
+    if (k && !byIsin.has(k)) byIsin.set(k, e);
+  }
+  return { byKey: new Map(arr.map((e) => [e.securityKey, e])), byIsin };
 }
 
 function main() {
@@ -371,7 +387,7 @@ function main() {
             : "no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against")
           : `the published NAV of ${rec.nav} against this book's own mark of ${lo === mark ? mark : `${lo}–${mark}`} is a factor of ${(1 / Math.max(...ratios)).toFixed(1)}, which is a share-count break rather than market movement — the units and the NAV are not the same unit`;
 
-      const before = prev.get(w.key);
+      const before = prev.byKey.get(w.key) ?? prev.byIsin.get(isin.trim().toUpperCase());
       // The previous NAV is whatever THIS FILE held on an earlier date — the
       // source publishes one day, so the change accumulates here or not at all.
       const carry = before && before.date && before.date !== rec.date

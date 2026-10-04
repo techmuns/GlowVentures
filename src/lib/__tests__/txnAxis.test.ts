@@ -114,14 +114,31 @@ for (const axis of GROUP_AXES) {
 }
 
 /**
- * LOAD-BEARING. Some funded account must be mixed when its empty lines are
- * COUNTED — or the rule above is exercised by nothing in this book, and every
- * check here would pass on a book where it did no work.
+ * LOAD-BEARING WHERE THE BOOK GIVES IT A SUBJECT. A funded account that is
+ * mixed only while its empty lines are COUNTED is the case the rule exists for.
+ * Buoyant's two folios were that case until the September 2026 delivery: their
+ * 31 Aug portfolio snaps supersede the 31 Jul appraisals and print no ₹0 cash
+ * sleeve. Measured on this book, no funded account now carries a ₹0 line beside
+ * a valued one in another section — 3P and both ASK Absolute Return folios hold
+ * nothing BUT ₹0 lines, and Molecule's ₹0 TDS line sits in a mandate, which is
+ * one section whatever it holds. So the claim abstains, with that evidence,
+ * and the constructed f1 case above still asserts the rule as a hard failure:
+ * the abstention never stands alone.
  */
 const mixedIfCounted = funded.filter((a) => GROUP_AXES.some((axis) =>
   new Set(BOOK_POSITIONS.filter((p) => p.accountId === a).map((p) => groupKeyFor(axis, idx, p))).size > 1));
-ok("the rule does work on this book: an account is mixed only while its ₹0 line is counted",
-  mixedIfCounted.length > 0, mixedIfCounted.join(", "));
+const zeroBesideValued = funded.filter((a) => {
+  const ps = BOOK_POSITIONS.filter((p) => p.accountId === a);
+  return ps.some((p) => p.marketValue === 0) && ps.some((p) => p.marketValue !== 0);
+});
+if (zeroBesideValued.length === 0) {
+  console.log(`NOT CHECKED the rule does work on this book — no funded account carries a ₹0 line beside a valued one (${funded.length} funded account(s) measured); the constructed f1 case holds it`);
+  // …and it must still be TRUE that none is mixed, or the measurement above is wrong.
+  ok("…and no funded account is mixed while its ₹0 lines are counted", mixedIfCounted.length === 0, mixedIfCounted.join(", ") || "none");
+} else {
+  ok("the rule does work on this book: an account is mixed only while its ₹0 line is counted",
+    mixedIfCounted.length > 0, `${mixedIfCounted.join(", ")} of ${zeroBesideValued.join(", ")}`);
+}
 
 console.log(fails ? `\n${fails} check(s) FAILED` : "\nall txnAxis checks passed");
 process.exit(fails ? 1 : 0);

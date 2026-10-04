@@ -222,6 +222,29 @@ ok("the book still carries a report date for the window to close against", !!BOO
   ok("absolute with no cost is absent, naming the depository",
      (() => { const r = measuredReturn(mr(null, long), "absolute", ASOF); return !r.shown && /cost/.test(r.reason); })());
 
+  // A LINE THAT HOLDS NOTHING (MH-15). Its statement reports a nil balance at a
+  // cost of ₹0, which is not a depository holding whose custodian never recorded
+  // a cost, so the two must give different reasons. Buoyant's two ₹0 cash
+  // sleeves were this book's case and its 31 Aug snaps print none, so the page
+  // check has no subject (Stage 10da). The rule is held here, on constructed
+  // rows, in both directions.
+  {
+    const nil = { ...mr(null, long), costBasis: 0, marketValue: 0 } as ReturnInput;
+    const depo = { ...mr(null, long), costBasis: null, marketValue: 1_00_000 } as ReturnInput;
+    for (const m of ["absolute", "cagr", "auto"] as const) {
+      const a = measuredReturn(nil, m, ASOF), b = measuredReturn(depo, m, ASOF);
+      ok(`${m}: a nil line says it holds nothing, never that no cost was reported (MH-15)`,
+         !a.shown && /holds nothing: its statement reports a nil balance at a cost of ₹0/.test(a.reason)
+         && !/depository/.test(a.reason), a.shown ? "shown" : a.reason);
+      // The CAGR column words the no-cost reason more briefly than the other
+      // two; both are true. What must not move is which of the two causes a
+      // row is given.
+      ok(`${m}: a holding with value and no cost keeps the no-cost reason`,
+         !b.shown && /reports a cost for this holding/.test(b.reason) && !/holds nothing/.test(b.reason),
+         b.shown ? "shown" : b.reason);
+    }
+  }
+
   // CAGR — annualised at a year or more, absolute under a year, absent with no date.
   ok("CAGR annualises a two-year hold and tags it CAGR",
      (() => { const r = measuredReturn(mr(21, twoYears), "cagr", ASOF); return r.shown && r.tag === "CAGR" && Math.abs(r.pct - 10) <= 0.05; })());

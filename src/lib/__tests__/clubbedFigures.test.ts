@@ -10,6 +10,8 @@
 import { BOOK_ACCOUNTS } from "@/data/glowData";
 import { LIVE_PRICED } from "./liveBook";
 import { dedupedPositions, currentHoldings, holdingBucket } from "@/lib/analytics";
+import { groupKeyFor, GROUP_AXES } from "@/lib/groupAxis";
+import { accountIndex } from "@/lib/accounts";
 import { costedFigures, commonMark, reportsCost } from "@/lib/clubbedFigures";
 import type { Position } from "@/lib/types";
 
@@ -75,17 +77,55 @@ console.log("\n── the book's own case: ICICI Bank ──");
 
 console.log("\n── a section whose only costed lines are nil balances has no cost total (A-14) ──");
 {
-  const cash = current.filter((p) => holdingBucket(p, eng.get(p.accountId)) === "Cash");
-  const f = costedFigures(cash);
-  const nilCosted = cash.filter((p) => reportsCost(p) && p.marketValue === 0 && p.costBasis === 0).length;
-  const valued = cash.filter((p) => !reportsCost(p) && p.marketValue > 0).length;
-  if (!(nilCosted > 0 && valued > 0)) {
-    ok("the Cash section still pairs nil costed sleeves with uncosted liquid funds", false,
-      `${nilCosted} nil costed, ${valued} valued uncosted — the case this guards has left the book; re-derive it`);
-  } else {
-    ok("the Cash section's cost total is absent, never ₹0", f.vacuous && f.cost === null && f.unrealised === null,
-      `${nilCosted} nil costed sleeves beside ${valued} uncosted holdings worth ₹${Math.round(f.uncosted.value).toLocaleString("en-IN")}`);
+  // The shape: every line that reports a cost is a nil balance (₹0 cost, ₹0
+  // value) and something beside it carries value with no cost. Summed, the
+  // costed lines give a ₹0 cost total that reads as a measurement. Buoyant's
+  // two ₹0 cash sleeves were this book's case, sitting in the Cash section
+  // beside the uncosted liquid funds; its 31 Aug portfolio snaps print no
+  // sleeve, so the shape is searched for on every axis and, wherever the book
+  // has none, held on a constructed copy of the real Cash section.
+  const vacuousShape = (ps: Position[]) => {
+    const costed = ps.filter(reportsCost);
+    return costed.length > 0 && costed.every((p) => p.marketValue === 0 && p.costBasis === 0)
+      && ps.some((p) => !reportsCost(p) && p.marketValue > 0);
+  };
+  const idx = accountIndex(BOOK_ACCOUNTS);
+  const shaped: string[] = [];
+  for (const axis of GROUP_AXES) {
+    const sections = new Map<string, Position[]>();
+    for (const p of current) {
+      const k = groupKeyFor(axis, idx, p);
+      sections.set(k, [...(sections.get(k) ?? []), p]);
+    }
+    for (const [k, ps] of sections) {
+      if (!vacuousShape(ps)) continue;
+      shaped.push(`${axis}/${k}`);
+      const f = costedFigures(ps);
+      ok(`${axis} · ${k}: the cost total is absent, never ₹0`, f.vacuous && f.cost === null && f.unrealised === null,
+        JSON.stringify({ cost: f.cost, vacuous: f.vacuous }));
+    }
   }
+  if (!shaped.length) {
+    console.log(`NOT CHECKED no section on any axis pairs nil costed lines with valued uncosted ones on this book (${GROUP_AXES.length} axes searched) — the constructed case below holds it`);
+  }
+  const cash = current.filter((p) => holdingBucket(p, eng.get(p.accountId)) === "Cash");
+  const valued = cash.filter((p) => !reportsCost(p) && p.marketValue > 0);
+  ok("the Cash section carries valued holdings that report no cost, so the constructed case is the book's own",
+    valued.length > 0, `${valued.length} holdings`);
+  const sleeve = { ...cash[0], securityKey: "cash", security: "Cash", assetClass: "Cash",
+    costBasis: 0, costUnavailable: false, marketValue: 0, quantity: 0 } as Position;
+  const c = costedFigures([...cash, sleeve]);
+  ok("a nil costed sleeve beside them gives a cost total that is absent, never ₹0",
+    vacuousShape([...cash, sleeve]) && c.vacuous && c.cost === null && c.unrealised === null,
+    `₹${Math.round(c.uncosted.value).toLocaleString("en-IN")} uncosted`);
+  // …and the book's own Cash section totals exactly what its lines report: no
+  // cost where no line reports one, never a ₹0 standing in for that absence.
+  const f = costedFigures(cash);
+  const costedCash = cash.filter(reportsCost);
+  const want = costedCash.length ? costedCash.reduce((t, p) => t + (p.costBasis as number), 0) : null;
+  ok("the book's Cash section totals the cost its own lines report, and no cost where none does",
+    want === null ? f.cost === null && f.unrealised === null : near(f.cost, want, 0.01),
+    `${costedCash.length} costed line(s), total ${f.cost}`);
   // …and a genuine measured zero is untouched: a set whose costed lines carry value keeps its cost.
   const g = costedFigures([{ costBasis: 0, costUnavailable: false, marketValue: 0, quantity: 0 }]);
   ok("a set of nothing but nil costed lines keeps its measured ₹0 (there is nothing uncosted beside it)",

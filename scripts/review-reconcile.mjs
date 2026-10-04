@@ -936,14 +936,16 @@ const custodianNote = (l) => {
   if (l.aggregate) {
     return "**an AGGREGATE line, not a holding** — the review reports this block only as a total on the "
       + "`" + l.tab + "` tab and itemises it nowhere. Its constituents are on the review's own "
-      + "`Private Investments` tab and in the family's investment register (`/register`); no custodian issues "
+      + "`Private Investments` tab and in the family's investment register (`docs/REGISTER-RECONCILIATION.md`); no custodian issues "
       + "a statement for it, so this is not a document to ask for";
   }
   if (l.tab) {
     return `a fund line on the **${l.tab}** tab. What carries it is the AMC's own folio statement or a `
       + "consolidated account statement (CAS) — not a demat holding statement, which moves units without a price";
   }
-  return /HDFC/i.test(adv) ? "held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it"
+  return /HDFC/i.test(adv) ? (/bharat/i.test(l.investor ?? "") && !/ajay/i.test(l.investor ?? "")
+      ? "held at **HDFC Bank NSDL** — Bharat's statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it"
+      : "held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)")
     : /ICICI/i.test(adv) ? "the ICICI NSDL statement is read; this line is not on it, so it sits in another account"
     : /MOPWM|Motilal/i.test(adv) ? "held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth"
     : /Private/i.test(adv) ? "a private holding the review carries at cost; no statement in the drop values it"
@@ -965,7 +967,7 @@ const askFor = (l) => {
   // counted apart so the ask list stays a list of things a client can send.
   return l.aggregate ? "NOTHING TO ASK FOR — an aggregate block the review itemises on another tab"
     : l.tab ? "AMC folio statements or a CAS for the mutual-fund and liquid holdings on the Debt / Cash / Alternate tabs"
-    : /HDFC/i.test(adv) ? "Bharat's HDFC Bank NSDL holding statement — **as a text PDF, not a scan**"
+    : /HDFC/i.test(adv) ? "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's **as a text PDF, not a scan**"
     : /ICICI/i.test(adv) ? "an ICICI Bank NSDL statement for the account this line sits in"
     : /MOPWM|Motilal/i.test(adv) ? "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
     : /Private/i.test(adv) ? "a valuation for the private holdings the review carries at cost"
@@ -1198,7 +1200,7 @@ say();
 say("**WHAT WOULD CLOSE CAUSE A:** a transaction statement or contract note from **ICICI Bank**");
 say("and **Motilal Oswal** for those accounts — the buy prices, not another holding statement.");
 say("The family's own investment register already covers part of it: `npm run reconcile:register`");
-say("measures which, and the answer today is 7 of the 60 rows.");
+say("measures which, in `docs/REGISTER-RECONCILIATION.md`.");
 say();
 say("**AND CAUSE A CANNOT RAISE NAV.** Those rows are already in the ₹" + cr(SUMMARY.totalValue / CR) + " Cr at their");
 say("statement marks. Supplying their cost raises invested capital, lowers the reported return on");
@@ -1345,8 +1347,9 @@ say("1. **Six weeks of market movement.** The review is struck 30 June; most of 
 say("   accounts are dated July or August, and the two ICICI-sourced accounts 31 March. Every");
 say("   line in section C2 whose quantity ties exactly and whose value does not is this.");
 say("2. **Partly-held names.** Nine direct-equity lines are held in this book at a smaller");
-say("   quantity than the review carries — Clean Max at exactly half, Insolation short by the");
-say("   91,000 shares that sit on the unreadable HDFC statement. The missing part of each is");
+say("   quantity than the review carries — Clean Max at exactly half (Ankita's 94,967 are kept as a");
+say("   quantity at the family's decision), Insolation short by Bharat's 91,260 shares, which the review");
+say("   places at ICICI Bank in an account no statement in the drop covers. The missing part of each is");
 say("   already counted in step 2 above only where the WHOLE line was absent, never where part");
 say("   of it is here.");
 say("3. **Private holdings the review carries at cost and this book cannot value.** The");
@@ -1355,6 +1358,314 @@ say("   carries no value here at all.");
 say();
 say("Closing the residual line by line needs the statements in section D1. Until they arrive");
 say("it stays stated rather than distributed across the book.");
+say();
+
+/**
+ * ── H. EVERY CLOSING THE REVIEW PRINTS, HOLDER BY HOLDER ──────────────────
+ *
+ * *"Make sure all the newly added and old data on the dashboard is as per this
+ *  consolidated excel file."* Sections A–G compare the review's TOTALS and its
+ * tab lines against the book. This one goes a level down: the review's own
+ * `Transactions since inception` tab ends every holding with a `Closing` row —
+ * one holder, one product, one date, the units and the value the adviser
+ * carried — and each is set against THE SAME HOLDER'S OWN STATEMENTS.
+ *
+ * Four rules keep it a measurement rather than a resemblance:
+ *
+ * - **THE HOLDER IS PART OF THE JOIN.** A unit count that ties on somebody
+ *   else's statement is a coincidence, not a witness.
+ * - **THE PRODUCT IS JOINED BY IDENTIFIER WHERE ONE EXISTS** — the ISINs
+ *   `src/lib/reviewGaps.ts` commits per review line (mirrored here, never
+ *   imported, so the report and the dashboard are two derivations), then this
+ *   reconciler's own name tiers, widened to every key that carries one of the
+ *   ISINs found. That is how Helios's AMC folio and its depository spelling
+ *   meet. There is no fuzzy tier.
+ * - **ACCOUNT BY ACCOUNT, AT THE CLOSING'S OWN DATE.** A depository balance on
+ *   that exact day (the tape's own running balance) is used where a window
+ *   covers it; otherwise the statement nearest the date, preferring an earlier
+ *   one, and the gap in days is printed. A statement of another date is carried
+ *   to the review's date over the units its own dated record shows moving between
+ *   (`H_MOVES`), and an account whose record shows it held nothing then is not
+ *   that closing's statement. Where one holder's product is split
+ *   across two closings (Deepak Fertilisers at HDFC Bank and at Motilal Oswal),
+ *   an account one closing ties to is not offered to the other.
+ * - **UNITS TIE TO THE THIRD DECIMAL THE STATEMENTS PRINT.** A value-only line
+ *   (a PMS mandate) ties where the holder's statement from that manager PRINTS
+ *   the review's figure; those printed totals include accrued income and
+ *   declared dividends, which this book keeps out of market value (§4b).
+ *
+ * The review is still not a source: nothing here reaches `glowData.ts` or
+ * `src/data/reviewGaps.ts`, and every figure below is labelled by whose it is.
+ */
+const H_ROWS = sheet("Transactions since inception");
+const hSerial = (v) => (/^\d+(\.\d+)?$/.test(String(v ?? "").trim())
+  ? new Date(Date.UTC(1899, 11, 30) + Number(v) * 864e5).toISOString().slice(0, 10) : String(v ?? "").trim());
+const H_CLOSINGS = [];
+H_ROWS.forEach((r, i) => {
+  const c = (r ?? []).map((x) => String(x ?? "").trim());
+  if (i < 4 || c[6] !== "Closing") return;
+  H_CLOSINGS.push({ row: i + 1, investor: c[1], advisor: c[2], tab: c[3], product: c[5],
+    date: hSerial(c[7]), qty: num(c[8]), qtyDp: (String(c[8]).split(".")[1] ?? "").length, rate: num(c[9]), value: num(c[10]) });
+});
+const H_OWNER = new Map([
+  ["Aarti Ajay Jaisinghani", "aarti-jaisinghani"], ["Ajay Jaisinghani", "ajay-jaisinghani"],
+  ["Ankita Jaisinghani", "ankita-jaisinghani"], ["Bharat Jaisinghani", "bharat-jaisinghani"],
+  ["Bharat Jaisinghani Family Trust II", "bharat-jaisinghani-family-trust-2"],
+  ["Bharat Jaisinghani Family Trust III", "bharat-jaisinghani-family-trust-3"],
+  ["Bharat Jaisinghani Family Trust", "bharat-jaisinghani-family-trust"],
+]);
+/** Mirror of `REVIEW_LINE_ISINS` in src/lib/reviewGaps.ts — kept in step by hand, on purpose. */
+const H_LINE_ISINS = new Map([
+  ["Motilal Oswal Arbitrage Fund Direct (G)", ["INF247L01ED1"]], ["HDFC Liquid Fund -Direct(G)", ["INF179KB1HP9"]],
+  ["Aditya Birla SL Balanced Advantage Fund(G)", ["INF084M01AB8"]],
+  ["Bandhan Large & Mid Cap Fund - Direct Plan - Growth", ["INF194K01V89"]],
+  ["ICICI Pru India Opportunities Fund", ["INF109KC1RH9"]], ["ICICI Prudential Equity Savings Fund - Direct Plan", ["INF109KA11J9"]],
+  ["Kotak Large & Midcap Fund - Direct- Growth", ["INF174K01LF9"]], ["Kotak Multicap Fund-Direct Plan-Growth", ["INF174KA1HV3"]],
+  ["IFB Inds.", ["INE559A01017"]], ["NLC INDIA", ["INE589A01014"]], ["Zepto", ["INE143403066", "INE143401029"]],
+  ["Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW", ["INF732E01037"]],
+  ["HDFC Balanced Advantage Fund", ["INF179K01830", "INF179K01WA6"]], ["ICICI Pru Balanced Advantage Fund", ["INF109K012B0"]],
+  ["ICICI Pru Liquid Fund-Direct(G)", ["INF109K01Q49"]], ["WhiteOak Capital Multi Asset Allocation Fund-Direct(G)", ["INF03VN01761"]],
+  ["Invesco India Arbitrage Fund-Direct(G)", ["INF205K01KR8"]],
+]);
+const hUp = (s) => String(s ?? "").trim().toUpperCase();
+/** A report type the classifier could not name is still a statement — never printed as "unknown of <date>". */
+const hKind = (t) => (!t || t === "unknown" ? "statement" : t);
+const hOwnerOfAccount = new Map(ACCOUNTS.map((a) => [a.accountId, a.ownerId]));
+const hEngagement = new Map(ACCOUNTS.map((a) => [a.accountId, a.engagement]));
+const hProviderOf = new Map(ACCOUNTS.map((a) => [a.accountId, a.provider]));
+const hNameKey = (s) => securityKeyOf(String(s ?? "").split("#")[0]);
+const hAccountOf = (provider, accountNo) => ACCOUNTS.find((a) => a.provider === provider && a.accountNo === accountNo)?.accountId ?? `${provider} ${accountNo}`;
+const H_DOCS = new Map();
+const hDoc = (k) => { if (!H_DOCS.has(k)) { try { H_DOCS.set(k, JSON.parse(readFileSync(`public/audit/${k}/document.json`, "utf8"))); } catch { H_DOCS.set(k, {}); } } return H_DOCS.get(k); };
+const H_MANIFEST = (() => { try { return JSON.parse(readFileSync("public/audit/manifest.json", "utf8")); } catch { return []; } })();
+/** Every holding row any statement in the archive prints, with whose and when. */
+const H_ROWS_ARCHIVE = [];
+for (const d of H_MANIFEST) {
+  if (!d.ownerId || !d.asOf) continue;
+  for (const h of hDoc(d.docKey).holdings ?? []) {
+    if (typeof h.quantity !== "number") continue;
+    H_ROWS_ARCHIVE.push({ ownerId: d.ownerId, key: h.securityKey ?? null, isin: hUp(h.isin), units: h.quantity, provider: d.provider, nameKey: hNameKey(h.security),
+      date: d.asOf, account: hAccountOf(d.provider, d.accountNo), how: `${d.provider} ${d.accountNo}, ${hKind(d.reportType)} of ${d.asOf}` });
+  }
+}
+const H_WINDOWS = Object.values(grab(src, "BOOK_SHARE_MOVEMENTS"));
+/** The depository's own balance on `date`, read off the tape's running balance — the same date, never the nearest. */
+function hBalancesOn(date) {
+  const out = [];
+  for (const w of H_WINDOWS) {
+    if (w.reason != null || !w.source || !w.periodFrom || !w.periodTo || date < w.periodFrom || date > w.periodTo) continue;
+    const isin = hUp(w.isin);
+    const before = (hDoc(w.source).transactions ?? []).filter((t) => hUp(t.isin) === isin && (t.date ?? "") <= date);
+    const printed = before.length ? /balance ([\d.,]+)/.exec(before[before.length - 1].description ?? "")?.[1] : null;
+    const units = before.length ? Number(String(printed ?? "").replace(/,/g, "")) : w.opening;
+    if (!Number.isFinite(units)) continue;
+    // The tape's next printed balance after the day, so a difference says when it ended.
+    const after = (hDoc(w.source).transactions ?? []).find((t) => hUp(t.isin) === isin && (t.date ?? "") > date
+      && Number(String(/balance ([\d.,]+)/.exec(t.description ?? "")?.[1] ?? "").replace(/,/g, "")) !== units);
+    const nextBal = after ? /balance ([\d.,]+)/.exec(after.description ?? "")?.[1] : null;
+    out.push({ ownerId: hOwnerOfAccount.get(w.accountId) ?? null, key: w.securityKey, isin, units, date, provider: hProviderOf.get(w.accountId) ?? "", nameKey: hNameKey(w.security),
+      account: w.accountId, how: `the depository's own balance on ${date} (${w.accountId.replace(/^.*-(\d{6,})$/, "a/c $1")})`
+        + (nextBal ? `; next printed balance ${hUnits(Number(nextBal.replace(/,/g, "")))} on ${after.date}` : "") });
+  }
+  return out;
+}
+/**
+ * UNITS THAT MOVED BETWEEN A STATEMENT'S DATE AND THE REVIEW'S. A fund's own
+ * dated record (`BOOK_CAPITAL_MOVES`, units signed) and a broker's own buys and
+ * sells on an Execution or Direct account. A depository's tape is not read here:
+ * `hBalancesOn` already reads its running balance. A trade two issues of one tape
+ * both print counts once, by the ordinal rule `datedRowsAcross` uses.
+ */
+const H_MOVES = (() => {
+  const out = [];
+  for (const m of grab(src, "BOOK_CAPITAL_MOVES")) {
+    if (typeof m.units === "number" && m.units !== 0) out.push({ account: m.accountId, key: m.securityKey ?? null, isin: "", date: m.date, units: m.units, label: m.label });
+  }
+  const counts = new Map();
+  for (const d of H_MANIFEST) {
+    if (!/transaction/.test(d.reportType ?? "")) continue;
+    const account = hAccountOf(d.provider, d.accountNo);
+    if (!["Execution", "Direct"].includes(hEngagement.get(account))) continue;
+    const seen = new Map();
+    for (const t of hDoc(d.docKey).transactions ?? []) {
+      if (!["buy", "sell"].includes(t.side) || typeof t.quantity !== "number" || !t.date) continue;
+      const sig = [account, t.date, t.side, Math.abs(t.quantity), t.securityKey].join("|");
+      const n = (seen.get(sig) ?? 0) + 1;
+      seen.set(sig, n);
+      if (n <= (counts.get(sig) ?? 0)) continue;
+      counts.set(sig, n);
+      out.push({ account, key: t.securityKey ?? null, isin: hUp(t.isin), date: t.date,
+        units: t.side === "sell" ? -Math.abs(t.quantity) : Math.abs(t.quantity), label: t.side === "sell" ? "sold" : "bought" });
+    }
+  }
+  return out;
+})();
+/** A statement's units carried to `date` over the moves dated between the two; null where nothing moved. */
+function hRolled(r, date, keys, isins) {
+  if (r.date === date) return null;
+  const lo = r.date < date ? r.date : date, hi = r.date < date ? date : r.date;
+  const between = H_MOVES.filter((m) => m.account === r.account && ((m.key && keys.has(m.key)) || (m.isin && isins.has(m.isin)))
+    && m.date > lo && m.date <= hi).sort((a, b) => (a.date < b.date ? -1 : 1));
+  if (!between.length) return null;
+  const net = between.reduce((s, m) => s + m.units, 0);
+  return { units: r.date < date ? r.units + net : r.units - net, between };
+}
+const hMovesText = (roll) => roll.between.map((m) => `${m.units < 0 ? "−" : "+"}${hUnits(Math.abs(m.units))} ${m.label.toLowerCase()} ${m.date}`).join(", ");
+/** Within the third decimal the statements print, or the review's own rounding where it printed fewer. */
+const hSame = (a, b, dp = 3) => Math.abs(a - b) < Math.max(0.001, 0.5 * 10 ** -Math.min(dp, 3) + 1e-9);
+const hDays = (a, b) => Math.round(Math.abs(Date.parse(a) - Date.parse(b)) / 864e5);
+/** Keys and ISINs one review product names, widened through each other. */
+function hIdentity(product) {
+  const keys = new Set(), isins = new Set(H_LINE_ISINS.get(product) ?? []);
+  for (const m of [matchInArchive(product), matchSecurity(product)]) if (m.key) keys.add(m.key);
+  for (const r of H_ROWS_ARCHIVE) if (keys.has(r.key) && r.isin) isins.add(r.isin);
+  for (const w of H_WINDOWS) if (keys.has(w.securityKey) && w.isin) isins.add(hUp(w.isin));
+  for (const r of H_ROWS_ARCHIVE) if (r.isin && isins.has(r.isin) && r.key) keys.add(r.key);
+  return { keys, isins };
+}
+const hInd = (x, dp) => { const [i, f] = Math.abs(x).toFixed(dp).split("."); const a = i.length > 3 ? i.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + i.slice(-3) : i; return a + (f ? "." + f : ""); };
+const hWest = (x, dp) => { const [i, f] = Math.abs(x).toFixed(dp).split("."); return i.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (f ? "." + f : ""); };
+/** Where a manager's own statement for this holder PRINTS the review's figure. */
+function hPrintedBy(ownerId, provider, value) {
+  const forms = new Set();
+  for (const dp of [0, 2]) if (Math.abs(Number(value.toFixed(dp)) - value) < 0.005) { forms.add(hInd(value, dp)); forms.add(hWest(value, dp)); }
+  const hits = [];
+  for (const d of H_MANIFEST) {
+    if (d.ownerId !== ownerId || d.provider !== provider) continue;
+    let text = "";
+    try { text = (JSON.parse(readFileSync(`public/audit/${d.docKey}/pages.json`, "utf8")).pages ?? []).map((p) => p.text ?? "").join("\n"); } catch { continue; }
+    for (const f of forms) if (new RegExp(`(^|[^\\d,.])${f.replace(/\./g, "\\.")}(?![\\d]|[.,]\\d)`).test(text)) { hits.push(d); break; }
+  }
+  return hits.sort((a, b) => (a.asOf < b.asOf ? -1 : 1));
+}
+const hUnits = (x) => (x == null ? "—" : x.toLocaleString("en-IN", { maximumFractionDigits: 4 }));
+const hRupees = (x) => (x == null ? "—" : `₹${x.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`);
+
+const hResults = [];
+const hClaimed = new Set(); // owner|account|key-group an earlier closing tied to
+const hOrdered = [...H_CLOSINGS].sort((a, b) => (b.qty ?? 0) - (a.qty ?? 0));
+for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
+  if (hResults.some((r) => r.c === c)) continue;
+  const ownerId = H_OWNER.get(c.investor) ?? null;
+  const put = (verdict, statement) => hResults.push({ c, verdict, statement });
+  if (/hope india/i.test(c.investor)) { if (pass === "rest") put("kept out", "HOPE INDIA TRUST is a separate taxpayer this book keeps out by decision; its folio statements are read and named in `docs/BOOK-REPORT.md`"); continue; }
+  if (!ownerId) { if (pass === "rest") put("unresolved holder", `"${c.investor}" names no member of this book`); continue; }
+  if (!c.qty && !c.value) { if (pass === "rest") put("nil", "the review carries nil — nothing to reconcile"); continue; }
+  if (!c.qty) {
+    if (pass === "tie") continue;
+    const provider = providerFor(c.product);
+    const hits = provider ? hPrintedBy(ownerId, provider, c.value) : [];
+    if (hits.length) put("ties (printed total)", `printed on ${hits.length} of the holder's ${provider} statements, first ${hKind(hits[0].reportType)} of ${hits[0].asOf}; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value`);
+    else if (provider) {
+      const near = H_MANIFEST.filter((d) => d.ownerId === ownerId && d.provider === provider && d.asOf).map((d) => d.asOf).sort((a, b) => hDays(a, c.date) - hDays(b, c.date))[0];
+      put(near === c.date ? "differs (same date)" : near ? "not on a statement of that date" : "no statement", near === c.date
+        ? `the holder's ${provider} statement of ${near} does not print ${hRupees(c.value)}`
+        : near
+        ? `no ${provider} statement for this holder prints ${hRupees(c.value)}; the nearest is dated ${near}, ${hDays(near, c.date)} days ${near < c.date ? "before" : "after"} the review — a mandate's value moves daily`
+        : `no ${provider} statement for this holder is in the drop`);
+    } else put("no statement", "a value-only line no manager or statement in this book is matched to — the review carries it at a figure only");
+    continue;
+  }
+  const { keys, isins } = hIdentity(c.product);
+  const reviewKey = securityKeyOf(c.product);
+  /** Two names the review clips its own way, checked by hand against LKP's statement (same holder, same units). */
+  const aliasKey = SECURITY_ALIASES.get(reviewKey)
+    ?? new Map([["crompton-gr-con", "crompton-greaves-consumer-electrical"], ["transrail-lighting-lkp", "transrail-lighting"]]).get(reviewKey) ?? null;
+  const fundHouse = providerFor(c.product);
+  /**
+   * The family's OWN lines are compared with the family's own accounts: a share a
+   * discretionary manager holds for this holder is the manager's position, not the
+   * review's demat line (MPS on Goldstandard is not Ajay's 4,878 at Motilal Oswal).
+   * And an advisor that IS a depository names the account: a line the review files
+   * at ICICI Bank is not answered by a Motilal Oswal statement.
+   */
+  const depository = /ICICI/i.test(c.advisor) ? /ICICI Bank/ : /HDFC/i.test(c.advisor) ? /HDFC Bank/ : /LKP/i.test(c.advisor) ? /LKP/ : null;
+  const otherDepository = /ICICI Bank \(NSDL|HDFC Bank \(NSDL|LKP Securities/;
+  const rows = [...H_ROWS_ARCHIVE, ...hBalancesOn(c.date)]
+    .filter((r) => r.ownerId === ownerId && hEngagement.get(r.account) !== "PMS")
+    .filter((r) => (depository ? depository.test(r.provider) : !otherDepository.test(r.provider)))
+    .filter((r) => (r.key && keys.has(r.key)) || (r.isin && isins.has(r.isin))
+      || (r.nameKey && (r.nameKey === reviewKey || r.nameKey === aliasKey))
+      || (fundHouse && (r.provider === fundHouse || (r.nameKey ?? "").startsWith(`${reviewKey}-`))));
+  if (rows.length) for (const r of rows) { if (r.key) keys.add(r.key); }
+  const byAccount = new Map();
+  for (const r of rows) {
+    const best = byAccount.get(r.account);
+    const score = (x) => (x.date === c.date ? 0 : (x.date < c.date ? 1 : 2) * 1e5 + hDays(x.date, c.date));
+    if (!best || score(r) < score(best)) byAccount.set(r.account, r);
+  }
+  const claim = (r) => hClaimed.add(`${ownerId}|${r.account}|${[...keys].sort()[0] ?? [...isins][0]}`);
+  const free = [...byAccount.values()].filter((r) => !hClaimed.has(`${ownerId}|${r.account}|${[...keys].sort()[0] ?? [...isins][0]}`));
+  const tie = free.find((r) => hSame(r.units, c.qty, c.qtyDp));
+  const at = (r) => (r.date === c.date ? `on the same date — ${r.how}` : `${r.how}, ${hDays(r.date, c.date)} days ${r.date < c.date ? "before" : "after"} the review`);
+  if (tie) { claim(tie); put(tie.date === c.date ? "ties" : "ties (other date)", `${hUnits(tie.units)} units ${at(tie)}`); continue; }
+  /**
+   * A statement of another date, carried to the review's date over the units
+   * that moved between. It is a verdict only where the result is the review's
+   * own figure; anything short of that is reported as it was.
+   */
+  const rolledTie = free.map((r) => ({ r, roll: hRolled(r, c.date, keys, isins) }))
+    .find((x) => x.roll && hSame(x.roll.units, c.qty, c.qtyDp));
+  if (rolledTie) {
+    const { r, roll } = rolledTie;
+    claim(r);
+    put("ties (carried to the review's date)", `${hUnits(r.units)} units ${at(r)}; ${hMovesText(roll)} → ${hUnits(roll.units)} units on ${c.date}`);
+    continue;
+  }
+  if (pass === "tie") continue;
+  /**
+   * An account whose dated record shows it held nothing on the review's date —
+   * every unit it reports was bought after — is not this closing's statement.
+   * Helios's AMC folio opened on 6 August is not the review's 30 June line.
+   */
+  const laterOnly = free.filter((r) => { const x = r.date > c.date ? hRolled(r, c.date, keys, isins) : null; return x != null && Math.abs(x.units) < 0.001; });
+  if (laterOnly.length && laterOnly.length === free.length) {
+    const began = laterOnly.map((r) => `${r.how.replace(/, [a-z-]+ of \d{4}-\d{2}-\d{2}$/, "")} first holds it on ${hRolled(r, c.date, keys, isins).between[0].date}, after the review`).join("; ");
+    put("no statement", `no statement of this holder's reports it on ${c.date} — ${began}; ${custodianNote({ advisor: c.advisor, investor: c.investor })}`);
+    continue;
+  }
+  if (!rows.length && !keys.size && !isins.size) { put("no statement", `no statement of this holder's names this product — ${custodianNote({ advisor: c.advisor, investor: c.investor })}`); continue; }
+  if (!free.length && depository !== undefined) {
+    const elsewhere = [...H_ROWS_ARCHIVE, ...hBalancesOn(c.date)].filter((r) => r.ownerId === ownerId && hEngagement.get(r.account) !== "PMS"
+      && ((r.key && keys.has(r.key)) || (r.isin && isins.has(r.isin)) || (r.nameKey && (r.nameKey === reviewKey || r.nameKey === aliasKey)))
+      && hSame(r.units, c.qty, c.qtyDp) && !hClaimed.has(`${ownerId}|${r.account}|${[...keys].sort()[0] ?? [...isins][0]}`));
+    if (elsewhere.length) { claim(elsewhere[0]); put("ties (other custodian)", `${hUnits(elsewhere[0].units)} units — ${elsewhere[0].how}; the review files it under ${c.advisor}`); continue; }
+  }
+  if (!free.length) { put("no statement", `no statement of this holder's reports it — ${custodianNote({ advisor: c.advisor, investor: c.investor })}`); continue; }
+  const held = free.filter((r) => !laterOnly.includes(r));
+  const total = held.reduce((s, r) => s + r.units, 0);
+  if (held.length > 1 && hSame(total, c.qty, c.qtyDp)) { held.forEach(claim); put("ties (across accounts)", `${hUnits(total)} units over ${held.length} accounts`); continue; }
+  const when = held.every((r) => r.date === c.date) ? "same date" : held.every((r) => r.date > c.date) ? "later statement" : "earlier statement";
+  put(`differs (${when})`, held.map((r) => {
+    const x = hRolled(r, c.date, keys, isins);
+    return `${hUnits(r.units)} units ${at(r)}` + (x ? `; carried to ${c.date} over ${hMovesText(x)}: ${hUnits(x.units)} units` : "");
+  }).join("; "));
+}
+hResults.sort((a, b) => a.c.row - b.c.row);
+
+say("## H. Every closing the review prints, holder by holder");
+say();
+say("The review's `Transactions since inception` tab closes each holding with one row: holder, product,");
+say("date, units, value. Each is set against **the same holder's own statements**, account by account,");
+say("at the closing's own date where a depository tape covers it and otherwise at the nearest statement,");
+say("whose date is printed. A statement of another date is carried to the review's date over the units");
+say("its dated record shows moving between the two (a fund's own allotments and redemptions, a broker's");
+say("trades), and that is a tie only where it lands on the review's figure. Units tie to the third decimal");
+say("the statements print. The review's figures are the review's (30 June 2026) and reach no total in this book.");
+say();
+const hTally = new Map();
+for (const r of hResults) hTally.set(r.verdict, (hTally.get(r.verdict) ?? 0) + 1);
+say("| Verdict | Closings |");
+say("| --- | ---: |");
+for (const [v, n] of [...hTally].sort((a, b) => b[1] - a[1])) say(`| ${v} | ${n} |`);
+say(`| **All** | **${hResults.length}** |`);
+say();
+say("| Row | Holder | Review line | Date | Review units · value | Verdict | What the holder's statements say |");
+say("| ---: | --- | --- | --- | --- | --- | --- |");
+for (const r of hResults) {
+  const c = r.c;
+  say(`| ${c.row} | ${c.investor} | ${c.product} (${c.advisor || "—"}) | ${c.date} | ${hUnits(c.qty)} · ${hRupees(c.value)} | ${r.verdict} | ${r.statement} |`);
+}
 say();
 
 const CHECK = process.argv.includes("--check");

@@ -1,0 +1,41 @@
+{
+ "name": "investment-summary",
+ "rows": [
+  [
+   "line",
+   "amount (INR, whole rupees, as printed)"
+  ],
+  [
+   "Scheme classification",
+   "Category III, Open Ended"
+  ],
+  [
+   "Scheme inception date",
+   "01/06/2024"
+  ],
+  [
+   "Since 01/06/2024",
+   ""
+  ],
+  [
+   "Capital Invested",
+   460000000
+  ],
+  [
+   "Income Distributed",
+   58862
+  ],
+  [
+   "Withdrawal",
+   -58862
+  ],
+  [
+   "Profit / Loss",
+   43276371
+  ],
+  [
+   "Current Value (31/08/2026)",
+   503276371
+  ]
+ ]
+}

@@ -5,8 +5,8 @@
  "ownerSource": "printed",
  "accountNoSource": "printed",
  "clientCode": null,
- "owner": "AARTI AJAY JAISINGHANI",
- "ownerId": "aarti-jaisinghani",
+ "owner": "Bharat Jaisinghani Family Trust",
+ "ownerId": "bharat-jaisinghani-family-trust",
  "familyGroup": null,
  "strategy": null,
  "engagement": "Direct",
@@ -20,8 +20,8 @@
  "status": "partial",
  "warnings": [
   {
-   "code": "pan-contradicts-name",
-   "detail": "the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, and Aarti Jaisinghani's PAN in the registry does not end that way. The name and the PAN name different taxpayers, so the account is not attributed to either."
+   "code": "owner-from-register",
+   "detail": "client ID 1201090032387399 is attributed to Bharat Jaisinghani Family Trust, not to the \"AARTI AJAY JAISINGHANI\" the page prints as its first holder: the family's investment register records ₹6.77 Cr paid under \"Bharat Jaisinghani Family Trust\" on 1 Jul 2025 into the ICICI Prudential Liquid and Invesco India Arbitrage direct plans (TRUST INVESTMENT, row 17), and their 30 June review carries both funds under that name with closings of 46,654.378 and 1,092,470.994 units, this account's own balances (Transactions since inception, rows 135–137 and 148–149). The holder lines print the trust's trustees."
   },
   {
    "code": "rate-is-last-movement-price",
@@ -190,7 +190,7 @@
  "positionsAsOf": null,
  "dematBalances": [],
  "securityNameSource": null,
- "excludedFromBook": "this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book.",
+ "excludedFromBook": null,
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [

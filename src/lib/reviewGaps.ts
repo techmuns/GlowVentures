@@ -216,8 +216,16 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
   // closing for him. Ajay's 21,70,488.137 are on no statement.
   ["ICICI Pru Balanced Advantage Fund", ["INF109K012B0"]],
   // Aarti's demat walks to 21,012.887 units on 30 June and Ankita's to
-  // 1,568.013, two of the review's three closings, to the unit.
+  // 1,568.013, two of the review's three closings, to the unit. The third, the
+  // family trust's 46,654.378, is its own demat's balance (Stage 10db): the
+  // trust's holding statement of 31 July prints it, and its tape from 1 April
+  // does not move the scheme.
   ["ICICI Pru Liquid Fund-Direct(G)", ["INF109K01Q49"]],
+  // Stage 10db — the trust's holding statement of 31 July prints 10,92,470.994
+  // Direct units, the review's closing for the trust to the unit, and its tape
+  // from 1 April does not move the scheme. The regular-plan line, Ajay's
+  // 7,99,864.748 units, is on no statement and is a different review line.
+  ["Invesco India Arbitrage Fund-Direct(G)", ["INF205K01KR8"]],
   // Ankita's and Bharat's holding statements print 39,15,742.08 and
   // 13,66,820.78 units, the review's closings for them. Neither demat moved
   // the scheme this year. Ajay's 70,52,224.197 are on no statement.

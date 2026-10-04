@@ -24,7 +24,7 @@ const ok = (name: string, pass: boolean, detail = "") => {
   if (!pass) { fails++; console.log(`FAIL ${name}${detail ? `: ${detail}` : ""}`); }
   else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
 };
-const rupees = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
+const rupees = (n: number) => `${n < 0 ? "−" : ""}₹${Math.round(Math.abs(n)).toLocaleString("en-IN")}`;
 const paise = (n: number) => Math.round(n * 100);
 
 // ── the archive, served off disk ─────────────────────────────────────────────
@@ -61,11 +61,43 @@ console.log("\n── A-08: every lot settles its sale ──");
   const bookTotal = book.reduce((t, e) => t + (e.realisedST ?? 0) + (e.realisedLT ?? 0), 0);
   const bookLots = book.reduce((t, e) => t + (e.lots ?? 0), 0);
   const tape = txn.txns.reduce((t, x) => t + (x.realized ?? 0), 0);
-  ok("the tape's realised is the capital-gain statements' own total, to the paisa",
-    paise(tape) === paise(bookTotal), `tape ${rupees(tape)} vs the book's ${rupees(bookTotal)} over ${bookLots} lots`);
-  ok("no lot is left unattributed", sales.unattributedLots === 0 && sales.statementRealized !== null
-    && paise(sales.totalRealized ?? NaN) === paise(sales.statementRealized),
-    `${sales.unattributedLots} unattributed; sales ${rupees(sales.totalRealized ?? NaN)} vs statements ${rupees(sales.statementRealized ?? NaN)}`);
+  // THE LOTS NO TRADE CAN SETTLE: a lot group whose every lot sold for ₹0 is not
+  // a sale — ASK prints the fractions a demerger or a bonus left that way — so
+  // there is no row on any tape for it to meet. RE-EXPRESSED off the documents,
+  // never through the ledger: per account, a lot repeated across two issues of
+  // its statement counted once and a repeat inside one document kept (the rule
+  // `datedRowsAcross` applies), then grouped per (security, sale date).
+  const lotIds = new Map<string, { n: number; lot: Record<string, any> }>(); // account|identity → max count in one doc
+  for (const d of manifest.filter((m) => m.reportType === "capital-gain")) {
+    const count = new Map<string, { n: number; lot: Record<string, any> }>();
+    for (const l of docOf(d.docKey).capitalGains ?? []) {
+      const id = `${d.accountNo}|${JSON.stringify([l.securityKey, l.saleDate, l.purchaseDate, l.quantity, l.saleAmount, l.purchaseAmount, l.shortTerm, l.longTerm])}`;
+      const c = count.get(id) ?? { n: 0, lot: l };
+      c.n += 1;
+      count.set(id, c);
+    }
+    for (const [id, c] of count) if ((lotIds.get(id)?.n ?? 0) < c.n) lotIds.set(id, c);
+  }
+  const groupsOff = new Map<string, { lots: Record<string, any>[]; n: number }>();
+  for (const [id, { n, lot }] of lotIds) {
+    if (!lot.saleDate) continue;
+    const gk = `${id.slice(0, id.indexOf("|"))}|${lot.securityKey}@${lot.saleDate}`;
+    const g = groupsOff.get(gk) ?? { lots: [], n: 0 };
+    g.lots.push(lot); g.n += n;
+    groupsOff.set(gk, g);
+  }
+  const notSales = [...groupsOff].filter(([, g]) => g.lots.every((l) => l.saleAmount === 0));
+  const notSaleLots = notSales.reduce((t, [, g]) => t + g.n, 0);
+  const notSaleRealised = notSales.reduce((t, [, g]) => t + g.lots.reduce((u, l) => u + (l.shortTerm ?? 0) + (l.longTerm ?? 0), 0), 0);
+  ok("the tape's realised and the lots no trade can settle make the capital-gain statements' own total, to the paisa",
+    paise(tape + notSaleRealised) === paise(bookTotal),
+    `tape ${rupees(tape)} + ${notSaleLots} lot(s) that sold for ₹0 (${rupees(notSaleRealised)}) vs the book's ${rupees(bookTotal)} over ${bookLots} lots`);
+  ok("the only lots the ledger leaves unattributed are the ones that sold for ₹0, and the three figures reconcile",
+    sales.statementRealized !== null && sales.unattributedLots === notSaleLots
+      && paise(sales.unattributedRealized ?? 0) === paise(notSaleRealised)
+      && paise((sales.totalRealized ?? NaN) + (sales.unattributedRealized ?? 0)) === paise(sales.statementRealized),
+    `${sales.unattributedLots} unattributed (${(sales.unattributedSecurities ?? []).join(", ") || "none"}); `
+      + `sales ${rupees(sales.totalRealized ?? NaN)} + ${rupees(sales.unattributedRealized ?? 0)} vs statements ${rupees(sales.statementRealized ?? NaN)}`);
   ok("the realised-lots list sums to the same total",
     paise(lotsData.lots.reduce((t, l) => t + l.gain, 0)) === paise(bookTotal), `${lotsData.lots.length} lots`);
 
@@ -80,6 +112,14 @@ console.log("\n── A-08: every lot settles its sale ──");
 
   const settled = L.settleSales(docs);
   ok("no two days disagree on which sale a lot key belongs to", settled.conflicts.length === 0, JSON.stringify(settled.conflicts));
+  // LOAD-BEARING for the third basis in the RUNTIME ledger, not only in the
+  // builder: some sale settles only on its consideration less brokerage (a
+  // capital gain statement that strikes its sale before STT), or a ledger that
+  // dropped that pass would leave those lots unattributed and the reconciliation
+  // above would fail — which is the point, so the case must be on this book.
+  const byConsideration = [...settled.bySale.values()].filter((v) => v.by === "consideration").length;
+  ok("some sales settle only on the consideration less brokerage, in the runtime ledger too", byConsideration > 0,
+    `${byConsideration} day-sale(s)`);
   // An alias joins two spellings inside ONE account, and its target is a key
   // that account's own statements print — never a key invented here.
   const printedKeys = new Map<string, Set<string>>();

@@ -44,12 +44,31 @@
  *   3. `--check` WRITES NOTHING and is the control run. Against an archive
  *      already carrying the join it must be a no-op, which is what says the
  *      files on disk are what the extractor would write.
+ *
+ * ── AND A SECOND JOIN, ON A SECOND DEPOSITORY (Stage 10db) ──────────────────
+ *
+ * Motilal Oswal demat 1201090032387399 prints the trustees of the unnumbered
+ * "Bharat Jaisinghani Family Trust" on its holder lines, and its masked PAN fits
+ * none of them, so it sat EXCLUDED as an account whose holder could not be
+ * established. `providers/motilalDemat.mjs` now carries the join, keyed on the
+ * client ID the page prints and cited to the family's own register and review;
+ * the note at the top of that file sets out what each records.
+ *
+ * This replay calls that reader's own `identityOf` on the committed text — the
+ * same function a full run calls — so nothing here re-reads a page by a regex
+ * of its own. Three more fields may move on those documents, because the join
+ * moves them: `excludedFromBook` (an account whose holder is now established is
+ * not excluded) and the reader's IDENTITY warnings, replaced in place and in
+ * the order the reader writes them. Its gate is the same rule 2, struck the
+ * same way: what is on disk must be EITHER the reader's reading with the join
+ * (already landed) or its reading with no entry at all (not yet landed).
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ownerIdFor } from "../shared/owners.mjs";
 import { BENEFICIAL_OWNER_BY_DP_ACCOUNT, PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
+import * as motilal from "./ingest/providers/motilalDemat.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public/audit");
@@ -147,7 +166,95 @@ for (const entry of manifest) {
   }
 }
 
+const hdfc = { checked, changed, refused };
+
+// ── Motilal Oswal (CDSL) — the client-ID join ───────────────────────────────
+
+const IDENTITY = new Set(motilal.IDENTITY_WARNING_CODES);
+const identityCodes = (ws) => (ws ?? []).filter((w) => IDENTITY.has(w.code)).map((w) => w.code);
+
+/** What a full run writes for these four fields, from one reading of the page. */
+function landedState(id) {
+  // extract.mjs falls back to the classifier's name where the reader returns no
+  // owner — on these statements the same `Client Name:` this reading carries.
+  const owner = id.owner ?? id.holderName;
+  return {
+    owner,
+    ownerId: id.owner ? id.ownerId : ownerIdFor(owner),
+    excludedFromBook: id.excludedFromBook,
+    identity: id.warnings,
+  };
+}
+
+let mChecked = 0, mChanged = 0, mRefused = 0;
+for (const entry of manifest) {
+  if (entry.provider !== motilal.PROVIDER) continue;
+  const file = path.join(AUDIT, entry.docKey, "document.json");
+  if (!fs.existsSync(file)) continue;
+  const text = textOf(entry.docKey);
+  if (!text) continue;
+  const doc = JSON.parse(fs.readFileSync(file, "utf8"));
+  mChecked += 1;
+
+  const now = motilal.identityOf(text);
+  const pre = motilal.identityOf(text, {});
+  if (now.clientId !== doc.accountNo) {
+    console.error(`REFUSED ${entry.docKey}: replayed client ID ${now.clientId} against ${doc.accountNo} on disk`);
+    mRefused += 1;
+    continue;
+  }
+
+  const want = landedState(now);
+  const was = landedState(pre);
+  const onDisk = {
+    owner: doc.owner,
+    ownerId: doc.ownerId,
+    excludedFromBook: doc.excludedFromBook ?? null,
+    identity: (doc.warnings ?? []).filter((w) => IDENTITY.has(w.code)),
+  };
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const landed = same(onDisk, want);
+  // The state before the entry existed. The exclusion's WORDING has moved since
+  // it was written to disk, so its presence is what is compared, with the owner,
+  // its id and the identity warning codes.
+  const preJoin = onDisk.owner === was.owner && onDisk.ownerId === was.ownerId
+    && (onDisk.excludedFromBook == null) === (was.excludedFromBook == null)
+    && same(identityCodes(doc.warnings), was.identity.map((w) => w.code));
+  if (!landed && !preJoin) {
+    console.error(`REFUSED ${entry.docKey}: the owner on disk ("${doc.owner}", ${doc.ownerId}) is neither the reader's `
+      + `reading with the join ("${want.owner}") nor without it ("${was.owner}")`);
+    mRefused += 1;
+    continue;
+  }
+  if (landed) continue;
+  if (!want.ownerId) {
+    console.error(`REFUSED ${entry.docKey}: "${want.owner}" resolves to no canonical owner — add it to shared/owners.mjs first`);
+    mRefused += 1;
+    continue;
+  }
+
+  const warnings = [...want.identity, ...(doc.warnings ?? []).filter((w) => !IDENTITY.has(w.code))];
+  const next = { ...doc, owner: want.owner, ownerId: want.ownerId, excludedFromBook: want.excludedFromBook, warnings };
+  const frozen = (o) => { const c = { ...o }; for (const k of ["owner", "ownerId", "excludedFromBook", "warnings"]) delete c[k]; return c; };
+  if (!same(frozen(next), frozen(doc))) {
+    console.error(`REFUSED ${entry.docKey}: a field other than the owner would change`);
+    mRefused += 1;
+    continue;
+  }
+
+  mChanged += 1;
+  console.log(`${CHECK ? "would update" : "updated"} ${entry.docKey.padEnd(82)} ${doc.owner} → ${want.owner}`);
+  if (!CHECK) {
+    fs.writeFileSync(file, JSON.stringify(next, null, 1) + "\n");
+    entry.owner = want.owner;
+    entry.ownerId = want.ownerId;
+    entry.warnings = warnings.length;
+    manifestDirty = true;
+  }
+}
+
 if (manifestDirty) fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 1) + "\n");
-console.log(`\n${checked} ${PROVIDER} document(s) replayed · ${changed} ${CHECK ? "would change" : "changed"} · ${refused} refused`);
-if (refused) process.exit(1);
-if (CHECK && changed) process.exit(2);
+console.log(`\n${hdfc.checked} ${PROVIDER} document(s) replayed · ${hdfc.changed} ${CHECK ? "would change" : "changed"} · ${hdfc.refused} refused`);
+console.log(`${mChecked} ${motilal.PROVIDER} document(s) replayed · ${mChanged} ${CHECK ? "would change" : "changed"} · ${mRefused} refused`);
+if (hdfc.refused || mRefused) process.exit(1);
+if (CHECK && (hdfc.changed || mChanged)) process.exit(2);

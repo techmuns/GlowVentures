@@ -14,7 +14,9 @@
 //                           consolidated review, the family's investment register)
 //   not-a-document        — a macOS `__MACOSX/._*` resource fork: a 212- or
 //                           477-byte AppleDouble stub with no `%PDF` header,
-//                           created by zipping on a Mac. There is nothing in it
+//                           created by zipping on a Mac. There is nothing in it.
+//                           Counted from each ZIP's own directory, never from
+//                           what happens to be on disk — see below
 //   excluded-by-policy    — the drop's own password notes. They carry PANs and a
 //                           SEBI registration number, so they are read at runtime
 //                           from `GLOW_PDF_PASSWORDS` and never committed
@@ -25,10 +27,21 @@
 import { readFileSync, writeFileSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { listEntries, readEntry, isMacMetadata } from "./ingest/lib/unzip.mjs";
 
-const OUT = "docs/SOURCE-COVERAGE.md";
+// Run against the committed tree by default, from wherever it is invoked; the
+// three GLOW_* variables `extract.mjs` honours point it at a scratch run
+// instead, so a new delivery can be accounted for without touching docs/.
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+process.chdir(ROOT);
+const SOURCE_DIR = process.env.GLOW_SOURCE_DIR ?? "source";
+const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? "public/audit";
+const DOCS_DIR = process.env.GLOW_DOCS_DIR ?? "docs";
+const OUT = path.join(DOCS_DIR, "SOURCE-COVERAGE.md");
 
-const manifest = JSON.parse(readFileSync("public/audit/manifest.json", "utf8"));
+const manifest = JSON.parse(readFileSync(path.join(AUDIT_DIR, "manifest.json"), "utf8"));
 const bySource = new Map();
 for (const d of manifest) {
   const k = (d.sourcePath ?? "").replace(/^\.\//, "");
@@ -37,8 +50,59 @@ for (const d of manifest) {
   bySource.get(k).push(d);
 }
 
-const files = execSync("find source -type f ! -name '*.zip' ! -name 'README.md' | sort", { encoding: "utf8", maxBuffer: 1e8 })
+const files = execSync(`find ${JSON.stringify(SOURCE_DIR)} -type f ! -name '*.zip' ! -name 'README.md' | sort`, { encoding: "utf8", maxBuffer: 1e8 })
+  .trim().split("\n").filter(Boolean)
+  // The path the manifest records: relative to the repository root.
+  .map((f) => path.relative(ROOT, path.resolve(f)).split(path.sep).join("/"));
+
+/**
+ * THE RESOURCE FORKS ARE COUNTED FROM EACH ZIP'S OWN DIRECTORY, NOT FROM DISK.
+ *
+ * `source/_extracted/` is derived and gitignored, and the pipeline's own
+ * unzipper (`lib/unzip.mjs`) SKIPS macOS metadata. So which forks exist on disk
+ * depends on who expanded the tree: the same `source/` read 58 "not a document"
+ * where another unzipper had written them and 0 where the pipeline had — a
+ * generated document whose counts depend on who unzipped is not idempotent.
+ *
+ * Every entry the unzipper skips is listed here at the path an unzipper would
+ * have written it to — the destination `inventory.mjs` gives each archive — and
+ * checked by its own bytes, exactly as a fork on disk is. One already on disk is
+ * read as it is. An entry the unzipper skips whose bytes are NOT a fork is not
+ * waved through: it falls to `unread`, because the pipeline never read it.
+ */
+const EXTRACT_DIR = path.join(SOURCE_DIR, "_extracted");
+const forkBytes = new Map();                     // repo-relative path -> Buffer | null
+const onDisk = new Set(files);
+const zips = execSync(`find ${JSON.stringify(SOURCE_DIR)} -type f -iname '*.zip' | sort`, { encoding: "utf8", maxBuffer: 1e8 })
   .trim().split("\n").filter(Boolean);
+for (const z of zips) {
+  const inExtracted = path.resolve(z).startsWith(path.resolve(EXTRACT_DIR) + path.sep);
+  const base = path.basename(z, path.extname(z));
+  const dest = inExtracted
+    ? path.join(path.dirname(z), base)
+    : path.join(EXTRACT_DIR, path.relative(SOURCE_DIR, path.dirname(z)), base);
+  let buf, entries;
+  try { buf = readFileSync(z); entries = listEntries(buf); } catch { continue; }
+  for (const e of entries) {
+    if (e.name.endsWith("/") || !isMacMetadata(e.name)) continue;
+    const abs = path.resolve(dest, e.name.replace(/\\/g, "/").replace(/^\/+/, ""));
+    if (!abs.startsWith(path.resolve(dest) + path.sep)) continue;   // escapes its destination
+    const p = path.relative(ROOT, abs).split(path.sep).join("/");
+    if (onDisk.has(p) || forkBytes.has(p)) continue;
+    let bytes = null;
+    try { bytes = readEntry(buf, e); } catch { /* an unreadable entry is judged on null below */ }
+    forkBytes.set(p, bytes);
+  }
+}
+files.push(...forkBytes.keys());
+
+/**
+ * A FILE CAN BE READ WITHOUT HAVING A DOCUMENT OF ITS OWN, one more way: a
+ * spreadsheet export beside its PDF is archived as a WITNESS of the PDF's
+ * document (`twinOf`) — its rows kept, no facts. It is read; it is not a second
+ * source. (Two files printing the same text are each read and archived: the
+ * second is filed under a `-2` docKey, exactly like the pairs before it.)
+ */
 
 /**
  * A ZIP DOES NOT SAY WHICH ENCODING ITS FILENAMES ARE IN, so two unzippers
@@ -60,7 +124,8 @@ for (const k of bySource.keys()) {
   byAscii.set(a, byAscii.has(a) ? null : k);   // null marks an ambiguous fold
 }
 
-const md5 = (f) => createHash("md5").update(readFileSync(f)).digest("hex");
+const bytesOf = (f) => (forkBytes.has(f) ? (forkBytes.get(f) ?? Buffer.alloc(0)) : readFileSync(f));
+const md5 = (f) => createHash("md5").update(bytesOf(f)).digest("hex");
 
 /**
  * A `__MACOSX/._x` file is not a document, and this is checked rather than
@@ -68,10 +133,12 @@ const md5 = (f) => createHash("md5").update(readFileSync(f)).digest("hex");
  * header, whatever its extension says.
  */
 function isResourceFork(f) {
-  if (!/(^|\/)__MACOSX\//.test(f)) return false;
+  if (!isMacMetadata(f)) return false;
   try {
-    if (statSync(f).size > 4096) return false;
-    return !readFileSync(f).subarray(0, 4).equals(Buffer.from("%PDF"));
+    if (!forkBytes.has(f) && statSync(f).size > 4096) return false;
+    const bytes = bytesOf(f);
+    if (forkBytes.has(f) && (!forkBytes.get(f) || bytes.length > 4096)) return false;
+    return !bytes.subarray(0, 4).equals(Buffer.from("%PDF"));
   } catch { return false; }
 }
 
@@ -86,7 +153,7 @@ for (const f of files) {
   byHash.get(h).push(f);
 }
 
-const CLASSES = ["read", "read-via-duplicate", "held-out-by-decision", "not-a-document", "excluded-by-policy", "unread"];
+const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "held-out-by-decision", "not-a-document", "excluded-by-policy", "unread"];
 const rows = [];
 for (const f of files) {
   let docs = bySource.get(f) ?? [];
@@ -97,7 +164,9 @@ for (const f of files) {
   if (docs.length) {
     const heldOut = docs.every((d) => (d.status === "failed")
       && /Family investment register|Consolidated family review/.test(d.provider ?? ""));
-    rows.push({ f, cls: heldOut ? "held-out-by-decision" : "read", docs, note: docs.map((d) => d.docKey).join(", ") });
+    const witness = docs.every((d) => d.twinOf);
+    rows.push({ f, cls: heldOut ? "held-out-by-decision" : witness ? "read-as-witness" : "read", docs,
+      note: witness ? `witness of ${docs.map((d) => d.twinOf).join(", ")}` : docs.map((d) => d.docKey).join(", ") });
     continue;
   }
   if (isResourceFork(f)) { rows.push({ f, cls: "not-a-document", docs: [], note: "macOS AppleDouble resource fork" }); continue; }
@@ -125,6 +194,7 @@ say("| Outcome | Files | What it means |");
 say("| --- | ---: | --- |");
 say(`| Read | ${count("read")} | one or more documents in \`public/audit/\` |`);
 say(`| Read via a byte-identical twin | ${count("read-via-duplicate")} | the pipeline reads each md5 once; the data IS in the archive |`);
+if (count("read-as-witness")) say(`| Read as a witness | ${count("read-as-witness")} | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |`);
 say(`| Held out by decision | ${count("held-out-by-decision")} | read perfectly and deliberately not a source |`);
 say(`| Not a document | ${count("not-a-document")} | macOS \`__MACOSX/._*\` resource forks — checked, not assumed |`);
 say(`| Excluded by policy | ${count("excluded-by-policy")} | the drop's own password notes |`);
@@ -176,11 +246,28 @@ for (const r of rows.filter((x) => x.cls === "read-via-duplicate")) {
 }
 say();
 
+if (count("read-as-witness")) {
+  say("## Read as a witness of its PDF");
+  say();
+  say("A spreadsheet export written beside a PDF of the same name. The PDF is the document; the");
+  say("export is archived with its rows, carries no facts, and every significant figure in it is");
+  say("checked against the figures the PDF prints (see each document's `witness-of` warning).");
+  say();
+  say("| File | Witness of |");
+  say("| --- | --- |");
+  for (const r of rows.filter((x) => x.cls === "read-as-witness")) {
+    say(`| \`${r.f.replace(/^source\//, "")}\` | ${r.docs.map((d) => `\`${d.twinOf}\` (${d.status})`).join(", ")} |`);
+  }
+  say();
+}
+
 say("## Not a document");
 say();
 say(`${count("not-a-document")} files under \`__MACOSX/\`, created by zipping on a Mac. Each is a 212- or`);
 say("477-byte AppleDouble stub and **none carries a `%PDF` header** — verified per file rather than");
-say("assumed from the path. There is nothing in them to read.");
+say("assumed from the path. There is nothing in them to read. They are counted from each ZIP's own");
+say("directory, at the path an unzipper would write them to: the pipeline's own unzipper skips them,");
+say("so whether they exist under `source/_extracted/` depends on who expanded it, and this count must not.");
 say();
 
 writeFileSync(OUT, L.join("\n") + "\n");

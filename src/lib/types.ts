@@ -891,6 +891,15 @@ export type EntityCG = {
   periodFrom?: string | null;
   periodTo?: string | null;
   lots?: number;
+  /**
+   * The realised figures above split by the FINANCIAL YEAR each lot was sold in
+   * — `fy` is that year's 1 April, and `null` holds the lots with no sale date.
+   * Σ over the entries is `realisedST` / `realisedLT`. Tax is assessed per
+   * year, and a manager's window can run from inception (ASK's from 2019), so
+   * the tax estimate reads the year it is about from here rather than taxing
+   * every year in the window. Absent on a row with no capital gain statement.
+   */
+  realisedByYear?: { fy: string | null; st: number; lt: number; lots: number }[];
   /** docKey of the capital gain statement these lots came from. */
   source?: string | null;
   /** Set when there is no statement: why, in one line, for the row to show. */

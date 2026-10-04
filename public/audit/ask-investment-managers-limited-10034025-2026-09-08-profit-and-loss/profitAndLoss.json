@@ -1,0 +1,185 @@
+{
+ "name": "profitAndLoss",
+ "rows": [
+  [
+   "page",
+   "section",
+   "label",
+   "figure"
+  ],
+  [
+   1,
+   "income",
+   "Dividend",
+   1955242.11
+  ],
+  [
+   1,
+   "income",
+   "Other Income",
+   239.12
+  ],
+  [
+   1,
+   "income",
+   "Realized Gain/Loss",
+   72644418.18
+  ],
+  [
+   1,
+   "income",
+   "TOTAL",
+   74599899.41
+  ],
+  [
+   1,
+   "expenses",
+   "Custodian Fees",
+   181918.74
+  ],
+  [
+   1,
+   "expenses",
+   "Management Fees",
+   7816077.54
+  ],
+  [
+   1,
+   "expenses",
+   "Securities Transaction Tax (STT)",
+   384740.1
+  ],
+  [
+   1,
+   "expenses",
+   "Other Expenses",
+   5221.5
+  ],
+  [
+   1,
+   "expenses",
+   "TOTAL",
+   8387957.89
+  ],
+  [
+   1,
+   "expenses",
+   "SURPLUS FOR THE PERIOD",
+   66211941.52
+  ],
+  [
+   1,
+   "unrealized",
+   "At the end of the period",
+   0
+  ],
+  [
+   1,
+   "unrealized",
+   "At the beginning of the period",
+   0
+  ],
+  [
+   1,
+   "unrealized",
+   "Net Unrealized Gain / Loss during the period",
+   0
+  ],
+  [
+   1,
+   "unrealized",
+   "(unlabelled)",
+   0
+  ],
+  [
+   2,
+   "liabilities",
+   "Capital Contribution",
+   85000000
+  ],
+  [
+   2,
+   "liabilities",
+   "Less : Withdrawals",
+   151211941.19
+  ],
+  [
+   2,
+   "liabilities",
+   "Add : Reserves and Surplus - Beginning",
+   0
+  ],
+  [
+   2,
+   "liabilities",
+   "- For the period",
+   66211941.52
+  ],
+  [
+   2,
+   "liabilities",
+   "- Ending",
+   66211941.52
+  ],
+  [
+   2,
+   "currentLiabilities",
+   "Payable against Purchases",
+   0
+  ],
+  [
+   2,
+   "currentLiabilities",
+   "Management Fees - billed / payable",
+   0
+  ],
+  [
+   2,
+   "currentLiabilities",
+   "(unlabelled)",
+   0
+  ],
+  [
+   2,
+   "liabilities",
+   "TOTAL",
+   0.34
+  ],
+  [
+   2,
+   "assets",
+   "Investments - At Cost",
+   0
+  ],
+  [
+   2,
+   "currentAssets",
+   "Balance with Banks",
+   0.34
+  ],
+  [
+   2,
+   "currentAssets",
+   "Pre-paid Taxes/Expenses",
+   0
+  ],
+  [
+   2,
+   "currentAssets",
+   "Receivable against Sale",
+   0
+  ],
+  [
+   2,
+   "currentAssets",
+   "(unlabelled)",
+   0.34
+  ],
+  [
+   2,
+   "assets",
+   "TOTAL",
+   0.34
+  ]
+ ]
+}

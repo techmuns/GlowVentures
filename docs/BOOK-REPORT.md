@@ -7,11 +7,11 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 6,11,39,87,856.41 |
-| Positions | 328 |
-| Accounts | 51 |
-| Owners | 6 |
-| Newest as-of | 2026-08-29 |
+| Consolidated market value | 6,13,00,64,051.56 |
+| Positions | 330 |
+| Accounts | 58 |
+| Owners | 7 |
+| Newest as-of | 2026-09-09 |
 
 ## Per account
 
@@ -22,9 +22,13 @@ Generated — **do not edit by hand**.
 | 37702 | 360 ONE Private Wealth | Ajay Jaisinghani | — | 2026-07-31 | 1 | 1,46,68,362.66 |
 | 60117 | 360 ONE Private Wealth | Bharat Jaisinghani | — | 2026-06-30 | 1 | 1,45,80,412.51 |
 | 3000048 | 3P Investment Managers | Ajay Jaisinghani | — | 2026-07-31 | 3 | 0 |
+| 9039917111 | ASK Absolute Return Fund | Ajay Jaisinghani | — | 2026-03-31 | 1 | 0 |
+| 9039917144 | ASK Absolute Return Fund | Ankita Jaisinghani | — | 2026-03-31 | 1 | 0 |
+| 10032723 | ASK Investment Managers Limited | Ankita Jaisinghani | ASK Indian Entrepreneur Portfolio | 2026-09-08 | 1 | 0.01 |
+| 10034025 | ASK Investment Managers Limited | Ajay Jaisinghani | ASK Indian Entrepreneur Portfolio | 2026-09-08 | 1 | 0.34 |
 | AIFM_BPEPF6_0584 | Baring Private Equity India Fund | Ankita Jaisinghani | — | 2026-03-31 | 1 | 1,88,42,208.74 |
-| 103472 | Buoyant Capital | Ankita Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-07-31 | 2 | 27,68,81,535.53 |
-| 103473 | Buoyant Capital | Ajay Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-07-31 | 2 | 49,29,81,982.05 |
+| 103472 | Buoyant Capital | Ankita Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-08-31 | 1 | 28,26,63,341.57 |
+| 103473 | Buoyant Capital | Ajay Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-08-31 | 1 | 50,32,76,370.81 |
 | 3517383 | Carnelian Asset Management and Advisors Pvt Ltd | Ajay Jaisinghani | CARNELIAN BESPOKE PORTFOLIO | 2026-08-10 | 12 | 39,53,37,616.86 |
 | 4551 | Carnelian Bharat Amritkaal Fund | Ankita Jaisinghani | — | 2026-07-31 | 1 | 16,31,15,312.43 |
 | 100022 | Goldstandard Wealth Private Limited | Ankita Jaisinghani | Aristos Equity Portfolio | 2026-08-11 | 32 | 8,01,95,236.76 |
@@ -40,6 +44,8 @@ Generated — **do not edit by hand**.
 | 175964 | India SME Investments | Bharat Jaisinghani | — | 2026-06-30 | 0 | 0 |
 | 177302 | India SME Investments | Ankita Jaisinghani | — | 2026-06-30 | 0 | 0 |
 | 98245 | LKP Securities | Bharat Jaisinghani | — | 2026-03-31 | 10 | 98,76,174.92 |
+| 5110758 | Marathon Trends Advisory Pvt Ltd | Ankita Jaisinghani | Trend Following - Flexicap Growth | 2026-09-09 | 0 | 0 |
+| 5110837 | Marathon Trends Advisory Pvt Ltd | Ajay Jaisinghani | Trend Following - Flexicap Growth | 2026-09-09 | 0 | 0 |
 | 7810404 | Molecule Ventures LLP | Ajay Jaisinghani | GROWTH | 2026-07-31 | 11 | 1,15,97,496.65 |
 | 904168868444 | Motilal Oswal Active Momentum Fund | Ankita Jaisinghani | — | 2026-08-06 | 1 | 21,41,89,290.53 |
 | 9049241536 | Motilal Oswal Delphi Equity Fund | Ajay Jaisinghani | — | 2026-06-30 | 1 | 11,12,87,535.35 |
@@ -47,6 +53,7 @@ Generated — **do not edit by hand**.
 | 1201090012838316 | Motilal Oswal Financial Services (demat) | Ankita Jaisinghani | — | 2026-07-31 | 0 | 0 |
 | 1201090012838320 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani | — | 2026-07-31 | 0 | 0 |
 | 1201090012838335 | Motilal Oswal Financial Services (demat) | Aarti Jaisinghani | — | 2026-07-31 | 0 | 0 |
+| 1201090032387399 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani Family Trust | — | 2026-07-31 | 0 | 0 |
 | 1201090037359311 | Motilal Oswal Financial Services (demat) | Ajay Jaisinghani | — | 2026-07-31 | 0 | 0 |
 | 1201090037436848 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani | — | 2026-07-31 | 0 | 0 |
 | 90410016093 | Motilal Oswal Founders Fund | Ankita Jaisinghani | — | 2026-07-31 | 1 | 10,99,00,127.57 |
@@ -73,12 +80,13 @@ Generated — **do not edit by hand**.
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 22 | 177 | 3,49,53,95,274.55 |
-| Ankita Jaisinghani | 11 | 89 | 1,28,03,03,571.16 |
+| Ajay Jaisinghani | 25 | 178 | 3,50,56,89,663.65 |
+| Ankita Jaisinghani | 14 | 90 | 1,28,60,85,377.21 |
 | Bharat Jaisinghani | 10 | 59 | 32,71,70,566.29 |
 | Aarti Jaisinghani | 2 | 1 | 97,68,26,519.91 |
 | Bharat Jaisinghani Family Trust 2 | 3 | 1 | 1,71,45,962.25 |
 | Bharat Jaisinghani Family Trust 3 | 3 | 1 | 1,71,45,962.25 |
+| Bharat Jaisinghani Family Trust | 1 | 0 | 0 |
 
 ## Holdings the family confirmed as separate investments
 
@@ -107,11 +115,8 @@ single entry in `shared/owners.mjs`, if the family says it should be.
 | 1038104611 | Aditya Birla Sun Life Mutual Fund | HOPE INDIA TRUST | 7,98,563.95 | holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 | 4295974 | Kotak Mahindra Mutual Fund | Hope India Trust | 7,77,205.81 | holder Hope India Trust is filed by the AMC as Trust, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 | 70413280453 | Mirae Asset Mutual Fund | HOPE INDIA TRUST | 9,41,106.71 | holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
-| 1201090032387399 | Motilal Oswal Financial Services (demat) | AARTI AJAY JAISINGHANI | — | this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book. No value is stated: its statement prints 3 holding(s) as quantities, with the price of each one's last depository movement rather than a valuation, so it states no value. |
 
 Together they carry **32,86,904.6** across 4 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
-
-1 more account(s) state no value on their own statement, and are named in the table with why.
 
 ## Ring-fenced: the promoter holding, on its own page
 
@@ -127,23 +132,23 @@ page alone. `BOOK_POLYCAB` is its only reader; remove its key from
 | --- | --- | --- | --- | ---: | ---: |
 | POLYCAB INDIA LIMITED - EQ | Ajay Jaisinghani | ICICI Bank (NSDL demat) 49794950 | 2026-03-31 | 1,39,01,229 | 1,23,51,24,19,665 |
 
-Together **1,23,51,24,19,665**, excluded from the 6,11,39,87,856.41 consolidated market value above.
+Together **1,23,51,24,19,665**, excluded from the 6,13,00,64,051.56 consolidated market value above.
 
 ## The family's own dated investments
 
-**4** of those account(s) print a running unit balance that starts from zero on every class's first allotment, which proves their record reaches inception: 3p-investment-managers-3000048, buoyant-capital-103473, helios-mutual-fund-10355977, motilal-oswal-active-momentum-fund-904168868444.
+**6** of those account(s) start every class's record at nil — a printed running unit balance that starts from zero on the class's first allotment, or a first allotment on the day the class's own series name says it was issued — which proves their record reaches inception: 3p-investment-managers-3000048, ask-absolute-return-fund-9039917111, ask-absolute-return-fund-9039917144, buoyant-capital-103473, helios-mutual-fund-10355977, motilal-oswal-active-momentum-fund-904168868444.
 
-**46** dated contribution(s) totalling **3,61,01,00,000** and **100** withdrawal(s) totalling **31,23,00,531.02**, across **17 of 51** account(s).
+**65** dated contribution(s) totalling **4,12,91,00,000** and **309** withdrawal(s) totalling **95,08,43,437.09**, across **21 of 58** account(s).
 
-These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 34 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
+These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 37 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
 
 A per-contribution breakdown is published for **12** position(s), of which **5** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
 
 | Position | Account | Contributions | Units | Invested |
 | --- | --- | ---: | ---: | ---: |
 | Neo Infra Income Opportunities Fund I — Class A5 | neo-infra-income-opportunities-fund-9039920536 | 6 | 4,85,837.2 | 4,85,83,720 |
-| BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 | buoyant-capital-103472 | 5 | 19,18,953.2 | 24,85,00,000 |
-| BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 | buoyant-capital-103473 | 5 | 34,16,657.417 | 46,00,58,861.66 |
+| Buoyant Opportunities Strategy — Category III — Class A4 | buoyant-capital-103472 | 5 | 19,18,953.2 | 24,85,00,000 |
+| Buoyant Opportunities Strategy — Category III — Class A4 | buoyant-capital-103473 | 5 | 34,16,657.417 | 46,00,58,861.66 |
 | Helios Flexi Cap Fund - Direct Growth | helios-mutual-fund-10355977 | 1 | 1,91,23,041.38 | 31,00,00,000 |
 | Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | motilal-oswal-active-momentum-fund-904168868444 | 1 | 1,52,45,765.959 | 21,42,00,000 |
 | Sanshi Fund-I (Open Ended AIF CAT-III) — Class E | sanshi-fund-9039671821 | 1 | 60,45,934.485 | 75,00,00,000 |
@@ -158,12 +163,12 @@ A per-contribution breakdown is published for **12** position(s), of which **5**
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 5,07,48,56,472.04 | 83.00% |
-| Financials | 25,85,86,623.95 | 4.23% |
-| Health Care | 19,08,15,090.8 | 3.12% |
-| Consumer Discretionary | 18,37,36,315.22 | 3.01% |
-| Industrials | 14,49,38,189.09 | 2.37% |
-| Cash | 11,57,87,076.72 | 1.89% |
+| Unclassified | 5,09,09,32,666.84 | 83.05% |
+| Financials | 25,85,86,623.95 | 4.22% |
+| Health Care | 19,08,15,090.8 | 3.11% |
+| Consumer Discretionary | 18,37,36,315.22 | 3.00% |
+| Industrials | 14,49,38,189.09 | 2.36% |
+| Cash | 11,57,87,077.07 | 1.89% |
 | Information Technology | 7,17,77,377.78 | 1.17% |
 | Materials | 2,39,34,566.25 | 0.39% |
 | Consumer Staples | 2,28,13,806.84 | 0.37% |
@@ -186,6 +191,7 @@ never guessed into the nearest plausible bucket.
 
 ## What this corpus does not support
 
+- 18 spreadsheet export(s) are witnesses of the PDF beside each (`twinOf`) and are not documents of this book — ASK Investment Managers Limited 10, Marathon Trends Advisory Pvt Ltd 8. Each carries no facts; every figure in it was checked against its PDF at extraction (docs/EXTRACTION-REPORT.md).
 - identity: 8 ISIN(s) are held under TWO OR MORE securityKeys — one security keyed twice, so its rows never add up. Each is a name one issuer CLIPS and another spells out, which no rule here bridges: the depository strip only ever REMOVES furniture and never supplies a name the statement did not print. Closing them needs a hand-checked alias, not another statement: INF0R8701046 (helios-flexi-cap-fund-direct-growth / helios-fcf-d-grow); INF0VGG22429 (blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability / bavf-series-20-class-c6); INE647U01026 (clean-max-enviro-energy-solutions / clean-max-env); INE0LTR03090 (everest-fleet-private-limited-0-001-series-b-new-pref-18ap43 / efpl-pref-18042043); INF0XAZ22055 (india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability / india-sme-investments-fund-ii-class-a2); INE721I01024 (national-stock-exchange-of-india / national-stock-ex); INF1ISW22079 (sanshi-trust-fd-i-cl-e-restricted-transferability / sanshi-fund-i-class-e); INF1V9N22050 (sky-capital-rising-titans-fund-i-skycrtf-oncarea3-restricted-transferability / sky-capital-rising-titans-fund-oncare-class-a3)
 - identity: 0 securityKey(s) carry two different ISINs — no key in this archive names two securities.
 - account 1000632: no time-weighted return series in any statement
@@ -208,6 +214,27 @@ never guessed into the nearest plausible bucket.
 - account 3000048: no time-weighted return series in any statement
 - account 3000048: no flow block in any statement, so no value bridge
 - account 3000048: no external capital movements found, so no money-weighted return series
+- account ASK Absolute Return Fund::9039917111: holdings 2026-03-31 superseded for SNAPSHOT facts by 2026-03-31 — `ask-absolute-return-fund-9039917111-2026-03-31-holdings-2`; its dated rows are still counted
+- account 9039917111: no time-weighted return series in any statement
+- account 9039917111: no flow block in any statement, so no value bridge
+- account 9039917111: no external capital movements found, so no money-weighted return series
+- account 9039917144: no time-weighted return series in any statement
+- account 9039917144: no flow block in any statement, so no value bridge
+- account 9039917144: no external capital movements found, so no money-weighted return series
+- account 10032723: capital-gain lots printed as `adani-ports-and-special-economic` settle this account's sales of `adani-ports-and-special-economic-zone` — same account and date, lot proceeds equal to each day's consideration less brokerage to the precision of its four-decimal rates — so their realised gain is that holding's
+- account 10032723: capital-gain lots printed as `britannia-industries-ltd-unsec-red` settle this account's sales of `britannia-industries-ltd-unsec-red-ncb-isd-03-jun-2021-mat-03-jun` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
+- account 10032723: capital-gain lots printed as `cholamandalam-investment-and` settle this account's sales of `cholamandalam-investment-and-finance` — same account and date, lot proceeds equal to each day's consideration less brokerage to the precision of its four-decimal rates — so their realised gain is that holding's
+- account 10032723: 3 capital-gain lot group(s) settle no sale on this account's transaction-statement trade record and name no holding it carries — aarti-pharmalabs sold 2023-01-17; astral-poly-technik sold 2021-06-19; astral-poly-technik sold 2023-03-23
+- account 10032723: its dated capital record runs to 2026-09-08 — the bank book whose capital rows its profit-and-loss account witnesses closes on that date
+- account 10032723: 103 dated move(s) from its bank book (46000000 in, 85383320.61 out) merged into its dated capital record — the bank book's deposits reproduce the profit-and-loss account's Capital Contribution (46000000) and its withdrawals with its TDS transfers reproduce the Withdrawals (85383320.61), to the paisa; on 2020-11-06 a withdrawal and a TDS reversal net to nil and nothing is listed
+- account 10032723: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
+- account 10034025: capital-gain lots printed as `adani-ports-and-special-economic` settle this account's sales of `adani-ports-and-special-economic-zone` — same account and date, lot proceeds equal to each day's consideration less brokerage to the precision of its four-decimal rates — so their realised gain is that holding's
+- account 10034025: capital-gain lots printed as `britannia-industries-ltd-unsec-red` settle this account's sales of `britannia-industries-ltd-unsec-red-ncb-isd-03-jun-2021-mat-03-jun` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
+- account 10034025: capital-gain lots printed as `cholamandalam-investment-and` settle this account's sales of `cholamandalam-investment-and-finance` — same account and date, lot proceeds equal to each day's consideration less brokerage to the precision of its four-decimal rates — so their realised gain is that holding's
+- account 10034025: 2 capital-gain lot group(s) settle no sale on this account's transaction-statement trade record and name no holding it carries — aarti-pharmalabs sold 2023-01-17; astral-poly-technik sold 2023-03-23
+- account 10034025: its dated capital record runs to 2026-09-08 — the bank book whose capital rows its profit-and-loss account witnesses closes on that date
+- account 10034025: 120 dated move(s) from its bank book (85000000 in, 151211941.19 out) merged into its dated capital record — the bank book's deposits reproduce the profit-and-loss account's Capital Contribution (85000000) and its withdrawals with its TDS transfers reproduce the Withdrawals (151211941.19), to the paisa; on 2020-11-06 a withdrawal and a TDS reversal net to nil and nothing is listed
+- account 10034025: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
 - account Aditya Birla Sun Life Mutual Fund::1019265797: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-08-03 — `aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings`; its dated rows are still counted
 - account 1019265797 (Aditya Birla Sun Life Mutual Fund) is NOT in the book: holder Hope India Trust is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,70,028.13.
 - account Aditya Birla Sun Life Mutual Fund::1038104611: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-08-03 — `aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings`; its dated rows are still counted
@@ -324,6 +351,18 @@ never guessed into the nearest plausible bucket.
 - account 98245: no time-weighted return series in any statement
 - account 98245: no flow block in any statement, so no value bridge
 - account 98245: no external capital movements found, so no money-weighted return series
+- account 5110758: capital-gain lots printed as `cholamandalam-investment` settle this account's sales of `cholamandalam-investment-and-finance` — same account and date, lot proceeds equal to each day's consideration less brokerage to the precision of its four-decimal rates — so their realised gain is that holding's
+- account 5110758: capital-gain lots printed as `oracle-financial-services` settle this account's sales of `oracle-financial-services-software` — same account and date, lot proceeds equal to each day's consideration less brokerage to the precision of its four-decimal rates — so their realised gain is that holding's
+- account 5110758: no time-weighted return series in any statement
+- account 5110758: the income-expense value bridge 2018-04-01 → 2026-09-09 is WITHHELD — The report prints no closing value, so its lines cannot be added up. Not read from this report: gain prior to takeover, accrued income and change in accruals.
+- account 5110758: no statement states this mandate's capital since inception as at 2026-09-09, so its return is struck holding by holding and carries only the realised gain its capital gain statement's window reports
+- account 5110758: no external capital movements found, so no money-weighted return series
+- account 5110837: capital-gain lots printed as `cholamandalam-investment` settle this account's sales of `cholamandalam-investment-and-finance` — same account and date, lot proceeds equal to each day's consideration less brokerage to the precision of its four-decimal rates — so their realised gain is that holding's
+- account 5110837: capital-gain lots printed as `oracle-financial-services` settle this account's sales of `oracle-financial-services-software` — same account and date, lot proceeds equal to each day's consideration less brokerage to the precision of its four-decimal rates — so their realised gain is that holding's
+- account 5110837: no time-weighted return series in any statement
+- account 5110837: the income-expense value bridge 2018-04-01 → 2026-09-09 is WITHHELD — The report prints no closing value, so its lines cannot be added up. Not read from this report: gain prior to takeover, accrued income and change in accruals.
+- account 5110837: no statement states this mandate's capital since inception as at 2026-09-09, so its return is struck holding by holding and carries only the realised gain its capital gain statement's window reports
+- account 5110837: no external capital movements found, so no money-weighted return series
 - account Mirae Asset Mutual Fund::70413280453: holdings 2026-07-02 superseded for SNAPSHOT facts by 2026-08-06 — `mirae-asset-mutual-fund-70413280453-2026-07-02-holdings`; its dated rows are still counted
 - account 70413280453 (Mirae Asset Mutual Fund) is NOT in the book: holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 9,41,106.71.
 - account Molecule Ventures LLP::7810404: expense-statement 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `molecule-ventures-llp-7810404-2026-06-30-expense-statement`; its dated rows are still counted
@@ -352,7 +391,10 @@ never guessed into the nearest plausible bucket.
 - account 1201090012838335: no time-weighted return series in any statement
 - account 1201090012838335: no flow block in any statement, so no value bridge
 - account 1201090012838335: no external capital movements found, so no money-weighted return series
-- account 1201090032387399 (Motilal Oswal Financial Services (demat)) is NOT in the book: this account's holder cannot be established: the page prints `Client Name: AARTI AJAY JAISINGHANI` with `PAN No: AAXXX-XX-8H`, which is not Aarti Jaisinghani's PAN, and the file it arrived in is named for a family trust whose two PANs it does not match either. Three identifiers, three answers — so it is not summed into anybody's total. One line in shared/owners.mjs, once the family names the holder, puts it in the book. Value: none stated — its statement prints 3 holding(s) as quantities, with the price of each one's last depository movement rather than a valuation, so it states no value.
+- account 1201090032387399 (Motilal Oswal Financial Services (demat)) contributes no market value on the statement basis: its statement of 2026-07-31 carries 3 holding(s) as quantities — 3 with the price of their last depository movement (1 dated on this account's transaction statement, 2 older than it). None of those is a valuation of the balance, so the units are in the archive and out of every statement-basis total; the live layer values the ones a current price reaches — a fund at its published NAV, a listed share at its quote.
+- account 1201090032387399: no time-weighted return series in any statement
+- account 1201090032387399: no flow block in any statement, so no value bridge
+- account 1201090032387399: no external capital movements found, so no money-weighted return series
 - account 1201090037359311 (Motilal Oswal Financial Services (demat)) contributes no market value on the statement basis: its statement of 2026-07-31 carries 2 holding(s) as quantities — 2 at the face value they were allotted at. None of those is a valuation of the balance, so the units are in the archive and out of every statement-basis total.
 - account 1201090037359311: no time-weighted return series in any statement
 - account 1201090037359311: no flow block in any statement, so no value bridge
@@ -469,15 +511,16 @@ never guessed into the nearest plausible bucket.
 - 1 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, 1,23,51,24,19,665 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - separate investments, confirmed by the family on 2026-09-28: 360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887] under Ajay Jaisinghani (37702) and Bharat Jaisinghani (60117) — each counted in full, 2,92,48,775.17 across 2 account(s).
 - separate investments, confirmed by the family on 2026-09-28: Transition Venture Capital Fund I — Class A1 under Bharat Jaisinghani Family Trust 2 (TVC262) and Bharat Jaisinghani Family Trust 3 (TVC263) — each counted in full, 3,42,91,924.5 across 2 account(s).
-- market side: listed 5,97,60,07,902.75 over 321 holding(s), private 13,78,81,211.66 over 6, and 98,742 over 1 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
+- market side: listed 5,99,20,84,097.9 over 321 holding(s), private 13,78,81,211.66 over 6, and 98,742 over 3 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
 - market side: 15 AIF holding(s) placed by the family's own classification of what the fund invests in; 3 of them, in 2 fund(s), differ from what the printed SEBI category alone would say — Motilal Oswal Founders Fund Series II — Class G1 (no category printed → listed: listed Indian equities); Motilal Oswal Wealth Delphi Equity Fund (no category printed → listed: Category III equity managers, as a fund of funds). The statement's category is unchanged; only the side is taken from the family.
-- market side: 1 fund(s) print NO SEBI category and the family have not classified them, so they are on neither side and are counted apart rather than defaulted to one: BLUE ASHVA VARENYA FUND - BAVF-SER20-C6 - Restricted Transferability. Putting them private would claim they are private capital and putting them listed would claim the opposite, and no document in this archive makes either claim. One line from the family, or a fund's own SEBI registration, settles each one.
+- market side: 2 fund(s) print NO SEBI category and the family have not classified them, so they are on neither side and are counted apart rather than defaulted to one: ASK Absolute Return Fund — Class A6 Series 31/01/2025; BLUE ASHVA VARENYA FUND - BAVF-SER20-C6 - Restricted Transferability. Putting them private would claim they are private capital and putting them listed would claim the opposite, and no document in this archive makes either claim. One line from the family, or a fund's own SEBI registration, settles each one.
 - market side: 1 holding(s) take a SEBI category the FAMILY declared, because no statement for them prints one — Motilal Oswal Wealth Delphi Equity Fund. A declaration only ever fills a category the statements leave empty and never overrides one they print; which side of the book each sits on is the family's own placing, noted above.
-- navHistory: 12 dated point(s) from 2026-05-31 to 2026-08-13 (74 days), over the 13 account(s) that publish MORE THAN ONE dated valuation (₹141.63 Cr at the last point, each dedupeGroup counted once). 20 account(s) publish exactly one dated valuation and 18 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-07-10; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
-- navHistory: the capital moving between each covered account's marks is established by the statements themselves — printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, hdfc-mutual-fund-16180583. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
+- navHistory: 13 dated point(s) from 2026-05-31 to 2026-08-31 (92 days), over the 15 account(s) that publish MORE THAN ONE dated valuation (₹220.22 Cr at the last point, each dedupeGroup counted once). 22 account(s) publish exactly one dated valuation and 21 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-07-31; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
+- navHistory: the capital moving between each covered account's marks is established by the statements themselves — dated-record: buoyant-capital-103473; printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, hdfc-mutual-fund-16180583; unproven: buoyant-capital-103472. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
+- navHistory: buoyant-capital-103472 2026-07-31 → 2026-08-31 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - account carnelian-asset-management-and-advisors-pvt-ltd-3517383: its printed capital totals (fact-sheet, performance-history, performance-summary) move by -30690 between 2026-07-10 and 2026-08-10 and its dated record carries 0 over the same days — -30690 moved on a day no statement in this drop prints. The NAV series nets it inside that step, which needs no date; the money-weighted return cannot, and names it rather than assuming a day.
-- attribution: 13 account(s) publish a valued holdings statement at two or more dates, so 268 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-08-13 the covered set runs ₹127.72 Cr → ₹141.63 Cr, of which price ₹2.54 Cr, trading ₹8.37 Cr, bought in ₹10.72 Cr, sold out ₹8.23 Cr. Largest detractor Jammu Kashmir Bank Ltd ₹-106.04 L. It covers ₹141.63 Cr of the book's ₹611.40 Cr; every other account publishes one statement, and one statement is a level rather than a change.
-- unrealised short/long-term split is populated on 3 of 328 position(s), across 1 of 51 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- attribution: 15 account(s) publish a valued holdings statement at two or more dates, so 270 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-08-31 the covered set runs ₹204.71 Cr → ₹220.22 Cr, of which price ₹4.15 Cr, trading ₹8.37 Cr, bought in ₹10.72 Cr, sold out ₹8.23 Cr. Largest detractor Jammu Kashmir Bank Ltd ₹-106.04 L. It covers ₹220.22 Cr of the book's ₹613.01 Cr; every other account publishes one statement, and one statement is a level rather than a change.
+- unrealised short/long-term split is populated on 3 of 330 position(s), across 1 of 58 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - realised is NULL, not ₹0, on BELRISE INDUSTRIES LIMITED (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on CAPRI GLOBAL CAPITAL LIMITED (lkp-securities-98245): every one of its 2 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Electronics Mart India Limited (lkp-securities-98245): every one of its 3 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
@@ -485,17 +528,21 @@ never guessed into the nearest plausible bucket.
 - realised is NULL, not ₹0, on NIP ETNF1D RTLIQBEES (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Varun Beverages Limited (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - FIFO restates the cost of 3P India Equity Fund 1 - Class B3 (3p-investment-managers-3000048): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 28,50,00,000 of cost was sold for a realised 2,55,82,835.17. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
+- FIFO restates the cost of ASK Absolute Return Fund — Class A6 Series 31/01/2025 (ask-absolute-return-fund-9039917111): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 20,00,00,000 of cost was sold for a realised 80,39,138.56. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
+- FIFO restates the cost of ASK Absolute Return Fund — Class A6 Series 31/01/2025 (ask-absolute-return-fund-9039917144): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 18,80,00,000 of cost was sold for a realised 59,08,505.71. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
 - FIFO restates the cost of Neo Infra Income Opportunities Fund I — Class A5 (neo-infra-income-opportunities-fund-9039920536): the statement prints 5,00,00,000, the fund's own unit record matched first-in, first-out holds 4,85,83,720 of cost in the units still held, and 14,16,280 of cost was sold for a realised 0. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
-- value bridge: 29 of 34 column(s) add up to their closing value within the statement's own rounding; 5 withheld, each named above with the lines it could not make add up
+- value bridge: 33 of 40 column(s) add up to their closing value within the statement's own rounding; 7 withheld, each named above with the lines it could not make add up
 - the 2025-02-01 switch from Buoyant Opportunities Strategy — Category III — Class A1 into Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103472 carries 1 dated contribution(s) through it, at the switch's own ratio of 170498.1912 unit(s) allotted for 155557.405 redeemed — the money keeps the date it was paid and the amount it cost
 - the 2026-03-31 switch from 3P India Equity Fund 1 - Class B1 into 3P India Equity Fund 1 - Class B3 in 3p-investment-managers-3000048 carries 4 dated contribution(s) through it, at the switch's own ratio of 993249.409 unit(s) allotted for 965892.766 redeemed — the money keeps the date it was paid and the amount it cost
 - the 2026-03-31 switch from 3P India Equity Fund 1 - Class B2 into 3P India Equity Fund 1 - Class B3 in 3p-investment-managers-3000048 carries 1 dated contribution(s) through it, at the switch's own ratio of 292748.872 unit(s) allotted for 282737.451 redeemed — the money keeps the date it was paid and the amount it cost
 - the 2026-06-01 switch from Buoyant Opportunities Strategy — Category III — Class A1 into Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103473 carries 4 dated contribution(s) through it, at the switch's own ratio of 1619755.8012 unit(s) allotted for 1489474.0032 redeemed — the money keeps the date it was paid and the amount it cost
 - no per-contribution breakdown for 3p-india-equity-fund-1-class-b3 in 3p-investment-managers-3000048: the 2053614.026 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
-- cost carried through the class switch for BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 in buoyant-capital-103472: 248500000 was paid for these units, against the 249410446.32 the statement's cost column prints, which restarts cost at the switch-day NAV. The 910446.32 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (910446.38) — and it is part of this holding's unrealised gain, because no money left the fund.
-- cost carried through the class switch for BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 in buoyant-capital-103473: 460058861.66 was paid for these units, against the 475353990.9 the statement's cost column prints, which restarts cost at the switch-day NAV. The 15295129.24 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (15295129.24) — and it is part of this holding's unrealised gain, because no money left the fund.
+- no per-contribution breakdown for ask-absolute-return-fund-class-a6-series-31-01-2025 in ask-absolute-return-fund-9039917111: the 199990.001 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
+- no per-contribution breakdown for ask-absolute-return-fund-class-a6-series-31-01-2025 in ask-absolute-return-fund-9039917144: the 187990.6 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
+- cost carried through the class switch for Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103472: 248500000 was paid for these units, against the 249410446.32 the statement's cost column prints, which restarts cost at the switch-day NAV. The 910446.32 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (910446.38) — and it is part of this holding's unrealised gain, because no money left the fund.
+- cost carried through the class switch for Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103473: 460058861.66 was paid for these units, against the 475353990.9 the statement's cost column prints, which restarts cost at the switch-day NAV. The 15295129.24 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (15295129.24) — and it is part of this holding's unrealised gain, because no money left the fund.
 - cost of Helios Flexi Cap Fund - Direct Growth in helios-mutual-fund-10355977 is what was paid in, 31,00,00,000, as the statement itself prints it: its own cost column counts the 15,499.23 of stamp duty it levied, so nothing is restated
 - cost of Motilal Oswal Active Momentum Fund - Direct Plan Growth Option in motilal-oswal-active-momentum-fund-904168868444 is what was paid in, 21,42,00,000, as the statement itself prints it: its own cost column counts the 10,709.46 of stamp duty it levied, so nothing is restated
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class E in sanshi-fund-9039671821 is what was paid in, 75,00,00,000: the statement prints 74,99,62,501.87 — what bought units after 37,498.13 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
@@ -503,7 +550,7 @@ never guessed into the nearest plausible bucket.
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2 in sanshi-fund-9039671912 is what was paid in, 25,00,00,000: the statement prints 24,99,87,500.62 — what bought units after 12,499.38 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class E in sanshi-fund-9069671554 is what was paid in, 22,00,00,000: the statement prints 21,99,89,000.54 — what bought units after 10,999.46 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class E in sanshi-fund-9069671634 is what was paid in, 20,50,00,000: the statement prints 20,49,89,750.51 — what bought units after 10,249.49 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
-- FIFO agrees with the class-switch carry on BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 (buoyant-capital-103472): both hold 24,85,00,000 of cost in the units still held, and the unit record shows none sold.
-- FIFO agrees with the class-switch carry on BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 (buoyant-capital-103473): both hold 46,00,58,861.66 of cost in the units still held, and the unit record shows none sold.
-- share movements: 89 holding-window(s) from the demat statements, 89 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 join a position this book carries and 23 a holding it carries as a quantity with no value; 39 close at nil, securities the account sold out of during the window; 19 close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; 8 sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change. 1 demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.
-- share movements: 10 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (3 close at nil; 7 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 8 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.
+- FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103472): both hold 24,85,00,000 of cost in the units still held, and the unit record shows none sold.
+- FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103473): both hold 46,00,58,861.66 of cost in the units still held, and the unit record shows none sold.
+- share movements: 90 holding-window(s) from the demat statements, 90 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 join a position this book carries and 24 a holding it carries as a quantity with no value; 39 close at nil, securities the account sold out of during the window; 19 close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; 8 sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.
+- share movements: 11 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (3 close at nil; 8 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 12 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.

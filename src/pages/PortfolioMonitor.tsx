@@ -27,7 +27,7 @@ import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
-import { loadTransactions, type Txn } from "@/lib/ledger";
+import { loadTransactions, type Txn, type TxnData } from "@/lib/ledger";
 import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, realisedWindowNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
 import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
@@ -5445,6 +5445,15 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    */
   const [tapePeriod, setTapePeriod] = useState<{ from: string | null; to: string | null }>({ from: null, to: null });
   /**
+   * THE CAPITAL-GAIN LOTS NO TRADE ON THE TAPE SETTLES (A-08) — five ASK lots
+   * that sold for ₹0, the fractions a demerger or a bonus left. They are in the
+   * statements' own realised total and in no row of this table, so the realised
+   * footer, which is the sum of its rows, falls short of the statements' by
+   * exactly their realised. The footer's hover names them; the figure stays the
+   * rows' own, because a total must tie to its own column.
+   */
+  const [lotsNoTrade, setLotsNoTrade] = useState<TxnData["lotsNoTrade"] | null>(null);
+  /**
    * WHICH SIDE OF THE RECORD IS IN VIEW — one state, read by both halves.
    *
    * It is kept in the DIRECTION vocabulary (`in`/`out`) because the capital
@@ -5475,7 +5484,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
     loadTransactions().then((d) => {
       if (!alive) return;
       if (!d) { setStatus("error"); return; }
-      setTxns(d.txns); setTapePeriod({ from: d.periodFrom, to: d.periodTo }); setStatus("ready");
+      setTxns(d.txns); setTapePeriod({ from: d.periodFrom, to: d.periodTo }); setLotsNoTrade(d.lotsNoTrade); setStatus("ready");
     });
     return () => { alive = false; };
   }, []);
@@ -5713,6 +5722,22 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
     : "no purchase falls inside the date window — this account's purchases are outside it; clear the date filter to see them";
   const sellsOf = (g: GroupRow) => g.instruments.flatMap((i) => i.tranches).filter((t) => t.side === "Sell");
   const allTradeSells = rows.flatMap((r) => (r.trades ? sellsOf(r.trades) : []));
+  /**
+   * WHERE THE REALISED FOOTER IS THE WHOLE TAPE'S, the lots no trade settles
+   * are named on it (A-08) — only there: under a date window, an entity, a
+   * section, a sector or a picked holding the footer covers part of the tape,
+   * and the statements' whole total would be a figure about something else.
+   */
+  const wholeTape = !windowed && side !== "in" && entity === "All" && section === "All" && sector === "All" && selected.size === 0;
+  const noTrade = wholeTape && lotsNoTrade && lotsNoTrade.lots > 0 && lotsNoTrade.realised != null && totals.realized != null
+    ? { ...lotsNoTrade, realised: lotsNoTrade.realised, statements: totals.realized + lotsNoTrade.realised }
+    : null;
+  const noTradeNote = noTrade
+    ? `The capital-gain statements' own realised total is ${fmtFromBase(noTrade.statements, { sign: true })}: this column's ${fmtFromBase(totals.realized, { sign: true })}, plus ${noTrade.lots} lot${noTrade.lots === 1 ? "" : "s"} no trade on this tape settles — ${noTrade.securities.join(", ")} — ${fmtFromBase(noTrade.realised, { sign: true })}. `
+      + (noTrade.allNil
+        ? `Each prints a sale of ₹0, so there is no sale row for it to meet: it is in the statements' total and in no row here.`
+        : `No sale row on the tape meets them, so they are in the statements' total and in no row here.`)
+    : undefined;
   const doubledNames = doubled.groups.map((ps) =>
     `${ps[0].security} — reported by ${ps.map((p) => { const a = accIdx.get(p.accountId); return a ? `${a.owner} (${a.accountNo}, ${money(p.marketValue)})` : p.accountId; }).join(" and ")}`);
   /**
@@ -6410,7 +6435,10 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                         : <>{fmtNum(totals.trades)}<span className="ml-1 text-[10.5px] font-normal text-slate-500">{totals.buys}B/{totals.sells}S</span></>}</td>,
                     bought: <td key="bought" data-foot-cell="bought" className="px-3 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{outsideTape ? <AbsentCell reason={tapeWhy} /> : totals.bought == null ? <AbsentCell reason={totals.buys === 0 ? "nothing was bought in the rows in view" : "no buy row in view reports a settled amount on its statement"} /> : money(totals.bought)}</td>,
                     sold: <td key="sold" data-foot-cell="sold" className="px-3 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{outsideTape ? <AbsentCell reason={tapeWhy} /> : totals.sold == null ? <AbsentCell reason={totals.sells === 0 ? "nothing was sold in the rows in view" : "no sell row in view reports a settled amount on its statement"} /> : money(totals.sold)}</td>,
-                    realised: <td key="realised" data-foot-cell="realised" className={`px-3 py-2.5 text-right mono whitespace-nowrap ${totals.realized == null ? "text-slate-600" : changeColor(totals.realized)}`}>{outsideTape ? <AbsentCell reason={tapeWhy} /> : totals.realized == null ? <AbsentCell reason={totals.sells === 0 ? "nothing was sold in the rows in view, so nothing was realised" : realisedAbsence(allTradeSells)} /> : <>{fmtFromBase(totals.realized, { compact: true, sign: true })}{totals.realizedOf < totals.sells && <span className="ml-1 text-[10.5px] font-normal text-slate-500" data-realised-of={`${totals.realizedOf}/${totals.sells}`} title={realisedCoverageNote(allTradeSells)}>{totals.realizedOf}/{totals.sells}</span>}</>}</td>,
+                    realised: <td key="realised" data-foot-cell="realised" className={`px-3 py-2.5 text-right mono whitespace-nowrap ${totals.realized == null ? "text-slate-600" : changeColor(totals.realized)}`}
+                      title={outsideTape ? undefined : noTradeNote}
+                      data-foot-no-trade-lots={!outsideTape && noTrade ? noTrade.lots : undefined}
+                      data-foot-no-trade-realised={!outsideTape && noTrade ? Math.round(noTrade.realised * 100) / 100 : undefined}>{outsideTape ? <AbsentCell reason={tapeWhy} /> : totals.realized == null ? <AbsentCell reason={totals.sells === 0 ? "nothing was sold in the rows in view, so nothing was realised" : realisedAbsence(allTradeSells)} /> : <>{fmtFromBase(totals.realized, { compact: true, sign: true })}{totals.realizedOf < totals.sells && <span className="ml-1 text-[10.5px] font-normal text-slate-500" data-realised-of={`${totals.realizedOf}/${totals.sells}`} title={realisedCoverageNote(allTradeSells)}>{totals.realizedOf}/{totals.sells}</span>}</>}</td>,
                     /* STRUCK OVER THE ACCOUNT ROWS THAT CARRY ONE, and the
                        count says how many — a security row is an instrument
                        rather than an account and has no account value to add,

@@ -61,6 +61,37 @@
  * Every published expansion, and every refusal, is listed in
  * `docs/SCHEME-NAMES.md` so any one of them can be challenged.
  *
+ * ── A SECOND TIER: AMFI'S OWN DAILY FILE, ON THE SAME ISIN (Stage 10db) ────
+ *
+ * The look-through store is built from a READ-ONLY AmfiBeas checkout, and a
+ * scheme reaches it only when `build-lookthrough` is run with that checkout
+ * present. When a delivery brings a scheme the store has never seen — the
+ * Bharat Jaisinghani Family Trust's demat brought Invesco India Arbitrage and
+ * Kotak Arbitrage, printed `INVES ARBF D-GROW` and `KOTAK ARBFD DP GROW` — the
+ * first tier has nothing to join, and the clipped spelling reached the screen.
+ * A one-word search for "arbitrage" then found neither fund, while the same
+ * Kotak scheme on Ajay's transaction-only demat read `Kotak Arbitrage Fund ·
+ * Direct`: one key, two names, which is the defect Stage 10cc exists to stop.
+ *
+ * `src/data/fundNavs.ts` already carries AMFI's own scheme name for every book
+ * line whose statement prints an ISIN AMFI publishes against (`build-fund-navs`,
+ * joined ON THE ISIN and never on a name). So the second tier reads it, for a
+ * book key the first tier has NO entry for — never one it refused, because a
+ * refusal there is a disagreement this tier must not paper over — and only
+ * where:
+ *
+ *  1. **the ISIN is the statement's own** (`isinFrom: "statement"`), every book
+ *     row under the key prints that one ISIN, and AMFI's entry carries it;
+ *  2. the instrument word survives and the name is not empty, as above;
+ *  3. **an ETF carries no plan marker**, read off AMFI's own category, for the
+ *     reason gate 4 gives: AMFI's file records a plan for an exchange-traded
+ *     unit, and nobody chose it.
+ *
+ * It is also what corrects a premise Stage 10az recorded: Liquid BeES's legacy
+ * ISIN `INF732E01037` is absent from AmfiBeas, and it IS in AMFI's own file —
+ * `build-fund-navs` has priced it there since Stage 10bn. Its clipped spelling
+ * (`NIP ETNF1D RTLIQBEES`) was never the only name an identifier could reach.
+ *
  * ── IT IS DISPLAY ONLY ─────────────────────────────────────────────────────
  *
  * `securityKeyOf` is NOT routed through this and must never be: two keys that
@@ -78,6 +109,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LOOKTHROUGH = join(ROOT, "public", "lookthrough");
 const BOOK = join(ROOT, "src", "data", "glowData.ts");
+const NAVS = join(ROOT, "src", "data", "fundNavs.ts");
 const OUT = join(ROOT, "src", "data", "schemeNames.json");
 const REPORT = join(ROOT, "docs", "SCHEME-NAMES.md");
 
@@ -159,6 +191,33 @@ function optionMarker(rec) {
   return o.replace(/\b[a-z]/g, (c) => c.toUpperCase());
 }
 
+/**
+ * THE SECOND TIER'S PLAN — AMFI's own plan column, never a marker on an ETF.
+ *
+ * AMFI's file records a plan for every row, an exchange-traded fund's included
+ * (`Nippon India ETF Nifty 1D Rate Liquid BeES` reads `Direct Plan`). A unit
+ * bought on the exchange has no direct or regular plan anybody chose, which is
+ * gate 4's reason, so the category AMFI files the scheme under decides it.
+ */
+function amfiPlanMarker(nav) {
+  if (/\bETFs?\b/i.test(String(nav.category ?? "")) || /\bETF\b/i.test(String(nav.scheme ?? ""))) return null;
+  const p = String(nav.plan ?? "");
+  return /\bdirect\b/i.test(p) ? "Direct" : /\bregular\b/i.test(p) ? "Regular" : null;
+}
+
+/**
+ * THE SECOND TIER'S OPTION — named only where it is not the default, the rule
+ * `optionMarker` applies, over AMFI's own wording (`GROWTH`, `Growth Option`,
+ * `Cumulative`, and nothing at all for an ETF). It is also the rule
+ * `labelFromAmfi` in `src/lib/fundNavs.ts` applies to a depository's line, so
+ * one scheme reached either way reads alike.
+ */
+function amfiOptionMarker(option) {
+  const o = String(option ?? "").trim();
+  if (!o || /growth|cumulative/i.test(o)) return null;
+  return o.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
 function main() {
   const idxPath = join(LOOKTHROUGH, "index.json");
   if (!existsSync(idxPath)) {
@@ -227,6 +286,58 @@ function main() {
     };
   }
 
+  // ── THE SECOND TIER: AMFI's own daily file, on the statement's own ISIN ──
+  // See the header. Only a book key the first tier has no entry for: a key it
+  // REFUSED stays refused, because that refusal is a disagreement between
+  // identifiers and a second source must not paper over it.
+  const navs = existsSync(NAVS) ? (bookArray(readFileSync(NAVS, "utf8"), "BOOK_FUND_NAVS") ?? []) : [];
+  const navByKey = new Map(navs.map((e) => [e.securityKey, e]));
+  // GATE 1 needs every ISIN the book prints under a key, not the first row's.
+  const isinsByKey = new Map();
+  for (const p of [...positions, ...recorded]) {
+    const s = isinsByKey.get(p.securityKey) ?? new Set();
+    if (typeof p.isin === "string" && p.isin.trim()) s.add(p.isin.trim().toUpperCase());
+    isinsByKey.set(p.securityKey, s);
+  }
+  const fromAmfi = [];
+  for (const securityKey of [...printed.keys()].sort()) {
+    if (index.schemes?.[securityKey]) continue;
+    const nav = navByKey.get(securityKey);
+    if (!nav) continue;                       // not a scheme AMFI prices — a share, a folio, an AIF
+    if (nav.isinFrom !== "statement" || nav.from !== "book") {
+      refused.push([securityKey, `AMFI's entry was not reached through this book's own statement ISIN (${nav.isinFrom}, ${nav.from})`]);
+      continue;
+    }
+    const navIsin = String(nav.isin ?? "").trim().toUpperCase();
+    const isins = isinsByKey.get(securityKey) ?? new Set();
+    if (!navIsin || isins.size !== 1 || !isins.has(navIsin)) {
+      refused.push([securityKey, `ISIN disagrees — AMFI's entry ${navIsin || "—"}, the book ${[...isins].join(" / ") || "—"}`]);
+      continue;
+    }
+    const amfi = String(nav.scheme ?? "").trim();
+    if (!amfi) { refused.push([securityKey, `AMFI's entry for ${navIsin} carries no scheme name`]); continue; }
+    const { name } = stripPlanTail(amfi);
+    if (INSTRUMENT.test(amfi) && !INSTRUMENT.test(name)) {
+      refused.push([securityKey, `the plan strip would eat the instrument word: "${amfi}" → "${name}"`]);
+      continue;
+    }
+    if (name.length < 4) { refused.push([securityKey, `the plan strip leaves "${name}", which names nothing`]); continue; }
+    out[securityKey] = {
+      name,
+      plan: amfiPlanMarker(nav),
+      option: amfiOptionMarker(nav.option),
+      // AMFI's file groups schemes under an AMC heading the NAV builder does not
+      // carry, so the AMC is not stated rather than read off the scheme's name.
+      amc: null,
+      isin: navIsin,
+      schemecode: String(nav.schemecode),
+      amfiName: amfi,
+      printed: printed.get(securityKey)?.name ?? null,
+      joinedBy: "amfi-isin",
+    };
+    fromAmfi.push(securityKey);
+  }
+
   // Sorted, so the file is a stable diff rather than one that reshuffles with
   // whatever order the index happened to be written in.
   const sorted = {};
@@ -239,11 +350,13 @@ function main() {
   L.push("");
   L.push("Generated by `npm run build-scheme-names`. The FULL name of every mutual-fund");
   L.push("scheme and ETF this book holds, joined to the book **by ISIN** through");
-  L.push("`public/lookthrough/` and therefore through the AMC's own filing. Nothing here is");
-  L.push("matched on a resemblance, and nothing reaches `glowData.ts`: it is the label a");
-  L.push("reader sees, and `securityKeyOf` is not routed through it.");
+  L.push("`public/lookthrough/` and therefore through the AMC's own filing — or, for a");
+  L.push("scheme that store has never seen, through AMFI's own daily file on the ISIN the");
+  L.push("family's statement prints (`src/data/fundNavs.ts`; joined by `amfi-isin` below).");
+  L.push("Nothing here is matched on a resemblance, and nothing reaches `glowData.ts`: it is");
+  L.push("the label a reader sees, and `securityKeyOf` is not routed through it.");
   L.push("");
-  L.push(`**${Object.keys(sorted).length} schemes resolve** and ${expanded.length} of them print differently from the name their own statement carried.`);
+  L.push(`**${Object.keys(sorted).length} schemes resolve** — ${Object.keys(sorted).length - fromAmfi.length} through the look-through store and ${fromAmfi.length} through AMFI's own file — and ${expanded.length} of them print differently from the name their own statement carried.`);
   L.push("");
   L.push("| What the statement printed | What a reader sees | Plan | AMC | ISIN | Joined by |");
   L.push("| --- | --- | --- | --- | --- | --- |");
@@ -253,9 +366,12 @@ function main() {
   L.push("");
   L.push("## Not expanded");
   L.push("");
-  const unresolved = index.unresolved ?? [];
+  // A scheme the look-through store could not resolve and AMFI's own file did
+  // is expanded, not "not expanded" — it is in the table above, joined by
+  // `amfi-isin`, and listing it here as well would state two things about it.
+  const unresolved = (index.unresolved ?? []).filter((u) => !sorted[u.securityKey]);
   if (!refused.length && !unresolved.length) {
-    L.push("Nothing. Every scheme in the lookthrough store resolved a full name.");
+    L.push("Nothing. Every scheme the book holds resolved a full name.");
   } else {
     L.push("Each of these keeps the name its own statement printed. None is name-matched to a");
     L.push("scheme it resembles: an expansion is published only where an identifier reached it.");
@@ -269,13 +385,14 @@ function main() {
   const sameMap = existsSync(OUT) && readFileSync(OUT, "utf8") === text;
   const sameReport = existsSync(REPORT) && readFileSync(REPORT, "utf8") === report;
   if (CHECK) {
-    console.log(`--check: ${Object.keys(sorted).length} schemes, ${refused.length} refused. `
+    console.log(`--check: ${Object.keys(sorted).length} schemes (${fromAmfi.length} from AMFI's own file), ${refused.length} refused. `
       + `${sameMap ? "map is a no-op" : "MAP DIFFERS"}; ${sameReport ? "report is a no-op" : "REPORT DIFFERS"}.`);
     return;
   }
   if (!sameMap) writeFileSync(OUT, text);
   if (!sameReport) writeFileSync(REPORT, report);
-  console.log(`${Object.keys(sorted).length} schemes → src/data/schemeNames.json (${expanded.length} read differently from the statement), ${refused.length} refused.`);
+  console.log(`${Object.keys(sorted).length} schemes → src/data/schemeNames.json (${fromAmfi.length} from AMFI's own file; ${expanded.length} read differently from the statement), ${refused.length} refused.`);
+  for (const k of fromAmfi) console.log(`  amfi-isin ${k}: ${sorted[k].printed} → ${sorted[k].name}${sorted[k].plan ? ` · ${sorted[k].plan}` : ""}${sorted[k].option ? ` · ${sorted[k].option}` : ""}`);
   for (const [k, why] of refused) console.log(`  refused ${k}: ${why}`);
 }
 

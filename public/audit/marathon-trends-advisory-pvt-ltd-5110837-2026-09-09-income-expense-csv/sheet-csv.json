@@ -1,0 +1,96 @@
+{
+ "name": "csv",
+ "rows": [
+  [
+   "Marathon Trends Advisory Pvt Ltd",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "701A, Ramee Emeralds, Linking Road Street 29, Santacruz West Mumbai - 400054 Maharashtra",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "DETAILS OF INCOME AND EXPENSES",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "From 01/04/2018 To 09/09/2026",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "Account : 5110837 Ajay Jaisinghani - 02AS23",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   ""
+  ],
+  [
+   "Client Code",
+   "Client Name",
+   "Date Until",
+   "ST Gain/Loss",
+   "LT Gain/Loss",
+   "Dividend",
+   "Interest",
+   "Management Fees",
+   "Custodian Fees",
+   "Other Expenses",
+   "STT"
+  ],
+  [
+   "5110837",
+   "Ajay Jaisinghani -",
+   "09/09/2026",
+   "12,708,648.05",
+   "0.00",
+   "966,612.00",
+   "130.30",
+   "954,431.42",
+   "0.00",
+   "38,874.75",
+   "386,305.43"
+  ]
+ ]
+}

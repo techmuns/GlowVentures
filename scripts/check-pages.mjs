@@ -534,24 +534,6 @@ function bookObject(src, name) {
 const FUND_ROUTE_ENGAGEMENTS = new Set(["AIF", "Distribution", "Advisory"]);
 
 /**
- * HOW MANY DISCRETIONARY MANDATES THE BOOK HOLDS — read from the generated book.
- *
- * The whole-book drill-down shows each of them as ONE ROW linking to its own
- * page, which is the way into the only look-through this book has. Asserting
- * that by counting links needs a number to count against, and a literal here
- * would be a second source for a figure `build-book` generates.
- */
-const MANDATE_COUNT = (() => {
-  try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const accounts = bookArray(src, "BOOK_ACCOUNTS");
-    const positions = bookArray(src, "BOOK_POSITIONS");
-    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
-    const held = new Set(positions.map((p) => p.accountId));
-    return accounts.filter((a) => a.engagement === "PMS" && held.has(a.accountId)).length || null;
-  } catch { return null; }
-})();
-/**
  * ── WHAT A SCHEME IS CALLED ON SCREEN, DERIVED FROM BOTH GENERATED FILES ────
  *
  *   *"why should everywhere you show me direct plan growth? You're wasting a
@@ -651,6 +633,38 @@ function smallKeysOf(positions) {
   for (const [k, v] of byKey) if (v !== 0 && Math.abs(v) < NEGLIGIBLE_FLOOR) out.add(k);
   return out;
 }
+/**
+ * HOW MANY DISCRETIONARY MANDATES THE BOOK HOLDS — read from the generated book.
+ *
+ * The whole-book drill-down shows each of them as ONE ROW linking to its own
+ * page, which is the way into the only look-through this book has. Asserting
+ * that by counting links needs a number to count against, and a literal here
+ * would be a second source for a figure `build-book` generates.
+ *
+ * A MANDATE IS COUNTED WHERE IT HOLDS SOMETHING THE PAGE DRAWS. That page lists
+ * CURRENT holdings — a fund redeemed to nil is closed, and a security worth
+ * under ₹1,000 across the book is a speck — so a mandate whose every line is
+ * one or the other draws no row. ASK's two discretionary accounts are that
+ * case since the September 2026 delivery: each fact sheet closes at ₹0 and the
+ * statement keeps a bank balance of ₹0.01 and ₹0.34. Counted here, they would
+ * be two links the page is right not to draw. Struck through `smallKeysOf`, the
+ * one copy of the floor in this file, and the closed test beside it — both
+ * re-derived from the book, never imported from `analytics.ts`.
+ */
+const MANDATE_COUNT = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const small = smallKeysOf(positions);
+    const held = new Set(positions
+      .filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null))
+      .filter((p) => !small.has(p.securityKey))
+      .map((p) => p.accountId));
+    return accounts.filter((a) => a.engagement === "PMS" && held.has(a.accountId)).length || null;
+  } catch { return null; }
+})();
 
 const SECURITY_AXIS_BOOK = (() => {
   try {
@@ -2612,7 +2626,38 @@ const LEDGER_BOOK = (() => {
     .filter((c) => !byAcct.has(c.accountId) && (c.calls ?? []).some((k) => k.date && k.amount > 0))
     .map((c) => c.accountId);
   const unvalued = [...new Set([...byAcct.keys(), ...withCalls])].filter((id) => !valued.has(id));
-    return { cgTotal, ownOnly, window, unvalued };
+    // THE LOTS NO TRADE CAN SETTLE (A-08): a lot group — one account, one
+    // security, one sale date — whose every lot sold for ₹0 is not a sale (ASK
+    // prints the fractions a demerger or a bonus left that way), so no row on
+    // any tape can meet it. Read off the capital-gain documents directly: a lot
+    // repeated across two issues of one account's statement counted once, a
+    // repeat inside one document kept — the rule `datedRowsAcross` applies.
+    const lotIds = new Map();
+    for (const d of manifest.filter((m) => m.reportType === "capital-gain")) {
+      const doc = JSON.parse(readFileSync(new URL(`${d.docKey}/document.json`, root), "utf8"));
+      const count = new Map();
+      for (const l of doc.capitalGains ?? []) {
+        const id = `${d.accountNo}|${JSON.stringify([l.securityKey, l.saleDate, l.purchaseDate, l.quantity, l.saleAmount, l.purchaseAmount, l.shortTerm, l.longTerm])}`;
+        const c = count.get(id) ?? { n: 0, lot: l };
+        c.n += 1;
+        count.set(id, c);
+      }
+      for (const [id, c] of count) if ((lotIds.get(id)?.n ?? 0) < c.n) lotIds.set(id, c);
+    }
+    const lotGroups = new Map();
+    for (const [id, { n, lot }] of lotIds) {
+      if (!lot.saleDate) continue;
+      const gk = `${id.slice(0, id.indexOf("|"))}|${lot.securityKey}@${lot.saleDate}`;
+      const g = lotGroups.get(gk) ?? { lots: [], n: 0 };
+      g.lots.push(lot); g.n += n;
+      lotGroups.set(gk, g);
+    }
+    const notSales = [...lotGroups.values()].filter((g) => g.lots.every((l) => l.saleAmount === 0));
+    const noTrade = {
+      lots: notSales.reduce((t, g) => t + g.n, 0),
+      realised: notSales.reduce((t, g) => t + g.lots.reduce((u, l) => u + (l.shortTerm ?? 0) + (l.longTerm ?? 0), 0), 0),
+    };
+    return { cgTotal, ownOnly, window, unvalued, noTrade };
   } catch { return null; }
 })();
 
@@ -7758,19 +7803,47 @@ const XA_BOOK = (() => {
     // and never back (A-13).
     const newest = reported.map((c) => c.periodTo ?? "").sort().at(-1) ?? "";
     const fy = newest ? `${Number(newest.slice(5, 7)) >= 4 ? newest.slice(0, 4) : Number(newest.slice(0, 4)) - 1}-04-01` : "";
-    const per = new Map();
-    for (const c of reported) {
-      if (!c.ownerId) continue;
-      const e = per.get(c.ownerId) ?? { st: 0, lt: 0, oneYear: true };
-      e.st += c.realisedST ?? 0; e.lt += c.realisedLT ?? 0;
-      if (!c.periodFrom || c.periodFrom < fy) e.oneYear = false;
-      per.set(c.ownerId, e);
-    }
+    // ONE YEAR'S TAX (the September 2026 delivery). A capital gain statement
+    // covers a WINDOW, and ASK's and Marathon's run from inception; the tax is
+    // one financial year's. Every row carries its realised figure split by the
+    // year each lot was SOLD in (`realisedByYear`, off the lots' own sale
+    // dates), so the year's heads are that year's entries — and a window that
+    // closes before the year opens says nothing about it. Re-expressed here,
+    // never through `taxEstimate.ts`, which is what the page calls; a row with
+    // no split falls back to its window and to the set-off gate on its dates.
+    const yearOf = (c) => {
+      const split = Array.isArray(c.realisedByYear) ? c.realisedByYear : null;
+      if (!split || !fy) return { st: c.realisedST ?? 0, lt: c.realisedLT ?? 0, split: false };
+      if (c.periodTo && c.periodTo < fy) return { st: 0, lt: 0, split: true };
+      const inYear = split.filter((e) => e.fy === fy);
+      return { st: inYear.reduce((a, e) => a + e.st, 0), lt: inYear.reduce((a, e) => a + e.lt, 0), split: true };
+    };
+    const strike = (pick) => {
+      const per = new Map();
+      for (const c of reported) {
+        if (!c.ownerId) continue;
+        const h = pick(c);
+        const e = per.get(c.ownerId) ?? { st: 0, lt: 0, oneYear: true };
+        e.st += h.st; e.lt += h.lt;
+        if (!h.split && (!c.periodFrom || c.periodFrom < fy)) e.oneYear = false;
+        per.set(c.ownerId, e);
+      }
+      return per;
+    };
+    const per = strike(yearOf);
     const taxOn = (st, lt) => Math.max(0, st) * 0.2 + Math.max(0, lt) * 0.125;
     const offOf = (e) => (e.oneYear && e.st < 0 && e.lt > 0 ? Math.min(-e.st, e.lt) : 0);
     const perTaxpayer = [...per.values()].reduce((a, e) => a + taxOn(e.st + offOf(e), e.lt - offOf(e)), 0);
     const noSetOff = [...per.values()].reduce((a, e) => a + taxOn(e.st, e.lt), 0);
-    const pooled = taxOn(reported.reduce((a, c) => a + (c.realisedST ?? 0), 0), reported.reduce((a, c) => a + (c.realisedLT ?? 0), 0));
+    const pooled = taxOn(reported.reduce((a, c) => a + yearOf(c).st, 0), reported.reduce((a, c) => a + yearOf(c).lt, 0));
+    // What taxing every WINDOW whole would print — the ₹2.00 Cr the tile read
+    // before the split, set off where each window sits inside the year — and
+    // the accounts whose sales in earlier years that would have taxed.
+    const whole = strike((c) => ({ st: c.realisedST ?? 0, lt: c.realisedLT ?? 0, split: false }));
+    const wholeWindow = [...whole.values()].reduce((a, e) => a + taxOn(e.st + offOf(e), e.lt - offOf(e)), 0);
+    const earlierYears = reported.filter((c) => Array.isArray(c.realisedByYear)
+      && c.realisedByYear.some((e) => e.fy !== null && (e.fy !== fy || (c.periodTo && c.periodTo < fy)))).map((c) => c.entity);
+    const fyLabel = fy ? `FY ${fy.slice(0, 4)}-${String((Number(fy.slice(0, 4)) + 1) % 100).padStart(2, "0")}` : "";
     // ── Snapshot History: each point's like-for-like change (XA-2), struck
     // straight off the point's own link fields — (close − capital in) ÷ open —
     // rather than through `navIndexSeries`, which is what the page calls.
@@ -8071,7 +8144,7 @@ const XA_BOOK = (() => {
       }
       var auditShort = best;
     } catch { ledger = null; }
-    return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size } : null, history, counts, sectors, fifo, valuation, twrr,
+    return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size, wholeWindow, earlierYears, fyLabel } : null, history, counts, sectors, fifo, valuation, twrr,
       cg: cgHarvest, drawdown, historyCapital, historyPanel, ledger, auditShort: typeof auditShort === "undefined" ? null : auditShort,
       returnsD: (() => {
         // ── Return & Drawdown's gain count and contributors (XA-24 / XA-25),
@@ -8360,8 +8433,14 @@ const PERF_BOOK = (() => {
     const SIGN = { realized: 1, unrealized: 1, gainPriorToTakeover: 1, income: 1, profit: 1,
       fees: -1, expenses: -1, otherExpenses: -1, accruedIncome: 1, changeInAccruals: 1 };
     const OPTIONAL = ["gainPriorToTakeover", "profit", "expenses", "otherExpenses", "accruedIncome", "changeInAccruals"];
+    // ON OR BEFORE, NOT ONLY ON — written again here rather than imported from
+    // `build-book`. ASK's profit and loss account runs from 1 April 2019, the
+    // start of the financial year its mandates opened in (26 July and
+    // 6 September 2019), so it covers each account's whole life. Struck on
+    // equality, both columns read as plain windows with no opening, and the
+    // checker withheld two columns the page is right to draw from a nil.
     const basisOf = (b, inception) => {
-      if (inception && b.periodFrom === inception) return "since-inception";
+      if (inception && b.periodFrom <= inception) return "since-inception";
       const fy = /^(\d{4})-04-01$/.exec(b.periodFrom);
       if (fy && b.periodTo >= b.periodFrom && b.periodTo <= `${Number(fy[1]) + 1}-03-31`) return "financial-year-to-date";
       return "window";
@@ -9347,8 +9426,25 @@ const txnTRealisedChecks = () => [
 ];
 
 /** MT-16, on a fiscal year that ends before the transaction statements begin. */
+/**
+ * NO SUBJECT WHERE THE TAPE REACHES BACK AS FAR AS THE CAPITAL RECORD. The
+ * claim needs a fiscal year in which the dated capital record moved and that
+ * ends before the first transaction statement begins. Since the September 2026
+ * delivery ASK's two tapes run from 26 Jul 2019 — the day the record's earliest
+ * movement is dated — so no such year exists, and a window before the tape has
+ * no capital row to draw and therefore no footer to read. That is read off the
+ * book (`TXN_T_BOOK`), never off what the page drew, and it is the only reason
+ * these abstain: an unreadable book is still a failure.
+ */
+const earlyWindowAbsent = () => {
+  if (!TXN_T_BOOK || TXN_T_BOOK.early) return null;
+  const first = (CAPITAL_RECORD_BOOK?.moves ?? []).map((m) => m.date).sort()[0] ?? null;
+  return { notChecked: `no fiscal year of the dated capital record ends before the transaction statements begin — they begin ${TXN_T_BOOK.tapeFrom}${first ? `, and the record's earliest movement is ${first}` : ""}` };
+};
 const txnTEarlyWindowChecks = () => [
   ["a window before the transaction statements begin is a dash naming their span — never a count of 0 trades", (t, ctx) => {
+    const absent = earlyWindowAbsent();
+    if (absent) return absent;
     if (!txnTReady(ctx) || !TXN_T_BOOK.early || !ctx.txnT.foot) return false;
     const B = TXN_T_BOOK;
     return ["trades", "bought", "sold", "realised"].every((c) => {
@@ -9361,6 +9457,8 @@ const txnTEarlyWindowChecks = () => [
   // with a movement inside it — a walk that never selected the preset would
   // strike the claim above on the whole table, where it cannot hold.
   ["…while the capital half of the same window still draws its rows, each windowed", (t, ctx) => {
+    const absent = earlyWindowAbsent();
+    if (absent) return absent;
     if (!txnTReady(ctx)) return false;
     const rows = ctx.txnT.rows;
     return rows.length > 0 && rows.every((r) => r.mine && r.windowed);
@@ -10750,7 +10848,9 @@ const CASH_MAPPING_BOOK = (() => {
       // in `glowData.ts`; they reach this list through the depository rows the
       // checker's model carries, exactly as the live page does.
       "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth",
-      "kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth",
+      // Stage 10db: Ajay's Kotak line and the trust's share the trust's key,
+      // and the trust's Invesco line is the third arbitrage fund on demat.
+      "kotak-arbfd-dp-grow", "inves-arbf-d-grow",
       "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
     ]);
     const outside = new Set();      // expected under Cash
@@ -11437,7 +11537,11 @@ const footBasisChecks = (setKey) => [
     const v = crU(m[2], m[3]) * (m[1] === "-" || m[1] === "−" ? -1 : 1);
     const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const day = (iso) => { const d = new Date(iso); return new RegExp(String.raw`\b${d.getUTCDate()} ${MON[d.getUTCMonth()]}\w* ${d.getUTCFullYear()}\b`); };
-    return Math.abs(v - st.total / 1e7) <= 0.006 && Number(m[4]) === st.accounts
+    // To the compact figure's own printing precision (`compactTieCr`): one
+    // decimal of a crore from ₹10 Cr, two below. A fixed 0.006 Cr held only
+    // while the statements' total stayed under ₹10 Cr — the September 2026
+    // delivery's ASK and Marathon lots took it to ₹14.15 Cr, printed ₹14.1 Cr.
+    return Math.abs(v - st.total / 1e7) <= compactTieCr(Math.abs(st.total) / 1e7) && Number(m[4]) === st.accounts
       && day(st.from).test(f.realisedNote) && day(st.to).test(f.realisedNote)
       // What it leaves out is named: a name sold out entirely is no row here.
       && /Not in this total: .*sold out entirely/i.test(f.realisedNote);
@@ -20034,11 +20138,48 @@ const INVARIANTS = {
      * agreeing to the paisa is a reconciliation, not a figure compared with its
      * own copy. A footer carrying no realised figure is a FAILURE: this book has
      * capital-gain lots, so an absent total means the join dropped all of them.
+     *
+     * …LESS THE LOTS NO TRADE CAN SETTLE, WHICH THE FOOTER NAMES. ASK prints
+     * five lots that sold for ₹0 — the fractions a demerger or a bonus left —
+     * and there is no tape row for a ₹0 lot to meet, so the footer, which is
+     * the sum of its rows, falls short of the statements' total by exactly
+     * their realised (−₹558.94 here). The allowance is NOT "whatever the page
+     * says it left out": the set is re-derived off the archive's own lots —
+     * groups whose every lot sold for ₹0 — and the page must name exactly that
+     * count and that figure. A lot WITH proceeds that settles no sale (the 19
+     * Axis Liquid lots this check was written for) is still a failure, because
+     * it is in no row, not in the named set, and moves the sum.
      */
     ["the realised total is the capital-gain statements' own, to the paisa (A-08)", (t, ctx) => {
       const d = ctx.datedTable?.footData;
       if (!LEDGER_BOOK || !d || d.realised === null || !Number.isFinite(d.realised)) return false;
-      return Math.round(d.realised * 100) === Math.round(LEDGER_BOOK.cgTotal * 100);
+      const nt = LEDGER_BOOK.noTrade;
+      const named = d.noTradeLots ?? 0, namedRealised = d.noTradeRealised ?? 0;
+      return named === nt.lots
+        && Math.round(namedRealised * 100) === Math.round(nt.realised * 100)
+        && Math.round((d.realised + namedRealised) * 100) === Math.round(LEDGER_BOOK.cgTotal * 100);
+    }],
+    /**
+     * ── …AND THE FOOTER SAYS SO, WHERE THERE IS ANYTHING TO SAY (A-08) ───────
+     *
+     * The handles above are what the reconciliation reads; a reader reads the
+     * hover. It must state the statements' own total — the figure the column
+     * falls short of, to the paisa — and how many lots it leaves out, and, where
+     * every one sold for ₹0, say so in those words. On a book where every lot
+     * settles a sale there is nothing to name, and the cell must carry no hover
+     * claiming otherwise.
+     */
+    ["the realised footer names the lots no trade settles, and the statements' own total (A-08)", (t, ctx) => {
+      const d = ctx.datedTable?.footData;
+      if (!LEDGER_BOOK || !d) return false;
+      const nt = LEDGER_BOOK.noTrade;
+      if (!nt.lots) return !/own realised total/i.test(d.realisedTitle ?? "");
+      const m = /own realised total is ([+\-−]?)₹([\d,]+(?:\.\d+)?)/.exec(d.realisedTitle ?? "");
+      if (!m) return false;
+      const v = Number(m[2].replace(/,/g, "")) * (m[1] && m[1] !== "+" ? -1 : 1);
+      return Math.round(v * 100) === Math.round(LEDGER_BOOK.cgTotal * 100)
+        && new RegExp(`\\b${nt.lots} lots?\\b`).test(d.realisedTitle)
+        && /prints a sale of ₹0/.test(d.realisedTitle);
     }],
     /**
      * ── A FUND'S OWN SUBSCRIPTION IS THE FAMILY'S CAPITAL, NEVER A TRADE (A-05) ─
@@ -32659,6 +32800,39 @@ const INVARIANTS = {
       return /per taxpayer/i.test(t) && Number(el.attrs.taxpayers) === XA_BOOK.tax.taxpayers;
     }],
     /**
+     * ── ONE YEAR'S TAX (the September 2026 delivery) ───────────────────────
+     *
+     * ASK's and Marathon's capital gain statements run from inception, so
+     * taxing each WINDOW whole put every past year's sales into this year's
+     * estimate: the tile read ₹2.00 Cr against ₹24.2 L on the year's own
+     * sales. Struck on the tile's figure against the whole-window figure
+     * re-expressed above, and the book must carry an account that sold in an
+     * earlier year — or the two would agree and the check could not fail.
+     */
+    ["the tax is one financial year's: the tile names the year, and never taxes a window whole", (t, ctx) => {
+      const el = xaEl(ctx, "cg-tax");
+      if (!XA_BOOK?.tax || !el) return false;
+      const { perTaxpayer, wholeWindow, earlierYears, fyLabel } = XA_BOOK.tax;
+      if (!earlierYears.length) {
+        return { notChecked: `no capital gain statement in this book reports a sale before ${fyLabel}, so a window taxed whole is the year's own tax` };
+      }
+      const shown = xaRupees(el.text);
+      const yearOnFace = new RegExp(`per taxpayer\\s*·\\s*${fyLabel.replace(/[-]/g, "\\-")}`, "i").test(t);
+      // One decimal of lakh, or of crore, is the tile's printing precision.
+      return yearOnFace && Math.abs(Number(el.attrs.value) - perTaxpayer) <= 1
+        && Math.abs(wholeWindow - perTaxpayer) > 1e5 && Math.abs(shown - wholeWindow) > 5100;
+    }],
+    ["…and its hover names the accounts whose earlier years' sales it leaves out", (t, ctx) => {
+      if (!XA_BOOK?.tax) return false;
+      const { earlierYears, fyLabel } = XA_BOOK.tax;
+      if (!earlierYears.length) {
+        return { notChecked: `no capital gain statement in this book reports a sale before ${fyLabel}` };
+      }
+      const hover = (ctx?.titles ?? []).find((x) => x.includes(`The sales made in ${fyLabel} only`));
+      return !!hover && earlierYears.every((e) => hover.includes(e))
+        && /from sales in earlier financial years/i.test(hover) && /in no part of this figure/i.test(hover);
+    }],
+    /**
      * XA-16. Three captions said the book carries no lot date — "No statement
      * in this drop carries lot dates", "Without a lot date there is no mark to
      * count to", and "the other 50 accounts issue a CAPITAL REGISTER" — while
@@ -36816,6 +36990,15 @@ for (const theme of THEMES) {
             realisedOf: Number(foot.getAttribute("data-foot-realised-of")),
             realised: foot.hasAttribute("data-foot-realised") ? Number(foot.getAttribute("data-foot-realised")) : null,
             bought: foot.hasAttribute("data-foot-bought") ? Number(foot.getAttribute("data-foot-bought")) : null,
+            /** The capital-gain lots no trade on the tape settles, as the realised cell names them (A-08). */
+            ...(() => {
+              const c = foot.querySelector('[data-foot-cell="realised"]');
+              return {
+                noTradeLots: c?.hasAttribute("data-foot-no-trade-lots") ? Number(c.getAttribute("data-foot-no-trade-lots")) : null,
+                noTradeRealised: c?.hasAttribute("data-foot-no-trade-realised") ? Number(c.getAttribute("data-foot-no-trade-realised")) : null,
+                realisedTitle: c?.getAttribute("title") ?? "",
+              };
+            })(),
           } : null,
         };
       });

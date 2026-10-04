@@ -254,7 +254,7 @@ function bandRows(rows, x0, x1) {
  * labels that ANCHOR their span count — a label found mid-span belongs to a
  * merged header item, which mapHeaderToColumns already resolves by offset.
  */
-function splitAtHeaderLabels(columns, headerRows, fieldAliases) {
+function splitAtHeaderLabels(columns, headerRows, fieldAliases, dataRows = []) {
   const sets = Object.values(fieldAliases);
   const matches = (t) => !!t && sets.some((set) => set.some((re) => re.test(t)));
 
@@ -268,20 +268,50 @@ function splitAtHeaderLabels(columns, headerRows, fieldAliases) {
   for (const row of headerRows) {
     for (const it of row.items ?? []) {
       const s = stacks.find((k) => Math.abs(k.x - it.x) <= STACK_TOL);
-      if (s) { s.parts.push(it.text); s.x = Math.min(s.x, it.x); }
-      else stacks.push({ x: it.x, parts: [it.text] });
+      if (s) { s.parts.push(it.text); s.x = Math.min(s.x, it.x); s.right = Math.max(s.right, it.x + it.width); }
+      else stacks.push({ x: it.x, right: it.x + it.width, parts: [it.text] });
     }
   }
-  const labels = stacks
-    .filter((s) => matches(norm(s.parts.join(" "))) || s.parts.some((p) => matches(norm(p))))
-    .map((s) => s.x);
+  const matched = stacks
+    .filter((s) => matches(norm(s.parts.join(" "))) || s.parts.some((p) => matches(norm(p))));
+  const labels = matched.map((s) => s.x);
   if (labels.length < 2) return null;
+
+  // The figures this table was measured from, by the column their centre falls in.
+  // FIGURES, not text: a description column carries words that can sit under a
+  // label's edge by accident (Buoyant's capital register, `Desc/Notes`), and a
+  // split made on those moved its opening-balance row out of the table.
+  const figures = dataRows.flatMap((r) => r.items ?? []).filter((it) => parseNumInfo(it.text).value !== null).map((it) => ({
+    right: it.x + it.width, center: it.x + it.width / 2,
+  }));
 
   const out = [];
   let changed = false;
   for (const col of columns) {
     // Distinct label positions inside this column, left to right.
-    const inside = [...new Set(labels.filter((x) => x >= col.x0 - 1 && x < col.x1))].sort((a, b) => a - b);
+    let inside = [...new Set(labels.filter((x) => x >= col.x0 - 1 && x < col.x1))].sort((a, b) => a - b);
+    // A RIGHT-ALIGNED LABEL WIDER THAN ITS FIGURES STARTS LEFT OF ITS COLUMN.
+    // ASK's capital gain statement prints "Sale Quantity" flush right over a
+    // two-digit "35", and "Sale Rate" 5pt to its right over "4,492.2574": the
+    // corridor between the two columns is under the gap the occupancy pass
+    // needs, two rows are too few to cluster an edge, and the quantity label's
+    // LEFT edge sits 20pt outside the merged column — so the column kept both
+    // fields, the quantity read as 354492.2574 and the rate as nothing.
+    //
+    // Such a label is counted by its RIGHT edge, and only under three
+    // conditions that together are the signature of a label over its own
+    // figures rather than the overhang of the column before: exactly one other
+    // label's left edge is inside the column, a figure in the column ends where
+    // this label ends, and figures sit on BOTH sides of the cut — so no cut ever
+    // opens an empty column. Where any is missing the column is left as it was.
+    if (inside.length === 1) {
+      const cut = inside[0] - 1;
+      const inCol = figures.filter((f) => f.center >= col.x0 && f.center <= col.x1);
+      const overhang = matched.some((s) =>
+        s.x < col.x0 - 1 && s.right > col.x0 && s.right < cut &&
+        inCol.some((f) => f.center < cut && Math.abs(f.right - s.right) <= 1.5));
+      if (overhang && cut > col.x0 && inCol.some((f) => f.center > cut)) inside = [col.x0, inside[0]];
+    }
     if (inside.length < 2) { out.push({ x0: col.x0, x1: col.x1 }); continue; }
     changed = true;
     let x0 = col.x0;
@@ -398,7 +428,7 @@ export function findTable(pageGrid, fieldAliases, opts = {}) {
       // three of thirty rows carry a Received Date and the Security beside it
       // was swallowed whole. Splitting on the labels' own positions is the same
       // header-driven rule the rest of this module runs on.
-      const split = splitAtHeaderLabels(grid.columns, slice.slice(0, headerRows), fieldAliases);
+      const split = splitAtHeaderLabels(grid.columns, slice.slice(0, headerRows), fieldAliases, measureFrom);
       if (split) grid = regrid(slice, { ...opts, measureFrom, columns: split });
       if (grid.rows.length <= headerRows - 1) continue;
 

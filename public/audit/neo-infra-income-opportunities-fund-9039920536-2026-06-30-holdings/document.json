@@ -24,6 +24,10 @@
    "detail": "485837 units at the printed NAV of 114.24 derive 55502018.88 against a printed valuation of 55498303.25 (3715.63). The valuation is used; the NAV is not a price this reader can multiply."
   },
   {
+   "code": "payouts-row-not-in-printed-total",
+   "detail": "the income rows sum to 3532396 against a printed Income Payout (Gross) of 3531941; the 455 difference is exactly one dated row — 2026-07-09 Distribution on Other Income, gross 455, TDS 46, net 409 — which the statement's own total does not count. It is carried and marked, not dropped"
+  },
+  {
    "code": "statement-basis",
    "detail": "the fund's own quarterly valuation is the primitive: market value is the printed Valuation (Net), not units x the printed NAV, which does not reproduce it. The family's consolidated review classifies this fund under Debt / High Yield Fund — its EXPOSURE, where `assetClass` records its legal form"
   }

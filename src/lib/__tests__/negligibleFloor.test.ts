@@ -32,7 +32,7 @@
 // test.
 import fs from "node:fs";
 import path from "node:path";
-import { BOOK_POSITIONS, BOOK_SUMMARY, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SUMMARY, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import {
   NEGLIGIBLE_VALUE_FLOOR, currentHoldings, droppedHoldings, negligibleKeys,
   dedupedPositions, isRedeemedToNil, sum,
@@ -109,14 +109,28 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
   ok("what the floor removes is a negligible share of the book — it is a speck filter, not a policy on real money",
      Math.abs(droppedMV) / LIVE_TOTAL < 0.0001,
      `${rs(droppedMV)} of ${rs(LIVE_TOTAL)}`);
-  // And on the STATEMENT basis it takes nothing at all — measured, not assumed.
-  // Every row it used to take was a Motilal demat line valued at a last-movement
-  // price, which that basis no longer values. A floor that starts dropping
-  // statement rows again has met a new speck, and the family are owed a look.
-  const stmtDropped = droppedHoldings(dedupedPositions(BOOK_POSITIONS)).negligible;
-  ok("on the statement basis the floor drops nothing — the specks were last-movement values that basis no longer carries",
-     stmtDropped.length === 0 && Math.abs(sum(dedupedPositions(BOOK_POSITIONS).map((p) => p.marketValue)) - BOOK_SUMMARY.totalValue) < 0.005,
-     stmtDropped.map((p) => `${p.security} ${rs(p.marketValue)}`).join(", ") || "0 rows; BOOK_SUMMARY ties");
+  // And on the STATEMENT basis it takes only what a CLOSED account leaves
+  // behind — measured, not assumed. Every row it used to take there was a
+  // Motilal demat line valued at a last-movement price, which that basis no
+  // longer values. Since the September 2026 delivery it takes the paise in each
+  // ASK mandate's bank account after the manager paid the whole account out
+  // (₹0.01 and ₹0.34). So the rule is structural rather than a count: a
+  // statement row the floor drops must be cash in an account that holds nothing
+  // else over the floor and whose own capital record shows its money paid back.
+  // A speck in a live account fails here, and the family are owed a look.
+  const stmtBook = dedupedPositions(BOOK_POSITIONS);
+  const stmtDropped = droppedHoldings(stmtBook).negligible;
+  const closedResidue = (p: (typeof stmtBook)[number]) => {
+    const acct = BOOK_ACCOUNTS.find((a) => a.accountId === p.accountId);
+    const rows = stmtBook.filter((q) => q.accountId === p.accountId);
+    return p.assetClass === "Cash" && rows.every((q) => Math.abs(q.marketValue) < NEGLIGIBLE_VALUE_FLOOR)
+      && !!acct?.capital && acct.capital.withdrawn > 0 && acct.capital.withdrawn >= acct.capital.contributed;
+  };
+  const live = stmtDropped.filter((p) => !closedResidue(p));
+  ok("on the statement basis the floor drops only the cash a paid-out account leaves behind",
+     live.length === 0 && Math.abs(sum(stmtBook.map((p) => p.marketValue)) - BOOK_SUMMARY.totalValue) < 0.005,
+     live.map((p) => `${p.accountId} ${p.security} ${rs(p.marketValue)}`).join(", ")
+       || `${stmtDropped.length} row(s): ${stmtDropped.map((p) => `${p.security} ${rs(p.marketValue)}`).join(", ") || "none"}; BOOK_SUMMARY ties`);
 }
 
 // ── 4. IT MOVES MARKET VALUE AND NOTHING ELSE ───────────────────────────────
@@ -126,10 +140,18 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
 // SHOULD — a holding with a cost basis is one the family paid for, and dropping
 // it silently understates what they put in.
 {
-  const withCost = negligible.filter((p) => p.costBasis != null);
+  // ONE EXCEPTION, AND IT MOVES NOTHING BUT ITSELF: a cash balance whose cost
+  // is its own value (ASK's paise above). Dropping it moves Capital invested by
+  // exactly what it moves the value, and the gain by nothing — it is not an
+  // investment the family paid for. Any other cost on a dropped row fails.
+  const withCost = negligible.filter((p) => p.costBasis != null
+    && !(p.assetClass === "Cash" && Math.abs((p.costBasis ?? NaN) - p.marketValue) < 0.005));
+  const cashAtValue = negligible.filter((p) => p.costBasis != null && !withCost.includes(p));
   const withDiv = negligible.filter((p) => p.dividendReceived != null);
-  ok("no dropped holding reports a cost — so Capital invested cannot move",
-     withCost.length === 0, withCost.map((p) => p.security).join(", "));
+  ok("no dropped holding reports a cost other than a cash balance's own value — so Capital invested cannot move by an investment",
+     withCost.length === 0,
+     withCost.map((p) => p.security).join(", ")
+       || `${cashAtValue.length} cash balance(s) at cost = value, ${rs(sum(cashAtValue.map((p) => p.marketValue)))}`);
   ok("no dropped holding reports a dividend — so income cannot move",
      withDiv.length === 0, withDiv.map((p) => p.security).join(", "));
   /**
@@ -209,17 +231,26 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
 // ── 6. THE TEST IS THE HOLDING, NEVER THE STATEMENT ROW ─────────────────────
 // A name held at ₹900 in five accounts is ₹4,500 the family owns. Per-row the
 // floor deletes all five rows and the holding with them; per-security it keeps
-// every one. This book has no such case — the smallest row belonging to a
-// multi-row security is ₹6,208 — so the two readings agree HERE, which is
-// exactly why the difference has to be asserted on constructed input rather
-// than waited for.
+// every one. This book has no such case, so the two readings agree HERE, which
+// is exactly why the difference has to be asserted on constructed input rather
+// than waited for. Agreement is checked key by key: the one multi-row key the
+// floor drops on this book (ASK's two bank balances, ₹0.01 and ₹0.34) is under
+// the floor on both readings, which is agreement, not the case this guards.
 {
-  const dangerous = [...negligibleKeys(book)].filter((k) => {
+  const keys = [...new Set(book.map((p) => p.securityKey))];
+  const multi = keys.filter((k) => book.filter((p) => p.securityKey === k).length > 1);
+  const dropped = negligibleKeys(book);
+  // Per row, with the same exception the floor makes for a measured zero: a
+  // row at exactly ₹0 is a measurement, not a speck, on either reading.
+  const perRow = (k: string) => {
     const rows = book.filter((p) => p.securityKey === k);
-    return rows.length > 1;
-  });
-  ok("no security is dropped whose rows the book reports separately — the two readings agree on this book",
-     dangerous.length === 0, dangerous.join(", ") || "checked against every multi-row security");
+    return rows.some((p) => p.marketValue !== 0) && rows.every((p) => Math.abs(p.marketValue) < NEGLIGIBLE_VALUE_FLOOR);
+  };
+  const disagree = multi.filter((k) => perRow(k) !== dropped.has(k));
+  const both = multi.filter((k) => dropped.has(k));
+  ok("for every security the book reports separately, the row reading and the holding reading agree on this book",
+     disagree.length === 0,
+     disagree.join(", ") || `${multi.length} multi-row securities; dropped on both readings: ${both.join(", ") || "none"}`);
 
   // The constructed case: one holding, three rows, each under the floor and the
   // holding well over it. Per-row this returns the key; per-security it must not.

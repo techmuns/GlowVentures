@@ -316,9 +316,10 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
          * null and 0 cannot be read as one thing.
          */
         const empty = accountEmptiness(a, held);
-        // Every row under the ₹1,000 floor: none on this book, and a bare 0
-        // there would read as a measured nil. The rows' own value is sent with
-        // the reason the dashboard lists none of them.
+        // Every row under the ₹1,000 floor: the two ASK PMS accounts since the
+        // September 2026 delivery, each holding only a bank balance of paise.
+        // A bare 0 there would read as a measured nil, so the rows' own value is
+        // sent with the reason the dashboard lists none of them.
         const allSpecks = !empty && live.length === 0;
         return {
           owner: a.owner, provider: a.provider, accountNo: a.accountNo,

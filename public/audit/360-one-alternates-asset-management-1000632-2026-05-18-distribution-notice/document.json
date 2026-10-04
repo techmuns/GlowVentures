@@ -34,6 +34,7 @@
    "memberId": null,
    "amount": 715619,
    "units": null,
+   "netAmount": null,
    "settlementDate": null,
    "tranAccount": null,
    "buySellAmount": null,

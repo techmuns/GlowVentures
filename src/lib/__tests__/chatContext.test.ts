@@ -234,7 +234,7 @@ ok("the context is a non-empty set of named blocks",
 {
   const acc = block<{ rows: { accountNo: string; provider: string; valueCr: number | null; valueNote: string | null }[] }>("accounts");
   const byNo = new Map(acc.rows.map((r) => [`${r.provider}|${r.accountNo}`, r]));
-  const absent: string[] = [], nil: string[] = [], wrong: string[] = [];
+  const absent: string[] = [], nil: string[] = [], specksOnly: string[] = [], wrong: string[] = [];
   for (const a of BOOK_ACCOUNTS) {
     const r = byNo.get(`${a.provider}|${a.accountNo}`);
     if (!r) continue;
@@ -246,12 +246,25 @@ ok("the context is a non-empty set of named blocks",
     const measuredNil = rows.length
       ? rows.every((p) => p.quantity === 0 && p.currentPrice != null)
       : /balance is nil/i.test(a.noPositionsReason ?? "");
+    // Every row the account HAS is under the ₹1,000 floor, so the dashboard
+    // lists none of them — the two ASK PMS accounts since the September 2026
+    // delivery, each holding only a bank balance of paise. Their value is sent
+    // (it is a measurement, and not zero) with the floor named, never as a
+    // bare figure that reads like a holding the screen forgot to draw.
+    const allSpecks = rows.length > 0 && !measuredNil
+      && rows.every((p) => closed(p) || speck(p.securityKey)) && rows.some((p) => !closed(p));
     if (rows.length === 0 && !measuredNil) {
       absent.push(a.accountNo);
       if (r.valueCr !== null || !r.valueNote) wrong.push(`${a.accountNo} should be null with a reason, got ${r.valueCr}`);
     } else if (measuredNil) {
       nil.push(a.accountNo);
       if (r.valueCr !== 0 || !/measured nil/i.test(r.valueNote ?? "")) wrong.push(`${a.accountNo} should be a measured 0, got ${r.valueCr} / ${r.valueNote}`);
+    } else if (allSpecks) {
+      specksOnly.push(a.accountNo);
+      const v = add(rows.map((p) => p.marketValue)) / CR;
+      if (typeof r.valueCr !== "number" || r.valueCr === 0 || Math.abs(r.valueCr - v) > Math.max(Math.abs(v) * 0.005, 1e-12)
+        || !/under ₹1,000/.test(r.valueNote ?? "") || !/lists none of them/.test(r.valueNote ?? ""))
+        wrong.push(`${a.accountNo} holds only specks under the floor, so its value ${v} Cr should be sent with the floor named, got ${r.valueCr} / ${r.valueNote}`);
     } else if (typeof r.valueCr !== "number"
       || r.valueNote !== (partialNote.has(a.accountId) ? `Partly valued — ${partialNote.get(a.accountId)}` : null)) {
       wrong.push(`${a.accountNo} holds a valued position, got ${r.valueCr} / ${r.valueNote}`);
@@ -262,6 +275,11 @@ ok("the context is a non-empty set of named blocks",
   // LOAD-BEARING: both kinds exist on this book, or the check passes over nothing.
   ok("...and this book has both kinds, so the check is not vacuous",
     absent.length > 0 && nil.length > 0, `${absent.length} not valued, ${nil.length} measured nil`);
+  // The third kind — an account whose every row is a speck — has a subject only
+  // where a drop brings one; this one does (the two ASK PMS bank balances).
+  if (specksOnly.length) ok("...and an account holding only specks under the floor sends its value with the floor named",
+    true, specksOnly.join(", "));
+  else console.log("NOT CHECKED an account holding only specks under the floor — none on this book");
   // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST (Stage 10ce): the
   // live book values a transaction-only demat's cash equivalents and nothing
   // else on it, and the account's row carries the registry's own note saying so.

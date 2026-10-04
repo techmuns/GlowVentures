@@ -347,19 +347,60 @@ console.log("── what a row says about its figure is true of the figure (SC-C
   ok("a holding filed under two categories names each that holds some of it, largest first — never whichever row sorts first",
     multi.length > 0 && catWrong.length === 0, `${multi.length} such: ${catWrong.join(", ") || multi.map(([k]) => k).join(", ")}`);
   // …and a category a holding's rows are filed under but that holds NONE of its
-  // value is not named — the book's "Cash" line is PMS cash sleeves plus two
+  // value is not named — the book's "Cash" line was PMS cash sleeves plus two
   // nil Buoyant lines filed under Cash, and "PMS mandates + Cash" said the Cash
   // category held some of the ₹9.51 Cr.
-  const zeroCats = [...byKey].flatMap(([k, rows]) => {
+  const zeroCatsOf = (byK: Map<string, typeof sc>) => [...byK].flatMap(([k, rows]) => {
     const by = new Map<string, number>();
     for (const p of rows) { const g = groupKeyFor("category", idx, p); by.set(g, (by.get(g) ?? 0) + Math.abs(p.marketValue)); }
     const pos = [...by].filter(([, v]) => v > 0);
     return pos.length ? [...by].filter(([, v]) => v === 0).map(([g]) => ({ k, g: label(g) })) : [];
   });
-  const zeroNamed = zeroCats.filter(({ k, g }) => (screenIndex.find((e) => e.id === `holding:${k}`)?.detail ?? "")
-    .split(" · ")[0].split(" + ").includes(g));
-  ok("…and a category holding none of the value is not named", zeroCats.length > 0 && zeroNamed.length === 0,
-    `${zeroCats.length} such: ${zeroNamed.map((x) => `${x.k}→${x.g}`).join(", ") || zeroCats.map((x) => `${x.k}/${x.g}`).join(", ")}`);
+  const namedIn = (ix: typeof screenIndex, k: string) =>
+    (ix.find((e) => e.id === `holding:${k}`)?.detail ?? "").split(" · ")[0].split(" + ");
+  const zeroCats = zeroCatsOf(byKey);
+  /**
+   * THE BOOK'S OWN CASE LEFT WITH THE SEPTEMBER 2026 DELIVERY: Buoyant's 31 Aug
+   * portfolio snaps supersede the 31 Jul appraisals and print no nil cash
+   * sleeve, so no holding on this book is filed under a category that holds
+   * none of its value. The claim abstains with that evidence — and the
+   * constructed case below puts Buoyant's old line back and holds the rule as a
+   * hard failure, so the abstention never stands alone.
+   */
+  if (zeroCats.length === 0) {
+    console.log(`NOT CHECKED …and a category holding none of the value is not named, on this book — no holding is filed under a category that holds none of its value (${byKey.size} holdings searched); the constructed case below holds it`);
+  } else {
+    const zeroNamed = zeroCats.filter(({ k, g }) => namedIn(screenIndex, k).includes(g));
+    ok("…and a category holding none of the value is not named", zeroNamed.length === 0,
+      `${zeroCats.length} such: ${zeroNamed.map((x) => `${x.k}→${x.g}`).join(", ") || zeroCats.map((x) => `${x.k}/${x.g}`).join(", ")}`);
+  }
+  {
+    // Constructed: the book's own cash sleeves (every one in a PMS mandate)
+    // beside a NIL Cash line in a fund folio — the shape the Buoyant folios
+    // carried until their snaps superseded it. Built through the index the
+    // page builds, so the row's own detail line is what is read.
+    const sleeves = positions.filter((p) => p.securityKey === "cash" && p.marketValue !== 0);
+    const folio = BOOK_ACCOUNTS.find((a) => !isMandateHeld(a.engagement) && a.engagement === "AIF");
+    const nil = sleeves[0] && folio
+      ? { ...sleeves[0], accountId: folio.accountId, marketValue: 0, quantity: 0, costBasis: 0, unrealizedPnL: 0, dedupeGroup: undefined, alsoReportedUnder: undefined } as (typeof positions)[number]
+      : null;
+    const withNil = nil ? [...positions, nil] : positions;
+    const nilIndex = buildSearchIndex({
+      positions: withNil, consolidated: dedupedPositions(withNil), accounts, money, recorded: BOOK_UNVALUED_HOLDINGS,
+      capitalMoves: BOOK_CAPITAL_MOVES, fenced: fencedIdentityOf(BOOK_POLYCAB),
+    });
+    const ccByKey = new Map<string, typeof sc>([["cash", dedupedPositions(withNil).filter((p) => p.securityKey === "cash")]]);
+    const ccZero = zeroCatsOf(ccByKey);
+    // LOAD-BEARING: the nil line really is filed under a category of its own,
+    // and that category really holds none of the value — or the case below
+    // would pass whatever the index did.
+    ok("constructed: a nil Cash line in a fund folio beside the PMS cash sleeves is filed under a category holding none of the value",
+      !!nil && sleeves.length > 0 && ccZero.length === 1 && ccZero[0].g === label("Cash"),
+      `${sleeves.length} sleeve(s) · ${ccZero.map((x) => x.g).join(", ") || "none"}`);
+    ok("constructed: …and the row names only the category that holds the money",
+      ccZero.length === 1 && !namedIn(nilIndex, "cash").includes(ccZero[0].g) && namedIn(nilIndex, "cash").length > 0,
+      namedIn(nilIndex, "cash").join(" + "));
+  }
 
   // SC-C2 — a member's figure is Family & Entities', not "as the statements print it".
   const owners = [...new Set(BOOK_ACCOUNTS.map((a) => a.owner))];

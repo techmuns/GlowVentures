@@ -7,14 +7,16 @@
 // restatement as money paid in. `carryCostThroughSwitches` now carries what the
 // family actually paid through the switch.
 //
-// ── WHY THIS SUITE READS FOUR DOCUMENTS RATHER THAN THE BOOK ALONE ──────────
+// ── WHY THIS SUITE READS FIVE DOCUMENTS RATHER THAN THE BOOK ALONE ──────────
 //
 // The new cost is the sum of the holding's own tranches, so comparing the two is
 // a figure checked against its own copy. Every assertion below is struck on a
 // figure produced somewhere ELSE:
 //
 //   the performance appraisal   Realized Gain = the gap the switch restated,
-//                               Realized + Unrealized = the book's gain
+//                               Realized + Unrealized = the gain on its own date
+//   the portfolio snap          Profit / Loss less Income Distributed = the
+//                               book's gain on the date the book is valued
 //   the fact sheet              Contribution = the cash the tranches paid
 //   the account statement       every tranche's entry NAV is printed on it
 //   the family's own review     Investment at Cost = the book's cost
@@ -47,6 +49,22 @@ const ROOT = process.env.GLOW_FIXTURES ? path.resolve(process.env.GLOW_FIXTURES,
 const AUDIT = path.join(ROOT, "public", "audit");
 
 const carried = BOOK_POSITIONS.filter((p) => p.costBasisSource === "carried-through-switch");
+
+/** A folio's portfolio snap, as it prints its Investment Summary. */
+const snapSummary = (accountId: string) => {
+  const acctNo = accountId.split("-").at(-1)!;
+  const dir = fs.readdirSync(AUDIT).find((d) => d.includes(`-${acctNo}-`) && d.endsWith("-portfolio-snap"));
+  if (!dir) return null;
+  const text = (JSON.parse(fs.readFileSync(path.join(AUDIT, dir, "pages.json"), "utf8")).pages as { text: string }[])
+    .map((x) => x.text).join("\n");
+  const num = (x: string) => Number(x.replace(/,/g, ""));
+  const asOf = /Account Summary : As of (\d\d)\/(\d\d)\/(\d{4})/.exec(text);
+  const value = /Current Value\(\d\d\/\d\d\/\d{4}\)\s+(-?[\d,]+)/.exec(text);
+  const profit = /Profit \/ Loss\s+(-?[\d,]+)/.exec(text);
+  const income = /Income Distributed\s+(-?[\d,]+)/.exec(text);
+  if (!asOf || !value || !profit || !income) return null;
+  return { date: `${asOf[3]}-${asOf[2]}-${asOf[1]}`, value: num(value[1]), profit: num(profit[1]), income: num(income[1]) };
+};
 
 console.log("\n── the book carries a cost through a switch, and says so ──");
 // A suite that passes over no input claims nothing — golden.mjs's rule.
@@ -106,10 +124,30 @@ for (const p of carried) {
     // The gap the switch restated is what the fund itself calls realised.
     near(`printed − carried = the appraisal's Realized Gain — ${tag}`,
       (p.printedCostBasis ?? 0) - (p.costBasis ?? 0), perf.realized!, 1);
-    // And the book's whole gain is the fund's realised plus unrealised — no money
-    // left the fund, so nothing of it is realised in the family's hands.
-    near(`the book's gain = the appraisal's Realized + Unrealized — ${tag}`,
-      p.unrealizedPnL, (perf.realized ?? 0) + (perf.unrealized ?? 0), 1);
+    // And on the appraisal's OWN date the whole gain over the carried cost is the
+    // fund's realised plus unrealised — no money left the fund, so nothing of it
+    // is realised in the family's hands. Struck on the appraisal's own closing
+    // value rather than the book's: since the September 2026 delivery each folio
+    // is valued on its 31 Aug portfolio snap, a month after this appraisal, and
+    // a gain struck a month later is a different measurement.
+    near(`on the appraisal's own date, value − carried cost = its Realized + Unrealized — ${tag}`,
+      (perf.closing ?? NaN) - (p.costBasis ?? 0), (perf.realized ?? 0) + (perf.unrealized ?? 0), 1);
+  }
+
+  // ── the book's own date: the portfolio snap it is valued on ──
+  // The snap prints its Investment Summary as text the reader does not take —
+  // Capital Invested, Income Distributed, Profit / Loss and Current Value — so
+  // it stands as a witness the book never read. Its Profit / Loss is struck on
+  // the CASH invested; the book's cost also carries the distribution the fund
+  // reinvested into units, so the book's gain is the snap's Profit / Loss less
+  // its Income Distributed. Every figure is printed to the rupee.
+  const sn = snapSummary(p.accountId);
+  ok(`the portfolio snap the book is valued on is there to witness — ${tag}`,
+    !!sn && sn.date === acct?.asOf, `${sn?.date} vs the account's ${acct?.asOf}`);
+  if (sn) {
+    near(`the book's value = the snap's Current Value — ${tag}`, p.marketValue, sn.value, 1);
+    near(`the book's gain = the snap's Profit / Loss less the income reinvested — ${tag}`,
+      p.unrealizedPnL, sn.profit - sn.income, 1);
   }
   if (fact && perf) {
     // What left the family's bank is the fact sheet's Contribution; the cost is

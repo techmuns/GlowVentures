@@ -59,6 +59,8 @@ type ArchiveTxn = {
   assetClass: string | null;
   quantity: number | null; unitPrice: number | null;
   gross: number | null; charges: number | null; net: number | null;
+  /** Brokerage as an amount, derived from the printed per-unit rate. */
+  brokerage?: number | null;
   /** The statement's OWN settlement figure. See `settledAmount`. */
   printed?: { settlementAmount?: number | null } | null;
 };
@@ -149,9 +151,12 @@ const AUTHORITATIVE = {
   cashIncome: ["dividend-statement"],
   nonCashIncome: ["corporate-benefits", "statement-of-earnings"],
   // A holdings statement, by whatever name its issuer gives it. `unknown` is
-  // last and is real: the AIF account statements carry no report title this
-  // pipeline recognises, and they are still where those units are valued.
-  holdings: ["appraisal", "investor-report", "holdings", "unknown"],
+  // real: the AIF account statements carry no report title this pipeline
+  // recognises, and they are still where those units are valued.
+  // `profit-and-loss` is last: ASK's two mandates (the september-2026 delivery)
+  // issue no appraisal, and their profit-and-loss account's balance sheet is
+  // where what is left in them is stated (`precedence.mjs` names it the same).
+  holdings: ["appraisal", "investor-report", "holdings", "unknown", "profit-and-loss"],
 } as const;
 
 async function fetchJson<T>(path: string): Promise<T | null> {
@@ -357,6 +362,21 @@ export type TxnData = {
   periodFrom: string | null; periodTo: string | null;
   /** Accounts that issued a transaction statement, and how many did not. */
   accounts: string[]; accountsWithout: string[];
+  /**
+   * THE CAPITAL-GAIN LOTS NO TRADE ON THIS TAPE SETTLES (A-08). A lot is set
+   * against the day's sale it belongs to (`shared/lotSettlement.mjs`), and a
+   * lot that is not a sale has no row to meet: ASK prints five lots that sold
+   * for ₹0 — the fractions a demerger or a bonus left. They are in the
+   * capital-gain statements' own total and in no row of the tape, so a total
+   * of the tape's realised column falls short of the statements' by exactly
+   * their realised. Named here so the page can say so rather than leave a gap
+   * nobody can see.
+   *
+   * `allNil` is whether every one of them prints a sale amount of ₹0 — the
+   * only case the page may describe as "sold for nothing". `realised` is null
+   * where no lot is left over, never 0.
+   */
+  lotsNoTrade: { lots: number; realised: number | null; securities: string[]; allNil: boolean };
 };
 
 // THE ISIN USED TO BE GLUED TO THE NAME, AND THE JOIN USED TO BE PATCHED HERE.
@@ -437,7 +457,13 @@ export function lotGroups(docs: ArchiveDoc[]): Map<string, LotGroup> {
 export function daySales(docs: ArchiveDoc[]): DaySale[] {
   return daySalesOf(datedRows(docs, AUTHORITATIVE.transactions, "transactions")
     .filter(({ doc: d, row: t }) => t.side === "sell" && !!t.date && !isOwnAllotment(d, t))
-    .map(({ doc: d, row: t }) => ({ accountNo: d.accountNo, securityKey: t.securityKey, date: t.date ?? null, amount: settledAmount(t) })));
+    .map(({ doc: d, row: t }) => ({
+      accountNo: d.accountNo, securityKey: t.securityKey, date: t.date ?? null, amount: settledAmount(t),
+      // What a capital gain is struck on — the consideration less brokerage (pass 3
+      // in shared/lotSettlement.mjs). Null where the row does not print both.
+      consideration: typeof t.gross === "number" && typeof t.brokerage === "number" ? t.gross - t.brokerage : null,
+      quantity: t.quantity,
+    })));
 }
 
 /** Each day's sale → the lot group that settles it, the aliases that join, and what no sale settles. */
@@ -449,7 +475,7 @@ export async function loadTransactions(): Promise<TxnData | null> {
   const docs = await loadArchive();
   if (!docs) return null;
   const src = of(docs, AUTHORITATIVE.transactions);
-  const { bySale: realised } = settleSales(docs, daySales(docs));
+  const { bySale: realised, unsettled } = settleSales(docs, daySales(docs));
   const txns: Txn[] = [];
   let periodFrom: string | null = null, periodTo: string | null = null;
   /**
@@ -568,8 +594,21 @@ export async function loadTransactions(): Promise<TxnData | null> {
   const withTxns = new Set(src.map((d) => d.accountNo));
   const allAccounts = new Map<string, string>();
   for (const d of docs) allAccounts.set(d.accountNo, accountLabel(d));
+  // The lots no sale on the tape settles — the same set `loadSales` names on
+  // Ledger Insights, read off the one settlement both share.
+  const unsettledKeys = new Set(unsettled.map((g) => g.key));
+  const noTrade: ArchiveLot[] = [];
+  for (const { doc: d, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
+    if (l.saleDate && unsettledKeys.has(daySaleKey(d.accountNo, l.securityKey, l.saleDate))) noTrade.push(l);
+  }
   return {
     asOf: newestAsOf(docs), txns, ownAllotments,
+    lotsNoTrade: {
+      lots: noTrade.length,
+      realised: noTrade.length ? noTrade.reduce((t, l) => t + (l.shortTerm ?? 0) + (l.longTerm ?? 0), 0) : null,
+      securities: [...new Set(noTrade.map((l) => securityLabel(l.securityKey, l.security)))].sort(),
+      allNil: noTrade.length > 0 && noTrade.every((l) => l.saleAmount === 0),
+    },
     buys: txns.filter((t) => t.side === "Buy").length,
     sells: txns.filter((t) => t.side === "Sell").length,
     periodFrom, periodTo,
@@ -795,6 +834,12 @@ export type SalesData = {
    * them out of a loss-making total makes the remainder look worse than the
    * book actually did. Nothing is lost or double-counted: the three figures
    * reconcile exactly, which is why all three are carried here.
+   *
+   * (That was the calibration; the Axis Liquid lots settle their sales since
+   * DL-1. On the September 2026 delivery the unattributed set is five lots that
+   * sold for ₹0 — the fractions a demerger or a bonus left on ASK's two
+   * accounts — which no trade exists to meet. The three figures still reconcile
+   * to the paisa, and `ledgerJoins.test.ts` holds them to it.)
    */
   statementRealized: number | null; statementLots: number; matchedSales: number;
   /** Lots the tape never carries, and what they sum to. Signed as the statement

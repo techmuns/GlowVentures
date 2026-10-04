@@ -10,12 +10,21 @@ export type LotGroup = {
   key: string; accountNo: string; securityKey: string; date: string;
   realised: number; saleAmount: number | null; lots: number;
 };
-export type SettlementSell = { accountNo: string; securityKey: string; date: string | null; amount: number | null };
-export type DaySale = { accountNo: string; securityKey: string; date: string; amount: number | null; rows: number };
-export type Settled = { realised: number; lots: number; by: "key" | "amount"; lotKey: string; lotSecurityKey: string };
+export type SettlementSell = {
+  accountNo: string; securityKey: string; date: string | null; amount: number | null;
+  /** Gross less brokerage, where the row prints both — what pass 3 settles a capital gain against. */
+  consideration?: number | null;
+  quantity?: number | null;
+};
+export type DaySale = {
+  accountNo: string; securityKey: string; date: string; amount: number | null;
+  consideration: number | null; quantity: number | null; rows: number;
+};
+export type Settled = { realised: number; lots: number; by: "key" | "amount" | "consideration"; lotKey: string; lotSecurityKey: string };
 
 export declare const daySaleKey: (accountNo: string, securityKey: string, date: string) => string;
 export declare const withinPrintedPrecision: (lotSum: number, lots: number, sale: number, rows: number) => boolean;
+export declare const withinDerivedPrecision: (lotSum: number, lots: number, sale: number, rows: number, quantity: number) => boolean;
 export declare function lotGroupsOf(lots: readonly SettlementLot[]): Map<string, LotGroup>;
 export declare function daySalesOf(sells: readonly SettlementSell[]): DaySale[];
 export declare function settleSales(groups: Map<string, LotGroup>, sales: readonly DaySale[]): {

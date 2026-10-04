@@ -83,8 +83,8 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "name": "Deepak Fert",
     "aliases": [],
     "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "HDFC Balanced Advantage Fund",
@@ -181,8 +181,8 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "name": "Kingfa Science & Technology Ltd.",
     "aliases": [],
     "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "Kotak Equity Arbitrage Scheme(G)",
@@ -216,15 +216,15 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "name": "Man Industries",
     "aliases": [],
     "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "Manorama Industries Ltd.",
     "aliases": [],
     "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "Mirae Asset Cash Management Fund-Direct(G)",
@@ -272,22 +272,22 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "name": "Sterlite Grid 5",
     "aliases": [],
     "custodian": "HDFC Bank",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "Sterlite Power Transmission",
     "aliases": [],
     "custodian": "HDFC Bank",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "STLNETWORK",
     "aliases": [],
     "custodian": "HDFC Bank",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "Tatva Chintan Pharma Chem Limi",
@@ -300,22 +300,22 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "name": "Vedanta Iron & Steel Ltd",
     "aliases": [],
     "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "Vedanta Oil & Gas Ltd",
     "aliases": [],
     "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "Vedanta Power Ltd",
     "aliases": [],
     "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank NSDL — that statement is in source/august-2026-e/ and is a SCAN with no text layer, so no reader can read it",
-    "ask": "Bharat's HDFC Bank NSDL holding statement — as a text PDF, not a scan"
+    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
+    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "WhiteOak Capital Multi Asset Allocation Fund-Direct(G)",

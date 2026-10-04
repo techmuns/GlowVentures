@@ -59,33 +59,99 @@ const GL = "green-lantern-capital-llp-510861";
 
 // ── 1. THE MANAGER'S OWN PRINTED IRR ─────────────────────────────────────────
 //
-// Buoyant's fact sheet prints a "Performance(IRR)" for each folio. An XIRR over
-// the dated deposits this book reads, closing on the statement's own value and
+// Buoyant's 31 Jul fact sheet prints a "Performance(IRR)" for each folio, and
+// beside it the value and date it is struck on ("Portfolio Value(31/07/2026)").
+// An XIRR over the dated deposits this book reads, closing on THAT value and
 // date, must reproduce it to the two decimals printed — a primary source
-// standing as witness for the flows, the close AND the solver at once.
+// standing as witness for the flows and the solver at once.
+//
+// THE BOOK NO LONGER CLOSES ON THAT DATE, and the witness had to follow its
+// own close rather than the book's. Since the September 2026 delivery each
+// folio's 31 Aug portfolio snap supersedes the 31 Jul appraisal, and the snap
+// prints a time-weighted return, never an IRR. So the IRR is reproduced on the
+// book AS IT STOOD on the fact sheet's date — the account's statement date, its
+// value and its record cut to that day, run through the REAL `buildDatedCapital`
+// — and the book's own close is held to the snap's printed value and date,
+// which is the only thing the snap can witness. Together the two say the rate
+// on screen is the manager's own method run one month further.
 console.log("\n── the IRR Buoyant's fact sheet prints ──");
 {
   const AUDIT = path.join(process.cwd(), "public", "audit");
-  const printedIrr = (accountId: string): number | null => {
-    const acct = accountId.split("-").at(-1);
-    const p = path.join(AUDIT, `buoyant-capital-${acct}-2026-07-31-fact-sheet`, "pages.json");
+  const pagesOf = (dir: string): string | null => {
+    const p = path.join(AUDIT, dir, "pages.json");
     if (!fs.existsSync(p)) return null;
-    const text = (JSON.parse(fs.readFileSync(p, "utf8")).pages as { text: string }[]).map((x) => x.text).join("\n");
-    const m = /Performance\(IRR\)[\s\S]*?Portfolio\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s+(-?[\d.]+)%/.exec(text);
-    return m ? Number(m[4]) : null;
+    return (JSON.parse(fs.readFileSync(p, "utf8")).pages as { text: string }[]).map((x) => x.text).join("\n");
+  };
+  const num = (x: string) => Number(x.replace(/,/g, ""));
+  const iso = (d: string) => d.split("/").reverse().join("-");
+  /** The fact sheet's IRR "Since" column, and the value and date it is struck on. */
+  const factSheet = (accountId: string): { irr: number; value: number; date: string } | null => {
+    const text = pagesOf(`buoyant-capital-${accountId.split("-").at(-1)}-2026-07-31-fact-sheet`);
+    if (!text) return null;
+    const irr = /Performance\(IRR\)[\s\S]*?Portfolio\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s+(-?[\d.]+)%/.exec(text);
+    const val = /Portfolio Value\((\d\d\/\d\d\/\d{4})\)\s+([\d,]+)/.exec(text);
+    return irr && val ? { irr: Number(irr[4]), value: num(val[2]), date: iso(val[1]) } : null;
+  };
+  /** The 31 Aug snap's printed total value and its "As of" date. */
+  const snap = (accountId: string): { value: number; date: string } | null => {
+    const text = pagesOf(`buoyant-capital-${accountId.split("-").at(-1)}-2026-08-31-portfolio-snap`);
+    if (!text) return null;
+    const asOf = /Account Summary : As of (\d\d\/\d\d\/\d{4})/.exec(text);
+    const total = /\nTotal\s+[\d,.]+\s+[\d,.]+\s+([\d,]+\.\d\d)/.exec(text);
+    return asOf && total ? { value: num(total[1]), date: iso(asOf[1]) } : null;
+  };
+  /** The book with ONE account as it stood on `date`, valued at `value`. */
+  const bookOn = (accountId: string, date: string, value: number) => {
+    const valued = BOOK_POSITIONS.filter((p) => p.accountId === accountId && p.marketValue !== 0);
+    if (valued.length !== 1) return null;
+    const positions = [
+      ...BOOK_POSITIONS.filter((p) => p.accountId !== accountId),
+      { ...valued[0], marketValue: value },
+    ];
+    return {
+      dc: buildDatedCapital({
+        ...book,
+        accounts: BOOK_ACCOUNTS.map((a) => (a.accountId === accountId ? { ...a, asOf: date } : a)),
+        positions,
+        moves: BOOK_CAPITAL_MOVES.filter((m) => m.accountId !== accountId || m.date <= date),
+      }),
+      rows: positions.filter((p) => p.accountId === accountId),
+      universe: currentHoldings(positions),
+    };
   };
   for (const id of [AJAY, ANKITA]) {
-    const printed = printedIrr(id);
-    ok(`${id}: the fact sheet prints an IRR to check against`, printed !== null);
+    const printed = factSheet(id);
+    ok(`${id}: the 31 Jul fact sheet prints an IRR, and the value and date it is struck on`, printed !== null, JSON.stringify(printed));
+    const then = printed ? bookOn(id, printed.date, printed.value) : null;
+    ok(`${id}: the folio is one valued line, so the book on that date can be stated`, then !== null);
+    const capThen = then ? then.dc.behind(then.rows, then.universe) : null;
+    ok(`${id}: on that date the folio is a whole account on a complete dated record, closing on the fact sheet's own date`,
+      !!capThen?.dated && capThen.to === printed?.date, JSON.stringify(capThen));
+    ok(`${id}: the XIRR over its dated deposits reproduces the IRR the manager prints`,
+      !!capThen?.dated && printed !== null && capThen.annualPct != null
+        && Math.abs(Math.round(capThen.annualPct * 100) / 100 - printed.irr) < 0.005,
+      `solved ${capThen?.dated ? capThen.annualPct?.toFixed(4) : "nothing"} against printed ${printed?.irr}`);
+
+    // The book's own close: the 31 Aug snap's printed value, on its own date.
+    const now = snap(id);
+    const g = dc.of(id);
+    ok(`${id}: the book closes the folio on the snap's own printed value and date`,
+      !!now && !!g && g.valueAsOf === now.date && g.value != null && Math.abs(g.value - now.value) < 0.01,
+      `book ${g?.value} on ${g?.valueAsOf} · snap ${now?.value} on ${now?.date}`);
     const cap = dc.behind(own(id), universe);
     ok(`${id}: the folio is a whole account on a complete dated record`, !!cap?.dated, JSON.stringify(cap));
     if (!cap?.dated) continue;
     ok(`${id}: its payments span more than a year, so the rate is annual`, cap.days >= 365, `${cap.days} days`);
-    ok(`${id}: the XIRR over its dated deposits reproduces the IRR the manager prints`,
-      printed !== null && cap.annualPct != null && Math.abs(Math.round(cap.annualPct * 100) / 100 - printed) < 0.005,
-      `solved ${cap.annualPct?.toFixed(4)} against printed ${printed}`);
+    // LOAD-BEARING: the month between the two closes moved the rate, so the
+    // witness above is a different measurement from the figure on screen and
+    // the snap's close is doing work — a book still closing on 31 Jul would
+    // print the fact sheet's IRR and pass the check above for the wrong reason.
+    ok(`${id}: the rate on screen is struck a month later than the one the manager printed`,
+      cap.to === now?.date && capThen?.dated === true && capThen.annualPct != null && cap.annualPct != null
+        && Math.abs(cap.annualPct - capThen.annualPct) >= 0.01,
+      `${capThen?.dated ? capThen.annualPct?.toFixed(2) : "—"}% to ${capThen?.dated ? capThen.to : "—"} · ${cap.annualPct?.toFixed(2)}% to ${cap.to}`);
     // …and it reaches the cell: the measure the Monitor's XIRR column resolves.
-    const shown = measuredReturn({ returnPct: 10, heldSince: null, assetClass: "AIF", capital: cap }, "xirr", "2026-07-31");
+    const shown = measuredReturn({ returnPct: 10, heldSince: null, assetClass: "AIF", capital: cap }, "xirr", cap.to);
     ok(`${id}: the XIRR column prints that rate, tagged XIRR`, shown.shown && shown.tag === "XIRR"
       && Math.abs(shown.pct - (cap.annualPct as number)) < 1e-9, JSON.stringify(shown));
   }
@@ -210,13 +276,27 @@ console.log("\n── the Transactions card and the Monitor strike one rate ─�
 // ── 4. THE WHOLE-ACCOUNT RULE ────────────────────────────────────────────────
 console.log("\n── a row carries an account's record only where it holds all of it ──");
 {
-  // Buoyant prints a ₹0 Cash line beside its units. It carries none of the
-  // account's money, so the units alone are the whole account.
+  // A ₹0 line with no cost carries none of an account's money, so the lines
+  // beside it are the whole account. Buoyant was this rule's subject: its 31 Jul
+  // appraisals printed a ₹0 Cash line beside each folio's units. Its 31 Aug
+  // snaps, which the book reads now, print none — so the shape is CONSTRUCTED
+  // on Ajay's real folio (the rule's own case), and held on the book wherever
+  // an account still carries such a line beside a valued one.
   const units = own(AJAY).filter((p) => p.marketValue !== 0);
-  const zero = own(AJAY).filter((p) => p.marketValue === 0 && !(typeof p.costBasis === "number" && p.costBasis !== 0));
-  ok("the folio carries a ₹0 line beside its units", zero.length > 0 && units.length > 0,
-    zero.map((p) => p.security).join(", "));
-  ok("…and the units alone are still the whole account", !!dc.behind(units, universe)?.dated);
+  const sleeve = { ...units[0], securityKey: "cash", security: "Cash", assetClass: "Cash",
+    marketValue: 0, costBasis: null, quantity: 0 } as Position;
+  ok("a costless ₹0 line beside a folio's units leaves the units the whole account",
+    units.length > 0 && !!dc.behind(units, [...universe, sleeve])?.dated);
+  const costless0 = (p: Position) => p.marketValue === 0 && !(typeof p.costBasis === "number" && p.costBasis !== 0);
+  const onBook = [...new Set(universe.map((p) => p.accountId))].filter((id) =>
+    own(id).some(costless0) && own(id).some((p) => p.marketValue !== 0));
+  if (onBook.length) {
+    const split = onBook.filter((id) => dc.behind(own(id).filter((p) => p.marketValue !== 0), universe) === null);
+    ok("…and on this book, every account carrying one is whole on its valued lines", split.length === 0,
+      `${onBook.join(", ")}${split.length ? ` — split: ${split.join(", ")}` : ""}`);
+  } else {
+    console.log("NOT CHECKED no account on this book carries a costless ₹0 line beside a valued one — the constructed case holds the rule");
+  }
   // A ₹0 line WITH a cost is money (a write-off) and does split.
   const written: Position = { ...units[0], securityKey: "written-off", security: "Written off", marketValue: 0, costBasis: 5_00_000 };
   ok("a ₹0 line that carries a cost does split the account",

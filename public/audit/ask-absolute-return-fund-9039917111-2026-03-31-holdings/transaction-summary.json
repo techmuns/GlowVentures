@@ -1,0 +1,53 @@
+{
+ "name": "transaction-summary",
+ "rows": [
+  [
+   "date",
+   "series",
+   "isin",
+   "description",
+   "units",
+   "amount"
+  ],
+  [
+   "2025-01-31",
+   "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+   "INF0V6R22JL5",
+   "Capital Contribution",
+   "1,99,990.001",
+   199990000.5
+  ],
+  [
+   "2025-01-31",
+   "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+   "INF0V6R22JL5",
+   "Stamp Duty",
+   "-",
+   -9999.5
+  ],
+  [
+   "2026-03-31",
+   "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+   "INF0V6R22JL5",
+   "Return of Capital Contribution",
+   "-",
+   -213262637.4
+  ],
+  [
+   "2026-03-31",
+   "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+   "INF0V6R22JL5",
+   "Tax on Return of Capital Contribution Tax on Redemption",
+   "-",
+   -5223498.84
+  ],
+  [
+   "2026-03-31",
+   "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
+   "INF0V6R22JL5",
+   "Net Return on Capital Contribution",
+   "1,99,990.001",
+   -208039138.56
+  ]
+ ]
+}

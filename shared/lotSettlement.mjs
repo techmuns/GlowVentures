@@ -24,11 +24,45 @@
 // it to. A candidate that is not unique joins nothing. Nothing is inferred from
 // a name, and the archive keeps both spellings exactly as printed.
 //
+// ── AND A THIRD BASIS, BECAUSE A CAPITAL GAIN IS NOT STRUCK ON THE SETTLEMENT ──
+//
+// ASK's and Marathon's capital gain statements (the September 2026 delivery)
+// strike each sale at the CONSIDERATION LESS THE BROKERAGE — what s.48 of the
+// Income-tax Act lets a gain be computed on, before STT, which it does not.
+// Their transaction statements print the settlement, which is after STT as well.
+// So on ASK's Adani Ports sale of 27 May 2024 (account 10032723) the two lots
+// print ₹6,91,329.71 — exactly the tape's gross ₹6,92,420.09 less its brokerage
+// ₹1,090.38 — and the tape settles ₹6,90,637.29: the ₹692.42 between them is
+// that day's STT of ₹692.41 and a paisa of the statement's own rounding, and
+// pass 2 rightly refuses it. Those same statements also CLIP a name the tape
+// spells out (`CHOLAMANDALAM INVESTMENT AND` against the tape's `… AND
+// FINANCE`), so identity cannot join them either: 36 lot groups, every one a
+// real sale, reached no sale at all.
+//
+// Pass 3 therefore sets what passes 1 and 2 leave against the tape's gross less
+// its brokerage, where the row prints both. The bound is the printing precision
+// again — half a paisa on each figure printed to the paisa — PLUS `quantity ×
+// 1e-4`, half the last decimal on each of the two four-decimal per-unit figures
+// (price and brokerage rate) the consideration is derived from: the same bound
+// section (a3) of the reconciliation holds a derived settlement to. Measured on
+// the delivery, pass 3 joins all 36, every one to a single candidate from both
+// ends; the closest call sits 4 paise from its sale against a bound of 9.03, and
+// the largest gap is 5 paise against 19.60. A join must be unique BOTH WAYS —
+// one group for the sale and one sale for the group — because a later sale must
+// not take a group an earlier one could also have had.
+//
+// What none of the three passes can settle is a lot that is not a SALE: ASK
+// prints five lots with sale proceeds of ₹0 — the fractions a demerger or a
+// bonus left (Aarti Pharmalabs' 0.75 share in both accounts, each a ₹279.47
+// loss; three Astral Poly Technik fractions at nil cost and nil proceeds).
+// There is no tape row for them to meet, so they stay unsettled and the caller
+// names them; they are never folded into a sale.
+//
 // Where a lot's key settles a sale under a DIFFERENT key, that is recorded as an
 // ALIAS for the account — `accountNo|lotKey → saleKey` — so a holding keyed the
 // way the sale is keyed can find its lots. An alias is kept only where every
-// amount-matched day for that lot key agrees on one sale key; two answers leave
-// it unaliased and are reported as a conflict.
+// day pass 2 or pass 3 matched for that lot key agrees on one sale key; two
+// answers leave it unaliased and are reported as a conflict.
 
 /** One (account, security, date) — a day's sale, or the lots that settle it. */
 export const daySaleKey = (accountNo, securityKey, date) => `${accountNo}|${securityKey}@${date}`;
@@ -47,6 +81,16 @@ const paise = (x) => Math.round(x * 100);
  */
 export const withinPrintedPrecision = (lotSum, lots, sale, rows) =>
   2 * Math.abs(paise(lotSum) - paise(sale)) <= lots + rows;
+
+/**
+ * The bound for a sale amount DERIVED from two four-decimal per-unit figures:
+ * each lot prints its own amount (a half-paisa each), each tape row carries two
+ * rounded figures (gross and brokerage, a half-paisa each), and the two rates
+ * the consideration rests on are printed to four decimals — half the last
+ * decimal on each is `quantity × 1e-4` rupees, `quantity × 0.02` half-paise.
+ */
+export const withinDerivedPrecision = (lotSum, lots, sale, rows, quantity) =>
+  2 * Math.abs(paise(lotSum) - paise(sale)) <= lots + 2 * rows + quantity * 0.02;
 
 /**
  * Lots → one group per (account, security, sale date). `lots` must already be
@@ -75,16 +119,26 @@ export function lotGroupsOf(lots) {
 /**
  * Sell rows → one day-sale per (account, security, date), its amounts summed —
  * a day's sale printed across two rows is still one sale. Each row is
- * `{ accountNo, securityKey, date, amount }`; an amount the statement does not
- * report makes the day's sum `null` (it can then only be settled by identity).
+ * `{ accountNo, securityKey, date, amount, consideration?, quantity? }`; an
+ * amount the statement does not report makes the day's sum `null` (it can then
+ * only be settled by identity). `consideration` is the row's gross less its
+ * brokerage, where it prints both — what pass 3 sets a capital gain against —
+ * and `quantity` the units sold; either missing on one row makes it `null` for
+ * the day, so pass 3 never strikes a bound over part of a sale.
  */
 export function daySalesOf(sells) {
   const m = new Map();
+  const add = (sum, v) => (sum === null || typeof v !== "number" || !Number.isFinite(v) ? null : sum + v);
   for (const t of sells) {
     if (!t.date) continue;
     const key = daySaleKey(t.accountNo, t.securityKey, t.date);
-    const e = m.get(key) ?? { accountNo: t.accountNo, securityKey: t.securityKey, date: t.date, amount: 0, rows: 0 };
-    e.amount = e.amount === null || typeof t.amount !== "number" ? null : e.amount + t.amount;
+    const e = m.get(key) ?? {
+      accountNo: t.accountNo, securityKey: t.securityKey, date: t.date,
+      amount: 0, consideration: 0, quantity: 0, rows: 0,
+    };
+    e.amount = add(e.amount, t.amount);
+    e.consideration = add(e.consideration, t.consideration);
+    e.quantity = add(e.quantity, t.quantity);
     e.rows += 1;
     m.set(key, e);
   }
@@ -94,7 +148,7 @@ export function daySalesOf(sells) {
 /**
  * Settle every day-sale against the lot groups.
  *
- *   bySale     daySaleKey of the SALE → { realised, lots, by: "key" | "amount", lotKey, lotSecurityKey }
+ *   bySale     daySaleKey of the SALE → { realised, lots, by: "key" | "amount" | "consideration", lotKey, lotSecurityKey }
  *   aliases    `${accountNo}|${lotSecurityKey}` → the sale's securityKey, where the
  *              two differ and every amount-matched day for that lot key agrees
  *   conflicts  lot keys whose amount-matched days name more than one sale key
@@ -124,10 +178,32 @@ export function settleSales(groups, sales) {
     used.add(g.key);
     bySale.set(k, { realised: g.realised, lots: g.lots, by: "amount", lotKey: g.key, lotSecurityKey: g.securityKey });
   }
-  // The aliases the amount pass established, kept only where they agree.
+  // Pass 3 — account, date and the consideration less brokerage, for what the
+  // first two passes left. Every candidate pair is found first and only a pair
+  // unique from BOTH ends joins, so the order the sales arrive in decides nothing.
+  const pairs = [];
+  for (const s of sales) {
+    const k = daySaleKey(s.accountNo, s.securityKey, s.date);
+    if (bySale.has(k) || typeof s.consideration !== "number" || typeof s.quantity !== "number") continue;
+    for (const g of all) {
+      if (used.has(g.key) || g.accountNo !== s.accountNo || g.date !== s.date || g.saleAmount === null) continue;
+      if (withinDerivedPrecision(g.saleAmount, g.lots, s.consideration, s.rows, s.quantity)) pairs.push({ k, g });
+    }
+  }
+  const perSale = new Map(), perGroup = new Map();
+  for (const p of pairs) {
+    perSale.set(p.k, (perSale.get(p.k) ?? 0) + 1);
+    perGroup.set(p.g.key, (perGroup.get(p.g.key) ?? 0) + 1);
+  }
+  for (const { k, g } of pairs) {
+    if (perSale.get(k) !== 1 || perGroup.get(g.key) !== 1) continue;
+    used.add(g.key);
+    bySale.set(k, { realised: g.realised, lots: g.lots, by: "consideration", lotKey: g.key, lotSecurityKey: g.securityKey });
+  }
+  // The aliases the amount passes established, kept only where they agree.
   const seen = new Map();
   for (const [saleKey, r] of bySale) {
-    if (r.by !== "amount") continue;
+    if (r.by === "key") continue;
     const accountNo = saleKey.slice(0, saleKey.indexOf("|"));
     const saleSecurity = saleKey.slice(saleKey.indexOf("|") + 1, saleKey.lastIndexOf("@"));
     if (saleSecurity === r.lotSecurityKey) continue;

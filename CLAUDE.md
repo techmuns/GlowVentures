@@ -539,17 +539,18 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** SEVEN DELIVERIES, and every one stays:
-the original set at the top of `source/`, the client's `august-2026/` folder, and
-`august-2026-b/`, `august-2026-c/`, `august-2026-d/`, `august-2026-e/` and
-`august-2026-f/` — statements that arrived after it. **ALL SEVEN have now been
-through `npm run extract`**, `august-2026-f/` included: its two outlined-text
+**What is actually in `source/` today.** EIGHT DELIVERIES, and every one stays:
+the original set at the top of `source/`, the client's `august-2026/` folder,
+`august-2026-b/` to `august-2026-f/` — statements that arrived after it — and
+`september-2026/`, the client's `Jaisinghani_Reports.zip` (Stage 10da). **ALL EIGHT
+have been through `npm run extract`**: `august-2026-f/`'s two outlined-text
 statements are read by rendering their glyphs (see its own section) and its third
-file is a register held out of the book by decision. 35 provider names in the
-archive, of which **31 are issuing institutions** — HDFC Bank's NSDL depository is
-the new one — **51 accounts** in the book, six holders and two family trusts, 53
-delivered files expanding to **318 leaf files** — of which **264 documents** are
-extracted, 199 read fully, 62 partially and **exactly ONE not at all**:
+file is a register held out of the book by decision. 38 provider names in the
+archive — ASK's PMS, the ASK Absolute Return Fund and Marathon are the newest —
+**58 accounts** in the book, seven holders (three of them family trusts, Stage 10db), and **361 leaf
+files** — of which **307 documents** are in the archive (18 of them spreadsheet
+exports read as WITNESSES of the PDF beside each), 238 read fully, 66 partially and
+**exactly ONE not at all**:
 
 - Bharat's HDFC NSDL holding statement from `august-2026-e/`, which is a SCAN —
   four JPEG pages of photographed paper, so there is nothing any reader or any
@@ -568,10 +569,11 @@ prior one nobody could answer without reading a directory listing by hand — *i
 there a file in `source/` whose data never reached anything?* `scripts/source-coverage.mjs`
 accounts for every leaf file in exactly one class and **exits non-zero if any is
 `unread`**, so a delivery that lands a file nobody reads cannot pass silently.
-Measured today: 252 read, 4 read via a byte-identical twin, 2 held out by
+Measured on the September 2026 delivery (Stage 10da): 277 read, 4 read via a
+byte-identical twin, 18 read as witnesses of the PDF beside them, 2 held out by
 decision, 58 macOS `__MACOSX/._*` resource forks (checked per file for a `%PDF`
 header, never assumed from the path), 2 password notes excluded by policy, and
-**0 unread**. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
+**0 unread** — 361 leaf files. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
 paragraph come from it and from `docs/BOOK-REPORT.md`, and should be re-read from
 them rather than edited to taste.
 
@@ -592,50 +594,57 @@ every ZIP already at the top level.
 | --- | --- | --- | --- | ---: |
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
 | ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | ₹63.78 Cr\*\* |
-| Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-07-31 | ₹49.30 Cr |
-| Carnelian Asset Management | 3517383 | Ajay Jaisinghani | 2026-08-10 | ₹39.53 Cr |
-| Motilal Oswal demat | 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | ₹38.38 Cr |
-| Motilal Oswal demat | 1201090012838320 | Bharat Jaisinghani | 2026-07-31 | ₹32.83 Cr |
+| Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-08-31 | ₹50.33 Cr |
+| Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-08-10 | ₹39.53 Cr |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | ₹31.00 Cr |
-| Motilal Oswal demat | 1201090012838335 | Aarti Jaisinghani | 2026-07-31 | ₹30.95 Cr |
 | Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹29.42 Cr |
 | Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹29.35 Cr |
 | Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹28.46 Cr |
-| Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-07-31 | ₹27.69 Cr |
+| Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-08-31 | ₹28.27 Cr |
 | Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-07-31 | ₹21.83 Cr |
 | Motilal Oswal Active Momentum Fund | 904168868444 | Ankita Jaisinghani | 2026-08-06 | ₹21.42 Cr |
-| V.E.C Assago Capital | 128005 | Ajay Jaisinghani | 2026-08-13 | ₹20.29 Cr |
+| V.E.C Assago Capital Management LLP | 128005 | Ajay Jaisinghani | 2026-08-13 | ₹20.29 Cr |
 | Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹19.57 Cr |
-| Goldstandard Wealth | 100023 | Ajay Jaisinghani | 2026-08-11 | ₹18.80 Cr |
-| SVAN Investment Managers | 8710067 | Ajay Jaisinghani | 2026-07-31 | ₹16.45 Cr |
+| Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | 2026-08-11 | ₹18.80 Cr |
+| SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-07-31 | ₹16.45 Cr |
 | Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | ₹16.31 Cr |
-| Green Lantern Capital | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
+| Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
 | Motilal Oswal Delphi Equity Fund | 9049241536 | Ajay Jaisinghani | 2026-06-30 | ₹11.13 Cr |
 | Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-07-31 | ₹10.99 Cr |
-| SVAN Investment Managers | 8710090 | Bharat Jaisinghani | 2026-07-31 | ₹10.70 Cr |
-| Goldstandard Wealth | 100022 | Ankita Jaisinghani | 2026-08-11 | ₹8.02 Cr |
-| V.E.C Assago Capital | 128004 | Ankita Jaisinghani | 2026-08-13 | ₹6.50 Cr |
-| Green Lantern Capital | 510854 | Ankita Jaisinghani | 2026-07-27 | ₹5.80 Cr |
+| SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-07-31 | ₹10.70 Cr |
+| Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | 2026-08-11 | ₹8.02 Cr |
+| V.E.C Assago Capital Management LLP | 128004 | Ankita Jaisinghani | 2026-08-13 | ₹6.50 Cr |
+| Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | 2026-07-27 | ₹5.80 Cr |
 | Neo Infra Income Opportunities Fund | 9039920536 | Ajay Jaisinghani | 2026-06-30 | ₹5.55 Cr |
 | Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | ₹1.88 Cr |
 | Transition Venture Capital | TVC262 | Bharat Jaisinghani Family Trust 2 | 2026-03-31 | ₹1.71 Cr\* |
 | Transition Venture Capital | TVC263 | Bharat Jaisinghani Family Trust 3 | 2026-03-31 | ₹1.71 Cr\* |
 | 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-07-31 | ₹1.47 Cr\* |
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-06-30 | ₹1.46 Cr\* |
-| Molecule Ventures | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
+| Molecule Ventures LLP | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
-| 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 |
-| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-08-06 | ₹0 |
-| 360 ONE Alternates | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
-| 360 ONE Alternates | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
-| HDFC Bank (NSDL demat) | 67786137 | Bharat Jaisinghani Family Trust 3 | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
-| HDFC Bank (NSDL demat) | 67786547 | Bharat Jaisinghani Family Trust 2 | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
+| ASK Investment Managers Limited | 10034025 | Ajay Jaisinghani | 2026-09-08 | ₹0.34 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
+| ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | ₹0.01 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
+| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-08-06 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
+| 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — every class redeemed to nil) |
+| ASK Absolute Return Fund | 9039917111 | Ajay Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
+| ASK Absolute Return Fund | 9039917144 | Ankita Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
+| 360 ONE Alternates Asset Management | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
+| 360 ONE Alternates Asset Management | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
+| Motilal Oswal Financial Services (demat) | 1201090012539150 | Ajay Jaisinghani | 2026-07-31 | — (**transaction statement only**, no holdings) |
+| Motilal Oswal Financial Services (demat) | 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
+| Motilal Oswal Financial Services (demat) | 1201090012838320 | Bharat Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
+| Motilal Oswal Financial Services (demat) | 1201090012838335 | Aarti Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
+| Motilal Oswal Financial Services (demat) | 1201090032387399 | Bharat Jaisinghani Family Trust | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
+| Motilal Oswal Financial Services (demat) | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (**quantity only** — the rate printed is face value) |
+| Motilal Oswal Financial Services (demat) | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | — (no NAV published) |
 | India SME Investments | 175964 | Bharat Jaisinghani | 2026-06-30 | — (no NAV published) |
 | India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | — (no NAV published) |
-| Motilal Oswal demat | 1201090012539150 | Ajay Jaisinghani | 2026-07-31 | — (**transaction statement only**, no holdings) |
-| Motilal Oswal demat | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (**quantity only** — the rate printed is face value) |
-| Motilal Oswal demat | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
+| Marathon Trends Advisory Pvt Ltd | 5110758 | Ankita Jaisinghani | 2026-09-09 | — (**no holdings statement** in the drop — its dated statements only) |
+| Marathon Trends Advisory Pvt Ltd | 5110837 | Ajay Jaisinghani | 2026-09-09 | — (**no holdings statement** in the drop — its dated statements only) |
+| HDFC Bank (NSDL demat) | 67786137 | Bharat Jaisinghani Family Trust 3 | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
+| HDFC Bank (NSDL demat) | 67786547 | Bharat Jaisinghani Family Trust 2 | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
 | Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
 | Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-07-31 | — (no NAV published) |
 | Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-07-31 | — (no NAV published) |
@@ -650,7 +659,7 @@ cells and gets a different answer has found one, and no prose rescues it. The
 column is regenerated from `BOOK_POSITIONS` now, and it is regenerated EVERY
 TIME rather than patched: hand-merging rows to keep it short is what let eight
 accounts go unlisted, and a row added by hand is a figure copied into prose. It
-is one row per account, all 51 of them, sorted by value — and the words in the
+is one row per account, all 58 of them, sorted by value — and the words in the
 right-hand cell are `Account.noPositionsReason`, routed rather than written, so
 an account that changes WHY it is empty changes this table on the next run.
 
@@ -666,8 +675,11 @@ question and named the reversal; the family answered it, and the answer is the
 promoter row is out of this column and out of every total below it. See **The
 ring-fence** section.
 
-**Consolidated ₹713.56 Cr**: listed ₹699.76 Cr, private ₹13.79 Cr, and
-₹98,742 (Blue Ashva) that nothing places on either side. The split reads the
+**Consolidated ₹613.01 Cr**: listed ₹599.21 Cr, private ₹13.79 Cr, and
+₹98,742 (Blue Ashva) that nothing places on either side. *(It was ₹713.56 Cr until
+Stage 10cz found the three Motilal Oswal demats' Rate column to be the last
+movement's price rather than a mark, ₹611.40 Cr after it, and ₹613.01 Cr since
+Stage 10da read Buoyant's 31 Aug snaps — both folios' units at the 31 Aug NAV.)* The split reads the
 family's own placing of a fund first and the SEBI category the statements print
 second — see `shared/aifCategory.mjs`, Stage 10bp and Stage 10bw. *(It was
 listed ₹655.82 Cr · private ₹37.88 Cr · not placed ₹16.69 Cr on the category
@@ -1090,6 +1102,12 @@ guess, by the mechanism the HOPE INDIA TRUST folios already use. Returning
 `owner: null` was not enough: `extract.mjs` falls back to the classifier's name,
 which is the same name the PAN contradicts, so `excludedFromBook` carries it.
 
+*(Attributed at Stage 10db. The holder lines print the trustees of the
+unnumbered "Bharat Jaisinghani Family Trust", which the family's register and
+review name. Since Stage 10cz its rates are last-movement prices, so the
+statement book does not move; the live book values its three funds at AMFI's
+NAV, about ₹8.72 Cr.)*
+
 | Account | Owner | As of | In the book |
 | --- | --- | --- | ---: |
 | 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | ₹38.38 Cr |
@@ -1171,6 +1189,10 @@ all, which agrees with an account holding nothing.
 TRUST` carries no numeral, and this book has Trust 2 and Trust 3 as separate
 taxpayers with separate PANs. Whoever writes that reader must resolve it on the
 PAN the statement prints, never on the name.
+
+*(Resolved at Stage 10db. The unnumbered trust is a third owner of its own,
+attributed by a join on the client ID that is checked against the page on every
+read, never by a name. No statement prints its PAN.)*
 
 **AND THE CONSOLIDATED REVIEW WORKBOOK IS NOT A SOURCE — BY DECISION.** The
 adviser's 25-tab aggregation of the whole book is matched on a column header no
@@ -10982,7 +11004,8 @@ inventions agree — and it failed four ways on the first run:
   so ₹8.23 Cr is excluded with the reason and is in no total. It issues a
   transaction statement like every other demat, and its window was keyed on its
   own accountId and emitted. `shareMovementsFrom` takes the REGISTRY now and
-  skips any account not in it, saying how many it skipped.
+  skips any account not in it, saying how many it skipped. *(The account is
+  attributed at Stage 10db, so its window is emitted under its owner now.)*
 - **AND FIVE FIELDS WERE CARRIED INTO NO CALLER.** This repo's most-repeated
   defect, arriving in a component written the same hour as the comment warning
   about it: the page rendered a GENERIC "no split is published" sentence where
@@ -25193,6 +25216,242 @@ that left is the Polycab pledge line: main's refresh brought back older quarters
 with no pledge figure, so the dashed-pledge check has a subject again, and it
 passes.
 
+### Stage 10da — THE SEPTEMBER 2026 DELIVERY: ASK, MARATHON, BUOYANT'S 31 AUG SNAPS, AND EVERY SPREADSHEET A WITNESS
+
+*"Every single file in this zip folder needs to be integrated in the dashboard.
+Make sure there are no mistakes while integrating this data and make sure every
+single file is integrated into the dashboard and nothing is missed."* — the
+client's `Jaisinghani_Reports.zip`, committed as `source/september-2026/`.
+
+**EVERY FILE IS ACCOUNTED FOR, AND `npm run coverage:source` SAYS SO.** 361 leaf
+files across all eight deliveries: 277 read, 4 read through a byte-identical twin,
+**18 read as witnesses**, 2 held out by decision, 58 macOS resource forks, 2
+password notes, and **0 unread**. The forks are now counted from each ZIP's own
+directory rather than from what is on disk, because the unzipper skips them and
+Stage 10bb found that the count then depended on who unzipped.
+
+#### What the delivery added
+
+| | Accounts | In the book |
+| --- | ---: | --- |
+| ASK Investment Managers — PMS | 10034025 (Ajay), 10032723 (Ankita) | closed mandates; a bank balance of ₹0.34 and ₹0.01 that the ₹1,000 floor drops |
+| ASK Absolute Return Fund | 9039917111 (Ajay), 9039917144 (Ankita) | every series redeemed to nil, a MEASURED ₹0; realised ₹80.39 L and ₹59.09 L |
+| Marathon Trends Advisory — PMS | 5110837 (Ajay), 5110758 (Ankita) | no holdings statement — dated statements only, so no value |
+| Buoyant 31 Aug Portfolio Snap Reports | 103473, 103472 | both folios at the 31 Aug NAV: ₹50.33 Cr and ₹28.27 Cr |
+
+The book is **57 accounts** and **₹613.01 Cr**: ₹611.40 Cr after Stage 10cz, plus
+Buoyant's move from 31 Jul to 31 Aug. ASK and Marathon add no value, because they
+hold nothing today or send no holdings statement.
+
+#### The readers
+
+- **ASK and Marathon PMS** run on the shared reporting system, read by
+  `pmsStatements.mjs`. Their profit-and-loss account is a new report type, and
+  `profitLoss.test.mjs` covers it.
+- **The ASK Absolute Return Fund statement** (`altFundStatements.mjs`) is
+  published only where its Account Summary ties to its own Total row, and its
+  Transaction Summary walks each series' units to the balance the summary prints.
+  Gross less tax must be the printed net, and a redemption must be units × NAV.
+  Any failure withholds the dated record and names why.
+- **ASK's account statement names the day each series was issued** (`seriesIssued`).
+  A class whose first allotment falls on that day reaches inception, which is how
+  both folios publish a realised gain.
+- **Buoyant's Portfolio Snap Report** is read only where page 3 restates page 1:
+  the units × NAV, both Total rows, each class's cost and value, and the
+  Investment Summary adding to the Current Value on the statement's own date.
+  Precedence takes the newest of the appraisal and the snap. Its fund holdings
+  and TWRR are archived only where they read whole, and a table withheld now
+  says so (`snap-section-not-read`).
+- **Every XLSX and CSV beside a PDF is a WITNESS, not a document.** Its rows are
+  archived (`twinOf`) and every figure is checked against the PDF: **36,208 of
+  them**. `build-book` sets witnesses aside, which removed 18 false "superseded"
+  lines from `docs/BOOK-REPORT.md`. `sheet.mjs` strips a UTF-8 byte-order mark as
+  bytes before decoding, so the Latin-1 fallback can never keep it.
+
+#### Three corrections the delivery forced
+
+- **Lots met no sale.** ASK's and Marathon's capital-gain statements strike a sale
+  at the consideration less brokerage, before STT, and clip names the tape spells
+  out, so 36 lot groups met no sale. Pass 3 in `shared/lotSettlement.mjs` joins
+  them on that figure, within the precision of the four-decimal rates, and only
+  where the match is unique from both ends. The five lots that stay unsettled
+  sold for ₹0 (fractions a demerger or bonus left), −₹558.94 together. The
+  Transactions footer names them beside the statements' own total.
+- **A glued ISIN went unsplit.** The `IN9` form is a partly paid-up share. It is
+  now split off the name, so Bharti Airtel PP's ISIN stops being glued onto 95
+  lots' names.
+- **The tax estimate taxed every year since inception.** ASK's and Marathon's
+  windows run from inception, so the tile read ₹2.00 Cr. The estimate now taxes
+  the financial year the newest window closes in, **₹24.19 L**. Earlier years'
+  gains are named in the hover and never taxed.
+
+#### Checks moved by the delivery
+
+- `holdings-book` no longer counts ASK's two closed mandates, now that the closed
+  test and the floor are applied.
+- The value bridge strikes "since inception" on or before, as `build-book` does.
+  ASK's profit-and-loss account runs from 1 Apr 2019, before either mandate opened.
+- The early fiscal-year window abstains, with the evidence, where no year ends
+  before the tape begins. ASK's tapes run from 26 Jul 2019.
+- The suites built on Buoyant's old empty cash line are re-anchored on the 31 Aug
+  snaps, each with a constructed case that still fails on the old defect.
+
+#### Tests, and what the bug passes proved
+
+| Suite | Checks | Bugs put back | Caught |
+| --- | ---: | ---: | ---: |
+| `askArf.test.mjs` | 87 | 20 reader bugs | 20 |
+| `buoyantSnap.test.mjs` | 123 | 18 reader bugs | 18 |
+| `sheetWitness.test.mjs` | 291 | 13 witness bugs + 2 BOM bugs | 15 |
+
+**THREE OF THEM FIRST CAME BACK CLEAN OR CRASHED, AND EACH FOUND A GAP IN THE
+SUITE.**
+- Two snap cases made the reader throw rather than refuse. A throw ended the suite
+  with no failing line. `read()` now catches the throw and the claim fails, with
+  the error's own message and never the statement's text.
+- One case let a snap that does not tie go on to the section check. It came back
+  clean until a test held a refusal to that one warning and no other.
+- The BOM case came back clean because JavaScript's `\s` trims U+FEFF. The
+  decoder had hidden it.
+
+#### Gaps in the delivery, for the family
+
+- **No ASK Absolute Return Fund statements for Bharat's or Aarti's folios.** The
+  family's register lists the ARF line under Ajay and Ankita, and those two folios
+  are in the book.
+- **The file named "Aarti J" for the ARF prints Ajay as the holder.** It is
+  text-identical to his other 9039917111 statement, so it is read once.
+- **No holdings statement from Marathon** for either account, so neither carries
+  a value.
+- **ASK 10034025's profit-and-loss total is ₹149.81 away from its fact sheet.**
+  It is reported, not explained away.
+
+#### Verification
+
+- `build`, `tsc` and `test:ingest` pass (golden 140 passed, 2 not checked, 0 blocked).
+- `test:family` exits 0, and `check:family` is **126/0**.
+- `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+  byte-identically.
+- `replay:calls`, `replay:flows`, `replay:owners`, `replay:movements`,
+  `replay:dedupe`, `rekey:archive` and `reconcile:review` are each a no-op with
+  `--check`.
+- `check:pages` walked **370 combinations, and 6 have a finding — none of them
+  this change's.** All 11 failing invariants are main's #104 checks on six Morning
+  CIO routes (`cio`, `cio-index-loading`, `cio-cached`, `cio-live`,
+  `cio-live-capture-lag`, `cio-alerts-badge`), the same 11 Stage 10cz measured on
+  main's own build.
+- 32 invariants were not checked, against Stage 10cz's 25. One left the list
+  (`history` no longer abstains) and eight joined it, each read out by name
+  and each evidenced by the book:
+  - **five lost their subject with the Buoyant snap.** A-14 on `cio-allocation`
+    and `monitor`, and MH-15 on `monitor`, `monitor-auto` and `monitor-cagr`.
+    Buoyant's two ₹0 cash lines were this book's only nil costed line, and the
+    31 Aug snaps print none. Both rules are still held on constructed rows:
+    `clubbedFigures.test.ts` for A-14, and `holdingReturn.test.ts` for MH-15,
+    which fails three checks when the nil-line rule is switched off.
+  - **two on `monitor-txn-window-early`**: no fiscal year of the dated capital
+    record ends before the transaction statements begin, because ASK's tapes run
+    from 26 Jul 2019.
+  - **one on `ledger`**: the archive's newest statement is now the tape's own last
+    date, so the two windows cannot be told apart.
+
+### Stage 10db — THE UNNUMBERED TRUST, AND EVERY REVIEW CLOSING SET AGAINST ITS STATEMENTS
+
+*"Also reconciliate the new updated data on the dashboard with this consolidated
+file that the client had shared for reconciliation … Also do run a thorough audit
+so that there are no logical errors or calculation mistakes in the data shown on
+dashboard."* — with the family's consolidated review of 30 June 2026.
+
+The review is still a cross-check and never a source. It settled one account the
+book had excluded, and the reconciler now checks every closing it prints.
+
+#### 1. Demat 1201090032387399 belongs to Bharat Jaisinghani Family Trust
+
+It was excluded because its holder line and its masked PAN named different
+taxpayers (see "ONE ACCOUNT IS EXCLUDED…" above). The family's own documents
+settle it:
+
+- the register records ₹6.77 Cr paid under the unnumbered "Bharat Jaisinghani
+  Family Trust" on 1 Jul 2025, into ICICI Pru Liquid and Invesco India Arbitrage;
+- the review closes those two funds under that trust at 46,654.378 and
+  10,92,470.994 units, this account's own balances;
+- the holder lines print the trust's trustees.
+
+`BENEFICIAL_OWNER_BY_CLIENT_ID` in `motilalDemat.mjs` is the join, keyed on the
+Client ID the page prints and checked on every read. It refuses unless the owner
+is a canonical trust, the page's A/C Type is read and is not an individual's, and
+the masked PAN fits no other taxpayer's PAN. No statement prints the trust's PAN,
+so the registry carries none. `npm run replay:owners` lands it without the
+passwords. `motilalOwner.test.mjs` (104 checks) and
+`scripts/dev/motilal-owner-bug.mjs` (14 cases, each fires) hold it.
+
+What moved:
+
+- **58 accounts and a seventh holder**, a third family trust.
+- **The statement book does not move** (₹613.01 Cr): since Stage 10cz this
+  demat's rates are last-movement prices. The live book values its three funds
+  at AMFI's NAV, about ₹8.72 Cr.
+- **The register's ₹12.52 Cr under the unnumbered trust resolves**
+  (`docs/REGISTER-RECONCILIATION.md`).
+- **Invesco India Arbitrage and the trust's Kotak Arbitrage are cash
+  equivalents.** Kotak's key is now one key for Ajay's demat and the trust's:
+  one ISIN, one scheme.
+- **`build-fund-navs` carries a NAV's previous value by ISIN** when a key moves,
+  so a re-keyed scheme keeps its day change.
+- **Scheme names gain a second tier**: AMFI's daily file, joined on the ISIN, for
+  the four schemes the look-through store never saw — the trust's Invesco and
+  Kotak arbitrage funds, Mirae Asset Large Cap and Nippon India ETF Liquid BeES.
+
+#### 2. Section H — every closing the review prints
+
+`npm run reconcile:review` gains section H. Each of the review's 162 closing rows
+is set against the same holder's own statements, account by account. A
+depository tape gives the balance on the closing's own date; otherwise the
+nearest statement is used and its date printed. A statement of another date is
+carried to the review's date over the units its own dated record moves, and that
+is a tie only where it lands on the review's figure.
+
+| Verdict | Closings |
+| --- | ---: |
+| ties — same date 32, another date 43, carried 3, printed total 7, other custodian 2 | 87 |
+| no statement in the drop | 50 |
+| nil (8), or kept out by decision (6) | 14 |
+| differs — same date 6, later statement 2, earlier statement 1 | 9 |
+| a value-only line on no statement of that date | 2 |
+| **All** | **162** |
+
+What still differs, named and not resolved — the family's to explain:
+
+- **India SME**: Ajay's ICICI NSDL statement holds 67,500 units on 31 March where
+  the review carries 54,000; Ankita's and Bharat's later statements hold 27,000
+  where it carries 18,000.
+- **Kaynes**: nil on 30 June on both Ajay's and Ankita's demats; Ankita's 4,875
+  are credited on 7 July.
+- **Nuvama** 3,695 against 9,500; **Yash High Voltage** 1,38,462 on the 31 March
+  statement against 1,16,462; **Motilal Oswal Arbitrage** 2,80,67,435.434
+  against .368.
+- **Helios**: no statement on 30 June; Ajay's AMC folio first holds it on
+  6 August. **V.E.C** and **Green Lantern** value-only lines meet no statement
+  of that date.
+
+A statement whose type the classifier could not name is printed as "statement
+of", never "unknown of".
+
+#### 3. One review line was wrongly called absent
+
+The review's `Invesco India Arbitrage Fund-Direct(G)` closing for the trust is
+the trust's holding statement of 31 July, to the unit, and its tape from 1 April
+does not move the scheme. It joins `REVIEW_LINE_ISINS` (the dashboard's
+review-gap note) and `H_LINE_ISINS` (the reconciler) on INF205K01KR8, so neither
+says no statement reports it. Ajay's regular-plan line is a different review
+line and is still on no statement.
+
+#### 4. Still open
+
+- The full audit the family asked for.
+- The reconciler's older prose sections (C1, C2, D, E).
+- Main's eleven #104 Morning CIO checks, which fail on main's own build.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -26101,7 +26360,8 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   archive — the two HDFC Bank NSDL statements whose holder line prints the
   TRUSTEES rather than the trust — from each document's own `pages.json`, keyed
   on the DP account number the page prints and cited to the family's own
-  investment register. The FIFTH faithful partial replay after `rekey:archive`,
+  investment register. Since Stage 10db it lands the Motilal client-ID join for
+  demat 1201090032387399 the same way. The FIFTH faithful partial replay after `rekey:archive`,
   `build-lookthrough --reindex`, `replay:calls` and `replay:movements`, on the
   same three rules (see Stage 10bp): it touches the owner, its id and one
   warning and nothing else; its gate is struck on the ARCHIVE — the owner on
@@ -26169,7 +26429,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   `capitalCalls.test.mjs`, which breaks a synthetic drawdown statement one
   figure at a time to prove the dated-call gate is load-bearing: a reader that
   publishes a schedule it could not reconcile is the one thing on that card a
-  reader cannot check by opening the PDF.
+  reader cannot check by opening the PDF. `askArf.test.mjs`,
+  `buoyantSnap.test.mjs` and `sheetWitness.test.mjs` do the same for the ASK
+  Absolute Return Fund statement, Buoyant's Portfolio Snap Report and every
+  spreadsheet export held to its PDF (Stage 10da).
 - `npm run reconcile:review` checks the book against the adviser's consolidated
   review; `npm run reconcile:register` checks it against the family's own
   investment register. **Neither ever writes to the book** — both are independent
