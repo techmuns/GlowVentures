@@ -22,10 +22,6 @@
   {
    "code": "account-holds-nothing",
    "detail": "the statement prints `NO HOLDING IS AVAILABLE` — the account is open and empty, and that is a measurement"
-  },
-  {
-   "code": "field-not-in-document-contract",
-   "detail": "Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
   }
  ],
  "holdings": [],

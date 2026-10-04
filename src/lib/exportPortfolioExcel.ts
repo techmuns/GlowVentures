@@ -36,6 +36,7 @@ import { fifoTotals } from "./fifo";
 import { costedFigures, commonMark, markKey, VACUOUS_COST_REASON } from "./clubbedFigures";
 import { buildDatedCapital, type DatedCapital } from "./datedCapital";
 import { labelledAccounts, labelledPositions } from "./securityLabel";
+import { describeDepositoryUnits } from "./fundNavs";
 import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
@@ -295,15 +296,22 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
             + `${cf.uncosted.lines === 1 ? "reports" : "report"} no cost and ${cf.uncosted.lines === 1 ? "is" : "are"} left out of all three, never counted at zero`);
         }
       }
-      // WHERE A DEPOSITORY LINE'S UNITS CAME FROM — the tab's own sentence: no
-      // statement priced these units at all, so their value is AMFI's NAV on a
-      // depository's closing balance, and a reader must not take them for a
-      // statement mark replaced.
-      const depo = ps.map((x) => x.depositoryUnits?.asOf).filter((d): d is string => !!d).sort();
-      if (depo.length) {
-        notes.push(`Qty — ${depo.length === ps.length ? "these units are" : "some of these units are"} a depository's own `
-          + `closing balance of ${depo[depo.length - 1]}, on an account that sent a transaction statement and no holding `
-          + `statement — no statement priced them, and they are valued at AMFI's published NAV`);
+      // WHERE A DEPOSITORY LINE'S UNITS CAME FROM — the tab's own words: no
+      // statement priced these units, so a reader must not take their value for
+      // a statement mark replaced. WHICH depository record it is follows the
+      // line's own kind (Stage 10cz): a transaction-only account's closing
+      // balance, a holding statement's balance beside the price of its LAST
+      // MOVEMENT, one printed with no rate, or one with no usable price — and
+      // only the first may say the account sent no holding statement.
+      const depoLines = ps.filter((x) => !!x.depositoryUnits);
+      if (depoLines.length) {
+        const phrases = [...new Set(depoLines.map((x) => describeDepositoryUnits(x.depositoryUnits!, idx)))];
+        const nav = depoLines.some((x) => x.navPriced);
+        const quote = depoLines.some((x) => !x.navPriced);
+        const at = nav && quote ? "AMFI's published NAV or the live quote"
+          : nav ? "AMFI's published NAV" : "the live quote";
+        notes.push(`Qty — ${depoLines.length === ps.length ? "these units are" : "some of these units are"} `
+          + `${phrases.join("; and ")} — no statement priced them, and they are valued at ${at}`);
       }
       if (mark.price === null) {
         // The tab's own sentence names the marks and then says "open the row";

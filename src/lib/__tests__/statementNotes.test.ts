@@ -9,6 +9,13 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "@/data/glowData";
+// THE BOOK THE PAGE READS. A note is drawn beside a figure on screen, and since
+// Stage 10cz the pledged ABSL Liquid line is on the LIVE basis only: the Motilal
+// statement's Rate and Value for it are its last depository movement, not a
+// valuation, so the statement basis carries its units and no value, and the page
+// values them at AMFI's NAV (`unpricedStatementUnits`). The note is still true
+// of the statement — every unit pledged — and of the row it is drawn beside.
+import { LIVE_POSITIONS } from "./liveBook";
 import { holdingBucket } from "@/lib/analytics";
 import { STATEMENT_NOTES, statementNoteFor } from "@/lib/statementNotes";
 
@@ -24,7 +31,7 @@ for (const n of STATEMENT_NOTES) {
   try { text = JSON.stringify(JSON.parse(readFileSync(file, "utf8"))).replace(/\\n/g, " ").replace(/\s+/g, " "); } catch { /* reported below */ }
   ok(`the cited statement is in the archive — ${n.cite.docKey}`, text.length > 0);
   for (const c of n.cite.text) ok(`it prints "${c}"`, text.includes(c), n.cite.docKey);
-  const held = BOOK_POSITIONS.filter((p) => n.securityKeys.includes(p.securityKey) && (!n.accountId || p.accountId === n.accountId));
+  const held = LIVE_POSITIONS.filter((p) => n.securityKeys.includes(p.securityKey) && (!n.accountId || p.accountId === n.accountId));
   ok(`the book holds what the note is about — ${n.short}`, held.length > 0 && held.some((p) => p.marketValue > 0), `${held.length} position(s)`);
   ok("the note carries no figure of its own", !/[₹]|\d[\d,]*\.\d/.test(n.note) && !/\d/.test(n.short), n.note);
 }
@@ -34,10 +41,10 @@ for (const n of STATEMENT_NOTES) {
 // filing it as Cash, the note's second sentence is wrong.
 {
   const eng = (p: { accountId: string }) => BOOK_ACCOUNTS.find((a) => a.accountId === p.accountId)?.engagement ?? null;
-  const absl = BOOK_POSITIONS.filter((p) => p.securityKey === "absl-liqf-d-growth" && p.accountId === "motilal-oswal-financial-services-demat-1201090012838320");
+  const absl = LIVE_POSITIONS.filter((p) => p.securityKey === "absl-liqf-d-growth" && p.accountId === "motilal-oswal-financial-services-demat-1201090012838320");
   ok("the pledged ABSL Liquid line is filed under Cash", absl.length === 1 && holdingBucket(absl[0], eng(absl[0])) === "Cash", absl.map((p) => holdingBucket(p, eng(p))).join(","));
   ok("the pledge note is the ABSL line's on that account", statementNoteFor("absl-liqf-d-growth", absl[0]?.accountId)?.short === "all units pledged / earmarked");
-  const other = BOOK_POSITIONS.find((p) => p.securityKey === "absl-liqf-d-growth" && p.accountId !== absl[0]?.accountId);
+  const other = LIVE_POSITIONS.find((p) => p.securityKey === "absl-liqf-d-growth" && p.accountId !== absl[0]?.accountId);
   ok("…and not on another account's line of the same fund", !other || statementNoteFor(other.securityKey, other.accountId) === null, other?.accountId ?? "no other account holds it");
 }
 

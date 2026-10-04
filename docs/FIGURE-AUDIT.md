@@ -174,6 +174,8 @@ changed until the family answers; each is disclosed on screen meanwhile.
 | **FQ-4** | *"check if the dates are different and if the accounts holding are different or same"* | Two separate holdings: one ISIN, both statements dated 31 Jul 2026, in two members' own demat accounts (Aarti's 1,195,000 units at ₹141.24, Ankita's 205,000 at ₹151.10). One ETF has one price on a day, so at least one mark is wrong. The scheme's own published NAV on 3 Aug, the next business day, was ₹137.73 a unit, on the same basis as the statements (before its 1:10 split). Aarti's ₹141.24 is 2.6% above it and Ankita's ₹151.10 is 9.7% above it, so Ankita's is the one further out. The book keeps each statement's own mark. At ₹141.24, Ankita's lot would read about ₹20.2 L less. |
 | **FQ-5** | *"no, this needs to be a normal holding, on the polycab page we will only show the shares held in the company polycab and relevant information regarding polycab"* | Not acted on: the answer can be read two ways, and one of them would undo the ring-fence. It has gone back to the family. |
 
+*(Stage 10cz: neither DSP Gold rate is a mark. A Motilal Oswal holding statement's rate is the price of the lot's last depository movement, and its value column is that price times the units that moved then — ₹5,45,319.90 is 3,609 × ₹151.10 against Ankita's 205,000 units, ₹1,95,62,022.48 is 1,38,502 × ₹141.24 against Aarti's 1,195,000. Both lots are quantities with no value on the statement basis, as are the other 41 rows on those three demats; see CLAUDE.md Stage 10cz.)*
+
 ## What cannot be calculated from the documents we have
 
 | Figure | Why not | The document that would fix it |

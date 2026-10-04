@@ -22,51 +22,65 @@
 // units, and 12539150, which is the one his Delphi and Hedged Equity statements
 // print as their depository account. Keying on the UCC would merge them.
 //
-// ── WHAT THIS DOCUMENT CAN AND CANNOT BE TRUSTED FOR ────────────────────────
+// ── WHAT THE RATE AND VALUE COLUMNS ARE: THE LAST MOVEMENT, NOT A VALUATION ─
 //
-// Its own three columns do not agree, and which one to believe had to be
-// MEASURED rather than assumed:
+// Beside every balance the statement prints `Rs RATE` and `Rs VALUE`. Neither
+// is a 31 July valuation, and the rate is not the average cost either. The rate
+// is the price of the holding's LAST DEPOSITORY MOVEMENT, and the value is that
+// rate times the MOVEMENT's own quantity, not the balance's:
 //
-//   Birla Cable   11,900.000 units   rate 170.600   printed value 34,120.00
+//   Axis Bank   7,300 held   rate 1,368.25   value 21,33,101.75
+//               value ÷ rate = 1,559, the credit of 2 Jul on this account's
+//               own transaction statement
+//   HDFC BAF    37,755.485 held   rate 517.054   value ÷ rate = 8,407.246,
+//               the DEBIT of 27 Jul — a SALE price standing as the "rate"
+//   ICICI Nifty Next 50   0.048 units held, value ₹2.90 Cr — the redemption
+//               that left 0.048 units behind, which no reading of the column
+//               as a valuation can produce
 //
-// 11,900 × 170.60 is 20,30,140, and the printed value implies ₹2.87 a share for
-// a stock the same row prices at ₹170.60. That is not an extraction artifact —
-// the row is four text items on one line and there is nothing else on it. It
-// happens on 22 of 67 rows across the five statements.
+// Measured over all 46 rows that print a rate other than an AIF's face value,
+// against the same account's own transaction tape, which runs from 1 April: on
+// 24 rows value ÷ rate is exactly the quantity of the LAST receipt or delivery
+// the tape prints (9 the whole balance, 10 a part of it received, 5 a delivery
+// out), and the other 22 do not move on the tape at all, so their last
+// movement predates it. Not one row contradicts the reading. Seven rates are
+// the price of a movement OUT — the five deliveries on the tape, and two ICICI
+// index funds whose balance (0.048 and 0.629 units) is smaller than the
+// movement the value describes. Three of the 46 are on account 32387399, which
+// is not in the book, so the book carries 43.
 //
-// THE PRINTED VALUE COLUMN TIES TO THE PRINTED TOTAL, TO THE RUPEE, on all five
-// documents. So the depository stands behind it, and it is still the column
-// that cannot be used: it implies impossible prices. What settles it is the
-// family's own consolidated review, which is independent of both:
+// That is also what made the document look BROKEN. Its value column ties to
+// its printed total to the rupee because the total is the sum of those movement
+// values, and the "impossible" price it implied — Birla Cable at ₹2.87 a share,
+// from 11,900 units and a value of 34,120 — is a last lot of 200 shares at the
+// ₹170.60 rate, divided across the whole balance. And one ISIN carrying two
+// rates on one date (Helios 15.740 / 14.180, DSP Gold 151.100 / 141.240) is two
+// accounts that last moved on different days.
 //
-//   PG Electroplast   demat 180,000 units × 502.200 = ₹9.04 Cr
-//                     review 180,000 units at ₹10.04 Cr as on 30 Jun
-//   Onesource         demat  48,000 × 1,792.850 = ₹8.61 Cr
-//                     review 91,000 sh at ₹15.03 Cr → ₹1,651/sh
-//   Birla Cable       demat  11,900 × 170.600 = ₹0.20 Cr
-//                     review 15,193 sh at ₹0.31 Cr → ₹205.8/sh
+// SO NOTHING HERE VALUES A HOLDING WITH THE RATE. A row carries its QUANTITY —
+// the primitive the depository stands behind — and the rate and value as
+// `lastMovementRate` / `lastMovementValue`: a transaction price a reader can
+// see, which `build-book` dates from the tape, and which the live layer uses as
+// its witness that a published NAV is on the same unit basis as the balance.
+// What values the units is a real current price: the exchange's quote for a
+// share or an ETF, the scheme's published NAV for a fund.
 //
-// Quantities match exactly where the holders line up and every derived price is
-// within ordinary drift of the review's. So QUANTITY and RATE are the
-// primitives, market value is DERIVED, and the printed value goes to
-// `printed.marketValue` where the reconciler reports it — rule 3 and rule 4,
-// applied to a document whose own arithmetic is broken.
+// THE FIRST READING OF THIS SECTION IS KEPT, IN THE ORDER IT WAS LEARNT. It
+// concluded that "QUANTITY and RATE are the primitives, market value is
+// DERIVED", so it valued ₹102 Cr of the book at the price of each holding's
+// last movement, under a label reading "statement mark, 31 July". It cited the
+// family's review as corroboration: PG Electroplast 180,000 × 502.20 = ₹9.04 Cr
+// against the review's ₹10.04 Cr on 30 June. A 10% gap in a month is not
+// "ordinary drift", and it was the clue — ₹502.20 was the price of the last
+// 4,500 shares to move, before April.
 //
 // ── A RATE OF 0.000 IS NOT PRICED, AND IS NULL ──────────────────────────────
 //
-// Fifteen rows print `0.000` in the rate column and `0.00` in the value column —
-// the unlisted names (National Stock Exchange, Cheelizza, Clean Max) and the AIF
-// units the depository does not mark. Read as zero they would each contribute a
+// Eleven rows print `0.000` in the rate column and `0.00` in the value column —
+// the unlisted names (National Stock Exchange, Cheelizza), Clean Max, three
+// mutual-fund lines and the AIF units the depository does not mark. Read as zero they would each contribute a
 // measured ₹0 to an account total and report the whole cost as a loss. They
 // carry no market value and the account names them.
-//
-// ── THE RATE ALSO CONTRADICTS ITSELF ACROSS ACCOUNTS, AND THAT IS REPORTED ──
-//
-// The same ISIN on the same date carries two different rates on two members'
-// statements — Helios 15.740 / 14.180, ICICI IOPPF 39.290 / 40.250, DSP Gold
-// 151.100 / 141.240, ICICI Liquid 394.625 / 409.572. Nothing here reconciles
-// them; each account is carried on the rate ITS OWN statement prints, and the
-// disagreement is a warning rather than an average nobody published.
 //
 // ── THE MASKED PAN IS A CHECK, NOT AN IDENTIFIER ────────────────────────────
 //
@@ -375,6 +389,10 @@ function readHoldings(pages, text, meta, warnings) {
   const holdings = [];
   const unpriced = [];
   const faceValued = [];
+  const lastMoved = [];
+  // Every figure the value column prints, AIF rows and all — the completeness
+  // witness below, and nothing else.
+  const valueColumn = [];
 
   for (const page of pages) {
     for (const row of page.rows ?? []) {
@@ -383,27 +401,27 @@ function readHoldings(pages, text, meta, warnings) {
       if (!isin || !ISIN_RE.test(isin) || cells[0].x >= BAND.isin[1]) continue;
       const name = inBand(cells, BAND.name);
       const quantity = n(inBand(cells, BAND.quantity));
-      const marketPrice = rateOrNull(inBand(cells, BAND.rate));
+      const rate = rateOrNull(inBand(cells, BAND.rate));
       const printedValue = n(inBand(cells, BAND.value));
       if (quantity == null) continue;
+      if (printedValue != null) valueColumn.push(printedValue);
 
       const aif = AIF_UNITS[isin] ?? null;
       /**
        * A DEPOSITORY PRINTS A FUND'S FACE VALUE, NOT ITS NAV.
        *
        * Every AIF row on these statements carries a rate of exactly 100.000 or
-       * 10.000 — the price the unit was ISSUED at, which is what a depository
-       * records and holds forever. It is not a mark, and multiplying by it
-       * produces a valuation nobody struck: 3P's units come to ₹34.71 Cr at face
-       * against the ₹52.12 Cr the family's own review carries them at, and
-       * Buoyant's to ₹34.17 Cr against a folio the fund itself values at
-       * ₹49.30 Cr.
+       * 10.000 — the price the unit was ISSUED at, which is also the price its
+       * last credit went through at, because an AIF's units are allotted at
+       * face. It is not a mark, and multiplying by it produces a valuation
+       * nobody struck: 3P's units come to ₹34.71 Cr at face against the
+       * ₹52.12 Cr the family's own review carries them at, and Buoyant's to
+       * ₹34.17 Cr against a folio the fund itself values at ₹49.30 Cr.
        *
        * So an AIF row from this issuer carries its UNITS and no price. Where the
        * fund's own statement is in this book the position comes from there and
        * this row is dropped as a duplicate; where it is not, the units are in the
-       * archive and the account says what is missing. That is the same rule as
-       * "a depository does not know what shares cost", one column over.
+       * archive and the account says what is missing.
        */
       const priceIsFaceValue = Boolean(aif);
       holdings.push(makeHolding({
@@ -411,27 +429,26 @@ function readHoldings(pages, text, meta, warnings) {
         isin,
         assetClass: assetClassOf(isin, name, Boolean(aif)),
         quantity,
-        marketPrice: priceIsFaceValue ? null : marketPrice,
         /**
-         * THE PRINTED VALUE IS THE CHECK, AND ONLY WHERE THERE IS SOMETHING TO
-         * CHECK. `makeHolding` files `marketValue` under `printed.*` and
-         * `deriveHolding` recomputes it as price x quantity, so a priced row
-         * carries both and the delta reaches the reconciler.
-         *
-         * An UNPRICED row must not pass its printed figure through, because
-         * `deriveHolding` adopts the printed value when it has no price — and
-         * the depository prints `0.00` beside every `0.000` rate. Adopted, that
-         * would put a MEASURED zero on National Stock Exchange and on every AIF
-         * unit the depository does not mark. Null, and the holding carries units
-         * with no value and says why.
+         * NEVER A MARKET PRICE, AND NEVER A MARKET VALUE — see the header. The
+         * rate is the price of the holding's last movement and the value is that
+         * price times the movement's own quantity, so neither describes the
+         * balance on the statement's date. `deriveHolding` would adopt a printed
+         * value as the market value of a row with no price, which is why the
+         * printed figure is not passed as `marketValue` either: it goes where it
+         * belongs, `lastMovementValue`, and values nothing.
          */
-        marketValue: priceIsFaceValue || marketPrice == null ? null : printedValue,
+        marketPrice: null,
+        marketValue: null,
         /** What the depository DID print, so the archive shows the document. */
-        faceValue: priceIsFaceValue ? marketPrice : null,
+        faceValue: priceIsFaceValue ? rate : null,
+        lastMovementRate: priceIsFaceValue ? null : rate,
+        lastMovementValue: priceIsFaceValue || rate == null ? null : printedValue,
         source,
       }));
-      if (priceIsFaceValue) faceValued.push(`${aif.name} (${quantity} units at a face value of ${marketPrice ?? "—"})`);
-      else if (marketPrice == null) unpriced.push(`${name} (${isin})`);
+      if (priceIsFaceValue) faceValued.push(`${aif.name} (${quantity} units at a face value of ${rate ?? "—"})`);
+      else if (rate == null) unpriced.push(`${name} (${isin})`);
+      else lastMoved.push({ name, quantity, rate, value: printedValue });
     }
   }
 
@@ -442,15 +459,28 @@ function readHoldings(pages, text, meta, warnings) {
         : "no row matched the ISIN column; nothing is read rather than reading the wrong columns");
   }
 
-  // (a2) in miniature, and it must be loud: the statement's own value column
-  // disagrees with its own quantity x rate on a third of these rows.
+  /**
+   * THE VALUE COLUMN'S OWN TOTAL IS THE COMPLETENESS WITNESS, AND ONLY THAT.
+   *
+   * `Total Holding Valuation` is the sum of the value column, so reproducing it
+   * says every row of the table was read — the licence `hdfcNsdl.mjs` needs to
+   * publish a rendered figure. It says nothing about what the holdings are
+   * worth, because what it sums is last-movement values: that is exactly the
+   * reading this reader used to make, and it is why the figure is checked here
+   * and never carried as `totals.totalMarketValue`.
+   */
   const printedTotal = n((/Total Holding Valuation\s*:\s*([\d,]+\.\d+)/i.exec(text) ?? [])[1]);
-  const disagree = holdings.filter((h) =>
-    h.quantity != null && h.marketPrice != null && h.printed?.marketValue != null &&
-    Math.abs(h.quantity * h.marketPrice - h.printed.marketValue) > Math.max(1, h.printed.marketValue * 1e-4));
-  if (disagree.length) {
-    warn(warnings, "printed-value-not-quantity-times-rate",
-      `${disagree.length} of ${holdings.length} row(s) print a value that is not their own quantity x rate — e.g. ${disagree[0].security} at ${disagree[0].quantity} x ${disagree[0].marketPrice} = ${(disagree[0].quantity * disagree[0].marketPrice).toFixed(2)} against a printed ${disagree[0].printed.marketValue}. The printed column sums to the printed total exactly and still implies impossible prices, so market value is DERIVED and the printed figure is kept only as the check.`);
+  const readTotal = valueColumn.length ? valueColumn.reduce((t, v) => t + v, 0) : null;
+  const tied = printedTotal != null && readTotal != null && Math.abs(readTotal - printedTotal) <= 1;
+  if (printedTotal != null && readTotal != null && !tied) {
+    warn(warnings, "value-column-does-not-reproduce-total",
+      `the value column read sums to ${readTotal.toFixed(2)} against a printed Total Holding Valuation of ${printedTotal.toFixed(2)} — a row was missed or misread, so what this document holds is not complete`);
+  }
+  if (lastMoved.length) {
+    const ex = lastMoved.find((r) => r.value != null && r.rate > 0 && Math.abs(r.value / r.rate - r.quantity) > 0.001) ?? lastMoved[0];
+    const moved = ex.value != null && ex.rate > 0 ? ex.value / ex.rate : null;
+    warn(warnings, "rate-is-last-movement-price",
+      `${lastMoved.length} holding(s) print a rate and a value that describe the holding's LAST DEPOSITORY MOVEMENT, not its balance — e.g. ${ex.name}: ${ex.quantity} held, rate ${ex.rate}, value ${ex.value}${moved != null ? `, which is ${moved.toFixed(3)} units, the quantity of that movement` : ""}. So these carry their units and no market value; the rate and value are kept as \`lastMovementRate\` / \`lastMovementValue\`, a transaction price rather than a valuation.${tied ? ` The value column sums to the printed Total Holding Valuation of Rs ${printedTotal.toFixed(2)} to the rupee, so every row was read — and that total is a sum of last-movement values, not what the account is worth.` : ""}`);
   }
   if (faceValued.length) {
     warn(warnings, "aif-units-carry-face-value-not-nav",
@@ -461,15 +491,10 @@ function readHoldings(pages, text, meta, warnings) {
       `the depository prints no rate for ${unpriced.length} holding(s) — ${unpriced.slice(0, 4).join(", ")}${unpriced.length > 4 ? ", …" : ""}. A rate of 0.000 is read as NOT PRICED, never as a price of zero, so these carry units and no market value.`);
   }
 
-  const priced = holdings.filter((h) => h.quantity != null && h.marketPrice != null);
   return {
     holdings,
-    totals: makeTotals({
-      totalMarketValue: priced.length ? priced.reduce((t, h) => t + h.quantity * h.marketPrice, 0) : null,
-      positionCount: holdings.length,
-      source,
-    }),
-    printedTotalValuation: printedTotal,
+    // No market value: nothing this statement prints values a balance.
+    totals: makeTotals({ totalMarketValue: null, positionCount: holdings.length, source }),
   };
 }
 

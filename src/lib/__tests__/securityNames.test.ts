@@ -22,7 +22,8 @@
 // fund filings — and it says so, and states the premise that makes the
 // construction necessary.
 import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "@/data/glowData";
-import { displayFiledName, displaySecurity, stripFilingMarks } from "@/lib/format";
+import { displayDepositoryName, displayFiledName, displaySecurity, stripFilingMarks } from "@/lib/format";
+import { allRecordedLines } from "@/lib/recordedHoldings";
 import { securityKeyOf } from "@/lib/securityKey";
 import { labelVariants, securityLabel } from "@/lib/securityLabel";
 import { issuerKeyOf, issuerNameOf, loadStockExposure, type HeldFund } from "@/lib/lookthrough";
@@ -54,19 +55,33 @@ eq("...and the clipped Crompton is Crompton",
  * `build-book`'s own note, which reports the same count on every run.
  */
 const SYM = NSE_SYMBOLS as Record<string, string>;
+/**
+ * EVERY LINE A PAGE NAMES A COMPANY ON — a position, and since Stage 10cz a
+ * holding a statement records as a quantity and nothing values. The three
+ * Motilal Oswal holding statements' 43 rows are that now (their rate is the
+ * last depository movement, not a price), and a page draws each under its
+ * HOME key (`recordedHoldings.ts`) — the key its company already has in the
+ * book, found by ISIN. Read off positions alone this section stopped seeing
+ * Kaynes, the company the family searched for, and passed over nothing.
+ */
+const RECORDED = allRecordedLines();
+const PAGE_LINES: { securityKey: string; security: string; symbolKey: string }[] = [
+  ...BOOK_POSITIONS.map((p) => ({ securityKey: p.securityKey, security: p.security, symbolKey: p.securityKey })),
+  ...RECORDED.map((l) => ({ securityKey: l.homeKey, security: displayDepositoryName(l.security), symbolKey: l.securityKey })),
+];
 const bySymbol = new Map<string, Set<string>>();
-for (const p of BOOK_POSITIONS) {
-  const s = SYM[p.securityKey];
+for (const p of PAGE_LINES) {
+  const s = SYM[p.symbolKey] ?? SYM[p.securityKey];
   if (s) (bySymbol.get(s) ?? bySymbol.set(s, new Set()).get(s)!).add(p.securityKey);
 }
 const twice = [...bySymbol].filter(([, ks]) => ks.size > 1);
-ok("no NSE symbol is carried by two keys in the book", twice.length === 0,
+ok("no NSE symbol is carried by two keys in the book — a position's, or a recorded line's home", twice.length === 0,
   twice.length ? twice.map(([s, ks]) => `${s}: ${[...ks].join(" | ")}`).join("; ") : `${bySymbol.size} symbols, one key each`);
 ok("...and the check has something to check", bySymbol.size > 100, `${bySymbol.size} symbols`);
 
 console.log("\n── 2. one label per key ──");
 const labels = new Map<string, Set<string>>();
-for (const p of BOOK_POSITIONS) {
+for (const p of PAGE_LINES) {
   (labels.get(p.securityKey) ?? labels.set(p.securityKey, new Set()).get(p.securityKey)!)
     .add(securityLabel(p.securityKey, p.security));
 }
@@ -84,8 +99,10 @@ ok("the book prints some securities two or more ways", variants.size > 0,
 const invented = [...variants].filter(([k, spellings]) => !spellings.includes(securityLabel(k, "")));
 ok("...and the one chosen is always one of the spellings printed", invented.length === 0,
   invented.map(([k]) => k).join(", "));
-ok("the Kaynes the family searched for is one name", new Set(
-  BOOK_POSITIONS.filter((p) => /kaynes/i.test(p.security)).map((p) => securityLabel(p.securityKey, p.security))).size === 1);
+const kaynes = PAGE_LINES.filter((p) => /kaynes/i.test(p.security));
+ok("the Kaynes the family searched for is one name, over every line a statement records it on",
+  kaynes.length > 0 && new Set(kaynes.map((p) => securityLabel(p.securityKey, p.security))).size === 1,
+  `${kaynes.length} line(s): ${[...new Set(kaynes.map((p) => securityLabel(p.securityKey, p.security)))].join(" | ")}`);
 
 console.log("\n── 3. the case: neither all capitals nor all small ──");
 // Two words or more in capitals. One capitalised word is an acronym by

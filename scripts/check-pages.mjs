@@ -228,10 +228,14 @@ function bookArray(src, name) {
   let out;
   try { out = JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
   // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER — the published
-  // NAV overlaid, and the depository's cash-equivalent units that the live book
-  // values on an account that sent no holding statement.
+  // NAV overlaid, and the depository's fund units that the live book values on
+  // an account that sent no holding statement. NOT its listed shares (Stage
+  // 10cy): those are rows only while the quote feed prices them, and a walk
+  // with no feed draws none. `DEPOSITORY_SHARE_BOOK` re-expresses both routes
+  // to them — a transaction-only demat's closing balances, and a holding
+  // statement's shares with no usable price — for the walks that serve a feed.
   return name === "BOOK_POSITIONS"
-    ? withPublishedNavs([...out, ...withDepositoryCash(src, out), ...withUnpricedStatementUnits(src, out)])
+    ? withPublishedNavs([...out, ...withDepositoryFunds(src, out), ...withUnpricedStatementUnits(src, out)])
     : out;
 }
 
@@ -305,27 +309,31 @@ function fundNavStore() {
 }
 
 /**
- * ── THE DEPOSITORY'S CASH, RE-EXPRESSED ─────────────────────────────────────
+ * ── THE DEPOSITORY'S FUNDS, RE-EXPRESSED ────────────────────────────────────
  *
  *   "Arbitrage funds or holdings into that cash as well, because arbitrage
  *    funds are nothing but basically cash."
  *
  * The three arbitrage funds this family holds are no POSITION in `glowData.ts`:
  * they are a depository's closing balances on an account that sent a
- * transaction statement and no holding statement. `PortfolioContext` values
- * them at AMFI's published NAV on the LIVE basis, so every page that reads the
- * live portfolio carries five rows the generated book does not — and every
+ * transaction statement and no holding statement — and so, since Stage 10cy,
+ * are the five other mutual funds on the same statement. `PortfolioContext`
+ * values them at AMFI's published NAV on the LIVE basis, so every page that
+ * reads the live portfolio carries rows the generated book does not — and every
  * derivation here that reconciles against a rendered figure has to carry them
  * too, or it compares two different books.
  *
- * RE-EXPRESSED FROM `src/lib/fundNavs.ts`'s `depositoryCashHoldings` AND NEVER
+ * RE-EXPRESSED FROM `src/lib/fundNavs.ts`'s `depositoryFundHoldings` AND NEVER
  * IMPORTED — the same five gates, written a second time off the committed
  * data: a transaction-only account with no position of its own; a block that
  * walked to its printed closing, with units left; a NAV AMFI publishes and the
- * builder cleared for value; a cash equivalent by the committed map; and no
- * book position of the same ISIN and the same units.
+ * builder cleared for value; a cash equivalent by the committed map, or a fund
+ * AMFI does not file as an ETF (a depository's ETF units may not be on its
+ * NAV's basis, and there is no statement mark here to test them against); and
+ * no book position of the same ISIN and the same units. It deliberately does
+ * not read the page's switches, so turning one off fails a check by name.
  */
-function withDepositoryCash(src, positions) {
+function withDepositoryFunds(src, positions) {
   const accounts = bookArray(src, "BOOK_ACCOUNTS");
   const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
   const store = fundNavStore();
@@ -347,7 +355,7 @@ function withDepositoryCash(src, positions) {
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;
     const book = bookByIsin.get(isin);
     const securityKey = book?.securityKey ?? w.securityKey;
-    if (!CASH_EQ_KEYS.has(securityKey)) continue;
+    if (!CASH_EQ_KEYS.has(securityKey) && /\bETFs?\b/i.test(nav.category ?? "")) continue;
     if (positions.some((p) => p.isin?.trim().toUpperCase() === isin && Math.abs(Number(p.quantity) - w.closing) < 0.0005)) continue;
     out.push({
       securityKey, security: book?.security ?? w.security ?? securityKey, isin: w.isin,
@@ -362,28 +370,43 @@ function withDepositoryCash(src, positions) {
 }
 
 /**
- * ── UNITS A HOLDING STATEMENT RECORDS AND PRICES NOWHERE, RE-EXPRESSED (A-17)
+ * ── UNITS A HOLDING STATEMENT RECORDS AND VALUES NOWHERE, RE-EXPRESSED ───────
  *
- * `PortfolioContext` values the ABSL Balanced Advantage units Aarti's and
- * Ankita's 31 July Motilal demat statements record and print no rate for, at
- * AMFI's NAV, on the LIVE basis — so every page drawn on the live portfolio
- * carries rows the generated book does not, and every derivation here that
- * reconciles against a rendered figure must carry them too.
+ * (A-17, widened at Stage 10cz.) The Motilal Oswal CDSL holding statements
+ * print, against most holdings, the price of the holding's LAST DEPOSITORY
+ * MOVEMENT and that price times the movement's own units — never a valuation
+ * of the balance — so every fund on them is a quantity in the book
+ * (`BOOK_UNVALUED_HOLDINGS`), and `PortfolioContext` values those units at
+ * AMFI's NAV on the LIVE basis. Every page drawn on the live portfolio
+ * therefore carries rows the generated book does not, and every derivation
+ * here that reconciles against a rendered figure must carry them too.
  *
  * RE-EXPRESSED FROM `src/lib/fundNavs.ts`'s `unpricedStatementUnits` AND NEVER
- * IMPORTED — the six gates written again off the committed data: a mutual-fund
- * row with an ISIN and units and no fund reporting the same units; a NAV the
- * builder cleared; a witness — the same ISIN, marked per unit on another account
- * at the same depository on the same day; that mark within a factor of two of
- * the NAV; and no position of the ISIN already in the row's own account.
+ * IMPORTED — the seven gates written again off the committed data:
+ *   1. an ISIN and units, and a MUTUAL FUND or an ETF;
+ *   2. no fund's own statement reports the same units;
+ *   3. a NAV the builder cleared for value (a usable entry preferred per ISIN);
+ *   4. a witness price: the row's OWN last-movement rate first; for a mutual
+ *      fund with none, the same ISIN priced per unit on another account at the
+ *      same depository on the same day — a position's mark, else another
+ *      row's last-movement rate. An ETF takes its own rate or nothing;
+ *   5. that price within a factor of two of the NAV;
+ *   6. no position of the ISIN already in the row's own account;
+ *   7. no account of the SAME OWNER carrying the same ISIN at the same units.
+ * It deliberately does not read the page's switch, so turning it off fails a
+ * check by name rather than leaving a stale model agreeing with a changed page.
  */
 function withUnpricedStatementUnits(src, positions) {
   const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
   const accounts = bookArray(src, "BOOK_ACCOUNTS");
   const store = fundNavStore();
   if (!Array.isArray(unvalued) || !Array.isArray(accounts) || !Array.isArray(store)) return [];
+  let keyToSymbol = {};
+  try { keyToSymbol = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8")); } catch { /* none */ }
   const acc = new Map(accounts.map((a) => [a.accountId, a]));
+  const ownerOf = (id) => acc.get(id)?.ownerId ?? acc.get(id)?.owner ?? null;
   const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+  const rateOf = (x) => (typeof x.lastMovementRate === "number" && x.lastMovementRate > 0 ? x.lastMovementRate : null);
   const navByIsin = new Map();
   for (const e of store) {
     const k = String(e.isin).toUpperCase();
@@ -393,28 +416,48 @@ function withUnpricedStatementUnits(src, positions) {
   const out = [];
   for (const u of unvalued) {
     const isin = I(u);
-    if (!isin || u.assetClass !== "Mutual Fund" || !(Number(u.quantity) > 0) || u.sameUnitsReportedBy) continue;
+    const qty = Number(u.quantity);
+    const etf = u.assetClass === "ETF";
+    if (!isin || !(qty > 0) || (u.assetClass !== "Mutual Fund" && !etf)) continue;              // 1
+    if (u.sameUnitsReportedBy) continue;                                                        // 2
     const nav = navByIsin.get(isin);
-    if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;
+    if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                // 3
     const own = acc.get(u.accountId);
     if (!own || !u.asOf) continue;
-    const w = positions.find((p) => I(p) === isin && p.accountId !== u.accountId
-      && acc.get(p.accountId)?.provider === own.provider && acc.get(p.accountId)?.asOf === u.asOf
-      && Number(p.currentPrice) > 0);
-    if (!w) continue;
-    const r = nav.nav / Number(w.currentPrice);
-    if (!(r > 0.5 && r < 2)) continue;
-    if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
+    const ownRate = rateOf(u);
+    let price = ownRate, witnessAccountId = null;
+    if (price === null && !etf) {
+      const sameDay = (id) => acc.get(id)?.provider === own.provider && acc.get(id)?.asOf === u.asOf;
+      const pos = positions.find((p) => I(p) === isin && p.accountId !== u.accountId && sameDay(p.accountId)
+        && Number(p.currentPrice) > 0);
+      const row = pos ? null : unvalued.find((r) => r !== u && I(r) === isin && r.accountId !== u.accountId
+        && sameDay(r.accountId) && rateOf(r) !== null);
+      price = pos ? Number(pos.currentPrice) : row ? rateOf(row) : null;
+      witnessAccountId = pos?.accountId ?? row?.accountId ?? null;
+    }
+    if (price === null) continue;                                                               // 4
+    const r = nav.nav / price;
+    if (!(r > 0.5 && r < 2)) continue;                                                          // 5
+    if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;          // 6
+    const owner = ownerOf(u.accountId);
+    if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - qty) < 0.0005
+      && ownerOf(p.accountId) === owner)) continue;                                              // 7
+    const book = positions.find((p) => p.securityKey === u.securityKey);
     out.push({
-      securityKey: w.securityKey, security: w.security, isin: u.isin, accountId: u.accountId,
-      sector: w.sector, assetClass: "Mutual Fund", marketSide: w.marketSide ?? null,
-      quantity: Number(u.quantity), marketValue: Number(u.quantity) * nav.nav, currentPrice: nav.nav,
+      securityKey: u.securityKey, security: book?.security ?? u.security ?? u.securityKey, isin: u.isin,
+      symbol: book?.symbol ?? keyToSymbol[u.securityKey] ?? null,
+      accountId: u.accountId, sector: book?.sector ?? "Unclassified",
+      assetClass: etf ? "ETF" : "Mutual Fund", marketSide: "listed",
+      quantity: qty, marketValue: qty * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
       navPriced: true, navDate: nav.date,
-      depositoryUnits: { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId: w.accountId },
+      depositoryUnits: ownRate !== null
+        ? { asOf: u.asOf, source: null, kind: "last-movement", lastMovementRate: ownRate,
+          lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null }
+        : { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId },
     });
   }
-  return out;
+  return out.sort((a, b) => b.marketValue - a.marketValue);
 }
 
 /**
@@ -684,7 +727,18 @@ const SECURITY_AXIS_BOOK = (() => {
     const dir = new URL("../public/lookthrough/", import.meta.url);
     const idx = JSON.parse(readFileSync(new URL("index.json", dir), "utf8"));
     const isinToBookKey = new Map();
-    for (const p of stocks) {
+    /**
+     * AND THE COMPANIES A STATEMENT RECORDS AND NOTHING VALUES (Stage 10cz),
+     * under the key the live layer files each by, AFTER the book's own rows so
+     * a statement's ISIN still wins. Re-derived through this file's own
+     * `recordedHomes`, never `lookthroughCompanies`. Without them a fund's
+     * Kaynes line stood on the filing's spelling until a quote made Ankita's
+     * demat line a row, and on the book's key after.
+     */
+    const recordedCos = (recordedHomes(src) ?? []).filter((u) => u.assetClass === "Equity")
+      .map((u) => ({ securityKey: u.homeKey, isin: u.isin ?? null }));
+    const joinable = [...stocks, ...recordedCos];
+    for (const p of joinable) {
       const i = (p.isin ?? "").trim().toUpperCase();
       if (i && !isinToBookKey.has(i)) isinToBookKey.set(i, p.securityKey);
     }
@@ -693,13 +747,13 @@ const SECURITY_AXIS_BOOK = (() => {
     // to no fund's line and stood twice. Read off the book key's NSE symbol and
     // that symbol's instrument in the price source's own list, `NSE_EQ|<ISIN>`.
     const nseSym = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
-    for (const k of new Set(stocks.map((p) => p.securityKey))) {
+    for (const k of new Set(joinable.map((p) => p.securityKey))) {
       const inst = nseSym[k] ? UPSTOX_INSTRUMENTS[nseSym[k]] : null;
       if (!inst || !String(inst.key).startsWith("NSE_EQ|")) continue;
       const i = String(inst.key).slice(7).trim().toUpperCase();
       if (/^IN[EF][A-Z0-9]{9}$/.test(i) && !isinToBookKey.has(i)) isinToBookKey.set(i, k);
     }
-    const bookCompanyKeys = new Set(stocks.map((p) => p.securityKey));
+    const bookCompanyKeys = new Set(joinable.map((p) => p.securityKey));
     // THE ISSUER, NOT THE INSTRUMENT. A debt line names its coupon, its
     // maturity and the filer's footnote marks; the row is its issuer.
     const marksOff = (x) => String(x ?? "").replace(/(?:\s*[*#^$@~]+)+\s*$/, "").trim();
@@ -3534,8 +3588,16 @@ const REVIEW_GAP_BOOK = (() => {
      * reader no statement reported a ₹8.61 Cr position sitting one search away.
      */
     const flat = (k) => k.replace(/-/g, "");
-    const bookKeys = [...new Set((bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS") ?? [])
-      .map((p) => securityKeyOf(p.security)))].filter(Boolean);
+    // A holding a statement RECORDS counts as well as one the book values
+    // (Stage 10cz): the Motilal demats' lines are quantities with no usable
+    // price, and a review line spelling one is still a holding a statement
+    // reports. The same set the app's own tier reads — a line another
+    // statement reports at the same units is that statement's, not a second.
+    const gsrcKeys = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const recordedLinesHere = (bookArray(gsrcKeys, "BOOK_UNVALUED_HOLDINGS") ?? [])
+      .filter((u) => (u.quantity ?? 0) > 0 && !u.sameUnitsReportedBy);
+    const bookKeys = [...new Set([...(bookArray(gsrcKeys, "BOOK_POSITIONS") ?? []).map((p) => p.security),
+      ...recordedLinesHere.map((u) => u.security)].map((n) => securityKeyOf(n)))].filter(Boolean);
     const related = (n) => {
       const k = securityKeyOf(n);
       return !!k && bookKeys.some((bk) =>
@@ -3559,12 +3621,13 @@ const REVIEW_GAP_BOOK = (() => {
       .replace(TAIL, " ").replace(/\s+/g, " ").trim();
     const relK = (a, b) => b.startsWith(a) || a.startsWith(b) || flat(b).startsWith(flat(a)) || flat(a).startsWith(flat(b));
     const heldBy = new Map();
-    for (const p of bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS") ?? []) {
-      const names = [schemes[p.securityKey]?.name, schemes[p.securityKey]?.amfiName,
-        navs.find((e) => e.securityKey === p.securityKey)?.scheme].filter(Boolean);
+    for (const heldKey of new Set([...(bookArray(gsrcKeys, "BOOK_POSITIONS") ?? []).map((p) => p.securityKey),
+      ...recordedLinesHere.map((u) => u.securityKey)])) {
+      const names = [schemes[heldKey]?.name, schemes[heldKey]?.amfiName,
+        navs.find((e) => e.securityKey === heldKey)?.scheme].filter(Boolean);
       for (const n of names) {
         const k = securityKeyOf(stem(n));
-        if (k) heldBy.set(k, (heldBy.get(k) ?? new Set()).add(p.securityKey));
+        if (k) heldBy.set(k, (heldBy.get(k) ?? new Set()).add(heldKey));
       }
     }
     const schemeKeysOf = (g) => {
@@ -3589,9 +3652,10 @@ const REVIEW_GAP_BOOK = (() => {
      */
     let depositoryValued = null, depositoryRows = 0, recordedValued = null, recordedRows = 0;
     // EVERY line that join ties, not only the first: the app withholds each of
-    // them (`valuedFromDepository`), so the scheme tier's claimable list below
-    // must too, or it offers the walk a name the note will never answer. The
-    // same for the lines A-17's closing-units join ties.
+    // them (`reportedByStatement` — a statement reports the line, whether or
+    // not this book values it), so the scheme tier's claimable list below must
+    // too, or it offers the walk a name the note will never answer. The same
+    // for the lines A-17's closing-units join ties.
     const depositoryAll = new Set();
     const recordedAll = new Set();
     try {
@@ -3653,11 +3717,118 @@ const REVIEW_GAP_BOOK = (() => {
         if (hit) { recordedValued ??= hit; recordedAll.add(hit); }
       }
     } catch { depositoryValued = null; recordedValued = null; }
+    /**
+     * …AND EVERY REVIEW LINE A STATEMENT REPORTS, WHETHER OR NOT THIS BOOK
+     * VALUES IT (Stage 10cy) — derived BY THE JOIN THAT LICENSES IT, never read
+     * from `REVIEW_LINE_ISINS`, which would agree with the page by construction.
+     * A line is reported where the review closes a holder at exactly the units a
+     * statement of that holder shows on the review's own date — a depository
+     * window's printed running balance that day, a holding statement's
+     * quantity, a holding it records without a value — or where the review's
+     * own purchase of it is a depository credit, unit for unit.
+     *
+     * A ROUND NUMBER IS NOT EVIDENCE ON ITS OWN. Joined on units and holder
+     * alone, 15,000 shares tied the review's Deepak Fertilisers to three
+     * unrelated holdings and 4,000 its Manorama to two. So a whole-number match
+     * also needs a word of the review's name in the statement's.
+     *
+     * `reportInputs` is what makes an empty result a FINDING: while the review
+     * and the statements both read, a join that ties nothing has lost its input.
+     */
+    let reportedAll = [], keptOut = [], reportInputs = { closings: 0, balances: 0, trustDocs: 0 };
+    try {
+      const gsrc = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+      const accounts = bookArray(gsrc, "BOOK_ACCOUNTS") ?? [];
+      const ownerOf = new Map(accounts.map((a) => [a.accountId, a.owner]));
+      const first = (s) => String(s ?? "").trim().split(/\s+/)[0].toLowerCase();
+      const upper = (x) => String(x ?? "").trim().toUpperCase();
+      const wb = XLSX.read(readFileSync(new URL("../source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx", import.meta.url)));
+      const sheet = wb.SheetNames.find((n) => /transactions since inception/i.test(n));
+      const rows = sheet ? XLSX.utils.sheet_to_json(wb.Sheets[sheet], { header: 1, blankrows: false, defval: "" }) : [];
+      const excelDate = (n) => new Date(Date.UTC(1899, 11, 30) + n * 86_400_000).toISOString().slice(0, 10);
+      const gapNames = new Set(gaps.map((g) => g.name));
+      const closings = [], buys = [];
+      for (const r of rows) for (const [kind, into] of [["closing", closings], ["purchase", buys]]) {
+        const j = r.findIndex((c) => String(c).trim().toLowerCase() === kind);
+        if (j < 1) continue;
+        const units = Number(r[j + 2]);
+        if (Number.isFinite(units) && units > 0)
+          into.push({ holder: String(r[0]), product: String(r[j - 1]), date: excelDate(Number(r[j + 1])), units, rate: Number(r[j + 3]) });
+      }
+      // A closing is the review's holding on the review's own date, whatever
+      // its row is dated — Zepto's is 31 July 2025, when it last marked it.
+      const reviewOn = closings.reduce((m, c) => (c.date > m ? c.date : m), "");
+      const STOP = new Set(["fund", "funds", "ltd", "limited", "india", "indian", "direct", "growth", "plan", "option", "regular",
+        "the", "and", "company", "equity", "equities", "shares", "share", "scheme", "idcw", "new", "face", "value"]);
+      const words = (s) => new Set(String(s).toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && /[a-z]/.test(w) && !STOP.has(w)));
+      const shareWord = (a, b) => { const wa = words(a); return [...words(b)].some((w) => wa.has(w)); };
+      const docs = new Map();
+      const doc = (src) => {
+        if (!docs.has(src)) {
+          try { docs.set(src, JSON.parse(readFileSync(new URL(`../public/audit/${src}/document.json`, import.meta.url), "utf8"))); }
+          catch { docs.set(src, {}); }
+        }
+        return docs.get(src);
+      };
+      const balances = [];
+      const moves = bookObject(gsrc, "BOOK_SHARE_MOVEMENTS") ?? {};
+      for (const w of Object.values(moves)) {
+        if (w.reason != null || !w.source || !w.periodFrom || !w.periodTo || reviewOn < w.periodFrom || reviewOn > w.periodTo) continue;
+        const before = (doc(w.source).transactions ?? []).filter((t) => upper(t.isin) === upper(w.isin) && (t.date ?? "") <= reviewOn);
+        const printed = before.length ? /balance ([\d.,]+)/.exec(before[before.length - 1].description ?? "")?.[1] : null;
+        const units = before.length ? Number(String(printed ?? "").replace(/,/g, "")) : w.opening;
+        if (Number.isFinite(units) && units > 0) balances.push({ owner: ownerOf.get(w.accountId), units, security: w.security });
+      }
+      for (const p of bookArray(gsrc, "BOOK_POSITIONS") ?? [])
+        if (p.quantity > 0) balances.push({ owner: ownerOf.get(p.accountId), units: p.quantity, security: p.security });
+      for (const u of bookArray(gsrc, "BOOK_UNVALUED_HOLDINGS") ?? [])
+        if ((u.quantity ?? 0) > 0) balances.push({ owner: ownerOf.get(u.accountId), units: u.quantity, security: u.security });
+      const same = (a, b) => Math.abs(a - b) < 0.0005;
+      const reported = new Set();
+      for (const c of closings) {
+        if (!gapNames.has(c.product)) continue;
+        if (balances.some((b) => same(b.units, c.units) && first(b.owner) === first(c.holder)
+          && (!Number.isInteger(c.units) || shareWord(c.product, b.security)))) reported.add(c.product);
+      }
+      const credits = [];
+      for (const w of Object.values(moves)) if (w.source) for (const t of doc(w.source).transactions ?? [])
+        if (upper(t.isin) === upper(w.isin) && t.side === "receipt" && typeof t.quantity === "number" && t.quantity > 0 && t.date)
+          credits.push({ date: t.date, units: t.quantity, security: w.security });
+      const days = (a, b) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+      for (const b of buys) {
+        if (!gapNames.has(b.product) || reported.has(b.product)) continue;
+        if (credits.some((c) => same(c.units, b.units) && days(c.date, b.date) <= 5
+          && (!Number.isInteger(b.units) || shareWord(b.product, c.security)))) reported.add(b.product);
+      }
+      reportedAll = gaps.map((g) => g.name).filter((n) => reported.has(n));
+      /**
+       * …AND A LINE A FOLIO THIS BOOK KEEPS OUT REPORTS. The review files Cash
+       * lines under HOPE INDIA TRUST, whose own folio statements are in the
+       * archive and out of the book by decision. Joined on the NAV: the review
+       * prices the line at exactly the rate one of those statements prints.
+       */
+      const manifest = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+      const inBook = new Set(accounts.map((a) => String(a.accountNo)));
+      const trustDocs = manifest.filter((m) => /hope india trust/i.test(String(m.owner ?? "")) && m.reportType === "holdings"
+        && !inBook.has(String(m.accountNo)));
+      const navs = trustDocs.flatMap((m) => (doc(m.docKey).holdings ?? []).map((h) => h.marketPrice).filter((x) => typeof x === "number"));
+      const kept = new Set(closings.filter((c) => gapNames.has(c.product) && /hope india trust/i.test(c.holder)
+        && navs.some((p) => Math.abs(p - c.rate) < 0.00005)).map((c) => c.product));
+      keptOut = gaps.map((g) => g.name).filter((n) => kept.has(n));
+      reportInputs = { closings: closings.length, balances: balances.length, trustDocs: trustDocs.length };
+    } catch { reportedAll = []; keptOut = []; }
+    const reportedSet = new Set([...reportedAll, ...keptOut]);
     return {
       depositoryValued,
       depositoryRows,
       recordedValued,
       recordedRows,
+      reportedAll,
+      // The ones only a statement join withholds — the name tier would claim
+      // them, so they are what a lost table entry would expose.
+      reportedOnly: reportedAll.filter((n) => !!securityKeyOf(n) && !related(n)),
+      keptOut,
+      reportInputs,
       // Any one of them exercises the claim equally, so the list's own first.
       // (The key tier alone — it is the Monitor walk's clipped-company case.)
       suppressed: gaps.filter((g) => related(g.name)).map((g) => g.name)[0] ?? null,
@@ -3669,10 +3840,16 @@ const REVIEW_GAP_BOOK = (() => {
        * check needs. `claimable` is `reviewGapsFor`'s list re-expressed — a gap
        * whose name keys to nothing is not claimable there either.
        */
-      suppressedAll: gaps.filter((g) => related(g.name) || heldScheme(g) || depositoryAll.has(g.name)
-        || recordedAll.has(g.name)).map((g) => g.name),
+      // THE CODE'S OWN RULE, RE-EXPRESSED: a gap is withheld where its name is
+      // a book or recorded holding's (the key tier), where it names a scheme a
+      // statement reports (SC-B4), or where a statement reports its line by a
+      // join no name reaches (Stage 10cy). `depositoryAll` and `recordedAll`
+      // are that last join's older, narrower derivations — kept on the
+      // claimable side only, where withholding one more name costs the walk a
+      // candidate and nothing else.
+      suppressedAll: gaps.filter((g) => related(g.name) || heldScheme(g) || reportedSet.has(g.name)).map((g) => g.name),
       claimable: gaps.filter((g) => !!securityKeyOf(g.name) && !related(g.name) && !heldScheme(g)
-        && !depositoryAll.has(g.name) && !recordedAll.has(g.name)).map((g) => g.name),
+        && !reportedSet.has(g.name) && !depositoryAll.has(g.name) && !recordedAll.has(g.name)).map((g) => g.name),
       // The review lines that name a scheme the book holds, each with the
       // holdings it names — the ones a search must FIND rather than stay
       // silent about (SC-B4).
@@ -5454,20 +5631,33 @@ const SOLD_ELSEWHERE = (() => {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const moves = bookObject(src, "BOOK_SHARE_MOVEMENTS");
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    // A SHARE A STATEMENT RECORDS AND PRICES NOTHING IS STILL HELD (Stage 10cz).
+    // Ankita's 4,875 Kaynes on her Motilal demat left BOOK_POSITIONS when the
+    // demat's "Rate" turned out to be the price of the last depository movement
+    // rather than a mark — the line is still hers, recorded with its quantity.
+    // Reading positions alone, the family's own Kaynes case vanished from this
+    // derivation and both routes walked nothing.
+    const recorded = (bookArray(src, "BOOK_UNVALUED_HOLDINGS") ?? [])
+      .filter((u) => u.assetClass === "Equity" && Number(u.quantity) > 0);
     if (!moves || !positions.length) return null;
     const isinOf = (x) => (x?.isin ?? "").trim().toUpperCase();
     let best = null;
     for (const m of Object.values(moves)) {
       const isin = isinOf(m);
       if (!isin || !(m.opening > 0) || m.closing !== 0) continue;
-      if (positions.some((p) => p.accountId === m.accountId && isinOf(p) === isin)) continue;
-      const owners = positions.filter((p) => p.assetClass === "Equity" && isinOf(p) === isin);
+      if ([...positions, ...recorded].some((p) => p.accountId === m.accountId && isinOf(p) === isin)) continue;
+      const owners = [...positions.filter((p) => p.assetClass === "Equity" && isinOf(p) === isin),
+        ...recorded.filter((u) => isinOf(u) === isin)];
       if (!owners.length) continue;
       if (!best || m.opening > best.opening) {
         best = { key: owners[0].securityKey, accountId: m.accountId, opening: m.opening, windowKey: m.securityKey,
           heldAccounts: [...new Set(owners.map((p) => p.accountId))] };
       }
     }
+    // WHETHER A ROW OF THIS SWEEP'S BOOK VALUES IT, which decides whether the
+    // category axis may offer it at all: a recorded line no price reaches is no
+    // holding row there (Stage 10cz).
+    if (best) best.valued = positions.some((p) => p.securityKey === best.key && p.marketValue > 0);
     return best;
   } catch { return null; }
 })();
@@ -5524,6 +5714,26 @@ const SEARCH_NAMES = (() => {
       family: fk && word ? { word, href: `/stock/${encodeURIComponent(fk)}` } : null,
       variant,
     };
+  } catch { return null; }
+})();
+
+/**
+ * ── WHAT A STATEMENT RECORDS UNDER EACH COMPANY, AND NOTHING VALUES (Stage 10cz) ─
+ *
+ * `recordedHomes` summed per home key: the units the search's "Not valued"
+ * row for that company must say the family holds. Re-expressed from
+ * `BOOK_UNVALUED_HOLDINGS`, never read off the page, so the row's units are
+ * checked by a second path — and a key missing here is a row that claims to be
+ * recorded when no statement records it.
+ */
+const RECORDED_HOME_UNITS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const homes = recordedHomes(src);
+    if (!homes) return null;
+    const by = new Map();
+    for (const l of homes) by.set(l.homeKey, (by.get(l.homeKey) ?? 0) + (Number(l.quantity) || 0));
+    return by;
   } catch { return null; }
 })();
 
@@ -5962,13 +6172,18 @@ const DRILLDOWN_FACET_NOTE = [
 
 const DRILLDOWN_COUNTS = new Map();
 const DRILLDOWN_TOTALS = new Map();
-// SIX, because the book has six buckets. Spare slots are not free: each one is
-// a route that renders a page nobody sees and reports four NOT CHECKED lines
-// every run, which is the noise that trains a reader to skim the report. A
-// SEVENTH bucket does not go unwalked either — the `cio` invariant below fails
+// FIVE, because the book has five buckets. It had six until Stage 10cz: the
+// ETF bucket held the DSP Gold and Silver ETFs at the Motilal statements' Rate,
+// which is the price of each holding's LAST DEPOSITORY MOVEMENT rather than a
+// mark, and with the NAV refused across their 1:10 unit split nothing values
+// them now, so the bucket is empty and Morning CIO draws no ETF row. Spare
+// slots are not free: each one is a route that renders a not-found page nobody
+// sees, and since the drill-down's generic checks landed it FAILS four of them
+// rather than abstaining — noise that trains a reader to skim the report. A
+// SIXTH bucket does not go unwalked either — the `cio` invariant below fails
 // when the table has more rows than this sweep has addresses for, which is a
 // one-line diagnosis naming the fix rather than a silent gap.
-const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6];
+const BUCKET_SLOTS = [1, 2, 3, 4, 5];
 
 /**
  * THE MUTUAL FUND WHOSE LOOK-THROUGH IS WALKED — derived, never typed.
@@ -6001,6 +6216,58 @@ const MF_KEY = (() => {
 })();
 
 /**
+ * ── WHERE A LINE A STATEMENT RECORDS AND NOTHING VALUES STANDS (Stage 10cz) ──
+ *
+ * `recordedLines` (src/lib/recordedHoldings.ts) RE-EXPRESSED, never imported:
+ * each `BOOK_UNVALUED_HOLDINGS` line with units the family holds, filed under
+ * the key a page for its company stands under —
+ *   1. a fund, or a line with no ISIN, keeps its own key;
+ *   2. otherwise the statement book's key for that ISIN, or for the one NSE
+ *      symbol the ISIN resolves to where exactly one key carries it;
+ *   3. otherwise the fullest-named recorded line carrying the same ISIN;
+ *   4. otherwise its own key.
+ * A function declaration, so the derivations above `DEPOSITORY_SHARE_BOOK` can
+ * call it before that constant exists. By identifier only, never by a name.
+ */
+function recordedHomes(src) {
+  const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
+  const stmt = statementBookPositions(src);
+  if (!Array.isArray(unvalued) || !Array.isArray(stmt)) return null;
+  const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+  const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+  const symOf = (p) => p.symbol || symbols[p.securityKey] || null;
+  const symByIsin = new Map();
+  for (const [sym, v] of Object.entries(UPSTOX_INSTRUMENTS)) {
+    if (!String(v.key).startsWith("NSE_EQ|")) continue;
+    const i = String(v.key).split("|")[1]?.trim().toUpperCase();
+    if (i) symByIsin.set(i, sym);
+  }
+  const held = unvalued.filter((u) => !u.sameUnitsReportedBy && typeof u.quantity === "number" && u.quantity > 0);
+  const twin = new Map();
+  for (const u of held) {
+    const i = I(u);
+    if (!i) continue;
+    const t = twin.get(i);
+    if (!t || u.security.length > t.security.length
+      || (u.security.length === t.security.length && u.securityKey < t.securityKey)) twin.set(i, u);
+  }
+  const bookKey = (isin, key) => {
+    const same = stmt.find((p) => I(p) === isin);
+    if (same) return same.securityKey;
+    const answers = new Set([symbols[key], symByIsin.get(isin)].filter(Boolean));
+    if (answers.size !== 1) return null;
+    const sym = [...answers][0];
+    const bySym = [...new Set(stmt.filter((p) => symOf(p) === sym).map((p) => p.securityKey))];
+    return bySym.length === 1 ? bySym[0] : null;
+  };
+  return held.map((u) => {
+    const i = I(u);
+    const own = !i || u.assetClass === "Mutual Fund" || u.assetClass === "ETF";
+    return { ...u, homeKey: own ? u.securityKey : bookKey(i, u.securityKey) ?? twin.get(i)?.securityKey ?? u.securityKey };
+  });
+}
+
+/**
  * ── THE STOCK PAGE'S OWN COUNTS AND THE FUND STORE'S UNIT CHANGES, RE-DERIVED ─
  *
  * Every expectation the M2 checks strike is computed here from `glowData.ts`
@@ -6027,11 +6294,18 @@ const M2_BOOK = (() => {
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const byKey = new Map();
     for (const p of positions) (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).get(p.securityKey)).push(p);
+    // A LINE A STATEMENT RECORDS AND NOTHING VALUES IS AN ACCOUNT THAT HOLDS IT
+    // (Stage 10cz): the page's pill counts it, and so the members and accounts
+    // are struck over both — a line no row of the live model already carries.
+    const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+    const homes = recordedHomes(src) ?? [];
+    const recordedAt = (key) => homes.filter((l) => l.homeKey === key
+      && !positions.some((p) => p.accountId === l.accountId && (I(l) ? I(p) === I(l) : p.securityKey === l.securityKey)));
     const entitiesOf = (key) => {
-      const ps = byKey.get(key) ?? [];
+      const ids = [...(byKey.get(key) ?? []).map((p) => p.accountId), ...recordedAt(key).map((l) => l.accountId)];
       return {
-        accounts: new Set(ps.map((p) => p.accountId)).size,
-        owners: new Set(ps.map((p) => acc.get(p.accountId)?.ownerId ?? `account:${p.accountId}`)).size,
+        accounts: new Set(ids).size,
+        owners: new Set(ids.map((id) => acc.get(id)?.ownerId ?? `account:${id}`)).size,
       };
     };
     const mvOf = (key) => (byKey.get(key) ?? []).reduce((a, p) => a + (Number(p.marketValue) || 0), 0);
@@ -6065,13 +6339,21 @@ const M2_BOOK = (() => {
         return r.startDate && r.endDate && steps.some((b) => b.from.date >= r.startDate && b.to.date <= r.endDate);
       });
       const annualised = periods.filter((k) => /^cagr$/i.test(f.returns[k].kind ?? ""));
-      const statementAsOf = [...new Set((byKey.get(key) ?? []).map((p) => acc.get(p.accountId)?.asOf).filter(Boolean))].sort()[0] ?? null;
+      // …and a recorded line's own statement date (Stage 10cz): a statement that
+      // counts the units and prints no usable price still counts them on its date.
+      const statementAsOf = [...new Set([...(byKey.get(key) ?? []).map((p) => acc.get(p.accountId)?.asOf),
+        ...recordedAt(key).map((l) => l.asOf ?? acc.get(l.accountId)?.asOf)].filter(Boolean))].sort()[0] ?? null;
       return { key, schemecode: e.schemecode, periods, crossing, annualised, steps, statementAsOf, nav: f.nav ?? null, plan: f.plan ?? null, option: f.option ?? null,
         holdingsN: Array.isArray(f.holdings) ? f.holdings.length : null };
     };
-    const held = Object.keys(idx.schemes ?? {}).filter((k) => byKey.has(k));
+    // A SCHEME THE FAMILY HOLDS AS A RECORDED LINE IS HELD (Stage 10cz). DSP's
+    // Gold ETF carries no valued row now — its NAV fails the basis gate and the
+    // demat's rate is a last movement's price — and its page still draws the
+    // scheme card. Ranked by value, then by the units the statements record.
+    const recordedUnitsOf = (key) => recordedAt(key).reduce((a, l) => a + (Number(l.quantity) || 0), 0);
+    const held = Object.keys(idx.schemes ?? {}).filter((k) => byKey.has(k) || recordedUnitsOf(k) > 0);
     const unitBreak = held.map(schemeOf).filter((x) => x && x.steps.length)
-      .sort((a, b) => mvOf(b.key) - mvOf(a.key))[0] ?? null;
+      .sort((a, b) => mvOf(b.key) - mvOf(a.key) || recordedUnitsOf(b.key) - recordedUnitsOf(a.key))[0] ?? null;
     // The scheme card is drawn for a mutual fund or an ETF, never an arbitrage
     // fund (that page draws no look-through at all). The one publishing the most
     // annualised returns, none refused, is where the p.a. marker must bind.
@@ -9445,6 +9727,12 @@ const CRUMB_ALIAS = { "holdings-invested-legacy": () => drilldownPath("book#cost
 const PM_TILE_IDS = [];
 /** What each search-list route found in its list, read off `data-option`. */
 const PICK_OPTIONS = {};
+/**
+ * What the category axis's list answered when the family's own company was
+ * TYPED into it — its options and the recorded holdings its empty note names
+ * (Stage 10cz), read off `data-option` and `data-recorded-key`.
+ */
+const PICK_TYPED = {};
 /** Morning CIO's picker, id and label, read off its open menu on the `cio` walk. */
 const CIO_TILE_OPTIONS = [];
 /**
@@ -9710,6 +9998,28 @@ function drilldownCounts(t) {
  */
 const QUOTE_FACTOR = 1.10;
 const INDEX_FACTOR = 0.99;
+
+/**
+ * ── THE LIVE FIXTURE IS STAMPED TODAY, IN IST ──────────────────────────────
+ *
+ * #104 on main keeps a quote only if it was observed in the current IST market
+ * day (`retainQuotes`), titles Today's movers "today" only for today's
+ * session, and strikes the Nifty 500 gap only where the index and the quotes
+ * share one. A fixture dated 13 Aug 2026 therefore had every quote DISCARDED,
+ * and six live routes failed on main's own build — each page correctly
+ * rendering its no-feed state under checks that expected a feed. The quotes
+ * (with a trade time), the index session and the corporate-action capture are
+ * stamped at the moment the page asks, which is what #104's own
+ * `scripts/dev/check-daily-movers.mjs` does with a fixed clock.
+ *
+ * `FIXTURE_DAY` is the IST day the sweep started on, and the re-derivations
+ * below that need the quotes' day read it. A sweep that crosses IST midnight
+ * would split the two, and is not supported.
+ */
+const IST_OFFSET_MS = 19_800_000;
+const istDay = (ms = Date.now()) => new Date(ms + IST_OFFSET_MS).toISOString().slice(0, 10);
+const dayBefore = (day, n = 1) => new Date(Date.parse(day) - n * 86_400_000).toISOString().slice(0, 10);
+const FIXTURE_DAY = istDay();
 const MARK_BY_SYMBOL = (() => {
   const m = new Map();
   try {
@@ -9725,6 +10035,105 @@ const MARK_BY_SYMBOL = (() => {
 })();
 
 /**
+ * ── THE LISTED SHARES A DEPOSITORY REPORTS WITH NO PRICE (Stage 10cy) ───────
+ *
+ * `depositoryShareCandidates` and `unpricedStatementShareCandidates`
+ * (src/lib/depositoryShares.ts) RE-EXPRESSED, never imported — their gates
+ * written again off the committed data.
+ *
+ * The transaction-only half: an account that sent a transaction statement and
+ * no holding statement and carries no position; a block that walked to its
+ * printed closing, with shares left; an equity ISIN; and no book position of
+ * the same ISIN at the same units.
+ *
+ * The holding-statement half: an equity line of `BOOK_UNVALUED_HOLDINGS` with
+ * units, not another statement's copy (`sameUnitsReportedBy`), its own account
+ * holding no position of that ISIN, no account of the SAME OWNER carrying the
+ * ISIN at the same units, and not a row the family decided to keep unvalued
+ * (Ankita's Clean Max, Stage 10cx's FQ-3).
+ *
+ * Both need an NSE symbol reached BY IDENTIFIER — a book position of the same
+ * ISIN, the committed bridge for the record's own key, or Upstox's own
+ * `NSE_EQ|<ISIN>` instrument — and where two answer they must agree. The page
+ * makes a ROW of one only while the quote feed prices it, so this is the set
+ * the live walks must add where their fixture prices the symbol — and the
+ * plain walks, which serve no feed, add none.
+ */
+const DEPOSITORY_SHARE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = statementBookPositions(src);
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
+    const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    if (!Array.isArray(positions) || !Array.isArray(accounts) || !movements || !Array.isArray(unvalued)) return null;
+    const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+    const symOf = (p) => p.symbol || symbols[p.securityKey] || null;
+    const symByIsin = new Map();
+    for (const [sym, v] of Object.entries(UPSTOX_INSTRUMENTS)) {
+      if (!String(v.key).startsWith("NSE_EQ|")) continue;
+      const i = String(v.key).split("|")[1]?.trim().toUpperCase();
+      if (i) symByIsin.set(i, sym);
+    }
+    const symbolOf = (isin, key) => {
+      const answers = new Set([
+        positions.filter((p) => I(p) === isin).map(symOf).find(Boolean),
+        symbols[key],
+        symByIsin.get(isin),
+      ].filter(Boolean));
+      return answers.size === 1 ? [...answers][0] : null;
+    };
+    const keyOf = (isin, symbol, fallback) => {
+      const same = positions.find((p) => I(p) === isin);
+      if (same) return same.securityKey;
+      const bySym = [...new Set(positions.filter((p) => symOf(p) === symbol).map((p) => p.securityKey))];
+      return bySym.length === 1 ? bySym[0] : fallback;
+    };
+    const txOnly = new Set(accounts.filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
+    const withPositions = new Set(positions.map((p) => p.accountId));
+    const out = [];
+    for (const w of Object.values(movements)) {
+      if (!txOnly.has(w.accountId) || withPositions.has(w.accountId)) continue;
+      if (w.reason != null || !(typeof w.closing === "number" && w.closing > 0)) continue;
+      const isin = I(w);
+      if (!isin || !isin.startsWith("INE")) continue;
+      const symbol = symbolOf(isin, w.securityKey);
+      if (!symbol) continue;
+      if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - w.closing) < 0.0005)) continue;
+      out.push({ securityKey: keyOf(isin, symbol, w.securityKey), isin, symbol, accountId: w.accountId,
+        quantity: w.closing, kind: "closing-balance" });
+    }
+    const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+    for (const u of unvalued) {
+      const isin = I(u);
+      const qty = Number(u.quantity);
+      if (u.assetClass !== "Equity" || !isin || !isin.startsWith("INE") || !(qty > 0)) continue;
+      if (u.sameUnitsReportedBy) continue;
+      if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
+      const owner = ownerOf.get(u.accountId) ?? u.ownerId;
+      if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - qty) < 0.0005
+        && (ownerOf.get(p.accountId) ?? null) === owner)) continue;
+      const symbol = symbolOf(isin, u.securityKey);
+      if (!symbol) continue;
+      // Gate 6: the family's decision to keep the row unvalued. The TABLE is
+      // committed data (`shared/keptUnvalued.mjs`), read on the account the
+      // statement prints and the row's ISIN; the match is written here again.
+      const acc = accounts.find((a) => a.accountId === u.accountId);
+      if (acc && KEPT_UNVALUED.some((d) => d.provider === acc.provider
+        && String(d.accountNo) === String(acc.accountNo) && d.isin === isin)) continue;
+      out.push({ securityKey: keyOf(isin, symbol, u.securityKey), isin, symbol, accountId: u.accountId,
+        quantity: qty, kind: "no-price" });
+    }
+    return out;
+  } catch { return null; }
+})();
+/** The depository share rows the live fixture prices — rows on a walk that serves quotes. */
+const PRICED_DEPOSITORY_ROWS = DEPOSITORY_SHARE_BOOK
+  ? DEPOSITORY_SHARE_BOOK.filter((d) => MARK_BY_SYMBOL.has(d.symbol)).length
+  : null;
+
+/**
  * ── WHICH LINES THE CORPORATE-ACTION CHECK HOLDS BACK UNDER THE LIVE FIXTURE ──
  *
  * DL-9: a quote that ARRIVED and was held back is a different fact from one
@@ -9732,10 +10141,11 @@ const MARK_BY_SYMBOL = (() => {
  * pill worded both as "no quote". These are the lines `installLiveMocks`
  * quotes that the gate must still hold back, in two states:
  *
- *   • `answered` — the fixture's capture answers (verified through 23 Sep,
- *     no events) and every quote is dated 13 Aug with no trade time, so a
- *     company share is held back where its statement records sales after its
- *     own date, or where the quote's day is before the statement's;
+ *   • `answered` — the fixture's capture answers (verified through the
+ *     fixture's own day, no events) and every quote is traded that day
+ *     (`FIXTURE_DAY`), so a company share is held back where its statement
+ *     records sales after its own date, or where the quote's day is before the
+ *     statement's;
  *   • `loading` — the capture has not arrived, so EVERY company share the
  *     fixture quotes is held back, waiting for the evidence.
  *
@@ -9755,7 +10165,7 @@ const WITHHELD_BOOK = (() => {
     const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
     if (!positions.length || !accounts.length) return null;
     const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
-    const QUOTE_DAY = "2026-08-13"; // installLiveMocks' `asOf`, with no `tradedAt`
+    const QUOTE_DAY = FIXTURE_DAY; // installLiveMocks' quotes, traded today (IST)
     const quoted = (p) => { const s = p.symbol || symbols[p.securityKey]; return !!s && MARK_BY_SYMBOL.has(s); };
     const closed = (x) => FUND_VEHICLE_CLASSES.has(x.assetClass) && x.quantity === 0 && x.currentPrice != null;
     const small = smallKeysOf(bookArray(src, "BOOK_POSITIONS") ?? []);
@@ -9989,8 +10399,14 @@ const PRICED_DIRECT_EQUITY_NAMES = (() => {
         if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
         names.add(p.securityKey);
       }
+      // The depository's listed shares (Stage 10cy) are the family's own Direct
+      // Equity, and a row on this walk wherever the fixture prices the symbol.
+      if (keys.includes(DIRECT_EQUITY_BUCKET)) {
+        for (const d of DEPOSITORY_SHARE_BOOK ?? []) if (MARK_BY_SYMBOL.has(d.symbol)) names.add(d.securityKey);
+      }
       return names.size;
     };
+    if (!DEPOSITORY_SHARE_BOOK) return null;
     return count([DIRECT_EQUITY_BUCKET]);
   } catch { return null; }
 })();
@@ -10025,6 +10441,10 @@ const DIRECT_EQUITY_SYMBOLS = (() => {
       const sym = p.symbol || symbols[p.securityKey];
       if (sym) out.add(sym);
     }
+    // …and the listed shares a transaction-only demat reports (Stage 10cy),
+    // which the page asks about in the same priority round.
+    if (!DEPOSITORY_SHARE_BOOK) return null;
+    for (const d of DEPOSITORY_SHARE_BOOK) out.add(d.symbol);
     return out.size || null;
   } catch { return null; }
 })();
@@ -10110,7 +10530,16 @@ const DE_CURRENT_NAMES = (() => {
       if (FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null) continue;
       current.add(p.securityKey);
     }
-    return current.size ? { current: current.size, all: all.size } : null;
+    /* ON A WALK THAT SERVES QUOTES, the listed shares a depository reports with
+       no price (Stages 10cy and 10cz) are Direct Equity rows too — wherever the
+       fixture prices their symbol, which is the only condition on which the
+       page makes a row of one. `live` is the scope the day-move tile counts on
+       those walks; `current` stays the statement book's, which is what a walk
+       with no feed draws. */
+    if (!DEPOSITORY_SHARE_BOOK) return null;
+    const live = new Set(current);
+    for (const d of DEPOSITORY_SHARE_BOOK) if (MARK_BY_SYMBOL.has(d.symbol)) live.add(d.securityKey);
+    return current.size ? { current: current.size, all: all.size, live: live.size } : null;
   } catch { return null; }
 })();
 
@@ -10253,23 +10682,37 @@ const UNVALUED_AIF_BOOK = (() => {
  * holds both WITH a reported cost and WITHOUT one, so the rows it matches carry
  * a coverage sentence to check. Only the input is derived here; every claim on
  * `holdings-book-filter` is an identity among figures the page prints.
+ *
+ * GROUPED ON THE WORD, NOT THE KEY (Stage 10cz). The case this found was ICICI
+ * Bank — a mandate's costed rows and Ankita's demat row with no cost — and that
+ * demat row is a recorded line now, carried by no position until a quote
+ * prices it. What the page's search matches is a NAME, so the word is what the
+ * derivation groups on: Borosil Renewables' share in two mandates, with a
+ * cost, and its warrant in a depository, without one. Company shares first,
+ * because that is the case the sentence describes; any class after, so a drop
+ * with no such company still hands the walk a word that exercises the claim.
  */
 const FILTER_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
-    const byKey = new Map();
-    for (const q of positions) {
-      if (q.assetClass !== "Equity" || !(Number(q.marketValue) > 0)) continue;
-      if (!byKey.has(q.securityKey)) byKey.set(q.securityKey, []);
-      byKey.get(q.securityKey).push(q);
-    }
+    const positions = (bookArray(src, "BOOK_POSITIONS") ?? []).filter((q) => Number(q.marketValue) > 0);
     const first = (x) => (String(x ?? "").toLowerCase().match(/[a-z]{4,}/) ?? [""])[0];
-    const cands = [...byKey.values()].filter((rows) => rows.length >= 2
-      && rows.some((q) => q.costBasis != null && !q.costUnavailable) && rows.some((q) => q.costBasis == null)
-      && first(rows[0].security) && rows.every((q) => first(q.security) === first(rows[0].security)))
-      .sort((a, b) => b.reduce((t, q) => t + q.marketValue, 0) - a.reduce((t, q) => t + q.marketValue, 0));
-    return cands.length ? { term: first(cands[0][0].security), key: cands[0][0].securityKey } : null;
+    const pick = (rows) => {
+      const byWord = new Map();
+      for (const q of rows) {
+        const w = first(q.security);
+        if (!w) continue;
+        if (!byWord.has(w)) byWord.set(w, []);
+        byWord.get(w).push(q);
+      }
+      const cands = [...byWord.entries()].filter(([, rs]) => rs.some((q) => q.costBasis != null && !q.costUnavailable)
+        && rs.some((q) => q.costBasis == null))
+        .map(([w, rs]) => ({ term: w, key: rs[0].securityKey, mv: rs.reduce((t, q) => t + Number(q.marketValue), 0) }))
+        .sort((a, b) => b.mv - a.mv || (a.term < b.term ? -1 : 1));
+      return cands[0] ?? null;
+    };
+    const c = pick(positions.filter((q) => q.assetClass === "Equity")) ?? pick(positions);
+    return c ? { term: c.term, key: c.key } : null;
   } catch { return null; }
 })();
 
@@ -10375,8 +10818,16 @@ const CASH_INSTRUCTION_BOOK = (() => {
     // (units a holding statement records with no rate) are depository-valued
     // too, but their accounts DID send a holding statement and are not partly
     // valued, so they are counted apart (`unpriced`) and never folded in here.
-    const depository = positions.filter((p) => p.depositoryUnits && p.depositoryUnits.kind !== "no-rate");
+    const depository = positions.filter((p) => p.depositoryUnits && (p.depositoryUnits.kind ?? "closing-balance") === "closing-balance");
     const unpriced = positions.filter((p) => p.depositoryUnits?.kind === "no-rate");
+    // …AND THE LAST-MOVEMENT KIND (Stage 10cz): a fund a Motilal holding
+    // statement records beside the price of its last depository movement, which
+    // is a transaction price and not a valuation, so it too is valued only at
+    // AMFI's NAV and is in no statement-basis figure. Counted over the rows
+    // `/holdings` DRAWS — four of them are specks under the ₹1,000 floor, which
+    // `currentHoldings` keeps off every allocation surface.
+    const lastMovement = positions.filter((p) => p.depositoryUnits?.kind === "last-movement");
+    const onPage = (p) => !closed(p) && !small.has(p.securityKey);
     const partialAccounts = [...new Set(depository.map((p) => p.accountId))];
     const largestArb = outside.filter(isArb).sort((a, b) => b.marketValue - a.marketValue)[0]?.securityKey ?? null;
     const partialOwner = (() => {
@@ -10391,13 +10842,65 @@ const CASH_INSTRUCTION_BOOK = (() => {
       depositoryCount: depository.length, depositoryMV: depository.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
       // EVERY ROW NO STATEMENT PRICES, of both kinds — what `/holdings` names
       // under its statement-basis figure, because neither kind is in it.
-      depositoryAllCount: depository.length + unpriced.length,
+      depositoryAllCount: [...depository, ...unpriced, ...lastMovement].filter(onPage).length,
+      lastMovementCount: lastMovement.filter(onPage).length,
       unpricedLines: unpriced.map((p) => `${p.securityKey}@${p.accountId}`),
       partialAccounts, partialOwner, partialAccountNo,
       // Each depository row as the Monitor's opened tree keys its statement
       // line: the security and the account it sits in.
       depositoryLines: depository.map((p) => `${p.securityKey}@${p.accountId}`),
     };
+  } catch { return null; }
+})();
+
+/**
+ * ── WHAT A PARTLY VALUED ACCOUNT RECORDS AND NOTHING VALUES (Stage 10cy) ────
+ *
+ * `depositoryBalancesOf` (src/lib/fundNavs.ts) RE-EXPRESSED, never imported:
+ * every balance the depository closes above nil on the account, sorted into
+ * valued (a row of the checker's own live model — which, on a walk that serves
+ * no quote feed, holds the funds and none of the shares), reported elsewhere
+ * (another account's position at the same ISIN and units, or the same owner's
+ * AIF whose own dated unit record sums to the balance) or NOT VALUED. The page
+ * lists the last kind under the account; this is how many it must list, and
+ * which securities.
+ */
+const PARTIAL_BALANCE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const live = bookArray(src, "BOOK_POSITIONS");
+    const stmt = statementBookPositions(src);
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
+    const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
+    const acc = CASH_INSTRUCTION_BOOK?.partialAccounts?.[0];
+    if (!acc || !Array.isArray(live) || !Array.isArray(stmt) || !Array.isArray(accounts) || !movements || !Array.isArray(moves)) return null;
+    const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+    const tie = (a, b) => Math.abs(Number(a) - Number(b)) < 0.0005;
+    const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+    const owner = ownerOf.get(acc);
+    const recorded = new Map();
+    for (const m of moves) {
+      if (!m.securityKey) continue;
+      const k = `${m.accountId}\u0000${m.securityKey}`;
+      const prev = recorded.has(k) ? recorded.get(k) : 0;
+      recorded.set(k, prev === null || typeof m.units !== "number" ? null : prev + m.units);
+    }
+    const valued = live.filter((p) => p.accountId === acc && p.depositoryUnits);
+    const notValued = [];
+    let reported = 0;
+    for (const w of Object.values(movements)) {
+      if (w.accountId !== acc || !(typeof w.closing === "number" && w.closing > 0)) continue;
+      const i = I(w);
+      if (i && valued.some((p) => I(p) === i)) continue;
+      const rep = stmt.some((p) => p.accountId !== acc && (
+        (!!i && I(p) === i && tie(p.quantity, w.closing))
+        || (p.assetClass === "AIF" && !!owner && ownerOf.get(p.accountId) === owner
+          && tie(recorded.get(`${p.accountId}\u0000${p.securityKey}`) ?? NaN, w.closing))));
+      if (rep) { reported++; continue; }
+      notValued.push({ key: w.securityKey, units: w.closing });
+    }
+    return { account: acc, notValued, reported, valued: valued.length };
   } catch { return null; }
 })();
 
@@ -10413,8 +10916,9 @@ const CASH_INSTRUCTION_BOOK = (() => {
  * values: `unvaluedStatementLinesOf` (src/lib/accounts.ts) RE-EXPRESSED, never
  * imported. An account with a position in the live book; its
  * BOOK_UNVALUED_HOLDINGS rows less a depository's copy of units a fund reports
- * itself (counted as `elsewhere`) and less a line the live book values at
- * AMFI's NAV (counted as `live`, never listed — the card is "in no total").
+ * itself (counted as `elsewhere`) and less a line the live book values — at
+ * AMFI's NAV on a witness or on its own last-movement rate (Stage 10cz) —
+ * counted as `live`, never listed, because the card is "in no total".
  */
 const UNPRICED_BOOK = (() => {
   try {
@@ -10438,7 +10942,14 @@ const UNPRICED_BOOK = (() => {
       const mine = unvalued.filter((u) => u.accountId === a.accountId);
       if (!mine.length) continue;
       const own = mine.filter((u) => !u.sameUnitsReportedBy);
-      const live = (u) => !!I(u) && rows.some((p) => p.accountId === a.accountId && I(p) === I(u));
+      // Valued live by ANY of the layer's kinds — a line printed with no rate
+      // (witnessed), one printed with its last movement's price (Stage 10cz), a
+      // share with no usable price once the feed prices it — exactly as the
+      // app's `unvaluedStatementLinesOf` tests it. The checker's live model
+      // carries no depository share with no feed, and neither does the page.
+      const liveKinds = new Set(["no-rate", "no-price", "last-movement"]);
+      const live = (u) => !!I(u) && positions.some((p) => p.accountId === a.accountId
+        && liveKinds.has(p.depositoryUnits?.kind) && I(p) === I(u));
       const listed = own.filter((u) => !live(u));
       if (!listed.length) continue;
       byOwner.set(a.owner, [...(byOwner.get(a.owner) ?? []), {
@@ -10498,11 +11009,16 @@ const KEPT_UNVALUED_BOOK = (() => {
 /**
  * HOW MANY HOLDINGS CAN HONESTLY CARRY AN INVESTED-ON DATE.
  *
- * Two sources, and both are the HOLDING'S OWN: a lot register's acquisition date
- * (`heldSince`), or the fund's own dated allotments against that very folio
- * (`BOOK_POSITION_TRANCHES`, keyed on account + security). An ACCOUNT's first
- * contribution is deliberately not a third tier — that is when the family funded
- * the account, not when a manager bought the share a row is about.
+ * Three sources, and all are the HOLDING'S OWN: a lot register's acquisition
+ * date (`heldSince`), the fund's own dated allotments against that very folio
+ * (`BOOK_POSITION_TRANCHES`, keyed on account + security), or a drawdown fund's
+ * dated calls where the account carries no other line with money in it, the
+ * line is an AIF, the statement's paid-in covers every call and nothing is
+ * printed as called and unpaid (Stage 10cy). Re-expressed here rather than
+ * imported from `callDatesByHolding`, which is the code under test. An
+ * ACCOUNT's first contribution is deliberately not a fourth tier — that is when
+ * the family funded the account, not when a manager bought the share a row is
+ * about.
  *
  * Measured here so the column's coverage is checked against the BOOK rather than
  * against the page's own count of what it drew, which would agree with itself
@@ -10513,13 +11029,27 @@ const INVESTED_ON_BOOK = (() => {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
     const tranches = bookObject(src, "BOOK_POSITION_TRANCHES") ?? {};
+    const commitments = bookArray(src, "BOOK_COMMITMENTS") ?? [];
+    const called = new Set();
+    const calledAccounts = [];
+    for (const c of commitments) {
+      const calls = (c.calls ?? []).filter((x) => x.date && x.amount > 0);
+      if (!calls.length) continue;
+      const money = positions.filter((p) => p.accountId === c.accountId
+        && (p.marketValue !== 0 || (p.costBasis ?? 0) !== 0));
+      if (money.length !== 1 || money[0].assetClass !== "AIF") continue;
+      const total = calls.reduce((a, x) => a + x.amount, 0);
+      if (c.paid == null || c.paid + 1 < total || (c.pending ?? 0) > 0) continue;
+      called.add(`${c.accountId}|${money[0].securityKey}`);
+      calledAccounts.push(c.accountId);
+    }
     const dated = new Set();
     for (const p of positions) {
       const own = tranches[`${p.accountId}|${p.securityKey}`];
       const ins = (own?.moves ?? []).filter((m) => m.direction === "in");
-      if (ins.length || p.heldSince) dated.add(p.securityKey);
+      if (ins.length || p.heldSince || called.has(`${p.accountId}|${p.securityKey}`)) dated.add(p.securityKey);
     }
-    return { keys: [...dated] };
+    return { keys: [...dated], calledAccounts };
   } catch { return null; }
 })();
 
@@ -11433,18 +11963,19 @@ async function installFillingQuotes(page) {
     // ordered the ask conveniently.
     const cut = Math.max(1, Math.floor(want.length / 3));
     const quotes = {}, missing = [], pending = want.slice(cut);
+    const now = new Date().toISOString(); // see FIXTURE_DAY
     for (const sym of want.slice(0, cut)) {
       const mark = MARK_BY_SYMBOL.get(sym);
       if (!mark) { missing.push(sym); continue; }
       quotes[sym] = {
         price: Math.round(mark * QUOTE_FACTOR * 10000) / 10000, prevClose: mark,
         open: mark, dayLow: mark, dayHigh: mark, low52: null, high52: null,
-        marketCap: null, volume: null, yearChangePct: null, ageS: 0,
+        marketCap: null, volume: null, yearChangePct: null, ageS: 0, tradedAt: now,
       };
     }
     await route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({ ok: true, quotes, asOf: "2026-08-13T10:00:00.000Z", missing, pending, fresh: Object.keys(quotes).length, stale: 0 }),
+      body: JSON.stringify({ ok: true, quotes, asOf: now, missing, pending, fresh: Object.keys(quotes).length, stale: 0 }),
     });
   });
 }
@@ -11456,6 +11987,15 @@ async function installFillingQuotes(page) {
  * ONE round rather than three. Reset per page so a walk reads its own.
  */
 let QUOTE_PRIORITY = null;
+/**
+ * WHETHER THIS WALK SERVES QUOTES — reset per walk and set by
+ * `installLiveMocks`, which the filling and stalled-index fixtures call too. A
+ * count over the live book depends on it: the listed shares a depository
+ * reports with no price (Stages 10cy and 10cz) are rows only where the fixture
+ * prices them, so a walk with no feed has none and a walk with one has
+ * `PRICED_DEPOSITORY_ROWS` more.
+ */
+let QUOTES_SERVED = false;
 
 /**
  * THE STORE, ANSWERING. An in-memory copy of the fixture that applies each
@@ -11716,18 +12256,19 @@ const RESEARCH_BOOK = (() => {
 
 async function installLiveMocks(page, opts = {}) {
   QUOTE_PRIORITY = null;
+  QUOTES_SERVED = true;
   // This fixture measures a pure +10% PRICE move. Keep corporate actions empty
   // and fully covered for its dated window, rather than letting a changing
   // external capture change the expected movers. The dedicated corporate-action
   // browser regression supplies split/dividend events and checks their effects.
   //
   // `captureLagDays` dates the capture that many days BEFORE the quotes' own
-  // day (2026-08-13), which is the 24 Sep 2026 incident: a capture one day old
-  // held every company share off its live price. See `cio-live-capture-lag`.
-  const lagged = typeof opts.captureLagDays === "number"
-    ? new Date(Date.parse("2026-08-13") - opts.captureLagDays * 86_400_000).toISOString().slice(0, 10) : null;
-  const actionFeed = { version: 1, capturedAt: lagged ? `${lagged}T10:00:00.000Z` : "2026-09-23T10:00:00.000Z", requestedFrom: "2020-01-01",
-    requestedTo: "2027-09-23", verifiedThrough: lagged ?? "2026-09-23", symbols: null, isins: [], rows: [],
+  // day (`FIXTURE_DAY`), which is the 24 Sep 2026 incident: a capture one day
+  // old held every company share off its live price. See `cio-live-capture-lag`.
+  // Without it the capture is verified through the quotes' own day.
+  const lagged = typeof opts.captureLagDays === "number" ? dayBefore(FIXTURE_DAY, opts.captureLagDays) : null;
+  const actionFeed = { version: 1, capturedAt: lagged ? `${lagged}T10:00:00.000Z` : new Date().toISOString(), requestedFrom: "2020-01-01",
+    requestedTo: `${Number(FIXTURE_DAY.slice(0, 4)) + 1}${FIXTURE_DAY.slice(4)}`, verifiedThrough: lagged ?? FIXTURE_DAY, symbols: null, isins: [], rows: [],
     sourceUrl: "https://glow-central-research.tech-441.workers.dev/data/corporate-actions.json" };
   await page.route("**/api/corporate-actions?*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, feed: actionFeed }) }));
   await page.route("**/data/corporate-actions.json", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(actionFeed) }));
@@ -11745,13 +12286,14 @@ async function installLiveMocks(page, opts = {}) {
     // that no request was seen; a request that named none records `[]`.
     if (QUOTE_PRIORITY == null) QUOTE_PRIORITY = sentPriority ?? [];
     const quotes = {}, missing = [];
+    const now = new Date().toISOString(); // see FIXTURE_DAY
     for (const s of want) {
       const mark = MARK_BY_SYMBOL.get(s);
       if (!mark) { missing.push(s); continue; }
       quotes[s] = {
         price: Math.round(mark * QUOTE_FACTOR * 10000) / 10000, prevClose: mark,
         open: mark, dayLow: mark, dayHigh: mark, low52: null, high52: null,
-        marketCap: null, volume: null, yearChangePct: null, ageS: 0,
+        marketCap: null, volume: null, yearChangePct: null, ageS: 0, tradedAt: now,
       };
     }
     await route.fulfill({
@@ -11760,10 +12302,11 @@ async function installLiveMocks(page, opts = {}) {
       // `missing`, which is attempted and unservable. This fixture answers
       // everything in one round, so it is empty; `installFillingQuotes` is the
       // one that exercises the other state.
-      body: JSON.stringify({ ok: true, quotes, asOf: "2026-08-13T10:00:00.000Z", missing, pending: [], fresh: Object.keys(quotes).length, stale: 0 }),
+      body: JSON.stringify({ ok: true, quotes, asOf: now, missing, pending: [], fresh: Object.keys(quotes).length, stale: 0 }),
     });
   });
   await page.route("**/api/indices*", async (route) => {
+    const at = Date.now(), session = istDay(at), stamp = new Date(at).toISOString(); // see FIXTURE_DAY
     const indices = MOCK_INDICES.map(([id, label, symbol, name, prev]) => {
       const level = Math.round(prev * INDEX_FACTOR * 100) / 100;
       return {
@@ -11771,15 +12314,15 @@ async function installLiveMocks(page, opts = {}) {
         // The level's OWN session, distinct from the previous close's, because the
         // real Function now names both ends of the move — a fixture missing a
         // field the response carries stops exercising what reads it.
-        level, sessionDate: "2026-08-13", prevClose: prev, prevCloseDate: "2026-08-12",
+        level, sessionDate: session, prevClose: prev, prevCloseDate: dayBefore(session),
         change: Math.round((level - prev) * 100) / 100, changePct: (INDEX_FACTOR - 1) * 100,
         dayHigh: level, dayLow: level, high52: prev * 1.2, low52: prev * 0.8,
-        asOf: "2026-08-13T10:00:00.000Z",
+        asOf: stamp,
       };
     });
     await route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({ ok: true, source: "fixture", fetchedAt: "2026-08-13T10:00:00.000Z", resolved: indices.length, requested: indices.length, indices }),
+      body: JSON.stringify({ ok: true, source: "fixture", fetchedAt: stamp, resolved: indices.length, requested: indices.length, indices }),
     });
   });
   /**
@@ -12060,7 +12603,10 @@ const CAPITAL_RETURN_CHECKS = [
     (t, ctx) => {
       if (!CAPITAL_RECORD_BOOK) return { notChecked: "the book's capital record could not be read" };
       const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-      const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
+      // The statement book, which is the table's own basis (see the identity
+      // check below): an account the live layer values from a depository's
+      // balance is not thereby a redeemed one or an unredeemed one.
+      const pos = statementBookPositions(src) ?? [];
       const valued = new Map();
       for (const p of pos) valued.set(p.accountId, (valued.get(p.accountId) ?? 0) + p.marketValue);
       const closed = [...new Set(CAPITAL_RECORD_BOOK.moves.filter((m) => m.direction === "out").map((m) => m.accountId))]
@@ -15421,8 +15967,14 @@ const CIO_SHARED = [
     const value = ctx.kpiTiles.find((x) => x.slot === "value");
     if (!value) return false;
     if (COSTED_BOOK.costedCount === COSTED_BOOK.holdings) return { notChecked: "every holding in this book reports a cost, so the invested line covers the whole value" };
+    /* ON A WALK THAT SERVES QUOTES the holdings include the listed shares a
+       depository reports with no price, which the fixture prices into rows.
+       None reports a cost, so the costed count does not move and the
+       denominator does. */
+    if (ctx.quotesServed && PRICED_DEPOSITORY_ROWS == null) return false;
+    const holdings = COSTED_BOOK.holdings + (ctx.quotesServed ? PRICED_DEPOSITORY_ROWS : 0);
     const m = /(\d+) of (\d+) reports? a cost/.exec(value.sub ?? "");
-    return !!m && Number(m[1]) === COSTED_BOOK.costedCount && Number(m[2]) === COSTED_BOOK.holdings;
+    return !!m && Number(m[1]) === COSTED_BOOK.costedCount && Number(m[2]) === holdings;
   }],
   /**
    * ...AND NO TILE LINKS AT A SCOPE THAT IS NOW A FACET. `?of=listed`,
@@ -18495,10 +19047,15 @@ const HB_DEPOSITORY = [
     // balance on an account that sent no holding statement, and units a holding
     // statement records with no rate — only the first may say "no holding
     // statement", and a line naming a kind the set does not carry is false.
-    const closing = B.depositoryCount > 0, noRate = B.unpricedLines.length > 0;
+    // And a holding a Motilal statement records beside the price of its last
+    // depository movement (Stage 10cz) is named as exactly that — a transaction
+    // price, never a valuation — wherever the set carries one.
+    const closing = B.depositoryCount > 0, noRate = B.unpricedLines.length > 0, lastMove = B.lastMovementCount > 0;
     return !!h && h.n === B.depositoryAllCount && /AMFI.s NAV/.test(h.text) && !/valued\s+from depository units/.test(h.text)
       && closing === /transaction statement and no holding statement/.test(h.title)
-      && noRate === /prints no rate/.test(h.title) && /not\s+in that figure/.test(h.title);
+      && noRate === /prints no rate/.test(h.title)
+      && lastMove === /last depository movement.*transaction price, not a valuation/.test(h.title)
+      && /not\s+in that figure/.test(h.title);
   }],
 ];
 /**
@@ -18557,11 +19114,29 @@ const pickListChecks = (axis, security = false) => [
     }
     return !ctx.pickOptions.some((o) => fundSpellings.has(sameCompany(o)) && !bookNames.has(sameCompany(o)));
   }]]),
-  ["...and the company the family searched for is ONE option", (t, ctx) => {
+  /**
+   * ONE OPTION WHERE THIS AXIS HAS A ROW FOR IT, AND NONE WHERE IT HAS NOT
+   * (Stage 10cz). The security axis draws the company wherever a fund discloses
+   * it or a row values it; the category axis only where a row values it. A demat
+   * line no price reaches is neither — on the category axis the family's Kaynes
+   * is no holding row until a live quote makes it one, and offering an option
+   * that picks no row is the control-that-looks-live failure.
+   */
+  ["...and the company the family searched for is ONE option wherever it is a row", (t, ctx) => {
     if (ctx.pickOptions == null) return { notChecked: "the list is read on the primary pass only" };
     if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
-    return ctx.pickOptions.filter((o) => securityKeyOf(o) === SOLD_ELSEWHERE.key).length === 1;
+    const n = ctx.pickOptions.filter((o) => securityKeyOf(o) === SOLD_ELSEWHERE.key).length;
+    const rowHere = SOLD_ELSEWHERE.valued || (security && !!SECURITY_AXIS_BOOK?.derivedByKey?.has(SOLD_ELSEWHERE.key));
+    return rowHere ? n === 1 : n === 0;
   }],
+  ...(security ? [] : [["...and where it is no row, typing it names the holding a statement records rather than finding nothing", (t, ctx) => {
+    if (ctx.pickOptions == null) return { notChecked: "the list is read on the primary pass only" };
+    if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
+    if (SOLD_ELSEWHERE.valued) return { notChecked: "a row of this book values the company, so the list offers it and its search needs no note" };
+    const p = ctx.pickTyped;
+    if (!p) return false;
+    return !p.options.some((o) => securityKeyOf(o) === SOLD_ELSEWHERE.key) && p.recorded.includes(SOLD_ELSEWHERE.key);
+  }]]),
 ];
 
 /**
@@ -19894,7 +20469,13 @@ const INVARIANTS = {
         }
         const dist = new Map(CAPITAL_RECORD_BOOK.commitments.map((c) => [c.accountId, c.distributed]));
         const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-        const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
+        // ON THE STATEMENT BASIS, because the table is: `TransactionsView` reads
+        // `statementPortfolio` (a dated trade is a statement fact, and a live
+        // price is not evidence about it). Struck on the live model, the check
+        // failed a correct page the moment a MUTUAL FUND gained a dated record —
+        // Helios's own purchase (Stage 10cy) set against its published NAV
+        // (₹30.44 Cr) where the row is valued at its statement's ₹31.00 Cr.
+        const pos = statementBookPositions(src) ?? [];
         const value = new Map();
         for (const p of pos) value.set(p.accountId, (value.get(p.accountId) ?? 0) + p.marketValue);
         let checked = 0;
@@ -20551,6 +21132,47 @@ const INVARIANTS = {
       if (!a) return false;
       if (a.options !== 0) return { notChecked: `“${a.q}” matched ${a.options} option(s), so the empty state was never reached` };
       return !a.named.includes(a.q);
+    }],
+    /**
+     * …NOR A REVIEW LINE A STATEMENT REPORTS, WHETHER OR NOT THIS BOOK VALUES
+     * IT (Stage 10cy). The note says "no statement reports it", which is a claim
+     * about the STATEMENTS: Zepto's preference shares, IFB and NLC sit on Ajay's
+     * transaction-only demat, and a reader told otherwise asks the family for a
+     * document they already sent. Every such line whose own name empties the
+     * list is typed; not one may be named.
+     */
+    ["…nor a review line a statement reports, whether or not this book values it", (t, ctx) => {
+      const B = REVIEW_GAP_BOOK;
+      if (!B?.reportedAll?.length) {
+        // Both inputs read and the join tied nothing: it lost its input.
+        const inp = B?.reportInputs ?? {};
+        return inp.closings > 0 && inp.balances > 0 ? false : { notChecked: "the review or the statements did not read" };
+      }
+      if (!B.reportedOnly?.length) return { notChecked: "every line a statement reports is also one the name tier withholds" };
+      if (!ctx.absentName) return { notChecked: "the search probe did not run" };
+      const reads = ctx.absentName.reported ?? [];
+      if (reads.length !== Math.min(40, B.reportedOnly.length)) return false;
+      const tested = reads.filter((r) => r.options === 0);
+      if (!tested.length) return { notChecked: "every such name matches an option here, so the empty state was never reached" };
+      return tested.every((r) => !r.named.includes(r.q));
+    }],
+    /**
+     * …NOR ONE A FOLIO THIS BOOK KEEPS OUT REPORTS. HOPE INDIA TRUST's own folio
+     * statements are in the drop, out of the book by decision, and report four
+     * of the review's Cash lines — so "no statement reports it … ask for AMC
+     * folio statements" asks for statements the family already sent.
+     */
+    ["…nor one a folio this book keeps out reports", (t, ctx) => {
+      const B = REVIEW_GAP_BOOK;
+      if (!B?.keptOut?.length) {
+        return (B?.reportInputs?.trustDocs ?? 0) > 0 ? false : { notChecked: "the archive carries no folio this book keeps out" };
+      }
+      if (!ctx.absentName) return { notChecked: "the search probe did not run" };
+      const reads = ctx.absentName.keptOut ?? [];
+      if (reads.length !== Math.min(12, B.keptOut.length)) return false;
+      const tested = reads.filter((r) => r.options === 0);
+      if (!tested.length) return { notChecked: "every such name matches an option here, so the empty state was never reached" };
+      return tested.every((r) => !r.named.includes(r.q));
     }],
     ["…and neither is a search that names nothing at all", (t, ctx) => {
       const a = ctx.absentName?.typo;
@@ -21982,12 +22604,37 @@ const INVARIANTS = {
       return real.length > 0 && real[0].href === "/polycab" && real[0].kind === "page"
         && real.every((x) => (x.kind === "page" || x.kind === "view") && (x.href === "/polycab" || x.href.startsWith("/polycab?")));
     }],
-    ["every result says what it is and where it goes, and a holding says what it is worth", () => {
+    /**
+     * A HOLDING SAYS WHAT IT IS WORTH — OR, WHERE A STATEMENT RECORDS IT AND
+     * NOTHING VALUES IT, THAT IT IS NOT VALUED AND HOW MANY UNITS IT IS (Stage
+     * 10cz). A Motilal demat's "Rate" is the price of the holding's last
+     * movement, so those lines are quantities; with no live quote a company
+     * held only there — Ankita's 4,875 Kaynes — is found from the statement's
+     * own line, "Not valued · 4,875 units", with no ₹ because nothing on this
+     * page values it. So a holding row with no figure must be one of the two
+     * states that have none: redeemed, or recorded and not valued. The second is
+     * struck on the BOOK — the row's key is a company `recordedHomes` names, and
+     * its units are the statements' own sum — never on its words alone, so a
+     * valued holding that lost its figure cannot pass by saying "Not valued".
+     * And a "Not valued" row carries no ₹ at all: the last movement's price is
+     * the figure Stage 10cz stopped passing off as a mark.
+     */
+    ["every result says what it is and where it goes, and a holding says what it is worth — or that nothing values it, and the units a statement records", () => {
       if (!SEARCH) return false;
       const rows = Object.values(SEARCH.results).flatMap((r) => r.rows ?? []).filter((x) => x.kind !== "ask");
       if (!rows.length) return false;
-      return rows.every((x) => x.kind && x.href?.startsWith("/") && x.detail.length > 0)
-        && rows.filter((x) => x.kind === "holding" && !/redeemed/i.test(x.detail)).every((x) => /₹[\d,.]+/.test(x.detail));
+      if (!rows.every((x) => x.kind && x.href?.startsWith("/") && x.detail.length > 0)) return false;
+      const unitsIn = (d) => {
+        const m = /([\d,]+(?:\.\d+)?)\s+units?\b/.exec(d);
+        return m ? Number(m[1].replace(/,/g, "")) : NaN;
+      };
+      return rows.filter((x) => x.kind === "holding" && !/redeemed/i.test(x.detail)).every((x) => {
+        if (!/^Not valued\b/.test(x.detail)) return /₹[\d,.]+/.test(x.detail);
+        if (/₹/.test(x.detail)) return false;
+        const want = RECORDED_HOME_UNITS?.get((x.id ?? "").replace(/^holding:/, ""));
+        // Printed to at most three decimals, Indian-grouped.
+        return typeof want === "number" && want > 0 && Math.abs(unitsIn(x.detail) - want) <= 0.0005;
+      });
     }],
     ["the list paints over the page, not under it — a short list, a tall one and the one carrying the note", () => {
       const g = SEARCH?.geometry, t = SEARCH?.geometryTall;
@@ -22694,8 +23341,10 @@ const INVARIANTS = {
       return pill.owners === want.owners && pill.accounts === want.accounts
         && new RegExp(`Held in ${want.owners} entit(y|ies) · ${want.accounts} accounts`).test(pill.text ?? "");
     }],
+    // Every account the table names — a statement row, or a line a statement
+    // records and nothing values (Stage 10cz), which the pill counts too.
     ["the account count is the rows Position by account draws", (t, ctx) =>
-      Number.isFinite(ctx?.accountRows) && ctx.accountRows === M2_BOOK?.entities?.accounts],
+      Number.isFinite(ctx?.heldAccountRows) && ctx.heldAccountRows === M2_BOOK?.entities?.accounts],
     ["no entity count is the account count", (t, ctx) =>
       M2_BOOK?.entities != null && !new RegExp(`Held in ${M2_BOOK.entities.accounts} entities`).test(t)],
   ],
@@ -26789,8 +27438,10 @@ const INVARIANTS = {
       // which Stage 10cp moved there. Each must count the current holdings.
       const face = /held\s*·\s*\d+ of (\d+) names/.exec(t);
       const hover = (ctx?.titles ?? []).map((x) => /^The move is struck on .*?across \d+ of (\d+) direct-equity names/.exec(x)).find(Boolean);
+      // THE LIVE SCOPE, because this walk serves quotes: the depository's
+      // listed shares are rows here wherever the fixture prices them.
       return !!face && !!hover
-        && Number(face[1]) === DE_CURRENT_NAMES.current && Number(hover[1]) === DE_CURRENT_NAMES.current;
+        && Number(face[1]) === DE_CURRENT_NAMES.live && Number(hover[1]) === DE_CURRENT_NAMES.live;
     }],
     /**
      * ...AND THE MOVERS TOGGLE IS THERE WITH A FEED TOO.
@@ -31493,7 +32144,7 @@ const INVARIANTS = {
       const key = DUAL_KEY ?? SEPARATE_KEY?.key ?? null;
       const want = key ? M2_BOOK?.entitiesOf(key) : null;
       const pill = ctx?.stockM2?.pill;
-      const rows = ctx?.accountRows;
+      const rows = ctx?.heldAccountRows;
       if (!want || !pill) return false;
       // NOT an abstention: this route is the dually-reported holding, so a page
       // that drew no account rows at all is the failure this check exists for.
@@ -31772,8 +32423,35 @@ const INVARIANTS = {
       if (!d) return { notChecked: "the probe did not run" };
       const B = CASH_INSTRUCTION_BOOK;
       if (!B || !B.partialOwner) return false;
+      // What IS valued is the note's to say, and since Stage 10cy it is more than
+      // the cash-equivalent funds — so the status names the part that is NOT,
+      // and the hover names both.
       return d.partialAccounts.length === B.partialAccounts.length && d.partialAccounts.every((x) =>
-        /partly valued/.test(x.text) && /cash-equivalent fund/.test(x.text) && /not valued/.test(x.why));
+        /partly valued/.test(x.status) && /not valued/.test(x.status)
+        && /AMFI/.test(x.why) && /\bfunds?\b/.test(x.why) && /not valued/.test(x.why));
+    }],
+    /**
+     * ── …AND WHAT IN IT NOTHING VALUES OPENS UNDER IT, BALANCE BY BALANCE ────
+     *
+     * The note counted them; the family asked to SEE them (Stage 10cy). The
+     * count on the status line, the count on the handle and the lines listed
+     * must all be the book's own — `PARTIAL_BALANCE_BOOK`, re-derived here — and
+     * each line must carry its units and a reason. The depository's copy of
+     * units a fund's own statement reports is NOT listed: it is valued through
+     * that fund, and listing it would say the family holds units nothing values.
+     */
+    ["…and every balance nothing values is listed under it, with its units and why", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      const P = PARTIAL_BALANCE_BOOK;
+      if (!P) return false;
+      const x = d.partialAccounts.find((a) => a.account === P.account);
+      if (!x) return false;
+      const n = P.notValued.length;
+      const m = /·\s*(\d+)\s+held, not valued/.exec(x.status);
+      const want = new Map(P.notValued.map((b) => [b.key, b.units]));
+      return n > 0 && x.notValued === n && !!m && Number(m[1]) === n && x.lines.length === n
+        && x.lines.every((l) => want.has(l.key) && Math.abs(want.get(l.key) - l.units) < 0.0005 && l.why.length > 20);
     }],
   ],
   /**
@@ -32903,6 +33581,7 @@ for (const theme of THEMES) {
       // every tab renders the same absent state and a filter that matched
       // nothing would be indistinguishable from one that worked.
       PRICE_REQUESTS = [];
+      QUOTES_SERVED = false;
       if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench") await installLiveMocks(page);
       if (name === "performance-live") await installLiveMocks(page);
       if (name === "monitor-withheld" || name === "monitor-withheld-loading") await installLiveMocks(page);
@@ -33227,7 +33906,10 @@ for (const theme of THEMES) {
            * abstains by name if this book offers no such name.
            */
           let gapWithHits = null;
-          for (const nm of (REVIEW_GAP_BOOK?.claimable ?? []).slice(0, 40)) {
+          // Any review line, the ones a statement reports included: the rule is
+          // about what a search that FINDS something shows, whoever withholds it.
+          const anyGap = [...new Set([...(REVIEW_GAP_BOOK?.claimable ?? []), ...(REVIEW_GAP_BOOK?.reportedAll ?? [])])];
+          for (const nm of anyGap.slice(0, 40)) {
             const r = await run(nm);
             if (r.rows.some((x) => x.kind !== "ask")) { gapWithHits = { q: nm, ...r }; break; }
           }
@@ -33396,6 +34078,12 @@ for (const theme of THEMES) {
       }
       // THE KAYNES ROW, OPENED where the family searched for it.
       if (name === "monitor-sold-elsewhere" && SOLD_ELSEWHERE) {
+        // THE LOOK-THROUGH FIRST (Stage 10cz). With no quote feed the family's
+        // Kaynes is a recorded demat line and no position, so its row is the
+        // look-through's DERIVED row and exists only once the filings are read.
+        // Looking for it before then finds nothing, clicks nothing, and fails
+        // three claims about a row the page draws a second later.
+        await page.waitForSelector('[data-lookthrough="ok"], [data-lookthrough="unreachable"]', { timeout: 20000 }).catch(() => {});
         const row = page.locator(`tr[data-security-key="${SOLD_ELSEWHERE.key}"] button`).first();
         if (await row.count()) {
           await row.click();
@@ -33414,10 +34102,39 @@ for (const theme of THEMES) {
        */
       if ((name === "monitor-picklist" || name === "monitor-security-picklist")
         && theme === THEMES[0] && width === WIDTHS[0]) {
+        // On the security axis the list offers what the funds disclose too, and
+        // — since a demat's unpriced line is no position (Stage 10cz) — the
+        // family's own recorded companies only through that join. Read before
+        // the filings land, the list is missing both.
+        if (name === "monitor-security-picklist") {
+          await page.waitForSelector('[data-lookthrough="ok"], [data-lookthrough="unreachable"]', { timeout: 20000 }).catch(() => {});
+        }
         const opener = page.locator("[data-multiselect-toggle='All holdings']").first();
         if (await opener.count()) {
           await opener.click(); await page.waitForTimeout(400);
           PICK_OPTIONS[name] = await page.$$eval("[data-option]", (els) => els.map((e) => e.getAttribute("data-option") ?? ""));
+          /**
+           * …AND THE FAMILY'S OWN COMPANY, TYPED (Stage 10cz). On the category
+           * axis a demat line no price reaches is no holding row, so the list
+           * offers no option for it — and the search's empty note must then
+           * name it as a holding a statement records, or "no holdings match"
+           * reads as the dashboard having lost Ankita's 4,875 Kaynes. The
+           * first long word of the book's key, typed as a reader types it; the
+           * box is emptied again before the list closes, so nothing the note
+           * says reaches the text the route's other checks read.
+           */
+          if (name === "monitor-picklist" && SOLD_ELSEWHERE) {
+            const box = page.locator("[data-multiselect='All holdings'] input").first();
+            const word = SOLD_ELSEWHERE.key.split("-").find((w) => w.length >= 4) ?? SOLD_ELSEWHERE.key;
+            if (await box.count()) {
+              await box.fill(word); await page.waitForTimeout(500);
+              PICK_TYPED[name] = await page.evaluate(() => ({
+                options: [...document.querySelectorAll("[data-option]")].map((e) => e.getAttribute("data-option") ?? ""),
+                recorded: [...document.querySelectorAll("[data-recorded-key]")].map((e) => e.getAttribute("data-recorded-key") ?? ""),
+              }));
+              await box.fill(""); await page.waitForTimeout(300);
+            }
+          }
           await opener.click().catch(() => {}); await page.waitForTimeout(300);
         } else PICK_OPTIONS[name] = [];
       }
@@ -34148,7 +34865,17 @@ for (const theme of THEMES) {
           recordedValued: REVIEW_GAP_BOOK.recordedValued
             ? { q: REVIEW_GAP_BOOK.recordedValued, ...(await read(REVIEW_GAP_BOOK.recordedValued)) }
             : null,
+          /**
+           * EVERY review line a statement reports that only the statement join
+           * withholds, and every one a folio this book keeps out reports — all
+           * of them, not the first: the table is hand-kept, and a check on one
+           * entry passes while any other goes missing.
+           */
+          reported: [],
+          keptOut: [],
         };
+        for (const q of (REVIEW_GAP_BOOK.reportedOnly ?? []).slice(0, 40)) ABSENT_NAME.reported.push({ q, ...(await read(q)) });
+        for (const q of (REVIEW_GAP_BOOK.keptOut ?? []).slice(0, 12)) ABSENT_NAME.keptOut.push({ q, ...(await read(q)) });
         /**
          * AND THE NOTE IS LEFT ON SCREEN, which is not tidiness.
          *
@@ -35632,6 +36359,16 @@ for (const theme of THEMES) {
         })),
         partialAccounts: [...document.querySelectorAll("[data-partial-account]")].map((e) => ({
           text: (e.textContent ?? "").replace(/\s+/g, " ").trim(),
+          // Stage 10cy: the account's status line, its count of what nothing
+          // values, and those balances, each with its reason as its hover — read
+          // whether or not the fold is open (a closed <details> keeps them).
+          account: e.getAttribute("data-partial-account"),
+          status: (e.querySelector("summary")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+          notValued: Number(e.getAttribute("data-partial-not-valued")),
+          lines: [...e.querySelectorAll("[data-partial-line]")].map((l) => ({
+            key: l.getAttribute("data-partial-line"), units: Number(l.getAttribute("data-partial-units")),
+            why: l.getAttribute("title") ?? "",
+          })),
           // The account's own note — what is valued and what is not — is the
           // hover on its name, where every other account on that card keeps its
           // reason (Stage 10cf). `innerText` cannot see a `title`.
@@ -36876,6 +37613,15 @@ for (const theme of THEMES) {
       // prints a strategy — so the entity-count check below reads `<tr>`s.
       const accountRows = FAST ? null : await page.evaluate(() =>
         document.querySelectorAll("tr[data-account-row]").length);
+      // …AND EVERY ACCOUNT THE TABLE NAMES, valued or not (Stage 10cz). A line a
+      // statement records and nothing values is a row of the same table under
+      // its own handle — never `data-account-row`, which means a measured
+      // position — and the page's pill counts its account. Distinct ids, so an
+      // account drawn under both handles is one account.
+      const heldAccountRows = FAST ? null : await page.evaluate(() => new Set([
+        ...[...document.querySelectorAll("tr[data-account-row]")].map((e) => e.getAttribute("data-account-row")),
+        ...[...document.querySelectorAll("tr[data-recorded-row]")].map((e) => e.getAttribute("data-recorded-row")),
+      ]).size);
       // WHICH FUNDS THE PRIVATE BOOK DRAWS, by key. A redeemed fund's row is
       // correct in every cell and adds nothing to any total, so no value check
       // on that page can see it.
@@ -39468,7 +40214,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -39,10 +39,10 @@
 // other artefact in this repo can confirm.
 import fs from "node:fs";
 import path from "node:path";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS } from "@/data/glowData";
 import {
   trancheTable, trancheKey, trancheCoverage,
-  contributionsAreComplete, capitalRollup, capitalTotals, capitalReturn,
+  contributionsAreComplete, capitalRollup, capitalTotals, capitalReturn, callDatesByHolding,
 } from "@/lib/tranches";
 import type { Position } from "@/lib/types";
 
@@ -246,6 +246,7 @@ const manifest = JSON.parse(fs.readFileSync(path.join(AUDIT, "manifest.json"), "
   { docKey: string; accountNo: string }[];
 let navChecked = 0;
 let navCarried = 0;
+let grossCosted = 0;
 for (const k of keys) {
   const tr = BOOK_POSITION_TRANCHES[k];
   const p = posOf(tr.accountId, tr.securityKey);
@@ -266,6 +267,22 @@ for (const k of keys) {
     // silent skip below, whose comment ("this issuer prints no NAV column")
     // would be false of it: Buoyant prints every NAV.
     if (r.move.carriedFrom) { navCarried++; continue; }
+    // A TRANCHE COSTED AT ITS GROSS — the statement's own cost column counts the
+    // stamp duty as part of what the units cost (build-book's `grossTies`) — has
+    // an entry cost per unit no page prints: the NAV the units were allotted at
+    // is struck on the NET. So the net, from the dated record the tranche was
+    // copied from, is what must reproduce the printed NAV. Counted apart and
+    // FAILED where the page does not carry it, never let into the silent skip
+    // below, whose comment would be false of it.
+    const rec = BOOK_CAPITAL_MOVES.find((m) => m.accountId === r.move.accountId && m.date === r.move.date
+      && m.direction === "in" && m.units === r.move.units);
+    if (rec && rec.invested != null && r.move.invested === r.move.amount && rec.invested !== rec.amount) {
+      const netNav = (rec.invested / r.move.units!).toFixed(4);
+      grossCosted++;
+      ok(`${acctNo} ${r.date} costed at its gross — its net ÷ units, ${netNav}, is the NAV the page prints`,
+        raw.includes(netNav));
+      continue;
+    }
     // The statement prints its NAV to four decimals, so that is the precision
     // the derived figure is held to — the document's own, never a widened one.
     const printed = r.navAtEntry.toFixed(4);
@@ -276,12 +293,29 @@ for (const k of keys) {
 }
 // A check that finds nothing to check must say so rather than pass — golden.mjs's
 // rule. Every Sanshi tranche prints a NAV, so this cannot legitimately be zero.
-ok("the archive actually witnessed some entry NAVs", navChecked >= 10, `${navChecked} matched`);
+// Since VD-24 costs a tranche at every rupee PAID, Sanshi's are gross-costed and
+// their printed NAV is witnessed through the net in the branch above — so the
+// witness is the two counts together, never the plain branch alone.
+ok("the archive actually witnessed some entry NAVs", navChecked + grossCosted >= 10,
+  `${navChecked} matched directly, ${grossCosted} through the net`);
 // ...and the carried ones were set aside by NAME, not lost: exactly the book's
 // own count of tranches carrying a `carriedFrom`, over the same positions.
 const carriedInBook = keys.reduce((a, k) => a + BOOK_POSITION_TRANCHES[k].moves.filter((m) => m.carriedFrom).length, 0);
 ok("every tranche carried through a class switch was set aside for carriedCost.test.ts, and only those",
   navCarried === carriedInBook, `${navCarried} set aside, ${carriedInBook} in the book`);
+// ...and the gross-costed ones are the ones whose position's printed cost is the
+// gross: exactly the positions whose tranche invested sums to the cost basis
+// while the dated record's net does not. LOAD-BEARING on this book (Helios, Active
+// Momentum and, since VD-24, every Sanshi tranche), so the branch above cannot pass
+// by never running.
+const grossInBook = keys.filter((k) => {
+  const tr = BOOK_POSITION_TRANCHES[k];
+  return tr.moves.some((m) => m.invested === m.amount && BOOK_CAPITAL_MOVES.some((c) =>
+    c.accountId === m.accountId && c.date === m.date && c.direction === "in" && c.units === m.units
+    && c.invested != null && c.invested !== c.amount));
+}).reduce((a, k) => a + BOOK_POSITION_TRANCHES[k].moves.length, 0);
+ok("every tranche costed at its gross had its printed NAV checked through the net",
+  grossCosted === grossInBook && grossCosted > 0, `${grossCosted} checked, ${grossInBook} in the book`);
 
 console.log("\n── the completeness gate, on inputs this book does not contain ──");
 // EVERY FUNDED ACCOUNT IN THIS BOOK PASSES THE GATE — seven by units, three
@@ -393,6 +427,61 @@ ok("no figure in the moves is non-finite",
     (m.amount == null || Number.isFinite(m.amount))
     && (m.invested == null || Number.isFinite(m.invested))
     && (m.units == null || Number.isFinite(m.units))));
+
+console.log("\n── a drawdown fund's own calls date the one holding they bought (Stage 10cy) ──");
+// "Invested on" takes a fund's dated calls only where the account holds that
+// fund and nothing else, its paid-in covers every call and nothing is printed as
+// unpaid. On this book that is five folios; each date list must be the fund's
+// own call dates, and the refusals are exercised on constructed accounts, since
+// nothing in this book trips them.
+{
+  const byHolding = callDatesByHolding(BOOK_COMMITMENTS, BOOK_POSITIONS);
+  const expected = [
+    "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "carnelian-bharat-amritkaal-fund-4551",
+    "motilal-oswal-delphi-equity-fund-9049241536",
+    "motilal-oswal-founders-fund-90410016093",
+    "motilal-oswal-founders-fund-90410016104",
+  ];
+  const got = [...byHolding.keys()].map((k) => k.split("|")[0]).sort();
+  const covered = new Set(got);
+  // Accounts with a dated record of their own already date their holding; the
+  // calls tier only has to answer for the rest, so those are the ones asserted.
+  ok("the five single-fund drawdown folios with no allotment record are dated by their calls",
+    expected.every((a) => covered.has(a)), got.join(", "));
+  for (const [k, dates] of byHolding) {
+    const [acct, key] = k.split("|");
+    const c = BOOK_COMMITMENTS.find((x) => x.accountId === acct)!;
+    ok(`${acct.slice(-12)}: the dates are the fund's own calls, oldest first`,
+      JSON.stringify(dates) === JSON.stringify(c.calls.map((x) => x.date).sort()));
+    ok(`${acct.slice(-12)}: the holding is the account's only line carrying money`,
+      BOOK_POSITIONS.filter((p) => p.accountId === acct && (p.marketValue !== 0 || (p.costBasis ?? 0) !== 0))
+        .map((p) => p.securityKey).join() === key);
+  }
+  ok("no account without dated calls is given a date",
+    [...byHolding.keys()].every((k) => BOOK_COMMITMENTS.some((c) => c.accountId === k.split("|")[0] && c.calls.length)));
+
+  const base = BOOK_POSITIONS.find((p) => p.accountId === expected[0])!;
+  const cm = BOOK_COMMITMENTS.find((c) => c.accountId === expected[0])!;
+  const acct = "acct-calls-x";
+  const fund = { ...base, accountId: acct, securityKey: "fund-x" };
+  const commit = { ...cm, accountId: acct };
+  ok("constructed: a single-fund folio with paid calls is dated",
+    callDatesByHolding([commit], [fund]).has(trancheKey(acct, "fund-x")));
+  const share = { ...base, accountId: acct, securityKey: "share-y", assetClass: "Equity" as const };
+  ok("constructed: an account also holding a share gets no date — the calls did not buy that share",
+    callDatesByHolding([commit], [fund, share]).size === 0);
+  ok("constructed: a cash sleeve at ₹0 with no cost does not stop it",
+    callDatesByHolding([commit], [fund, { ...share, marketValue: 0, costBasis: null }]).size === 1);
+  ok("constructed: a holding that is not an AIF gets no date",
+    callDatesByHolding([commit], [{ ...fund, assetClass: "Equity" as const }]).size === 0);
+  ok("constructed: calls the statement has not seen paid get no date",
+    callDatesByHolding([{ ...commit, paid: (commit.paid ?? 0) - 1e5 }], [fund]).size === 0);
+  ok("constructed: a call printed as unpaid gets no date",
+    callDatesByHolding([{ ...commit, pending: 1e5 }], [fund]).size === 0);
+  ok("constructed: no paid-in line at all gets no date",
+    callDatesByHolding([{ ...commit, paid: null }], [fund]).size === 0);
+}
 
 // ── MT-8: "Purchased on" is the span of the PURCHASES, not of every movement ──
 // Green Lantern 510861 was funded once, on 16 Jan 2025, and its record's last

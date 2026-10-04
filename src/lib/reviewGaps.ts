@@ -15,10 +15,10 @@
 // review workbook is not a source — by decision"), so no value and no quantity
 // of its own crosses over; `REVIEW_GAPS` carries a name, a custodian and two
 // sentences, and its generator throws rather than emit a number.
-import { BOOK_POSITIONS } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { securityKeyOf } from "@/lib/securityKey";
 import { schemeNameFor } from "@/lib/schemeLabel";
-import { depositoryCashHoldings, fundNavFor, unpricedStatementUnits } from "@/lib/fundNavs";
+import { fundNavFor } from "@/lib/fundNavs";
 import { REVIEW_GAPS, REVIEW_AS_OF, type ReviewGap } from "@/data/reviewGaps";
 
 export type { ReviewGap };
@@ -48,16 +48,25 @@ const spellings = (g: ReviewGap) => [g.name, ...g.aliases];
  * statement reported a position sitting one search away. Also `Bharat
  * Parenteral`, `Infinium Pharma`, `Kaynes Technology` and `Zaggle Prepaid`.
  *
- * AND IT DECLINES THE THREE VEDANTA SPIN-OFFS TOO, which ARE genuine gaps — the
- * book's `vedanta` row is their former parent, and nothing here can tell that
- * apart from a clipped name without the hand-checked table `nameMatch.mjs`
- * already says this corpus needs. Three real answers withheld rather than one
- * false one published; `shared/nameMatch.mjs` lists them for a human to commit.
+ * AND IT DECLINES THE THREE VEDANTA SPIN-OFFS TOO, because the book's `vedanta`
+ * row is their former parent. That is the right answer, though not for this
+ * reason: the note would be false of all three. The review closes Ajay at
+ * 1,15,000 shares of each at MOPWM and 1,15,000 at HDFC Bank, and his
+ * transaction-only demat holds 1,15,000 of each on 30 June 2026 — credited by
+ * the 8 May arrangement, delivered out 22–27 July. Only the HDFC Bank half is
+ * on no statement.
  */
 const flat = (k: string) => k.replace(/-/g, "");
 const prefixRelated = (k: string, keys: readonly string[]) => keys.some((bk) =>
   bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
-const BOOK_KEYS = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security)))].filter(Boolean);
+// A holding a statement RECORDS counts as well as one the book values: the
+// Motilal demats' lines are quantities with no usable price (Stage 10cz), and a
+// review line spelling one of them is still a holding the statements report.
+const RECORDED = BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0 && !u.sameUnitsReportedBy);
+const BOOK_KEYS = [...new Set([
+  ...BOOK_POSITIONS.map((p) => p.security),
+  ...RECORDED.map((u) => u.security),
+].map((n) => securityKeyOf(n)))].filter(Boolean);
 
 /**
  * ── …AND A GAP WHOSE NAME IS A SCHEME THE BOOK HOLDS (SC-B4) ────────────────
@@ -118,59 +127,156 @@ export function schemeNamesOf(securityKey: string): string[] {
   return [...new Set([s?.name, s?.amfiName, n?.scheme].filter((x): x is string => !!x))];
 }
 
-/** Every scheme a statement in the book reports — held OR redeemed, because both are reported. */
-const HELD_SCHEME_KEYS = [...new Set(BOOK_POSITIONS.flatMap((p) => schemeNamesOf(p.securityKey))
+/**
+ * Every scheme a statement reports — held OR redeemed, because both are
+ * reported, and one a statement records with no usable price too (Stage 10cz).
+ */
+const HELD_SCHEME_KEYS = [...new Set([...BOOK_POSITIONS.map((p) => p.securityKey), ...RECORDED.map((u) => u.securityKey)]
+  .flatMap((k) => schemeNamesOf(k))
   .map((n) => securityKeyOf(schemeStem(n))))].filter(Boolean);
 
 /**
- * ── …NOR ONE THE LIVE BOOK VALUES FROM A DEPOSITORY'S OWN BALANCE ──────────
+ * ── …NOR ONE A STATEMENT REPORTS, WHETHER OR NOT THIS BOOK VALUES IT ────────
  *
- * Stage 10ce values the cash-equivalent funds a depository reports on an
- * account that sent a transaction statement and no holding statement — at
- * units × AMFI's published NAV, on the LIVE basis only — so `BOOK_POSITIONS`
- * above never carries them, and the name tier cannot see them either: the
- * depository prints the AMC's name in front of the scheme's. Two of them are
- * lines the family's review prints, and left claimable, a search that empties
- * a narrowed page would say "no statement reports it … no value or quantity"
- * beside the Cash row that values it.
+ * The note says "no statement reports it", and that is a claim about the
+ * STATEMENTS, not about what this book values. A review line some statement
+ * reports, for any holder, makes the sentence false, and a reader told it
+ * sends the family a request for a document they already sent.
  *
- * JOINED BY ISIN THROUGH A HAND-CHECKED TABLE, never by a name rule, and each
- * entry says what ties the review's line to the depository's balance. Keyed on
- * what the live book ACTUALLY carries rather than on the table alone, so
- * switching that valuation off (`VALUE_DEPOSITORY_CASH_UNITS`) brings the
- * sentence back — which is then true again.
+ * Measured, it was false for eight more lines than the ones this book values.
+ * The name tier cannot see them: a depository prints the AMC's name in front
+ * of the scheme's or clips it, and it prints an unlisted company's instrument
+ * in full where the review writes a brand. IFB Inds., NLC INDIA and Zepto are
+ * on Ajay's transaction-only demat. Liquid BeES, HDFC and ICICI Pru Balanced
+ * Advantage, ICICI Pru Liquid and WhiteOak are on the other three demats, some
+ * of them as a holding this book values.
+ *
+ * JOINED BY ISIN THROUGH A HAND-CHECKED TABLE, never by a name rule. Each entry
+ * says what ties the review's line to a statement's balance, and
+ * `reviewGaps.test.ts` holds every entry to that witness. The note stays quiet
+ * wherever the joined ISIN is on a statement this dashboard reads: a position
+ * in the book, a holding a statement records that this book does not value,
+ * or a depository's closing balance. It is keyed on the STATEMENTS, not on the
+ * valuation, so switching a valuation off (`VALUE_DEPOSITORY_CASH_UNITS`,
+ * `VALUE_DEPOSITORY_FUND_UNITS`) does not bring the sentence back. The units
+ * are still on the statement.
+ *
+ * A line some statement reports for one holder and not for another stays
+ * quiet too. The note has one sentence, and "no statement reports it" is
+ * false of that line. The unreported part is on the ask list, in
+ * `docs/REVIEW-RECONCILIATION.md`, which names the documents that close it.
  */
-export const REVIEW_LINE_ISINS: ReadonlyMap<string, string> = new Map([
+export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map([
   // The review's transaction sheet records Ajay buying 1,63,08,407.445 units at
   // ₹11.0367 on 20 May 2026, and the depository credits exactly those units on
   // his demat the next day — the unit witness `fundNavs.test.ts` asserts.
-  ["Motilal Oswal Arbitrage Fund Direct (G)", "INF247L01ED1"],
+  ["Motilal Oswal Arbitrage Fund Direct (G)", ["INF247L01ED1"]],
   // The review's Cash tab and its transaction sheet both print Ajay's 2,282.178
   // units: the depository's closing balance on the same demat, to the third
   // decimal.
-  ["HDFC Liquid Fund -Direct(G)", "INF179KB1HP9"],
+  ["HDFC Liquid Fund -Direct(G)", ["INF179KB1HP9"]],
   // A-17: the review's transaction sheet closes Aarti at 2,42,412.122 units and
   // Ankita at 3,93,095.951 — the two Motilal Oswal holding statements' own
   // balances of ABSL BAL ADV-GROWTH, to the third decimal. Those statements
   // record the units and print no rate, and the live book values them at AMFI's
   // NAV (`unpricedStatementUnits`); Bharat's statement prices the same scheme.
-  // Left claimable, a search for the review's spelling would say "no statement
-  // reports it" about a holding three statements report.
-  ["Aditya Birla SL Balanced Advantage Fund(G)", "INF084M01AB8"],
+  ["Aditya Birla SL Balanced Advantage Fund(G)", ["INF084M01AB8"]],
+  // Stage 10cy — the other mutual funds on Ajay's transaction-only demat. Each
+  // is tied by units, never by name. The review's own purchases are depository
+  // credits unit for unit: twelve weekly Bandhan purchases (1,27,182.131 on
+  // 2 Apr 2026 onward), seven Kotak Multicap purchases, and the 34,045.997
+  // Kotak Large & Midcap units bought on 2 Apr 2026. For ICICI India
+  // Opportunities and ICICI Equity Savings the review closes Ajay on 30 June at
+  // 48,50,206.378 and 93,20,249.865 units, and the depository closes the demat
+  // at exactly those balances on 31 July.
+  ["Bandhan Large & Mid Cap Fund - Direct Plan - Growth", ["INF194K01V89"]],
+  ["ICICI Pru India Opportunities Fund", ["INF109KC1RH9"]],
+  ["ICICI Prudential Equity Savings Fund - Direct Plan", ["INF109KA11J9"]],
+  ["Kotak Large & Midcap Fund - Direct- Growth", ["INF174K01LF9"]],
+  ["Kotak Multicap Fund-Direct Plan-Growth", ["INF174KA1HV3"]],
+  // Stage 10cy — lines a statement reports, valued or not. Each review closing
+  // on 30 June 2026 is the statement's own balance that day, to the unit:
+  // Ajay's transaction-only demat walks to 15,772 IFB shares and 32,000 NLC
+  // shares by then, and still holds both at 31 July.
+  ["IFB Inds.", ["INE559A01017"]],
+  ["NLC INDIA", ["INE589A01014"]],
+  // The same demat opens the year at 4,716 Zepto preference shares and still
+  // holds them on 30 June 2026 — the review's closing, to the share. On 22 July
+  // the statement's own corporate action converts them into 37,38,119 equity
+  // shares under a new ISIN, so both ISINs are this line.
+  ["Zepto", ["INE143403066", "INE143401029"]],
+  // Aarti's demat walks to 5,169.754 Liquid BeES units on 30 June and Bharat's
+  // to 3,816.251, the review's two closings.
+  ["Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW", ["INF732E01037"]],
+  // Both plans. Ankita's demat walks to 46,162.731 Regular units on 30 June and
+  // Bharat's to 27,779.278 Direct units, two of the review's four closings.
+  // Ajay's 83,001.863 and Ankita's other 49,917.632 are on no statement.
+  ["HDFC Balanced Advantage Fund", ["INF179K01830", "INF179K01WA6"]],
+  // Bharat's demat walks to 1,46,856.943 Direct units on 30 June, the review's
+  // closing for him. Ajay's 21,70,488.137 are on no statement.
+  ["ICICI Pru Balanced Advantage Fund", ["INF109K012B0"]],
+  // Aarti's demat walks to 21,012.887 units on 30 June and Ankita's to
+  // 1,568.013, two of the review's three closings, to the unit.
+  ["ICICI Pru Liquid Fund-Direct(G)", ["INF109K01Q49"]],
+  // Ankita's and Bharat's holding statements print 39,15,742.08 and
+  // 13,66,820.78 units, the review's closings for them. Neither demat moved
+  // the scheme this year. Ajay's 70,52,224.197 are on no statement.
+  ["WhiteOak Capital Multi Asset Allocation Fund-Direct(G)", ["INF03VN01761"]],
 ]);
-const DEPOSITORY_VALUED = new Set(
-  [...depositoryCashHoldings(), ...unpricedStatementUnits()]
-    .map((p) => p.isin?.trim().toUpperCase()).filter((x): x is string => !!x));
+
 /**
- * Whether the live book values this review line from units no statement
- * prices — a depository's closing balance, or units a holding statement records
- * and prints no rate for (A-17).
+ * ── …NOR ONE A STATEMENT REPORTS FOR AN ENTITY THIS BOOK KEEPS OUT ─────────
+ *
+ * The review files four Cash-tab lines under HOPE INDIA TRUST. That trust's
+ * own AMC folio statements are in the drop and report each of them. This book
+ * keeps them out by decision: the trust is a separate taxpayer
+ * (`shared/owners.mjs`, `docs/BOOK-REPORT.md`). So the sentence is false here
+ * too, and its ask ("AMC folio statements") names statements the family
+ * already sent.
+ *
+ * Keyed on the FOLIO, because two of the four print no ISIN. The folios are
+ * in the audit archive and not in the book, so the runtime cannot check this
+ * table. `reviewGaps.test.ts` holds every entry to the folio's own statement:
+ * the trust holds it, and it prints a holding at exactly the NAV the review
+ * prices the line at. HSBC Liquid, the review's fifth line for the trust, has
+ * no folio in the drop and stays claimable.
  */
-export const valuedFromDepository = (g: ReviewGap) =>
-  DEPOSITORY_VALUED.has(REVIEW_LINE_ISINS.get(g.name) ?? "");
+export const REVIEW_LINES_KEPT_OUT: ReadonlyMap<string, string> = new Map([
+  ["Aditya Birla SL Liquid Fund-(DD)-Direct", "1019265797"],
+  ["Aditya Birla SL Liquid Fund-Direct (G)", "1038104611"],
+  ["Kotak Liquid-Direct (DD)", "4295974"],
+  ["Mirae Asset Cash Management Fund-Direct(G)", "70413280453"],
+]);
+
+/**
+ * Every ISIN a statement this dashboard reads reports with units: a position in
+ * the book, a holding a statement records that this book does not value, and a
+ * depository window that walks its own printed balance.
+ *
+ * A window counts whatever it closes at. The review is struck on 30 June, and
+ * a holding the depository shows that day and delivers out or converts in July
+ * was on a statement on the review's date — Zepto's preference shares are the
+ * case. The dated half, that the balance on the review's date IS the review's
+ * units, is `reviewGaps.test.ts`'s witness for every entry.
+ */
+const STATEMENT_REPORTED = new Set(
+  [
+    ...BOOK_POSITIONS.filter((p) => p.quantity > 0).map((p) => p.isin),
+    ...BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0).map((u) => u.isin),
+    ...Object.values(BOOK_SHARE_MOVEMENTS).filter((w) => w.reason == null).map((w) => w.isin),
+  ].map((x) => x?.trim().toUpperCase()).filter((x): x is string => !!x));
+
+/**
+ * Whether a statement reports this review line: its hand-checked ISINs are on
+ * a statement this dashboard reads, or a folio this book keeps out by decision
+ * reports it.
+ */
+export const reportedByStatement = (g: ReviewGap) =>
+  (REVIEW_LINE_ISINS.get(g.name) ?? []).some((i) => STATEMENT_REPORTED.has(i))
+  || REVIEW_LINES_KEPT_OUT.has(g.name);
 
 const CLAIMABLE = REVIEW_GAPS.filter((g) => {
-  if (valuedFromDepository(g)) return false;
+  if (reportedByStatement(g)) return false;
   const k = securityKeyOf(g.name);
   if (!k) return false;
   if (prefixRelated(k, BOOK_KEYS)) return false;

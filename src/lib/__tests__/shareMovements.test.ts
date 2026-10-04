@@ -6,7 +6,7 @@
  * would prove only that two inventions agree with each other, and the whole
  * claim here is that the demat statements' own arithmetic reproduces itself.
  */
-import { BOOK_SHARE_MOVEMENTS, BOOK_POSITIONS, BOOK_ACCOUNTS } from "@/data/glowData";
+import { BOOK_SHARE_MOVEMENTS, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import type { ShareMovement } from "@/lib/types";
 import { movementIdentityHolds, movementNet } from "@/lib/shareMovements";
 import { securityKeyOf } from "@/lib/securityKey";
@@ -89,11 +89,40 @@ ok("...and these run the Indian financial year, not the calendar year",
   fyStart.length === all.length, `all start ${all[0]?.periodFrom}`);
 
 // ── 8. THE JOIN REACHES REAL HOLDINGS, and the rest are named ────────────────
-const held = new Set(BOOK_POSITIONS.map((p) => `${p.accountId}|${p.securityKey}`));
+// A window is about UNITS, and since Stage 10cz the units on the three Motilal
+// demats are QUANTITIES in the book (`BOOK_UNVALUED_HOLDINGS`): those statements'
+// `Value` column is the price of each holding's last depository movement, never
+// a valuation, so no position carries them. Joined on positions alone, every
+// window on those demats would read as a holding the book does not have — which
+// is what this check reported the day that correction landed (0 of 89). The
+// join reads both, as `build-book`'s own does.
+const carriedRows = [...BOOK_POSITIONS, ...BOOK_UNVALUED_HOLDINGS];
+const held = new Set(carriedRows.map((p) => `${p.accountId}|${p.securityKey}`));
+const qtyOnly = new Set(BOOK_UNVALUED_HOLDINGS.map((u) => `${u.accountId}|${u.securityKey}`));
 const joined = all.filter((m) => held.has(`${m.accountId}|${m.securityKey}`));
-ok("the movements join positions this book actually carries", joined.length > 0, `${joined.length} of ${all.length}`);
-ok("...and the rest are securities the account no longer holds, which is the point",
-  all.length - joined.length > 0, `${all.length - joined.length} window(s) closed during the year`);
+ok("the movements join holdings this book carries, valued or not", joined.length > 0, `${joined.length} of ${all.length}`);
+ok("...and some join a holding the book carries only as a quantity — the last-movement rows of Stage 10cz",
+  joined.some((m) => qtyOnly.has(`${m.accountId}|${m.securityKey}`)),
+  `${joined.filter((m) => qtyOnly.has(`${m.accountId}|${m.securityKey}`)).length} of ${joined.length}`);
+// THE REST, EACH NAMED FOR WHAT IT IS. "The account no longer holds it" is true
+// of a nil close and false of the other two: a balance on an account that sent
+// only a transaction statement (the tape's closing balance is the only record of
+// it, valued live — Stage 10ce, 10cy), and a depository's copy of AIF units,
+// which stays off the fund's page by design. A window in none of the three is a
+// holding the join missed.
+const txnOnly = new Set(BOOK_ACCOUNTS.filter((a) => a.transactionsOnly).map((a) => a.accountId));
+const aifIsinsAll = new Set(carriedRows.filter((p) => p.assetClass === "AIF")
+  .map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean));
+const rest = all.filter((m) => !held.has(`${m.accountId}|${m.securityKey}`));
+const nilClose = rest.filter((m) => (m.closing ?? 0) === 0);
+const unexplained = rest.filter((m) => !((m.closing ?? 0) === 0 || txnOnly.has(m.accountId)
+  || aifIsinsAll.has((m.isin ?? "").trim().toUpperCase())));
+ok("...and every window that joins nothing closes at nil, sits on an account that sent no holding statement, or is a depository's copy of AIF units",
+  unexplained.length === 0,
+  unexplained.length ? unexplained.slice(0, 3).map((m) => `${m.accountId.slice(-16)} ${m.securityKey} closes ${m.closing}`).join(" · ")
+    : `${nilClose.length} nil · ${rest.filter((m) => (m.closing ?? 0) !== 0 && txnOnly.has(m.accountId)).length} on a transaction-only account · ${rest.length - nilClose.length - rest.filter((m) => (m.closing ?? 0) !== 0 && txnOnly.has(m.accountId)).length} AIF copies`);
+ok("...and the nil closes are there — securities an account sold out of during the year, which is the point",
+  nilClose.length > 0, `${nilClose.length} window(s)`);
 const knownAcct = new Set(BOOK_ACCOUNTS.map((a) => a.accountId));
 ok("every movement names an account in the registry",
   all.every((m) => knownAcct.has(m.accountId)));
@@ -116,11 +145,13 @@ ok("the movement columns' own net equals the two balances' difference", netOff.l
 // an orphan key. `build-book` now keys a window on the BOOK's company wherever
 // the window's ISIN is carried by exactly one company this book holds.
 //
-// Re-derived here from `BOOK_POSITIONS`, never read from the builder's notes: a
-// check that reads the builder's own count agrees with it by construction.
+// Re-derived here from the book's own rows — every position and every quantity
+// line, which is what the builder's join reads since Stage 10cz — never read
+// from the builder's notes: a check that reads the builder's own count agrees
+// with it by construction.
 const keysByIsin = new Map<string, Set<string>>();
 const fundIsins = new Set<string>();
-for (const p of BOOK_POSITIONS) {
+for (const p of carriedRows) {
   const i = (p.isin ?? "").trim().toUpperCase();
   if (!i) continue;
   if (p.assetClass === "AIF") { fundIsins.add(i); continue; }
@@ -146,16 +177,26 @@ ok("...and some of them reach the company only because of the ISIN", respelled.l
 // holds the company, keyed on the company another account still holds. That is
 // what the Monitor's expansion and the stock page draw as "sold out in this
 // window" — without it they have nothing to draw and Ajay's Kaynes vanishes.
-const bookKeysAll = new Set(BOOK_POSITIONS.map((p) => p.securityKey));
+//
+// "STILL HOLDS" INCLUDES A QUANTITY LINE. Ankita's 4,875 Kaynes shares are a
+// recorded line since Stage 10cz, not a position — so struck on positions alone
+// this check stopped seeing the very case it was written for, and went on
+// passing on ICICI Bank and SBI, whose own accounts still record them as lines:
+// the right number for the wrong reason.
+const bookKeysAll = new Set(carriedRows.map((p) => p.securityKey));
 const elsewhere = all.filter((m) => !held.has(`${m.accountId}|${m.securityKey}`) && bookKeysAll.has(m.securityKey));
 ok("some windows record a company this account no longer holds and another account still does",
   elsewhere.length > 0,
   `${elsewhere.length}, e.g. ${elsewhere.slice(0, 2).map((m) => `${m.securityKey} in ${m.accountId.slice(-16)} (${m.opening} → ${m.closing})`).join(", ")}`);
+ok("...and some of them closed at nil — sold out in one account while another still holds the company",
+  elsewhere.some((m) => (m.closing ?? 0) === 0 && (m.opening ?? 0) > 0),
+  elsewhere.filter((m) => (m.closing ?? 0) === 0 && (m.opening ?? 0) > 0)
+    .map((m) => `${m.securityKey} ${m.opening} → 0 in ${m.accountId.slice(-16)}`).join(", "));
 // A DEPOSITORY'S COPY OF AIF UNITS IS NOT THE FUND'S RECORD. The fund reports
 // its own units; a window on the depository's copy keyed onto the fund's key
 // would stand beside the fund's statement as a second account of the same units.
 const fundCopies = all.filter((m) => fundIsins.has((m.isin ?? "").trim().toUpperCase()));
-const fundKeys = new Set(BOOK_POSITIONS.filter((p) => p.assetClass === "AIF").map((p) => p.securityKey));
+const fundKeys = new Set(carriedRows.filter((p) => p.assetClass === "AIF").map((p) => p.securityKey));
 ok("a depository's copy of AIF units is never keyed onto the fund",
   fundCopies.every((m) => !fundKeys.has(m.securityKey)), `${fundCopies.length} window(s) left on their own key`);
 

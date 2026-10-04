@@ -379,14 +379,16 @@ export type Position = {
   navPriced?: boolean;
   navDate?: string;           // AMFI's own publication date for that NAV
   /**
-   * WHERE THE QUANTITY CAME FROM, when it is not a holding statement.
+   * WHERE THE QUANTITY CAME FROM, when no statement puts a price on it.
    *
-   * Set only on a position the LIVE portfolio values from a depository's own
-   * closing balance — an account that sent a TRANSACTION statement and no
-   * holding one (`Account.transactionsOnly`), whose cash-equivalent funds are
-   * valued at AMFI's published NAV. `asOf` is that statement's closing date and
-   * `source` its docKey. Such a position has no statement mark at all, so it is
-   * never in `statementPortfolio`, and a page says so wherever it shows one.
+   * Set only on a position the LIVE portfolio values without a statement mark:
+   * a depository's own closing balance on an account that sent a TRANSACTION
+   * statement and no holding one (`Account.transactionsOnly`) — its funds at
+   * AMFI's published NAV, its listed shares at the live quote — or units a
+   * holding statement records with no usable price (see `kind`). `asOf` is that
+   * statement's date and `source` its docKey where one is known. Such a
+   * position has no statement mark at all, so it is never in
+   * `statementPortfolio`, and a page says so wherever it shows one.
    *
    * `kind` says WHICH absence of a mark it is, because the two need different
    * sentences and a page that used one for both would be false about the other:
@@ -395,15 +397,30 @@ export type Position = {
    *   - `no-rate` (the figure audit, A-17): the account's holding statement
    *     records the units and prints no rate for them, and `witnessAccountId`
    *     is the account whose statement — same depository, same day — prices the
-   *     same scheme, which is what proves the units are on the NAV's basis.
+   *     same scheme, which is what proves the units are on the NAV's basis;
+   *   - `no-price` (Stage 10cy): a LISTED SHARE the account's holding statement
+   *     records with no usable price — no rate, or only the face value it was
+   *     allotted at — valued at the live quote, and only while the feed prices
+   *     it (`src/lib/depositoryShares.ts`);
+   *   - `last-movement` (Stage 10cz): the account's holding statement prints a
+   *     rate against the units, and that rate is the price of the holding's
+   *     LAST DEPOSITORY MOVEMENT — a receipt or a delivery, on
+   *     `lastMovementDate` where the account's transaction statement dates it —
+   *     never a valuation of the balance. A fund is valued at AMFI's NAV and a
+   *     listed share at the live quote; the rate is kept here only as what it
+   *     is, and as the witness that a fund's units are on the NAV's basis.
    * `describeDepositoryUnits` in `fundNavs.ts` is the one place the sentence is
    * chosen.
    */
   depositoryUnits?: {
     asOf: string | null;
     source: string | null;
-    kind?: "closing-balance" | "no-rate";
+    kind?: "closing-balance" | "no-rate" | "no-price" | "last-movement";
     witnessAccountId?: string | null;
+    /** `last-movement` only: the statement's rate, the date it moved at, and which way. */
+    lastMovementRate?: number | null;
+    lastMovementDate?: string | null;
+    lastMovementSide?: "receipt" | "delivery" | null;
   };
 };
 
@@ -1117,6 +1134,15 @@ export type RealisedByClass = {
  * holding seen from two sides, so a screen listing these must not list it twice.
  * `faceValue` is set only where the statement prints one.
  *
+ * `lastMovementRate` / `lastMovementValue` are what a CDSL holding statement
+ * prints in its rate and value columns: the price of the holding's LAST
+ * DEPOSITORY MOVEMENT and that price times the movement's own quantity (Stage
+ * 10cz) — a transaction price, never a valuation of the balance, which is why
+ * the row is a quantity. `lastMovementDate` / `lastMovementSide` are that
+ * movement, read off the same account's transaction statement where its
+ * quantity times the rate reproduces the printed value; null where the tape
+ * does not show it (it moved before the tape starts), which the reason says.
+ *
  * NAMED APART FROM `UnvaluedHolding` in `accounts.ts`, which is an ACCOUNT that
  * carries no position (Stage 10bp). This is one statement LINE — a security and
  * its units — inside an account that may carry positions besides.
@@ -1130,6 +1156,10 @@ export type UnvaluedStatementHolding = {
   assetClass: AssetClass | null;
   quantity: number | null;
   faceValue: number | null;
+  lastMovementRate: number | null;
+  lastMovementValue: number | null;
+  lastMovementDate: string | null;
+  lastMovementSide: "receipt" | "delivery" | null;
   /** The holdings statement's own date — the quantity is as of this day. */
   asOf: string | null;
   sameUnitsReportedBy: string | null;

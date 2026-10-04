@@ -20,10 +20,11 @@
 // Anchored on `schemeNames.json` and `glowData.ts` — two generated artefacts —
 // so every expectation is derived on the run or written as a relation that
 // survives the next drop moving it.
-import { BOOK_POSITIONS } from "@/data/glowData";
+import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import schemeNames from "@/data/schemeNames.json";
 import { holdingLabel, schemeNameFor, composeSchemeLabel, SCHEME_KEYS } from "@/lib/schemeLabel";
 import { sortRows, TXN_SORTS, type TxnSort } from "@/lib/txnSort";
+import { LIVE_POSITIONS } from "./liveBook";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -33,7 +34,19 @@ const ok = (name: string, pass: boolean, detail = "") => {
 
 type Entry = { name: string; plan: string | null; option: string | null; isin: string; amfiName: string; printed: string | null };
 const MAP = schemeNames as Record<string, Entry>;
-const held = new Set(BOOK_POSITIONS.map((p) => p.securityKey));
+/**
+ * WHAT THE PAGES CAN NAME, WHICH SINCE Stage 10cz IS WIDER THAN `BOOK_POSITIONS`.
+ * The Motilal holding statements' funds are quantity lines on the statement
+ * basis (their `Value` column is a last-movement price, never a valuation), and
+ * the LIVE basis values them at AMFI's NAV — so a scheme the family holds only
+ * on those demats is a row on every live page and a recorded line on the
+ * company page, and it takes this map's label in both. The set checked is the
+ * live book's keys plus every line a statement records and nothing values.
+ */
+const held = new Set([
+  ...LIVE_POSITIONS.map((p) => p.securityKey),
+  ...BOOK_UNVALUED_HOLDINGS.map((u) => u.securityKey),
+]);
 const inBook = Object.entries(MAP).filter(([k]) => held.has(k));
 
 // ── 1. THE MAP IS DOING WORK ────────────────────────────────────────────────
@@ -101,7 +114,7 @@ for (const [k, v] of inBook) {
 // folio, every PMS mandate — must come back exactly as `displaySecurity` left
 // it. A label helper that silently emptied those would be invisible in the map.
 {
-  const unmapped = BOOK_POSITIONS.filter((p) => !schemeNameFor(p.securityKey));
+  const unmapped = LIVE_POSITIONS.filter((p) => !schemeNameFor(p.securityKey));
   ok("the book still holds plenty this map does not name", unmapped.length > 0, `${unmapped.length} positions`);
   ok("…and every one of them keeps a non-empty label",
      unmapped.every((p) => holdingLabel(p.securityKey, p.security).trim().length > 0));

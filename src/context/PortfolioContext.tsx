@@ -12,7 +12,8 @@ import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCK
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
-import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
+import { applyFundNavs, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
+import { depositoryShareHoldings, depositoryShareIsins, depositoryShareSymbols, shareCandidates } from "@/lib/depositoryShares";
 import { applyCorporateActionQuotes, fetchCorporateActions, liveWithheldReason, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
 import { readCachedQuotes, writeCachedQuotes, mergeQuoteFeeds, retainQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
@@ -22,27 +23,41 @@ import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
   BOOK_ACCOUNT_CASH_FLOWS, BOOK_ENTITY_CASH_FLOWS,
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
-  BOOK_COMMITMENTS,
+  BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS,
 } from "@/data/glowData";
 
 /**
- * THE FAMILY'S CASH THAT NO HOLDING STATEMENT REPORTS — computed once, because
- * every input is committed data. See `depositoryCashHoldings`: the arbitrage and
- * liquid funds on an account that sent only a transaction statement, valued at
- * the depository's closing units × AMFI's published NAV. LIVE portfolio only.
+ * THE FUNDS THAT NO HOLDING STATEMENT REPORTS — computed once, because every
+ * input is committed data. See `depositoryFundHoldings`: the mutual funds on an
+ * account that sent only a transaction statement, valued at the depository's
+ * closing units × AMFI's published NAV — its liquid and arbitrage funds, the
+ * family's cash (Stage 10ce), and its other schemes (Stage 10cy). LIVE
+ * portfolio only. The same statement's listed SHARES are valued at the live
+ * quote inside the memo below, because they exist only while the feed prices
+ * them (`depositoryShares.ts`).
  */
-const DEPOSITORY_CASH = depositoryCashHoldings();
-const DEPOSITORY_NOTES = partialValuationNotes(DEPOSITORY_CASH);
+const DEPOSITORY_FUNDS = depositoryFundHoldings();
 /**
- * UNITS A HOLDING STATEMENT RECORDS AND PRICES NOWHERE (the figure audit, A-17)
- * — ABSL Balanced Advantage on two Motilal demats, priced by the same scheme's
- * row on a third account's statement from the same depository and day. Valued
- * at AMFI's NAV on the LIVE basis only, exactly like the depository's cash, and
- * deliberately NOT fed to `partialValuationNotes`: those accounts sent a holding
- * statement and are valued, so "this account sent no holding statement" would
- * be false of them.
+ * UNITS A HOLDING STATEMENT RECORDS AND PRICES NOWHERE — valued at AMFI's
+ * published NAV on the LIVE basis only, exactly like the depository's cash.
+ * The figure audit's A-17 found the first of them (ABSL Balanced Advantage on
+ * two Motilal demats); Stage 10cz found that EVERY fund on the three Motilal
+ * holding statements is one, because the `Rs RATE` and `Rs VALUE` those
+ * statements print are the holding's LAST DEPOSITORY MOVEMENT — a transaction
+ * price and that price times the movement's own units — never a valuation of
+ * the balance (`unpricedStatementUnits` has the gates).
+ *
+ * They ARE fed to `partialValuationNotes` now: an account whose holding
+ * statement values none of its holdings is partly valued the moment this
+ * layer values some of them, and the note says which, and why the rest are
+ * not. That function words a holding-statement account apart from a
+ * transaction-only one, so "this account sent no holding statement" is never
+ * said of an account that sent one.
  */
 const UNPRICED_UNITS = unpricedStatementUnits();
+
+/** Every row this layer adds on top of the statements, for the requests below. */
+const LIVE_ONLY_FUNDS = [...DEPOSITORY_FUNDS, ...UNPRICED_UNITS];
 
 // Re-export so components can keep importing these from the context module.
 export { SUPPORTED_DISPLAY_CURRENCIES } from "@/lib/fx";
@@ -267,6 +282,11 @@ const PRIORITY_SYMBOLS = (() => {
     const sym = symbolFor(p);
     if (sym) out.add(sym);
   }
+  // The listed shares a depository reports — on a transaction-only demat
+  // (Stage 10cy), and on the three Motilal holding statements that price none
+  // of them (Stage 10cz) — are the family's own Direct Equity too, so they land
+  // in the same round.
+  for (const sym of depositoryShareSymbols()) out.add(sym);
   return [...out];
 })();
 
@@ -286,7 +306,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       setCorporateActions(next);
     };
     const tick = async () => {
-      const latest = await fetchCorporateActions(symbolsFor(BOOK_POSITIONS), BOOK_POSITIONS.flatMap((p) => p.isin ? [p.isin] : []), controller.signal);
+      // THE CAPTURE IS FILTERED TO WHAT IS ASKED FOR, so the shares this layer
+      // adds must be asked for too — a share outside the capture's coverage
+      // cannot pass the corporate-action gate, and would never be a row.
+      const latest = await fetchCorporateActions(
+        [...symbolsFor(BOOK_POSITIONS), ...depositoryShareSymbols()],
+        [...BOOK_POSITIONS.flatMap((p) => p.isin ? [p.isin] : []), ...depositoryShareIsins()],
+        controller.signal,
+      );
       if (controller.signal.aborted) return;
       if (latest) accept(latest.feed);
       setCorporateActionsStatus(latest && !latest.retained ? "current" : held ? "saved" : "unavailable");
@@ -360,7 +387,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
   const loadQuotes = useCallback(async (refresh = false) => {
     if (inFlight.current) return 0;
-    const symbols = symbolsFor(BOOK_POSITIONS);
+    // The live-only funds are asked for too: a liquid ETF among them prices
+    // intraday the way its siblings on the statements do.
+    const symbols = [...new Set([...symbolsFor(BOOK_POSITIONS), ...symbolsFor(LIVE_ONLY_FUNDS), ...depositoryShareSymbols()])];
     if (!symbols.length) { setQuotesStatus("unavailable"); return 0; }
     inFlight.current = true;
     // Keep the last failure visible until a successful response replaces it.
@@ -429,25 +458,42 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // nothing else, so ONE path serves both cases and the no-feed run is no
     // longer an early return that skipped the NAVs.
     /**
-     * AND THE DEPOSITORY'S CASH JOINS HERE, NEVER IN `basePortfolio`.
+     * AND THE DEPOSITORY'S BALANCES JOIN HERE, NEVER IN `basePortfolio`.
      *
-     * Those rows have no statement mark at all — their value IS the published
-     * NAV — so they belong to the live book alone, and `statementPortfolio`
-     * stays exactly what the PDFs print. They go through the same two overlays
-     * as every other row, so a liquid ETF the quote feed prices intraday is
-     * priced here the way its siblings on the other demats are.
+     * Those rows have no statement mark at all — a fund's value IS the published
+     * NAV, and a listed share's IS the live quote (Stage 10cy) — so they belong
+     * to the live book alone, and `statementPortfolio` stays exactly what the
+     * PDFs print. The funds go through the same two overlays as every other row,
+     * so a liquid ETF the quote feed prices intraday is priced here the way its
+     * siblings on the other demats are; a share is a row ONLY where the feed
+     * priced it, and otherwise the account's note names it as not valued.
      */
     // The statement's own rows come through the corporate-action layer, which
-    // prices them; the depository's cash rows are funds, which that layer would
-    // only price the same way, so they take the quote overlay directly.
-    const positions = applyFundNavs([...corporateActionLayer.positions, ...applyQuotes([...DEPOSITORY_CASH, ...UNPRICED_UNITS], quotes)]);
+    // prices them; the depository's fund rows are funds, which that layer would
+    // only price the same way, so they take the quote overlay directly. The
+    // SHARES go through that layer too (`depositoryShareHoldings`): a balance
+    // counted on 31 July and a quote from today are two dates, and a split or
+    // bonus between them must be projected, or the share is not a row.
+    const depositoryShares = depositoryShareHoldings(quotes, corporateActions, undefined, basePortfolio.accounts);
+    const positions = applyFundNavs([...corporateActionLayer.positions,
+      ...applyQuotes([...LIVE_ONLY_FUNDS], quotes), ...depositoryShares]);
     /**
      * AN ACCOUNT SOME OF WHOSE HOLDINGS ARE NOW VALUED NO LONGER "VALUES NOTHING".
      * Its generated `noPositionsReason` is true of the statement basis and false
      * of this one, so the live copy carries `partialValuation` instead — what is
      * valued, from what, and how many holdings on the same statement are not.
      */
-    const accounts = withPartialValuation(basePortfolio.accounts, DEPOSITORY_NOTES);
+    // `partialValuationNotes` decides WHICH accounts are partly valued: a
+    // transaction-only account whose closing balances are valued here, and a
+    // holding-statement account that values none of its own holdings (the three
+    // Motilal demats, Stage 10cz) once this layer values some. An account whose
+    // statement values holdings of its own — Clean Max's, ESDS's — is not
+    // "partly valued" by a row or two added beside them. It is handed the
+    // share candidates too, so a share the feed has not priced YET is told
+    // apart from a holding nothing here can price.
+    const accounts = withPartialValuation(basePortfolio.accounts,
+      partialValuationNotes([...LIVE_ONLY_FUNDS, ...depositoryShares],
+        BOOK_SHARE_MOVEMENTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, shareCandidates()));
     // COUNT ONCE, AND SPLIT BY CLASS — the two ways this NAV has been wrong.
     //
     // `publicPrivateSplit` dedupes first (each dedupeGroup once — the 360 ONE AIF
@@ -470,7 +516,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       ...basePortfolio, positions, accounts, listedValue, privateValue, unplacedValue,
       totalValue: listedValue + privateValue + unplacedValue,
     };
-  }, [basePortfolio, corporateActionLayer, quotes]);
+  }, [basePortfolio, corporateActionLayer, quotes, corporateActions]);
 
   const consolidated = useMemo(
     () => dedupedPositions(portfolio?.positions ?? []),

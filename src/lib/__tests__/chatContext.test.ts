@@ -22,14 +22,15 @@
 // or held to a second surface built on the same book (the search's category
 // rows, Private Market's `capitalScope`) — so agreement is a cross-check, not a
 // figure compared with its own copy. Each load-bearing difference (statement
-// vs screen, 371 vs 358, 15 capital accounts vs 11, one row vs one holding) is
+// vs screen, every row vs current holdings, 15 capital accounts vs 11, one row vs one holding) is
 // asserted to EXIST on this book, so a builder that went back would fail.
-import { BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS } from "@/data/glowData";
-import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
+import { BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { applyFundNavs, depositoryCashHoldings, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
+import { depositoryShareHoldings, shareCandidates } from "@/lib/depositoryShares";
 import { applyCorporateActionQuotes } from "@/lib/corporateActions";
 import { applyQuotes } from "@/lib/quotes";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
-import { dedupedPositions, publicPrivateSplit } from "@/lib/analytics";
+import { dedupedPositions, publicPrivateSplit, isCashEquivalent } from "@/lib/analytics";
 import { buildSearchIndex } from "@/lib/searchIndex";
 import { capitalScope } from "@/lib/privateMarket";
 import { MARKET_SIDE_UNPLACED } from "@/lib/aifCategory";
@@ -48,17 +49,23 @@ const near = (name: string, a: unknown, b: number, tol = 0.02) =>
 const add = (xs: number[]) => xs.reduce((t, x) => t + x, 0);
 
 // ── THE BOOK THE PAGES READ, assembled as PortfolioContext assembles it ─────
-// The labelled rows through the corporate-action layer, the depository's cash
-// rows (Stage 10ce) and the fund units a statement records with no rate (A-17)
-// through the quote overlay, AMFI's published NAVs over all of them, and the
-// live registry with its partial-valuation notes.
+// The labelled rows through the corporate-action layer; the funds a depository
+// reports on a transaction-only demat (Stage 10ce cash, 10cy the rest) and the
+// fund units a holding statement records and values nowhere (A-17, Stage 10cz)
+// through the quote overlay; the listed shares a statement records, which are
+// rows only while a feed prices them — none here, with no feed; AMFI's
+// published NAVs over all of them; and the live registry with its
+// partial-valuation notes, built from the same inputs PortfolioContext gives it.
 const baseAccounts = labelledAccounts(BOOK_ACCOUNTS);
-const DEP = depositoryCashHoldings();
+const DEP = depositoryFundHoldings();
 const UNPRICED = unpricedStatementUnits();
+const LIVE_ONLY_FUNDS = [...DEP, ...UNPRICED];
+const SHARES = depositoryShareHoldings(null, null, undefined, baseAccounts);
 const positions = applyFundNavs([
   ...applyCorporateActionQuotes(labelledPositions(BOOK_POSITIONS), baseAccounts, null, null).positions,
-  ...applyQuotes([...DEP, ...UNPRICED], null)]);
-const liveAccounts = withPartialValuation(baseAccounts, partialValuationNotes(DEP));
+  ...applyQuotes([...LIVE_ONLY_FUNDS], null), ...SHARES]);
+const liveAccounts = withPartialValuation(baseAccounts,
+  partialValuationNotes([...LIVE_ONLY_FUNDS, ...SHARES], BOOK_SHARE_MOVEMENTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, shareCandidates()));
 const split = publicPrivateSplit(positions);
 const book: ChatBook = {
   portfolio: {
@@ -138,8 +145,13 @@ ok("the context is a non-empty set of named blocks",
   ok("positions and names are the holdings the dashboard lists",
     s.positions === current.length && s.distinctSecurities === new Set(current.map((p) => p.securityKey)).size,
     `${s.positions} positions, ${s.distinctSecurities} names`);
-  ok("...which is fewer than the statement rows, so the check is load-bearing",
-    current.length < BOOK_POSITIONS.length, `${current.length} of ${BOOK_POSITIONS.length} rows`);
+  // Struck on the rows the SCREEN is built from, not on the statement rows:
+  // since Stage 10cz the live book carries rows the statement basis does not
+  // (fund units a holding statement records and values nowhere), so it has
+  // more rows than `BOOK_POSITIONS` and a comparison against those would fail
+  // a builder that is right.
+  ok("...which is fewer than the rows the screen is built from, so the check is load-bearing",
+    current.length < positions.length, `${current.length} of ${positions.length} rows`);
   ok("...and what they leave out is counted, not dropped in silence",
     s.countsExclude.closedPositions === deduped.filter(closed).length
       && s.countsExclude.belowFloor.positions === deduped.filter((p) => !closed(p) && speck(p.securityKey)).length
@@ -272,7 +284,10 @@ ok("the context is a non-empty set of named blocks",
 {
   type Dep = { note: string; totalCr: number | null; rows: { fund: string; accountId: string; valueCr: number; unitsAsOf: string | null }[] };
   const d = block<Dep>("cash_valued_from_depository_units");
-  const depRows = positions.filter((p) => !!p.depositoryUnits && p.depositoryUnits.kind !== "no-rate" && !closed(p) && !speck(p.securityKey));
+  // The cash `depositoryCashHoldings` values, found in the live book — a second
+  // path to the builder's own filter on the row's kind and class.
+  const cashKeys = new Set(depositoryCashHoldings().map((u) => `${u.accountId}|${u.securityKey}|${u.quantity}`));
+  const depRows = positions.filter((p) => cashKeys.has(`${p.accountId}|${p.securityKey}|${p.quantity}`) && !closed(p) && !speck(p.securityKey));
   ok("the live book carries depository-valued cash for the block to describe", depRows.length > 0, `${depRows.length} rows`);
   ok("...and the block lists exactly those rows, at their own values",
     d.rows.length === depRows.length && depRows.every((p) => d.rows.some((r) => r.accountId === p.accountId
@@ -295,6 +310,54 @@ ok("the context is a non-empty set of named blocks",
   const sd = buildDashboardContext(stmtBook).find((b) => b.kind === "cash_valued_from_depository_units") as unknown as Dep;
   ok("a book that carries no depository-valued row says so, with no total and no rows",
     !!sd && sd.rows.length === 0 && sd.totalCr === null && /No holding in this book is valued from a depository/.test(sd.note));
+}
+
+// ── Stage 10cy/10cz: THE REST OF WHAT A STATEMENT'S QUANTITY VALUES ─────────
+//
+// The same transaction-only demat carries funds that are NOT cash (Stage 10cy),
+// and a statement's listed shares are rows only while a feed prices them. Each
+// has a block of its own; told only the cash, a model asked "how much Bandhan
+// Large & Mid Cap do I hold" would miss the units on this demat and contradict
+// the screen. And every row the live book values from a statement's quantity
+// must land in exactly ONE block — a row in two is counted twice by a model
+// that adds blocks up, and a row in none is a holding the model cannot see.
+{
+  type Fund = { note: string; totalCr: number | null; rows: { fund: string; accountId: string; units: number; valueCr: number }[] };
+  const f = block<Fund>("funds_valued_from_depository_units");
+  const cashKeys = new Set(depositoryCashHoldings().map((u) => `${u.accountId}|${u.securityKey}|${u.quantity}`));
+  const fundKeys = new Set(DEP.map((u) => `${u.accountId}|${u.securityKey}|${u.quantity}`).filter((k) => !cashKeys.has(k)));
+  const fundRows = positions.filter((p) => fundKeys.has(`${p.accountId}|${p.securityKey}|${p.quantity}`) && !closed(p) && !speck(p.securityKey));
+  ok("the other funds on the transaction-only demat have a block of their own, row for row",
+    !!f && f.rows.length === fundRows.length && fundRows.every((p) => f.rows.some((r) => r.accountId === p.accountId
+      && r.fund === p.security && Math.abs(r.valueCr - p.marketValue / CR) <= 0.01)),
+    `${f?.rows?.length ?? "no block"} vs ${fundRows.length}`);
+  near("...totalling their value", f?.totalCr, add(fundRows.map((p) => p.marketValue)) / CR, 0.02);
+  ok("...saying they are INCLUDED in the totals and are not cash",
+    !!f && /INCLUDED in the Current Value of Holdings/.test(f.note) && /not cash/i.test(f.note));
+  // LOAD-BEARING: the funds the family asked to see are on this book.
+  ok("...and this book has such funds", fundRows.length > 0, `${fundRows.length} rows`);
+
+  type Shr = { note: string; totalCr: number | null; rows: unknown[] };
+  const sh = block<Shr>("shares_valued_at_the_live_quote_from_a_statement_quantity");
+  // No feed here, so no share is a row — and the block must say so rather than
+  // read as the family holding none.
+  ok("with no quote feed the shares block lists none and says why, never a ₹0 total",
+    !!sh && sh.rows.length === 0 && sh.totalCr === null && /quote feed has priced none/i.test(sh.note)
+      && SHARES.length === 0, sh?.note?.slice(0, 120));
+  ok("...while the statements do record shares the feed would value, named in the quantity block",
+    shareCandidates().length > 0 && (block<{ rows: { accountId: string; units: number }[] }>("holdings_a_statement_records_and_values_nowhere")?.rows ?? [])
+      .some((r) => shareCandidates().some((c) => c.accountId === r.accountId && c.quantity === r.units)),
+    `${shareCandidates().length} candidates`);
+
+  const kinds = ["cash_valued_from_depository_units", "funds_valued_from_depository_units",
+    "fund_units_a_holding_statement_records_and_values_nowhere", "shares_valued_at_the_live_quote_from_a_statement_quantity"];
+  const listed = kinds.flatMap((k) => (block<{ rows: { accountId: string; units: number; fund?: string; security?: string }[] }>(k)?.rows ?? [])
+    .map((r) => `${r.accountId}|${r.fund ?? r.security}|${r.units}`));
+  const onScreen = positions.filter((p) => !!p.depositoryUnits && !closed(p) && !speck(p.securityKey))
+    .map((p) => `${p.accountId}|${p.security}|${p.quantity}`);
+  ok("every row the live book values from a statement's quantity is in exactly one block",
+    listed.length === onScreen.length && new Set(listed).size === listed.length && onScreen.every((k) => listed.includes(k)),
+    `${listed.length} listed vs ${onScreen.length} on screen`);
 }
 
 // ── SC-B5: THE LARGEST HOLDINGS ARE HOLDINGS, NOT STATEMENT ROWS ────────────
@@ -425,30 +488,51 @@ ok("the context is a non-empty set of named blocks",
     && w.notCarried.some((x) => x.includes(oldest)), oldest);
 }
 
-// ── A-17: units a statement records with no rate are named, and are not cash ──
+// ── A-17 / Stage 10cz: units a statement records and values nowhere are named ──
 //
-// The dashboard values ABSL Balanced Advantage at AMFI's NAV where a sibling
-// statement proves the basis. The context must carry those rows in a block of
-// their own — never inside the cash block, because the fund is not cash — and,
-// being built from the screen's book (SC-B1), say they are INCLUDED in its
-// totals; a statement-basis book carries none and says so.
+// The dashboard values these fund units at AMFI's NAV where a witness puts them
+// on the NAV's basis — the line's own last-movement rate, or a sibling
+// statement's price for the scheme. The context must carry those rows in a
+// block of their own, never inside the transaction-only demat's cash block, and
+// each must say WHAT put it on the basis and whether it counts as cash. Built
+// from the screen's book (SC-B1), it says they are INCLUDED in its totals; a
+// statement-basis book carries none and says so.
 {
-  type Row = { fund: string; accountId: string; units: number; valueCr: number | null; pricedLikeAccountId: string | null };
+  type Row = { fund: string; accountId: string; units: number; valueCr: number | null;
+    lastMovementRate: number | null; pricedLikeAccountId: string | null; countsAsCash: boolean };
   type Blk = { note: string; rows: Row[]; totalCr: number | null };
-  const b = block<Blk>("fund_units_a_statement_records_without_a_rate");
-  const want = positions.filter((p) => p.depositoryUnits?.kind === "no-rate" && !closed(p) && !speck(p.securityKey));
+  const b = block<Blk>("fund_units_a_holding_statement_records_and_values_nowhere");
+  // The rows the page draws: every unit `unpricedStatementUnits` values, found in
+  // the live book — a second path to the builder's own filter on the row's kind.
+  const valuedHere = new Set(UNPRICED.map((u) => `${u.accountId}|${u.securityKey}|${u.quantity}`));
+  const want = positions.filter((p) => valuedHere.has(`${p.accountId}|${p.securityKey}|${p.quantity}`) && !closed(p) && !speck(p.securityKey));
   const cash = block<{ rows: { accountId: string; fund: string }[] }>("cash_valued_from_depository_units");
-  ok("the context names the fund units a statement records and prints no rate for",
+  ok("the context names the fund units a holding statement records and values nowhere",
     !!b && Array.isArray(b.rows) && b.rows.length === want.length
       && want.every((p) => b.rows.some((r) => r.accountId === p.accountId && r.units === p.quantity)),
     `${b?.rows?.length ?? "no block"} vs ${want.length}`);
   near("...totalling their value", b?.totalCr, add(want.map((p) => p.marketValue)) / CR, 0.02);
-  ok("...each names the account whose statement prices the scheme",
-    !!b && b.rows.every((r) => typeof r.pricedLikeAccountId === "string" && r.pricedLikeAccountId.length > 0));
+  ok("...each names what put it on the NAV's basis — its own last-movement rate, or the account whose statement prices the scheme",
+    !!b && b.rows.every((r) => (typeof r.lastMovementRate === "number" && r.lastMovementRate > 0)
+      || (typeof r.pricedLikeAccountId === "string" && r.pricedLikeAccountId.length > 0)));
+  // LOAD-BEARING, BOTH KINDS: a block where every row was one kind would let the
+  // other half of the check above pass over nothing.
+  ok("...and this book carries both kinds of witness",
+    !!b && b.rows.some((r) => typeof r.lastMovementRate === "number") && b.rows.some((r) => !!r.pricedLikeAccountId),
+    `${b?.rows.filter((r) => typeof r.lastMovementRate === "number").length ?? 0} by their own rate, `
+      + `${b?.rows.filter((r) => !!r.pricedLikeAccountId).length ?? 0} by a sibling statement`);
+  // CASH IS SAID PER ROW, AND IT IS THE PAGE'S OWN TEST. A liquid fund on a
+  // Motilal demat counts as cash (the family's instruction); a block claiming
+  // "not cash" of every row would contradict the page's Cash line.
+  ok("...each says whether it counts as cash, exactly as the page files it",
+    !!b && want.every((p) => b.rows.some((r) => r.accountId === p.accountId && r.units === p.quantity
+      && r.countsAsCash === isCashEquivalent(p))),
+    `${b?.rows.filter((r) => r.countsAsCash).length ?? 0} count as cash`);
   ok("...and says they are INCLUDED in the totals above, never that they are left out",
     !!b && /INCLUDED in the Current Value of Holdings/.test(b.note) && !/NOT in/.test(b.note), b?.note?.slice(0, 120));
-  const cashWant = positions.filter((p) => !!p.depositoryUnits && p.depositoryUnits.kind !== "no-rate" && !closed(p) && !speck(p.securityKey));
-  ok("...and none of them is filed as cash",
+  const cashHere = new Set(depositoryCashHoldings().map((u) => `${u.accountId}|${u.securityKey}|${u.quantity}`));
+  const cashWant = positions.filter((p) => cashHere.has(`${p.accountId}|${p.securityKey}|${p.quantity}`) && !closed(p) && !speck(p.securityKey));
+  ok("...and none of them is filed in the transaction-only demat's cash block",
     !!cash && want.every((p) => !cash.rows.some((r) => r.accountId === p.accountId && r.fund === p.security))
       && cash.rows.length === cashWant.length, `${cash?.rows?.length} cash rows vs ${cashWant.length}`);
   const stmtPositions = applyFundNavs(applyCorporateActionQuotes(labelledPositions(BOOK_POSITIONS), baseAccounts, null, null).positions);
@@ -461,11 +545,52 @@ ok("the context is a non-empty set of named blocks",
       accounts: baseAccounts, positions: stmtPositions, commitments: BOOK_COMMITMENTS,
     },
     consolidated: dedupedPositions(stmtPositions), basis: "STATEMENT", quotesAsOf: null,
-  }).find((x) => x.kind === "fund_units_a_statement_records_without_a_rate") as unknown as Blk;
+  }).find((x) => x.kind === "fund_units_a_holding_statement_records_and_values_nowhere") as unknown as Blk;
   ok("...and a statement-basis book lists none, with no total and no rows",
     !!sb && sb.rows.length === 0 && sb.totalCr === null && /No holding in this book is valued from fund units/.test(sb.note));
   // LOAD-BEARING: this book has such a row, or the checks above pass over nothing.
   ok("...and this book has at least one such row", want.length > 0 && UNPRICED.length > 0, `${want.length} row(s)`);
+}
+
+// ── Every quantity line is named, with why it carries no value ─────────────
+{
+  type Row = { security: string; accountId: string; units: number; why: string; reportedBy: string | null };
+  const b = block<{ rows: Row[]; count: number }>("holdings_a_statement_records_and_values_nowhere");
+  const why = new Set(["last-movement-price", "face-value", "no-rate"]);
+  ok("the context names every holding a statement records as a quantity",
+    !!b && b.rows.length === BOOK_UNVALUED_HOLDINGS.length && b.count === BOOK_UNVALUED_HOLDINGS.length
+      && BOOK_UNVALUED_HOLDINGS.every((u) => b.rows.some((r) => r.accountId === u.accountId && r.units === u.quantity)),
+    `${b?.rows?.length ?? "no block"} vs ${BOOK_UNVALUED_HOLDINGS.length}`);
+  ok("...each with why it carries no value, in one of the three words the note defines",
+    !!b && b.rows.every((r) => why.has(r.why)));
+  // LOAD-BEARING: the last-movement rows are the whole reason this block exists.
+  ok("...and the last-movement rows are among them",
+    !!b && b.rows.some((r) => r.why === "last-movement-price"),
+    `${b?.rows.filter((r) => r.why === "last-movement-price").length ?? 0} of ${b?.rows.length ?? 0}`);
+  // No row may carry a figure a model could sum: units only.
+  ok("...and no row carries a value a model could add up",
+    !!b && b.rows.every((r) => !Object.keys(r).some((k) => /value|cr$|price|mark/i.test(k))));
+  // A line the screen values now says so; the rest are in no total. Struck on
+  // the units `unpricedStatementUnits` values, a second path to the builder's.
+  type Live = { accountId: string; units: number; shownLiveNow: boolean };
+  const lb = block<{ rows: Live[] }>("holdings_a_statement_records_and_values_nowhere");
+  // A line the NAV values but whose whole holding is under the ₹1,000 floor is
+  // on no screen (`currentHoldings` drops it everywhere), so the dashboard does
+  // NOT show it and must not say it does — the same `speck` rule as above.
+  const unitKey = (u: { accountId: string; quantity: number }) => `${u.accountId}|${u.quantity}`;
+  const liveUnits = new Set(UNPRICED.filter((u) => !speck(u.securityKey)).map(unitKey));
+  const speckUnits = new Set(UNPRICED.filter((u) => speck(u.securityKey)).map(unitKey));
+  ok("...each says whether the dashboard values it now — true of every line a fund's NAV values here",
+    !!lb && lb.rows.filter((r) => liveUnits.has(`${r.accountId}|${r.units}`)).every((r) => r.shownLiveNow === true)
+      && lb.rows.some((r) => r.shownLiveNow === false),
+    `${lb?.rows.filter((r) => r.shownLiveNow).length ?? 0} shown live of ${lb?.rows.length ?? 0}`);
+  // LOAD-BEARING on this book: four such lines, ₹3 to ₹105, sit on Bharat's
+  // Motilal demat. A builder that read the live rows before the floor would
+  // tell the model the dashboard shows lines it does not.
+  ok("...and a line the NAV values under the ₹1,000 floor is not shown, and says so",
+    speckUnits.size > 0 && !!lb && lb.rows.filter((r) => speckUnits.has(`${r.accountId}|${r.units}`)).length === speckUnits.size
+      && lb.rows.filter((r) => speckUnits.has(`${r.accountId}|${r.units}`)).every((r) => r.shownLiveNow === false),
+    `${speckUnits.size} line(s) under the floor`);
 }
 
 // ── NO FABRICATED ZEROS ANYWHERE IN THE CONTEXT ────────────────────────────

@@ -1,0 +1,25 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2026-08-06",
+   "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
+   "Purchase",
+   "contribution",
+   214200000,
+   214189290.54,
+   15245765.959,
+   15245765.959
+  ]
+ ]
+}
