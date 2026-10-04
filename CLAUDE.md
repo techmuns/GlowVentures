@@ -24774,7 +24774,9 @@ On this branch merged with main at `58c6f3d5`:
   routes, `monitor-withheld` and its loading twin, `performance-live`,
   `sectors-direct-live`, `corporate-actions-live` and `stock-sold-after`. They
   are named here and not fixed. They are those changes' checks, and rewriting
-  them in this merge would be a change nobody asked for.
+  them in this merge would be a change nobody asked for. *(Stage 10cz fixed the
+  fixture dates that failed eight of them, and Stage 10dc the six Morning CIO
+  routes left over.)*
 
 **Then main gained one daily Polycab refresh (`ddb7170d`)**, which touches no
 file here. On that tree `build`, `test:family` (0 failed) and `build-book`
@@ -25084,7 +25086,9 @@ only these fixture dates applied, fails the same 11 invariants on the same six
 Morning CIO routes as this branch — #104's movers coverage, gap and gainer
 counts on `cio-live`, the capture-lag claim, the no-feed and scope claims on
 `cio`, and an on-face sentence ("Share counts await verification…") breaking
-Stage 10cp on five routes. They are main's and are left to it.
+Stage 10cp on five routes. They are main's and are left to it. *(Fixed at
+Stage 10dc: five of the 11 were that sentence and the coverage line breaking
+Stage 10cp, and six were checks #104 had outrun.)*
 
 `build` · `tsc` · `test:ingest` (golden 140, 2 not checked, 0 blocked) ·
 `test:family` 0 failed · `check:family` **126/0** · `build-book`
@@ -25173,7 +25177,7 @@ CIO routes (`cio`, `cio-index-loading`, `cio-cached`, `cio-live`,
 measured on main's own build at `ddb7170d`. #107 changed none of those checks and
 none of the movers code they read, so they fail on `5858f24f` for the same
 reason. This branch's last sweep before the merge had a seventh finding, on
-`search`, which is now fixed.
+`search`, which is now fixed. *(The 11 were fixed at Stage 10dc.)*
 
 26 invariants were not checked. Each was read out by name and set against main's
 own build at `5858f24f`, walked for this record with only the fixture dates
@@ -25339,7 +25343,7 @@ SUITE.**
   this change's.** All 11 failing invariants are main's #104 checks on six Morning
   CIO routes (`cio`, `cio-index-loading`, `cio-cached`, `cio-live`,
   `cio-live-capture-lag`, `cio-alerts-badge`), the same 11 Stage 10cz measured on
-  main's own build.
+  main's own build. *(Fixed at Stage 10dc.)*
 - 32 invariants were not checked, against Stage 10cz's 25. One left the list
   (`history` no longer abstains) and eight joined it, each read out by name
   and each evidenced by the book:
@@ -25450,7 +25454,96 @@ line and is still on no statement.
 
 - The full audit the family asked for.
 - The reconciler's older prose sections (C1, C2, D, E).
-- Main's eleven #104 Morning CIO checks, which fail on main's own build.
+- ~~Main's eleven #104 Morning CIO checks, which fail on main's own build.~~
+  Fixed at Stage 10dc.
+
+### Stage 10dc — TODAY'S MOVERS: #104'S TWO SETS ON THE FACE, AND THE ELEVEN CHECKS IT OUTRAN
+
+Eleven Morning CIO invariants had failed on main's own build since #104. That
+change ranks a name whose share count the corporate-action gate has not verified
+by its exchange % move alone, and leaves it out of every rupee figure. Stages
+10cz, 10da and 10db named the eleven and left them. They were of two kinds.
+
+#### 1. Five were one check, and the page was wrong
+
+Stage 10cp's no-explainer rule failed on the five routes that serve quotes
+(`cio-index-loading`, `cio-cached`, `cio-live`, `cio-live-capture-lag`,
+`cio-alerts-badge`), because #104 put two sentences on the card's face:
+
+| Was | Now |
+| --- | --- |
+| "Share counts await verification for 5 names. Their exchange % moves are shown; money impact is withheld." | "5 names ranked by % move only · share counts unverified" ("left out" under the ₹ ranking). The names and the gate's own reason ("Why: Sales are recorded after this statement…") are its hover |
+| "16 of 26 names with price changes · ₹24.6 Cr of ₹89 Cr held · 11 of 26 names with verified impact" | "₹24.6 Cr of ₹89 Cr held · 11 of 26 names". How many names the % ranking spans is the hover |
+
+Three figures were wrong beside them:
+
+- **"₹0 of ₹64.8 Cr held" over no name.** On the cached reload the saved capture
+  is days behind the cached quotes, so the gate verifies no share count. The line
+  prints no rupee figure when it covers no name (Convention 2).
+- **A gainers total over part of its list.** Ranked by %, a list holds names with
+  no money impact, and summing the rest printed a figure under a heading that
+  counts all of them. The total is a dash whose hover names how many
+  (`data-mover-total-absent`).
+- **A %-only row's money cell** is a dash whose hover says why. Both figure cells
+  carry `data-mover-cell`.
+
+#### 2. Six were checks #104 outran, and the page was right
+
+- **`cio`**: the no-feed check looked for the old headline; #104 says "Daily
+  price changes are temporarily unavailable", names the service and offers a
+  retry. The scope check looked for "Today's movers · Direct Equity"; with no feed
+  #104's heading is "Latest price movers".
+- **`cio-live`**: the coverage hover's wording; the gap line, which reads
+  "against the Nifty 500 · today" now; and the gainer count, which counted only
+  verified names where #104 ranks every priced one.
+- **`cio-live-capture-lag`**: the same gainer count.
+
+`MOVERS_HEADING` finds the card under any of #104's three headings.
+`PRICED_DIRECT_EQUITY` re-derives from the book which names the card ranks,
+which its money total covers, and which are ranked by % alone: a position with
+a sale recorded after its statement (`realizedLotsAfter > 0`).
+
+New checks: the tile's money total covers the verified names and the amber line
+counts the rest, with the gate's reason in its hover; the cached coverage line
+prints no rupee figure over no name; a gainers total over %-only names is a dash
+naming how many; and each drawn row's money cell is the book's answer for that
+name — a signed figure, or a dash that says why, never ₹0.
+
+#### 3. The bug pass, and the check it showed could not fail
+
+`scripts/dev/movers-partition-bug.sh` puts 15 bugs back one at a time, after a
+clean control. **Case 7 first swept clean**: a %-only row printing ₹0 was
+skipped, because an unsigned "₹0" matched neither "+₹…" nor "—". The per-row
+check is what catches it now. All 15 fire:
+
+| # | Bug put back | Fires |
+| --- | --- | --- |
+| 1 | the amber paragraph back on the face | the prose check on 5 routes · the money-total check |
+| 2 | #104's coverage sentence back | the prose check on 5 routes · the cached no-rupee check · the coverage and money-total checks |
+| 3 | "₹0 of ₹Y held" over no name | the cached no-rupee check |
+| 4 | the amber hover drops the gate's reason | the money-total check |
+| 5 | the coverage hover drops the ranked count | the money-total check |
+| 6 | the %-only names dropped from the ranking | the gainer count on `cio-live` and `cio-live-capture-lag` · the gainers-total check |
+| 7 | a %-only row prints ₹0 | the gainers-listed check · the per-row check |
+| 8 | the money total counts the %-only names | the money-total check |
+| 9 | with no feed, the card makes a claim about the book | the no-feed and scope checks on `cio` |
+| 10 | the funds branch draws the direct-equity card too | the branch check on `cio-movers-funds` |
+| 11 | the gainers total sums part of its list | the gainers-total check |
+| 12 | the gainers total a bare dash | the gainers-total check |
+| 13 | the tile's label drops Direct Equity | the day-move check |
+| 14 | a %-only row's dash loses its reason | the gainers-listed check · the per-row check |
+| 15 | every row's money impact a dash | the gainers-listed check · the per-row check |
+
+#### Verification
+
+`build` · `test:family` (0 failed) · `check:family` **126/0** · `npm run
+build-book` byte-identical: nothing here touches the book. `check:pages` over
+the 22 Morning CIO routes in both themes: **44 combinations clean, 0 invariant
+failures**. The 13 lines not checked, read by name, are main's evidenced
+abstentions: the money-weighted tile on eleven routes (#105's strip does not show
+it by default), a scheme struck on an older day on `cio-movers-funds` (every
+priced scheme published on one day), and A-14 on `cio-allocation` (no nil costed
+Cash line since Stage 10da).
 
 ### Stage 10k — News & Announcements: REMOVED
 
