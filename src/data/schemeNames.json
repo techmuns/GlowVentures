@@ -186,6 +186,17 @@
     "printed": "ICICI PRU BAF DP GRW",
     "joinedBy": "isin"
   },
+  "inves-arbf-d-grow": {
+    "name": "Invesco India Arbitrage Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF205K01KR8",
+    "schemecode": "120401",
+    "amfiName": "Invesco India Arbitrage Fund",
+    "printed": "INVES ARBF D-GROW",
+    "joinedBy": "amfi-isin"
+  },
   "inves-con-r-growth": {
     "name": "Invesco India Contra Fund",
     "plan": "Regular",
@@ -196,6 +207,17 @@
     "amfiName": "Invesco India Contra Fund - Regular Plan - Growth",
     "printed": "INVES CON R GROWTH",
     "joinedBy": "isin"
+  },
+  "kotak-arbfd-dp-grow": {
+    "name": "Kotak Arbitrage Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF174K01LC6",
+    "schemecode": "119771",
+    "amfiName": "Kotak Arbitrage Fund",
+    "printed": "KOTAK ARBFD DP GROW",
+    "joinedBy": "amfi-isin"
   },
   "kotak-mtcf-d-grow": {
     "name": "Kotak Multicap Fund",
@@ -208,6 +230,17 @@
     "printed": "KOTAK MTCF D-GROW",
     "joinedBy": "isin"
   },
+  "mirae-lcf-d-grow": {
+    "name": "Mirae Asset Large Cap Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF769K01AX2",
+    "schemecode": "118825",
+    "amfiName": "Mirae Asset Large Cap Fund",
+    "printed": "MIRAE LCF D-GROW",
+    "joinedBy": "amfi-isin"
+  },
   "motilal-oswal-active-momentum-fund-direct-plan-growth-option": {
     "name": "Motilal Oswal Active Momentum Fund",
     "plan": "Direct",
@@ -218,6 +251,17 @@
     "amfiName": "Motilal Oswal Active Momentum Fund- Direct-Growth",
     "printed": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
     "joinedBy": "name+plan"
+  },
+  "nip-etnf1d-rtliqbees": {
+    "name": "Nippon India ETF Nifty 1D Rate Liquid BeES",
+    "plan": null,
+    "option": null,
+    "amc": null,
+    "isin": "INF732E01037",
+    "schemecode": "140086",
+    "amfiName": "Nippon India ETF Nifty 1D Rate Liquid BeES",
+    "printed": "NIP ETNF1D RTLIQBEES",
+    "joinedBy": "amfi-isin"
   },
   "woc-maaf-d-grow": {
     "name": "WhiteOak Capital Multi Asset Allocation Fund",
