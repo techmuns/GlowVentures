@@ -59,6 +59,8 @@ type ArchiveTxn = {
   assetClass: string | null;
   quantity: number | null; unitPrice: number | null;
   gross: number | null; charges: number | null; net: number | null;
+  /** Brokerage as an amount, derived from the printed per-unit rate. */
+  brokerage?: number | null;
   /** The statement's OWN settlement figure. See `settledAmount`. */
   printed?: { settlementAmount?: number | null } | null;
 };
@@ -440,7 +442,13 @@ export function lotGroups(docs: ArchiveDoc[]): Map<string, LotGroup> {
 export function daySales(docs: ArchiveDoc[]): DaySale[] {
   return daySalesOf(datedRows(docs, AUTHORITATIVE.transactions, "transactions")
     .filter(({ doc: d, row: t }) => t.side === "sell" && !!t.date && !isOwnAllotment(d, t))
-    .map(({ doc: d, row: t }) => ({ accountNo: d.accountNo, securityKey: t.securityKey, date: t.date ?? null, amount: settledAmount(t) })));
+    .map(({ doc: d, row: t }) => ({
+      accountNo: d.accountNo, securityKey: t.securityKey, date: t.date ?? null, amount: settledAmount(t),
+      // What a capital gain is struck on — the consideration less brokerage (pass 3
+      // in shared/lotSettlement.mjs). Null where the row does not print both.
+      consideration: typeof t.gross === "number" && typeof t.brokerage === "number" ? t.gross - t.brokerage : null,
+      quantity: t.quantity,
+    })));
 }
 
 /** Each day's sale → the lot group that settles it, the aliases that join, and what no sale settles. */
@@ -798,6 +806,12 @@ export type SalesData = {
    * them out of a loss-making total makes the remainder look worse than the
    * book actually did. Nothing is lost or double-counted: the three figures
    * reconcile exactly, which is why all three are carried here.
+   *
+   * (That was the calibration; the Axis Liquid lots settle their sales since
+   * DL-1. On the September 2026 delivery the unattributed set is five lots that
+   * sold for ₹0 — the fractions a demerger or a bonus left on ASK's two
+   * accounts — which no trade exists to meet. The three figures still reconcile
+   * to the paisa, and `ledgerJoins.test.ts` holds them to it.)
    */
   statementRealized: number | null; statementLots: number; matchedSales: number;
   /** Lots the tape never carries, and what they sum to. Signed as the statement

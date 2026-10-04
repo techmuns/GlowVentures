@@ -2639,9 +2639,11 @@ function build(docs) {
      * `shared/lotSettlement.mjs` is the ONE rule, read by the runtime ledger
      * too: a lot group settles a day's sale by identity, else by the same
      * account and date with its summed proceeds equal to the sale to the printed
-     * precision — and where that happens under a different key the account gains
-     * an alias. Nothing is inferred from a name, and the archive keeps both
-     * spellings.
+     * precision, else — where a capital gain statement strikes its sale value
+     * before STT, as ASK's and Marathon's do — equal to the consideration less
+     * brokerage within its four-decimal rates; and where that happens under a
+     * different key the account gains an alias. Nothing is inferred from a name,
+     * and the archive keeps both spellings.
      *
      * A fund's own allotment or redemption already on the dated capital record
      * is not a sale (same account, security and date, amount within ₹1 of the
@@ -2654,7 +2656,11 @@ function build(docs) {
       && isNum(sale.amount) && isNum(m.invested ?? m.amount) && Math.abs((m.invested ?? m.amount) - sale.amount) <= 1);
     const daySales = saleType ? daySalesOf(dated.transactions
       .filter((t) => t.side === "sell" && t.date && t.securityKey && typeOfDoc.get(t.source) === saleType)
-      .map((t) => ({ accountNo, securityKey: t.securityKey, date: t.date, amount: settledOf(t) }))
+      .map((t) => ({ accountNo, securityKey: t.securityKey, date: t.date, amount: settledOf(t),
+        // What a capital gain is struck on: the consideration less brokerage
+        // (see pass 3 in shared/lotSettlement.mjs). Null where either is unprinted.
+        consideration: isNum(t.gross) && isNum(t.brokerage) ? t.gross - t.brokerage : null,
+        quantity: isNum(t.quantity) ? t.quantity : null }))
       .filter((x) => !isOwnFundMove(x))) : [];
     const settlement = settleSales(lotGroupsOf(dated.capitalGains.filter((l) => l.securityKey).map((l) => ({
       accountNo, securityKey: l.securityKey, saleDate: l.saleDate ?? null,
@@ -2681,10 +2687,21 @@ function build(docs) {
       if (!lotByIsin.some((x) => x.from === k)) lotByIsin.push({ from: k, to: byIsin[0], isin: l.isin });
       return byIsin[0];
     };
+    // Which figure each alias was matched on, said in the note: a lot group that
+    // met its sale on the settled amount (pass 2) and one that met it on the
+    // consideration less brokerage (pass 3) are different evidence.
+    const basisOf = (lotKey) => {
+      const by = new Set([...settlement.bySale.values()].filter((v) => v.lotSecurityKey === lotKey.slice(lotKey.indexOf("|") + 1)
+        && v.by !== "key").map((v) => v.by));
+      const words = [];
+      if (by.has("amount")) words.push("each day's settled sale to the printed precision");
+      if (by.has("consideration")) words.push("each day's consideration less brokerage to the precision of its four-decimal rates");
+      return words.join(", or ");
+    };
     for (const [lot, saleKey] of [...settlement.aliases].sort()) {
       notes.push(`account ${accountNo}: capital-gain lots printed as \`${lot.slice(lot.indexOf("|") + 1)}\` settle this account's `
-        + `sales of \`${saleKey}\` — same account and date, lot proceeds equal to each day's settled sale to the printed `
-        + "precision — so their realised gain is that holding's");
+        + `sales of \`${saleKey}\` — same account and date, lot proceeds equal to ${basisOf(lot)} — so their realised `
+        + "gain is that holding's");
     }
     for (const c of settlement.conflicts) {
       notes.push(`account ${accountNo}: lots printed as \`${c.lot.slice(c.lot.indexOf("|") + 1)}\` settle sales under `

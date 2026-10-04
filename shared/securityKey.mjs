@@ -36,7 +36,16 @@
 // "INDraprastha Medical Corp. Ltd." — `IND` plus nine more characters is the
 // same shape — and would amputate a real company name. Three statements in this
 // drop carry that name, which is how the anchor earned its place.
-const ISIN_TAIL = /[\s-]+(IN[EF][0-9A-Z]{9})\s*$/i;
+//
+// AND `IN9` IS THE THIRD FORM, for PARTLY PAID-UP shares (NSDL's own numbering:
+// the third character says what the issuer issued, and `9` is a partly paid
+// share). ASK's capital gain statements print `Bharti Airtel Ltd PP-IN9397D01014`
+// — the company code `397D` is Bharti Airtel's own (INE397D01024) — while the
+// same accounts' transaction statements print the name bare. Unsplit, 95 lots
+// keyed `bharti-airtel-ltd-pp-in9397d01014` and joined no sale on the tape.
+// The anchor and the separator are unchanged, so the form adds nothing a real
+// name could match.
+const ISIN_TAIL = /[\s-]+(IN[EF9][0-9A-Z]{9})\s*$/i;
 // A separator printed with nothing after it: the column was empty, but the glue
 // character still made it into the name ("Vedanta Iron and Steel Limited-").
 const EMPTY_TAIL = /[\s-]+$/;
