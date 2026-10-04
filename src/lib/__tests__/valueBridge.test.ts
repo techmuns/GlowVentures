@@ -85,9 +85,14 @@ ok("every column names the lines no reader looked for, and only those", unreadMi
 // ── 2. THE WINDOW IS NAMED BY ITS OWN DATES (XA-21) ──────────────────────────
 // "FY to date" was printed over SVAN's one-month report and over five Sanshi
 // windows that begin on a first contribution — because every window that was
-// not since-inception was called one. Since inception only where it starts on
-// the account's inception; a financial year to date only where it opens on
-// 1 April and closes inside that year; anything else is a window.
+// not since-inception was called one. Since inception where it starts on or
+// before the account's inception; a financial year to date only where it opens
+// on 1 April and closes inside that year; anything else is a window.
+//
+// ON OR BEFORE: ASK's profit and loss account opens on 1 April 2019, the start
+// of the financial year its two mandates opened in, and a window that opens
+// before an account existed covers its whole life. That is only true if
+// nothing happened before inception, so it is checked below, off the archive.
 const inceptionOf = (b: Col) => {
   const a = acct.get(b.accountId);
   const mine = docs.filter((d) => d.provider === a?.provider && d.accountNo === a?.accountNo);
@@ -95,7 +100,7 @@ const inceptionOf = (b: Col) => {
 };
 const basisOf = (b: Col) => {
   const inc = inceptionOf(b);
-  if (inc && b.periodFrom === inc) return "since-inception";
+  if (inc && b.periodFrom <= inc) return "since-inception";
   const fy = /^(\d{4})-04-01$/.exec(b.periodFrom);
   if (fy && b.periodTo >= b.periodFrom && b.periodTo <= `${Number(fy[1]) + 1}-03-31`) return "financial-year-to-date";
   return "window";
@@ -103,6 +108,24 @@ const basisOf = (b: Col) => {
 const basisWrong = cols.filter((b) => b.basis !== basisOf(b));
 for (const b of basisWrong.slice(0, 5)) console.log(`  ${b.source}: book ${b.basis}, dates say ${basisOf(b)}`);
 ok("every column's window is named by its own dates", basisWrong.length === 0, `${basisWrong.length} misnamed`);
+// A column called since-inception although it opens BEFORE inception: the
+// account must have nothing dated before its inception on any of its archived
+// documents, or the window covers more than the account's life.
+const early = cols.filter((b) => basisOf(b) === "since-inception" && b.periodFrom < (inceptionOf(b) ?? ""));
+let datedSeen = 0;
+const beforeLife = early.flatMap((b) => {
+  const a = acct.get(b.accountId);
+  const inc = inceptionOf(b)!;
+  return docs.filter((d) => d.provider === a?.provider && d.accountNo === a?.accountNo)
+    .flatMap((d) => (d.cashFlows ?? []).filter((f) => typeof f.date === "string" && (datedSeen++, f.date < inc))
+      .map((f) => `${d.docKey} ${f.date}`));
+});
+// Over dated rows actually read: an account with none would pass vacuously.
+ok("a column that opens before its account's inception has nothing dated before it",
+  beforeLife.length === 0 && (early.length === 0 || datedSeen > 0),
+  beforeLife.slice(0, 3).join(", ") || `${early.length} such column(s), ${datedSeen} dated row(s) read`);
+ok("…and this book HAS such columns, so the widened rule has a subject",
+  early.length > 0, early.map((b) => `${b.accountId} ${b.periodFrom}→${b.periodTo}`).join(", "));
 const windows = cols.filter((b) => basisOf(b) === "window");
 ok("…and this book HAS columns that are neither since inception nor a financial year (the rule is load-bearing)",
   windows.length > 0, windows.map((b) => `${b.periodFrom}→${b.periodTo}`).slice(0, 3).join(", "));

@@ -98,6 +98,39 @@ const RINGFENCED_SECURITY_KEYS = new Set(["polycab-india"]);
 const isNum = (v) => typeof v === "number" && Number.isFinite(v);
 const sum = (xs) => xs.reduce((a, b) => a + b, 0);
 
+/**
+ * ── WHICH FINANCIAL YEAR EACH LOT'S GAIN BELONGS TO ─────────────────────────
+ *
+ * Tax is assessed per financial year (1 April to 31 March), on the sales made
+ * in it. A capital gain statement's window is the MANAGER's choice, and ASK's
+ * and Marathon's run from inception — 2019 and 2024 — so an account's realised
+ * total can span seven years, and an estimate struck on it taxes a past year's
+ * sales as this year's. Measured on the September 2026 delivery: not one of
+ * those four accounts' 2,389 lots was sold on or after 1 April 2026, and the
+ * tax estimate read ₹2.00 Cr on gains a past year's return already covers.
+ *
+ * Every lot carries its own sale date, so the split is exact rather than an
+ * allocation: summed by the year that date falls in, Σ over the years is the
+ * account's realised total. A lot with no sale date is counted in no year and
+ * carried as its own entry (`fy: null`), so the identity still holds and the
+ * page can name what it could not place.
+ */
+function realisedByYearOf(lots) {
+  const by = new Map();
+  for (const l of lots) {
+    const d = typeof l.saleDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(l.saleDate) ? l.saleDate : null;
+    const fy = d ? `${Number(d.slice(5, 7)) >= 4 ? Number(d.slice(0, 4)) : Number(d.slice(0, 4)) - 1}-04-01` : null;
+    const e = by.get(fy) ?? { fy, st: 0, lt: 0, lots: 0 };
+    e.st += isNum(l.shortTerm) ? l.shortTerm : 0;
+    e.lt += isNum(l.longTerm) ? l.longTerm : 0;
+    e.lots += 1;
+    by.set(fy, e);
+  }
+  return [...by.values()]
+    .sort((a, b) => (a.fy ?? "").localeCompare(b.fy ?? ""))
+    .map((e) => ({ fy: e.fy, st: r2(e.st), lt: r2(e.lt), lots: e.lots }));
+}
+
 // ── Load ─────────────────────────────────────────────────────────────────────
 
 function loadArchive() {
@@ -3490,6 +3523,9 @@ function build(docs) {
         periodTo: allIssues.filter((d) => (d.capitalGains ?? []).length)
           .map((d) => d.periodTo).filter(Boolean).sort().pop() ?? cgDoc.periodTo ?? null,
         lots: lots.length,
+        // The same totals split by the financial year each lot was SOLD in —
+        // what a tax estimate, which is a one-year figure, reads.
+        realisedByYear: realisedByYearOf(lots),
         source: cgDoc.docKey,
       });
       // ── the same total, split by ASSET CLASS ──

@@ -7758,19 +7758,47 @@ const XA_BOOK = (() => {
     // and never back (A-13).
     const newest = reported.map((c) => c.periodTo ?? "").sort().at(-1) ?? "";
     const fy = newest ? `${Number(newest.slice(5, 7)) >= 4 ? newest.slice(0, 4) : Number(newest.slice(0, 4)) - 1}-04-01` : "";
-    const per = new Map();
-    for (const c of reported) {
-      if (!c.ownerId) continue;
-      const e = per.get(c.ownerId) ?? { st: 0, lt: 0, oneYear: true };
-      e.st += c.realisedST ?? 0; e.lt += c.realisedLT ?? 0;
-      if (!c.periodFrom || c.periodFrom < fy) e.oneYear = false;
-      per.set(c.ownerId, e);
-    }
+    // ONE YEAR'S TAX (the September 2026 delivery). A capital gain statement
+    // covers a WINDOW, and ASK's and Marathon's run from inception; the tax is
+    // one financial year's. Every row carries its realised figure split by the
+    // year each lot was SOLD in (`realisedByYear`, off the lots' own sale
+    // dates), so the year's heads are that year's entries — and a window that
+    // closes before the year opens says nothing about it. Re-expressed here,
+    // never through `taxEstimate.ts`, which is what the page calls; a row with
+    // no split falls back to its window and to the set-off gate on its dates.
+    const yearOf = (c) => {
+      const split = Array.isArray(c.realisedByYear) ? c.realisedByYear : null;
+      if (!split || !fy) return { st: c.realisedST ?? 0, lt: c.realisedLT ?? 0, split: false };
+      if (c.periodTo && c.periodTo < fy) return { st: 0, lt: 0, split: true };
+      const inYear = split.filter((e) => e.fy === fy);
+      return { st: inYear.reduce((a, e) => a + e.st, 0), lt: inYear.reduce((a, e) => a + e.lt, 0), split: true };
+    };
+    const strike = (pick) => {
+      const per = new Map();
+      for (const c of reported) {
+        if (!c.ownerId) continue;
+        const h = pick(c);
+        const e = per.get(c.ownerId) ?? { st: 0, lt: 0, oneYear: true };
+        e.st += h.st; e.lt += h.lt;
+        if (!h.split && (!c.periodFrom || c.periodFrom < fy)) e.oneYear = false;
+        per.set(c.ownerId, e);
+      }
+      return per;
+    };
+    const per = strike(yearOf);
     const taxOn = (st, lt) => Math.max(0, st) * 0.2 + Math.max(0, lt) * 0.125;
     const offOf = (e) => (e.oneYear && e.st < 0 && e.lt > 0 ? Math.min(-e.st, e.lt) : 0);
     const perTaxpayer = [...per.values()].reduce((a, e) => a + taxOn(e.st + offOf(e), e.lt - offOf(e)), 0);
     const noSetOff = [...per.values()].reduce((a, e) => a + taxOn(e.st, e.lt), 0);
-    const pooled = taxOn(reported.reduce((a, c) => a + (c.realisedST ?? 0), 0), reported.reduce((a, c) => a + (c.realisedLT ?? 0), 0));
+    const pooled = taxOn(reported.reduce((a, c) => a + yearOf(c).st, 0), reported.reduce((a, c) => a + yearOf(c).lt, 0));
+    // What taxing every WINDOW whole would print — the ₹2.00 Cr the tile read
+    // before the split, set off where each window sits inside the year — and
+    // the accounts whose sales in earlier years that would have taxed.
+    const whole = strike((c) => ({ st: c.realisedST ?? 0, lt: c.realisedLT ?? 0, split: false }));
+    const wholeWindow = [...whole.values()].reduce((a, e) => a + taxOn(e.st + offOf(e), e.lt - offOf(e)), 0);
+    const earlierYears = reported.filter((c) => Array.isArray(c.realisedByYear)
+      && c.realisedByYear.some((e) => e.fy !== null && (e.fy !== fy || (c.periodTo && c.periodTo < fy)))).map((c) => c.entity);
+    const fyLabel = fy ? `FY ${fy.slice(0, 4)}-${String((Number(fy.slice(0, 4)) + 1) % 100).padStart(2, "0")}` : "";
     // ── Snapshot History: each point's like-for-like change (XA-2), struck
     // straight off the point's own link fields — (close − capital in) ÷ open —
     // rather than through `navIndexSeries`, which is what the page calls.
@@ -8071,7 +8099,7 @@ const XA_BOOK = (() => {
       }
       var auditShort = best;
     } catch { ledger = null; }
-    return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size } : null, history, counts, sectors, fifo, valuation, twrr,
+    return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size, wholeWindow, earlierYears, fyLabel } : null, history, counts, sectors, fifo, valuation, twrr,
       cg: cgHarvest, drawdown, historyCapital, historyPanel, ledger, auditShort: typeof auditShort === "undefined" ? null : auditShort,
       returnsD: (() => {
         // ── Return & Drawdown's gain count and contributors (XA-24 / XA-25),
@@ -32657,6 +32685,39 @@ const INVARIANTS = {
       const el = xaEl(ctx, "cg-tax");
       if (!XA_BOOK?.tax || !el) return false;
       return /per taxpayer/i.test(t) && Number(el.attrs.taxpayers) === XA_BOOK.tax.taxpayers;
+    }],
+    /**
+     * ── ONE YEAR'S TAX (the September 2026 delivery) ───────────────────────
+     *
+     * ASK's and Marathon's capital gain statements run from inception, so
+     * taxing each WINDOW whole put every past year's sales into this year's
+     * estimate: the tile read ₹2.00 Cr against ₹24.2 L on the year's own
+     * sales. Struck on the tile's figure against the whole-window figure
+     * re-expressed above, and the book must carry an account that sold in an
+     * earlier year — or the two would agree and the check could not fail.
+     */
+    ["the tax is one financial year's: the tile names the year, and never taxes a window whole", (t, ctx) => {
+      const el = xaEl(ctx, "cg-tax");
+      if (!XA_BOOK?.tax || !el) return false;
+      const { perTaxpayer, wholeWindow, earlierYears, fyLabel } = XA_BOOK.tax;
+      if (!earlierYears.length) {
+        return { notChecked: `no capital gain statement in this book reports a sale before ${fyLabel}, so a window taxed whole is the year's own tax` };
+      }
+      const shown = xaRupees(el.text);
+      const yearOnFace = new RegExp(`per taxpayer\\s*·\\s*${fyLabel.replace(/[-]/g, "\\-")}`, "i").test(t);
+      // One decimal of lakh, or of crore, is the tile's printing precision.
+      return yearOnFace && Math.abs(Number(el.attrs.value) - perTaxpayer) <= 1
+        && Math.abs(wholeWindow - perTaxpayer) > 1e5 && Math.abs(shown - wholeWindow) > 5100;
+    }],
+    ["…and its hover names the accounts whose earlier years' sales it leaves out", (t, ctx) => {
+      if (!XA_BOOK?.tax) return false;
+      const { earlierYears, fyLabel } = XA_BOOK.tax;
+      if (!earlierYears.length) {
+        return { notChecked: `no capital gain statement in this book reports a sale before ${fyLabel}` };
+      }
+      const hover = (ctx?.titles ?? []).find((x) => x.includes(`The sales made in ${fyLabel} only`));
+      return !!hover && earlierYears.every((e) => hover.includes(e))
+        && /from sales in earlier financial years/i.test(hover) && /in no part of this figure/i.test(hover);
     }],
     /**
      * XA-16. Three captions said the book carries no lot date — "No statement

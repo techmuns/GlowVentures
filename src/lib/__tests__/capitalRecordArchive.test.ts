@@ -26,7 +26,12 @@
 //   · a register whose only movements are withdrawals, for an account with no
 //     other dated capital, is not listed — and the suite asserts it is ABSENT,
 //     because listed alone it presents a funded account as one nothing was paid
-//     into.
+//     into;
+//   · a BANK BOOK's deposits and withdrawals are dated capital only where the
+//     same account's profit-and-loss account WITNESSES them — its Capital
+//     Contribution and Withdrawals lines, struck on the bank book's own closing
+//     date, reproduce the rows' sums to the paisa (the two ASK PMS accounts in
+//     the September 2026 delivery, which publish nothing else dated).
 import fs from "node:fs";
 import path from "node:path";
 import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITIONS } from "@/data/glowData";
@@ -40,6 +45,7 @@ const ok = (name: string, pass: boolean, detail = "") => {
 
 type Row = Record<string, any>;
 type Doc = { docKey: string; provider: string; accountNo: string; reportType: string; asOf: string | null; status?: string;
+  periodFrom?: string | null; periodTo?: string | null; flows?: Row | null;
   cashFlows?: Row[]; commitment?: { calls?: Row[] } | null };
 
 const AUDIT = path.resolve("public/audit");
@@ -56,12 +62,18 @@ const byPA = new Map(BOOK_ACCOUNTS.map((a) => [`${a.provider}::${a.accountNo}`, 
 const num = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const within = (a: number, b: number) => Math.abs(a - b) <= 1;
 
-type Archive = { typed: Row[]; calls: Row[]; register: Row[]; switches: Row[] };
+type Archive = { typed: Row[]; calls: Row[]; register: Row[]; switches: Row[]; bank: BankDay[] };
+type BankDay = { date: string; ins: number; outs: number };
 const archive = new Map<string, Archive>();
+const bankBooks = new Map<string, Doc[]>();
+const profitAndLoss = new Map<string, Doc[]>();
 for (const d of docs) {
   const accountId = byPA.get(`${d.provider}::${d.accountNo}`);
   if (!accountId) continue;
-  const a = archive.get(accountId) ?? { typed: [], calls: [], register: [], switches: [] };
+  const a = archive.get(accountId) ?? { typed: [], calls: [], register: [], switches: [], bank: [] };
+  if (d.reportType === "bank-book" && (d.cashFlows ?? []).length) bankBooks.set(accountId, [...(bankBooks.get(accountId) ?? []), d]);
+  if (d.reportType === "profit-and-loss" && num(d.flows?.contribution) && num(d.flows?.withdrawal))
+    profitAndLoss.set(accountId, [...(profitAndLoss.get(accountId) ?? []), d]);
   for (const c of d.cashFlows ?? []) {
     if (!c.date) continue;
     if ((c.kind === "contribution" || c.kind === "withdrawal") && num(c.amount)) a.typed.push(c);
@@ -81,6 +93,45 @@ for (const a of archive.values()) {
   a.calls = dedupe(a.calls, (k) => `${k.date}|${k.amount}|${k.label ?? ""}`);
   a.register = dedupe(a.register, (c) => `${c.date}|${c.description ?? ""}|${c.amount}|${c.balance ?? ""}`);
 }
+/**
+ * A BANK BOOK ITS PROFIT-AND-LOSS ACCOUNT WITNESSES. A bank book's Dep/With
+ * column is capital moving, and its TDS transfers ("Trf to TDS A/c", printed in
+ * the Buy/Sell column) are money leaving the family's account — but its running
+ * balance moves with every trade, so nothing on the page witnesses those rows
+ * alone. The account's own profit-and-loss account does: its Capital
+ * Contribution and Withdrawals lines, struck on the bank book's closing date,
+ * must be the rows' sums to the paisa. ONE issue's rows, never a union of two —
+ * a second issue of one bank book prints every payment again. A day's moves
+ * are netted per direction; a day whose withdrawals and reversals net to nil
+ * moves nothing.
+ */
+const isTds = (c: Row) => /^trf to tds a\/c$/i.test(String(c.description ?? "").trim());
+for (const [accountId, books] of bankBooks) {
+  const a = archive.get(accountId)!;
+  for (const pl of profitAndLoss.get(accountId) ?? []) {
+    const close = pl.flows?.periodTo ?? pl.periodTo ?? pl.asOf;
+    const issue = [...books].sort((x, y) => x.docKey.localeCompare(y.docKey)).find((b) => {
+      if ((b.periodTo ?? b.asOf) !== close) return false;
+      const rows = (b.cashFlows ?? []).filter((c) => c.kind === "bank-book" && c.date);
+      const dep = rows.filter((c) => num(c.depositWithdrawal) && c.depositWithdrawal > 0).reduce((t, c) => t + c.depositWithdrawal, 0);
+      const wd = -(rows.filter((c) => num(c.depositWithdrawal) && c.depositWithdrawal < 0).reduce((t, c) => t + c.depositWithdrawal, 0)
+        + rows.filter((c) => isTds(c) && num(c.buySellAmount)).reduce((t, c) => t + c.buySellAmount, 0));
+      return Math.abs(dep - pl.flows!.contribution) < 0.01 && Math.abs(wd - pl.flows!.withdrawal) < 0.01;
+    });
+    if (!issue) continue;
+    const days = new Map<string, BankDay>();
+    for (const c of issue.cashFlows ?? []) {
+      if (c.kind !== "bank-book" || !c.date) continue;
+      const day = days.get(c.date) ?? { date: c.date, ins: 0, outs: 0 };
+      if (num(c.depositWithdrawal) && c.depositWithdrawal > 0) day.ins += c.depositWithdrawal;
+      if (num(c.depositWithdrawal) && c.depositWithdrawal < 0) day.outs += -c.depositWithdrawal;
+      if (isTds(c) && num(c.buySellAmount)) day.outs += -c.buySellAmount;
+      if (day.ins || day.outs || days.has(c.date)) days.set(c.date, day);
+    }
+    a.bank = [...days.values()].filter((d) => Math.round(d.ins * 100) || Math.round(d.outs * 100));
+    break;
+  }
+}
 const isSwitchLeg = (a: Archive, c: Row) => a.switches.some((s) => s.date === c.date && num(s.amount) && within(Math.abs(s.amount), Math.abs(c.amount)));
 
 // ── WHICH ACCOUNTS THE ARCHIVE SAYS HAVE A DATED CAPITAL RECORD ────────────
@@ -89,6 +140,9 @@ const withdrawalsOnly: string[] = [];
 for (const [accountId, a] of archive) {
   const money = a.register.filter((c) => !isSwitchLeg(a, c));
   if (a.typed.length || a.calls.length) { expected.add(accountId); continue; }
+  // A witnessed bank book lists the account where it carries a deposit — its
+  // withdrawals alone are held back by the register's own rule, below.
+  if (a.bank.some((d) => Math.round(d.ins * 100) > 0)) { expected.add(accountId); continue; }
   if (!money.length) continue;
   if (money.some((c) => c.amount > 0)) expected.add(accountId);
   else withdrawalsOnly.push(accountId);
@@ -108,8 +162,11 @@ ok("a register holding nothing but withdrawals, for an account with no other dat
 // or the merge did no work and every check above passes on the defect.
 const typedOnly = new Set([...archive].filter(([, a]) => a.typed.length).map(([id]) => id));
 const viaMerge = [...expected].filter((a) => !typedOnly.has(a)).sort();
-ok("the dated calls and registers reach accounts the typed rows alone do not", viaMerge.length > 0,
-  `${typedOnly.size} account(s) from typed rows, ${viaMerge.length} more from calls or a register: ${viaMerge.join(", ")}`);
+ok("the dated calls, registers and witnessed bank books reach accounts the typed rows alone do not", viaMerge.length > 0,
+  `${typedOnly.size} account(s) from typed rows, ${viaMerge.length} more from calls, a register or a bank book: ${viaMerge.join(", ")}`);
+const viaBank = [...expected].filter((a) => archive.get(a)!.bank.length && !typedOnly.has(a)).sort();
+ok("…and a bank book its profit-and-loss account witnesses reaches accounts nothing else dates", viaBank.length > 0,
+  viaBank.join(", ") || "none");
 
 // ── EVERY DATED CALL IS ONE ROW ────────────────────────────────────────────
 // Grouped per (account, date, amount), because two calls of one size on one day
@@ -165,6 +222,32 @@ for (const [accountId, a] of archive) {
 ok("every register day on a listed account is exactly one capital row", regChecked > 0 && regProblems.length === 0,
   regProblems.slice(0, 6).join("; ") || `${regChecked} register day(s)`);
 ok("no leg of a class switch is listed as money moving", legProblems.length === 0, legProblems.join("; ") || "none");
+
+// ── EVERY WITNESSED BANK-BOOK DAY IS ONE ROW, PER DIRECTION ────────────────
+// The day's deposits are one `in` row and its withdrawals with its TDS
+// transfers one `out` row, each at the day's own sum; a day netting to nil is
+// none. And the account's record carries no move its bank book does not — two
+// records of one account's capital that disagree would be summed into one.
+let bankChecked = 0;
+const bankProblems: string[] = [];
+for (const [accountId, a] of archive) {
+  if (!a.bank.length || !listed.has(accountId)) continue;
+  for (const d of a.bank) {
+    for (const [direction, amount] of [["in", d.ins], ["out", d.outs]] as const) {
+      if (!Math.round(amount * 100)) continue;
+      bankChecked++;
+      const hit = movesOf(accountId, d.date, direction);
+      if (hit.length !== 1 || !num(hit[0].amount) || Math.abs(hit[0].amount - amount) > 0.01)
+        bankProblems.push(`${accountId} ${d.date} ${direction} ${amount.toFixed(2)}: ${hit.map((m) => m.amount).join(", ") || "no row"}`);
+    }
+  }
+  const onBank = new Set(a.bank.flatMap((d) => [
+    ...(Math.round(d.ins * 100) ? [`${d.date}|in`] : []), ...(Math.round(d.outs * 100) ? [`${d.date}|out`] : [])]));
+  const stray = RECORD.filter((m) => m.accountId === accountId && m.payoutKind == null && !onBank.has(`${m.date}|${m.direction}`));
+  for (const m of stray) bankProblems.push(`${accountId} ${m.date} ${m.direction} ${m.amount}: on the record and not in its bank book`);
+}
+ok("every witnessed bank-book day is exactly one capital row per direction, at its own sum", bankChecked > 0 && bankProblems.length === 0,
+  bankProblems.slice(0, 6).join("; ") || `${bankChecked} bank-book day move(s)`);
 
 // The deposit the audit found missing: the largest register deposit on an
 // account whose statements type NO contribution — the case the merge exists for

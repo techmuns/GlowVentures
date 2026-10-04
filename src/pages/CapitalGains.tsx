@@ -177,11 +177,22 @@ export function CapitalGains() {
    * person, and this pooled every member's heads first — so one member's
    * short-term loss erased the others' short-term gains and the tile printed
    * ₹18.2 L. Per person, a short-term loss then sets off against that person's
-   * own long-term gain within one financial year (s.70(2)): ₹24.2 L on this
-   * book. See `estimateRealisedTax`.
+   * own long-term gain within one financial year (s.70(2)). And it is ONE
+   * year's tax: only the sales made in the financial year the newest window
+   * closes in, read off each lot's sale date — ASK's and Marathon's windows run
+   * from inception, and taxing every year in them read ₹2.00 Cr on gains no
+   * sale this year made. See `estimateRealisedTax`.
    */
   const taxEst = estimateRealisedTax(cg);
   const estTaxRealised = realisedTotal === null ? null : taxEst.total;
+  const fyLabel = taxEst.year ? `FY ${taxEst.year.slice(0, 4)}-${String((Number(taxEst.year.slice(0, 4)) + 1) % 100).padStart(2, "0")}` : "";
+  const earlierGain = taxEst.earlierYears.reduce((s, e) => s + e.st + e.lt, 0);
+  const earlierLine = taxEst.earlierYears.length
+    ? `${taxEst.earlierYears.map((e) => e.entity).join(", ")} report ${money(earlierGain, true)} of gains from sales in earlier financial years — a past year's return, in no part of this figure.`
+    : "";
+  const undatedLine = taxEst.undated.length
+    ? `${taxEst.undated.reduce((n, e) => n + e.lots, 0)} lot(s) on ${taxEst.undated.map((e) => e.entity).join(", ")} carry no sale date, so they are placed in no year and are in no part of this figure.`
+    : "";
   // WHICH WINDOWS REACH INTO AN EARLIER FINANCIAL YEAR. Derived from the
   // statements' own windows: the financial year is the one the newest window
   // closes in (1 April to 31 March), and a window that opens before it mixes
@@ -432,19 +443,23 @@ export function CapitalGains() {
                     ? `${t.owner}: ST ${money(t.st ?? 0, true)} sets off ${money(t.setOff)} of LT ${money(t.lt ?? 0, true)} → max(0, ${money((t.st ?? 0) + t.setOff, true)}) × 20% + max(0, ${money((t.lt ?? 0) - t.setOff, true)}) × 12.5% = ${money(t.tax)}`
                     : `${t.owner}: max(0, ${money(t.st ?? 0, true)}) × 20% + max(0, ${money(t.lt ?? 0, true)}) × 12.5% = ${money(t.tax)}${t.setOffWithheld ? " (no set-off struck: their windows span financial years)" : ""}`),
                   `Σ = ${money(estTaxRealised)}`,
+                  ...(earlierLine ? [earlierLine] : []),
                 ].join("  ·  "),
               }}>{fmtFromBase(estTaxRealised, { compact: true })}</Auditable>
             </span>}
             sub={estTaxRealised === 0
               ? <span className="text-slate-400">nothing to tax · every taxpayer's heads are at a net loss</span>
-              : "per taxpayer · STCG 20% · LTCG 12.5% · illustrative"}
+              : `per taxpayer${fyLabel ? ` · ${fyLabel}` : ""} · STCG 20% · LTCG 12.5% · illustrative`}
             hint={[
               taxEst.byTaxpayer.map((t) => `${t.owner} ${money(t.tax)}`).join(" · "),
+              fyLabel ? `The sales made in ${fyLabel} only, from ${fmtDate(taxEst.year)}, read off each lot's sale date.` : "",
+              earlierLine,
+              undatedLine,
               taxEst.unattributed.length
                 ? `${taxEst.unattributed.map((c) => c.entity).join(", ")} ${taxEst.unattributed.length === 1 ? "carries" : "carry"} no canonical owner and ${taxEst.unattributed.length === 1 ? "is" : "are"} not in this figure.`
                 : "",
             ].filter(Boolean).join(" — ")}
-            title="Each person's realised gains are the sum over their own accounts' capital gain statements, and a short-term loss is set off against that person's own long-term gain within one financial year. Illustrative only: equity rates, no ₹1.25 L exemption, no surcharge or cess."
+            title="Each person's realised gains in one financial year are the sum over their own accounts' sales in that year, read off each lot's sale date, and a short-term loss is set off against that person's own long-term gain within the year. Illustrative only: equity rates, no ₹1.25 L exemption, no surcharge or cess."
             icon={<Percent className="h-4 w-4" />} />
         )}
 
@@ -778,9 +793,9 @@ export function CapitalGains() {
           absence could do — a tax figure read without it is read as advice
           (Stage 10ci) — and so the one line the no-explainer sweep excuses. */}
       <p className="mt-4 text-[11px] text-slate-500" data-prose-ok="tax caveat"
-        title={`Current Indian equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A), struck per taxpayer — each person over their own accounts, so one member's loss never reduces another member's tax. A short-term loss is set off against the same person's long-term gain within one financial year (s.70(2)) and a long-term loss against a long-term gain only (s.70(3)); they do not apply the ₹1.25L LTCG exemption, carry a loss across years, or add surcharge and cess. The realised figure also includes the managers' liquid-fund redemptions (Ledger Insights' Realised tab names them), which s.50AA taxes at the holder's slab rate rather than these equity rates${priorYear.length > 0
-          ? `, and ${priorYear.join(", ")} ${priorYear.length === 1 ? "reports a window" : "report windows"} reaching back before ${fmtDate(fyStart)}, into an earlier financial year`
-          : ""} — this estimate separates neither. This page is on a statement basis so every figure ties to the source PDF: realised figures are as each manager's capital gain statement reports them, each over its own window, and unrealised figures are at the statement mark — the live feed does not move them here.`}>
+        title={`Current Indian equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A), struck per taxpayer — each person over their own accounts, so one member's loss never reduces another member's tax. A short-term loss is set off against the same person's long-term gain within one financial year (s.70(2)) and a long-term loss against a long-term gain only (s.70(3)); they do not apply the ₹1.25L LTCG exemption, carry a loss across years, or add surcharge and cess. The realised figure also includes the managers' liquid-fund redemptions (Ledger Insights' Realised tab names them), which s.50AA taxes at the holder's slab rate rather than these equity rates — this estimate does not separate them. It counts only the sales made in the financial year from ${fmtDate(fyStart)}, read off each lot's sale date${priorYear.length > 0
+          ? `; ${priorYear.join(", ")} ${priorYear.length === 1 ? "reports a window" : "report windows"} reaching back before it, and the sales in earlier years are in no part of the estimate`
+          : ""}. This page is on a statement basis so every figure ties to the source PDF: realised figures are as each manager's capital gain statement reports them, each over its own window, and unrealised figures are at the statement mark — the live feed does not move them here.`}>
         Tax figures are <span className="font-medium text-slate-400">illustrative</span> · per taxpayer · statement basis · not tax advice
       </p>
     </div>

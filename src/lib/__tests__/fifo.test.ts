@@ -265,9 +265,14 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
   near(`C2 ${id}: FIFO cost = cash deposits + reinvested distribution`, (p.costBasis ?? 0) - deposits, ph.income ?? 0, 0.05);
   ok(`C2 ${id}: …and no unit was sold`, (p.realizedPnL ?? 0) === 0 && (p.costOfUnitsSold ?? 0) === 0);
   // The fund's OWN total gain — realised on the switch plus unrealised — is the
-  // same money FIFO reports as unrealised over the family's own cost.
-  const fifoGain = p.marketValue - (p.costBasis ?? 0) + (p.realizedPnL ?? 0);
-  near(`C2 ${id}: FIFO gain = the manager's realised + unrealised`, fifoGain,
+  // same money FIFO reports as unrealised over the family's own cost. Struck on
+  // the manager's own closing value and date: the book values each folio on its
+  // 31 Aug portfolio snap since the September 2026 delivery, a month after this
+  // report, and a gain struck a month later is a different measurement
+  // (`carriedCost.test.ts` holds the book's own date to the snap's Profit / Loss).
+  ok(`C2 ${id}: the manager's report prints the value its gain is struck on`, isNum(ph.closing), String(ph.closing));
+  const fifoGain = (ph.closing ?? NaN) - (p.costBasis ?? 0) + (p.realizedPnL ?? 0);
+  near(`C2 ${id}: FIFO gain on the manager's own date = its realised + unrealised`, fifoGain,
     (ph.realized ?? 0) + (ph.unrealized ?? 0), 0.15);
   // And the statement's own restamped cost is off by exactly what the switch
   // "realised" — the reason the old return was wrong.
@@ -445,6 +450,13 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
       witnessed += 1;
       near(`C6 ${a.accountId}: gain = the manager's realised + unrealised + income − fees`, gain,
         ph.realized! + ph.unrealized! + ph.income! - ph.fees!, 0.5);
+    } else if ([src.realized, src.unrealized, src.income, src.fees].every(isNum)) {
+      // ASK prints its decomposition on the SAME profit-and-loss account its
+      // capital is read from, so against it the gain would only test the
+      // book's value against that account's closing — the value, not the
+      // return, which is this section's own reason for not using a profit.
+      skip(`C6 ${a.accountId}: the manager's bridge`,
+        `its only since-inception decomposition is the ${src.reportType} its capital is read from, so it would test the value, not the return`);
     } else {
       skip(`C6 ${a.accountId}: the manager's bridge`, `no performance history dated ${a.capital.to}, the capital's own date`);
     }
