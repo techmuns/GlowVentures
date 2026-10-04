@@ -1519,20 +1519,50 @@ export function buoyantSnapFails(p, heldClass) {
   return fails;
 }
 
-/** The FUND's own top holdings tie only if their serial numbers run 1..N and their weights add to 100. */
-function buoyantSnapHoldingsTie(p) {
+/**
+ * The FUND's own top holdings tie only if their serial numbers run 1..N, a
+ * `Total 100%` row closes them, and their weights add to 100 within the
+ * precision each is printed to (two decimals, so N × 0.005 at the most).
+ * Returns what failed; empty means the table may be archived.
+ */
+export function buoyantSnapHoldingsFails(p) {
   const h = p.fundHoldings;
-  if (!h.length || !p.fundHoldingsTotal) return false;
-  if (h.some((x, i) => x.sr !== i + 1)) return false;
+  if (!h.length) return ["no fund holding row was read"];
+  const fails = [];
+  if (!p.fundHoldingsTotal) fails.push("the fund holdings print no Total 100% row");
+  if (h.some((x, i) => x.sr !== i + 1)) fails.push(`the fund holdings' serial numbers do not run 1 to ${h.length}`);
   const sum = h.reduce((a, x) => a + x.pct, 0);
-  return Math.abs(sum - 100) <= h.length * 0.005 + 1e-9;
+  if (Math.abs(sum - 100) > h.length * 0.005 + 1e-9) {
+    fails.push(`the fund holdings add to ${Math.round(sum * 100) / 100}%, not 100%`);
+  }
+  return fails;
 }
+const buoyantSnapHoldingsTie = (p) => !buoyantSnapHoldingsFails(p).length;
 
+/**
+ * Whether the snap restates page 1 — and, where it does, whether the two tables
+ * archived AS PRINTED were read. The fund's top holdings and this account's
+ * TWRR become no fact of the book, so a table this reader cannot read is
+ * withheld from the archive rather than archived wrong; and a withheld table
+ * SAYS so, because a section that silently stops appearing is indistinguishable
+ * from a snap that never printed one. Where the pages do not restate each other
+ * every page-3 table is withheld for that reason, which the first warning names.
+ */
 function buoyantSnapCheck(text, holdings, warn) {
   const held = /CLASS\s+([A-Z]\d?)/i.exec(text)?.[1]?.toUpperCase() ?? null;
   const p = buoyantSnapParse(text);
   const fails = holdings.length === 1 ? buoyantSnapFails(p, held) : ["the snap carries more than one Account Summary row"];
-  if (fails.length) warn("snap-does-not-tie", "the Portfolio Snap Report's pages do not restate each other: " + fails.join("; "));
+  if (fails.length) {
+    warn("snap-does-not-tie", "the Portfolio Snap Report's pages do not restate each other: " + fails.join("; "));
+    return;
+  }
+  const unread = [
+    ...(p.twrr ? [] : ["the Performance (TWRR) row did not read as four percentages"]),
+    ...buoyantSnapHoldingsFails(p),
+  ];
+  if (unread.length) {
+    warn("snap-section-not-read", "a table page 3 prints is not archived, because it did not read whole: " + unread.join("; "));
+  }
 }
 
 function buoyantSnapSections(text) {

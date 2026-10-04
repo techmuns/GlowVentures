@@ -28,6 +28,9 @@ const SUITES = [
   { name: "categoryWords", file: "categoryWords.test.mjs", required: true },
   { name: "separate", file: "separateInvestments.test.mjs", required: true },
   { name: "profitLoss", file: "profitLoss.test.mjs", required: true },
+  { name: "askArf", file: "askArf.test.mjs", required: true },
+  { name: "buoyantSnap", file: "buoyantSnap.test.mjs", required: true },
+  { name: "sheetWitness", file: "sheetWitness.test.mjs", required: true },
   // Exit 2 = BLOCKED: the real statements are not present. Reported, not failed.
   { name: "golden",   file: "golden.mjs",        required: false },
 ];

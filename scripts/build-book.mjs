@@ -2191,8 +2191,26 @@ function bridgeTieOf(b) {
 
 // ── Build ────────────────────────────────────────────────────────────────────
 
-function build(docs) {
+function build(archived) {
   const notes = [];
+  // AN EXPORT IS A WITNESS, NEVER A DOCUMENT OF THE BOOK. A spreadsheet that
+  // sits beside its PDF (`askimpms_…_BankBook178CT.xlsx`, Marathon's `.csv`) is
+  // archived with its rows and NO facts, `twinOf` naming the PDF it witnesses;
+  // every figure in it was checked against that PDF at extraction. Left in the
+  // load it shares its PDF's account, report type and date, so
+  // `newestPerReportType` kept the PDF only because its docKey sorts first, and
+  // the report then said each export was "superseded … its dated rows are still
+  // counted" — about a document with no rows to count. It is set aside here,
+  // where the archive is read, and said once.
+  const witnesses = archived.filter((d) => d.twinOf);
+  const docs = archived.filter((d) => !d.twinOf);
+  if (witnesses.length) {
+    const byProvider = new Map();
+    for (const w of witnesses) byProvider.set(w.provider, (byProvider.get(w.provider) ?? 0) + 1);
+    notes.push(`${witnesses.length} spreadsheet export(s) are witnesses of the PDF beside each (\`twinOf\`) and are not documents of this book — `
+      + [...byProvider].map(([p, n]) => `${p} ${n}`).join(", ")
+      + `. Each carries no facts; every figure in it was checked against its PDF at extraction (docs/EXTRACTION-REPORT.md).`);
+  }
   const byAccount = new Map();
   for (const d of docs) {
     const k = acctKey(d);

@@ -75,8 +75,11 @@ export function sniffFormat(buf) {
 
 // ── Comma-separated text ─────────────────────────────────────────────────────
 
-/** A UTF-8 byte-order mark, which Excel writes in front of a CSV it saves. */
-const BOM = "\uFEFF";
+/**
+ * A UTF-8 byte-order mark, which Excel writes in front of a CSV it saves — as
+ * BYTES, because that is where it has to be removed (see `csvText`).
+ */
+const isBomAt0 = (buf) => buf.length >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf;
 
 /**
  * Is this comma-separated TEXT? Decided on the bytes, and only once every
@@ -105,12 +108,19 @@ function looksLikeCsv(buf) {
  * would arrive with a replacement character in it — a wrong name that looks
  * like a rendering glitch. Latin-1 maps every byte to a character, so nothing
  * is lost; it is only the fallback, because the drop's own exports are UTF-8.
+ *
+ * THE BYTE-ORDER MARK IS REMOVED AS BYTES, BEFORE EITHER DECODING. `TextDecoder`
+ * strips it on its own, so a test of the decoded text for U+FEFF never fires on
+ * the UTF-8 path — and on the Latin-1 path the same three bytes decode to "ï»¿",
+ * which no such test can see either. That was this function's first version:
+ * a file carrying the mark and one byte that is not UTF-8 kept "ï»¿" in front of
+ * its first field, and a QUOTED first field then opened mid-field, so its quote
+ * was kept as a character and the comma inside it split the field in two.
  */
 function csvText(buf) {
-  let s;
-  try { s = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
-  catch { s = buf.toString("latin1"); }
-  return s.startsWith(BOM) ? s.slice(1) : s;
+  const body = isBomAt0(buf) ? buf.subarray(3) : buf;
+  try { return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(body); }
+  catch { return Buffer.from(body).toString("latin1"); }
 }
 
 /**
