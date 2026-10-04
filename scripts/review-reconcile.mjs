@@ -1383,7 +1383,10 @@ say();
  * - **ACCOUNT BY ACCOUNT, AT THE CLOSING'S OWN DATE.** A depository balance on
  *   that exact day (the tape's own running balance) is used where a window
  *   covers it; otherwise the statement nearest the date, preferring an earlier
- *   one, and the gap in days is printed. Where one holder's product is split
+ *   one, and the gap in days is printed. A statement of another date is carried
+ *   to the review's date over the units its own dated record shows moving between
+ *   (`H_MOVES`), and an account whose record shows it held nothing then is not
+ *   that closing's statement. Where one holder's product is split
  *   across two closings (Deepak Fertilisers at HDFC Bank and at Motilal Oswal),
  *   an account one closing ties to is not offered to the other.
  * - **UNITS TIE TO THE THIRD DECIMAL THE STATEMENTS PRINT.** A value-only line
@@ -1422,8 +1425,11 @@ const H_LINE_ISINS = new Map([
   ["Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW", ["INF732E01037"]],
   ["HDFC Balanced Advantage Fund", ["INF179K01830", "INF179K01WA6"]], ["ICICI Pru Balanced Advantage Fund", ["INF109K012B0"]],
   ["ICICI Pru Liquid Fund-Direct(G)", ["INF109K01Q49"]], ["WhiteOak Capital Multi Asset Allocation Fund-Direct(G)", ["INF03VN01761"]],
+  ["Invesco India Arbitrage Fund-Direct(G)", ["INF205K01KR8"]],
 ]);
 const hUp = (s) => String(s ?? "").trim().toUpperCase();
+/** A report type the classifier could not name is still a statement — never printed as "unknown of <date>". */
+const hKind = (t) => (!t || t === "unknown" ? "statement" : t);
 const hOwnerOfAccount = new Map(ACCOUNTS.map((a) => [a.accountId, a.ownerId]));
 const hEngagement = new Map(ACCOUNTS.map((a) => [a.accountId, a.engagement]));
 const hProviderOf = new Map(ACCOUNTS.map((a) => [a.accountId, a.provider]));
@@ -1439,7 +1445,7 @@ for (const d of H_MANIFEST) {
   for (const h of hDoc(d.docKey).holdings ?? []) {
     if (typeof h.quantity !== "number") continue;
     H_ROWS_ARCHIVE.push({ ownerId: d.ownerId, key: h.securityKey ?? null, isin: hUp(h.isin), units: h.quantity, provider: d.provider, nameKey: hNameKey(h.security),
-      date: d.asOf, account: hAccountOf(d.provider, d.accountNo), how: `${d.provider} ${d.accountNo}, ${d.reportType} of ${d.asOf}` });
+      date: d.asOf, account: hAccountOf(d.provider, d.accountNo), how: `${d.provider} ${d.accountNo}, ${hKind(d.reportType)} of ${d.asOf}` });
   }
 }
 const H_WINDOWS = Object.values(grab(src, "BOOK_SHARE_MOVEMENTS"));
@@ -1463,6 +1469,48 @@ function hBalancesOn(date) {
   }
   return out;
 }
+/**
+ * UNITS THAT MOVED BETWEEN A STATEMENT'S DATE AND THE REVIEW'S. A fund's own
+ * dated record (`BOOK_CAPITAL_MOVES`, units signed) and a broker's own buys and
+ * sells on an Execution or Direct account. A depository's tape is not read here:
+ * `hBalancesOn` already reads its running balance. A trade two issues of one tape
+ * both print counts once, by the ordinal rule `datedRowsAcross` uses.
+ */
+const H_MOVES = (() => {
+  const out = [];
+  for (const m of grab(src, "BOOK_CAPITAL_MOVES")) {
+    if (typeof m.units === "number" && m.units !== 0) out.push({ account: m.accountId, key: m.securityKey ?? null, isin: "", date: m.date, units: m.units, label: m.label });
+  }
+  const counts = new Map();
+  for (const d of H_MANIFEST) {
+    if (!/transaction/.test(d.reportType ?? "")) continue;
+    const account = hAccountOf(d.provider, d.accountNo);
+    if (!["Execution", "Direct"].includes(hEngagement.get(account))) continue;
+    const seen = new Map();
+    for (const t of hDoc(d.docKey).transactions ?? []) {
+      if (!["buy", "sell"].includes(t.side) || typeof t.quantity !== "number" || !t.date) continue;
+      const sig = [account, t.date, t.side, Math.abs(t.quantity), t.securityKey].join("|");
+      const n = (seen.get(sig) ?? 0) + 1;
+      seen.set(sig, n);
+      if (n <= (counts.get(sig) ?? 0)) continue;
+      counts.set(sig, n);
+      out.push({ account, key: t.securityKey ?? null, isin: hUp(t.isin), date: t.date,
+        units: t.side === "sell" ? -Math.abs(t.quantity) : Math.abs(t.quantity), label: t.side === "sell" ? "sold" : "bought" });
+    }
+  }
+  return out;
+})();
+/** A statement's units carried to `date` over the moves dated between the two; null where nothing moved. */
+function hRolled(r, date, keys, isins) {
+  if (r.date === date) return null;
+  const lo = r.date < date ? r.date : date, hi = r.date < date ? date : r.date;
+  const between = H_MOVES.filter((m) => m.account === r.account && ((m.key && keys.has(m.key)) || (m.isin && isins.has(m.isin)))
+    && m.date > lo && m.date <= hi).sort((a, b) => (a.date < b.date ? -1 : 1));
+  if (!between.length) return null;
+  const net = between.reduce((s, m) => s + m.units, 0);
+  return { units: r.date < date ? r.units + net : r.units - net, between };
+}
+const hMovesText = (roll) => roll.between.map((m) => `${m.units < 0 ? "−" : "+"}${hUnits(Math.abs(m.units))} ${m.label.toLowerCase()} ${m.date}`).join(", ");
 /** Within the third decimal the statements print, or the review's own rounding where it printed fewer. */
 const hSame = (a, b, dp = 3) => Math.abs(a - b) < Math.max(0.001, 0.5 * 10 ** -Math.min(dp, 3) + 1e-9);
 const hDays = (a, b) => Math.round(Math.abs(Date.parse(a) - Date.parse(b)) / 864e5);
@@ -1507,7 +1555,7 @@ for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
     if (pass === "tie") continue;
     const provider = providerFor(c.product);
     const hits = provider ? hPrintedBy(ownerId, provider, c.value) : [];
-    if (hits.length) put("ties (printed total)", `printed on ${hits.length} of the holder's ${provider} statements, first ${hits[0].reportType} of ${hits[0].asOf}; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value`);
+    if (hits.length) put("ties (printed total)", `printed on ${hits.length} of the holder's ${provider} statements, first ${hKind(hits[0].reportType)} of ${hits[0].asOf}; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value`);
     else if (provider) {
       const near = H_MANIFEST.filter((d) => d.ownerId === ownerId && d.provider === provider && d.asOf).map((d) => d.asOf).sort((a, b) => hDays(a, c.date) - hDays(b, c.date))[0];
       put(near === c.date ? "differs (same date)" : near ? "not on a statement of that date" : "no statement", near === c.date
@@ -1551,7 +1599,31 @@ for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
   const tie = free.find((r) => hSame(r.units, c.qty, c.qtyDp));
   const at = (r) => (r.date === c.date ? `on the same date — ${r.how}` : `${r.how}, ${hDays(r.date, c.date)} days ${r.date < c.date ? "before" : "after"} the review`);
   if (tie) { claim(tie); put(tie.date === c.date ? "ties" : "ties (other date)", `${hUnits(tie.units)} units ${at(tie)}`); continue; }
+  /**
+   * A statement of another date, carried to the review's date over the units
+   * that moved between. It is a verdict only where the result is the review's
+   * own figure; anything short of that is reported as it was.
+   */
+  const rolledTie = free.map((r) => ({ r, roll: hRolled(r, c.date, keys, isins) }))
+    .find((x) => x.roll && hSame(x.roll.units, c.qty, c.qtyDp));
+  if (rolledTie) {
+    const { r, roll } = rolledTie;
+    claim(r);
+    put("ties (carried to the review's date)", `${hUnits(r.units)} units ${at(r)}; ${hMovesText(roll)} → ${hUnits(roll.units)} units on ${c.date}`);
+    continue;
+  }
   if (pass === "tie") continue;
+  /**
+   * An account whose dated record shows it held nothing on the review's date —
+   * every unit it reports was bought after — is not this closing's statement.
+   * Helios's AMC folio opened on 6 August is not the review's 30 June line.
+   */
+  const laterOnly = free.filter((r) => { const x = r.date > c.date ? hRolled(r, c.date, keys, isins) : null; return x != null && Math.abs(x.units) < 0.001; });
+  if (laterOnly.length && laterOnly.length === free.length) {
+    const began = laterOnly.map((r) => `${r.how.replace(/, [a-z-]+ of \d{4}-\d{2}-\d{2}$/, "")} first holds it on ${hRolled(r, c.date, keys, isins).between[0].date}, after the review`).join("; ");
+    put("no statement", `no statement of this holder's reports it on ${c.date} — ${began}; ${custodianNote({ advisor: c.advisor, investor: c.investor })}`);
+    continue;
+  }
   if (!rows.length && !keys.size && !isins.size) { put("no statement", `no statement of this holder's names this product — ${custodianNote({ advisor: c.advisor, investor: c.investor })}`); continue; }
   if (!free.length && depository !== undefined) {
     const elsewhere = [...H_ROWS_ARCHIVE, ...hBalancesOn(c.date)].filter((r) => r.ownerId === ownerId && hEngagement.get(r.account) !== "PMS"
@@ -1560,10 +1632,14 @@ for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
     if (elsewhere.length) { claim(elsewhere[0]); put("ties (other custodian)", `${hUnits(elsewhere[0].units)} units — ${elsewhere[0].how}; the review files it under ${c.advisor}`); continue; }
   }
   if (!free.length) { put("no statement", `no statement of this holder's reports it — ${custodianNote({ advisor: c.advisor, investor: c.investor })}`); continue; }
-  const total = free.reduce((s, r) => s + r.units, 0);
-  if (free.length > 1 && hSame(total, c.qty, c.qtyDp)) { free.forEach(claim); put("ties (across accounts)", `${hUnits(total)} units over ${free.length} accounts`); continue; }
-  const when = free.every((r) => r.date === c.date) ? "same date" : free.every((r) => r.date > c.date) ? "later statement" : "earlier statement";
-  put(`differs (${when})`, free.map((r) => `${hUnits(r.units)} units ${at(r)}`).join("; "));
+  const held = free.filter((r) => !laterOnly.includes(r));
+  const total = held.reduce((s, r) => s + r.units, 0);
+  if (held.length > 1 && hSame(total, c.qty, c.qtyDp)) { held.forEach(claim); put("ties (across accounts)", `${hUnits(total)} units over ${held.length} accounts`); continue; }
+  const when = held.every((r) => r.date === c.date) ? "same date" : held.every((r) => r.date > c.date) ? "later statement" : "earlier statement";
+  put(`differs (${when})`, held.map((r) => {
+    const x = hRolled(r, c.date, keys, isins);
+    return `${hUnits(r.units)} units ${at(r)}` + (x ? `; carried to ${c.date} over ${hMovesText(x)}: ${hUnits(x.units)} units` : "");
+  }).join("; "));
 }
 hResults.sort((a, b) => a.c.row - b.c.row);
 
@@ -1572,8 +1648,10 @@ say();
 say("The review's `Transactions since inception` tab closes each holding with one row: holder, product,");
 say("date, units, value. Each is set against **the same holder's own statements**, account by account,");
 say("at the closing's own date where a depository tape covers it and otherwise at the nearest statement,");
-say("whose date is printed. Units tie to the third decimal the statements print. The review's figures");
-say("are the review's (30 June 2026) and reach no total in this book.");
+say("whose date is printed. A statement of another date is carried to the review's date over the units");
+say("its dated record shows moving between the two (a fund's own allotments and redemptions, a broker's");
+say("trades), and that is a tie only where it lands on the review's figure. Units tie to the third decimal");
+say("the statements print. The review's figures are the review's (30 June 2026) and reach no total in this book.");
 say();
 const hTally = new Map();
 for (const r of hResults) hTally.set(r.verdict, (hTally.get(r.verdict) ?? 0) + 1);

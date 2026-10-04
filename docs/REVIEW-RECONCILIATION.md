@@ -431,22 +431,25 @@ it stays stated rather than distributed across the book.
 The review's `Transactions since inception` tab closes each holding with one row: holder, product,
 date, units, value. Each is set against **the same holder's own statements**, account by account,
 at the closing's own date where a depository tape covers it and otherwise at the nearest statement,
-whose date is printed. Units tie to the third decimal the statements print. The review's figures
-are the review's (30 June 2026) and reach no total in this book.
+whose date is printed. A statement of another date is carried to the review's date over the units
+its dated record shows moving between the two (a fund's own allotments and redemptions, a broker's
+trades), and that is a tie only where it lands on the review's figure. Units tie to the third decimal
+the statements print. The review's figures are the review's (30 June 2026) and reach no total in this book.
 
 | Verdict | Closings |
 | --- | ---: |
 | no statement | 50 |
-| ties (other date) | 42 |
+| ties (other date) | 43 |
 | ties | 32 |
 | nil | 8 |
 | ties (printed total) | 7 |
 | differs (same date) | 6 |
 | kept out | 6 |
-| differs (later statement) | 4 |
-| differs (earlier statement) | 3 |
+| ties (carried to the review's date) | 3 |
+| differs (later statement) | 2 |
 | ties (other custodian) | 2 |
 | not on a statement of that date | 2 |
+| differs (earlier statement) | 1 |
 | **All** | **162** |
 
 | Row | Holder | Review line | Date | Review units · value | Verdict | What the holder's statements say |
@@ -466,8 +469,8 @@ are the review's (30 June 2026) and reach no total in this book.
 | 79 | Bharat Jaisinghani Family Trust II | Sky Capital Titan Rising Funds 1 (Sky Capital) | 2026-03-31 | 7,500 · ₹75,00,000 | ties (other date) | 7,500 units Sky Capital Rising Titans Fund SKY023, holdings of 2026-04-30, 30 days after the review |
 | 81 | Bharat Jaisinghani Family Trust III | Sky Capital Titan Rising Funds 1 (Sky Capital) | 2026-03-31 | 7,500 · ₹75,00,000 | ties (other date) | 7,500 units Sky Capital Rising Titans Fund SKY024, holdings of 2026-04-30, 30 days after the review |
 | 83 | Ankita Jaisinghani | Transition Venture Capital fund I (Private Investments) | 2026-02-28 | 2,500 · ₹32,85,877 | ties (other date) | 2,500 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 153 days after the review |
-| 85 | Bharat Jaisinghani Family Trust II | Transition Venture Capital fund I (Private Investments) | 2026-02-28 | 7,500 · ₹96,80,754 | ties (other date) | 7,500 units Transition Venture Capital TVC262, unknown of 2026-03-31, 31 days after the review |
-| 87 | Bharat Jaisinghani Family Trust III | Transition Venture Capital fund I (Private Investments) | 2026-02-28 | 7,500 · ₹96,80,754 | ties (other date) | 7,500 units Transition Venture Capital TVC263, unknown of 2026-03-31, 31 days after the review |
+| 85 | Bharat Jaisinghani Family Trust II | Transition Venture Capital fund I (Private Investments) | 2026-02-28 | 7,500 · ₹96,80,754 | ties (other date) | 7,500 units Transition Venture Capital TVC262, statement of 2026-03-31, 31 days after the review |
+| 87 | Bharat Jaisinghani Family Trust III | Transition Venture Capital fund I (Private Investments) | 2026-02-28 | 7,500 · ₹96,80,754 | ties (other date) | 7,500 units Transition Venture Capital TVC263, statement of 2026-03-31, 31 days after the review |
 | 90 | Ajay Jaisinghani | DSP Silver ETF (MOPWM Reg) | 2026-06-30 | 1,81,000 · ₹3,89,68,358.8 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | 93 | Ankita Jaisinghani | DSP Silver ETF (MOPWM Reg) | 2026-06-30 | 1,23,000 · ₹2,64,81,260.4 | ties (other date) | 1,23,000 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
 | 95 | Aarti Ajay Jaisinghani | Bank Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | nil | the review carries nil — nothing to reconcile |
@@ -492,11 +495,11 @@ are the review's (30 June 2026) and reach no total in this book.
 | 143 | Aarti Ajay Jaisinghani | Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW (MOPWM) | 2026-06-30 | 5,169.754 · ₹51,69,754 | ties | 5,169.754 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838335); next printed balance 7,657.754 on 2026-07-06 |
 | 145 | Bharat Jaisinghani | Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW (MOPWM) | 2026-06-30 | 3,816.251 · ₹38,16,251 | ties | 3,816.251 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838320); next printed balance 3,819.213 on 2026-07-06 |
 | 147 | Ajay Jaisinghani | Invesco India Arbitrage Fund(G) (MOPWM) | 2026-06-30 | 7,99,864.748 · ₹2,70,30,789.27 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
-| 149 | Bharat Jaisinghani Family Trust | Invesco India Arbitrage Fund-Direct(G) (MOPWM) | 2026-06-30 | 10,92,470.994 · ₹4,01,89,932.17 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 149 | Bharat Jaisinghani Family Trust | Invesco India Arbitrage Fund-Direct(G) (MOPWM) | 2026-06-30 | 10,92,470.994 · ₹4,01,89,932.17 | ties (other date) | 10,92,470.994 units Motilal Oswal Financial Services (demat) 1201090032387399, holdings of 2026-07-31, 31 days after the review |
 | 151 | Ajay Jaisinghani | Kotak Equity Arbitrage Scheme(G) (MOPWM) | 2026-06-30 | 6,42,940.095 · ₹2,55,10,448.5 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | 153 | Ajay Jaisinghani | Motilal Oswal Arbitrage Fund Direct (G) (MOPWM) | 2025-09-24 | 5,47,324.748 · ₹60,83,295.64 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | 178 | Ajay Jaisinghani | Motilal Oswal Arbitrage Fund Direct (G) (MOPWM) | 2026-06-30 | 2,80,67,435.368 · ₹31,19,58,317.14 | differs (same date) | 2,80,67,435.434 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
-| 203 | Ajay Jaisinghani | Neo Infra Income Opportunities Fund Share Class A5 (MOPWM) | 2026-03-31 | 3,35,837 · ₹3,76,84,269.77 | differs (later statement) | 4,85,837 units Neo Infra Income Opportunities Fund 9039920536, holdings of 2026-06-30, 91 days after the review |
+| 203 | Ajay Jaisinghani | Neo Infra Income Opportunities Fund Share Class A5 (MOPWM) | 2026-03-31 | 3,35,837 · ₹3,76,84,269.77 | ties (carried to the review's date) | 4,85,837 units Neo Infra Income Opportunities Fund 9039920536, holdings of 2026-06-30, 91 days after the review; +1,50,000 fifth drawdown 2026-04-22 → 3,35,837 units on 2026-03-31 |
 | 207 | Bharat Jaisinghani | 15% K M Global - Credit Private Limited (Private Investments) | 2026-06-30 | 0 · ₹1,04,34,584.46 | no statement | a value-only line no manager or statement in this book is matched to — the review carries it at a figure only |
 | 212 | Ajay Jaisinghani | Kaynes Technology India ltd (MOPWM) | 2026-06-30 | 16,300 · ₹5,08,91,045 | differs (same date) | 0 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
 | 215 | Ankita Jaisinghani | Kaynes Technology India ltd (MOPWM) | 2026-06-30 | 4,875 · ₹1,52,20,481.25 | differs (same date) | 0 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838316); next printed balance 4,875 on 2026-07-07 |
@@ -566,18 +569,18 @@ are the review's (30 June 2026) and reach no total in this book.
 | 478 | Ajay Jaisinghani | WhiteOak Capital Multi Asset Allocation Fund-Direct(G) (MOPWM) | 2026-06-30 | 70,52,224.197 · ₹11,45,63,382.08 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | 480 | Ankita Jaisinghani | WhiteOak Capital Multi Asset Allocation Fund-Direct(G) (MOPWM) | 2026-06-30 | 39,15,742.08 · ₹6,36,11,230.09 | ties (other date) | 39,15,742.08 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
 | 482 | Bharat Jaisinghani | WhiteOak Capital Multi Asset Allocation Fund-Direct(G) (MOPWM) | 2026-06-30 | 13,66,820.78 · ₹2,22,04,003.57 | ties (other date) | 13,66,820.78 units Motilal Oswal Financial Services (demat) 1201090012838320, holdings of 2026-07-31, 31 days after the review |
-| 485 | Bharat Jaisinghani | Belrise Industries (LKP SEC) | 2026-06-30 | 6,500 · ₹10,32,590 | differs (earlier statement) | 12,500 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
+| 485 | Bharat Jaisinghani | Belrise Industries (LKP SEC) | 2026-06-30 | 6,500 · ₹10,32,590 | ties (carried to the review's date) | 12,500 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review; −6,000 sold 2026-06-25 → 6,500 units on 2026-06-30 |
 | 489 | Bharat Jaisinghani | Crompton Gr. Con (LKP SEC) | 2026-06-30 | 5,000 · ₹13,74,500 | ties (other date) | 5,000 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
 | 491 | Bharat Jaisinghani | Electronics Mart India Ltd (LKP SEC) | 2026-06-30 | 10,000 · ₹12,18,500 | ties (other date) | 10,000 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
 | 495 | Bharat Jaisinghani | Jyothy Lab. (LKP SEC) | 2026-06-30 | 4,000 · ₹7,66,800 | ties (other date) | 4,000 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
 | 499 | Bharat Jaisinghani | Mrs. Bectors F (LKP SEC) | 2026-06-30 | 6,000 · ₹10,78,200 | ties (other date) | 6,000 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
 | 502 | Bharat Jaisinghani | Transrail Lighting - LKP (LKP SEC) | 2026-06-30 | 2,525 · ₹12,93,557.5 | ties (other date) | 2,525 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
-| 507 | Bharat Jaisinghani | Pricol Ltd (LKP SEC) | 2026-06-30 | 2,875 · ₹17,33,625 | differs (earlier statement) | 650 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
-| 509 | Aarti Ajay Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 60,45,934.485 · ₹97,68,23,496.94 | ties | 60,45,934.485 units on the same date — Sanshi Fund 9039671821, unknown of 2026-06-30 |
-| 511 | Ajay Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 23,41,480.851 · ₹29,35,23,824.82 | ties | 23,41,480.851 units on the same date — Sanshi Fund 9039671912, unknown of 2026-06-30 |
-| 515 | Ajay Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 17,61,264.629 · ₹28,45,63,122.95 | ties | 17,61,264.629 units on the same date — Sanshi Fund 9069671634, unknown of 2026-06-30 |
-| 520 | Ankita Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-02-28 | 18,20,926.864 · ₹29,42,02,601.1 | ties (other date) | 18,20,926.864 units Sanshi Fund 9069671554, unknown of 2026-06-30, 122 days after the review |
-| 522 | Bharat Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 12,11,186.597 · ₹19,56,88,390.51 | ties | 12,11,186.597 units on the same date — Sanshi Fund 9039671854, unknown of 2026-06-30 |
+| 507 | Bharat Jaisinghani | Pricol Ltd (LKP SEC) | 2026-06-30 | 2,875 · ₹17,33,625 | ties (carried to the review's date) | 650 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review; +2,225 bought 2026-05-05 → 2,875 units on 2026-06-30 |
+| 509 | Aarti Ajay Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 60,45,934.485 · ₹97,68,23,496.94 | ties | 60,45,934.485 units on the same date — Sanshi Fund 9039671821, statement of 2026-06-30 |
+| 511 | Ajay Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 23,41,480.851 · ₹29,35,23,824.82 | ties | 23,41,480.851 units on the same date — Sanshi Fund 9039671912, statement of 2026-06-30 |
+| 515 | Ajay Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 17,61,264.629 · ₹28,45,63,122.95 | ties | 17,61,264.629 units on the same date — Sanshi Fund 9069671634, statement of 2026-06-30 |
+| 520 | Ankita Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-02-28 | 18,20,926.864 · ₹29,42,02,601.1 | ties (other date) | 18,20,926.864 units Sanshi Fund 9069671554, statement of 2026-06-30, 122 days after the review |
+| 522 | Bharat Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 12,11,186.597 · ₹19,56,88,390.51 | ties | 12,11,186.597 units on the same date — Sanshi Fund 9039671854, statement of 2026-06-30 |
 | 560 | Ajay Jaisinghani | Svan Investment (Svan) | 2026-06-30 | 0 · ₹15,99,42,275.22 | ties (printed total) | printed on 2 of the holder's SVAN Investment Managers LLP statements, first investor-report of 2026-06-30; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
 | 588 | Bharat Jaisinghani | Svan Investment (Svan) | 2026-06-30 | 0 · ₹10,38,90,192.28 | ties (printed total) | printed on 2 of the holder's SVAN Investment Managers LLP statements, first investor-report of 2026-06-30; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
 | 590 | Ajay Jaisinghani | VEC Small and Mid cap fund (MOPWM) | 2026-06-30 | 0 · ₹9,32,78,083 | not on a statement of that date | no V.E.C Assago Capital Management LLP statement for this holder prints ₹9,32,78,083; the nearest is dated 2026-07-06, 6 days after the review — a mandate's value moves daily |
@@ -596,7 +599,7 @@ are the review's (30 June 2026) and reach no total in this book.
 | 646 | Ajay Jaisinghani | Fund of Funds (VEC+ Carnelian+Girik Cap+Insightful) (MOPWM) | 2026-04-17 | 99,995 · ₹11,12,87,435.35 | ties (other date) | 99,995 units Motilal Oswal Delphi Equity Fund 9049241536, holdings of 2026-06-30, 74 days after the review |
 | 648 | Ajay Jaisinghani | Green Lantern Growth Strategy (Green Lantern) | 2026-06-30 | 0 · ₹11,69,10,162 | differs (same date) | the holder's Green Lantern Capital LLP statement of 2026-06-30 does not print ₹11,69,10,162 |
 | 650 | Ankita Jaisinghani | Green Lantern Growth Strategy (Green Lantern) | 2026-06-25 | 0 · ₹5,92,66,352 | ties (printed total) | printed on 2 of the holder's Green Lantern Capital LLP statements, first fact-sheet of 2026-06-25; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
-| 654 | Ajay Jaisinghani | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 32,45,281.682 · ₹5,15,02,620.29 | differs (later statement) | 1,91,23,041.38 units Helios Mutual Fund 10355977, holdings of 2026-08-07, 38 days after the review |
+| 654 | Ajay Jaisinghani | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 32,45,281.682 · ₹5,15,02,620.29 | no statement | no statement of this holder's reports it on 2026-06-30 — Helios Mutual Fund 10355977 first holds it on 2026-08-06, after the review; held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | 660 | Ankita Jaisinghani | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 51,00,984.835 · ₹8,09,52,629.33 | ties (other date) | 51,00,984.835 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
 | 668 | Bharat Jaisinghani | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 24,07,981.455 · ₹3,82,14,665.69 | ties (other date) | 24,07,981.455 units Motilal Oswal Financial Services (demat) 1201090012838320, holdings of 2026-07-31, 31 days after the review |
 | 670 | Bharat Jaisinghani Family Trust II | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 31,84,554.148 · ₹5,05,38,874.33 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |

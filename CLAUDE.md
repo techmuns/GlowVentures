@@ -547,7 +547,7 @@ have been through `npm run extract`**: `august-2026-f/`'s two outlined-text
 statements are read by rendering their glyphs (see its own section) and its third
 file is a register held out of the book by decision. 38 provider names in the
 archive — ASK's PMS, the ASK Absolute Return Fund and Marathon are the newest —
-**57 accounts** in the book, six holders and two family trusts, and **361 leaf
+**58 accounts** in the book, seven holders (three of them family trusts, Stage 10db), and **361 leaf
 files** — of which **307 documents** are in the archive (18 of them spreadsheet
 exports read as WITNESSES of the PDF beside each), 238 read fully, 66 partially and
 **exactly ONE not at all**:
@@ -635,6 +635,7 @@ every ZIP already at the top level.
 | Motilal Oswal Financial Services (demat) | 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
 | Motilal Oswal Financial Services (demat) | 1201090012838320 | Bharat Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
 | Motilal Oswal Financial Services (demat) | 1201090012838335 | Aarti Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
+| Motilal Oswal Financial Services (demat) | 1201090032387399 | Bharat Jaisinghani Family Trust | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
 | Motilal Oswal Financial Services (demat) | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (**quantity only** — the rate printed is face value) |
 | Motilal Oswal Financial Services (demat) | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | — (no NAV published) |
@@ -658,7 +659,7 @@ cells and gets a different answer has found one, and no prose rescues it. The
 column is regenerated from `BOOK_POSITIONS` now, and it is regenerated EVERY
 TIME rather than patched: hand-merging rows to keep it short is what let eight
 accounts go unlisted, and a row added by hand is a figure copied into prose. It
-is one row per account, all 57 of them, sorted by value — and the words in the
+is one row per account, all 58 of them, sorted by value — and the words in the
 right-hand cell are `Account.noPositionsReason`, routed rather than written, so
 an account that changes WHY it is empty changes this table on the next run.
 
@@ -1101,6 +1102,12 @@ guess, by the mechanism the HOPE INDIA TRUST folios already use. Returning
 `owner: null` was not enough: `extract.mjs` falls back to the classifier's name,
 which is the same name the PAN contradicts, so `excludedFromBook` carries it.
 
+*(Attributed at Stage 10db. The holder lines print the trustees of the
+unnumbered "Bharat Jaisinghani Family Trust", which the family's register and
+review name. Since Stage 10cz its rates are last-movement prices, so the
+statement book does not move; the live book values its three funds at AMFI's
+NAV, about ₹8.72 Cr.)*
+
 | Account | Owner | As of | In the book |
 | --- | --- | --- | ---: |
 | 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | ₹38.38 Cr |
@@ -1182,6 +1189,10 @@ all, which agrees with an account holding nothing.
 TRUST` carries no numeral, and this book has Trust 2 and Trust 3 as separate
 taxpayers with separate PANs. Whoever writes that reader must resolve it on the
 PAN the statement prints, never on the name.
+
+*(Resolved at Stage 10db. The unnumbered trust is a third owner of its own,
+attributed by a join on the client ID that is checked against the page on every
+read, never by a name. No statement prints its PAN.)*
 
 **AND THE CONSOLIDATED REVIEW WORKBOOK IS NOT A SOURCE — BY DECISION.** The
 adviser's 25-tab aggregation of the whole book is matched on a column header no
@@ -10993,7 +11004,8 @@ inventions agree — and it failed four ways on the first run:
   so ₹8.23 Cr is excluded with the reason and is in no total. It issues a
   transaction statement like every other demat, and its window was keyed on its
   own accountId and emitted. `shareMovementsFrom` takes the REGISTRY now and
-  skips any account not in it, saying how many it skipped.
+  skips any account not in it, saying how many it skipped. *(The account is
+  attributed at Stage 10db, so its window is emitted under its owner now.)*
 - **AND FIVE FIELDS WERE CARRIED INTO NO CALLER.** This repo's most-repeated
   defect, arriving in a component written the same hour as the comment warning
   about it: the page rendered a GENERIC "no split is published" sentence where
@@ -25343,6 +25355,103 @@ SUITE.**
   - **one on `ledger`**: the archive's newest statement is now the tape's own last
     date, so the two windows cannot be told apart.
 
+### Stage 10db — THE UNNUMBERED TRUST, AND EVERY REVIEW CLOSING SET AGAINST ITS STATEMENTS
+
+*"Also reconciliate the new updated data on the dashboard with this consolidated
+file that the client had shared for reconciliation … Also do run a thorough audit
+so that there are no logical errors or calculation mistakes in the data shown on
+dashboard."* — with the family's consolidated review of 30 June 2026.
+
+The review is still a cross-check and never a source. It settled one account the
+book had excluded, and the reconciler now checks every closing it prints.
+
+#### 1. Demat 1201090032387399 belongs to Bharat Jaisinghani Family Trust
+
+It was excluded because its holder line and its masked PAN named different
+taxpayers (see "ONE ACCOUNT IS EXCLUDED…" above). The family's own documents
+settle it:
+
+- the register records ₹6.77 Cr paid under the unnumbered "Bharat Jaisinghani
+  Family Trust" on 1 Jul 2025, into ICICI Pru Liquid and Invesco India Arbitrage;
+- the review closes those two funds under that trust at 46,654.378 and
+  10,92,470.994 units, this account's own balances;
+- the holder lines print the trust's trustees.
+
+`BENEFICIAL_OWNER_BY_CLIENT_ID` in `motilalDemat.mjs` is the join, keyed on the
+Client ID the page prints and checked on every read. It refuses unless the owner
+is a canonical trust, the page's A/C Type is read and is not an individual's, and
+the masked PAN fits no other taxpayer's PAN. No statement prints the trust's PAN,
+so the registry carries none. `npm run replay:owners` lands it without the
+passwords. `motilalOwner.test.mjs` (104 checks) and
+`scripts/dev/motilal-owner-bug.mjs` (14 cases, each fires) hold it.
+
+What moved:
+
+- **58 accounts and a seventh holder**, a third family trust.
+- **The statement book does not move** (₹613.01 Cr): since Stage 10cz this
+  demat's rates are last-movement prices. The live book values its three funds
+  at AMFI's NAV, about ₹8.72 Cr.
+- **The register's ₹12.52 Cr under the unnumbered trust resolves**
+  (`docs/REGISTER-RECONCILIATION.md`).
+- **Invesco India Arbitrage and the trust's Kotak Arbitrage are cash
+  equivalents.** Kotak's key is now one key for Ajay's demat and the trust's:
+  one ISIN, one scheme.
+- **`build-fund-navs` carries a NAV's previous value by ISIN** when a key moves,
+  so a re-keyed scheme keeps its day change.
+- **Scheme names gain a second tier**: AMFI's daily file, joined on the ISIN, for
+  the four schemes the look-through store never saw — the trust's Invesco and
+  Kotak arbitrage funds, Mirae Asset Large Cap and Nippon India ETF Liquid BeES.
+
+#### 2. Section H — every closing the review prints
+
+`npm run reconcile:review` gains section H. Each of the review's 162 closing rows
+is set against the same holder's own statements, account by account. A
+depository tape gives the balance on the closing's own date; otherwise the
+nearest statement is used and its date printed. A statement of another date is
+carried to the review's date over the units its own dated record moves, and that
+is a tie only where it lands on the review's figure.
+
+| Verdict | Closings |
+| --- | ---: |
+| ties — same date 32, another date 43, carried 3, printed total 7, other custodian 2 | 87 |
+| no statement in the drop | 50 |
+| nil (8), or kept out by decision (6) | 14 |
+| differs — same date 6, later statement 2, earlier statement 1 | 9 |
+| a value-only line on no statement of that date | 2 |
+| **All** | **162** |
+
+What still differs, named and not resolved — the family's to explain:
+
+- **India SME**: Ajay's ICICI NSDL statement holds 67,500 units on 31 March where
+  the review carries 54,000; Ankita's and Bharat's later statements hold 27,000
+  where it carries 18,000.
+- **Kaynes**: nil on 30 June on both Ajay's and Ankita's demats; Ankita's 4,875
+  are credited on 7 July.
+- **Nuvama** 3,695 against 9,500; **Yash High Voltage** 1,38,462 on the 31 March
+  statement against 1,16,462; **Motilal Oswal Arbitrage** 2,80,67,435.434
+  against .368.
+- **Helios**: no statement on 30 June; Ajay's AMC folio first holds it on
+  6 August. **V.E.C** and **Green Lantern** value-only lines meet no statement
+  of that date.
+
+A statement whose type the classifier could not name is printed as "statement
+of", never "unknown of".
+
+#### 3. One review line was wrongly called absent
+
+The review's `Invesco India Arbitrage Fund-Direct(G)` closing for the trust is
+the trust's holding statement of 31 July, to the unit, and its tape from 1 April
+does not move the scheme. It joins `REVIEW_LINE_ISINS` (the dashboard's
+review-gap note) and `H_LINE_ISINS` (the reconciler) on INF205K01KR8, so neither
+says no statement reports it. Ajay's regular-plan line is a different review
+line and is still on no statement.
+
+#### 4. Still open
+
+- The full audit the family asked for.
+- The reconciler's older prose sections (C1, C2, D, E).
+- Main's eleven #104 Morning CIO checks, which fail on main's own build.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -26251,7 +26360,8 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   archive — the two HDFC Bank NSDL statements whose holder line prints the
   TRUSTEES rather than the trust — from each document's own `pages.json`, keyed
   on the DP account number the page prints and cited to the family's own
-  investment register. The FIFTH faithful partial replay after `rekey:archive`,
+  investment register. Since Stage 10db it lands the Motilal client-ID join for
+  demat 1201090032387399 the same way. The FIFTH faithful partial replay after `rekey:archive`,
   `build-lookthrough --reindex`, `replay:calls` and `replay:movements`, on the
   same three rules (see Stage 10bp): it touches the owner, its id and one
   warning and nothing else; its gate is struck on the ARCHIVE — the owner on
