@@ -195,12 +195,12 @@ reported rather than requested.
 
 | Review line | Custodian / advisor | Review MV | Why it is not here |
 | --- | --- | ---: | --- |
-| Private Equity | Alternate tab | ₹136.16 Cr | **an AGGREGATE line, not a holding** — the review reports this block only as a total on the `Alternate` tab and itemises it nowhere. Its constituents are on the review's own `Private Investments` tab and in the family's investment register (`/register`); no custodian issues a statement for it, so this is not a document to ask for |
-| Man Industries | HDFC Bank / MOPWM | ₹33.90 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
+| Private Equity | Alternate tab | ₹136.16 Cr | **an AGGREGATE line, not a holding** — the review reports this block only as a total on the `Alternate` tab and itemises it nowhere. Its constituents are on the review's own `Private Investments` tab and in the family's investment register (`docs/REGISTER-RECONCILIATION.md`); no custodian issues a statement for it, so this is not a document to ask for |
+| Man Industries | HDFC Bank / MOPWM | ₹33.90 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 | Motilal Oswal Arbitrage Fund Direct (G) | Debt tab | ₹31.80 Cr | a fund line on the **Debt** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
 | Aditya Birla SL Balanced Advantage Fund(G) | MOPWM / MOPWM Dir | ₹29.58 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | ICICI Pru India Opportunities Fund | MOPWM Dir | ₹25.42 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
-| Manorama Industries Ltd. | HDFC Bank / MOPWM | ₹25.05 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
+| Manorama Industries Ltd. | HDFC Bank / MOPWM | ₹25.05 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 | Bandhan Large & Mid Cap Fund - Direct Plan - Growth | MOPWM | ₹24.78 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | ICICI Prudential Equity Savings Fund - Direct Plan | MOPWM | ₹23.18 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | Zepto | MOPWM | ₹22.83 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
@@ -210,10 +210,10 @@ reported rather than requested.
 | Onesource Specialty Pharma | MOPWM | ₹15.03 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | HDFC Balanced Advantage Fund | MOPWM Dir / MOPWM Reg | ₹10.87 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | Kotak Multicap Fund-Direct Plan-Growth | MOPWM | ₹10.24 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
-| Kingfa Science & Technology Ltd. | HDFC Bank / MOPWM | ₹10.06 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
+| Kingfa Science & Technology Ltd. | HDFC Bank / MOPWM | ₹10.06 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 | Neuland Labs. | MOPWM | ₹8.62 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | Kaynes Technology India ltd | MOPWM | ₹6.61 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
-| Deepak Fert | HDFC Bank / MOPWM | ₹4.04 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
+| Deepak Fert | HDFC Bank / MOPWM | ₹4.04 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 | Invesco India Arbitrage Fund-Direct(G) | Debt tab | ₹4.02 Cr | a fund line on the **Debt** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
 | ICICI Pru Liquid Fund-Direct(G) | Cash tab | ₹2.87 Cr | a fund line on the **Cash** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
 | Invesco India Arbitrage Fund(G) | Debt tab | ₹2.70 Cr | a fund line on the **Debt** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
@@ -225,10 +225,10 @@ reported rather than requested.
 | HDFC Liquid Fund -Direct(G) | Cash tab | ₹1.26 Cr | a fund line on the **Cash** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
 | 15% K M Global - Credit Private Limited | Debt tab | ₹1.04 Cr | a fund line on the **Debt** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
 | NLC INDIA | MOPWM | ₹1.03 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
-| Vedanta Power Ltd | HDFC Bank / MOPWM | ₹0.93 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
+| Vedanta Power Ltd | HDFC Bank / MOPWM | ₹0.93 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 | Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW | Cash tab | ₹0.90 Cr | a fund line on the **Cash** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
-| Vedanta Iron & Steel Ltd | HDFC Bank / MOPWM | ₹0.81 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
-| Vedanta Oil & Gas Ltd | HDFC Bank / MOPWM | ₹0.74 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
+| Vedanta Iron & Steel Ltd | HDFC Bank / MOPWM | ₹0.81 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| Vedanta Oil & Gas Ltd | HDFC Bank / MOPWM | ₹0.74 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 | Infinium Pharmachem Ltd. | MOPWM | ₹0.15 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
 | Mirae Asset Cash Management Fund-Direct(G) | Cash tab | ₹0.09 Cr | a fund line on the **Cash** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
 | Bharat Parenterals Ltd | MOPWM | ₹0.08 Cr | held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
@@ -236,10 +236,10 @@ reported rather than requested.
 | Kotak Liquid-Direct (DD) | Cash tab | ₹0.08 Cr | a fund line on the **Cash** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
 | Aditya Birla SL Liquid Fund-(DD)-Direct | Cash tab | ₹0.08 Cr | a fund line on the **Cash** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
 | HSBC Liquid Fund-Direct(DD) | Cash tab | ₹0.06 Cr | a fund line on the **Cash** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
-| Sterlite Power Transmission | HDFC Bank | ₹0.06 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
-| Sterlite Grid 5 | HDFC Bank | ₹0.04 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
+| Sterlite Power Transmission | HDFC Bank | ₹0.06 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| Sterlite Grid 5 | HDFC Bank | ₹0.04 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 | HDFC Overnight Fund - Direct - G | Cash tab | ₹0.02 Cr | a fund line on the **Cash** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
-| STLNETWORK | HDFC Bank | ₹0.00 Cr | held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
+| STLNETWORK | HDFC Bank | ₹0.00 Cr | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 
 **₹503.94 Cr of review lines have no counterpart in this book.**
 
@@ -249,7 +249,7 @@ reported rather than requested.
 | --- | ---: | ---: |
 | Motilal Oswal holding statements for the demat and PWM accounts not in the drop | 20 | **₹244.59 Cr** |
 | NOTHING TO ASK FOR — an aggregate block the review itemises on another tab | 1 | **₹136.16 Cr** |
-| Bharat's HDFC Bank NSDL holding statement — **as a text PDF, not a scan** | 10 | **₹75.63 Cr** |
+| HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's **as a text PDF, not a scan** | 10 | **₹75.63 Cr** |
 | AMC folio statements or a CAS for the mutual-fund and liquid holdings on the Debt / Cash / Alternate tabs | 14 | **₹47.56 Cr** |
 
 Every figure in that last column is the REVIEW's, not this book's — it is what the
@@ -332,7 +332,7 @@ honest answer until a contract note arrives.
 **WHAT WOULD CLOSE CAUSE A:** a transaction statement or contract note from **ICICI Bank**
 and **Motilal Oswal** for those accounts — the buy prices, not another holding statement.
 The family's own investment register already covers part of it: `npm run reconcile:register`
-measures which, and the answer today is 7 of the 60 rows.
+measures which, in `docs/REGISTER-RECONCILIATION.md`.
 
 **AND CAUSE A CANNOT RAISE NAV.** Those rows are already in the ₹613.01 Cr at their
 statement marks. Supplying their cost raises invested capital, lowers the reported return on
@@ -414,8 +414,9 @@ honest position — a bridge forced to zero would be a fabricated figure with a 
    accounts are dated July or August, and the two ICICI-sourced accounts 31 March. Every
    line in section C2 whose quantity ties exactly and whose value does not is this.
 2. **Partly-held names.** Nine direct-equity lines are held in this book at a smaller
-   quantity than the review carries — Clean Max at exactly half, Insolation short by the
-   91,000 shares that sit on the unreadable HDFC statement. The missing part of each is
+   quantity than the review carries — Clean Max at exactly half (Ankita's 94,967 are kept as a
+   quantity at the family's decision), Insolation short by Bharat's 91,260 shares, which the review
+   places at ICICI Bank in an account no statement in the drop covers. The missing part of each is
    already counted in step 2 above only where the WHOLE line was absent, never where part
    of it is here.
 3. **Private holdings the review carries at cost and this book cannot value.** The
@@ -424,4 +425,192 @@ honest position — a bridge forced to zero would be a fabricated figure with a 
 
 Closing the residual line by line needs the statements in section D1. Until they arrive
 it stays stated rather than distributed across the book.
+
+## H. Every closing the review prints, holder by holder
+
+The review's `Transactions since inception` tab closes each holding with one row: holder, product,
+date, units, value. Each is set against **the same holder's own statements**, account by account,
+at the closing's own date where a depository tape covers it and otherwise at the nearest statement,
+whose date is printed. Units tie to the third decimal the statements print. The review's figures
+are the review's (30 June 2026) and reach no total in this book.
+
+| Verdict | Closings |
+| --- | ---: |
+| no statement | 50 |
+| ties (other date) | 42 |
+| ties | 32 |
+| nil | 8 |
+| ties (printed total) | 7 |
+| differs (same date) | 6 |
+| kept out | 6 |
+| differs (later statement) | 4 |
+| differs (earlier statement) | 3 |
+| ties (other custodian) | 2 |
+| not on a statement of that date | 2 |
+| **All** | **162** |
+
+| Row | Holder | Review line | Date | Review units · value | Verdict | What the holder's statements say |
+| ---: | --- | --- | --- | --- | --- | --- |
+| 7 | Aarti Ajay Jaisinghani | DSP Gold ETF (MOPWM) | 2026-06-30 | 11,95,000 · ₹16,30,73,165.5 | ties (other date) | 11,95,000 units Motilal Oswal Financial Services (demat) 1201090012838335, holdings of 2026-07-31, 31 days after the review |
+| 10 | Ajay Jaisinghani | DSP Gold ETF (MOPWM) | 2026-06-30 | 21,40,000 · ₹29,20,30,606 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 12 | Ankita Jaisinghani | DSP Gold ETF (MOPWM) | 2026-06-30 | 2,05,000 · ₹2,79,74,894.5 | ties (other date) | 2,05,000 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
+| 19 | Ajay Jaisinghani | 360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II) (L&T Financial) | 2026-06-30 | 9,90,429.68 · ₹1,45,80,413 | ties | 9,90,429.684 units on the same date — 360 ONE Private Wealth 37702, holdings of 2026-06-30 |
+| 26 | Bharat Jaisinghani | 360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II) (L&T Financial) | 2026-06-30 | 9,90,429.68 · ₹1,45,80,412.51 | ties | 9,90,429.684 units on the same date — 360 ONE Private Wealth 60117, holdings of 2026-06-30 |
+| 28 | Ajay Jaisinghani | Assetgro Fintech Private Limited (ICICI Bank) | 2026-06-30 | 0 · ₹5,00,32,848 | no statement | a value-only line no manager or statement in this book is matched to — the review carries it at a figure only |
+| 37 | Ankita Jaisinghani | Baring PE India Fund 6 (MOPWM) | 2026-03-31 | 202.5 · ₹1,88,42,208.74 | ties | 202.5 units on the same date — Baring Private Equity India Fund AIFM_BPEPF6_0584, holdings of 2026-03-31 |
+| 49 | Ajay Jaisinghani | India SME (ICICI Bank) | 2026-03-31 | 54,000 · ₹9,55,80,000 | differs (same date) | 67,500 units on the same date — ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31 |
+| 58 | Ankita Jaisinghani | India SME (Private Investments) | 2026-03-31 | 18,000 · ₹3,18,60,000 | differs (later statement) | 27,000 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 122 days after the review; 27,000 units India SME Investments 177302, holdings of 2026-06-30, 91 days after the review |
+| 69 | Bharat Jaisinghani | India SME (Private Investments) | 2026-03-31 | 18,000 · ₹3,18,60,000 | differs (later statement) | 27,000 units India SME Investments 175964, holdings of 2026-06-30, 91 days after the review |
+| 71 | Ajay Jaisinghani | Sky Capital Titan Rising Funds 1 (Sky Capital) | 2026-03-31 | 15,000 · ₹1,50,00,000 | ties (other date) | 15,000 units Sky Capital Rising Titans Fund SKY022, holdings of 2026-04-30, 30 days after the review |
+| 77 | Bharat Jaisinghani | Sky Capital Titan Rising Funds 1 (Sky Capital) | 2026-03-31 | 17,000 · ₹1,71,50,000 | ties (other date) | 17,000 units Sky Capital Rising Titans Fund SKY003, holdings of 2026-04-30, 30 days after the review |
+| 79 | Bharat Jaisinghani Family Trust II | Sky Capital Titan Rising Funds 1 (Sky Capital) | 2026-03-31 | 7,500 · ₹75,00,000 | ties (other date) | 7,500 units Sky Capital Rising Titans Fund SKY023, holdings of 2026-04-30, 30 days after the review |
+| 81 | Bharat Jaisinghani Family Trust III | Sky Capital Titan Rising Funds 1 (Sky Capital) | 2026-03-31 | 7,500 · ₹75,00,000 | ties (other date) | 7,500 units Sky Capital Rising Titans Fund SKY024, holdings of 2026-04-30, 30 days after the review |
+| 83 | Ankita Jaisinghani | Transition Venture Capital fund I (Private Investments) | 2026-02-28 | 2,500 · ₹32,85,877 | ties (other date) | 2,500 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 153 days after the review |
+| 85 | Bharat Jaisinghani Family Trust II | Transition Venture Capital fund I (Private Investments) | 2026-02-28 | 7,500 · ₹96,80,754 | ties (other date) | 7,500 units Transition Venture Capital TVC262, unknown of 2026-03-31, 31 days after the review |
+| 87 | Bharat Jaisinghani Family Trust III | Transition Venture Capital fund I (Private Investments) | 2026-02-28 | 7,500 · ₹96,80,754 | ties (other date) | 7,500 units Transition Venture Capital TVC263, unknown of 2026-03-31, 31 days after the review |
+| 90 | Ajay Jaisinghani | DSP Silver ETF (MOPWM Reg) | 2026-06-30 | 1,81,000 · ₹3,89,68,358.8 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 93 | Ankita Jaisinghani | DSP Silver ETF (MOPWM Reg) | 2026-06-30 | 1,23,000 · ₹2,64,81,260.4 | ties (other date) | 1,23,000 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
+| 95 | Aarti Ajay Jaisinghani | Bank Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | nil | the review carries nil — nothing to reconcile |
+| 97 | Ajay Jaisinghani | Bank Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | nil | the review carries nil — nothing to reconcile |
+| 99 | Ankita Jaisinghani | Bank Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | nil | the review carries nil — nothing to reconcile |
+| 101 | Bharat Jaisinghani | Bank Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | nil | the review carries nil — nothing to reconcile |
+| 103 | HOPE INDIA TRUST | Bank Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | kept out | HOPE INDIA TRUST is a separate taxpayer this book keeps out by decision; its folio statements are read and named in `docs/BOOK-REPORT.md` |
+| 105 | Aarti Ajay Jaisinghani | Ledger Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | nil | the review carries nil — nothing to reconcile |
+| 107 | Ajay Jaisinghani | Ledger Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | nil | the review carries nil — nothing to reconcile |
+| 109 | Ankita Jaisinghani | Ledger Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | nil | the review carries nil — nothing to reconcile |
+| 111 | Bharat Jaisinghani | Ledger Balance (MOPWM) | 2026-06-30 | 0 · ₹0 | nil | the review carries nil — nothing to reconcile |
+| 114 | HOPE INDIA TRUST | Aditya Birla SL Liquid Fund-(DD)-Direct (LKP SEC) | 2026-06-30 | 7,609.72 · ₹7,62,455.9 | kept out | HOPE INDIA TRUST is a separate taxpayer this book keeps out by decision; its folio statements are read and named in `docs/BOOK-REPORT.md` |
+| 117 | HOPE INDIA TRUST | Aditya Birla SL Liquid Fund-Direct (G) (LKP SEC) | 2026-06-30 | 1,752.565 · ₹7,94,412.48 | kept out | HOPE INDIA TRUST is a separate taxpayer this book keeps out by decision; its folio statements are read and named in `docs/BOOK-REPORT.md` |
+| 119 | Ajay Jaisinghani | HDFC Liquid Fund -Direct(G) (L&T Financial) | 2026-06-30 | 2,282.178 · ₹1,25,71,073.76 | ties | 2,282.178 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 123 | Aarti Ajay Jaisinghani | HDFC Overnight Fund - Direct - G (MOPWM) | 2026-06-30 | 48.183 · ₹1,94,832.98 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 125 | HOPE INDIA TRUST | HSBC Liquid Fund-Direct(DD) (LKP SEC) | 2026-06-30 | 605.838 · ₹6,06,792.8 | kept out | HOPE INDIA TRUST is a separate taxpayer this book keeps out by decision; its folio statements are read and named in `docs/BOOK-REPORT.md` |
+| 128 | Aarti Ajay Jaisinghani | ICICI Pru Liquid Fund-Direct(G) (MOPWM) | 2026-06-30 | 21,012.887 · ₹87,22,596.48 | ties | 21,012.887 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838335) |
+| 134 | Ankita Jaisinghani | ICICI Pru Liquid Fund-Direct(G) (MOPWM) | 2026-06-30 | 1,568.013 · ₹6,50,893.17 | ties | 1,568.013 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838316); next printed balance 0 on 2026-07-27 |
+| 137 | Bharat Jaisinghani Family Trust | ICICI Pru Liquid Fund-Direct(G) (MOPWM) | 2026-06-30 | 46,654.378 · ₹1,93,66,558.89 | ties (other date) | 46,654.378 units Motilal Oswal Financial Services (demat) 1201090032387399, holdings of 2026-07-31, 31 days after the review |
+| 139 | HOPE INDIA TRUST | Kotak Liquid-Direct (DD) (LKP SEC) | 2026-06-30 | 632.5 · ₹7,73,427.33 | kept out | HOPE INDIA TRUST is a separate taxpayer this book keeps out by decision; its folio statements are read and named in `docs/BOOK-REPORT.md` |
+| 141 | HOPE INDIA TRUST | Mirae Asset Cash Management Fund-Direct(G) (LKP SEC) | 2026-06-30 | 316.19 · ₹9,36,386.82 | kept out | HOPE INDIA TRUST is a separate taxpayer this book keeps out by decision; its folio statements are read and named in `docs/BOOK-REPORT.md` |
+| 143 | Aarti Ajay Jaisinghani | Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW (MOPWM) | 2026-06-30 | 5,169.754 · ₹51,69,754 | ties | 5,169.754 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838335); next printed balance 7,657.754 on 2026-07-06 |
+| 145 | Bharat Jaisinghani | Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW (MOPWM) | 2026-06-30 | 3,816.251 · ₹38,16,251 | ties | 3,816.251 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838320); next printed balance 3,819.213 on 2026-07-06 |
+| 147 | Ajay Jaisinghani | Invesco India Arbitrage Fund(G) (MOPWM) | 2026-06-30 | 7,99,864.748 · ₹2,70,30,789.27 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 149 | Bharat Jaisinghani Family Trust | Invesco India Arbitrage Fund-Direct(G) (MOPWM) | 2026-06-30 | 10,92,470.994 · ₹4,01,89,932.17 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 151 | Ajay Jaisinghani | Kotak Equity Arbitrage Scheme(G) (MOPWM) | 2026-06-30 | 6,42,940.095 · ₹2,55,10,448.5 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 153 | Ajay Jaisinghani | Motilal Oswal Arbitrage Fund Direct (G) (MOPWM) | 2025-09-24 | 5,47,324.748 · ₹60,83,295.64 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 178 | Ajay Jaisinghani | Motilal Oswal Arbitrage Fund Direct (G) (MOPWM) | 2026-06-30 | 2,80,67,435.368 · ₹31,19,58,317.14 | differs (same date) | 2,80,67,435.434 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 203 | Ajay Jaisinghani | Neo Infra Income Opportunities Fund Share Class A5 (MOPWM) | 2026-03-31 | 3,35,837 · ₹3,76,84,269.77 | differs (later statement) | 4,85,837 units Neo Infra Income Opportunities Fund 9039920536, holdings of 2026-06-30, 91 days after the review |
+| 207 | Bharat Jaisinghani | 15% K M Global - Credit Private Limited (Private Investments) | 2026-06-30 | 0 · ₹1,04,34,584.46 | no statement | a value-only line no manager or statement in this book is matched to — the review carries it at a figure only |
+| 212 | Ajay Jaisinghani | Kaynes Technology India ltd (MOPWM) | 2026-06-30 | 16,300 · ₹5,08,91,045 | differs (same date) | 0 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 215 | Ankita Jaisinghani | Kaynes Technology India ltd (MOPWM) | 2026-06-30 | 4,875 · ₹1,52,20,481.25 | differs (same date) | 0 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838316); next printed balance 4,875 on 2026-07-07 |
+| 219 | Ajay Jaisinghani | Onesource Specialty Pharma (MOPWM) | 2026-06-30 | 43,000 · ₹7,10,16,650 | ties | 43,000 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 222 | Bharat Jaisinghani | Onesource Specialty Pharma (MOPWM) | 2026-06-30 | 48,000 · ₹7,92,74,400 | ties | 48,000 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838320) |
+| 229 | Ankita Jaisinghani | Bharat Parenterals Ltd (MOPWM) | 2026-06-30 | 603 · ₹8,44,200 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 246 | Ajay Jaisinghani | Birla Cable Ltd. (MOPWM) | 2026-06-30 | 3,293 · ₹6,77,864.05 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 253 | Bharat Jaisinghani | Birla Cable Ltd. (MOPWM) | 2026-06-30 | 11,900 · ₹24,49,615 | ties (other date) | 11,900 units Motilal Oswal Financial Services (demat) 1201090012838320, holdings of 2026-07-31, 31 days after the review |
+| 261 | Ajay Jaisinghani | BSE Ltd. (MOPWM) | 2026-06-30 | 40,000 · ₹15,46,24,000 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 263 | Ajay Jaisinghani | Clean Max Enviro Energy Solutions Ltd (ICICI Bank) | 2026-06-30 | 94,967 · ₹12,95,87,219.85 | ties (other date) | 94,967 units ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31, 91 days before the review |
+| 265 | Ankita Jaisinghani | Clean Max Enviro Energy Solutions Ltd (MOPWM) | 2026-06-30 | 94,967 · ₹12,95,87,219.85 | ties (other date) | 94,967 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
+| 269 | Ajay Jaisinghani | Deepak Fert (HDFC Bank) | 2026-06-30 | 10,930 · ₹1,70,29,486.5 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 274 | Ajay Jaisinghani | Deepak Fert (MOPWM) | 2026-06-30 | 15,000 · ₹2,33,70,750 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 277 | Ajay Jaisinghani | Fractal Analytics Limited (ICICI Bank) | 2026-06-30 | 1,80,185 · ₹16,03,28,613 | ties (other date) | 1,80,185 units ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31, 91 days before the review |
+| 290 | Ajay Jaisinghani | IFB Inds. (MOPWM) | 2026-06-30 | 15,772 · ₹2,03,63,229.2 | ties | 15,772 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 298 | Ankita Jaisinghani | Infinium Pharmachem Ltd. (MOPWM) | 2026-06-30 | 8,000 · ₹15,42,400 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 301 | Ajay Jaisinghani | Insolation Energy Ltd (ICICI Bank) | 2026-06-30 | 2,12,000 · ₹2,46,34,400 | ties (other date) | 2,12,000 units ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31, 91 days before the review |
+| 304 | Bharat Jaisinghani | Insolation Energy Ltd (ICICI Bank) | 2026-06-30 | 91,260 · ₹1,06,04,412 | no statement | no statement of this holder's reports it — the ICICI NSDL statement is read; this line is not on it, so it sits in another account |
+| 307 | Ajay Jaisinghani | Jaro Education (ICICI Bank) | 2026-06-30 | 1,16,979 · ₹5,79,57,245.55 | ties (other date) | 1,16,979 units ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31, 91 days before the review |
+| 309 | Ajay Jaisinghani | Kingfa Science & Technology Ltd. (HDFC Bank) | 2026-06-30 | 1,808 · ₹93,32,715.2 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 322 | Ajay Jaisinghani | Kingfa Science & Technology Ltd. (MOPWM) | 2026-06-30 | 17,675 · ₹9,12,36,582.5 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 326 | Ajay Jaisinghani | M/S Grand Continent Hotels (Private Investments) | 2026-06-30 | 2,62,125 · ₹1,62,77,250 | ties (other custodian) | 2,62,125 units — ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31; the review files it under Private Investments |
+| 329 | Ajay Jaisinghani | Man Industries (HDFC Bank) | 2026-06-30 | 5,17,317 · ₹30,07,93,969.65 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 339 | Ajay Jaisinghani | Man Industries (MOPWM) | 2026-06-30 | 65,703 · ₹3,82,03,009.35 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 342 | Ajay Jaisinghani | Manorama Industries Ltd. (HDFC Bank) | 2026-06-30 | 4,000 · ₹66,24,800 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 354 | Ajay Jaisinghani | Manorama Industries Ltd. (MOPWM) | 2026-06-30 | 1,47,270 · ₹24,39,08,574 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 357 | Ajay Jaisinghani | MPS (MOPWM) | 2026-06-30 | 4,878 · ₹92,31,371.1 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 365 | Ajay Jaisinghani | Neuland Labs. (MOPWM) | 2026-06-30 | 4,625 · ₹8,61,64,675 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 367 | Ajay Jaisinghani | NLC INDIA (MOPWM) | 2026-06-30 | 32,000 · ₹1,03,12,000 | ties | 32,000 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 373 | Ajay Jaisinghani | Nuvama Wealth Management Ltd (MOPWM) | 2026-06-30 | 9,500 · ₹1,71,65,075 | differs (same date) | 3,695 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 375 | Ajay Jaisinghani | Parth Electrical & Engineering (ICICI Bank) | 2026-06-30 | 59,000 · ₹3,68,30,750 | ties (other date) | 59,000 units ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31, 91 days before the review |
+| 378 | Aarti Ajay Jaisinghani | PG Electro. (MOPWM) | 2026-06-30 | 1,80,000 · ₹10,03,80,600 | ties (other date) | 1,80,000 units Motilal Oswal Financial Services (demat) 1201090012838335, holdings of 2026-07-31, 31 days after the review |
+| 380 | Ajay Jaisinghani | Smart Works (HDFC Bank) | 2026-06-30 | 1,87,778 · ₹9,11,66,219 | ties (other custodian) | 1,87,778 units — ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31; the review files it under HDFC Bank |
+| 382 | Bharat Jaisinghani | Smart Works (HDFC Bank) | 2026-06-30 | 1,01,111 · ₹4,90,89,390.5 | no statement | no statement of this holder's reports it — held at **HDFC Bank NSDL** — Bharat's statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it |
+| 384 | Ajay Jaisinghani | Sterlite Grid 5 (HDFC Bank) | 2026-06-30 | 1,140 · ₹3,65,940 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 386 | Ajay Jaisinghani | Sterlite Power Transmission (HDFC Bank) | 2026-06-30 | 1,140 · ₹5,58,600 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 388 | Ajay Jaisinghani | Sterlite Tech (HDFC Bank) | 2026-06-30 | 1,850 · ₹11,36,177.5 | no statement | no statement of this holder's reports it — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 390 | Ajay Jaisinghani | STLNETWORK (HDFC Bank) | 2026-06-30 | 1,850 · ₹42,476 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 397 | Ajay Jaisinghani | Tatva Chintan Pharma Chem Limi (MOPWM) | 2026-06-30 | 21,185 · ₹2,53,01,245.5 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 406 | Ajay Jaisinghani | Tech Mahindra Ltd. (MOPWM) | 2026-06-30 | 21,750 · ₹3,05,63,100 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 414 | Ajay Jaisinghani | Vedanta (HDFC Bank) | 2026-06-30 | 1,77,000 · ₹4,97,01,600 | no statement | no statement of this holder's reports it — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 417 | Ajay Jaisinghani | Vedanta (MOPWM) | 2026-06-30 | 1,15,000 · ₹3,22,92,000 | ties | 1,15,000 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150); next printed balance 0 on 2026-07-22 |
+| 419 | Ajay Jaisinghani | Vedanta Aluminium Metal Ltd (HDFC Bank) | 2026-06-30 | 1,15,000 · ₹5,17,96,000 | no statement | no statement of this holder's reports it — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 421 | Ajay Jaisinghani | Vedanta Aluminium Metal Ltd (MOPWM) | 2026-06-30 | 1,15,000 · ₹5,17,96,000 | ties | 1,15,000 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150); next printed balance 1,60,776 on 2026-07-15 |
+| 423 | Ajay Jaisinghani | Vedanta Iron & Steel Ltd (HDFC Bank) | 2026-06-30 | 1,15,000 · ₹40,53,750 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 425 | Ajay Jaisinghani | Vedanta Iron & Steel Ltd (MOPWM) | 2026-06-30 | 1,15,000 · ₹40,53,750 | ties | 1,15,000 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150); next printed balance 0 on 2026-07-22 |
+| 427 | Ajay Jaisinghani | Vedanta Oil & Gas Ltd (HDFC Bank) | 2026-06-30 | 1,15,000 · ₹37,14,500 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 429 | Ajay Jaisinghani | Vedanta Oil & Gas Ltd (MOPWM) | 2026-06-30 | 1,15,000 · ₹37,14,500 | ties | 1,15,000 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150); next printed balance 0 on 2026-07-27 |
+| 431 | Ajay Jaisinghani | Vedanta Power Ltd (HDFC Bank) | 2026-06-30 | 1,15,000 · ₹46,34,500 | no statement | no statement of this holder's names this product — held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
+| 433 | Ajay Jaisinghani | Vedanta Power Ltd (MOPWM) | 2026-06-30 | 1,15,000 · ₹46,34,500 | ties | 1,15,000 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150); next printed balance 0 on 2026-07-27 |
+| 438 | Ajay Jaisinghani | Yash High Voltage Ltd. (ICICI Bank) | 2026-06-30 | 1,16,462 · ₹10,20,73,119.9 | differs (earlier statement) | 1,38,462 units ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31, 91 days before the review |
+| 440 | Ajay Jaisinghani | Zaggle Prepaid Ocean Services Ltd. (MOPWM) | 2026-06-30 | 50,000 · ₹1,03,52,500 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 442 | Ankita Jaisinghani | Zaggle Prepaid Ocean Services Ltd. (MOPWM) | 2026-06-30 | 12,000 · ₹24,84,600 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 444 | Ajay Jaisinghani | Zepto (MOPWM) | 2025-07-31 | 4,716 · ₹22,82,85,156.52 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 446 | Aarti Ajay Jaisinghani | Aditya Birla SL Balanced Advantage Fund(G) (MOPWM) | 2026-06-30 | 2,42,412.122 · ₹2,68,08,356.57 | ties (other date) | 2,42,412.122 units Motilal Oswal Financial Services (demat) 1201090012838335, holdings of 2026-07-31, 31 days after the review |
+| 450 | Ankita Jaisinghani | Aditya Birla SL Balanced Advantage Fund(G) (MOPWM) | 2026-06-30 | 3,93,095.951 · ₹4,34,72,481.22 | ties (other date) | 3,93,095.951 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
+| 452 | Bharat Jaisinghani | Aditya Birla SL Balanced Advantage Fund(G) (MOPWM) | 2026-06-30 | 1,83,499.511 · ₹2,02,93,210.92 | ties (other date) | 1,83,499.511 units Motilal Oswal Financial Services (demat) 1201090012838320, holdings of 2026-07-31, 31 days after the review |
+| 454 | Ajay Jaisinghani | Aditya Birla SL Balanced Advantage Fund(G) (MOPWM Dir) | 2026-06-30 | 16,18,023.03 · ₹20,52,46,221.36 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 456 | Bharat Jaisinghani | HDFC Balanced Advantage Fund (MOPWM Dir) | 2026-06-30 | 27,779.278 · ₹1,56,81,041.3 | ties | 27,779.278 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838320); next printed balance 1,469.627 on 2026-07-13 |
+| 458 | Ajay Jaisinghani | HDFC Balanced Advantage Fund (MOPWM Reg) | 2026-06-30 | 83,001.863 · ₹4,31,11,416.65 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 460 | Ankita Jaisinghani | HDFC Balanced Advantage Fund (MOPWM Reg) | 2026-06-30 | 49,917.632 · ₹2,59,27,367.81 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 465 | Ankita Jaisinghani | HDFC Balanced Advantage Fund (MOPWM Reg) | 2026-06-30 | 46,162.731 · ₹2,39,77,060.97 | ties | 46,162.731 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838316); next printed balance 37,755.485 on 2026-07-27 |
+| 467 | Ajay Jaisinghani | ICICI Pru Balanced Advantage Fund (MOPWM Dir) | 2026-06-30 | 21,70,488.137 · ₹18,78,34,043.38 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 470 | Bharat Jaisinghani | ICICI Pru Balanced Advantage Fund (MOPWM Dir) | 2026-06-30 | 1,46,856.943 · ₹1,27,08,999.85 | ties | 1,46,856.943 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838320) |
+| 472 | Ankita Jaisinghani | ICICI Pru Balanced Advantage Fund (MOPWM Reg) | 2026-06-30 | 2,93,240.47 · ₹2,26,29,367.07 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 475 | Ajay Jaisinghani | ICICI Prudential Equity Savings Fund - Direct Plan (MOPWM) | 2026-06-30 | 93,20,249.865 · ₹23,17,94,614.14 | ties | 93,20,249.865 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 478 | Ajay Jaisinghani | WhiteOak Capital Multi Asset Allocation Fund-Direct(G) (MOPWM) | 2026-06-30 | 70,52,224.197 · ₹11,45,63,382.08 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 480 | Ankita Jaisinghani | WhiteOak Capital Multi Asset Allocation Fund-Direct(G) (MOPWM) | 2026-06-30 | 39,15,742.08 · ₹6,36,11,230.09 | ties (other date) | 39,15,742.08 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
+| 482 | Bharat Jaisinghani | WhiteOak Capital Multi Asset Allocation Fund-Direct(G) (MOPWM) | 2026-06-30 | 13,66,820.78 · ₹2,22,04,003.57 | ties (other date) | 13,66,820.78 units Motilal Oswal Financial Services (demat) 1201090012838320, holdings of 2026-07-31, 31 days after the review |
+| 485 | Bharat Jaisinghani | Belrise Industries (LKP SEC) | 2026-06-30 | 6,500 · ₹10,32,590 | differs (earlier statement) | 12,500 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
+| 489 | Bharat Jaisinghani | Crompton Gr. Con (LKP SEC) | 2026-06-30 | 5,000 · ₹13,74,500 | ties (other date) | 5,000 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
+| 491 | Bharat Jaisinghani | Electronics Mart India Ltd (LKP SEC) | 2026-06-30 | 10,000 · ₹12,18,500 | ties (other date) | 10,000 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
+| 495 | Bharat Jaisinghani | Jyothy Lab. (LKP SEC) | 2026-06-30 | 4,000 · ₹7,66,800 | ties (other date) | 4,000 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
+| 499 | Bharat Jaisinghani | Mrs. Bectors F (LKP SEC) | 2026-06-30 | 6,000 · ₹10,78,200 | ties (other date) | 6,000 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
+| 502 | Bharat Jaisinghani | Transrail Lighting - LKP (LKP SEC) | 2026-06-30 | 2,525 · ₹12,93,557.5 | ties (other date) | 2,525 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
+| 507 | Bharat Jaisinghani | Pricol Ltd (LKP SEC) | 2026-06-30 | 2,875 · ₹17,33,625 | differs (earlier statement) | 650 units LKP Securities 98245, holdings of 2026-03-31, 91 days before the review |
+| 509 | Aarti Ajay Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 60,45,934.485 · ₹97,68,23,496.94 | ties | 60,45,934.485 units on the same date — Sanshi Fund 9039671821, unknown of 2026-06-30 |
+| 511 | Ajay Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 23,41,480.851 · ₹29,35,23,824.82 | ties | 23,41,480.851 units on the same date — Sanshi Fund 9039671912, unknown of 2026-06-30 |
+| 515 | Ajay Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 17,61,264.629 · ₹28,45,63,122.95 | ties | 17,61,264.629 units on the same date — Sanshi Fund 9069671634, unknown of 2026-06-30 |
+| 520 | Ankita Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-02-28 | 18,20,926.864 · ₹29,42,02,601.1 | ties (other date) | 18,20,926.864 units Sanshi Fund 9069671554, unknown of 2026-06-30, 122 days after the review |
+| 522 | Bharat Jaisinghani | Sanshi Fund 1 (Mukul Agarwal) | 2026-06-30 | 12,11,186.597 · ₹19,56,88,390.51 | ties | 12,11,186.597 units on the same date — Sanshi Fund 9039671854, unknown of 2026-06-30 |
+| 560 | Ajay Jaisinghani | Svan Investment (Svan) | 2026-06-30 | 0 · ₹15,99,42,275.22 | ties (printed total) | printed on 2 of the holder's SVAN Investment Managers LLP statements, first investor-report of 2026-06-30; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
+| 588 | Bharat Jaisinghani | Svan Investment (Svan) | 2026-06-30 | 0 · ₹10,38,90,192.28 | ties (printed total) | printed on 2 of the holder's SVAN Investment Managers LLP statements, first investor-report of 2026-06-30; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
+| 590 | Ajay Jaisinghani | VEC Small and Mid cap fund (MOPWM) | 2026-06-30 | 0 · ₹9,32,78,083 | not on a statement of that date | no V.E.C Assago Capital Management LLP statement for this holder prints ₹9,32,78,083; the nearest is dated 2026-07-06, 6 days after the review — a mandate's value moves daily |
+| 592 | Ankita Jaisinghani | VEC Small and Mid cap fund (MOPWM) | 2026-06-30 | 0 · ₹6,56,66,338 | not on a statement of that date | no V.E.C Assago Capital Management LLP statement for this holder prints ₹6,56,66,338; the nearest is dated 2026-07-06, 6 days after the review — a mandate's value moves daily |
+| 599 | Ajay Jaisinghani | 3P India Equity Fund 1 (MOPWM) | 2026-06-30 | 20,53,614.026 · ₹30,83,83,003.83 | ties (other date) | 20,53,614.026 units Motilal Oswal Financial Services (demat) 1201090037359311, holdings of 2026-07-31, 31 days after the review |
+| 604 | Ankita Jaisinghani | 3P India Equity Fund 1 (MOPWM) | 2026-06-30 | 14,16,918.692 · ₹21,27,73,012.3 | ties (other date) | 14,16,918.692 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
+| 606 | Ajay Jaisinghani | Aristos Equity Potrfolio - SB (Sanjay Bhattacharya) | 2026-07-09 | 0 · ₹18,15,33,677 | ties (printed total) | printed on 2 of the holder's Goldstandard Wealth Private Limited statements, first holdings of 2026-07-10; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
+| 608 | Ankita Jaisinghani | Aristos Equity Potrfolio - SB (Sanjay Bhattacharya) | 2026-07-09 | 0 · ₹7,76,95,353 | ties (printed total) | printed on 2 of the holder's Goldstandard Wealth Private Limited statements, first holdings of 2026-07-10; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
+| 610 | Aarti Ajay Jaisinghani | Bandhan Large & Mid Cap Fund - Direct Plan - Growth (MOPWM) | 2026-06-30 | 1,32,634.709 · ₹2,16,66,144.98 | ties | 1,32,634.709 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838335) |
+| 623 | Ajay Jaisinghani | Bandhan Large & Mid Cap Fund - Direct Plan - Growth (MOPWM) | 2026-06-30 | 13,60,101.454 · ₹22,21,75,292.71 | ties | 13,60,101.454 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150); next printed balance 14,73,642.679 on 2026-07-03 |
+| 625 | Ankita Jaisinghani | Bandhan Large & Mid Cap Fund - Direct Plan - Growth (MOPWM) | 2026-06-30 | 24,406.691 · ₹39,86,881.79 | ties | 24,406.691 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838316) |
+| 631 | Ajay Jaisinghani | Buoyant Opportunities Portfolio AIF (MOPWM) | 2026-06-30 | 34,16,657.4167 · ₹48,69,72,764.94 | ties (other date) | 34,16,657.4167 units Buoyant Capital 103473, holdings of 2026-07-31, 31 days after the review |
+| 637 | Ankita Jaisinghani | Buoyant Opportunities Portfolio AIF (MOPWM) | 2026-06-30 | 19,18,953.2 · ₹27,35,06,481 | ties (other date) | 19,18,953.2003 units Buoyant Capital 103472, holdings of 2026-07-31, 31 days after the review |
+| 641 | Ajay Jaisinghani | Carnelian Bespoke Portfolio (Carnelian) | 2026-07-09 | 0 · ₹40,04,75,678 | ties (printed total) | printed on 2 of the holder's Carnelian Asset Management and Advisors Pvt Ltd statements, first fact-sheet of 2026-07-10; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
+| 644 | Ankita Jaisinghani | Carnelian Bharat Amritkaal Fund (MOPWM) | 2026-03-31 | 1,29,93,094.825 · ₹16,00,89,220.65 | ties (other date) | 1,29,93,094.825 units Carnelian Bharat Amritkaal Fund 4551, holdings of 2026-07-31, 122 days after the review |
+| 646 | Ajay Jaisinghani | Fund of Funds (VEC+ Carnelian+Girik Cap+Insightful) (MOPWM) | 2026-04-17 | 99,995 · ₹11,12,87,435.35 | ties (other date) | 99,995 units Motilal Oswal Delphi Equity Fund 9049241536, holdings of 2026-06-30, 74 days after the review |
+| 648 | Ajay Jaisinghani | Green Lantern Growth Strategy (Green Lantern) | 2026-06-30 | 0 · ₹11,69,10,162 | differs (same date) | the holder's Green Lantern Capital LLP statement of 2026-06-30 does not print ₹11,69,10,162 |
+| 650 | Ankita Jaisinghani | Green Lantern Growth Strategy (Green Lantern) | 2026-06-25 | 0 · ₹5,92,66,352 | ties (printed total) | printed on 2 of the holder's Green Lantern Capital LLP statements, first fact-sheet of 2026-06-25; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
+| 654 | Ajay Jaisinghani | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 32,45,281.682 · ₹5,15,02,620.29 | differs (later statement) | 1,91,23,041.38 units Helios Mutual Fund 10355977, holdings of 2026-08-07, 38 days after the review |
+| 660 | Ankita Jaisinghani | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 51,00,984.835 · ₹8,09,52,629.33 | ties (other date) | 51,00,984.835 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
+| 668 | Bharat Jaisinghani | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 24,07,981.455 · ₹3,82,14,665.69 | ties (other date) | 24,07,981.455 units Motilal Oswal Financial Services (demat) 1201090012838320, holdings of 2026-07-31, 31 days after the review |
+| 670 | Bharat Jaisinghani Family Trust II | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 31,84,554.148 · ₹5,05,38,874.33 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 672 | Bharat Jaisinghani Family Trust III | Helios Flexi Cap Fund Direct (G) (MOPWM) | 2026-06-30 | 31,84,554.148 · ₹5,05,38,874.33 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 678 | Ajay Jaisinghani | ICICI Pru India Opportunities Fund (MOPWM Dir) | 2026-06-30 | 48,50,206.378 · ₹19,12,43,637.48 | ties | 48,50,206.378 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 680 | Ankita Jaisinghani | ICICI Pru India Opportunities Fund (MOPWM Dir) | 2026-06-30 | 9,93,739.133 · ₹3,91,83,134.01 | ties (other date) | 9,93,739.133 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
+| 682 | Bharat Jaisinghani | ICICI Pru India Opportunities Fund (MOPWM Dir) | 2026-06-30 | 6,02,441.424 · ₹2,37,54,265.35 | ties (other date) | 6,02,441.424 units Motilal Oswal Financial Services (demat) 1201090012838320, holdings of 2026-07-31, 31 days after the review |
+| 684 | Ajay Jaisinghani | Kotak Large & Midcap Fund - Direct- Growth (MOPWM Dir) | 2026-06-30 | 34,045.997 · ₹1,37,41,917.68 | ties | 34,045.997 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 704 | Ajay Jaisinghani | Kotak Large & Midcap Fund - Direct- Growth (MOPWM Dir) | 2026-06-30 | 27,900.484 · ₹1,12,61,416.56 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth |
+| 706 | Aarti Ajay Jaisinghani | Kotak Multicap Fund-Direct Plan-Growth (MOPWM) | 2026-06-30 | 6,12,631.862 · ₹1,30,76,627.09 | ties | 6,12,631.862 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012838335) |
+| 714 | Ajay Jaisinghani | Kotak Multicap Fund-Direct Plan-Growth (MOPWM) | 2026-06-30 | 41,83,009.836 · ₹8,92,86,344.95 | ties | 41,83,009.836 units on the same date — the depository's own balance on 2026-06-30 (a/c 1201090012539150) |
+| 717 | Ajay Jaisinghani | Motilal Oswal Founders Fund II (MOPWM) | 2026-06-30 | 1,88,95,852.36 · ₹21,75,27,162.78 | ties (other date) | 1,88,95,852.36 units Motilal Oswal Founders Fund 90410016104, holdings of 2026-07-31, 31 days after the review |
+| 721 | Ankita Jaisinghani | Motilal Oswal Founders Fund II (MOPWM) | 2026-06-30 | 95,14,997.798 · ₹10,95,35,703.15 | ties (other date) | 95,14,997.798 units Motilal Oswal Founders Fund 90410016093, holdings of 2026-07-31, 31 days after the review |
+| 722 | Ajay Jaisinghani | SLBM (MOPWM) | 2026-06-30 | 0 · ₹16,94,178.29 | no statement | a value-only line no manager or statement in this book is matched to — the review carries it at a figure only |
+| 723 | Ankita Jaisinghani | SLBM (MOPWM) | 2026-06-30 | 0 · ₹7,53,681.25 | no statement | a value-only line no manager or statement in this book is matched to — the review carries it at a figure only |
+| 725 | Ajay Jaisinghani | Molecule Growth Strategy (Molecule Venture) | 2026-06-30 | 0 · ₹1,12,48,249 | ties (printed total) | printed on 2 of the holder's Molecule Ventures LLP statements, first fact-sheet of 2026-06-30; a manager's printed total includes accrued income and declared dividends, which this book keeps out of market value |
 
