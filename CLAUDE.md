@@ -25453,7 +25453,8 @@ line and is still on no statement.
 #### 4. Still open
 
 - The full audit the family asked for.
-- The reconciler's older prose sections (C1, C2, D, E).
+- ~~The reconciler's older prose sections (C2, D, E).~~ Fixed at Stage 10dd.
+  C1's Helios note is still open.
 - ~~Main's eleven #104 Morning CIO checks, which fail on main's own build.~~
   Fixed at Stage 10dc.
 
@@ -25544,6 +25545,44 @@ abstentions: the money-weighted tile on eleven routes (#105's strip does not sho
 it by default), a scheme struck on an older day on `cio-movers-funds` (every
 priced scheme published on one day), and A-14 on `cio-allocation` (no nil costed
 Cash line since Stage 10da).
+
+### Stage 10dd — THE REVIEW RECONCILIATION READS ITS OWN SECTION H
+
+*"Also do run a thorough audit so that there are no logical errors or calculation
+mistakes in the data shown on dashboard."*
+
+Stage 10db added section H, which sets every review closing against the holder's
+own statements, and left C2, D, E and G reading the book by name alone. So the
+report contradicted itself: H said a closing ties on a statement while C2 said no
+statement reports it (Zepto, Onesource, IFB, NLC among them). Nothing in the book
+moves; only `scripts/review-reconcile.mjs` and what it writes.
+
+- **C2 reads H's verdicts**, holder by holder. Of 38 direct-equity lines, **10
+  tie, 8 are partly on a statement, 3 differ, 1 is reported and not valued, and
+  16 are on no statement** (was 4 / 8 / 1 / 4 / 21).
+- **D splits its ₹503.94 Cr the same way**: ₹306.05 Cr on no statement (₹136.16
+  Cr of it the Private Equity aggregate), ₹197.50 Cr on a statement as a quantity
+  this book does not value, and ₹0.39 Cr the Hope India Trust's, kept out by
+  decision. None of it is valued.
+- **The bridge subtracted Hope India twice**: once with the holders that have no
+  account here, and again with the lines no name reaches. The second is gone, a
+  new step names the ₹197.50 Cr, and the residual moves −₹176.77 Cr → −₹177.15 Cr.
+- **G names B and B2 apart**: ₹169.89 Cr on no statement, ₹197.50 Cr on a
+  statement as a quantity. G1's count and cause A's ask are derived from the
+  book, so the ask names the two custodians whose costless rows carry a value
+  (ICICI Bank NSDL and LKP).
+- **H reads a depository window that opens after the closing's date** from its
+  dated opening balance. Three closings now read it; two change verdict — Zepto
+  ties, and a Motilal Oswal Arbitrage line of 24 Sep 2025 differs.
+- **The dashboard's gap list is unchanged at 44 lines.** Only the Motilal wording
+  in its `why` moved; its header now says it is the lines no NAME reaches, which
+  the dashboard's tiers then narrow.
+- E and F2: E says the review is dated 30 June and most statements after it;
+  F2's count is derived.
+
+`build` · `test:family` (0 failed) · `npm run build-book` byte-identical ·
+`reconcile:review -- --check` a no-op · `check:pages` on `monitor-absent-name`,
+`search` and `monitor-picklist`, which render the gap note.
 
 ### Stage 10k — News & Announcements: REMOVED
 
