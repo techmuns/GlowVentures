@@ -80,11 +80,11 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "option": "GROWTH",
   "category": "Income/Debt Oriented Schemes - Liquid Fund",
   "sebiCategory": "Liquid Fund",
-  "nav": 460.5501,
-  "date": "2026-10-01",
-  "prev": 460.3525,
-  "prevDate": "2026-09-30",
-  "changePct": 0.042924,
+  "nav": 460.7809,
+  "date": "2026-10-04",
+  "prev": 460.5501,
+  "prevDate": "2026-10-01",
+  "changePct": 0.050114,
   "usableForValue": true,
   "notUsableReason": null
  },
@@ -180,11 +180,11 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "option": "Growth Option",
   "category": "Debt Scheme - Liquid Fund",
   "sebiCategory": "Liquid Fund",
-  "nav": 5596.2779,
-  "date": "2026-10-02",
-  "prev": 5593.1126,
-  "prevDate": "2026-09-30",
-  "changePct": 0.056593,
+  "nav": 5598.0849,
+  "date": "2026-10-04",
+  "prev": 5596.2779,
+  "prevDate": "2026-10-02",
+  "changePct": 0.032289,
   "usableForValue": true,
   "notUsableReason": null
  },
@@ -280,11 +280,11 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "option": "Growth",
   "category": "Debt Scheme - Liquid Fund",
   "sebiCategory": "Liquid Fund",
-  "nav": 421.7273,
-  "date": "2026-10-02",
-  "prev": 421.6595,
-  "prevDate": "2026-10-01",
-  "changePct": 0.016079,
+  "nav": 421.8632,
+  "date": "2026-10-04",
+  "prev": 421.7273,
+  "prevDate": "2026-10-02",
+  "changePct": 0.032225,
   "usableForValue": true,
   "notUsableReason": null
  },
@@ -521,9 +521,9 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "category": "Other Scheme - Other ETFs",
   "sebiCategory": "Other ETFs",
   "nav": 1000,
-  "date": "2026-10-01",
+  "date": "2026-10-04",
   "prev": 1000,
-  "prevDate": "2026-09-30",
+  "prevDate": "2026-10-01",
   "changePct": 0,
   "usableForValue": true,
   "notUsableReason": null
@@ -551,4 +551,4 @@ export const BOOK_FUND_NAVS: FundNav[] = [
 ];
 
 /** The newest publication date across every scheme above. */
-export const FUND_NAV_AS_OF = "2026-10-02";
+export const FUND_NAV_AS_OF = "2026-10-04";
