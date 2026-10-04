@@ -10534,7 +10534,7 @@ const PRICED_DIRECT_EQUITY = (() => {
       if (keys.includes(DIRECT_EQUITY_BUCKET)) {
         for (const d of DEPOSITORY_SHARE_BOOK ?? []) if (MARK_BY_SYMBOL.has(d.symbol)) ranked.add(d.securityKey);
       }
-      return { ranked: ranked.size, verified: ranked.size - withheld.size, priceOnly: withheld.size };
+      return { ranked: ranked.size, verified: ranked.size - withheld.size, priceOnly: withheld.size, withheldKeys: [...withheld] };
     };
     if (!DEPOSITORY_SHARE_BOOK) return null;
     return count([DIRECT_EQUITY_BUCKET]);
@@ -27729,7 +27729,7 @@ const INVARIANTS = {
         const rows = [...card.matchAll(/\t\+10\.00%\t(\+₹[\d,.]+\s*(?:Cr|L|K)?|—)/g)];
         const dashes = rows.filter((m) => m[1] === "—").length;
         const priced = rows.length - dashes;
-        if (!/\d+ GAINERS/i.test(card) || rows.length < 3 || priced < 1 || /\t\+10\.00%\t\+₹0\b/.test(card)) return false;
+        if (!/\d+ GAINERS/i.test(card) || rows.length < 3 || priced < 1 || /\t\+10\.00%\t[+−-]?₹0\b/.test(card)) return false;
         if (dashes === 0) return true;
         if (PRICED_DIRECT_EQUITY == null) return { notChecked: "the book could not be read, so how many names are ranked by % alone could not be derived" };
         return dashes <= PRICED_DIRECT_EQUITY.priceOnly
@@ -27753,6 +27753,40 @@ const INVARIANTS = {
         if (priceOnly === 0) return /^\+₹/.test(g.text) && g.absent == null;
         return g.text === "—" && g.absent === priceOnly
           && new RegExp(`^No total: ${priceOnly} of these ${ranked} names? ha(?:s|ve) an unverified share count`).test(g.title ?? "");
+      }],
+    /**
+     * EVERY DRAWN ROW'S MONEY CELL IS THE BOOK'S ANSWER FOR THAT NAME (Stage
+     * 10dc), held row by row against the names the book says are withheld. A
+     * name ranked by % alone shows a dash whose hover names the cause; every
+     * other row shows a signed rupee figure, and never a zero, because every
+     * fixture price moves 10% on a holding the ₹1,000 floor keeps.
+     *
+     * THE ROW CHECK ABOVE COULD NOT SEE THIS. It matched "+₹…" or "—" after the
+     * percentage, so a row printing an unsigned "₹0" matched neither pattern and
+     * was skipped rather than failed — and putting `?? 0` back on the money cell
+     * swept clean. This is struck on each row's own cells, keyed on the book.
+     */
+    ["each drawn mover row's money cell is the book's answer for that name: a figure, or a dash that says why",
+      (t, ctx) => {
+        const rows = ctx?.cioLayout?.moverRows;
+        if (!rows) return false;
+        if (PRICED_DIRECT_EQUITY == null) return { notChecked: "the book could not be read, so which names are ranked by % alone could not be derived" };
+        if (rows.length < 3) return false;
+        const withheld = new Set(PRICED_DIRECT_EQUITY.withheldKeys);
+        let drawnWithheld = 0;
+        for (const r of rows) {
+          if (r.pct == null || r.impact == null) return false;
+          if (withheld.has(r.key)) {
+            drawnWithheld++;
+            if (r.impact !== "—" || !/^Share count needs verification; the percentage is the exchange price move/.test(r.impactTitle ?? "")) return false;
+          } else if (!/^[+−-]₹[\d,.]+\s*(?:Cr|L|K)?$/.test(r.impact) || /^[+−-]?₹0(?:\.0+)?\s*(?:Cr|L|K)?$/.test(r.impact)) {
+            return false;
+          }
+        }
+        if (PRICED_DIRECT_EQUITY.priceOnly > 0 && drawnWithheld === 0) {
+          return { notChecked: "no name ranked by % alone is among the rows drawn, so the dash half has no subject on this pass" };
+        }
+        return true;
       }],
     /**
      * NOTHING FELL IN THIS FIXTURE, AND AN EMPTY LIST HAS NO TOTAL. `₹0` beside
@@ -36232,6 +36266,22 @@ for (const theme of THEMES) {
              figure, and where it is a dash, how many names its hover says carry
              no money impact. A pill sits on the same line as the list's
              heading, so the panel's text cannot tell a dash from a figure. */
+          /* EACH DRAWN MOVER ROW, read off its own cells (Stage 10dc): its
+             key, which list it is in, the % move and the money impact with the
+             impact's hover. A row printing "₹0" for a name ranked by % alone
+             was invisible to every text check — "₹0" carries no sign, so a
+             pattern for "+₹" skipped the row instead of failing it. */
+          moverRows: [...document.querySelectorAll("main [data-mover-row]")].map((tr) => {
+            const pct = tr.querySelector('[data-mover-cell="pct"]');
+            const imp = tr.querySelector('[data-mover-cell="impact"]');
+            return {
+              key: tr.getAttribute("data-mover-row"),
+              list: tr.closest('[data-testid^="movers-"]')?.getAttribute("data-testid") ?? null,
+              pct: pct ? (pct.textContent ?? "").trim() : null,
+              impact: imp ? (imp.textContent ?? "").trim() : null,
+              impactTitle: imp?.getAttribute("title") ?? null,
+            };
+          }),
           moverTotals: Object.fromEntries(["gain", "loss"].map((k) => {
             const root = document.querySelector(`main [data-testid="movers-${k}"]`);
             if (!root) return [k, null];

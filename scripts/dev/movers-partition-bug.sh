@@ -126,8 +126,10 @@ run_case 6 "cio-live,cio-live-capture-lag" "the %-only names are dropped from th
     'const ranked = rank === "impact" ? impactRows : rows;' \
     'const ranked = rank === "impact" ? impactRows : impactRows;'
 
-# ── 7 ── a %-only row prints a measured ₹0
-run_case 7 "cio-live" "a %-only gainer's money impact prints +₹0" \
+# ── 7 ── a %-only row prints a measured ₹0. ITS FIRST RUN SWEPT CLEAN: "₹0"
+# carries no sign, and the row check matched "+₹…" or "—", so it skipped the row
+# rather than failing it. The per-row money-cell check is what catches it now.
+run_case 7 "cio-live" "a %-only gainer's money impact prints ₹0" \
   sub "$M" \
     '{fmt(r.dayChange, { compact: true, sign: true })}' \
     '{fmt(r.dayChange ?? 0, { compact: true, sign: true })}'
@@ -167,6 +169,18 @@ run_case 13 "cio-live" "the day-move tile's label drops Direct Equity" \
   sub "$M" \
     '<div className="label-xs">{SCOPE.label} &middot; {sessionLabel}</div>' \
     '<div className="label-xs">{sessionLabel}</div>'
+
+# ── 14 ── a %-only row's dash loses its reason
+run_case 14 "cio-live" "a %-only row's money dash names no reason" \
+  sub "$M" \
+    'data-mover-cell="impact" title={r.dayChange === null' \
+    'data-mover-cell="impact" data-gone={r.dayChange === null'
+
+# ── 15 ── every row's money impact a dash, verified names included
+run_case 15 "cio-live" "every row's money impact is drawn as a dash" \
+  sub "$M" \
+    '{fmt(r.dayChange, { compact: true, sign: true })}' \
+    '{fmt(null, { compact: true, sign: true })}'
 
 echo ""
 echo "════════ DONE"

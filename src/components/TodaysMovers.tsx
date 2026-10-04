@@ -646,10 +646,13 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
                     {r.security}
                   </Link>
                 </td>
-                <td className={`py-1.5 pr-3 text-right tabular ${rank === "pct" ? "font-semibold" : ""} ${changeColor(r.dayChangePct)}`}>
+                {/* `data-mover-cell` names each figure, so the sweep can hold a
+                    row's money cell to the book: a name ranked by % alone must
+                    show a dash whose hover says why, never a ₹0 (Stage 10dc). */}
+                <td data-mover-cell="pct" className={`py-1.5 pr-3 text-right tabular ${rank === "pct" ? "font-semibold" : ""} ${changeColor(r.dayChangePct)}`}>
                   {fmtPct(r.dayChangePct, { sign: true })}
                 </td>
-                <td title={r.dayChange === null ? "Share count needs verification; the percentage is the exchange price move." : undefined} className={`py-1.5 text-right tabular ${rank === "impact" ? "font-semibold" : ""} ${changeColor(r.dayChange)}`}>
+                <td data-mover-cell="impact" title={r.dayChange === null ? "Share count needs verification; the percentage is the exchange price move." : undefined} className={`py-1.5 text-right tabular ${rank === "impact" ? "font-semibold" : ""} ${changeColor(r.dayChange)}`}>
                   {fmt(r.dayChange, { compact: true, sign: true })}
                 </td>
               </tr>
