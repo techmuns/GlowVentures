@@ -2612,7 +2612,38 @@ const LEDGER_BOOK = (() => {
     .filter((c) => !byAcct.has(c.accountId) && (c.calls ?? []).some((k) => k.date && k.amount > 0))
     .map((c) => c.accountId);
   const unvalued = [...new Set([...byAcct.keys(), ...withCalls])].filter((id) => !valued.has(id));
-    return { cgTotal, ownOnly, window, unvalued };
+    // THE LOTS NO TRADE CAN SETTLE (A-08): a lot group — one account, one
+    // security, one sale date — whose every lot sold for ₹0 is not a sale (ASK
+    // prints the fractions a demerger or a bonus left that way), so no row on
+    // any tape can meet it. Read off the capital-gain documents directly: a lot
+    // repeated across two issues of one account's statement counted once, a
+    // repeat inside one document kept — the rule `datedRowsAcross` applies.
+    const lotIds = new Map();
+    for (const d of manifest.filter((m) => m.reportType === "capital-gain")) {
+      const doc = JSON.parse(readFileSync(new URL(`${d.docKey}/document.json`, root), "utf8"));
+      const count = new Map();
+      for (const l of doc.capitalGains ?? []) {
+        const id = `${d.accountNo}|${JSON.stringify([l.securityKey, l.saleDate, l.purchaseDate, l.quantity, l.saleAmount, l.purchaseAmount, l.shortTerm, l.longTerm])}`;
+        const c = count.get(id) ?? { n: 0, lot: l };
+        c.n += 1;
+        count.set(id, c);
+      }
+      for (const [id, c] of count) if ((lotIds.get(id)?.n ?? 0) < c.n) lotIds.set(id, c);
+    }
+    const lotGroups = new Map();
+    for (const [id, { n, lot }] of lotIds) {
+      if (!lot.saleDate) continue;
+      const gk = `${id.slice(0, id.indexOf("|"))}|${lot.securityKey}@${lot.saleDate}`;
+      const g = lotGroups.get(gk) ?? { lots: [], n: 0 };
+      g.lots.push(lot); g.n += n;
+      lotGroups.set(gk, g);
+    }
+    const notSales = [...lotGroups.values()].filter((g) => g.lots.every((l) => l.saleAmount === 0));
+    const noTrade = {
+      lots: notSales.reduce((t, g) => t + g.n, 0),
+      realised: notSales.reduce((t, g) => t + g.lots.reduce((u, l) => u + (l.shortTerm ?? 0) + (l.longTerm ?? 0), 0), 0),
+    };
+    return { cgTotal, ownOnly, window, unvalued, noTrade };
   } catch { return null; }
 })();
 
@@ -9375,8 +9406,25 @@ const txnTRealisedChecks = () => [
 ];
 
 /** MT-16, on a fiscal year that ends before the transaction statements begin. */
+/**
+ * NO SUBJECT WHERE THE TAPE REACHES BACK AS FAR AS THE CAPITAL RECORD. The
+ * claim needs a fiscal year in which the dated capital record moved and that
+ * ends before the first transaction statement begins. Since the September 2026
+ * delivery ASK's two tapes run from 26 Jul 2019 — the day the record's earliest
+ * movement is dated — so no such year exists, and a window before the tape has
+ * no capital row to draw and therefore no footer to read. That is read off the
+ * book (`TXN_T_BOOK`), never off what the page drew, and it is the only reason
+ * these abstain: an unreadable book is still a failure.
+ */
+const earlyWindowAbsent = () => {
+  if (!TXN_T_BOOK || TXN_T_BOOK.early) return null;
+  const first = (CAPITAL_RECORD_BOOK?.moves ?? []).map((m) => m.date).sort()[0] ?? null;
+  return { notChecked: `no fiscal year of the dated capital record ends before the transaction statements begin — they begin ${TXN_T_BOOK.tapeFrom}${first ? `, and the record's earliest movement is ${first}` : ""}` };
+};
 const txnTEarlyWindowChecks = () => [
   ["a window before the transaction statements begin is a dash naming their span — never a count of 0 trades", (t, ctx) => {
+    const absent = earlyWindowAbsent();
+    if (absent) return absent;
     if (!txnTReady(ctx) || !TXN_T_BOOK.early || !ctx.txnT.foot) return false;
     const B = TXN_T_BOOK;
     return ["trades", "bought", "sold", "realised"].every((c) => {
@@ -9389,6 +9437,8 @@ const txnTEarlyWindowChecks = () => [
   // with a movement inside it — a walk that never selected the preset would
   // strike the claim above on the whole table, where it cannot hold.
   ["…while the capital half of the same window still draws its rows, each windowed", (t, ctx) => {
+    const absent = earlyWindowAbsent();
+    if (absent) return absent;
     if (!txnTReady(ctx)) return false;
     const rows = ctx.txnT.rows;
     return rows.length > 0 && rows.every((r) => r.mine && r.windowed);
@@ -11465,7 +11515,11 @@ const footBasisChecks = (setKey) => [
     const v = crU(m[2], m[3]) * (m[1] === "-" || m[1] === "−" ? -1 : 1);
     const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const day = (iso) => { const d = new Date(iso); return new RegExp(String.raw`\b${d.getUTCDate()} ${MON[d.getUTCMonth()]}\w* ${d.getUTCFullYear()}\b`); };
-    return Math.abs(v - st.total / 1e7) <= 0.006 && Number(m[4]) === st.accounts
+    // To the compact figure's own printing precision (`compactTieCr`): one
+    // decimal of a crore from ₹10 Cr, two below. A fixed 0.006 Cr held only
+    // while the statements' total stayed under ₹10 Cr — the September 2026
+    // delivery's ASK and Marathon lots took it to ₹14.15 Cr, printed ₹14.1 Cr.
+    return Math.abs(v - st.total / 1e7) <= compactTieCr(Math.abs(st.total) / 1e7) && Number(m[4]) === st.accounts
       && day(st.from).test(f.realisedNote) && day(st.to).test(f.realisedNote)
       // What it leaves out is named: a name sold out entirely is no row here.
       && /Not in this total: .*sold out entirely/i.test(f.realisedNote);
@@ -20062,11 +20116,48 @@ const INVARIANTS = {
      * agreeing to the paisa is a reconciliation, not a figure compared with its
      * own copy. A footer carrying no realised figure is a FAILURE: this book has
      * capital-gain lots, so an absent total means the join dropped all of them.
+     *
+     * …LESS THE LOTS NO TRADE CAN SETTLE, WHICH THE FOOTER NAMES. ASK prints
+     * five lots that sold for ₹0 — the fractions a demerger or a bonus left —
+     * and there is no tape row for a ₹0 lot to meet, so the footer, which is
+     * the sum of its rows, falls short of the statements' total by exactly
+     * their realised (−₹558.94 here). The allowance is NOT "whatever the page
+     * says it left out": the set is re-derived off the archive's own lots —
+     * groups whose every lot sold for ₹0 — and the page must name exactly that
+     * count and that figure. A lot WITH proceeds that settles no sale (the 19
+     * Axis Liquid lots this check was written for) is still a failure, because
+     * it is in no row, not in the named set, and moves the sum.
      */
     ["the realised total is the capital-gain statements' own, to the paisa (A-08)", (t, ctx) => {
       const d = ctx.datedTable?.footData;
       if (!LEDGER_BOOK || !d || d.realised === null || !Number.isFinite(d.realised)) return false;
-      return Math.round(d.realised * 100) === Math.round(LEDGER_BOOK.cgTotal * 100);
+      const nt = LEDGER_BOOK.noTrade;
+      const named = d.noTradeLots ?? 0, namedRealised = d.noTradeRealised ?? 0;
+      return named === nt.lots
+        && Math.round(namedRealised * 100) === Math.round(nt.realised * 100)
+        && Math.round((d.realised + namedRealised) * 100) === Math.round(LEDGER_BOOK.cgTotal * 100);
+    }],
+    /**
+     * ── …AND THE FOOTER SAYS SO, WHERE THERE IS ANYTHING TO SAY (A-08) ───────
+     *
+     * The handles above are what the reconciliation reads; a reader reads the
+     * hover. It must state the statements' own total — the figure the column
+     * falls short of, to the paisa — and how many lots it leaves out, and, where
+     * every one sold for ₹0, say so in those words. On a book where every lot
+     * settles a sale there is nothing to name, and the cell must carry no hover
+     * claiming otherwise.
+     */
+    ["the realised footer names the lots no trade settles, and the statements' own total (A-08)", (t, ctx) => {
+      const d = ctx.datedTable?.footData;
+      if (!LEDGER_BOOK || !d) return false;
+      const nt = LEDGER_BOOK.noTrade;
+      if (!nt.lots) return !/own realised total/i.test(d.realisedTitle ?? "");
+      const m = /own realised total is ([+\-−]?)₹([\d,]+(?:\.\d+)?)/.exec(d.realisedTitle ?? "");
+      if (!m) return false;
+      const v = Number(m[2].replace(/,/g, "")) * (m[1] && m[1] !== "+" ? -1 : 1);
+      return Math.round(v * 100) === Math.round(LEDGER_BOOK.cgTotal * 100)
+        && new RegExp(`\\b${nt.lots} lots?\\b`).test(d.realisedTitle)
+        && /prints a sale of ₹0/.test(d.realisedTitle);
     }],
     /**
      * ── A FUND'S OWN SUBSCRIPTION IS THE FAMILY'S CAPITAL, NEVER A TRADE (A-05) ─
@@ -36877,6 +36968,15 @@ for (const theme of THEMES) {
             realisedOf: Number(foot.getAttribute("data-foot-realised-of")),
             realised: foot.hasAttribute("data-foot-realised") ? Number(foot.getAttribute("data-foot-realised")) : null,
             bought: foot.hasAttribute("data-foot-bought") ? Number(foot.getAttribute("data-foot-bought")) : null,
+            /** The capital-gain lots no trade on the tape settles, as the realised cell names them (A-08). */
+            ...(() => {
+              const c = foot.querySelector('[data-foot-cell="realised"]');
+              return {
+                noTradeLots: c?.hasAttribute("data-foot-no-trade-lots") ? Number(c.getAttribute("data-foot-no-trade-lots")) : null,
+                noTradeRealised: c?.hasAttribute("data-foot-no-trade-realised") ? Number(c.getAttribute("data-foot-no-trade-realised")) : null,
+                realisedTitle: c?.getAttribute("title") ?? "",
+              };
+            })(),
           } : null,
         };
       });

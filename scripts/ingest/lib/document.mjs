@@ -496,6 +496,17 @@ export function makeCashFlow(input) {
     /** The running balance the statement printed after this row — a CHECK. */
     balance: num(input.balance),
     source: input.source ?? null,
+    /**
+     * THE DAY THE ROW'S SERIES WAS ISSUED, where the statement's own series
+     * name says so — ASK's `Class A6 Series 31/01/2025`. A first allotment
+     * dated on it is the first that series can have had, which is how a
+     * statement that prints no running unit balance can still show its
+     * record begins at nil (`capitalRecordFromInception` in build-book).
+     *
+     * Carried only where a statement names one: a row that names none
+     * carries no key, so the rest of the archive is what the extractor writes.
+     */
+    ...(input.seriesIssued ? { seriesIssued: input.seriesIssued } : {}),
   };
 }
 

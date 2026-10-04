@@ -24003,6 +24003,8 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
  */
 export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "3p-investment-managers-3000048",
+  "ask-absolute-return-fund-9039917111",
+  "ask-absolute-return-fund-9039917144",
   "buoyant-capital-103473",
   "helios-mutual-fund-10355977",
   "motilal-oswal-active-momentum-fund-904168868444"

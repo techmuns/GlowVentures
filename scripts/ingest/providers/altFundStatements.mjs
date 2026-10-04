@@ -1196,8 +1196,14 @@ export function askArfSummaryFails(parsed) {
  * parentheses; the units are carried signed, out of the folio, because that is
  * what the row's own amount and label say happened.
  *
- * Exported for `__tests__/askArf.test.mjs`, which breaks a synthetic statement
- * one figure at a time to prove each check can fail.
+ * Each row carries the day its series was issued, as the series' own name
+ * prints it (`seriesIssued`): a Capital Contribution dated on it is the first
+ * allotment that series can have had, so the record begins at nil — the
+ * evidence `capitalRecordFromInception` reads where a statement prints no
+ * running unit balance.
+ *
+ * Exported for `__tests__/askArf.test.mjs`, which breaks the real statement's
+ * archived text one figure at a time to prove each check can fail.
  */
 export function askArfFlows(text, warn) {
   const parsed = askArfParse(text);
@@ -1269,6 +1275,7 @@ export function askArfFlows(text, warn) {
         netAmount: c.amount,
         expenses: charge,
         units: c.units,
+        seriesIssued: toIso(g.series),
         notes: charge === null
           ? "Capital Contribution as printed; no Stamp Duty row is printed beside it"
           : `Capital Contribution ${c.amount} and Stamp Duty ${charge}, printed as two rows on this date; the amount is every rupee paid, the two together`,
@@ -1295,6 +1302,7 @@ export function askArfFlows(text, warn) {
         date: g.date, description: net[0].description, security: name, isin: g.isin, kind: "withdrawal",
         amount: net[0].amount,
         units: u === null ? null : -Math.abs(u),
+        seriesIssued: toIso(g.series),
         notes: `Return of Capital Contribution ${G} less Tax on Return of Capital Contribution ${T} = ${N} paid out; `
           + "the statement prints the unit count unsigned and the amount in parentheses",
       }));
@@ -1302,8 +1310,17 @@ export function askArfFlows(text, warn) {
   }
 
   // The units the table allots and redeems reach the Account Summary's balance,
-  // series by series — the printed nil the holding stands on.
+  // series by series — the printed nil the holding stands on. A dash is that
+  // nil only beside valuations of nil (`askArfSummaryFails`' own rule); beside
+  // a valuation that is not nil the balance is not printed at all, so there is
+  // nothing for the run to reach and the record is withheld rather than tied to
+  // a zero the statement contradicts.
   for (const s of parsed.series) {
+    const nilDash = s.units === null && [s.grossValue, s.valueNetFee, s.valueNetFeeTax].every((v) => v === 0);
+    if (s.units === null && !nilDash) {
+      fails.push(`Class ${s.cls} Series ${s.series}: the Account Summary prints a dash beside a valuation that is not nil, so the balance the table's units must reach is not printed`);
+      continue;
+    }
     const mine = L.rows.filter((r) => r.cls === s.cls && r.series === s.series && r.isin === s.isin);
     const run = arfUnits(mine.reduce((a, r) => a + (r.type === "contribution" ? r.units ?? 0 : r.type === "net" ? -(r.units ?? 0) : 0), 0));
     const want = s.units ?? 0;
@@ -1377,7 +1394,7 @@ function askArfJointHolders(text) {
  * Page 1 is the account statement's own Account Summary (the row
  * `BY_SUMMARY_ROW` reads) and its dated record; page 3 is the snap: the
  * scheme's classification and inception, Current Investments per class in
- * whole rupees, an Investment Summary since inception, the scheme's TWRR and
+ * whole rupees, an Investment Summary since inception, THIS ACCOUNT's TWRR and
  * the FUND's top holdings. Nothing on page 3 becomes a fact of the book — the
  * holding is page 1's, units × NAV — but page 3 restates page 1 in round
  * rupees, so the two must agree before the document is published as ok:
@@ -1390,9 +1407,14 @@ function askArfJointHolders(text) {
  *      printed Current Value, which is page 1's value rounded, on page 1's date;
  *   4. page 3 names the same account as page 1.
  *
- * The fund's top holdings and its TWRR are ARCHIVED as sections, as printed —
- * they describe the scheme, not this family's units, and nothing reads them as
- * a return or a look-through. Exported for `__tests__/buoyantSnap.test.mjs`.
+ * The fund's top holdings and the account's TWRR are ARCHIVED as sections, as
+ * printed, and nothing reads either as a return or a look-through. The TWRR is
+ * the ACCOUNT's, not the scheme's: Ajay's and Ankita's snaps print the same
+ * holdings to the line and the same 1-month and 3-month figures, and DIFFERENT
+ * 1-year and since-inception ones (11.56% / 10.28% against 12.02% / 10.65%) —
+ * the two folios sat in different unit classes until Ajay's switched in June
+ * 2026, and a scheme has one return. The page says it is after management fees
+ * and other expenses, and post tax. Exported for `__tests__/buoyantSnap.test.mjs`.
  */
 const SNAP_CI_ROW = /^BUOYANT\s+OPPORTUNITIES\s+(-?[\d,]+)\s+(-?[\d,]+)\s*$/i;
 const SNAP_HOLDING = /(?:^|\s)(\d{1,2})\s+([A-Z][A-Za-z0-9 &.,'()/-]*?)\s+(\d+\.\d{2})%(?=\s*$)/gm;
@@ -1404,7 +1426,12 @@ export function buoyantSnapParse(text) {
   const row = BY_SUMMARY_ROW.exec(text);
   const total1 = /^Total\s+([\d,]+\.\d+)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/im.exec(text);
   const ciAt = p3.search(/^Current\s+Investments\s*$/im);
-  const chAt = p3.search(/^Current\s+Holdings\s*$/im);
+  // The holdings heading sits on a line of its own on one folio's snap and at
+  // the END of the "Investment Summary (INR)" line on the other's — the same
+  // page, laid out two ways. Anchored on the line's end either way, never on
+  // its start alone, or the second folio's fund holdings are never found.
+  const CURRENT_HOLDINGS = /(?:^|[ \t])Current\s+Holdings[ \t]*$/im;
+  const chAt = p3.search(CURRENT_HOLDINGS);
   const ciBlock = ciAt < 0 ? [] : p3.slice(ciAt, chAt > ciAt ? chAt : undefined).split("\n").map((l) => l.trim());
   const classes = [];
   let ciTotal = null;
@@ -1429,7 +1456,7 @@ export function buoyantSnapParse(text) {
     currentValue: snapInt(line(/^Current\s+Value\s*\(\d{2}\/\d{2}\/\d{4}\)\s+(-?[\d,]+)/im)),
   };
   const twrr = /^Portfolio\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s+(-?[\d.]+)%/im.exec(p3);
-  const hAt = p3.search(/^Current\s+Holdings\s*$/im);
+  const hAt = chAt;
   const hEnd = p3.search(/^Total\s+100(?:\.0+)?%\s*$/im);
   const hBlock = hAt < 0 ? "" : p3.slice(hAt, hEnd > hAt ? hEnd : undefined);
   const fundHoldings = [...hBlock.matchAll(SNAP_HOLDING)].map((m) => ({ sr: Number(m[1]), security: m[2].trim(), pct: n(m[3]) }));
@@ -1534,7 +1561,7 @@ function buoyantSnapSections(text) {
   if (p.twrr) {
     out["performance-twrr"] = {
       name: "performance-twrr",
-      rows: [["period", "portfolio TWRR % (the scheme's, after fees; over a year annualised — as printed)"],
+      rows: [["period", "portfolio TWRR % (this account's, after management fees, expenses and tax; over a year annualised — as printed)"],
         ["1m", p.twrr.m1], ["3m", p.twrr.m3], ["1y", p.twrr.y1], [`since ${p.twrr.sinceFrom ?? "inception"}`, p.twrr.since]],
     };
   }

@@ -110,7 +110,8 @@
    "debit": null,
    "notes": "Capital Contribution 199990000.5 and Stamp Duty 9999.5, printed as two rows on this date; the amount is every rupee paid, the two together",
    "balance": null,
-   "source": null
+   "source": null,
+   "seriesIssued": "2025-01-31"
   },
   {
    "date": "2026-03-31",
@@ -133,7 +134,8 @@
    "debit": null,
    "notes": "Return of Capital Contribution 213262637.4 less Tax on Return of Capital Contribution 5223498.84 = 208039138.56 paid out; the statement prints the unit count unsigned and the amount in parentheses",
    "balance": null,
-   "source": null
+   "source": null,
+   "seriesIssued": "2025-01-31"
   }
  ],
  "transactions": [],

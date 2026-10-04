@@ -1095,10 +1095,21 @@ const CAPITAL_KINDS = new Set(["contribution", "withdrawal"]);
  * (its reader refuses the table unless the running total reproduces every printed
  * balance), and so does Sanshi.
  *
+ * A SERIES NAMED FOR THE DAY IT WAS ISSUED ANSWERS IT ANOTHER WAY. ASK's
+ * statement prints no running balance; it names each series for its issue date
+ * (`Class A6 Series 31/01/2025`, carried as `seriesIssued`). A class's earliest
+ * row that is a contribution dated ON that day is the first allotment the series
+ * can have had — nothing of it existed the day before — so its balance was zero
+ * before it, which is the same fact 3P's printed balance states. Both folios
+ * the September 2026 delivery brings start that way, each allotting its first
+ * units at ₹1,000.00 apiece, and the reader will not publish the table unless
+ * its units run to the Account Summary's own printed balance.
+ *
  * STRUCK PER CLASS AND REQUIRED OF EVERY ONE. A single class that begins
  * mid-stream would leave some purchase unrecorded, so every contribution row must
- * carry a security, units and a printed balance, and every class's first row must
- * start from zero within half the last printed decimal. Anything less is not
+ * carry a security, units and one of the two pieces of evidence, and every
+ * class's first row must start from zero: within half the last printed decimal
+ * of its printed balance, or on its series' own issue date. Anything less is not
  * evidence and the account is not listed — the caller then falls back to the
  * other two tests, and failing those, withholds the return with the reason.
  */
@@ -1106,12 +1117,15 @@ function capitalRecordFromInception(cashFlows) {
   const rows = (cashFlows ?? []).filter((c) => c.date && CAPITAL_KINDS.has(c.kind));
   const ins = rows.filter((c) => c.kind === "contribution");
   if (!ins.length) return false;
-  if (!ins.every((c) => c.securityKey && isNum(c.units) && isNum(c.balance))) return false;
+  const evidenced = (c) => isNum(c.balance) || !!c.seriesIssued;
+  if (!ins.every((c) => c.securityKey && isNum(c.units) && evidenced(c))) return false;
   const first = new Map();
-  for (const c of [...rows].filter((r) => r.securityKey && isNum(r.units) && isNum(r.balance)).sort((a, b) => a.date.localeCompare(b.date))) {
+  for (const c of [...rows].filter((r) => r.securityKey && isNum(r.units) && evidenced(r)).sort((a, b) => a.date.localeCompare(b.date))) {
     if (!first.has(c.securityKey)) first.set(c.securityKey, c);
   }
-  return [...first.values()].every((c) => c.kind === "contribution" && Math.abs(Math.abs(c.balance) - Math.abs(c.units)) <= UNIT_TIE);
+  return [...first.values()].every((c) => c.kind === "contribution" && (isNum(c.balance)
+    ? Math.abs(Math.abs(c.balance) - Math.abs(c.units)) <= UNIT_TIE
+    : c.date === c.seriesIssued));
 }
 
 function capitalMovesFrom(cashFlows, accountId, notes, label) {
@@ -4706,8 +4720,9 @@ function report(book) {
   const cinTot = sum(cin.map((m) => m.amount ?? 0));
   const coutTot = sum(cout.map((m) => m.amount ?? 0));
   const cAccts = new Set(book.capitalMoves.map((m) => m.accountId));
-  L.push(`**${book.capitalFromInception.length}** of those account(s) print a running unit balance that starts `
-    + `from zero on every class's first allotment, which proves their record reaches inception: `
+  L.push(`**${book.capitalFromInception.length}** of those account(s) start every class's record at nil — a printed `
+    + `running unit balance that starts from zero on the class's first allotment, or a first allotment on the day `
+    + `the class's own series name says it was issued — which proves their record reaches inception: `
     + `${book.capitalFromInception.join(", ") || "none"}.`);
   L.push("");
   L.push(`**${cin.length}** dated contribution(s) totalling **${r2(cinTot).toLocaleString("en-IN")}** and `

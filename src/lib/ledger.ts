@@ -362,6 +362,21 @@ export type TxnData = {
   periodFrom: string | null; periodTo: string | null;
   /** Accounts that issued a transaction statement, and how many did not. */
   accounts: string[]; accountsWithout: string[];
+  /**
+   * THE CAPITAL-GAIN LOTS NO TRADE ON THIS TAPE SETTLES (A-08). A lot is set
+   * against the day's sale it belongs to (`shared/lotSettlement.mjs`), and a
+   * lot that is not a sale has no row to meet: ASK prints five lots that sold
+   * for ₹0 — the fractions a demerger or a bonus left. They are in the
+   * capital-gain statements' own total and in no row of the tape, so a total
+   * of the tape's realised column falls short of the statements' by exactly
+   * their realised. Named here so the page can say so rather than leave a gap
+   * nobody can see.
+   *
+   * `allNil` is whether every one of them prints a sale amount of ₹0 — the
+   * only case the page may describe as "sold for nothing". `realised` is null
+   * where no lot is left over, never 0.
+   */
+  lotsNoTrade: { lots: number; realised: number | null; securities: string[]; allNil: boolean };
 };
 
 // THE ISIN USED TO BE GLUED TO THE NAME, AND THE JOIN USED TO BE PATCHED HERE.
@@ -460,7 +475,7 @@ export async function loadTransactions(): Promise<TxnData | null> {
   const docs = await loadArchive();
   if (!docs) return null;
   const src = of(docs, AUTHORITATIVE.transactions);
-  const { bySale: realised } = settleSales(docs, daySales(docs));
+  const { bySale: realised, unsettled } = settleSales(docs, daySales(docs));
   const txns: Txn[] = [];
   let periodFrom: string | null = null, periodTo: string | null = null;
   /**
@@ -579,8 +594,21 @@ export async function loadTransactions(): Promise<TxnData | null> {
   const withTxns = new Set(src.map((d) => d.accountNo));
   const allAccounts = new Map<string, string>();
   for (const d of docs) allAccounts.set(d.accountNo, accountLabel(d));
+  // The lots no sale on the tape settles — the same set `loadSales` names on
+  // Ledger Insights, read off the one settlement both share.
+  const unsettledKeys = new Set(unsettled.map((g) => g.key));
+  const noTrade: ArchiveLot[] = [];
+  for (const { doc: d, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
+    if (l.saleDate && unsettledKeys.has(daySaleKey(d.accountNo, l.securityKey, l.saleDate))) noTrade.push(l);
+  }
   return {
     asOf: newestAsOf(docs), txns, ownAllotments,
+    lotsNoTrade: {
+      lots: noTrade.length,
+      realised: noTrade.length ? noTrade.reduce((t, l) => t + (l.shortTerm ?? 0) + (l.longTerm ?? 0), 0) : null,
+      securities: [...new Set(noTrade.map((l) => securityLabel(l.securityKey, l.security)))].sort(),
+      allNil: noTrade.length > 0 && noTrade.every((l) => l.saleAmount === 0),
+    },
     buys: txns.filter((t) => t.side === "Buy").length,
     sells: txns.filter((t) => t.side === "Sell").length,
     periodFrom, periodTo,

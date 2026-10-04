@@ -10152,6 +10152,7 @@
    "investment-summary",
    "current-investments",
    "performance-twrr",
+   "fund-holdings",
    "pages"
   ],
   "status": "ok",
@@ -10184,6 +10185,12 @@
     "name": "performance-twrr",
     "rows": 5,
     "cols": 2
+   },
+   {
+    "key": "fund-holdings",
+    "name": "fund-holdings",
+    "rows": 42,
+    "cols": 3
    },
    {
     "key": "pages",
