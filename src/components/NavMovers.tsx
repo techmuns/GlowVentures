@@ -347,16 +347,19 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
 
       {/* WHAT THE STORE COULD NOT PRICE IS NAMED, with its own reason. A
           holding dropped in silence is indistinguishable from one that moved
-          nothing. */}
+          nothing. The NAMES are on the face and the reason is the line's hover
+          (Stage 10cp) — a depository's funds on a transaction-only demat
+          (Stage 10cy) brought two schemes this store never resolved, and the
+          reason beside them ran the line past one short line. */}
       {model.skipped.length > 0 && (
         <div className="mt-3 space-y-0.5" data-testid="navmovers-skipped">
           {skippedByReason.map((g) => (
-            <p key={g.reason} className="text-[11px] text-slate-500">
+            <p key={g.reason} className="text-[11px] text-slate-500" title={`Not priced here — ${g.reason}.`}>
               Not priced here: {g.names.map((n, i) => (
                 <span key={n.security}>{i > 0 ? " \u00b7 " : ""}{n.security}
                   {n.rows > 1 ? <span className="text-slate-600"> ({n.rows} statements)</span> : null}
                 </span>
-              ))} &mdash; {g.reason}.
+              ))}
             </p>
           ))}
         </div>

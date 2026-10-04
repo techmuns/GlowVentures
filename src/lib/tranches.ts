@@ -583,6 +583,45 @@ export function contributionsAreComplete(
  * Only a call schedule that reproduced its statement's own total was ever
  * published (`callsIfTheyTie`), so there is no partial list to be misled by.
  */
+/**
+ * THE DATES A DRAWDOWN FUND CALLED THE MONEY THAT BOUGHT ONE HOLDING — keyed on
+ * the holding (`trancheKey`), for "Invested on".
+ *
+ * A drawdown fund's statement dates each call and never an allotment, so its
+ * folio has no per-contribution breakdown (a call carries no unit count). Its
+ * calls are still the dates this holding's money went in, but only where three
+ * things hold, each read off the book:
+ *
+ *   • the account carries ONE line with money in it, and it is the fund's units
+ *     (an AIF). Then the calls bought exactly that holding. An account's
+ *     funding date standing in for a share a manager bought inside it is the
+ *     case `investedOnOf` refuses, and this gate is what keeps it out;
+ *   • the statement's own paid-in covers every call it lists, within a rupee,
+ *     so no date here is a call the family has not paid yet;
+ *   • nothing is printed as called and still unpaid (`pending`).
+ *
+ * The call list itself was published only where it reproduced the statement's
+ * own called total (`callsIfTheyTie`), so a date here is never one of part of a
+ * schedule.
+ */
+export function callDatesByHolding(
+  commitments: readonly Commitment[],
+  positions: readonly Position[],
+): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const c of commitments) {
+    const calls = (c.calls ?? []).filter((x) => !!x.date && x.amount > 0);
+    if (!calls.length) continue;
+    const withMoney = positions.filter((p) => p.accountId === c.accountId
+      && (p.marketValue !== 0 || (p.costBasis ?? 0) !== 0));
+    if (withMoney.length !== 1 || withMoney[0].assetClass !== "AIF") continue;
+    const called = calls.reduce((a, x) => a + x.amount, 0);
+    if (c.paid == null || c.paid + 1 < called || (c.pending ?? 0) > 0) continue;
+    out.set(trancheKey(c.accountId, withMoney[0].securityKey), calls.map((x) => x.date).sort());
+  }
+  return out;
+}
+
 export function capitalMovesWithCalls(
   moves: CapitalMove[],
   commitments: Commitment[],

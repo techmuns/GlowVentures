@@ -11,9 +11,9 @@
 // IT. The closed-position filter beside it is free — a redeemed holding is a
 // measured ₹0, so every total is identical either way — and that is exactly
 // why it is the wrong precedent to reason from. Four things can go wrong here
-// and NOT ONE of them shows on a rendered page, because ₹848.24 against a
-// ₹710 Cr book is invisible at the one-decimal-crore precision every surface
-// prints:
+// and NOT ONE of them shows on a rendered page, because a few hundred rupees
+// against a book of hundreds of crores is invisible at the one-decimal-crore
+// precision every surface prints:
 //
 //   • the test struck on the statement ROW rather than the HOLDING, so a name
 //     held in five small lots vanishes although the family owns ₹4,500 of it;
@@ -32,11 +32,12 @@
 // test.
 import fs from "node:fs";
 import path from "node:path";
-import { BOOK_POSITIONS, BOOK_SUMMARY } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_SUMMARY, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import {
   NEGLIGIBLE_VALUE_FLOOR, currentHoldings, droppedHoldings, negligibleKeys,
   dedupedPositions, isRedeemedToNil, sum,
 } from "@/lib/analytics";
+import { LIVE_POSITIONS, liveBookTotal } from "./liveBook";
 
 const AUDIT = path.resolve(process.cwd(), "public/audit");
 
@@ -47,7 +48,20 @@ const ok = (name: string, pass: boolean, detail = "") => {
 };
 const rs = (n: number) => `₹${n.toFixed(2)}`;
 
-const book = BOOK_POSITIONS;
+/**
+ * THE BOOK THE FLOOR IS APPLIED TO ON A PAGE, WHICH SINCE Stage 10cz IS NOT
+ * `BOOK_POSITIONS`. Every speck the family pointed at was a Motilal Oswal demat
+ * row, and those statements' `Value` column is the holding's last depository
+ * movement rather than a valuation — so the STATEMENT basis carries those rows as
+ * quantities (`BOOK_UNVALUED_HOLDINGS`) and the floor drops nothing there, while
+ * the LIVE basis values the mutual-fund units at AMFI's NAV and the floor takes
+ * the ones that come to a few rupees. `currentHoldings` runs on the live book on
+ * every page that draws an allocation, so that is the book checked here. The
+ * statement basis stays the source for everything this suite only BORROWS: the
+ * negative payables and the constructed rows' shape.
+ */
+const book = LIVE_POSITIONS;
+const LIVE_TOTAL = liveBookTotal();
 const held = currentHoldings(book);
 const { closed, negligible } = droppedHoldings(book);
 
@@ -68,31 +82,41 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
 {
   const total = held.length + closed.length + negligible.length;
   ok("held + closed + negligible = every position in the book",
-     total === BOOK_POSITIONS.length, `${held.length} + ${closed.length} + ${negligible.length} = ${total} vs ${BOOK_POSITIONS.length}`);
+     total === book.length, `${held.length} + ${closed.length} + ${negligible.length} = ${total} vs ${book.length}`);
   const overlap = closed.filter((c) => negligible.some((n) => n === c));
   ok("no row is counted under both reasons — a redeemed ₹0 is under the floor too, and `closed` must win",
      overlap.length === 0, `${overlap.length} in both`);
 }
 
 // ── 3. WHAT IT COSTS, STATED AS A FIGURE ────────────────────────────────────
-// `BOOK_SUMMARY.totalValue` is produced by `build-book.mjs` on a completely
-// different path from this filter, so the two are independent. The floor is
-// carried as an EXPLICIT TERM rather than a widened tolerance: that is what
-// keeps a drop of ₹848 from growing into a drop of ₹8 Cr unnoticed.
+// `liveBookTotal()` starts from `BOOK_SUMMARY.totalValue`, produced by
+// `build-book.mjs` on a completely different path from this filter, and adds
+// two named steps (the NAV's move, the live-only rows) — so the two are
+// independent. The floor is carried as an EXPLICIT TERM rather than a widened
+// tolerance: that is what keeps a drop of a few rupees from growing into a drop
+// of ₹8 Cr unnoticed.
 {
-  const bookMV = sum(dedupedPositions(BOOK_POSITIONS).map((p) => p.marketValue));
-  const heldMV = sum(currentHoldings(dedupedPositions(BOOK_POSITIONS)).map((p) => p.marketValue));
-  const droppedMV = sum(droppedHoldings(dedupedPositions(BOOK_POSITIONS)).negligible.map((p) => p.marketValue));
+  const bookMV = sum(dedupedPositions(book).map((p) => p.marketValue));
+  const heldMV = sum(currentHoldings(dedupedPositions(book)).map((p) => p.marketValue));
+  const droppedMV = sum(droppedHoldings(dedupedPositions(book)).negligible.map((p) => p.marketValue));
   ok("consolidated NAV, less exactly what the floor took, is the book's own total",
      Math.abs((heldMV + droppedMV) - bookMV) < 0.005, `${rs(heldMV)} + ${rs(droppedMV)} vs ${rs(bookMV)}`);
-  ok("...and the book's own total is BOOK_SUMMARY.totalValue, so the two paths meet",
-     Math.abs(bookMV - BOOK_SUMMARY.totalValue) < 0.005, `${rs(bookMV)} vs ${rs(BOOK_SUMMARY.totalValue)}`);
+  ok("...and the book's own total is the live book reached on a second path, so the two paths meet",
+     Math.abs(bookMV - LIVE_TOTAL) < 0.005, `${rs(bookMV)} vs ${rs(LIVE_TOTAL)}`);
   // The floor must stay a rounding-error share of the book. If a future drop
   // pushes it past this it is no longer "irrelevant items" and the family are
   // owed the decision again rather than having it applied silently.
   ok("what the floor removes is a negligible share of the book — it is a speck filter, not a policy on real money",
-     Math.abs(droppedMV) / BOOK_SUMMARY.totalValue < 0.0001,
-     `${rs(droppedMV)} of ${rs(BOOK_SUMMARY.totalValue)}`);
+     Math.abs(droppedMV) / LIVE_TOTAL < 0.0001,
+     `${rs(droppedMV)} of ${rs(LIVE_TOTAL)}`);
+  // And on the STATEMENT basis it takes nothing at all — measured, not assumed.
+  // Every row it used to take was a Motilal demat line valued at a last-movement
+  // price, which that basis no longer values. A floor that starts dropping
+  // statement rows again has met a new speck, and the family are owed a look.
+  const stmtDropped = droppedHoldings(dedupedPositions(BOOK_POSITIONS)).negligible;
+  ok("on the statement basis the floor drops nothing — the specks were last-movement values that basis no longer carries",
+     stmtDropped.length === 0 && Math.abs(sum(dedupedPositions(BOOK_POSITIONS).map((p) => p.marketValue)) - BOOK_SUMMARY.totalValue) < 0.005,
+     stmtDropped.map((p) => `${p.security} ${rs(p.marketValue)}`).join(", ") || "0 rows; BOOK_SUMMARY ties");
 }
 
 // ── 4. IT MOVES MARKET VALUE AND NOTHING ELSE ───────────────────────────────
@@ -191,7 +215,7 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
 // than waited for.
 {
   const dangerous = [...negligibleKeys(book)].filter((k) => {
-    const rows = BOOK_POSITIONS.filter((p) => p.securityKey === k);
+    const rows = book.filter((p) => p.securityKey === k);
     return rows.length > 1;
   });
   ok("no security is dropped whose rows the book reports separately — the two readings agree on this book",
@@ -221,7 +245,7 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
 // prevent.
 {
   const a = [...negligibleKeys(book)].sort();
-  const b = [...negligibleKeys(dedupedPositions(BOOK_POSITIONS))].sort();
+  const b = [...negligibleKeys(dedupedPositions(book))].sort();
   ok("the same keys are dropped whether the caller passes every row or the deduped set",
      a.length === b.length && a.every((k, i) => k === b[i]), `${a.length} vs ${b.length}`);
 }
@@ -234,10 +258,22 @@ ok("the floor is ₹1,000, as asked for", NEGLIGIBLE_VALUE_FLOOR === 1000, `${NE
 // The row the family actually pointed at — "54 rupees क्या होता है?" — must be
 // one of the rows that goes. Found by VALUE rather than by name, so the next
 // drop picks its own and a renamed scheme does not silently retire the case.
+//
+// The ₹54 was the statement's own printed figure (0.39 units × its ₹137.62
+// last-movement rate), which is what the screen showed then. Since Stage 10cz
+// that figure is not a valuation, so the page values the units at AMFI's NAV and
+// the row reads a few rupees less — the SAME holding, still a speck. It is found
+// by the value its statement PRINTED (`lastMovementValue` on the recorded line),
+// joined to the dropped row on its account and key.
 {
-  const theRow = negligible.find((p) => Math.round(p.marketValue) === 54);
+  const printed = new Map(BOOK_UNVALUED_HOLDINGS.map((u) => [`${u.accountId}|${u.securityKey}`, u.lastMovementValue]));
+  const theRow = negligible.find((p) => {
+    const v = printed.get(`${p.accountId}|${p.securityKey}`);
+    return typeof v === "number" && Math.round(v) === 54;
+  });
   ok("the ₹54 holding the family pointed at is one of the rows that goes",
-     theRow !== undefined, theRow ? theRow.security : "no ₹54 row among the dropped");
+     theRow !== undefined,
+     theRow ? `${theRow.security}, now ${rs(theRow.marketValue)} at its published NAV` : "no dropped row whose statement printed ₹54");
 }
 
 // ── 9. CLOSED ROWS STILL GO, AND STILL FOR THEIR OWN REASON ─────────────────

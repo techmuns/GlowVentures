@@ -372,37 +372,27 @@ function derivedVsPrinted(doc, docs = []) {
         && explainedByOutstandingDividend(h, outstanding.get(h.securityKey) ?? 0);
       const pctPrinted = field === "pctAssets" && !pctBasis && !aumBasis && outstanding.size > 0
         && explainedByPrintedBasis(h, doc.totals?.totalMarketValue);
-      /**
-       * AN ISSUER WHOSE OWN ARITHMETIC IS BROKEN, NAMED RATHER THAN TOLERATED.
-       *
-       * Every other `explained` cause here reproduces the printed figure from a
-       * basis difference. This one cannot, because there is no basis to
-       * reproduce: the Motilal Oswal depository prints a value column that ties
-       * to its own grand total to the rupee and disagrees with its own quantity
-       * x rate on a third of its rows — Birla Cable at 11,900 units and a
-       * printed rate of 170.600 carries a printed value of 34,120.00, which is
-       * ₹2.87 a share.
-       *
-       * It is `explained` because the cause IS established and is a property of
-       * the document rather than of the extraction: the family's own review
-       * values the same holdings at quantity x rate to within ordinary drift,
-       * and prices the printed column implies are impossible. Leaving it
-       * `material` would put 28 rows in front of the two real settlement
-       * residuals this book actually needs a reader to look at. The rows are
-       * still listed, and the reader still warns once per document.
+      /*
+       * THERE USED TO BE A SEVENTH CAUSE HERE, `depositoryValueColumn`, and it
+       * is gone because its premise was wrong rather than because it stopped
+       * firing. It marked every Motilal Oswal depository row `explained` on the
+       * grounds that the document's own arithmetic was broken — a value column
+       * tying to its grand total while disagreeing with quantity x rate on a
+       * third of its rows. The document was right and the reading was not: the
+       * rate is the price of the holding's LAST MOVEMENT and the value is that
+       * price times the movement's own quantity (see `motilalDemat.mjs`), so
+       * that reader no longer derives a market value from either and there is
+       * nothing left to compare. A cause that explains a delta by calling the
+       * source broken is worth a second look every time it is reached for.
        */
-      const depositoryValueColumn = field === "marketValue"
-        && doc.provider === "Motilal Oswal Financial Services (demat)";
       out.push({
         docKey: doc.docKey, provider: doc.provider, accountNo: doc.accountNo,
         asOf: doc.asOf, reportType: doc.reportType,
         security: h.security, securityKey: h.securityKey,
         field, derived, printed, delta,
-        severity: pctBasis || aumBasis || mvBasis || divBasis || pctPrinted || depositoryValueColumn
+        severity: pctBasis || aumBasis || mvBasis || divBasis || pctPrinted
           ? "explained" : classifyDelta(field, delta),
-        cause: depositoryValueColumn
-          ? "the depository's printed VALUE column is not its own quantity x rate. It sums to this statement's printed grand total exactly and still implies impossible prices, so market value is DERIVED from quantity x rate — which the family's consolidated review independently corroborates — and the printed figure is kept only as the record of what the document said."
-          : pctBasis
+        cause: pctBasis
           ? "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly."
           : aumBasis
             ? "printed % is of ASSETS UNDER MANAGEMENT, which this report's own total row states is 111.54% of the market value printed beside it; and its printed market value does not equal its own quantity x price on every row. Reproduced from the printed value over the declared AUM."

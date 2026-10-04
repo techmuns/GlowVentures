@@ -35,6 +35,7 @@ import { BOOK_POSITIONS, BOOK_POLYCAB } from "@/data/glowData";
 import { currentHoldings, dedupedPositions, isCompanyShare } from "@/lib/analytics";
 import { bookIsinBridge, companySectorIndex, heldFundVehicles, loadStockExposure, type StockExposureState } from "@/lib/lookthrough";
 import { UNCLASSIFIED } from "@/lib/sectors";
+import { lookthroughCompanies } from "@/lib/recordedHoldings";
 import NSE_SYMBOLS from "@/data/nseSymbols.json";
 import SCREENER from "@/data/screenerSectors.json";
 
@@ -64,8 +65,10 @@ const ringFenced = {
   keys: new Set(BOOK_POLYCAB.map((p) => p.securityKey)),
   isins: new Set(BOOK_POLYCAB.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean)),
 };
+// The companies the page's look-through joins to (`lookthroughCompanies`).
+const companies = lookthroughCompanies(ded);
 const state: StockExposureState = await loadStockExposure(
-  heldFundVehicles(ded), bookIsinBridge(ded).index, ringFenced, new Set(stocks.map((p) => p.securityKey)));
+  heldFundVehicles(ded), bookIsinBridge(companies).index, ringFenced, new Set(companies.map((p) => p.securityKey)));
 ok("the committed look-through store answers", state.status === "ok", state.status);
 if (state.status !== "ok") process.exit(1);
 

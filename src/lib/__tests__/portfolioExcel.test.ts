@@ -48,7 +48,8 @@ import {
 } from "@/data/glowData";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { buildPortfolioWorkbook } from "@/lib/exportPortfolioExcel";
-import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
+import { applyFundNavs, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
+import { shareCandidates } from "@/lib/depositoryShares";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { buildDatedCapital } from "@/lib/datedCapital";
 import { displaySecurity, DASH } from "@/lib/format";
@@ -74,14 +75,19 @@ const NOW = Date.parse("2026-09-23T06:00:00Z");
 // ── THE PAGE'S OWN INPUT ────────────────────────────────────────────────────
 // `PortfolioContext` names each holding once (`labelledPositions`) and each
 // strategy (`labelledAccounts`), runs the quote layer — a no-op with no feed —
-// adds the depository's own cash-equivalent units it values at AMFI's NAV (the
-// live book only), and overlays the published NAV. That is what `handleExport`
-// passes, so it is what the workbook is built from here.
-const DEPO: Position[] = depositoryCashHoldings();
-/** The raw lines behind PAGE, index for index: the statement book, then the depository's cash. */
+// adds the fund units only the LIVE book values at AMFI's NAV — the depository's
+// own funds on the transaction-only demat (Stage 10ce cash, 10cy the rest) and
+// the units a holding statement records and values nowhere (A-17, and the three
+// Motilal demats since Stage 10cz, whose Rate is a last-movement price) — and
+// overlays the published NAV. A listed share a statement records is a row only
+// while a quote feed prices it, and this suite has none. That is what
+// `handleExport` passes, so it is what the workbook is built from here.
+const DEPO: Position[] = [...depositoryFundHoldings(), ...unpricedStatementUnits()];
+/** The raw lines behind PAGE, index for index: the statement book, then the rows only the live book carries. */
 const RAW: Position[] = [...BOOK_POSITIONS, ...DEPO];
 const PAGE: Position[] = applyFundNavs([...labelledPositions(BOOK_POSITIONS), ...DEPO]);
-const PAGE_ACCOUNTS = withPartialValuation(labelledAccounts(BOOK_ACCOUNTS), partialValuationNotes(DEPO));
+const PAGE_ACCOUNTS = withPartialValuation(labelledAccounts(BOOK_ACCOUNTS),
+  partialValuationNotes(DEPO, undefined, undefined, undefined, shareCandidates()));
 if (PAGE.length !== RAW.length || PAGE.some((p, i) => p.securityKey !== RAW[i].securityKey || p.accountId !== RAW[i].accountId)) {
   throw new Error("the page's lines no longer line up with the book's, index for index");
 }
@@ -309,7 +315,7 @@ eq("Transactions columns: Entity closes the figures, Notes the row", headersOf(t
      near(got, want, 0.005), `${got} vs ${want}`);
   // ...and it is NOT the figure a sheet listing the closed rows and the specks prints.
   const withAll = firstOfGroup(RAW).reduce((s, p) => s + navMV(p), 0);
-  ok("...which is below the sum that lists the specks too (the ₹840.99 the tab leaves out)",
+  ok("...which is below the sum that lists the specks too (the few rupees under the ₹1,000 floor the tab leaves out)",
      withAll - got > 1 && near(withAll - got, firstOfGroup(NAV_SET.specks).reduce((s, p) => s + navMV(p), 0), 0.005),
      `${withAll} − ${got}`);
   eq("the footer counts the rows above it", String(holdings.getRow(footerRow).getCell(1).value), `Total · ${nRows} holdings`);
@@ -543,8 +549,34 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
       }
     }
   }
-  ok("a row whose lines disagree on a mark prints no CMP and names the marks; one that agrees prints it",
-     split > 0 && bad.length === 0, bad.join("; ") || `${split} split, ${single} agreeing`);
+  // THE SPLIT HALF HAS NO SUBJECT ON THIS BOOK SINCE Stage 10cz — and why is
+  // the finding. Every split this check used to find (DSP Gold at ₹151.10 and
+  // ₹141.24, the two Helios demat rows) was a pair of Motilal "marks" that were
+  // the prices of each line's LAST DEPOSITORY MOVEMENT, not marks at all; the
+  // book carries those lines as quantities now, and what is left agrees. So the
+  // real book is held to the agreeing half, and the split half to a constructed
+  // pair below — never silently dropped, because a row printing one line's mark
+  // over another line's units is the defect A-03 was.
+  ok("a row whose lines agree on a mark prints it, and no real row prints a mark its lines disagree on",
+     single > 0 && bad.length === 0, bad.join("; ") || `${split} split, ${single} agreeing`);
+  {
+    const direct2 = BOOK_ACCOUNTS.filter((a) => a.engagement === "Direct").slice(0, 2);
+    const b = { securityKey: "test-split-mark", security: "Test Split Mark Ltd", assetClass: "Equity",
+      sector: "Industrials", providerSector: null, isin: null, symbol: null, marketSide: "listed" } as unknown as Position;
+    const two: Position[] = [
+      { ...b, accountId: direct2[0].accountId, quantity: 100, costBasis: null, avgCost: null, currentPrice: 120,
+        marketValue: 12000, unrealizedPnL: null, returnPct: null, realizedPnL: null } as unknown as Position,
+      { ...b, accountId: direct2[1].accountId, quantity: 100, costBasis: null, avgCost: null, currentPrice: 130,
+        marketValue: 13000, unrealizedPnL: null, returnPct: null, realizedPnL: null } as unknown as Position,
+    ];
+    const sw = buildPortfolioWorkbook(two, BOOK_ACCOUNTS, [], NOW).getWorksheet("Holdings")!;
+    const recs = recordsOf(sw, footerRowOf(sw) - 1).filter((r) => r["Security"] === "Test Split Mark Ltd");
+    const cmp = recs[0]?.["CMP (₹)"];
+    const notes = String(recs[0]?.["Notes"] ?? "");
+    ok("...and a row whose lines are marked at two prices prints no CMP and names both marks — on a constructed pair",
+       direct2.length === 2 && recs.length === 1 && cmp === DASH && [120, 130].every((m) => notes.includes(rupees(m))),
+       `${recs.length} row(s) · CMP ${String(cmp)} over marks 120 / 130 · notes: ${notes.slice(0, 120)}`);
+  }
 
   // COST OVER THE COSTED LINES, on a constructed pair — this book's partly
   // costed holdings all sit across a mandate and a demat, which the sheet
@@ -616,15 +648,60 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   }
   ok("every blank figure names its column and its reason in Notes", silent.length === 0,
      silent.slice(0, 4).join("; ") || `${ROWS.length} rows`);
-  // A DEPOSITORY'S OWN UNITS SAY WHAT THEY ARE: a closing balance off a
-  // transaction statement, valued at AMFI's NAV — no statement priced them, and
-  // a reader must not take them for a statement mark replaced.
-  const depoNames = new Set(DEPO.map((p) => displaySecurity(PAGE[RAW.indexOf(p)].security)));
+  // A DEPOSITORY'S OWN UNITS SAY WHAT THEY ARE, by the record they came from
+  // (Stage 10cz): a transaction-only account's closing balance, a holding
+  // statement's balance beside the price of its LAST MOVEMENT, or one printed
+  // with no rate. Every kind says no statement priced them and that AMFI's NAV
+  // values them — and ONLY the first may say the account sent no holding
+  // statement: said of a Motilal holding statement it would be false, which is
+  // what this row printed on every line of every kind before.
+  const kindOf = (p: Position) => p.depositoryUnits?.kind ?? "closing-balance";
+  const SAYS: Record<string, RegExp> = {
+    "closing-balance": /a depository's own closing balance of \d{4}-\d\d-\d\d, on an account that sent a transaction statement and no holding statement/,
+    "last-movement": /holding statement of \d{4}-\d\d-\d\d records beside the price of their last depository movement — .*a transaction price, not a valuation of the balance/,
+    "no-rate": /holding statement of \d{4}-\d\d-\d\d records and prints no rate for/,
+    "no-price": /holding statement of \d{4}-\d\d-\d\d records with no usable price/,
+  };
+  // A ROW IS FOUND BY ITS KEY, NEVER BY ITS NAME ALONE: two keys can share one
+  // label — the depository's clipped `HELIOS FCF D-GROW` and the AMC folio's full
+  // name read alike since Stage 10az — and only one of the two rows is a
+  // depository's. The row's own Qty is what says which key it is.
+  const depoKinds = new Map<string, Set<string>>();
+  for (const p of DEPO) {
+    if (!depoKinds.has(p.securityKey)) depoKinds.set(p.securityKey, new Set());
+    depoKinds.get(p.securityKey)!.add(kindOf(p));
+  }
+  const nameOf = (p: Position) => displaySecurity(p.security);
+  const depoNames = new Set(PAGE.filter((p) => depoKinds.has(p.securityKey)).map(nameOf));
+  const qtyByKey = new Map<string, { name: string; qty: number }>();
+  for (const p of PAGE) {
+    const e = qtyByKey.get(p.securityKey) ?? { name: nameOf(p), qty: 0 };
+    e.qty += p.quantity;
+    qtyByKey.set(p.securityKey, e);
+  }
+  const keyOfRow = (r: Record<string, unknown>): string | null => {
+    const q = Number(r["Qty"]);
+    const hit = [...qtyByKey].filter(([, e]) => e.name === String(r["Security"]) && Number.isFinite(q) && Math.abs(e.qty - q) < 0.01);
+    return hit.length === 1 ? hit[0][0] : null;
+  };
   const depoRows = ROWS.filter((r) => depoNames.has(String(r["Security"])));
-  const unsaid = depoRows.filter((r) => !/Qty — (these|some of these) units are a depository's own closing balance of \d{4}-\d\d-\d\d, on an account that sent a transaction statement and no holding statement — no statement priced them/.test(String(r["Notes"])));
-  ok("a row carrying a depository's own closing units says so, and that no statement priced them",
-     DEPO.length > 0 && depoRows.length > 0 && unsaid.length === 0,
-     unsaid.map((r) => String(r["Security"])).join("; ") || `${depoRows.length} rows over ${DEPO.length} depository lines`);
+  const unsaid = depoRows.filter((r) => {
+    const notes = String(r["Notes"]);
+    const key = keyOfRow(r);
+    if (key === null) return true; // a row no key accounts for is itself the finding
+    const kinds = depoKinds.get(key);
+    if (!kinds) return /Qty — (these|some of these) units are /.test(notes); // not a depository row: must not say it is
+    return !/Qty — (these|some of these) units are /.test(notes)
+      || !/no statement priced them, and they are valued at AMFI's published NAV/.test(notes)
+      || [...kinds].some((k) => !SAYS[k].test(notes))
+      || (!kinds.has("closing-balance") && /transaction statement and no holding statement/.test(notes));
+  });
+  const kindsSeen = new Set(DEPO.map(kindOf));
+  ok("a row carrying a depository's own units says which record they came from, and that no statement priced them",
+     kindsSeen.has("closing-balance") && kindsSeen.has("last-movement")
+       && depoRows.length > 0 && unsaid.length === 0,
+     unsaid.map((r) => String(r["Security"])).join("; ")
+       || `${depoRows.length} rows over ${DEPO.length} depository lines · kinds ${[...kindsSeen].sort().join(", ")}`);
   // A cost nobody reported names WHOSE statement it is, never one cause for all.
   const providers = [...new Set(BOOK_ACCOUNTS.map((a) => a.provider))];
   const costless = ROWS.filter((r) => r["Avg Cost (₹)"] === DASH && r["Unreal. P&L (₹)"] === DASH);

@@ -14,7 +14,9 @@
 //                           consolidated review, the family's investment register)
 //   not-a-document        — a macOS `__MACOSX/._*` resource fork: a 212- or
 //                           477-byte AppleDouble stub with no `%PDF` header,
-//                           created by zipping on a Mac. There is nothing in it
+//                           created by zipping on a Mac. There is nothing in it.
+//                           Counted from each ZIP's own directory, never from
+//                           what happens to be on disk — see below
 //   excluded-by-policy    — the drop's own password notes. They carry PANs and a
 //                           SEBI registration number, so they are read at runtime
 //                           from `GLOW_PDF_PASSWORDS` and never committed
@@ -27,6 +29,7 @@ import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { listEntries, readEntry, isMacMetadata } from "./ingest/lib/unzip.mjs";
 
 // Run against the committed tree by default, from wherever it is invoked; the
 // three GLOW_* variables `extract.mjs` honours point it at a scratch run
@@ -51,6 +54,47 @@ const files = execSync(`find ${JSON.stringify(SOURCE_DIR)} -type f ! -name '*.zi
   .trim().split("\n").filter(Boolean)
   // The path the manifest records: relative to the repository root.
   .map((f) => path.relative(ROOT, path.resolve(f)).split(path.sep).join("/"));
+
+/**
+ * THE RESOURCE FORKS ARE COUNTED FROM EACH ZIP'S OWN DIRECTORY, NOT FROM DISK.
+ *
+ * `source/_extracted/` is derived and gitignored, and the pipeline's own
+ * unzipper (`lib/unzip.mjs`) SKIPS macOS metadata. So which forks exist on disk
+ * depends on who expanded the tree: the same `source/` read 58 "not a document"
+ * where another unzipper had written them and 0 where the pipeline had — a
+ * generated document whose counts depend on who unzipped is not idempotent.
+ *
+ * Every entry the unzipper skips is listed here at the path an unzipper would
+ * have written it to — the destination `inventory.mjs` gives each archive — and
+ * checked by its own bytes, exactly as a fork on disk is. One already on disk is
+ * read as it is. An entry the unzipper skips whose bytes are NOT a fork is not
+ * waved through: it falls to `unread`, because the pipeline never read it.
+ */
+const EXTRACT_DIR = path.join(SOURCE_DIR, "_extracted");
+const forkBytes = new Map();                     // repo-relative path -> Buffer | null
+const onDisk = new Set(files);
+const zips = execSync(`find ${JSON.stringify(SOURCE_DIR)} -type f -iname '*.zip' | sort`, { encoding: "utf8", maxBuffer: 1e8 })
+  .trim().split("\n").filter(Boolean);
+for (const z of zips) {
+  const inExtracted = path.resolve(z).startsWith(path.resolve(EXTRACT_DIR) + path.sep);
+  const base = path.basename(z, path.extname(z));
+  const dest = inExtracted
+    ? path.join(path.dirname(z), base)
+    : path.join(EXTRACT_DIR, path.relative(SOURCE_DIR, path.dirname(z)), base);
+  let buf, entries;
+  try { buf = readFileSync(z); entries = listEntries(buf); } catch { continue; }
+  for (const e of entries) {
+    if (e.name.endsWith("/") || !isMacMetadata(e.name)) continue;
+    const abs = path.resolve(dest, e.name.replace(/\\/g, "/").replace(/^\/+/, ""));
+    if (!abs.startsWith(path.resolve(dest) + path.sep)) continue;   // escapes its destination
+    const p = path.relative(ROOT, abs).split(path.sep).join("/");
+    if (onDisk.has(p) || forkBytes.has(p)) continue;
+    let bytes = null;
+    try { bytes = readEntry(buf, e); } catch { /* an unreadable entry is judged on null below */ }
+    forkBytes.set(p, bytes);
+  }
+}
+files.push(...forkBytes.keys());
 
 /**
  * A FILE CAN BE READ WITHOUT HAVING A DOCUMENT OF ITS OWN, one more way: a
@@ -80,7 +124,8 @@ for (const k of bySource.keys()) {
   byAscii.set(a, byAscii.has(a) ? null : k);   // null marks an ambiguous fold
 }
 
-const md5 = (f) => createHash("md5").update(readFileSync(f)).digest("hex");
+const bytesOf = (f) => (forkBytes.has(f) ? (forkBytes.get(f) ?? Buffer.alloc(0)) : readFileSync(f));
+const md5 = (f) => createHash("md5").update(bytesOf(f)).digest("hex");
 
 /**
  * A `__MACOSX/._x` file is not a document, and this is checked rather than
@@ -88,10 +133,12 @@ const md5 = (f) => createHash("md5").update(readFileSync(f)).digest("hex");
  * header, whatever its extension says.
  */
 function isResourceFork(f) {
-  if (!/(^|\/)__MACOSX\//.test(f)) return false;
+  if (!isMacMetadata(f)) return false;
   try {
-    if (statSync(f).size > 4096) return false;
-    return !readFileSync(f).subarray(0, 4).equals(Buffer.from("%PDF"));
+    if (!forkBytes.has(f) && statSync(f).size > 4096) return false;
+    const bytes = bytesOf(f);
+    if (forkBytes.has(f) && (!forkBytes.get(f) || bytes.length > 4096)) return false;
+    return !bytes.subarray(0, 4).equals(Buffer.from("%PDF"));
   } catch { return false; }
 }
 
@@ -218,7 +265,9 @@ say("## Not a document");
 say();
 say(`${count("not-a-document")} files under \`__MACOSX/\`, created by zipping on a Mac. Each is a 212- or`);
 say("477-byte AppleDouble stub and **none carries a `%PDF` header** — verified per file rather than");
-say("assumed from the path. There is nothing in them to read.");
+say("assumed from the path. There is nothing in them to read. They are counted from each ZIP's own");
+say("directory, at the path an unzipper would write them to: the pipeline's own unzipper skips them,");
+say("so whether they exist under `source/_extracted/` depends on who expanded it, and this count must not.");
 say();
 
 writeFileSync(OUT, L.join("\n") + "\n");

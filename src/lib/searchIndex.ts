@@ -49,7 +49,8 @@
 // There is no similarity score over whole names — the fuzzy tiers this repo has
 // already refused matched `KIRANAKART TECHNOLOGIES` to `TATA TECHNOLOGIES` —
 // and a near miss is only ever a way to a page, never a join between figures.
-import type { Account, CapitalMove, Position } from "./types";
+import type { Account, CapitalMove, Position, UnvaluedStatementHolding } from "./types";
+import { recordedLines, type RecordedLine } from "./recordedHoldings";
 import { accountIndex, type AccountIndex } from "./accounts";
 import {
   currentHoldings, dedupedPositions, isFundVehicle, isMandateHeld, mandateLabel, bucketLabel,
@@ -59,7 +60,7 @@ import { groupKeyFor, groupLabelFor, GROUP_AXES } from "./groupAxis";
 import { AXIS_SCOPE, drilldownHref } from "./drilldown";
 import { fundMarketSideOf } from "./aifCategory";
 import { NAV } from "./nav";
-import { printedSpellings } from "./securityLabel";
+import { printedSpellings, securityLabel } from "./securityLabel";
 import { schemeNamesOf, schemeStem } from "./reviewGaps";
 import { schemeNameFor } from "./schemeLabel";
 import { displaySecurity } from "./format";
@@ -88,6 +89,8 @@ export type SearchEntry = {
   weight: number;
   /** A position the family no longer holds — findable, ranked below any held one. */
   closed?: boolean;
+  /** A holding a statement records at a quantity and nothing values (Stage 10cz). */
+  recorded?: boolean;
   /**
    * A SCHEME's published names with the plan and option set aside (SC-B4) —
    * matched only against a query that carried a plan or option tail of its own.
@@ -525,6 +528,8 @@ export function buildSearchIndex(input: {
   consolidated: Position[];
   accounts: Account[];
   money: Money;
+  /** The lines a statement records at a quantity and no value (`BOOK_UNVALUED_HOLDINGS`). */
+  recorded?: readonly UnvaluedStatementHolding[];
   /**
    * The family's own dated capital record (`BOOK_CAPITAL_MOVES`) — read only
    * to decide whether a redemption IS on the Transactions tab before a row says
@@ -538,7 +543,7 @@ export function buildSearchIndex(input: {
    */
   fenced?: { names: string[]; codes: string[] };
 }): SearchEntry[] {
-  const { positions, consolidated, accounts, money } = input;
+  const { positions, consolidated, accounts, money, recorded = [] } = input;
   const idx: AccountIndex = accountIndex(accounts);
   const out: SearchEntry[] = [];
   const current = currentHoldings(consolidated);
@@ -639,6 +644,63 @@ export function buildSearchIndex(input: {
     });
   }
 
+  // ── holdings a statement records at a quantity, and nothing values ────────
+  /**
+   * A HOLDING THE FAMILY OWNS IS FINDABLE WHETHER OR NOT ANYTHING VALUES IT
+   * (Stage 10cz).
+   *
+   * The Motilal CDSL demat prints a rate and a value that belong to each
+   * holding's LAST DEPOSITORY MOVEMENT, not to the statement date, so its rows
+   * are quantities in the book — valued on the live basis only while a quote or
+   * a published NAV answers. With nothing valuing Kaynes the search found no
+   * Kaynes at all, which a family who hold 4,875 shares of it reads as the
+   * dashboard having lost it. So a key no valued row stands for is offered from
+   * the statement's own line: its units and whose they are, and "Not valued"
+   * where a figure would be — never the last movement's price, which is the
+   * figure this change stopped passing off as a mark.
+   *
+   * Only where no valued row already stands for the key, and not a key the
+   * family's ₹1,000 floor has dropped. A line whose units another account's own
+   * statement reports is that account's holding and is not offered twice.
+   */
+  // Grouped under the company the live layer would file the line under
+  // (`recordedHoldings.ts`), so two statements spelling one company — Clean Max
+  // on a demat and on the NSDL account, NSE's shares on two — are ONE result.
+  const recordedByKey = new Map<string, RecordedLine[]>();
+  for (const l of recordedLines(recorded)) {
+    if (byKey.has(l.homeKey) || small.has(l.homeKey)) continue;
+    recordedByKey.set(l.homeKey, [...(recordedByKey.get(l.homeKey) ?? []), l]);
+  }
+  for (const [key, lines] of recordedByKey) {
+    const head = lines.find((l) => l.securityKey === key) ?? lines[0];
+    const units = sum(lines.map((u) => u.quantity));
+    const accountIds = new Set(lines.map((u) => u.accountId));
+    const owners = [...new Set(lines.map((u) => idx.get(u.accountId)?.owner).filter(Boolean))] as string[];
+    // A class the statement did not state is not guessed at: the chip says
+    // only that it is a holding.
+    const cls = head.assetClass ? readerClassOf({ assetClass: head.assetClass, securityKey: key }) : null;
+    const chip = cls === "Equity" ? "Stock" : cls === "Mutual Fund" ? "Mutual fund" : cls ?? "Holding";
+    const label = securityLabel(key, head.security);
+    const asOf = lines.map((u) => u.asOf).filter(Boolean).sort().pop();
+    const spellings = [...new Set(lines.flatMap((l) => [...printedSpellings(l.securityKey), l.securityKey.replace(/-/g, " ")]))];
+    out.push({
+      id: `holding:${key}`, kind: "holding", chip,
+      label,
+      detail: ["Not valued", `${units.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units`,
+        accountIds.size === 1 ? `1 account · ${owners[0] ?? ""}` : `${accountIds.size} accounts · ${owners.length} member${owners.length === 1 ? "" : "s"}`,
+        asOf ? `as of ${asOf}` : ""]
+        .filter(Boolean).join(" · "),
+      href: `/stock/${encodeURIComponent(key)}`,
+      names: [label, ...printedSpellings(key).filter((n) => n !== label), key.replace(/-/g, " "),
+        ...spellings.filter((n) => n !== label)],
+      codes: [...new Set(lines.map((u) => u.isin).filter((c): c is string => !!c))],
+      keywords: [bucketLabel(groupKeyFor("category", idx, { assetClass: head.assetClass, securityKey: key, accountId: head.accountId }))]
+        .filter((s): s is string => !!s),
+      weight: 0,
+      recorded: true,
+    });
+  }
+
   // ── PMS mandates — one per account ────────────────────────────────────────
   const byAccount = new Map<string, Position[]>();
   for (const p of positions) byAccount.set(p.accountId, [...(byAccount.get(p.accountId) ?? []), p]);
@@ -695,10 +757,12 @@ export function buildSearchIndex(input: {
       : empty?.kind === "unvalued" ? "holds no valued position — no statement in this book values it"
       : listed.length
         // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. On the live
-        // basis a transaction-only demat values the cash-equivalent funds its
-        // depository reports and nothing else on that statement (Stage 10ce),
-        // so its total must not read as the account's — the words lead,
-        // because this line is truncated to one row.
+        // basis an account whose statement records quantities it does not value
+        // is valued only where a published NAV or a live quote can price them —
+        // a transaction-only demat's funds and shares (Stages 10ce, 10cy), a
+        // Motilal holding statement's last-movement lines (Stage 10cz) — so its
+        // total must not read as the account's: the words lead, because this
+        // line is truncated to one row.
         ? `${a.partialValuation ? "partly valued · " : ""}${listed.length} holding${listed.length === 1 ? "" : "s"} · ${money(listedMV)} ${valueBasisOf(listed, a.asOf)}`
         : `every holding here is under the ₹1,000 floor, so none is listed`;
     out.push({

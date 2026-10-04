@@ -38,11 +38,14 @@
 // cash-flow suite already follows for its two saved API responses.
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { BOOK_POSITIONS, BOOK_POLYCAB, BOOK_SUMMARY } from "@/data/glowData";
+import { BOOK_POLYCAB } from "@/data/glowData";
+import { LIVE_POSITIONS, liveBookTotal } from "./liveBook";
 import { NEGLIGIBLE_VALUE_FLOOR, dedupedPositions, droppedHoldings, isCompanyShare, isFundVehicle, sum } from "@/lib/analytics";
+import { isArbitrageFund } from "@/lib/fundNavs";
 import { bookIsinBridge, heldFundVehicles, issuerKeyOf, issuerNameOf, issuerOf, loadStockExposure, type StockExposureState } from "@/lib/lookthrough";
 import { securityKeyOf } from "@/lib/securityKey";
 import { securityLabel } from "@/lib/securityLabel";
+import { lookthroughCompanies } from "@/lib/recordedHoldings";
 import { UPSTOX_INSTRUMENTS } from "../../../shared/upstoxInstruments.mjs";
 import NSE_SYMBOLS from "@/data/nseSymbols.json";
 
@@ -79,7 +82,19 @@ const STORE = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures
 // `import.meta.env` is Vite's, and this runs in node.
 (import.meta as { env?: Record<string, string> }).env ??= { BASE_URL: "/" };
 
-const ded = dedupedPositions(BOOK_POSITIONS);
+/**
+ * THE BOOK THE PAGE READS. `useStockExposure` is handed the LIVE consolidated
+ * set (`PortfolioContext`), and since Stage 10cz that differs from the statement
+ * basis by more than a published NAV: the three Motilal Oswal holding
+ * statements' funds are valued there at AMFI's NAV and nowhere on the statement
+ * basis, because the rate those statements print is the last depository
+ * movement, never a price. Read off `BOOK_POSITIONS` this suite lost the funds
+ * that hold LIC Housing's twelve NCDs and the Government of India's paper — the
+ * very look-through it exists to check — while the page still drew them.
+ */
+const ded = dedupedPositions(LIVE_POSITIONS);
+/** The live book's own NAV, reached on a second path (see `liveBookTotal`). */
+const BOOK_NAV = liveBookTotal();
 const stocks = ded.filter(isCompanyShare);
 /**
  * THE SAME FUNDS THE PAGE LOADS — `heldFundVehicles`, shared with
@@ -100,9 +115,18 @@ const vehicles = heldFundVehicles(ded);
  * which is how the listing tier's absence went unnoticed: every company held
  * only through a mandate joined to nothing, and this suite agreed.
  */
-const bridge = bookIsinBridge(ded);
+/**
+ * …OVER THE SAME COMPANIES — the book's valued shares, then the ones a
+ * statement records and nothing values, under the key the live layer files them
+ * by (`lookthroughCompanies`, Stage 10cz). Built off `stocks` alone, a fund's
+ * Kaynes line landed on the filing's spelling here while the page — on a day no
+ * quote had made Ankita's demat line a row — needed the recorded line to put it
+ * on the family's own Kaynes.
+ */
+const companies = lookthroughCompanies(ded);
+const bridge = bookIsinBridge(companies);
 const isinToBookKey = bridge.index;
-const bookCompanyKeys = new Set(stocks.map((p) => p.securityKey));
+const bookCompanyKeys = new Set(companies.map((p) => p.securityKey));
 const ringFenced = {
   keys: new Set(BOOK_POLYCAB.map((p) => p.securityKey)),
   isins: new Set(BOOK_POLYCAB.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean)),
@@ -115,7 +139,11 @@ const ex = state;
 
 console.log("\n── the partition: every rupee of the book in exactly one bucket ──");
 const measured = sum(stocks.map((p) => p.marketValue));
-const cash = sum(ded.filter((p) => p.assetClass === "Cash").map((p) => p.marketValue));
+// The book's cash rows AND the arbitrage funds the family counts as cash — the
+// page's own `stockCoverage.cash`. They are not looked through (`heldFundVehicles`
+// skips them), so on the live book, which carries the depository's arbitrage
+// funds, a cash term of `Cash` rows alone leaves them in no bucket.
+const cash = sum(ded.filter((p) => p.assetClass === "Cash" || isArbitrageFund(p)).map((p) => p.marketValue));
 /**
  * THE ₹1,000 FLOOR, AS A TERM OF ITS OWN. The funds are today's holdings
  * (`heldFundVehicles`), so the fund rows `currentHoldings` leaves out are in no
@@ -131,11 +159,12 @@ const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ex
  * THE STRONGEST ASSERTION HERE. The stock axis draws a table covering less than
  * half the book, so a reader is owed a statement of where the rest is — and that
  * statement is only worth anything if the parts reconstruct the whole. Anchored
- * on `BOOK_SUMMARY.totalValue`, which `build-book.mjs` produces on a completely
+ * on `liveBookTotal()` — `build-book.mjs`'s own `BOOK_SUMMARY.totalValue` plus
+ * two named steps, the NAV's move and the live-only rows — which is a completely
  * separate path from `dedupedPositions`, so the two agreeing is a real
  * cross-check rather than a figure compared with its own copy.
  */
-near("the five buckets rebuild the book's own NAV, to the rupee", buckets, BOOK_SUMMARY.totalValue, 1);
+near("the five buckets rebuild the live book's own NAV, to the rupee", buckets, BOOK_NAV, 1);
 console.log(`     measured ${CR(measured)} + derived ${CR(ex.total)} + opaque ${CR(ex.skippedValue)}`
   + ` + unaccounted ${CR(ex.unaccountedValue)} + fenced ₹${ex.fencedValue.toFixed(2)} + cash ${CR(cash)} + under the floor ₹${floored.toFixed(2)} = ${CR(buckets)}`);
 ok("...where the floor's term is specks and redeemed nils, never money",
@@ -143,8 +172,8 @@ ok("...where the floor's term is specks and redeemed nils, never money",
     && floored < NEGLIGIBLE_VALUE_FLOOR * new Set(floorOut.negligible.map((p) => p.securityKey)).size,
   `₹${floored.toFixed(2)} across ${floorOut.negligible.length} speck row(s) and ${floorOut.closed.length} redeemed`);
 ok("...and the table covers less than the book, which is why the statement is owed",
-  measured + ex.total < BOOK_SUMMARY.totalValue * 0.75,
-  `${CR(measured + ex.total)} of ${CR(BOOK_SUMMARY.totalValue)}`);
+  measured + ex.total < BOOK_NAV * 0.75,
+  `${CR(measured + ex.total)} of ${CR(BOOK_NAV)}`);
 ok("every bucket is non-negative — a partition, not a subtraction that overshot",
   [measured, ex.total, ex.skippedValue, ex.unaccountedValue, ex.fencedValue, cash].every((v) => v >= 0));
 eq("the vehicles split into covered and skipped with none lost",
@@ -376,7 +405,7 @@ ok("this book's funds disclose the ring-fenced company, so the term has a subjec
   fencedLines > 0 && fencedWant > 0, `${fencedLines} line(s), ₹${fencedWant.toFixed(2)}`);
 near("the fenced line is counted as its own term, to the rupee", ex.fencedValue, fencedWant, 1);
 ok("...and it is in exactly one bucket: taken out of the partition, the partition breaks",
-  Math.abs(buckets - ex.fencedValue - BOOK_SUMMARY.totalValue) > 1,
+  Math.abs(buckets - ex.fencedValue - BOOK_NAV) > 1,
   "so the term is load-bearing rather than a zero added for show");
 ok("...and no row of the index carries it",
   ![...ex.byKey.values()].some((e) => e.rows.some((r) => r.instruments.some((i) => ringFenced.isins.has((i.isin ?? "").trim().toUpperCase())))));
@@ -552,7 +581,9 @@ ok("every key spanning two issuer codes is one company by its filings' own names
  * and a fund row — or this section passes on a book with nothing to bridge.
  */
 const statementOnly = new Map<string, string>();
-for (const p of stocks) { const i = (p.isin ?? "").trim().toUpperCase(); if (i && !statementOnly.has(i)) statementOnly.set(i, p.securityKey); }
+// Every ISIN a STATEMENT printed — valued rows and recorded lines alike — so
+// the only tier missing is the listing's.
+for (const p of companies) { const i = (p.isin ?? "").trim().toUpperCase(); if (i && !statementOnly.has(i)) statementOnly.set(i, p.securityKey); }
 const bare = await loadStockExposure(vehicles, statementOnly, ringFenced, bookCompanyKeys);
 const lostWithout = bare.status === "ok"
   ? [...ex.byKey.keys()].filter((k) => bookCompanyKeys.has(k) && !bare.byKey.has(k)) : [];

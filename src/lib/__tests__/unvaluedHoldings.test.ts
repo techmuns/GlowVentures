@@ -43,7 +43,8 @@ const docs: Doc[] = fs.readdirSync(AUDIT).sort()
 const FENCED = new Set(BOOK_POLYCAB.map((p) => p.securityKey));
 
 // ── WHAT THE ARCHIVE SAYS EACH ACCOUNT HOLDS AND NOTHING VALUES ──────────────
-const expected: { accountId: string; securityKey: string; quantity: number | null; faceValue: number | null; custody: boolean }[] = [];
+const expected: { accountId: string; securityKey: string; quantity: number | null; faceValue: number | null; custody: boolean;
+  lastMovementRate: number | null; lastMovementValue: number | null }[] = [];
 for (const a of BOOK_ACCOUNTS) {
   const mine = docs.filter((d) => d.provider === a.provider && d.accountNo === a.accountNo);
   const rule = sourceFor(a.provider, "holdings") as { reportTypes: string[] } | null;
@@ -61,6 +62,11 @@ for (const a of BOOK_ACCOUNTS) {
     expected.push({
       accountId: a.accountId, securityKey: h.securityKey, quantity: num(h.quantity) ? h.quantity : null,
       faceValue: num(h.faceValue) ? h.faceValue : null, custody: /demat/i.test(a.provider),
+      // The Motilal Oswal statements print, where they print a rate at all, the
+      // price of the holding's LAST DEPOSITORY MOVEMENT and that price times the
+      // movement's own units (Stage 10cz) — archived as such, never as a mark.
+      lastMovementRate: num(h.lastMovementRate) && h.lastMovementRate > 0 ? h.lastMovementRate : null,
+      lastMovementValue: num(h.lastMovementValue) ? h.lastMovementValue : null,
     });
   }
 }
@@ -95,12 +101,24 @@ for (const e of expected) {
   const u = BOOK_UNVALUED_HOLDINGS.find((x) => key(x) === key(e));
   if (!u) continue;
   const r = u.reason;
+  const rupees = (v: number) => `₹${v.toLocaleString("en-IN", { maximumFractionDigits: 3 })}`;
   const right = e.custody
-    ? (e.faceValue !== null ? /face value of/.test(r) && r.includes(String(e.faceValue)) : /prints no rate/.test(r))
+    ? (e.faceValue !== null ? /face value of/.test(r) && r.includes(String(e.faceValue))
+      : e.lastMovementRate !== null ? /depository movement/.test(r) && r.includes(rupees(e.lastMovementRate))
+        && /not a valuation/.test(r) && /quantity and no value/.test(r)
+      : /prints no rate/.test(r))
     : /no NAV/.test(r);
-  if (!right || u.faceValue !== e.faceValue) wrongReason.push(`${u.accountId} ${u.security}: ${r.slice(0, 60)}`);
+  if (!right || u.faceValue !== e.faceValue || (u.lastMovementRate ?? null) !== e.lastMovementRate
+    || (u.lastMovementValue ?? null) !== e.lastMovementValue) wrongReason.push(`${u.accountId} ${u.security}: ${r.slice(0, 60)}`);
 }
-ok("each reason names the row's own cause — face value, no rate, or no NAV", wrongReason.length === 0, wrongReason.slice(0, 4).join("; "));
+ok("each reason names the row's own cause — face value, a last movement's price, no rate, or no NAV",
+  wrongReason.length === 0, wrongReason.slice(0, 4).join("; "));
+// LOAD-BEARING: the last-movement branch must have a subject, or the check above
+// passes over the three Motilal statements without ever reading one.
+const movedRows = expected.filter((e) => e.custody && e.faceValue === null && e.lastMovementRate !== null);
+ok("…and the last-movement cause is in use — the Motilal statements' printed rate reaches the book as a movement, never as a mark",
+  movedRows.length > 0 && movedRows.every((e) => !BOOK_POSITIONS.some((p) => p.accountId === e.accountId && p.securityKey === e.securityKey)),
+  `${movedRows.length} row(s)`);
 
 // ── THE SAME UNITS SEEN FROM TWO SIDES ARE NAMED AS SUCH ─────────────────────
 const tie = (q: number | null | undefined, w: number) => num(q) && Math.abs(q - w) <= 0.0005 + Math.abs(w) * 1e-9;

@@ -157,6 +157,18 @@ const NAME_ACRONYMS = new Set([
    * word nobody writes; it is the instrument's own abbreviation.
    */
   "SDL",
+  /**
+   * NLC — `NLC India Limited`, which a depository TRANSACTION statement prints
+   * in capitals (`NLC INDIA LIMITED # EQTY SHARES`, Stage 10cy). The company's
+   * name, not an expansion of one; title-cased it read "Nlc India".
+   */
+  "NLC",
+  /**
+   * ESDS — `ESDS Software Solution Limited`, which Ajay's ICICI NSDL statement
+   * prints in capitals (Stage 10cy). The company's own name; title-cased it
+   * read "Esds Software".
+   */
+  "ESDS",
 ]);
 /**
  * A BRAND THAT IS NOT AN ACRONYM AND STILL KEEPS ITS CAPITALS. "ONE" is a word
@@ -265,6 +277,45 @@ export function displaySecurity(name: string): string {
     return out;
   }).join("");
   return withBrands(cased);
+}
+
+/**
+ * A depository TRANSACTION statement's name for a holding, as a reader should
+ * see it (Stage 10cy). CDSL prints `ISSUER#INSTRUMENT` — `NLC INDIA LIMITED #
+ * EQTY SHARES`, `BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT
+ * PL - GROWTH` — so a company is the part before the `#`, and a fund is the
+ * scheme after it with the fund house's `… MF-` prefix taken off.
+ *
+ * ONLY EVER REMOVES, on `displaySecurity`'s terms: nothing here supplies a word
+ * the statement did not print. An instrument that is NOT the ordinary equity —
+ * a preference share, a warrant — is kept after the company, because it is a
+ * different holding and folding it into the company's name merges two.
+ */
+export function displayDepositoryName(name: string): string {
+  if (!name) return name;
+  const at = name.indexOf("#");
+  const head = (at < 0 ? name : name.slice(0, at)).trim();
+  const tail = at < 0 ? "" : name.slice(at + 1).trim();
+  // Equity furniture, whether after the `#` or glued on with a dash. The dashed
+  // form reaches past what `stripDepositoryTail` cuts: NSDL prints ESDS as
+  // `… LIMITED - EQ NEW FV RS .1/`, and the space inside `RS .1` is outside
+  // that pattern — which stays as it is, because it also takes the KEY.
+  const EQUITY = /^[\s#-]*(NEW\s+)?(EQUITY|EQTY|EQ)\b.*$/i;
+  const stripEquity = (s: string) => s
+    .replace(/[\s-]*(NEW\s+)?(EQUITY|EQTY|EQ)\s+SHARES?\b.*$/i, "")
+    .replace(/\s*-\s*(EQUITY|EQTY|EQ)\b[^#]*$/i, "")
+    .trim();
+  // A fund house (an AMC) or an AIF's own trust or fund — `BUOYANT CAPITAL AIF`,
+  // `INDIA SME INVESTMENTS AIF TRUST II` — whose scheme after the `#` IS the name.
+  const fundHouse = /\b(AMC|AM|ASSET\s+(MGMNT|MANAGEMENT)(\s+CO(MPANY)?)?)\s+(LTD|LIMITED)\.?$|\b(TRUST|FUND|AIF)(\s+[IVX]+)?$/i;
+  let out: string;
+  if (tail && fundHouse.test(head)) {
+    out = tail.replace(/^.*?\b(MF|MOMF|MUTUAL\s+FUND)\s*-\s*/i, "");
+  } else {
+    const company = stripEquity(head);
+    out = tail && !EQUITY.test(tail) ? `${company} · ${tail}` : company;
+  }
+  return displaySecurity(out || name);
 }
 
 /**

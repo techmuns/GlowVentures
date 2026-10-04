@@ -2793,7 +2793,7 @@
    "pages"
   ],
   "status": "partial",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-holdings",
   "label": "Motilal Oswal Financial Services (demat) · 1201090037359311 · holdings",
   "fy": "2026-07-31",
@@ -2853,7 +2853,7 @@
    "pages"
   ],
   "status": "partial",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
   "label": "Motilal Oswal Financial Services (demat) · 1201090012838320 · holdings",
   "fy": "2026-07-31",
@@ -2883,7 +2883,7 @@
    "pages"
   ],
   "status": "partial",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "motilal-oswal-financial-services-demat-1201090037436848-2026-07-31-holdings",
   "label": "Motilal Oswal Financial Services (demat) · 1201090037436848 · holdings",
   "fy": "2026-07-31",
@@ -2943,7 +2943,7 @@
    "pages"
   ],
   "status": "partial",
-  "warnings": 4,
+  "warnings": 3,
   "fileKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
   "label": "Motilal Oswal Financial Services (demat) · 1201090012838316 · holdings",
   "fy": "2026-07-31",
@@ -2973,7 +2973,7 @@
    "pages"
   ],
   "status": "partial",
-  "warnings": 3,
+  "warnings": 2,
   "fileKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
   "label": "Motilal Oswal Financial Services (demat) · 1201090032387399 · holdings",
   "fy": "2026-07-31",
@@ -3033,7 +3033,7 @@
    "pages"
   ],
   "status": "partial",
-  "warnings": 3,
+  "warnings": 2,
   "fileKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
   "label": "Motilal Oswal Financial Services (demat) · 1201090012838335 · holdings",
   "fy": "2026-07-31",
@@ -9040,6 +9040,7 @@
   "sourcePath": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "partial",
@@ -9049,6 +9050,12 @@
   "fy": "2026-08-06",
   "source": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 2,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -9070,6 +9077,7 @@
   "sourcePath": "source/august-2026/Helios - Ajay.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "partial",
@@ -9079,6 +9087,12 @@
   "fy": "2026-08-07",
   "source": "source/august-2026/Helios - Ajay.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 2,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",

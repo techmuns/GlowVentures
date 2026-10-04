@@ -9,15 +9,16 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 
 | Outcome | Files | What it means |
 | --- | ---: | --- |
-| Read | 252 | one or more documents in `public/audit/` |
+| Read | 277 | one or more documents in `public/audit/` |
 | Read via a byte-identical twin | 4 | the pipeline reads each md5 once; the data IS in the archive |
+| Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
 | Held out by decision | 2 | read perfectly and deliberately not a source |
 | Not a document | 58 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
 | **Unread** | **0** | **must be zero** |
-| **Total leaf files** | **318** | |
+| **Total leaf files** | **361** | |
 
-Those files produce **264 documents** in the archive.
+Those files produce **307 documents** in the archive.
 
 ## Held out by decision
 
@@ -28,7 +29,7 @@ struck it. Both are recorded in the archive with that reason — they are NOT mi
 | File | Where its data goes instead |
 | --- | --- |
 | `source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx` | `npm run reconcile:review` — an independent cross-check of the generated book |
-| `source/august-2026-f/NEW INVESTMENT SHEET.xlsx` | the `/register` page (`npm run build-register`) and `npm run reconcile:register` |
+| `source/august-2026-f/NEW INVESTMENT SHEET.xlsx` | `npm run reconcile:register` — an independent cross-check of the generated book |
 
 ## Excluded by policy
 
@@ -49,9 +50,38 @@ twice. `extract.mjs` reads each md5 once, so these carry no data the archive lac
 | `_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf` | `_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (1).pdf` |
 | `_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioAppraisal675OT (6).pdf` | `_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioAppraisal675OT (5).pdf` |
 
+## Read as a witness of its PDF
+
+A spreadsheet export written beside a PDF of the same name. The PDF is the document; the
+export is archived with its rows, carries no facts, and every significant figure in it is
+checked against the figures the PDF prints (see each document's `witness-of` warning).
+
+| File | Witness of |
+| --- | --- |
+| `_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_CapitalGain90CT.csv` | `marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-capital-gain` (ok) |
+| `_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_DividendStatement_India177CT.csv` | `marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-dividend-statement` (ok) |
+| `_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_IncomeExpenseCSV1538CT.csv` | `marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-income-expense` (ok) |
+| `_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_TransactionStatement_India94CT.csv` | `marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-transaction-statement` (ok) |
+| `_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_CapitalGain90CT.csv` | `marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-capital-gain` (ok) |
+| `_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_DividendStatement_India177CT.csv` | `marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-dividend-statement` (ok) |
+| `_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_IncomeExpenseCSV1538CT.csv` | `marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-income-expense` (ok) |
+| `_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_TransactionStatement_India94CT.csv` | `marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-transaction-statement` (ok) |
+| `september-2026/askimpms_10032723_BankBook178CT.xlsx` | `ask-investment-managers-limited-10032723-2026-09-08-bank-book` (ok) |
+| `september-2026/askimpms_10032723_CapitalGain90CT.xlsx` | `ask-investment-managers-limited-10032723-2026-09-08-capital-gain` (ok) |
+| `september-2026/askimpms_10032723_DividendStatement_India177CT.xlsx` | `ask-investment-managers-limited-10032723-2026-09-08-dividend-statement` (ok) |
+| `september-2026/askimpms_10032723_ProfitLossAccount1213CT.xlsx` | `ask-investment-managers-limited-10032723-2026-09-08-profit-and-loss` (ok) |
+| `september-2026/askimpms_10032723_TransactionStatement_India94CT.xlsx` | `ask-investment-managers-limited-10032723-2026-09-08-transaction-statement` (ok) |
+| `september-2026/askimpms_10034025_BankBook178CT.xlsx` | `ask-investment-managers-limited-10034025-2026-09-08-bank-book` (ok) |
+| `september-2026/askimpms_10034025_CapitalGain90CT.xlsx` | `ask-investment-managers-limited-10034025-2026-09-08-capital-gain` (ok) |
+| `september-2026/askimpms_10034025_DividendStatement_India177CT.xlsx` | `ask-investment-managers-limited-10034025-2026-09-08-dividend-statement` (ok) |
+| `september-2026/askimpms_10034025_ProfitLossAccount1213CT.xlsx` | `ask-investment-managers-limited-10034025-2026-09-08-profit-and-loss` (ok) |
+| `september-2026/askimpms_10034025_TransactionStatement_India94CT.xlsx` | `ask-investment-managers-limited-10034025-2026-09-08-transaction-statement` (ok) |
+
 ## Not a document
 
 58 files under `__MACOSX/`, created by zipping on a Mac. Each is a 212- or
 477-byte AppleDouble stub and **none carries a `%PDF` header** — verified per file rather than
-assumed from the path. There is nothing in them to read.
+assumed from the path. There is nothing in them to read. They are counted from each ZIP's own
+directory, at the path an unzipper would write them to: the pipeline's own unzipper skips them,
+so whether they exist under `source/_extracted/` depends on who expanded it, and this count must not.
 

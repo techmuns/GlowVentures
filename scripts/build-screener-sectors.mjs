@@ -75,7 +75,25 @@ function bookArray(name) {
   return JSON.parse(src.slice(start + 2, end + 2));
 }
 
-/** One entry per COMPANY, deduped exactly as every consolidated figure is. */
+/** The object literal behind `export const NAME = {...}` (`BOOK_SHARE_MOVEMENTS`). */
+function bookObject(name) {
+  const i = src.indexOf(`export const ${name}`);
+  const a = i < 0 ? -1 : src.indexOf("= {", i);
+  const b = a < 0 ? -1 : src.indexOf("\n};", a);
+  return a < 0 || b < 0 ? {} : JSON.parse(src.slice(a + 2, b + 2));
+}
+
+/**
+ * One entry per COMPANY, deduped exactly as every consolidated figure is —
+ * AND EVERY SHARE A STATEMENT RECORDS WITHOUT VALUING IT, which the dashboard
+ * values at the live quote and places in a sector like any other: a holding
+ * statement's lines the book carries as quantities (`BOOK_UNVALUED_HOLDINGS` —
+ * since Stage 10cz every share on the Motilal Oswal CDSL statements, whose
+ * printed rate is a last movement's price and not a valuation) and a
+ * transaction-only account's closing balances (Stage 10cy). They carry no
+ * statement value, so they add nothing to `mv`. Asked off positions alone this
+ * store, which is rewritten whole on every run, would drop their sectors.
+ */
 function companyShares() {
   const positions = bookArray("BOOK_POSITIONS");
   const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
@@ -92,6 +110,20 @@ function companyShares() {
     e.symbol ||= p.symbol ?? symbols[p.securityKey] ?? null;
     if (p.sector && p.sector !== UNCLASSIFIED) e.bookSector ||= p.sector;
     byKey.set(p.securityKey, e);
+  }
+  const txOnly = new Set(bookArray("BOOK_ACCOUNTS").filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
+  const recorded = [
+    ...bookArray("BOOK_UNVALUED_HOLDINGS").filter((u) => u.assetClass === "Equity"
+      && typeof u.quantity === "number" && u.quantity > 0 && !u.sameUnitsReportedBy),
+    ...Object.values(bookObject("BOOK_SHARE_MOVEMENTS")).filter((w) => txOnly.has(w.accountId)
+      && w.reason == null && typeof w.closing === "number" && w.closing > 0
+      && typeof w.isin === "string" && /^INE/i.test(w.isin)),
+  ];
+  for (const u of recorded) {
+    const e = byKey.get(u.securityKey)
+      ?? { key: u.securityKey, name: u.security, bookSector: null, symbol: null, mv: 0 };
+    e.symbol ||= symbols[u.securityKey] ?? null;
+    byKey.set(u.securityKey, e);
   }
   return [...byKey.values()].sort((a, b) => b.mv - a.mv);
 }

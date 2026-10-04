@@ -343,8 +343,18 @@ export function HoldingsBehind() {
    * and read by both the hover and the short line under the headline.
    */
   const depositoryRows = rows.filter((r) => r.depositoryUnits);
+  // A FUND is valued at AMFI's published NAV and a listed SHARE at the live
+  // quote (Stage 10cy) — two sources, and each is named for the rows it prices.
+  const depositoryFunds = depositoryRows.filter((r) => r.navPriced);
+  const depositoryShares = depositoryRows.filter((r) => !r.navPriced);
+  const depositoryHow = [
+    depositoryFunds.length > 0
+      ? `${depositoryShares.length > 0 ? `${fmtNum(depositoryFunds.length)} ` : ""}at AMFI's published NAV (${full(sum(depositoryFunds.map((r) => r.marketValue)))})` : null,
+    depositoryShares.length > 0
+      ? `${depositoryFunds.length > 0 ? `${fmtNum(depositoryShares.length)} ` : ""}at the live quote, only while the quote feed prices ${depositoryShares.length === 1 ? "it" : "them"} (${full(sum(depositoryShares.map((r) => r.marketValue)))})` : null,
+  ].filter(Boolean).join(" and ");
   const depositoryNote = depositoryRows.length === 0 ? null
-    : `${depositoryRows.length === 1 ? "One holding here carries" : `${depositoryRows.length} holdings here carry`} no statement mark at all — ${depositoryRows.length === 1 ? "it is" : "they are"} ${depositoryUnitsGist(depositoryRows)}, valued only at AMFI's published NAV (${full(sum(depositoryRows.map((r) => r.marketValue)))}) — so ${depositoryRows.length === 1 ? "it is" : "they are"} not in that figure.`;
+    : `${depositoryRows.length === 1 ? "One holding here carries" : `${depositoryRows.length} holdings here carry`} no statement mark at all — ${depositoryRows.length === 1 ? "it is" : "they are"} ${depositoryUnitsGist(depositoryRows)}, valued only ${depositoryHow} — so ${depositoryRows.length === 1 ? "it is" : "they are"} not in that figure.`;
   // THE BUCKET CHIP EARNS ITS PLACE ONLY WHERE THE SET SPANS MORE THAN ONE.
   // On a bucket drill-down every row would carry the same chip — a repetition of
   // the heading above them, pushing the name out of its column for no
@@ -728,7 +738,10 @@ export function HoldingsBehind() {
           {!d.absent && depositoryRows.length > 0 && (
             <div className="mt-0.5 text-[10.5px] text-amber-400/80" data-hb-depository={depositoryRows.length}
                  title={depositoryNote ?? undefined}>
-              {depositoryRows.length === 1 ? "1 holding" : `${fmtNum(depositoryRows.length)} holdings`} at AMFI&rsquo;s NAV
+              {[
+                depositoryFunds.length > 0 ? `${depositoryFunds.length === 1 ? "1 holding" : `${fmtNum(depositoryFunds.length)} holdings`} at AMFI’s NAV` : null,
+                depositoryShares.length > 0 ? `${depositoryShares.length === 1 ? "1 share" : `${fmtNum(depositoryShares.length)} shares`} at the live quote` : null,
+              ].filter(Boolean).join(" · ")}
             </div>
           )}
           {/* ── AND THE CAPITAL INVESTED IN IT, BESIDE WHAT IT IS WORTH ────────

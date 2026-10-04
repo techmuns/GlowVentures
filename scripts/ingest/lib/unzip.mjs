@@ -82,6 +82,14 @@ export function readEntry(buf, entry) {
 }
 
 /**
+ * Is this archive entry macOS metadata — a `__MACOSX/` shadow entry or an
+ * AppleDouble `._` stub? `extractZip` skips these, and `source-coverage.mjs`
+ * counts the skipped ones from the archive's own directory, so the rule lives
+ * here once and the two cannot disagree about which entries it covers.
+ */
+export const isMacMetadata = (name) => /(^|\/)__MACOSX\/|(^|\/)\._/.test(name);
+
+/**
  * Reject path traversal ("../", absolute paths, drive letters) before writing.
  * An archive is untrusted input even when it came from a bank.
  */
@@ -110,7 +118,7 @@ export function extractZip(zipPath, destDir) {
   }
   for (const entry of entries) {
     if (entry.name.endsWith("/")) continue;                       // directory marker
-    if (/(^|\/)__MACOSX\/|(^|\/)\._/.test(entry.name)) {          // macOS resource forks
+    if (isMacMetadata(entry.name)) {                               // macOS resource forks
       result.skipped.push({ name: entry.name, reason: "macOS metadata" });
       continue;
     }
