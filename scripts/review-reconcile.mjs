@@ -920,7 +920,12 @@ const hOrdered = [...H_CLOSINGS].sort((a, b) => (b.qty ?? 0) - (a.qty ?? 0));
 for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
   if (hResults.some((r) => r.c === c)) continue;
   const ownerId = H_OWNER.get(c.investor) ?? null;
-  const put = (verdict, statement, rows = []) => hResults.push({ c, verdict, statement, rows: rows.map((r) => ({ account: r.account, key: r.key, units: r.units })) });
+  /**
+   * `later` names each account whose own dated record holds NOTHING on the review's
+   * date — it first holds the product after it — so section C1 can say when a
+   * manager's book figure is a holding the review could not carry (Stage 10de).
+   */
+  const put = (verdict, statement, rows = [], later = []) => hResults.push({ c, verdict, statement, rows: rows.map((r) => ({ account: r.account, key: r.key, units: r.units })), later });
   if (/hope india/i.test(c.investor)) { if (pass === "rest") put("kept out", "HOPE INDIA TRUST is a separate taxpayer this book keeps out by decision; its folio statements are read and named in `docs/BOOK-REPORT.md`"); continue; }
   if (!ownerId) { if (pass === "rest") put("unresolved holder", `"${c.investor}" names no member of this book`); continue; }
   if (!c.qty && !c.value) { if (pass === "rest") put("nil", "the review carries nil — nothing to reconcile"); continue; }
@@ -992,9 +997,10 @@ for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
    * Helios's AMC folio opened on 6 August is not the review's 30 June line.
    */
   const laterOnly = free.filter((r) => { const x = r.date > c.date ? hRolled(r, c.date, keys, isins) : null; return x != null && Math.abs(x.units) < 0.001; });
+  const later = laterOnly.map((r) => ({ account: r.account, key: r.key, first: hRolled(r, c.date, keys, isins).between[0].date }));
   if (laterOnly.length && laterOnly.length === free.length) {
-    const began = laterOnly.map((r) => `${r.how.replace(/, [a-z-]+ of \d{4}-\d{2}-\d{2}$/, "")} first holds it on ${hRolled(r, c.date, keys, isins).between[0].date}, after the review`).join("; ");
-    put("no statement", `no statement of this holder's reports it on ${c.date} — ${began}; ${custodianNote({ advisor: c.advisor, investor: c.investor })}`);
+    const began = laterOnly.map((r, i) => `${r.how.replace(/, [a-z-]+ of \d{4}-\d{2}-\d{2}$/, "")} first holds it on ${later[i].first}, after the review`).join("; ");
+    put("no statement", `no statement of this holder's reports it on ${c.date} — ${began}; ${custodianNote({ advisor: c.advisor, investor: c.investor })}`, [], later);
     continue;
   }
   if (!rows.length && !keys.size && !isins.size) { put("no statement", `no statement of this holder's names this product — ${custodianNote({ advisor: c.advisor, investor: c.investor })}`); continue; }
@@ -1007,12 +1013,12 @@ for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
   if (!free.length) { put("no statement", `no statement of this holder's reports it — ${custodianNote({ advisor: c.advisor, investor: c.investor })}`); continue; }
   const held = free.filter((r) => !laterOnly.includes(r));
   const total = held.reduce((s, r) => s + r.units, 0);
-  if (held.length > 1 && hSame(total, c.qty, c.qtyDp)) { held.forEach(claim); put("ties (across accounts)", `${hUnits(total)} units over ${held.length} accounts`, held); continue; }
+  if (held.length > 1 && hSame(total, c.qty, c.qtyDp)) { held.forEach(claim); put("ties (across accounts)", `${hUnits(total)} units over ${held.length} accounts`, held, later); continue; }
   const when = held.every((r) => r.date === c.date) ? "same date" : held.every((r) => r.date > c.date) ? "later statement" : "earlier statement";
   put(`differs (${when})`, held.map((r) => {
     const x = hRolled(r, c.date, keys, isins);
     return `${hUnits(r.units)} units ${at(r)}` + (x ? `; carried to ${c.date} over ${hMovesText(x)}: ${hUnits(x.units)} units` : "");
-  }).join("; "), held);
+  }).join("; "), held, later);
 }
 hResults.sort((a, b) => a.c.row - b.c.row);
 
@@ -1090,6 +1096,7 @@ say("| Review line | Review MV | Book (same manager) | Difference | Book account
 say("| --- | ---: | ---: | ---: | ---: |");
 let c1rev = 0, c1book = 0;
 const zeroedManagers = [];
+const c1Later = [];
 for (const [prov, e] of [...matchedProviders].sort((a, b) => b[1].review - a[1].review)) {
   const b = bookByProvider(prov);
   c1rev += e.review; c1book += b.mv / CR;
@@ -1098,10 +1105,38 @@ for (const [prov, e] of [...matchedProviders].sort((a, b) => b[1].review - a[1].
   if (e.review > 0 && b.mv === 0) {
     zeroedManagers.push({ product: e.lines.map((l) => l.product).join(", "), prov, reviewMV: e.review });
   }
-  say(`| ${e.lines.map((l) => l.product).join("<br>")} <br><sub>-> ${prov}</sub> | ₹${cr(e.review)} Cr | ₹${cr(b.mv / CR)} Cr | ${(d >= 0 ? "+" : "") + cr(d)} Cr | ${b.accounts} |`);
+  /**
+   * A BOOK HOLDING THE REVIEW COULD NOT CARRY (Stage 10de). The book's figure for
+   * this manager is set against the review's line, and that is only a comparison
+   * where both describe one holding. Section H reads each account's own dated
+   * record: where it holds nothing on the review's date, the book's figure is
+   * money that arrived after the review — Helios's AMC folio, first held on
+   * 6 August against a 30 June line — and the difference beside it is not drift.
+   */
+  const hs = e.lines.flatMap(hOf);
+  const provIds = new Set(ACCOUNTS.filter((a) => a.provider === prov).map((a) => a.accountId));
+  const laterHere = new Map();
+  for (const r of hs) for (const x of r.later ?? []) if (provIds.has(x.account)) laterHere.set(`${x.account}|${x.key}`, { ...x, date: r.c.date });
+  const laterPs = CONSOLIDATED.filter((p) => laterHere.has(`${p.accountId}|${p.securityKey}`) && p.marketValue > 0);
+  let sub = "";
+  if (laterPs.length) {
+    const laterMv = laterPs.reduce((s, p) => s + p.marketValue, 0);
+    c1Later.push({ prov, mv: laterMv, ps: laterPs.map((p) => ({ p, ...laterHere.get(`${p.accountId}|${p.securityKey}`) })) });
+    const named = laterPs.map((p) => { const x = laterHere.get(`${p.accountId}|${p.securityKey}`); return `${ACC.get(p.accountId)?.accountNo ?? p.accountId}, first held ${x.first}`; }).join("; ");
+    const whole = Math.abs(laterMv - b.mv) < 1;
+    const onStmt = hs.filter((r) => hClass(r.verdict) === "reported").length;
+    sub = `<br><sub>${whole ? "all" : `₹${cr(laterMv / CR)} Cr`} of the book's figure is account ${named} — after the review's ${[...new Set(hs.map((r) => r.c.date))].join(", ")}, so ${whole ? "the difference is not drift" : "that part of the difference is not drift"}; section H finds ${onStmt} of the line's ${hs.length} closings on the holders' own statements</sub>`;
+  }
+  say(`| ${e.lines.map((l) => l.product).join("<br>")} <br><sub>-> ${prov}</sub>${sub} | ₹${cr(e.review)} Cr | ₹${cr(b.mv / CR)} Cr | ${(d >= 0 ? "+" : "") + cr(d)} Cr | ${b.accounts} |`);
 }
 say(`| **Total matched** | **₹${cr(c1rev)} Cr** | **₹${cr(c1book)} Cr** | **${(c1book - c1rev >= 0 ? "+" : "") + cr(c1book - c1rev)} Cr** | |`);
 say();
+const c1LaterMv = c1Later.reduce((s, x) => s + x.mv, 0);
+if (c1LaterMv > 0) {
+  say(`₹${cr(c1LaterMv / CR)} Cr of the book side is a holding first held after the review's date, named on its row:`);
+  say("the review could not carry it, so its difference is new money rather than drift.");
+  say();
+}
 
 // ── C2. direct equity, name by name ────────────────────────────────────────
 say("### C2. Direct equity — name by name, on QUANTITY");
@@ -1680,9 +1715,19 @@ say("  on the client ask list until this ran.");
 say("- **The residual fell from −₹263.10 Cr to what section F now prints.**");
 say();
 
-say("**THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things");
-say("this reconciliation can name but cannot yet quantify line by line, and saying so is the");
-say("honest position — a bridge forced to zero would be a fabricated figure with a badge on it:");
+say("**THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.**");
+if (c1LaterMv > 0) {
+  const names = c1Later.flatMap((x) => x.ps.map(({ p, first }) => `${x.prov} ${ACC.get(p.accountId)?.accountNo ?? p.accountId} (₹${cr(p.marketValue / CR)} Cr, first held ${first})`)).join("; ");
+  const rest = residual - c1LaterMv / CR;
+  say(`**One part of it runs the other way, and is quantified: +₹${cr(c1LaterMv / CR)} Cr** is a holding the book`);
+  say(`carries and the review could not, because its own dated record holds nothing on the review's date —`);
+  say(`${names}. Section C1 names it. Without it the residual would be ${(rest >= 0 ? "+" : "−") + "₹" + cr(Math.abs(rest))} Cr.`);
+  say("That remainder is the sum of three things this reconciliation can name but cannot yet quantify line");
+} else {
+  say("It is the sum of three things this reconciliation can name but cannot yet quantify line");
+}
+say("by line, and saying so is the honest position — a bridge forced to zero would be a fabricated");
+say("figure with a badge on it:");
 say();
 say("1. **Six weeks of market movement.** The review is struck 30 June; most of this book's");
 say("   accounts are dated July or August, and the two ICICI-sourced accounts 31 March. Every");

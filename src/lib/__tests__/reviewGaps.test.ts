@@ -536,5 +536,32 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   }
 }
 
+// ── 8. THE REPORT DOES NOT SET A LATER HOLDING AGAINST THE REVIEW AS DRIFT ──
+//
+// Section H reads each account's own dated record, and where it holds nothing on
+// the review's date it says so — "Helios Mutual Fund 10355977 first holds it on
+// 2026-08-06, after the review". Section C1 sets the same manager's book figure
+// against the review's line, and before Stage 10de it printed that pair as an
+// ordinary difference (+₹3.82 Cr) beside the review's ₹27.17 Cr for five other
+// holdings: two sections of one report contradicting each other, which is the
+// failure Stage 10dd fixed in C2. Read off the report's own text, so the H row
+// and the C1 row must agree whatever the next drop brings.
+{
+  const later = [...REPORT.matchAll(/([A-Z][^|;—]*?) (\S+) first holds it on (\d{4}-\d{2}-\d{2}), after the review/g)]
+    .map((m) => ({ provider: m[1].trim(), accountNo: m[2], first: m[3] }));
+  const c1 = REPORT.slice(REPORT.indexOf("### C1."), REPORT.indexOf("### C2."));
+  const onC1 = later.filter((x) => c1.includes(`-> ${x.provider}</sub>`));
+  if (!onC1.length) {
+    console.log("NOT CHECKED a manager's book figure first held after the review is named on its C1 row — section H names no such account on a C1 manager");
+  }
+  for (const x of onC1) {
+    const row = c1.split("\n").find((l) => l.includes(`-> ${x.provider}</sub>`)) ?? "";
+    ok(`C1 names ${x.provider} ${x.accountNo} as first held ${x.first}, after the review`,
+      row.includes(`account ${x.accountNo}, first held ${x.first}`) && /not drift/.test(row));
+    ok(`…and the residual counts it as a holding the review could not carry`,
+      new RegExp(`${x.accountNo} \\(₹[\\d,.]+ Cr, first held ${x.first}\\)`).test(REPORT) && /runs the other way/.test(REPORT));
+  }
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall review-gap checks passed");
 process.exit(fails ? 1 : 0);

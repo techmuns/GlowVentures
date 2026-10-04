@@ -110,7 +110,7 @@ IS the deliverable, because it names exactly which statements are still missing.
 | 3P India Equity Fund 1 <br><sub>-> 3P Investment Managers</sub> | ₹52.12 Cr | ₹0.00 Cr | -52.12 Cr | 1 |
 | Carnelian Bespoke Portfolio <br><sub>-> Carnelian Asset Management and Advisors Pvt Ltd</sub> | ₹40.05 Cr | ₹39.53 Cr | -0.51 Cr | 1 |
 | Motilal Oswal Founders Fund II <br><sub>-> Motilal Oswal Founders Fund</sub> | ₹32.71 Cr | ₹32.82 Cr | +0.11 Cr | 2 |
-| Helios Flexi Cap Fund Direct (G) <br><sub>-> Helios Mutual Fund</sub> | ₹27.17 Cr | ₹31.00 Cr | +3.82 Cr | 1 |
+| Helios Flexi Cap Fund Direct (G) <br><sub>-> Helios Mutual Fund</sub><br><sub>all of the book's figure is account 10355977, first held 2026-08-06 — after the review's 2026-06-30, so the difference is not drift; section H finds 2 of the line's 5 closings on the holders' own statements</sub> | ₹27.17 Cr | ₹31.00 Cr | +3.82 Cr | 1 |
 | Svan Investment <br><sub>-> SVAN Investment Managers LLP</sub> | ₹26.38 Cr | ₹27.16 Cr | +0.77 Cr | 2 |
 | Aristos Equity Potrfolio - SB <br><sub>-> Goldstandard Wealth Private Limited</sub> | ₹25.92 Cr | ₹26.82 Cr | +0.90 Cr | 2 |
 | Green Lantern Growth Strategy <br><sub>-> Green Lantern Capital LLP</sub> | ₹17.62 Cr | ₹17.25 Cr | -0.37 Cr | 2 |
@@ -124,6 +124,9 @@ IS the deliverable, because it names exactly which statements are still missing.
 | Baring PE India Fund 6 <br><sub>-> Baring Private Equity India Fund</sub> | ₹1.88 Cr | ₹1.88 Cr | -0.00 Cr | 1 |
 | Molecule Growth Strategy <br><sub>-> Molecule Ventures LLP</sub> | ₹1.12 Cr | ₹1.16 Cr | +0.03 Cr | 1 |
 | **Total matched** | **₹575.22 Cr** | **₹523.89 Cr** | **-51.32 Cr** | |
+
+₹31.00 Cr of the book side is a holding first held after the review's date, named on its row:
+the review could not carry it, so its difference is new money rather than drift.
 
 ### C2. Direct equity — name by name, on QUANTITY
 
@@ -411,9 +414,13 @@ What reading them corrected — which is the check that this was a real gap and 
   on the client ask list until this ran.
 - **The residual fell from −₹263.10 Cr to what section F now prints.**
 
-**THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.** It is the sum of three things
-this reconciliation can name but cannot yet quantify line by line, and saying so is the
-honest position — a bridge forced to zero would be a fabricated figure with a badge on it:
+**THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.**
+**One part of it runs the other way, and is quantified: +₹31.00 Cr** is a holding the book
+carries and the review could not, because its own dated record holds nothing on the review's date —
+Helios Mutual Fund 10355977 (₹31.00 Cr, first held 2026-08-06). Section C1 names it. Without it the residual would be −₹208.15 Cr.
+That remainder is the sum of three things this reconciliation can name but cannot yet quantify line
+by line, and saying so is the honest position — a bridge forced to zero would be a fabricated
+figure with a badge on it:
 
 1. **Six weeks of market movement.** The review is struck 30 June; most of this book's
    accounts are dated July or August, and the two ICICI-sourced accounts 31 March. Every

@@ -25454,7 +25454,7 @@ line and is still on no statement.
 
 - The full audit the family asked for.
 - ~~The reconciler's older prose sections (C2, D, E).~~ Fixed at Stage 10dd.
-  C1's Helios note is still open.
+  C1's Helios note was fixed at Stage 10de.
 - ~~Main's eleven #104 Morning CIO checks, which fail on main's own build.~~
   Fixed at Stage 10dc.
 
@@ -25583,6 +25583,23 @@ moves; only `scripts/review-reconcile.mjs` and what it writes.
 `build` · `test:family` (0 failed) · `npm run build-book` byte-identical ·
 `reconcile:review -- --check` a no-op · `check:pages` on `monitor-absent-name`,
 `search` and `monitor-picklist`, which render the gap note.
+
+### Stage 10de — THE REVIEW'S HELIOS LINE IS NOT SET AGAINST A LATER HOLDING
+
+Section C1 compared the review's Helios Flexi Cap line (₹27.17 Cr, five holders
+on 30 June) with the book's Helios figure (₹31.00 Cr). The book's figure is
+Ajay's AMC folio 10355977, which section H already showed first holding the fund
+on 6 Aug 2026, after the review. So C1 printed "+₹3.82 Cr" as if it were drift.
+
+- Section H records each account whose dated record holds nothing on the
+  review's date (`later`).
+- C1's row names that account and says the difference is not drift.
+- The residual names it as +₹31.00 Cr, running the other way, and gives the
+  remainder: −₹208.15 Cr.
+- `reviewGaps.test.ts` holds C1 and the residual to section H's own text.
+  Putting the old row back fails both checks.
+
+Nothing in the book moves; `src/data/reviewGaps.ts` is unchanged.
 
 ### Stage 10k — News & Announcements: REMOVED
 
