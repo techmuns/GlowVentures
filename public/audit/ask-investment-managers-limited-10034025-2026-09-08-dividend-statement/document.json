@@ -1606,7 +1606,7 @@
    "ratePerUnit": null,
    "receivable": -5031,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -5031,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1622,7 +1622,7 @@
    "ratePerUnit": 1,
    "receivable": 1646.6,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1646.6,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1638,7 +1638,7 @@
    "ratePerUnit": 1,
    "receivable": 3656,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 3656,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1654,7 +1654,7 @@
    "ratePerUnit": 1,
    "receivable": 9685,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 9685,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1670,7 +1670,7 @@
    "ratePerUnit": 1,
    "receivable": 12512,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 12512,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1686,7 +1686,7 @@
    "ratePerUnit": 1,
    "receivable": 13979.7,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 13979.7,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1702,7 +1702,7 @@
    "ratePerUnit": 1,
    "receivable": 4677.4,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 4677.4,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1718,7 +1718,7 @@
    "ratePerUnit": 1,
    "receivable": 9065,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 9065,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1734,7 +1734,7 @@
    "ratePerUnit": 1,
    "receivable": 12664,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 12664,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1750,7 +1750,7 @@
    "ratePerUnit": null,
    "receivable": 3585,
    "received": 3585,
-   "tds": null,
+   "tds": 0,
    "netAmount": 3585,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1766,7 +1766,7 @@
    "ratePerUnit": null,
    "receivable": -3585,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -3585,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1782,7 +1782,7 @@
    "ratePerUnit": null,
    "receivable": 1010,
    "received": 1010,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1010,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1798,7 +1798,7 @@
    "ratePerUnit": null,
    "receivable": -1010,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -1010,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1814,7 +1814,7 @@
    "ratePerUnit": null,
    "receivable": 9756,
    "received": 9756,
-   "tds": null,
+   "tds": 0,
    "netAmount": 9756,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1830,7 +1830,7 @@
    "ratePerUnit": null,
    "receivable": -9756,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -9756,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1846,7 +1846,7 @@
    "ratePerUnit": null,
    "receivable": 19563.6,
    "received": 19563.6,
-   "tds": null,
+   "tds": 0,
    "netAmount": 19563.6,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1862,7 +1862,7 @@
    "ratePerUnit": null,
    "receivable": -19563.6,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -19563.6,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1878,7 +1878,7 @@
    "ratePerUnit": null,
    "receivable": 21307.1,
    "received": 21307.1,
-   "tds": null,
+   "tds": 0,
    "netAmount": 21307.1,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1894,7 +1894,7 @@
    "ratePerUnit": null,
    "receivable": -21307.1,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -21307.1,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1910,7 +1910,7 @@
    "ratePerUnit": 1,
    "receivable": 32270,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 32270,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1926,7 +1926,7 @@
    "ratePerUnit": 1,
    "receivable": 1578,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1578,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1942,7 +1942,7 @@
    "ratePerUnit": 1,
    "receivable": 6236,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 6236,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1958,7 +1958,7 @@
    "ratePerUnit": 1,
    "receivable": 7448,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 7448,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1974,7 +1974,7 @@
    "ratePerUnit": null,
    "receivable": 32270,
    "received": 32270,
-   "tds": null,
+   "tds": 0,
    "netAmount": 32270,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -1990,7 +1990,7 @@
    "ratePerUnit": null,
    "receivable": -32270,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -32270,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2006,7 +2006,7 @@
    "ratePerUnit": 1,
    "receivable": 46563,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 46563,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2022,7 +2022,7 @@
    "ratePerUnit": null,
    "receivable": 12664,
    "received": 12664,
-   "tds": null,
+   "tds": 0,
    "netAmount": 12664,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2038,7 +2038,7 @@
    "ratePerUnit": null,
    "receivable": -11148,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -11148,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2054,7 +2054,7 @@
    "ratePerUnit": 1,
    "receivable": 1880,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1880,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2070,7 +2070,7 @@
    "ratePerUnit": 1,
    "receivable": 1561,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1561,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2086,7 +2086,7 @@
    "ratePerUnit": 1,
    "receivable": 5052,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 5052,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2102,7 +2102,7 @@
    "ratePerUnit": null,
    "receivable": 6236,
    "received": 6236,
-   "tds": null,
+   "tds": 0,
    "netAmount": 6236,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2118,7 +2118,7 @@
    "ratePerUnit": null,
    "receivable": -6236,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -6236,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2134,7 +2134,7 @@
    "ratePerUnit": null,
    "receivable": 1578,
    "received": 1578,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1578,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2150,7 +2150,7 @@
    "ratePerUnit": null,
    "receivable": -1578,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -1578,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2166,7 +2166,7 @@
    "ratePerUnit": 1,
    "receivable": 3711.8,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 3711.8,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2182,7 +2182,7 @@
    "ratePerUnit": null,
    "receivable": 46563,
    "received": 46563,
-   "tds": null,
+   "tds": 0,
    "netAmount": 46563,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2198,7 +2198,7 @@
    "ratePerUnit": null,
    "receivable": -46563,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -46563,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2214,7 +2214,7 @@
    "ratePerUnit": null,
    "receivable": 7448,
    "received": 7448,
-   "tds": null,
+   "tds": 0,
    "netAmount": 7448,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2230,7 +2230,7 @@
    "ratePerUnit": null,
    "receivable": -7448,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -7448,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2246,7 +2246,7 @@
    "ratePerUnit": 1,
    "receivable": 7939.75,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 7939.75,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2262,7 +2262,7 @@
    "ratePerUnit": null,
    "receivable": 1516,
    "received": 1516,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1516,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2278,7 +2278,7 @@
    "ratePerUnit": 1,
    "receivable": 401,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 401,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2294,7 +2294,7 @@
    "ratePerUnit": null,
    "receivable": 1561,
    "received": 1561,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1561,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2310,7 +2310,7 @@
    "ratePerUnit": 1,
    "receivable": 9413,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 9413,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2326,7 +2326,7 @@
    "ratePerUnit": null,
    "receivable": 5052,
    "received": 5052,
-   "tds": null,
+   "tds": 0,
    "netAmount": 5052,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2342,7 +2342,7 @@
    "ratePerUnit": null,
    "receivable": -5052,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -5052,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2358,7 +2358,7 @@
    "ratePerUnit": null,
    "receivable": 1880,
    "received": 1880,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1880,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2374,7 +2374,7 @@
    "ratePerUnit": null,
    "receivable": -1880,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -1880,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2390,7 +2390,7 @@
    "ratePerUnit": 1,
    "receivable": 4830,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": 4830,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2406,7 +2406,7 @@
    "ratePerUnit": null,
    "receivable": 3711.8,
    "received": 3711.8,
-   "tds": null,
+   "tds": 0,
    "netAmount": 3711.8,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2422,7 +2422,7 @@
    "ratePerUnit": null,
    "receivable": -3711.8,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -3711.8,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2438,7 +2438,7 @@
    "ratePerUnit": null,
    "receivable": 7939.75,
    "received": 7939.75,
-   "tds": null,
+   "tds": 0,
    "netAmount": 7939.75,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2454,7 +2454,7 @@
    "ratePerUnit": null,
    "receivable": -7939.75,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -7939.75,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2470,7 +2470,7 @@
    "ratePerUnit": null,
    "receivable": 8700,
    "received": 8700,
-   "tds": null,
+   "tds": 0,
    "netAmount": 8700,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2486,7 +2486,7 @@
    "ratePerUnit": null,
    "receivable": -8700,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -8700,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2502,7 +2502,7 @@
    "ratePerUnit": null,
    "receivable": 2274,
    "received": 2274,
-   "tds": null,
+   "tds": 0,
    "netAmount": 2274,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2518,7 +2518,7 @@
    "ratePerUnit": null,
    "receivable": -2274,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -2274,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2534,7 +2534,7 @@
    "ratePerUnit": null,
    "receivable": 1917,
    "received": 1917,
-   "tds": null,
+   "tds": 0,
    "netAmount": 1917,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2550,7 +2550,7 @@
    "ratePerUnit": null,
    "receivable": -1917,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -1917,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2566,7 +2566,7 @@
    "ratePerUnit": null,
    "receivable": 4830,
    "received": 4830,
-   "tds": null,
+   "tds": 0,
    "netAmount": 4830,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
@@ -2582,7 +2582,7 @@
    "ratePerUnit": null,
    "receivable": -4830,
    "received": 0,
-   "tds": null,
+   "tds": 0,
    "netAmount": -4830,
    "entitlement": null,
    "source": "ask-investment-managers-limited-10034025-2026-09-08-dividend-statement"
