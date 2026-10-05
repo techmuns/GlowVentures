@@ -1110,7 +1110,12 @@ function readCapitalGains(pages, source, warnings) {
  * cancel when summed, which is the point.
  */
 function readDividends(pages, source, warnings) {
-  const t = readAcrossPages(pages, DIVIDEND_COLUMNS, { minFields: 5, require: ["security", "exDate"] });
+  // A page can leave Balance entirely blank, including its subtotals. Its
+  // header must not fall back to the neighbouring TDS column: that discarded
+  // 124 explicitly printed zero-TDS values in the September ASK statements.
+  const t = readAcrossPages(pages, DIVIDEND_COLUMNS, {
+    minFields: 5, require: ["security", "exDate"], overlapOnly: ["balance"],
+  });
   if (!t) return null;
   if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
 
