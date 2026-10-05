@@ -1299,7 +1299,7 @@ if (alreadyHeld.length) {
  *
  * The Equity tab names a custodian per line, which is what makes that half of
  * this joinable at all. The three asset tabs name none, so their lines are
- * routed on WHAT THE LINE IS instead: an AGGREGATE heading nothing itemises is
+ * routed on WHAT THE LINE IS instead: an AGGREGATE heading nothing on its own tab itemises is
  * not a missing statement and must not be asked for as one — `Private Equity
  * ₹136.16 Cr` is a block whose constituents sit on the review's own
  * `Private Investments` tab, and asking a custodian for it would be asking for
@@ -1311,9 +1311,9 @@ function custodianNote(l) {
   const adv = l.advisor ?? "";
   if (l.aggregate) {
     return "**an AGGREGATE line, not a holding** — the review reports this block only as a total on the "
-      + "`" + l.tab + "` tab and itemises it nowhere. Its constituents are on the review's own "
-      + "`Private Investments` tab and in the family's investment register (`docs/REGISTER-RECONCILIATION.md`); no custodian issues "
-      + "a statement for it, so this is not a document to ask for";
+      + "`" + l.tab + "` tab and itemises it on its own `Private Investments` tab, every line of which the Private "
+      + "Market page's MOPWM review tab draws (Stage 10dg); the family's investment register carries it too "
+      + "(`docs/REGISTER-RECONCILIATION.md`). No custodian issues a statement for a block, so this is not a document to ask for";
   }
   if (l.tab) {
     return `a fund line on the **${l.tab}** tab. What carries it is the AMC's own folio statement or a `
@@ -1595,7 +1595,7 @@ say("| --- | :---: | :---: | ---: |");
 say(`| **A. Held, valued, and no cost reported** — ${costless.length} of ${CONSOLIDATED.length} positions | understated | **not affected** | ₹${cr(costlessMV)} Cr of market value already in NAV |`);
 say(`| **B. On no statement in \`source/\`** — section D | understated | understated | ₹${cr(absentValue)} Cr at the review's marks |`);
 say(`| **B2. On a statement as a quantity this book does not value** — section D | understated | understated | ₹${cr(gapReportedUnvalued)} Cr at the review's marks |`);
-say(`| **C. An aggregate block the review itemises nowhere** | understated | understated | ₹${cr(aggregateTotal)} Cr at the review's marks |`);
+say(`| **C. An aggregate block, itemised only on the review's own \`Private Investments\` tab** | understated | understated | ₹${cr(aggregateTotal)} Cr at the review's marks |`);
 say();
 say("**CAUSE A IS THE WHOLE OF WHY INVESTED CAPITAL LOOKS WRONG WITHOUT NAV LOOKING WRONG.**");
 say(`${costless.filter((p) => (p.marketValue ?? 0) > 0).length} of those ${costless.length} positions carry a value; by account:`);
@@ -1645,8 +1645,8 @@ const steps = [
   ["Review portfolio total, 30 June 2026", reviewTotal, null],
   ["less: holders with no account in this book", -absentHolders,
     `the review's holders the account registry has no account for, section B — ${noAccountHolders.map((h) => (/hope india/i.test(h) ? `the ${h}, a separate taxpayer kept out by decision` : h)).join("; ") || "none"}. A holder with an account and no valued position is not one: its lines are in the steps below, once`],
-  ["less: aggregate blocks the review itemises nowhere", -aggregateTotal,
-    `${aggregateLines.map((l) => "`" + l.product + "`").join(", ") || "—"} — reported on the \`Alternate\` tab as a total only. Not a missing statement: see \`docs/REGISTER-RECONCILIATION.md\`, which measures the family's own record of this money`],
+  ["less: aggregate blocks itemised only on another tab", -aggregateTotal,
+    `${aggregateLines.map((l) => "`" + l.product + "`").join(", ") || "—"} — reported on the \`Alternate\` tab as a total and itemised on the review's own \`Private Investments\` tab, which the Private Market page's MOPWM review tab draws line by line. Not a missing statement: see \`docs/REGISTER-RECONCILIATION.md\`, which measures the family's own record of this money`],
   ["less: lines no statement in `source/` reports", -(gapNoStatement - aggregateTotal),
     "section D, read on the holders' own statements — the HDFC Bank, Motilal Oswal and AMC statements that have not been supplied"],
   ["less: lines a statement reports as a quantity this book does not value", -gapReportedUnvalued,
@@ -1741,7 +1741,7 @@ say();
 say("**A heading is told from a holding by `Investment Date Range`.** A holding was bought over a");
 say("window (`Jul-25 - Jul-25`); a heading is not a purchase, so the cell is blank or carries a");
 say("stray Excel serial. A heading whose children sum to it is a SUBTOTAL and is skipped in favour");
-say("of them; a heading nothing itemises is an AGGREGATE line and is carried, marked as one.");
+say("of them; a heading nothing on its own tab itemises is an AGGREGATE line and is carried, marked as one.");
 say();
 say("| Review tab | Lines read | They sum to | Its own printed total | |");
 say("| --- | ---: | ---: | ---: | --- |");

@@ -203,7 +203,7 @@ reported rather than requested.
 
 | Review line | Custodian / advisor | Review MV | On the holders' own statements (section H) | Where no statement reports it |
 | --- | --- | ---: | --- | --- |
-| Private Equity | Alternate tab | ₹136.16 Cr | — | **an AGGREGATE line, not a holding** — the review reports this block only as a total on the `Alternate` tab and itemises it nowhere. Its constituents are on the review's own `Private Investments` tab and in the family's investment register (`docs/REGISTER-RECONCILIATION.md`); no custodian issues a statement for it, so this is not a document to ask for |
+| Private Equity | Alternate tab | ₹136.16 Cr | — | **an AGGREGATE line, not a holding** — the review reports this block only as a total on the `Alternate` tab and itemises it on its own `Private Investments` tab, every line of which the Private Market page's MOPWM review tab draws (Stage 10dg); the family's investment register carries it too (`docs/REGISTER-RECONCILIATION.md`). No custodian issues a statement for a block, so this is not a document to ask for |
 | Man Industries | HDFC Bank / MOPWM | ₹33.90 Cr | Ajay Jaisinghani: no statement<br>Ajay Jaisinghani: no statement | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 | Motilal Oswal Arbitrage Fund Direct (G) | Debt tab | ₹31.80 Cr | Ajay Jaisinghani: differs (later statement)<br>Ajay Jaisinghani: differs (same date) | — |
 | Aditya Birla SL Balanced Advantage Fund(G) | MOPWM / MOPWM Dir | ₹29.58 Cr | Aarti Ajay Jaisinghani: ties (other date)<br>Ankita Jaisinghani: ties (other date)<br>Bharat Jaisinghani: ties (other date)<br>Ajay Jaisinghani: no statement | held at **Motilal Oswal**; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat |
@@ -324,7 +324,7 @@ does not hold in general. Split on exactly that line:
 | **A. Held, valued, and no cost reported** — 16 of 330 positions | understated | **not affected** | ₹63.78 Cr of market value already in NAV |
 | **B. On no statement in `source/`** — section D | understated | understated | ₹169.89 Cr at the review's marks |
 | **B2. On a statement as a quantity this book does not value** — section D | understated | understated | ₹197.50 Cr at the review's marks |
-| **C. An aggregate block the review itemises nowhere** | understated | understated | ₹136.16 Cr at the review's marks |
+| **C. An aggregate block, itemised only on the review's own `Private Investments` tab** | understated | understated | ₹136.16 Cr at the review's marks |
 
 **CAUSE A IS THE WHOLE OF WHY INVESTED CAPITAL LOOKS WRONG WITHOUT NAV LOOKING WRONG.**
 12 of those 16 positions carry a value; by account:
@@ -360,7 +360,7 @@ is NAMED rather than plugged: no step below is fitted to make the arithmetic wor
 | --- | ---: | ---: | --- |
 | Review portfolio total, 30 June 2026 | ₹1,300.05 Cr | ₹1,300.05 Cr |  |
 | less: holders with no account in this book | −₹0.39 Cr | ₹1,299.66 Cr | the review's holders the account registry has no account for, section B — the Hope India Trust, a separate taxpayer kept out by decision. A holder with an account and no valued position is not one: its lines are in the steps below, once |
-| less: aggregate blocks the review itemises nowhere | −₹136.16 Cr | ₹1,163.50 Cr | `Private Equity` — reported on the `Alternate` tab as a total only. Not a missing statement: see `docs/REGISTER-RECONCILIATION.md`, which measures the family's own record of this money |
+| less: aggregate blocks itemised only on another tab | −₹136.16 Cr | ₹1,163.50 Cr | `Private Equity` — reported on the `Alternate` tab as a total and itemised on the review's own `Private Investments` tab, which the Private Market page's MOPWM review tab draws line by line. Not a missing statement: see `docs/REGISTER-RECONCILIATION.md`, which measures the family's own record of this money |
 | less: lines no statement in `source/` reports | −₹169.89 Cr | ₹993.61 Cr | section D, read on the holders' own statements — the HDFC Bank, Motilal Oswal and AMC statements that have not been supplied |
 | less: lines a statement reports as a quantity this book does not value | −₹197.50 Cr | ₹796.11 Cr | section D — on a statement, but as a quantity with no value: a depository's last-movement rate, a face value, a transaction tape with no holding statement |
 | **What the book would carry on those four adjustments alone** | | **₹796.11 Cr** | |
@@ -395,7 +395,7 @@ Equity tab — a fund is a fund whichever tab the adviser filed it under.
 **A heading is told from a holding by `Investment Date Range`.** A holding was bought over a
 window (`Jul-25 - Jul-25`); a heading is not a purchase, so the cell is blank or carries a
 stray Excel serial. A heading whose children sum to it is a SUBTOTAL and is skipped in favour
-of them; a heading nothing itemises is an AGGREGATE line and is carried, marked as one.
+of them; a heading nothing on its own tab itemises is an AGGREGATE line and is carried, marked as one.
 
 | Review tab | Lines read | They sum to | Its own printed total | |
 | --- | ---: | ---: | ---: | --- |
