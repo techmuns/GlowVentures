@@ -256,6 +256,22 @@ export async function onRequest(context) {
     });
   }
 
+  const existing = bundle[ticker];
+  if (existing?.v && ageS(bundle, ticker, now) < CACHE_TTL_S) {
+    context.waitUntil((async () => {
+      const { value } = await fetchOne(kind, ticker, token);
+      if (value) {
+        // Re-read before merging to avoid overwriting another company's refresh.
+        const current = await cache.read();
+        current[ticker] = { v: value, at: Date.now() };
+        await cache.write(current);
+      }
+    })().catch(() => {}));
+    return json({ ok: true, kind, ticker, label: KINDS[kind].label, ...existing.v,
+      cached: true, stale: true, refreshing: true, ageS: Math.round(ageS(bundle, ticker, now)),
+      servedAt: new Date(existing.at).toISOString(), totalDurationMs: Date.now() - started, ...meta });
+  }
+
   const { diag, value } = await fetchOne(kind, ticker, token);
   if (value) {
     bundle[ticker] = { v: value, at: now };

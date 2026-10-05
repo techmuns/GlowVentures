@@ -238,6 +238,19 @@ export async function onRequest(context) {
     if (ageS(bundle, ticker, now) < FRESH_S && bundle[ticker] && bundle[ticker].v) {
       return json({ ok: true, cached: true, ticker, ...bundle[ticker].v, totalDurationMs: Date.now() - started, ...meta });
     }
+    const existing = bundle[ticker];
+    if (existing?.v && ageS(bundle, ticker, now) < CACHE_TTL_S) {
+      context.waitUntil((async () => {
+        const { value } = await fetchRatioTable(ticker, token, []);
+        if (value) {
+          const current = await cache.read();
+          current[ticker] = { v: value, at: Date.now() };
+          await cache.write(current);
+        }
+      })().catch(() => {}));
+      return json({ ok: true, cached: true, stale: true, refreshing: true, ticker, ...existing.v,
+        ageS: Math.round(ageS(bundle, ticker, now)), servedAt: new Date(existing.at).toISOString(), ...meta });
+    }
     const diagnostics = [];
     const { value, failure, pointer, upstreamStatus } = await fetchRatioTable(ticker, token, diagnostics);
     if (value) {

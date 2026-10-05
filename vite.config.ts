@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
+import { readModelApi } from "./scripts/dev/read-model-api.mjs";
 
 // The Data Audit archive lives in public/audit/ so Vite serves it at /audit/*
 // in dev, preview and the production build alike. On the hosted site every
@@ -8,7 +9,7 @@ import path from "node:path";
 // functions/_middleware.js, so the archive is only reachable after sign-in.
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), readModelApi()],
   resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
   server: { port: 5173, host: true },
   build: {

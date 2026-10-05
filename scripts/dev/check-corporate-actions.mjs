@@ -29,6 +29,7 @@ const base = process.env.BASE || "http://127.0.0.1:4173";
 try {
   for (const theme of ["dark", "light"]) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    await page.clock.install({ time: new Date(now) });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.addInitScript((theme) => { localStorage.setItem("glow:theme", theme); }, theme);
@@ -43,6 +44,7 @@ try {
     await page.route("**/data/corporate-actions.json", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(feed) }));
     await page.goto(`${base}/corporate-actions`);
     const selector = `[data-corporate-return-row="${target.accountId}|${target.securityKey}"]`;
+    await page.getByRole("textbox", { name: "Search corporate action holdings" }).fill(target.security);
     await page.locator(selector).waitFor();
     await page.waitForFunction((selector) => document.querySelector(selector)?.textContent?.includes("×2.0000"), selector);
     const expected = 2 / target.currentPrice * 100;
@@ -59,6 +61,7 @@ try {
     assert.ok(await page.locator('th[data-col="total"]').getAttribute("aria-sort") !== "none");
     // Reload proves neither saved state nor a second refresh doubles the ratio.
     await page.reload();
+    await page.getByRole("textbox", { name: "Search corporate action holdings" }).fill(target.security);
     await page.waitForFunction((selector) => document.querySelector(selector)?.textContent?.includes("×2.0000"), selector);
     assert.match(await page.locator(selector).innerText(), new RegExp(expected.toFixed(2).replace(".", "\\.") + "%"));
     // The card sits on the position page's Price & returns tab, under the
@@ -71,6 +74,7 @@ try {
     assert.doesNotMatch(await page.locator("main").innerText(), /Since each statement date, not since purchase/);
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto(`${base}/corporate-actions`);
+    await page.getByRole("textbox", { name: "Search corporate action holdings" }).fill(target.security);
     await page.locator(selector).waitFor();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), "No page-wide overflow at the supported narrow dashboard width");
     assert.deepEqual(errors, [], "No React/runtime errors");

@@ -42,7 +42,7 @@ const PUB = path.join(ROOT, "public");
 // `import.meta.env` is Vite's, and this runs in node.
 (import.meta as { env?: Record<string, string> }).env ??= { BASE_URL: "/" };
 
-const L = await import("@/lib/ledger");
+const L = await import("./archiveLedger");
 const txn = await L.loadTransactions();
 const sales = await L.loadSales();
 const lotsData = await L.loadRealisedLots();

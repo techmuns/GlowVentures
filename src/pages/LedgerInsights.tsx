@@ -1,3 +1,4 @@
+import { PagedTableBody } from "@/components/PagedTableBody";
 import { useEffect, useState } from "react";
 import { TrendingUp, Coins, ShieldAlert, ArrowLeftRight, Scissors, LogOut, Receipt, Gift } from "lucide-react";
 import { BasisPill } from "@/components/BasisPill";
@@ -66,12 +67,17 @@ export function LedgerInsights() {
       if (!alive) return;
       if (!t) { setStatus("unreachable"); return; }
       setTxn(t); setStatus("ready");
-      loadRealisedLots().then((x) => alive && setLots(x));
-      loadIncome().then((x) => alive && setIncome(x));
-      loadSales().then((x) => alive && setSales(x));
     });
+    loadSales().then((x) => alive && setSales(x));
     return () => { alive = false; };
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    if (tab === "gains") loadRealisedLots().then((x) => alive && setLots(x));
+    if (tab === "income") loadIncome().then((x) => alive && setIncome(x));
+    return () => { alive = false; };
+  }, [tab]);
 
   if (status === "unreachable") {
     return (
@@ -274,8 +280,8 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
                 <SortHeader col="realised" view={txnView}>Realised</SortHeader>
               </Tr>
             </thead>
-            <tbody className="divide-y divide-ink-700/70">
-              {txnRows.map((t, i) => (
+            <PagedTableBody rows={txnRows} columns={TXN_COLS.length} resetKey={JSON.stringify(txnView.sort)} className="divide-y divide-ink-700/70">
+              {(t, i) => (
                 <Tr view={txnView} key={`${t.date}-${t.securityKey}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 mono text-slate-400 whitespace-nowrap">{fmtDate(t.date)}</td>
                   <td className="px-4 py-2 text-slate-100"><StockLink securityKey={t.securityKey} name={t.security} /></td>
@@ -290,8 +296,8 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
                       : <span className={changeColor(t.realized)}>{fmtFromBase(t.realized, { compact: true, sign: true })}</span>}
                   </td>
                 </Tr>
-              ))}
-            </tbody>
+              )}
+            </PagedTableBody>
           </table>
         </div>
       </Card>
@@ -311,8 +317,8 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
                   <SortHeader col="status" view={saleView} align="left">Status</SortHeader>
                 </Tr>
               </thead>
-              <tbody className="divide-y divide-ink-700/70">
-                {saleRows.map((r) => (
+              <PagedTableBody rows={saleRows} columns={SALE_COLS.length} resetKey={JSON.stringify(saleView.sort)} className="divide-y divide-ink-700/70">
+                {(r) => (
                   <Tr view={saleView} key={r.securityKey} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
                     <td className="px-4 py-2 text-right mono text-slate-300">{fmtNum(Math.round(r.soldQty))}</td>
@@ -329,8 +335,8 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
                       <Pill tone={r.exited ? "warn" : "info"}>{r.exited ? <><LogOut className="mr-1 inline h-3 w-3" />Exited</> : <><Scissors className="mr-1 inline h-3 w-3" />Trimmed</>}</Pill>
                     </td>
                   </Tr>
-                ))}
-              </tbody>
+                )}
+              </PagedTableBody>
             </table>
           </div>
         </Card>
@@ -583,8 +589,8 @@ function GainsView({ data }: { data: LotData | null }) {
                 <SortHeader col="gain" view={lotView}>Gain</SortHeader>
               </Tr>
             </thead>
-            <tbody className="divide-y divide-ink-700/70">
-              {lotRows.map((l, i) => (
+            <PagedTableBody rows={lotRows} columns={LOT_COLS.length} resetKey={JSON.stringify(lotView.sort)} className="divide-y divide-ink-700/70">
+              {(l, i) => (
                 <Tr view={lotView} key={`${l.securityKey}-${l.saleDate}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 text-slate-100"><StockLink securityKey={l.securityKey} name={l.security} /></td>
                   <td className="px-4 py-2 text-[12px] text-slate-400">{l.account}</td>
@@ -598,8 +604,8 @@ function GainsView({ data }: { data: LotData | null }) {
                     {fmtFromBase(l.gain, { compact: true, sign: true })}
                   </td>
                 </Tr>
-              ))}
-            </tbody>
+              )}
+            </PagedTableBody>
           </table>
         </div>
       </Card>
@@ -677,8 +683,8 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   <SortHeader col="net" view={cashView}>Net</SortHeader>
                 </Tr>
               </thead>
-              <tbody className="divide-y divide-ink-700/70">
-                {cashRows.map((r, i) => (
+              <PagedTableBody rows={cashRows} columns={CASH_COLS.length} resetKey={JSON.stringify(cashView.sort)} className="divide-y divide-ink-700/70">
+                {(r, i) => (
                   <Tr view={cashView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
                     <td className="px-4 py-2 text-[12px] text-slate-400">{r.account}</td>
@@ -692,8 +698,8 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                       )}
                     </td>
                   </Tr>
-                ))}
-              </tbody>
+                )}
+              </PagedTableBody>
             </table>
           </div>
         </Card>
@@ -713,8 +719,8 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   <SortHeader col="entitlement" view={corpView} align="left">Entitlement</SortHeader>
                 </Tr>
               </thead>
-              <tbody className="divide-y divide-ink-700/70">
-                {corpRows.map((r, i) => (
+              <PagedTableBody rows={corpRows} columns={CORP_COLS.length} resetKey={JSON.stringify(corpView.sort)} className="divide-y divide-ink-700/70">
+                {(r, i) => (
                   <Tr view={corpView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
                     <td className="px-4 py-2 text-[12px] text-slate-400">{r.account}</td>
@@ -723,8 +729,8 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                     <td className="px-4 py-2 text-right mono text-slate-400">{r.quantity == null ? <AbsentCell /> : fmtNum(Math.round(r.quantity))}</td>
                     <td className="px-4 py-2 text-[12px] text-slate-300">{r.entitlement ?? <AbsentCell reason="the report prints no ratio for this action" />}</td>
                   </Tr>
-                ))}
-              </tbody>
+                )}
+              </PagedTableBody>
             </table>
           </div>
         </Card>

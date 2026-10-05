@@ -1,3 +1,4 @@
+import { PagedTableBody } from "@/components/PagedTableBody";
 import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useSearchParams } from "react-router-dom";
@@ -3835,7 +3836,7 @@ export function PortfolioMonitor() {
                         </Tr>
                       );
                     })()}
-                    {secOpen && sortRows(grp.rows, holdView.sort, holdAccessors).map((r) => {
+                    {secOpen && <PagedTableBody body={false} rows={sortRows(grp.rows, holdView.sort, holdAccessors)} columns={COL_COUNT} resetKey={JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort])}>{(r) => {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;
                   /**
@@ -4378,7 +4379,7 @@ export function PortfolioMonitor() {
                       {isOpen && renderChildren(r)}
                     </Fragment>
                   );
-                    })}
+                    }}</PagedTableBody>}
                   </Fragment>
                   );
                 })}
