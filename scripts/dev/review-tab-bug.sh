@@ -151,9 +151,12 @@ run_case "the funds table is drawn on the review tab as well" $ROUTES 0 0 \
           <div className="overflow-x-auto">' '        {view !== "transactions" && (
           <div className="overflow-x-auto">'
 
-# ── 12 ── the tab missing from the control
+# ── 12 ── the tab missing from the control. Hidden where the control is drawn
+#          rather than renamed in the catalogue: a renamed key leaves every
+#          `view === "review"` comparison with no overlap, and the tree does not
+#          build — which is not a result.
 run_case "the review tab is not offered" $ALL_PM 0 0 \
-  sub src/pages/PrivateMarket.tsx '    key: "review", label: "MOPWM review",' '    key: "review-off", label: "MOPWM review",'
+  sub src/pages/PrivateMarket.tsx '      {BOOK_VIEWS.map((v) => (' '      {BOOK_VIEWS.filter((v) => v.key !== "review").map((v) => ('
 
 # ── 13 ── the GENERATOR strikes a gain without what was paid back
 run_case "the generator leaves what was paid back out of a gain" $ROUTES 1 1 \
