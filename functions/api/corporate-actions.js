@@ -43,7 +43,9 @@ export async function onRequestGet(context) {
 /** Return local evidence immediately; external feeds refresh only in waitUntil. */
 export async function loadActionCapture(context) {
   const origin = new URL(context.request.url).origin;
-  const key = new Request(`${origin}/__cache/corporate-actions/v2`);
+  // Reuse the existing validated capture on rollout. The payload is unchanged;
+  // older entries merely lack the new refresh metadata and refresh once below.
+  const key = new Request(`${origin}/__cache/corporate-actions/v1`);
   const now = Date.now();
   const today = new Date(now + 19_800_000).toISOString().slice(0, 10);
   const errors = [];
@@ -96,9 +98,14 @@ export async function loadActionCapture(context) {
         return null;
       }
     }));
-    const candidates = responses.filter(Boolean).sort((a, b) => Date.parse(b.capturedAt) - Date.parse(a.capturedAt));
+    const candidates = responses.filter(Boolean).sort((a, b) => Date.parse(a.capturedAt) - Date.parse(b.capturedAt));
     // Choose once, never racing writes from an old deployment and a newer mirror.
-    const next = candidates[0] || feed;
+    let next = feed;
+    for (const candidate of candidates) {
+      if (next && ((next.verifiedThrough && (!candidate.verifiedThrough || candidate.verifiedThrough < next.verifiedThrough))
+        || candidate.rows.length < next.rows.length * 0.75)) continue;
+      next = candidate;
+    }
     if (next) await persist(next, false, !candidates.length);
     return { feed: next, retained: !candidates.length || !next?.verifiedThrough || next.verifiedThrough < today, refreshing: false, errors };
   };

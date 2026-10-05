@@ -98,3 +98,19 @@ await assert.rejects(() => readBoundedJson(new Response('x', { headers: { 'Conte
 await assert.rejects(() => readBoundedJson(new Response(new ReadableStream({ start(c) { c.enqueue(new Uint8Array(17 * 1024 * 1024)); c.close(); } }))), /too large/);
 assert.deepEqual(await readBoundedJson(Response.json({ ok: true })), { ok: true });
 console.log('PASS immediate saved/cold responses, background recovery/backoff, privacy, monotonic evidence, fallback transports and bounded reads');
+
+// A rollout reuses the old cache payload, before the new metadata existed.
+const oldCache = new Map<string, Response>();
+oldCache.set('https://local.test/__cache/corporate-actions/v1', Response.json(normalizeActionFeed(newer), { headers: { 'x-fetched-at': String(now) } }));
+Object.defineProperty(globalThis, 'caches', { configurable: true, value: { default: {
+  match: async (r: Request) => oldCache.get(r.url)?.clone(),
+  put: async (r: Request, v: Response) => { oldCache.set(r.url, v.clone()); },
+} } });
+let continueRefresh!: () => void;
+const waitRefresh = new Promise<void>(resolve => { continueRefresh = resolve; });
+globalThis.fetch = async () => { await waitRefresh; return Response.json(newer); };
+const migrated = await (await onRequestGet(context())).json();
+assert.equal(migrated.feed.capturedAt, newerTime);
+assert.equal(migrated.refreshing, true);
+continueRefresh(); await settle();
+console.log('PASS rollout retains the previously warm evidence cache');
