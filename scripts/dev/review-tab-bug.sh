@@ -175,5 +175,14 @@ run_case "the generator leaves what was paid back out of a gain" $ROUTES 1 1 \
 run_case "the generator takes a line's cost from its market value" $ROUTES 1 1 \
   sub scripts/build-review-private.mjs 'invested: l.cost, paidIn, paidBack, value: l.value' 'invested: l.value, paidIn, paidBack, value: l.value'
 
+# ── 15 ── the GENERATOR writes a single date as the cell holds it: an Excel serial
+run_case "the generator writes a line's date as the Excel serial the cell holds" $ROUTES 1 1 \
+  sub scripts/build-review-private.mjs 'printed: d.text, text: dayText(d.from) }' 'printed: d.text, text: d.text }'
+
+# ── 16 ── the PAGE prints the cell as the workbook carries it, while its handle
+#          still carries the date — a check reading only the handle passes this
+run_case "the line's sub-line prints the raw cell while its handle carries the date" $ROUTES 0 0 \
+  sub $T '[`${r.tab} row ${r.row}`, r.dates?.text]' '[`${r.tab} row ${r.row}`, r.dates?.printed]'
+
 echo ""
 echo "════════ done"
