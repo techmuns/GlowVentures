@@ -374,6 +374,7 @@ type LotSplit = {
   key: string; label: string; heldNote: string | null; unclassified: boolean;
   lots: number; short: number; long: number; total: number;
   securities: string[]; accounts: string[]; unresolved: string[];
+  noClassLots: number; noClassSecurities: string[];
 };
 
 /**
@@ -398,10 +399,17 @@ type LotSplit = {
  * land in the mandate bucket and are netted there. Only the security no report
  * classifies reaches the last line. Describing it as the sweep would put a
  * caption over a figure a fraction of the size of the thing it named.
+ *
+ * A MANDATE'S LOT IS HELD AS A PMS MANDATE WHATEVER ITS CLASS (Stage 10df):
+ * the September delivery's closed ASK and Marathon mandates sold shares no
+ * statement in the drop classifies, every one in a PMS account. How an account
+ * is run is known where the security's class is not, so those lots are counted
+ * on the mandate line and its hover says how many carry no asset class. Only a
+ * lot outside a mandate whose class is unknown keeps a line of its own.
  */
 function splitLotsByBucket(lots: Lot[], accounts: Account[]): LotSplit[] {
-  type Row = Omit<LotSplit, "securities" | "accounts" | "unresolved" | "total">
-    & { securities: Set<string>; accounts: Set<string>; unresolved: Set<string> };
+  type Row = Omit<LotSplit, "securities" | "accounts" | "unresolved" | "total" | "noClassSecurities">
+    & { securities: Set<string>; accounts: Set<string>; unresolved: Set<string>; noClassSecurities: Set<string> };
   const m = new Map<string, Row>();
   for (const l of lots) {
     const acc = accountForLot(accounts, l.source);
@@ -411,16 +419,20 @@ function splitLotsByBucket(lots: Lot[], accounts: Account[]): LotSplit[] {
     const held = acc && isMandateHeld(acc.engagement) ? MANDATE_BUCKET
       : l.assetClass ? holdingBucket({ assetClass: l.assetClass, securityKey: l.securityKey }, acc?.engagement)
       : null;
-    const key = `${held ?? "unbucketed"}::${l.assetClass === null ? "no-class" : "class"}`;
+    const inMandate = held === MANDATE_BUCKET;
+    const unclassified = l.assetClass === null && !inMandate;
+    const key = `${held ?? "unbucketed"}::${unclassified ? "no-class" : "class"}`;
     const e = m.get(key) ?? {
       key,
       label: held ? bucketLabel(held) : "",
       heldNote: held ? bucketLabel(held) : null,
-      unclassified: l.assetClass === null,
+      unclassified,
       lots: 0, short: 0, long: 0,
       securities: new Set<string>(), accounts: new Set<string>(), unresolved: new Set<string>(),
+      noClassLots: 0, noClassSecurities: new Set<string>(),
     };
     e.lots++; e.short += l.shortTerm ?? 0; e.long += l.longTerm ?? 0;
+    if (l.assetClass === null && inMandate) { e.noClassLots++; e.noClassSecurities.add(l.security); }
     e.securities.add(l.security);
     e.accounts.add(l.account);
     if (!acc) e.unresolved.add(l.account);
@@ -432,6 +444,7 @@ function splitLotsByBucket(lots: Lot[], accounts: Account[]): LotSplit[] {
       securities: [...e.securities].sort(),
       accounts: [...e.accounts].sort(),
       unresolved: [...e.unresolved].sort(),
+      noClassSecurities: [...e.noClassSecurities].sort(),
     }))
     // The classified buckets first, biggest book first; an absence last.
     .sort((a, b) => Number(a.unclassified) - Number(b.unclassified) || b.lots - a.lots);
@@ -510,28 +523,18 @@ function GainsView({ data }: { data: LotData | null }) {
                     <td className="px-4 py-2.5">
                       {!c.unclassified ? (
                         <>
-                          <span className="font-medium text-slate-100">{c.label}</span>
+                          <span className="font-medium text-slate-100" data-li-bucket-noclass={c.noClassLots}
+                            title={c.noClassLots > 0
+                              ? `${c.noClassLots} of these ${fmtNum(c.lots)} lots are in ${c.noClassSecurities.length} ${c.noClassSecurities.length === 1 ? "security" : "securities"} no statement in this drop gives an asset class for (${c.noClassSecurities.join(", ")}). The account is a PMS mandate, so its lots are held as one whatever the security was; no asset class is asserted for them.`
+                              : undefined}>{c.label}</span>
                         </>
                       ) : (
                           <>
-                            <span className="text-slate-400">
-                              {DASH} no asset class on any statement
-                              {c.heldNote ? <> · inside {c.heldNote}</> : null}
+                            {/* One line, the explanation in its hover (Stage 10cp). */}
+                            <span className="text-slate-400" data-li-unclassified={c.lots}
+                              title={`${c.securities.join(", ")} — no appraisal, fact sheet or transaction statement in this drop carries an asset class for ${c.securities.length === 1 ? "it" : "them"}, and the account is not a PMS mandate, so neither how it was held nor what it was is known. It keeps its own line rather than being added into another bucket, so the absence is not buried inside a labelled group.`}>
+                              {DASH} no asset class on any statement · {c.securities.length} {c.securities.length === 1 ? "security" : "securities"}
                             </span>
-                            <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
-                              {c.securities.join(", ")} — no appraisal, fact sheet or transaction statement in
-                              this drop carries an asset class for {c.securities.length === 1 ? "it" : "them"},
-                              so none is asserted. "Mutual Fund" in a printed name is not a classification any
-                              statement made. It keeps its own line rather than being added into the bucket
-                              above, so the absence is not buried inside a labelled group.
-                              <br />
-                              <span className="text-slate-400">This line is not the cash sweep.</span>{" "}
-                              A lot's class is joined from the same security's rows elsewhere in the archive, and
-                              the other liquid-fund instruments these mandates sweep into ARE carried on other
-                              reports here — so those lots come back classified and are netted inside the bucket
-                              above. What this line separates is the lots nothing classifies, which is a smaller
-                              set than the sweep and does not measure it.
-                            </div>
                           </>
                         )}
                     </td>

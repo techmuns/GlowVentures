@@ -19033,12 +19033,23 @@ const CG_BOOK = (() => {
     const cg = bookArray(src, "BOOK_CAPITAL_GAINS");
     if (!Array.isArray(cg) || !cg.length) return null;
     const missing = cg.filter((c) => c.absent);
+    // Stage 10df: a realised-by-class row whose class no statement carries is
+    // counted on the PMS mandates line where its ACCOUNT is a mandate (engagement
+    // "PMS", `holdingRoute`'s own rule written again), and keeps a line of its
+    // own only where it is not. Re-expressed here, never imported.
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const engagementOf = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const byClass = bookArray(src, "BOOK_REALISED_BY_CLASS") ?? [];
+    const noClass = byClass.filter((r) => r.assetClass === null);
+    const inMandate = (r) => engagementOf.get(r.accountId) === "PMS";
     return {
       total: cg.length,
       missing: missing.length,
       reported: cg.length - missing.length,
       missingEntities: missing.map((c) => c.entity).sort(),
       reasons: [...new Set(missing.map((c) => c.absent))],
+      mandateNoClassLots: noClass.filter(inMandate).reduce((n, r) => n + r.lots, 0),
+      otherNoClassLots: noClass.filter((r) => !inMandate(r)).reduce((n, r) => n + r.lots, 0),
     };
   } catch { return null; }
 })();
@@ -33160,6 +33171,26 @@ const INVARIANTS = {
       if (/accounts/i.test(d.footLotsText)) return false;
       return !!d.footAccounts && new RegExp(`\\b${d.reported.length} of \\d+ accounts issue a capital gain statement`).test(d.footAccounts);
     }],
+    // A MANDATE'S LOTS THAT NO STATEMENT CLASSIFIES ARE HELD AS PMS MANDATES
+    // (Stage 10df): the "Held as" column is the account's engagement, known where
+    // the security's class is not, so those lots are on the PMS mandates line and
+    // its hover counts them; only a lot outside a mandate keeps its own line.
+    ["a mandate's lots that no statement classifies are counted on the PMS mandates line, and its hover says how many", (t, ctx) => {
+      const d = ctx?.cgMissing;
+      if (!d) return { notChecked: "the probe did not run" };
+      if (!CG_BOOK) return false;
+      if (!d.bucketLines?.length) return false;
+      const want = CG_BOOK.mandateNoClassLots;
+      const pms = d.bucketLines.find((b) => /^PMS mandates::class$/.test(b.key ?? ""));
+      const otherLines = d.bucketLines.filter((b) => b.unclassified !== null);
+      const otherLots = otherLines.reduce((n, b) => n + b.unclassified, 0);
+      if (otherLots !== CG_BOOK.otherNoClassLots) return false;
+      if (want === 0) return { notChecked: "no lot in a mandate account lacks an asset class on this book" };
+      return !!pms && pms.noClass === want
+        && new RegExp(`^${want} of these \\d+ lots are in \\d+ securit(y|ies) no statement in this drop gives an asset class for`).test(pms.hint ?? "")
+        && /The account is a PMS mandate/.test(pms.hint ?? "")
+        && !otherLines.some((b) => /PMS mandates/.test(b.key ?? ""));
+    }],
     ["the accounts with no capital gain statement are one band, marked missing data, closed on arrival", (t, ctx) => {
       const d = ctx?.cgMissing;
       if (!d) return { notChecked: "the probe did not run" };
@@ -38704,6 +38735,13 @@ for (const theme of THEMES) {
           footLots: document.querySelector("main [data-cg-foot-lots]")?.getAttribute("data-cg-foot-lots") ?? null,
           footLotsText: (document.querySelector("main [data-cg-foot-lots]")?.textContent ?? "").trim(),
           bucketLots: (document.querySelector("main [data-cg-bucket-lots]")?.textContent ?? "").trim(),
+          // Stage 10df: which line a mandate's unclassed lots are on, and its hover.
+          bucketLines: [...document.querySelectorAll("main [data-cg-bucket]")].map((el) => ({
+            key: el.getAttribute("data-cg-bucket"),
+            noClass: el.hasAttribute("data-cg-bucket-noclass") ? Number(el.getAttribute("data-cg-bucket-noclass")) : null,
+            unclassified: el.hasAttribute("data-cg-unclassified") ? Number(el.getAttribute("data-cg-unclassified")) : null,
+            hint: el.getAttribute("title"),
+          })),
           footAccounts: document.querySelector("main [data-cg-foot-accounts]")?.getAttribute("title") ?? null,
         };
       });

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // BUG-REINTRODUCTION HARNESS for Stage 10df — the September 2026 delivery's
 // follow-ups: the whole-life reports' printed lines, a closed mandate's return,
-// a mandate with no holding statement, a redeemed holding's return, and the
-// reconciler's holder step.
+// a mandate with no holding statement, a redeemed holding's return, the
+// reconciler's holder step, and a closed mandate's lots on Capital Gains.
 //
 //   node scripts/dev/whole-life-bug.mjs            # the control, then every case
 //   node scripts/dev/whole-life-bug.mjs 3 7        # the control, then those cases (1-based)
@@ -89,6 +89,17 @@ const CASES = [
     edits: [["scripts/review-reconcile.mjs", "if (!hasAccount) { absentHolders += mv ?? 0; noAccountHolders.push(holder); }", "if (b == null) { absentHolders += mv ?? 0; noAccountHolders.push(holder); }"]],
     gen: ["scripts/review-reconcile.mjs"],
     family: [GAPS],
+  },
+  // ── a closed mandate's sold-out lots on Capital Gains ─────────────────
+  {
+    name: "a mandate's lots no statement classifies get a line of their own again",
+    edits: [["src/pages/CapitalGains.tsx", "const unclassified = r.assetClass === null && !inMandate;", "const unclassified = r.assetClass === null;"]],
+    pages: "capital-gains",
+  },
+  {
+    name: "the PMS mandates line's hover stops counting the lots no statement classifies",
+    edits: [["src/pages/CapitalGains.tsx", "`${c.noClassLots} of these ${c.lots} lots are in", "`${c.lots} lots are in"]],
+    pages: "capital-gains",
   },
 ];
 
