@@ -453,6 +453,19 @@ export function makeFlows(input = {}) {
     periodFrom: input.periodFrom ?? null,
     periodTo: input.periodTo ?? null,
     source: input.source ?? null,
+    /**
+     * THE PRINTED LINES BEHIND A FLOW THAT SUMS SEVERAL — `{ label, flow, value }`,
+     * in the report's own order, under the label it printed. Only the two
+     * whole-life reports set it (ASK's profit and loss account, Marathon's
+     * income and expenses), because only they print more lines than these
+     * fields: their `income` is a dividend AND interest, their `expenses` a
+     * custodian fee AND STT. Same rule as the optional flows above: a reader
+     * that does not read lines leaves the key out, so every other document is
+     * byte-identical to what it was.
+     */
+    ...(Array.isArray(input.lines)
+      ? { lines: input.lines.map((l) => ({ label: String(l.label), flow: String(l.flow), value: num(l.value) })) }
+      : {}),
   };
 }
 

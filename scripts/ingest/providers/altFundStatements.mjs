@@ -57,7 +57,7 @@
 // it. An absence declared against a premise nobody rechecked, for the sixth
 // time in this book — see `flowsFrom` below for what it takes to read it.
 import { parseNum } from "../lib/parseNum.mjs";
-import { makeHolding, makeTotals, makeCashFlow } from "../lib/document.mjs";
+import { makeHolding, makeTotals, makeCashFlow, makeReturnSeries } from "../lib/document.mjs";
 import { toIso, trimPersonName } from "../lib/classify.mjs";
 import { panHolderType } from "../../../shared/owners.mjs";
 
@@ -1565,6 +1565,37 @@ function buoyantSnapCheck(text, holdings, warn) {
   }
 }
 
+/**
+ * THE SNAP'S OWN PERFORMANCE ROW, AS A RETURN SERIES (Stage 10df). Page 3 prints
+ * `Portfolio 2.09% 5.87% 11.56% 10.28%` — trailing 1 month, 3 months and 1 year,
+ * and since the date the row names, this account's time-weighted return after
+ * management fees, expenses and tax. It was archived as a section and reached
+ * no return block, so the Performance page carried no figure for either folio.
+ *
+ * Published only where the snap restates its own page 1 (`buoyantSnapFails`),
+ * the gate every other figure on it passes. `siAnnualised` is read off the
+ * dates the row spans — the snap annualises only past a year, as its own
+ * heading says — and is null where the start date does not read. A row that
+ * does not read as four percentages yields no series, never zeros.
+ */
+function buoyantSnapReturns(text, meta = {}) {
+  const p = buoyantSnapParse(text);
+  const held = /CLASS\s+([A-Z]\d?)/i.exec(text)?.[1]?.toUpperCase() ?? null;
+  if (!p.twrr || buoyantSnapFails(p, held).length) return [];
+  const from = /^(\d{2})\/(\d{2})\/(\d{2})$/.exec(p.twrr.sinceFrom ?? "");
+  const fromIso = from ? `20${from[3]}-${from[2]}-${from[1]}` : null;
+  const to = p.asOf3 ?? p.asOf1;
+  const days = fromIso && to ? (Date.parse(to) - Date.parse(fromIso)) / 86400000 : NaN;
+  return [makeReturnSeries({
+    series: "Portfolio",
+    m1: p.twrr.m1, m3: p.twrr.m3, y1: p.twrr.y1, si: p.twrr.since,
+    siAnnualised: Number.isFinite(days) ? days >= 365 : null,
+    // "after management fees, expenses and tax", in the snap's own words.
+    feeBasis: "after",
+    source: meta.docKey ?? null,
+  })];
+}
+
 function buoyantSnapSections(text) {
   const p = buoyantSnapParse(text);
   const held = /CLASS\s+([A-Z]\d?)/i.exec(text)?.[1]?.toUpperCase() ?? null;
@@ -1646,7 +1677,7 @@ const LAYOUTS = [
      * headings) and the same row is read, checked against that page.
      */
     variants: {
-      "portfolio-snap": { verify: buoyantSnapCheck, sectionsFrom: buoyantSnapSections, okWhenClean: true },
+      "portfolio-snap": { verify: buoyantSnapCheck, sectionsFrom: buoyantSnapSections, returnsFrom: buoyantSnapReturns, okWhenClean: true },
     },
   },
   {
@@ -2934,6 +2965,8 @@ export function extract({ grid, meta = {} }) {
     jointHolders: layout.jointHolders?.(text) ?? undefined,
     holdings,
     cashFlows,
+    // A time-weighted return the statement prints, where the layout reads one.
+    ...(variant?.returnsFrom ? { returns: variant.returnsFrom(text, meta) } : {}),
     // BROWSABLE PROVENANCE, so a reader who sees a redemption on the dashboard
     // can open the rows it was read from. A dated table archived only inside
     // `document.json` is provenance the Data Audit page cannot show.

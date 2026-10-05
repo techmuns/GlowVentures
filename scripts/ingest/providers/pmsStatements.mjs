@@ -1771,6 +1771,55 @@ const PL_REQUIRED = [
 ];
 
 /**
+ * WHICH FLOW EACH PRINTED LINE IS ADDED INTO, for the two whole-life reports
+ * that print more lines than `makeFlows` has fields: ASK's profit and loss
+ * account and Marathon's income and expenses.
+ *
+ * `income` is dividend plus other income (or interest), `expenses` is custodian
+ * fees plus STT, `realized` is short- plus long-term. Folded into one figure the
+ * report's own lines stop being visible — a reader looking for the dividend sees
+ * only "income" — so each line is carried as printed beside the flow it is part
+ * of, under the label the statement printed. `printedLines` emits them in the
+ * order this map lists, which is the report's own order of lines.
+ */
+const PL_FLOW = {
+  dividend: "income", otherIncome: "income", realized: "realized",
+  custodian: "expenses", management: "fees", stt: "expenses", otherExpenses: "otherExpenses",
+  unrealizedNet: "unrealized",
+  contribution: "contribution", withdrawals: "withdrawal",
+};
+const IE_FLOW = {
+  st: "realized", lt: "realized", dividend: "income", interest: "income",
+  management: "fees", custodian: "expenses", other: "otherExpenses", stt: "expenses",
+};
+/**
+ * THE BRIDGE LINES THESE TWO REPORTS DO NOT PRINT, STATED AS SUCH. `makeFlows`
+ * reads an absent key as "no reader looked" and a null as "the reader looked and
+ * the report prints none" — and the book words the first as a line "not read
+ * from this report". Both readers here know every line their report prints: the
+ * profit and loss account refuses any line it cannot place, and the income and
+ * expense statement must print exactly its eleven headings. So an accrued
+ * income, a change in accruals or a gain prior to takeover is not a line they
+ * missed; it is a line neither statement has, and saying it was "not read"
+ * would send the family looking for a figure their statement never printed.
+ */
+const NOT_PRINTED_BRIDGE_LINES = { accruedIncome: null, changeInAccruals: null, gainPriorToTakeover: null };
+
+/**
+ * The printed lines behind each flow, as `{ label, flow, value }`. A line whose
+ * label or value was not read is not invented: the label is the statement's own
+ * and the value its own primitive, and a map entry with neither is skipped.
+ */
+function printedLines(flowOf, labels, values) {
+  const out = [];
+  for (const [key, flow] of Object.entries(flowOf)) {
+    if (!(key in values) || !labels[key]) continue;
+    out.push({ label: labels[key], flow, value: values[key] });
+  }
+  return out;
+}
+
+/**
  * ASK's PROFIT AND LOSS ACCOUNT: the P&L since 1 April 2019 on page one, the
  * balance sheet at the as-of date on page two.
  *
@@ -1805,9 +1854,11 @@ function readProfitAndLoss(pages, source, warnings, window) {
   const sheetRows = [];
   let top = null, sub = null;
   let bankLabel = null;
+  const labels = {};
   const put = (key, value, label) => {
     if (key in got) problems.push(`"${label || "(unlabelled)"}" printed twice`);
     got[key] = value;
+    labels[key] = label;
   };
   for (const line of labelledLines(pages)) {
     if (!line.figures.length) {
@@ -1904,8 +1955,10 @@ function readProfitAndLoss(pages, source, warnings, window) {
     // What the account is worth at the as-of: its assets at cost, less what it
     // owes, plus the unrealised gain on what it still holds at cost.
     corpus: round2(g["assets.total"] - g["currentLiabilities.subtotal"] + g.unrealizedEnd),
+    ...NOT_PRINTED_BRIDGE_LINES,
     ...window,
     source,
+    lines: printedLines(PL_FLOW, labels, g),
   });
 
   const nil = (v) => Math.abs(v) < 0.005;
@@ -1991,6 +2044,9 @@ function readIncomeExpense(pages, source, warnings, window, accountNo) {
         return null;
       }
       const v = Object.fromEntries(IE_FIGURES.map((k) => [k, parseNum(row[k])]));
+      // In the order the report prints its columns, under the headings it prints.
+      const printedOrder = Object.fromEntries(keys.filter((k) => IE_FLOW[k]).map((k) => [k, IE_FLOW[k]]));
+      const labelOf = Object.fromEntries(keys.map((k, i) => [k, header[i]]));
       return {
         flows: makeFlows({
           realized: round2(v.st + v.lt),
@@ -1998,8 +2054,10 @@ function readIncomeExpense(pages, source, warnings, window, accountNo) {
           fees: v.management,
           expenses: round2(v.custodian + v.stt),
           otherExpenses: v.other,
+          ...NOT_PRINTED_BRIDGE_LINES,
           ...window,
           source,
+          lines: printedLines(printedOrder, labelOf, v),
         }),
         sheet: toAuditSheet("incomeExpense", header, data.map((cells) => ({ cells }))),
       };

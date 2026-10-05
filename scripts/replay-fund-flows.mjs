@@ -13,7 +13,8 @@
  * and `guardAgainstShrinkingTheArchive` correctly refuses a run without them —
  * so a reader change would otherwise be unlandable on most machines.
  *
- * It lands `buoyantFlows`: Buoyant's account statement prints every Cash
+ * Since Stage 10df it also lands a Portfolio Snap Report's return row (see the
+ * second loop). It lands `buoyantFlows`: Buoyant's account statement prints every Cash
  * Deposit since inception, every allotment and redemption per class, and the
  * Class A1 → A4 switch that restarted the fund's printed cost at the switch-day
  * NAV — and the reader took only the summary row above them. The text it parses
@@ -141,6 +142,48 @@ for (const entry of manifest) {
     entry.sections = entry.sheets.map((s) => s.key);
     manifestChanged = true;
   }
+}
+
+// ── a Portfolio Snap Report's return row (Stage 10df) ─────────────────────
+//
+// The snap prints the account's own time-weighted return, and the reader now
+// carries it as a return series. The same three rules: it only ADDS a series
+// where the archive holds none (an archived one must come back identical); the
+// replayed holdings must reproduce the stored ones; and `--check` writes nothing.
+for (const entry of manifest) {
+  if (!funds.has(entry.provider) || entry.reportType !== "portfolio-snap") continue;
+  const file = path.join(AUDIT, entry.docKey, "document.json");
+  if (!fs.existsSync(file)) continue;
+  const pages = pagesOf(entry.docKey);
+  if (!pages) continue;
+  const doc = JSON.parse(fs.readFileSync(file, "utf8"));
+  let out;
+  try { out = alt.extract({ grid: { pages }, meta: { reportType: entry.reportType, docKey: entry.docKey } }); } catch (e) {
+    console.error(`REFUSED ${entry.docKey}: the reader threw — ${e?.message ?? e}`);
+    refused += 1;
+    continue;
+  }
+  if (!out) continue;
+  checked += 1;
+  const returns = out.returns ?? [];
+  const archived = doc.returns ?? [];
+  if (eq(returns, archived)) continue;
+  const was = doc.holdings ?? [];
+  const same = out.holdings.length === was.length
+    && out.holdings.every((h, i) => eq(identity(h), identity(was[i])));
+  if (!same) {
+    console.error(`REFUSED ${entry.docKey}: the replayed holdings do not reproduce the ${was.length} already on disk`);
+    refused += 1;
+    continue;
+  }
+  if (archived.length) {
+    console.error(`REFUSED ${entry.docKey}: a return series is already archived and the replay would change it`);
+    refused += 1;
+    continue;
+  }
+  changed += 1;
+  console.log(`${CHECK ? "would update" : "updated"} ${entry.docKey.padEnd(52)} return series 0 → ${returns.length}`);
+  if (!CHECK) write(file, { ...doc, returns });
 }
 
 if (manifestChanged && !CHECK) write(manifestFile, manifest);

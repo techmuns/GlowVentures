@@ -292,12 +292,23 @@ export function CapitalGains() {
    * claiming it separates what the sweep realised from what the equity book
    * realised would be a caption narrowing a figure it does not cover, and a
    * reader would take the figure beside it for the sweep's realised total.
+   *
+   * A MANDATE'S LOT IS HELD AS A PMS MANDATE WHATEVER ITS CLASS (Stage 10df).
+   * The September delivery brought two closed mandates, ASK and Marathon, whose
+   * sold-out shares no statement in the drop classifies: 426 lots, every one in
+   * a PMS account. The column is "Held as", and how an account is run is a fact
+   * about the ACCOUNT, known where the security's class is not. So a mandate's
+   * lot is counted on the PMS mandates line, and the line's hover says how many
+   * of its lots carry no asset class; none is asserted for them. Only a lot
+   * whose account is NOT a mandate and whose class is unknown keeps the line of
+   * its own, because there neither fact is known. On this book there is none.
    */
   const byBucket = (() => {
     type Row = {
       key: string; label: string; heldNote: string | null; unclassified: boolean;
       lots: number; st: number; lt: number;
       securities: Set<string>; accounts: Set<string>; unresolved: Set<string>;
+      noClassLots: number; noClassSecurities: Set<string>;
     };
     const m = new Map<string, Row>();
     for (const r of BOOK_REALISED_BY_CLASS) {
@@ -324,18 +335,26 @@ export function CapitalGains() {
       const held = acc && isMandateHeld(acc.engagement) ? MANDATE_BUCKET
         : r.assetClass ? holdingBucket({ assetClass: r.assetClass }, acc?.engagement)
         : null;
-      const key = `${held ?? "unbucketed"}::${r.assetClass === null ? "no-class" : "class"}`;
+      // A mandate's lot is held as a mandate whatever its class (Stage 10df).
+      const inMandate = held === MANDATE_BUCKET;
+      const unclassified = r.assetClass === null && !inMandate;
+      const key = `${held ?? "unbucketed"}::${unclassified ? "no-class" : "class"}`;
       const e = m.get(key) ?? {
         key,
         // Never `assetClassLabel` on a row that has an account: the bucket is
         // what the account supports and the class label is what it does not.
         label: held ? bucketLabel(held) : "",
         heldNote: held ? bucketLabel(held) : null,
-        unclassified: r.assetClass === null,
+        unclassified,
         lots: 0, st: 0, lt: 0,
         securities: new Set<string>(), accounts: new Set<string>(), unresolved: new Set<string>(),
+        noClassLots: 0, noClassSecurities: new Set<string>(),
       };
       e.lots += r.lots; e.st += r.realisedST ?? 0; e.lt += r.realisedLT ?? 0;
+      if (r.assetClass === null && inMandate) {
+        e.noClassLots += r.lots;
+        for (const n of r.securities) e.noClassSecurities.add(n);
+      }
       for (const n of r.securities) e.securities.add(n);
       e.accounts.add(r.entity);
       if (!acc) e.unresolved.add(r.entity);
@@ -347,6 +366,7 @@ export function CapitalGains() {
         securities: [...e.securities].sort(),
         accounts: [...e.accounts].sort(),
         unresolved: [...e.unresolved].sort(),
+        noClassSecurities: [...e.noClassSecurities].sort(),
       }))
       .sort((a, b) => Number(a.unclassified) - Number(b.unclassified) || b.lots - a.lots);
   })();
@@ -507,17 +527,23 @@ export function CapitalGains() {
                       <td className="px-4 py-2.5">
                         {!c.unclassified ? (
                           <>
-                            <span className="font-medium text-slate-100">{c.label}</span>
+                            {/* A mandate's lots whose security no statement
+                                classifies are counted here, held as the account
+                                is run (Stage 10df); the hover says how many. */}
+                            <span className="font-medium text-slate-100" data-cg-bucket={c.key}
+                              data-cg-bucket-noclass={c.noClassLots}
+                              title={c.noClassLots > 0
+                                ? `${c.noClassLots} of these ${c.lots} lots are in ${c.noClassSecurities.length} ${c.noClassSecurities.length === 1 ? "security" : "securities"} no statement in this drop gives an asset class for (${c.noClassSecurities.join(", ")}). The account is a PMS mandate, so its lots are held as one whatever the security was; no asset class is asserted for them.`
+                                : undefined}>{c.label}</span>
                           </>
                         ) : (
                             <>
                               {/* ONE LINE, the explanation in its hover — it was a
                                   paragraph inside this cell, and the family asked
                                   for the notes inside the tables to go. */}
-                              <span className="text-slate-400"
-                                title={`${c.securities.join(", ")} — no appraisal, fact sheet or transaction statement in this drop carries an asset class for ${c.securities.length === 1 ? "it" : "them"}, so none is asserted; "Mutual Fund" in a printed name is not a classification a statement made. It keeps its own line rather than being added into the bucket above, so the absence is not buried inside a labelled group. This line is not the account's cash sweep: a lot's class is joined from the same security's rows elsewhere in this drop, and the other liquid-fund instruments these mandates sweep into are carried on other reports here — so those lots come back classified and are netted inside the bucket above. What this line separates is the lots nothing classifies, which is a smaller set than the sweep and does not measure it.`}>
+                              <span className="text-slate-400" data-cg-bucket={c.key} data-cg-unclassified={c.lots}
+                                title={`${c.securities.join(", ")} — no appraisal, fact sheet or transaction statement in this drop carries an asset class for ${c.securities.length === 1 ? "it" : "them"}, and the account is not a PMS mandate, so neither how it was held nor what it was is known. It keeps its own line rather than being added into another bucket, so the absence is not buried inside a labelled group.`}>
                                 {DASH} no asset class on any statement
-                                {c.heldNote ? <> · inside {c.heldNote}</> : null}
                                 {" "}· {c.securities.length} {c.securities.length === 1 ? "security" : "securities"}
                               </span>
                             </>

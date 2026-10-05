@@ -5905,6 +5905,47 @@ const FIFO_STOCK = (() => {
 })();
 
 /**
+ * A HOLDING REDEEMED TO NIL, WHOSE WHOLE GAIN IS REALISED (Stage 10df) —
+ * derived, never typed.
+ *
+ * Its cost held is ₹0 and every unit's cost is in the cost of units sold, so
+ * FIFO's return is realised ÷ that cost. The page divided only where the cost
+ * HELD was above zero — a guard written before FIFO — so the ASK Absolute
+ * Return Fund (+3.59% on ₹38.8 Cr) and 3P Class B3 (+8.98% on ₹28.5 Cr) read
+ * a dash. This picks the one with the most cost sold, so a holding two accounts
+ * report wins and the Total row is drawn. Re-expressed, never imported.
+ */
+const REDEEMED_STOCK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const num = (x) => typeof x === "number" && Number.isFinite(x);
+    const byKey = new Map();
+    for (const p of positions) {
+      if (!byKey.has(p.securityKey)) byKey.set(p.securityKey, []);
+      byKey.get(p.securityKey).push(p);
+    }
+    const shown = (x) => `${x > 0 ? "▲" : x < 0 ? "▼" : "■"}${Math.abs(x).toFixed(1)}`;
+    let best = null;
+    for (const [key, rows] of byKey) {
+      if (!rows.every((r) => r.marketValue === 0 && r.costBasis === 0)) continue;
+      const seen = new Set();
+      let realised = 0, sold = 0, accounts = 0;
+      for (const r of rows) {
+        if (r.dedupeGroup) { if (seen.has(r.dedupeGroup)) continue; seen.add(r.dedupeGroup); }
+        realised += num(r.realizedPnL) ? r.realizedPnL : 0;
+        sold += num(r.costOfUnitsSold) ? r.costOfUnitsSold : 0;
+        accounts += 1;
+      }
+      if (!(sold > 0)) continue;
+      const fifo = (realised / sold) * 100;
+      if (!best || sold > best.sold) best = { key, fifo, fifoShown: shown(fifo), sold, accounts };
+    }
+    return best;
+  } catch { return null; }
+})();
+
+/**
  * The rupee figures in a rendered string, as NUMBERS.
  *
  * COMPARED NUMERICALLY AND NEVER AS DIGIT STRINGS, which the first draft of
@@ -7255,6 +7296,10 @@ const ROUTES = [
   // THE MANDATE WHERE FIFO AND THE SURVIVORS-ONLY RETURN DIFFER MOST — see
   // `FIFO_BOOK`. Derived from the book, never typed.
   ["mandate-fifo", () => (FIFO_BOOK?.worst ? `/mandate/${encodeURIComponent(FIFO_BOOK.worst.accountId)}` : "/mandate/none-resolved-from-the-book")],
+  // A MANDATE THAT HOLDS NOTHING TODAY, and one whose manager sent no holding
+  // statement (Stage 10df) — see `CLOSED_MANDATE_BOOK`. Derived from the book.
+  ["mandate-closed", () => (CLOSED_MANDATE_BOOK?.closed ? `/mandate/${encodeURIComponent(CLOSED_MANDATE_BOOK.closed.accountId)}` : "/mandate/none-resolved-from-the-book")],
+  ["mandate-no-statement", () => (CLOSED_MANDATE_BOOK?.noStatement ? `/mandate/${encodeURIComponent(CLOSED_MANDATE_BOOK.noStatement.accountId)}` : "/mandate/none-resolved-from-the-book")],
   // A MANDATE WHOSE ACCOUNT ISSUES A CAPITAL GAIN STATEMENT, and whose manager
   // both bought a line without selling it and sold one without buying (DSM-C10,
   // DSM-D8) — the case the "no capital gain statement covers this account"
@@ -7549,6 +7594,9 @@ const ROUTES = [
   // cost (`FIFO_STOCK`) — the one place a return struck on the survivors alone
   // prints a different figure from FIFO's (Stage 10ca).
   ["stock-fifo", () => (FIFO_STOCK ? `/stock/${encodeURIComponent(FIFO_STOCK.key)}` : "/stock/no-holding-with-units-sold-in-the-book")],
+  // A HOLDING REDEEMED TO NIL (`REDEEMED_STOCK`, Stage 10df): its return is
+  // realised over the cost of the units sold, never a dash.
+  ["stock-redeemed", () => (REDEEMED_STOCK ? `/stock/${encodeURIComponent(REDEEMED_STOCK.key)}` : "/stock/no-redeemed-holding-in-the-book")],
   // The holding whose statements mark it at figures the page renders
   // differently — where the headline must refuse rather than print one of
   // them. Derived (`CMP_BOOK`), so the next drop picks its own worst case; an
@@ -8458,10 +8506,17 @@ const PERF_BOOK = (() => {
       const unit = figs.some((v) => Math.abs(v - Math.round(v)) > 0.004) ? 0.01 : 1;
       return { ties: Math.abs(residual) <= (figs.length * unit) / 2 + 1e-9, residual };
     };
+    // LINES ONLY (Stage 10df) — written again here rather than read off the
+    // book's flag: a column printing neither an opening nor a closing value
+    // has no total for its lines to add to, so it is neither tied nor
+    // withheld. Struck on the PRINTED opening, as the book strikes it: a
+    // since-inception nil is computed, and computing one gives a column with
+    // no closing nothing to add up to either.
     const cols = Object.entries(bridgesBy).flatMap(([accountId, bs]) => bs.map((b) => {
       const basis = basisOf(b, acc.get(accountId)?.inceptionDate ?? null);
       const openingNil = basis === "since-inception" && b.opening == null;
-      return { accountId, src: b.source, basis, openingNil, ...adds(b, openingNil), book: b };
+      const linesOnly = !num(b.closing) && !num(b.opening);
+      return { accountId, src: b.source, basis, openingNil, linesOnly, ...adds(b, openingNil), book: b };
     }));
     const optionalRows = new Map(Object.entries(bridgesBy).map(([id, bs]) =>
       [id, new Set(OPTIONAL.filter((k) => bs.some((b) => num(b[k]) && b[k] !== 0)))]));
@@ -8511,6 +8566,7 @@ const PERF_BOOK = (() => {
       statementBook: bookObject(src, "BOOK_SUMMARY")?.totalValue ?? null,
       cols, optionalRows,
       tied: cols.filter((c) => c.ties).length, all: cols.length,
+      linesOnly: cols.filter((c) => c.linesOnly).length,
       perAccount, measured,
       rateStatement: solve(measured, (x) => x.stmtMV),
       firstClose: closes[0] ?? null, lastClose: closes[closes.length - 1] ?? null,
@@ -8543,14 +8599,15 @@ const PERF_BRIDGE = [
     if (!B || !B.all) return false;
     const drawn = new Set(d.cols.map((c) => `${c.account}|${c.src}`));
     return d.cols.length === B.all && B.cols.every((c) => drawn.has(`${c.accountId}|${c.src}`))
-      && d.totals != null && d.totals.tied === B.tied && d.totals.all === B.all;
+      && d.totals != null && d.totals.tied === B.tied && d.totals.all === B.all
+      && d.totals.linesOnly === B.linesOnly && d.totals.withheld === B.all - B.tied - B.linesOnly;
   }],
   ["the book's own tie flag is the checker's arithmetic, column by column", (t, ctx) => {
     const B = PERF_BOOK;
     if (!B || !B.all) return false;
     // An untied column's gap is the same on both sides — or absent on both,
     // where the column has no opening or closing figure to add from.
-    return B.cols.every((c) => (c.book.ties !== false) === c.ties
+    return B.cols.every((c) => (c.book.ties !== false) === c.ties && (c.book.linesOnly === true) === c.linesOnly
       && (c.ties || (c.book.residual == null && c.residual == null)
         || (typeof c.book.residual === "number" && typeof c.residual === "number" && Math.abs(c.book.residual - c.residual) <= 0.01)));
   }],
@@ -8571,16 +8628,85 @@ const PERF_BRIDGE = [
     if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
     const B = PERF_BOOK;
     if (!B || !B.all) return false;
-    if (B.tied === B.all) return { notChecked: "every bridge column in this book adds up" };
+    if (B.tied + B.linesOnly === B.all) return { notChecked: "every bridge column in this book adds up or prints no total to add up to" };
     const by = new Map(d.cols.map((c) => [`${c.account}|${c.src}`, c]));
     return B.cols.every((c) => {
       const col = by.get(`${c.accountId}|${c.src}`);
       if (!col) return false;
       const cells = d.cells.filter((x) => x.account === c.accountId && x.of === c.src);
-      if (c.ties) return !col.withheld;
+      if (c.ties) return !col.withheld && !col.linesOnly;
+      // A column with no total is not WITHHELD — the next claim holds it.
+      if (c.linesOnly) return !col.withheld;
       return col.withheld && /not drawn as a bridge/i.test(col.why ?? "") && cells.length > 0
         && cells.every((x) => x.v === "" && /not drawn as a bridge/i.test(x.reason ?? ""));
     });
+  }],
+  /**
+   * A COLUMN WITH NO TOTAL SHOWS ITS LINES AS PRINTED (Stage 10df). Marathon's
+   * income and expense statement prints every gain and charge since 1 April
+   * 2018 and no portfolio value at either end; withholding it hid twelve
+   * figures the family's statement prints. Each figure must be the book's, the
+   * closing must stay absent with its reason (nothing is added up into one),
+   * and the heading must say so — in a status, never the amber withheld flag.
+   */
+  ["a column that prints no opening and no closing value shows its printed lines, never adds them up, and says so", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    const lo = B.cols.filter((c) => c.linesOnly);
+    if (!lo.length) return { notChecked: "no bridge column in this book prints neither an opening nor a closing value" };
+    const by = new Map(d.cols.map((c) => [`${c.account}|${c.src}`, c]));
+    return lo.every((c) => {
+      const col = by.get(`${c.accountId}|${c.src}`);
+      if (!col || col.withheld || !col.linesOnly) return false;
+      if (!/not added up/i.test(col.linesOnlyNote ?? "") || !/prints no opening or closing value/i.test(col.linesOnlyWhy ?? "")) return false;
+      const cells = d.cells.filter((x) => x.account === c.accountId && x.of === c.src);
+      if (!cells.length) return false;
+      const closing = cells.find((x) => x.row === "closing");
+      if (!closing || closing.v !== "" || !/prints no closing value line/i.test(closing.reason ?? "")) return false;
+      // Every figure the book carries for the column is drawn, as the book carries it.
+      return cells.every((x) => {
+        const want = c.book[x.row];
+        if (typeof want !== "number" || !Number.isFinite(want)) return x.v === "";
+        return x.v !== "" && Math.abs(Number(x.v) - want) <= 0.005;
+      }) && cells.some((x) => x.v !== "");
+    });
+  }],
+  /**
+   * SEVERAL PRINTED LINES BEHIND ONE ROW ARE EACH NAMED (Stage 10df). ASK's
+   * profit and loss account prints Dividend and Other Income where the bridge
+   * has one Income row; Marathon prints short- and long-term gains, Custodian
+   * Fees and STT. The lines are re-added here and must make the book's row —
+   * the replay refused any document whose lines did not — and the page must
+   * list every one under the row's figure, or name the single line it prints.
+   */
+  ["where a statement prints several lines behind one bridge row, each is listed under the row's figure, and they add to it", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    const withLines = B.cols.filter((c) => Array.isArray(c.book.lines) && c.book.lines.length);
+    if (!withLines.length) return { notChecked: "no bridge column in this book carries its printed lines" };
+    let multi = 0;
+    const ok = withLines.every((c) => {
+      const by = new Map();
+      for (const l of c.book.lines) { if (!by.has(l.flow)) by.set(l.flow, []); by.get(l.flow).push(l); }
+      return [...by].every(([flow, ls]) => {
+        const want = c.book[flow];
+        const sum = ls.reduce((t, l) => t + (typeof l.value === "number" ? l.value : 0), 0);
+        if (typeof want !== "number" || Math.abs(sum - want) > 0.005 * ls.length) return false;
+        const cell = d.cells.find((x) => x.account === c.accountId && x.of === c.src && x.row === flow);
+        // An optional row nobody prints a non-nil figure for is not drawn at all.
+        if (!cell) return !B.optionalRows.get(c.accountId)?.has(flow) && !["contribution", "withdrawal", "realized", "unrealized", "income", "fees"].includes(flow);
+        if (cell.v === "" || Math.abs(Number(cell.v) - want) > 0.005) return false;
+        if (ls.length === 1) return cell.split == null && cell.printedAs === `Printed as \u201c${ls[0].label}\u201d`;
+        multi += 1;
+        return Number(cell.splitLines) === ls.length
+          && ls.every((l) => (cell.split ?? "").includes(l.label) && (cell.splitTitle ?? "").includes(l.label));
+      });
+    });
+    return ok && multi > 0;
   }],
   ["every column drawn as a bridge adds up from the figures on screen to its own closing value", (t, ctx) => {
     const d = ctx?.perfDom;
@@ -8610,7 +8736,7 @@ const PERF_BRIDGE = [
     if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
     const B = PERF_BOOK;
     if (!B || !B.tied) return false;
-    const blanks = B.cols.filter((c) => c.ties).flatMap((c) => d.cells
+    const blanks = B.cols.filter((c) => c.ties || c.linesOnly).flatMap((c) => d.cells
       .filter((x) => x.account === c.accountId && x.of === c.src && x.v === "")
       .map((x) => ({ x, unread: (c.book.unread ?? []).includes(x.row) })));
     if (!blanks.length) return { notChecked: "every line of every column that adds up is printed" };
@@ -11263,6 +11389,53 @@ const FIFO_BOOK = (() => {
       if (survivors !== null && (!worst || Math.abs(capitalRet - survivors) > Math.abs(worst.capitalRet - worst.survivors))) worst = row;
     }
     return { byAccountNo, worst, contributedOf };
+  } catch { return null; }
+})();
+
+/**
+ * ── A MANDATE THAT HOLDS NOTHING TODAY, AND ONE NO STATEMENT VALUES ──────────
+ *
+ * Two September 2026 accounts the FIFO derivation above skips, because it reads
+ * only mandates with a current holding (Stage 10df):
+ *
+ *   • A CLOSED MANDATE — ASK's two accounts. Each sold out, and its statement
+ *     keeps only a bank balance under the ₹1,000 floor, so nothing is a current
+ *     holding. Its return is still FIFO's total on its capital: whatever the
+ *     lots, cost held plus cost sold is what was paid in. The page read 0.00%
+ *     because the whole-mandate test found no current holding to call whole.
+ *     `closed` is the largest such account, by capital paid in.
+ *   • A MANDATE NO STATEMENT VALUES — Marathon's two accounts, whose manager
+ *     sent dated statements and no holding statement. The page read ₹0 for
+ *     market value, invested and P&L, which is a measurement nobody made.
+ *     `noStatement` is the first such account by id.
+ *
+ * Re-derived from `glowData.ts`, never imported from `fifo.ts`.
+ */
+const CLOSED_MANDATE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const small = smallKeysOf(positions);
+    const isCurrent = (p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+      && !small.has(p.securityKey);
+    let closed = null;
+    let noStatement = null;
+    for (const a of [...accounts].sort((x, y) => String(x.accountId).localeCompare(String(y.accountId)))) {
+      if (a.engagement !== "PMS") continue;
+      const raw = positions.filter((p) => p.accountId === a.accountId);
+      if (!raw.length) {
+        if (a.noPositionsReason && !noStatement) noStatement = { accountId: a.accountId, reason: a.noPositionsReason };
+        continue;
+      }
+      if (raw.some(isCurrent) || !a.capital || !(a.capital.contributed > 0)) continue;
+      const mv = raw.reduce((x, p) => x + p.marketValue, 0);
+      const capitalRet = ((mv + a.capital.withdrawn - a.capital.contributed) / a.capital.contributed) * 100;
+      const realised = raw.reduce((x, p) => x + (typeof p.realizedPnL === "number" ? p.realizedPnL : 0), 0);
+      const row = { accountId: a.accountId, capitalRet, realised, contributed: a.capital.contributed };
+      if (!closed || row.contributed > closed.contributed) closed = row;
+    }
+    return { closed, noStatement };
   } catch { return null; }
 })();
 
@@ -18860,12 +19033,23 @@ const CG_BOOK = (() => {
     const cg = bookArray(src, "BOOK_CAPITAL_GAINS");
     if (!Array.isArray(cg) || !cg.length) return null;
     const missing = cg.filter((c) => c.absent);
+    // Stage 10df: a realised-by-class row whose class no statement carries is
+    // counted on the PMS mandates line where its ACCOUNT is a mandate (engagement
+    // "PMS", `holdingRoute`'s own rule written again), and keeps a line of its
+    // own only where it is not. Re-expressed here, never imported.
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const engagementOf = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const byClass = bookArray(src, "BOOK_REALISED_BY_CLASS") ?? [];
+    const noClass = byClass.filter((r) => r.assetClass === null);
+    const inMandate = (r) => engagementOf.get(r.accountId) === "PMS";
     return {
       total: cg.length,
       missing: missing.length,
       reported: cg.length - missing.length,
       missingEntities: missing.map((c) => c.entity).sort(),
       reasons: [...new Set(missing.map((c) => c.absent))],
+      mandateNoClassLots: noClass.filter(inMandate).reduce((n, r) => n + r.lots, 0),
+      otherNoClassLots: noClass.filter((r) => !inMandate(r)).reduce((n, r) => n + r.lots, 0),
     };
   } catch { return null; }
 })();
@@ -31782,6 +31966,58 @@ const INVARIANTS = {
       /on\s+₹[\d.,]+\s*(?:Cr|L)?\s+paid in since/i.test(t)],
   ],
   /**
+   * ── A CLOSED MANDATE'S RETURN IS STILL ITS CAPITAL'S (Stage 10df) ──────────
+   *
+   * ASK sold out and keeps a bank balance under the ₹1,000 floor. The page read
+   * Return · FIFO 0.00% because the whole-mandate test looked for a CURRENT
+   * holding to call whole and found none. The tile must equal the capital
+   * return re-derived here, and must never read zero.
+   */
+  "mandate-closed": [
+    ["the route resolves to a real mandate, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ["the book carries a closed mandate with capital paid in (load-bearing)", () =>
+      !!CLOSED_MANDATE_BOOK?.closed && Math.abs(CLOSED_MANDATE_BOOK.closed.capitalRet) > 1],
+    ["the Return · FIFO tile is the closed mandate's capital return, never 0.00%", (t, ctx) => {
+      const c = CLOSED_MANDATE_BOOK?.closed, s = ctx?.stockM2?.mandateState;
+      if (!c || !s) return false;
+      const printed = pctIn(s.fifoReturnText);
+      return typeof s.fifoReturn === "number" && Math.abs(s.fifoReturn - c.capitalRet) < 1e-6
+        && printed !== null && Math.abs(printed.v - c.capitalRet) <= printed.tie && Math.abs(printed.v) > 0;
+    }],
+    ["…and it names the realised gain and the capital it is struck on", (t) =>
+      /RETURN · FIFO[\s\S]{0,40}realised\s+[+−-]?₹[\d.,]+\s*(?:Cr|L)?\s+·\s+on\s+₹[\d.,]+\s*(?:Cr|L)?\s+paid in since/i.test(t)],
+  ],
+  /**
+   * ── A MANDATE NO STATEMENT VALUES DRAWS NO ₹0 (Stage 10df) ─────────────────
+   *
+   * Marathon sent dated statements and no holding statement, and the page read
+   * ₹0 for its value, invested and P&L. The headline, the tiles and the
+   * holdings card are absences now, each carrying the account's own reason.
+   */
+  "mandate-no-statement": [
+    ["the route resolves to a real mandate, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ["the book carries a mandate with no position and a reason (load-bearing)", () =>
+      !!CLOSED_MANDATE_BOOK?.noStatement?.reason],
+    ["the headline is an absence that names its cause, never ₹0", (t, ctx) => {
+      const s = ctx?.stockM2?.mandateState, want = CLOSED_MANDATE_BOOK?.noStatement?.reason;
+      if (!s || !want) return false;
+      return s.headline === "absent" && !/₹/.test(s.headlineText ?? "")
+        && !!s.noHoldings && /no holding statement/i.test(s.noHoldings.text ?? "") && s.noHoldings.tip === want;
+    }],
+    ["no tile prints ₹0 or 0.00% for what nobody measured", (t) => {
+      const strip = sliceBetween(t, "MARKET VALUE", "What the manager holds") ?? "";
+      return strip.length > 0 && !/₹0(?![\d.,])/.test(strip) && !/[+−-]?0\.00%/.test(strip)
+        && (strip.match(/no holding statement in this drop/gi) ?? []).length >= 5;
+    }],
+    ["the holdings card says no holding statement was sent, with the reason in its hover", (t, ctx) => {
+      const s = ctx?.stockM2?.mandateState, want = CLOSED_MANDATE_BOOK?.noStatement?.reason;
+      return !!s?.card && /sent no holding statement/i.test(s.card.text ?? "")
+        && (s.card.tip ?? "") === String(want ?? "").replace(/\s+/g, " ").trim();
+    }],
+  ],
+  /**
    * ── WHAT THE MANAGER TRADED, EVERY LINE OPEN (DSM-C10, DSM-D8) ───────────
    *
    * A mandate whose account issues a capital gain statement, so no line on it
@@ -32101,6 +32337,31 @@ const INVARIANTS = {
         if (!m || !FIFO_STOCK) return false;
         const sign = m[1] === "-" || m[1] === "−" ? "▼" : Number(m[2]) === 0 ? "■" : "▲";
         return `${sign}${m[2]}` === FIFO_STOCK.fifoShown;
+      }],
+  ],
+  /**
+   * ── A HOLDING REDEEMED TO NIL SHOWS ITS RETURN (Stage 10df) ────────────────
+   *
+   * The whole gain is realised and the cost held is ₹0, so FIFO's return is
+   * realised over the cost of the units sold. The tile and the Total row read
+   * a dash, because the page divided only where the cost held was above zero.
+   */
+  "stock-redeemed": [
+    ...stockTabChecks("position"),
+    ["the book carries a holding redeemed to nil whose sold units have a cost (load-bearing)",
+      () => !!REDEEMED_STOCK && REDEEMED_STOCK.fifo !== 0],
+    ["the Unrealised P&L tile's return is realised over the cost of the units sold",
+      (t, ctx) => {
+        const tile = (ctx.stockPage?.tiles ?? []).find((x) => /unrealised p&l/i.test(x.label));
+        const m = /([▲▼■])\s*(\d+(?:\.\d+)?)%/.exec(tile?.sub ?? "");
+        return !!REDEEMED_STOCK && !!m && `${m[1]}${m[2]}` === REDEEMED_STOCK.fifoShown;
+      }],
+    ["...and so is the Total row's return, where two accounts draw one",
+      (t, ctx) => {
+        if (!REDEEMED_STOCK) return false;
+        if (REDEEMED_STOCK.accounts < 2) return { notChecked: "the holding is in one account, so no Total row is drawn" };
+        const foot = (ctx.heldTable?.feet ?? []).find((f) => f.kind === "measured");
+        return !!foot && typeof foot.ret === "number" && Math.abs(foot.ret - REDEEMED_STOCK.fifo) < 1e-6;
       }],
   ],
   /**
@@ -32909,6 +33170,26 @@ const INVARIANTS = {
       if (d.bucketLots !== String(sum)) return false;
       if (/accounts/i.test(d.footLotsText)) return false;
       return !!d.footAccounts && new RegExp(`\\b${d.reported.length} of \\d+ accounts issue a capital gain statement`).test(d.footAccounts);
+    }],
+    // A MANDATE'S LOTS THAT NO STATEMENT CLASSIFIES ARE HELD AS PMS MANDATES
+    // (Stage 10df): the "Held as" column is the account's engagement, known where
+    // the security's class is not, so those lots are on the PMS mandates line and
+    // its hover counts them; only a lot outside a mandate keeps its own line.
+    ["a mandate's lots that no statement classifies are counted on the PMS mandates line, and its hover says how many", (t, ctx) => {
+      const d = ctx?.cgMissing;
+      if (!d) return { notChecked: "the probe did not run" };
+      if (!CG_BOOK) return false;
+      if (!d.bucketLines?.length) return false;
+      const want = CG_BOOK.mandateNoClassLots;
+      const pms = d.bucketLines.find((b) => /^PMS mandates::class$/.test(b.key ?? ""));
+      const otherLines = d.bucketLines.filter((b) => b.unclassified !== null);
+      const otherLots = otherLines.reduce((n, b) => n + b.unclassified, 0);
+      if (otherLots !== CG_BOOK.otherNoClassLots) return false;
+      if (want === 0) return { notChecked: "no lot in a mandate account lacks an asset class on this book" };
+      return !!pms && pms.noClass === want
+        && new RegExp(`^${want} of these \\d+ lots are in \\d+ securit(y|ies) no statement in this drop gives an asset class for`).test(pms.hint ?? "")
+        && /The account is a PMS mandate/.test(pms.hint ?? "")
+        && !otherLines.some((b) => /PMS mandates/.test(b.key ?? ""));
     }],
     ["the accounts with no capital gain statement are one band, marked missing data, closed on arrival", (t, ctx) => {
       const d = ctx?.cgMissing;
@@ -36781,14 +37062,26 @@ for (const theme of THEMES) {
           withheld: th.getAttribute("data-bridge-withheld") === "1", residual: th.getAttribute("data-bridge-residual"),
           head: txt(th), why: th.querySelector("[data-bridge-withheld-note]")?.getAttribute("title") ?? null,
           account: th.closest("table")?.getAttribute("data-bridge-table") ?? null,
+          // A column with no total (Stage 10df) — its status and its reason.
+          linesOnly: th.getAttribute("data-bridge-lines-only") === "1",
+          linesOnlyNote: th.querySelector("[data-bridge-lines-only-note]") ? txt(th.querySelector("[data-bridge-lines-only-note]")) : null,
+          linesOnlyWhy: th.querySelector("[data-bridge-lines-only-note]")?.getAttribute("title") ?? null,
         }));
-        const cells = [...document.querySelectorAll("td[data-bridge-cell]")].map((td) => ({
-          row: td.getAttribute("data-bridge-cell"), of: td.getAttribute("data-bridge-of"),
-          account: td.closest("table")?.getAttribute("data-bridge-table") ?? null,
-          v: td.getAttribute("data-v"), text: txt(td),
-          computed: !!td.querySelector("[data-bridge-computed]"),
-          reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
-        }));
+        const cells = [...document.querySelectorAll("td[data-bridge-cell]")].map((td) => {
+          const split = td.querySelector("[data-bridge-split]");
+          return {
+            row: td.getAttribute("data-bridge-cell"), of: td.getAttribute("data-bridge-of"),
+            account: td.closest("table")?.getAttribute("data-bridge-table") ?? null,
+            v: td.getAttribute("data-v"), text: txt(td),
+            computed: !!td.querySelector("[data-bridge-computed]"),
+            reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
+            // The printed lines behind the figure (Stage 10df): several are
+            // listed under it, and a single one is named in its hover.
+            split: split ? txt(split) : null, splitLines: split?.getAttribute("data-bridge-split-lines") ?? null,
+            splitTitle: split?.getAttribute("title") ?? null,
+            printedAs: [...td.querySelectorAll("[title]")].map((e) => e.getAttribute("title")).find((x) => /^Printed as /.test(x ?? "")) ?? null,
+          };
+        });
         const rows = [...document.querySelectorAll("tr[data-bridge-row]")].map((tr) => ({
           key: tr.getAttribute("data-bridge-row"), account: tr.closest("table")?.getAttribute("data-bridge-table") ?? null,
           label: txt(tr.cells[0]),
@@ -36811,7 +37104,8 @@ for (const theme of THEMES) {
         const consRet = cons?.cells[4]?.querySelector("[data-xirr-undated]") ?? null;
         return {
           cols, cells, rows,
-          totals: tot ? { tied: Number(tot.getAttribute("data-tied")), all: Number(tot.getAttribute("data-all")), text: txt(tot) } : null,
+          totals: tot ? { tied: Number(tot.getAttribute("data-tied")), all: Number(tot.getAttribute("data-all")),
+            linesOnly: Number(tot.getAttribute("data-lines-only")), withheld: Number(tot.getAttribute("data-withheld")), text: txt(tot) } : null,
           xirr,
           cons: cons ? {
             mv: cons.getAttribute("data-mv"), book: cons.getAttribute("data-book"), first: cons.getAttribute("data-first"),
@@ -38441,6 +38735,13 @@ for (const theme of THEMES) {
           footLots: document.querySelector("main [data-cg-foot-lots]")?.getAttribute("data-cg-foot-lots") ?? null,
           footLotsText: (document.querySelector("main [data-cg-foot-lots]")?.textContent ?? "").trim(),
           bucketLots: (document.querySelector("main [data-cg-bucket-lots]")?.textContent ?? "").trim(),
+          // Stage 10df: which line a mandate's unclassed lots are on, and its hover.
+          bucketLines: [...document.querySelectorAll("main [data-cg-bucket]")].map((el) => ({
+            key: el.getAttribute("data-cg-bucket"),
+            noClass: el.hasAttribute("data-cg-bucket-noclass") ? Number(el.getAttribute("data-cg-bucket-noclass")) : null,
+            unclassified: el.hasAttribute("data-cg-unclassified") ? Number(el.getAttribute("data-cg-unclassified")) : null,
+            hint: el.getAttribute("title"),
+          })),
           footAccounts: document.querySelector("main [data-cg-foot-accounts]")?.getAttribute("title") ?? null,
         };
       });
@@ -38893,6 +39194,24 @@ for (const theme of THEMES) {
             const e = document.querySelector("[data-mandate-invested-reconcile]");
             return e ? { paidIn: num(e.getAttribute("data-paid-in")), takenOut: num(e.getAttribute("data-taken-out")),
               realised: num(e.getAttribute("data-realised")), text: txt(e), sub: txt(e.parentElement) } : null;
+          })(),
+          // The mandate page's headline and its Return · FIFO tile, read by
+          // their own handles (Stage 10df): an account no statement values
+          // draws an absence with its reason, never ₹0, and a closed mandate's
+          // return is its capital's.
+          mandateState: (() => {
+            const h = document.querySelector("[data-mandate-headline]");
+            if (!h) return null;
+            const nh = document.querySelector("[data-mandate-no-holdings]");
+            const card = document.querySelector("[data-mandate-no-holdings-card]");
+            const ret = document.querySelector("[data-mandate-fifo-return]");
+            return {
+              headline: h.getAttribute("data-mandate-headline"), headlineText: txt(h),
+              noHoldings: nh ? { text: txt(nh), tip: nh.getAttribute("title") } : null,
+              card: card ? { text: txt(card), tip: card.querySelector("[data-absent-needs]")?.getAttribute("data-absent-needs") ?? null } : null,
+              fifoReturn: ret ? num(ret.getAttribute("data-mandate-fifo-return")) : null,
+              fifoReturnText: ret ? txt(ret) : null,
+            };
           })(),
           // The fund card's NAV: whose it is, and the figure and date it prints.
           ltNav: (() => {

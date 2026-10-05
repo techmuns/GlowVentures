@@ -563,5 +563,83 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   }
 }
 
+// ── 9. A HOLDER LEAVES THE BRIDGE ONCE, AND ONLY IF NO ACCOUNT IS ITS ─────────
+//
+// Section B used to call a holder "not in the book" whenever the book carried
+// no VALUED position for it, and the bridge's "holders with no account in this
+// book" step subtracted that holder's whole review total. Since Stage 10db the
+// unnumbered Bharat Jaisinghani Family Trust has an account in the registry — a
+// Motilal demat whose statement records its funds as quantities only — so its
+// ₹5.96 Cr was subtracted twice: once as a holder with no account, and again in
+// section D, which files both its closings as "a quantity this book does not
+// value". Every figure printed was right on its own; the residual was ₹5.96 Cr
+// off. Read off the report's own text against the account registry, so the
+// next holder in that state is caught by the same rule.
+{
+  const crOf = (cell: string) => Number((cell.match(/₹([\d,]+(?:\.\d+)?) Cr/) ?? [])[1]?.replace(/,/g, "") ?? NaN);
+  const B = REPORT.slice(REPORT.indexOf("## B. Per holder"), REPORT.indexOf("## C. "));
+  const rows = B.split("\n")
+    .filter((l) => /^\| /.test(l) && !/^\| (Holder|---|\*\*Total|— \*not a review column)/.test(l))
+    .map((l) => {
+      const c = l.split("|").map((x) => x.trim());
+      const holder = c[1].split("<br>")[0].trim();
+      const bookAs = (c[1].match(/book: ([^<]+)</) ?? [])[1]?.trim() ?? holder;
+      return { holder, bookAs, review: crOf(c[2]), book: c[3] };
+    });
+  const owners = new Set(BOOK_ACCOUNTS.map((a) => a.owner));
+  ok("section B lists the review's holders", rows.length >= 5 && rows.every((r) => Number.isFinite(r.review)), `${rows.length} rows`);
+  for (const r of rows) {
+    if (owners.has(r.bookAs)) {
+      ok(`${r.holder} has an account in the book, so section B never calls it "not in the book"`, !/not in the book/.test(r.book), r.book);
+    } else {
+      ok(`${r.holder} has no account in the book, and section B says so`, /not in the book/.test(r.book), r.book);
+    }
+  }
+  const absent = rows.filter((r) => /not in the book/.test(r.book));
+  const quantityOnly = rows.filter((r) => /quantities only/.test(r.book));
+  if (!quantityOnly.length) {
+    console.log("NOT CHECKED a holder with an account and no valued position is named as such — no review holder is in that state on this book");
+  }
+  for (const r of quantityOnly) {
+    const accts = BOOK_ACCOUNTS.filter((a) => a.owner === r.bookAs);
+    const valued = BOOK_POSITIONS.some((p) => accts.some((a) => a.accountId === p.accountId) && (p.marketValue ?? 0) > 0);
+    ok(`${r.holder} is "in the book, as quantities only": it has ${accts.length} account(s) and no valued position`, accts.length > 0 && !valued);
+    ok(`…and section B names its account`, accts.every((a) => B.includes(a.accountNo)));
+  }
+  const F = REPORT.slice(REPORT.indexOf("## F. "), REPORT.indexOf("### F1."));
+  const step = F.split("\n").find((l) => l.startsWith("| less: holders with no account in this book")) ?? "";
+  const stepCr = crOf(step.split("|")[2] ?? "");
+  const absentCr = absent.reduce((t, r) => t + r.review, 0);
+  // Each figure is printed to 0.01 Cr, so n rounded rows against one rounded step carry (n + 1) half-digits.
+  ok("the bridge's holder step is the review total of exactly the holders section B calls not in the book",
+    Number.isFinite(stepCr) && Math.abs(stepCr - absentCr) <= 0.005 * (absent.length + 1) + 1e-9,
+    `step ₹${stepCr} Cr, section B ₹${absentCr.toFixed(2)} Cr`);
+  // The names are read out of the step's own list and compared WHOLE, against
+  // the REGISTRY rather than against section B's labels. Checked against B's
+  // labels, a report that went back to calling the trust "not in the book" would
+  // also stop calling it "quantities only", and a check over that empty list
+  // passes by asserting nothing — which is exactly what reintroducing the old
+  // rule showed it doing.
+  const namesIn = (list: string) => list.split("; ")
+    .map((s) => s.replace(/`/g, "").replace(/^the /, "").replace(/, a separate taxpayer.*$/, "").trim())
+    .filter(Boolean);
+  const stepNames = namesIn((step.match(/section B — (.*?)\. A holder with an account/) ?? [])[1] ?? "");
+  const withAccount = rows.filter((r) => owners.has(r.bookAs));
+  ok("…and it names each of them, and no one else", stepNames.length === absent.length
+    && absent.every((r) => stepNames.includes(r.holder)), stepNames.join("; ") || "(none named)");
+  ok("…and no holder the registry has an account for", withAccount.every((r) => !stepNames.includes(r.holder)),
+    withAccount.filter((r) => stepNames.includes(r.holder)).map((r) => r.holder).join("; "));
+  const D = REPORT.slice(REPORT.indexOf("## D. "), REPORT.indexOf("### D1."));
+  const dNames = namesIn((D.replace(/\s+/g, " ").match(/belongs to holders with no account in this book \((.*?)\), which the bridge/) ?? [])[1] ?? "");
+  ok("section D names the same holders as the bridge, and none the registry has an account for",
+    dNames.length === stepNames.length && stepNames.every((n) => dNames.includes(n))
+    && withAccount.every((r) => !dNames.includes(r.holder)), dNames.join("; ") || "(none named)");
+  // The row under the steps says how many adjustments it is the result of.
+  const steps = F.split("\n").filter((l) => l.startsWith("| less: ")).length;
+  const carried = F.split("\n").find((l) => /What the book would carry on/.test(l)) ?? "";
+  const word = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"][steps] ?? String(steps);
+  ok(`the bridge's subtotal names its ${steps} adjustments`, steps >= 1 && carried.includes(`on those ${word} adjustments alone`), carried);
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall review-gap checks passed");
 process.exit(fails ? 1 : 0);

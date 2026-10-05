@@ -102,6 +102,7 @@ const BRIDGE_BASIS_LABEL: Record<AccountBridge["basis"], string> = {
 const bridgeReportName = (t: string) => ({
   "fact-sheet": "fact sheet", "performance-history": "performance history",
   "performance-summary": "performance summary", "investor-report": "SEBI investor report",
+  "income-expense": "income and expense statement", "profit-and-loss": "profit and loss account",
 } as Record<string, string>)[t] ?? "account statement";
 /**
  * WHY A COLUMN IS WITHHELD. The book names the lines it could not make add up
@@ -114,11 +115,28 @@ const bridgeWithheldWhy = (b: AccountBridge, money: (n: number) => string): stri
     : `Not drawn as a bridge: its lines add to ${money(b.linesTotal)} against a closing value of `
       + `${money(b.closing ?? 0)}, ${money(Math.abs(b.residual))} apart. `)
   + (b.withheldReason ?? "");
-/** How many of the book's bridge columns add up, and of how many — counted, never typed. */
+/**
+ * How many of the book's bridge columns add up, how many show their printed
+ * lines only, and of how many — counted, never typed. A LINES-ONLY column
+ * (Stage 10df) prints no opening and no closing value, so there is no total
+ * for its lines to add to and nothing to withhold: it is neither tied nor
+ * withheld, and is counted apart from both.
+ */
 const bridgeTotalsOf = (accounts: readonly { accountId: string }[]) => {
   const cols = accounts.flatMap((a) => BOOK_ACCOUNT_BRIDGES[a.accountId] ?? []);
-  return { all: cols.length, tied: cols.filter((b) => b.ties !== false).length };
+  const linesOnly = cols.filter((b) => b.linesOnly === true).length;
+  const tied = cols.filter((b) => b.ties !== false).length;
+  return { all: cols.length, tied, linesOnly, withheld: cols.length - tied - linesOnly };
 };
+/**
+ * THE LINES A STATEMENT PRINTS BEHIND ONE BRIDGE FIGURE (Stage 10df). ASK's
+ * profit and loss account prints Dividend and Other Income where the bridge
+ * has one Income row, and Marathon's income and expense statement prints
+ * short- and long-term gains, Custodian Fees and STT. Each printed line is the
+ * statement's own figure; the row is their sum, and the book's replay refused
+ * any document whose lines did not add to it.
+ */
+const bridgeLinesFor = (b: AccountBridge, flow: string) => (b.lines ?? []).filter((l) => l.flow === flow);
 
 /**
  * WHAT A "NO FLOWS" ROW MAY SAY. This page's rate is struck on a flow series
@@ -160,6 +178,7 @@ const REPORT_LABEL: Record<string, string> = {
   "investor-report": "SEBI investor report",
   "performance-summary": "Performance summary",
   "appraisal": "Appraisal",
+  "portfolio-snap": "Portfolio snap report",
 };
 const reportLabel = (t: string) => REPORT_LABEL[t] ?? t;
 /** The statement date is the `<asOf>` segment of `<provider>-<accountNo>-<asOf>-<reportType>`. */
@@ -619,8 +638,12 @@ export function Performance() {
           (`ties`, `withheldReason`); one that does not is WITHHELD: its heading
           says so and why, and none of its figures is drawn as a bridge. */}
       <Card className="mt-5" title="Value bridge"
-        subtitle={`Opening value to closing value, per account — every line read from the statements. ${bridgeTotals.tied} of ${bridgeTotals.all} columns add up to their closing value within the statement's own rounding${bridgeTotals.all > bridgeTotals.tied ? `; the other ${bridgeTotals.all - bridgeTotals.tied} are withheld, and each heading says why` : ""}.`}
-        right={bridgeTotals.all > 0 ? <Pill tone="info"><span data-bridge-totals data-tied={bridgeTotals.tied} data-all={bridgeTotals.all}>
+        subtitle={`Opening value to closing value, per account — every line read from the statements. ${bridgeTotals.tied} of ${bridgeTotals.all} columns add up to their closing value within the statement's own rounding`
+          + (bridgeTotals.linesOnly ? `; ${bridgeTotals.linesOnly} come from a report that prints no opening or closing value, so their lines are shown as printed and not added up` : "")
+          + (bridgeTotals.withheld ? `; the other ${bridgeTotals.withheld} are withheld, and each heading says why` : "")
+          + ". Where a statement prints several lines behind one row, each is listed under the row's figure."}
+        right={bridgeTotals.all > 0 ? <Pill tone="info"><span data-bridge-totals data-tied={bridgeTotals.tied} data-all={bridgeTotals.all}
+          data-lines-only={bridgeTotals.linesOnly} data-withheld={bridgeTotals.withheld}>
           {bridgeTotals.tied} of {bridgeTotals.all} add up</span></Pill> : undefined}>
         <div className="space-y-6">
           {accounts.map((a) => {
@@ -648,10 +671,12 @@ export function Performance() {
                         <tr>
                           <th className="px-3 py-1.5 text-left">Component</th>
                           {bridges.map((b) => {
-                            const withheld = b.ties === false;
+                            const linesOnly = b.linesOnly === true;
+                            const withheld = b.ties === false && !linesOnly;
                             return (
                               <th key={b.source} className="px-3 py-1.5 text-right" data-bridge-col={b.source}
                                 data-bridge-basis={b.basis} data-bridge-withheld={withheld ? "1" : "0"}
+                                data-bridge-lines-only={linesOnly ? "1" : "0"}
                                 data-bridge-residual={b.residual ?? ""}>
                                 {BRIDGE_BASIS_LABEL[b.basis] ?? b.basis}
                                 <div className="font-normal normal-case tracking-normal text-slate-600">{b.periodFrom} → {b.periodTo}</div>
@@ -659,6 +684,15 @@ export function Performance() {
                                 {withheld && (
                                   <div className="cursor-help font-normal normal-case tracking-normal text-amber-400"
                                     data-bridge-withheld-note title={bridgeWithheldWhy(b, money)}>withheld · does not add up</div>
+                                )}
+                                {/* NOTHING TO WITHHOLD: no opening and no closing
+                                    value is printed, so there is no total for the
+                                    lines to contradict. They are the statement's
+                                    own figures, shown as printed — a status, with
+                                    its reason in the hover, never an amber flag. */}
+                                {linesOnly && (
+                                  <div className="cursor-help font-normal normal-case tracking-normal text-slate-500"
+                                    data-bridge-lines-only-note title={b.linesOnlyReason ?? undefined}>printed lines · not added up</div>
                                 )}
                               </th>
                             );
@@ -672,11 +706,13 @@ export function Performance() {
                             {bridges.map((b) => {
                               const v = b[row.key];
                               const nilOpening = row.key === "opening" && b.openingNil === true;
+                              const withheld = b.ties === false && b.linesOnly !== true;
+                              const printed = bridgeLinesFor(b, row.key);
                               return (
                                 <td key={b.source} className="px-3 py-1.5 text-right mono" data-bridge-cell={row.key}
                                   data-bridge-of={b.source}
-                                  data-v={b.ties === false ? "" : nilOpening ? 0 : typeof v === "number" ? v : ""}>
-                                  {b.ties === false
+                                  data-v={withheld ? "" : nilOpening ? 0 : typeof v === "number" ? v : ""}>
+                                  {withheld
                                     ? <AbsentCell reason={bridgeWithheldWhy(b, money)} />
                                     : nilOpening
                                     /* NIL BY DEFINITION, AND SAID IN THE CELL: nothing
@@ -690,8 +726,19 @@ export function Performance() {
                                     ? <AbsentCell reason={(b.unread ?? []).includes(row.key)
                                         ? `no ${row.words} line is read from this ${bridgeReportName(b.reportType)}`
                                         : `the ${bridgeReportName(b.reportType)} prints no ${row.words} line`} />
-                                    : <span className={row.tone === -1 ? "text-loss" : row.tone === 1 ? "text-gain" : "text-slate-200"}>
+                                    : <span className={row.tone === -1 ? "text-loss" : row.tone === 1 ? "text-gain" : "text-slate-200"}
+                                        title={printed.length === 1 ? `Printed as “${printed[0].label}”` : undefined}>
                                           {money(v)}
+                                          {/* SEVERAL PRINTED LINES BEHIND ONE ROW: each is
+                                              listed under the figure, as the statement
+                                              prints it; the exact rupees are the hover. */}
+                                          {printed.length > 1 && (
+                                            <span className="block text-[10px] font-sans text-slate-500" data-bridge-split
+                                              data-bridge-split-lines={printed.length}
+                                              title={printed.map((l) => `${l.label} ${fmtFromBase(l.value, { compact: false })}`).join(" · ")}>
+                                              {printed.map((l) => `${l.label} ${money(l.value)}`).join(" · ")}
+                                            </span>
+                                          )}
                                         </span>}
                                 </td>
                               );

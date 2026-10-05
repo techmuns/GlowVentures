@@ -675,16 +675,39 @@ const OWNER_ALIAS = new Map([
   ["Bharat Jaisinghani Family Trust II", "Bharat Jaisinghani Family Trust 2"],
   ["Bharat Jaisinghani Family Trust III", "Bharat Jaisinghani Family Trust 3"],
 ]);
+/**
+ * "NOT IN THE BOOK" IS A FACT ABOUT THE ACCOUNT REGISTRY, NOT ABOUT A VALUE.
+ *
+ * This read `bookByOwner()` — the per-owner sum of VALUED positions — and called
+ * any holder it did not carry "not in the book", adding the holder's whole review
+ * total to the bridge's "holders with no account in this book" step. That was
+ * true while the only such holder was the Hope India Trust, and stopped being
+ * true at Stage 10db: the unnumbered Bharat Jaisinghani Family Trust has an
+ * account in the registry (Motilal Oswal demat 1201090032387399) whose statement
+ * records its three funds as QUANTITIES only (Stage 10cz), so it holds no valued
+ * position on the statement basis. Its ₹5.96 Cr was then subtracted TWICE: once
+ * here as a holder with no account, and again in section D, where section H reads
+ * both its closings on that demat and files them as "a quantity this book does not
+ * value". The holder step now takes only holders the registry has no account for.
+ */
+const OWNERS_WITH_ACCOUNT = new Set(ACCOUNTS.map((a) => a.owner));
+const noAccountHolders = [];
+const quantityOnlyHolders = [];
 let revSum = 0, bookSum = 0, absentHolders = 0;
 for (const { holder, mv } of iw) {
   const bookName = OWNER_ALIAS.get(holder) ?? holder;
   const b = bo.get(bookName) ?? null;
+  const hasAccount = OWNERS_WITH_ACCOUNT.has(bookName);
   const bookCr = b == null ? null : b / CR;
   revSum += mv ?? 0; bookSum += bookCr ?? 0;
-  if (b == null) absentHolders += mv ?? 0;
+  if (!hasAccount) { absentHolders += mv ?? 0; noAccountHolders.push(holder); }
+  else if (b == null) quantityOnlyHolders.push({ holder, mv, accounts: ACCOUNTS.filter((a) => a.owner === bookName) });
   const diff = bookCr == null || mv == null ? null : bookCr - mv;
-  say(`| ${holder}${bookName !== holder ? ` <br><sub>book: ${bookName}</sub>` : ""} | ₹${cr(mv)} Cr | ${bookCr == null ? "— *not in the book*" : "₹" + cr(bookCr) + " Cr"} | ${diff == null ? "—" : (diff >= 0 ? "+" : "") + cr(diff) + " Cr"} |`);
+  const bookCell = bookCr != null ? "₹" + cr(bookCr) + " Cr" : hasAccount ? "— *in the book, as quantities only*" : "— *not in the book*";
+  say(`| ${holder}${bookName !== holder ? ` <br><sub>book: ${bookName}</sub>` : ""} | ₹${cr(mv)} Cr | ${bookCell} | ${diff == null ? "—" : (diff >= 0 ? "+" : "") + cr(diff) + " Cr"} |`);
 }
+/** Upper-cased, because the review's Transactions tab prints `HOPE INDIA TRUST` where its Investorwise tab prints `Hope India Trust`. */
+const NO_ACCOUNT_HOLDERS = new Set(noAccountHolders.map((h) => h.trim().toUpperCase()));
 // Owners the book has and the review's columns do not.
 for (const [o, v] of bo) if (!iw.some(({ holder }) => (OWNER_ALIAS.get(holder) ?? holder) === o)) {
   say(`| — *not a review column* | — | ₹${cr(v / CR)} Cr | — |`);
@@ -723,6 +746,14 @@ say("`Hope India Trust` is a review column and deliberately NOT in this book: it
 say("mutual-fund folios are filed by each AMC as `Status : Trust`, a separate taxpayer. One");
 say("entry in `shared/owners.mjs` reverses that if the family says it belongs here.");
 say();
+for (const q of quantityOnlyHolders) {
+  const accts = q.accounts.map((a) => `${a.provider} ${a.accountNo}`).join(", ");
+  say(`\`${q.holder}\` IS in this book — ${accts} — and holds no valued position on the statement`);
+  say("basis: its statement records what it holds as quantities, with no value this book can use.");
+  say("Section H reads each of its closings on its own statements and section D files each one once;");
+  say(`the bridge in section F takes its ₹${cr(q.mv)} Cr out there, and not again as a holder with no account.`);
+  say();
+}
 
 /**
  * ── H. EVERY CLOSING THE REVIEW PRINTS, HOLDER BY HOLDER ──────────────────
@@ -1334,7 +1365,23 @@ if (!notInBook.length && !trulyAbsent.length) {
     const x = { absent: 0, valued: 0, unvalued: 0, kept: 0 };
     if (!hs.length) { x.absent = l.mv ?? 0; return { ...x, text: "—" }; }
     for (const r of hs) {
-      const v = (r.c.value ?? 0) / CR, k = hClass(r.verdict);
+      const v = (r.c.value ?? 0) / CR;
+      /**
+       * A HOLDER WITH NO ACCOUNT IN THIS BOOK IS ALREADY OUT OF THE BRIDGE, WHOLE.
+       * The holder step subtracts its entire review total, so a closing of its
+       * must not ALSO land in a bucket the bridge subtracts — whatever section H's
+       * verdict on it. `kept` is the bucket the bridge does not subtract; the
+       * Hope India Trust's closings reach it by their verdict anyway, and this is
+       * what keeps the next holder with no account from being counted twice.
+       *
+       * SO ON THIS BOOK IT CHANGES NOTHING, MEASURED: with the guard removed the
+       * report regenerates byte-identically, because the only holder with no
+       * account is the trust whose lines section H already files as kept out by
+       * decision. No check can fire on its removal until a review holder with no
+       * account has a closing section H reads as absent — which is why it is
+       * written down here rather than left to look load-bearing.
+       */
+      const k = NO_ACCOUNT_HOLDERS.has(String(r.c.investor ?? "").trim().toUpperCase()) ? "kept" : hClass(r.verdict);
       if (k === "kept") x.kept += v; else if (k === "reported") x[hValued(r) ? "valued" : "unvalued"] += v; else x.absent += v;
     }
     return { ...x, text: hs.map((r) => `${r.c.investor}: ${r.verdict}`).join("<br>") };
@@ -1355,7 +1402,12 @@ if (!notInBook.length && !trulyAbsent.length) {
   say(`**₹${cr(named)} Cr of review lines match no name in this book.** Read on the holders' own statements:`);
   say(`₹${cr(gapNoStatement)} Cr is on no statement in \`source/\`; ₹${cr(gapReportedValued)} Cr is on a statement and valued in`);
   say(`this book under a spelling no name tier reaches; ₹${cr(gapReportedUnvalued)} Cr is on a statement that carries it`);
-  say(`as a quantity this book does not value; and ₹${cr(gapKept)} Cr is the Hope India Trust's, kept out by decision.`);
+  {
+    // Named off section B's own list, so the sentence cannot name a holder the bridge's step 2 did not take.
+    const who = noAccountHolders.map((h) => (/hope india/i.test(h) ? `the ${h}, a separate taxpayer kept out by decision` : `\`${h}\``)).join("; ") || "no holder";
+    say(`as a quantity this book does not value; and ₹${cr(gapKept)} Cr belongs to holders with no account in this book (${who}),`);
+    say("which the bridge in section F takes out once, with the holder.");
+  }
   say();
   /**
    * THE SAME LIST, GROUPED BY THE DOCUMENT THAT WOULD CLOSE IT.
@@ -1592,7 +1644,7 @@ say();
 const steps = [
   ["Review portfolio total, 30 June 2026", reviewTotal, null],
   ["less: holders with no account in this book", -absentHolders,
-    "the review's holders with no account in this book, section B — the Hope India Trust, a separate taxpayer kept out by decision, among them"],
+    `the review's holders the account registry has no account for, section B — ${noAccountHolders.map((h) => (/hope india/i.test(h) ? `the ${h}, a separate taxpayer kept out by decision` : h)).join("; ") || "none"}. A holder with an account and no valued position is not one: its lines are in the steps below, once`],
   ["less: aggregate blocks the review itemises nowhere", -aggregateTotal,
     `${aggregateLines.map((l) => "`" + l.product + "`").join(", ") || "—"} — reported on the \`Alternate\` tab as a total only. Not a missing statement: see \`docs/REGISTER-RECONCILIATION.md\`, which measures the family's own record of this money`],
   ["less: lines no statement in `source/` reports", -(gapNoStatement - aggregateTotal),
@@ -1608,7 +1660,12 @@ for (const [label, amt, why] of steps) {
   say(`| ${label} | ${amt == null ? "—" : (amt >= 0 ? "" : "−") + "₹" + cr(Math.abs(amt)) + " Cr"} | ₹${cr(running)} Cr | ${why ?? ""} |`);
 }
 const residual = bookExPromoter - running;
-say(`| **What the book would carry on those two adjustments alone** | | **₹${cr(running)} Cr** | |`);
+// The count is the steps' own, never typed: it read "two" for as long as the
+// bridge had grown to four subtractions, a caption describing a sum it no
+// longer was.
+const adjustments = steps.filter(([label]) => label.startsWith("less: ")).length;
+const WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+say(`| **What the book would carry on those ${WORDS[adjustments] ?? adjustments} adjustments alone** | | **₹${cr(running)} Cr** | |`);
 // "less the promoter stock" would now describe a subtraction that no longer
 // happens — the book total is ex-promoter by construction. The caption says what
 // the figure IS rather than how it once got there.

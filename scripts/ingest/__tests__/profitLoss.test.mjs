@@ -140,6 +140,33 @@ const detailOf = (d, code) => (d.warnings ?? []).filter((w) => w.code === code).
     JSON.stringify(h[0]?.printed));
   ok("P&L: the account is kept on the audit sheet, line by line", Array.isArray(d.sections?.profitAndLoss?.rows)
     && d.sections.profitAndLoss.rows.length > 25, `got ${d.sections?.profitAndLoss?.rows?.length}`);
+  // THE PRINTED LINES BEHIND EACH FLOW (Stage 10df). Income folds dividend into
+  // other income and expenses fold custodian fees into STT, so without the lines
+  // a reader looking for the dividend sees only "income". Each is carried under
+  // the label the statement printed, in the statement's own order.
+  const ln = f.lines ?? [];
+  const want = [
+    ["Dividend", "income", 1000], ["Other Income", "income", 10], ["Realized Gain/Loss", "realized", 5000],
+    ["Custodian Fees", "expenses", 100], ["Management Fees", "fees", 500], ["Securities Transaction Tax (STT)", "expenses", 50],
+    ["Other Expenses", "otherExpenses", 10], ["Net Unrealized Gain / Loss during the period", "unrealized", 0],
+    ["Capital Contribution", "contribution", 100000], ["Less : Withdrawals", "withdrawal", 105349.66],
+  ];
+  ok("P&L: every printed line is carried, as printed, beside the flow it feeds",
+    ln.length === want.length && want.every(([label, flow, v], i) => ln[i]?.label === label && ln[i]?.flow === flow && near(ln[i]?.value, v)),
+    JSON.stringify(ln));
+  const sums = {};
+  for (const l of ln) sums[l.flow] = (sums[l.flow] ?? 0) + l.value;
+  ok("P&L: …and the lines add to their flows exactly", Object.keys(sums).length > 0 && Object.entries(sums).every(([k, v]) => near(f[k], v)),
+    JSON.stringify(sums));
+  ok("P&L: a subtotal, a TOTAL or a balance-sheet line is never carried as a line of the account",
+    !ln.some((l) => /total|surplus|reserves|bank|investments/i.test(l.label)), JSON.stringify(ln.map((l) => l.label)));
+  // A reader that refuses every line it cannot place KNOWS the account prints
+  // no accrued income, no change in accruals and no gain prior to takeover, so
+  // it says so (null) rather than leaving them absent — which the book reads as
+  // "not read from this report", a gap the statement never had.
+  ok("P&L: the bridge lines the account does not print are stated as not printed, never left as unread",
+    f.accruedIncome === null && f.changeInAccruals === null && f.gainPriorToTakeover === null
+      && "accruedIncome" in f && "changeInAccruals" in f && "gainPriorToTakeover" in f, JSON.stringify(f));
 }
 
 // 1b. EVERY IDENTITY IS LOAD-BEARING. One figure moved by a rupee — far outside
@@ -256,6 +283,27 @@ const readIe = async (rows, docKey) => {
     f.contribution === null && f.withdrawal === null && f.corpus === null && f.openingCorpus === null, JSON.stringify(f));
   ok("income-expense: the window is the statement's own", f.periodFrom === "2018-04-01" && f.periodTo === "2026-09-09",
     `${f.periodFrom}..${f.periodTo}`);
+  // THE PRINTED COLUMNS BEHIND EACH FLOW (Stage 10df): short- and long-term
+  // gains are one `realized`, dividend and interest one `income`, custodian fees
+  // and STT one `expenses` — each column is carried under its own heading.
+  const ln = f.lines ?? [];
+  const want = [
+    ["ST Gain/Loss", "realized", -1000.5], ["LT Gain/Loss", "realized", 200], ["Dividend", "income", 3000.25],
+    ["Interest", "income", 10], ["Management Fees", "fees", 500], ["Custodian Fees", "expenses", 20],
+    ["Other Expenses", "otherExpenses", 5], ["STT", "expenses", 75],
+  ];
+  ok("income-expense: every printed column is carried, under its own heading, beside the flow it feeds",
+    ln.length === want.length && want.every(([label, flow, v], i) => ln[i]?.label === label && ln[i]?.flow === flow && near(ln[i]?.value, v)),
+    JSON.stringify(ln));
+  const sums = {};
+  for (const l of ln) sums[l.flow] = (sums[l.flow] ?? 0) + l.value;
+  ok("income-expense: …and the columns add to their flows exactly", Object.keys(sums).length > 0 && Object.entries(sums).every(([k, v]) => near(f[k], v)),
+    JSON.stringify(sums));
+  ok("income-expense: the client code, name and date are never carried as lines",
+    !ln.some((l) => /client|date/i.test(l.label)), JSON.stringify(ln.map((l) => l.label)));
+  ok("income-expense: the bridge lines its eleven headings do not include are stated as not printed",
+    f.accruedIncome === null && f.changeInAccruals === null && f.gainPriorToTakeover === null
+      && "accruedIncome" in f && "changeInAccruals" in f && "gainPriorToTakeover" in f, JSON.stringify(f));
 }
 const IE_REFUSALS = [
   ["two data rows", [IE_GOOD, IE_GOOD], /2 data row\(s\) under the headings, not one/],

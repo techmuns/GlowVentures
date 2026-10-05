@@ -2165,6 +2165,22 @@ function bridgeTieOf(b) {
   const unreadWords = BRIDGE_TERMS.filter((t) => unread.includes(t.key)).map((t) => t.words);
   const unreadClause = unreadWords.length
     ? ` Not read from this report: ${joinWords(unreadWords)}.` : "";
+  /**
+   * LINES ONLY — A COLUMN WITH NO TOTAL TO CONTRADICT (Stage 10df). Marathon's
+   * DETAILS OF INCOME AND EXPENSES prints every gain and charge since 1 April
+   * 2018 and no portfolio value at either end. Withholding it hid twelve
+   * figures the family's statement prints, on the grounds that they cannot be
+   * added up — but a column is withheld so that parts which do NOT make their
+   * total are never drawn as a bridge, and this column has no total for them
+   * to miss. So its lines are shown AS PRINTED and never added: no sum, no
+   * residual, no closing, and the page says so. A column with a closing value
+   * and no opening is different, and stays withheld below — its lines and its
+   * closing would then sit together with nothing to say whether they agree.
+   */
+  if (!isNum(b.closing) && !isNum(b.opening)) {
+    return { ties: false, linesOnly: true, openingNil, residual: null, linesTotal: null, withheldReason: null,
+      linesOnlyReason: `The report prints no opening or closing value, so its lines are shown as printed and not added up.${unreadClause}` };
+  }
   if (!isNum(b.closing)) {
     return { ties: false, openingNil, residual: null, linesTotal: null,
       withheldReason: `The report prints no closing value, so its lines cannot be added up.${unreadClause}` };
@@ -3390,10 +3406,16 @@ function build(archived) {
         otherExpenses: f.otherExpenses ?? null,
         gainPriorToTakeover: f.gainPriorToTakeover ?? null,
         unread: OPTIONAL_BRIDGE_FLOWS.filter((k) => f[k] === undefined),
+        // The printed lines behind a flow that sums several (Stage 10df): only
+        // the two whole-life reports carry them, and a column without them
+        // keeps the key out rather than growing an empty array.
+        ...(Array.isArray(f.lines) && f.lines.length ? { lines: f.lines.map((l) => ({ label: l.label, flow: l.flow, value: l.value })) } : {}),
       };
       const tie = bridgeTieOf(bridge);
       Object.assign(bridge, tie);
-      if (!tie.ties) {
+      if (tie.linesOnly) {
+        notes.push(`account ${accountNo}: the ${d.reportType} column ${f.periodFrom} → ${f.periodTo} is shown as its printed lines only — ${tie.linesOnlyReason}`);
+      } else if (!tie.ties) {
         notes.push(`account ${accountNo}: the ${d.reportType} value bridge ${f.periodFrom} → ${f.periodTo} is WITHHELD — `
           + (tie.residual === null ? tie.withheldReason
             : `its lines add to ${r2(tie.linesTotal).toLocaleString("en-IN")} against a closing value of `

@@ -73,7 +73,26 @@
   "declaredAum": null,
   "source": null
  },
- "returns": [],
+ "returns": [
+  {
+   "series": "Portfolio",
+   "isBenchmark": false,
+   "mtd": null,
+   "qtd": null,
+   "fytd": null,
+   "m1": 2.09,
+   "m3": 5.87,
+   "m6": null,
+   "y1": 11.56,
+   "y3": null,
+   "y5": null,
+   "y10": null,
+   "si": 10.28,
+   "siAnnualised": true,
+   "feeBasis": "after",
+   "source": "buoyant-capital-103473-2026-08-31-portfolio-snap"
+  }
+ ],
  "flows": null,
  "cashFlows": [
   {

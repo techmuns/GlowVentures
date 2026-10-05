@@ -415,5 +415,33 @@ for (const K of [K_ANKITA, K_AJAY]) {
   }
 }
 
+// ── the TWRR row as a return series (Stage 10df) ────────────────────────
+// The snap's own time-weighted return reaches the book as a return series —
+// every printed figure, after fees, annualised since a start more than a year
+// before the as-of — and a snap that does not restate its page 1 publishes none.
+for (const docKey of [K_ANKITA, K_AJAY]) {
+  const P = PRINTED[docKey];
+  const ex = extract({ grid: { pages: pagesOf(docKey) }, meta: { reportType: "portfolio-snap", docKey } });
+  const r = ex?.returns ?? [];
+  ok(`returns: ${P.accountNo} carries ONE series, the portfolio's own`,
+    r.length === 1 && r[0].series === "Portfolio" && r[0].isBenchmark === false, JSON.stringify(r));
+  ok(`returns: ${P.accountNo}'s figures are the printed TWRR row, 1m 3m 1y and since`,
+    r[0]?.m1 === P.twrr.m1 && r[0]?.m3 === P.twrr.m3 && r[0]?.y1 === P.twrr.y1 && r[0]?.si === P.twrr.since
+      && r[0]?.mtd === null && r[0]?.m6 === null, JSON.stringify(r[0]));
+  ok(`returns: ${P.accountNo} is after fees, annualised since 01/06/24, and names its own document`,
+    r[0]?.feeBasis === "after" && r[0]?.siAnnualised === true && r[0]?.source === docKey, JSON.stringify(r[0]));
+  ok(`returns: ${P.accountNo}'s series is what the archive carries`,
+    JSON.stringify(docOf(docKey).returns) === JSON.stringify(r), JSON.stringify(docOf(docKey).returns));
+}
+{
+  const T = textOf(K_AJAY);
+  const off = extract({ grid: { pages: [{ text: mutate(T, "147.3008", "147.3018") }] }, meta: { reportType: "portfolio-snap" } });
+  ok("returns: a snap that does not restate its page 1 publishes no return series",
+    Array.isArray(off?.returns) && off.returns.length === 0, JSON.stringify(off?.returns));
+  const noRow = extract({ grid: { pages: [{ text: mutate(T, "Portfolio 2.09% 5.87% 11.56% 10.28%", "Portfolio 2.09% 5.87% 11.56%") }] }, meta: { reportType: "portfolio-snap" } });
+  ok("returns: a TWRR row that does not read as four percentages yields no series, never zeros",
+    Array.isArray(noRow?.returns) && noRow.returns.length === 0, JSON.stringify(noRow?.returns));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

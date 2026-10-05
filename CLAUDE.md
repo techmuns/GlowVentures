@@ -25601,6 +25601,63 @@ on 6 Aug 2026, after the review. So C1 printed "+₹3.82 Cr" as if it were drift
 
 Nothing in the book moves; `src/data/reviewGaps.ts` is unchanged.
 
+### Stage 10df — THE SEPTEMBER DELIVERY, AUDITED AGAIN: EVERY PRINTED LINE ON SCREEN
+
+*"we need to make sure that we are showing every single data point that the
+client has shared with us … why it has not made any significant change in the
+dashboard figures."* Answered with a measurement: the September delivery adds
+no value because ASK's mandates and its Absolute Return Fund are closed or
+redeemed, Marathon sent no holding statement, and Buoyant moved one month. What
+it did carry, and the dashboard did not show, is fixed here. Nothing in
+`BOOK_SUMMARY` moves.
+
+| What the statement printed | Was | Now |
+| --- | --- | --- |
+| ASK's profit and loss account, Marathon's income-and-expense statement | summed into `makeFlows`' fields, the lines lost | every printed line carried as `flows.lines` and listed under its bridge row on Performance; a column that prints no opening or closing value shows its lines and is never added up |
+| ASK 10034025 and 10032723, closed | Return · FIFO struck on the survivors (a cash residue) | struck on the mandate's capital, +77.90% and +85.62% (`fifoTotals`: a mandate holding nothing is still whole) |
+| Marathon 5110837 and 5110758, no holding statement | a headline and tiles of ₹0 | an absence naming the cause, the account's reason in the hover |
+| a holding redeemed to nil (3P B3, ASK ARF A6) | return refused by a `cost > 0` guard | realised ÷ the cost of the units sold, 8.98% and 3.59% |
+| the closed mandates' 426 sold lots, no asset class printed | a line of their own on Capital Gains and Ledger Insights | on the PMS mandates line, whose hover counts them (427 with one Carnelian lot) |
+| Buoyant's 31 Aug Portfolio Snap TWRR | archived as a section, on no page | a return block on Performance: 1m 2.09%, 3m 5.87%, 1y 12.02% / 11.56%, since 01/06/24 10.65% / 10.28%, after fees |
+
+**THE RECONCILER SUBTRACTED ONE TRUST TWICE.** Section B read the per-owner sum
+of valued positions, so the unnumbered Bharat Jaisinghani Family Trust — an
+account since Stage 10db, holding quantities only — was called "not in the book"
+and its ₹5.96 Cr left the bridge in section B and again in section D. Section B
+reads the account registry now.
+
+**Two more faithful partial replays**, so none needs `GLOW_PDF_PASSWORDS`:
+`npm run replay:flow-lines` lands the printed lines (it reads the four
+unencrypted PDFs, because both readers take a figure from the item it was
+printed as), and `npm run replay:flows` now also lands a Portfolio Snap Report's
+return row. Each only adds, each gate is struck on the archive, and each is a
+no-op with `--check`.
+
+**The client PDF.** `docs/client/Glow-Ventures-missing-statement-data-update-2026-10-05.pdf`
+is a new top page — what the data-requirement PDF asked for against what the
+September delivery sent — over the 29 Sep PDF unchanged. Its figures are the
+dashboard's own tiles (Portfolio value ₹912.3 Cr, Recorded invested ₹469.1 Cr),
+bridged from the review through the statement book (₹613.01 Cr). Every review
+figure is marked as the review's.
+
+**Not done, and named:**
+- **Buoyant's fund holdings** (42 lines, % of assets) are archived and drawn
+  nowhere. They are the AIF's own portfolio, so they could join the
+  look-through, which changes the partition every stock-axis figure rests on.
+  That is a change of its own.
+- **Buoyant's class yields** are not shown: the cost under them is the fund's
+  switch-day restatement (Stage 10bv).
+- **ASK 10034025's P&L total is ₹149.81 away from its fact sheet**, the issuer's
+  own discrepancy, reported and not explained away.
+- **Marathon sold every share by 23 Jul 2025** and sent no holding statement, so
+  neither account carries a value.
+
+**Checks.** `profitLoss.test.mjs`, `buoyantSnap.test.mjs` (10 new cases),
+`heldThrough.test.ts` and `reviewGaps.test.ts`; `check:pages` routes
+`mandate-closed`, `mandate-no-statement` and `stock-redeemed`, with the
+Performance and Capital Gains invariants. `scripts/dev/whole-life-bug.mjs` puts
+11 bugs back after a clean control, and all 11 are caught.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -26529,6 +26586,12 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   holdings must reproduce the stored ones on security, quantity, printed cost and
   NAV; and `--check` writes nothing and is the control run, which must be a
   no-op. Follow it with `build-book`.
+- `npm run replay:flow-lines` lands the printed lines behind ASK's profit and
+  loss account and Marathon's income-and-expense statement (`flows.lines`). It
+  writes those lines and nothing else, its gate is the committed `pages.json`
+  and section files, and `--check` is a no-op. Since Stage 10df `replay:flows`
+  also lands a Portfolio Snap Report's return row. Follow either with
+  `build-book`.
 - `npm run replay:dedupe` re-runs the DUPLICATE POLICY over the committed
   archive — check (c) and `applyDedupePolicy`, the two functions `reconcile()`
   calls — so a change to `shared/separateInvestments.mjs` lands without

@@ -162,7 +162,15 @@ ok("every column's `ties` is what its own lines give", tieWrong === 0, `${tieWro
 ok("…and its residual is the gap its own lines leave", residualWrong === 0, `${residualWrong} differ`);
 ok("a since-inception column with no printed opening is marked as opening at a computed nil, and no other", nilWrong === 0);
 const tied = cols.filter((b) => b.ties === true);
-const held = cols.filter((b) => b.ties !== true);
+// A LINES-ONLY column (Stage 10df) is a third state: its report prints no
+  // opening or closing value, so there is no total for its lines to miss. It
+  // is shown as printed and never added, and it says THAT in words instead.
+  const linesOnly = cols.filter((b) => b.linesOnly === true);
+  const held = cols.filter((b) => b.ties !== true && b.linesOnly !== true);
+  ok("a lines-only column prints no opening or closing value, and says its lines are not added up",
+    linesOnly.every((b) => b.ties === false && b.opening == null && b.closing == null && b.residual == null
+      && b.withheldReason == null && typeof b.linesOnlyReason === "string" && /not added up/.test(b.linesOnlyReason)),
+    `${linesOnly.length} lines-only`);
 ok("a withheld column says why, in words", held.every((b) => typeof b.withheldReason === "string" && b.withheldReason.length > 20),
   `${held.length} withheld`);
 ok("a column that adds up carries no reason to be withheld", tied.every((b) => b.withheldReason == null), `${tied.length} tie`);
