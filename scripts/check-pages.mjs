@@ -15782,6 +15782,47 @@ const REVIEW_PI_BOOK = (() => {
   } catch { return null; }
 })();
 
+/**
+ * EVERY LINE'S DATE, AS THE WORKBOOK'S OWN CELL HOLDS IT. Excel keeps a single
+ * date as a serial (45631 is 5 Dec 2024), and the tab once printed the serial;
+ * a month range is the review's own words ("Sept 20 - March 24"). Read here
+ * cell by cell off the sheet each line names — the date column found by its
+ * HEADER, scanning up from the line, never by position — and formatted a second
+ * way, never through the generator. `null` where the workbook cannot be read.
+ */
+const REVIEW_DATE_BOOK = (() => {
+  try {
+    const wb = XLSX.read(readFileSync(REVIEW_WORKBOOK_URL));
+    const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const HEAD = /date investment range|investment date range/i;
+    return (tab, row) => {
+      const name = wb.SheetNames.find((n) => n.trim() === tab);
+      if (!name || !Number.isInteger(row)) return { missing: true };
+      const ws = wb.Sheets[name];
+      const at = (r, c) => ws[XLSX.utils.encode_cell({ r: r - 1, c })]?.v;
+      let col = -1;
+      for (let r = row - 1; r >= 1 && col < 0; r--) for (let c = 0; c < 30; c++) if (HEAD.test(String(at(r, c) ?? ""))) { col = c; break; }
+      if (col < 0) return { missing: true };
+      const v = at(row, col);
+      if (v === undefined || v === null || String(v).trim() === "") return { text: null };
+      if (typeof v === "number" || /^\d+$/.test(String(v).trim())) {
+        const n = Number(v);
+        const t = new Date(Date.UTC(1899, 11, 30) + n * 864e5);
+        return { serial: n, text: `${t.getUTCDate()} ${MON[t.getUTCMonth()]} ${t.getUTCFullYear()}` };
+      }
+      const toks = [...String(v).matchAll(/([a-z]{3,})[\s'-]*(\d{2,4})/gi)];
+      if (!toks.length) return { text: String(v).trim() };
+      const m = (tk) => {
+        const i = MON.findIndex((x) => x.toLowerCase() === tk[1].slice(0, 3).toLowerCase());
+        return i < 0 ? null : `${MON[i]} ${tk[2].length === 2 ? `20${tk[2]}` : tk[2]}`;
+      };
+      const a = m(toks[0]), b = m(toks[toks.length - 1]);
+      if (!a || !b) return { text: String(v).trim() };
+      return { text: a === b ? a : `${a} – ${b}` };
+    };
+  } catch { return null; }
+})();
+
 const REVIEW_TAB_CHECKS = [
   ["the review tab draws every line of its blocks once, each block open on arrival, and the footer counts them all", (t, ctx) => {
     // THIS ROUTE DRAWS THE REVIEW TABLE, so a probe that found none is the table gone — a finding, never an abstention.
@@ -15857,6 +15898,25 @@ const REVIEW_TAB_CHECKS = [
       const okCost = r.invested === null ? (c?.text === "—" && !!c?.title) : /₹/.test(c?.text ?? "");
       return okValue && okCost;
     });
+  }],
+  ["every line prints the date its own review cell holds, as a date — never an Excel serial (Stage 10dg)", (t, ctx) => {
+    // The tab once printed "45631" under Integris: a serial, which is 5 Dec 2024.
+    // Each line's date is held to the WORKBOOK's own cell on the row it names,
+    // read and formatted a second way, and must be on the row's face.
+    const rv = ctx?.reviewTab;
+    if (!rv || !REVIEW_DATE_BOOK) return false;
+    let serials = 0;
+    const ok = rv.rows.length > 0 && rv.rows.every((r) => {
+      const want = REVIEW_DATE_BOOK(r.tab, r.xlrow);
+      if (want.missing) return false;
+      if (want.serial !== undefined) serials++;
+      const shown = r.dates || null;
+      if (want.text === null) return shown === null;
+      return shown === want.text && (r.nameText ?? "").includes(want.text)
+        && !/\b\d{5}\b/.test(r.nameText ?? "");
+    });
+    // LOAD-BEARING: the workbook keeps most of these lines' dates as serials.
+    return ok && serials > 0;
   }],
   ["the members band is the review's Investorwise summary of these lines, and it and the disagreements are closed on arrival", (t, ctx) => {
     const rv = ctx?.reviewTab;
@@ -38565,6 +38625,7 @@ for (const theme of THEMES) {
               out.push({
                 key: tr.getAttribute("data-review-row"), band, kind: tr.getAttribute("data-review-kind"),
                 tab: tr.getAttribute("data-review-tab"), basis: tr.getAttribute("data-review-basis"),
+                xlrow: num(tr, "data-review-xlrow"), dates: tr.getAttribute("data-review-dates"), nameText: txt(tr.children[0]),
                 invested: num(tr, "data-review-invested"), value: num(tr, "data-review-value"),
                 paidIn: num(tr, "data-review-paidin"), paidBack: num(tr, "data-review-paidback"),
                 gain: num(tr, "data-review-gain"), ret: num(tr, "data-review-ret"), retPrinted: num(tr, "data-review-ret-printed"),

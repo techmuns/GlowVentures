@@ -24,7 +24,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "India SME",
      "tab": "Alternate",
      "row": 8,
-     "dates": "Sep-24 - Mar-26",
+     "dates": {
+      "from": "2024-09",
+      "to": "2026-03",
+      "precision": "month",
+      "printed": "Sep-24 - Mar-26",
+      "text": "Sep 2024 – Mar 2026"
+     },
      "invested": 135000000,
      "paidIn": 135000000,
      "paidBack": 405880,
@@ -89,7 +95,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Baring PE India Fund 6",
      "tab": "Alternate",
      "row": 9,
-     "dates": "Oct 24- Sep 25",
+     "dates": {
+      "from": "2024-10",
+      "to": "2025-09",
+      "precision": "month",
+      "printed": "Oct 24- Sep 25",
+      "text": "Oct 2024 – Sep 2025"
+     },
      "invested": 20250000,
      "paidIn": 20250000,
      "paidBack": 142867,
@@ -130,7 +142,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II)",
      "tab": "Alternate",
      "row": 10,
-     "dates": "Apr-21 - Apr-21",
+     "dates": {
+      "from": "2021-04",
+      "to": "2021-04",
+      "precision": "month",
+      "printed": "Apr-21 - Apr-21",
+      "text": "Apr 2021"
+     },
      "invested": 19842360.04,
      "paidIn": 19999000.04,
      "paidBack": 3955592,
@@ -171,7 +189,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Sky Capital Titan Rising Funds 1",
      "tab": "Alternate",
      "row": 11,
-     "dates": "May-25 - Feb-26",
+     "dates": {
+      "from": "2025-05",
+      "to": "2026-02",
+      "precision": "month",
+      "printed": "May-25 - Feb-26",
+      "text": "May 2025 – Feb 2026"
+     },
      "invested": 47150000,
      "paidIn": 47150000,
      "paidBack": 0,
@@ -244,7 +268,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Assetgro Fintech Private Limited",
      "tab": "Alternate",
      "row": 12,
-     "dates": "Nov-25 - Nov-25",
+     "dates": {
+      "from": "2025-11",
+      "to": "2025-11",
+      "precision": "month",
+      "printed": "Nov-25 - Nov-25",
+      "text": "Nov 2025"
+     },
      "invested": 0,
      "paidIn": 50032848,
      "paidBack": 0,
@@ -277,7 +307,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Transition Venture Capital fund I",
      "tab": "Alternate",
      "row": 13,
-     "dates": "Aug-25 - Oct-25",
+     "dates": {
+      "from": "2025-08",
+      "to": "2025-10",
+      "precision": "month",
+      "printed": "Aug-25 - Oct-25",
+      "text": "Aug 2025 – Oct 2025"
+     },
      "invested": 0,
      "paidIn": 17500000,
      "paidBack": 0,
@@ -338,7 +374,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "National Stock Exchange",
      "tab": "Equity",
      "row": 69,
-     "dates": "Dec-22 - Aug-23",
+     "dates": {
+      "from": "2022-12",
+      "to": "2023-08",
+      "precision": "month",
+      "printed": "Dec-22 - Aug-23",
+      "text": "Dec 2022 – Aug 2023"
+     },
      "invested": 120850000,
      "paidIn": null,
      "paidBack": null,
@@ -379,7 +421,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Zepto",
      "tab": "Equity",
      "row": 70,
-     "dates": "Feb-25",
+     "dates": {
+      "from": "2025-02",
+      "to": "2025-02",
+      "precision": "month",
+      "printed": "Feb-25",
+      "text": "Feb 2025"
+     },
      "invested": 150015960,
      "paidIn": 150015960,
      "paidBack": 0,
@@ -415,7 +463,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Integris",
      "tab": "Private Investments",
      "row": 7,
-     "dates": "45631",
+     "dates": {
+      "from": "2024-12-05",
+      "to": "2024-12-05",
+      "precision": "day",
+      "printed": "45631",
+      "text": "5 Dec 2024"
+     },
      "invested": 159997462.8,
      "paidIn": null,
      "paidBack": null,
@@ -450,7 +504,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "ESDS",
      "tab": "Private Investments",
      "row": 16,
-     "dates": "45544",
+     "dates": {
+      "from": "2024-09-09",
+      "to": "2024-09-09",
+      "precision": "day",
+      "printed": "45544",
+      "text": "9 Sep 2024"
+     },
      "invested": 50000024,
      "paidIn": null,
      "paidBack": null,
@@ -493,7 +553,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Everest Fleet Private Ltd - SIDDHARTH LADSARIYA",
      "tab": "Private Investments",
      "row": 4,
-     "dates": "Jan 22 - May 23",
+     "dates": {
+      "from": "2022-01",
+      "to": "2023-05",
+      "precision": "month",
+      "printed": "Jan 22 - May 23",
+      "text": "Jan 2022 – May 2023"
+     },
      "invested": 47607824,
      "paidIn": null,
      "paidBack": null,
@@ -544,7 +610,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "URB Ventures Pvt Ltd - ANUJ MUNOT",
      "tab": "Private Investments",
      "row": 5,
-     "dates": "Jun 22 - Feb 23",
+     "dates": {
+      "from": "2022-06",
+      "to": "2023-02",
+      "precision": "month",
+      "printed": "Jun 22 - Feb 23",
+      "text": "Jun 2022 – Feb 2023"
+     },
      "invested": 22500000,
      "paidIn": null,
      "paidBack": null,
@@ -587,7 +659,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Waterwala Labs Private Limited - Drink Prime",
      "tab": "Private Investments",
      "row": 6,
-     "dates": "Feb 20 - Jul 23",
+     "dates": {
+      "from": "2020-02",
+      "to": "2023-07",
+      "precision": "month",
+      "printed": "Feb 20 - Jul 23",
+      "text": "Feb 2020 – Jul 2023"
+     },
      "invested": 81001152,
      "paidIn": null,
      "paidBack": null,
@@ -613,7 +691,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "MOTHER INDIA FORMING PRIVATE LIMITED",
      "tab": "Private Investments",
      "row": 8,
-     "dates": "45681",
+     "dates": {
+      "from": "2025-01-24",
+      "to": "2025-01-24",
+      "precision": "day",
+      "printed": "45681",
+      "text": "24 Jan 2025"
+     },
      "invested": 79999960,
      "paidIn": null,
      "paidBack": null,
@@ -639,7 +723,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "SKS Fastener",
      "tab": "Private Investments",
      "row": 9,
-     "dates": "45741",
+     "dates": {
+      "from": "2025-03-25",
+      "to": "2025-03-25",
+      "precision": "day",
+      "printed": "45741",
+      "text": "25 Mar 2025"
+     },
      "invested": 29958400,
      "paidIn": null,
      "paidBack": null,
@@ -674,7 +764,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Transigo Fleet LLP",
      "tab": "Private Investments",
      "row": 10,
-     "dates": "May 21 - Jan 23",
+     "dates": {
+      "from": "2021-05",
+      "to": "2023-01",
+      "precision": "month",
+      "printed": "May 21 - Jan 23",
+      "text": "May 2021 – Jan 2023"
+     },
      "invested": 57557000,
      "paidIn": null,
      "paidBack": null,
@@ -700,7 +796,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "FH Enable LLP - Aakash Sachdev",
      "tab": "Private Investments",
      "row": 11,
-     "dates": "Jul 20 - Oct 20",
+     "dates": {
+      "from": "2020-07",
+      "to": "2020-10",
+      "precision": "month",
+      "printed": "Jul 20 - Oct 20",
+      "text": "Jul 2020 – Oct 2020"
+     },
      "invested": 5000000,
      "paidIn": null,
      "paidBack": null,
@@ -726,7 +828,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "PROCYON ENTERPRISE LLP - ABHISHEK MURARKA",
      "tab": "Private Investments",
      "row": 12,
-     "dates": "May 23 - Aug 23",
+     "dates": {
+      "from": "2023-05",
+      "to": "2023-08",
+      "precision": "month",
+      "printed": "May 23 - Aug 23",
+      "text": "May 2023 – Aug 2023"
+     },
      "invested": 40128000,
      "paidIn": null,
      "paidBack": null,
@@ -752,7 +860,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Spray Engineering Devices Ltd.",
      "tab": "Private Investments",
      "row": 13,
-     "dates": "45420",
+     "dates": {
+      "from": "2024-05-08",
+      "to": "2024-05-08",
+      "precision": "day",
+      "printed": "45420",
+      "text": "8 May 2024"
+     },
      "invested": 47517442,
      "paidIn": null,
      "paidBack": null,
@@ -787,7 +901,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Matrix Gas And Renewables Limited",
      "tab": "Private Investments",
      "row": 14,
-     "dates": "45352",
+     "dates": {
+      "from": "2024-03-01",
+      "to": "2024-03-01",
+      "precision": "day",
+      "printed": "45352",
+      "text": "1 Mar 2024"
+     },
      "invested": 45000000,
      "paidIn": null,
      "paidBack": null,
@@ -822,7 +942,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Telawne Power",
      "tab": "Private Investments",
      "row": 15,
-     "dates": "45650",
+     "dates": {
+      "from": "2024-12-24",
+      "to": "2024-12-24",
+      "precision": "day",
+      "printed": "45650",
+      "text": "24 Dec 2024"
+     },
      "invested": 40000000,
      "paidIn": null,
      "paidBack": null,
@@ -848,7 +974,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Innoviti Payment Solutions Private Ltd - PRANAV KORANNE",
      "tab": "Private Investments",
      "row": 17,
-     "dates": "44554",
+     "dates": {
+      "from": "2021-12-24",
+      "to": "2021-12-24",
+      "precision": "day",
+      "printed": "44554",
+      "text": "24 Dec 2021"
+     },
      "invested": 19999973.84,
      "paidIn": null,
      "paidBack": null,
@@ -874,7 +1006,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Oil Max",
      "tab": "Private Investments",
      "row": 18,
-     "dates": "45700",
+     "dates": {
+      "from": "2025-02-12",
+      "to": "2025-02-12",
+      "precision": "day",
+      "printed": "45700",
+      "text": "12 Feb 2025"
+     },
      "invested": 38760000,
      "paidIn": null,
      "paidBack": null,
@@ -909,7 +1047,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Borosil Renewables",
      "tab": "Private Investments",
      "row": 19,
-     "dates": "45700",
+     "dates": {
+      "from": "2025-02-12",
+      "to": "2025-02-12",
+      "precision": "day",
+      "printed": "45700",
+      "text": "12 Feb 2025"
+     },
      "invested": 37499885,
      "paidIn": null,
      "paidBack": null,
@@ -944,7 +1088,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "BIG BANG BOOM",
      "tab": "Private Investments",
      "row": 20,
-     "dates": "45544",
+     "dates": {
+      "from": "2024-09-09",
+      "to": "2024-09-09",
+      "precision": "day",
+      "printed": "45544",
+      "text": "9 Sep 2024"
+     },
      "invested": 40320000,
      "paidIn": null,
      "paidBack": null,
@@ -979,7 +1129,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "RAY's",
      "tab": "Private Investments",
      "row": 21,
-     "dates": "45462",
+     "dates": {
+      "from": "2024-06-19",
+      "to": "2024-06-19",
+      "precision": "day",
+      "printed": "45462",
+      "text": "19 Jun 2024"
+     },
      "invested": 20060000,
      "paidIn": null,
      "paidBack": null,
@@ -1014,7 +1170,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Pivot Ventures - ISHA KEDIA",
      "tab": "Private Investments",
      "row": 22,
-     "dates": "Dec 21 - Aug 22",
+     "dates": {
+      "from": "2021-12",
+      "to": "2022-08",
+      "precision": "month",
+      "printed": "Dec 21 - Aug 22",
+      "text": "Dec 2021 – Aug 2022"
+     },
      "invested": 16000000,
      "paidIn": null,
      "paidBack": null,
@@ -1040,7 +1202,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Stay Vista Private Limited - ARTHA ENERGY PROJECTS PVT LTD",
      "tab": "Private Investments",
      "row": 23,
-     "dates": "44236",
+     "dates": {
+      "from": "2021-02-09",
+      "to": "2021-02-09",
+      "precision": "day",
+      "printed": "44236",
+      "text": "9 Feb 2021"
+     },
      "invested": 4773404,
      "paidIn": null,
      "paidBack": null,
@@ -1066,7 +1234,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Incred Holdings Ltd.",
      "tab": "Private Investments",
      "row": 25,
-     "dates": "45260",
+     "dates": {
+      "from": "2023-11-30",
+      "to": "2023-11-30",
+      "precision": "day",
+      "printed": "45260",
+      "text": "30 Nov 2023"
+     },
      "invested": 15029264,
      "paidIn": null,
      "paidBack": null,
@@ -1092,7 +1266,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Autocracy Machinery Pvt Ltd.",
      "tab": "Private Investments",
      "row": 26,
-     "dates": "Oct 23 - Mar 24",
+     "dates": {
+      "from": "2023-10",
+      "to": "2024-03",
+      "precision": "month",
+      "printed": "Oct 23 - Mar 24",
+      "text": "Oct 2023 – Mar 2024"
+     },
      "invested": 15000018,
      "paidIn": null,
      "paidBack": null,
@@ -1118,7 +1298,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "The OAKS Consumer Fund I - SANTOSH PARAB",
      "tab": "Private Investments",
      "row": 27,
-     "dates": "Sep 21 - Mar 23",
+     "dates": {
+      "from": "2021-09",
+      "to": "2023-03",
+      "precision": "month",
+      "printed": "Sep 21 - Mar 23",
+      "text": "Sep 2021 – Mar 2023"
+     },
      "invested": 13000000,
      "paidIn": null,
      "paidBack": null,
@@ -1153,7 +1339,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "SOTEFIN",
      "tab": "Private Investments",
      "row": 28,
-     "dates": "45485",
+     "dates": {
+      "from": "2024-07-12",
+      "to": "2024-07-12",
+      "precision": "day",
+      "printed": "45485",
+      "text": "12 Jul 2024"
+     },
      "invested": 20000400,
      "paidIn": null,
      "paidBack": null,
@@ -1188,7 +1380,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "WE VOISE",
      "tab": "Private Investments",
      "row": 29,
-     "dates": "45544",
+     "dates": {
+      "from": "2024-09-09",
+      "to": "2024-09-09",
+      "precision": "day",
+      "printed": "45544",
+      "text": "9 Sep 2024"
+     },
      "invested": 10106085,
      "paidIn": null,
      "paidBack": null,
@@ -1214,7 +1412,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Zenith",
      "tab": "Private Investments",
      "row": 30,
-     "dates": "45491",
+     "dates": {
+      "from": "2024-07-18",
+      "to": "2024-07-18",
+      "precision": "day",
+      "printed": "45491",
+      "text": "18 Jul 2024"
+     },
      "invested": 10001255,
      "paidIn": null,
      "paidBack": null,
@@ -1249,7 +1453,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Radiant",
      "tab": "Private Investments",
      "row": 31,
-     "dates": "45491",
+     "dates": {
+      "from": "2024-07-18",
+      "to": "2024-07-18",
+      "precision": "day",
+      "printed": "45491",
+      "text": "18 Jul 2024"
+     },
      "invested": 9996000,
      "paidIn": null,
      "paidBack": null,
@@ -1284,7 +1494,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Vineet Sethia - Drink Prime",
      "tab": "Private Investments",
      "row": 32,
-     "dates": "45085",
+     "dates": {
+      "from": "2023-06-08",
+      "to": "2023-06-08",
+      "precision": "day",
+      "printed": "45085",
+      "text": "8 Jun 2023"
+     },
      "invested": 7908030,
      "paidIn": null,
      "paidBack": null,
@@ -1310,7 +1526,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Third Eye Distillery Holdings Pvt Ltd (SKYVENTURES - LV ANGEL FUND - AAKASH SACHDEV)",
      "tab": "Private Investments",
      "row": 33,
-     "dates": "44690",
+     "dates": {
+      "from": "2022-05-09",
+      "to": "2022-05-09",
+      "precision": "day",
+      "printed": "44690",
+      "text": "9 May 2022"
+     },
      "invested": 2500000,
      "paidIn": null,
      "paidBack": null,
@@ -1336,7 +1558,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "HYPRKYTCHEN Foodtech Private Limited - Mr. Bansi",
      "tab": "Private Investments",
      "row": 34,
-     "dates": "Dec 20 - Dec 21",
+     "dates": {
+      "from": "2020-12",
+      "to": "2021-12",
+      "precision": "month",
+      "printed": "Dec 20 - Dec 21",
+      "text": "Dec 2020 – Dec 2021"
+     },
      "invested": 25608347.68,
      "paidIn": null,
      "paidBack": null,
@@ -1362,7 +1590,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Inflexor Technologies",
      "tab": "Private Investments",
      "row": 35,
-     "dates": "Nov 20 - Nov 22",
+     "dates": {
+      "from": "2020-11",
+      "to": "2022-11",
+      "precision": "month",
+      "printed": "Nov 20 - Nov 22",
+      "text": "Nov 2020 – Nov 2022"
+     },
      "invested": 7950000,
      "paidIn": null,
      "paidBack": null,
@@ -1388,7 +1622,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "SWAPECO SOLUTIONS PRIVATE LIMITED - (SCRAP UNCLE - MUKUL CHABRA)",
      "tab": "Private Investments",
      "row": 36,
-     "dates": "45160",
+     "dates": {
+      "from": "2023-08-22",
+      "to": "2023-08-22",
+      "precision": "day",
+      "printed": "45160",
+      "text": "22 Aug 2023"
+     },
      "invested": 5020300,
      "paidIn": null,
      "paidBack": null,
@@ -1414,7 +1654,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "A K Enterprises",
      "tab": "Private Investments",
      "row": 37,
-     "dates": "43891",
+     "dates": {
+      "from": "2020-03-01",
+      "to": "2020-03-01",
+      "precision": "day",
+      "printed": "43891",
+      "text": "1 Mar 2020"
+     },
      "invested": 5000000,
      "paidIn": null,
      "paidBack": null,
@@ -1440,7 +1686,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Sky Enable Tech Llp",
      "tab": "Private Investments",
      "row": 38,
-     "dates": "45337",
+     "dates": {
+      "from": "2024-02-15",
+      "to": "2024-02-15",
+      "precision": "day",
+      "printed": "45337",
+      "text": "15 Feb 2024"
+     },
      "invested": 8000000,
      "paidIn": null,
      "paidBack": null,
@@ -1466,7 +1718,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Since 99 Apparel Pvt Limited - PUNIT SEHGAL / DEXTER CAPITAL",
      "tab": "Private Investments",
      "row": 39,
-     "dates": "45006",
+     "dates": {
+      "from": "2023-03-21",
+      "to": "2023-03-21",
+      "precision": "day",
+      "printed": "45006",
+      "text": "21 Mar 2023"
+     },
      "invested": 4999071,
      "paidIn": null,
      "paidBack": null,
@@ -1492,7 +1750,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "EMA Preferred Shares",
      "tab": "Private Investments",
      "row": 40,
-     "dates": "45534",
+     "dates": {
+      "from": "2024-08-30",
+      "to": "2024-08-30",
+      "precision": "day",
+      "printed": "45534",
+      "text": "30 Aug 2024"
+     },
      "invested": 4642872,
      "paidIn": null,
      "paidBack": null,
@@ -1518,7 +1782,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Stay Vista Private Limited - Anandkumar Radhakrishna Ladsariya",
      "tab": "Private Investments",
      "row": 41,
-     "dates": "44963",
+     "dates": {
+      "from": "2023-02-06",
+      "to": "2023-02-06",
+      "precision": "day",
+      "printed": "44963",
+      "text": "6 Feb 2023"
+     },
      "invested": 4212804,
      "paidIn": null,
      "paidBack": null,
@@ -1544,7 +1814,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Ajay Jain - Drink Prime",
      "tab": "Private Investments",
      "row": 42,
-     "dates": "45085",
+     "dates": {
+      "from": "2023-06-08",
+      "to": "2023-06-08",
+      "precision": "day",
+      "printed": "45085",
+      "text": "8 Jun 2023"
+     },
      "invested": 4098207,
      "paidIn": null,
      "paidBack": null,
@@ -1570,7 +1846,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Hanok Reuben Medhari - Drink Prime",
      "tab": "Private Investments",
      "row": 43,
-     "dates": "43922",
+     "dates": {
+      "from": "2020-04-01",
+      "to": "2020-04-01",
+      "precision": "day",
+      "printed": "43922",
+      "text": "1 Apr 2020"
+     },
      "invested": 2500024,
      "paidIn": null,
      "paidBack": null,
@@ -1596,7 +1878,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Head Infotech",
      "tab": "Private Investments",
      "row": 44,
-     "dates": "44602",
+     "dates": {
+      "from": "2022-02-10",
+      "to": "2022-02-10",
+      "precision": "day",
+      "printed": "44602",
+      "text": "10 Feb 2022"
+     },
      "invested": 22500000,
      "paidIn": null,
      "paidBack": null,
@@ -1622,7 +1910,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Nopo Nanotechnologies India Pvt Ltd - Gadhadar Reddy",
      "tab": "Private Investments",
      "row": 45,
-     "dates": "45295",
+     "dates": {
+      "from": "2024-01-04",
+      "to": "2024-01-04",
+      "precision": "day",
+      "printed": "45295",
+      "text": "4 Jan 2024"
+     },
      "invested": 2500000,
      "paidIn": null,
      "paidBack": null,
@@ -1648,7 +1942,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Credit Fair-K M Global Credit Private Limited",
      "tab": "Private Investments",
      "row": 46,
-     "dates": "Sep 20 - Jun 21",
+     "dates": {
+      "from": "2020-09",
+      "to": "2021-06",
+      "precision": "month",
+      "printed": "Sep 20 - Jun 21",
+      "text": "Sep 2020 – Jun 2021"
+     },
      "invested": 2000046,
      "paidIn": null,
      "paidBack": null,
@@ -1674,7 +1974,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "FH Edutech LLP",
      "tab": "Private Investments",
      "row": 47,
-     "dates": "44375",
+     "dates": {
+      "from": "2021-06-28",
+      "to": "2021-06-28",
+      "precision": "day",
+      "printed": "44375",
+      "text": "28 Jun 2021"
+     },
      "invested": 2000000,
      "paidIn": null,
      "paidBack": null,
@@ -1700,7 +2006,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Home Pecked E-Marketplace Services Ltd",
      "tab": "Private Investments",
      "row": 48,
-     "dates": "44531",
+     "dates": {
+      "from": "2021-12-01",
+      "to": "2021-12-01",
+      "precision": "day",
+      "printed": "44531",
+      "text": "1 Dec 2021"
+     },
      "invested": 1540769.02,
      "paidIn": null,
      "paidBack": null,
@@ -1726,7 +2038,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "AL Trust - Collabmates Pvt Ltd - (ANGELLIST - LIKEMINDS)",
      "tab": "Private Investments",
      "row": 49,
-     "dates": "44971",
+     "dates": {
+      "from": "2023-02-14",
+      "to": "2023-02-14",
+      "precision": "day",
+      "printed": "44971",
+      "text": "14 Feb 2023"
+     },
      "invested": 1530000,
      "paidIn": null,
      "paidBack": null,
@@ -1752,7 +2070,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Aksum Trademart Pvt Ltd - ANKIT JAIN",
      "tab": "Private Investments",
      "row": 50,
-     "dates": "45061",
+     "dates": {
+      "from": "2023-05-15",
+      "to": "2023-05-15",
+      "precision": "day",
+      "printed": "45061",
+      "text": "15 May 2023"
+     },
      "invested": 1500150,
      "paidIn": null,
      "paidBack": null,
@@ -1778,7 +2102,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "AL Trust - Karban Envirotech (RUV) - Nilesh Angelist",
      "tab": "Private Investments",
      "row": 51,
-     "dates": "45272",
+     "dates": {
+      "from": "2023-12-12",
+      "to": "2023-12-12",
+      "precision": "day",
+      "printed": "45272",
+      "text": "12 Dec 2023"
+     },
      "invested": 1020000,
      "paidIn": null,
      "paidBack": null,
@@ -1804,7 +2134,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Zippmat Private Ltd - ABHIJEET KUDVA",
      "tab": "Private Investments",
      "row": 52,
-     "dates": "44602",
+     "dates": {
+      "from": "2022-02-10",
+      "to": "2022-02-10",
+      "precision": "day",
+      "printed": "44602",
+      "text": "10 Feb 2022"
+     },
      "invested": 1015000,
      "paidIn": null,
      "paidBack": null,
@@ -1830,7 +2166,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "LV Angel Fund - Lets Venture (HOOPR) - VAIBHAV KARNAVAT",
      "tab": "Private Investments",
      "row": 53,
-     "dates": "44610",
+     "dates": {
+      "from": "2022-02-18",
+      "to": "2022-02-18",
+      "precision": "day",
+      "printed": "44610",
+      "text": "18 Feb 2022"
+     },
      "invested": 1010000,
      "paidIn": null,
      "paidBack": null,
@@ -1856,7 +2198,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Rurash Financials Private Ltd - Reliance Retail",
      "tab": "Private Investments",
      "row": 54,
-     "dates": "44061",
+     "dates": {
+      "from": "2020-08-18",
+      "to": "2020-08-18",
+      "precision": "day",
+      "printed": "44061",
+      "text": "18 Aug 2020"
+     },
      "invested": 1001220,
      "paidIn": null,
      "paidBack": null,
@@ -1882,7 +2230,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Variance PT Ventures LLP - Romil Kapadia",
      "tab": "Private Investments",
      "row": 55,
-     "dates": "44610",
+     "dates": {
+      "from": "2022-02-18",
+      "to": "2022-02-18",
+      "precision": "day",
+      "printed": "44610",
+      "text": "18 Feb 2022"
+     },
      "invested": 1000000,
      "paidIn": null,
      "paidBack": null,
@@ -1908,7 +2262,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "LANDCRAFT RETAIL PVT LTD. - FOOD SQUARE",
      "tab": "Private Investments",
      "row": 56,
-     "dates": "45524",
+     "dates": {
+      "from": "2024-08-20",
+      "to": "2024-08-20",
+      "precision": "day",
+      "printed": "45524",
+      "text": "20 Aug 2024"
+     },
      "invested": 30015000,
      "paidIn": null,
      "paidBack": null,
@@ -1934,7 +2294,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Sky Vision Cure LLP",
      "tab": "Private Investments",
      "row": 57,
-     "dates": "45743",
+     "dates": {
+      "from": "2025-03-27",
+      "to": "2025-03-27",
+      "precision": "day",
+      "printed": "45743",
+      "text": "27 Mar 2025"
+     },
      "invested": 44092619.87,
      "paidIn": null,
      "paidBack": null,
@@ -1960,7 +2326,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Blue Ashva India Pool Account",
      "tab": "Private Investments",
      "row": 60,
-     "dates": "45889",
+     "dates": {
+      "from": "2025-08-20",
+      "to": "2025-08-20",
+      "precision": "day",
+      "printed": "45889",
+      "text": "20 Aug 2025"
+     },
      "invested": 37408000,
      "paidIn": null,
      "paidBack": null,
@@ -1986,7 +2358,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Electromech Infraprojects Pvt Ltd",
      "tab": "Private Investments",
      "row": 61,
-     "dates": "45875",
+     "dates": {
+      "from": "2025-08-06",
+      "to": "2025-08-06",
+      "precision": "day",
+      "printed": "45875",
+      "text": "6 Aug 2025"
+     },
      "invested": 50000016,
      "paidIn": null,
      "paidBack": null,
@@ -2021,7 +2399,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Swapeco Solutions Private Limited",
      "tab": "Private Investments",
      "row": 62,
-     "dates": "45900",
+     "dates": {
+      "from": "2025-08-31",
+      "to": "2025-08-31",
+      "precision": "day",
+      "printed": "45900",
+      "text": "31 Aug 2025"
+     },
      "invested": 27001750,
      "paidIn": null,
      "paidBack": null,
@@ -2064,7 +2448,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "PERPLEXITY INVESTMENT",
      "tab": "Private Investments",
      "row": 63,
-     "dates": "45854",
+     "dates": {
+      "from": "2025-07-16",
+      "to": "2025-07-16",
+      "precision": "day",
+      "printed": "45854",
+      "text": "16 Jul 2025"
+     },
      "invested": 2583000,
      "paidIn": null,
      "paidBack": null,
@@ -2090,7 +2480,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "RUNABLE INVESTMENT",
      "tab": "Private Investments",
      "row": 64,
-     "dates": "45860",
+     "dates": {
+      "from": "2025-07-22",
+      "to": "2025-07-22",
+      "precision": "day",
+      "printed": "45860",
+      "text": "22 Jul 2025"
+     },
      "invested": 451000,
      "paidIn": null,
      "paidBack": null,
@@ -2116,7 +2512,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Blue Ashva Varenya Account",
      "tab": "Private Investments",
      "row": 65,
-     "dates": "45889",
+     "dates": {
+      "from": "2025-08-20",
+      "to": "2025-08-20",
+      "precision": "day",
+      "printed": "45889",
+      "text": "20 Aug 2025"
+     },
      "invested": 200000,
      "paidIn": null,
      "paidBack": null,
@@ -2151,7 +2553,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "EDUGORILLA COMMUNITY PRIVATE LIMITED",
      "tab": "Private Investments",
      "row": 66,
-     "dates": "45889",
+     "dates": {
+      "from": "2025-08-20",
+      "to": "2025-08-20",
+      "precision": "day",
+      "printed": "45889",
+      "text": "20 Aug 2025"
+     },
      "invested": 21971252.67,
      "paidIn": null,
      "paidBack": null,
@@ -2177,7 +2585,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Onix Renewable",
      "tab": "Private Investments",
      "row": 67,
-     "dates": "45689",
+     "dates": {
+      "from": "2025-02-01",
+      "to": "2025-02-01",
+      "precision": "day",
+      "printed": "45689",
+      "text": "1 Feb 2025"
+     },
      "invested": 50000000,
      "paidIn": null,
      "paidBack": null,
@@ -2220,7 +2634,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "M/S Grand Continent Hotels",
      "tab": "Private Investments",
      "row": 24,
-     "dates": "Feb 24 - Mar 24",
+     "dates": {
+      "from": "2024-02",
+      "to": "2024-03",
+      "precision": "month",
+      "printed": "Feb 24 - Mar 24",
+      "text": "Feb 2024 – Mar 2024"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2260,7 +2680,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Parth Electrical & Engineering",
      "tab": "Private Investments",
      "row": 58,
-     "dates": "45763",
+     "dates": {
+      "from": "2025-04-16",
+      "to": "2025-04-16",
+      "precision": "day",
+      "printed": "45763",
+      "text": "16 Apr 2025"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2300,7 +2726,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Fractual Analytics",
      "tab": "Private Investments",
      "row": 59,
-     "dates": "45845",
+     "dates": {
+      "from": "2025-07-07",
+      "to": "2025-07-07",
+      "precision": "day",
+      "printed": "45845",
+      "text": "7 Jul 2025"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2340,7 +2772,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Clean Max Solar",
      "tab": "Private Investments",
      "row": 68,
-     "dates": "46060",
+     "dates": {
+      "from": "2026-02-07",
+      "to": "2026-02-07",
+      "precision": "day",
+      "printed": "46060",
+      "text": "7 Feb 2026"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2388,7 +2826,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Vecino Fitness Pvt Ltd - DOPAMINE",
      "tab": "Private Investments",
      "row": 69,
-     "dates": "45001",
+     "dates": {
+      "from": "2023-03-16",
+      "to": "2023-03-16",
+      "precision": "day",
+      "printed": "45001",
+      "text": "16 Mar 2023"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2414,7 +2858,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "BETR Tech Privated Limited - Venture Catalyst",
      "tab": "Private Investments",
      "row": 70,
-     "dates": "Dec 20 - Jun 21",
+     "dates": {
+      "from": "2020-12",
+      "to": "2021-06",
+      "precision": "month",
+      "printed": "Dec 20 - Jun 21",
+      "text": "Dec 2020 – Jun 2021"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2440,7 +2890,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Bitcipher LLP",
      "tab": "Private Investments",
      "row": 71,
-     "dates": "Feb 21 - Jun 22",
+     "dates": {
+      "from": "2021-02",
+      "to": "2022-06",
+      "precision": "month",
+      "printed": "Feb 21 - Jun 22",
+      "text": "Feb 2021 – Jun 2022"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2466,7 +2922,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Cheelizza - ANIMESH LODHA",
      "tab": "Private Investments",
      "row": 72,
-     "dates": "44780",
+     "dates": {
+      "from": "2022-08-07",
+      "to": "2022-08-07",
+      "precision": "day",
+      "printed": "44780",
+      "text": "7 Aug 2022"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2501,7 +2963,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Crypto",
      "tab": "Private Investments",
      "row": 73,
-     "dates": "Feb 21 - Nov 22",
+     "dates": {
+      "from": "2021-02",
+      "to": "2022-11",
+      "precision": "month",
+      "printed": "Feb 21 - Nov 22",
+      "text": "Feb 2021 – Nov 2022"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2527,7 +2995,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Crypto Matic",
      "tab": "Private Investments",
      "row": 74,
-     "dates": "44256",
+     "dates": {
+      "from": "2021-03-01",
+      "to": "2021-03-01",
+      "precision": "day",
+      "printed": "44256",
+      "text": "1 Mar 2021"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2553,7 +3027,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "DCX Deposits",
      "tab": "Private Investments",
      "row": 75,
-     "dates": "Mar 21 - May 21",
+     "dates": {
+      "from": "2021-03",
+      "to": "2021-05",
+      "precision": "month",
+      "printed": "Mar 21 - May 21",
+      "text": "Mar 2021 – May 2021"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2579,7 +3059,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Falconbrick Technologies Private Limited - Shashi Kiran",
      "tab": "Private Investments",
      "row": 76,
-     "dates": "43860",
+     "dates": {
+      "from": "2020-01-30",
+      "to": "2020-01-30",
+      "precision": "day",
+      "printed": "43860",
+      "text": "30 Jan 2020"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2605,7 +3091,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Moneyclub Technologies Private Limited - Venture Catalyst",
      "tab": "Private Investments",
      "row": 77,
-     "dates": "44064",
+     "dates": {
+      "from": "2020-08-21",
+      "to": "2020-08-21",
+      "precision": "day",
+      "printed": "44064",
+      "text": "21 Aug 2020"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2631,7 +3123,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Neblio Technologies Pvt Ltd",
      "tab": "Private Investments",
      "row": 78,
-     "dates": "Dec 21 - Jan 22",
+     "dates": {
+      "from": "2021-12",
+      "to": "2022-01",
+      "precision": "month",
+      "printed": "Dec 21 - Jan 22",
+      "text": "Dec 2021 – Jan 2022"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2657,7 +3155,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "One Eight Technologies Private Limited - Ram",
      "tab": "Private Investments",
      "row": 79,
-     "dates": "44131",
+     "dates": {
+      "from": "2020-10-27",
+      "to": "2020-10-27",
+      "precision": "day",
+      "printed": "44131",
+      "text": "27 Oct 2020"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2683,7 +3187,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Reflexical",
      "tab": "Private Investments",
      "row": 80,
-     "dates": "44757",
+     "dates": {
+      "from": "2022-07-15",
+      "to": "2022-07-15",
+      "precision": "day",
+      "printed": "44757",
+      "text": "15 Jul 2022"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2709,7 +3219,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Tamasha - Angel List",
      "tab": "Private Investments",
      "row": 81,
-     "dates": "44063",
+     "dates": {
+      "from": "2020-08-20",
+      "to": "2020-08-20",
+      "precision": "day",
+      "printed": "44063",
+      "text": "20 Aug 2020"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2735,7 +3251,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "UE Lifesciences - SHIKHA JAISINGHANI",
      "tab": "Private Investments",
      "row": 82,
-     "dates": "44560",
+     "dates": {
+      "from": "2021-12-30",
+      "to": "2021-12-30",
+      "precision": "day",
+      "printed": "44560",
+      "text": "30 Dec 2021"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2761,7 +3283,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Wazir",
      "tab": "Private Investments",
      "row": 83,
-     "dates": "44285",
+     "dates": {
+      "from": "2021-03-30",
+      "to": "2021-03-30",
+      "precision": "day",
+      "printed": "44285",
+      "text": "30 Mar 2021"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2787,7 +3315,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Zaamo E Commerce Pvt Ltd - PRADEEP KUMAR",
      "tab": "Private Investments",
      "row": 84,
-     "dates": "44868",
+     "dates": {
+      "from": "2022-11-03",
+      "to": "2022-11-03",
+      "precision": "day",
+      "printed": "44868",
+      "text": "3 Nov 2022"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2813,7 +3347,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "AL Trust - Forbidden Foods - BRB",
      "tab": "Private Investments",
      "row": 85,
-     "dates": "43752",
+     "dates": {
+      "from": "2019-10-14",
+      "to": "2019-10-14",
+      "precision": "day",
+      "printed": "43752",
+      "text": "14 Oct 2019"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2839,7 +3379,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Faraway Foods Private Limited",
      "tab": "Private Investments",
      "row": 86,
-     "dates": "Sep 19 - Aug 20",
+     "dates": {
+      "from": "2019-09",
+      "to": "2020-08",
+      "precision": "month",
+      "printed": "Sep 19 - Aug 20",
+      "text": "Sep 2019 – Aug 2020"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2865,7 +3411,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Kylo Edutech Private Ltd",
      "tab": "Private Investments",
      "row": 87,
-     "dates": "44287",
+     "dates": {
+      "from": "2021-04-01",
+      "to": "2021-04-01",
+      "precision": "day",
+      "printed": "44287",
+      "text": "1 Apr 2021"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2891,7 +3443,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Rang Technovations LLP",
      "tab": "Private Investments",
      "row": 88,
-     "dates": "43699",
+     "dates": {
+      "from": "2019-08-22",
+      "to": "2019-08-22",
+      "precision": "day",
+      "printed": "43699",
+      "text": "22 Aug 2019"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2917,7 +3475,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Synergistic Financial Networks Pvt Ltd (Equity Shares) - MOSAMBEE",
      "tab": "Private Investments",
      "row": 89,
-     "dates": "Nov 12 - Sep 18",
+     "dates": {
+      "from": "2012-11",
+      "to": "2018-09",
+      "precision": "month",
+      "printed": "Nov 12 - Sep 18",
+      "text": "Nov 2012 – Sep 2018"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2943,7 +3507,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "Transigo OPC Pvt Ltd",
      "tab": "Private Investments",
      "row": 90,
-     "dates": "Mar 20 - Jun 20",
+     "dates": {
+      "from": "2020-03",
+      "to": "2020-06",
+      "precision": "month",
+      "printed": "Mar 20 - Jun 20",
+      "text": "Mar 2020 – Jun 2020"
+     },
      "invested": null,
      "paidIn": null,
      "paidBack": null,
@@ -2977,7 +3547,13 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
      "name": "15% K M Global - Credit Private Limited",
      "tab": "Debt",
      "row": 11,
-     "dates": "Sept 20 - March 24",
+     "dates": {
+      "from": "2020-09",
+      "to": "2024-03",
+      "precision": "month",
+      "printed": "Sept 20 - March 24",
+      "text": "Sep 2020 – Mar 2024"
+     },
      "invested": 7000149.8,
      "paidIn": 7000149.8,
      "paidBack": 0,

@@ -187,5 +187,53 @@ console.log("\n8. The review's own inconsistencies are listed, each short on its
     mismatched.map((r) => r.name).join(", "));
 }
 
+console.log("\n9. Every line's date is its own review cell's, written out as a date");
+{
+  // The tab once printed "45631" under Integris — an Excel serial, which is
+  // 5 Dec 2024. Each line is held to the date cell on the review row it names,
+  // the column found by its HEADER scanning up from the line, and formatted
+  // here a second way. A month range is the review's own words; it is written
+  // out too, so "Sept 20" cannot read as the 20th of September.
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const HEAD = /date investment range|investment date range/i;
+  const bad: string[] = [];
+  let serials = 0, months = 0;
+  for (const r of rows) {
+    const ws = sheet(r.tab);
+    const at = (row: number, c: number) => ws[XLSX.utils.encode_cell({ r: row - 1, c })]?.v;
+    let col = -1;
+    for (let row = r.row - 1; row >= 1 && col < 0; row--) for (let c = 0; c < 30; c++) if (HEAD.test(String(at(row, c) ?? ""))) { col = c; break; }
+    if (col < 0) { bad.push(`${r.name}: no date column above row ${r.row}`); continue; }
+    const v = at(r.row, col);
+    if (v === undefined || v === null || String(v).trim() === "") { if (r.dates !== null) bad.push(`${r.name}: a date the review does not print`); continue; }
+    if (typeof v === "number") {
+      serials++;
+      const t = new Date(Date.UTC(1899, 11, 30) + v * 864e5);
+      const iso = t.toISOString().slice(0, 10);
+      const text = `${t.getUTCDate()} ${MON[t.getUTCMonth()]} ${t.getUTCFullYear()}`;
+      if (r.dates?.precision !== "day" || r.dates.from !== iso || r.dates.to !== iso || r.dates.text !== text)
+        bad.push(`${r.name}: cell ${v} is ${text}, the tab says ${JSON.stringify(r.dates)}`);
+      continue;
+    }
+    const toks = [...String(v).matchAll(/([a-z]{3,})[\s'-]*(\d{2,4})/gi)];
+    const m = (tk: RegExpMatchArray) => {
+      const i = MON.findIndex((x) => x.toLowerCase() === tk[1].slice(0, 3).toLowerCase());
+      return i < 0 ? null : { ym: `${tk[2].length === 2 ? `20${tk[2]}` : tk[2]}-${String(i + 1).padStart(2, "0")}`, text: `${MON[i]} ${tk[2].length === 2 ? `20${tk[2]}` : tk[2]}` };
+    };
+    const a = toks.length ? m(toks[0]) : null, b = toks.length ? m(toks[toks.length - 1]) : null;
+    if (!a || !b) { if (r.dates?.text !== String(v).trim()) bad.push(`${r.name}: an unread cell "${v}" is not shown as printed`); continue; }
+    months++;
+    const text = a.text === b.text ? a.text : `${a.text} – ${b.text}`;
+    if (r.dates?.precision !== "month" || r.dates.from !== a.ym || r.dates.to !== b.ym || r.dates.text !== text || r.dates.printed !== String(v).replace(/\s+/g, " ").trim())
+      bad.push(`${r.name}: "${v}" is ${text}, the tab says ${JSON.stringify(r.dates)}`);
+  }
+  ok("every line's date is the date its own review cell holds", bad.length === 0, bad.slice(0, 3).join("; "));
+  ok("no line prints a bare number where a date belongs", rows.every((r) => !r.dates || !/\d{5}/.test(r.dates.text)),
+    rows.filter((r) => r.dates && /\d{5}/.test(r.dates.text)).map((r) => r.name).slice(0, 3).join(", "));
+  // LOAD-BEARING: the workbook keeps most single dates as serials, so the defect
+  // this section exists for has a subject on this book.
+  ok("the workbook stores dates as serials, so the conversion is exercised", serials > 0 && months > 0, `${serials} serials, ${months} month ranges`);
+}
+
 if (fails) { console.log(`\n${fails} FAILED`); process.exit(1); }
 console.log("\nall review-tab checks passed");

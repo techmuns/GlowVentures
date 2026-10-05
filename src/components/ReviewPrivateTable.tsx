@@ -116,9 +116,10 @@ export function ReviewPrivateTable({ money, moneyFull }: {
   const lineRow = (r: ReviewRow, i: number, n: number) => {
     const k = kindOf(r);
     const days = daysOf(r);
-    const subBits = [`${r.tab} row ${r.row}`, r.dates].filter(Boolean).join(" · ");
+    const subBits = [`${r.tab} row ${r.row}`, r.dates?.text].filter(Boolean).join(" · ");
     const hint = [
       `The review's ${r.tab} tab, row ${r.row}, as on ${asOf}.`,
+      r.dates?.precision === "month" ? `Invested ${r.dates.text}: the review prints "${r.dates.printed}".` : r.dates ? `Invested ${r.dates.text}.` : null,
       r.valuedAsOf ? `The review: "${r.valuedAsOf}".` : null,
       r.remark ? `Remark: ${r.remark}.` : null,
       r.benchmark ? `Benchmark: ${r.benchmark}.` : null,
@@ -145,7 +146,7 @@ export function ReviewPrivateTable({ money, moneyFull }: {
     }
     return (
       <Tr key={r.key} view={view} className={TREE_ROW.child} data-review-row={r.key} data-review-kind={k}
-        data-review-tab={r.tab} data-review-basis={r.retBasis ?? undefined}
+        data-review-tab={r.tab} data-review-xlrow={r.row} data-review-dates={r.dates?.text ?? ""} data-review-basis={r.retBasis ?? undefined}
         data-review-invested={r.invested ?? undefined} data-review-value={r.value ?? undefined}
         data-review-paidin={r.paidIn ?? undefined} data-review-paidback={r.paidBack ?? undefined}
         data-review-gain={r.gain ?? undefined} data-review-ret={r.ret ?? undefined} data-review-ret-printed={r.reviewRet ?? undefined}

@@ -23,13 +23,27 @@ export interface ReviewStatement {
   valued: boolean;
 }
 
+export interface ReviewDates {
+  from: string | null;
+  to: string | null;
+  precision: "day" | "month" | "unread";
+  printed: string;
+  text: string;
+}
+
 export interface ReviewRow {
   key: string;
   name: string;
   /** The review tab the line is printed on. */
   tab: string;
   row: number;
-  dates: string | null;
+  /**
+   * The review's "Date Investment Range" cell: the day or the months it names, as
+   * ISO, and `text`, the one form the page and the report print. `printed` is the
+   * cell as the workbook carries it, whitespace collapsed — a single date is an
+   * Excel serial there.
+   */
+  dates: ReviewDates | null;
   /** The review's own "Investment at Cost". */
   invested: number | null;
   /** What the review's own dated rows say was paid in — Transactions since inception. */
