@@ -1,4 +1,5 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useSyncExternalStore } from "react";
+import { deploymentChanged, subscribeToDeployment } from "@/lib/deploymentVersion";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { BOOK_POLYCAB } from "@/data/glowData";
 import { Sidebar } from "@/components/Sidebar";
@@ -73,6 +74,14 @@ function StockRoute() {
 }
 
 export default function App() {
+  const updated = useSyncExternalStore(subscribeToDeployment, deploymentChanged);
+  if (updated) return <div role="alert" className="flex h-full items-center justify-center bg-ink-950 p-6 text-slate-200">
+    <div className="max-w-md rounded-lg border border-ink-700 bg-ink-900 p-6">
+      <h1 className="text-lg font-semibold">A new dashboard version is ready</h1>
+      <p className="mt-2 text-sm text-slate-400">Reload to continue with the latest portfolio data. Your saved preferences will be kept.</p>
+      <button type="button" onClick={() => window.location.reload()} className="mt-4 rounded bg-champagne-500 px-4 py-2 text-sm font-semibold text-ink-950">Reload dashboard</button>
+    </div>
+  </div>;
   return (
     <div className="flex h-full bg-ink-950 text-slate-200 bg-grid">
       <Sidebar />

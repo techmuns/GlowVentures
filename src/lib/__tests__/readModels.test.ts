@@ -26,5 +26,14 @@ assert.equal(await L.loadIncome(), null);
 offline = false;
 assert.deepEqual(await L.loadIncome(), wire(await expected.loadIncome()), 'failed reads can recover on a later visit');
 for (const key of new Set(BOOK_POSITIONS.map(p => p.securityKey))) assert.deepEqual(await L.loadStockLedger(key), wire(await expected.loadStockLedger(key)));
+for (const key of new Set((await expected.loadArchive()).flatMap(d => (d.income ?? []).map(r => r.securityKey)))) {
+  assert.ok(manifest.stockKeys.includes(key), 'income-only links have prepared views');
+  assert.deepEqual(await L.loadStockLedger(key), wire(await expected.loadStockLedger(key)));
+}
+const beforeEmpty = calls;
+offline = true;
+assert.deepEqual(await L.loadStockLedger('fund-only-regression-company'), wire(await expected.loadStockLedger('fund-only-regression-company')));
+assert.equal(calls, beforeEmpty, 'the complete build manifest proves an absent key has no ledger; no missing-file request');
+offline = false;
 assert.equal(await L.loadStockLedger('../private'), null);
 console.log('PASS prepared ledger views equal canonical source derivations and book totals; deduped reads, failure recovery and exact per-stock views');

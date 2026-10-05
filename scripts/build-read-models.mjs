@@ -16,8 +16,9 @@ put('ledger/transactions.json', model.deriveTransactions(docs));
 put('ledger/lots.json', model.deriveRealisedLots(docs));
 put('ledger/income.json', model.deriveIncome(docs));
 put('ledger/sales.json', model.deriveSales(docs));
-const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
-for (const key of [...keys].filter(Boolean).sort()) {
+const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings','income'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
+const stockKeys = [...keys].filter(Boolean).sort();
+for (const key of stockKeys) {
   if (!/^[a-z0-9-]+$/.test(key)) throw new Error(`Invalid security key: ${key}`);
   put(`ledger/stocks/${key}.json`, model.deriveStockLedger(docs, key));
 }
@@ -34,5 +35,7 @@ for (const [name, body] of outputs) {
   await fs.mkdir(path.dirname(file), { recursive: true });
   await fs.writeFile(file, body + '\n');
 }
-await fs.writeFile(path.join(root, 'src/data/readModels.json'), JSON.stringify({ revision }) + '\n');
+// Keys absent from this complete archive have a valid empty ledger, including
+// companies held only through funds. A missing file for a listed key is an outage.
+await fs.writeFile(path.join(root, 'src/data/readModels.json'), JSON.stringify({ revision, stockKeys, emptyLedger: model.deriveStockLedger(docs, '') }) + '\n');
 console.log(`Prepared ${docs.length} statements into ${outputs.size} views (${revision}); ledger views ${[...outputs].filter(([n])=>/^ledger\/[^/]+\.json$/.test(n)).map(([n,b])=>`${n}: ${Buffer.byteLength(b)} B`).join(', ')}`);

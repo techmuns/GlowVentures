@@ -1,6 +1,7 @@
 import type { HeldFund, StockExposure, StockExposureState } from "./lookthrough";
 import { requestDeadline } from "./requestDeadline";
 import manifest from "../data/readModels.json";
+import { markDeploymentChanged } from "./deploymentVersion";
 
 // Tab switches and unrelated quote ticks reuse the exact valuation request.
 // Keep a small bounded session cache; source files are tied to the build revision.
@@ -15,6 +16,13 @@ export function fetchStockExposure(funds: HeldFund[], identities: ReadonlyMap<st
       const deadline = requestDeadline(15_000);
       try {
         const response = await fetch("/api/stock-exposure", { method: "POST", headers: { "Content-Type": "application/json" }, body, signal: deadline.signal });
+        if (response.status === 409) {
+          const data = await response.json();
+          if (data.status === "revision_changed") {
+            markDeploymentChanged();
+            return { status: "loading" }; // App presents the reload prompt immediately.
+          }
+        }
         if (!response.ok) return { status: "unreachable" };
         const data = await response.json();
         if (data.status !== "ok" || !Array.isArray(data.byKey)) return { status: "unreachable" };
