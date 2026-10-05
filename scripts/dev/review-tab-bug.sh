@@ -47,8 +47,17 @@ WANT="${CASES:-}"
 
 put_back() { for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; }
 
+# A SWEEP THAT PRINTS NO TALLY TESTED NOTHING. With the preview down every line
+# the filter keeps is missing, so the case reads as blank rather than as a
+# failure — which is how one run here "passed" case 12 against no server at all.
 sweep() {
-  ONLY="$1" npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | grep -v 'NOT CHECKED' | sed 's/^/   /'
+  local out; out=$(ONLY="$1" npm run check:pages 2>&1)
+  if ! printf '%s\n' "$out" | grep -qE '^(✓|✗) [0-9]+( of [0-9]+)? route/theme/width combination'; then
+    echo "   NOT A RESULT — the sweep printed no tally (is ${BASE:-http://127.0.0.1:4173} up?)"
+    printf '%s\n' "$out" | tail -3 | sed 's/^/   | /'
+    return
+  fi
+  printf '%s\n' "$out" | grep -E 'INVARIANT|^✓|^✗' | grep -v 'NOT CHECKED' | sed 's/^/   /'
 }
 
 # The review suite on its own, bundled exactly as `test:family` bundles it.
