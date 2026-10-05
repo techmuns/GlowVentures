@@ -639,6 +639,20 @@ export function MandateHoldings() {
     pnl: (r) => r.unrealizedPnL,
   });
   const hidden = rows.length - shown.length;
+  /**
+   * A MANDATE WITH NO HOLDING STATEMENT IS NOT A MANDATE HOLDING NOTHING
+   * (Stage 10df). Marathon's two accounts sent a capital-gain statement, a
+   * dividend statement, a transaction statement and an income-and-expense
+   * account — and no holding statement — so nothing in the drop says what they
+   * hold or what they are worth. This page summed their no rows and printed ₹0
+   * as the value, "0 holdings", and a Statement total of ₹0: a measurement of
+   * nothing, which reads as "this mandate is empty". The account's own
+   * `noPositionsReason` says why there are no rows, and every figure that would
+   * be struck over them is absent with it. A redeemed mandate is the opposite
+   * case — it HAS rows, at a measured ₹0 — and keeps its zero.
+   */
+  const noHoldingStatement = rows.length === 0 && !!account.noPositionsReason;
+  const NO_HOLDING_STATEMENT = "no holding statement in this drop";
 
   return (
     <div>
@@ -670,7 +684,7 @@ export function MandateHoldings() {
                 ? ` The book's newest statement, ${fmtDate(portfolio.asOf)}, is another account's; this page is dated by its own.` : "";
               const tip = liveN
                 ? `LIVE basis: ${liveN} of ${rows.length} holdings are marked to a live quote now and the rest keep ${account.provider}'s statement mark of ${fmtDate(account.asOf)}. Quantity, cost, realised gains, dividends and cash flows stay exactly as that statement prints them.${other}`
-                : `Every figure on this page is as ${account.provider} printed it on ${fmtDate(account.asOf)}${quotesStatus === "loading" ? " — live prices are still being fetched" : " — no live price reached any of these holdings"}.${other}`;
+                : `Every figure on this page is as ${account.provider} printed it on ${fmtDate(account.asOf)}${rows.length === 0 ? "" : quotesStatus === "loading" ? " — live prices are still being fetched" : " — no live price reached any of these holdings"}.${other}`;
               return (
                 <Pill tone="info">
                   <span title={tip} data-mandate-asof={account.asOf} data-mandate-basis={liveN ? "live" : "statement"}>
@@ -682,23 +696,36 @@ export function MandateHoldings() {
             {account.engagement && <Pill>{account.providerEngagement || account.engagement}</Pill>}
           </div>
         </div>
-        <div className="text-right">
-          <div className="font-display text-2xl font-bold tabular text-slate-100">{money(mv)}</div>
-          <div className="mt-0.5 text-[10.5px] text-slate-500">
-            {rows.length} holdings the manager runs — shares and the cash sleeve
+        <div className="text-right" data-mandate-headline={noHoldingStatement ? "absent" : String(mv)}>
+          <div className="font-display text-2xl font-bold tabular text-slate-100">
+            {noHoldingStatement ? <AbsentValue /> : money(mv)}
           </div>
+          {noHoldingStatement ? (
+            <div className="mt-0.5 text-[10.5px] text-slate-500" title={account.noPositionsReason ?? undefined}
+              data-mandate-no-holdings>
+              No holding statement in this drop
+            </div>
+          ) : (
+            <div className="mt-0.5 text-[10.5px] text-slate-500">
+              {rows.length} holdings the manager runs — shares and the cash sleeve
+            </div>
+          )}
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Kpi label="Market value"
-          value={money(mv)}
-          sub={`${shares.length} company shares · ${sleeve.length} cash ${sleeve.length === 1 ? "line" : "lines"}${other ? ` · ${other} other` : ""}`}
+          value={noHoldingStatement ? <AbsentValue /> : money(mv)}
+          sub={noHoldingStatement
+            ? <span className="text-slate-500" title={account.noPositionsReason ?? undefined}>{NO_HOLDING_STATEMENT}</span>
+            : `${shares.length} company shares · ${sleeve.length} cash ${sleeve.length === 1 ? "line" : "lines"}${other ? ` · ${other} other` : ""}`}
           icon={<Wallet className="h-4 w-4" />} />
         <Kpi label="Invested"
           value={cost === null ? <AbsentValue /> : money(cost)}
-          sub={<span title={fundedWhy}>
-            {cost === null
+          sub={<span title={noHoldingStatement ? account.noPositionsReason ?? undefined : fundedWhy}>
+            {noHoldingStatement
+              ? <span className="text-slate-500">{NO_HOLDING_STATEMENT}</span>
+              : cost === null
               ? <span className="text-slate-500">no row on this statement reports a cost</span>
               : noCost
                 ? <span className="text-slate-500">cost in · {noCost} of {rows.length} rows report none and are skipped</span>
@@ -706,9 +733,11 @@ export function MandateHoldings() {
             {/* THE DATE, AND ITS ABSENCE IS NAMED RATHER THAN LEFT BLANK — a
                 tile that simply stops mentioning when tells a reader nothing
                 about whether to go and find the document. */}
-            <span className="text-slate-500">
-              {" · "}{fundedNote ?? "no statement dates what was paid in"}
-            </span>
+            {!noHoldingStatement && (
+              <span className="text-slate-500">
+                {" · "}{fundedNote ?? "no statement dates what was paid in"}
+              </span>
+            )}
             {reconcile && (
               <span className="block text-slate-500" data-mandate-invested-reconcile
                 data-paid-in={reconcile.paidIn} data-taken-out={reconcile.takenOut} data-realised={reconcile.realised}
@@ -720,7 +749,9 @@ export function MandateHoldings() {
           icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{money(pnl, true)}</span>}
-          sub={pnl === null ? <span className="text-slate-500">needs a cost this statement does not print</span> : "on the shares held now"}
+          sub={noHoldingStatement
+            ? <span className="text-slate-500" title={account.noPositionsReason ?? undefined}>{NO_HOLDING_STATEMENT}</span>
+            : pnl === null ? <span className="text-slate-500">needs a cost this statement does not print</span> : "on the shares held now"}
           icon={<TrendingUp className="h-4 w-4" />} />
         {/* FIFO'S RETURN, IN A TILE OF ITS OWN — never as the P&L tile's
             delta, where it read as unrealised ÷ cost and left out every gain
@@ -728,18 +759,35 @@ export function MandateHoldings() {
         <Kpi label="Return · FIFO"
           value={ret === null ? <AbsentValue /> : <span className={changeColor(ret)} data-mandate-fifo-return={ret}>{fmtPct(ret, { sign: true })}</span>}
           sub={ret === null
-            ? <span className="text-slate-500">no cost or capital on this statement to measure against</span>
+            ? noHoldingStatement
+              ? <span className="text-slate-500" title={`${account.noPositionsReason ?? ""} A return needs what the account is worth now, and no statement in this drop says.`.trim()}>{NO_HOLDING_STATEMENT}</span>
+              : <span className="text-slate-500">no cost or capital on this statement to measure against</span>
             : <span title={fifoBasisNote(fifo, (n) => money(n))}>
                 {fifo.wholeMandates.length && account?.capital
                   ? <>realised {money(fifo.realised, true)} · on {money(account.capital.contributed)} paid in since {fmtDate(account.capital.from)}</>
                   : <>realised {money(fifo.realised ?? 0, true)} · on {money(fifo.deployed)} deployed</>}
               </span>}
           icon={<Percent className="h-4 w-4" />} />
-        <Kpi label="Holdings" value={fmtNum(rows.length)}
-          sub={`in one mandate · ${MANDATE_BUCKET}`}
+        <Kpi label="Holdings" value={noHoldingStatement ? <AbsentValue /> : fmtNum(rows.length)}
+          sub={noHoldingStatement
+            ? <span className="text-slate-500" title={account.noPositionsReason ?? undefined}>{NO_HOLDING_STATEMENT}</span>
+            : `in one mandate · ${MANDATE_BUCKET}`}
           icon={<Layers className="h-4 w-4" />} />
       </div>
 
+      {noHoldingStatement ? (
+        /* NO TABLE, AND NO STATEMENT TOTAL: there is no statement to total.
+           An empty table under a "Total ₹0" footer is the measured-zero look
+           this account must not have. */
+        <Card className="mt-5" title="What the manager holds">
+          <div data-mandate-no-holdings-card>
+            <AbsentSection
+              what={`${account.provider} sent no holding statement for account ${account.accountNo}`}
+              needs={account.noPositionsReason ?? ""}
+            />
+          </div>
+        </Card>
+      ) : (
       <Card className="mt-5" pad={false}
         title="What the manager holds"
         subtitle={`As ${account.provider} printed it on ${fmtDate(account.asOf)}. Every constituent of this mandate — the shares the manager chose and the cash it is holding back. Weight is within this mandate, not within the book.`}
@@ -892,6 +940,7 @@ export function MandateHoldings() {
           )}
         </div>
       </Card>
+      )}
 
       {/* THE TWO RECORDS, SIDE BY SIDE AND NEVER CONFLATED: what the family
           paid in, then what the manager did with it. */}

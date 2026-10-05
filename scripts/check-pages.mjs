@@ -5905,6 +5905,47 @@ const FIFO_STOCK = (() => {
 })();
 
 /**
+ * A HOLDING REDEEMED TO NIL, WHOSE WHOLE GAIN IS REALISED (Stage 10df) —
+ * derived, never typed.
+ *
+ * Its cost held is ₹0 and every unit's cost is in the cost of units sold, so
+ * FIFO's return is realised ÷ that cost. The page divided only where the cost
+ * HELD was above zero — a guard written before FIFO — so the ASK Absolute
+ * Return Fund (+3.59% on ₹38.8 Cr) and 3P Class B3 (+8.98% on ₹28.5 Cr) read
+ * a dash. This picks the one with the most cost sold, so a holding two accounts
+ * report wins and the Total row is drawn. Re-expressed, never imported.
+ */
+const REDEEMED_STOCK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const num = (x) => typeof x === "number" && Number.isFinite(x);
+    const byKey = new Map();
+    for (const p of positions) {
+      if (!byKey.has(p.securityKey)) byKey.set(p.securityKey, []);
+      byKey.get(p.securityKey).push(p);
+    }
+    const shown = (x) => `${x > 0 ? "▲" : x < 0 ? "▼" : "■"}${Math.abs(x).toFixed(1)}`;
+    let best = null;
+    for (const [key, rows] of byKey) {
+      if (!rows.every((r) => r.marketValue === 0 && r.costBasis === 0)) continue;
+      const seen = new Set();
+      let realised = 0, sold = 0, accounts = 0;
+      for (const r of rows) {
+        if (r.dedupeGroup) { if (seen.has(r.dedupeGroup)) continue; seen.add(r.dedupeGroup); }
+        realised += num(r.realizedPnL) ? r.realizedPnL : 0;
+        sold += num(r.costOfUnitsSold) ? r.costOfUnitsSold : 0;
+        accounts += 1;
+      }
+      if (!(sold > 0)) continue;
+      const fifo = (realised / sold) * 100;
+      if (!best || sold > best.sold) best = { key, fifo, fifoShown: shown(fifo), sold, accounts };
+    }
+    return best;
+  } catch { return null; }
+})();
+
+/**
  * The rupee figures in a rendered string, as NUMBERS.
  *
  * COMPARED NUMERICALLY AND NEVER AS DIGIT STRINGS, which the first draft of
@@ -7255,6 +7296,10 @@ const ROUTES = [
   // THE MANDATE WHERE FIFO AND THE SURVIVORS-ONLY RETURN DIFFER MOST — see
   // `FIFO_BOOK`. Derived from the book, never typed.
   ["mandate-fifo", () => (FIFO_BOOK?.worst ? `/mandate/${encodeURIComponent(FIFO_BOOK.worst.accountId)}` : "/mandate/none-resolved-from-the-book")],
+  // A MANDATE THAT HOLDS NOTHING TODAY, and one whose manager sent no holding
+  // statement (Stage 10df) — see `CLOSED_MANDATE_BOOK`. Derived from the book.
+  ["mandate-closed", () => (CLOSED_MANDATE_BOOK?.closed ? `/mandate/${encodeURIComponent(CLOSED_MANDATE_BOOK.closed.accountId)}` : "/mandate/none-resolved-from-the-book")],
+  ["mandate-no-statement", () => (CLOSED_MANDATE_BOOK?.noStatement ? `/mandate/${encodeURIComponent(CLOSED_MANDATE_BOOK.noStatement.accountId)}` : "/mandate/none-resolved-from-the-book")],
   // A MANDATE WHOSE ACCOUNT ISSUES A CAPITAL GAIN STATEMENT, and whose manager
   // both bought a line without selling it and sold one without buying (DSM-C10,
   // DSM-D8) — the case the "no capital gain statement covers this account"
@@ -7549,6 +7594,9 @@ const ROUTES = [
   // cost (`FIFO_STOCK`) — the one place a return struck on the survivors alone
   // prints a different figure from FIFO's (Stage 10ca).
   ["stock-fifo", () => (FIFO_STOCK ? `/stock/${encodeURIComponent(FIFO_STOCK.key)}` : "/stock/no-holding-with-units-sold-in-the-book")],
+  // A HOLDING REDEEMED TO NIL (`REDEEMED_STOCK`, Stage 10df): its return is
+  // realised over the cost of the units sold, never a dash.
+  ["stock-redeemed", () => (REDEEMED_STOCK ? `/stock/${encodeURIComponent(REDEEMED_STOCK.key)}` : "/stock/no-redeemed-holding-in-the-book")],
   // The holding whose statements mark it at figures the page renders
   // differently — where the headline must refuse rather than print one of
   // them. Derived (`CMP_BOOK`), so the next drop picks its own worst case; an
@@ -11263,6 +11311,53 @@ const FIFO_BOOK = (() => {
       if (survivors !== null && (!worst || Math.abs(capitalRet - survivors) > Math.abs(worst.capitalRet - worst.survivors))) worst = row;
     }
     return { byAccountNo, worst, contributedOf };
+  } catch { return null; }
+})();
+
+/**
+ * ── A MANDATE THAT HOLDS NOTHING TODAY, AND ONE NO STATEMENT VALUES ──────────
+ *
+ * Two September 2026 accounts the FIFO derivation above skips, because it reads
+ * only mandates with a current holding (Stage 10df):
+ *
+ *   • A CLOSED MANDATE — ASK's two accounts. Each sold out, and its statement
+ *     keeps only a bank balance under the ₹1,000 floor, so nothing is a current
+ *     holding. Its return is still FIFO's total on its capital: whatever the
+ *     lots, cost held plus cost sold is what was paid in. The page read 0.00%
+ *     because the whole-mandate test found no current holding to call whole.
+ *     `closed` is the largest such account, by capital paid in.
+ *   • A MANDATE NO STATEMENT VALUES — Marathon's two accounts, whose manager
+ *     sent dated statements and no holding statement. The page read ₹0 for
+ *     market value, invested and P&L, which is a measurement nobody made.
+ *     `noStatement` is the first such account by id.
+ *
+ * Re-derived from `glowData.ts`, never imported from `fifo.ts`.
+ */
+const CLOSED_MANDATE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const small = smallKeysOf(positions);
+    const isCurrent = (p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+      && !small.has(p.securityKey);
+    let closed = null;
+    let noStatement = null;
+    for (const a of [...accounts].sort((x, y) => String(x.accountId).localeCompare(String(y.accountId)))) {
+      if (a.engagement !== "PMS") continue;
+      const raw = positions.filter((p) => p.accountId === a.accountId);
+      if (!raw.length) {
+        if (a.noPositionsReason && !noStatement) noStatement = { accountId: a.accountId, reason: a.noPositionsReason };
+        continue;
+      }
+      if (raw.some(isCurrent) || !a.capital || !(a.capital.contributed > 0)) continue;
+      const mv = raw.reduce((x, p) => x + p.marketValue, 0);
+      const capitalRet = ((mv + a.capital.withdrawn - a.capital.contributed) / a.capital.contributed) * 100;
+      const realised = raw.reduce((x, p) => x + (typeof p.realizedPnL === "number" ? p.realizedPnL : 0), 0);
+      const row = { accountId: a.accountId, capitalRet, realised, contributed: a.capital.contributed };
+      if (!closed || row.contributed > closed.contributed) closed = row;
+    }
+    return { closed, noStatement };
   } catch { return null; }
 })();
 
@@ -31782,6 +31877,58 @@ const INVARIANTS = {
       /on\s+₹[\d.,]+\s*(?:Cr|L)?\s+paid in since/i.test(t)],
   ],
   /**
+   * ── A CLOSED MANDATE'S RETURN IS STILL ITS CAPITAL'S (Stage 10df) ──────────
+   *
+   * ASK sold out and keeps a bank balance under the ₹1,000 floor. The page read
+   * Return · FIFO 0.00% because the whole-mandate test looked for a CURRENT
+   * holding to call whole and found none. The tile must equal the capital
+   * return re-derived here, and must never read zero.
+   */
+  "mandate-closed": [
+    ["the route resolves to a real mandate, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ["the book carries a closed mandate with capital paid in (load-bearing)", () =>
+      !!CLOSED_MANDATE_BOOK?.closed && Math.abs(CLOSED_MANDATE_BOOK.closed.capitalRet) > 1],
+    ["the Return · FIFO tile is the closed mandate's capital return, never 0.00%", (t, ctx) => {
+      const c = CLOSED_MANDATE_BOOK?.closed, s = ctx?.stockM2?.mandateState;
+      if (!c || !s) return false;
+      const printed = pctIn(s.fifoReturnText);
+      return typeof s.fifoReturn === "number" && Math.abs(s.fifoReturn - c.capitalRet) < 1e-6
+        && printed !== null && Math.abs(printed.v - c.capitalRet) <= printed.tie && Math.abs(printed.v) > 0;
+    }],
+    ["…and it names the realised gain and the capital it is struck on", (t) =>
+      /RETURN · FIFO[\s\S]{0,40}realised\s+[+−-]?₹[\d.,]+\s*(?:Cr|L)?\s+·\s+on\s+₹[\d.,]+\s*(?:Cr|L)?\s+paid in since/i.test(t)],
+  ],
+  /**
+   * ── A MANDATE NO STATEMENT VALUES DRAWS NO ₹0 (Stage 10df) ─────────────────
+   *
+   * Marathon sent dated statements and no holding statement, and the page read
+   * ₹0 for its value, invested and P&L. The headline, the tiles and the
+   * holdings card are absences now, each carrying the account's own reason.
+   */
+  "mandate-no-statement": [
+    ["the route resolves to a real mandate, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ["the book carries a mandate with no position and a reason (load-bearing)", () =>
+      !!CLOSED_MANDATE_BOOK?.noStatement?.reason],
+    ["the headline is an absence that names its cause, never ₹0", (t, ctx) => {
+      const s = ctx?.stockM2?.mandateState, want = CLOSED_MANDATE_BOOK?.noStatement?.reason;
+      if (!s || !want) return false;
+      return s.headline === "absent" && !/₹/.test(s.headlineText ?? "")
+        && !!s.noHoldings && /no holding statement/i.test(s.noHoldings.text ?? "") && s.noHoldings.tip === want;
+    }],
+    ["no tile prints ₹0 or 0.00% for what nobody measured", (t) => {
+      const strip = sliceBetween(t, "MARKET VALUE", "What the manager holds") ?? "";
+      return strip.length > 0 && !/₹0(?![\d.,])/.test(strip) && !/[+−-]?0\.00%/.test(strip)
+        && (strip.match(/no holding statement in this drop/gi) ?? []).length >= 5;
+    }],
+    ["the holdings card says no holding statement was sent, with the reason in its hover", (t, ctx) => {
+      const s = ctx?.stockM2?.mandateState, want = CLOSED_MANDATE_BOOK?.noStatement?.reason;
+      return !!s?.card && /sent no holding statement/i.test(s.card.text ?? "")
+        && (s.card.tip ?? "") === String(want ?? "").replace(/\s+/g, " ").trim();
+    }],
+  ],
+  /**
    * ── WHAT THE MANAGER TRADED, EVERY LINE OPEN (DSM-C10, DSM-D8) ───────────
    *
    * A mandate whose account issues a capital gain statement, so no line on it
@@ -32101,6 +32248,31 @@ const INVARIANTS = {
         if (!m || !FIFO_STOCK) return false;
         const sign = m[1] === "-" || m[1] === "−" ? "▼" : Number(m[2]) === 0 ? "■" : "▲";
         return `${sign}${m[2]}` === FIFO_STOCK.fifoShown;
+      }],
+  ],
+  /**
+   * ── A HOLDING REDEEMED TO NIL SHOWS ITS RETURN (Stage 10df) ────────────────
+   *
+   * The whole gain is realised and the cost held is ₹0, so FIFO's return is
+   * realised over the cost of the units sold. The tile and the Total row read
+   * a dash, because the page divided only where the cost held was above zero.
+   */
+  "stock-redeemed": [
+    ...stockTabChecks("position"),
+    ["the book carries a holding redeemed to nil whose sold units have a cost (load-bearing)",
+      () => !!REDEEMED_STOCK && REDEEMED_STOCK.fifo !== 0],
+    ["the Unrealised P&L tile's return is realised over the cost of the units sold",
+      (t, ctx) => {
+        const tile = (ctx.stockPage?.tiles ?? []).find((x) => /unrealised p&l/i.test(x.label));
+        const m = /([▲▼■])\s*(\d+(?:\.\d+)?)%/.exec(tile?.sub ?? "");
+        return !!REDEEMED_STOCK && !!m && `${m[1]}${m[2]}` === REDEEMED_STOCK.fifoShown;
+      }],
+    ["...and so is the Total row's return, where two accounts draw one",
+      (t, ctx) => {
+        if (!REDEEMED_STOCK) return false;
+        if (REDEEMED_STOCK.accounts < 2) return { notChecked: "the holding is in one account, so no Total row is drawn" };
+        const foot = (ctx.heldTable?.feet ?? []).find((f) => f.kind === "measured");
+        return !!foot && typeof foot.ret === "number" && Math.abs(foot.ret - REDEEMED_STOCK.fifo) < 1e-6;
       }],
   ],
   /**
@@ -38893,6 +39065,24 @@ for (const theme of THEMES) {
             const e = document.querySelector("[data-mandate-invested-reconcile]");
             return e ? { paidIn: num(e.getAttribute("data-paid-in")), takenOut: num(e.getAttribute("data-taken-out")),
               realised: num(e.getAttribute("data-realised")), text: txt(e), sub: txt(e.parentElement) } : null;
+          })(),
+          // The mandate page's headline and its Return · FIFO tile, read by
+          // their own handles (Stage 10df): an account no statement values
+          // draws an absence with its reason, never ₹0, and a closed mandate's
+          // return is its capital's.
+          mandateState: (() => {
+            const h = document.querySelector("[data-mandate-headline]");
+            if (!h) return null;
+            const nh = document.querySelector("[data-mandate-no-holdings]");
+            const card = document.querySelector("[data-mandate-no-holdings-card]");
+            const ret = document.querySelector("[data-mandate-fifo-return]");
+            return {
+              headline: h.getAttribute("data-mandate-headline"), headlineText: txt(h),
+              noHoldings: nh ? { text: txt(nh), tip: nh.getAttribute("title") } : null,
+              card: card ? { text: txt(card), tip: card.querySelector("[data-absent-needs]")?.getAttribute("data-absent-needs") ?? null } : null,
+              fifoReturn: ret ? num(ret.getAttribute("data-mandate-fifo-return")) : null,
+              fifoReturnText: ret ? txt(ret) : null,
+            };
           })(),
           // The fund card's NAV: whose it is, and the figure and date it prints.
           ltNav: (() => {

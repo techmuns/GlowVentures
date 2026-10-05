@@ -154,7 +154,28 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
       const cap = a?.capital;
       if (a?.engagement !== "PMS" || !cap || !(cap.contributed > 0)) continue;
       const all = held.filter((p) => p.accountId === acct);
-      if (all.length && all.every((p) => keys.has(p.securityKey))) whole.add(acct);
+      if (all.length) {
+        if (all.every((p) => keys.has(p.securityKey))) whole.add(acct);
+        continue;
+      }
+      /**
+       * A MANDATE THAT HOLDS NOTHING TODAY IS STILL A MANDATE (Stage 10df).
+       * ASK closed both of its accounts and left a bank balance of ₹0.34 and
+       * ₹0.01, which the ₹1,000 floor keeps off every holdings table — so the
+       * test above found nothing held and the account was never whole. Its own
+       * page then struck the return on the 34 paise, 0.00% on ₹0 deployed,
+       * while its capital record says ₹8.5 Cr went in and ₹15.12 Cr came back:
+       * +77.90%, the figure the Transactions card already prints.
+       *
+       * Whole here only where the set IS the account — every row of it, and no
+       * row of any other account. A closed mandate's capital is the answer to
+       * "what did this account earn"; it is not the answer for a set that only
+       * shares a security with it, such as one cash line held in two accounts.
+       */
+      const raw = (universe as Position[]).filter((p) => p.accountId === acct);
+      if (raw.length && set.every((p) => p.accountId === acct) && raw.every((p) => keys.has(p.securityKey))) {
+        whole.add(acct);
+      }
     }
   }
 

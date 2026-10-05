@@ -273,7 +273,17 @@ export function measuredTotals(rows: readonly Position[]): MeasuredTotals {
     uncostedMV,
     pnl,
     avgCost: cost !== null && costedQty > 0 ? cost / costedQty : null,
-    costedReturn: cost !== null && pnl !== null && cost > 0 ? fifo.returnPct : null,
+    /**
+     * NO `cost > 0` GUARD (Stage 10df). It was a division guard from before the
+     * return was FIFO's, and FIFO divides by the capital DEPLOYED — the cost of
+     * the units held plus the cost of the units sold — which `fifoTotals`
+     * already requires to be positive. A holding redeemed to nil holds a cost of
+     * ₹0 and sold units that cost something, so the guard refused exactly the
+     * holdings whose whole gain is realised: the ASK Absolute Return Fund's two
+     * folios (+3.59% on ₹38.8 Cr) and 3P's Class B3 (+8.98% on ₹28.5 Cr) read
+     * a dash on their own pages while the gain sat in the tile beside it.
+     */
+    costedReturn: cost !== null && pnl !== null ? fifo.returnPct : null,
     fifo,
     covers: costCoversSet(mv, uncostedMV),
   };
