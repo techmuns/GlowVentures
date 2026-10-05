@@ -16,9 +16,9 @@
  * needs `GLOW_PDF_PASSWORDS` for eight other statements and is correctly
  * refused without them by `guardAgainstShrinkingTheArchive`.
  *
- * The eighth faithful partial replay, after `rekey:archive`,
+ * The ninth faithful partial replay, after `rekey:archive`,
  * `build-lookthrough --reindex`, `replay:calls`, `replay:movements`,
- * `replay:owners`, `replay:flows` and `replay:demat-holdings`. Like the last
+ * `replay:owners`, `replay:flows`, `replay:dedupe` and `replay:demat-holdings`. Like the last
  * one it reads the PDF rather than `pages.json`, because both readers take a
  * figure from the item it was printed as and `pages.json` keeps only the text.
  * None of the four statements is encrypted.

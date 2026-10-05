@@ -26780,6 +26780,26 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "feeBasis": null
         }
       ]
+    },
+    {
+      "reportType": "portfolio-snap",
+      "source": "buoyant-capital-103472-2026-08-31-portfolio-snap",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 2.09,
+          "m3": 5.87,
+          "m6": null,
+          "y1": 12.02,
+          "si": 10.65,
+          "siAnnualised": true,
+          "feeBasis": "after"
+        }
+      ]
     }
   ],
   "buoyant-capital-103473": [
@@ -26820,6 +26840,26 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "si": 9.65,
           "siAnnualised": true,
           "feeBasis": null
+        }
+      ]
+    },
+    {
+      "reportType": "portfolio-snap",
+      "source": "buoyant-capital-103473-2026-08-31-portfolio-snap",
+      "series": [
+        {
+          "series": "Portfolio",
+          "isBenchmark": false,
+          "mtd": null,
+          "qtd": null,
+          "fytd": null,
+          "m1": 2.09,
+          "m3": 5.87,
+          "m6": null,
+          "y1": 11.56,
+          "si": 10.28,
+          "siAnnualised": true,
+          "feeBasis": "after"
         }
       ]
     }

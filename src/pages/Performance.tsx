@@ -178,6 +178,7 @@ const REPORT_LABEL: Record<string, string> = {
   "investor-report": "SEBI investor report",
   "performance-summary": "Performance summary",
   "appraisal": "Appraisal",
+  "portfolio-snap": "Portfolio snap report",
 };
 const reportLabel = (t: string) => REPORT_LABEL[t] ?? t;
 /** The statement date is the `<asOf>` segment of `<provider>-<accountNo>-<asOf>-<reportType>`. */
