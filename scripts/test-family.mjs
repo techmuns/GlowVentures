@@ -38,6 +38,7 @@ const SUITES = [
   ["account XIRR", "src/lib/__tests__/accountXirr.test.ts"],
   ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["private market table", "src/lib/__tests__/privateBook.test.ts"],
+  ["MOPWM review tab", "src/lib/__tests__/reviewPrivate.test.ts"],
   ["separate investments", "src/lib/__tests__/separateInvestments.test.ts"],
   ["keep unvalued", "src/lib/__tests__/keptUnvalued.test.ts"],
   ["capital calls", "src/lib/__tests__/capitalCalls.test.ts"],

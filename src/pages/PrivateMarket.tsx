@@ -41,6 +41,7 @@ import { callTotals, callHistory } from "@/lib/capitalCalls";
 import { useEnteredCalls, headlineCall, todayIso, CAUSE_WORD } from "@/lib/enteredCalls";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 import { fifoTotals, positionFifoReturn } from "@/lib/fifo";
+import { ReviewPrivateTable } from "@/components/ReviewPrivateTable";
 
 /**
  * WHICH FOUR TILES THE STRIP OPENS ON, and where a reader's own choice is kept.
@@ -209,6 +210,11 @@ const BOOK_VIEWS = [
     key: "transactions", label: "Transactions",
     title: "Every capital call the funds have made, newest first.",
     cardTitle: "Private market — capital calls",
+  },
+  {
+    key: "review", label: "MOPWM review",
+    title: "The family's consolidated review (MOPWM, 30 June 2026): every private-market line as it prints it, at its own figures and mostly at cost. In no total of this book.",
+    cardTitle: "Private market — the consolidated review",
   },
 ] as const;
 
@@ -1786,25 +1792,26 @@ export function PrivateMarket() {
         right={
           <div className="flex flex-wrap items-center justify-end gap-2">
             {tabs}
+            {view !== "review" && (
             <SearchInput value={q} onChange={setQ}
               placeholder={view === "transactions" ? "Search calls…" : view === "owners" ? "Search members or funds…" : "Search funds or members…"}
               className="w-56"
               suggestions={view === "transactions"
                 ? [...new Set(m.history.map((c) => c.fund))]
-                : allGroups.map((g) => g.label)} />
+                : allGroups.map((g) => g.label)} />)}
             {/* THE RETURN PICKER, where the return columns are. The Monitor's own
                 control and its own `?ret=` param, with the hints this page's
                 funds make true (`PM_RETURN_HINTS`) — the Monitor's XIRR hint
                 says the statements carry no per-holding cash flows, which is
                 false of a drawdown fund. */}
-            {view !== "transactions" && (
+            {(view === "funds" || view === "owners") && (
               <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} hints={PM_RETURN_HINTS} source={returnSource} />
             )}
-            {view !== "transactions" && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />}
+            {(view === "funds" || view === "owners") && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />}
           </div>
         }>
 
-        {view !== "transactions" && (
+        {(view === "funds" || view === "owners") && (
           <div className="overflow-x-auto">
             <table className="min-w-full text-[13px]" data-pm-table={view}>
               <thead className="border-b border-ink-700">
@@ -1894,6 +1901,7 @@ export function PrivateMarket() {
           </div>
         )}
 
+        {view === "review" && <ReviewPrivateTable money={money} moneyFull={moneyFull} />}
         {view === "transactions" && (
           <div className="overflow-x-auto">
             <table className="min-w-full text-[13px]" data-pm-table="transactions">

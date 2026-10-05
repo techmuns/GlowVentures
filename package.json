@@ -28,6 +28,7 @@
     "harvest": "node scripts/harvest/run.mjs",
     "probe:sources": "node scripts/harvest/probe-sources.mjs",
     "build-lookthrough": "node scripts/build-fund-lookthrough.mjs",
+    "build-review-private": "node scripts/build-review-private.mjs",
     "build-scheme-names": "node scripts/build-scheme-names.mjs",
     "replay:movements": "node scripts/replay-demat-movements.mjs",
     "replay:flows": "node scripts/replay-fund-flows.mjs",
