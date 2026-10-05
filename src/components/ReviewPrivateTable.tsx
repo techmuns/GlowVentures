@@ -145,6 +145,7 @@ export function ReviewPrivateTable({ money, moneyFull }: {
     }
     return (
       <Tr key={r.key} view={view} className={TREE_ROW.child} data-review-row={r.key} data-review-kind={k}
+        data-review-tab={r.tab} data-review-basis={r.retBasis ?? undefined}
         data-review-invested={r.invested ?? undefined} data-review-value={r.value ?? undefined}
         data-review-paidin={r.paidIn ?? undefined} data-review-paidback={r.paidBack ?? undefined}
         data-review-gain={r.gain ?? undefined} data-review-ret={r.ret ?? undefined} data-review-ret-printed={r.reviewRet ?? undefined}

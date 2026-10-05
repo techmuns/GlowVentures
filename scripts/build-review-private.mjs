@@ -129,7 +129,7 @@ function perfRow(l, section) {
     check(`cost-${section}-${l.row}`, `${displayName(l.product)}: Investment at Cost reads ${cr(l.cost)}, against ${cr(paidIn)} paid in on its own dated rows`, f.sale ? `The review nets the ${cr(f.sale)} sale proceeds out of cost.` : `Review row ${l.row}.`, `${shortName(l.product)}: cost ≠ paid in`);
   const dated = f.rows.filter((t) => t.date).map((t) => t.date).sort();
   for (const w of unitWalk(l.product, f.rows)) check(`walk-${section}-${l.row}-${checks.length}`, `${displayName(l.product)} — ${w}`, `Transactions since inception, ${shortName(l.product)}.`,
-    `${shortName(l.product)} · ${w.split(":")[0].split(" ")[0]}: ${/purchases less sales/.test(w) ? "units bought less sold ≠ closing units" : "units × price ≠ closing value"}`);
+    `${shortName(l.product)} · ${w.split(":")[0].split(" ")[0]}: ${/purchases less sales/.test(w) ? "bought less sold ≠ closing units" : "units × price ≠ closing value"}`);
   return {
     key: `${section}-${l.row}`, name: displayName(l.product), tab: section === "pe-funds" ? "Alternate" : section === "credit" ? "Debt" : "Equity", row: l.row,
     dates: l.dates.text || null, invested: l.cost, paidIn, paidBack, value: l.value, gain, atCost,

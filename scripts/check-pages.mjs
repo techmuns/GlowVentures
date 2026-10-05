@@ -6878,6 +6878,7 @@ const ROUTES = [
    * route that correctly does not draw them.
    */
   ["private-market-transactions", "/private-market?view=transactions"],
+  ["private-market-review", "/private-market?view=review"],
   /**
    * ...AND THE FUND TABLE WITH EVERY CONCRETE RETURN TICKED, one column each.
    *
@@ -15743,23 +15744,151 @@ const PM_EXPANDED_CHECKS = [
   }],
 ];
 
+/**
+ * ── THE MOPWM REVIEW TAB (Stage 10dg) ──────────────────────────────────────
+ *
+ *   *"use the private equity information from the reconciliation motilal sheet
+ *    to feed the data in the dashboard … Make sure nothing is missed and there
+ *    are no logical or calculation errors."*
+ *
+ * The tab draws the family's consolidated review's private-market lines at the
+ * review's own figures. What can go wrong renders perfectly — a line left out
+ * still adds up to itself, and a return on the wrong basis is a plausible
+ * percentage — so every claim here is struck on the table's own handles, and
+ * the one that says nothing was missed is struck against the WORKBOOK, read a
+ * second time here cell by cell (never through the generator's reader, which
+ * would agree with itself by construction).
+ */
+const REVIEW_WORKBOOK_URL = new URL("../source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx", import.meta.url);
+const REVIEW_PI_BOOK = (() => {
+  try {
+    const wb = XLSX.read(readFileSync(REVIEW_WORKBOOK_URL));
+    const name = wb.SheetNames.find((n) => n.trim() === "Private Investments");
+    if (!name) return null;
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, blankrows: true, defval: "" });
+    // Columns by their HEADER TEXT, never by position: the Total row carries a
+    // stray figure in its date column, which a positional read takes for a cost.
+    const hdr = rows.findIndex((r) => r.some((c) => /^investment at cost$/i.test(String(c).trim())));
+    if (hdr < 0) return null;
+    const costCol = rows[hdr].findIndex((c) => /^investment at cost$/i.test(String(c).trim()));
+    const nameCol = rows[hdr].findIndex((c) => /^product$/i.test(String(c).trim()));
+    const head = rows.findIndex((r, i) => i > hdr && /^private equity$/i.test(String(r[nameCol] ?? "").trim()));
+    const total = rows.findIndex((r, i) => i > head && /^total$/i.test(String(r[nameCol] ?? "").trim()));
+    if (nameCol < 0 || head < 0 || total < 0) return null;
+    let lines = 0;
+    for (let i = head + 1; i < total; i++) if (String(rows[i][nameCol] ?? "").trim()) lines++;
+    const cost = Number(rows[total][costCol]);
+    return Number.isFinite(cost) ? { lines, cost: cost * 1e7 } : null;
+  } catch { return null; }
+})();
+
+const REVIEW_TAB_CHECKS = [
+  ["the review tab draws every line of its blocks once, each block open on arrival, and the footer counts them all", (t, ctx) => {
+    // THIS ROUTE DRAWS THE REVIEW TABLE, so a probe that found none is the table gone — a finding, never an abstention.
+    const rv = ctx?.reviewTab;
+    if (!rv) return false;
+    const keys = rv.rows.map((r) => r.key);
+    return rv.bands.length > 0 && rv.bands.every((b) => b.open)
+      && keys.length > 0 && keys.length === new Set(keys).size
+      && rv.bands.every((b) => rv.rows.filter((r) => r.band === b.key).length === b.lines)
+      && rv.foot?.lines === keys.length;
+  }],
+  ["…every line of the review's Private Investments tab is a row here, and their cost is that tab's own Total, to the rupee", (t, ctx) => {
+    const rv = ctx?.reviewTab;
+    if (!rv || !REVIEW_PI_BOOK) return false;
+    const pi = rv.rows.filter((r) => r.tab === "Private Investments");
+    const cost = pi.reduce((a, r) => a + (r.invested ?? 0), 0);
+    return pi.length === REVIEW_PI_BOOK.lines && Math.abs(cost - REVIEW_PI_BOOK.cost) <= 1;
+  }],
+  ["each block's lines add to the review's own head, and the band prints that sum", (t, ctx) => {
+    const rv = ctx?.reviewTab;
+    if (!rv) return false;
+    const sum = (b, f) => rv.rows.filter((r) => r.band === b.key).reduce((a, r) => a + (r[f] ?? 0), 0);
+    return rv.bands.some((b) => b.headInvested !== null)
+      && rv.bands.every((b) =>
+        (b.invested === null || Math.abs(sum(b, "invested") - b.invested) <= 1)
+        && (b.value === null || Math.abs(sum(b, "value") - b.value) <= 1)
+        && (b.headInvested === null || (Math.abs(sum(b, "invested") - b.headInvested) <= 1
+          && Math.abs(sum(b, "value") - (b.headValue ?? NaN)) <= 1)));
+  }],
+  ["the footer is its rows' own sum", (t, ctx) => {
+    const rv = ctx?.reviewTab;
+    if (!rv?.foot) return false;
+    const sum = (f) => rv.rows.reduce((a, r) => a + (r[f] ?? 0), 0);
+    return Math.abs(sum("invested") - (rv.foot.invested ?? NaN)) <= 1 && Math.abs(sum("value") - (rv.foot.value ?? NaN)) <= 1;
+  }],
+  ["a gain is value plus paid back less what was put in, on the basis the line has, and its Return cell prints gain ÷ that base", (t, ctx) => {
+    const rv = ctx?.reviewTab;
+    if (!rv) return false;
+    const struck = rv.rows.filter((r) => r.gain !== null);
+    return struck.length > 0 && rv.rows.every((r) => {
+      if (r.gain === null) return r.ret === null && !/%/.test(r.retCell?.text ?? "");
+      const base = r.basis === "rows" ? r.paidIn : r.basis === "cost" ? r.invested : null;
+      if (!base) return false;
+      const gain = (r.value ?? 0) + (r.paidBack ?? 0) - base;
+      return Math.abs(gain - r.gain) <= 1 && r.ret !== null && Math.abs(r.ret - r.gain / base) <= 1e-9
+        && Math.abs(pctOfCell(r.retCell?.text) - r.ret * 100) <= 0.006;
+    });
+  }],
+  ["a rate over less than a year is never shown, and this tab has one to refuse", (t, ctx) => {
+    const rv = ctx?.reviewTab;
+    if (!rv) return false;
+    const rated = rv.rows.filter((r) => r.xirr !== null);
+    const sub = rated.filter((r) => r.days !== null && r.days < 365);
+    const year = rated.filter((r) => r.days !== null && r.days >= 365);
+    return sub.length > 0 && rated.every((r) => r.days !== null)
+      && sub.every((r) => !/%/.test(r.xirrCell?.text ?? "") && new RegExp(`\\b${r.days} days\\b`).test(r.xirrCell?.title ?? ""))
+      && year.every((r) => Math.abs(pctOfCell(r.xirrCell?.text) - r.xirr * 100) <= 0.006);
+  }],
+  ["a line whose printed return differs from its own rows is marked ≠, and no other is", (t, ctx) => {
+    const rv = ctx?.reviewTab;
+    if (!rv) return false;
+    const off = rv.rows.filter((r) => r.ret !== null && r.retPrinted !== null && Math.abs(r.ret - r.retPrinted) > 1e-4);
+    return off.length > 0 && rv.rows.every((r) =>
+      r.mismatch.includes("return") === (r.ret !== null && r.retPrinted !== null && Math.abs(r.ret - r.retPrinted) > 1e-4));
+  }],
+  ["an absent figure is a dash with its reason, and a written-off line is a measured ₹0", (t, ctx) => {
+    const rv = ctx?.reviewTab;
+    if (!rv) return false;
+    return rv.rows.every((r) => {
+      if (r.kind === "written-off") return /₹\s*0\b/.test(r.valueCell?.text ?? "") && /written off/i.test(r.valueCell?.title ?? "");
+      const v = r.valueCell, c = r.investedCell;
+      const okValue = r.value === null ? (v?.text === "—" && !!v?.title) : /₹/.test(v?.text ?? "");
+      const okCost = r.invested === null ? (c?.text === "—" && !!c?.title) : /₹/.test(c?.text ?? "");
+      return okValue && okCost;
+    });
+  }],
+  ["the members band is the review's Investorwise summary of these lines, and it and the disagreements are closed on arrival", (t, ctx) => {
+    const rv = ctx?.reviewTab;
+    if (!rv?.members || !rv?.checks) return false;
+    // The review's own basis: PE funds and unlisted shares at its value, private investments at cost; credit is filed under Debt.
+    const lines = rv.rows.filter((r) => r.band !== "credit")
+      .reduce((a, r) => a + (r.tab === "Private Investments" ? (r.invested ?? 0) : (r.value ?? 0)), 0);
+    return rv.members.count > 0 && Math.abs(rv.members.value - lines) <= 2
+      && !rv.members.open && rv.members.rows === 0
+      && rv.checks.count > 0 && !rv.checks.open && rv.checks.rows === 0;
+  }],
+];
+
 const pmViewChecks = (expected) => [
   /**
-   * THREE TABS, AND `folios` IS STILL GONE FROM THE CONTROL.
+   * FOUR TABS, AND `folios` IS STILL GONE FROM THE CONTROL.
    *
    *   *"keep default view as fund only… And remove folio as the toggle button."*
    *   *"cant it be a transactions tab in the same table view"*
+   *   *"show the private market data in the dashboard using the data provided
+   *    in the motilal excel sheet"* — the fourth, the MOPWM review (Stage 10dg).
    *
    * Struck on the control, never on the labels — "By fund", "By owner" and
    * "Transactions" are phrases this page's own prose uses, so a text match
    * cannot tell a rendered button from a sentence about one.
    */
-  [`the private book is one card with three tabs, and this address opens on ${expected}`, (t, ctx) => {
+  [`the private book is one card with four tabs, and this address opens on ${expected}`, (t, ctx) => {
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     const keys = pv.views.map((v) => v.key);
-    return keys.length === 3
-      && ["funds", "owners", "transactions"].every((k) => keys.includes(k))
+    return keys.length === 4
+      && ["funds", "owners", "transactions", "review"].every((k) => keys.includes(k))
       && !keys.includes("folios")
       && pv.views.find((v) => v.active)?.key === expected;
   }],
@@ -26734,6 +26863,17 @@ const INVARIANTS = {
    * would have reported NOT CHECKED against a table that is correctly not drawn
    * there, which is an abstention and reads as a clean run.
    */
+  /**
+   * THE MOPWM REVIEW TAB (Stage 10dg) — the family's consolidated review's
+   * private-market lines, as it prints them, in no total of this book.
+   */
+  "private-market-review": [
+    ...pmViewChecks("review"),
+    ...REVIEW_TAB_CHECKS,
+    PM_FIT_CHECK,
+    PRIVATE_SIDES_GONE,
+    PM_NO_PROSE,
+  ],
   "private-market-transactions": [
     PM_CALL_RUPEES_CHECK,
     ...pmViewChecks("transactions"),
@@ -38386,6 +38526,74 @@ for (const theme of THEMES) {
        * once looks, in `innerText`, exactly like three views that each draw
        * their own. `data-pm-table` is what says only one is on screen.
        */
+      /**
+       * THE MOPWM REVIEW TAB (Stage 10dg), read off its own handles: every band,
+       * every line, the footer, and the two closed bands under it. Figures are
+       * read off attributes in RUPEES so a sum is exact rather than read
+       * through a compact "₹20.9 Cr", and the rendered text is kept beside them
+       * so a cell that stopped printing its own attribute fails on the pair.
+       */
+      const reviewTab = FAST ? null : await page.evaluate(() => {
+        const table = document.querySelector("main table[data-pm-table='review']");
+        if (!table) return null;
+        const num = (e, a) => { const v = e?.getAttribute(a); return v == null || v === "" ? null : Number(v); };
+        const txt = (e) => (e?.innerText ?? "").replace(/\s+/g, " ").trim();
+        const heads = [...table.querySelectorAll("thead tr:last-child > th")].map((th) => th.getAttribute("data-col"));
+        const cellText = (tr, col) => {
+          let i = 0;
+          for (const td of tr.children) {
+            if (heads[i] === col) return { text: txt(td), title: td.getAttribute("title") ?? td.querySelector("[title]")?.getAttribute("title") ?? null };
+            i += Number(td.getAttribute("colspan")) || 1;
+          }
+          return null;
+        };
+        return {
+          heads,
+          bands: [...table.querySelectorAll("tr[data-review-section]")].map((e) => ({
+            key: e.getAttribute("data-review-section"), lines: num(e, "data-review-lines"),
+            open: e.getAttribute("data-review-open") === "true",
+            invested: num(e, "data-review-invested"), value: num(e, "data-review-value"),
+            headInvested: num(e, "data-review-head-invested"), headValue: num(e, "data-review-head-value"),
+          })),
+          // Each line with the band it is drawn under — the rows follow their band in the DOM.
+          rows: (() => {
+            const out = [];
+            let band = null;
+            for (const tr of table.querySelectorAll("tbody tr")) {
+              if (tr.hasAttribute("data-review-section")) { band = tr.getAttribute("data-review-section"); continue; }
+              if (!tr.hasAttribute("data-review-row")) continue;
+              out.push({
+                key: tr.getAttribute("data-review-row"), band, kind: tr.getAttribute("data-review-kind"),
+                tab: tr.getAttribute("data-review-tab"), basis: tr.getAttribute("data-review-basis"),
+                invested: num(tr, "data-review-invested"), value: num(tr, "data-review-value"),
+                paidIn: num(tr, "data-review-paidin"), paidBack: num(tr, "data-review-paidback"),
+                gain: num(tr, "data-review-gain"), ret: num(tr, "data-review-ret"), retPrinted: num(tr, "data-review-ret-printed"),
+                xirr: num(tr, "data-review-xirr"), days: num(tr, "data-review-days"),
+                mismatch: [...tr.querySelectorAll("[data-review-mismatch]")].map((m) => m.getAttribute("data-review-mismatch")),
+                stmts: num(tr.querySelector("[data-review-stmts]"), "data-review-stmts"),
+                retCell: cellText(tr, "ret"), xirrCell: cellText(tr, "xirr"), valueCell: cellText(tr, "value"),
+                investedCell: cellText(tr, "invested"),
+              });
+            }
+            return out;
+          })(),
+          foot: (() => {
+            const f = table.querySelector("tr[data-review-foot]");
+            return f ? { lines: num(f, "data-review-lines"), invested: num(f, "data-review-invested"), value: num(f, "data-review-value"), text: txt(f) } : null;
+          })(),
+          members: (() => {
+            const m = table.querySelector("tr[data-review-members]");
+            return m ? { count: num(m, "data-review-members"), value: num(m, "data-review-members-value"),
+              open: m.getAttribute("data-review-open") === "true", text: txt(m),
+              rows: table.querySelectorAll("tr[data-review-member]").length } : null;
+          })(),
+          checks: (() => {
+            const c = table.querySelector("tr[data-review-checks]");
+            return c ? { count: num(c, "data-review-checks"), open: c.getAttribute("data-review-open") === "true",
+              rows: table.querySelectorAll("tr[data-review-check]").length } : null;
+          })(),
+        };
+      });
       const pmView = FAST ? null : await page.evaluate(() => {
         const table = document.querySelector("main table[data-pm-table]");
         // THE COLUMNS AS DRAWN, so every cell is read by the column its header
@@ -40926,7 +41134,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmView, reviewTab, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

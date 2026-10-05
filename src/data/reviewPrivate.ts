@@ -3080,7 +3080,7 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
   },
   {
    "key": "walk-pe-funds-10-6",
-   "short": "360 One Special Opportunities Fund · Ajay: units bought less sold ≠ closing units",
+   "short": "360 One Special Opportunities Fund · Ajay: bought less sold ≠ closing units",
    "text": "360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II) — Ajay Jaisinghani: purchases less sales are 9,94,198.706 units, the closing row says 9,90,429.68",
    "detail": "Transactions since inception, 360 One Special Opportunities Fund."
   },
@@ -3092,7 +3092,7 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
   },
   {
    "key": "walk-pe-funds-10-8",
-   "short": "360 One Special Opportunities Fund · Bharat: units bought less sold ≠ closing units",
+   "short": "360 One Special Opportunities Fund · Bharat: bought less sold ≠ closing units",
    "text": "360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II) — Bharat Jaisinghani: purchases less sales are 9,94,198.706 units, the closing row says 9,90,429.68",
    "detail": "Transactions since inception, 360 One Special Opportunities Fund."
   },
@@ -3116,7 +3116,7 @@ export const REVIEW_PRIVATE: ReviewPrivate = {
   },
   {
    "key": "walk-pe-funds-12-12",
-   "short": "Assetgro Fintech Private Limited · Ajay: units bought less sold ≠ closing units",
+   "short": "Assetgro Fintech Private Limited · Ajay: bought less sold ≠ closing units",
    "text": "Assetgro Fintech Private Limited — Ajay Jaisinghani: purchases less sales are 636 units, the closing row says 0",
    "detail": "Transactions since inception, Assetgro Fintech Private Limited."
   },
