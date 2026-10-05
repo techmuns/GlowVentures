@@ -8506,10 +8506,17 @@ const PERF_BOOK = (() => {
       const unit = figs.some((v) => Math.abs(v - Math.round(v)) > 0.004) ? 0.01 : 1;
       return { ties: Math.abs(residual) <= (figs.length * unit) / 2 + 1e-9, residual };
     };
+    // LINES ONLY (Stage 10df) — written again here rather than read off the
+    // book's flag: a column printing neither an opening nor a closing value
+    // has no total for its lines to add to, so it is neither tied nor
+    // withheld. Struck on the PRINTED opening, as the book strikes it: a
+    // since-inception nil is computed, and computing one gives a column with
+    // no closing nothing to add up to either.
     const cols = Object.entries(bridgesBy).flatMap(([accountId, bs]) => bs.map((b) => {
       const basis = basisOf(b, acc.get(accountId)?.inceptionDate ?? null);
       const openingNil = basis === "since-inception" && b.opening == null;
-      return { accountId, src: b.source, basis, openingNil, ...adds(b, openingNil), book: b };
+      const linesOnly = !num(b.closing) && !num(b.opening);
+      return { accountId, src: b.source, basis, openingNil, linesOnly, ...adds(b, openingNil), book: b };
     }));
     const optionalRows = new Map(Object.entries(bridgesBy).map(([id, bs]) =>
       [id, new Set(OPTIONAL.filter((k) => bs.some((b) => num(b[k]) && b[k] !== 0)))]));
@@ -8559,6 +8566,7 @@ const PERF_BOOK = (() => {
       statementBook: bookObject(src, "BOOK_SUMMARY")?.totalValue ?? null,
       cols, optionalRows,
       tied: cols.filter((c) => c.ties).length, all: cols.length,
+      linesOnly: cols.filter((c) => c.linesOnly).length,
       perAccount, measured,
       rateStatement: solve(measured, (x) => x.stmtMV),
       firstClose: closes[0] ?? null, lastClose: closes[closes.length - 1] ?? null,
@@ -8591,14 +8599,15 @@ const PERF_BRIDGE = [
     if (!B || !B.all) return false;
     const drawn = new Set(d.cols.map((c) => `${c.account}|${c.src}`));
     return d.cols.length === B.all && B.cols.every((c) => drawn.has(`${c.accountId}|${c.src}`))
-      && d.totals != null && d.totals.tied === B.tied && d.totals.all === B.all;
+      && d.totals != null && d.totals.tied === B.tied && d.totals.all === B.all
+      && d.totals.linesOnly === B.linesOnly && d.totals.withheld === B.all - B.tied - B.linesOnly;
   }],
   ["the book's own tie flag is the checker's arithmetic, column by column", (t, ctx) => {
     const B = PERF_BOOK;
     if (!B || !B.all) return false;
     // An untied column's gap is the same on both sides — or absent on both,
     // where the column has no opening or closing figure to add from.
-    return B.cols.every((c) => (c.book.ties !== false) === c.ties
+    return B.cols.every((c) => (c.book.ties !== false) === c.ties && (c.book.linesOnly === true) === c.linesOnly
       && (c.ties || (c.book.residual == null && c.residual == null)
         || (typeof c.book.residual === "number" && typeof c.residual === "number" && Math.abs(c.book.residual - c.residual) <= 0.01)));
   }],
@@ -8619,16 +8628,85 @@ const PERF_BRIDGE = [
     if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
     const B = PERF_BOOK;
     if (!B || !B.all) return false;
-    if (B.tied === B.all) return { notChecked: "every bridge column in this book adds up" };
+    if (B.tied + B.linesOnly === B.all) return { notChecked: "every bridge column in this book adds up or prints no total to add up to" };
     const by = new Map(d.cols.map((c) => [`${c.account}|${c.src}`, c]));
     return B.cols.every((c) => {
       const col = by.get(`${c.accountId}|${c.src}`);
       if (!col) return false;
       const cells = d.cells.filter((x) => x.account === c.accountId && x.of === c.src);
-      if (c.ties) return !col.withheld;
+      if (c.ties) return !col.withheld && !col.linesOnly;
+      // A column with no total is not WITHHELD — the next claim holds it.
+      if (c.linesOnly) return !col.withheld;
       return col.withheld && /not drawn as a bridge/i.test(col.why ?? "") && cells.length > 0
         && cells.every((x) => x.v === "" && /not drawn as a bridge/i.test(x.reason ?? ""));
     });
+  }],
+  /**
+   * A COLUMN WITH NO TOTAL SHOWS ITS LINES AS PRINTED (Stage 10df). Marathon's
+   * income and expense statement prints every gain and charge since 1 April
+   * 2018 and no portfolio value at either end; withholding it hid twelve
+   * figures the family's statement prints. Each figure must be the book's, the
+   * closing must stay absent with its reason (nothing is added up into one),
+   * and the heading must say so — in a status, never the amber withheld flag.
+   */
+  ["a column that prints no opening and no closing value shows its printed lines, never adds them up, and says so", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    const lo = B.cols.filter((c) => c.linesOnly);
+    if (!lo.length) return { notChecked: "no bridge column in this book prints neither an opening nor a closing value" };
+    const by = new Map(d.cols.map((c) => [`${c.account}|${c.src}`, c]));
+    return lo.every((c) => {
+      const col = by.get(`${c.accountId}|${c.src}`);
+      if (!col || col.withheld || !col.linesOnly) return false;
+      if (!/not added up/i.test(col.linesOnlyNote ?? "") || !/prints no opening or closing value/i.test(col.linesOnlyWhy ?? "")) return false;
+      const cells = d.cells.filter((x) => x.account === c.accountId && x.of === c.src);
+      if (!cells.length) return false;
+      const closing = cells.find((x) => x.row === "closing");
+      if (!closing || closing.v !== "" || !/prints no closing value line/i.test(closing.reason ?? "")) return false;
+      // Every figure the book carries for the column is drawn, as the book carries it.
+      return cells.every((x) => {
+        const want = c.book[x.row];
+        if (typeof want !== "number" || !Number.isFinite(want)) return x.v === "";
+        return x.v !== "" && Math.abs(Number(x.v) - want) <= 0.005;
+      }) && cells.some((x) => x.v !== "");
+    });
+  }],
+  /**
+   * SEVERAL PRINTED LINES BEHIND ONE ROW ARE EACH NAMED (Stage 10df). ASK's
+   * profit and loss account prints Dividend and Other Income where the bridge
+   * has one Income row; Marathon prints short- and long-term gains, Custodian
+   * Fees and STT. The lines are re-added here and must make the book's row —
+   * the replay refused any document whose lines did not — and the page must
+   * list every one under the row's figure, or name the single line it prints.
+   */
+  ["where a statement prints several lines behind one bridge row, each is listed under the row's figure, and they add to it", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    const withLines = B.cols.filter((c) => Array.isArray(c.book.lines) && c.book.lines.length);
+    if (!withLines.length) return { notChecked: "no bridge column in this book carries its printed lines" };
+    let multi = 0;
+    const ok = withLines.every((c) => {
+      const by = new Map();
+      for (const l of c.book.lines) { if (!by.has(l.flow)) by.set(l.flow, []); by.get(l.flow).push(l); }
+      return [...by].every(([flow, ls]) => {
+        const want = c.book[flow];
+        const sum = ls.reduce((t, l) => t + (typeof l.value === "number" ? l.value : 0), 0);
+        if (typeof want !== "number" || Math.abs(sum - want) > 0.005 * ls.length) return false;
+        const cell = d.cells.find((x) => x.account === c.accountId && x.of === c.src && x.row === flow);
+        // An optional row nobody prints a non-nil figure for is not drawn at all.
+        if (!cell) return !B.optionalRows.get(c.accountId)?.has(flow) && !["contribution", "withdrawal", "realized", "unrealized", "income", "fees"].includes(flow);
+        if (cell.v === "" || Math.abs(Number(cell.v) - want) > 0.005) return false;
+        if (ls.length === 1) return cell.split == null && cell.printedAs === `Printed as \u201c${ls[0].label}\u201d`;
+        multi += 1;
+        return Number(cell.splitLines) === ls.length
+          && ls.every((l) => (cell.split ?? "").includes(l.label) && (cell.splitTitle ?? "").includes(l.label));
+      });
+    });
+    return ok && multi > 0;
   }],
   ["every column drawn as a bridge adds up from the figures on screen to its own closing value", (t, ctx) => {
     const d = ctx?.perfDom;
@@ -8658,7 +8736,7 @@ const PERF_BRIDGE = [
     if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
     const B = PERF_BOOK;
     if (!B || !B.tied) return false;
-    const blanks = B.cols.filter((c) => c.ties).flatMap((c) => d.cells
+    const blanks = B.cols.filter((c) => c.ties || c.linesOnly).flatMap((c) => d.cells
       .filter((x) => x.account === c.accountId && x.of === c.src && x.v === "")
       .map((x) => ({ x, unread: (c.book.unread ?? []).includes(x.row) })));
     if (!blanks.length) return { notChecked: "every line of every column that adds up is printed" };
@@ -36953,14 +37031,26 @@ for (const theme of THEMES) {
           withheld: th.getAttribute("data-bridge-withheld") === "1", residual: th.getAttribute("data-bridge-residual"),
           head: txt(th), why: th.querySelector("[data-bridge-withheld-note]")?.getAttribute("title") ?? null,
           account: th.closest("table")?.getAttribute("data-bridge-table") ?? null,
+          // A column with no total (Stage 10df) — its status and its reason.
+          linesOnly: th.getAttribute("data-bridge-lines-only") === "1",
+          linesOnlyNote: th.querySelector("[data-bridge-lines-only-note]") ? txt(th.querySelector("[data-bridge-lines-only-note]")) : null,
+          linesOnlyWhy: th.querySelector("[data-bridge-lines-only-note]")?.getAttribute("title") ?? null,
         }));
-        const cells = [...document.querySelectorAll("td[data-bridge-cell]")].map((td) => ({
-          row: td.getAttribute("data-bridge-cell"), of: td.getAttribute("data-bridge-of"),
-          account: td.closest("table")?.getAttribute("data-bridge-table") ?? null,
-          v: td.getAttribute("data-v"), text: txt(td),
-          computed: !!td.querySelector("[data-bridge-computed]"),
-          reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
-        }));
+        const cells = [...document.querySelectorAll("td[data-bridge-cell]")].map((td) => {
+          const split = td.querySelector("[data-bridge-split]");
+          return {
+            row: td.getAttribute("data-bridge-cell"), of: td.getAttribute("data-bridge-of"),
+            account: td.closest("table")?.getAttribute("data-bridge-table") ?? null,
+            v: td.getAttribute("data-v"), text: txt(td),
+            computed: !!td.querySelector("[data-bridge-computed]"),
+            reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
+            // The printed lines behind the figure (Stage 10df): several are
+            // listed under it, and a single one is named in its hover.
+            split: split ? txt(split) : null, splitLines: split?.getAttribute("data-bridge-split-lines") ?? null,
+            splitTitle: split?.getAttribute("title") ?? null,
+            printedAs: [...td.querySelectorAll("[title]")].map((e) => e.getAttribute("title")).find((x) => /^Printed as /.test(x ?? "")) ?? null,
+          };
+        });
         const rows = [...document.querySelectorAll("tr[data-bridge-row]")].map((tr) => ({
           key: tr.getAttribute("data-bridge-row"), account: tr.closest("table")?.getAttribute("data-bridge-table") ?? null,
           label: txt(tr.cells[0]),
@@ -36983,7 +37073,8 @@ for (const theme of THEMES) {
         const consRet = cons?.cells[4]?.querySelector("[data-xirr-undated]") ?? null;
         return {
           cols, cells, rows,
-          totals: tot ? { tied: Number(tot.getAttribute("data-tied")), all: Number(tot.getAttribute("data-all")), text: txt(tot) } : null,
+          totals: tot ? { tied: Number(tot.getAttribute("data-tied")), all: Number(tot.getAttribute("data-all")),
+            linesOnly: Number(tot.getAttribute("data-lines-only")), withheld: Number(tot.getAttribute("data-withheld")), text: txt(tot) } : null,
           xirr,
           cons: cons ? {
             mv: cons.getAttribute("data-mv"), book: cons.getAttribute("data-book"), first: cons.getAttribute("data-first"),

@@ -695,6 +695,20 @@ export type AccountBridge = {
   linesTotal?: number | null;
   /** Why a withheld column does not add up, in words — the gap itself is struck by the page. */
   withheldReason?: string | null;
+  /**
+   * A column that prints NEITHER an opening NOR a closing value (Stage 10df):
+   * there is no total for its lines to miss, so they are shown as printed and
+   * never added up. Not `ties`, and not withheld either.
+   */
+  linesOnly?: boolean;
+  /** Why the lines are shown as printed and not added up, in words. */
+  linesOnlyReason?: string | null;
+  /**
+   * The printed lines behind a flow that sums several — `income` as a dividend
+   * AND interest, `expenses` as a custodian fee AND STT — under the label the
+   * statement printed, in its order. Only the two whole-life reports print them.
+   */
+  lines?: { label: string; flow: string; value: number | null }[];
 };
 
 /**

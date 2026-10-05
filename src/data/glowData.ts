@@ -27822,10 +27822,58 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "changeInAccruals": null,
       "otherExpenses": 5221.5,
       "gainPriorToTakeover": null,
-      "unread": [
-        "accruedIncome",
-        "changeInAccruals",
-        "gainPriorToTakeover"
+      "unread": [],
+      "lines": [
+        {
+          "label": "Dividend",
+          "flow": "income",
+          "value": 1197629.52
+        },
+        {
+          "label": "Other Income",
+          "flow": "income",
+          "value": 712.92
+        },
+        {
+          "label": "Realized Gain/Loss",
+          "flow": "realized",
+          "value": 43118073.39
+        },
+        {
+          "label": "Custodian Fees",
+          "flow": "expenses",
+          "value": 109115.16
+        },
+        {
+          "label": "Management Fees",
+          "flow": "fees",
+          "value": 4596771.29
+        },
+        {
+          "label": "Securities Transaction Tax (STT)",
+          "flow": "expenses",
+          "value": 221987.27
+        },
+        {
+          "label": "Other Expenses",
+          "flow": "otherExpenses",
+          "value": 5221.5
+        },
+        {
+          "label": "Net Unrealized Gain / Loss during the period",
+          "flow": "unrealized",
+          "value": 0
+        },
+        {
+          "label": "Capital Contribution",
+          "flow": "contribution",
+          "value": 46000000
+        },
+        {
+          "label": "Less : Withdrawals",
+          "flow": "withdrawal",
+          "value": 85383320.61
+        }
       ],
       "ties": true,
       "openingNil": true,
@@ -27889,10 +27937,58 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "changeInAccruals": null,
       "otherExpenses": 5221.5,
       "gainPriorToTakeover": null,
-      "unread": [
-        "accruedIncome",
-        "changeInAccruals",
-        "gainPriorToTakeover"
+      "unread": [],
+      "lines": [
+        {
+          "label": "Dividend",
+          "flow": "income",
+          "value": 1955242.11
+        },
+        {
+          "label": "Other Income",
+          "flow": "income",
+          "value": 239.12
+        },
+        {
+          "label": "Realized Gain/Loss",
+          "flow": "realized",
+          "value": 72644418.18
+        },
+        {
+          "label": "Custodian Fees",
+          "flow": "expenses",
+          "value": 181918.74
+        },
+        {
+          "label": "Management Fees",
+          "flow": "fees",
+          "value": 7816077.54
+        },
+        {
+          "label": "Securities Transaction Tax (STT)",
+          "flow": "expenses",
+          "value": 384740.1
+        },
+        {
+          "label": "Other Expenses",
+          "flow": "otherExpenses",
+          "value": 5221.5
+        },
+        {
+          "label": "Net Unrealized Gain / Loss during the period",
+          "flow": "unrealized",
+          "value": 0
+        },
+        {
+          "label": "Capital Contribution",
+          "flow": "contribution",
+          "value": 85000000
+        },
+        {
+          "label": "Less : Withdrawals",
+          "flow": "withdrawal",
+          "value": 151211941.19
+        }
       ],
       "ties": true,
       "openingNil": true,
@@ -28604,16 +28700,56 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "changeInAccruals": null,
       "otherExpenses": 30074.61,
       "gainPriorToTakeover": null,
-      "unread": [
-        "accruedIncome",
-        "changeInAccruals",
-        "gainPriorToTakeover"
+      "unread": [],
+      "lines": [
+        {
+          "label": "ST Gain/Loss",
+          "flow": "realized",
+          "value": -252940.31
+        },
+        {
+          "label": "LT Gain/Loss",
+          "flow": "realized",
+          "value": 0
+        },
+        {
+          "label": "Dividend",
+          "flow": "income",
+          "value": 487122.75
+        },
+        {
+          "label": "Interest",
+          "flow": "income",
+          "value": 48.86
+        },
+        {
+          "label": "Management Fees",
+          "flow": "fees",
+          "value": 684122.01
+        },
+        {
+          "label": "Custodian Fees",
+          "flow": "expenses",
+          "value": 0
+        },
+        {
+          "label": "Other Expenses",
+          "flow": "otherExpenses",
+          "value": 30074.61
+        },
+        {
+          "label": "STT",
+          "flow": "expenses",
+          "value": 219788.99
+        }
       ],
       "ties": false,
+      "linesOnly": true,
       "openingNil": false,
       "residual": null,
       "linesTotal": null,
-      "withheldReason": "The report prints no closing value, so its lines cannot be added up. Not read from this report: gain prior to takeover, accrued income and change in accruals."
+      "withheldReason": null,
+      "linesOnlyReason": "The report prints no opening or closing value, so its lines are shown as printed and not added up."
     }
   ],
   "marathon-trends-advisory-pvt-ltd-5110837": [
@@ -28638,16 +28774,56 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "changeInAccruals": null,
       "otherExpenses": 38874.75,
       "gainPriorToTakeover": null,
-      "unread": [
-        "accruedIncome",
-        "changeInAccruals",
-        "gainPriorToTakeover"
+      "unread": [],
+      "lines": [
+        {
+          "label": "ST Gain/Loss",
+          "flow": "realized",
+          "value": 12708648.05
+        },
+        {
+          "label": "LT Gain/Loss",
+          "flow": "realized",
+          "value": 0
+        },
+        {
+          "label": "Dividend",
+          "flow": "income",
+          "value": 966612
+        },
+        {
+          "label": "Interest",
+          "flow": "income",
+          "value": 130.3
+        },
+        {
+          "label": "Management Fees",
+          "flow": "fees",
+          "value": 954431.42
+        },
+        {
+          "label": "Custodian Fees",
+          "flow": "expenses",
+          "value": 0
+        },
+        {
+          "label": "Other Expenses",
+          "flow": "otherExpenses",
+          "value": 38874.75
+        },
+        {
+          "label": "STT",
+          "flow": "expenses",
+          "value": 386305.43
+        }
       ],
       "ties": false,
+      "linesOnly": true,
       "openingNil": false,
       "residual": null,
       "linesTotal": null,
-      "withheldReason": "The report prints no closing value, so its lines cannot be added up. Not read from this report: gain prior to takeover, accrued income and change in accruals."
+      "withheldReason": null,
+      "linesOnlyReason": "The report prints no opening or closing value, so its lines are shown as printed and not added up."
     }
   ],
   "molecule-ventures-llp-7810404": [

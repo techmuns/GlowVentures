@@ -31,13 +31,58 @@
   "income": 487171.61,
   "expenses": 219788.99,
   "fees": 684122.01,
+  "accruedIncome": null,
+  "changeInAccruals": null,
   "otherExpenses": 30074.61,
+  "gainPriorToTakeover": null,
   "profit": null,
   "corpus": null,
   "openingCorpus": null,
   "periodFrom": "2018-04-01",
   "periodTo": "2026-09-09",
-  "source": "marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-income-expense"
+  "source": "marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-income-expense",
+  "lines": [
+   {
+    "label": "ST Gain/Loss",
+    "flow": "realized",
+    "value": -252940.31
+   },
+   {
+    "label": "LT Gain/Loss",
+    "flow": "realized",
+    "value": 0
+   },
+   {
+    "label": "Dividend",
+    "flow": "income",
+    "value": 487122.75
+   },
+   {
+    "label": "Interest",
+    "flow": "income",
+    "value": 48.86
+   },
+   {
+    "label": "Management Fees",
+    "flow": "fees",
+    "value": 684122.01
+   },
+   {
+    "label": "Custodian Fees",
+    "flow": "expenses",
+    "value": 0
+   },
+   {
+    "label": "Other Expenses",
+    "flow": "otherExpenses",
+    "value": 30074.61
+   },
+   {
+    "label": "STT",
+    "flow": "expenses",
+    "value": 219788.99
+   }
+  ]
  },
  "cashFlows": [],
  "transactions": [],

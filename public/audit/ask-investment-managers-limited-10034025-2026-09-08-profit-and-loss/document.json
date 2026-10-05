@@ -72,13 +72,68 @@
   "income": 1955481.23,
   "expenses": 566658.84,
   "fees": 7816077.54,
+  "accruedIncome": null,
+  "changeInAccruals": null,
   "otherExpenses": 5221.5,
+  "gainPriorToTakeover": null,
   "profit": null,
   "corpus": 0.34,
   "openingCorpus": null,
   "periodFrom": "2019-04-01",
   "periodTo": "2026-09-08",
-  "source": "ask-investment-managers-limited-10034025-2026-09-08-profit-and-loss"
+  "source": "ask-investment-managers-limited-10034025-2026-09-08-profit-and-loss",
+  "lines": [
+   {
+    "label": "Dividend",
+    "flow": "income",
+    "value": 1955242.11
+   },
+   {
+    "label": "Other Income",
+    "flow": "income",
+    "value": 239.12
+   },
+   {
+    "label": "Realized Gain/Loss",
+    "flow": "realized",
+    "value": 72644418.18
+   },
+   {
+    "label": "Custodian Fees",
+    "flow": "expenses",
+    "value": 181918.74
+   },
+   {
+    "label": "Management Fees",
+    "flow": "fees",
+    "value": 7816077.54
+   },
+   {
+    "label": "Securities Transaction Tax (STT)",
+    "flow": "expenses",
+    "value": 384740.1
+   },
+   {
+    "label": "Other Expenses",
+    "flow": "otherExpenses",
+    "value": 5221.5
+   },
+   {
+    "label": "Net Unrealized Gain / Loss during the period",
+    "flow": "unrealized",
+    "value": 0
+   },
+   {
+    "label": "Capital Contribution",
+    "flow": "contribution",
+    "value": 85000000
+   },
+   {
+    "label": "Less : Withdrawals",
+    "flow": "withdrawal",
+    "value": 151211941.19
+   }
+  ]
  },
  "cashFlows": [],
  "transactions": [],
