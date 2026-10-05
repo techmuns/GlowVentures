@@ -261,23 +261,25 @@ export function liveWithheldReason(
 }
 
 /** Refresh failure retains the dated capture, never converts unknown income to zero. */
-export async function fetchCorporateActions(symbols: string[], isins: string[], signal?: AbortSignal): Promise<{ feed: ActionFeed; retained: boolean } | null> {
+export async function fetchCorporateActions(symbols: string[], isins: string[], signal?: AbortSignal): Promise<{ feed: ActionFeed; retained: boolean; refreshing: boolean } | null> {
   const deadline = requestDeadline(30_000, signal);
   try {
     const params = new URLSearchParams({ symbols: [...new Set(symbols)].sort().join(","), isins: [...new Set(isins)].sort().join(",") });
     const response = await fetch(`/api/corporate-actions?${params}`, { signal: deadline.signal });
     if (!response.ok) return null;
     const body = await response.json();
-    return body.ok && validActionFeed(body.feed) ? { feed: body.feed, retained: !!body.retained } : null;
+    return body.ok && validActionFeed(body.feed) ? { feed: body.feed, retained: !!body.retained, refreshing: !!body.refreshing } : null;
   } catch { return null; }
   finally { deadline.dispose(); }
 }
 
 export async function savedCorporateActions(signal?: AbortSignal): Promise<ActionFeed | null> {
+  const deadline = requestDeadline(15_000, signal);
   try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/corporate-actions.json`, { signal });
+    const response = await fetch(`${import.meta.env.BASE_URL}data/corporate-actions.json`, { signal: deadline.signal });
     if (!response.ok) return null;
     const body = await response.json();
     return validActionFeed(body) ? body : null;
   } catch { return null; }
+  finally { deadline.dispose(); }
 }

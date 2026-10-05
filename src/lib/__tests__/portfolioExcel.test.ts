@@ -768,7 +768,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     }
   };
   (import.meta as { env?: Record<string, string> }).env ??= { BASE_URL: "/" };
-  const L = await import("@/lib/ledger");
+  const L = await import("./archiveLedger");
   const data: TxnData | null = await L.loadTransactions();
   ok("the committed archive loads through the real loader", !!data && data.txns.length > 0, `${data?.txns.length ?? 0} rows`);
   if (data) {

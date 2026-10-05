@@ -37,7 +37,11 @@
     "report:extraction": "node scripts/report-from-archive.mjs",
     "build-polycab": "node scripts/build-polycab-live.mjs",
     "build-fund-navs": "node scripts/build-fund-navs.mjs",
-    "build-upstox-instruments": "node scripts/build-upstox-instruments.mjs"
+    "build-upstox-instruments": "node scripts/build-upstox-instruments.mjs",
+    "build:views": "node scripts/build-read-models.mjs",
+    "prebuild": "npm run build:views",
+    "predev": "npm run build:views",
+    "pretest:family": "npm run build:views"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

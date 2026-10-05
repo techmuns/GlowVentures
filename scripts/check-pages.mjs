@@ -1,3 +1,4 @@
+import { installReadModelRoutes } from "./dev/read-model-api.mjs";
 // Walks every route and reports what a human would otherwise have to look for.
 //
 // Five checks, in the order they catch things:
@@ -34390,6 +34391,12 @@ for (const theme of THEMES) {
         }, RETURN_PICK_KEYS);
       }
       const page = await ctx.newPage();
+      // Financial invariants inspect the complete table. Performance regressions
+      // separately enforce bounded default rendering and test page navigation.
+      const allTableRows = async () => {
+        for (const pick of await page.getByLabel("Rows per page", { exact: true }).all()) await pick.selectOption("all");
+      };
+      await installReadModelRoutes(page);
       // The web-font CDN is unreachable from this sandbox and blocks `load` for
       // ~12s per navigation. Abort it up front: it changes no layout the checks
       // care about (metrics fall back to system-ui) and takes the sweep from
@@ -34467,6 +34474,7 @@ for (const theme of THEMES) {
       const settle = (name === "cio-loading" || name === "cio-index-loading" || name === "monitor-security-loading" || name === "monitor-withheld-loading")
         ? "load" : (FAST ? "load" : "networkidle");
       await page.goto(`${BASE}${path}`, { waitUntil: settle, timeout: 45000 });
+      await allTableRows();
       /**
        * THE SEND TO GLOW CENTRAL RESEARCH RUNS A MOMENT AFTER THE PAGE SETTLES —
        * the sender waits for a burst of edits to finish — so `networkidle` can
@@ -34836,6 +34844,7 @@ for (const theme of THEMES) {
       // is to stall the request for the length of the walk.
       if (name === "monitor-security-loading") {
         await page.route("**/lookthrough/**", (r) => new Promise(() => { void r; }));
+        await page.route("**/api/stock-exposure", (r) => new Promise(() => { void r; }));
       }
       if ((name === "monitor-security-drill" || name === "monitor-security-loading") && FUND_EXPOSURE) {
         const row = page.locator(`tr[data-security-key="${FUND_EXPOSURE.key}"] button`).first();
@@ -36322,6 +36331,7 @@ for (const theme of THEMES) {
         }));
       }
       await page.waitForTimeout(FAST ? 350 : 800);
+      await allTableRows();
 
       const text = FAST ? "" : await page.evaluate(() => document.body.innerText);
       /**
@@ -40904,6 +40914,7 @@ for (const theme of THEMES) {
             // anything read after here see the page as addressed.
             await page.evaluate(() => { try { window.localStorage.clear(); } catch { /* private mode */ } });
             await page.goto(BASE + path, { waitUntil: "networkidle" });
+      await allTableRows();
           } else {
             await page.keyboard.press("Escape");
           }

@@ -306,6 +306,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       setCorporateActions(next);
     };
     const tick = async () => {
+      if (document.hidden) { timer = window.setTimeout(tick, 30_000); return; }
       // THE CAPTURE IS FILTERED TO WHAT IS ASKED FOR, so the shares this layer
       // adds must be asked for too — a share outside the capture's coverage
       // cannot pass the corporate-action gate, and would never be a row.
@@ -316,10 +317,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       );
       if (controller.signal.aborted) return;
       if (latest) accept(latest.feed);
+      else if (!held) {
+        const saved = await savedCorporateActions(controller.signal);
+        if (controller.signal.aborted) return;
+        if (saved) accept(saved);
+      }
       setCorporateActionsStatus(latest && !latest.retained ? "current" : held ? "saved" : "unavailable");
-      timer = window.setTimeout(tick, latest && !latest.retained ? 15 * 60_000 : 30_000);
+      timer = window.setTimeout(tick, latest?.refreshing ? 2_000 : latest && !latest.retained ? 15 * 60_000 : 30_000);
     };
-    savedCorporateActions(controller.signal).then((saved) => {
+    // Development/fixtures have no Pages asset binding. Production obtains the
+    // filtered saved capture from the server, without a second full-feed download.
+    if (import.meta.env.DEV) savedCorporateActions(controller.signal).then((saved) => {
       if (controller.signal.aborted) return;
       if (saved) { accept(saved); setCorporateActionsStatus((s) => s === "current" ? s : "saved"); }
     });
@@ -418,6 +426,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // alone full coverage would take minutes; this gets there in seconds and
     // each request is cheap (4 subrequests, mostly served from the edge cache).
     const tick = async (refresh = false) => {
+      if (document.hidden) { timer = window.setTimeout(() => tick(), QUOTE_POLL_MS); return; }
       const pending = await loadQuotes(refresh);
       if (!alive) return;
       timer = window.setTimeout(() => tick(), pending < 0 ? 15_000 : pending > 0 ? QUOTE_FILL_MS : QUOTE_POLL_MS);
