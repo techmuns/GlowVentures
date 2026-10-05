@@ -24,6 +24,7 @@ export const REVIEW_PRIVATE_JOIN = [
   { line: /^Borosil Renewables$/, keys: ["borosil-renewables-limited-warrants-13ag26"], why: "₹3.75 Cr ÷ 2,83,018 warrants = ₹132.50, the 25% subscribed on a ₹530 warrant" },
   { line: /^BIG BANG BOOM$/, keys: ["big-bang-boom-solutions-private-limited-0-001-pref-12sp44"], why: "₹4.032 Cr ÷ 48 preference shares = ₹8,40,000 a share" },
   { line: /^RAY's$/, keys: ["rays-power-experts"], why: "₹2.006 Cr ÷ 59,000 shares = ₹340 a share" },
+  { line: /^Pivot Ventures/, keys: ["pvc-ii-class-a1"], why: "₹1.6 Cr ÷ 16,000 units = ₹1,000 a unit, the face value" },
   { line: /^The OAKS Consumer Fund I/, keys: ["tocf-i-class-a2"], why: "The OAKS Consumer Fund I — TOCF-I on the depository" },
   { line: /^SOTEFIN$/, keys: ["sotefin-bharat"], why: "the company's name on both" },
   { line: /^Zenith$/, keys: ["zenith-leisure-holidays"], why: "₹1 Cr ÷ 32,791 shares = ₹305 a share" },
