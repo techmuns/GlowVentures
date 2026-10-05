@@ -26,6 +26,18 @@ export const sumOrNull = (xs: (number | null | undefined)[]): number | null => {
 };
 
 /**
+ * A UNIT COUNT ACROSS SEVERAL ROWS — `null` the moment any row has no count.
+ *
+ * Unlike `sumOrNull`, which skips a missing money figure and lets a caption name
+ * the coverage, a count over SOME of the rows is not a count of the holding: the
+ * family's consolidated review records most private investments as an amount
+ * paid with no share count (Stage 10dh), and adding the rows that do print one
+ * would state a holding of fewer shares than it is. So it is all or nothing.
+ */
+export const totalQuantity = (rows: readonly { quantity: number | null }[]): number | null =>
+  rows.length && rows.every((r) => r.quantity != null) ? rows.reduce((a, r) => a + (r.quantity as number), 0) : null;
+
+/**
  * DUPLICATE POLICY — carry both, count once.
  *
  * PENDING CONFIRMATION FROM THE PROVIDER. Reversible policy, not a fact, and it
@@ -243,7 +255,7 @@ export const isFundVehicle = (p: { assetClass: string }) => FUND_CLASSES.has(p.a
  * (Buoyant's sleeve twice, Molecule's TDS), which are nil and not redeemed. The
  * other five are this: 3P's three classes and HDFC's two schemes.
  */
-export const isRedeemedToNil = (p: { assetClass: string; quantity: number; currentPrice: number | null }) =>
+export const isRedeemedToNil = (p: { assetClass: string; quantity: number | null; currentPrice: number | null }) =>
   isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null;
 
 /**
@@ -389,7 +401,7 @@ export function negligibleKeys<T extends NegligibleInput>(positions: readonly T[
 }
 
 type NegligibleInput = {
-  assetClass: string; quantity: number; currentPrice: number | null;
+  assetClass: string; quantity: number | null; currentPrice: number | null;
   securityKey: string; marketValue: number; dedupeGroup?: string;
 };
 

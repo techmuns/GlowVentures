@@ -23,6 +23,19 @@ import { securityKeyOf } from "../../shared/securityKey.mjs";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 import { ownerById } from "../../shared/owners.mjs";
 
+// A date is a date, never an Excel serial (Stage 10dg): the review stores a
+// single investment date as a serial number, so 45001 is shown as "16 Mar 2023".
+// A cell no rule reads is shown as printed, never turned into a date it may not be.
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const dayText = (iso) => `${Number(iso.slice(8, 10))} ${MON[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+const monthText = (ym) => `${MON[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+function datesText(d) {
+  if (!d || d.precision === null) return null;
+  if (d.precision === "day") return dayText(d.from);
+  if (d.precision === "month") return d.from === d.to ? monthText(d.from) : `${monthText(d.from)} – ${monthText(d.to)}`;
+  return d.text ?? null;
+}
+
 export const REVIEW_PROVIDER = "Consolidated review (MOPWM)";
 const r2 = (x) => (x === null || x === undefined ? null : Math.round(x * 100) / 100);
 const sum = (xs) => xs.reduce((s, x) => s + (x ?? 0), 0);
@@ -31,8 +44,6 @@ const fail = (msg) => { throw new Error(`reviewBook: ${msg}`); };
 
 const displayName = (product) => DISPLAY_NAME.find((d) => d.line.test(product))?.name ?? product;
 const ownerName = (id) => (id === NOT_ATTRIBUTED ? NOT_ATTRIBUTED_NAME : ownerById(id)?.displayName ?? fail(`no owner ${id}`));
-const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const dayText = (iso) => `${Number(iso.slice(8, 10))} ${MON[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 
 /** The review's Transactions tab names a holder in words; this is the one map. */
 const INVESTOR = {
@@ -67,7 +78,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     const id = `${s.accountId}|${s.securityKey}`;
     const reviewLine = reviewLineFor(s.securityKey);
     const base = { accountId: s.accountId, securityKey: s.securityKey, kind: s.kind, reviewLine };
-    if (s.kind === "window") { removeWindows.add(id); superseded.push({ ...base, quantity: null, marketValue: null }); continue; }
+    if (s.kind === "window") { removeWindows.add(id); superseded.push({ ...base, security: null, quantity: null, marketValue: null }); continue; }
     const pool = s.kind === "position" ? positions : unvalued;
     const hits = pool.filter((p) => p.accountId === s.accountId && p.securityKey === s.securityKey);
     if (hits.length !== 1) fail(`superseded ${s.kind} ${id} is in the book ${hits.length} times, not once`);
@@ -138,7 +149,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     if (!/written off/i.test(l.remark ?? "")) continue;
     if (l.cost || l.value) fail(`written-off row ${l.row} carries a figure`);
     covered.set(l.row, "written off");
-    writtenOff.push({ security: displayName(l.product), reviewRow: l.row, remark: l.remark, dates: l.dates?.text ?? null });
+    writtenOff.push({ security: displayName(l.product), reviewRow: l.row, remark: l.remark, dates: datesText(l.dates) });
   }
   for (const e of PRIVATE_INVESTMENT_ELSEWHERE) { claim(e, "elsewhere"); }
   for (const e of PRIVATE_INVESTMENT_HOLDERS) {

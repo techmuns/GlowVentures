@@ -14380,7 +14380,8 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
     "securityKey": "zepto-limited-0-01-div-cum-comp-conv-pref-sh-sr-ii-g-rd-14-11-2044",
     "kind": "window",
     "reviewLine": "Zepto",
-    "quantity": null,
+    "security": "ZEPTO LIMITED#0.01%(DIV) CUM COMP CONV PREF SH SR II G-RD 14-11-2044",
+    "quantity": 0,
     "marketValue": null
   },
   {
@@ -14388,7 +14389,8 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
     "securityKey": "zepto-limited-new-equity-shares-with-face-value-rs-5-after-sub-division",
     "kind": "window",
     "reviewLine": "Zepto",
-    "quantity": null,
+    "security": "ZEPTO LIMITED#NEW EQUITY SHARES WITH FACE VALUE RS.5/- AFTER SUB-DIVISION",
+    "quantity": 3738119,
     "marketValue": null
   }
 ];
@@ -14399,133 +14401,133 @@ export const BOOK_REVIEW_WRITTEN_OFF: ReviewWrittenOff[] = [
     "security": "Vecino Fitness Pvt Ltd - DOPAMINE",
     "reviewRow": 69,
     "remark": "Written Off",
-    "dates": "45001"
+    "dates": "16 Mar 2023"
   },
   {
     "security": "BETR Tech Privated Limited - Venture Catalyst",
     "reviewRow": 70,
     "remark": "Written Off",
-    "dates": "Dec 20 - Jun 21"
+    "dates": "Dec 2020 – Jun 2021"
   },
   {
     "security": "Bitcipher LLP",
     "reviewRow": 71,
     "remark": "Written Off",
-    "dates": "Feb 21 - Jun 22"
+    "dates": "Feb 2021 – Jun 2022"
   },
   {
     "security": "Cheelizza - ANIMESH LODHA",
     "reviewRow": 72,
     "remark": "Written Off",
-    "dates": "44780"
+    "dates": "7 Aug 2022"
   },
   {
     "security": "Crypto",
     "reviewRow": 73,
     "remark": "Written Off",
-    "dates": "Feb 21 - Nov 22"
+    "dates": "Feb 2021 – Nov 2022"
   },
   {
     "security": "Crypto Matic",
     "reviewRow": 74,
     "remark": "Written Off",
-    "dates": "44256"
+    "dates": "1 Mar 2021"
   },
   {
     "security": "DCX Deposits",
     "reviewRow": 75,
     "remark": "Written Off",
-    "dates": "Mar 21 - May 21"
+    "dates": "Mar 2021 – May 2021"
   },
   {
     "security": "Falconbrick Technologies Private Limited - Shashi Kiran",
     "reviewRow": 76,
     "remark": "Written Off",
-    "dates": "43860"
+    "dates": "30 Jan 2020"
   },
   {
     "security": "Moneyclub Technologies Private Limited - Venture Catalyst",
     "reviewRow": 77,
     "remark": "Written Off",
-    "dates": "44064"
+    "dates": "21 Aug 2020"
   },
   {
     "security": "Neblio Technologies Pvt Ltd",
     "reviewRow": 78,
     "remark": "Written Off",
-    "dates": "Dec 21 - Jan 22"
+    "dates": "Dec 2021 – Jan 2022"
   },
   {
     "security": "One Eight Technologies Private Limited - Ram",
     "reviewRow": 79,
     "remark": "Written Off",
-    "dates": "44131"
+    "dates": "27 Oct 2020"
   },
   {
     "security": "Reflexical",
     "reviewRow": 80,
     "remark": "Written Off",
-    "dates": "44757"
+    "dates": "15 Jul 2022"
   },
   {
     "security": "Tamasha - Angel List",
     "reviewRow": 81,
     "remark": "Written Off",
-    "dates": "44063"
+    "dates": "20 Aug 2020"
   },
   {
     "security": "UE Lifesciences - SHIKHA JAISINGHANI",
     "reviewRow": 82,
     "remark": "Written Off",
-    "dates": "44560"
+    "dates": "30 Dec 2021"
   },
   {
     "security": "Wazir",
     "reviewRow": 83,
     "remark": "Written Off",
-    "dates": "44285"
+    "dates": "30 Mar 2021"
   },
   {
     "security": "Zaamo E Commerce Pvt Ltd - PRADEEP KUMAR",
     "reviewRow": 84,
     "remark": "Written Off",
-    "dates": "44868"
+    "dates": "3 Nov 2022"
   },
   {
     "security": "AL Trust - Forbidden Foods - BRB",
     "reviewRow": 85,
     "remark": "Written Off",
-    "dates": "43752"
+    "dates": "14 Oct 2019"
   },
   {
     "security": "Faraway Foods Private Limited",
     "reviewRow": 86,
     "remark": "Written Off",
-    "dates": "Sep 19 - Aug 20"
+    "dates": "Sep 2019 – Aug 2020"
   },
   {
     "security": "Kylo Edutech Private Ltd",
     "reviewRow": 87,
     "remark": "Written Off",
-    "dates": "44287"
+    "dates": "1 Apr 2021"
   },
   {
     "security": "Rang Technovations LLP",
     "reviewRow": 88,
     "remark": "Written Off",
-    "dates": "43699"
+    "dates": "22 Aug 2019"
   },
   {
     "security": "Synergistic Financial Networks Pvt Ltd (Equity Shares) - MOSAMBEE",
     "reviewRow": 89,
     "remark": "Written Off",
-    "dates": "Nov 12 - Sep 18"
+    "dates": "Nov 2012 – Sep 2018"
   },
   {
     "security": "Transigo OPC Pvt Ltd",
     "reviewRow": 90,
     "remark": "Written Off",
-    "dates": "Mar 20 - Jun 20"
+    "dates": "Mar 2020 – Jun 2020"
   }
 ];
 

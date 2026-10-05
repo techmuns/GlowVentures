@@ -4403,6 +4403,12 @@ function build(archived) {
   const shareMovements = shareMovementsFrom(docs, [...positions, ...polycab], accounts, notes, unvaluedHoldings);
   for (const k of review?.removeWindows ?? []) {
     if (!(k in shareMovements)) throw new Error(`build-book: the review supersedes the movement window ${k}, which is not in the book`);
+    // What the depository printed stays named: its own spelling, and the units it
+    // closed the window at (null where the tape printed no closing).
+    const w = shareMovements[k];
+    const entry = review.superseded.find((x) => x.kind === "window" && `${x.accountId}|${x.securityKey}` === k);
+    entry.security = w.security ?? entry.reviewLine;
+    entry.quantity = w.closing ?? null;
     delete shareMovements[k];
   }
 

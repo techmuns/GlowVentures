@@ -135,8 +135,8 @@ Stage 10dh: the review (MOPWM, 30 Jun 2026) is the source for private-market hol
 | 360-one-private-wealth-60117 | 360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887] | position | 990429.684 | 360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II) |
 | transition-venture-capital-TVC262 | Transition Venture Capital Fund I — Class A1 | position | 7500 | Transition Venture Capital fund I |
 | transition-venture-capital-TVC263 | Transition Venture Capital Fund I — Class A1 | position | 7500 | Transition Venture Capital fund I |
-| motilal-oswal-financial-services-demat-1201090012539150 | zepto-limited-0-01-div-cum-comp-conv-pref-sh-sr-ii-g-rd-14-11-2044 | window | — | Zepto |
-| motilal-oswal-financial-services-demat-1201090012539150 | zepto-limited-new-equity-shares-with-face-value-rs-5-after-sub-division | window | — | Zepto |
+| motilal-oswal-financial-services-demat-1201090012539150 | ZEPTO LIMITED#0.01%(DIV) CUM COMP CONV PREF SH SR II G-RD 14-11-2044 | window | 0 | Zepto |
+| motilal-oswal-financial-services-demat-1201090012539150 | ZEPTO LIMITED#NEW EQUITY SHARES WITH FACE VALUE RS.5/- AFTER SUB-DIVISION | window | 3738119 | Zepto |
 
 Where a newer statement disagrees, the review is followed and the statement named (11 rows):
 
