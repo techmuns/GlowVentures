@@ -181,7 +181,7 @@ export type SchemeMatch = {
   holdingsSource: "amc" | "aggregator" | null;
 };
 
-type Index = {
+export type Index = {
   source: Record<string, string>;
   schemes: Record<string, SchemeMatch>;
   unresolved: { securityKey: string; name: string; isin: string | null; reason: string }[];
@@ -966,8 +966,9 @@ export async function loadStockExposure(
    * another line's. Defaults to the keys the ISIN index already names.
    */
   bookCompanyKeys: ReadonlySet<string> = new Set(isinToBookKey.values()),
+  source?: { index: Index; portfolios: Record<string, FundPortfolio> },
 ): Promise<StockExposureState> {
-  const idx = await loadIndex();
+  const idx = source?.index ?? await loadIndex();
   if (!idx) return { status: "unreachable" };
 
   const loaded = await Promise.all(
@@ -977,7 +978,7 @@ export async function loadStockExposure(
         const miss = idx.unresolved?.find((u) => u.securityKey === f.securityKey);
         return { f, pf: null as FundPortfolio | null, skip: skipReason(f, miss?.reason ?? null) };
       }
-      const pf = await loadPortfolio(match.schemecode);
+      const pf = source ? source.portfolios[match.schemecode] ?? null : await loadPortfolio(match.schemecode);
       return pf
         ? { f, pf, skip: null as string | null }
         : { f, pf: null as FundPortfolio | null, skip: "the store did not answer for this scheme" };

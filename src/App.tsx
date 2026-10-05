@@ -1,3 +1,5 @@
+import { lazy, Suspense, useSyncExternalStore } from "react";
+import { deploymentChanged, subscribeToDeployment } from "@/lib/deploymentVersion";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { BOOK_POLYCAB } from "@/data/glowData";
 import { Sidebar } from "@/components/Sidebar";
@@ -5,24 +7,24 @@ import { TopBar } from "@/components/TopBar";
 import { IndexStrip } from "@/components/IndexStrip";
 import { ResearchLevelSync } from "@/lib/useResearchSync";
 import { EmptyState } from "@/components/EmptyState";
-import { MorningCIO } from "@/pages/MorningCIO";
-import { Polycab } from "@/pages/Polycab";
-import { PortfolioMonitor } from "@/pages/PortfolioMonitor";
-import { PrivateMarket } from "@/pages/PrivateMarket";
-import { FamilyEntities } from "@/pages/FamilyEntities";
-import { SectorComposition } from "@/pages/SectorComposition";
-import { CapitalGains } from "@/pages/CapitalGains";
-import { Performance } from "@/pages/Performance";
-import { ReturnAnalysis } from "@/pages/ReturnAnalysis";
-import { DataRefresh } from "@/pages/DataRefresh";
-import { UploadHistory } from "@/pages/UploadHistory";
-import { DataAudit } from "@/pages/DataAudit";
-import { LedgerInsights } from "@/pages/LedgerInsights";
-import { StockInfo } from "@/pages/StockInfo";
-import { CorporateActions } from "@/pages/CorporateActions";
-import { MandateHoldings } from "@/pages/MandateHoldings";
-import { HoldingsBehind } from "@/pages/HoldingsBehind";
 import { usePortfolio } from "@/context/PortfolioContext";
+const MorningCIO = lazy(() => import("@/pages/MorningCIO").then((m) => ({ default: m.MorningCIO })));
+const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.Polycab })));
+const PortfolioMonitor = lazy(() => import("@/pages/PortfolioMonitor").then((m) => ({ default: m.PortfolioMonitor })));
+const PrivateMarket = lazy(() => import("@/pages/PrivateMarket").then((m) => ({ default: m.PrivateMarket })));
+const FamilyEntities = lazy(() => import("@/pages/FamilyEntities").then((m) => ({ default: m.FamilyEntities })));
+const SectorComposition = lazy(() => import("@/pages/SectorComposition").then((m) => ({ default: m.SectorComposition })));
+const CapitalGains = lazy(() => import("@/pages/CapitalGains").then((m) => ({ default: m.CapitalGains })));
+const Performance = lazy(() => import("@/pages/Performance").then((m) => ({ default: m.Performance })));
+const ReturnAnalysis = lazy(() => import("@/pages/ReturnAnalysis").then((m) => ({ default: m.ReturnAnalysis })));
+const DataRefresh = lazy(() => import("@/pages/DataRefresh").then((m) => ({ default: m.DataRefresh })));
+const UploadHistory = lazy(() => import("@/pages/UploadHistory").then((m) => ({ default: m.UploadHistory })));
+const DataAudit = lazy(() => import("@/pages/DataAudit").then((m) => ({ default: m.DataAudit })));
+const LedgerInsights = lazy(() => import("@/pages/LedgerInsights").then((m) => ({ default: m.LedgerInsights })));
+const StockInfo = lazy(() => import("@/pages/StockInfo").then((m) => ({ default: m.StockInfo })));
+const CorporateActions = lazy(() => import("@/pages/CorporateActions").then((m) => ({ default: m.CorporateActions })));
+const MandateHoldings = lazy(() => import("@/pages/MandateHoldings").then((m) => ({ default: m.MandateHoldings })));
+const HoldingsBehind = lazy(() => import("@/pages/HoldingsBehind").then((m) => ({ default: m.HoldingsBehind })));
 
 // A page only renders when there is something real to render. An empty book
 // reaches every analytics page as zeros, and a zero that came from "we have no
@@ -72,6 +74,14 @@ function StockRoute() {
 }
 
 export default function App() {
+  const updated = useSyncExternalStore(subscribeToDeployment, deploymentChanged);
+  if (updated) return <div role="alert" className="flex h-full items-center justify-center bg-ink-950 p-6 text-slate-200">
+    <div className="max-w-md rounded-lg border border-ink-700 bg-ink-900 p-6">
+      <h1 className="text-lg font-semibold">A new dashboard version is ready</h1>
+      <p className="mt-2 text-sm text-slate-400">Reload to continue with the latest portfolio data. Your saved preferences will be kept.</p>
+      <button type="button" onClick={() => window.location.reload()} className="mt-4 rounded bg-champagne-500 px-4 py-2 text-sm font-semibold text-ink-950">Reload dashboard</button>
+    </div>
+  </div>;
   return (
     <div className="flex h-full bg-ink-950 text-slate-200 bg-grid">
       <Sidebar />
@@ -93,6 +103,7 @@ export default function App() {
             level went. */}
         <ResearchLevelSync />
         <main className="flex-1 overflow-y-auto px-6 py-6">
+          <Suspense fallback={<div role="status" className="p-4 text-sm text-slate-400">Opening page…</div>}>
           <Routes>
             <Route path="/" element={<RootRedirect />} />
             <Route path="/upload" element={<DataRefresh />} />
@@ -349,6 +360,7 @@ export default function App() {
             <Route path="/history" element={<UploadHistory />} />
             <Route path="*" element={<RootRedirect />} />
           </Routes>
+          </Suspense>
         </main>
       </div>
     </div>

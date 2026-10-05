@@ -6,6 +6,7 @@
 // them, because turning an analyst's sentence into a headline figure is exactly
 // how a wrong number gets into a dashboard that promises every figure traces to a
 // source. If a metric belongs in a tile, it should come from a typed feed.
+import { requestDeadline } from "./requestDeadline";
 import { isOutage, outageSentence } from "@/lib/upstreamStatus";
 
 export type ResearchKind = "estimates" | "financials" | "statements" | "concalls" | "documents";
@@ -23,6 +24,7 @@ export type ResearchDoc = { url: string; title: string; date: string | null };
  */
 export type Staleness = {
   stale?: boolean;
+  refreshing?: boolean;
   /** Seconds since the copy was fetched. */
   ageS?: number;
   servedAt?: string;
@@ -37,12 +39,27 @@ export type Research = Staleness & (
 
 export type ResearchError = { failureCode: string; upstreamStatus: number | null; detail: string | null };
 
-export async function fetchResearch(kind: ResearchKind, ticker: string): Promise<Research | ResearchError> {
+const requests = new Map<string, { at: number; value: Promise<Research | ResearchError> }>();
+export function fetchResearch(kind: ResearchKind, ticker: string): Promise<Research | ResearchError> {
+  const key = `${kind}:${ticker.toUpperCase()}`;
+  const cached = requests.get(key);
+  if (cached && Date.now() - cached.at < 5 * 60_000) return cached.value;
+  const value = loadResearch(kind, ticker).then((result) => {
+    if (isResearchError(result) || result.refreshing) requests.delete(key);
+    return result;
+  });
+  if (requests.size >= 40) requests.delete(requests.keys().next().value!);
+  requests.set(key, { at: Date.now(), value });
+  return value;
+}
+async function loadResearch(kind: ResearchKind, ticker: string): Promise<Research | ResearchError> {
+  const deadline = requestDeadline(25_000);
   try {
     const r = await fetch("/api/research", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ kind, ticker }),
+      signal: deadline.signal,
     });
     const d = await r.json().catch(() => null);
     if (!d || !d.ok) {
@@ -57,7 +74,7 @@ export async function fetchResearch(kind: ResearchKind, ticker: string): Promise
     return { ...d } as Research;
   } catch (e) {
     return { failureCode: "NETWORK", upstreamStatus: null, detail: e instanceof Error ? e.message : String(e) };
-  }
+  } finally { deadline.dispose(); }
 }
 
 export const isResearchError = (r: Research | ResearchError): r is ResearchError =>
@@ -74,7 +91,8 @@ export function stalenessNote(r: Research): string | null {
   const h = Math.floor(s / 3600);
   const m = Math.round((s % 3600) / 60);
   const age = h >= 1 ? `${h}h${m ? ` ${m}m` : ""}` : `${Math.max(1, m)}m`;
-  return `The data service did not respond, so this is the last saved copy — fetched ${age} ago.`;
+  return r.refreshing ? `Showing the saved copy from ${age} ago while it refreshes.`
+    : `The data service did not respond, so this is the last saved copy — fetched ${age} ago.`;
 }
 
 /**

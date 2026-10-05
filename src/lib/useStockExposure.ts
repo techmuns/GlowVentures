@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { BOOK_POLYCAB } from "@/data/glowData";
 import { isCompanyShare } from "@/lib/analytics";
-import { bookIsinBridge, heldFundVehicles, loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
+import { bookIsinBridge, heldFundVehicles, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
+import { fetchStockExposure } from "./stockExposureClient";
 import type { Position } from "@/lib/types";
 import { lookthroughCompanies } from "@/lib/recordedHoldings";
 
@@ -76,27 +76,13 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
   const bookCompanyKeys = useMemo(
     () => new Set(companies.filter(isCompanyShare).map((p) => p.securityKey)), [companies]);
 
-  /**
-   * THE RING-FENCE, CARRIED ONTO THE DERIVED SIDE.
-   *
-   * `Polycab.tsx` is `BOOK_POLYCAB`'s only reader FOR DISPLAY and stays so: this
-   * reads it to take a name OUT, never to put a figure in, and no value from it
-   * reaches any cell. Without it the look-through would draw a Polycab row from
-   * a scheme's disclosure — the fence is a decision about a SECURITY, and it has
-   * to hold wherever that security is reported, including in somebody else's
-   * portfolio. `check:pages` asserts no page names it.
-   */
-  const ringFenced = useMemo(() => ({
-    keys: new Set(BOOK_POLYCAB.map((p) => p.securityKey)),
-    isins: new Set(BOOK_POLYCAB.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean)),
-  }), []);
-
+  // The server applies the canonical promoter ring-fence before returning rows.
   const [exposure, setExposure] = useState<StockExposureState>({ status: "loading" });
   useEffect(() => {
     if (!enabled) return;
     let live = true;
-    loadStockExposure(heldVehicles, isinToBookKey, ringFenced, bookCompanyKeys).then((s) => { if (live) setExposure(s); });
+    fetchStockExposure(heldVehicles, isinToBookKey, bookCompanyKeys).then((s) => { if (live) setExposure(s); });
     return () => { live = false; };
-  }, [enabled, heldVehicles, isinToBookKey, ringFenced, bookCompanyKeys]);
+  }, [enabled, heldVehicles, isinToBookKey, bookCompanyKeys]);
   return exposure;
 }

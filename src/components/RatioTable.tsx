@@ -1,3 +1,4 @@
+import { requestDeadline } from "@/lib/requestDeadline";
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, ShieldAlert, ShieldCheck, Split } from "lucide-react";
 import { Pill } from "@/components/Pill";
@@ -34,24 +35,35 @@ import { isOutage, outageHeadline, outageSentence } from "@/lib/upstreamStatus";
 const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 type Fetched =
-  | { ok: true; text: string; sourceUrl: string; stale?: boolean; ageS?: number }
+  | { ok: true; text: string; sourceUrl: string; stale?: boolean; refreshing?: boolean; ageS?: number }
   | { ok: false; failureCode: string; pointer: string | null; upstreamStatus: number | null };
 
-async function fetchRatioTable(ticker: string): Promise<Fetched> {
+const ratioRequests = new Map<string, { at: number; value: Promise<Fetched> }>();
+function fetchRatioTable(ticker: string): Promise<Fetched> {
+  const cached = ratioRequests.get(ticker);
+  if (cached && Date.now() - cached.at < 5 * 60_000) return cached.value;
+  const value = loadRatioTable(ticker).then((r) => { if (!r.ok || r.refreshing) ratioRequests.delete(ticker); return r; });
+  if (ratioRequests.size >= 40) ratioRequests.delete(ratioRequests.keys().next().value!);
+  ratioRequests.set(ticker, { at: Date.now(), value });
+  return value;
+}
+async function loadRatioTable(ticker: string): Promise<Fetched> {
+  const deadline = requestDeadline(65_000);
   try {
     const r = await fetch("/api/ratios", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ table: true, ticker }),
+      signal: deadline.signal,
     });
     const d = await r.json().catch(() => null);
     if (!d || !d.ok || typeof d.text !== "string") {
       return { ok: false, failureCode: d?.failureCode ?? `HTTP_${r.status}`, pointer: d?.pointer ?? null, upstreamStatus: d?.upstreamStatus ?? null };
     }
-    return { ok: true, text: d.text, sourceUrl: d.sourceUrl, stale: d.stale, ageS: d.ageS };
+    return { ok: true, text: d.text, sourceUrl: d.sourceUrl, stale: d.stale, refreshing: d.refreshing, ageS: d.ageS };
   } catch (e) {
     return { ok: false, failureCode: "NETWORK", pointer: e instanceof Error ? e.message : null, upstreamStatus: null };
-  }
+  } finally { deadline.dispose(); }
 }
 
 const REASONS: Record<string, string> = {

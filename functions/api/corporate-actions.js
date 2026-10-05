@@ -34,9 +34,20 @@ export async function onRequestGet(context) {
     || isins.length > 250 || isins.some((s) => !/^[A-Z]{2}[A-Z0-9]{9}\d$/.test(s))) {
     return json({ ok: false, reason: "Invalid symbol list" }, 400);
   }
-  // Fetch the market-wide public capture. No holdings, cookies or credentials
-  // are forwarded to Research; filtering happens here, behind our own gate.
-  const key = new Request(`${url.origin}/__cache/corporate-actions/v1`);
+  const { feed, retained, refreshing, errors } = await loadActionCapture(context);
+  if (!feed) return json({ ok: false, reason: "Research feed unavailable; use the dated saved capture", errors }, 503);
+  const wanted = new Set(symbols), identities = new Set(isins);
+  return json({ ok: true, retained, refreshing, errors, feed: { ...feed, symbols, isins, rows: feed.rows.filter((r) => wanted.has(r.ticker) || identities.has(r.isin)) } });
+}
+
+/** Return local evidence immediately; external feeds refresh only in waitUntil. */
+export async function loadActionCapture(context) {
+  const origin = new URL(context.request.url).origin;
+  // Reuse the existing validated capture on rollout. The payload is unchanged;
+  // older entries merely lack the new refresh metadata and refresh once below.
+  const key = new Request(`${origin}/__cache/corporate-actions/v1`);
+  const now = Date.now();
+  const today = new Date(now + 19_800_000).toISOString().slice(0, 10);
   const errors = [];
   let cache, saved, feed = null;
   try {
@@ -45,12 +56,34 @@ export async function onRequestGet(context) {
     const candidate = saved ? await saved.json() : null;
     if (validActionFeed(candidate)) feed = candidate;
   } catch { errors.push({ source: "cache", reason: "Saved capture could not be read" }); }
-  const today = new Date(Date.now() + 19_800_000).toISOString().slice(0, 10);
-  let retained = !!feed && (!feed.verifiedThrough || feed.verifiedThrough < today);
-  const fetched = Number(saved?.headers.get("x-fetched-at") || 0);
-  if (!feed || retained || Date.now() - fetched > 15 * 60_000) {
-    retained = true;
-    for (const [source, address] of [["Research", RESEARCH_ACTIONS_URL], ["Research repository", RESEARCH_MIRROR_URL]]) {
+  // The deployed asset is available even in a cold edge location. A new browser
+  // never waits for Research or downloads the full market-wide source to filter it.
+  if (!feed && context.env?.ASSETS) {
+    try {
+      const response = await context.env.ASSETS.fetch(new Request(`${origin}/data/corporate-actions.json`));
+      if (response.ok) {
+        const candidate = await readBoundedJson(response);
+        if (validActionFeed(candidate)) feed = candidate;
+      }
+    } catch { errors.push({ source: "deployment", reason: "Saved capture could not be read" }); }
+  }
+  const dated = !feed?.verifiedThrough || feed.verifiedThrough < today;
+  const checkedAt = Number(saved?.headers.get("x-checked-at") || 0);
+  const failed = saved?.headers.get("x-refresh-failed") === "1";
+  const refreshing = saved?.headers.get("x-refreshing") === "1" && now - checkedAt < 25_000;
+  const due = !checkedAt || now - checkedAt >= (dated || failed ? 30_000 : 15 * 60_000);
+  const persist = async (value, pending, failedRefresh = false) => {
+    if (!cache) return;
+    try { await cache.put(key, new Response(JSON.stringify(value), { headers: {
+      "Content-Type": "application/json", "Cache-Control": "public, max-age=604800",
+      "x-checked-at": String(Date.now()), "x-refreshing": pending ? "1" : "0", "x-refresh-failed": failedRefresh ? "1" : "0",
+    } })); } catch { /* Never discard evidence because its cache write failed. */ }
+  };
+  const refresh = async () => {
+    // Independent transports share one deadline rather than serial 12s waits.
+    const responses = await Promise.all([
+      ["Research", RESEARCH_ACTIONS_URL], ["Research repository", RESEARCH_MIRROR_URL],
+    ].map(async ([source, address]) => {
       try {
         const response = await fetch(address, { signal: AbortSignal.timeout(12_000), redirect: "manual" });
         if (!response.ok) { await response.body?.cancel(); throw new Error(`HTTP ${response.status}`); }
@@ -59,25 +92,27 @@ export async function onRequestGet(context) {
         if (feed && (Date.parse(next.capturedAt) < Date.parse(feed.capturedAt)
           || (feed.verifiedThrough && (!next.verifiedThrough || next.verifiedThrough < feed.verifiedThrough))
           || next.rows.length < feed.rows.length * 0.75)) throw new Error("Regressed capture");
-        feed = next;
-        retained = !next.verifiedThrough || next.verifiedThrough < today;
-        // A reachable but out-of-date deployment should not mask a fresher
-        // capture already committed by Research's existing refresh job.
-        if (retained) continue;
-        break;
+        return next;
       } catch (error) {
         errors.push({ source, reason: String(error?.message || "Capture unavailable").slice(0, 160) });
+        return null;
       }
+    }));
+    const candidates = responses.filter(Boolean).sort((a, b) => Date.parse(a.capturedAt) - Date.parse(b.capturedAt));
+    // Choose once, never racing writes from an old deployment and a newer mirror.
+    let next = feed;
+    for (const candidate of candidates) {
+      if (next && ((next.verifiedThrough && (!candidate.verifiedThrough || candidate.verifiedThrough < next.verifiedThrough))
+        || candidate.rows.length < next.rows.length * 0.75)) continue;
+      next = candidate;
     }
-    if (!feed) return json({ ok: false, reason: "Research feed unavailable; use the dated saved capture", errors }, 503);
-    // Write the winning capture once. Parallel writes for an old deployment
-    // and a newer mirror could otherwise leave the old capture in the cache.
-    // A cache failure must never discard a successfully fetched capture.
-    if (!retained && cache) context.waitUntil(Promise.resolve().then(() => cache.put(key, new Response(JSON.stringify(feed), { headers: {
-      "Content-Type": "application/json", "Cache-Control": "public, max-age=604800", "x-fetched-at": String(Date.now()),
-    } }))).catch(() => {}));
+    if (next) await persist(next, false, !candidates.length);
+    return { feed: next, retained: !candidates.length || !next?.verifiedThrough || next.verifiedThrough < today, refreshing: false, errors };
+  };
+  if (!feed) return refresh(); // Only when both edge cache and deployment asset are unavailable.
+  if (due) {
+    await persist(feed, true); // Back off other readers while this refresh runs.
+    context.waitUntil(refresh().catch(() => {}));
   }
-  const wanted = new Set(symbols);
-  const identities = new Set(isins);
-  return json({ ok: true, retained, errors, feed: { ...feed, symbols, isins, rows: feed.rows.filter((r) => wanted.has(r.ticker) || identities.has(r.isin)) } });
+  return { feed, retained: dated || failed || due || refreshing, refreshing: due || refreshing, errors };
 }

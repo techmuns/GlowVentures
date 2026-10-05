@@ -112,7 +112,7 @@ const PUB = path.join(ROOT, "public");
   }
 };
 (import.meta as { env?: Record<string, string> }).env ??= { BASE_URL: "/" };
-const L = await import("@/lib/ledger");
+const L = await import("./archiveLedger");
 
 console.log("\n── the book, against the ledger ──");
 const byKey = new Map<string, Position[]>();

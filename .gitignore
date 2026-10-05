@@ -20,3 +20,7 @@ scripts/.nse-etf-master.csv
 # Page-check output — screenshots and report from `npm run check:pages`.
 # Regenerable, and 15 full-page PNGs per run has no business in git history.
 docs/page-check/
+
+# Prepared by build:views for this exact book revision.
+public/views/
+src/data/readModels.json
