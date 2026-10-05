@@ -82,7 +82,7 @@ reports, and for a depository row with no price that is no value at all.
 | Bharat Jaisinghani | ₹105.49 Cr | ₹32.72 Cr | -72.78 Cr |
 | Ankita Jaisinghani | ₹212.78 Cr | ₹128.61 Cr | -84.17 Cr |
 | Hope India Trust | ₹0.39 Cr | — *not in the book* | — |
-| Bharat Jaisinghani Family Trust | ₹5.96 Cr | — *not in the book* | — |
+| Bharat Jaisinghani Family Trust | ₹5.96 Cr | — *in the book, as quantities only* | — |
 | Bharat Jaisinghani Family Trust II <br><sub>book: Bharat Jaisinghani Family Trust 2</sub> | ₹8.12 Cr | ₹1.71 Cr | -6.41 Cr |
 | Bharat Jaisinghani Family Trust III <br><sub>book: Bharat Jaisinghani Family Trust 3</sub> | ₹8.12 Cr | ₹1.71 Cr | -6.41 Cr |
 | **Total** | **₹1,300.05 Cr** | **₹613.01 Cr** | **-687.04 Cr** |
@@ -94,6 +94,11 @@ Every book figure here is ex-promoter by construction: Polycab is ring-fenced in
 `Hope India Trust` is a review column and deliberately NOT in this book: its four
 mutual-fund folios are filed by each AMC as `Status : Trust`, a separate taxpayer. One
 entry in `shared/owners.mjs` reverses that if the family says it belongs here.
+
+`Bharat Jaisinghani Family Trust` IS in this book — Motilal Oswal Financial Services (demat) 1201090032387399 — and holds no valued position on the statement
+basis: its statement records what it holds as quantities, with no value this book can use.
+Section H reads each of its closings on its own statements and section D files each one once;
+the bridge in section F takes its ₹5.96 Cr out there, and not again as a holder with no account.
 
 ## C. The review's product lines against the book
 
@@ -247,7 +252,8 @@ reported rather than requested.
 **₹503.94 Cr of review lines match no name in this book.** Read on the holders' own statements:
 ₹306.05 Cr is on no statement in `source/`; ₹0.00 Cr is on a statement and valued in
 this book under a spelling no name tier reaches; ₹197.50 Cr is on a statement that carries it
-as a quantity this book does not value; and ₹0.39 Cr is the Hope India Trust's, kept out by decision.
+as a quantity this book does not value; and ₹0.39 Cr belongs to holders with no account in this book (the Hope India Trust, a separate taxpayer kept out by decision),
+which the bridge in section F takes out once, with the holder.
 
 ### D1. Grouped by the one document that would close each
 
@@ -353,13 +359,13 @@ is NAMED rather than plugged: no step below is fitted to make the arithmetic wor
 | Step | Amount | Running | Why |
 | --- | ---: | ---: | --- |
 | Review portfolio total, 30 June 2026 | ₹1,300.05 Cr | ₹1,300.05 Cr |  |
-| less: holders with no account in this book | −₹6.34 Cr | ₹1,293.71 Cr | the review's holders with no account in this book, section B — the Hope India Trust, a separate taxpayer kept out by decision, among them |
-| less: aggregate blocks the review itemises nowhere | −₹136.16 Cr | ₹1,157.55 Cr | `Private Equity` — reported on the `Alternate` tab as a total only. Not a missing statement: see `docs/REGISTER-RECONCILIATION.md`, which measures the family's own record of this money |
-| less: lines no statement in `source/` reports | −₹169.89 Cr | ₹987.66 Cr | section D, read on the holders' own statements — the HDFC Bank, Motilal Oswal and AMC statements that have not been supplied |
-| less: lines a statement reports as a quantity this book does not value | −₹197.50 Cr | ₹790.16 Cr | section D — on a statement, but as a quantity with no value: a depository's last-movement rate, a face value, a transaction tape with no holding statement |
-| **What the book would carry on those two adjustments alone** | | **₹790.16 Cr** | |
+| less: holders with no account in this book | −₹0.39 Cr | ₹1,299.66 Cr | the review's holders the account registry has no account for, section B — the Hope India Trust, a separate taxpayer kept out by decision. A holder with an account and no valued position is not one: its lines are in the steps below, once |
+| less: aggregate blocks the review itemises nowhere | −₹136.16 Cr | ₹1,163.50 Cr | `Private Equity` — reported on the `Alternate` tab as a total only. Not a missing statement: see `docs/REGISTER-RECONCILIATION.md`, which measures the family's own record of this money |
+| less: lines no statement in `source/` reports | −₹169.89 Cr | ₹993.61 Cr | section D, read on the holders' own statements — the HDFC Bank, Motilal Oswal and AMC statements that have not been supplied |
+| less: lines a statement reports as a quantity this book does not value | −₹197.50 Cr | ₹796.11 Cr | section D — on a statement, but as a quantity with no value: a depository's last-movement rate, a face value, a transaction tape with no holding statement |
+| **What the book would carry on those four adjustments alone** | | **₹796.11 Cr** | |
 | **What the book actually carries (ex-promoter)** | | **₹613.01 Cr** | |
-| **Residual** | | **−₹177.15 Cr** | see below |
+| **Residual** | | **−₹183.11 Cr** | see below |
 
 ### F1. The part of the residual where the money LEFT, and is not a price
 
@@ -417,7 +423,7 @@ What reading them corrected — which is the check that this was a real gap and 
 **THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.**
 **One part of it runs the other way, and is quantified: +₹31.00 Cr** is a holding the book
 carries and the review could not, because its own dated record holds nothing on the review's date —
-Helios Mutual Fund 10355977 (₹31.00 Cr, first held 2026-08-06). Section C1 names it. Without it the residual would be −₹208.15 Cr.
+Helios Mutual Fund 10355977 (₹31.00 Cr, first held 2026-08-06). Section C1 names it. Without it the residual would be −₹214.11 Cr.
 That remainder is the sum of three things this reconciliation can name but cannot yet quantify line
 by line, and saying so is the honest position — a bridge forced to zero would be a fabricated
 figure with a badge on it:
