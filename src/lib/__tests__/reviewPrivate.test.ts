@@ -73,7 +73,14 @@ console.log("\n1. Every line of the Private Investments tab is a row of this tab
     productRows.length === mine.length && productRows.every((r, i) => r === mine[i]),
     `workbook ${productRows.length}, tab ${mine.length}`);
   ok("…and that is the 87 the review lists", productRows.length === 87, String(productRows.length));
-  const totalCost = numbersIn(rowCells(PI, total))[1];
+  // The cost column BY ITS HEADER, never by position: the Total row carries a
+  // stray figure (921871) in its date column, which a positional read takes for a cost.
+  let costCol = -1;
+  for (let r = range.s.r; r < head && costCol < 0; r++) {
+    costCol = rowCells(PI, r + 1).findIndex((v) => typeof v === "string" && /^investment at cost$/i.test(v.trim()));
+  }
+  ok("the tab's Investment at Cost column is found by its header", costCol >= 0);
+  const totalCost = Number(rowCells(PI, total)[costCol]);
   ok("the generated total is the workbook's Total row", Math.abs(d.privateInvestmentsTotal.invested - totalCost * CRORE) <= 1,
     `${d.privateInvestmentsTotal.invested} vs ${totalCost * CRORE}`);
   const sum = rows.filter((r) => r.tab === PI).reduce((s, r) => s + (r.invested ?? 0), 0);
