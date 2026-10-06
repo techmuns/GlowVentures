@@ -771,7 +771,8 @@ export function coveredReturn(set: readonly Position[], opts: FifoOptions = {}) 
  * cost — Stage 10ca's decision, and main records the refusal version (a bare
  * "—" wherever ₹168 Cr of depository holdings report no cost) as a regression.
  * WHEREVER IT APPEARS IT NAMES THAT SET ON ITS FACE, not only in a hover:
- * "on the ₹X of ₹Y that reports a cost · N of M holdings". Morning CIO's
+ * "on the ₹X of ₹Y with a cost and a valuation · N of M holdings" (it read
+ * "that reports a cost" until Stage 10dh). Morning CIO's
  * Consolidated return tile, its allocation table's Total row and the Portfolio
  * Monitor's footer all print this ONE figure over this ONE set, so the set and
  * its words are built here once.
@@ -819,16 +820,18 @@ export function costedBookSet(current: readonly Position[]): CostedBookSet {
   };
 }
 /**
- * The words, in the reader's currency: "on the ₹X of ₹Y that reports a cost
- * and a valuation · N of M holdings". It names the RETURN's set, so it counts
- * the struck holdings: a depository row reports no cost and a review line held
- * at cost no valuation, and a return covers neither.
+ * The words, in the reader's currency: "on the ₹X of ₹Y with a cost and a
+ * valuation · N of M holdings". It names the RETURN's set, so it counts the
+ * struck holdings: a depository row reports no cost and a review line held at
+ * cost no valuation, and a return covers neither. Nine small words, not ten:
+ * the label stands on a tile's face, where a line of ten reads as a sentence
+ * (Stage 10cp's prose rule).
  */
 export function costedSetLabel(
   s: Pick<CostedBookSet, "struckValue" | "bookValue" | "struckCount" | "holdings">,
   money: (n: number) => string,
 ): string {
-  return `on the ${money(s.struckValue)} of ${money(s.bookValue)} that reports a cost and a valuation · ${s.struckCount} of ${s.holdings} holdings`;
+  return `on the ${money(s.struckValue)} of ${money(s.bookValue)} with a cost and a valuation · ${s.struckCount} of ${s.holdings} holdings`;
 }
 
 /**

@@ -1567,11 +1567,24 @@ export function PrivateMarket() {
               data-pm-committed={fig.committed ?? undefined} data-pm-called={fig.called ?? undefined}
               data-pm-paid={fig.paid ?? undefined} data-pm-uncalled={fig.uncalled ?? undefined}
               data-pm-value={f.value ?? undefined} data-pm-counted={f.counted ? "" : undefined}
+              data-pm-review={f.position?.review && f.position.reviewSource
+                ? `${f.position.reviewSource.sheet}:${f.position.reviewSource.row}` : undefined}
               data-calls={s ? s.calls.length : undefined}>
               <TreeNameCell depth={1} last={i === kids.length - 1 && !(grouping === "fund" && g.overlap)}
                 title={grouping === "fund" ? f.owner : f.fundName}
                 sub={<>
                   {f.provider} {f.accountNo}
+                  {/* VALUED ON THE REVIEW (Stage 10dh). The family's consolidated
+                      review is the source for private-market lines, and where
+                      the line sits in a fund's own statement account the account
+                      alone would read as that statement's figure — so the line
+                      says whose figure it is, and the hover says which review
+                      line and how it was split. A review holder's own account
+                      already names the review, so it says nothing more. */}
+                  {f.position?.review && !m.accIdx.get(f.accountId)?.reviewHolder && (
+                    <> · <span className="text-slate-400" data-pm-review-note
+                      title={f.position.reviewNote ?? "Valued on the family's consolidated review (MOPWM)."}>MOPWM review</span></>
+                  )}
                   {s && s.calls.length > 0 && <> · {s.calls.length} {s.calls.length === 1 ? "call" : "calls"}</>}
                   {/* AN INCOME-ONLY VIEW OF A HOLDING ANOTHER LINE VALUES — said
                       on the line, so a reader never looks for its units here. */}
@@ -1607,6 +1620,9 @@ export function PrivateMarket() {
                 stale: s?.staleDays ?? null,
                 ties: s?.uncalledTies ?? null,
                 implied: s?.impliedUncalled ?? null,
+                // A REVIEW LINE'S VALUE SAYS WHOSE FIGURE IT IS, on the figure.
+                titles: f.position?.review && f.position.reviewNote
+                  ? { value: f.position.reviewNote, cost: f.position.reviewNote } : undefined,
                 capAlso: f.capital && !f.capitalCounted && f.capitalCountedAs
                   ? {
                     id: f.capitalCountedAs,

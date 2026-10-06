@@ -2485,7 +2485,7 @@ export function PortfolioMonitor() {
   // valuation — never a depository row, and never a line held at cost.
   const returnSetLine = (footCover.uncosted.lines === 0 || footCover.uncosted.value === 0) && footCover.atCost.lines === 0
     ? `every one of the ${footCover.lines} ${footCover.lines === 1 ? "holding reports" : "holdings reports"} a cost`
-    : `on the ${money(footStruckValue)} of ${money(footCover.value)} that reports a cost and a valuation · ${footStruckLines} of ${footCover.lines} holdings`;
+    : `on the ${money(footStruckValue)} of ${money(footCover.value)} with a cost and a valuation · ${footStruckLines} of ${footCover.lines} holdings`;
   // ── WHAT A ROW OPENS INTO: ROWS OF THIS TABLE, IN ITS COLUMNS ─────────────
   //
   //   *"i hope the ui design upgrades you are doing and making it much amazing

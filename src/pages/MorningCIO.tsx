@@ -1059,7 +1059,7 @@ export function MorningCIO() {
       }${
         m.accrued == null || !m.accruedCount ? "" :
         ` NOT IN THIS FIGURE: ${fmtFromBase(m.accrued, { compact: true })} of accrued income — dividends and interest declared on ${m.accruedCount} holding${m.accruedCount === 1 ? "" : "s"} here and not yet received. The managers' printed totals fold it into market value on some rows and not others, so the book carries it as its own field and every market value on this site excludes it; a statement whose total runs above ours by about this much is agreeing with us, not disagreeing.`
-      }${m.totalInvested == null ? "" : ` INVESTED is the cost the statements report, over the ${fmtNum(m.p.length - m.noCostCount)} of ${fmtNum(m.p.length)} holdings that report one, except that each whole PMS mandate enters at the capital paid into it — what its FIFO return divides by; ${fmtNum(m.noCostCount)} holdings worth ${fmtFromBase(m.noCostMV, { compact: true })} report no cost and are in the value and not in the capital invested, so the two figures are not a gain apart: the book's FIFO gain is ${m.embeddedGain == null ? "not struck" : fmtFromBase(m.embeddedGain, { compact: true, sign: true })}.`}`,
+      }${m.totalInvested == null ? "" : ` INVESTED is the cost the statements report — and, for a private-market line, what the family's consolidated review (MOPWM) records as paid — over the ${fmtNum(m.p.length - m.noCostCount)} of ${fmtNum(m.p.length)} holdings that report one, except that each whole PMS mandate enters at the capital paid into it — what its FIFO return divides by; ${fmtNum(m.noCostCount)} holdings worth ${fmtFromBase(m.noCostMV, { compact: true })} report no cost and are in the value and not in the capital invested, so the two figures are not a gain apart: the book's FIFO gain is ${m.embeddedGain == null ? "not struck" : fmtFromBase(m.embeddedGain, { compact: true, sign: true })}.`}`,
       value: fmtFromBase(m.totalValue, { compact: true }),
       second: m.totalInvested == null
         ? <span title="No statement in this book reports a cost basis, so there is no capital invested to show.">Invested <span className="text-slate-500">{DASH}</span></span>
@@ -1079,12 +1079,15 @@ export function MorningCIO() {
     {
       id: "gain", label: "Gain / loss", icon: <TrendingUp className="h-4 w-4" />,
       href: drilldownHref("book", undefined, "costed"),
-      hrefTitle: "Open the holdings this gain is struck over — the ones whose statement reports a cost. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). Return on recorded capital is this gain over the capital deployed. This is the recorded gain, not a complete since-inception total return: separate dividends and fund distributions and sales outside the available statements are not included, except within a whole PMS mandate. It covers the holdings reporting a cost.",
+      hrefTitle: `Open the holdings whose statement reports a cost. The gain is struck over the ${fmtNum(m.costedSet.struckCount)} of them that also carry a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })}. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). Return on recorded capital is this gain over the capital deployed. This is the recorded gain, not a complete since-inception total return: separate dividends and fund distributions and sales outside the available statements are not included, except within a whole PMS mandate.${
+        m.costedSet.atCost > 0
+          ? ` The ${fmtNum(m.costedSet.atCost)} private investments the family's consolidated review holds at cost, ${fmtFromBase(m.costedSet.atCostValue, { compact: true })}, are in Recorded invested and in no gain: their value is what was paid.`
+          : ""}`,
       value: m.embeddedGain == null ? <AbsentValue />
         : <span className={changeColor(m.embeddedGain)}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</span>,
       second: m.gainPct == null ? undefined : <>Return on capital {pct1(m.gainPct)}</>,
       sub: m.embeddedGain == null ? absentWhy("No recorded cost or gain")
-        : <>Recorded · {fmtNum(m.costedSet.costedCount)} of {fmtNum(m.costedSet.holdings)} holdings<br />Separate income excluded</>,
+        : <>Recorded · {fmtNum(m.costedSet.struckCount)} of {fmtNum(m.costedSet.holdings)} holdings<br />Separate income excluded</>,
     },
     {
       id: "annualised", label: "Annualised return", icon: <TrendingUp className="h-4 w-4" />,
@@ -1133,7 +1136,10 @@ export function MorningCIO() {
     {
       id: "return", label: "Consolidated return", icon: <Percent className="h-4 w-4" />,
       href: drilldownHref("book", undefined, "costed"),
-      hrefTitle: `Open the holdings this return is struck over — the ${fmtNum(m.costedSet.costedCount)} of ${fmtNum(m.costedSet.holdings)} whose statement reports a cost, worth ${fmtFromBase(m.costedSet.costedValue, { compact: true })} of the ${fmtFromBase(m.costedSet.bookValue, { compact: true })} book — on the Current Value of Holdings page; the ${fmtFromBase(m.costedSet.bookValue - m.costedSet.costedValue, { compact: true })} that reports none is outside it. FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the capital deployed — the cost of the units held plus the cost of the units sold, and each whole PMS mandate at the capital paid into it. Cumulative, not annualised. Dividends and fund distributions are not in it, except inside a whole mandate's capital.`,
+      hrefTitle: `Open the holdings this return is struck over — the ${fmtNum(m.costedSet.struckCount)} of ${fmtNum(m.costedSet.holdings)} with a cost and a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })} of the ${fmtFromBase(m.costedSet.bookValue, { compact: true })} book — on the Current Value of Holdings page; the ${fmtFromBase(m.costedSet.bookValue - m.costedSet.costedValue, { compact: true })} that reports no cost is outside it${
+        m.costedSet.atCost > 0
+          ? `, and so are the ${fmtNum(m.costedSet.atCost)} private investments the family's consolidated review holds at cost, ${fmtFromBase(m.costedSet.atCostValue, { compact: true })}: their value is what was paid, so there is no gain on them to strike`
+          : ""}. FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the capital deployed — the cost of the units held plus the cost of the units sold, and each whole PMS mandate at the capital paid into it. Cumulative, not annualised. Dividends and fund distributions are not in it, except inside a whole mandate's capital.`,
       value: pct1(m.gainPct),
       // THE SET, ON ITS FACE (B-07) — the same words the allocation table's
       // Total row prints beside the same figure, from `costedSetLabel`.
@@ -1687,6 +1693,9 @@ export function MorningCIO() {
                       invested: <td key="invested" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300 whitespace-nowrap"
                         title={[
                           `Invested covers ${fmtNum(m.p.length - m.noCostCount)} of the ${fmtNum(m.p.length)} holdings — ${fmtNum(m.noCostCount)} report no cost and are in Current only.`,
+                          m.costedSet.atCost > 0
+                            ? `It includes the ${fmtNum(m.costedSet.atCost)} private investments the family's consolidated review holds at cost, ${money(m.costedSet.atCostValue)}, which are in Current at the same figure.`
+                            : null,
                           capitalNote(m.bookWhole),
                         ].filter(Boolean).join(" · ")}
                         data-invested-capital={m.bookWhole.wholeMandates.length ? m.totalInvested ?? undefined : undefined}>{money(m.totalInvested)}</td>,
@@ -1708,7 +1717,10 @@ export function MorningCIO() {
                       <td key="return" className={`border-t-2 border-ink-600 px-2 py-2.5 text-right whitespace-nowrap mono font-semibold ${m.footerPct == null ? "text-slate-500" : changeColor(m.footerPct)}`}
                         data-alloc-total-return={m.footerPct ?? ""}
                         title={m.footerPct == null ? undefined
-                          : `The whole-book return on cost, FIFO — the unrealised gain on what is held plus the gain realised on units sold, over the capital deployed — struck over the holdings that report a cost. It is not Current ÷ Invested: Current covers every holding and Invested the costed ones. Cumulative, not annualised.`}>
+                          : `The whole-book return on cost, FIFO — the unrealised gain on what is held plus the gain realised on units sold, over the capital deployed — struck over the holdings with a cost and a valuation of their own. It is not Current ÷ Invested: Current covers every holding and Invested the costed ones${
+                            m.costedSet.atCost > 0
+                              ? `, among them the ${fmtNum(m.costedSet.atCost)} private investments the family's consolidated review holds at cost, ${money(m.costedSet.atCostValue)}, which carry no gain and are in neither side of this return`
+                              : ""}. Cumulative, not annualised.`}>
                         {/* ONE FIGURE, ONE SET, ONE LABEL (B-07). This read "—"
                             with no reason while the tile and the Portfolio
                             Monitor's footer printed the figure; it prints the
