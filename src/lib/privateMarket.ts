@@ -539,8 +539,21 @@ export function incomeOnlyViewOf(
   const position = positions.find((p) => p.securityKey === view.securityKey
     && p.accountId !== account.accountId
     && accIdx.get(p.accountId)?.ownerId === account.ownerId
-    && p.quantity !== null && Math.abs(p.quantity - view.units) < 0.0005);
+    && p.quantity !== null && Math.abs(p.quantity - view.units) < unitTolerance(p));
   return position ? { view, position } : null;
+}
+
+/**
+ * HALF THE LAST DECIMAL THE COARSER OF THE TWO DOCUMENTS PRINTS. The letters
+ * print units to three decimals; the family's consolidated review, which values
+ * the 360 ONE holding since Stage 10dh, prints them to two — 9,90,429.68 against
+ * the letters' 9,90,429.684. Held to the third decimal the two never met, the
+ * income-only folios fell into "Not valued" as a fund of their own, and their
+ * ₹14,31,238 of distributions left the Distributions tile. The bound is the
+ * coarser document's own printing precision, never a tolerance widened to fit.
+ */
+function unitTolerance(p: Position): number {
+  return p.review ? 0.005 : 0.0005;
 }
 
 /**
