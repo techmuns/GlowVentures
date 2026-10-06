@@ -160,7 +160,17 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   const taxonomyOf = (tab, key) => tab === "unlisted"
     ? { assetClass: "Equity", basket: UNLISTED_BASKET[key] ?? fail(`unlisted line ${key} carries no basket code here`) }
     : REVIEW_TAXONOMY[tab] ?? fail(`no review classification for tab ${tab}`);
-  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab }) => {
+  // WHICH CELL OF THE WORKBOOK A ROW CAME FROM (Stage 10dh), as data rather than
+  // prose: the sheet, the block on it and the Excel row. The reconciler joins the
+  // review's own lines to the book's on it, and the Investorwise tie below reads
+  // it — a structural claim must not depend on the wording of `reviewNote`.
+  const SHEET = { privateInvestments: ["Private Investments", "Private Investments"], peFunds: ["Alternate", "PE Funds"], unlisted: ["Equity", "Direct Equity - Unlisted"], credit: ["Debt", "Debt"] };
+  const sourceOf = (tab, row) => {
+    const [sheet, block] = SHEET[tab] ?? fail(`no workbook sheet for tab ${tab}`);
+    if (!Number.isInteger(row)) fail(`${tab}: a review row carries no Excel row number`);
+    return { sheet, block, row };
+  };
+  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row }) => {
     if (key !== securityKeyOf(security) && !statementKeys.has(key)) {
       fail(`${security}: key ${key} is neither its name's own (${securityKeyOf(security)}) nor a statement row's`);
     }
@@ -183,7 +193,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       stCostBasis: null, ltCostBasis: null, daysToLT: null, heldSince: null,
       priceAsOf: asOf ?? REVIEW_AS_OF, accruedIncome: null, dividendReceived: null, positionIrrPct: null,
       dedupeGroup: undefined, alsoReportedUnder: undefined,
-      review: true, valuedAtCost: atCost ? true : undefined, reviewTaxonomy: taxonomyOf(tab, key),
+      review: true, valuedAtCost: atCost ? true : undefined, reviewTaxonomy: taxonomyOf(tab, key), reviewSource: sourceOf(tab, row),
       reviewNote: `${note}${fresher.length ? ` A statement says otherwise: ${fresher.join("; ")}.` : ""}`,
     });
   };
@@ -218,7 +228,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     const parts = e.split.map((s) => ({ ...s, cost: s.cost ?? l.cost - fixed }));
     if (!near(sum(parts.map((s) => s.cost)), l.cost)) fail(`${name}: the split adds to ${sum(parts.map((s) => s.cost))}, not the line's ${l.cost}`);
     for (const s of parts) {
-      push({ key, security: name, owner: s.owner, assetClass: e.assetClass, qty: null, cost: s.cost, atCost: true, tab: "privateInvestments",
+      push({ key, security: name, owner: s.owner, assetClass: e.assetClass, qty: null, cost: s.cost, atCost: true, tab: "privateInvestments", row: l.row,
         note: `Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row ${l.row}${parts.length > 1 ? ` — ${ownerName(s.owner)}'s ₹${s.cost.toLocaleString("en-IN")} of the line` : ""}. ${cap(e.why)}.` });
     }
   }
@@ -262,7 +272,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
           notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s Transactions rows walk to ${walked.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units; the closing holds ${s.qty.toLocaleString("en-IN", { maximumFractionDigits: 3 })}, so ${(walked - s.qty).toLocaleString("en-IN", { maximumFractionDigits: 3 })} units are on no dated row`);
         }
       }
-      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab,
+      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab, row: l.row,
         cost: s.cost, value: s.value, atCost: !!e.atCost, asOf: e.atCost ? REVIEW_AS_OF : f.closingDate ?? REVIEW_AS_OF,
         note: `${e.atCost ? "Held at cost" : `Valued at ₹${s.value.toLocaleString("en-IN")}`} on the family's consolidated review (MOPWM, 30 Jun 2026), ${tabName} row ${l.row}${f.closingDate && !e.atCost ? `, its closing of ${dayText(f.closingDate)}` : ""}. ${cap(e.why)}.` });
     }
@@ -275,7 +285,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   // PE funds and unlisted shares tie member by member. Private Investments ties
   // as a whole: what no member is shown holding is exactly the not-attributed
   // rows, plus the two lines counted elsewhere (ESDS, and the K M Global loan).
-  const tabOf = (p) => (/PE Funds row/.test(p.reviewNote) ? "peFunds" : /Unlisted row/.test(p.reviewNote) ? "unlisted" : /Private Investments row/.test(p.reviewNote) ? "peAtCost" : null);
+  const tabOf = (p) => ({ "PE Funds": "peFunds", "Direct Equity - Unlisted": "unlisted", "Private Investments": "peAtCost" })[p.reviewSource.block] ?? null;
   const ownerOfRow = (p) => rowOwner.get(out.indexOf(p));
   const held = { peFunds: new Map(), unlisted: new Map(), peAtCost: new Map() };
   for (const p of out) { const t = tabOf(p); if (t) held[t].set(ownerOfRow(p), (held[t].get(ownerOfRow(p)) ?? 0) + p.marketValue); }

@@ -9,9 +9,10 @@ Book: `src/data/glowData.ts`, 412 consolidated positions across 64 accounts, eac
 for (*is invested capital too low, and does NAV follow?*), and **D1** is the list of
 documents to send the client. Everything between them is the evidence.
 
-The review is **not a source and never becomes one** — every figure in this book traces
-to the statement of the institution that struck it. This is the independent check on the
-generated book, the role `golden.mjs` plays for the extractors.
+Since Stage 10dh the review is the **source of the book's private-market lines** (section C0),
+at its own 30 June figures. Every other figure in this book traces to the statement of the
+institution that struck it, and this report is the independent check on those, the role
+`golden.mjs` plays for the extractors.
 
 ## A. Three reasons the two totals are not comparable line for line
 
@@ -69,9 +70,9 @@ carries each account at its own statement date (§3). Per-account dates in the b
 
 A line whose QUANTITY matches exactly while its value does not is almost always only this.
 
-**3. PRIVATE HOLDINGS ARE CARRIED AT COST IN THE REVIEW.** On the `Private Investments`
-tab, cost and market value are equal on every row. This book carries what each statement
-reports, and for a depository row with no price that is no value at all.
+**3. THE REVIEW CARRIES PRIVATE HOLDINGS AT COST.** On the `Private Investments` tab, cost
+and market value are equal on every row. Since Stage 10dh the book carries those lines at the
+review's own figures (section C0), so on them the two agree by construction.
 
 ## B. Per holder
 
@@ -107,6 +108,32 @@ Matched on the manager or fund the line names, then on `securityKeyOf` for a com
 A line this book cannot match is listed with what it would take to close it — that list
 IS the deliverable, because it names exactly which statements are still missing.
 
+### C0. The review's private-market lines, carried in the book at the review's own figures
+
+Since Stage 10dh the book carries these lines from the review itself, each row tagged with the
+tab and row it was read from. Each is held here to the book's own rows, so the two agree by
+construction and none of them is missing from the book or drift against it.
+
+| Review line | Tab · row | Book rows | Review | Book |
+| --- | --- | ---: | ---: | ---: |
+| National Stock Exchange | Equity · 69 | 2 | ₹41.50 Cr | ₹41.50 Cr |
+| Zepto | Equity · 70 | 1 | ₹22.83 Cr | ₹22.83 Cr |
+| 15% K M Global - Credit Private Limited | Debt · 11 | 1 | ₹1.04 Cr | ₹1.04 Cr |
+| Private Equity | Alternate · 5 | 71 | ₹136.16 Cr | ₹130.96 Cr |
+| India SME | Alternate · 8 | 3 | ₹15.93 Cr | ₹15.93 Cr |
+| Baring PE India Fund 6 | Alternate · 9 | 1 | ₹1.88 Cr | ₹1.88 Cr |
+| 360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II) | Alternate · 10 | 2 | ₹2.92 Cr | ₹2.92 Cr |
+| Sky Capital Titan Rising Funds 1 | Alternate · 11 | 4 | ₹4.72 Cr | ₹4.72 Cr |
+| Assetgro Fintech Private Limited | Alternate · 12 | 1 | ₹5.00 Cr | ₹5.00 Cr |
+| Transition Venture Capital fund I | Alternate · 13 | 3 | ₹2.26 Cr | ₹2.26 Cr |
+| **Total** | | **89** | **₹234.24 Cr** | **₹229.04 Cr** |
+
+The `Private Equity` line is carried less two of its own `Private Investments` lines, each named
+rather than taken as a difference:
+
+- **ESDS**, ₹5.00 Cr — listed since; the ICICI Bank NSDL statement holds the shares at face value, so the book records them as a quantity and the live layer values them at the quote. In section F's quantity step.
+- **Credit Fair-K M Global Credit Private Limited**, ₹0.20 Cr — the review counts it twice: here, and inside its own 15% K M Global credit line on the Debt tab, which the book carries once. Its own step in section F.
+
 ### C1. Managed strategies — matched to a manager in the book
 
 | Review line | Review MV | Book (same manager) | Difference | Book accounts |
@@ -121,15 +148,11 @@ IS the deliverable, because it names exactly which statements are still missing.
 | Aristos Equity Potrfolio - SB <br><sub>-> Goldstandard Wealth Private Limited</sub> | ₹25.92 Cr | ₹26.82 Cr | +0.90 Cr | 2 |
 | Green Lantern Growth Strategy <br><sub>-> Green Lantern Capital LLP</sub> | ₹17.62 Cr | ₹17.25 Cr | -0.37 Cr | 2 |
 | Carnelian Bharat Amritkaal Fund <br><sub>-> Carnelian Bharat Amritkaal Fund</sub> | ₹16.01 Cr | ₹16.31 Cr | +0.30 Cr | 1 |
-| India SME <br><sub>-> India SME Investments</sub> | ₹15.93 Cr | ₹15.93 Cr | +0.00 Cr | 3 |
 | VEC Small and Mid cap fund <br><sub>-> V.E.C Assago Capital Management LLP</sub> | ₹15.89 Cr | ₹26.79 Cr | +10.89 Cr | 2 |
 | Fund of Funds (VEC+ Carnelian+Girik Cap+Insightful) <br><sub>-> Motilal Oswal Delphi Equity Fund</sub> | ₹11.13 Cr | ₹11.13 Cr | +0.00 Cr | 1 |
-| Sky Capital Titan Rising Funds 1 <br><sub>-> Sky Capital Rising Titans Fund</sub> | ₹4.72 Cr | ₹4.72 Cr | +0.00 Cr | 4 |
 | Neo Infra Income Opportunities Fund Share Class A5 <br><sub>-> Neo Infra Income Opportunities Fund</sub> | ₹3.77 Cr | ₹5.55 Cr | +1.78 Cr | 1 |
-| Transition Venture Capital fund I <br><sub>-> Transition Venture Capital</sub> | ₹2.26 Cr | ₹1.94 Cr | -0.33 Cr | 2 |
-| Baring PE India Fund 6 <br><sub>-> Baring Private Equity India Fund</sub> | ₹1.88 Cr | ₹1.88 Cr | -0.00 Cr | 1 |
 | Molecule Growth Strategy <br><sub>-> Molecule Ventures LLP</sub> | ₹1.12 Cr | ₹1.16 Cr | +0.03 Cr | 1 |
-| **Total matched** | **₹575.22 Cr** | **₹543.05 Cr** | **-32.17 Cr** | |
+| **Total matched** | **₹550.42 Cr** | **₹518.58 Cr** | **-31.84 Cr** | |
 
 ₹31.00 Cr of the book side is a holding first held after the review's date, named on its row:
 the review could not carry it, so its difference is new money rather than drift.
@@ -142,11 +165,9 @@ review names the custodian per line, which is what makes this joinable at all.
 
 | Review line | Custodian | Review qty | On the holders' own statements (section H) | Verdict |
 | --- | --- | ---: | --- | --- |
-| National Stock Exchange | ICICI Bank / MOPWM | 2,00,000 | no closing on the review's transactions sheet | in the archive, **not valued** — 1,25,000 unit(s) recorded at a face value of 1 |
 | Man Industries | HDFC Bank / MOPWM | 5,83,020 | Ajay Jaisinghani: no statement<br>Ajay Jaisinghani: no statement | **no statement in `source/` reports this** |
 | Clean Max Enviro Energy Solutions Ltd | ICICI Bank / MOPWM | 1,89,934 | Ajay Jaisinghani: ties (other date)<br>Ankita Jaisinghani: ties (other date) | quantity ties on the holders' own statements |
 | Manorama Industries Ltd. | HDFC Bank / MOPWM | 1,51,270 | Ajay Jaisinghani: no statement<br>Ajay Jaisinghani: no statement | **no statement in `source/` reports this** |
-| Zepto | MOPWM | 4,716 | Ajay Jaisinghani: no statement | **no statement in `source/` reports this** |
 | Fractal Analytics Limited | ICICI Bank | 1,80,185 | Ajay Jaisinghani: ties (other date) | quantity ties on the holders' own statements |
 | BSE Ltd. | MOPWM | 40,000 | Ajay Jaisinghani: no statement | **no statement in `source/` reports this** |
 | Onesource Specialty Pharma | MOPWM | 91,000 | Ajay Jaisinghani: ties<br>Bharat Jaisinghani: ties | quantity ties on the holders' own statements |
@@ -181,9 +202,9 @@ review names the custodian per line, which is what makes this joinable at all.
 | Sterlite Grid 5 | HDFC Bank | 1,140 | Ajay Jaisinghani: no statement | **no statement in `source/` reports this** |
 | STLNETWORK | HDFC Bank | 1,850 | Ajay Jaisinghani: no statement | **no statement in `source/` reports this** |
 
-**9 of 38** direct-equity lines tie on the holders' own statements, 8 are partly on one,
-3 are on a statement at another quantity, 1 is read from a statement but carries
-no value this book may publish, and **17 are reported by no statement in `source/` at all**.
+**9 of 36** direct-equity lines tie on the holders' own statements, 8 are partly on one,
+3 are on a statement at another quantity, 0 are read from a statement but carry
+no value this book may publish, and **16 are reported by no statement in `source/` at all**.
 
 ### D0. Review lines this book DOES carry — tested before being asked for
 
@@ -195,17 +216,13 @@ reported rather than requested.
 | --- | --- | ---: | --- | --- |
 | DSP Gold ETF | Alternate tab | ₹48.31 Cr | — <br><sub>in the archive, 14,00,000 unit(s), no value published</sub> | exact |
 | DSP Silver ETF | Alternate tab | ₹6.54 Cr | — <br><sub>in the archive, 1,23,000 unit(s), no value published</sub> | exact |
-| Assetgro Fintech Private Limited | Alternate tab | ₹5.00 Cr | ₹5.00 Cr <br><sub>Assetgro Fintech Private Limited — Series B Preference</sub> | prefix |
-| 360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II) | Alternate tab | ₹2.92 Cr | ₹2.92 Cr <br><sub>360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) +1 more row(s)</sub> | exact |
-| 15% K M Global - Credit Private Limited | Debt tab | ₹1.04 Cr | ₹1.04 Cr <br><sub>15% K M Global - Credit Private Limited</sub> | exact |
 
-**₹63.82 Cr of review lines were on the ask list and should not have been.**
+**₹54.85 Cr of review lines were on the ask list and should not have been.**
 
 ## D. What the review carries that this book does not — and what would close it
 
 | Review line | Custodian / advisor | Review MV | On the holders' own statements (section H) | Where no statement reports it |
 | --- | --- | ---: | --- | --- |
-| Private Equity | Alternate tab | ₹136.16 Cr | — | **an AGGREGATE line, not a holding** — the review reports this block only as a total on the `Alternate` tab and itemises it on its own `Private Investments` tab, every line of which the Private Market page's MOPWM review tab draws (Stage 10dg); the family's investment register carries it too (`docs/REGISTER-RECONCILIATION.md`). No custodian issues a statement for a block, so this is not a document to ask for |
 | Man Industries | HDFC Bank / MOPWM | ₹33.90 Cr | Ajay Jaisinghani: no statement<br>Ajay Jaisinghani: no statement | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 | Motilal Oswal Arbitrage Fund Direct (G) | Debt tab | ₹31.80 Cr | Ajay Jaisinghani: differs (later statement)<br>Ajay Jaisinghani: differs (same date) | — |
 | Aditya Birla SL Balanced Advantage Fund(G) | MOPWM / MOPWM Dir | ₹29.58 Cr | Aarti Ajay Jaisinghani: ties (other date)<br>Ankita Jaisinghani: ties (other date)<br>Bharat Jaisinghani: ties (other date)<br>Ajay Jaisinghani: no statement | held at **Motilal Oswal**; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat |
@@ -249,8 +266,8 @@ reported rather than requested.
 | HDFC Overnight Fund - Direct - G | Cash tab | ₹0.02 Cr | Aarti Ajay Jaisinghani: no statement | a fund line on the **Cash** tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price |
 | STLNETWORK | HDFC Bank | ₹0.00 Cr | Ajay Jaisinghani: no statement | held at **HDFC Bank** — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN) |
 
-**₹480.06 Cr of review lines match no name in this book.** Read on the holders' own statements:
-₹305.01 Cr is on no statement in `source/`; ₹0.00 Cr is on a statement and valued in
+**₹343.90 Cr of review lines match no name in this book.** Read on the holders' own statements:
+₹168.85 Cr is on no statement in `source/`; ₹0.00 Cr is on a statement and valued in
 this book under a spelling no name tier reaches; ₹174.67 Cr is on a statement that carries it
 as a quantity this book does not value; and ₹0.39 Cr belongs to holders with no account in this book (the Hope India Trust, a separate taxpayer kept out by decision),
 which the bridge in section F takes out once, with the holder.
@@ -259,7 +276,6 @@ which the bridge in section F takes out once, with the holder.
 
 | Ask the client for | Lines | Value it would bring in |
 | --- | ---: | ---: |
-| NOTHING TO ASK FOR — an aggregate block the review itemises on another tab | 1 | **₹136.16 Cr** |
 | Motilal Oswal holding statements for the demat and PWM accounts not in the drop | 11 | **₹89.19 Cr** |
 | HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's **as a text PDF, not a scan** | 10 | **₹74.39 Cr** |
 | AMC folio statements or a CAS for the mutual-fund and liquid holdings on the Debt / Cash / Alternate tabs | 3 | **₹5.27 Cr** |
@@ -273,14 +289,13 @@ than a number this book will publish when the statements arrive.
 
 | Provider | Positions | Market value |
 | --- | ---: | ---: |
-| Consolidated review (MOPWM) | 75 | ₹177.79 Cr |
 | ICICI Bank (NSDL demat) | 6 | ₹33.37 Cr |
 | Motilal Oswal Active Momentum Fund | 1 | ₹21.42 Cr |
 | LKP Securities | 10 | ₹0.99 Cr |
 | ASK Investment Managers Limited | 2 | ₹0.00 Cr |
 | ASK Absolute Return Fund | 2 | ₹0.00 Cr |
 | HDFC Mutual Fund | 2 | ₹0.00 Cr |
-| **Total** | **98** | **₹233.57 Cr** |
+| **Total** | **23** | **₹55.78 Cr** |
 
 A holding here and not in the review is not automatically an error on either side: the
 review is drawn on 30 June 2026 and most statements here are dated after it, so a holding
@@ -324,8 +339,7 @@ does not hold in general. Split on exactly that line:
 | --- | :---: | :---: | ---: |
 | **A. Held, valued, and no cost reported** — 14 of 412 positions | understated | **not affected** | ₹63.76 Cr of market value already in NAV |
 | **B. On no statement in `source/`** — section D | understated | understated | ₹168.85 Cr at the review's marks |
-| **B2. On a statement as a quantity this book does not value** — section D | understated | understated | ₹174.67 Cr at the review's marks |
-| **C. An aggregate block, itemised only on the review's own `Private Investments` tab** | understated | understated | ₹136.16 Cr at the review's marks |
+| **B2. On a statement as a quantity this book does not value** — section D, and ESDS (C0) | understated | understated | ₹179.67 Cr at the review's marks |
 
 **CAUSE A IS THE WHOLE OF WHY INVESTED CAPITAL LOOKS WRONG WITHOUT NAV LOOKING WRONG.**
 10 of those 14 positions carry a value; by account:
@@ -350,7 +364,7 @@ measures which, in `docs/REGISTER-RECONCILIATION.md`.
 
 **AND CAUSE A CANNOT RAISE NAV.** Those rows are already in the ₹833.80 Cr at their
 statement marks. Supplying their cost raises invested capital, lowers the reported return on
-cost, and leaves NAV where it is. NAV rises only on B and C — the holdings that are absent.
+cost, and leaves NAV where it is. NAV rises only on B and B2 — the holdings that are absent or not valued.
 
 ## F. The bridge — review total to book total
 
@@ -361,12 +375,12 @@ is NAMED rather than plugged: no step below is fitted to make the arithmetic wor
 | --- | ---: | ---: | --- |
 | Review portfolio total, 30 June 2026 | ₹1,300.05 Cr | ₹1,300.05 Cr |  |
 | less: holders with no account in this book | −₹0.39 Cr | ₹1,299.66 Cr | the review's holders the account registry has no account for, section B — the Hope India Trust, a separate taxpayer kept out by decision. A holder with an account and no valued position is not one: its lines are in the steps below, once |
-| less: aggregate blocks itemised only on another tab | −₹136.16 Cr | ₹1,163.50 Cr | `Private Equity` — reported on the `Alternate` tab as a total and itemised on the review's own `Private Investments` tab, which the Private Market page's MOPWM review tab draws line by line. Not a missing statement: see `docs/REGISTER-RECONCILIATION.md`, which measures the family's own record of this money |
-| less: lines no statement in `source/` reports | −₹168.85 Cr | ₹994.65 Cr | section D, read on the holders' own statements — the HDFC Bank, Motilal Oswal and AMC statements that have not been supplied |
-| less: lines a statement reports as a quantity this book does not value | −₹174.67 Cr | ₹819.99 Cr | section D — on a statement, but as a quantity with no value: a depository's last-movement rate, a face value, a transaction tape with no holding statement |
-| **What the book would carry on those four adjustments alone** | | **₹819.99 Cr** | |
+| less: lines no statement in `source/` reports | −₹168.85 Cr | ₹1,130.81 Cr | section D, read on the holders' own statements — the HDFC Bank, Motilal Oswal and AMC statements that have not been supplied |
+| less: lines a statement reports as a quantity this book does not value | −₹179.67 Cr | ₹951.15 Cr | section D, and ESDS from the review's `Private Investments` tab (C0) — on a statement, but as a quantity with no value: a depository's last-movement rate, a face value, a transaction tape with no holding statement |
+| less: a line the review counts twice | −₹0.20 Cr | ₹950.95 Cr | `Credit Fair-K M Global Credit Private Limited` — on the `Private Investments` tab and again inside the review's own 15% K M Global credit line on its Debt tab, which the book carries once (C0) |
+| **What the book would carry on those four adjustments alone** | | **₹950.95 Cr** | |
 | **What the book actually carries (ex-promoter)** | | **₹833.80 Cr** | |
-| **Residual** | | **+₹13.81 Cr** | see below |
+| **Residual** | | **−₹117.15 Cr** | see below |
 
 ### F1. The part of the residual where the money LEFT, and is not a price
 
@@ -414,7 +428,8 @@ What reading them corrected — which is the check that this was a real gap and 
   Alternate) were reported as holdings the review does not carry, while the review carried
   every one of them on a tab nothing read.
 - **Five managers joined C1** — India SME, Sky Capital, Neo Infra, Transition Venture and
-  Baring PE — two of them the ₹0 case F1 exists for.
+  Baring PE. Since Stage 10dh four of them are carried from the review itself and listed in
+  C0; Neo Infra stays in C1, on its own statement.
 - **The DSP Gold and Silver ETFs joined D0**: held in the book through the Motilal demat, and
   on the client ask list until this ran.
 - **The residual fell from −₹263.10 Cr to what section F now prints.**
@@ -422,7 +437,7 @@ What reading them corrected — which is the check that this was a real gap and 
 **THE REST OF THE RESIDUAL IS NOT A PLUG AND IS NOT ZERO.**
 **One part of it runs the other way, and is quantified: +₹31.00 Cr** is a holding the book
 carries and the review could not, because its own dated record holds nothing on the review's date —
-Helios Mutual Fund 10355977 (₹31.00 Cr, first held 2026-08-06). Section C1 names it. Without it the residual would be −₹17.19 Cr.
+Helios Mutual Fund 10355977 (₹31.00 Cr, first held 2026-08-06). Section C1 names it. Without it the residual would be −₹148.15 Cr.
 That remainder is the sum of three things this reconciliation can name but cannot yet quantify line
 by line, and saying so is the honest position — a bridge forced to zero would be a fabricated
 figure with a badge on it:
@@ -433,9 +448,9 @@ figure with a badge on it:
 2. **Partly-held names.** 8 direct-equity lines are only partly on the holders' own
    statements: one holder's closing ties and another's is on no statement in the drop. Section C2
    names each holder; the missing part is in the residual, not in a step above.
-3. **Private holdings the review carries at cost and this book cannot value.** The
-   `Private Investments` tab prices every row at its cost; a depository row with no price
-   carries no value here at all.
+3. **Holdings found by name and valued differently.** Section D0 lists review lines the
+   book holds under another name; where the book records one as a quantity, or at an older
+   statement's mark, the difference stays here rather than in a step above.
 
 Closing the residual line by line needs the statements in section D1. Until they arrive
 it stays stated rather than distributed across the book.
@@ -452,8 +467,8 @@ the statements print. The review's figures are the review's (30 June 2026) and r
 
 | Verdict | Closings |
 | --- | ---: |
-| no statement | 49 |
-| ties (other date) | 43 |
+| no statement | 48 |
+| ties (other date) | 44 |
 | ties | 32 |
 | nil | 8 |
 | ties (printed total) | 7 |
@@ -567,7 +582,7 @@ the statements print. The review's figures are the review's (30 June 2026) and r
 | 438 | Ajay Jaisinghani | Yash High Voltage Ltd. (ICICI Bank) | 2026-06-30 | 1,16,462 · ₹10,20,73,119.9 | differs (earlier statement) | 1,38,462 units ICICI Bank (NSDL demat) 49794950, holdings of 2026-03-31, 91 days before the review |
 | 440 | Ajay Jaisinghani | Zaggle Prepaid Ocean Services Ltd. (MOPWM) | 2026-06-30 | 50,000 · ₹1,03,52,500 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat |
 | 442 | Ankita Jaisinghani | Zaggle Prepaid Ocean Services Ltd. (MOPWM) | 2026-06-30 | 12,000 · ₹24,84,600 | no statement | no statement of this holder's names this product — held at **Motilal Oswal**; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat |
-| 444 | Ajay Jaisinghani | Zepto (MOPWM) | 2025-07-31 | 4,716 · ₹22,82,85,156.52 | no statement | no statement of this holder's reports it — held at **Motilal Oswal**; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat |
+| 444 | Ajay Jaisinghani | Zepto (MOPWM) | 2025-07-31 | 4,716 · ₹22,82,85,156.52 | ties (other date) | 4,716 units the depository's opening balance on 2026-04-01 (a/c 1201090012539150), 244 days after the review |
 | 446 | Aarti Ajay Jaisinghani | Aditya Birla SL Balanced Advantage Fund(G) (MOPWM) | 2026-06-30 | 2,42,412.122 · ₹2,68,08,356.57 | ties (other date) | 2,42,412.122 units Motilal Oswal Financial Services (demat) 1201090012838335, holdings of 2026-07-31, 31 days after the review |
 | 450 | Ankita Jaisinghani | Aditya Birla SL Balanced Advantage Fund(G) (MOPWM) | 2026-06-30 | 3,93,095.951 · ₹4,34,72,481.22 | ties (other date) | 3,93,095.951 units Motilal Oswal Financial Services (demat) 1201090012838316, holdings of 2026-07-31, 31 days after the review |
 | 452 | Bharat Jaisinghani | Aditya Birla SL Balanced Advantage Fund(G) (MOPWM) | 2026-06-30 | 1,83,499.511 · ₹2,02,93,210.92 | ties (other date) | 1,83,499.511 units Motilal Oswal Financial Services (demat) 1201090012838320, holdings of 2026-07-31, 31 days after the review |

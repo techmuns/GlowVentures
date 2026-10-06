@@ -4435,6 +4435,11 @@ function build(archived) {
     r.entry.securityKey = w.securityKey;
     r.entry.security = w.security ?? r.entry.reviewLine;
     r.entry.quantity = w.closing ?? null;
+    // AND THE WINDOW ITSELF RIDES ON THE ENTRY. The statement still reports the
+    // holding — what it no longer does is decide the book's figure for it — so
+    // the review cross-check (section H) reads its dated balance from here
+    // rather than calling a line the depository prints "on no statement".
+    r.entry.window = { ...w };
     delete shareMovements[keys[0]];
   }
 

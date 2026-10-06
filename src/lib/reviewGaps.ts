@@ -146,10 +146,12 @@ const HELD_SCHEME_KEYS = [...new Set([...BOOK_POSITIONS.map((p) => p.securityKey
  * Measured, it was false for eight more lines than the ones this book values.
  * The name tier cannot see them: a depository prints the AMC's name in front
  * of the scheme's or clips it, and it prints an unlisted company's instrument
- * in full where the review writes a brand. IFB Inds., NLC INDIA and Zepto are
- * on Ajay's transaction-only demat. Liquid BeES, HDFC and ICICI Pru Balanced
+ * in full where the review writes a brand. IFB Inds. and NLC INDIA are on
+ * Ajay's transaction-only demat. Liquid BeES, HDFC and ICICI Pru Balanced
  * Advantage, ICICI Pru Liquid and WhiteOak are on the other three demats, some
- * of them as a holding this book values.
+ * of them as a holding this book values. (Zepto, on Ajay's demat too, left this
+ * table at Stage 10dh: the review is the source for a private-market line, so
+ * the book carries Zepto itself and no gap list names it.)
  *
  * JOINED BY ISIN THROUGH A HAND-CHECKED TABLE, never by a name rule. Each entry
  * says what ties the review's line to a statement's balance, and
@@ -200,11 +202,6 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
   // shares by then, and still holds both at 31 July.
   ["IFB Inds.", ["INE559A01017"]],
   ["NLC INDIA", ["INE589A01014"]],
-  // The same demat opens the year at 4,716 Zepto preference shares and still
-  // holds them on 30 June 2026 — the review's closing, to the share. On 22 July
-  // the statement's own corporate action converts them into 37,38,119 equity
-  // shares under a new ISIN, so both ISINs are this line.
-  ["Zepto", ["INE143403066", "INE143401029"]],
   // Aarti's demat walks to 5,169.754 Liquid BeES units on 30 June and Bharat's
   // to 3,816.251, the review's two closings.
   ["Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW", ["INF732E01037"]],
@@ -263,9 +260,9 @@ export const REVIEW_LINES_KEPT_OUT: ReadonlyMap<string, string> = new Map([
  *
  * A window counts whatever it closes at. The review is struck on 30 June, and
  * a holding the depository shows that day and delivers out or converts in July
- * was on a statement on the review's date — Zepto's preference shares are the
- * case. The dated half, that the balance on the review's date IS the review's
- * units, is `reviewGaps.test.ts`'s witness for every entry.
+ * was on a statement on the review's date. The dated half, that the balance on
+ * the review's date IS the review's units, is `reviewGaps.test.ts`'s witness
+ * for every entry.
  */
 const STATEMENT_REPORTED = new Set(
   [

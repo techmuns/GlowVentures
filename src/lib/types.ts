@@ -327,6 +327,13 @@ export type Position = {
   /** The review's own asset class and basket for the line (Stage 10dh). */
   reviewTaxonomy?: { assetClass: "Equity" | "Debt" | "Alternate" | "Cash"; basket: "Stable Growth" | "Entrepreneurial Growth" | "Thematic & Tactical" | "Liquidity" };
   /**
+   * WHICH CELL OF THE REVIEW WORKBOOK this row came from (Stage 10dh): the sheet,
+   * the block on it and the Excel row. Data, never prose — the reconciler joins
+   * the review's own lines to the book's on it, and `reviewNote` is a sentence a
+   * redesign is free to reword.
+   */
+  reviewSource?: { sheet: "Private Investments" | "Alternate" | "Equity" | "Debt"; block: "Private Investments" | "PE Funds" | "Direct Equity - Unlisted" | "Debt"; row: number };
+  /**
    * PER-UNIT figures, and NULLABLE — not every provider prints them.
    *
    * The four PMS appraisals print a Unit Cost and a Market Price on every row.
@@ -1261,6 +1268,12 @@ export type ReviewSuperseded = {
   /** The units the statement printed (a window's closing balance); null where it printed none. */
   quantity: number | null;
   marketValue: number | null;
+  /**
+   * For a window, the depository's own window as printed. The statement still
+   * REPORTS the holding — it only no longer decides the book's figure for it —
+   * so a cross-check against the review reads its dated balance from here.
+   */
+  window?: ShareMovement;
 };
 
 /**

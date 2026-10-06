@@ -6,8 +6,9 @@
 // one of these names is told why it is absent and which document would close
 // it, rather than being shown an empty result they cannot tell from a defect.
 //
-// NOT A SOURCE, AND NOT ONE FIGURE OF ONE. The consolidated review is held
-// out of the book by decision; what travels here is a NAME, a custodian and
+// NOT ONE FIGURE OF THE REVIEW TRAVELS HERE. Since Stage 10dh the book carries
+// the review's private-market lines through scripts/lib/reviewBook.mjs; every
+// other review line is a cross-check. What travels here is a NAME, a custodian and
 // two sentences — an absence and a document to ask for. There is deliberately
 // no value and no quantity on this type, and the generator throws rather than
 // emit one. Nothing here reaches `glowData.ts`, any total, or any allocation.

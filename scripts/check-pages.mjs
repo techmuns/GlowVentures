@@ -21698,8 +21698,8 @@ const INVARIANTS = {
     /**
      * …NOR A REVIEW LINE A STATEMENT REPORTS, WHETHER OR NOT THIS BOOK VALUES
      * IT (Stage 10cy). The note says "no statement reports it", which is a claim
-     * about the STATEMENTS: Zepto's preference shares, IFB and NLC sit on Ajay's
-     * transaction-only demat, and a reader told otherwise asks the family for a
+     * about the STATEMENTS: IFB and NLC sit on Ajay's transaction-only demat,
+     * and a reader told otherwise asks the family for a
      * document they already sent. Every such line whose own name empties the
      * list is typed; not one may be named.
      */
