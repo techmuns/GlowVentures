@@ -10,7 +10,7 @@
 import type {
   Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,
-  RealisedByClass, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
+  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -14884,6 +14884,730 @@ export const BOOK_REVIEW_WRITTEN_OFF: ReviewWrittenOff[] = [
     "reviewRow": 90,
     "remark": "Written Off",
     "dates": "Mar 2020 – Jun 2020"
+  }
+];
+
+/**
+ * THE REVIEW'S DATED ROWS behind each holding it values (Stage 10dh): every purchase,
+ * sale and income payout on its Transactions tab, each on its own date. What a private
+ * fund's money-weighted return is struck on — the value it closes on is the review's,
+ * so its flows are the same document's. `amount` is positive; `kind` gives the direction.
+ */
+export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2021-04-22",
+    "kind": "purchase",
+    "amount": 9999500.02,
+    "units": 999950.002,
+    "rate": 10,
+    "reviewRow": 13
+  },
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2022-03-31",
+    "kind": "income",
+    "amount": 18908,
+    "units": null,
+    "rate": null,
+    "reviewRow": 14
+  },
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2023-03-31",
+    "kind": "income",
+    "amount": 14547,
+    "units": null,
+    "rate": null,
+    "reviewRow": 15
+  },
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2024-04-30",
+    "kind": "sale",
+    "amount": 78320,
+    "units": 5751.296,
+    "rate": 13.6178,
+    "reviewRow": 16
+  },
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2024-06-27",
+    "kind": "income",
+    "amount": 1150402,
+    "units": null,
+    "rate": null,
+    "reviewRow": 17
+  },
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2026-05-18",
+    "kind": "income",
+    "amount": 715619,
+    "units": null,
+    "rate": null,
+    "reviewRow": 18
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2021-04-22",
+    "kind": "purchase",
+    "amount": 9999500.02,
+    "units": 999950.002,
+    "rate": 10,
+    "reviewRow": 20
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2022-03-31",
+    "kind": "income",
+    "amount": 18908,
+    "units": null,
+    "rate": null,
+    "reviewRow": 21
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2023-03-31",
+    "kind": "income",
+    "amount": 14547,
+    "units": null,
+    "rate": null,
+    "reviewRow": 22
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2024-04-30",
+    "kind": "sale",
+    "amount": 78320,
+    "units": 5751.296,
+    "rate": 13.6178,
+    "reviewRow": 23
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2024-06-27",
+    "kind": "income",
+    "amount": 1150402,
+    "units": null,
+    "rate": null,
+    "reviewRow": 24
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "security": "360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II)",
+    "date": "2026-05-18",
+    "kind": "income",
+    "amount": 715619,
+    "units": null,
+    "rate": null,
+    "reviewRow": 25
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "date": "2024-10-03",
+    "kind": "purchase",
+    "amount": 6500000,
+    "units": 65,
+    "rate": 100000,
+    "reviewRow": 29
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "date": "2024-12-05",
+    "kind": "purchase",
+    "amount": 5000000,
+    "units": 50,
+    "rate": 100000,
+    "reviewRow": 30
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "date": "2025-07-22",
+    "kind": "purchase",
+    "amount": 2500000,
+    "units": 25,
+    "rate": 100000,
+    "reviewRow": 31
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "date": "2025-09-25",
+    "kind": "purchase",
+    "amount": 6250000,
+    "units": 62.5,
+    "rate": 100000,
+    "reviewRow": 32
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "date": "2025-09-30",
+    "kind": "income",
+    "amount": 2046,
+    "units": null,
+    "rate": null,
+    "reviewRow": 33
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "date": "2025-09-30",
+    "kind": "income",
+    "amount": 18909,
+    "units": null,
+    "rate": null,
+    "reviewRow": 34
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "date": "2025-12-31",
+    "kind": "income",
+    "amount": 83,
+    "units": null,
+    "rate": null,
+    "reviewRow": 35
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "date": "2026-03-31",
+    "kind": "income",
+    "amount": 121829,
+    "units": null,
+    "rate": null,
+    "reviewRow": 36
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2024-09-11",
+    "kind": "purchase",
+    "amount": 15000000,
+    "units": 15000,
+    "rate": 1000,
+    "reviewRow": 38
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2024-10-17",
+    "kind": "purchase",
+    "amount": 7500000,
+    "units": 7500,
+    "rate": 1000,
+    "reviewRow": 39
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2024-11-29",
+    "kind": "purchase",
+    "amount": 7500000,
+    "units": 7500,
+    "rate": 1000,
+    "reviewRow": 40
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-03-30",
+    "kind": "income",
+    "amount": 121437,
+    "units": null,
+    "rate": null,
+    "reviewRow": 41
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-03-30",
+    "kind": "income",
+    "amount": 40479,
+    "units": null,
+    "rate": null,
+    "reviewRow": 42
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-07-14",
+    "kind": "purchase",
+    "amount": 15000000,
+    "units": 15000,
+    "rate": 1000,
+    "reviewRow": 43
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-09-24",
+    "kind": "purchase",
+    "amount": 9000000,
+    "units": 9000,
+    "rate": 1000,
+    "reviewRow": 44
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-12-31",
+    "kind": "purchase",
+    "amount": 6000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 45
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2026-02-13",
+    "kind": "purchase",
+    "amount": 7500000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 46
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2026-03-23",
+    "kind": "purchase",
+    "amount": 13500000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 47
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2026-03-31",
+    "kind": "income",
+    "amount": 122091,
+    "units": null,
+    "rate": null,
+    "reviewRow": 48
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2024-09-11",
+    "kind": "purchase",
+    "amount": 5000000,
+    "units": 5000,
+    "rate": 1000,
+    "reviewRow": 59
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2024-10-14",
+    "kind": "purchase",
+    "amount": 2500000,
+    "units": 2500,
+    "rate": 1000,
+    "reviewRow": 60
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2024-11-29",
+    "kind": "purchase",
+    "amount": 2500000,
+    "units": 2500,
+    "rate": 1000,
+    "reviewRow": 61
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-03-30",
+    "kind": "income",
+    "amount": 40479,
+    "units": null,
+    "rate": null,
+    "reviewRow": 62
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-07-14",
+    "kind": "purchase",
+    "amount": 5000000,
+    "units": 5000,
+    "rate": 1000,
+    "reviewRow": 63
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-09-24",
+    "kind": "purchase",
+    "amount": 3000000,
+    "units": 3000,
+    "rate": 1000,
+    "reviewRow": 64
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-12-31",
+    "kind": "purchase",
+    "amount": 2000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 65
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2026-02-13",
+    "kind": "purchase",
+    "amount": 2500000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 66
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2026-03-26",
+    "kind": "purchase",
+    "amount": 4500000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 67
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2026-03-31",
+    "kind": "income",
+    "amount": 40697,
+    "units": null,
+    "rate": null,
+    "reviewRow": 68
+  },
+  {
+    "accountId": "india-sme-investments-177302",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2024-10-17",
+    "kind": "purchase",
+    "amount": 7500000,
+    "units": 7500,
+    "rate": 1000,
+    "reviewRow": 50
+  },
+  {
+    "accountId": "india-sme-investments-177302",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2024-11-29",
+    "kind": "purchase",
+    "amount": 2500000,
+    "units": 2500,
+    "rate": 1000,
+    "reviewRow": 51
+  },
+  {
+    "accountId": "india-sme-investments-177302",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2024-11-29",
+    "kind": "purchase",
+    "amount": 5000000,
+    "units": 5000,
+    "rate": 1000,
+    "reviewRow": 52
+  },
+  {
+    "accountId": "india-sme-investments-177302",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-09-24",
+    "kind": "purchase",
+    "amount": 3000000,
+    "units": 3000,
+    "rate": 1000,
+    "reviewRow": 53
+  },
+  {
+    "accountId": "india-sme-investments-177302",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2025-12-31",
+    "kind": "purchase",
+    "amount": 2000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 54
+  },
+  {
+    "accountId": "india-sme-investments-177302",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2026-02-13",
+    "kind": "purchase",
+    "amount": 2500000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 55
+  },
+  {
+    "accountId": "india-sme-investments-177302",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2026-03-24",
+    "kind": "purchase",
+    "amount": 4500000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 56
+  },
+  {
+    "accountId": "india-sme-investments-177302",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "date": "2026-03-31",
+    "kind": "income",
+    "amount": 40697,
+    "units": null,
+    "rate": null,
+    "reviewRow": 57
+  },
+  {
+    "accountId": "review-ajay-jaisinghani",
+    "securityKey": "assetgro-fintech-private-limited-1-series-b-pref-25nv44",
+    "security": "Assetgro Fintech Private Limited — Series B Preference",
+    "date": "2025-11-26",
+    "kind": "purchase",
+    "amount": 50032848,
+    "units": 636,
+    "rate": 78668,
+    "reviewRow": 27
+  },
+  {
+    "accountId": "review-ajay-jaisinghani",
+    "securityKey": "zepto",
+    "security": "Zepto",
+    "date": "2025-02-24",
+    "kind": "purchase",
+    "amount": 150015960,
+    "units": 4716,
+    "rate": 31810,
+    "reviewRow": 443
+  },
+  {
+    "accountId": "review-ankita-jaisinghani",
+    "securityKey": "transition-venture-capital-fund-i-class-a1",
+    "security": "Transition Venture Capital Fund I — Class A1",
+    "date": "2025-08-01",
+    "kind": "purchase",
+    "amount": 2500000,
+    "units": 2500,
+    "rate": 1000,
+    "reviewRow": 82
+  },
+  {
+    "accountId": "review-bharat-jaisinghani",
+    "securityKey": "15-percent-k-m-global-credit",
+    "security": "15% K M Global - Credit Private Limited",
+    "date": "2020-09-21",
+    "kind": "purchase",
+    "amount": 1000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 204
+  },
+  {
+    "accountId": "review-bharat-jaisinghani",
+    "securityKey": "15-percent-k-m-global-credit",
+    "security": "15% K M Global - Credit Private Limited",
+    "date": "2020-09-30",
+    "kind": "purchase",
+    "amount": 1000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 205
+  },
+  {
+    "accountId": "review-bharat-jaisinghani",
+    "securityKey": "15-percent-k-m-global-credit",
+    "security": "15% K M Global - Credit Private Limited",
+    "date": "2024-03-22",
+    "kind": "purchase",
+    "amount": 5000149.8,
+    "units": null,
+    "rate": null,
+    "reviewRow": 206
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY003",
+    "securityKey": "sky-capital-rising-titans-fund-i",
+    "security": "Sky Capital Rising Titans Fund I",
+    "date": "2025-05-09",
+    "kind": "purchase",
+    "amount": 5000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 72
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY003",
+    "securityKey": "sky-capital-rising-titans-fund-i",
+    "security": "Sky Capital Rising Titans Fund I",
+    "date": "2025-05-14",
+    "kind": "purchase",
+    "amount": 5000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 73
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY003",
+    "securityKey": "sky-capital-rising-titans-fund-i",
+    "security": "Sky Capital Rising Titans Fund I",
+    "date": "2025-06-04",
+    "kind": "purchase",
+    "amount": 3000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 74
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY003",
+    "securityKey": "sky-capital-rising-titans-fund-i",
+    "security": "Sky Capital Rising Titans Fund I",
+    "date": "2025-07-24",
+    "kind": "purchase",
+    "amount": 4000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 75
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY003",
+    "securityKey": "sky-capital-rising-titans-fund-i",
+    "security": "Sky Capital Rising Titans Fund I",
+    "date": "2025-09-25",
+    "kind": "purchase",
+    "amount": 150000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 76
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY022",
+    "securityKey": "sky-capital-rising-titans-fund-i",
+    "security": "Sky Capital Rising Titans Fund I",
+    "date": "2026-02-03",
+    "kind": "purchase",
+    "amount": 15000000,
+    "units": null,
+    "rate": null,
+    "reviewRow": 70
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY023",
+    "securityKey": "sky-capital-rising-titans-fund-i",
+    "security": "Sky Capital Rising Titans Fund I",
+    "date": "2026-02-03",
+    "kind": "purchase",
+    "amount": 7500000,
+    "units": 7500,
+    "rate": 1000,
+    "reviewRow": 78
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY024",
+    "securityKey": "sky-capital-rising-titans-fund-i",
+    "security": "Sky Capital Rising Titans Fund I",
+    "date": "2026-02-03",
+    "kind": "purchase",
+    "amount": 7500000,
+    "units": 7500,
+    "rate": 1000,
+    "reviewRow": 80
+  },
+  {
+    "accountId": "transition-venture-capital-TVC262",
+    "securityKey": "transition-venture-capital-fund-i-class-a1",
+    "security": "Transition Venture Capital Fund I — Class A1",
+    "date": "2025-10-17",
+    "kind": "purchase",
+    "amount": 7500000,
+    "units": 7500,
+    "rate": 1000,
+    "reviewRow": 84
+  },
+  {
+    "accountId": "transition-venture-capital-TVC263",
+    "securityKey": "transition-venture-capital-fund-i-class-a1",
+    "security": "Transition Venture Capital Fund I — Class A1",
+    "date": "2025-10-17",
+    "kind": "purchase",
+    "amount": 7500000,
+    "units": 7500,
+    "rate": 1000,
+    "reviewRow": 86
   }
 ];
 

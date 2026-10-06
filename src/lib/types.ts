@@ -821,6 +821,16 @@ export type CapitalMove = {
    */
   payoutKind?: "income" | "capital" | "equalisation";
   /**
+   * Set where this movement is one of the family's CONSOLIDATED REVIEW's dated
+   * rows (`BOOK_REVIEW_FLOWS`) — a purchase, a sale or an income payout on the
+   * review's Transactions tab — rather than a statement's. At the family's
+   * instruction the review is the source for private-market holdings (Stage
+   * 10dh), so for an account the review values, `capitalMovesWithCalls` puts
+   * these in place of the statement's record and calls: the value the account
+   * closes on is the review's, and its dated rows must be the same document's.
+   */
+  fromReview?: true;
+  /**
    * PRESENT ONLY ON A TRANCHE, and only where the fund later moved these units
    * into another of its classes. The move is then shown in the class it sits in
    * today — `units` converted at the switch's own printed ratio, `security` the
@@ -1255,6 +1265,28 @@ export type ReviewWrittenOff = {
   remark: string;
   /** The dates the review prints for the investment, as text. */
   dates: string | null;
+};
+
+/**
+ * ONE DATED ROW OF THE REVIEW'S TRANSACTIONS TAB, behind a holding the review
+ * values (Stage 10dh): a purchase, a sale or an income payout ("Div / Int"),
+ * each on its own date. What a private fund's money-weighted return is struck
+ * on, on the Private Market page and the Transactions card alike — the value it
+ * closes on is the review's, so its flows are the same document's. `amount` is
+ * always positive; `kind` says which way the money went. `units` and `rate` are
+ * what the row prints, null where it prints none (an income row never does).
+ */
+export type ReviewFlow = {
+  accountId: string;
+  securityKey: string;
+  security: string;
+  date: string;
+  kind: "purchase" | "sale" | "income";
+  amount: number;
+  units: number | null;
+  rate: number | null;
+  /** The row on the review's Transactions since inception tab. */
+  reviewRow: number;
 };
 
 /**

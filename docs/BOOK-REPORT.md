@@ -154,6 +154,27 @@ Where a newer statement disagrees, the review is followed and the statement name
 
 Written off on the review, a measured ₹0 in no total: Vecino Fitness Pvt Ltd - DOPAMINE, BETR Tech Privated Limited - Venture Catalyst, Bitcipher LLP, Cheelizza - ANIMESH LODHA, Crypto, Crypto Matic, DCX Deposits, Falconbrick Technologies Private Limited - Shashi Kiran, Moneyclub Technologies Private Limited - Venture Catalyst, Neblio Technologies Pvt Ltd, One Eight Technologies Private Limited - Ram, Reflexical, Tamasha - Angel List, UE Lifesciences - SHIKHA JAISINGHANI, Wazir, Zaamo E Commerce Pvt Ltd - PRADEEP KUMAR, AL Trust - Forbidden Foods - BRB, Faraway Foods Private Limited, Kylo Edutech Private Ltd, Rang Technovations LLP, Synergistic Financial Networks Pvt Ltd (Equity Shares) - MOSAMBEE, Transigo OPC Pvt Ltd.
 
+The review's dated rows behind the holdings it values (65 rows, `BOOK_REVIEW_FLOWS`) — what each fund's return is struck on:
+
+| Holding | Purchases | Sales | Income rows |
+| --- | ---: | ---: | ---: |
+| 360-one-private-wealth-37702 · 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) | 1 | 1 | 4 |
+| 360-one-private-wealth-60117 · 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) | 1 | 1 | 4 |
+| baring-private-equity-india-fund-AIFM_BPEPF6_0584 · Baring Private Equity India Fund 6 — Class A1 | 4 | 0 | 4 |
+| india-sme-investments-175962 · India SME Investments Fund II — Class A2 | 8 | 0 | 3 |
+| india-sme-investments-175964 · India SME Investments Fund II — Class A2 | 8 | 0 | 2 |
+| india-sme-investments-177302 · India SME Investments Fund II — Class A2 | 7 | 0 | 1 |
+| review-ajay-jaisinghani · Assetgro Fintech Private Limited — Series B Preference | 1 | 0 | 0 |
+| review-ajay-jaisinghani · Zepto | 1 | 0 | 0 |
+| review-ankita-jaisinghani · Transition Venture Capital Fund I — Class A1 | 1 | 0 | 0 |
+| review-bharat-jaisinghani · 15% K M Global - Credit Private Limited | 3 | 0 | 0 |
+| sky-capital-rising-titans-fund-SKY003 · Sky Capital Rising Titans Fund I | 5 | 0 | 0 |
+| sky-capital-rising-titans-fund-SKY022 · Sky Capital Rising Titans Fund I | 1 | 0 | 0 |
+| sky-capital-rising-titans-fund-SKY023 · Sky Capital Rising Titans Fund I | 1 | 0 | 0 |
+| sky-capital-rising-titans-fund-SKY024 · Sky Capital Rising Titans Fund I | 1 | 0 | 0 |
+| transition-venture-capital-TVC262 · Transition Venture Capital Fund I — Class A1 | 1 | 0 | 0 |
+| transition-venture-capital-TVC263 · Transition Venture Capital Fund I — Class A1 | 1 | 0 | 0 |
+
 ## Per owner
 
 | Owner | Accounts | Positions | Market value |
@@ -581,7 +602,10 @@ never guessed into the nearest plausible bucket.
 - account 128005: 4 movement(s) from its capital register (112400000 in, 9162 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
 - 2 depository row(s) for Sanshi Fund are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
 - identity: 0 NSE symbol(s) are carried by two securityKeys among the positions — no listed company is keyed twice.
+- review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Ajay Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
+- review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Bharat Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
 - review: 89 private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — 49 statement rows superseded, 22 written-off lines named
+- review: 65 dated rows (purchases, sales, income) behind 16 valued holdings
 - kept unvalued by the family's decision of 2026-09-28: INE647U01026 on Motilal Oswal Financial Services (demat) 1201090012838316 — its reason says so
 - the custodian reports 1416918.692 unit(s) of 3P India Equity Fund 1 — Class B3 on motilal-oswal-financial-services-demat-1201090012838316 (2026-07-31) with no value, and no 3P Investment Managers account of the same owner's is in this book. Both are listed as printed: two statements that do not agree on a unit count are not assumed to describe one holding.
 - the custodian reports 2053614.026 unit(s) of 3P India Equity Fund 1 — Class B3 on motilal-oswal-financial-services-demat-1201090037359311 (2026-07-31) with no value, and the same owner's 3P Investment Managers account(s) carry 0 unit(s) of 3P India Equity Fund 1 - Class B1 (3p-investment-managers-3000048); 0 unit(s) of 3P India Equity Fund 1 - Class B2 (3p-investment-managers-3000048); 0 unit(s) of 3P India Equity Fund 1 - Class B3 (3p-investment-managers-3000048). Both are listed as printed: two statements that do not agree on a unit count are not assumed to describe one holding.

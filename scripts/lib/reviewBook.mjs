@@ -97,17 +97,38 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     const unknown = tsi.filter((t) => t.product === product && !INVESTOR[t.investor]);
     if (unknown.length) fail(`${product}: a Transactions row names a holder this table does not map (${unknown[0].investor})`);
     const closing = rows.filter((t) => t.txn === "Closing");
+    const closingDate = closing.length ? closing.map((t) => t.date).sort().at(-1) : null;
+    // THE DATED ROWS, AS THE REVIEW PRINTS THEM (Stage 10dh): every purchase,
+    // sale and income payout, each on its own date, which is what a fund's
+    // money-weighted return is struck on. A row type no rule here reads, a row
+    // with no date or no amount, a sign the wrong way round, or a row dated
+    // after the line's own closing REFUSES the build — a return over rows this
+    // reader guessed at is a figure nobody could check.
+    const dated = rows.filter((t) => t.txn !== "Closing").map((t) => {
+      const kind = t.txn === "Purchase" ? "purchase" : t.txn === "Sale" ? "sale" : /^div/i.test(t.txn) ? "income"
+        : fail(`${product}: ${ownerId}'s Transactions row ${t.row} is a "${t.txn}", which no rule here reads`);
+      if (!t.date) fail(`${product}: Transactions row ${t.row} carries no date`);
+      if (!Number.isFinite(t.value) || t.value === 0) fail(`${product}: Transactions row ${t.row} carries no amount`);
+      if (kind === "purchase" ? t.value > 0 : t.value < 0) fail(`${product}: Transactions row ${t.row}, a ${t.txn}, has the wrong sign (${t.value})`);
+      if (closingDate && t.date > closingDate) fail(`${product}: Transactions row ${t.row} is dated ${t.date}, after the line's own closing of ${closingDate}`);
+      const units = kind === "income" || t.qty === null || t.qty === undefined ? null : Math.round(Number(t.qty) * 1000) / 1000;
+      const rate = kind === "income" || t.rate === null || t.rate === undefined ? null : Number(t.rate);
+      return { date: t.date, kind, amount: r2(Math.abs(t.value)), units, rate, reviewRow: t.row };
+    }).sort((a, b) => a.date.localeCompare(b.date) || a.reviewRow - b.reviewRow);
     return {
       rows: rows.length,
       cost: r2(-sum(rows.filter((t) => t.txn === "Purchase" || t.txn === "Sale").map((t) => t.value))),
       paidIn: r2(-sum(rows.filter((t) => t.txn === "Purchase").map((t) => t.value))),
       closing: closing.length ? r2(sum(closing.map((t) => t.value))) : null,
-      closingDate: closing.length ? closing.map((t) => t.date).sort().at(-1) : null,
+      closingDate,
+      dated,
     };
   };
 
   // ── 3. Rows ────────────────────────────────────────────────────────────────
   const out = [];
+  /** The review's dated rows behind each valued line, per holder (BOOK_REVIEW_FLOWS). */
+  const flows = [];
   const owners = new Set();
   const rowOwner = new Map();
   const fresherOf = (key, owner) => FRESHER_STATEMENT.filter((f) => f.key === key && f.owner === owner).map((f) => f.text);
@@ -213,6 +234,18 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       } else if (!/National Stock Exchange/.test(e.name) && !s.account) {
         fail(`${e.name}: no Transactions row for ${s.owner}`);
       }
+      const accountId = s.account ?? `${REVIEW_ACCOUNT_PREFIX}${s.owner}`;
+      for (const x of f.dated) flows.push({ accountId, securityKey: e.key, security: e.name, ...x });
+      // THE UNITS THE DATED ROWS WALK TO, where every one of them prints units:
+      // a line whose closing holds a different count is NAMED, never reconciled
+      // by a unit nobody dated (360 ONE's 3,769.026, Stage 10dh).
+      const unitRows = f.dated.filter((x) => x.kind !== "income");
+      if (s.qty && unitRows.length && unitRows.every((x) => x.units !== null)) {
+        const walked = sum(unitRows.map((x) => (x.kind === "purchase" ? x.units : -x.units)));
+        if (!near(walked, s.qty, 0.01)) {
+          notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s Transactions rows walk to ${walked.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units; the closing holds ${s.qty.toLocaleString("en-IN", { maximumFractionDigits: 3 })}, so ${(walked - s.qty).toLocaleString("en-IN", { maximumFractionDigits: 3 })} units are on no dated row`);
+        }
+      }
       push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab,
         cost: s.cost, value: s.value, atCost: !!e.atCost, asOf: e.atCost ? REVIEW_AS_OF : f.closingDate ?? REVIEW_AS_OF,
         note: `${e.atCost ? "Held at cost" : `Valued at ₹${s.value.toLocaleString("en-IN")}`} on the family's consolidated review (MOPWM, 30 Jun 2026), ${tabName} row ${l.row}${f.closingDate && !e.atCost ? `, its closing of ${dayText(f.closingDate)}` : ""}. ${cap(e.why)}.` });
@@ -257,5 +290,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     providerEngagement: "Private investments as the family's consolidated review records them (MOPWM, 30 June 2026)",
     members: [], asOf: REVIEW_AS_OF, inceptionDate: null, capitalRecordTo: null, custodian: REVIEW_PROVIDER, noPositionsReason: null,
   }));
-  return { positions: out, accounts, removePositions, removeUnvalued, removeWindows, superseded, writtenOff, notes, members: r.members };
+  flows.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey) || a.date.localeCompare(b.date) || a.reviewRow - b.reviewRow);
+  notes.push(`review: ${flows.length} dated rows (purchases, sales, income) behind ${new Set(flows.map((x) => `${x.accountId}|${x.securityKey}`)).size} valued holdings`);
+  return { positions: out, accounts, flows, removePositions, removeUnvalued, removeWindows, superseded, writtenOff, notes, members: r.members };
 }

@@ -4418,7 +4418,7 @@ function build(archived) {
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
     excludedAccounts, unvaluedHoldings, separateInvestments,
-    reviewSuperseded: review?.superseded ?? [], reviewWrittenOff: review?.writtenOff ?? [],
+    reviewSuperseded: review?.superseded ?? [], reviewWrittenOff: review?.writtenOff ?? [], reviewFlows: review?.flows ?? [],
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
     // depend on map iteration, and the book must regenerate byte-identically.
@@ -4495,7 +4495,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
+  L.push("  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -4526,6 +4526,14 @@ function emit(book) {
   L.push("");
   L.push("/** The review's written-off private investments: a measured ₹0, in no total (Stage 10dh). */");
   L.push(`export const BOOK_REVIEW_WRITTEN_OFF: ReviewWrittenOff[] = ${j(book.reviewWrittenOff)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * THE REVIEW'S DATED ROWS behind each holding it values (Stage 10dh): every purchase,");
+  L.push(" * sale and income payout on its Transactions tab, each on its own date. What a private");
+  L.push(" * fund's money-weighted return is struck on — the value it closes on is the review's,");
+  L.push(" * so its flows are the same document's. `amount` is positive; `kind` gives the direction.");
+  L.push(" */");
+  L.push(`export const BOOK_REVIEW_FLOWS: ReviewFlow[] = ${j(book.reviewFlows)};`);
   L.push("");
   L.push("/**");
   L.push(" * RING-FENCED PROMOTER STOCK — Polycab India, the family's own promoter");
@@ -4759,6 +4767,19 @@ function report(book) {
     for (const p of fresher) L.push(`- ${p.accountId} · ${p.security}: ${p.reviewNote.split("A newer statement says otherwise: ")[1]}`);
     L.push("");
     L.push(`Written off on the review, a measured ₹0 in no total: ${book.reviewWrittenOff.map((w) => w.security).join(", ")}.`);
+    L.push("");
+    const fh = new Map();
+    for (const f of book.reviewFlows) {
+      const k = `${f.accountId} · ${f.security}`;
+      const c = fh.get(k) ?? { purchase: 0, sale: 0, income: 0 };
+      c[f.kind] += 1;
+      fh.set(k, c);
+    }
+    L.push(`The review's dated rows behind the holdings it values (${book.reviewFlows.length} rows, \`BOOK_REVIEW_FLOWS\`) — what each fund's return is struck on:`);
+    L.push("");
+    L.push("| Holding | Purchases | Sales | Income rows |");
+    L.push("| --- | ---: | ---: | ---: |");
+    for (const [k, c] of fh) L.push(`| ${k} | ${c.purchase} | ${c.sale} | ${c.income} |`);
     L.push("");
   }
   L.push("## Per owner");
