@@ -30,7 +30,7 @@ import { displaySecurity, fmtCr, fmtCurrency, DASH } from "./format";
 import {
   valueDateOf, commonValueDate, measuredReturn, isFixedIncome,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
-  totalQuantity, AT_COST_PNL, NO_UNIT_COUNT,
+  totalQuantity, AT_COST_PNL, NO_UNIT_COUNT, AT_COST_MARK, REVIEW_NO_MARK,
 } from "./analytics";
 import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
 import { fifoTotals } from "./fifo";
@@ -346,12 +346,16 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
         notes.push(`Market Value — ${reviewLines.length === ps.length ? "from" : "partly from"} the family's consolidated review (MOPWM), not a statement`
           + (reviewLines.some((x) => x.valuedAtCost) ? "; held at cost, it is what was paid" : ""));
       }
-      if (mark.price === null && !allAtCost) {
+      if (mark.price === null) {
         // The tab's own sentence names the marks and then says "open the row";
         // a workbook row does not open, so the sheet says what the lines are.
-        notes.push(`CMP — ${mark.values.length > 1
+        // A row the review holds at cost, or values as a total, says so in the
+        // tab's own words (Stage 10dh): no statement marks it at all.
+        notes.push(`CMP — ${allAtCost ? AT_COST_MARK
+          : mark.values.length > 1
           ? `the statements reporting this holding mark it at ${mark.values.map((v) => fmtCurrency(v, "INR")).join(" and ")}; `
             + `no one price covers every unit, and a weighted mean of them is a figure no statement printed`
+          : ps.every((x) => x.review) ? REVIEW_NO_MARK
           : "marked at a total value, not a per-unit price"}`);
       }
       if (!costNA && !allAtCost) {

@@ -61,8 +61,11 @@
 // audit. So the "disagreement" was the review against an invention, and the
 // review was the one reading the fund correctly. The family have since placed
 // Founders themselves (`FAMILY_MARKET_SIDE`), which is where its side comes
-// from today. The review is still never a tier here: it is not a total function
-// onto this axis (its `Debt` maps to neither side).
+// from today. For a STATEMENT row the review is still never a tier here: it is
+// not a total function onto this axis (its `Debt` maps to neither side). A row
+// the book takes FROM the review is another matter — since Stage 10dh the review
+// is the source of every private-market figure, and its lines are private by the
+// review's own tabs (`marketSideOf`, below).
 
 // ── THE READ ITSELF, AND THE TWO PLACES A CATEGORY IS PRINTED ──────────────
 //

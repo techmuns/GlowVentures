@@ -22,6 +22,7 @@ import {
   measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate,
   type ReturnMeasure, type ReturnInput, type RowCapital,
   costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
+  AT_COST_MARK, REVIEW_NO_MARK,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
 import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
@@ -4965,6 +4966,11 @@ function statementMarkNote(lead: string, valuedAt: string, ps: readonly Position
  * names both days where the statement prices on another day than its balances.
  */
 function totalValueNote(valuedAt: string | null, ps: readonly Position[], accIdx: AccountIndex): string {
+  // A REVIEW LINE IS NOT A STATEMENT MARK (Stage 10dh). No statement values
+  // it — the family's consolidated review does, at cost or as a total — and
+  // "its statement values it" would send a reader to a document that does not.
+  if (ps.length && ps.every(isValuedAtCost)) return AT_COST_MARK;
+  if (ps.length && ps.every((x) => x.review)) return valuedAt ? `${REVIEW_NO_MARK}. The review values it as of ${fmtDate(valuedAt)}.` : REVIEW_NO_MARK;
   const base = "marked at a total value, not a per-unit price";
   return valuedAt ? `${base}. ${statementMarkNote("Its statement values it", valuedAt, ps, accIdx)}` : base;
 }

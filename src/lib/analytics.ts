@@ -181,14 +181,21 @@ export type MarketSideRow = {
  * on its registration line and is private. `shared/aifCategory.mjs` is the
  * order — the family's placing, then a fund whose own name says private equity
  * or venture, then the category its statement prints — and these say that order.
+ *
+ * AND THE REVIEW'S PRIVATE-MARKET LINES COME BEFORE ALL OF IT (Stage 10dh). The
+ * family made their consolidated review (MOPWM) the source of every
+ * private-market figure on 5 Oct 2026, and every line the book takes from it is
+ * private by the review's own tabs, whatever wrapper it is — so the private
+ * reason names it first.
  */
 export const SIDE_NOTE = {
   listed: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the AIFs that trade"
     + " listed securities — placed there by the family's own word for each fund, or by the Category III its"
     + " statement prints where they have not said.",
-  private: "Private capital: unlisted holdings, structured products, and the AIFs that invest privately — placed"
-    + " there by the family's own word for each fund, by a fund whose own name says private equity or venture,"
-    + " or by the Category I or II its statement prints.",
+  private: "Private capital: every private-market line of the family's consolidated review (MOPWM, 30 Jun 2026),"
+    + " which is the source for private markets; and on the statements, unlisted holdings, structured products"
+    + " and the AIFs that invest privately — placed there by the family's own word for each fund, by a fund whose"
+    + " own name says private equity or venture, or by the Category I or II its statement prints.",
   unplaced: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; one line from the`
     + " family, or the fund's own SEBI registration, would settle each one.",
 } as const;
