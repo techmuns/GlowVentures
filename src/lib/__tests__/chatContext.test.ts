@@ -438,7 +438,7 @@ ok("the context is a non-empty set of named blocks",
   ok("...named, so the model can recognise a question about it", !!f.security, String(f.security));
   const fencedAccts = [...new Set(BOOK_POLYCAB.map((p) => p.accountId))].map((id) => acct.get(id)!);
   ok("...with its share count, its statement's date and the account it covers",
-    f.shares === add(BOOK_POLYCAB.map((p) => p.quantity))
+    f.shares === add(BOOK_POLYCAB.map((p) => p.quantity!))
       && f.heldIn.length === fencedAccts.length && f.heldIn.every((h, i) => h.accountNo === fencedAccts[i].accountNo && h.statementAsOf === fencedAccts[i].asOf)
       && (f.statementAsOf === fencedAccts[0]?.asOf),
     `${f.shares} shares, ${JSON.stringify(f.statementAsOf)}`);
@@ -595,7 +595,7 @@ ok("the context is a non-empty set of named blocks",
   // A line the NAV values but whose whole holding is under the ₹1,000 floor is
   // on no screen (`currentHoldings` drops it everywhere), so the dashboard does
   // NOT show it and must not say it does — the same `speck` rule as above.
-  const unitKey = (u: { accountId: string; quantity: number }) => `${u.accountId}|${u.quantity}`;
+  const unitKey = (u: { accountId: string; quantity: number | null }) => `${u.accountId}|${u.quantity}`;
   const liveUnits = new Set(UNPRICED.filter((u) => !speck(u.securityKey)).map(unitKey));
   const speckUnits = new Set(UNPRICED.filter((u) => speck(u.securityKey)).map(unitKey));
   ok("...each says whether the dashboard values it now — true of every line a fund's NAV values here",

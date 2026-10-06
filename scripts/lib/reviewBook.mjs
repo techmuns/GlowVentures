@@ -111,7 +111,22 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   const owners = new Set();
   const rowOwner = new Map();
   const fresherOf = (key, owner) => FRESHER_STATEMENT.filter((f) => f.key === key && f.owner === owner).map((f) => f.text);
-  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note }) => {
+  // THE REVIEW'S OWN CLASSIFICATION OF EACH LINE (Stage 10dh). Its head tab
+  // files the PE funds and the Private Equity block under Alternate, unlisted
+  // shares under Equity and the K M Global loan under Debt; the basket is the
+  // code each line carries — EG for the private book, SG for NSE's unlisted
+  // shares, EG for Zepto's, TT for the credit line. Read by the family's two
+  // axes (`familyTaxonomy.ts`) for a line their hand-checked map does not name.
+  const REVIEW_TAXONOMY = {
+    peFunds: { assetClass: "Alternate", basket: "Entrepreneurial Growth" },
+    privateInvestments: { assetClass: "Alternate", basket: "Entrepreneurial Growth" },
+    credit: { assetClass: "Debt", basket: "Thematic & Tactical" },
+  };
+  const UNLISTED_BASKET = { "national-stock-exchange-of-india": "Stable Growth", zepto: "Entrepreneurial Growth" };
+  const taxonomyOf = (tab, key) => tab === "unlisted"
+    ? { assetClass: "Equity", basket: UNLISTED_BASKET[key] ?? fail(`unlisted line ${key} carries no basket code here`) }
+    : REVIEW_TAXONOMY[tab] ?? fail(`no review classification for tab ${tab}`);
+  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab }) => {
     const accountId = account ?? `${REVIEW_ACCOUNT_PREFIX}${owner}`;
     if (!account) owners.add(owner);
     const fresher = fresherOf(key, owner);
@@ -131,7 +146,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       stCostBasis: null, ltCostBasis: null, daysToLT: null, heldSince: null,
       priceAsOf: asOf ?? REVIEW_AS_OF, accruedIncome: null, dividendReceived: null, positionIrrPct: null,
       dedupeGroup: undefined, alsoReportedUnder: undefined,
-      review: true, valuedAtCost: atCost ? true : undefined,
+      review: true, valuedAtCost: atCost ? true : undefined, reviewTaxonomy: taxonomyOf(tab, key),
       reviewNote: `${note}${fresher.length ? ` A newer statement says otherwise: ${fresher.join("; ")}.` : ""}`,
     });
   };
@@ -166,7 +181,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     const parts = e.split.map((s) => ({ ...s, cost: s.cost ?? l.cost - fixed }));
     if (!near(sum(parts.map((s) => s.cost)), l.cost)) fail(`${name}: the split adds to ${sum(parts.map((s) => s.cost))}, not the line's ${l.cost}`);
     for (const s of parts) {
-      push({ key, security: name, owner: s.owner, assetClass: e.assetClass, qty: null, cost: s.cost, atCost: true,
+      push({ key, security: name, owner: s.owner, assetClass: e.assetClass, qty: null, cost: s.cost, atCost: true, tab: "privateInvestments",
         note: `Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row ${l.row}${parts.length > 1 ? ` — ${ownerName(s.owner)}'s ₹${s.cost.toLocaleString("en-IN")} of the line` : ""}. ${cap(e.why)}.` });
     }
   }
@@ -198,7 +213,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       } else if (!/National Stock Exchange/.test(e.name) && !s.account) {
         fail(`${e.name}: no Transactions row for ${s.owner}`);
       }
-      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty,
+      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab,
         cost: s.cost, value: s.value, atCost: !!e.atCost, asOf: e.atCost ? REVIEW_AS_OF : f.closingDate ?? REVIEW_AS_OF,
         note: `${e.atCost ? "Held at cost" : `Valued at ₹${s.value.toLocaleString("en-IN")}`} on the family's consolidated review (MOPWM, 30 Jun 2026), ${tabName} row ${l.row}${f.closingDate && !e.atCost ? `, its closing of ${dayText(f.closingDate)}` : ""}. ${cap(e.why)}.` });
     }

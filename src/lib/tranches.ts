@@ -165,11 +165,12 @@ export function trancheTable(
     if (!tr || !tr.moves.length) return null;
     // A position marked at a total with no unit count cannot price a tranche —
     // there is no per-unit figure to multiply.
-    if (!(p.quantity > 0)) return null;
+    const pq = p.quantity;
+    if (pq === null || !(pq > 0)) return null;
     // A value with no date cannot close a window — refuse rather than guess one.
     const end = valueDate(p);
     if (!end) return null;
-    const navNow = p.marketValue / p.quantity;
+    const navNow = p.marketValue / pq;
     for (const m of tr.moves) {
       // Both are required for a tranche to be a measurement at all. A move with
       // units and no `invested` is a contribution whose gross the statement
@@ -191,7 +192,7 @@ export function trancheTable(
         ret: holdingReturn({ returnPct, heldSince: m.date, valuedAt: end }, mode, end),
       });
     }
-    positionUnits += p.quantity;
+    positionUnits += pq;
     positionValue += p.marketValue;
     realised += typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL) ? p.realizedPnL : 0;
     costSold += typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0;

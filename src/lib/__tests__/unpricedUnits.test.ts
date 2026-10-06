@@ -77,7 +77,7 @@ function expected(unvalued: readonly UnvaluedStatementHolding[], accounts: Map<s
     const ratio = nav.nav / price;
     if (!(ratio > 0.5 && ratio < 2)) continue;
     if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
-    if (positions.some((p) => I(p) === isin && Math.abs(p.quantity - (u.quantity as number)) < 0.0005
+    if (positions.some((p) => I(p) === isin && Math.abs((p.quantity ?? NaN) - (u.quantity as number)) < 0.0005
       && ownerOfId(p.accountId) === ownerOfId(u.accountId))) continue;
     out.push({ accountId: u.accountId, isin, quantity: u.quantity, nav: nav.nav, witness, ownRate });
   }
@@ -86,7 +86,7 @@ function expected(unvalued: readonly UnvaluedStatementHolding[], accounts: Map<s
 
 const got = unpricedStatementUnits();
 const want = expected(BOOK_UNVALUED_HOLDINGS, acc, BOOK_POSITIONS);
-const sig = (x: { accountId: string; isin?: string | null; quantity: number }) => `${x.accountId}|${I(x)}|${x.quantity}`;
+const sig = (x: { accountId: string; isin?: string | null; quantity: number | null }) => `${x.accountId}|${I(x)}|${x.quantity}`;
 
 console.log("── the book ──");
 ok("the switch is on", VALUE_UNPRICED_STATEMENT_UNITS === true);
@@ -104,8 +104,8 @@ ok("each is valued at its own units × the published NAV, nothing else",
 // statements' own ABSL Balanced Advantage balances, which print no rate at all.
 const absl = got.filter((p) => I(p) === "INF084M01AB8" && p.depositoryUnits?.kind === "no-rate");
 ok("...and on this book that includes the ABSL Balanced Advantage units the audit found with no rate — 3,93,095.951 + 2,42,412.122 units",
-  absl.length === 2 && Math.abs(absl.reduce((s, p) => s + p.quantity, 0) - 635508.073) < 0.0005,
-  `${absl.reduce((s, p) => s + p.quantity, 0).toFixed(3)} units over ${absl.length} account(s)`);
+  absl.length === 2 && Math.abs(absl.reduce((s, p) => s + (p.quantity ?? 0), 0) - 635508.073) < 0.0005,
+  `${absl.reduce((s, p) => s + (p.quantity ?? 0), 0).toFixed(3)} units over ${absl.length} account(s)`);
 // Stage 10cz: EVERY fund the three Motilal holding statements carry is now a
 // quantity in the book, so the live book values far more than the audit's two.
 const motilalHolding = new Set(BOOK_ACCOUNTS.filter((a) => /motilal oswal/i.test(a.provider) && /demat/i.test(a.provider)

@@ -352,7 +352,7 @@ console.log("\n── the two sections ──");
     const valued = BOOK_POSITIONS.filter((p) => p.securityKey === v.securityKey && p.accountId !== v.accountId
       && accIdx.get(p.accountId)?.ownerId === acc?.ownerId);
     ok(`${v.accountId}: …and the same member's valued holding of that fund carries the same units`,
-      valued.some((p) => Math.abs(p.quantity - v.units) < 0.0005), valued.map((p) => `${p.accountId} ${p.quantity}`).join("; "));
+      valued.some((p) => Math.abs((p.quantity ?? NaN) - v.units) < 0.0005), valued.map((p) => `${p.accountId} ${p.quantity}`).join("; "));
   }
   ok("…each with no holding and no value",
     unFolios.every((f) => f.position === null && f.value === null && f.units === null && f.cost === null));

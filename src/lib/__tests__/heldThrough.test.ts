@@ -227,11 +227,11 @@ console.log("\n── the average cost is over the units that HAVE one ──");
   for (const key of companyKeys) {
     const t = measuredTotals(rowsOf(key));
     if (t.cost === null) { if (t.avgCost !== null) avgFails.push(`${key}: an average cost with no cost`); continue; }
-    if (!near(t.avgCost! * t.costedQty, t.cost, 1)) avgFails.push(`${key}: avg × costed units ≠ cost`);
-    if (t.costedQty < t.qty - 1e-6) {
+    if (!near(t.avgCost! * t.costedQty!, t.cost, 1)) avgFails.push(`${key}: avg × costed units ≠ cost`);
+    if (t.qty !== null && t.costedQty !== null && t.costedQty < t.qty - 1e-6) {
       partial.push(key);
       // The old arithmetic, which this must never equal on a partly costed holding.
-      if (near(t.avgCost, t.cost / t.qty, 0.005)) avgFails.push(`${key}: struck over every unit`);
+      if (near(t.avgCost, t.cost / t.qty!, 0.005)) avgFails.push(`${key}: struck over every unit`);
       if (t.covers && t.uncostedMV > t.mv * 0.005) avgFails.push(`${key}: claims to cover a set it does not`);
     }
   }
@@ -252,8 +252,8 @@ console.log("\n── the average cost is over the units that HAVE one ──");
   const icici = partial.find((k) => rowsOf(k).some((p) => /icici bank/i.test(p.security)));
   if (icici) {
     const t = measuredTotals(rowsOf(icici));
-    ok(`ICICI Bank: ₹${t.avgCost!.toFixed(2)} on ${t.costedQty} of ${t.qty} shares, not ₹${(t.cost! / t.qty).toFixed(2)}`,
-      t.avgCost! > 3 * (t.cost! / t.qty) && !t.covers);
+    ok(`ICICI Bank: ₹${t.avgCost!.toFixed(2)} on ${t.costedQty} of ${t.qty} shares, not ₹${(t.cost! / t.qty!).toFixed(2)}`,
+      t.avgCost! > 3 * (t.cost! / t.qty!) && !t.covers);
   }
 }
 

@@ -54,7 +54,7 @@
 // the same rule that places its holding (`fundMarketSideOf`), and the page
 // NAMES the ones it leaves out rather than dropping them.
 import type { Account, Commitment, Position } from "./types";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings } from "./analytics";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings, totalQuantity } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 import { fifoTotals } from "./fifo";
 import {
@@ -211,7 +211,7 @@ export type FundRow = {
   folios: number;
   /** Distinct statement dates behind the row, ascending. A group can span two. */
   asOf: string[];
-  units: number;
+  units: number | null;
   /** NULL where no statement reports a cost — never 0, and never blended in as one. */
   cost: number | null;
   mv: number;
@@ -251,7 +251,8 @@ export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex, rawRow
         providers: [...new Set(g.map((p) => providerOf(accIdx, p)))],
         folios: statements.get(g[0].securityKey) ?? g.length,
         asOf: [...new Set(g.map((p) => accIdx.get(p.accountId)?.asOf).filter(Boolean) as string[])].sort(),
-        units: sum(g.map((p) => p.quantity)),
+        // Null where a line carries no unit count (Stage 10dh) — never a partial sum.
+        units: totalQuantity(g),
         cost,
         mv,
         pnl,
@@ -538,7 +539,7 @@ export function incomeOnlyViewOf(
   const position = positions.find((p) => p.securityKey === view.securityKey
     && p.accountId !== account.accountId
     && accIdx.get(p.accountId)?.ownerId === account.ownerId
-    && Math.abs(p.quantity - view.units) < 0.0005);
+    && p.quantity !== null && Math.abs(p.quantity - view.units) < 0.0005);
   return position ? { view, position } : null;
 }
 

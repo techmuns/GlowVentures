@@ -698,7 +698,9 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     distributionAccounts: dists.length,
     // Units of two different funds are two different units, so they add only
     // inside one fund — a sum across funds is a number with no unit.
-    units: held.length && funds.size === 1 ? sum(held.map((f) => f.units ?? 0)) : null,
+    // And only where every folio carries a count: a review line held at cost may
+    // record none (Stage 10dh), and a sum without it is a partial count.
+    units: held.length && funds.size === 1 && held.every((f) => f.units != null) ? sum(held.map((f) => f.units ?? 0)) : null,
     cost,
     value,
     pnl,

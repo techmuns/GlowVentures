@@ -1235,7 +1235,11 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
-    "reviewNote": "Valued at ₹1,45,80,413 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. one folio under each CRN — two investments, as the family confirmed on 28 Sep 2026. A newer statement says otherwise: CRN37702's statement of 31 Jul 2026 values the same units at ₹1,46,68,362.66."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Valued at ₹1,45,80,413 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026. A newer statement says otherwise: CRN37702's statement of 31 Jul 2026 values the same units at ₹1,46,68,362.66."
   },
   {
     "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
@@ -1266,7 +1270,11 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
-    "reviewNote": "Valued at ₹1,45,80,412.51 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. one folio under each CRN — two investments, as the family confirmed on 28 Sep 2026."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Valued at ₹1,45,80,412.51 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026."
   },
   {
     "securityKey": "3p-india-equity-fund-1-class-b1",
@@ -1495,6 +1503,10 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
     "reviewNote": "Valued at ₹1,88,42,208.74 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 9, its closing of 31 Mar 2026. Ankita's folio. A newer statement says otherwise: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry."
   },
   {
@@ -5869,7 +5881,11 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
-    "reviewNote": "Valued at ₹9,55,80,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A newer statement says otherwise: the review's own closing carries 54,000 units at ₹1,770 a unit; the fund's statement prints the 81,000 units held."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Valued at ₹9,55,80,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A newer statement says otherwise: the review's own closing carries 54,000 units at ₹1,770 a unit; the fund's statement prints the 81,000 units held."
   },
   {
     "securityKey": "india-sme-investments-fund-ii-class-a2",
@@ -5901,7 +5917,11 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
-    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A newer statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A newer statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held."
   },
   {
     "securityKey": "india-sme-investments-fund-ii-class-a2",
@@ -5933,7 +5953,11 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
-    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A newer statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A newer statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held."
   },
   {
     "securityKey": "belrise-industries",
@@ -6700,7 +6724,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 12. the review's Transactions row: 636 preference shares at ₹78,668, and the ICICI Bank NSDL statement's 636 in Ajay's account."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 12. The review's Transactions row: 636 preference shares at ₹78,668, and the ICICI Bank NSDL statement's 636 in Ajay's account."
   },
   {
     "securityKey": "big-bang-boom-solutions-private-limited-0-001-pref-12sp44",
@@ -6733,7 +6761,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Ajay Jaisinghani's ₹3,02,40,000 of the line. two holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Ajay Jaisinghani's ₹3,02,40,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "blue-ashva-india-pool-account",
@@ -6765,7 +6797,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ajay Jaisinghani's ₹51,08,000 of the line. the family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ajay Jaisinghani's ₹51,08,000 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
   },
   {
     "securityKey": "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability",
@@ -6798,7 +6834,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ajay Jaisinghani's ₹1,00,000 of the line. two holders; the family's investment register records ₹1 L each. A newer statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ajay Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each. A newer statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742."
   },
   {
     "securityKey": "borosil-renewables-limited-warrants-13ag26",
@@ -6831,7 +6871,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 19. one holder on the review's own Transactions and on the register. A newer statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 19. One holder on the review's own Transactions and on the register. A newer statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50."
   },
   {
     "securityKey": "edugorilla-community",
@@ -6863,7 +6907,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 66. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 66. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "electromech-infraprojects",
@@ -6896,7 +6944,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 61. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 61. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "ema-preferred-shares",
@@ -6928,7 +6980,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 40. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 40. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "everest-fleet",
@@ -6961,7 +7017,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ajay Jaisinghani's ₹2,53,18,588 of the line. three holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ajay Jaisinghani's ₹2,53,18,588 of the line. Three holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "innoviti-payment-solutions-private-ltd-pranav-koranne",
@@ -6993,7 +7053,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Ajay Jaisinghani's ₹1,49,99,980.38 of the line. two holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Ajay Jaisinghani's ₹1,49,99,980.38 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "integris-medtech",
@@ -7026,7 +7090,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Ajay Jaisinghani's ₹9,99,98,625 of the line. the family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Ajay Jaisinghani's ₹9,99,98,625 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
   },
   {
     "securityKey": "landcraft-retail-pvt-ltd-food-square",
@@ -7058,7 +7126,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 56. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 56. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "matrix-gas-and-renewables",
@@ -7091,7 +7163,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Ajay Jaisinghani's ₹3,00,00,000 of the line. two holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Ajay Jaisinghani's ₹3,00,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "mother-india-forming",
@@ -7123,7 +7199,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 8. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 8. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "national-stock-exchange-of-india",
@@ -7155,6 +7235,10 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
+    "reviewTaxonomy": {
+      "assetClass": "Equity",
+      "basket": "Stable Growth"
+    },
     "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000."
   },
   {
@@ -7188,7 +7272,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 18. the ICICI Bank NSDL statement holds the 17,000 shares in Ajay's account."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 18. The ICICI Bank NSDL statement holds the 17,000 shares in Ajay's account."
   },
   {
     "securityKey": "onix-renewable",
@@ -7221,7 +7309,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 67. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 67. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "radiant-innovative-manufacturing",
@@ -7254,7 +7346,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 31. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 31. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "rays-power-experts",
@@ -7287,7 +7383,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 21. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 21. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "sks-fasteners",
@@ -7320,7 +7420,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 9. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 9. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "sotefin-bharat",
@@ -7353,7 +7457,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 28. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 28. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "spray-engineering-devices",
@@ -7386,7 +7494,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 13. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 13. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "telawne-power",
@@ -7418,7 +7530,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 15. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 15. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "urb-ventures",
@@ -7451,7 +7567,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ajay Jaisinghani's ₹1,00,00,000 of the line. two holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ajay Jaisinghani's ₹1,00,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "we-voise",
@@ -7483,7 +7603,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 29. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 29. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "zenith-leisure-holidays",
@@ -7516,7 +7640,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 30. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 30. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "zepto",
@@ -7547,7 +7675,11 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
-    "reviewNote": "Valued at ₹22,82,85,156.52 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 70, its closing of 31 Jul 2025. the review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025. A newer statement says otherwise: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026."
+    "reviewTaxonomy": {
+      "assetClass": "Equity",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Valued at ₹22,82,85,156.52 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 70, its closing of 31 Jul 2025. The review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025. A newer statement says otherwise: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026."
   },
   {
     "securityKey": "al-trust-collabmates-pvt-ltd-angellist-likeminds",
@@ -7579,7 +7711,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 49. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 49. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "blue-ashva-india-pool-account",
@@ -7611,7 +7747,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ankita Jaisinghani's ₹1,52,51,640 of the line. the family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ankita Jaisinghani's ₹1,52,51,640 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
   },
   {
     "securityKey": "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability",
@@ -7644,7 +7784,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ankita Jaisinghani's ₹1,00,000 of the line. two holders; the family's investment register records ₹1 L each."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ankita Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each."
   },
   {
     "securityKey": "everest-fleet",
@@ -7677,7 +7821,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ankita Jaisinghani's ₹1,60,93,284 of the line. three holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ankita Jaisinghani's ₹1,60,93,284 of the line. Three holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "inflexor-technologies",
@@ -7709,7 +7857,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 35. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 35. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "national-stock-exchange-of-india",
@@ -7741,6 +7893,10 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
+    "reviewTaxonomy": {
+      "assetClass": "Equity",
+      "basket": "Stable Growth"
+    },
     "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000."
   },
   {
@@ -7774,7 +7930,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 22. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 22. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "since-99-apparel-pvt-limited-punit-sehgal-dexter-capital",
@@ -7806,7 +7966,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 39. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 39. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "sky-vision-cure",
@@ -7838,7 +8002,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 57. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 57. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "tocf-i-class-a2",
@@ -7871,7 +8039,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 27. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 27. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "transition-venture-capital-fund-i-class-a1",
@@ -7903,7 +8075,11 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
-    "reviewNote": "Valued at ₹32,85,877 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. each trust's own folio, and Ankita's 2,500 units on the review's Transactions."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Valued at ₹32,85,877 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions."
   },
   {
     "securityKey": "urb-ventures",
@@ -7936,7 +8112,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ankita Jaisinghani's ₹1,25,00,000 of the line. two holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ankita Jaisinghani's ₹1,25,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "15-percent-k-m-global-credit",
@@ -7967,6 +8147,10 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
+    "reviewTaxonomy": {
+      "assetClass": "Debt",
+      "basket": "Thematic & Tactical"
+    },
     "reviewNote": "Valued at ₹1,04,34,584.46 on the family's consolidated review (MOPWM, 30 Jun 2026), Debt row 11, its closing of 30 Jun 2026. Bharat's, on the review's own Transactions; the Private Investments tab's ₹20 L Credit Fair-K M Global line is the same loan, counted here once."
   },
   {
@@ -7999,7 +8183,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 37. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 37. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "ajay-jain-drink-prime",
@@ -8031,7 +8219,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 42. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 42. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "aksum-trademart-pvt-ltd-ankit-jain",
@@ -8063,7 +8255,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 50. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 50. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "al-trust-karban-envirotech-ruv-nilesh-angelist",
@@ -8095,7 +8291,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 51. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 51. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "autocracy-machinery",
@@ -8127,7 +8327,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 26. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 26. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "big-bang-boom-solutions-private-limited-0-001-pref-12sp44",
@@ -8160,7 +8364,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Bharat Jaisinghani's ₹1,00,80,000 of the line. two holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Bharat Jaisinghani's ₹1,00,80,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "everest-fleet",
@@ -8193,7 +8401,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Bharat Jaisinghani's ₹61,95,952 of the line. three holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Bharat Jaisinghani's ₹61,95,952 of the line. Three holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "fh-edutech",
@@ -8225,7 +8437,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 47. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 47. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "fh-enable-llp-aakash-sachdev",
@@ -8257,7 +8473,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 11. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 11. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "hanok-reuben-medhari-drink-prime",
@@ -8289,7 +8509,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 43. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 43. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "home-pecked-e-marketplace-services",
@@ -8321,7 +8545,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 48. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 48. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "hyprkytchen-foodtech-private-limited-mr-bansi",
@@ -8353,7 +8581,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 34. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 34. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "incred-holdings",
@@ -8385,7 +8617,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 25. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 25. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "innoviti-payment-solutions-private-ltd-pranav-koranne",
@@ -8417,7 +8653,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Bharat Jaisinghani's ₹49,99,993.46 of the line. two holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Bharat Jaisinghani's ₹49,99,993.46 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "integris-medtech",
@@ -8450,7 +8690,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Bharat Jaisinghani's ₹2,99,99,419 of the line. the family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Bharat Jaisinghani's ₹2,99,99,419 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
   },
   {
     "securityKey": "lv-angel-fund-lets-venture-hoopr-vaibhav-karnavat",
@@ -8482,7 +8726,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 53. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 53. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "matrix-gas-and-renewables",
@@ -8515,7 +8763,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Bharat Jaisinghani's ₹1,50,00,000 of the line. two holders; the family's investment register records each one's payment."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Bharat Jaisinghani's ₹1,50,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
     "securityKey": "nopo-nanotechnologies-india-pvt-ltd-gadhadar-reddy",
@@ -8547,7 +8799,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 45. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 45. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "procyon-enterprise-llp-abhishek-murarka",
@@ -8579,7 +8835,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 12. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 12. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "rurash-financials-private-ltd-reliance-retail",
@@ -8611,7 +8871,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 54. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 54. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "sky-enable-tech",
@@ -8643,7 +8907,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 38. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 38. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "stay-vista-private-limited-anandkumar-radhakrishna-ladsariya",
@@ -8675,7 +8943,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 41. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 41. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "stay-vista-private-limited-artha-energy-projects",
@@ -8707,7 +8979,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 23. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 23. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "swapeco-solutions-equity",
@@ -8739,7 +9015,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 36. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 36. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "third-eye-distillery-holdings-pvt-ltd-skyventures-lv-angel-fund-aakash-sachdev",
@@ -8771,7 +9051,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 33. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 33. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "transigo-fleet",
@@ -8803,7 +9087,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 10. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 10. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "variance-pt-ventures-llp-romil-kapadia",
@@ -8835,7 +9123,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 55. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 55. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "vineet-sethia-drink-prime",
@@ -8867,7 +9159,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 32. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 32. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "waterwala-labs-private-limited-drink-prime",
@@ -8899,7 +9195,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 6. the family's investment register records both Waterwala payments under Bharat."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 6. The family's investment register records both Waterwala payments under Bharat."
   },
   {
     "securityKey": "zippmat-private-ltd-abhijeet-kudva",
@@ -8931,7 +9231,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 52. one holder on the review's own Transactions and on the register."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 52. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "swapeco-solutions",
@@ -8964,6 +9268,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 62 — Bharat Jaisinghani Family Trust 2's ₹1,35,00,875 of the line. 347 CCPS per family trust on both trusts' HDFC Bank NSDL statements, ₹1,35,00,875 each on the review's own member summary."
   },
   {
@@ -8997,6 +9305,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 62 — Bharat Jaisinghani Family Trust 3's ₹1,35,00,875 of the line. 347 CCPS per family trust on both trusts' HDFC Bank NSDL statements, ₹1,35,00,875 each on the review's own member summary."
   },
   {
@@ -9029,7 +9341,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Not attributed to a member's ₹1,70,48,360 of the line. the family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Not attributed to a member's ₹1,70,48,360 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
   },
   {
     "securityKey": "head-infotech",
@@ -9061,7 +9377,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 44. no document in the drop names its holder."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 44. No document in the drop names its holder."
   },
   {
     "securityKey": "integris-medtech",
@@ -9094,7 +9414,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Not attributed to a member's ₹2,99,99,418.8 of the line. the family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Not attributed to a member's ₹2,99,99,418.8 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
   },
   {
     "securityKey": "perplexity-investment",
@@ -9126,7 +9450,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 63. no document in the drop names its holder."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 63. No document in the drop names its holder."
   },
   {
     "securityKey": "runable-investment",
@@ -9158,7 +9486,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 64. no document in the drop names its holder."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 64. No document in the drop names its holder."
   },
   {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -9335,7 +9667,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. each folio's own statement. A newer statement says otherwise: SKY003's statement of 31 Jul 2026 prints ₹1,73,00,000 drawn."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement. A newer statement says otherwise: SKY003's statement of 31 Jul 2026 prints ₹1,73,00,000 drawn."
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",
@@ -9367,7 +9703,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. each folio's own statement."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",
@@ -9399,7 +9739,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. each folio's own statement."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",
@@ -9431,7 +9775,11 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null,
     "review": true,
     "valuedAtCost": true,
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. each folio's own statement."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
   },
   {
     "securityKey": "arvind-fashions",
@@ -11920,7 +12268,11 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
-    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A newer statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A newer statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
   },
   {
     "securityKey": "transition-venture-capital-fund-i-class-a1",
@@ -11952,7 +12304,11 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "review": true,
-    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A newer statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
+    "reviewTaxonomy": {
+      "assetClass": "Alternate",
+      "basket": "Entrepreneurial Growth"
+    },
+    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A newer statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
   },
   {
     "securityKey": "amrutanjan-health-care",

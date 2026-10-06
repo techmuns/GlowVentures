@@ -9,7 +9,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare } from "@/lib/analytics";
+import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare, NO_UNIT_COUNT } from "@/lib/analytics";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
@@ -836,7 +836,7 @@ export function MandateHoldings() {
                             : "A cash-equivalent fund, not a share in a company — no sector applies."}>—</span>
                         : <span data-mandate-sector={sectorOf(r)} data-mandate-sector-key={r.securityKey}>{sectorOf(r)}</span>}
                     </td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-300">{r.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(r.quantity)}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">
                       {price(r.avgCost) ?? <AbsentCell reason="this statement prints no per-unit cost for the holding" />}
                     </td>

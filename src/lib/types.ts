@@ -314,6 +314,8 @@ export type Position = {
   valuedAtCost?: boolean;
   /** Which review line this row is, and how the line was split among the family. */
   reviewNote?: string;
+  /** The review's own asset class and basket for the line (Stage 10dh). */
+  reviewTaxonomy?: { assetClass: "Equity" | "Debt" | "Alternate" | "Cash"; basket: "Stable Growth" | "Entrepreneurial Growth" | "Thematic & Tactical" | "Liquidity" };
   /**
    * PER-UNIT figures, and NULLABLE — not every provider prints them.
    *

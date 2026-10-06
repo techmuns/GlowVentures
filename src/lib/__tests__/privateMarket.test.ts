@@ -376,7 +376,7 @@ console.log("\n── an income-only folio folds only where its units tie ──
   const real = BOOK_POSITIONS.filter((p) => p.securityKey === v.securityKey);
   ok("the join finds the valued holding on the book", incomeOnlyViewOf(acc, real, accIdx) != null);
   // One unit off, and the join refuses rather than folding a folio under a holding it does not describe.
-  const off = real.map((p) => ({ ...p, quantity: p.quantity + 1 }));
+  const off = real.map((p) => ({ ...p, quantity: (p.quantity ?? 0) + 1 }));
   eq("a unit count that does not tie folds nothing", incomeOnlyViewOf(acc, off, accIdx), null);
   // Another member's holding of the same fund is not this folio's.
   const other = real.filter((p) => accIdx.get(p.accountId)?.ownerId !== acc.ownerId);

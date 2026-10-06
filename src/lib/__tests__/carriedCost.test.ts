@@ -105,7 +105,7 @@ for (const p of carried) {
   if (!t) continue;
 
   // The tranches ARE the licence: they account for every unit and every rupee.
-  near(`units tie to the quantity held — ${tag}`, t.units, p.quantity, 0.0005);
+  near(`units tie to the quantity held — ${tag}`, t.units, p.quantity!, 0.0005);
   near(`value ties to the market value — ${tag}`, t.value, p.marketValue, 1);
   near(`the cost is what the tranches paid — ${tag}`, t.invested, p.costBasis ?? NaN, 0.01);
   ok(`some tranche came through the switch — ${tag}`, tr.moves.some((m) => m.carriedFrom));

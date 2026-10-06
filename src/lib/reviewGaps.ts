@@ -269,7 +269,9 @@ export const REVIEW_LINES_KEPT_OUT: ReadonlyMap<string, string> = new Map([
  */
 const STATEMENT_REPORTED = new Set(
   [
-    ...BOOK_POSITIONS.filter((p) => p.quantity > 0).map((p) => p.isin),
+    // A review-sourced position (Stage 10dh) is the review's own line, not a
+    // statement reporting it.
+    ...BOOK_POSITIONS.filter((p) => !p.review && (p.quantity ?? 0) > 0).map((p) => p.isin),
     ...BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0).map((u) => u.isin),
     ...Object.values(BOOK_SHARE_MOVEMENTS).filter((w) => w.reason == null).map((w) => w.isin),
   ].map((x) => x?.trim().toUpperCase()).filter((x): x is string => !!x));

@@ -97,8 +97,8 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
 const isPms = (p: Position) => ACC.get(p.accountId)?.engagement === "PMS";
 /** The NAV the page overlays: a usable published NAV times the units held. */
 const NAV = new Map(BOOK_FUND_NAVS.filter((e) => e.usableForValue && e.nav > 0).map((e) => [e.securityKey, e]));
-const navOf = (p: Position) => (!p.live && p.quantity > 0 ? NAV.get(p.securityKey) ?? null : null);
-const navMV = (p: Position) => { const e = navOf(p); return e ? p.quantity * e.nav : p.marketValue; };
+const navOf = (p: Position) => (!p.live && (p.quantity ?? 0) > 0 ? NAV.get(p.securityKey) ?? null : null);
+const navMV = (p: Position) => { const e = navOf(p); return e ? p.quantity! * e.nav : p.marketValue; };
 /**
  * AMFI's date for a line the page prices at a NAV: the overlay's, or — for a
  * depository's own closing units, which have no statement mark at all — the
@@ -676,7 +676,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   const qtyByKey = new Map<string, { name: string; qty: number }>();
   for (const p of PAGE) {
     const e = qtyByKey.get(p.securityKey) ?? { name: nameOf(p), qty: 0 };
-    e.qty += p.quantity;
+    e.qty += p.quantity ?? 0;
     qtyByKey.set(p.securityKey, e);
   }
   const keyOfRow = (r: Record<string, unknown>): string | null => {

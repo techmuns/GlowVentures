@@ -1130,7 +1130,7 @@ export function HoldingsBehind() {
                                   : money(x.costBasis)}
                               </td>
                               <td className="px-4 py-1.5 text-right mono text-slate-400"
-                                title={`${fmtNum(x.quantity, x.quantity % 1 === 0 ? 0 : 3)} units on this statement`}>{money(x.marketValue)}</td>
+                                title={x.quantity === null ? "the family's consolidated review records no unit count for this line" : `${fmtNum(x.quantity, x.quantity % 1 === 0 ? 0 : 3)} units on this statement`}>{money(x.marketValue)}</td>
                               {/* THIS LINE'S WEIGHT, under the Weight heading. The
                                   cell printed the line's QUANTITY here — a unit
                                   count under a column of percentages, which is the

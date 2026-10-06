@@ -213,6 +213,8 @@ export type Classifiable = {
   assetClass: Position["assetClass"] | null;
   securityKey: Position["securityKey"];
   accountId: Position["accountId"];
+  /** The review's own classification, on a line the review is the source for (Stage 10dh). */
+  reviewTaxonomy?: Position["reviewTaxonomy"];
 };
 
 export const productKeyOf = (p: Classifiable, isMandate: boolean) =>
@@ -512,6 +514,8 @@ export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<Fami
       : { value: "Liquidity", source: "cash-rule", reviewProduct: hit?.reviewProduct ?? null };
   }
   if (hit) return { value: hit.basket, source: "review", reviewProduct: hit.reviewProduct };
+  // A line the review itself is the source for carries the review's own code (Stage 10dh).
+  if (p.reviewTaxonomy) return { value: p.reviewTaxonomy.basket, source: "review", reviewProduct: null };
   // A mandate is never rule-filled: see `basketByRule`.
   const byRule = isMandate ? null : basketByRule(p);
   return byRule ? { value: byRule, source: "rule", reviewProduct: null } : null;
@@ -526,6 +530,7 @@ export function familyAssetClass(p: Classifiable, isMandate: boolean): Resolved<
       : { value: "Cash", source: "cash-rule", reviewProduct: hit?.reviewProduct ?? null };
   }
   if (hit) return { value: hit.assetClass, source: "review", reviewProduct: hit.reviewProduct };
+  if (p.reviewTaxonomy) return { value: p.reviewTaxonomy.assetClass, source: "review", reviewProduct: null };
   const derived = classByDerivation(p);
   return derived ? { value: derived, source: "derived", reviewProduct: null } : null;
 }

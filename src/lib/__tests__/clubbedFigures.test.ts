@@ -45,7 +45,7 @@ for (const [key, ps] of byKey) {
   const costed = ps.filter((p) => !p.costUnavailable && typeof p.costBasis === "number");
   const cost = costed.length ? costed.reduce((s, p) => s + (p.costBasis as number), 0) : null;
   const cv = costed.reduce((s, p) => s + p.marketValue, 0);
-  const cu = costed.reduce((s, p) => s + p.quantity, 0);
+  const cu = costed.reduce((s, p) => s + (p.quantity ?? 0), 0);
   const uv = ps.filter((p) => !costed.includes(p)).reduce((s, p) => s + p.marketValue, 0);
   if (costed.length && costed.length < ps.length && uv > 0) mixed++;
   const vac = cost === 0 && cv === 0 && uv !== 0;
@@ -63,7 +63,7 @@ console.log("\n── the book's own case: ICICI Bank ──");
 {
   const ps = byKey.get("icici-bank") ?? [];
   const f = costedFigures(ps);
-  const allUnits = ps.reduce((s, p) => s + p.quantity, 0);
+  const allUnits = ps.reduce((s, p) => s + (p.quantity ?? 0), 0);
   ok("ICICI Bank is held through lines that report a cost and lines that do not",
     ps.some(reportsCost) && ps.some((p) => !reportsCost(p)), `${ps.length} lines`);
   ok("its average cost is cost over the COSTED units, not over every unit",

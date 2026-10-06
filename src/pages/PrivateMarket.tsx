@@ -569,7 +569,7 @@ export function PrivateMarket() {
             if (w.isin !== p.isin || w.accountId === p.accountId || w.closing == null || !w.periodFrom || !w.periodTo) continue;
             if (accIdx.get(w.accountId)?.ownerId !== own?.ownerId) continue;
             if (asOf && w.periodTo <= asOf) continue;
-            if (Math.abs(w.closing - p.quantity) < 0.0005) continue;
+            if (p.quantity === null || Math.abs(w.closing - p.quantity) < 0.0005) continue;
             out.set(p.securityKey, { accountId: w.accountId, closing: w.closing, periodFrom: w.periodFrom, periodTo: w.periodTo, held: p.quantity, asOf });
           }
         }
