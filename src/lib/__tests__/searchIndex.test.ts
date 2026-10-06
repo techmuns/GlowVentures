@@ -181,7 +181,13 @@ console.log("── a holding a statement records, and nothing values, is still 
   for (const [what, isin] of [["Clean Max", "INE647U01026"], ["National Stock Exchange", "INE721I01024"],
     ["Everest Fleet preference", "INE0LTR03090"], ["Blue Ashva Varenya", "INF0VGG22429"]] as const) {
     const hits = holdingEntries.filter((e) => e.codes.some((c) => c.toUpperCase() === isin));
-    ok(`${what} is one result`, hits.length === 1, hits.map((e) => e.id).join(", ") || "none");
+    // Since Stage 10dh a statement's line the review's own line supersedes (the
+    // Everest Fleet preference shares) is in no table, so it is in no result —
+    // and that is only allowed where nothing in the book still carries its ISIN.
+    const carried = BOOK_POSITIONS.some((p) => p.isin?.toUpperCase() === isin)
+      || lines.some((l) => l.isin?.toUpperCase() === isin);
+    ok(`${what} is one result`, hits.length === 1 || (hits.length === 0 && !carried),
+      hits.map((e) => e.id).join(", ") || (carried ? "none, though the book carries it" : "none"));
   }
 }
 
@@ -223,11 +229,21 @@ console.log("── an identifier lands on its own row, first — every one of t
     symMiss.slice(0, 3).map(([s]) => `${s} → ${top(s)?.label}`).join("; "));
   // ACCOUNT NUMBERS: a mandate's opens the mandate, every other account's opens
   // the account row — first, whatever else shares its digits.
-  const acctMiss = BOOK_ACCOUNTS.filter((a) => {
+  // The review's holder accounts (Stage 10dh) share one account number, "MOPWM":
+  // a shared number cannot land on one account first, so it must land on ONE OF
+  // its own accounts, and every unique number on its own.
+  const sharedNo = (a: (typeof BOOK_ACCOUNTS)[number]) => BOOK_ACCOUNTS.filter((b) => b.accountNo === a.accountNo).length > 1;
+  const sharedMiss = BOOK_ACCOUNTS.filter(sharedNo).filter((a) => {
+    const id = top(a.accountNo)?.id ?? "";
+    return !BOOK_ACCOUNTS.some((b) => b.accountNo === a.accountNo && (id === `account:${b.accountId}` || id === `mandate:${b.accountId}`));
+  });
+  ok("a shared account number finds one of its own accounts first", sharedMiss.length === 0,
+    sharedMiss.slice(0, 3).map((a) => `${a.accountNo} → ${top(a.accountNo)?.label}`).join("; "));
+  const acctMiss = BOOK_ACCOUNTS.filter((a) => !sharedNo(a)).filter((a) => {
     const want = isMandateHeld(a.engagement) ? `mandate:${a.accountId}` : `account:${a.accountId}`;
     return top(a.accountNo)?.id !== want;
   });
-  ok(`every one of the ${BOOK_ACCOUNTS.length} account numbers finds its own account first`, acctMiss.length === 0,
+  ok(`every one of the ${BOOK_ACCOUNTS.filter((a) => !sharedNo(a)).length} unique account numbers finds its own account first`, acctMiss.length === 0,
     acctMiss.slice(0, 3).map((a) => `${a.accountNo} → ${top(a.accountNo)?.label}`).join("; "));
 }
 
