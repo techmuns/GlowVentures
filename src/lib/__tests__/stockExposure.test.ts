@@ -154,7 +154,20 @@ const cash = sum(ded.filter((p) => p.assetClass === "Cash" || isArbitrageFund(p)
  */
 const floorOut = droppedHoldings(ded.filter(isFundVehicle));
 const floored = sum([...floorOut.closed, ...floorOut.negligible].map((p) => p.marketValue));
-const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ex.fencedValue + cash + floored;
+/**
+ * THE SIXTH BUCKET: WHAT IS NEITHER A COMPANY SHARE, A FUND NOR CASH (Stage
+ * 10dh). The family's consolidated review is the source for private-market
+ * lines now, and it carries unlisted companies' stakes (`Unlisted`) and one
+ * private-credit line (`Bond`). This axis draws neither — its rows are the
+ * company shares the statements report and the companies the funds' filings
+ * disclose — and neither is a vehicle to look through, so a five-bucket
+ * partition left ₹194 Cr of the book in no bucket at all. It is the rule
+ * Sector Composition's "not on this page" card already names, so the two pages
+ * describe one set.
+ */
+const otherRows = ded.filter((p) => !isCompanyShare(p) && !isFundVehicle(p) && p.assetClass !== "Cash");
+const other = sum(otherRows.map((p) => p.marketValue));
+const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ex.fencedValue + cash + other + floored;
 /**
  * THE STRONGEST ASSERTION HERE. The stock axis draws a table covering less than
  * half the book, so a reader is owed a statement of where the rest is — and that
@@ -164,9 +177,21 @@ const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ex
  * separate path from `dedupedPositions`, so the two agreeing is a real
  * cross-check rather than a figure compared with its own copy.
  */
-near("the five buckets rebuild the live book's own NAV, to the rupee", buckets, BOOK_NAV, 1);
+near("the six buckets rebuild the live book's own NAV, to the rupee", buckets, BOOK_NAV, 1);
 console.log(`     measured ${CR(measured)} + derived ${CR(ex.total)} + opaque ${CR(ex.skippedValue)}`
-  + ` + unaccounted ${CR(ex.unaccountedValue)} + fenced ₹${ex.fencedValue.toFixed(2)} + cash ${CR(cash)} + under the floor ₹${floored.toFixed(2)} = ${CR(buckets)}`);
+  + ` + unaccounted ${CR(ex.unaccountedValue)} + fenced ₹${ex.fencedValue.toFixed(2)} + cash ${CR(cash)}`
+  + ` + not a share, a fund or cash ${CR(other)} + under the floor ₹${floored.toFixed(2)} = ${CR(buckets)}`);
+/**
+ * THE SIXTH BUCKET IS LOAD-BEARING ON THIS BOOK, AND IT IS THE REVIEW'S. Taken
+ * out, the partition must break — or the term is a zero added for show — and
+ * every row in it must be a line the review carries, so a statement row that
+ * lands here (a class nobody filed) is a finding rather than a quiet addition.
+ */
+ok("the sixth bucket has a subject: taken out, the partition breaks",
+  other > 1e7 && Math.abs(buckets - other - BOOK_NAV) > 1, CR(other));
+ok("...and every row in it is a line the family's review carries",
+  otherRows.every((p) => p.review === true),
+  otherRows.filter((p) => p.review !== true).map((p) => p.security).join(", "));
 ok("...where the floor's term is specks and redeemed nils, never money",
   floorOut.closed.every((p) => p.marketValue === 0)
     && floored < NEGLIGIBLE_VALUE_FLOOR * new Set(floorOut.negligible.map((p) => p.securityKey)).size,
@@ -175,7 +200,7 @@ ok("...and the table covers less than the book, which is why the statement is ow
   measured + ex.total < BOOK_NAV * 0.75,
   `${CR(measured + ex.total)} of ${CR(BOOK_NAV)}`);
 ok("every bucket is non-negative — a partition, not a subtraction that overshot",
-  [measured, ex.total, ex.skippedValue, ex.unaccountedValue, ex.fencedValue, cash].every((v) => v >= 0));
+  [measured, ex.total, ex.skippedValue, ex.unaccountedValue, ex.fencedValue, cash, other].every((v) => v >= 0));
 eq("the vehicles split into covered and skipped with none lost",
   ex.covered + ex.skipped.length, vehicles.length);
 near("...and their values do too", ex.disclosedValue + ex.skippedValue,

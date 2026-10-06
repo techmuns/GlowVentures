@@ -23,7 +23,7 @@ import {
   type ReturnMeasure, type ReturnInput, type RowCapital,
   costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
   AT_COST_MARK, REVIEW_NO_MARK,
-  currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
+  currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent, assetClassLabel,
 } from "@/lib/analytics";
 import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
@@ -2279,6 +2279,17 @@ export function PortfolioMonitor() {
     const mandateCash = sum(held.filter((p) => p.assetClass === "Cash" && heldUnderMandate(accIdx, p)).map((p) => p.marketValue));
     const categoryCash = sum(held.filter((p) => groupKeyFor("category", accIdx, p) === "Cash").map((p) => p.marketValue));
     const nav = sum(held.map((p) => p.marketValue));
+    /**
+     * THE SIXTH BUCKET (Stage 10dh): what is neither a company share, a fund
+     * nor cash. Since the family's review became the source for private-market
+     * lines the book carries unlisted companies' stakes and a private-credit
+     * line, and this table draws neither — so without a bucket of their own the
+     * parts below stopped adding to the book by ₹194 Cr. Sector Composition's
+     * "not on this page" card names the same set by the same rule.
+     */
+    const otherRows = held.filter((p) => !isCompanyShare(p) && !isFundVehicle(p) && p.assetClass !== "Cash");
+    const other = sum(otherRows.map((p) => p.marketValue));
+    const otherLabels = [...new Set(otherRows.map((p) => assetClassLabel(p.assetClass)))].join(" and ");
     const ex = exposure.status === "ok" ? exposure : null;
     const derived = ex?.total ?? 0;
     const opaque = ex?.skippedValue ?? 0;
@@ -2296,6 +2307,7 @@ export function PortfolioMonitor() {
     const notInStore = (ex?.skipped ?? []).filter((sk) => !/^an AIF files/.test(sk.reason));
     return {
       nav, measured, derived, opaque, unaccounted, cash, cashRule, liquidThrough, mandateCash, categoryCash,
+      other, otherLabels,
       fundsRead, zeroLine: Math.max(0, (ex?.covered ?? 0) - fundsRead),
       notInStore: { names: notInStore.map((sk) => sk.fundName), value: sum(notInStore.map((sk) => sk.marketValue)) },
       total: measured + derived,
@@ -4645,7 +4657,9 @@ export function PortfolioMonitor() {
                                     stockCoverage.notInStore.names.length > 0 ? `${stockCoverage.notInStore.names.join(", ")}, ${money(stockCoverage.notInStore.value)} — a fund whose filing the store does not carry` : "",
                                   ].filter(Boolean).join("; ")})`
                                 : "")
-                            + `, ${money(stockCoverage.unaccounted)} is the part of a disclosed fund no line in the filing accounted for — its cash sleeve, a gold or silver ETF's metal, and the disclosure's own rounding — and ${money(stockCoverage.cash)} is cash: the book's own cash rows and the arbitrage funds the family counts as cash, which are not looked through because their long shares are hedged.`
+                            + `, ${money(stockCoverage.unaccounted)} is the part of a disclosed fund no line in the filing accounted for — its cash sleeve, a gold or silver ETF's metal, and the disclosure's own rounding`
+                            + (stockCoverage.other > 0 ? `, ${money(stockCoverage.other)} is ${stockCoverage.otherLabels} holdings, which this table does not draw` : "")
+                            + ` — and ${money(stockCoverage.cash)} is cash: the book's own cash rows and the arbitrage funds the family counts as cash, which are not looked through because their long shares are hedged.`
                             + ` That is the family's cash rule (${money(stockCoverage.cashRule)}: every Cash row, liquid fund and arbitrage fund) less the ${money(stockCoverage.liquidThrough)} of liquid funds, which this view reads through instead because their paper is real credit; the Category view's Cash section reads ${money(stockCoverage.categoryCash)} because it counts those liquid funds and files the ${money(stockCoverage.mandateCash)} of cash inside PMS mandates with each mandate.`
                             + (stockCoverage.splitNames.count > 0
                                 ? ` ${stockCoverage.splitNames.count === 1 ? "One company stands here as two rows" : `${stockCoverage.splitNames.count} companies stand here as more than one row each`} (${money(stockCoverage.splitNames.value)}): one issuer clips its name where another spells it out, their ISINs say they are one security, and the fix belongs in the extractor — docs/BOOK-REPORT.md names them.`
