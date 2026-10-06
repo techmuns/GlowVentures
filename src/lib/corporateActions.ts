@@ -1,6 +1,7 @@
 import type { Account, Position } from "./types";
 import { applyQuotes, symbolFor, type QuoteFeed } from "./quotes";
 import { requestDeadline } from "./requestDeadline";
+import { isCounted } from "./analytics";
 import { validActionFeed, type ActionFeed, type ResearchAction } from "../../shared/corporateActions.mjs";
 export type { ActionFeed, ResearchAction } from "../../shared/corporateActions.mjs";
 
@@ -81,7 +82,7 @@ function captureLagDays(feed: ActionFeed, through: string): number {
  * Only events AFTER that account's dated closing are applied, exactly once.
  * Cash here is a gross entitlement, never a claimed bank receipt or book asset.
  */
-export function projectActions(p: Position, statementDate: string, through: string, feed: ActionFeed | null): ActionReturn {
+export function projectActions(p: Position & { quantity: number }, statementDate: string, through: string, feed: ActionFeed | null): ActionReturn {
   const result: ActionReturn = {
     accountId: p.accountId, securityKey: p.securityKey, statementDate, through,
     statementQuantity: p.quantity, adjustedQuantity: p.quantity, factor: 1,
@@ -174,7 +175,10 @@ export function applyCorporateActionQuotes(
   const dates = new Map(accounts.map((a) => [a.accountId, a.asOf]));
   const returns = new Map<string, ActionReturn>();
   const output = positions.map((p) => {
-    if (p.assetClass !== "Equity") return applyQuotes([p], quotes)[0];
+    // A share event multiplies a unit count; a line recorded with none (the
+    // review's private investments, Stage 10dh) has nothing to adjust and is
+    // never priced live, so it takes the plain overlay, which leaves it alone.
+    if (p.assetClass !== "Equity" || !isCounted(p)) return applyQuotes([p], quotes)[0];
     const sym = symbolFor(p);
     const q = quotes?.quotes[sym || ""];
     const start = dates.get(p.accountId) || "";

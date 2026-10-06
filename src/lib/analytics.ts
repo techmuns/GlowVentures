@@ -38,6 +38,14 @@ export const totalQuantity = (rows: readonly { quantity: number | null }[]): num
   rows.length && rows.every((r) => r.quantity != null) ? rows.reduce((a, r) => a + (r.quantity as number), 0) : null;
 
 /**
+ * A row that carries a unit count — what a price, a split or a NAV can be
+ * applied to (Stage 10dh). A type guard, so a caller that has checked it may
+ * multiply by the count; the review's lines recorded with no count fail it.
+ */
+export const isCounted = <T extends { quantity: number | null }>(p: T): p is T & { quantity: number } =>
+  typeof p.quantity === "number" && Number.isFinite(p.quantity);
+
+/**
  * DUPLICATE POLICY — carry both, count once.
  *
  * PENDING CONFIRMATION FROM THE PROVIDER. Reversible policy, not a fact, and it

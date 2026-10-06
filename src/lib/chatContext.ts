@@ -38,6 +38,7 @@
 import { BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import {
   byEntity, currentHoldings, doubleCountedValue, droppedHoldings, isCashEquivalent, NEGLIGIBLE_VALUE_FLOOR, sum, sumOrNull,
+  totalQuantity,
 } from "@/lib/analytics";
 import { accountIndex, type AccountIndex } from "@/lib/accounts";
 import { groupKeyFor, groupLabelFor } from "@/lib/groupAxis";
@@ -95,7 +96,13 @@ export type ChatBook = {
 function priceBasisOf(rows: readonly Position[], accts: AccountIndex, quotesAsOf: string | null) {
   const nav = rows.filter((p) => p.navPriced && !p.live);
   const live = rows.filter((p) => p.live);
-  const marks = rows.filter((p) => !p.live && !p.navPriced);
+  // THE REVIEW IS NOT A STATEMENT (Stage 10dh). A private-market line the
+  // family's consolidated review supplies is valued at the review's own figure
+  // — or held at cost where it records only what was paid — and calling that
+  // "the statement's own mark" would send a reader to a statement that prints
+  // no such figure.
+  const review = rows.filter((p) => p.review && !p.live && !p.navPriced);
+  const marks = rows.filter((p) => !p.live && !p.navPriced && !p.review);
   const navDates = [...new Set(nav.map((p) => p.navDate).filter((d): d is string => !!d))].sort();
   const markDates = [...new Set(marks.map((p) => accts.get(p.accountId)?.asOf).filter((d): d is string => !!d))].sort();
   const parts: string[] = [];
@@ -108,8 +115,16 @@ function priceBasisOf(rows: readonly Position[], accts: AccountIndex, quotesAsOf
       : `dated ${navDates[0]} to ${navDates[navDates.length - 1]}`})`);
   }
   if (live.length) parts.push(`${live.length} at a live intraday quote${quotesAsOf ? ` (pulled ${quotesAsOf})` : ""}`);
+  if (review.length) {
+    const atCost = review.filter((p) => p.valuedAtCost).length;
+    const dates = [...new Set(review.map((p) => p.priceAsOf).filter((d): d is string => !!d))].sort();
+    parts.push(`${review.length} from the family's consolidated review (MOPWM) rather than a statement`
+      + ` (${dates.length === 1 ? `dated ${dates[0]}` : dates.length ? `dated ${dates[0]} to ${dates[dates.length - 1]}` : "undated"})`
+      + (atCost ? `, ${atCost} of them held at cost — the review records what was paid and no valuation, so they carry no gain` : ""));
+  }
   return {
     statementMarks: marks.length,
+    review: review.length ? { holdings: review.length, heldAtCost: review.filter((p) => p.valuedAtCost).length } : null,
     publishedNav: nav.length ? { holdings: nav.length, dated: navDates } : null,
     liveQuote: live.length ? { holdings: live.length, pulledAt: quotesAsOf ?? null } : null,
     summary: parts.join("; "),
@@ -357,8 +372,11 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
           // Every category the rows span, largest first — the search reads the same (SC-C4).
           category: categoryWordsOf(rows, accts).join(" + "),
           sector: head.sector ?? null,
-          quantity: sum(rows.map((p) => p.quantity)),
+          // Null where a line carries no unit count — the review records many
+          // private investments as an amount paid and no count (Stage 10dh).
+          quantity: totalQuantity(rows),
           valueCr: cr(value),
+          heldAtCost: rows.every((p) => p.valuedAtCost === true) || undefined,
           pctOfBook: pct(value, bookMV),
           costBasisCr: allCosted ? cr(sum(costs as number[])) : null,
           costNote: allCosted ? null
@@ -608,7 +626,7 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
       ringFenced: {
         security: BOOK_POLYCAB[0]?.security ?? null,
         isin: BOOK_POLYCAB[0]?.isin ?? null,
-        shares: BOOK_POLYCAB.length ? sum(BOOK_POLYCAB.map((p) => p.quantity)) : null,
+        shares: BOOK_POLYCAB.length ? totalQuantity(BOOK_POLYCAB) : null,
         valueCr: BOOK_POLYCAB.length ? cr(sum(BOOK_POLYCAB.map((p) => p.marketValue))) : null,
         valueBasis: "the depository statement's own value column (an NSDL statement prints no rate, so its mark is value ÷"
           + ` units) — the statement's mark${fencedAsOf.length === 1 ? ` as of ${fencedAsOf[0]}` : ""}, not today's price`,
