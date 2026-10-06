@@ -1,5 +1,5 @@
 // THE PRIVATE MARKET BOOK AS ONE TABLE — every fund, every folio behind it,
-// and the capital account each folio sends, in two sections.
+// and the capital account each folio sends, in three sections.
 //
 //   *"Why are these two tables separate they need to be in one master table
 //    itself … make one consolidated structured table instead of breaking it
@@ -26,9 +26,17 @@
 // The two groupings share every column, so switching between them changes which
 // rows are drawn and never what a column means.
 //
-// ── THE TWO SECTIONS, AND WHY THE SECOND STARTS CLOSED ─────────────────────
+// ── THE THREE SECTIONS, AND WHY THE LAST STARTS CLOSED ─────────────────────
 //
-//   private    the private side of the book with a value — open.
+//   private    the private side of the book with a measured value — open.
+//   atCost     private investments the family's consolidated review records at
+//              what was paid and no valuation (Stage 10dh) — open. Their value is
+//              their cost, so they carry no gain and no return, and a section of
+//              their own keeps them out of the valued funds' FIFO: counted there
+//              they are 60% of the private value, and the band's return would
+//              either be refused for the wrong reason or blend a 0% gain nobody
+//              measured into the funds that were valued. The Monitor's footer
+//              makes the same split (`strikesGain`, `atCostNote`).
 //   unvalued   private accounts whose statement carries NO value: a fund that
 //              publishes no NAV, an income-only folio no valued holding can be
 //              shown to be a view of, an account redeemed to nil. On this book
@@ -39,9 +47,9 @@
 //              drop down clearly marked."* Their capital figures are real and
 //              are in the capital totals; their value is absent, never ₹0.
 //
-// ── AND THERE IS NO THIRD, BECAUSE THE FAMILY PLACED THEIR FUNDS ───────────
+// ── AND NO SECTION OF PUBLIC-MARKET FUNDS, BECAUSE THE FAMILY PLACED THEIRS ──
 //
-// This table carried a third section — the capital accounts of AIFs that are
+// This table once carried another section — the capital accounts of AIFs that are
 // NOT private market, closed and marked, so the capital columns would add to
 // every capital account in the book. The family then classified all fifteen
 // capital accounts themselves (Stage 10bw): *"Your dashboard should NOT
@@ -91,7 +99,7 @@
 // the book's own unit count), carrying no holding figure of their own: their
 // units are already counted on the line above.
 import type { Account, Commitment, Position } from "./types";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings } from "./analytics";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings, isValuedAtCost } from "./analytics";
 import { type AccountIndex, accountIndex, ownerOf, providerOf } from "./accounts";
 import { aifSectionOf, categoriesNamedIn, readsAsPrivateEquity, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION } from "./aifCategory";
 import {
@@ -100,12 +108,12 @@ import {
 import { schemeCalls, type SchemeCall } from "./capitalCalls";
 import { fifoTotals } from "./fifo";
 
-export type BookSectionId = "private" | "unvalued";
+export type BookSectionId = "private" | "atCost" | "unvalued";
 export type BookGrouping = "fund" | "owner";
 /** Why a folio carries (or does not carry) a value. */
 export type FolioStatus = "valued" | UnvaluedKind;
 
-export const BOOK_SECTIONS: readonly BookSectionId[] = ["private", "unvalued"];
+export const BOOK_SECTIONS: readonly BookSectionId[] = ["private", "atCost", "unvalued"];
 
 /** One account's view of one fund — the atom every row of the table is built from. */
 export type BookFolio = {
@@ -239,8 +247,17 @@ export type BookFigures = {
   /** How many holdings are summed into cost/value, and how many report a cost. */
   holdings: number;
   costed: number;
-  /** Struck only where the cost side covers essentially the whole value. */
+  /**
+   * FIFO over the holdings that carry a measured value — never over a line held
+   * at cost, whose value is its cost (Stage 10dh) — and only where their cost
+   * covers essentially their value. Where some holdings are held at cost the
+   * figure is over the rest, and `atCostHoldings` / `atCostValue` say how much
+   * of the row it leaves out, so a caption can name it (`atCostNote`).
+   */
   returnPct: number | null;
+  /** Holdings under this row held at cost, and their value (= what was paid). */
+  atCostHoldings: number;
+  atCostValue: number;
   /**
    * WHAT THAT RETURN DIVIDES BY (DL-16) — FIFO's capital deployed: the cost of
    * the units held (the Cost column) plus what the units already redeemed cost.
@@ -325,10 +342,10 @@ export type PrivateBook = {
   grouping: BookGrouping;
   sections: Record<BookSectionId, BookSection>;
   /**
-   * The whole table — both sections — on the consolidated basis. Its capital
+   * The whole table — every section — on the consolidated basis. Its capital
    * columns are every capital account on the page, which is what the capital
-   * tiles add to: there is no capital account on this page outside the two
-   * sections, so one total carries both.
+   * tiles add to: there is no capital account on this page outside the
+   * sections, so one total carries them all.
    */
   privateTotal: BookFigures;
   /** The consolidated private value — the denominator of every Weight cell. */
@@ -355,7 +372,8 @@ function accountCategory(a: Account | undefined): string | null {
  * sides line under this table says what the rest of the book is worth.
  */
 function sectionOf(p: Position): BookSectionId | null {
-  return isPrivateClass(p) ? "private" : null;
+  if (!isPrivateClass(p)) return null;
+  return isValuedAtCost(p) ? "atCost" : "private";
 }
 
 /**
@@ -432,7 +450,11 @@ export function bookFolios(args: {
       owner: ownerOf(accIdx, p),
       provider: providerOf(accIdx, p),
       accountNo: a?.accountNo ?? "",
-      asOf: a?.asOf ?? null,
+      // THE DATE THE VALUE IS STRUCK ON (C-01), never the account's newest
+      // statement: a line the family's consolidated review values carries the
+      // review's own date for it (TVC at 28 Feb under trusts whose statement is
+      // 31 Mar; 360 ONE at 30 Jun under a CRN whose own statement runs to 31 Jul).
+      asOf: p.priceAsOf ?? a?.asOf ?? null,
       fundKey: p.securityKey,
       fundName: p.security,
       securityKey: p.securityKey,
@@ -712,13 +734,26 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     // stays in the return and what those units cost stays in its denominator —
     // Neo Infra's capital redemption above all. Over the same held set, behind
     // the same coverage gate.
+    //
+    // A LINE HELD AT COST IS IN THE COST AND THE VALUE, AND IN NO GAIN (Stage
+    // 10dh): its value is what was paid. So the return is struck over the
+    // holdings that carry a measured value, behind the same gate, and the
+    // at-cost part is counted apart for the caption to name — the Monitor
+    // footer's rule (`strikesGain`).
     ...(() => {
-      const fifo = cost != null && cost > 0 && pnl != null && value != null && value > 0
-        && costedValue >= value * COST_COVERAGE_MIN
-        ? fifoTotals(held.map((f) => f.position!)) : null;
+      const atCost = held.filter((f) => f.position != null && isValuedAtCost(f.position));
+      const struck = held.filter((f) => !atCost.includes(f));
+      const sCost = sumOrNull(struck.map((f) => f.cost));
+      const sValue = struck.length ? sum(struck.map((f) => f.value ?? 0)) : null;
+      const sPnl = sumOrNull(struck.map((f) => f.pnl));
+      const sCosted = sum(struck.filter((f) => f.cost != null).map((f) => f.value ?? 0));
+      const fifo = sCost != null && sCost > 0 && sPnl != null && sValue != null && sValue > 0
+        && sCosted >= sValue * COST_COVERAGE_MIN
+        ? fifoTotals(struck.map((f) => f.position!)) : null;
+      const counts = { atCostHoldings: atCost.length, atCostValue: sum(atCost.map((f) => f.value ?? 0)) };
       return fifo?.returnPct != null
-        ? { returnPct: fifo.returnPct, deployed: fifo.deployed }
-        : { returnPct: null, deployed: null };
+        ? { returnPct: fifo.returnPct, deployed: fifo.deployed, ...counts }
+        : { returnPct: null, deployed: null, ...counts };
     })(),
     // Only the folios that carry a figure here — never an income-only VIEW,
     // and on a consolidated row never the second statement of a holding
@@ -764,11 +799,13 @@ const byValueThenPaid = (a: { value: number | null; paid: number | null; committ
   (b.value ?? -1) - (a.value ?? -1) || (b.paid ?? -1) - (a.paid ?? -1) || (b.committed ?? -1) - (a.committed ?? -1);
 
 /**
- * THE TABLE: two sections of rows, grouped by fund or by family member, and the
+ * THE TABLE: three sections of rows, grouped by fund or by family member, and the
  * one total every figure on the page ties to.
  */
 export function privateBook(folios: BookFolio[], grouping: BookGrouping): PrivateBook {
-  const privateValue = figuresOf(folios.filter((f) => f.section === "private"), true).value ?? 0;
+  // Every private holding with a value — the measured ones AND the ones held at
+  // cost — which is BOOK_SUMMARY.privateValue on the statement basis.
+  const privateValue = figuresOf(folios.filter((f) => f.section !== "unvalued"), true).value ?? 0;
   const sections = {} as Record<BookSectionId, BookSection>;
   for (const id of BOOK_SECTIONS) {
     const mine = folios.filter((f) => f.section === id);

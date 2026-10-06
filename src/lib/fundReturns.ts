@@ -49,7 +49,7 @@
 import type { Commitment, FundPayout, Position } from "./types";
 import type { AccountIndex } from "./accounts";
 import {
-  daysBetween, YEAR_DAYS, returnMeasureDef,
+  daysBetween, YEAR_DAYS, returnMeasureDef, isValuedAtCost, AT_COST_RETURN,
   type MeasuredReturn, type ReturnMeasure,
 } from "./analytics";
 import { pooledXirr, moneyWeightedReturn } from "./bucketXirr";
@@ -167,8 +167,20 @@ export function fundDatedRecords(
     let withoutAccount = 0;
     let redeemedAtCost = 0;
     for (const p of g) {
-      const valuedAt = accIdx.get(p.accountId)?.asOf ?? null;
+      /**
+       * THE DATE THE VALUE IS STRUCK ON, which is where the dated record must
+       * close — the line's own `priceAsOf` before its account's as-of
+       * (`valueDateOf`'s statement rule). A line the family's consolidated
+       * review values (Stage 10dh) is valued on the review's closing date for
+       * that line — Transition Venture at its fund's 28 Feb valuation, under an
+       * account whose statement is dated 31 Mar — and closing the XIRR on the
+       * account's date would credit the money with a month nobody measured.
+       */
+      const valuedAt = p.priceAsOf ?? accIdx.get(p.accountId)?.asOf ?? null;
       if (!valuedAt) { gaps.push("a folio behind this fund states no valuation date"); continue; }
+      // HELD AT COST: a value that is its cost is no measurement to close a
+      // money-weighted return on, so the record is a gap — never pooled.
+      if (isValuedAtCost(p)) { gaps.push(AT_COST_RETURN); continue; }
       parts.push({ accountId: p.accountId, valuedAt, value: p.marketValue, cost: p.costBasis });
       const c = byAccount.get(p.accountId);
       // A folio whose record stops short is UNKNOWN on the payout side too —
@@ -314,7 +326,14 @@ const oneEntry = (d: FundDated) => d.tranches === 1 && valuationDates(d).length 
  * folio is one statement's holding rather than a `FundRow` — its own value
  * against its own cost, with its own account's dated record.
  */
-export type FundReturnInput = Pick<FundRow, "returnPct" | "cost">;
+export type FundReturnInput = Pick<FundRow, "returnPct" | "cost"> & {
+  /**
+   * Held at cost (Stage 10dh): the review records what was paid and no
+   * valuation, so no measure has a gain to strike — every one is refused with
+   * `AT_COST_RETURN`, ahead of any reason that names a different cause.
+   */
+  atCost?: boolean;
+};
 
 /**
  * WHAT A FALLBACK TO THE HOLDING-PERIOD RETURN IS STRUCK ON, said once (PM-C1).
@@ -333,6 +352,10 @@ export function fundMeasuredReturn(
   date: DateFmt,
 ): MeasuredReturn {
   const tag = returnMeasureDef(measure).tag;
+  // A FUND HELD AT COST HAS NO GAIN ON ANY MEASURE. Its value is what was paid,
+  // so an XIRR over its calls would read ~0% — a rate nobody measured — and the
+  // "covers only part" reason below names a cause it does not have.
+  if (f.atCost) return { shown: false, tag: measure === "auto" ? "AUTO" : tag, reason: AT_COST_RETURN };
   const hpr = f.returnPct;
   const noHpr = f.cost == null
     ? "no cost is reported for this fund, so there is no capital to strike a return against"

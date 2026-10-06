@@ -54,7 +54,7 @@
 // the same rule that places its holding (`fundMarketSideOf`), and the page
 // NAMES the ones it leaves out rather than dropping them.
 import type { Account, Commitment, Position } from "./types";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings, totalQuantity } from "./analytics";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings, totalQuantity, isValuedAtCost } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 import { fifoTotals } from "./fifo";
 import {
@@ -220,6 +220,16 @@ export type FundRow = {
   costedMV: number;
   /** Non-null only where the cost side covers essentially the whole row. */
   returnPct: number | null;
+  /**
+   * HELD AT COST (Stage 10dh): every line of the fund is a private investment
+   * the family's consolidated review records at what was paid and no
+   * valuation. Its value is its cost and there is no gain, so every return is
+   * refused with `AT_COST_RETURN` — never "covers only part", which names a
+   * different cause, and never a 0% struck on a value nobody measured. Measured
+   * on this book, no fund mixes lines held at cost with valued ones, so the flag
+   * is the whole row's.
+   */
+  atCost: boolean;
 };
 
 /**
@@ -250,7 +260,9 @@ export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex, rawRow
         security: g[0].security,
         providers: [...new Set(g.map((p) => providerOf(accIdx, p)))],
         folios: statements.get(g[0].securityKey) ?? g.length,
-        asOf: [...new Set(g.map((p) => accIdx.get(p.accountId)?.asOf).filter(Boolean) as string[])].sort(),
+        // The date each value is struck on (C-01) — a review line's own date
+        // rather than its account's newest statement.
+        asOf: [...new Set(g.map((p) => p.priceAsOf ?? accIdx.get(p.accountId)?.asOf).filter(Boolean) as string[])].sort(),
         // Null where a line carries no unit count (Stage 10dh) — never a partial sum.
         units: totalQuantity(g),
         cost,
@@ -263,6 +275,7 @@ export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex, rawRow
           cost != null && cost > 0 && pnl != null && mv > 0 && costedMV >= mv * COST_COVERAGE_MIN
             ? fifoTotals(g).returnPct
             : null,
+        atCost: g.every(isValuedAtCost),
       };
     })
     .sort((a, b) => b.mv - a.mv);
