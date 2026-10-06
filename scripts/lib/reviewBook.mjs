@@ -14,7 +14,7 @@
 // `build-book` splices the result in after the ring-fence and nowhere else.
 
 import { loadReviewPrivate, REVIEW_AS_OF } from "./reviewPrivateRead.mjs";
-import { REVIEW_PRIVATE_JOIN, DISPLAY_NAME } from "../../shared/reviewPrivateJoin.mjs";
+import { REVIEW_PRIVATE_JOIN, REFUSED, DISPLAY_NAME } from "../../shared/reviewPrivateJoin.mjs";
 import {
   PRIVATE_INVESTMENT_HOLDERS, PRIVATE_INVESTMENT_ELSEWHERE, VALUED_HOLDERS, SUPERSEDED,
   FRESHER_STATEMENT, REVIEW_ACCOUNT_PREFIX, NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME,
@@ -77,11 +77,19 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     const pattern = j?.line ?? holder?.line;
     if (!pattern) fail(`superseded key ${key} names no review line`);
     const line = [...r.privateInvestments.lines, ...r.peFunds.lines, ...r.unlisted.lines].find((l) => pattern.test(l.product));
-    return displayName(line?.product ?? fail(`superseded key ${key}: its pattern ${pattern} matches no review line`));
+    return line?.product ?? fail(`superseded key ${key}: its pattern ${pattern} matches no review line`);
   };
+  // A NEAR MISS STAYS REFUSED (`REFUSED`, shared/reviewPrivateJoin.mjs): a
+  // statement row and a review line the evidence says are two instruments — or
+  // two companies — are never joined, whichever table a future edit reaches them
+  // through. Bharat's own Swapeco equity against the trusts' CCPS is the live case.
+  const refusedJoin = (key, product) => REFUSED.find((rf) => rf.key === key && rf.line.test(product)) ?? null;
   for (const s of SUPERSEDED) {
     const id = `${s.accountId}|${s.securityKey}`;
-    const reviewLine = reviewLineFor(s.line ?? s.securityKey);
+    const product = reviewLineFor(s.line ?? s.securityKey);
+    const refused = refusedJoin(s.securityKey, product);
+    if (refused) fail(`superseded ${s.kind} ${id} joins "${product}", a near miss refused on the evidence: ${refused.why}`);
+    const reviewLine = displayName(product);
     const base = { accountId: s.accountId, securityKey: s.securityKey ?? null, kind: s.kind, reviewLine };
     if (s.kind === "window") {
       const entry = { ...base, security: null, quantity: null, marketValue: null };
@@ -222,6 +230,8 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     const l = claim(e, "held");
     const name = displayName(l.product);
     const key = e.key ?? securityKeyOf(name);
+    const refused = refusedJoin(key, l.product);
+    if (refused) fail(`${name}: keyed ${key}, a near miss refused on the evidence: ${refused.why}`);
     const bare = e.split.filter((s) => s.cost === undefined);
     if (bare.length > 1) fail(`${name}: more than one part takes the remainder`);
     const fixed = sum(e.split.map((s) => s.cost));
