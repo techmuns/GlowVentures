@@ -604,6 +604,15 @@ export const AT_COST_PNL =
 /** Why a review line, or a row holding one, has no unit count. */
 export const NO_UNIT_COUNT =
   "the family's consolidated review records what was paid for this private investment and no unit count — a count here would be a figure no document states";
+/** Why a line held at cost has no per-unit mark. */
+export const AT_COST_MARK =
+  "held at cost: the family's consolidated review records what was paid and no valuation, so there is no price per unit to show";
+/** Why a review line it DOES value has no per-unit mark: the review values it as a total. */
+export const REVIEW_NO_MARK =
+  "the family's consolidated review values this holding as a total and prints no price per unit, so there is no price to show";
+/** Why a review line carries no realised gain. */
+export const REVIEW_NO_REALISED =
+  "the family's consolidated review records what this holding cost and what it is worth, not what any sale or payout realised, so no realised gain is reported";
 
 /**
  * ── CASH IS CASH, WHATEVER WRAPPER IT ARRIVED IN ────────────────────────────

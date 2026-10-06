@@ -55,7 +55,7 @@
  * contributes a realised of nothing measured, and is counted too.
  */
 import type { Account, Position } from "./types";
-import { costCoversSet, currentHoldings } from "./analytics";
+import { costCoversSet, currentHoldings, REVIEW_NO_REALISED } from "./analytics";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 export { fifoReturnPct };
@@ -426,10 +426,14 @@ export function realisedBasisNote(
 }
 
 /** Why a holding's realised cell is empty, in the book's own terms. */
-export function realisedReason(p: Pick<Position, "realizedPnL" | "realizedLotsAfter">): string {
+export function realisedReason(p: Pick<Position, "realizedPnL" | "realizedLotsAfter"> & { review?: boolean }): string {
   if (p.realizedLotsAfter) {
     return `${p.realizedLotsAfter} sale(s) of this holding came after its statement's date, so those units are still in it at that statement's mark — the gain is on the capital gain statement and is not added here`;
   }
+  // A line the consolidated review supplies (Stage 10dh) is on no statement at
+  // all, so "no capital gain statement covers this account" would send a reader
+  // looking for one; the review is what carries it, and it records no sale.
+  if (p.review) return REVIEW_NO_REALISED;
   return "no capital gain statement or dated unit record covers this account, so what its sales realised is not reported";
 }
 

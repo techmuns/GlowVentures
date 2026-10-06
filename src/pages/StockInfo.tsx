@@ -12,6 +12,7 @@ import {
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, isCashEquivalent,
+  totalQuantity, isValuedAtCost, AT_COST_PNL, AT_COST_MARK, REVIEW_NO_MARK, NO_UNIT_COUNT,
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { fifoBasisNote, realisedReason } from "@/lib/fifo";
@@ -587,7 +588,18 @@ export function StockInfo() {
   /* The holding-level mark is resolved below, once `price` exists — whether
      one can be shown at all is a question about what the RENDERER can
      distinguish, so it cannot be answered before the renderer is defined. */
-  const qty = sum(drows.map((r) => r.quantity));
+  /* NULL WHERE ANY ROW HAS NO UNIT COUNT (Stage 10dh). The family's
+     consolidated review records most private investments as an amount paid and
+     no count, and a total over the rows that print one would state a smaller
+     holding than the family has — `totalQuantity` is all or nothing. */
+  const qty = totalQuantity(drows);
+  /** Every row is the family's consolidated review's, not a statement's (Stage 10dh). */
+  const reviewAll = drows.length > 0 && drows.every((r) => r.review === true);
+  /** …and the review records what was paid and no valuation, so value is cost. */
+  const atCostAll = drows.length > 0 && drows.every(isValuedAtCost);
+  /** The newest closing date the review gives these rows — the date their value is of. */
+  const reviewAsOf = reviewAll
+    ? drows.map((r) => r.priceAsOf).filter((d): d is string => !!d).sort().pop() ?? null : null;
   const cost = sumOrNull(drows.map((r) => r.costBasis));
   const mv = sum(drows.map((r) => r.marketValue));
   const pnl = sumOrNull(drows.map((r) => r.unrealizedPnL));
@@ -615,7 +627,8 @@ export function StockInfo() {
   const fifo = whole.fifo;
   const ret = whole.costedReturn;
   /** "7,000 of 21,500 shares" — only where a cost covers some units and not all. */
-  const costedShare = cost !== null && whole.costedQty > 0 && whole.costedQty < qty - 1e-6
+  const costedShare = cost !== null && qty !== null && whole.costedQty !== null
+    && whole.costedQty > 0 && whole.costedQty < qty - 1e-6
     ? `${fmtNum(whole.costedQty)} of ${fmtNum(qty)} ${assetClass === "Equity" ? "shares" : "units"}`
     : null;
   /**
@@ -774,6 +787,9 @@ export function StockInfo() {
     : rt.lotsAfter > 0
       ? `${rt.lotsAfter} sale${rt.lotsAfter === 1 ? "" : "s"} after ${fmtDate(lotsAfterDate ?? "")} not counted`
     : rt.unreconciled != null ? `the capital gain statements record ${money(rt.unreconciled, true)} on this name — not in this figure`
+    // A review line is on no statement at all (Stage 10dh): "no capital gain
+    // statement covers the accounts" would send a reader looking for one.
+    : realised == null && reviewAll ? "not reported by the consolidated review"
     : realised == null ? "no capital gain statement covers the accounts that hold it"
     : rt.source === "unit-record" ? `from the fund's dated redemption record · FIFO${realisedCover}`
     // Kept under ten small words so the line stays a figure's note (#95).
@@ -892,6 +908,21 @@ export function StockInfo() {
           cmpDates.length > 1 ? `drawn ${cmpDates[0]} to ${cmpDates[cmpDates.length - 1]}` : `all drawn ${cmpDates[0] ?? portfolio.asOf}`
         }. No one price covers them, and a weighted mean of them is a figure no statement printed, so none is shown here. Each is beside its own statement on the Position tab.`,
       }
+    /* THE FAMILY'S CONSOLIDATED REVIEW IS THIS HOLDING'S SOURCE (Stage 10dh),
+       and it prints no price per unit — a line held at cost records what was
+       paid, a line it values records a total. "no per-unit price in the book"
+       is true of both and says nothing about why; the line names the review and
+       the date its figure is of. */
+    : reviewAll && cmp === null
+    ? atCostAll
+      ? {
+          line: `held at cost · review, ${fmtDate(reviewAsOf ?? "")}`,
+          tip: `The family's consolidated review (MOPWM) records what was paid for this holding and no valuation, so it is held at cost: its value is its cost, and there is no price per unit to show. No statement, live quote or published NAV values it.`,
+        }
+      : {
+          line: `consolidated review, ${fmtDate(reviewAsOf ?? "")} · a total`,
+          tip: `The family's consolidated review (MOPWM) values this holding as a total, of ${fmtDate(reviewAsOf ?? "")}, and prints no price per unit, so there is no price to show. No statement, live quote or published NAV values it.`,
+        }
     : cmp === null
     ? {
         line: "no per-unit price in the book — valued as a total",
@@ -1733,8 +1764,14 @@ export function StockInfo() {
             asset class the row carries, and an unstated class gets the noun that
             claims nothing. */}
         <Kpi label="Quantity"
-          value={exited ? <AbsentValue /> : <span data-stock-qty={recordedOnly ? recordedUnits : qty}>{recordedOnly ? unitsText(recordedUnits) : fmtNum(qty)}</span>}
+          value={exited ? <AbsentValue />
+            : recordedOnly ? <span data-stock-qty={recordedUnits}>{unitsText(recordedUnits)}</span>
+            /* NO COUNT IS NOT ZERO (Stage 10dh): the review records an amount
+               paid for most private investments and no unit count. */
+            : qty === null ? <span data-stock-qty-absent><AbsentValue /></span>
+            : <span data-stock-qty={qty}>{fmtNum(qty)}</span>}
           sub={exited ? <span className="text-slate-500">{unchecked ? "no direct holding" : "no current holding"}</span>
+            : !recordedOnly && qty === null ? <span className="text-slate-500" title={NO_UNIT_COUNT} data-stock-no-count>no unit count</span>
             : recorded.length > 0
               ? <span title={RECORDED_TIP} data-stock-recorded-units={recordedUnits}>
                   {recordedOnly ? `${qtyNoun} · not valued` : `${qtyNoun} · +${unitsText(recordedUnits)} not valued`}</span>
@@ -1751,6 +1788,10 @@ export function StockInfo() {
         <Kpi label="Avg cost"
           value={avgCost === null ? <AbsentValue /> : <span className="mono" data-stock-avg-cost={avgCost}>{price(avgCost)}</span>}
           sub={cost === null ? <span className="text-slate-500">{costWhy}</span>
+            // A cost with no unit count to divide it by — the review's records
+            // of what was paid (Stage 10dh). The cost is real; the average is not.
+            : avgCost === null && whole.costedQty === null
+            ? <span className="text-slate-500" title={NO_UNIT_COUNT} data-stock-avg-no-count>invested {money(cost)} &middot; no unit count</span>
             : carried ? <span title={carriedWhy} data-stock-cost-carried={carried.paid}>invested {money(cost)} &middot; as paid, across a class switch</span>
             : gross ? <span title={grossWhy} data-stock-cost-gross={gross.paid}>invested {money(cost)} &middot; as paid, stamp duty included</span>
             : costedShare ? <span data-stock-cost-covers={costedShare}
@@ -1770,7 +1811,11 @@ export function StockInfo() {
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
           delta={ret}
-          sub={pnl === null ? <span className="text-slate-500">{costWhy}</span>
+          sub={pnl === null && atCostAll
+            // HELD AT COST IS NOT "NO COST" (Stage 10dh): the review records the
+            // cost and no valuation, so no gain was measured — and never a ₹0.
+            ? <span className="text-slate-500" title={AT_COST_PNL} data-stock-at-cost>held at cost · no valuation</span>
+            : pnl === null ? <span className="text-slate-500">{costWhy}</span>
             // A COMPUTED ZERO KEEPS ITS ZERO, AND ITS REASON GOES IN THE TILE.
             // (Measured: the book's cash rows net to ₹0.11 of paise rounding
             // between the printed cost and value, so "no P&L" would overstate it.)

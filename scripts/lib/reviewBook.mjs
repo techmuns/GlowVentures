@@ -40,6 +40,8 @@ export const REVIEW_PROVIDER = "Consolidated review (MOPWM)";
 const r2 = (x) => (x === null || x === undefined ? null : Math.round(x * 100) / 100);
 const sum = (xs) => xs.reduce((s, x) => s + (x ?? 0), 0);
 const near = (a, b, tol = 1) => Math.abs(a - b) <= tol;
+/** A reason opens a sentence of its own in a note, so its first letter is a capital. */
+const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 const fail = (msg) => { throw new Error(`reviewBook: ${msg}`); };
 
 const displayName = (product) => DISPLAY_NAME.find((d) => d.line.test(product))?.name ?? product;
@@ -165,7 +167,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     if (!near(sum(parts.map((s) => s.cost)), l.cost)) fail(`${name}: the split adds to ${sum(parts.map((s) => s.cost))}, not the line's ${l.cost}`);
     for (const s of parts) {
       push({ key, security: name, owner: s.owner, assetClass: e.assetClass, qty: null, cost: s.cost, atCost: true,
-        note: `Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row ${l.row}${parts.length > 1 ? ` — ${ownerName(s.owner)}'s ₹${s.cost.toLocaleString("en-IN")} of the line` : ""}. ${e.why}.` });
+        note: `Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row ${l.row}${parts.length > 1 ? ` — ${ownerName(s.owner)}'s ₹${s.cost.toLocaleString("en-IN")} of the line` : ""}. ${cap(e.why)}.` });
     }
   }
   for (const l of pi.lines) if (!covered.has(l.row)) fail(`Private Investments row ${l.row} (${displayName(l.product)}) is covered by no entry`);
@@ -198,7 +200,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       }
       push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty,
         cost: s.cost, value: s.value, atCost: !!e.atCost, asOf: e.atCost ? REVIEW_AS_OF : f.closingDate ?? REVIEW_AS_OF,
-        note: `${e.atCost ? "Held at cost" : `Valued at ₹${s.value.toLocaleString("en-IN")}`} on the family's consolidated review (MOPWM, 30 Jun 2026), ${tabName} row ${l.row}${f.closingDate && !e.atCost ? `, its closing of ${dayText(f.closingDate)}` : ""}. ${e.why}.` });
+        note: `${e.atCost ? "Held at cost" : `Valued at ₹${s.value.toLocaleString("en-IN")}`} on the family's consolidated review (MOPWM, 30 Jun 2026), ${tabName} row ${l.row}${f.closingDate && !e.atCost ? `, its closing of ${dayText(f.closingDate)}` : ""}. ${cap(e.why)}.` });
     }
   }
   for (const [tab, [block, tabName]] of Object.entries(TAB)) {
