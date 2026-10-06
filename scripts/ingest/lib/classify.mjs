@@ -623,6 +623,16 @@ const ISSUER_PROVIDER_RULES = [
    */
   [/DP\s*ID\s*IN301549[\s\S]{0,4000}?HDFC\s+Bank\s+Limited/i, "HDFC Bank (NSDL demat)"],
   /**
+   * …AND THE SAME BANK'S NATIVE EXPORT, which prints neither `IN301549` nor
+   * `HDFC Bank Limited` on its first page. Its title names the bank AND the
+   * document — `HDFC Bank Depository Holding Details` — so the title is the
+   * signature, never the bank's name alone: every rule above records how many
+   * documents here merely MENTION HDFC. It sits ABOVE the house rule
+   * `HDFC (Securities|Bank|…)`, which would otherwise file Ajay's DP account
+   * 10295743 under a provider no reader knows.
+   */
+  [/HDFC\s+Bank\s+Depository\s+Holding\s+Details/i, "HDFC Bank (NSDL demat)"],
+  /**
    * THE FUND'S OWN NAME BEATS THE STATIONERY IT ARRIVES ON.
    *
    * These six come FIRST because four of them print `Motilal Oswal` on the

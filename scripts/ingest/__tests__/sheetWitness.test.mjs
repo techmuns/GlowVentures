@@ -9,7 +9,9 @@
 //
 //   1. the CSV reader — RFC 4180 and nothing cleverer, because Marathon's export
 //      opens with an address that runs over four lines inside one quoted field;
-//   2. the format sniffing that decides a file is comma-separated text at all;
+//   2. the format sniffing that decides a file is comma-separated text at all,
+//      and the reader for a GENUINE legacy BIFF `.xls` (the October 2026 bank
+//      exports), which must read a stored amount and not its shortened display;
 //   3. the witness check itself, on constructed figures, so each rule (what is
 //      significant, the precisions it compares at, the one-unit tolerance) is
 //      pinned rather than described;
@@ -25,7 +27,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseCsv, readCsv, sniffFormat, readSpreadsheet, witnessCheck } from "../lib/sheet.mjs";
+import { createRequire } from "node:module";
+import * as XLSX from "xlsx";
+import { parseCsv, readCsv, sniffFormat, readSpreadsheet, readBiff, witnessCheck } from "../lib/sheet.mjs";
 import { listEntries, readEntry, isMacMetadata } from "../lib/unzip.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -118,6 +122,87 @@ ok("an HTML table named .xls is an html-table", sniffFormat(Buffer.from("<html><
     bad.format === "csv" && /unterminated/.test(String(bad.error)) && bad.sheets.length === 0, JSON.stringify({ f: bad.format, e: bad.error }));
   const u8 = readSpreadsheet(new Uint8Array(Buffer.from("a,b\n1,2\n")));
   ok("a Uint8Array is read as the same bytes a Buffer is", u8.format === "csv" && u8.sheets.length === 1);
+}
+
+// ── 2b. A genuine legacy BIFF .xls ───────────────────────────────────────────
+//
+// The October 2026 delivery's bank exports are real BIFF8 workbooks. The one
+// built here has the shapes that matter: two sheets, a blank row, a row of
+// empty strings, a value standing alone at C9, a boolean, a whole count, and
+// two amounts a bank prints to the paisa that the General display format
+// shortens. No real export is used — they carry account numbers and names.
+{
+  const book = XLSX.utils.book_new();
+  const first = XLSX.utils.aoa_to_sheet([
+    ["Date", "Narration", "Withdrawal", "Deposit", "Balance"],
+    ["01/04/26", "  OPENING   BALANCE  ", null, null, 219778.32],
+    ["06/04/26", "RTGS CR SOME FUND", null, 208039138.56, 208258916.88],
+    [],
+    ["", "", "", "", ""],
+    ["Debits", 3583688673.57, "Count", 243, true],
+  ]);
+  XLSX.utils.sheet_add_aoa(first, [["lone"]], { origin: "C9" });
+  XLSX.utils.book_append_sheet(book, first, "Sheet 1");
+  XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([["second", 1.5]]), "Second");
+  const bytes = XLSX.write(book, { type: "buffer", bookType: "biff8" });
+
+  ok("the workbook built here is an OLE compound file, as the banks' exports are",
+    bytes.subarray(0, 4).toString("hex") === "d0cf11e0" && sniffFormat(bytes) === "biff");
+  const r = readSpreadsheet(bytes);
+  ok("a BIFF workbook is read, with no error, every sheet in its order",
+    r.format === "biff" && r.error === null && same(r.sheets.map((s) => s.name), ["Sheet 1", "Second"]),
+    JSON.stringify({ f: r.format, e: r.error, n: r.sheets.map((s) => s.name) }));
+  const rows = r.sheets[0]?.rows ?? [];
+
+  // THE TRAP, measured rather than described: SheetJS's displayed text for these
+  // two cells drops the paise, so a reader that took it would publish a different
+  // figure. The assertion that it does is what makes the next one load-bearing.
+  const shown = XLSX.read(bytes, { type: "buffer" }).Sheets["Sheet 1"];
+  ok("SheetJS's displayed text shortens a large amount (the reason readBiff reads the stored value)",
+    shown.D3?.w !== "208039138.56" && shown.B6?.w !== "3583688673.57", `${shown.D3?.w} · ${shown.B6?.w}`);
+  ok("an amount is its stored value to the paisa, never its shortened display",
+    rows[2]?.[3] === "208039138.56" && rows[5]?.[1] === "3583688673.57", JSON.stringify([rows[2]?.[3], rows[5]?.[1]]));
+  ok("a cell keeps its own column — a value at C9 is the third cell of the ninth row",
+    rows.length === 9 && same(rows[8], ["", "", "lone"]), JSON.stringify(rows[8]));
+  ok("rows with nothing in them are kept, empty, so the sheet keeps its real shape",
+    same(rows[3], []) && same(rows[4], []) && same(rows[6], []) && same(rows[7], []));
+  ok("cells to the right of the last value are not padded on",
+    same(rows[1], ["01/04/26", "OPENING BALANCE", "", "", "219778.32"]), JSON.stringify(rows[1]));
+  ok("text is whitespace-collapsed and trimmed, as every other format here is", rows[1]?.[1] === "OPENING BALANCE");
+  ok("a whole count is its digits, and a boolean is 1 or 0", rows[5]?.[3] === "243" && rows[5]?.[4] === "1", JSON.stringify(rows[5]));
+  ok("the second sheet is read too", same(r.sheets[1]?.rows, [["second", "1.5"]]));
+  ok("readBiff and readSpreadsheet return the same grid", same(readBiff(bytes), r.sheets));
+
+  // The witness check sees the stored figure. Shortened to "3583688674" it would
+  // be a whole number, not significant, and silently left out of the check — so
+  // a PDF printing different paise would pass. Read at its stored value it is
+  // checked, and the difference is reported.
+  const pdfRight = "Opening 2,19,778.32 credit 20,80,39,138.56 balance 20,82,58,916.88 debits 3,58,36,88,673.57 and 1.5";
+  const w = witnessCheck(r.sheets, pdfRight);
+  ok("a BIFF export is witnessed by text that prints its figures, Indian grouping and all",
+    w.checked === 5 && w.matched === 5 && w.unmatched.length === 0, JSON.stringify(w));
+  const pdfWrongPaise = pdfRight.replace("3,58,36,88,673.57", "3,58,36,88,673.75");
+  const w2 = witnessCheck(r.sheets, pdfWrongPaise);
+  ok("…and a PDF printing different paise on one amount leaves exactly that amount unmatched",
+    w2.checked === 5 && same(w2.unmatched, ["3583688673.57"]), JSON.stringify(w2));
+
+  // An OLE file that is not a readable workbook is an ERROR with the sniffed
+  // format — never a throw out of readSpreadsheet, never an empty grid.
+  const corrupt = Buffer.concat([Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]), Buffer.alloc(600, 0x41)]);
+  const truncated = bytes.subarray(0, 700);
+  // SheetJS's OLE writer is on its CommonJS export only.
+  const { CFB } = createRequire(import.meta.url)("xlsx");
+  const cfb = CFB.utils.cfb_new();
+  CFB.utils.cfb_add(cfb, "/WordDocument", Buffer.from("a document, not a workbook"));
+  const notABook = CFB.write(cfb, { type: "buffer" });
+  for (const [label, b] of [["a corrupt OLE header", corrupt], ["a truncated workbook", truncated], ["an OLE file holding no workbook stream", notABook]]) {
+    let res, err = null;
+    try { res = readSpreadsheet(b); } catch (e) { err = e; }
+    ok(`${label} is reported as an error, not thrown`, err === null, String(err?.message));
+    ok(`${label} keeps the sniffed format biff, an error saying so, and no sheets`,
+      res?.format === "biff" && /BIFF workbook/.test(String(res?.error)) && res?.sheets.length === 0,
+      JSON.stringify({ f: res?.format, e: res?.error, n: res?.sheets?.length }));
+  }
 }
 
 // ── 3. witnessCheck on constructed figures ───────────────────────────────────

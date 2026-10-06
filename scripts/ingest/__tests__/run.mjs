@@ -21,6 +21,7 @@ const SUITES = [
   { name: "capitalCalls", file: "capitalCalls.test.mjs", required: true },
   { name: "payouts", file: "payouts.test.mjs", required: true },
   { name: "hdfcOwner", file: "hdfcNsdlOwner.test.mjs", required: true },
+  { name: "hdfcNative", file: "hdfcNative.test.mjs", required: true },
   { name: "motilalOwner", file: "motilalOwner.test.mjs", required: true },
   { name: "nsdlPriceDate", file: "nsdlPriceDate.test.mjs", required: true },
   { name: "neoFlows", file: "neoFlows.test.mjs", required: true },
