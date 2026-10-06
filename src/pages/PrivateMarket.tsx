@@ -22,7 +22,7 @@ import {
   isValuedAtCost, AT_COST_RETURN,
   type MeasuredReturn, type ReturnMeasure,
 } from "@/lib/analytics";
-import { BOOK_CORPORATE_ACTIONS, BOOK_CAPITAL_MOVES, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
+import { BOOK_CORPORATE_ACTIONS, BOOK_CAPITAL_MOVES, BOOK_SHARE_MOVEMENTS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
   countedOnceNote,
@@ -685,7 +685,7 @@ export function PrivateMarket() {
     countedOnceNote(m.counting, accName, (n) => money(n), extra, what);
   const moneyN = (n: number) => money(n);
   /** Per FUND, over the fund rows' own deduped positions — the record Stage 10bw built. */
-  const fundDated = fundDatedRecords(m.scope.dedupedRows, m.commitments, m.accIdx, moneyN, fmtDate);
+  const fundDated = fundDatedRecords(m.scope.dedupedRows, m.commitments, BOOK_REVIEW_FLOWS, m.accIdx, moneyN, fmtDate);
   /**
    * ── WHAT THE FUNDS PAID BACK, AND HOW IT MEETS THE XIRR (B-10) ───────────
    *
@@ -1103,7 +1103,7 @@ export function PrivateMarket() {
   /** Per FUND — `fundDated`, built above the tiles, which reconcile against it. */
   /** Per FOLIO — one statement's own holding and its own capital account. */
   const folioDated = new Map(m.byFund.folios.filter((f) => f.position).map((f) =>
-    [f.key, fundDatedRecords([f.position!], m.commitments, m.accIdx, moneyN, fmtDate).get(f.position!.securityKey)]));
+    [f.key, fundDatedRecords([f.position!], m.commitments, BOOK_REVIEW_FLOWS, m.accIdx, moneyN, fmtDate).get(f.position!.securityKey)]));
   /** A row with no value has no return on any measure, and every measure says so. */
   const noValueReturn = (why: string) => (measure: ReturnMeasure): MeasuredReturn =>
     ({ shown: false, tag: measure === "auto" ? "AUTO" : returnMeasureDef(measure).tag, reason: why });

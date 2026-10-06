@@ -156,6 +156,16 @@ export type Account = {
    */
   partialValuation?: string | null;
   /**
+   * TRUE ON ONE OF THE REVIEW'S HOLDER BUCKETS (Stage 10dh) — the account a
+   * member's private investments sit under when the family's consolidated
+   * review (MOPWM) is their source and no custodian account carries them.
+   * It is a GROUPING, not a custodian: its lines are separate investments,
+   * each with its own dated purchases, so a dated record over it is struck per
+   * LINE (`capitalRollup`, `datedCapital`), never pooled across lines into one
+   * account return. Absent on every statement account.
+   */
+  reviewHolder?: true;
+  /**
    * A PMS MANDATE'S CAPITAL, SINCE INCEPTION, AS AT THE HOLDINGS' OWN DATE —
    * what the family paid in and took out, from a statement that states it over
    * that window (or the account's own dated capital record where it starts at

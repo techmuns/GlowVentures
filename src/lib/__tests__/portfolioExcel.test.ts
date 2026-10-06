@@ -45,6 +45,7 @@ import path from "node:path";
 import {
   BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY,
   BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
+  BOOK_REVIEW_FLOWS,
 } from "@/data/glowData";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { buildPortfolioWorkbook } from "@/lib/exportPortfolioExcel";
@@ -168,6 +169,7 @@ const INDEX = buildDatedCapital({
   moves: BOOK_CAPITAL_MOVES, commitments: BOOK_COMMITMENTS,
   accounts: labelledAccounts(BOOK_ACCOUNTS), positions: labelledPositions(BOOK_POSITIONS),
   tranches: BOOK_POSITION_TRANCHES, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
+  reviewFlows: BOOK_REVIEW_FLOWS,
 });
 /** The current holdings as the page holds them — what "every holding of an account" is measured against. */
 const UNIVERSE: Position[] = PAGE.filter((_, i) => NAV_SET.held.includes(RAW[i]));

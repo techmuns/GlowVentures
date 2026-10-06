@@ -50,9 +50,18 @@ for (const [key, ps] of byKey) {
   if (costed.length && costed.length < ps.length && uv > 0) mixed++;
   const vac = cost === 0 && cv === 0 && uv !== 0;
   const want = vac ? null : cost;
+  // A LINE HELD AT COST (Stage 10dh) is in the cost and in no gain: the gain is
+  // struck over the costed lines that carry a valuation, and is absent where
+  // none does — never a computed 0 standing for a value nobody struck.
+  const struck = costed.filter((p) => p.valuedAtCost !== true);
+  const gainWant = want === null || !struck.length ? null
+    : struck.reduce((s, p) => s + p.marketValue - (p.costBasis as number), 0);
+  // A unit count the review does not print (null) leaves the average cost absent.
+  const unitsKnown = costed.every((p) => typeof p.quantity === "number");
   const pass = f.cost === want
-    && (want === null ? f.unrealised === null : near(f.unrealised, cv - want, 0.01))
-    && (want === null || cu === 0 ? f.avgCost === null : near(f.avgCost, want / cu, 1e-6))
+    && (gainWant === null ? f.unrealised === null : near(f.unrealised, gainWant, 0.01))
+    && (want === null || cu === 0 || !unitsKnown ? f.avgCost === null : near(f.avgCost, want / cu, 1e-6))
+    && f.atCost.lines === costed.length - struck.length
     && near(f.costedValue + f.uncosted.value, f.value, 0.01);
   if (!pass) ok(`${key}: cost, units, value and gain on one set`, false, JSON.stringify({ f, cost, cv, cu }));
 }

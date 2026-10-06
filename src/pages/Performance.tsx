@@ -24,7 +24,7 @@ import { fifoTotals } from "@/lib/fifo";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { AccountBridge, ReturnSeries } from "@/lib/types";
 import { measuredAccountsReturn, accountHasOpeningValue } from "@/lib/returns";
-import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_UNDATED_CAPITAL } from "@/data/glowData";
+import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_UNDATED_CAPITAL, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { capitalMovesWithCalls } from "@/lib/tranches";
 
 // NAV & Performance — built from what these statements actually carry.
@@ -147,7 +147,7 @@ const bridgeLinesFor = (b: AccountBridge, flow: string) => (b.lines ?? []).filte
  * statements" was false of every one of those rows. The count is struck on the
  * one record that card reads, never on a second copy of it.
  */
-const CAPITAL_RECORD_COUNT = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS)
+const CAPITAL_RECORD_COUNT = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS)
   .reduce<Record<string, number>>((m, x) => { m[x.accountId] = (m[x.accountId] ?? 0) + 1; return m; }, {});
 /**
  * CAPITAL NO DATED ROW CARRIES, NAMED BESIDE THE RATE IT IS MISSING FROM

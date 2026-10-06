@@ -32,6 +32,7 @@ import path from "node:path";
 import {
   BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITIONS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
+  BOOK_REVIEW_FLOWS,
 } from "@/data/glowData";
 import { buildDatedCapital } from "@/lib/datedCapital";
 import {
@@ -49,6 +50,7 @@ const ok = (name: string, pass: boolean, detail = "") => {
 const book = {
   moves: BOOK_CAPITAL_MOVES, commitments: BOOK_COMMITMENTS, accounts: BOOK_ACCOUNTS,
   positions: BOOK_POSITIONS, tranches: BOOK_POSITION_TRANCHES, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
+  reviewFlows: BOOK_REVIEW_FLOWS,
 };
 const dc = buildDatedCapital(book);
 const universe = currentHoldings(BOOK_POSITIONS);
@@ -243,7 +245,7 @@ console.log("\n── the record must reach the value it is set against ──")
 // whose row is the whole account, the two rates must be one.
 console.log("\n── the Transactions card and the Monitor strike one rate ──");
 {
-  const record = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
+  const record = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS);
   const card = capitalRollup(record, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, "all", "recent", {
     commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
   });

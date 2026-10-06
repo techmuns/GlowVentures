@@ -41,6 +41,7 @@ import { describeDepositoryUnits } from "./fundNavs";
 import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
+  BOOK_REVIEW_FLOWS,
 } from "@/data/glowData";
 import {
   sumOrNull, dedupedPositions, consolidatedMarketValue,
@@ -95,6 +96,7 @@ function bookDatedCapital(): DatedCapital {
     moves: BOOK_CAPITAL_MOVES, commitments: BOOK_COMMITMENTS,
     accounts: labelledAccounts(BOOK_ACCOUNTS), positions: labelledPositions(BOOK_POSITIONS),
     tranches: BOOK_POSITION_TRANCHES, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
+    reviewFlows: BOOK_REVIEW_FLOWS,
   }));
 }
 

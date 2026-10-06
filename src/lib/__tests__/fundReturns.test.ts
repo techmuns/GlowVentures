@@ -29,9 +29,9 @@
 // Anchored on the GENERATED book (`glowData.ts`) through the page's own scope
 // helpers, so every expectation is derived on the run or written as a relation
 // that survives the next drop moving it.
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
-import { currentHoldings, daysBetween, YEAR_DAYS, type MeasuredReturn } from "@/lib/analytics";
+import { currentHoldings, daysBetween, isValuedAtCost, AT_COST_RETURN, YEAR_DAYS, type MeasuredReturn } from "@/lib/analytics";
 import { privateScope, fundRollup, capitalScope } from "@/lib/privateMarket";
 import {
   fundDatedRecords, fundMeasuredReturn, pooledFundXirr, fundReturnColumnMeta,
@@ -52,7 +52,7 @@ const idx = accountIndex(BOOK_ACCOUNTS);
 const scope = privateScope(currentHoldings(BOOK_POSITIONS), BOOK_ACCOUNTS);
 const onPage = capitalScope(BOOK_COMMITMENTS, BOOK_ACCOUNTS).onPage;
 const funds = fundRollup(scope.dedupedRows, idx, scope.rows);
-const dated = fundDatedRecords(scope.dedupedRows, onPage, idx, money, date);
+const dated = fundDatedRecords(scope.dedupedRows, onPage, BOOK_REVIEW_FLOWS, idx, money, date);
 const MEASURES = ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"] as const;
 const resolve = (key: string, m: typeof MEASURES[number]) => {
   const f = funds.find((x) => x.securityKey === key)!;
@@ -69,8 +69,12 @@ console.log("── the record is built over the row's own folios ──");
   for (const f of funds) {
     const d = dated.get(f.securityKey)!;
     const deduped = scope.dedupedRows.filter((p) => p.securityKey === f.securityKey);
-    ok(`${f.security.slice(0, 32)}: one part per deduped folio`, d.parts.length === deduped.length,
-      `${d.parts.length} parts, ${deduped.length} folios`);
+    // A FOLIO HELD AT COST (Stage 10dh) is no part: a value that is its cost is no
+    // measurement to close a money-weighted return on, so it is a gap instead.
+    const measured = deduped.filter((p) => !isValuedAtCost(p));
+    ok(`${f.security.slice(0, 32)}: one part per deduped folio not held at cost`, d.parts.length === measured.length
+      && (measured.length === deduped.length || d.gap === AT_COST_RETURN || /at cost/.test(d.gap ?? "")),
+      `${d.parts.length} parts, ${measured.length} of ${deduped.length} folios measured, gap ${d.gap ?? "none"}`);
     if (d.gap) continue;
     // THE TWO SIDES OF THE RETURN DESCRIBE THE SAME MONEY: the calls the record
     // carries add to the capital the row divides by. Pairing a consolidated cost
@@ -83,8 +87,10 @@ console.log("── the record is built over the row's own folios ──");
     const calls = d.calls.reduce((t, c) => t + c.amount, 0);
     const sold = deduped.reduce((t, p) => t + (p.costOfUnitsSold ?? 0), 0);
     ok(`${f.security.slice(0, 32)}: its calls add to the row's own cost held plus the cost of units redeemed`,
-      f.cost != null && Math.abs(calls - (f.cost + sold)) <= 1,
-      `${money(calls)} vs ${f.cost == null ? "—" : money(f.cost + sold)}`);
+      // …PLUS what a sale returned, on a line the review dates (Stage 10dh): the
+      // review sets a sale's proceeds against the line's cost.
+      f.cost != null && Math.abs(calls - (f.cost + sold + d.saleProceeds)) <= 1,
+      `${money(calls)} vs ${f.cost == null ? "—" : money(f.cost + sold + d.saleProceeds)}`);
   }
   // THE CASE THAT MAKES IT LOAD-BEARING: a fund two folios both report, where
   // the raw rows carry two sets of calls and the row carries one cost.
@@ -99,19 +105,22 @@ console.log("── the record is built over the row's own folios ──");
     tagged.pairsFound.every((x) => x.rows >= 2), JSON.stringify(tagged.pairsFound));
   const tScope = privateScope(currentHoldings(tagged.positions), BOOK_ACCOUNTS);
   const tFunds = fundRollup(tScope.dedupedRows, idx, tScope.rows);
-  const tDated = fundDatedRecords(tScope.dedupedRows, onPage, idx, money, date);
+  const tDated = fundDatedRecords(tScope.dedupedRows, onPage, BOOK_REVIEW_FLOWS, idx, money, date);
   const doubled = tFunds.find((f) => tScope.rows.filter((p) => p.securityKey === f.securityKey).length
     > tScope.dedupedRows.filter((p) => p.securityKey === f.securityKey).length && !tDated.get(f.securityKey)!.gap);
   ok("the tagged copy has a fund reported under two folios with a complete dated record", !!doubled);
   if (doubled) {
-    const raw = fundDatedRecords(tScope.rows, onPage, idx, money, date).get(doubled.securityKey)!;
+    const raw = fundDatedRecords(tScope.rows, onPage, BOOK_REVIEW_FLOWS, idx, money, date).get(doubled.securityKey)!;
     const rawCalls = raw.calls.reduce((t, c) => t + c.amount, 0);
     const rowCalls = tDated.get(doubled.securityKey)!.calls.reduce((t, c) => t + c.amount, 0);
     ok("…built over the RAW rows it would carry the calls twice", rawCalls > rowCalls * 1.9,
       `raw ${money(rawCalls)} vs row ${money(rowCalls)}`);
-    ok("…and over the row's own folios its calls tie to the one holding's cost",
-      doubled.cost != null && Math.abs(rowCalls - doubled.cost) <= 1,
-      `${money(rowCalls)} vs ${doubled.cost == null ? "—" : money(doubled.cost)}`);
+    // A LINE THE REVIEW DATES (Stage 10dh) sets its sale proceeds against its
+    // cost, so its purchases are the cost PLUS what the sales returned.
+    const proceeds = tDated.get(doubled.securityKey)!.saleProceeds;
+    ok("…and over the row's own folios its calls tie to the one holding's cost, plus any sale proceeds the review set against it",
+      doubled.cost != null && Math.abs(rowCalls - (doubled.cost + proceeds)) <= 1,
+      `${money(rowCalls)} vs ${doubled.cost == null ? "—" : money(doubled.cost + proceeds)}`);
   }
   // ON THE REAL BOOK each pair the family named is TWO holdings, so its fund
   // row is built over both folios and carries both folios' calls — one row,
@@ -126,8 +135,12 @@ console.log("── the record is built over the row's own folios ──");
     const d = dated.get(dec.securityKey);
     const folios = scope.dedupedRows.filter((p) => p.securityKey === dec.securityKey);
     ok(`${dec.securityKey.slice(0, 40)}: every folio the family named is a part of its row`,
-      !!d && folios.length === dec.accounts.length && d.parts.length === folios.length
-        && folios.every((p) => named(p.accountId, dec)),
+      // The family's consolidated review may carry the same fund under ANOTHER
+      // member as well (Ankita's own Transition Venture units, Stage 10dh) —
+      // a separate investment, and a part of the row like any other.
+      !!d && d.parts.length === folios.length
+        && folios.filter((p) => named(p.accountId, dec)).length === dec.accounts.length
+        && folios.every((p) => named(p.accountId, dec) || p.review),
       `${d?.parts.length ?? 0} parts, ${folios.length} folios, ${dec.accounts.length} named`);
     if (!d || d.gap) continue;
     pairsWithCalls++;
@@ -154,9 +167,15 @@ console.log("── two calls on one date are one purchase date ──");
   }
   const shared = funds.find((f) => {
     const d = dated.get(f.securityKey)!;
-    return !d.gap && d.calls.length > 1 && d.tranches === 1;
+    // …AND PAID NOTHING BACK: a fund that paid cash back is XIRR by the family's
+    // rule whatever its call dates (360 ONE, Stage 10dh), so it is not this case.
+    return !d.gap && d.calls.length > 1 && d.tranches === 1 && d.paidOut === 0;
   });
-  ok("this book has a fund whose several calls all fell on one date", !!shared);
+  if (!shared) {
+    const oneDate = [...dated.values()].filter((d) => !d.gap && d.calls.length > 1 && d.tranches === 1)
+      .map((d) => `${d.securityKey.slice(0, 28)} paid back ${money(d.paidOut)}`);
+    console.log(`NOT CHECKED this book has a fund whose several calls all fell on one date and that paid nothing back — the ones called on one date paid cash back: ${oneDate.join("; ") || "none"}`);
+  }
   if (shared) {
     const d = dated.get(shared.securityKey)!;
     const auto = resolve(shared.securityKey, "auto");
@@ -192,7 +211,14 @@ console.log("── folios valued on different dates ──");
     const d = dated.get(f.securityKey)!;
     return !d.gap && d.parts.length > 1 && d.tranches === 1 && d.paidOut === 0 && d.payouts !== "unknown";
   });
-  ok("this book has a multi-folio fund with one call date to build the case from", !!shared);
+  // THE REVIEW DATES EACH LINE (Stage 10dh): Transition Venture's trusts and
+  // Ankita's own units were called on different dates, so this book may carry
+  // no such fund. That is EVIDENCED, never silently passed.
+  if (!shared) {
+    const multi = funds.filter((f) => dated.get(f.securityKey)!.parts.length > 1)
+      .map((f) => `${f.security.slice(0, 24)}: ${dated.get(f.securityKey)!.tranches} call dates`);
+    console.log(`NOT CHECKED this book has a multi-folio fund with one call date to build the case from — every multi-folio fund here was called on more than one date: ${multi.join("; ")}`);
+  }
   if (shared) {
     const base = dated.get(shared.securityKey)!;
     // Moved back a year and a half so the window is over a year either way —
@@ -222,7 +248,12 @@ console.log("── a payout is counted once ──");
   for (const f of funds) {
     const d = dated.get(f.securityKey)!;
     if (d.gap || d.payouts === "unknown") continue;
-    const printed = d.parts.flatMap((part) => onPage.find((c) => c.accountId === part.accountId)?.payouts ?? []);
+    // A fund the review dates (Stage 10dh) is paid back by the review's own sale
+    // and income rows, not by the statement's payout table.
+    const printed = d.source === "review"
+      ? BOOK_REVIEW_FLOWS.filter((rf) => rf.kind !== "purchase" && rf.securityKey === f.securityKey
+          && d.parts.some((part) => part.accountId === rf.accountId)).map((rf) => ({ gross: rf.amount }))
+      : d.parts.flatMap((part) => onPage.find((c) => c.accountId === part.accountId)?.payouts ?? []);
     const carried = [...d.paidBack, ...d.afterValuation];
     ok(`${f.security.slice(0, 32)}: every payout the capital account carries is in exactly one list`,
       carried.length === printed.length
@@ -337,8 +368,12 @@ console.log("── a fund with no capital account ──");
       ok(`${f.security.slice(0, 28)} ${m}: refused, naming the gap`, !r.shown && r.reason.includes(gap), r.shown ? `${r.tag} ${r.pct}` : r.reason);
     }
     const a = resolve(f.securityKey, "auto");
-    ok(`${f.security.slice(0, 28)} auto: falls back to HPR and says why`,
-      a.shown && a.tag === "HPR" && /cannot be annualised or money-weighted/.test(a.note ?? ""), a.shown ? a.note : a.reason);
+    // A FUND HELD AT COST (Stage 10dh) has no gain at all, so even the HPR is
+    // refused — with the at-cost reason, never a computed 0%.
+    const atCost = gap === AT_COST_RETURN || /held at cost/.test(gap);
+    ok(`${f.security.slice(0, 28)} auto: ${atCost ? "held at cost, refused and says why" : "falls back to HPR and says why"}`,
+      atCost ? !a.shown && /held at cost/.test(a.reason)
+        : a.shown && a.tag === "HPR" && /cannot be annualised or money-weighted/.test(a.note ?? ""), a.shown ? a.note : a.reason);
   }
 }
 

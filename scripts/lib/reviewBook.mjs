@@ -289,6 +289,9 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     strategy: null, engagement: "Direct",
     providerEngagement: "Private investments as the family's consolidated review records them (MOPWM, 30 June 2026)",
     members: [], asOf: REVIEW_AS_OF, inceptionDate: null, capitalRecordTo: null, custodian: REVIEW_PROVIDER, noPositionsReason: null,
+    // A holder bucket, not a custodian account: its lines are separate
+    // investments, so a dated record over it is struck per line (Stage 10dh).
+    reviewHolder: true,
   }));
   flows.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey) || a.date.localeCompare(b.date) || a.reviewRow - b.reviewRow);
   notes.push(`review: ${flows.length} dated rows (purchases, sales, income) behind ${new Set(flows.map((x) => `${x.accountId}|${x.securityKey}`)).size} valued holdings`);

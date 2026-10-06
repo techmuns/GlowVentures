@@ -18,7 +18,7 @@ import {
   DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, AT_COST_BUCKET,
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf, unvaluedStatementLinesOf } from "@/lib/accounts";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_UNVALUED_HOLDINGS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { depositoryBalancesOf } from "@/lib/fundNavs";
 import { shareCandidates } from "@/lib/depositoryShares";
 import { fifoTotals } from "@/lib/fifo";
@@ -49,7 +49,7 @@ const FE_HOLDING_COLS = ["security", "heldVia", "sector", "value", "return"] as 
  * how many of its accounts are on that tab instead (FS-12).
  */
 const CAPITAL_RECORD_ACCOUNTS = new Set(
-  capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS).map((m) => m.accountId));
+  capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS).map((m) => m.accountId));
 /**
  * WHAT KINDS OF ACCOUNT A "NOT VALUED" CARD LISTS (FS-16) — read off each
  * account's own reason, which the book generates from what its statement is.

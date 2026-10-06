@@ -41,7 +41,7 @@ import {
 // that must never be added. See its header for what that was measured at.
 import { mergeDatedRecords, datedTotals, datedSectionRollup, type DatedRow } from "@/lib/txnLedger";
 import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
-import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_GAINS } from "@/data/glowData";
+import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_GAINS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY, type TaxonomySource } from "@/lib/familyTaxonomy";
 // THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
@@ -5232,7 +5232,7 @@ const DATED_COLS = ["name", "how", "committed", "in", "out", "realisedGain", "un
  * funds that reached no transaction table before carry what was promised, what
  * was called and on which dates.
  */
-const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
+const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS);
 
 /**
  * WHAT EACH RETURN COLUMN MEASURES ON THIS TABLE — its own words (MT-6 / B-11).
@@ -5627,13 +5627,21 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    */
   const valueOfAccount = useMemo(() => {
     const by = new Map<string, number>();
-    for (const p of positionsReg) by.set(p.accountId, (by.get(p.accountId) ?? 0) + p.marketValue);
+    for (const p of positionsReg) {
+      by.set(p.accountId, (by.get(p.accountId) ?? 0) + p.marketValue);
+      // A review holder bucket's line is a row of its own (Stage 10dh).
+      const line = `${p.accountId}|${p.securityKey}`;
+      by.set(line, (by.get(line) ?? 0) + p.marketValue);
+    }
     // AN ACCOUNT WITH NO POSITION IS UNVALUED, NOT WORTH ₹0. India SME's and Sky
     // Capital's folios reach this table through their dated calls and publish no
     // NAV, and `?? 0` would print a ₹0 value beside ₹8.1 Cr of purchases — the
     // measured-zero rule failing in the direction that invents a loss. A fund
     // redeemed to nil still HAS its positions, at zero, and keeps its measured ₹0.
-    return (id: string): number | null => (by.has(id) ? by.get(id)! : null);
+    return (id: string, securityKey?: string | null): number | null => {
+      const k = securityKey ? `${id}|${securityKey}` : id;
+      return by.has(k) ? by.get(k)! : null;
+    };
   }, [positionsReg]);
 
   /**
@@ -5676,7 +5684,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * the Holdings table.
    */
   const mineGroups = useMemo(
-    () => (section === "All" ? mineAll : mineAll.filter((g) => sections.forAccount(axis, g.accountId) === section)),
+    () => (section === "All" ? mineAll : mineAll.filter((g) => sections.forAccount(axis, g.accountId, g.securityKey) === section)),
     [mineAll, section, sections, axis]);
 
   const filtered = useMemo(() => {
@@ -5709,7 +5717,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
     () => rollup(filtered, accountsReg, "auto", sort, (t) => sections.forTxn(axis, t)),
     [filtered, accountsReg, sort, sections, axis]);
   const rows = useMemo(
-    () => mergeDatedRecords(mineGroups, tradeGroups, (id) => sections.forAccount(axis, id), valueOfAccount, sort),
+    () => mergeDatedRecords(mineGroups, tradeGroups, (id, sk) => sections.forAccount(axis, id, sk), valueOfAccount, sort),
     [mineGroups, tradeGroups, sections, axis, valueOfAccount, sort]);
   const secs = useMemo(
     () => datedSectionRollup(rows, (keys) => orderSections(axis, keys)), [rows, axis]);

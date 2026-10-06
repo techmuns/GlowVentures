@@ -20,7 +20,7 @@ import { loadTransactions, type Txn } from "@/lib/ledger";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN } from "@/lib/txnRollup";
 import { capitalRollup, capitalMovesWithCalls, capitalReturn } from "@/lib/tranches";
 import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
-import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
+import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 /** How many accounts publish a dated capital record — COUNTED, never typed (it read "Eleven" for a book carrying more). */
 const DATED_ACCOUNTS = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId)).size;
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
@@ -212,7 +212,7 @@ const CAPITAL_COLS = ["date", "type", "in", "out", "units", "security"] as const
  * same list the Transactions table reads, so a fund's page and that table
  * cannot disagree about what was paid in and when. See `capitalMovesWithCalls`.
  */
-const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
+const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS);
 const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"] as const;
 
 export function MandateHoldings() {

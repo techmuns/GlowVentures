@@ -817,7 +817,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Consolidated review (MOPWM)",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "reviewHolder": true
   },
   {
     "accountId": "review-ankita-jaisinghani",
@@ -833,7 +834,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Consolidated review (MOPWM)",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "reviewHolder": true
   },
   {
     "accountId": "review-bharat-jaisinghani",
@@ -849,7 +851,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Consolidated review (MOPWM)",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "reviewHolder": true
   },
   {
     "accountId": "review-bharat-jaisinghani-family-trust-2",
@@ -865,7 +868,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Consolidated review (MOPWM)",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "reviewHolder": true
   },
   {
     "accountId": "review-bharat-jaisinghani-family-trust-3",
@@ -881,7 +885,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Consolidated review (MOPWM)",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "reviewHolder": true
   },
   {
     "accountId": "review-not-attributed",
@@ -897,7 +902,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Consolidated review (MOPWM)",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "reviewHolder": true
   },
   {
     "accountId": "sanshi-fund-9039671821",

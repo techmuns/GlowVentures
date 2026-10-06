@@ -54,15 +54,19 @@
  * date. A live quote moves a mandate row's value today, and closing today's
  * value on a month-old date would credit the rate with days nobody measured.
  */
-import type { Account, CapitalMove, Commitment, Position, PositionTranches } from "./types";
+import type { Account, CapitalMove, Commitment, Position, PositionTranches, ReviewFlow } from "./types";
 import type { RowCapital } from "./analytics";
 import { capitalMovesWithCalls, capitalRollup, type CapitalGroup } from "./tranches";
 import { xirrPct } from "./bucketXirr";
 import type { DatedFlow } from "./xirr";
 
 export type DatedCapital = {
-  /** The account's whole-record group, where it carries a money-weighted rate. Null otherwise. */
-  of: (accountId: string) => CapitalGroup | null;
+  /**
+   * The whole-record group, where it carries a money-weighted rate. Null
+   * otherwise. Keyed as `CapitalGroup.key`: the account id, or for a line of a
+   * review holder bucket `<accountId>|<securityKey>` (Stage 10dh).
+   */
+  of: (key: string) => CapitalGroup | null;
   /**
    * The dated capital behind a set of positions — or NULL where the set is not
    * whole accounts at all (a holding inside an account), which is the caller's
@@ -84,6 +88,19 @@ const dayDiff = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse
  */
 const carries = (p: Position) => p.marketValue !== 0 || (typeof p.costBasis === "number" && p.costBasis !== 0);
 
+/**
+ * ── A REVIEW HOLDER BUCKET'S LINES ARE UNITS OF THEIR OWN (Stage 10dh) ─────
+ *
+ * A holder bucket (`Account.reviewHolder`) groups a member's private
+ * investments as the family's consolidated review lists them; it is not a
+ * custodian account and its lines are separate investments. So the "whole
+ * account" a row must carry is, there, the whole LINE: the dated record behind
+ * Zepto is Zepto's purchases, and a row holding Zepto carries all of it whether
+ * or not it also holds Assetgro.
+ */
+const unitOf = (p: { accountId: string; securityKey: string }, holders: ReadonlySet<string>) =>
+  holders.has(p.accountId) ? `${p.accountId}|${p.securityKey}` : p.accountId;
+
 /** Why an account whose whole record is on this row still carries no rate. */
 const noRateReason = (g: CapitalGroup | undefined) =>
   !g ? "this account publishes no dated record of the family's payments — its capital is known only as a total since inception, if at all — so there are no dated flows to solve a money-weighted return over. The per-account money-weighted return, where one can be struck, is on Performance"
@@ -103,39 +120,45 @@ export function buildDatedCapital(input: {
   positions: readonly Position[];
   tranches: Record<string, PositionTranches>;
   fromInception: readonly string[];
+  /** The review's dated rows (`BOOK_REVIEW_FLOWS`) — they date the accounts the review values. */
+  reviewFlows: readonly ReviewFlow[];
 }): DatedCapital {
-  const record = capitalMovesWithCalls([...input.moves], [...input.commitments], input.accounts);
+  const record = capitalMovesWithCalls([...input.moves], [...input.commitments], input.accounts, input.reviewFlows);
   const groups = capitalRollup(record, [...input.accounts], [...input.positions], input.tranches, "all", "recent", {
     commitments: [...input.commitments], fromInception: input.fromInception,
   });
-  const byAccount = new Map(groups.map((g) => [g.accountId, g]));
+  const byKey = new Map(groups.map((g) => [g.key, g]));
+  const holders = new Set(input.accounts.filter((a) => a.reviewHolder).map((a) => a.accountId));
   const rated = (g: CapitalGroup | undefined): g is CapitalGroup =>
     !!g && g.appreciationReason == null && g.value != null && !!g.flows?.length;
   const labelOf = new Map(input.accounts.map((a) => [a.accountId, a.strategy || `${a.provider} ${a.accountNo}`]));
+  const unitLabel = (u: string) => byKey.get(u)?.label ?? labelOf.get(u.split("|")[0]) ?? u;
 
   const behind = (set: readonly Position[], universe: readonly Position[]): RowCapital | null => {
     const keysIn = new Map<string, Set<string>>();
     for (const p of set) {
-      if (!keysIn.has(p.accountId)) keysIn.set(p.accountId, new Set());
-      keysIn.get(p.accountId)!.add(p.securityKey);
+      const u = unitOf(p, holders);
+      if (!keysIn.has(u)) keysIn.set(u, new Set());
+      keysIn.get(u)!.add(p.securityKey);
     }
     if (!keysIn.size) return null;
     // WHOLE, OR NOT AT ALL — every account the set touches, every holding of it
-    // that carries money.
-    for (const [acct, keys] of keysIn) {
-      const own = universe.filter((p) => p.accountId === acct && carries(p));
+    // that carries money. A review holder bucket's unit is one line.
+    for (const [u, keys] of keysIn) {
+      const own = universe.filter((p) => unitOf(p, holders) === u && carries(p));
       if (!own.length || !own.every((p) => keys.has(p.securityKey))) return null;
     }
-    const accts = [...keysIn.keys()].sort();
-    const gs = accts.map((a) => byAccount.get(a));
-    const missing = accts.filter((_, i) => !rated(gs[i]));
+    const units = [...keysIn.keys()].sort();
+    const accts = [...new Set(units.map((u) => u.split("|")[0]))].sort();
+    const gs = units.map((u) => byKey.get(u));
+    const missing = units.filter((_, i) => !rated(gs[i]));
     if (missing.length) {
-      const why = noRateReason(byAccount.get(missing[0]));
+      const why = noRateReason(byKey.get(missing[0]));
       return {
         dated: false,
         accountIds: accts,
-        reason: accts.length === 1 ? why
-          : `${missing.length} of the ${accts.length} accounts behind this row carry no dated record a money-weighted return can be solved over — ${labelOf.get(missing[0]) ?? missing[0]}: ${why}`,
+        reason: units.length === 1 ? why
+          : `${missing.length} of the ${units.length} ${units.some((u) => u.includes("|")) ? "investments" : "accounts"} behind this row carry no dated record a money-weighted return can be solved over — ${unitLabel(missing[0])}: ${why}`,
       };
     }
     // POOLED, EACH ACCOUNT CLOSING ON ITS OWN DATE — `capitalXirr`'s construction
@@ -160,7 +183,7 @@ export function buildDatedCapital(input: {
     return {
       dated: true,
       accountIds: accts,
-      accounts: accts.length,
+      accounts: units.length,
       flows: n,
       since,
       to,
@@ -170,7 +193,7 @@ export function buildDatedCapital(input: {
   };
 
   return {
-    of: (id) => { const g = byAccount.get(id); return rated(g) ? g : null; },
+    of: (id) => { const g = byKey.get(id); return rated(g) ? g : null; },
     behind,
   };
 }

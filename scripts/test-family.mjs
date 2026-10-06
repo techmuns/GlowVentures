@@ -100,7 +100,11 @@ const SUITES = [
 ];
 
 let failed = 0;
+// `ONLY=<name>,<name>` runs a subset, matched on the suite's name — for
+// re-running one suite while fixing it. The default is every suite.
+const ONLY = (process.env.ONLY ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 for (const [name, rel] of SUITES) {
+  if (ONLY.length && !ONLY.includes(name)) continue;
   const out = path.join(DIR, path.basename(rel).replace(/\.ts$/, ".mjs"));
   const build = spawnSync(
     path.join(ROOT, "node_modules/.bin/esbuild"),

@@ -34,7 +34,7 @@
 //     the September 2026 delivery, which publish nothing else dated).
 import fs from "node:fs";
 import path from "node:path";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITIONS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITIONS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { capitalMovesWithCalls } from "@/lib/tranches";
 
 let fails = 0;
@@ -147,7 +147,7 @@ for (const [accountId, a] of archive) {
   if (money.some((c) => c.amount > 0)) expected.add(accountId);
   else withdrawalsOnly.push(accountId);
 }
-const RECORD = capitalMovesWithCalls([...BOOK_CAPITAL_MOVES], [...BOOK_COMMITMENTS], BOOK_ACCOUNTS);
+const RECORD = capitalMovesWithCalls([...BOOK_CAPITAL_MOVES], [...BOOK_COMMITMENTS], BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS);
 const listed = new Set(RECORD.map((m) => m.accountId));
 const missing = [...expected].filter((a) => !listed.has(a)).sort();
 const extra = [...listed].filter((a) => !expected.has(a)).sort();

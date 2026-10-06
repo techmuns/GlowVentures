@@ -40,9 +40,9 @@
 // be most tempting. It is not re-derived here: `holdingReturn` decides, so the
 // guard that put +99.0% on the Morning CIO strip in Stage 10g(ii) lives in one
 // place still, and `positionIrrPct` stays unread.
-import type { CapitalMove, Commitment, Position, PositionTranches } from "./types";
+import type { CapitalMove, Commitment, Position, PositionTranches, ReviewFlow } from "./types";
 import {
-  holdingReturn, sumOrNull, RETURN_MEASURES,
+  holdingReturn, sumOrNull, RETURN_MEASURES, isValuedAtCost, commonValueDate, AT_COST_RETURN,
   type HoldingReturn, type ReturnMode, type ReturnMeasure, type MeasuredReturn,
 } from "./analytics";
 import { xirrPct } from "./bucketXirr";
@@ -370,15 +370,32 @@ export const boughtNavOf = (t: TrancheRow): number | null =>
 // simpler still: one contribution is a lumpsum, more than one is not.
 
 export type CapitalGroup = {
+  /**
+   * WHAT THIS ROW IS, uniquely. The account id for every statement account; for
+   * one of the review's holder buckets (`Account.reviewHolder`) the account and
+   * the line, `<accountId>|<securityKey>`, because each line there is a
+   * separate investment with its own dated purchases (Stage 10dh).
+   */
+  key: string;
   accountId: string;
+  /**
+   * The ONE holding this row is, where it is a line of a review holder bucket.
+   * Null on every account-level row, including an account that holds one line.
+   */
+  securityKey: string | null;
   /** The mandate or fund as the app names it elsewhere. */
   label: string;
   provider: string;
   accountNo: string;
   owner: string;
   moves: CapitalMove[];
-  /** Where the dated purchases came from: the family's capital record, or the fund's own dated calls. */
-  source: "record" | "calls";
+  /**
+   * Where the dated purchases came from: the family's capital record, the
+   * fund's own dated calls, or — for an account whose holdings the family's
+   * consolidated review values (Stage 10dh) — the review's own Transactions
+   * sheet, which dates every purchase, sale and income row behind its lines.
+   */
+  source: "record" | "calls" | "review";
   contributions: number;
   withdrawals: number;
   /** PURCHASE — money the family put in, gross, as each statement prints it. */
@@ -426,6 +443,12 @@ export type CapitalGroup = {
   value: number | null;
   /** The report date that value is struck at — the terminal date of the XIRR. */
   valueAsOf: string | null;
+  /**
+   * TRUE WHERE SOME OF THAT VALUE IS A COST, NOT A VALUATION — a line the
+   * family's consolidated review holds at what was paid (`valuedAtCost`). The
+   * value is real money and still shown; no gain or return is struck on it.
+   */
+  atCost: boolean;
   /**
    * ── APPRECIATION — value today plus what came back, less what went in ────
    *
@@ -509,6 +532,49 @@ export function recordShortfall(a: { asOf?: string | null; capitalRecordTo?: str
   if (!a?.asOf) return "the account carries no statement date for its value, so there is nothing for the record to reach";
   if (a.capitalRecordTo && a.capitalRecordTo >= a.asOf) return null;
   return `this dated record ends ${a.capitalRecordTo ?? "before the account's statement date"}, before the ${a.asOf} statement its value is struck on, so what moved in between is not in it — the return on the capital the manager's own statement prints is on the Holdings table`;
+}
+
+/**
+ * ── DOES THE REVIEW'S DATED RECORD DESCRIBE THE MONEY IN ITS VALUE? ─────────
+ *
+ * For a line the family's consolidated review values (Stage 10dh) the dated
+ * record is the review's own Transactions sheet, and the questions a capital
+ * record is asked — does it reach inception, does it reach the value's date —
+ * become three the review's own rows can answer:
+ *
+ *   • IS THERE A VALUE TO MEASURE AGAINST? A line held at cost has a value that
+ *     IS its cost, so any gain struck on it is a zero nobody measured.
+ *   • DO THE PURCHASES ADD UP TO THE COST? The review carries a line at what was
+ *     paid less what a sale returned, so the dated purchases less the dated sale
+ *     proceeds must reproduce that cost to the rupee — or the two sides of a
+ *     return describe different money (a purchase missing from the sheet).
+ *   • IS EVERY ROW ON OR BEFORE THE VALUE'S DATE? A row after it is money the
+ *     value cannot hold.
+ *
+ * Null where a return can be struck; otherwise the reason, true of this line.
+ */
+function reviewShortfall(own: readonly Position[], all: readonly CapitalMove[], valueAsOf: string | null): string | null {
+  const ins = all.filter((m) => m.direction === "in");
+  if (!ins.length) return "the family's consolidated review prints no dated purchase for this line, so there is nothing to measure a return against";
+  if (!own.length) return "the family's consolidated review dates purchases for this line but carries no holding of it in the book, so there is no value to measure them against";
+  if (own.every(isValuedAtCost)) return AT_COST_RETURN;
+  if (own.some(isValuedAtCost)) {
+    return "part of this is held at cost: the family's consolidated review records what was paid for it and no valuation, so a return over the whole would blend a gain nobody measured";
+  }
+  if (!valueAsOf) {
+    return "the holdings behind this row are valued on different dates, so there is no one date to close a return on";
+  }
+  const bought = ins.reduce((t, m) => t + (m.amount ?? 0), 0);
+  const sold = all.filter((m) => m.direction === "out" && m.payoutKind === "capital").reduce((t, m) => t + (m.amount ?? 0), 0);
+  const cost = own.reduce((t, p) => t + (p.costBasis ?? Number.NaN), 0);
+  if (!Number.isFinite(cost) || Math.abs(bought - sold - cost) > 1) {
+    return "the review's dated purchases less its sale proceeds do not add up to the cost it carries for this line, so a purchase may be missing from its dated rows — and a return would set one sum of money against the value of another";
+  }
+  const late = all.find((m) => m.date > valueAsOf);
+  if (late) {
+    return `the review dates a ${late.direction === "in" ? "purchase" : late.payoutKind === "capital" ? "sale" : "payment"} on ${late.date}, after the ${valueAsOf} value it carries for this line, so that value would not hold it`;
+  }
+  return null;
 }
 
 /**
@@ -627,11 +693,49 @@ export function capitalMovesWithCalls(
   moves: CapitalMove[],
   commitments: Commitment[],
   accounts: readonly { accountId: string; asOf?: string | null }[],
+  /**
+   * ── THE REVIEW'S DATED ROWS, IN PLACE OF THE STATEMENT'S (Stage 10dh) ─────
+   *
+   * At the family's instruction their consolidated review (MOPWM) is the
+   * source for private-market holdings, and its Transactions sheet dates every
+   * purchase, sale and income row behind each line (`BOOK_REVIEW_FLOWS`). An
+   * account carrying any of them is dated by the review and by nothing else:
+   * its statement record, calls and payouts describe the statement's holding,
+   * which the review's line replaced in the book, and mixing the two would
+   * value one document's money against the other's. `build-book` refuses a
+   * book where such an account holds a statement line with money beside the
+   * review's, so nothing the statement dated is left without a home.
+   *
+   * REQUIRED, not optional: a caller that forgot it would quietly date a
+   * review-valued account by the statement it replaced.
+   */
+  reviewFlows: readonly ReviewFlow[],
 ): CapitalMove[] {
-  const recorded = new Set(moves.map((m) => m.accountId));
+  const reviewed = new Set(reviewFlows.map((f) => f.accountId));
+  const kept = moves.filter((m) => !reviewed.has(m.accountId));
+  const recorded = new Set(kept.map((m) => m.accountId));
   const valuedAt = new Map(accounts.map((a) => [a.accountId, a.asOf ?? null]));
-  const out = [...moves];
+  const out = [...kept];
+  for (const f of reviewFlows) {
+    out.push({
+      accountId: f.accountId, date: f.date,
+      direction: f.kind === "purchase" ? "in" : "out",
+      // The review's own word for the row, never ours.
+      label: f.kind === "purchase" ? "Purchase" : f.kind === "sale" ? "Sale" : "Div / Int",
+      amount: f.amount,
+      // The review prints one figure for a purchase — what was paid — and no
+      // charges, so what bought units is that figure.
+      invested: f.kind === "purchase" ? f.amount : null,
+      units: f.units == null ? null : f.kind === "purchase" ? f.units : f.kind === "sale" ? -f.units : null,
+      security: f.security, securityKey: f.securityKey,
+      fromReview: true,
+      // A sale returns capital; Div / Int is gain paid out. Typed so the split
+      // below can be struck on the review's own rows.
+      ...(f.kind === "sale" ? { payoutKind: "capital" as const } : f.kind === "income" ? { payoutKind: "income" as const } : {}),
+    });
+  }
   for (const c of commitments) {
+    if (reviewed.has(c.accountId)) continue;
     const hasRecord = recorded.has(c.accountId);
     for (const call of hasRecord ? [] : c.calls ?? []) {
       if (!call.date || !(call.amount > 0)) continue;
@@ -718,23 +822,34 @@ export function capitalMovesWithCalls(
  */
 export function capitalRollup(
   moves: CapitalMove[],
-  accounts: { accountId: string; provider: string; accountNo: string; strategy: string | null; owner: string; inceptionDate?: string | null; asOf?: string | null; capitalRecordTo?: string | null; engagement?: string; noPositionsReason?: string | null }[],
+  accounts: { accountId: string; provider: string; accountNo: string; strategy: string | null; owner: string; inceptionDate?: string | null; asOf?: string | null; capitalRecordTo?: string | null; engagement?: string; noPositionsReason?: string | null; reviewHolder?: boolean }[],
   positions: Position[],
   index: Record<string, PositionTranches>,
   side: CapitalSide = "all",
   sort: TxnSort = "recent",
   opts: { commitments?: Commitment[]; windowed?: boolean; fromInception?: readonly string[] } = {},
 ): CapitalGroup[] {
-  const byAcct = new Map<string, CapitalMove[]>();
+  /**
+   * ONE ROW PER ACCOUNT — EXCEPT UNDER A REVIEW HOLDER BUCKET, WHERE IT IS ONE
+   * ROW PER LINE. A holder bucket (`Account.reviewHolder`) is the family's
+   * consolidated review's grouping of a member's private investments, not a
+   * custodian account: Assetgro and Zepto under Ajay are two separate
+   * investments bought on their own dates, and one return over both would be a
+   * rate for a portfolio nobody holds as one (Stage 10dh).
+   */
+  const holder = new Set(accounts.filter((a) => a.reviewHolder).map((a) => a.accountId));
+  const byGroup = new Map<string, { accountId: string; line: string | null; moves: CapitalMove[] }>();
   for (const m of moves) {
-    if (!byAcct.has(m.accountId)) byAcct.set(m.accountId, []);
-    byAcct.get(m.accountId)!.push(m);
+    const line = holder.has(m.accountId) && m.securityKey ? m.securityKey : null;
+    const key = line ? `${m.accountId}|${line}` : m.accountId;
+    if (!byGroup.has(key)) byGroup.set(key, { accountId: m.accountId, line, moves: [] });
+    byGroup.get(key)!.moves.push(m);
   }
   const commitmentOf = new Map((opts.commitments ?? []).map((c) => [c.accountId, c]));
   const windowed = !!opts.windowed;
   const fromInception = new Set(opts.fromInception ?? []);
   const out: CapitalGroup[] = [];
-  for (const [accountId, all] of byAcct) {
+  for (const [key, { accountId, line, moves: all }] of byGroup) {
     // WHAT THE FILTER NARROWS, AND WHAT IT MUST NOT. `ms` is the movements in
     // view — the rows listed, the amounts on each side, the payment count. The
     // account's WHOLE record still decides whether it can carry a return, so a
@@ -742,7 +857,8 @@ export function capitalRollup(
     // contribution history look incomplete.
     const ms = side === "all" ? all : all.filter((m) => m.direction === side);
     const c = commitmentOf.get(accountId) ?? null;
-    const source: CapitalGroup["source"] = all.length > 0 && all.every((m) => m.fromCall) ? "calls" : "record";
+    const source: CapitalGroup["source"] = all.length > 0 && all.every((m) => m.fromReview) ? "review"
+      : all.length > 0 && all.every((m) => m.fromCall) ? "calls" : "record";
     // An undated payout rides only on a call-derived row: a capital RECORD lists
     // its redemptions dated, so its own out-movements are the whole of it.
     // A fund whose payouts are carried DATED (`Commitment.payouts`) has them as
@@ -765,12 +881,22 @@ export function capitalRollup(
      * DISTRIBUTED, and null where it prints no such line.
      */
     const redemption: number | null = side === "in" ? null
-      : source === "record" || datedPayouts ? tookOut
+      : source === "record" || source === "review" || datedPayouts ? tookOut
       : c?.distributed != null ? (c.distributed ?? 0) + tookOut
       : null;
 
-    const own = positions.filter((p) => p.accountId === accountId);
+    const own = positions.filter((p) => p.accountId === accountId && (line == null || p.securityKey === line));
     const value = own.length === 0 ? null : own.reduce((s, p) => s + p.marketValue, 0);
+    /**
+     * WHERE THE VALUE IS STRUCK. A statement account's own report date; a line
+     * the review values, the date the review values IT on (`priceAsOf` — the
+     * line's own closing on the Transactions sheet, or the review's date for a
+     * line held at cost), which is often months before the bucket's 30 June.
+     * Several lines valued on different dates have no one date to close on.
+     */
+    const valueAsOf = source === "review"
+      ? commonValueDate(own.map((p) => p.priceAsOf ?? a?.asOf ?? null))
+      : a?.asOf ?? null;
     /** Held = not a fund row redeemed to nil. A cash sleeve at zero units still counts. */
     const held = own.filter((p) => !(p.quantity === 0 && p.marketValue === 0));
     const costOfHeld = held.length === 0 ? 0
@@ -783,14 +909,19 @@ export function capitalRollup(
     // the value beside it is struck on (`recordShortfall`) — the second asked of
     // a capital RECORD only, since a fund's call list is read off the very
     // statement its value comes from.
-    const incompleteReason = contributionsAreComplete(accountId, all, positions, index, a?.inceptionDate, c, fromInception.has(accountId))
-      ?? (source === "record" ? recordShortfall(a) : null);
+    // A line the review values answers to the review's own rows instead
+    // (`reviewShortfall`): its record IS the review's, so it reaches inception
+    // and the value's date when its purchases add up to the cost beside it.
+    const incompleteReason = source === "review"
+      ? reviewShortfall(own, all, valueAsOf)
+      : contributionsAreComplete(accountId, all, positions, index, a?.inceptionDate, c, fromInception.has(accountId))
+        ?? (source === "record" ? recordShortfall(a) : null);
 
     // ── APPRECIATION, AND WHY IT IS WITHHELD WHERE IT IS ─────────────────────
     const filtered = sideFiltered || windowed;
     const allIn = all.filter((m) => m.direction === "in");
     const P = allIn.reduce((s, m) => s + (m.amount ?? 0), 0);
-    const R = source === "record" || datedPayouts
+    const R = source === "record" || source === "review" || datedPayouts
       ? all.filter((m) => m.direction === "out").reduce((s, m) => s + (m.amount ?? 0), 0)
       : c?.distributed != null ? c.distributed : null;
     const unknownAmount = allIn.some((m) => m.amount == null);
@@ -854,7 +985,31 @@ export function capitalRollup(
      */
     const reinvested = allIn.reduce((s, m) =>
       s + (m.amount != null && m.invested != null && m.invested > m.amount ? m.invested - m.amount : 0), 0);
-    if (appreciation != null) {
+    if (appreciation != null && source === "review") {
+      /**
+       * A LINE THE FAMILY'S REVIEW VALUES — split on the review's own rows. The
+       * review sets a sale's proceeds against the line's cost (360 ONE: paid
+       * ₹99,99,500.02, sold for ₹78,320, carried at ₹99,21,180.02), so what a
+       * sale returned is capital coming back, not gain; its Div / Int rows are
+       * gain paid out. Unrealised is then value less the cost it carries, and
+       * the two add to appreciation by construction — `reviewShortfall` checked
+       * the purchases less the sale proceeds ARE that cost.
+       */
+      const saleProceeds = outsAll.filter((m) => m.payoutKind === "capital").reduce((t, m) => t + (m.amount ?? 0), 0);
+      realised = R! - saleProceeds;
+      unrealised = appreciation - realised;
+      if (R === 0) {
+        realisedNote = "nothing has come back out of this line, so nothing is realised — a computed zero, not a missing figure";
+        unrealisedNote = "value today less what was paid — the family's consolidated review's value against the cost it carries";
+      } else {
+        realisedNote = saleProceeds > 0
+          ? "the interest and dividends the family's consolidated review records this line paid out — what a sale returned the review sets against the line's cost, so it is not in this figure"
+          : "the interest and dividends the family's consolidated review records this line paid out";
+        unrealisedNote = saleProceeds > 0
+          ? "value today less the cost the review carries: what was paid, less what the sale returned"
+          : "value today less what was paid — the family's consolidated review's value against the cost it carries";
+      }
+    } else if (appreciation != null) {
       if (R === 0 && reinvested > 0) {
         realised = reinvested;
         realisedNote = "a gain the fund distributed and reinvested in more units rather than paying out — realised by the fund, though no cash reached the family; nothing else has come back out of this account";
@@ -919,8 +1074,11 @@ export function capitalRollup(
       : null;
 
     out.push({
+      key,
       accountId,
-      label: a?.strategy || a?.provider || accountId,
+      securityKey: line,
+      // A line is named as every other table names it; an account, as before.
+      label: line ? securityLabel(line, own[0]?.security ?? all[0]?.security ?? line) : a?.strategy || a?.provider || accountId,
       provider: a?.provider ?? "",
       accountNo: a?.accountNo ?? "",
       owner: a?.owner ?? "",
@@ -950,7 +1108,8 @@ export function capitalRollup(
       boughtFirst: boughtDates[0] ?? "", boughtLast: boughtDates.at(-1) ?? "",
       staggered: ins.length > 1,
       value,
-      valueAsOf: a?.asOf ?? null,
+      valueAsOf,
+      atCost: own.some(isValuedAtCost),
       appreciation, realised, unrealised,
       appreciationReason, realisedNote, unrealisedNote,
       flows,
@@ -966,7 +1125,7 @@ export function capitalRollup(
   // still here and no longer imposed. Sorted by accountId FIRST so the mode's
   // own comparator, which is stable, resolves every tie the same way on every
   // run rather than however the Map happened to be filled.
-  out.sort((a, b) => a.accountId.localeCompare(b.accountId));
+  out.sort((a, b) => a.key.localeCompare(b.key));
   return sortRows(out, sort, (g) => g.paidIn);
 }
 

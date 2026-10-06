@@ -27,6 +27,7 @@
 import {
   BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_POSITIONS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
+  BOOK_REVIEW_FLOWS,
 } from "@/data/glowData";
 import {
   capitalRollup, capitalMovesWithCalls, capitalReturn, capitalXirr, capitalTotals, type CapitalGroup,
@@ -45,7 +46,7 @@ const near = (name: string, a: number | null | undefined, b: number | null | und
   ok(name, a != null && b != null && Math.abs(a - b) <= tol, `${a} vs ${b}`);
 const cr = (n: number | null | undefined) => (n == null ? "—" : `₹${(n / 1e7).toFixed(4)} Cr`);
 
-const RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
+const RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS);
 const book = (opts: { windowed?: boolean } = {}, side: "all" | "in" | "out" = "all") =>
   capitalRollup(RECORD, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, side, "recent", {
     commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION, ...opts,
@@ -181,7 +182,7 @@ console.log("\n── PMS mandates ──");
 console.log("\n── dated, typed payouts ──");
 {
   const s = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
-  const recs = fundDatedRecords(s.dedupedRows, BOOK_COMMITMENTS, accountIndex(BOOK_ACCOUNTS), String, String);
+  const recs = fundDatedRecords(s.dedupedRows, BOOK_COMMITMENTS, BOOK_REVIEW_FLOWS, accountIndex(BOOK_ACCOUNTS), String, String);
   const withPayouts = BOOK_COMMITMENTS.filter((c) => c.payouts != null && c.payouts.length > 0);
   const recorded = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId));
   ok("the book carries a fund with dated payouts and no capital record (LOAD-BEARING)",
@@ -247,7 +248,7 @@ console.log("\n── an undated payout (constructed) ──");
   const commitment = { accountId: "u", name: "Fund", total: 10_000_000, contributed: 10_000_000,
     called: 10_000_000, paid: 10_000_000, pending: null, undrawn: 0, distributed: 500_000,
     calls: [{ date: "2024-01-01", amount: 10_000_000, label: "Call 1" }], payouts: null } as unknown as Commitment;
-  const moves = capitalMovesWithCalls([], [commitment], acc);
+  const moves = capitalMovesWithCalls([], [commitment], acc, []);
   ok("no payout row is invented from an undated total", !moves.some((m) => m.direction === "out"));
   const u = capitalRollup(moves, acc, [{ accountId: "u", securityKey: "f", security: "Fund", assetClass: "AIF",
     quantity: 1, marketValue: 11_000_000, costBasis: 10_000_000 } as Position], {}, "all", "recent",

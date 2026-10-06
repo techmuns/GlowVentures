@@ -3950,6 +3950,20 @@ function build(archived) {
     positions.push(...review.positions);
     positions.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey));
     notes.push(...review.notes);
+    // AN ACCOUNT THE REVIEW DATES MUST HOLD ONLY THE REVIEW'S LINES. Its dated
+    // record replaces the statement's calls and capital moves on the
+    // Transactions card (`capitalMovesWithCalls`), so a statement holding with
+    // money left beside it would be valued against purchases that never bought
+    // it. Refused here rather than discovered on a page (Stage 10dh).
+    const dated = new Set(review.flows.map((f) => f.accountId));
+    const mixed = positions.filter((p) => dated.has(p.accountId) && !p.review
+      && ((isNum(p.marketValue) && p.marketValue !== 0) || (isNum(p.costBasis) && p.costBasis !== 0)));
+    if (mixed.length) {
+      throw new Error(`build-book: ${mixed.length} statement holding(s) carry money on an account the review dates — `
+        + mixed.map((p) => `${p.security} (${p.accountId})`).join("; ")
+        + ". The review's dated rows would stand in for a record that bought something else.");
+    }
+    notes.push(`review: ${dated.size} account(s) carry the review's dated rows, and every holding with money on them is the review's own`);
   }
 
   /**

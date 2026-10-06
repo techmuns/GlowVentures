@@ -46,7 +46,7 @@
 // figures on two pages is the failure this book keeps paying for. It is the
 // figure that CANNOT see a payout, and where a fund has paid cash back the cell
 // says so and names the column that can.
-import type { Commitment, FundPayout, Position } from "./types";
+import type { Commitment, FundPayout, Position, ReviewFlow } from "./types";
 import type { AccountIndex } from "./accounts";
 import {
   daysBetween, YEAR_DAYS, returnMeasureDef, isValuedAtCost, AT_COST_RETURN,
@@ -89,6 +89,15 @@ export type FundPart = { accountId: string; valuedAt: string; value: number; cos
  */
 export type FundDated = {
   securityKey: string;
+  /**
+   * WHOSE DATED RECORD THIS IS (Stage 10dh). `statement` — a fund's own
+   * capital account (`BOOK_COMMITMENTS`); `review` — the family's consolidated
+   * review, whose Transactions sheet dates every purchase, sale and income row
+   * (`BOOK_REVIEW_FLOWS`); `mixed` — some folios of each. It decides the WORDS
+   * (a review line was bought, not called) and which cash the holding-period
+   * return already counts; never a figure.
+   */
+  source: "statement" | "review" | "mixed";
   parts: FundPart[];
   /** Calls, oldest first, across the row's folios. */
   calls: FundFlow[];
@@ -127,6 +136,13 @@ export type FundDated = {
    */
   redeemedAtCost: number;
   /**
+   * THE REVIEW'S SALE PROCEEDS ITS COST IS ALREADY NET OF. The review carries
+   * a line at what was paid less what a sale returned (360 ONE: ₹99,99,500.02
+   * paid, ₹78,320 back, ₹99,21,180.02 carried), so a return on that cost
+   * already counts those proceeds — XIRR counts them on their own dates.
+   */
+  saleProceeds: number;
+  /**
    * WHY THIS RECORD CANNOT CARRY A DATED RETURN, in a sentence that is true of
    * this fund — or null where it can. Lower-case and full-stop-free, so each
    * measure can put it in its own sentence.
@@ -145,11 +161,25 @@ const PAYOUT_KINDS: FundPayout["kind"][] = ["income", "capital", "equalisation"]
 export function fundDatedRecords(
   dedupedRows: Position[],
   commitments: Commitment[],
+  /**
+   * The review's dated rows (`BOOK_REVIEW_FLOWS`). A line the review values is
+   * dated by the review and by nothing else: its account's capital record, if
+   * the statement carries one, describes the statement's holding, which the
+   * review's line replaced (Stage 10dh).
+   */
+  reviewFlows: readonly ReviewFlow[],
   accIdx: AccountIndex,
   money: Money,
   date: DateFmt,
 ): Map<string, FundDated> {
   const byAccount = new Map(commitments.map((c) => [c.accountId, c]));
+  const reviewBy = new Map<string, ReviewFlow[]>();
+  for (const r of reviewFlows) {
+    const k = `${r.accountId}|${r.securityKey}`;
+    const list = reviewBy.get(k) ?? [];
+    list.push(r);
+    reviewBy.set(k, list);
+  }
   const groups = new Map<string, Position[]>();
   for (const p of dedupedRows) {
     const g = groups.get(p.securityKey) ?? [];
@@ -166,7 +196,10 @@ export function fundDatedRecords(
     let unknownPayouts = false;
     let withoutAccount = 0;
     let redeemedAtCost = 0;
+    let saleProceeds = 0;
+    const sources = new Set<"statement" | "review">();
     for (const p of g) {
+      sources.add(p.review ? "review" : "statement");
       /**
        * THE DATE THE VALUE IS STRUCK ON, which is where the dated record must
        * close — the line's own `priceAsOf` before its account's as-of
@@ -182,6 +215,45 @@ export function fundDatedRecords(
       // money-weighted return on, so the record is a gap — never pooled.
       if (isValuedAtCost(p)) { gaps.push(AT_COST_RETURN); continue; }
       parts.push({ accountId: p.accountId, valuedAt, value: p.marketValue, cost: p.costBasis });
+      /**
+       * ── A LINE THE REVIEW VALUES IS DATED BY THE REVIEW ──────────────────
+       *
+       * Its Transactions sheet dates every purchase, sale and income row for
+       * the holding, and the review's cost is what those purchases paid less
+       * what the sales returned — checked here to the rupee, because a dated
+       * record that does not add up to the cost beside it would set a return
+       * on one sum of money against the value of another. A line the review
+       * dates nothing for (NSE) has no date the money went in, and says so.
+       */
+      if (p.review) {
+        const rf = reviewBy.get(`${p.accountId}|${p.securityKey}`) ?? [];
+        if (!rf.length) {
+          gaps.push("the family's consolidated review prints no dated purchase for this line, so there is no date the money went in");
+          unknownPayouts = true;
+          continue;
+        }
+        const bought = rf.filter((r) => r.kind === "purchase").reduce((t, r) => t + r.amount, 0);
+        const soldFor = rf.filter((r) => r.kind === "sale").reduce((t, r) => t + r.amount, 0);
+        if (p.costBasis == null || Math.abs(bought - soldFor - p.costBasis) > 1) {
+          gaps.push(`the review's dated purchases less its sale proceeds add to ${money(bought - soldFor)} against the ${p.costBasis == null ? "unreported" : money(p.costBasis)} cost it carries for this line, so the two sides of a return would describe different money`);
+          unknownPayouts = true;
+          continue;
+        }
+        const lateRow = rf.find((r) => r.date > valuedAt);
+        if (lateRow) {
+          gaps.push(`the review dates a ${lateRow.kind === "income" ? "payment" : lateRow.kind} on ${date(lateRow.date)}, after the ${date(valuedAt)} value it carries for this line, so that value would not hold it`);
+          unknownPayouts = true;
+          continue;
+        }
+        for (const r of rf) {
+          if (r.kind === "purchase") { calls.push({ date: r.date, amount: r.amount, kind: "call", accountId: p.accountId, label: "Purchase" }); continue; }
+          // Every row is on or before the value's date (refused above
+          // otherwise), so it is cash OUTSIDE the value, as a payout is.
+          paidBack.push({ date: r.date, amount: r.amount, kind: r.kind === "sale" ? "capital" : "income", accountId: p.accountId, label: r.kind === "sale" ? "Sale" : "Income" });
+        }
+        saleProceeds += soldFor;
+        continue;
+      }
       const c = byAccount.get(p.accountId);
       // A folio whose record stops short is UNKNOWN on the payout side too —
       // never "nil", which would say the fund paid nothing.
@@ -236,6 +308,7 @@ export function fundDatedRecords(
     const valuedAt = parts.map((x) => x.valuedAt).sort().pop() ?? null;
     out.set(key, {
       securityKey: key,
+      source: sources.size === 1 ? [...sources][0] : sources.size === 0 ? "statement" : "mixed",
       parts, calls, paidBack, afterValuation,
       payouts: unknownPayouts ? "unknown" : paidBack.length || afterValuation.length ? "measured" : "nil",
       paidOut, paidOutByKind,
@@ -244,6 +317,7 @@ export function fundDatedRecords(
       valuedAt,
       tranches: new Set(calls.map((c) => c.date)).size,
       redeemedAtCost,
+      saleProceeds,
       gap: gaps[0] ?? null,
     });
   }
@@ -279,11 +353,23 @@ export function pooledFundXirr(records: FundDated[]): {
   return { annualPct: annual, pct: mw.pct, annualised: mw.annualised, windowDays: mw.windowDays };
 }
 
-/** "income ₹28.2 L, principal ₹14.2 L, equalisation ₹8.7 L" — only the kinds that paid. */
+/**
+ * "income ₹28.2 L, principal ₹14.2 L, equalisation ₹8.7 L" — only the kinds
+ * that paid. A review line's capital back is a SALE, and its proceeds are
+ * called that; a statement's is a principal redemption.
+ */
 function payoutParts(d: FundDated, money: Money): string {
-  const words: Record<FundPayout["kind"], string> = { income: "income", capital: "principal returned", equalisation: "equalisation" };
+  const capital = d.source === "review" ? "sale proceeds" : d.source === "mixed" ? "capital returned" : "principal returned";
+  const words: Record<FundPayout["kind"], string> = { income: "income", capital, equalisation: "equalisation" };
   return PAYOUT_KINDS.filter((k) => d.paidOutByKind[k] !== 0).map((k) => `${words[k]} ${money(d.paidOutByKind[k])}`).join(", ");
 }
+
+/**
+ * WHAT ONE DATED PAYMENT IN IS CALLED. A drawdown fund CALLS its money; a line
+ * the family's review values was BOUGHT, on the dates its Transactions sheet
+ * prints. A row of both is a payment.
+ */
+const callWord = (d: FundDated) => (d.source === "review" ? "purchase" : d.source === "mixed" ? "payment" : "call");
 
 const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -296,12 +382,12 @@ const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  */
 function callsPhrase(d: FundDated): string {
   const n = d.calls.length;
-  const calls = `${n} call${n === 1 ? "" : "s"}`;
+  const calls = `${n} ${callWord(d)}${n === 1 ? "" : "s"}`;
   return n === d.tranches ? calls : `${calls} on ${d.tranches === 1 ? "one date" : `${d.tranches} dates`}`;
 }
 
 /** "One call", or "2 calls, all on one date" — only where every call shares one date. */
-const oneDateCalls = (d: FundDated) => (d.calls.length === 1 ? "one call" : `${d.calls.length} calls, all on one date`);
+const oneDateCalls = (d: FundDated) => (d.calls.length === 1 ? `one ${callWord(d)}` : `${d.calls.length} ${callWord(d)}s, all on one date`);
 
 /**
  * WHETHER ONE START AND ONE END DESCRIBE ALL THE MONEY — every call on one date
@@ -366,17 +452,32 @@ export function fundMeasuredReturn(
    * — so a PRINCIPAL redemption is inside it: the units were sold, at their
    * cost. Income and equalisation are not units, and XIRR is what counts them.
    */
-  const principalIn = d && d.redeemedAtCost > 0 ? d.paidOutByKind.capital : 0;
+  /**
+   * A REVIEW LINE'S SALE PROCEEDS ARE IN IT TOO, a different way: the review
+   * carries the line at what was paid less what the sales returned, so the
+   * return on that cost already counts them.
+   */
+  const statementPrincipal = d ? d.paidOutByKind.capital - d.saleProceeds : 0;
+  const principalIn = d ? d.saleProceeds + (d.redeemedAtCost > 0 ? statementPrincipal : 0) : 0;
   const outside = d ? d.paidOut - principalIn : 0;
+  const inWhy = d?.source === "review"
+    ? ` The ${money(principalIn)} of sale proceeds is in this figure — the review nets it against the cost it carries.`
+    : d?.source === "mixed"
+      ? ` The ${money(principalIn)} returned as principal or as sale proceeds is in this figure — FIFO books redeemed units at their cost, and the review nets its sale proceeds against the cost it carries.`
+      : ` The ${money(principalIn)} returned as principal is in this figure — FIFO books those units as redeemed at their cost.`;
   const paidNote = d && d.paidOut > 0 && d.valuedAt
     ? (principalIn > 0
-      ? ` The ${money(principalIn)} returned as principal is in this figure — FIFO books those units as redeemed at their cost.${outside > 0 ? ` The other ${money(outside)} it had paid back by the ${date(d.valuedAt)} valuation (${payoutParts({ ...d, paidOutByKind: { ...d.paidOutByKind, capital: 0 } }, money)}) is not — XIRR counts it.` : ""}`
+      ? `${inWhy}${outside > 0 ? ` The other ${money(outside)} it had paid back by the ${date(d.valuedAt)} valuation (${payoutParts({ ...d, paidOutByKind: { ...d.paidOutByKind, capital: 0 } }, money)}) is not — XIRR counts it.` : ""}`
       : ` The ${money(d.paidOut)} it had paid back by the ${date(d.valuedAt)} valuation (${payoutParts(d, money)}) is not in this figure — XIRR counts it.`)
     : "";
+  /** What the holding-period figure is struck on, for the source it came from. */
+  const hprBasis = d?.source === "review"
+    ? "The review's value against the cost it carries — what was paid, less any sale proceeds — not annualised, and not a return on Paid in."
+    : `FIFO: the gain on the units held plus the gain on any units redeemed, over what those units cost — the cost of the units held plus the cost of any redeemed — not annualised, and not a return on Paid in.${d?.source === "mixed" ? " The review's lines are struck on the cost it carries — what was paid, less any sale proceeds." : ""}`;
 
   if (measure === "absolute") {
     if (hpr == null) return { shown: false, tag, reason: noHpr };
-    return { shown: true, pct: hpr, tag, note: `FIFO: the gain on the units held plus the gain on any units redeemed, over what those units cost — the cost of the units held plus the cost of any redeemed — not annualised, and not a return on Paid in.${paidNote}` };
+    return { shown: true, pct: hpr, tag, note: `${hprBasis}${paidNote}` };
   }
 
   if (measure === "calendar") {
@@ -392,7 +493,7 @@ export function fundMeasuredReturn(
     if (d.tranches > 1) {
       return {
         shown: false, tag,
-        reason: `this fund was paid in ${callsPhrase(d)} between ${date(d.firstCall!)} and ${date(d.lastCall!)}, so there is no one purchase date to compound from — compounding from the first call would credit the later money with time it was not invested. XIRR weights each call by its own date`,
+        reason: `this fund was paid in ${callsPhrase(d)} between ${date(d.firstCall!)} and ${date(d.lastCall!)}, so there is no one purchase date to compound from — compounding from the first ${callWord(d)} would credit the later money with time it was not invested. XIRR weights each ${callWord(d)} by its own date`,
       };
     }
     if (!oneEntry(d)) {
@@ -418,7 +519,7 @@ export function fundMeasuredReturn(
     if (growth <= 0) return { shown: false, tag, reason: "this fund is worth nothing against its cost, so it has no compound rate — only a total loss" };
     return {
       shown: true, pct: (Math.pow(growth, YEAR_DAYS / days) - 1) * 100, tag,
-      note: `Annualised over the ${days} days from ${d.calls.length === 1 ? "the one call" : `the ${d.calls.length} calls, all`} on ${date(d.firstCall!)} to the ${date(d.valuedAt!)} valuation.`,
+      note: `Annualised over the ${days} days from ${d.calls.length === 1 ? `the one ${callWord(d)}` : `the ${d.calls.length} ${callWord(d)}s, all`} on ${date(d.firstCall!)} to the ${date(d.valuedAt!)} valuation.`,
     };
   }
 
@@ -430,14 +531,14 @@ export function fundMeasuredReturn(
     if (d.firstCall! < `${year}-01-01`) {
       return {
         shown: false, tag,
-        reason: `the family were already in this fund on 1 January ${year} (first call ${date(d.firstCall!)}), and no statement in this book values it on that date — the only valuation here is dated ${date(d.valuedAt!)}`,
+        reason: `the family were already in this fund on 1 January ${year} (first ${callWord(d)} ${date(d.firstCall!)}), and no statement in this book values it on that date — the only valuation here is dated ${date(d.valuedAt!)}`,
       };
     }
     // Entered during the year: no opening value is missing, because there was
     // none. Its return since the first call IS its year to date.
     const x = xirrOf(f, d, money, date);
     if (!x.shown) return { shown: false, tag, reason: x.reason };
-    return { shown: true, pct: x.pct, tag, note: `Entered on ${date(d.firstCall!)}, during ${year}, so its return since the first call is its year to date. ${x.note ?? ""}`.trim() };
+    return { shown: true, pct: x.pct, tag, note: `Entered on ${date(d.firstCall!)}, during ${year}, so its return since the first ${callWord(d)} is its year to date. ${x.note ?? ""}`.trim() };
   }
 
   // ── auto: the family's methodology ─────────────────────────────────────────
@@ -467,7 +568,7 @@ export function fundMeasuredReturn(
   return {
     shown: true, pct: hpr, tag: "HPR",
     note: days < YEAR_DAYS
-      ? `Paid in ${d.calls.length === 1 ? "one call" : `${d.calls.length} calls, all on one date,`} ${days} days before the ${date(d.valuedAt!)} valuation — under a year, so the methodology shows the holding-period return, not an annual rate.`
+      ? `Paid in ${d.calls.length === 1 ? `one ${callWord(d)}` : `${d.calls.length} ${callWord(d)}s, all on one date,`} ${days} days before the ${date(d.valuedAt!)} valuation — under a year, so the methodology shows the holding-period return, not an annual rate.`
       : `${sentence(oneDateCalls(d))}, and this book carries no payout record to confirm nothing came back, so the methodology shows the holding-period return.`,
   };
 }
@@ -484,7 +585,7 @@ function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date
   }
   const pooled = pooledFundXirr([d]);
   if (!pooled || pooled.pct == null) return { shown: false, tag, reason: "the dated flows do not solve to a rate" };
-  const flowsLine = `${d.calls.length} dated call${d.calls.length === 1 ? "" : "s"}${d.calls.length === d.tranches ? "" : ` on ${d.tranches === 1 ? "one date" : `${d.tranches} dates`}`}`
+  const flowsLine = `${d.calls.length} dated ${callWord(d)}${d.calls.length === 1 ? "" : "s"}${d.calls.length === d.tranches ? "" : ` on ${d.tranches === 1 ? "one date" : `${d.tranches} dates`}`}`
     + (d.paidOut > 0 ? `, ${money(d.paidOut)} paid back (${payoutParts(d, money)})` : ", nothing paid back")
     + ` and the ${date(d.valuedAt!)} value`;
   const after = d.afterValuation.reduce((t, x) => t + x.amount, 0);
@@ -494,7 +595,7 @@ function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date
   if (pooled.annualised) {
     return {
       shown: true, pct: pooled.pct, tag,
-      note: `Money-weighted across ${flowsLine} — annualised over the ${pooled.windowDays} days since the first call.${afterLine}`,
+      note: `Money-weighted across ${flowsLine} — annualised over the ${pooled.windowDays} days since the first ${callWord(d)}.${afterLine}`,
     };
   }
   // UNDER A YEAR. With every call on one date, every folio valued on one date
@@ -505,7 +606,7 @@ function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date
   if (oneEntry(d) && d.paidOut === 0 && f.returnPct != null) {
     return {
       shown: true, pct: f.returnPct, tag: "HPR",
-      note: `The money went in ${pooled.windowDays} days before the valuation — under a year, so an annual rate would be a projection. With ${d.calls.length === 1 ? "one call" : "every call on one date"} and nothing paid back, the money-weighted return over that window equals ${HPR_IS}.`,
+      note: `The money went in ${pooled.windowDays} days before the valuation — under a year, so an annual rate would be a projection. With ${d.calls.length === 1 ? `one ${callWord(d)}` : `every ${callWord(d)} on one date`} and nothing paid back, the money-weighted return over that window equals ${HPR_IS}.`,
     };
   }
   return {
@@ -561,10 +662,10 @@ export const PM_AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  * definition; only the sentence that would mislead is replaced.
  */
 export const PM_RETURN_HINTS: Partial<Record<ReturnMeasure, string>> = {
-  auto: "One call, held under a year: holding-period return. One call held a year or more: CAGR. More than one dated call, or cash paid back: XIRR. Each cell says which one it is.",
-  absolute: "FIFO: the gain on the units held plus the gain on any units redeemed, over what those units cost — not annualised, and not a return on Paid in. Income a fund has paid out is not in it — XIRR counts that.",
-  cagr: "The return on cost annualised — only for a fund paid in one call at least a year ago that has paid nothing back. A fund paid in several calls is money-weighted instead.",
-  xirr: "Money-weighted across every dated call, every dated payout and the value on the fund's statement date — each fund's own capital account prints every one.",
+  auto: "One call or purchase, held under a year: holding-period return. One, held a year or more: CAGR. More than one dated call or purchase, or cash paid back: XIRR. Each cell says which one it is.",
+  absolute: "The gain over what the holding cost, not annualised and not a return on Paid in — FIFO on a statement's lines, the review's own cost (what was paid, less any sale proceeds) on the review's. Income paid out is not in it — XIRR counts that.",
+  cagr: "The return on cost annualised — only for a holding paid for in one call or purchase at least a year ago that has paid nothing back. One paid for over several dates is money-weighted instead.",
+  xirr: "Money-weighted across every dated call or purchase, every dated payout or sale, and the value on its statement's or the review's date — a fund's own capital account, or the family's consolidated review, dates every one.",
   ytd: "The fund's own return since 1 January — measurable only where it was entered during the year, because no statement here values a fund on 1 January.",
   calendar: "A past calendar year's return — it needs a valuation at both ends of that year, which no statement in this book carries.",
 };
