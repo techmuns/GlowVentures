@@ -15,10 +15,21 @@
 //   3. the witness check itself, on constructed figures, so each rule (what is
 //      significant, the precisions it compares at, the one-unit tolerance) is
 //      pinned rather than described;
-//   4. the eighteen real exports: each re-read from its committed bytes
-//      reproduces the archived sheet, each is witnessed whole by its own PDF and
-//      NOT by the other account's PDF of the same report, each carries no facts,
-//      and neither the book nor its report ever cites one.
+//   4. every real export in the archive: each is witnessed whole by its own PDF
+//      and NOT by the other account's PDF of the same report, each carries no
+//      facts, and neither the book nor its report ever cites one. Where its own
+//      bytes are in the committed tree it is re-read from them and must
+//      reproduce the archived sheet exactly.
+//
+// THE COUNT IS DERIVED, NOT TYPED. It read `=== 18`, which is a figure that has
+// to be edited by hand every time a delivery brings an export — and a figure
+// edited by hand to make a suite pass is not a check. It walks the committed
+// `source/` tree instead (its zips included) for every spreadsheet sitting
+// beside a PDF of the same stem, and requires the archive to carry a witness of
+// each: a second path to the same set, so a merge that dropped one fails by
+// name. A delivery the family has asked to keep OUT of the repository is not in
+// that walk, so its exports are reported as carrying no committed bytes rather
+// than read as missing.
 //
 // Nothing here prints a fixture's text — the exports carry holder names and
 // addresses. A failure names the docKey (already a directory name in the
@@ -242,9 +253,78 @@ ok("a percentage cell is the figure without its sign", witnessCheck(sheet(["12.3
 const readJson = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const manifest = readJson(path.join(AUDIT, "manifest.json"));
 const witnessEntries = manifest.filter((m) => m.twinOf);
-ok("the archive carries the eighteen exports of the September 2026 delivery as witnesses",
-  witnessEntries.length === 18, `${witnessEntries.length} found`);
 ok("no two manifest entries share a docKey", new Set(manifest.map((m) => m.docKey)).size === manifest.length);
+
+const SHEET_EXT = /\.(xlsx|xls|csv)$/i;
+
+/**
+ * EVERY SPREADSHEET THE COMMITTED TREE CARRIES BESIDE A PDF OF THE SAME STEM.
+ *
+ * The second path to the archive's own witness set. It walks `source/` and the
+ * entries of every committed zip under it, and deliberately NOT
+ * `source/_extracted/`, which is gitignored and derived: a suite whose
+ * expectation depends on who unzipped is the hazard Stage 10bb already records,
+ * and the zip itself is what CI has.
+ *
+ * `beside a PDF of the same stem` is the rule `extract.mjs` pairs on, so this
+ * reaches the same set from the file system rather than from the archive. A
+ * spreadsheet with no PDF beside it is a document in its own right and is not
+ * expected here.
+ */
+function committedExports() {
+  const out = new Set();
+  const addDir = (files, prefix) => {
+    const pdfs = new Set(files.filter((f) => /\.pdf$/i.test(f)).map((f) => f.replace(/\.[^.]+$/, "").toLowerCase()));
+    for (const f of files) {
+      if (!SHEET_EXT.test(f)) continue;
+      if (pdfs.has(f.replace(/\.[^.]+$/, "").toLowerCase())) out.add(prefix + f);
+    }
+  };
+  const walk = (dir, rel) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.name.startsWith(".") || e.name === "_extracted") continue;
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) { walk(full, `${rel}${e.name}/`); continue; }
+      if (/\.zip$/i.test(e.name)) {
+        const buf = fs.readFileSync(full);
+        const names = listEntries(buf).filter((x) => !isMacMetadata(x.name)).map((x) => x.name);
+        const byDir = new Map();
+        for (const n of names) {
+          const d = n.includes("/") ? n.slice(0, n.lastIndexOf("/") + 1) : "";
+          if (!byDir.has(d)) byDir.set(d, []);
+          byDir.get(d).push(n.slice(d.length));
+        }
+        // `lib/bundle.mjs`'s caller MIRRORS the zip's own path under `source/`:
+        // a zip at `source/september-2026/X.zip` extracts to
+        // `source/_extracted/september-2026/X/<entry>`, and one at the top level
+        // to `source/_extracted/X/<entry>`. That is the fix Stage "A MONTHLY DROP
+        // REISSUES THE SAME FILENAMES" records, and a walk that used the stem
+        // alone would look for eight of these in a directory nothing writes.
+        const stem = e.name.replace(/\.zip$/i, "");
+        const under = `${rel.replace(/^source\//, "")}${stem}/`;
+        for (const [d, fns] of byDir) addDir(fns, `source/_extracted/${under}${d}`);
+        continue;
+      }
+    }
+    addDir(fs.readdirSync(dir).filter((f) => fs.statSync(path.join(dir, f)).isFile()), rel);
+  };
+  walk(path.join(ROOT, "source"), "source/");
+  return out;
+}
+
+{
+  const expected = committedExports();
+  const archived = new Set(witnessEntries.map((m) => m.sourcePath));
+  const missing = [...expected].filter((f) => !archived.has(f));
+  ok("every spreadsheet the committed tree carries beside a PDF is in the archive as a witness of it",
+    missing.length === 0, `${missing.length} missing, e.g. ${missing[0] ?? ""}`);
+  ok("…and that walk reaches exports at all, so the check is not passing over an empty set",
+    expected.size > 0, `${expected.size} found in source/`);
+  const uncommitted = witnessEntries.filter((m) => !expected.has(m.sourcePath));
+  console.log(`  ${witnessEntries.length} witness(es) in the archive; `
+    + `${witnessEntries.length - uncommitted.length} with committed bytes`
+    + `${uncommitted.length ? `, ${uncommitted.length} without` : ""}`);
+}
 
 const stem = (p) => path.basename(String(p)).replace(/\.[^.]+$/, "");
 const sheetsOf = (dir) => fs.readdirSync(dir).filter((f) => /^sheet-.*\.json$/.test(f)).sort().map((f) => readJson(path.join(dir, f)));
@@ -260,15 +340,36 @@ const IDENTITY = new Set(["docKey", "provider", "accountNo", "ownerSource", "acc
  * tree exists (CI).
  */
 function bytesOf(sourcePath) {
-  if (!sourcePath.startsWith("source/_extracted/")) return fs.readFileSync(path.join(ROOT, sourcePath));
+  if (!sourcePath.startsWith("source/_extracted/")) {
+    const f = path.join(ROOT, sourcePath);
+    // A DELIVERY THE FAMILY HAS ASKED TO KEEP OUT OF THE REPOSITORY. Its rows
+    // are archived and every other check below still runs on them, against the
+    // PDF's own archived text; only the re-read from bytes has nothing to read.
+    // Returning null says that, where throwing would read as a dropped file.
+    return fs.existsSync(f) ? fs.readFileSync(f) : null;
+  }
   const parts = sourcePath.replace(/^source\/_extracted\//, "").split("/");
   const zipPath = path.join(ROOT, "source", parts[0], `${parts[1]}.zip`);
   const entryName = parts.slice(2).join("/");
+  if (!fs.existsSync(zipPath)) return null;
   const buf = fs.readFileSync(zipPath);
   const entry = listEntries(buf).find((e) => !isMacMetadata(e.name) && e.name === entryName);
   if (!entry) throw new Error(`no entry ${entryName} in ${path.relative(ROOT, zipPath)}`);
   return readEntry(buf, entry);
 }
+
+/**
+ * THE FORMAT A NAME IMPLIES, WHICH IS NOT ALWAYS ITS EXTENSION.
+ *
+ * A genuine legacy `.xls` is an OLE2 compound document and the reader names it
+ * `biff`; `.xls` is ALSO what a broker calls an HTML table, which this corpus
+ * already carries elsewhere and the reader names `html-table`. So `.xls` accepts
+ * either, and the suite PRINTS which each file is rather than this file guessing
+ * — the guarantee is the next assertion, that the re-read reproduces the
+ * archived sheet exactly. An extension outside this table fails rather than
+ * passing on its own name: a new export format is a finding.
+ */
+const FORMATS_OF_EXT = { xlsx: ["xlsx"], xls: ["biff", "html-table"], csv: ["csv"] };
 
 const checked = new Map(); // docKey -> { sheets, pdfText, result }
 let figures = 0;
@@ -300,17 +401,26 @@ for (const m of witnessEntries) {
   // Re-read from its committed bytes: the archived sheet is what the reader
   // makes of the file, and nothing else.
   const sheets = sheetsOf(dir);
-  let wb;
-  try { wb = readSpreadsheet(bytesOf(doc.sourcePath)); } catch (e) { wb = { sheets: [], format: "?", error: e.message }; }
-  ok(`${label}: re-read from its committed bytes it is the format its name says`, wb.format === ext && !wb.error, `${wb.format} ${wb.error ?? ""}`);
-  ok(`${label}: …and reproduces the archived sheet exactly`,
-    same(wb.sheets.map((s) => ({ name: s.name, rows: s.rows })), sheets.map((s) => ({ name: s.name, rows: s.rows }))),
-    `${wb.sheets.length} sheet(s) re-read against ${sheets.length} archived`);
-  if (ext === "csv") {
-    try {
-      const raw = parseCsv(bytesOf(doc.sourcePath).toString("utf8").replace(/^﻿/, ""));
-      if (raw.some((r) => r.some((c) => /[\r\n]/.test(c)))) multiLineFieldSeen = true;
-    } catch { /* the reproduction check above already reports an unreadable file */ }
+  const bytes = bytesOf(doc.sourcePath);
+  if (bytes === null) {
+    // Stated once per export, so a suite reporting fewer checks than usual says
+    // why rather than looking like one that quietly stopped.
+    console.log(`  (${label}: its bytes are not in the committed tree, so the re-read is not run)`);
+  } else {
+    let wb;
+    try { wb = readSpreadsheet(bytes); } catch (e) { wb = { sheets: [], format: "?", error: e.message }; }
+    const want = FORMATS_OF_EXT[ext] ?? [ext];
+    ok(`${label}: re-read from its committed bytes it is a format its name can be`,
+      want.includes(wb.format) && !wb.error, `${wb.format} ${wb.error ?? ""} (expected ${want.join(" or ")})`);
+    ok(`${label}: …and reproduces the archived sheet exactly`,
+      same(wb.sheets.map((s) => ({ name: s.name, rows: s.rows })), sheets.map((s) => ({ name: s.name, rows: s.rows }))),
+      `${wb.sheets.length} sheet(s) re-read against ${sheets.length} archived`);
+    if (ext === "csv") {
+      try {
+        const raw = parseCsv(bytes.toString("utf8").replace(/^﻿/, ""));
+        if (raw.some((r) => r.some((c) => /[\r\n]/.test(c)))) multiLineFieldSeen = true;
+      } catch { /* the reproduction check above already reports an unreadable file */ }
+    }
   }
 
   // The witness: every significant figure is printed in its own PDF, and the
@@ -328,7 +438,7 @@ for (const m of witnessEntries) {
     `archive says ${stated ? `${stated[1]} of ${stated[2]}` : "nothing"}; re-check ${r.matched} of ${r.checked}`);
 }
 ok("Marathon's real export exercises the multi-line quoted field the parser exists for", multiLineFieldSeen);
-ok("the eighteen exports carry a few thousand figures between them, not a token handful", figures > 1000, `${figures} checked`);
+ok("the exports carry a few thousand figures between them, not a token handful", figures > 1000, `${figures} checked`);
 console.log(`  ${figures} significant figures across ${checked.size} exports, every one printed in its own PDF`);
 
 // THE CHECK DISCRIMINATES. The same report for the other account of the same

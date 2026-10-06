@@ -20,7 +20,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractLayout, passwordsFromEnv } from "./lib/layout.mjs";
-import { NON_STATEMENT_PROVIDERS, classify } from "./lib/classify.mjs";
+import { NON_STATEMENT_PROVIDERS, bankGuardCounts, classify } from "./lib/classify.mjs";
 import { splitBundle, isKnownReportType } from "./lib/bundle.mjs";
 import { readSpreadsheet, witnessCheck } from "./lib/sheet.mjs";
 import { makeDocument, makeDocKey, assertNormalized, deriveDocument, DOCUMENT_FIELDS } from "./lib/document.mjs";
@@ -36,6 +36,7 @@ import * as motilalDemat from "./providers/motilalDemat.mjs";
 import * as nsdlDemat from "./providers/nsdlDemat.mjs";
 import * as hdfcNsdl from "./providers/hdfcNsdl.mjs";
 import * as bankAdvice from "./providers/bankAdvice.mjs";
+import * as bankStatement from "./providers/bankStatement.mjs";
 import * as aifDistribution from "./providers/aifDistribution.mjs";
 import * as altFunds from "./providers/altFundStatements.mjs";
 import * as mutualFundFolio from "./providers/mutualFundFolio.mjs";
@@ -91,6 +92,17 @@ const EXTRACTORS = Object.fromEntries([
   // Two ICICI payment receipts. Read in full and attributed to nothing —
   // a receipt names no holder, no security and no folio.
   [bankAdvice.PROVIDER, bankAdvice],
+  // The family's own SAVINGS ACCOUNTS — three at HDFC Bank and two at ICICI
+  // Bank. Read in full and kept OUT of every book total: a bank balance is cash
+  // the family can spend, not a holding anybody manages, and whether it belongs
+  // beside the portfolio is a decision about their affairs rather than a
+  // parsing rule (see `excludedFromBook` in the reader, and §4c).
+  //
+  // Both names are here AND the report type below, for the same reason
+  // `investorReport` is keyed on its type: one layout per bank, and a bank that
+  // sends a statement this reader has never seen reaches it rather than reaching
+  // the demat or trade reader, which would read its narrations as securities.
+  ...bankStatement.PROVIDER.map((name) => [name, bankStatement]),
   // Four documents in three formats — two PDFs and two spreadsheets — for one
   // self-directed demat account. The only lot register in the drop.
   [lkp.PROVIDER, lkp],
@@ -130,6 +142,13 @@ const EXTRACTORS = Object.fromEntries([
  */
 const BY_REPORT_TYPE = {
   [investorReport.REPORT_TYPE]: investorReport,
+  // ...and a second that earns it the other way round: a personal BANK
+  // STATEMENT is one document type across two banks, and the classifier's
+  // backstop types a third bank's layout as one before any provider rule has
+  // named the bank. Keyed on the type, such a document reaches this reader,
+  // which refuses it and says which columns it could not find; keyed on the
+  // provider it would reach no reader at all.
+  [bankStatement.REPORT_TYPE]: bankStatement,
 };
 
 /**
@@ -1137,6 +1156,20 @@ async function main() {
   } else {
     const by = (s) => docs.filter((d) => d.status === s).length;
     console.log(`Extracted ${docs.length} document(s): ${by("ok")} ok, ${by("partial")} partial, ${by("failed")} failed.`);
+    // PRINTED EVEN AT ZERO, AND ZERO IS THE CORRECT ANSWER. `classify()`
+    // resolves a savings statement before either PMS house matcher is reached,
+    // so neither matcher's bank guard fires on the live path however many bank
+    // statements a drop carries; a non-zero count means that order changed and
+    // those guards are now the only thing between a narration naming a manager
+    // and a misfile. A guard that only speaks when it fires is
+    // indistinguishable, on a clean run, from one that was quietly deleted —
+    // the rule `build-book`'s identity guards already follow.
+    const guards = bankGuardCounts();
+    console.log(
+      `  bank-statement guards reached: match360One ${guards.match360One}, ` +
+      `matchGoldstandard ${guards.matchGoldstandard} — 0 is correct; ` +
+      `a savings statement is resolved before either matcher.`,
+    );
     if (report.summary.totalMismatches) console.log(`  ${report.summary.totalMismatches} row-sum vs printed-total mismatch(es).`);
     if (report.summary.crossReportDeltas) console.log(`  ${report.summary.crossReportDeltas} cross-report delta(s).`);
     if (report.summary.suspectedDuplicates) console.log(`  ${report.summary.suspectedDuplicates} suspected duplicate holding(s) across owners — NOT deduped.`);

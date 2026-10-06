@@ -118,6 +118,10 @@ single entry in `shared/owners.mjs`, if the family says it should be.
 
 Together they carry **32,86,904.6** across 4 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
 
+## The family's own bank accounts
+
+_None — no savings-account statement is in this drop._
+
 ## Ring-fenced: the promoter holding, on its own page
 
 Carried in the archive and OUT of every total above — the consolidated market

@@ -28,12 +28,15 @@
 //          it whose first line carries a comma, after the ZIP, OLE and HTML
 //          signatures have all been ruled out.
 //
-//   .xls   AND SOMETIMES IT IS NOT A LIE. The October 2026 delivery brought six
+//   .xls   AND SOMETIMES IT IS NOT A LIE. The October 2026 delivery brought
 //          GENUINE legacy BIFF workbooks — an OLE compound file, `D0 CF 11 E0` —
 //          beside the bank statements they export: HDFC Bank's and ICICI Bank's
 //          own "download as Excel". They are read through SheetJS (`xlsx`, the
 //          library the AMFI harvester already uses for the same format), and
 //          read for their stored VALUES. See `readBiff` for why that matters.
+//          HOW MANY is deliberately not written here: that delivery is not in
+//          this repository, so a count would be a figure the next reader cannot
+//          check against anything. `npm run coverage:source` counts them.
 //
 // Everything returns the same shape — a grid of trimmed strings — so a provider
 // reads a sheet the way it reads a PDF page: by locating a header row and

@@ -41,6 +41,31 @@ const REAL_FILE = "Demat Holding Query Stmt_5743_06-10-2026 11.31.PDF";
 const REAL_PATH = path.join(ROOT, "source/october-2026", REAL_FILE);
 /** The bytes the client sent, from the delivery's own ZIP. */
 const REAL_SHA256 = "2bd1aec43c2ab00f08a67e68fcf251d5be158c2bb7ed5178d37e282146cdc918";
+/**
+ * THE DELIVERY IS NOT IN THE REPOSITORY, SO SECTION 6 IS SKIPPED RATHER THAN
+ * FAILED — AND NEVER PASSED.
+ *
+ * `source/october-2026/` holds the family's own bank and demat statements, and
+ * the family asked for it to stay out of the tree. So on this tree, and in CI,
+ * there are no bytes to read. Three ways of handling that, and only one of them
+ * is honest:
+ *
+ *   • read unconditionally — the suite dies on ENOENT, and a tree with nothing
+ *     wrong with it reports a failing reader;
+ *   • assert the file exists — the same failure wearing a check's name, so every
+ *     run reports FAIL for a file nobody lost;
+ *   • read where it is there and SKIP where it is not, saying so and saying what
+ *     the skip costs. That is this.
+ *
+ * What it costs is stated rather than glossed: sections 1-5 run on the SYNTHETIC
+ * fixture, so without section 6 nothing on this tree checks that the fixture is
+ * the real statement rather than an invention the reader happens to agree with.
+ * That claim was measured where the bytes were present, and the sha256 above is
+ * what makes the measurement repeatable: wherever the file IS there, the
+ * identity check is a HARD assertion, so the suite can never read a different
+ * document and report the fixture verified against it.
+ */
+const REAL_BYTES = fs.existsSync(REAL_PATH) ? fs.readFileSync(REAL_PATH) : null;
 
 let pass = 0, fail = 0;
 const ok = (label, cond, detail = "") => {
@@ -332,10 +357,16 @@ refuses("one ISIN printed twice at two rates",
 }
 
 // ── 6. THE REAL STATEMENT, END TO END ───────────────────────────────────────
-{
+if (REAL_BYTES === null) {
+  console.log("  (the statement's bytes are not in the committed tree, so the end-to-end");
+  console.log("   section is not run · the fixture is checked against the reader above, and");
+  console.log("   against the statement itself only where the delivery is present)");
+} else {
+  // THE BYTES ARE THE DOCUMENT. A suite that read whatever sits at that path
+  // could verify the fixture against another statement and report it verified.
   ok("the committed statement is the file the client sent",
-    fs.existsSync(REAL_PATH) && crypto.createHash("sha256").update(fs.readFileSync(REAL_PATH)).digest("hex") === REAL_SHA256);
-  const layout = await extractLayout(new Uint8Array(fs.readFileSync(REAL_PATH)));
+    crypto.createHash("sha256").update(REAL_BYTES).digest("hex") === REAL_SHA256);
+  const layout = await extractLayout(new Uint8Array(REAL_BYTES));
   ok("it carries a native text layer", !layout.error && layout.textSource !== "ocr", layout.error ?? "");
   const text = layout.pages.map((p) => (p.rows ?? []).map((r) => r.cells.map((c) => c.text).join(" ")).join("\n")).join("\n");
   const c = classify({ fileName: REAL_FILE, text });

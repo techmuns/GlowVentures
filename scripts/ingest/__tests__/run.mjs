@@ -34,6 +34,7 @@ const SUITES = [
   { name: "buoyantSnap", file: "buoyantSnap.test.mjs", required: true },
   { name: "sheetWitness", file: "sheetWitness.test.mjs", required: true },
   { name: "septemberAudit", file: "septemberAudit.test.mjs", required: true },
+  { name: "bankStatement", file: "bankStatement.test.mjs", required: true },
   // Exit 2 = BLOCKED: the real statements are not present. Reported, not failed.
   { name: "golden",   file: "golden.mjs",        required: false },
 ];

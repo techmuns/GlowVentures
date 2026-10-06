@@ -2396,6 +2396,29 @@ function build(archived) {
   const unclassified = new Map();
   /** Accounts read in full and deliberately left OUT — see excludedFromBook. */
   const excludedAccounts = [];
+  /**
+   * THE FAMILY'S OWN BANK ACCOUNTS — read in full, in no total, and reported
+   * with the four figures their statements print.
+   *
+   * They are in `excludedAccounts` too, which is what keeps them out of the
+   * book; this carries what that table cannot. Its value column is headed
+   * "Value on its own statement" and is summed into one figure across every
+   * excluded account, which for a portfolio is a market value. A bank balance
+   * is not one, and adding the two under that heading would be a total over two
+   * different kinds of thing — §"a total must tie to its own columns". So the
+   * balance is reported here, under its own heading, beside the debits and
+   * credits that produced it.
+   *
+   * IT REACHES THE REPORT AND NOT THE BOOK, and that was measured rather than
+   * reasoned: neither this nor `excludedAccounts` is emitted to `glowData.ts`,
+   * so a savings statement in the archive changes NOT ONE BYTE of it. Run with
+   * one synthetic HDFC statement added to a scratch copy of the archive, every
+   * export of the emitted book — `BOOK_SUMMARY` included, `accountsCount` with
+   * it — is byte-identical to the committed one. That is the whole safety
+   * argument for landing this delivery, so it is a measurement here rather than
+   * a claim in a stage note.
+   */
+  const bankAccounts = [];
   /** Positions whose lot register does not account for the units held — no split. */
   const splitUnreconciled = [];
   /** Positions whose statement cost FIFO over the fund's own unit record restates — named in the report. */
@@ -2507,9 +2530,34 @@ function build(archived) {
        * it is kept for the next one a drop cannot attribute.
        */
       const heldRows = group.flatMap((d) => d.holdings ?? []);
-      const valueWhy = value === null && heldRows.some((h) => isNum(h.lastMovementRate) && h.lastMovementRate > 0)
-        ? `its statement prints ${heldRows.length} holding(s) as quantities, with the price of each one's last depository movement rather than a valuation, so it states no value`
-        : null;
+      /**
+       * A BANK ACCOUNT STATES A BALANCE AND NOT A VALUE, and the two must not
+       * share a column. `value` stays null — it is the market value of what an
+       * account HOLDS, and a savings account holds nothing — and the balance is
+       * reported in `bankAccounts` below. Without this the excluded table would
+       * read "—" for an account whose statement prints its balance four times,
+       * which is a dash standing where a figure exists.
+       */
+      const bankDocs = group.filter((d) => d.reportType === "bank-statement");
+      for (const d of bankDocs) {
+        bankAccounts.push({
+          accountId, provider, accountNo,
+          owner: d.owner ?? null,
+          periodFrom: d.flows?.periodFrom ?? d.periodFrom ?? null,
+          periodTo: d.flows?.periodTo ?? d.periodTo ?? null,
+          openingBalance: isNum(d.flows?.openingBalance) ? d.flows.openingBalance : null,
+          closingBalance: isNum(d.flows?.closingBalance) ? d.flows.closingBalance : null,
+          debits: isNum(d.flows?.debits) ? d.flows.debits : null,
+          credits: isNum(d.flows?.credits) ? d.flows.credits : null,
+          rows: (d.cashFlows ?? []).filter((c) => c.kind === "bank-statement").length,
+          status: d.status ?? null,
+        });
+      }
+      const valueWhy = value === null && bankDocs.length
+        ? "it is a bank account rather than a holding, so its statement states no market value; its balance is in the bank-account section below"
+        : value === null && heldRows.some((h) => isNum(h.lastMovementRate) && h.lastMovementRate > 0)
+          ? `its statement prints ${heldRows.length} holding(s) as quantities, with the price of each one's last depository movement rather than a valuation, so it states no value`
+          : null;
       excludedAccounts.push({ accountId, provider, accountNo, owner: group.map((d) => d.owner).find(Boolean) ?? null, value, valueWhy, reason: excluded });
       notes.push(`account ${accountNo} (${provider}) is NOT in the book: ${excluded}`
         + (value !== null ? ` Value on its own statement: ${value.toLocaleString("en-IN")}.` : "")
@@ -4350,7 +4398,7 @@ function build(archived) {
     capitalMoves, positionTranches, shareMovements,
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
-    excludedAccounts, unvaluedHoldings, separateInvestments,
+    excludedAccounts, bankAccounts, unvaluedHoldings, separateInvestments,
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
     // depend on map iteration, and the book must regenerate byte-identically.
@@ -4727,6 +4775,80 @@ function report(book) {
     if (unstated.length) {
       L.push("");
       L.push(`${unstated.length} more account(s) state no value on their own statement, and are named in the table with why.`);
+    }
+  }
+  L.push("");
+  /**
+   * THE FAMILY'S OWN BANK ACCOUNTS — READ IN FULL, AND IN NO TOTAL ABOVE.
+   *
+   * It is its own section rather than a column of the table above it, because
+   * that table's value column is headed "Value on its own statement" and is
+   * SUMMED into one figure: a market value. A bank balance is not one, and
+   * adding it there would print a total that does not tie to its own columns.
+   *
+   * It carries the four figures each statement prints and NOT ONE NARRATION.
+   * A row's description names whoever was paid, and this file is read by
+   * anybody who opens the repository.
+   */
+  L.push("## The family's own bank accounts");
+  L.push("");
+  if (!book.bankAccounts?.length) {
+    L.push("_None — no savings-account statement is in this drop._");
+  } else {
+    L.push("Read COMPLETELY, and in **no total above** — not in the consolidated value, not in");
+    L.push("Cash, and not as capital. This book's Cash is the cash sleeve a manager or a");
+    L.push("depository reports INSIDE an investment account; a household account is a different");
+    L.push("kind of money, and summing one into Cash would move every allocation weight and every");
+    L.push("return denominator on a decision nobody has made. **Whether these balances should be");
+    L.push("counted is the family's to answer**, and this section is here so the figures are");
+    L.push("stated rather than silently dropped.");
+    L.push("");
+    L.push("Every figure below is one the statement PRINTS. The reader publishes a tape only");
+    L.push("where the running balance, both printed totals, the Dr/Cr counts and the closing");
+    L.push("balance all reconcile to the paisa; a statement that does not reconcile publishes no");
+    L.push("rows at all and says which check failed. Where a bank prints no opening balance the");
+    L.push("cell says so — the figure the reader chained from is in that document's own `summary`");
+    L.push("sheet, labelled as derived from the first row.");
+    L.push("");
+    L.push("| Account | Bank | Holder | Period | Opening | Debits | Credits | Closing | Rows |");
+    L.push("| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |");
+    /**
+     * TWO DECIMALS, ALWAYS, which the rest of this report does not do — and the
+     * paragraph above is why: it says every figure here is one the statement
+     * PRINTS, and `toLocaleString` drops a trailing zero, so a closing balance
+     * the bank prints as 85,500.50 rendered 85,500.5 and an opening of
+     * 1,00,000.00 rendered 1,00,000. A portfolio market value elsewhere in this
+     * file is a derived figure to the rupee and loses nothing that way; a bank
+     * balance is quoted to the paisa, and the tie-out that published it is
+     * struck on the paisa, so the paise belong on screen.
+     *
+     * Found by RENDERING this section against a synthetic statement: the
+     * committed archive carries none, so the branch had never run. One
+     * formatter for the table and the total under it, rather than one each.
+     */
+    const money = (v) => (isNum(v)
+      ? r2(v).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : "—");
+    for (const b of book.bankAccounts) {
+      const period = b.periodFrom && b.periodTo ? `${b.periodFrom} → ${b.periodTo}` : (b.periodTo ?? b.periodFrom ?? "—");
+      const opening = isNum(b.openingBalance) ? money(b.openingBalance) : "not printed";
+      const rows = b.rows === 0 ? "none published" : b.rows.toLocaleString("en-IN");
+      L.push(`| ${b.accountNo ?? "—"} | ${b.provider} | ${b.owner ?? "—"} | ${period} | ${opening} | `
+        + `${money(b.debits)} | ${money(b.credits)} | ${money(b.closingBalance)} | ${rows} |`);
+    }
+    const published = book.bankAccounts.filter((b) => b.rows > 0);
+    const held = published.filter((b) => isNum(b.closingBalance));
+    if (held.length) {
+      L.push("");
+      L.push(`Their closing balances come to **${money(sum(held.map((b) => b.closingBalance)))}** `
+        + `across ${held.length} account(s), and that figure is in nothing above.`);
+    }
+    const refused = book.bankAccounts.filter((b) => b.rows === 0);
+    if (refused.length) {
+      L.push("");
+      L.push(`${refused.length} statement(s) published no rows: the tie-out did not reconcile, so the reader `
+        + "published nothing rather than a partial tape, which would read as a complete one. Each names the "
+        + "check that failed in `docs/EXTRACTION-REPORT.md`.");
     }
   }
   L.push("");
