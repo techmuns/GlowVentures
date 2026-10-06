@@ -16,6 +16,16 @@ export {
 } from "../../shared/owners.mjs";
 
 import { OWNERS, ownerById } from "../../shared/owners.mjs";
+import { BOOK_OWNERS } from "@/data/glowData";
+
+/**
+ * The names the BOOK gives its holders. The registry above names every member
+ * and trust; the book adds exactly one holder the registry does not carry —
+ * the part of a review line no document names a holder for (Stage 10dh,
+ * `shared/reviewHolders.mjs`). Read from the generated list rather than typed
+ * here, so the page and the generator cannot spell it two ways.
+ */
+const BOOK_OWNER_NAMES = new Map(BOOK_OWNERS.map((o) => [o.ownerId, o.displayName]));
 
 /**
  * Display name for an ownerId.
@@ -26,7 +36,7 @@ import { OWNERS, ownerById } from "../../shared/owners.mjs";
  */
 export function ownerDisplayName(ownerId: string | null | undefined): string {
   if (!ownerId) return "Unattributed";
-  return ownerById(ownerId)?.displayName ?? ownerId;
+  return ownerById(ownerId)?.displayName ?? BOOK_OWNER_NAMES.get(ownerId) ?? ownerId;
 }
 
 /** Every canonical owner, alphabetical — for filters and pick-lists. */
