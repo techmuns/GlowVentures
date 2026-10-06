@@ -11,10 +11,12 @@
 // cannot tell "no custodian sent this" from "the dashboard lost it" assumes the
 // second. `costWhy` names the custodian on a cost cell for exactly this reason.
 //
-// NOTHING HERE IS A FIGURE. The review is not a source (§"the consolidated
-// review workbook is not a source — by decision"), so no value and no quantity
-// of its own crosses over; `REVIEW_GAPS` carries a name, a custodian and two
-// sentences, and its generator throws rather than emit a number.
+// NOTHING HERE IS A FIGURE. Since Stage 10dh the review is the book's source for
+// private-market lines and a cross-check for everything else, and every line on
+// this list is a listed share or a fund — a private-market line is a book row.
+// So no value and no quantity of its own crosses over; `REVIEW_GAPS` carries a
+// name, a custodian and two sentences, and its generator throws rather than
+// emit a number.
 import { BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { securityKeyOf } from "@/lib/securityKey";
 import { schemeNameFor } from "@/lib/schemeLabel";

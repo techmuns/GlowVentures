@@ -181,8 +181,8 @@ for (const p of carried) {
 }
 
 console.log("\n── and the family's own review agrees with the book, not with the old figure ──");
-// The review is TEST-ONLY — never a source (CLAUDE.md, "the consolidated review
-// workbook is not a source — by decision"). It is here as the independent
+// For a listed fund like Buoyant the review is not a source — it is the book's
+// source for private-market lines alone (Stage 10dh). It is here as the independent
 // witness it has always been allowed to be: the family's own record of what
 // they paid, product by product, cited through the taxonomy map rather than
 // typed.

@@ -3360,7 +3360,8 @@ export function PortfolioMonitor() {
               reported by no statement in `source/`, so the book is right to carry
               nothing and the screen was wrong to say nothing. `AbsentFromBook`
               renders only where a review line answers the search, and never a
-              figure: the review is a cross-check, not a source. */}
+              figure: for a listed share or a fund the review is a cross-check,
+              not a source (it is the source for private-market lines only). */}
           <MultiSelectFilter options={securityNames} selected={selected} onChange={setSelected} dense align="right"
             allLabel="All holdings" unit="holdings" placeholder="Search holdings…" className="w-56 max-w-full"
             emptyNote={(q) => <AbsentFromBook query={q} className="mt-2" />} />

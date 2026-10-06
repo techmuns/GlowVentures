@@ -14,7 +14,7 @@
 // `build-book` splices the result in after the ring-fence and nowhere else.
 
 import { loadReviewPrivate, REVIEW_AS_OF } from "./reviewPrivateRead.mjs";
-import { REVIEW_PRIVATE_JOIN, DISPLAY_NAME } from "../../shared/reviewPrivateJoin.mjs";
+import { REVIEW_PRIVATE_JOIN, REFUSED, DISPLAY_NAME } from "../../shared/reviewPrivateJoin.mjs";
 import {
   PRIVATE_INVESTMENT_HOLDERS, PRIVATE_INVESTMENT_ELSEWHERE, VALUED_HOLDERS, SUPERSEDED,
   FRESHER_STATEMENT, REVIEW_ACCOUNT_PREFIX, NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME,
@@ -96,6 +96,24 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     if (h.isin && !isinOf.has(h.securityKey)) isinOf.set(h.securityKey, h.isin);
     (s.kind === "position" ? removePositions : removeUnvalued).add(id);
     superseded.push({ ...base, security: h.security, quantity: h.quantity ?? null, marketValue: s.kind === "position" ? r2(h.marketValue) : null });
+  }
+
+  // ── 1b. The joins the family's documents refuse ─────────────────────────────
+  // `REFUSED` names near misses a reader might join by eye — a different company,
+  // or a different instrument of the same one. With the review now the book's
+  // source, joining one would put the review's line on a statement row that is
+  // not the same holding, and take that row out of the book as superseded. So a
+  // refused pair may appear in no holder entry and no superseded entry, and a
+  // refusal whose line the review no longer prints once is stale and refuses too.
+  const reviewLines = [...r.privateInvestments.lines, ...r.peFunds.lines, ...r.unlisted.lines, ...r.credit.lines];
+  for (const x of REFUSED) {
+    const hits = reviewLines.filter((l) => x.line.test(l.product));
+    if (hits.length !== 1) fail(`refused join ${x.line} matches ${hits.length} review lines, not one`);
+    const product = hits[0].product;
+    const joined = [...PRIVATE_INVESTMENT_HOLDERS, ...VALUED_HOLDERS].find((h) => h.key === x.key && h.line.test(product));
+    if (joined) fail(`${displayName(product)}: the holder table joins it to ${x.key}, a join REFUSED names — ${x.why}`);
+    const dropped = superseded.find((e) => e.securityKey === x.key && e.reviewLine === displayName(product));
+    if (dropped) fail(`${displayName(product)}: ${x.key} on ${dropped.accountId} is superseded by it, a join REFUSED names — ${x.why}`);
   }
 
   // ── 2. The Transactions tab, per holder ────────────────────────────────────

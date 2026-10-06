@@ -95,11 +95,13 @@ export function AbsentCell({ reason }: { reason?: string }) {
  * holdings match “BSE”." — indistinguishable, to the reader, from the dashboard
  * having lost a ₹15 Cr position it never had.
  *
- * NO FIGURE IS SHOWN AND NONE IS AVAILABLE TO SHOW. The review is not a source,
- * so `ReviewGap` carries no value and no quantity at all (§"the consolidated
- * review workbook is not a source — by decision"). What renders is the name the
- * review prints, where it says the holding sits, and the document that would
- * let this book carry it properly.
+ * NO FIGURE IS SHOWN AND NONE IS AVAILABLE TO SHOW. Since Stage 10dh the review
+ * is the book's source for PRIVATE-MARKET lines and a cross-check for every
+ * other line — and every line this note can name is a listed share or a fund,
+ * because a private-market line is a book row and a search finds it. So
+ * `ReviewGap` carries no value and no quantity at all. What renders is the name
+ * the review prints, where it says the holding sits, and the document that
+ * would let this book carry it properly.
  *
  * Renders nothing when the search names no such line, so an ordinary typo still
  * gets the caller's own plain empty state rather than a paragraph about the
@@ -158,8 +160,8 @@ export function AbsentFromBook({ query, className = "" }: { query: string; class
           it is its hover: this comes from the family's own review, it is dated,
           and no figure of its own is on this screen. */}
       <div className="mt-2 border-t border-ink-700/70 pt-1.5 text-[11px] leading-snug text-slate-500"
-        title={`From the family's consolidated review as at ${REVIEW_AS_OF}, which is a cross-check and not a source — so this book publishes no value or quantity for it until a statement arrives.`}>
-        Review as at {REVIEW_AS_OF} · a cross-check, not a source
+        title={`From the family's consolidated review as at ${REVIEW_AS_OF}. The review is this book's source for private-market lines only; for a line like this it is a cross-check, so this book publishes no value or quantity for it until a statement arrives.`}>
+        Review as at {REVIEW_AS_OF} · a cross-check for these lines
       </div>
     </div>
     )}
