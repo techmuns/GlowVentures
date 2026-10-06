@@ -62,7 +62,10 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   const notes = [];
 
   // ── 1. Which statement rows the review replaces ────────────────────────────
-  const removePositions = new Set(), removeUnvalued = new Set(), removeWindows = new Set();
+  // A window is named by its key, or by the ISIN its own tape prints — the second
+  // for a window whose key is the depository's own spelling (`build-book` resolves
+  // it, and refuses unless exactly one window on that account carries the ISIN).
+  const removePositions = new Set(), removeUnvalued = new Set(), removeWindows = [];
   const isinOf = new Map();
   const superseded = [];
   const reviewLineFor = (key) => {
@@ -78,9 +81,14 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   };
   for (const s of SUPERSEDED) {
     const id = `${s.accountId}|${s.securityKey}`;
-    const reviewLine = reviewLineFor(s.securityKey);
-    const base = { accountId: s.accountId, securityKey: s.securityKey, kind: s.kind, reviewLine };
-    if (s.kind === "window") { removeWindows.add(id); superseded.push({ ...base, security: null, quantity: null, marketValue: null }); continue; }
+    const reviewLine = reviewLineFor(s.line ?? s.securityKey);
+    const base = { accountId: s.accountId, securityKey: s.securityKey ?? null, kind: s.kind, reviewLine };
+    if (s.kind === "window") {
+      const entry = { ...base, security: null, quantity: null, marketValue: null };
+      removeWindows.push({ accountId: s.accountId, securityKey: s.securityKey ?? null, isin: s.isin ?? null, entry });
+      superseded.push(entry);
+      continue;
+    }
     const pool = s.kind === "position" ? positions : unvalued;
     const hits = pool.filter((p) => p.accountId === s.accountId && p.securityKey === s.securityKey);
     if (hits.length !== 1) fail(`superseded ${s.kind} ${id} is in the book ${hits.length} times, not once`);
@@ -132,6 +140,11 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   const owners = new Set();
   const rowOwner = new Map();
   const fresherOf = (key, owner) => FRESHER_STATEMENT.filter((f) => f.key === key && f.owner === owner).map((f) => f.text);
+  // A KEY IS ITS NAME'S, OR A STATEMENT ROW'S (CLAUDE.md §1). A key typed by hand
+  // that is neither joins nothing: the review-gap reconciler, the search and every
+  // page that finds a holding by its name miss it — which is how the K M Global
+  // credit line stood on the gap list while the book carried it (Stage 10dh).
+  const statementKeys = new Set([...positions, ...unvalued].map((p) => p.securityKey));
   // THE REVIEW'S OWN CLASSIFICATION OF EACH LINE (Stage 10dh). Its head tab
   // files the PE funds and the Private Equity block under Alternate, unlisted
   // shares under Equity and the K M Global loan under Debt; the basket is the
@@ -148,6 +161,9 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     ? { assetClass: "Equity", basket: UNLISTED_BASKET[key] ?? fail(`unlisted line ${key} carries no basket code here`) }
     : REVIEW_TAXONOMY[tab] ?? fail(`no review classification for tab ${tab}`);
   const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab }) => {
+    if (key !== securityKeyOf(security) && !statementKeys.has(key)) {
+      fail(`${security}: key ${key} is neither its name's own (${securityKeyOf(security)}) nor a statement row's`);
+    }
     const accountId = account ?? `${REVIEW_ACCOUNT_PREFIX}${owner}`;
     if (!account) owners.add(owner);
     const fresher = fresherOf(key, owner);
@@ -168,7 +184,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       priceAsOf: asOf ?? REVIEW_AS_OF, accruedIncome: null, dividendReceived: null, positionIrrPct: null,
       dedupeGroup: undefined, alsoReportedUnder: undefined,
       review: true, valuedAtCost: atCost ? true : undefined, reviewTaxonomy: taxonomyOf(tab, key),
-      reviewNote: `${note}${fresher.length ? ` A newer statement says otherwise: ${fresher.join("; ")}.` : ""}`,
+      reviewNote: `${note}${fresher.length ? ` A statement says otherwise: ${fresher.join("; ")}.` : ""}`,
     });
   };
 

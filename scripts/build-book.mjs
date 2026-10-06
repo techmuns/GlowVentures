@@ -4415,15 +4415,27 @@ function build(archived) {
     }
   }
   const shareMovements = shareMovementsFrom(docs, [...positions, ...polycab], accounts, notes, unvaluedHoldings);
-  for (const k of review?.removeWindows ?? []) {
-    if (!(k in shareMovements)) throw new Error(`build-book: the review supersedes the movement window ${k}, which is not in the book`);
+  for (const r of review?.removeWindows ?? []) {
+    // A WINDOW GOES WITH THE LINE IT IS THE QUANTITY ACCOUNT OF. Named by its key,
+    // or — where the key is only the depository's own spelling — by the ISIN its
+    // tape prints, on the one account named. Anything but exactly one window
+    // refuses the build: a supersede that took the wrong window, or none, would
+    // leave a line counted twice or a movement nobody can find.
+    const keys = r.isin
+      ? Object.keys(shareMovements).filter((k) => shareMovements[k].accountId === r.accountId
+        && (shareMovements[k].isin ?? "").trim().toUpperCase() === r.isin.toUpperCase())
+      : [`${r.accountId}|${r.securityKey}`].filter((k) => k in shareMovements);
+    if (keys.length !== 1) {
+      throw new Error(`build-book: the review supersedes the movement window ${r.accountId}|${r.securityKey ?? `isin ${r.isin}`}, `
+        + `which is in the book ${keys.length} times, not once`);
+    }
     // What the depository printed stays named: its own spelling, and the units it
     // closed the window at (null where the tape printed no closing).
-    const w = shareMovements[k];
-    const entry = review.superseded.find((x) => x.kind === "window" && `${x.accountId}|${x.securityKey}` === k);
-    entry.security = w.security ?? entry.reviewLine;
-    entry.quantity = w.closing ?? null;
-    delete shareMovements[k];
+    const w = shareMovements[keys[0]];
+    r.entry.securityKey = w.securityKey;
+    r.entry.security = w.security ?? r.entry.reviewLine;
+    r.entry.quantity = w.closing ?? null;
+    delete shareMovements[keys[0]];
   }
 
   return {
@@ -4775,10 +4787,10 @@ function report(book) {
     L.push("| --- | --- | --- | ---: | --- |");
     for (const s of book.reviewSuperseded) L.push(`| ${s.accountId} | ${s.security ?? s.securityKey} | ${s.kind} | ${s.quantity ?? "—"} | ${s.reviewLine} |`);
     L.push("");
-    const fresher = book.positions.filter((p) => p.review && /A newer statement says otherwise/.test(p.reviewNote));
-    L.push(`Where a newer statement disagrees, the review is followed and the statement named (${fresher.length} rows):`);
+    const fresher = book.positions.filter((p) => p.review && /A statement says otherwise/.test(p.reviewNote));
+    L.push(`Where a statement disagrees, the review is followed and the statement named (${fresher.length} rows):`);
     L.push("");
-    for (const p of fresher) L.push(`- ${p.accountId} · ${p.security}: ${p.reviewNote.split("A newer statement says otherwise: ")[1]}`);
+    for (const p of fresher) L.push(`- ${p.accountId} · ${p.security}: ${p.reviewNote.split("A statement says otherwise: ")[1]}`);
     L.push("");
     L.push(`Written off on the review, a measured ₹0 in no total: ${book.reviewWrittenOff.map((w) => w.security).join(", ")}.`);
     L.push("");

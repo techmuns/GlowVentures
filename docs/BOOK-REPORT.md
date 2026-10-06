@@ -137,18 +137,19 @@ Stage 10dh: the review (MOPWM, 30 Jun 2026) is the source for private-market hol
 | transition-venture-capital-TVC263 | Transition Venture Capital Fund I — Class A1 | position | 7500 | Transition Venture Capital fund I |
 | motilal-oswal-financial-services-demat-1201090012539150 | ZEPTO LIMITED#0.01%(DIV) CUM COMP CONV PREF SH SR II G-RD 14-11-2044 | window | 0 | Zepto |
 | motilal-oswal-financial-services-demat-1201090012539150 | ZEPTO LIMITED#NEW EQUITY SHARES WITH FACE VALUE RS.5/- AFTER SUB-DIVISION | window | 3738119 | Zepto |
+| motilal-oswal-financial-services-demat-1201090012838316 | EVEREST FLEET PVT LTD#0.001% (DIV) UNSEC CUM PART NON RED CCPS AFTR SUB-DIV SR B-RD 18-04-2043 | window | 60 | Everest Fleet Private Ltd |
 
-Where a newer statement disagrees, the review is followed and the statement named (11 rows):
+Where a statement disagrees, the review is followed and the statement named (11 rows):
 
 - 360-one-private-wealth-37702 · 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II): CRN37702's statement of 31 Jul 2026 values the same units at ₹1,46,68,362.66.
-- baring-private-equity-india-fund-AIFM_BPEPF6_0584 · Baring Private Equity India Fund 6 — Class A1: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry.
+- baring-private-equity-india-fund-AIFM_BPEPF6_0584 · Baring Private Equity India Fund 6 — Class A1: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry; the fund's statement of 31 Mar 2026 prints ₹56,161 paid out (₹18,909 on 30 Sep 2025 and ₹37,252 on 31 Mar 2026) where the review carries ₹1,42,867.
 - india-sme-investments-175962 · India SME Investments Fund II — Class A2: the review's own closing carries 54,000 units at ₹1,770 a unit; the fund's statement prints the 81,000 units held.
 - india-sme-investments-175964 · India SME Investments Fund II — Class A2: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held.
-- india-sme-investments-177302 · India SME Investments Fund II — Class A2: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held.
+- india-sme-investments-177302 · India SME Investments Fund II — Class A2: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held; the fund's statement dates the ₹50,00,000 call the review puts on 29 Nov 2024 on 14 Jul 2025.
 - review-ajay-jaisinghani · Blue Ashva Varenya Account: the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742.
 - review-ajay-jaisinghani · Borosil Renewables: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50.
 - review-ajay-jaisinghani · Zepto: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026.
-- sky-capital-rising-titans-fund-SKY003 · Sky Capital Rising Titans Fund I: SKY003's statement of 31 Jul 2026 prints ₹1,73,00,000 drawn.
+- sky-capital-rising-titans-fund-SKY003 · Sky Capital Rising Titans Fund I: SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review.
 - transition-venture-capital-TVC262 · Transition Venture Capital Fund I — Class A1: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark.
 - transition-venture-capital-TVC263 · Transition Venture Capital Fund I — Class A1: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark.
 
@@ -604,7 +605,7 @@ never guessed into the nearest plausible bucket.
 - identity: 0 NSE symbol(s) are carried by two securityKeys among the positions — no listed company is keyed twice.
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Ajay Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Bharat Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
-- review: 89 private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — 49 statement rows superseded, 22 written-off lines named
+- review: 89 private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — 50 statement rows superseded, 22 written-off lines named
 - review: 65 dated rows (purchases, sales, income) behind 16 valued holdings
 - review: 15 account(s) carry the review's dated rows, and every holding with money on them is the review's own
 - kept unvalued by the family's decision of 2026-09-28: INE647U01026 on Motilal Oswal Financial Services (demat) 1201090012838316 — its reason says so

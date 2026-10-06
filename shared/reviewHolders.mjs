@@ -46,7 +46,9 @@ const one = (owner, why = "one holder on the review's own Transactions and on th
  * `line` matches the review's product text exactly once. `key` is the book's
  * securityKey where a statement in this book reports the same instrument (the
  * first key of `REVIEW_PRIVATE_JOIN`), so the line and the statement's row are
- * one holding; otherwise the line's own key. `assetClass` is what the line IS.
+ * one holding; otherwise the line's own key, `securityKeyOf` of the name it is
+ * shown under — never one typed by hand, which joins nothing (the builder refuses
+ * a key that is neither, Stage 10dh). `assetClass` is what the line IS.
  */
 export const PRIVATE_INVESTMENT_HOLDERS = [
   { line: /^Everest Fleet Private Ltd/, key: "everest-fleet", assetClass: "Unlisted",
@@ -86,8 +88,9 @@ export const PRIVATE_INVESTMENT_HOLDERS = [
   { line: /^Third Eye Distillery/, assetClass: "Unlisted", ...one(BH) },
   { line: /^HYPRKYTCHEN/, assetClass: "Unlisted", ...one(BH) },
   { line: /^Inflexor Technologies - /, assetClass: "Unlisted", ...one(AN) },
-  // Bharat's own 244 EQUITY shares — a different instrument from the trusts' CCPS below.
-  { line: /^SWAPECO SOLUTIONS PRIVATE LIMITED - /, key: "swapeco-solutions-equity", assetClass: "Unlisted", ...one(BH) },
+  // Bharat's own 244 EQUITY shares — a different instrument from the trusts' CCPS
+  // below, so its key is its own name's, never the CCPS's `swapeco-solutions`.
+  { line: /^SWAPECO SOLUTIONS PRIVATE LIMITED - /, assetClass: "Unlisted", ...one(BH) },
   { line: /^A K Enterprises - /, assetClass: "Unlisted", ...one(BH) },
   { line: /^Sky Enable Tech Llp$/, assetClass: "Unlisted", ...one(BH) },
   { line: /^Since 99 Apparel/, assetClass: "Unlisted", ...one(AN) },
@@ -185,7 +188,7 @@ export const VALUED_HOLDERS = [
   { tab: "unlisted", line: /^Zepto$/, name: "Zepto", key: "zepto", assetClass: "Unlisted",
     split: [{ owner: AJ, cost: 150015960, value: 228285156.52, qty: 4716 }],
     why: "the review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025" },
-  { tab: "credit", line: /^15% K M Global/, name: "15% K M Global - Credit Private Limited", key: "15-percent-k-m-global-credit", assetClass: "Bond",
+  { tab: "credit", line: /^15% K M Global/, name: "15% K M Global - Credit Private Limited", key: "15-k-m-global-credit", assetClass: "Bond",
     split: [{ owner: BH, cost: 7000149.8, value: 10434584.46 }],
     why: "Bharat's, on the review's own Transactions; the Private Investments tab's ₹20 L Credit Fair-K M Global line is the same loan, counted here once" },
 ];
@@ -223,12 +226,20 @@ export const SUPERSEDED = [
   ...["TVC262", "TVC263"].map((n) => ({ accountId: `transition-venture-capital-${n}`, securityKey: "transition-venture-capital-fund-i-class-a1", kind: "position" })),
   ...["zepto-limited-0-01-div-cum-comp-conv-pref-sh-sr-ii-g-rd-14-11-2044", "zepto-limited-new-equity-shares-with-face-value-rs-5-after-sub-division"]
     .map((securityKey) => ({ accountId: "motilal-oswal-financial-services-demat-1201090012539150", securityKey, kind: "window" })),
+  // The 60 Everest Fleet preference shares' window on Ankita's demat goes with the
+  // recorded line it is the quantity account of (`efpl-pref-18042043`, above). Its
+  // key is the transaction statement's own spelling, so it is named by its ISIN.
+  { accountId: "motilal-oswal-financial-services-demat-1201090012838316", isin: "INE0LTR03090", line: "efpl-pref-18042043", kind: "window" },
 ];
 
 /**
- * WHERE A NEWER STATEMENT SAYS SOMETHING DIFFERENT. The family asked for the
- * review to be the source, so its figure is used — and the statement's is named,
- * on the row's hover and in docs/BOOK-REPORT.md, never dropped.
+ * WHERE A STATEMENT SAYS SOMETHING DIFFERENT — a newer mark, a call or a payout
+ * the review carries differently, a date it puts elsewhere. The family asked for
+ * the review to be the source, so its figure is used — and the statement's is
+ * named, on the row's hover and in docs/BOOK-REPORT.md, never dropped.
+ * `src/lib/__tests__/capitalRecordArchive.test.ts` holds every call and payout
+ * the statements print to the review's own rows, so one this table does not name
+ * fails there.
  */
 export const FRESHER_STATEMENT = [
   { key: "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii", owner: AJ,
@@ -242,9 +253,11 @@ export const FRESHER_STATEMENT = [
   { key: "borosil-renewables-limited-warrants-13ag26", owner: AJ,
     text: "the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50" },
   { key: "sky-capital-rising-titans-fund-i", owner: BH,
-    text: "SKY003's statement of 31 Jul 2026 prints ₹1,73,00,000 drawn" },
+    text: "SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review" },
   { key: "baring-private-equity-india-fund-6-class-a1", owner: AN,
     text: "Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry" },
+  { key: "baring-private-equity-india-fund-6-class-a1", owner: AN,
+    text: "the fund's statement of 31 Mar 2026 prints ₹56,161 paid out (₹18,909 on 30 Sep 2025 and ₹37,252 on 31 Mar 2026) where the review carries ₹1,42,867" },
   { key: "zepto", owner: AJ,
     text: "Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026" },
   { key: "india-sme-investments-fund-ii-class-a2", owner: AJ,
@@ -253,4 +266,6 @@ export const FRESHER_STATEMENT = [
     text: "the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held" },
   { key: "india-sme-investments-fund-ii-class-a2", owner: AN,
     text: "the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held" },
+  { key: "india-sme-investments-fund-ii-class-a2", owner: AN,
+    text: "the fund's statement dates the ₹50,00,000 call the review puts on 29 Nov 2024 on 14 Jul 2025" },
 ];

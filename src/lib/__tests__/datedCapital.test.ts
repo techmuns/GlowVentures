@@ -249,30 +249,39 @@ console.log("\n── the Transactions card and the Monitor strike one rate ─�
   const card = capitalRollup(record, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, "all", "recent", {
     commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
   });
-  let compared = 0, noRow = 0;
+  let compared = 0, noRow = 0, lines = 0;
+  // A CARD ROW IS AN ACCOUNT, OR ONE LINE OF A REVIEW HOLDER BUCKET (Stage
+  // 10dh) — each line there is a separate investment with its own dated
+  // purchases, so its rows on a holdings table are that line's, never the
+  // whole bucket's. Compared over the bucket, every line would be set against
+  // a pooled rate over the others.
+  const rowsOf = (g: { accountId: string; securityKey: string | null }) =>
+    own(g.accountId).filter((p) => g.securityKey == null || p.securityKey === g.securityKey);
   for (const g of card) {
     const cardX = capitalReturn(g, "xirr");
+    if (g.securityKey != null) lines++;
     // AN ACCOUNT HOLDING NOTHING HAS NO ROW ON A HOLDINGS TABLE — 3P, redeemed
     // in full, and the funds no statement values. Its rate, where it has one,
     // is the Transactions card's alone, and that is not a disagreement.
-    if (!own(g.accountId).length) { noRow++; continue; }
-    const cap = dc.behind(own(g.accountId), universe);
+    if (!rowsOf(g).length) { noRow++; continue; }
+    const cap = dc.behind(rowsOf(g), universe);
     if (!cap?.dated) {
       // Rated on the card and not on the Monitor would be two definitions.
-      ok(`${g.accountId}: an account the Monitor does not rate carries no annual rate on the card either`,
+      ok(`${g.key}: an account the Monitor does not rate carries no annual rate on the card either`,
         !(cardX.shown && cardX.tag === "XIRR"), JSON.stringify(cardX));
       continue;
     }
     if (cap.days < 365) {
-      ok(`${g.accountId}: under a year on both — the card shows HPR, not a rate`, cardX.shown ? cardX.tag === "HPR" : true);
+      ok(`${g.key}: under a year on both — the card shows HPR, not a rate`, cardX.shown ? cardX.tag === "HPR" : true);
       continue;
     }
     compared++;
-    ok(`${g.accountId}: the Monitor's XIRR is the Transactions card's, to the millionth`,
+    ok(`${g.key}: the Monitor's XIRR is the Transactions card's, to the millionth`,
       cardX.shown && cardX.tag === "XIRR" && cap.annualPct != null && Math.abs(cardX.pct - cap.annualPct) < 1e-6,
       `${cap.annualPct} vs ${cardX.shown ? cardX.pct : "absent"}`);
   }
   ok("the comparison ran over accounts funded more than a year ago", compared >= 3, `${compared}, and ${noRow} holding nothing`);
+  ok("…and it reached the review holder buckets' lines, one row per line", lines > 0, `${lines} line rows`);
 }
 
 // ── 4. THE WHOLE-ACCOUNT RULE ────────────────────────────────────────────────

@@ -1245,7 +1245,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Valued at ₹1,45,80,413 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026. A newer statement says otherwise: CRN37702's statement of 31 Jul 2026 values the same units at ₹1,46,68,362.66."
+    "reviewNote": "Valued at ₹1,45,80,413 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026. A statement says otherwise: CRN37702's statement of 31 Jul 2026 values the same units at ₹1,46,68,362.66."
   },
   {
     "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
@@ -1513,7 +1513,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Valued at ₹1,88,42,208.74 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 9, its closing of 31 Mar 2026. Ankita's folio. A newer statement says otherwise: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry."
+    "reviewNote": "Valued at ₹1,88,42,208.74 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 9, its closing of 31 Mar 2026. Ankita's folio. A statement says otherwise: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry; the fund's statement of 31 Mar 2026 prints ₹56,161 paid out (₹18,909 on 30 Sep 2025 and ₹37,252 on 31 Mar 2026) where the review carries ₹1,42,867."
   },
   {
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
@@ -5891,7 +5891,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Valued at ₹9,55,80,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A newer statement says otherwise: the review's own closing carries 54,000 units at ₹1,770 a unit; the fund's statement prints the 81,000 units held."
+    "reviewNote": "Valued at ₹9,55,80,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 54,000 units at ₹1,770 a unit; the fund's statement prints the 81,000 units held."
   },
   {
     "securityKey": "india-sme-investments-fund-ii-class-a2",
@@ -5927,7 +5927,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A newer statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held."
+    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held."
   },
   {
     "securityKey": "india-sme-investments-fund-ii-class-a2",
@@ -5963,7 +5963,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A newer statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held."
+    "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held; the fund's statement dates the ₹50,00,000 call the review puts on 29 Nov 2024 on 14 Jul 2025."
   },
   {
     "securityKey": "belrise-industries",
@@ -6844,7 +6844,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ajay Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each. A newer statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ajay Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each. A statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742."
   },
   {
     "securityKey": "borosil-renewables-limited-warrants-13ag26",
@@ -6881,7 +6881,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 19. One holder on the review's own Transactions and on the register. A newer statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 19. One holder on the review's own Transactions and on the register. A statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50."
   },
   {
     "securityKey": "edugorilla-community",
@@ -7685,7 +7685,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Equity",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Valued at ₹22,82,85,156.52 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 70, its closing of 31 Jul 2025. The review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025. A newer statement says otherwise: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026."
+    "reviewNote": "Valued at ₹22,82,85,156.52 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 70, its closing of 31 Jul 2025. The review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025. A statement says otherwise: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026."
   },
   {
     "securityKey": "al-trust-collabmates-pvt-ltd-angellist-likeminds",
@@ -8125,7 +8125,7 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ankita Jaisinghani's ₹1,25,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
-    "securityKey": "15-percent-k-m-global-credit",
+    "securityKey": "15-k-m-global-credit",
     "security": "15% K M Global - Credit Private Limited",
     "symbol": null,
     "accountId": "review-bharat-jaisinghani",
@@ -8992,7 +8992,7 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 23. One holder on the review's own Transactions and on the register."
   },
   {
-    "securityKey": "swapeco-solutions-equity",
+    "securityKey": "swapeco-solutions-private-limited-scrap-uncle-mukul-chabra",
     "security": "SWAPECO SOLUTIONS PRIVATE LIMITED - (SCRAP UNCLE - MUKUL CHABRA)",
     "symbol": null,
     "accountId": "review-bharat-jaisinghani",
@@ -9677,7 +9677,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement. A newer statement says otherwise: SKY003's statement of 31 Jul 2026 prints ₹1,73,00,000 drawn."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement. A statement says otherwise: SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review."
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",
@@ -12278,7 +12278,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A newer statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
+    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
   },
   {
     "securityKey": "transition-venture-capital-fund-i-class-a1",
@@ -12314,7 +12314,7 @@ export const BOOK_POSITIONS: Position[] = [
       "assetClass": "Alternate",
       "basket": "Entrepreneurial Growth"
     },
-    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A newer statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
+    "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
   },
   {
     "securityKey": "amrutanjan-health-care",
@@ -14754,6 +14754,15 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
     "security": "ZEPTO LIMITED#NEW EQUITY SHARES WITH FACE VALUE RS.5/- AFTER SUB-DIVISION",
     "quantity": 3738119,
     "marketValue": null
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "securityKey": "everest-fleet-pvt-ltd-0-001-div-unsec-cum-part-non-red-ccps-aftr-sub-div-sr-b-rd-18-04-2043",
+    "kind": "window",
+    "reviewLine": "Everest Fleet Private Ltd",
+    "security": "EVEREST FLEET PVT LTD#0.001% (DIV) UNSEC CUM PART NON RED CCPS AFTR SUB-DIV SR B-RD 18-04-2043",
+    "quantity": 60,
+    "marketValue": null
   }
 ];
 
@@ -15474,7 +15483,7 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
   },
   {
     "accountId": "review-bharat-jaisinghani",
-    "securityKey": "15-percent-k-m-global-credit",
+    "securityKey": "15-k-m-global-credit",
     "security": "15% K M Global - Credit Private Limited",
     "date": "2020-09-21",
     "kind": "purchase",
@@ -15485,7 +15494,7 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
   },
   {
     "accountId": "review-bharat-jaisinghani",
-    "securityKey": "15-percent-k-m-global-credit",
+    "securityKey": "15-k-m-global-credit",
     "security": "15% K M Global - Credit Private Limited",
     "date": "2020-09-30",
     "kind": "purchase",
@@ -15496,7 +15505,7 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
   },
   {
     "accountId": "review-bharat-jaisinghani",
-    "securityKey": "15-percent-k-m-global-credit",
+    "securityKey": "15-k-m-global-credit",
     "security": "15% K M Global - Credit Private Limited",
     "date": "2024-03-22",
     "kind": "purchase",
@@ -29232,24 +29241,6 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "corporateAction": 0,
     "encumbranceMoves": 0,
     "rows": 2,
-    "unclassified": 0,
-    "reason": null,
-    "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
-  },
-  "motilal-oswal-financial-services-demat-1201090012838316|everest-fleet-pvt-ltd-0-001-div-unsec-cum-part-non-red-ccps-aftr-sub-div-sr-b-rd-18-04-2043": {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "everest-fleet-pvt-ltd-0-001-div-unsec-cum-part-non-red-ccps-aftr-sub-div-sr-b-rd-18-04-2043",
-    "security": "EVEREST FLEET PVT LTD#0.001% (DIV) UNSEC CUM PART NON RED CCPS AFTR SUB-DIV SR B-RD 18-04-2043",
-    "isin": "INE0LTR03090",
-    "periodFrom": "2026-04-01",
-    "periodTo": "2026-07-31",
-    "opening": 0,
-    "closing": 60,
-    "unitsIn": 120,
-    "unitsOut": 60,
-    "corporateAction": 0,
-    "encumbranceMoves": 0,
-    "rows": 3,
     "unclassified": 0,
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"

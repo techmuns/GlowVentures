@@ -27,7 +27,7 @@
 import {
   BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_POSITIONS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
-  BOOK_REVIEW_FLOWS,
+  BOOK_REVIEW_FLOWS, BOOK_REVIEW_SUPERSEDED,
 } from "@/data/glowData";
 import {
   capitalRollup, capitalMovesWithCalls, capitalReturn, capitalXirr, capitalTotals, type CapitalGroup,
@@ -53,6 +53,13 @@ const book = (opts: { windowed?: boolean } = {}, side: "all" | "in" | "out" = "a
   });
 const G = book();
 const byId = new Map(G.map((g) => [g.accountId, g]));
+// THE ACCOUNTS THE FAMILY'S REVIEW DATES (Stage 10dh). Their statement record,
+// calls and payouts describe the statement's holding, which the review's line
+// replaced, so each is held to the review's own rows below and never to the
+// statement's.
+const REVIEWED = new Set(BOOK_REVIEW_FLOWS.map((f) => f.accountId));
+const reviewSum = (id: string, kinds: readonly string[]) =>
+  BOOK_REVIEW_FLOWS.filter((f) => f.accountId === id && kinds.includes(f.kind)).reduce((t, f) => t + (f.amount ?? 0), 0);
 
 // ── 1. THE LOAD-BEARING GATE — a suite over no input claims nothing ────────
 console.log("\n── the book's capital record ──");
@@ -183,10 +190,22 @@ console.log("\n── dated, typed payouts ──");
 {
   const s = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
   const recs = fundDatedRecords(s.dedupedRows, BOOK_COMMITMENTS, BOOK_REVIEW_FLOWS, accountIndex(BOOK_ACCOUNTS), String, String);
-  const withPayouts = BOOK_COMMITMENTS.filter((c) => c.payouts != null && c.payouts.length > 0);
+  const allWithPayouts = BOOK_COMMITMENTS.filter((c) => c.payouts != null && c.payouts.length > 0);
+  // A fund the family's review dates is held to the review's rows in §8a.
+  const withPayouts = allWithPayouts.filter((c) => !REVIEWED.has(c.accountId));
   const recorded = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId));
-  ok("the book carries a fund with dated payouts and no capital record (LOAD-BEARING)",
-    withPayouts.some((c) => !recorded.has(c.accountId)), withPayouts.map((c) => c.accountId).join(", "));
+  if (withPayouts.some((c) => !recorded.has(c.accountId))) {
+    ok("the book carries a fund with dated payouts and no capital record (LOAD-BEARING)", true,
+      withPayouts.filter((c) => !recorded.has(c.accountId)).map((c) => c.accountId).join(", "));
+  } else {
+    // EVIDENCED, NEVER SILENT: such a fund still exists — Baring — and the
+    // family's review dates it since Stage 10dh. §8c holds the statement rule
+    // on a constructed fund, so the path is still checked.
+    const taken = allWithPayouts.filter((c) => !recorded.has(c.accountId) && REVIEWED.has(c.accountId));
+    ok("every fund with dated payouts and no capital record is dated by the family's review now", taken.length > 0,
+      taken.map((c) => c.accountId).join(", "));
+    console.log("NOT CHECKED a statement-dated fund with dated payouts and no capital record, on this book: the review dates the only one since Stage 10dh — §8c holds the rule on a constructed fund");
+  }
   // …AND ONE WITH A CAPITAL RECORD OF ITS OWN. Since Stage 10ca Neo Infra's unit
   // record is in `BOOK_CAPITAL_MOVES` (FIFO needs it), and "one record per
   // account" then dropped every payout it published. Both kinds are held to the
@@ -237,6 +256,50 @@ console.log("\n── dated, typed payouts ──");
   near("committed is the fund's printed commitment", neo?.committed, 50_000_000);
 }
 
+// ── 8a. THE REVIEW'S DATED PAYOUTS ─────────────────────────────────────────
+// Since Stage 10dh the family's consolidated review dates every purchase, sale
+// and income row behind its private-market lines (`BOOK_REVIEW_FLOWS`), and an
+// account carrying any of them is dated by the review alone. A sale returns
+// capital and Div / Int is gain paid out — the review's own words — so the
+// split is struck on its rows. Two witnesses again: the review's rows, read
+// straight off the book here, and the Private Market page's own module on the
+// same account's line alone.
+console.log("\n── the review's dated payouts ──");
+{
+  const s = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
+  const idx = accountIndex(BOOK_ACCOUNTS);
+  const ids = [...new Set(BOOK_REVIEW_FLOWS.filter((f) => f.kind !== "purchase").map((f) => f.accountId))];
+  ok("the review dates payouts for some accounts (LOAD-BEARING)", ids.length > 0, ids.join(", "));
+  for (const id of ids) {
+    const keys = [...new Set(BOOK_REVIEW_FLOWS.filter((f) => f.accountId === id).map((f) => f.securityKey))];
+    const g = G.find((x) => x.accountId === id && (x.securityKey == null || keys.includes(x.securityKey)));
+    ok(`${id}: on the table, dated by the review alone`, !!g && g.source === "review"
+      && RECORD.filter((m) => m.accountId === id).every((m) => m.fromReview));
+    if (!g) continue;
+    near(`${id}: purchase is the review's dated purchases`, g.paidIn, reviewSum(id, ["purchase"]));
+    near(`${id}: redemption is the review's sales and Div / Int`, g.redemption, reviewSum(id, ["sale", "income"]));
+    near(`${id}: realised is the Div / Int the review prints`, g.realised, reviewSum(id, ["income"]));
+    near(`${id}: unrealised is value less the purchase net of sale proceeds`, g.unrealised,
+      (g.value ?? NaN) - (g.paidIn - reviewSum(id, ["sale"])));
+    const statementPayouts = BOOK_COMMITMENTS.find((c) => c.accountId === id)?.payouts ?? [];
+    ok(`${id}: no payout its statement prints is counted beside the review's`,
+      statementPayouts.every((r) => !RECORD.some((m) => m.accountId === id && !m.fromReview && m.date === r.date)),
+      `${statementPayouts.length} statement payout(s)`);
+    // THE SECOND PATH, on this account's own line: a fund several accounts hold
+    // pools them on the Private Market page, so only this account's rows go in.
+    const rows = s.dedupedRows.filter((p) => p.accountId === id && keys.includes(p.securityKey));
+    const rec = rows.length ? fundDatedRecords(rows, BOOK_COMMITMENTS, BOOK_REVIEW_FLOWS, idx, String, String).get(rows[0].securityKey) : undefined;
+    const theirs = rec ? pooledFundXirr([rec])?.annualPct ?? null : null;
+    const ours = capitalReturn(g, "xirr");
+    if (ours.shown && ours.tag === "XIRR") {
+      near(`${id}: XIRR agrees with the Private Market page's, by its own module`, (ours as { pct: number }).pct, theirs, 0.01);
+    } else {
+      ok(`${id}: XIRR is not annualised under a year, and says so`, ours.shown && ours.tag === "HPR",
+        ours.shown ? ours.tag : (ours as { reason: string }).reason);
+    }
+  }
+}
+
 // ── 8b. …AND ONE WHOSE STATEMENT PRINTS ONLY AN UNDATED TOTAL ──────────────
 // No fund in this book since Stage 10bw, so a constructed one: a payout that
 // cannot be placed in time refuses the XIRR, and one that is not typed refuses
@@ -259,6 +322,37 @@ console.log("\n── an undated payout (constructed) ──");
     !!u && !capitalReturn(u, "xirr").shown && /undated/.test((capitalReturn(u, "xirr") as { reason: string }).reason));
 }
 
+// ── 8c. DATED PAYOUTS AND NO CAPITAL RECORD (constructed) ──────────────────
+// The statement rule §8 held on Baring until the family's review took it over
+// (Stage 10dh): a drawdown fund's calls are its purchases, every payout dated on
+// or before the valuation is a redemption on its date, one after it is inside
+// the value, and the fund's own typing is the split.
+console.log("\n── dated payouts and no capital record (constructed) ──");
+{
+  const acc = [{ accountId: "d", provider: "Fund", accountNo: "2", owner: "O", strategy: null,
+    inceptionDate: "2024-01-01", asOf: "2026-03-31", engagement: "AIF" }];
+  const commitment = { accountId: "d", name: "Fund", total: 20_000_000, contributed: 20_000_000,
+    called: 20_000_000, paid: 20_000_000, pending: null, undrawn: 0, distributed: null,
+    calls: [{ date: "2024-01-01", amount: 10_000_000, label: "Call 1" }, { date: "2025-01-01", amount: 10_000_000, label: "Call 2" }],
+    payouts: [
+      { date: "2025-06-30", kind: "income", label: "Income", gross: 300_000, tds: 30_000, net: 270_000, inPrintedTotal: true },
+      { date: "2025-09-30", kind: "capital", label: "Principal", gross: 1_000_000, tds: 0, net: 1_000_000, inPrintedTotal: true },
+      { date: "2025-12-31", kind: "equalisation", label: "Equalisation", gross: 50_000, tds: 0, net: 50_000, inPrintedTotal: true },
+      { date: "2026-05-31", kind: "income", label: "After the valuation", gross: 99_000, tds: 0, net: 99_000, inPrintedTotal: true },
+    ] } as unknown as Commitment;
+  const moves = capitalMovesWithCalls([], [commitment], acc, []);
+  const d = capitalRollup(moves, acc, [{ accountId: "d", securityKey: "f2", security: "Fund", assetClass: "AIF",
+    quantity: 1, marketValue: 22_000_000, costBasis: 19_000_000 } as Position], {}, "all", "recent", { commitments: [commitment] })[0];
+  near("its calls are its purchases", d?.paidIn, 20_000_000);
+  near("redemption is every payout dated on or before the valuation", d?.redemption, 1_350_000);
+  ok("…and a payout dated after it is inside the value and is not counted again", !moves.some((m) => m.date === "2026-05-31"));
+  near("realised is the income and equalisation the fund typed", d?.realised, 350_000);
+  near("unrealised is value less the purchase net of principal returned", d?.unrealised, 22_000_000 - (20_000_000 - 1_000_000));
+  const x = d ? capitalReturn(d, "xirr") : null;
+  ok("XIRR is struck over the calls, the payouts and the value", !!x && x.shown && x.tag === "XIRR",
+    x && x.shown ? `${x.pct.toFixed(3)}%` : "absent");
+}
+
 // ── 9. DRAWDOWN FUNDS: calls are purchases, and never on top of a record ───
 console.log("\n── capital calls as purchases ──");
 {
@@ -266,21 +360,51 @@ console.log("\n── capital calls as purchases ──");
   const calls = RECORD.filter((m) => m.fromCall);
   ok("calls reach the table for funds with no capital record", calls.length > 0, `${calls.length} calls`);
   ok("…and never for an account that already publishes one", calls.every((m) => !recorded.has(m.accountId)));
+  ok("…nor for an account the family's review dates", calls.every((m) => !REVIEWED.has(m.accountId)));
   for (const c of BOOK_COMMITMENTS) {
     if (recorded.has(c.accountId) || !c.calls.length) continue;
     const g = byId.get(c.accountId);
+    if (REVIEWED.has(c.accountId)) {
+      // The review's dated purchases, which can differ from the statement's
+      // calls (Sky Capital SKY003: ₹1.715 Cr against ₹1.7285 Cr) — the review
+      // is the family's source for this line.
+      near(`${c.accountId}: purchase is the review's dated purchases, not its statement's calls`, g?.paidIn,
+        reviewSum(c.accountId, ["purchase"]));
+      continue;
+    }
     near(`${c.accountId}: purchase is the fund's dated calls`, g?.paidIn, c.calls.reduce((s, x) => s + x.amount, 0));
   }
-  // The two Transition Venture trusts publish BOTH a record and a call — the
-  // record wins and the ₹75 L is counted once.
+  // The two Transition Venture trusts publish a record and a call, and the
+  // family's review dates each trust's line since Stage 10dh — the ₹75 L is
+  // counted once.
   for (const id of ["transition-venture-capital-TVC262", "transition-venture-capital-TVC263"]) {
     near(`${id}: purchased once, not twice`, byId.get(id)?.paidIn, 7_500_000);
   }
   // AN UNVALUED FUND IS NOT WORTH ₹0.
   const unvalued = G.filter((g) => g.value === null);
-  ok("a fund no statement values has NO value, rather than ₹0", unvalued.length > 0
-    && unvalued.every((g) => g.appreciation === null && /valued by no statement/.test(g.appreciationReason ?? "")),
-    unvalued.map((g) => g.accountId).join(", "));
+  if (unvalued.length) {
+    ok("a fund no statement values has NO value, rather than ₹0",
+      unvalued.every((g) => g.appreciation === null && /valued by no statement/.test(g.appreciationReason ?? "")),
+      unvalued.map((g) => g.accountId).join(", "));
+  } else {
+    // EVIDENCED: the folios no statement valued (India SME, Sky Capital) are
+    // the review's lines since Stage 10dh, each with the review's value or its
+    // cost. The rule is held on a constructed fund below.
+    const took = new Set(BOOK_REVIEW_SUPERSEDED.filter((x) => x.kind === "unvalued").map((x) => x.accountId));
+    const taken = G.filter((g) => took.has(g.accountId));
+    ok("every capital account a statement left unvalued carries the review's value or cost now", taken.length > 0
+      && taken.every((g) => g.value != null && g.source === "review"), taken.map((g) => g.accountId).join(", "));
+    const acc = [{ accountId: "v", provider: "Fund", accountNo: "3", owner: "O", strategy: null,
+      inceptionDate: "2024-01-01", asOf: "2026-03-31", engagement: "AIF",
+      noPositionsReason: "this fund publishes no NAV: its statement carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation" }];
+    const commitment = { accountId: "v", name: "Fund", total: 10_000_000, contributed: 10_000_000,
+      called: 10_000_000, paid: 10_000_000, pending: null, undrawn: 0, distributed: null,
+      calls: [{ date: "2024-01-01", amount: 10_000_000, label: "Call 1" }], payouts: null } as unknown as Commitment;
+    const v = capitalRollup(capitalMovesWithCalls([], [commitment], acc, []), acc, [], {}, "all", "recent", { commitments: [commitment] })[0];
+    ok("a fund no statement values has NO value, rather than ₹0 (constructed)", !!v && v.value === null
+      && v.appreciation === null && /valued by no statement/.test(v.appreciationReason ?? ""), v?.appreciationReason ?? "missing");
+    console.log("NOT CHECKED an unvalued capital account on this book: the family's review values every one a statement left unvalued since Stage 10dh — the constructed fund above holds the rule");
+  }
   // A DRAWDOWN FUND THAT PRINTS NO DISTRIBUTION LINE has no stated redemption.
   const noDist = G.filter((g) => g.source === "calls" && g.redemption === null && g.value != null);
   ok("a fund printing no distribution line states no redemption — never ₹0", noDist.length > 0
