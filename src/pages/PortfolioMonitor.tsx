@@ -21,7 +21,7 @@ import {
   mandateLabel, MANDATE_BUCKET,
   measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate,
   type ReturnMeasure, type ReturnInput, type RowCapital,
-  costCoversSet,
+  costCoversSet, unstruckValue, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
 import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
@@ -125,8 +125,11 @@ type Venue = {
   /** `ROUTE_LABEL` — a manager's mandate, the family's own account, a fund. */
   route: string;
   isMandate: boolean;
-  quantity: number; marketValue: number;
+  /** Null where a line is the family's review recording an amount paid and no unit count (Stage 10dh). */
+  quantity: number | null; marketValue: number;
   costBasis: number | null; unrealizedPnL: number | null; returnPct: number | null; costNA: boolean;
+  /** The review's line HELD AT COST: a cost, no valuation, so no gain (Stage 10dh). */
+  valuedAtCost: boolean;
   /** The date this line's value is struck at — where its return window ends. */
   valuedAt: string | null;
   /** This venue's share of the name as PRINTED across the statements. */
@@ -173,7 +176,7 @@ type Venue = {
  */
 type MandateHolding = {
   securityKey: string; security: string; sector: string;
-  quantity: number; avgCost: number | null; currentPrice: number | null;
+  quantity: number | null; avgCost: number | null; currentPrice: number | null;
   costBasis: number | null; marketValue: number; unrealizedPnL: number | null;
   returnPct: number | null; costNA: boolean; live: boolean;
   /** For the row's own Day, Invested on and return cells — see `Venue`. */
@@ -280,9 +283,11 @@ type Row = {
   key: string; security: string; securityKey: string; sector: string; assetClass: string;
   // avgCost / currentPrice are PER-UNIT and nullable — 360 ONE prints neither
   // for its AIF holding. See the note on Position in src/lib/types.ts.
-  // Quantity is NULL on a mandate row and only there: a mandate is an account,
-  // not a security, and its constituents are what carry quantities. A 0 would
-  // read as a mandate holding nothing.
+  // Quantity is NULL on a mandate row: a mandate is an account, not a security,
+  // and its constituents are what carry quantities. A 0 would read as a mandate
+  // holding nothing. It is null on a security row too where a line behind it is
+  // the family's review recording an amount paid and no unit count (Stage 10dh)
+  // — a count over the other lines would state a holding of fewer units.
   entities: string[]; quantity: number | null; avgCost: number | null; currentPrice: number | null;
   /** The price above is AMFI's published NAV, not the statement's mark. */
   navPriced?: boolean; navDate?: string;
@@ -324,6 +329,12 @@ type Row = {
   // null rather than 0 so nothing downstream can sum them into a total.
   costBasis: number | null; marketValue: number; unrealizedPnL: number | null; returnPct: number | null; weight: number;
   costNA: boolean;
+  /**
+   * EVERY line behind this row is the family's review HELD AT COST — an amount
+   * paid and no valuation, so its value is its cost and no gain or return is
+   * struck on it (Stage 10dh). False where any line carries a valuation.
+   */
+  valuedAtCost?: boolean;
   /**
    * THE DATED CAPITAL BEHIND THE ROW, where the row IS whole accounts
    * (`datedCapital.ts`) — which is what lets its XIRR column, and the family's
@@ -1521,7 +1532,10 @@ export function PortfolioMonitor() {
          */
         const cf = costedFigures(dps);
         const cost = cf.cost;
-        const qty = sum(dps.map((x) => x.quantity));
+        // A COUNT OVER EVERY LINE OR NONE: the review records most private
+        // investments with no share count (Stage 10dh), and adding the lines
+        // that do print one would state a holding of fewer shares than it is.
+        const qty = totalQuantity(dps);
         const costNA = cost === null || (cost === 0 && mv > 0);
         const pnl = costNA ? null : cf.unrealised;
         // ONE MARK OR NONE (A-03): DSP Gold's two statements mark it at ₹151.10
@@ -1575,6 +1589,8 @@ export function PortfolioMonitor() {
           fifo,
           weight: weightBase > 0 ? mv / weightBase : 0,
           costNA,
+          // Every line the review's, held at cost — no gain to strike (Stage 10dh).
+          valuedAtCost: dps.every((x) => x.valuedAtCost === true),
           heldSince,
           // The deduped set's ONE value date, or null where its lines are marked
           // on different dates — that row refuses to annualise rather than pick.
@@ -1645,6 +1661,7 @@ export function PortfolioMonitor() {
         realised: p.realizedPnL ?? null,
         fifo: fifoTotals([p], fifoOpts),
         costNA: !!p.costUnavailable || p.costBasis === null,
+        valuedAtCost: p.valuedAtCost === true,
         heldSince: p.heldSince,
         valuedAt: valueDate(p),
         // One statement line that is the whole folio IS the account.
@@ -2862,9 +2879,9 @@ export function PortfolioMonitor() {
         sub: m.accountMV > 0 ? `${((h.marketValue / m.accountMV) * 100).toFixed(1)}% of the mandate` : undefined,
         last: i === m.holdings.length - 1,
       }, {
-        qty: fmtNum(h.quantity),
+        qty: h.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(h.quantity),
         avgCost: h.costNA ? <AbsentCell reason={NO_COST_LINE} />
-          : h.avgCost === null ? <AbsentCell reason={h.quantity === 0 ? "this line holds no units to divide its cost by" : "this provider prints no per-unit cost for the holding"} />
+          : h.avgCost === null ? <AbsentCell reason={h.quantity === null ? NO_UNIT_COUNT : h.quantity === 0 ? "this line holds no units to divide its cost by" : "this provider prints no per-unit cost for the holding"} />
           : fmtFromBase(h.avgCost),
         invested: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : fmtFromBase(h.costBasis, { compact: true }),
         investedOn: dateCell(h.investedOn, h.costNA
@@ -2969,9 +2986,9 @@ export function PortfolioMonitor() {
           ? <> · {(v.share * 100).toFixed(1)}% of the {asClass ? "fund" : "holding"}</> : null}</>,
         last: lastLine,
       }, {
-        qty: fmtNum(v.quantity),
+        qty: v.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(v.quantity),
         avgCost: v.costNA ? <AbsentCell reason={NO_COST_LINE} />
-          : v.avgCost === null ? <AbsentCell reason="this line holds no units to divide its cost by" />
+          : v.avgCost === null ? <AbsentCell reason={v.quantity === null ? NO_UNIT_COUNT : "this line holds no units to divide its cost by"} />
           : fmtFromBase(v.avgCost),
         invested: v.costNA ? <AbsentCell reason={NO_COST_LINE} /> : fmtFromBase(v.costBasis, { compact: true }),
         investedOn: dateCell(v.investedOn, v.costNA
@@ -3007,7 +3024,9 @@ export function PortfolioMonitor() {
         day: dayCell(v.live, v.dayChangePct),
         mv: fmtFromBase(v.marketValue, { compact: true }),
         weight: pctOfBook(v.marketValue),
-        pnl: v.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(v.unrealizedPnL),
+        pnl: v.costNA ? <AbsentCell reason={NO_COST_LINE} />
+          : v.valuedAtCost ? <AbsentCell reason={AT_COST_PNL} />
+          : signed(v.unrealizedPnL),
         realised: (() => {
           const rz = sumOrNull(v.positions.map((p) => (typeof p.realizedPnL === "number" ? p.realizedPnL : null)));
           return rz === null
@@ -3018,7 +3037,7 @@ export function PortfolioMonitor() {
         // record's money-weighted rate — Buoyant's two folios under the row
         // pooling both, each at the rate its own fact sheet prints.
         ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA, costBasis: v.costBasis, marketValue: v.marketValue,
-          capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure),
+          valuedAtCost: v.valuedAtCost, capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure),
         entity: v.owner,
       }, {
         "data-venue": v.route, "data-venue-class": v.cls ?? "", "data-venue-share": v.share,
@@ -3037,7 +3056,7 @@ export function PortfolioMonitor() {
     if (overlap) {
       const printedCost = sumOrNull(vs.map((v) => v.costBasis));
       const printedPnl = sumOrNull(vs.map((v) => v.unrealizedPnL));
-      const printedQty = r.quantity === null ? null : sum(vs.map((v) => v.quantity));
+      const printedQty = r.quantity === null ? null : totalQuantity(vs);
       const minus = (v: ReactNode) => <span className="text-amber-400">{v}</span>;
       out.push(childRow(`${r.key}>overlap`, "overlap", 1, {
         title: <span className="text-amber-400">Counted once</span>,
@@ -3930,6 +3949,15 @@ export function PortfolioMonitor() {
                   const cover = r.costCover;
                   const coverNote = cover && !r.costNA
                     ? costCoverNote(cover, (v) => fmtFromBase(v, { compact: true }), fmtNum) : "";
+                  // THE ◦ MARKS A PARTLY COSTED ROW, and only that: a row whose
+                  // every line reports a cost has no part left out, even where
+                  // the note names lines held at cost (Stage 10dh).
+                  const coverPartial = !!cover && !r.costNA && !cover.complete;
+                  // Why a security row has no unit count: every line is the
+                  // review's amount paid, or one of them is.
+                  const noCountWhy = cover && cover.units > 0
+                    ? "a line behind this row is the family's consolidated review recording what was paid and no unit count — a count over the other lines would state a holding of fewer units than it is"
+                    : NO_UNIT_COUNT;
                   const noCostWhy = r.measuredNA
                     ? DERIVED_ONLY_WHY
                     : cover?.vacuous
@@ -4065,7 +4093,9 @@ export function PortfolioMonitor() {
                           {r.quantity === null
                             ? <AbsentCell reason={r.measuredNA ? DERIVED_ONLY_WHY : r.fundClasses.length
                                 ? `this row is one fund under ${r.fundClasses.length} unit classes (${r.fundClasses.join(", ")}), and their units are not the same unit: each class is allotted at its own NAV. Adding them would give a quantity no NAV prices. Open the row for each class's own units.`
-                                : "a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing."} />
+                                : r.kind === "mandate"
+                                ? "a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing."
+                                : noCountWhy} />
                             : fmtNum(r.quantity)}
                         </td>
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
@@ -4073,8 +4103,9 @@ export function PortfolioMonitor() {
                             : r.fundClasses.length
                             ? <AbsentCell reason={`an average cost per unit needs one unit, and this row clubs ${r.fundClasses.length} unit classes allotted at NAVs of their own. The money below it is additive across classes; a per-unit figure is not.`} />
                             : r.costNA ? <AbsentCell reason={noCostWhy} />
-                            : r.avgCost === null ? <AbsentCell reason={r.quantity === 0 ? "this line holds no units to divide its cost by" : "this provider prints no per-unit cost for the holding"} />
-                            : coverNote ? <span title={coverNote} data-avg-cost-costed={r.avgCost}>{fmtFromBase(r.avgCost)}<span className="ml-1 text-[10px] text-amber-400/80">◦</span></span>
+                            : r.avgCost === null ? <AbsentCell reason={r.quantity === null ? noCountWhy : r.quantity === 0 ? "this line holds no units to divide its cost by" : "this provider prints no per-unit cost for the holding"} />
+                            : coverPartial ? <span title={coverNote} data-avg-cost-costed={r.avgCost}>{fmtFromBase(r.avgCost)}<span className="ml-1 text-[10px] text-amber-400/80">◦</span></span>
+                            : coverNote ? <span title={coverNote}>{fmtFromBase(r.avgCost)}</span>
                             : fmtFromBase(r.avgCost)}
                         </td>
                         {/* THE INVESTED CELL CARRIED A SECOND CHEVRON, opening the
@@ -4100,8 +4131,10 @@ export function PortfolioMonitor() {
                             ? <span title={carriedWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
                             : grossWhy
                             ? <span title={grossWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
-                            : coverNote
+                            : coverPartial
                             ? <span title={coverNote}>{fmtFromBase(r.costBasis, { compact: true })}<span className="ml-1 text-[10px] text-amber-400/80">◦</span></span>
+                            : coverNote
+                            ? <span title={coverNote}>{fmtFromBase(r.costBasis, { compact: true })}</span>
                             : fmtFromBase(r.costBasis, { compact: true })}
                         </td>
                         {/*
@@ -4235,11 +4268,16 @@ export function PortfolioMonitor() {
                         <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`}
                           title={r.live && !r.costNA ? [mixedBasisNote, coverNote].filter(Boolean).join(" · ") : undefined}>
                           {r.costNA ? <AbsentCell reason={r.measuredNA ? DERIVED_ONLY_WHY : `an unrealised gain is market value less cost, and ${noCostWhy}`} />
-                            : r.live ? <span data-pnl-costed-value={pnlValue}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}{coverNote && <span className="ml-1 text-[10px] text-amber-400/80">◦</span>}</span>
+                            // HELD AT COST: a cost and no valuation, so no gain —
+                            // never a ₹0, which reads as a holding that did not
+                            // move (Stage 10dh).
+                            : r.unrealizedPnL === null ? <AbsentCell reason={r.valuedAtCost ? AT_COST_PNL
+                              : "every line here that reports a cost is held at cost — the family's consolidated review records what was paid and no valuation — and the rest report no cost, so there is no gain to strike"} />
+                            : r.live ? <span data-pnl-costed-value={pnlValue}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}{coverPartial && <span className="ml-1 text-[10px] text-amber-400/80">◦</span>}</span>
                             : <span data-pnl-costed-value={pnlValue} title={coverNote || undefined}><Auditable formula={{
                                 ...pnlFormula(pnlValue, r.costBasis, r.unrealizedPnL, money),
                                 ...(coverNote ? { plain: `What the shares whose statement reports a cost are worth today, minus what they cost. ${coverNote}` } : {}),
-                              }}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>{coverNote && <span className="ml-1 text-[10px] text-amber-400/80">◦</span>}</span>}
+                              }}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>{coverPartial && <span className="ml-1 text-[10px] text-amber-400/80">◦</span>}</span>}
                         </td>
                         {/* REALISED, MATCHED FIFO, ON THE ROW'S OWN HOLDINGS —
                             a whole mandate carries everything its capital shows
@@ -4937,7 +4975,8 @@ function venuesOf(ps: Position[], accIdx: AccountIndex, valueDate: (p: Position)
     const costBasis = cf.cost;
     const costNA = costBasis === null || (costBasis === 0 && marketValue > 0) || xs.some((x) => x.costUnavailable);
     const pnl = costNA ? null : cf.unrealised;
-    const quantity = sum(xs.map((x) => x.quantity));
+    // Null where the review records the line with no unit count (Stage 10dh).
+    const quantity = totalQuantity(xs);
     const mark = commonMark(xs, markKey);
     return {
       accountId, accountNo: acc?.accountNo ?? "",
@@ -4954,6 +4993,7 @@ function venuesOf(ps: Position[], accIdx: AccountIndex, valueDate: (p: Position)
       // FIFO: the holding's realised gain on units already sold stays in it.
       returnPct: costNA ? null : fifoTotals(xs).returnPct,
       costNA, share: 0,
+      valuedAtCost: xs.every((x) => x.valuedAtCost === true),
       positions: xs,
       // DERIVED as cost ÷ units, exactly as the consolidated row above derives
       // its own — so a line and the row it opens from are on one basis in the

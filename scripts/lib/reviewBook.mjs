@@ -118,7 +118,9 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       securityKey: key, security, symbol: null, isin: isinOf.get(key) ?? undefined, accountId, memberId: null,
       sector: "Unclassified", providerSector: null, assetClass, marketSide: "private",
       quantity: qty ?? null,
-      avgCost: atCost || !qty ? null : r2(cost / qty),
+      // What one unit cost, wherever the review records units — held at cost or not:
+      // a price paid is a cost, not a valuation (Stage 10dh).
+      avgCost: !qty ? null : r2(cost / qty),
       currentPrice: null, costBasis: r2(cost), costBasisSource: "review", printedCostBasis: undefined,
       marketValue: r2(atCost ? cost : value),
       unrealizedPnL: atCost ? null : r2(value - cost),
