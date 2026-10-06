@@ -1270,7 +1270,10 @@ export function capitalReturnCoverage(groups: CapitalGroup[], measure: ReturnMea
 /** Column totals, summed FROM the rows so the footer cannot disagree with them. */
 export function capitalTotals(groups: CapitalGroup[]) {
   return {
-    accounts: groups.length,
+    // ACCOUNTS, not rows (Stage 10dh): a member's review holder bucket draws
+    // one row per LINE — Zepto and Assetgro under Ajay are two rows — and they
+    // are rows of ONE account, so "K of M accounts" counts each account once.
+    accounts: new Set(groups.map((g) => g.accountId)).size,
     contributions: groups.reduce((a, g) => a + g.contributions, 0),
     withdrawals: groups.reduce((a, g) => a + g.withdrawals, 0),
     paidIn: groups.reduce((a, g) => a + g.paidIn, 0),

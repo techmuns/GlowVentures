@@ -6231,7 +6231,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                               names why it is withheld — the four cases and the
                               one refusal are `capitalRollup`'s. */}
                           <td className={`px-3 py-2.5 text-right mono whitespace-nowrap ${cap?.realised == null ? "" : changeColor(cap.realised)}`}
-                            data-realised-gain={cap?.realised ?? undefined}
+                            data-mine-cell="realised" data-realised-gain={cap?.realised ?? undefined}
                             title={cap?.realised != null ? cap.realisedNote ?? undefined : undefined}>
                             {!cap ? <AbsentCell reason={noCapitalWhy(r)} />
                               : cap.realised === null
@@ -6241,7 +6241,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                                 : fmtFromBase(cap.realised, { compact: true, sign: true })}
                           </td>
                           <td className={`px-3 py-2.5 text-right mono whitespace-nowrap ${cap?.unrealised == null ? "" : changeColor(cap.unrealised)}`}
-                            data-unrealised-gain={cap?.unrealised ?? undefined}
+                            data-mine-cell="unrealised" data-unrealised-gain={cap?.unrealised ?? undefined}
                             title={cap?.unrealised != null ? cap.unrealisedNote ?? undefined : undefined}>
                             {!cap ? <AbsentCell reason={noCapitalWhy(r)} />
                               : cap.unrealised === null

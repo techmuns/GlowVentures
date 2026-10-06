@@ -4031,14 +4031,37 @@ const YTD_MEASURABLE = (() => {
  * of money coming back is the commitment's own printed distribution total —
  * no date on it, so it is no MOVEMENT, and it still puts the account on the
  * redemption side.
+ *
+ * ── AND AN ACCOUNT THE REVIEW DATES IS DATED BY THE REVIEW ALONE (Stage 10dh) ─
+ *
+ * The family's consolidated review is the source for private-market lines, and
+ * its Transactions sheet dates every purchase, sale and income row behind each
+ * (`BOOK_REVIEW_FLOWS`). The page (`capitalMovesWithCalls`'s fourth argument)
+ * dates such an account by those rows and by nothing else — its statement
+ * record, calls and payouts describe the holding the review's line replaced.
+ * Re-expressed here, never imported; a book whose review accounts were dated by
+ * their statements would put the wrong document's money beside the value.
  */
 const CAPITAL_RECORD_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
+    const allMoves = bookArray(src, "BOOK_CAPITAL_MOVES");
     const commits = bookArray(src, "BOOK_COMMITMENTS");
     const accs = bookArray(src, "BOOK_ACCOUNTS");
-    if (!Array.isArray(moves) || !Array.isArray(commits) || !Array.isArray(accs)) return null;
+    const reviewRows = bookArray(src, "BOOK_REVIEW_FLOWS");
+    if (!Array.isArray(allMoves) || !Array.isArray(commits) || !Array.isArray(accs) || !Array.isArray(reviewRows)) return null;
+    const reviewed = new Set(reviewRows.map((f) => f.accountId));
+    const moves = allMoves.filter((m) => !reviewed.has(m.accountId));
+    const reviewMoves = reviewRows.map((f) => ({
+      accountId: f.accountId, date: f.date,
+      direction: f.kind === "purchase" ? "in" : "out",
+      amount: f.amount,
+      invested: f.kind === "purchase" ? f.amount : null,
+      units: f.units == null ? null : f.kind === "purchase" ? f.units : f.kind === "sale" ? -f.units : null,
+      security: f.security, securityKey: f.securityKey,
+      fromReview: true,
+      ...(f.kind === "sale" ? { payoutKind: "capital" } : f.kind === "income" ? { payoutKind: "income" } : {}),
+    }));
     const asOf = new Map(accs.map((a) => [a.accountId, a.asOf ?? null]));
     const recorded = new Set(moves.map((m) => m.accountId));
     const calls = [];
@@ -4049,6 +4072,9 @@ const CAPITAL_RECORD_BOOK = (() => {
     // the split below counts the principal the page counts.
     const typed = new Map();
     for (const c of commits) {
+      // An account the review dates takes nothing from its statement's
+      // commitment — no call and no payout (see above).
+      if (reviewed.has(c.accountId)) continue;
       const hasRecord = recorded.has(c.accountId);
       // A CAPITAL RECORD IS THE AUTHORITY ON WHAT WENT IN, so its account takes
       // no call from the commitment's list — the calls and the record are two
@@ -4092,7 +4118,7 @@ const CAPITAL_RECORD_BOOK = (() => {
       } else if (dated.length && typeof c.distributed === "number" && c.distributed > 0) undatedOut.add(c.accountId);
     }
     const recordMoves = moves.map((m) => (typed.has(m) ? { ...m, payoutKind: typed.get(m) } : m));
-    return { moves: [...recordMoves, ...calls, ...payouts], calls, payouts, undatedOut, commitments: commits };
+    return { moves: [...recordMoves, ...reviewMoves, ...calls, ...payouts], calls, payouts, undatedOut, commitments: commits, reviewMoves, reviewed };
   } catch { return null; }
 })();
 
@@ -4107,7 +4133,66 @@ const UNVALUED_ACCOUNTS = (() => {
   } catch { return null; }
 })();
 
-const FUNDED_ACCOUNTS = CAPITAL_RECORD_BOOK ? new Set(CAPITAL_RECORD_BOOK.moves.map((m) => m.accountId)).size : null;
+/**
+ * ── ONE TRANSACTIONS ROW PER ACCOUNT, OR PER LINE OF A REVIEW HOLDER BUCKET ──
+ *
+ * Stage 10dh: a member's review holder bucket (`Account.reviewHolder`) is the
+ * family's consolidated review's grouping of that member's private
+ * investments, not a custodian account. The page (`capitalRollup`) draws ONE
+ * ROW PER LINE of such a bucket — Zepto and Assetgro under Ajay are two
+ * investments bought on their own dates — and one row per account everywhere
+ * else, so every Transactions check is struck per GROUP, keyed the same way:
+ * `<accountId>|<securityKey>` on a holder bucket, the account otherwise.
+ *
+ * A review-dated group's value is struck on the date the review values ITS
+ * holdings (`priceAsOf`, else the account's own as-of), and only where every
+ * one of them is valued on one date — `commonValueDate`, restated. Every other
+ * group closes on its account's as-of. Re-expressed here, never imported.
+ *
+ * `rowGroup(key, account)` reads the group a drawn row IS off its own
+ * `data-dated-row` key, which carries `\u0000line:<securityKey>` on a
+ * holder line — the page's own key, so a row and the book meet on one name.
+ */
+const CAPITAL_GROUPS = (() => {
+  try {
+    if (!CAPITAL_RECORD_BOOK) return null;
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accs = bookArray(src, "BOOK_ACCOUNTS");
+    const pos = statementBookPositions(src);
+    if (!Array.isArray(accs) || !Array.isArray(pos)) return null;
+    const holder = new Set(accs.filter((a) => a.reviewHolder).map((a) => a.accountId));
+    const acc = new Map(accs.map((a) => [a.accountId, a]));
+    const groupOf = (accountId, securityKey) => (holder.has(accountId) && securityKey ? `${accountId}|${securityKey}` : accountId);
+    const groups = new Map();
+    for (const m of CAPITAL_RECORD_BOOK.moves) {
+      const g = groupOf(m.accountId, m.securityKey);
+      if (!groups.has(g)) groups.set(g, { key: g, accountId: m.accountId, line: g === m.accountId ? null : m.securityKey, moves: [] });
+      groups.get(g).moves.push(m);
+    }
+    for (const g of groups.values()) {
+      const a = acc.get(g.accountId);
+      const own = pos.filter((p) => p.accountId === g.accountId && (g.line == null || p.securityKey === g.line));
+      if (CAPITAL_RECORD_BOOK.reviewed.has(g.accountId)) {
+        const ds = new Set(own.map((p) => p.priceAsOf ?? a?.asOf ?? null));
+        g.asOf = ds.size === 1 ? [...ds][0] ?? null : null;
+      } else g.asOf = a?.asOf ?? null;
+      const ins = g.moves.filter((m) => m.direction === "in").map((m) => m.date).sort();
+      g.first = ins[0] ?? null;
+      g.last = ins.at(-1) ?? null;
+      g.lastAny = g.moves.map((m) => m.date).sort().at(-1) ?? null;
+    }
+    /** The group a drawn row is: its own key's line, under the account it names. */
+    const rowGroup = (key, account) => {
+      if (!account) return null;
+      const line = String(key ?? "").split("\u0000line:")[1];
+      return line ? `${account}|${line}` : account;
+    };
+    return { groups, groupOf, rowGroup, holder };
+  } catch { return null; }
+})();
+
+/** Rows the Transactions card draws a capital record on: one per group (above). */
+const FUNDED_ACCOUNTS = CAPITAL_GROUPS ? CAPITAL_GROUPS.groups.size : null;
 
 /**
  * ── WHICH ACCOUNTS CARRY A MONEY-WEIGHTED RETURN, AND WHICH ROWS ARE THEM ──
@@ -4140,6 +4225,19 @@ const FUNDED_ACCOUNTS = CAPITAL_RECORD_BOOK ? new Set(CAPITAL_RECORD_BOOK.moves.
  * `solve(ids)` pools every flow of every account at its own date, each account
  * closing at its own STATEMENT value on its own date — by BISECTION on the
  * ACT/365 NPV, a path the page's Newton solver does not take.
+ *
+ * ── A REVIEW LINE IS A UNIT OF ITS OWN, RATED ON THE REVIEW'S ROWS (Stage 10dh)
+ *
+ * The family's consolidated review dates the accounts it values
+ * (`BOOK_REVIEW_FLOWS`), and on a member's review holder bucket each LINE is a
+ * separate investment: Zepto and Assetgro under Ajay are two rows on the
+ * Transactions card, each with its own rate. So the unit here is the account —
+ * or, on a holder bucket, `<accountId>|<securityKey>` — and `rated`, `solve`
+ * and `wholeOf` are keyed on units. A review-dated unit is rated where the
+ * review's own rows support a rate, restated from `reviewShortfall`: it has a
+ * dated purchase and a holding, none of it held at cost, every holding valued on
+ * one date, the purchases less the sale proceeds ARE the cost carried (±₹1), and
+ * no row is dated after that date — which is also the date it closes on.
  */
 const DATED_CAPITAL_BOOK = (() => {
   try {
@@ -4155,14 +4253,39 @@ const DATED_CAPITAL_BOOK = (() => {
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const recorded = new Set(recordedMoves.map((m) => m.accountId));
     const commitmentOf = new Map(CAPITAL_RECORD_BOOK.commitments.map((c) => [c.accountId, c]));
+    const holders = new Set(accounts.filter((a) => a.reviewHolder).map((a) => a.accountId));
+    /** The unit a dated record describes: the account, or one line of a holder bucket. */
+    const unitOf = (accountId, securityKey) => (holders.has(accountId) && securityKey ? `${accountId}|${securityKey}` : accountId);
+    const accountsOf = (units) => [...new Set(units.map((u) => u.split("|")[0]))].sort();
     const byAcct = new Map();
     for (const m of CAPITAL_RECORD_BOOK.moves) {
-      if (!byAcct.has(m.accountId)) byAcct.set(m.accountId, []);
-      byAcct.get(m.accountId).push(m);
+      const u = unitOf(m.accountId, m.securityKey);
+      if (!byAcct.has(u)) byAcct.set(u, []);
+      byAcct.get(u).push(m);
     }
     const rated = new Map();
-    for (const [id, ms] of byAcct) {
+    for (const [unit, ms] of byAcct) {
+      const [id, line = null] = unit.split("|");
       const a = acc.get(id);
+      if (CAPITAL_RECORD_BOOK.reviewed.has(id)) {
+        if (!ms.every((m) => m.fromReview)) continue;
+        const ins = ms.filter((m) => m.direction === "in");
+        const own = statement.filter((p) => p.accountId === id && (line == null || p.securityKey === line));
+        if (!ins.length || !own.length || own.some((p) => p.valuedAtCost === true)) continue;
+        const dates = new Set(own.map((p) => p.priceAsOf ?? a?.asOf ?? null));
+        const valueAsOf = dates.size === 1 ? [...dates][0] : null;
+        if (!valueAsOf) continue;
+        const bought = ins.reduce((t, m) => t + (m.amount ?? 0), 0);
+        const sold = ms.filter((m) => m.direction === "out" && m.payoutKind === "capital").reduce((t, m) => t + (m.amount ?? 0), 0);
+        const cost = own.reduce((t, p) => t + (typeof p.costBasis === "number" ? p.costBasis : Number.NaN), 0);
+        if (!Number.isFinite(cost) || Math.abs(bought - sold - cost) > 1) continue;
+        if (ms.some((m) => m.date > valueAsOf)) continue;
+        const flows = ms.filter((m) => m.amount != null)
+          .map((m) => ({ t: Date.parse(m.date), a: m.direction === "in" ? -m.amount : m.amount }));
+        if (!flows.length) continue;
+        rated.set(unit, { flows, value: own.reduce((t, p) => t + p.marketValue, 0), asOf: valueAsOf });
+        continue;
+      }
       const c = commitmentOf.get(id) ?? null;
       const fromCalls = !recorded.has(id);
       const ins = ms.filter((m) => m.direction === "in");
@@ -4183,7 +4306,7 @@ const DATED_CAPITAL_BOOK = (() => {
         .map((m) => ({ t: Date.parse(m.date), a: m.direction === "in" ? -m.amount : m.amount }));
       if (!reachesBack || !reachesNow || ins.some((m) => m.amount == null) || value == null
         || !backStated || undatedBack || !flows.length) continue;
-      rated.set(id, { flows, value, asOf: a.asOf });
+      rated.set(unit, { flows, value, asOf: a.asOf });
     }
     const solve = (ids) => {
       const cs = ids.map((id) => rated.get(id));
@@ -4225,12 +4348,13 @@ const DATED_CAPITAL_BOOK = (() => {
     const wholeOf = (set) => {
       const keysIn = new Map();
       for (const p of set) {
-        if (!keysIn.has(p.accountId)) keysIn.set(p.accountId, new Set());
-        keysIn.get(p.accountId).add(p.securityKey);
+        const u = unitOf(p.accountId, p.securityKey);
+        if (!keysIn.has(u)) keysIn.set(u, new Set());
+        keysIn.get(u).add(p.securityKey);
       }
       if (!keysIn.size) return null;
-      for (const [id, keys] of keysIn) {
-        const own = current.filter((p) => p.accountId === id && carries(p));
+      for (const [u, keys] of keysIn) {
+        const own = current.filter((p) => unitOf(p.accountId, p.securityKey) === u && carries(p));
         if (!own.length || !own.every((p) => keys.has(p.securityKey))) return null;
       }
       return [...keysIn.keys()].sort();
@@ -4254,7 +4378,7 @@ const DATED_CAPITAL_BOOK = (() => {
     const byKey = new Map();
     for (const p of current.filter((x) => buoyant.includes(x.accountId))) byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
     const buoyantKey = [...byKey.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] ?? null;
-    return { rated, solve, wholeOf, consolidated, current, carries, acc, buoyant, buoyantKey };
+    return { rated, solve, wholeOf, consolidated, current, carries, acc, buoyant, buoyantKey, unitOf, accountsOf, holders };
   } catch { return null; }
 })();
 
@@ -14893,9 +15017,11 @@ const stockLayoutChecks = () => [
         if (!r.account) return false;
         const set = B.current.filter((p) => p.accountId === r.account && p.securityKey === key);
         const whole = set.length ? B.wholeOf(set) : null;
-        const want = !whole ? null : B.rated.has(r.account) ? "dated" : "undated";
+        // A row on a review holder bucket is one LINE of it (Stage 10dh).
+        const unit = B.unitOf(r.account, key);
+        const want = !whole ? null : B.rated.has(unit) ? "dated" : "undated";
         if ((r.capital ?? null) !== want) return false;
-        const sol = want === "dated" ? B.solve([r.account]) : null;
+        const sol = want === "dated" ? B.solve([unit]) : null;
         const expect = sol && sol.days >= 365 && sol.annual !== null ? sol.annual : null;
         if (expect === null) { if (r.xirr !== null) return false; continue; }
         // To the printed decimal: the line renders one place.
@@ -30149,8 +30275,14 @@ const INVARIANTS = {
           if (!Number.isNaN(v) || !/—/.test(c.text)) return false;
           continue;
         }
-        if (!c.capitalAccounts.length || !c.capitalAccounts.every((id) => B.rated.has(id))) return false;
-        const r = B.solve(c.capitalAccounts);
+        // The UNITS behind the row, restated from its own keys — on a review
+        // holder bucket each line is one (Stage 10dh) — and the accounts the
+        // page names must be exactly theirs.
+        const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
+        const units = c.mandate ? c.capitalAccounts : B.wholeOf(B.consolidated(keys));
+        if (!units?.length || B.accountsOf(units).join(" ") !== c.capitalAccounts.join(" ")
+          || !units.every((u) => B.rated.has(u))) return false;
+        const r = B.solve(units);
         if (!r) return false;
         if (r.days < 365) {
           if (!Number.isNaN(v) && c.tag !== "HPR") return false;
@@ -30185,13 +30317,15 @@ const INVARIANTS = {
       for (const c of cells.filter((x) => x.measure === "xirr")) {
         const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
         if (!keys.size) return false;
-        const accounts = c.mandate
+        // UNITS, not accounts: on a review holder bucket each line is one, and
+        // its rate is that line's alone (Stage 10dh).
+        const units = c.mandate
           ? (c.capitalAccounts.length === 1 && B.wholeOf(B.current.filter((p) => p.accountId === c.capitalAccounts[0])) ? c.capitalAccounts : null)
           : B.wholeOf(B.consolidated(keys));
-        if (!accounts) { if (c.capital !== null) return false; continue; }
+        if (!units) { if (c.capital !== null) return false; continue; }
         whole++;
-        const want = accounts.every((id) => B.rated.has(id)) ? "dated" : "undated";
-        if (c.capital !== want || c.capitalAccounts.join(" ") !== accounts.join(" ")) return false;
+        const want = units.every((u) => B.rated.has(u)) ? "dated" : "undated";
+        if (c.capital !== want || c.capitalAccounts.join(" ") !== B.accountsOf(units).join(" ")) return false;
       }
       return whole > 0;
     }],
