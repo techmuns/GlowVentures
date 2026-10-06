@@ -1176,8 +1176,11 @@ const SECURITY_AXIS_BOOK = (() => {
       cashRuleCr: cashRule / 1e7, liquidThroughCr: liquidThrough / 1e7,
       mandateCashCr: mandateCash / 1e7, categoryCashCr: categoryCash / 1e7,
       cashRuleOk: !!CASH_EQ_KEYS,
-      // The five buckets are a PARTITION: they must reconstruct NAV exactly.
-      residualCr: (nav - (measured + derived + skippedValue + (disclosedValue - derived) + cash)) / 1e7,
+      // The buckets are a PARTITION: they must reconstruct NAV exactly — the
+      // sixth, what is neither a share, a fund nor cash, included (Stage 10dh).
+      residualCr: (nav - (measured + derived + skippedValue + (disclosedValue - derived) + cash
+        + sum(ded.filter((p) => p.assetClass !== "Equity" && p.assetClass !== "Cash"
+          && !["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)).map((p) => p.marketValue)))) / 1e7,
       names: measuredKeys.size,
       derivedOnly,
       rows: measuredKeys.size + derivedOnly,
@@ -1201,10 +1204,16 @@ const SECURITY_AXIS_BOOK = (() => {
       topBySector, issuersBySector, ownTopBySector,
       ownHoldings: ownStocks.length, ownCompanies: ownPs.size,
       derivedByDate, derivedByClass, derivedInCashFunds, fundMarks,
-      // What is neither a share, a fund nor cash — the "Not on this page" part
-      // the book carries none of today, and the page must still name if it did.
+      // What is neither a share, a fund nor cash — the "Not on this page" part,
+      // and the Monitor's sixth bucket. The book carried none of it until the
+      // family's consolidated review became the source for the private market
+      // (Stage 10dh): its unlisted companies and its private credit line.
       otherMV: sum(ded.filter((p) => p.assetClass !== "Equity" && p.assetClass !== "Cash"
         && !["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)).map((p) => p.marketValue)),
+      otherClasses: [...new Set(ded.filter((p) => p.assetClass !== "Equity" && p.assetClass !== "Cash"
+        && !["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)).map((p) => p.assetClass))],
+      otherAllPrivate: ded.filter((p) => p.assetClass !== "Equity" && p.assetClass !== "Cash"
+        && !["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)).every((p) => p.marketSide === "private"),
       // Every name the book's own statements print for a company share.
       bookRawNames: [...new Set(stocks.map((p) => p.security))],
       aifCount, aifValueCr: aifValue / 1e7,
@@ -29706,11 +29715,13 @@ const INVARIANTS = {
      *
      * The rows are companies, so the footer no longer describes the book: this
      * table covers 42% of it. A reader takes a table's total for the whole of
-     * their money unless told otherwise, so the page states five buckets that
+     * their money unless told otherwise, so the page states six buckets that
      * reconstruct NAV — and the sweep holds each to a figure derived from
-     * `glowData.ts` and the store, never to a literal.
+     * `glowData.ts` and the store, never to a literal. The sixth (Stage 10dh)
+     * is what is held and is neither a share, a fund nor cash: the review's
+     * unlisted companies and private credit, which this table draws no row for.
      */
-    ["the page states what it covers and what it cannot, and the five buckets rebuild NAV", (t, ctx) => {
+    ["the page states what it covers and what it cannot, and the six buckets rebuild NAV", (t, ctx) => {
       if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
       const cov = ctx?.stockCoverage?.exposure;
       // AN ABSENT HOVER IS THE DEFECT, NOT A REASON TO ABSTAIN. The partition
@@ -29733,6 +29744,21 @@ const INVARIANTS = {
       const cash     = cr(/₹([\d,.]+)\s*(Cr|L|K)? is cash: the book.s own cash rows and the arbitrage funds/i);
       const all = [covers, directly, derived, opaque, nonEq, cash];
       if (all.some((v) => !Number.isFinite(v))) return false;
+      // THE SIXTH BUCKET (Stage 10dh): what is held and is neither a share, a
+      // fund nor cash — the review's unlisted companies and private credit. It is
+      // stated where the book carries any, at its own value with its classes and
+      // the page that carries each, and absent where it carries none. Before it
+      // the five came to ₹194 Cr short of the book they claim to rebuild.
+      const outsideM = /₹([\d,.]+)\s*(Cr|L|K)? is held in ([^,]+(?:, [^,]+)*?), neither a share nor a fund( — the Private Market page carries each)?/i.exec(cov);
+      const outside = outsideM ? crU(outsideM[1], outsideM[2]) : 0;
+      const B = SECURITY_AXIS_BOOK;
+      if (B.otherMV > 0) {
+        if (!outsideM || Math.abs(outside - B.otherMV / 1e7) > 0.15) return false;
+        const named = outsideM[3].split(", ").map((x) => x.trim()).sort().join("|");
+        const want = B.otherClasses.map((c) => (c === "Equity" ? "Company Shares" : c)).sort().join("|");
+        if (named !== want) return false;
+        if (!!outsideM[4] !== B.otherAllPrivate) return false;
+      } else if (outsideM) return false;
       // WHICH FUNDS THE DERIVED HALF IS READ FROM (MSX-14): the ones whose
       // filing reached a company line — not every fund with a store entry,
       // which counted the metal ETFs whose filing holds no company at all.
@@ -29752,9 +29778,9 @@ const INVARIANTS = {
       if (Math.abs(opaque - SECURITY_AXIS_BOOK.opaqueCr) > 0.15) return false;
       if (Math.abs(nonEq - SECURITY_AXIS_BOOK.unaccountedCr) > 0.15) return false;
       if (Math.abs(cash - SECURITY_AXIS_BOOK.cashCr) > 0.15) return false;
-      // ...and the five together must rebuild the book, which is the claim a
+      // ...and the six together must rebuild the book, which is the claim a
       // reader acts on and which no single figure can make on its own.
-      const rebuilt = directly + derived + opaque + nonEq + cash;
+      const rebuilt = directly + derived + opaque + nonEq + cash + outside;
       return Math.abs(rebuilt - SECURITY_AXIS_BOOK.navCr) <= 0.5
         && Math.abs(covers - (directly + derived)) <= 0.15;
     }],

@@ -154,7 +154,20 @@ const cash = sum(ded.filter((p) => p.assetClass === "Cash" || isArbitrageFund(p)
  */
 const floorOut = droppedHoldings(ded.filter(isFundVehicle));
 const floored = sum([...floorOut.closed, ...floorOut.negligible].map((p) => p.marketValue));
-const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ex.fencedValue + cash + floored;
+/**
+ * THE SIXTH BUCKET: WHAT IS HELD AND IS NEITHER A SHARE, A FUND NOR CASH
+ * (Stage 10dh). The family's consolidated review now feeds the book's private
+ * market, and it carries unlisted company shares and a private credit line as
+ * holdings. None is a listed company's share (this table's rows), none is a
+ * fund vehicle (its look-through) and none is cash, so they fell in no bucket
+ * and the partition came to ₹194 Cr short of the book. Struck as the
+ * complement of the other kinds rather than as a list of the review's classes,
+ * so a class a later drop brings lands here AND is named, instead of reopening
+ * the gap.
+ */
+const outsideRows = ded.filter((p) => !isCompanyShare(p) && !isFundVehicle(p) && p.assetClass !== "Cash" && !isArbitrageFund(p));
+const outside = sum(outsideRows.map((p) => p.marketValue));
+const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ex.fencedValue + cash + outside + floored;
 /**
  * THE STRONGEST ASSERTION HERE. The stock axis draws a table covering less than
  * half the book, so a reader is owed a statement of where the rest is — and that
@@ -164,9 +177,23 @@ const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ex
  * separate path from `dedupedPositions`, so the two agreeing is a real
  * cross-check rather than a figure compared with its own copy.
  */
-near("the five buckets rebuild the live book's own NAV, to the rupee", buckets, BOOK_NAV, 1);
+near("the six buckets rebuild the live book's own NAV, to the rupee", buckets, BOOK_NAV, 1);
 console.log(`     measured ${CR(measured)} + derived ${CR(ex.total)} + opaque ${CR(ex.skippedValue)}`
-  + ` + unaccounted ${CR(ex.unaccountedValue)} + fenced ₹${ex.fencedValue.toFixed(2)} + cash ${CR(cash)} + under the floor ₹${floored.toFixed(2)} = ${CR(buckets)}`);
+  + ` + unaccounted ${CR(ex.unaccountedValue)} + fenced ₹${ex.fencedValue.toFixed(2)} + cash ${CR(cash)}`
+  + ` + neither a share nor a fund ${CR(outside)} + under the floor ₹${floored.toFixed(2)} = ${CR(buckets)}`);
+/**
+ * THE SIXTH BUCKET IS PRIVATE, AND LOAD-BEARING. Every row in it is on the
+ * private side of the book — the Private Market page carries each — and taking
+ * it out breaks the partition by its own size, so it is a term with a subject
+ * rather than a zero added for show. On a book with no such row the second
+ * claim has nothing to bear and says so.
+ */
+ok("...where everything that is neither a share, a fund nor cash is a private holding",
+  outsideRows.every((p) => p.marketSide === "private"),
+  `${outsideRows.length} rows: ${[...new Set(outsideRows.map((p) => p.assetClass))].join(", ")}, ${CR(outside)}`);
+ok("...and that bucket is load-bearing: taken out, the partition breaks",
+  outside === 0 || Math.abs(buckets - outside - BOOK_NAV) > 1,
+  outside === 0 ? "nothing on this book is neither a share, a fund nor cash" : `${CR(outside)}`);
 ok("...where the floor's term is specks and redeemed nils, never money",
   floorOut.closed.every((p) => p.marketValue === 0)
     && floored < NEGLIGIBLE_VALUE_FLOOR * new Set(floorOut.negligible.map((p) => p.securityKey)).size,
@@ -175,7 +202,7 @@ ok("...and the table covers less than the book, which is why the statement is ow
   measured + ex.total < BOOK_NAV * 0.75,
   `${CR(measured + ex.total)} of ${CR(BOOK_NAV)}`);
 ok("every bucket is non-negative — a partition, not a subtraction that overshot",
-  [measured, ex.total, ex.skippedValue, ex.unaccountedValue, ex.fencedValue, cash].every((v) => v >= 0));
+  [measured, ex.total, ex.skippedValue, ex.unaccountedValue, ex.fencedValue, cash, outside].every((v) => v >= 0));
 eq("the vehicles split into covered and skipped with none lost",
   ex.covered + ex.skipped.length, vehicles.length);
 near("...and their values do too", ex.disclosedValue + ex.skippedValue,

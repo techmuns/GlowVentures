@@ -24,6 +24,7 @@ import {
   costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
   AT_COST_MARK, REVIEW_NO_MARK,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
+  assetClassLabel, isPrivateClass,
 } from "@/lib/analytics";
 import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
@@ -2231,7 +2232,7 @@ export function PortfolioMonitor() {
    * The rows on this axis are companies, so the footer no longer describes the
    * book: a fund is not a stock and has stopped being a row. That is exactly the
    * arrangement in which a reader takes a table's total for the whole of their
-   * money, so every rupee of NAV is placed in one of five buckets and the five
+   * money, so every rupee of NAV is placed in one of six buckets and the six
    * are printed. They sum to the book's own NAV by construction — each is a
    * disjoint slice of the same deduped positions.
    *
@@ -2241,8 +2242,10 @@ export function PortfolioMonitor() {
    *   nonEquity  inside a disclosed fund and not equity — its cash and debt
    *              sleeves, a gold or silver ETF's metal, the disclosure's rounding
    *   cash       the book's own cash rows, and the arbitrage funds the family
- *              counts as cash — which are not looked through, because their
- *              disclosed long shares are hedged and would read as exposure
+   *              counts as cash — which are not looked through, because their
+   *              disclosed long shares are hedged and would read as exposure
+   *   outside    held, and neither a share, a fund nor cash — the unlisted
+   *              companies and the private credit the review carries (10dh)
    *
    * `opaque` is the one that matters most and it is almost entirely the AIF
    * block: half this book by value, and no drop of the current statements can
@@ -2279,6 +2282,18 @@ export function PortfolioMonitor() {
     const mandateCash = sum(held.filter((p) => p.assetClass === "Cash" && heldUnderMandate(accIdx, p)).map((p) => p.marketValue));
     const categoryCash = sum(held.filter((p) => groupKeyFor("category", accIdx, p) === "Cash").map((p) => p.marketValue));
     const nav = sum(held.map((p) => p.marketValue));
+    /**
+     * THE SIXTH BUCKET (Stage 10dh): held, and neither a company share, a fund
+     * nor cash — the unlisted companies and the private credit line the
+     * family's consolidated review carries. This table draws none of them, so
+     * before this term the parts below came to ₹194 Cr short of the book they
+     * claim to rebuild. The complement of the other kinds, not a list of the
+     * review's classes, and its classes are named in the hover.
+     */
+    const outsideRows = held.filter((p) => !isCompanyShare(p) && !isFundVehicle(p) && p.assetClass !== "Cash" && !isArbitrageFund(p));
+    const outside = sum(outsideRows.map((p) => p.marketValue));
+    const outsideClasses = [...new Set(outsideRows.map((p) => assetClassLabel(p.assetClass)))];
+    const outsidePrivate = outsideRows.length > 0 && outsideRows.every(isPrivateClass);
     const ex = exposure.status === "ok" ? exposure : null;
     const derived = ex?.total ?? 0;
     const opaque = ex?.skippedValue ?? 0;
@@ -2296,6 +2311,7 @@ export function PortfolioMonitor() {
     const notInStore = (ex?.skipped ?? []).filter((sk) => !/^an AIF files/.test(sk.reason));
     return {
       nav, measured, derived, opaque, unaccounted, cash, cashRule, liquidThrough, mandateCash, categoryCash,
+      outside, outsideClasses, outsidePrivate,
       fundsRead, zeroLine: Math.max(0, (ex?.covered ?? 0) - fundsRead),
       notInStore: { names: notInStore.map((sk) => sk.fundName), value: sum(notInStore.map((sk) => sk.marketValue)) },
       total: measured + derived,
@@ -4644,6 +4660,9 @@ export function PortfolioMonitor() {
                                     stockCoverage.aifCount > 0 ? `${stockCoverage.aifCount} AIF fund class${stockCoverage.aifCount === 1 ? "" : "es"}, ${money(stockCoverage.aifValue)} — an AIF files no portfolio disclosure that joins to a folio this family holds, so no future statement fills it` : "",
                                     stockCoverage.notInStore.names.length > 0 ? `${stockCoverage.notInStore.names.join(", ")}, ${money(stockCoverage.notInStore.value)} — a fund whose filing the store does not carry` : "",
                                   ].filter(Boolean).join("; ")})`
+                                : "")
+                            + (stockCoverage.outside > 0
+                                ? `, ${money(stockCoverage.outside)} is held in ${stockCoverage.outsideClasses.join(", ")}, neither a share nor a fund${stockCoverage.outsidePrivate ? " — the Private Market page carries each" : ""}`
                                 : "")
                             + `, ${money(stockCoverage.unaccounted)} is the part of a disclosed fund no line in the filing accounted for — its cash sleeve, a gold or silver ETF's metal, and the disclosure's own rounding — and ${money(stockCoverage.cash)} is cash: the book's own cash rows and the arbitrage funds the family counts as cash, which are not looked through because their long shares are hedged.`
                             + ` That is the family's cash rule (${money(stockCoverage.cashRule)}: every Cash row, liquid fund and arbitrage fund) less the ${money(stockCoverage.liquidThrough)} of liquid funds, which this view reads through instead because their paper is real credit; the Category view's Cash section reads ${money(stockCoverage.categoryCash)} because it counts those liquid funds and files the ${money(stockCoverage.mandateCash)} of cash inside PMS mandates with each mandate.`
