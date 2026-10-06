@@ -770,8 +770,10 @@ export function coveredReturn(set: readonly Position[], opts: FifoOptions = {}) 
  * The whole-book return on cost is struck over the holdings that report a
  * cost — Stage 10ca's decision, and main records the refusal version (a bare
  * "—" wherever ₹168 Cr of depository holdings report no cost) as a regression.
+ * Since Stage 10dh it is the holdings that report a cost AND carry a valuation
+ * of their own: a review line held at cost is a cost with no gain on it.
  * WHEREVER IT APPEARS IT NAMES THAT SET ON ITS FACE, not only in a hover:
- * "on the ₹X of ₹Y that reports a cost · N of M holdings". Morning CIO's
+ * "on the ₹X of ₹Y valued against a cost · N of M holdings". Morning CIO's
  * Consolidated return tile, its allocation table's Total row and the Portfolio
  * Monitor's footer all print this ONE figure over this ONE set, so the set and
  * its words are built here once.
@@ -819,16 +821,19 @@ export function costedBookSet(current: readonly Position[]): CostedBookSet {
   };
 }
 /**
- * The words, in the reader's currency: "on the ₹X of ₹Y that reports a cost
- * and a valuation · N of M holdings". It names the RETURN's set, so it counts
- * the struck holdings: a depository row reports no cost and a review line held
- * at cost no valuation, and a return covers neither.
+ * The words, in the reader's currency: "on the ₹X of ₹Y valued against a cost
+ * · N of M holdings". It names the RETURN's set, so it counts the struck
+ * holdings: a depository row reports no cost and a review line held at cost no
+ * valuation of its own, and a return covers neither. "Valued against a cost"
+ * says both halves in four words — the label sits on a figure's face, where a
+ * sentence would break the no-explainer rule (Stage 10cp); which lines it leaves
+ * out, and why, is the hover of the figure it qualifies.
  */
 export function costedSetLabel(
   s: Pick<CostedBookSet, "struckValue" | "bookValue" | "struckCount" | "holdings">,
   money: (n: number) => string,
 ): string {
-  return `on the ${money(s.struckValue)} of ${money(s.bookValue)} that reports a cost and a valuation · ${s.struckCount} of ${s.holdings} holdings`;
+  return `on the ${money(s.struckValue)} of ${money(s.bookValue)} valued against a cost · ${s.struckCount} of ${s.holdings} holdings`;
 }
 
 /**

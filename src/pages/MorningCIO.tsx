@@ -461,9 +461,12 @@ export function MorningCIO() {
      * one quantity gated on one surface and not on the others. The rule is now
      * one: the whole-book return on cost is struck over the holdings that
      * report a cost (Stage 10ca), and every surface that prints it names that
-     * set ON ITS FACE — "on the ₹X of ₹Y that reports a cost · N of M
+     * set ON ITS FACE — "on the ₹X of ₹Y valued against a cost · N of M
      * holdings" (`costedSetLabel`). A reader dividing Current by Invested in
      * the Total row is told, beside the figure, that it is not struck on those.
+     * Since Stage 10dh the set is narrower than "reports a cost": a line the
+     * family's review holds at cost reports one and carries no valuation of its
+     * own, so it is in Invested and in no gain (`costedSet.struck`).
      */
     const costedMV = costedSet.costedValue + (privateCount ? privateCurrent : 0);
     const costCoversBook = totalValue > 0 && Math.abs(costedMV - totalValue) <= totalValue * 0.005;
@@ -1079,12 +1082,14 @@ export function MorningCIO() {
     {
       id: "gain", label: "Gain / loss", icon: <TrendingUp className="h-4 w-4" />,
       href: drilldownHref("book", undefined, "costed"),
-      hrefTitle: "Open the holdings this gain is struck over — the ones whose statement reports a cost. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). Return on recorded capital is this gain over the capital deployed. This is the recorded gain, not a complete since-inception total return: separate dividends and fund distributions and sales outside the available statements are not included, except within a whole PMS mandate. It covers the holdings reporting a cost.",
+      hrefTitle: `Open the holdings whose statement reports a cost. The gain is struck over the ${fmtNum(m.costedSet.struckCount)} of them that also carry a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })}. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). Return on recorded capital is this gain over the capital deployed.${
+        m.costedSet.atCost > 0 ? ` The ${fmtNum(m.costedSet.atCost)} line${m.costedSet.atCost === 1 ? "" : "s"} the family's consolidated review holds at cost (${fmtFromBase(m.costedSet.atCostValue, { compact: true })}) ${m.costedSet.atCost === 1 ? "is" : "are"} in the capital invested and in no gain: the review records what was paid and no valuation.` : ""
+      } This is the recorded gain, not a complete since-inception total return: separate dividends and fund distributions and sales outside the available statements are not included, except within a whole PMS mandate.`,
       value: m.embeddedGain == null ? <AbsentValue />
         : <span className={changeColor(m.embeddedGain)}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</span>,
       second: m.gainPct == null ? undefined : <>Return on capital {pct1(m.gainPct)}</>,
       sub: m.embeddedGain == null ? absentWhy("No recorded cost or gain")
-        : <>Recorded · {fmtNum(m.costedSet.costedCount)} of {fmtNum(m.costedSet.holdings)} holdings<br />Separate income excluded</>,
+        : <>Recorded · {fmtNum(m.costedSet.struckCount)} of {fmtNum(m.costedSet.holdings)} holdings<br />Separate income excluded</>,
     },
     {
       id: "annualised", label: "Annualised return", icon: <TrendingUp className="h-4 w-4" />,
@@ -1133,7 +1138,9 @@ export function MorningCIO() {
     {
       id: "return", label: "Consolidated return", icon: <Percent className="h-4 w-4" />,
       href: drilldownHref("book", undefined, "costed"),
-      hrefTitle: `Open the holdings this return is struck over — the ${fmtNum(m.costedSet.costedCount)} of ${fmtNum(m.costedSet.holdings)} whose statement reports a cost, worth ${fmtFromBase(m.costedSet.costedValue, { compact: true })} of the ${fmtFromBase(m.costedSet.bookValue, { compact: true })} book — on the Current Value of Holdings page; the ${fmtFromBase(m.costedSet.bookValue - m.costedSet.costedValue, { compact: true })} that reports none is outside it. FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the capital deployed — the cost of the units held plus the cost of the units sold, and each whole PMS mandate at the capital paid into it. Cumulative, not annualised. Dividends and fund distributions are not in it, except inside a whole mandate's capital.`,
+      hrefTitle: `Open the holdings whose statement reports a cost — the ${fmtNum(m.costedSet.costedCount)} of ${fmtNum(m.costedSet.holdings)}, worth ${fmtFromBase(m.costedSet.costedValue, { compact: true })} of the ${fmtFromBase(m.costedSet.bookValue, { compact: true })} book — on the Current Value of Holdings page. The return is struck over the ${fmtNum(m.costedSet.struckCount)} of them that also carry a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })}${
+        m.costedSet.atCost > 0 ? `; the ${fmtNum(m.costedSet.atCost)} line${m.costedSet.atCost === 1 ? "" : "s"} the family's consolidated review holds at cost (${fmtFromBase(m.costedSet.atCostValue, { compact: true })}) ${m.costedSet.atCost === 1 ? "is" : "are"} in the capital invested and in no gain` : ""
+      }; the ${fmtFromBase(m.costedSet.bookValue - m.costedSet.costedValue, { compact: true })} that reports no cost is outside it. FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the capital deployed — the cost of the units held plus the cost of the units sold, and each whole PMS mandate at the capital paid into it. Cumulative, not annualised. Dividends and fund distributions are not in it, except inside a whole mandate's capital.`,
       value: pct1(m.gainPct),
       // THE SET, ON ITS FACE (B-07) — the same words the allocation table's
       // Total row prints beside the same figure, from `costedSetLabel`.
@@ -1708,7 +1715,7 @@ export function MorningCIO() {
                       <td key="return" className={`border-t-2 border-ink-600 px-2 py-2.5 text-right whitespace-nowrap mono font-semibold ${m.footerPct == null ? "text-slate-500" : changeColor(m.footerPct)}`}
                         data-alloc-total-return={m.footerPct ?? ""}
                         title={m.footerPct == null ? undefined
-                          : `The whole-book return on cost, FIFO — the unrealised gain on what is held plus the gain realised on units sold, over the capital deployed — struck over the holdings that report a cost. It is not Current ÷ Invested: Current covers every holding and Invested the costed ones. Cumulative, not annualised.`}>
+                          : `The whole-book return on cost, FIFO — the unrealised gain on what is held plus the gain realised on units sold, over the capital deployed — struck over the holdings that report a cost and carry a valuation of their own. It is not Current ÷ Invested: Current covers every holding and Invested the costed ones${m.costedSet.atCost > 0 ? `, the ${fmtNum(m.costedSet.atCost)} line${m.costedSet.atCost === 1 ? "" : "s"} the family's consolidated review holds at cost included — in Invested and in no gain` : ""}. Cumulative, not annualised.`}>
                         {/* ONE FIGURE, ONE SET, ONE LABEL (B-07). This read "—"
                             with no reason while the tile and the Portfolio
                             Monitor's footer printed the figure; it prints the

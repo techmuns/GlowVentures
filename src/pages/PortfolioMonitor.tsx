@@ -2479,8 +2479,11 @@ export function PortfolioMonitor() {
    * value: 60-odd depository rows print no cost, and a reader who takes a
    * whole-book figure for one over every holding has been told something the
    * figure does not say. So the set is printed UNDER the figure, not left to a
-   * popover — "on the ₹X of ₹Y that reports a cost, N of M holdings" — and a
-   * table every holding of which reports a cost says that instead.
+   * popover — "on the ₹X of ₹Y valued against a cost · N of M holdings" — and a
+   * table every holding of which reports a cost says that instead. "Valued
+   * against a cost" (Stage 10dh) because the set is narrower than "reports a
+   * cost": a review line held at cost reports one and carries no valuation of
+   * its own, so no gain is struck on it.
    */
   /** What the footer's Realised counts, said on its face and in its hover (MH-05). */
   const realisedBasis = realisedBasisNote(totFifo, realisedFacts, (n) => money(n, true), fmtDate);
@@ -2489,7 +2492,7 @@ export function PortfolioMonitor() {
   // valuation — never a depository row, and never a line held at cost.
   const returnSetLine = (footCover.uncosted.lines === 0 || footCover.uncosted.value === 0) && footCover.atCost.lines === 0
     ? `every one of the ${footCover.lines} ${footCover.lines === 1 ? "holding reports" : "holdings reports"} a cost`
-    : `on the ${money(footStruckValue)} of ${money(footCover.value)} that reports a cost and a valuation · ${footStruckLines} of ${footCover.lines} holdings`;
+    : `on the ${money(footStruckValue)} of ${money(footCover.value)} valued against a cost · ${footStruckLines} of ${footCover.lines} holdings`;
   // ── WHAT A ROW OPENS INTO: ROWS OF THIS TABLE, IN ITS COLUMNS ─────────────
   //
   //   *"i hope the ui design upgrades you are doing and making it much amazing

@@ -264,6 +264,51 @@ function statementBookPositions(src) {
 }
 
 /**
+ * ── A REVIEW ROW, PLACED BY THE BLOCK IT WAS READ FROM (Stage 10dh) ─────────
+ *
+ * The family's consolidated review is the source for their private-market
+ * lines, and `build-book` carries each one with `reviewSource {sheet, block,
+ * row}` — the tab and the block of the workbook it was read from. Which side of
+ * the book such a line sits on is a fact about THAT BLOCK, not about its asset
+ * class: the review files K M Global's bond on its Debt tab and two unlisted
+ * companies under Equity, and every one of them is private capital. So the
+ * checker places a review row by its block — a second expression of the rule,
+ * never `Position.marketSide` read back, which would agree with the page by
+ * construction. A review row from a block not named here is NOT placed by this
+ * rule and falls through to the class rule, so a builder that started carrying
+ * another tab of the review would be caught by the side checks rather than
+ * waved through.
+ *
+ * `valuedAtCost` is read as a SOURCE property: the review records no valuation
+ * for those lines, only what was paid, and `reviewBook.test.ts` holds the flag
+ * to the workbook's own columns. Re-deriving it here would read the workbook a
+ * second time in the sweep for a fact the suite already holds.
+ */
+const REVIEW_PRIVATE_BLOCKS = new Set([
+  "Private Investments|Private Investments",
+  "Alternate|PE Funds",
+  "Equity|Direct Equity - Unlisted",
+  "Debt|Debt",
+]);
+const reviewPrivateRow = (p) => !!p?.reviewSource
+  && REVIEW_PRIVATE_BLOCKS.has(`${p.reviewSource.sheet}|${p.reviewSource.block}`);
+/** A line the review carries at what was paid, with no valuation of its own. */
+const reviewAtCost = (p) => p?.valuedAtCost === true;
+/**
+ * A LINE THAT HOLDS SOMETHING: units above nil, or — where its source prints no
+ * units at all (59 of the review's private investments) — a value. A redeemed
+ * line prints nil units and is not held; a review line printing no units is.
+ */
+const holdsSomething = (p) => (Number(p?.quantity) || 0) > 0
+  || (p?.quantity == null && (Number(p?.marketValue) || 0) > 0);
+/**
+ * THE DATE A ROW'S VALUE IS STRUCK ON: the price date it carries where it
+ * carries one (a review line is valued on the review's own date, or on the
+ * date of the valuation it cites), else its account's report date.
+ */
+const valuedOnOf = (p, acc) => p?.priceAsOf ?? acc?.get?.(p?.accountId)?.asOf ?? null;
+
+/**
  * ── THE CASH MAP, READ ONCE AS COMMITTED DATA ──────────────────────────────
  *
  * `CASH_EQUIVALENT_KEYS` in `src/lib/analytics.ts`, parsed rather than imported
@@ -2286,6 +2331,10 @@ const SIDE_BOOK = (() => {
      */
     const sideOf = (p) => {
       const a = acc.get(p.accountId);
+      // A review line is private by the block it was read from (Stage 10dh) —
+      // K M Global's bond is on the review's Debt tab and is private credit,
+      // which the class rule below would have called listed.
+      if (reviewPrivateRow(p)) return "private";
       if (p.assetClass === "Unlisted" || p.assetClass === "Structured Product") return "private";
       if (p.assetClass !== "AIF") return "listed";
       return fundSideOf(p.security, a, p.securityKey);
@@ -2311,6 +2360,9 @@ const SIDE_BOOK = (() => {
     return {
       listedMV: val(on("listed")), privateMV: val(on("private")), unplacedMV: val(on(null)),
       totalMV: val(ded),
+      // How many lines the family's review is the source for (Stage 10dh): the
+      // private side's hover must say so wherever there is one.
+      reviewRows: positions.filter(reviewPrivateRow).length,
       sides: [["Listed", val(on("listed"))], ["Private", val(on("private"))], ["Not placed", val(on(null))]]
         .filter(([, v]) => v !== 0).map(([k]) => k),
       // The funds the family named, and the ones nothing places. They were
@@ -2341,8 +2393,11 @@ const SIDE_BOOK = (() => {
        * fund row's As of spans all of its folios: 360 ONE's two CRNs are marked
        * a month apart and the row prints both dates.
        */
+      // Each row on its OWN price date where it carries one — a review line is
+      // valued on the review's date, or on the valuation it cites (Zepto's
+      // 31 Jul 2025 round), never on its holder account's newest statement.
       privateAsOfMax: [...new Set(current(positions.filter((p) => sideOf(p) === "private"))
-        .map((p) => acc.get(p.accountId)?.asOf).filter(Boolean))].sort().at(-1) ?? null,
+        .map((p) => valuedOnOf(p, acc)).filter(Boolean))].sort().at(-1) ?? null,
       bookAsOfMax: [...new Set(accounts.map((a) => a.asOf).filter(Boolean))].sort().at(-1) ?? null,
       /**
        * THE WHOLE BOOK ON THE STATEMENT BASIS. Private Market reads
@@ -4693,15 +4748,19 @@ const FAMILY_BOOK = (() => {
       const e = acc.get(p.accountId)?.engagement;
       if (e === "PMS") return "PMS mandates";
       if (CASH_EQ_KEYS.has(p.securityKey)) return "Cash";
+      if (reviewAtCost(p)) return "Private investments at cost";
       if (p.assetClass !== "Equity") return p.assetClass;
       return e === "Direct" || e === "Execution" ? "Direct Equity" : "Equity — how it is held is not stated";
     };
     const owners = new Map();
     for (const p of positions) {
       const k = ownerKey(p);
-      const o = owners.get(k) ?? { owner: k, mv: 0, count: 0, withoutCost: 0, rows: [] };
+      const o = owners.get(k) ?? { owner: k, mv: 0, count: 0, withoutCost: 0, atCost: 0, rows: [] };
       o.mv += p.marketValue; o.count += 1;
       if (!costed(p)) o.withoutCost += 1;
+      // A line the family's review holds at cost reports a cost and no
+      // valuation (Stage 10dh): costed, and in no gain — counted apart.
+      if (reviewAtCost(p)) o.atCost += 1;
       o.rows.push(`${p.securityKey}@${p.accountId}`);
       owners.set(k, o);
     }
@@ -4737,7 +4796,9 @@ const FAMILY_BOOK = (() => {
      * Written out here rather than imported from `fifo.ts`.
      */
     const returnOf = (owner) => {
-      const set = positions.filter((p) => ownerKey(p) === owner && costed(p));
+      // Over the holdings a gain is struck on: a cost, and a valuation of its
+      // own — never a review line held at cost, which is in no gain (Stage 10dh).
+      const set = positions.filter((p) => ownerKey(p) === owner && costed(p) && !reviewAtCost(p));
       const inSet = new Map();
       for (const p of set) { if (!inSet.has(p.accountId)) inSet.set(p.accountId, new Set()); inSet.get(p.accountId).add(p.securityKey); }
       const whole = new Set();
@@ -4972,6 +5033,21 @@ const SIDE_HOVER_CHECKS = [
     ].filter(([v]) => v !== 0);
     if (!want.length) return { notChecked: "the book has no side to explain" };
     return want.every(([, lead, rule]) => titles.some((x) => lead.test(x ?? "") && rule.test(x ?? "")));
+  }],
+  /**
+   * THE PRIVATE SIDE NAMES ITS SOURCE (Stage 10dh). The family asked for their
+   * consolidated review to be THE source for private markets, so the private
+   * side's own explanation must say so wherever the book carries a line of it:
+   * a hover that explained the side by SEBI categories alone would describe a
+   * set most of whose value no statement placed. Struck on the same hover the
+   * check above reads, so the two cannot be satisfied by different sentences.
+   */
+  ["...and the private side names the family's consolidated review as the source for private markets (Stage 10dh)", (t, ctx) => {
+    if (!SIDE_BOOK) return { notChecked: "the sides could not be re-derived from glowData.ts" };
+    if (!(SIDE_BOOK.reviewRows > 0)) return { notChecked: "the book carries no line of the family's review" };
+    if (!(SIDE_BOOK.privateMV > 0)) return false;
+    return (ctx?.titles ?? []).some((x) => /Private capital/.test(x ?? "")
+      && /consolidated review/.test(x ?? "") && /source for private markets/.test(x ?? ""));
   }],
   ["...and no hover still says the SEBI category alone places a fund", (t, ctx) =>
     !(ctx?.titles ?? []).some((x) => /Category III AIFs whose own statements|AIFs whose statements\s+print Category I or II|so this book places them on neither\s+side\. They are in the total/.test(x ?? ""))],
@@ -6268,18 +6344,22 @@ const DRILLDOWN_FACET_NOTE = [
 
 const DRILLDOWN_COUNTS = new Map();
 const DRILLDOWN_TOTALS = new Map();
-// FIVE, because the book has five buckets. It had six until Stage 10cz: the
+// EIGHT, because the book has eight buckets. It had six until Stage 10cz: the
 // ETF bucket held the DSP Gold and Silver ETFs at the Motilal statements' Rate,
 // which is the price of each holding's LAST DEPOSITORY MOVEMENT rather than a
 // mark, and with the NAV refused across their 1:10 unit split nothing values
-// them now, so the bucket is empty and Morning CIO draws no ETF row. Spare
+// them now, so the bucket is empty and Morning CIO draws no ETF row. Stage 10dh
+// added three: the family's review is the source for their private-market
+// lines, so the book carries Unlisted companies, a Bond (K M Global's credit)
+// and the lines the review holds at what was paid, which are their own bucket —
+// "Private investments at cost" — because they carry no gain. Spare
 // slots are not free: each one is a route that renders a not-found page nobody
 // sees, and since the drill-down's generic checks landed it FAILS four of them
 // rather than abstaining — noise that trains a reader to skim the report. A
 // SIXTH bucket does not go unwalked either — the `cio` invariant below fails
 // when the table has more rows than this sweep has addresses for, which is a
 // one-line diagnosis naming the fix rather than a silent gap.
-const BUCKET_SLOTS = [1, 2, 3, 4, 5];
+const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8];
 
 /**
  * THE MUTUAL FUND WHOSE LOOK-THROUGH IS WALKED — derived, never typed.
@@ -6888,7 +6968,6 @@ const ROUTES = [
    * route that correctly does not draw them.
    */
   ["private-market-transactions", "/private-market?view=transactions"],
-  ["private-market-review", "/private-market?view=review"],
   /**
    * ...AND THE FUND TABLE WITH EVERY CONCRETE RETURN TICKED, one column each.
    *
@@ -9006,11 +9085,12 @@ function sectionOf(text, label) {
 const HOLDINGS_BAND = String.raw`·\s*([\d,]+)\s*holdings?(?:\s*\(([\d,]+)\s*statement lines?\))?(?:\s*·\s*([\d,]+)\s*names?)?\s*·\s*₹([\d.,]+)\s*(Cr|L|K)?`;
 /**
  * THE FOOTER'S RETURN CELL: the whole-book figure, then the set it is struck
- * over, on its face (MH-04 / B-07) — "on the ₹X of ₹Y that reports a cost · N
- * of M holdings", or "every one of the N holdings reports a cost" where the
- * table's every holding does. Nothing else may follow the figure.
+ * over, on its face (MH-04 / B-07) — "on the ₹X of ₹Y valued against a cost · N
+ * of M holdings" (Stage 10dh: a cost and a valuation of its own), or "every one
+ * of the N holdings reports a cost" where the table's every holding does.
+ * Nothing else may follow the figure.
  */
-const FOOT_RETURN_CELL = /^[+\-−]?[\d.]+%(?:\s+(?:on the ₹[\d,.]+\s*(?:Cr|L|K)? of ₹[\d,.]+\s*(?:Cr|L|K)? that reports a cost\s*[·,]\s*[\d,]+ of [\d,]+ holdings|every one of the [\d,]+ holdings? reports? a cost))?$/;
+const FOOT_RETURN_CELL = /^[+\-−]?[\d.]+%(?:\s+(?:on the ₹[\d,.]+\s*(?:Cr|L|K)? of ₹[\d,.]+\s*(?:Cr|L|K)? valued against a cost\s*[·,]\s*[\d,]+ of [\d,]+ holdings|every one of the [\d,]+ holdings? reports? a cost))?$/;
 function headingCount(head) {
   const m = new RegExp(HOLDINGS_BAND, "i").exec(head ?? "");
   return m ? { holdings: cr(m[1]), lines: m[2] ? cr(m[2]) : null, names: m[3] ? cr(m[3]) : null, mv: crU(m[4], m[5]) } : null;
@@ -9083,6 +9163,7 @@ const TXN_SECTIONS = (() => {
       const e = engagement.get(p.accountId);
       if (e === "PMS") return MANDATE_BUCKET;
       if (cashEq.has(p.securityKey)) return "Cash";
+      if (reviewAtCost(p)) return "Private investments at cost";
       if (p.assetClass !== "Equity") return p.assetClass;
       return e === "Direct" || e === "Execution" ? DIRECT_EQUITY_BUCKET : "Equity — how it is held is not stated";
     };
@@ -9753,6 +9834,7 @@ const CLUBBED_BOOK = (() => {
       const e = engagement.get(p.accountId);
       if (e === "PMS") return MANDATE_BUCKET;
       if (cashEq.has(p.securityKey)) return "Cash";
+      if (reviewAtCost(p)) return "Private investments at cost";
       if (p.assetClass !== "Equity") return p.assetClass;
       return e === "Direct" || e === "Execution" ? DIRECT_EQUITY_BUCKET : "Equity — how it is held is not stated";
     };
@@ -10813,8 +10895,8 @@ const DE_CURRENT_NAMES = (() => {
 /**
  * THE SET THE WHOLE-BOOK RETURN IS STRUCK OVER (B-07), and the book it is a
  * part of. The rule is Stage 10ca's: the whole-book return on cost is struck
- * over the holdings whose statement reports a cost, and every surface that
- * prints it — Morning CIO's Consolidated return tile, the allocation table's
+ * over the holdings whose statement reports a cost (and, since Stage 10dh, that
+ * carry a valuation of their own), and every surface that prints it — Morning CIO's Consolidated return tile, the allocation table's
  * Total row, the page both open — names that set on its face. Re-expressed
  * here off `glowData.ts`, on the live model the pages draw (`bookArray`: the
  * published NAV overlaid, the depository cash added), and never imported from
@@ -10823,7 +10905,12 @@ const DE_CURRENT_NAMES = (() => {
  *     consolidated set keeps it;
  *   • a fund vehicle at nil units with a published NAV is closed, and a
  *     security worth under ₹1,000 in all is a speck — the current-holdings rule;
- *   • a cost is one the statement reports AND the page may use.
+ *   • a cost is one the statement reports AND the page may use;
+ *   • the RETURN is struck over the costed holdings that carry a valuation of
+ *     their own (Stage 10dh): a line the family's review holds at cost
+ *     (`valuedAtCost`) reports what was paid and no valuation, so it is in
+ *     Capital invested and in no gain. `struck` is that set; `costed` stays
+ *     Capital invested's and the "Cost reported" facet's.
  */
 const COSTED_BOOK = (() => {
   try {
@@ -10840,17 +10927,18 @@ const COSTED_BOOK = (() => {
     const current = ded.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null)
       && !small.has(p.securityKey));
     const costed = current.filter((p) => typeof p.costBasis === "number" && Number.isFinite(p.costBasis) && !p.costUnavailable);
+    const struck = costed.filter((p) => !reviewAtCost(p));
     const mv = (xs) => xs.reduce((t, p) => t + p.marketValue, 0);
-    /* THE RETURN ITSELF, FIFO over that set — Stage 10ca's one aggregate,
+    /* THE RETURN ITSELF, FIFO over the STRUCK set — Stage 10ca's one aggregate,
        written out here rather than called: a PMS mandate the set holds WHOLE
-       (every current holding of the account reports a cost) is struck on its
-       own capital, `value + withdrawn − contributed` over `contributed`; every
+       (every current holding of the account is in it) is struck on its own
+       capital, `value + withdrawn − contributed` over `contributed`; every
        other holding is its unrealised gain plus what it realised, over its
        cost held plus the cost of the units it sold. Summed, then divided. */
     const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
     const byAcct = new Map(accounts.map((a) => [a.accountId, a]));
     const keysIn = new Map();
-    for (const q of costed) {
+    for (const q of struck) {
       if (!keysIn.has(q.accountId)) keysIn.set(q.accountId, new Set());
       keysIn.get(q.accountId).add(q.securityKey);
     }
@@ -10863,7 +10951,7 @@ const COSTED_BOOK = (() => {
     }
     const fin = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
     let gain = 0, deployed = 0, invested = 0;
-    for (const q of costed) {
+    for (const q of struck) {
       if (whole.has(q.accountId)) continue;
       gain += q.marketValue - q.costBasis + fin(q.realizedPnL);
       deployed += q.costBasis + fin(q.costOfUnitsSold);
@@ -10871,16 +10959,20 @@ const COSTED_BOOK = (() => {
     }
     for (const acct of whole) {
       const cap = byAcct.get(acct).capital;
-      gain += mv(costed.filter((q) => q.accountId === acct)) + cap.withdrawn - cap.contributed;
+      gain += mv(struck.filter((q) => q.accountId === acct)) + cap.withdrawn - cap.contributed;
       deployed += cap.contributed;
       invested += cap.contributed;
     }
+    const atCost = costed.filter(reviewAtCost);
     // ACCRUED INCOME over the same current holdings, which is what the
     // drill-down the Accrued income tile opens sums (DL-14).
     const accruedRows = current.filter((q) => typeof q.accruedIncome === "number" && q.accruedIncome !== 0);
     return current.length
       ? {
         holdings: current.length, costedCount: costed.length, costedValue: mv(costed), bookValue: mv(current),
+        // THE RETURN'S SET (Stage 10dh): a cost AND a valuation of its own.
+        struckCount: struck.length, struckValue: mv(struck),
+        atCostCount: atCost.length, atCostValue: mv(atCost), atCostCost: atCost.reduce((t, q) => t + q.costBasis, 0),
         // THE ONE BOOK: every deduped position, as the top bar sums it.
         totalValue: mv(ded),
         pct: deployed > 0 ? (gain / deployed) * 100 : null, gain, deployed, invested, wholeMandates: whole.size,
@@ -10897,23 +10989,25 @@ const COSTED_BOOK = (() => {
  * THE WORDS THE WHOLE-BOOK RETURN'S SET IS NAMED IN (B-07), read back.
  *
  * Every surface that prints the whole-book return on cost prints its set as
- * "on the ₹X of ₹Y that reports a cost · N of M holdings" (`costedSetLabel`).
+ * "on the ₹X of ₹Y valued against a cost · N of M holdings" (`costedSetLabel`)
+ * — the STRUCK set since Stage 10dh: a cost and a valuation of its own, so a
+ * line the family's review holds at cost is not in it.
  * Each is held to COSTED_BOOK here: the two counts exactly, the two values to
  * the compact figure's own printing precision — `fmtFromBase` prints one
  * decimal of a crore from ₹10 Cr, two below it, one of a lakh below ₹1 Cr and
  * whole rupees below ₹1 L, so the bound is half of that last digit. Never a
  * tolerance widened until the figure fits.
  */
-const COSTED_LABEL_RE = /^on the (₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?) of (₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?) that reports a cost · ([\d,]+) of ([\d,]+) holdings$/;
+const COSTED_LABEL_RE = /^on the (₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?) of (₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?) valued against a cost · ([\d,]+) of ([\d,]+) holdings$/;
 const compactTieCr = (vCr) => (vCr >= 10 ? 0.05 : vCr >= 1 ? 0.005 : vCr >= 0.01 ? 0.0005 : 5e-8) + 1e-9;
 const costedLabelIsTheBooks = (label) => {
   if (!COSTED_BOOK) return false;
   const m = COSTED_LABEL_RE.exec(String(label ?? "").replace(/\s+/g, " ").trim());
   if (!m) return false;
-  const costedV = money2cr(m[1]), bookV = money2cr(m[2]);
-  return Number(m[3].replace(/,/g, "")) === COSTED_BOOK.costedCount
+  const struckV = money2cr(m[1]), bookV = money2cr(m[2]);
+  return Number(m[3].replace(/,/g, "")) === COSTED_BOOK.struckCount
     && Number(m[4].replace(/,/g, "")) === COSTED_BOOK.holdings
-    && Math.abs(costedV - COSTED_BOOK.costedValue / 1e7) <= compactTieCr(costedV)
+    && Math.abs(struckV - COSTED_BOOK.struckValue / 1e7) <= compactTieCr(struckV)
     && Math.abs(bookV - COSTED_BOOK.bookValue / 1e7) <= compactTieCr(bookV);
 };
 /** A compact rupee figure with its sign, in ₹ Cr — "−₹2.5 Cr" is −2.5. */
@@ -11594,8 +11688,13 @@ const MONITOR_BASIS_BOOK = (() => {
     };
     const setOf = (xs) => {
       const c = xs.filter(costed);
+      // THE RETURN'S SET (Stage 10dh): a cost AND a valuation of its own. A
+      // review line held at cost is in Invested and in no gain or return.
+      const s = c.filter((p) => !reviewAtCost(p));
+      const a = c.filter(reviewAtCost);
       return { holdings: xs.length, costedCount: c.length, bookValue: total(xs), costedValue: total(c),
-        ret: fifo(c).pct, realised: fifo(xs).realised, whole: fifo(xs).whole };
+        struckCount: s.length, struckValue: total(s), atCostCount: a.length, atCostValue: total(a),
+        ret: fifo(s).pct, realised: fifo(xs).realised, whole: fifo(xs).whole };
     };
     const companies = ded.filter((p) => p.assetClass === "Equity");
     const stmts = gains.filter((c) => c.realisedST != null || c.realisedLT != null);
@@ -11604,6 +11703,7 @@ const MONITOR_BASIS_BOOK = (() => {
       const e = acc.get(p.accountId)?.engagement;
       if (e === "PMS") return "PMS mandates";
       if (CASH_EQ_KEYS.has(p.securityKey)) return "Cash";
+      if (reviewAtCost(p)) return "Private investments at cost";
       if (p.assetClass === "Equity") return e === "Direct" || e === "Execution" ? "Direct Equity" : "Equity — how it is held is not stated";
       return p.assetClass;
     };
@@ -11711,19 +11811,19 @@ const MONITOR_BASIS_BOOK = (() => {
  * footer that lost a handle is the regression, not a reason to stand down.
  */
 const footBasisChecks = (setKey) => [
-  [`the footer's whole-book return names, on its face, the holdings it is struck over — the ones that report a cost (${setKey})`, (t, ctx) => {
+  [`the footer's whole-book return names, on its face, the holdings it is struck over — the ones that report a cost and carry a valuation of their own (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const f = ctx?.monitorFoot;
     if (!b || !f?.returnSet) return false;
     const [c, n] = String(f.returnSet.counts ?? "").split("/").map(Number);
-    if (c !== b.costedCount || n !== b.holdings) return false;
+    if (c !== b.struckCount || n !== b.holdings) return false;
     if (c === n) return /^every one of the [\d,]+ holdings? reports? a cost$/i.test(f.returnSet.text);
-    const m = /^on the ₹([\d,.]+)\s*(Cr|L|K)? of ₹([\d,.]+)\s*(Cr|L|K)? that reports a cost\s*[·,]\s*([\d,]+) of ([\d,]+) holdings$/i
+    const m = /^on the ₹([\d,.]+)\s*(Cr|L|K)? of ₹([\d,.]+)\s*(Cr|L|K)? valued against a cost\s*[·,]\s*([\d,]+) of ([\d,]+) holdings$/i
       .exec(f.returnSet.text);
     if (!m) return false;
-    return Math.abs(crU(m[1], m[2]) - b.costedValue / 1e7) <= 0.06
+    return Math.abs(crU(m[1], m[2]) - b.struckValue / 1e7) <= 0.06
       && Math.abs(crU(m[3], m[4]) - b.bookValue / 1e7) <= 0.06
-      && cr(m[5]) === b.costedCount && cr(m[6]) === b.holdings;
+      && cr(m[5]) === b.struckCount && cr(m[6]) === b.holdings;
   }],
   [`…and the figure is FIFO over exactly those holdings, re-derived from the book (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
@@ -11824,12 +11924,22 @@ const footCChecks = (setKey) => [
     const m = new RegExp(String.raw`Only the ${inv.costed} of ${inv.lines} holdings whose statement reports a cost are in this figure; the other ${inv.lines - inv.costed} hold ₹([\d,.]+)\s*(Cr|L|K)? and report no cost`, "i").exec(inv.title ?? "");
     return inv.partial && !!m && Math.abs(crU(m[1], m[2]) - (b.bookValue - b.costedValue) / 1e7) <= 0.06;
   }],
-  [`[C] the footer's P&L is on the same costed set, and says so where it is partial (${setKey})`, (t, ctx) => {
+  /*
+   * The P&L is struck over the holdings a gain is struck on — a cost AND a
+   * valuation of their own (Stage 10dh). A review line held at cost is in
+   * Invested and in no gain, so where the set carries one the cell is partial
+   * and its hover names the lines and their value.
+   */
+  [`[C] the footer's P&L is on the holdings a gain is struck on, and says so where it is partial (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const p = ctx?.monitorC?.foot?.pnl;
     if (!b || !p) return false;
-    if (b.costedCount === b.holdings) return !p.partial;
-    return p.partial && new RegExp(String.raw`The gain of the ${b.costedCount} of ${b.holdings} holdings whose statement reports a cost`, "i").test(p.title ?? "");
+    if (b.costedCount === b.holdings && b.atCostCount === 0) return !p.partial;
+    const gainLine = b.costedCount === b.holdings
+      || new RegExp(String.raw`The gain of the ${b.struckCount} of ${b.holdings} holdings whose statement reports a cost and a valuation`, "i").test(p.title ?? "");
+    const atCostLine = b.atCostCount === 0
+      || new RegExp(String.raw`${b.atCostCount === 1 ? "1 holding" : `${b.atCostCount} holdings`} worth ₹([\d,.]+)\s*(Cr|L|K)? (?:is a private investment|are private investments) held at cost`, "i").test(p.title ?? "");
+    return p.partial && gainLine && atCostLine;
   }],
   [`[C] Invested on's footer counts the rows the statements report, not the derived-only ones (MSX-15, ${setKey})`, (t, ctx) => {
     const c = ctx?.monitorC;
@@ -14103,6 +14213,7 @@ const DROPPED_BOOK = (() => {
       bucket: (p) => {
         if (mandate(p)) return "PMS mandates";
         if (cashEq(p)) return "Cash";
+        if (reviewAtCost(p)) return "Private investments at cost";
         if (p.assetClass === "Equity") return eng(p) === "Direct" || eng(p) === "Execution" ? "Direct Equity" : "Equity — how it is held is not stated";
         return p.assetClass;
       },
@@ -14110,12 +14221,15 @@ const DROPPED_BOOK = (() => {
         if (!mandate(p) && cashEq(p)) return "Liquidity";
         const h = hit(p);
         if (h) return h.basket;
+        // A line the review is the source for carries the review's own code (Stage 10dh).
+        if (p.reviewTaxonomy) return p.reviewTaxonomy.basket;
         return !mandate(p) && p.assetClass === "Equity" ? "Thematic & Tactical" : UNCLASSIFIED;
       },
       "family-class": (p) => {
         if (!mandate(p) && cashEq(p)) return "Cash";
         const h = hit(p);
         if (h) return h.assetClass;
+        if (p.reviewTaxonomy) return p.reviewTaxonomy.assetClass;
         return p.assetClass === "Equity" ? "Equity" : p.assetClass === "Cash" ? "Cash" : UNCLASSIFIED;
       },
     };
@@ -15754,212 +15868,28 @@ const PM_EXPANDED_CHECKS = [
   }],
 ];
 
-/**
- * ── THE MOPWM REVIEW TAB (Stage 10dg) ──────────────────────────────────────
- *
- *   *"use the private equity information from the reconciliation motilal sheet
- *    to feed the data in the dashboard … Make sure nothing is missed and there
- *    are no logical or calculation errors."*
- *
- * The tab draws the family's consolidated review's private-market lines at the
- * review's own figures. What can go wrong renders perfectly — a line left out
- * still adds up to itself, and a return on the wrong basis is a plausible
- * percentage — so every claim here is struck on the table's own handles, and
- * the one that says nothing was missed is struck against the WORKBOOK, read a
- * second time here cell by cell (never through the generator's reader, which
- * would agree with itself by construction).
- */
-const REVIEW_WORKBOOK_URL = new URL("../source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx", import.meta.url);
-const REVIEW_PI_BOOK = (() => {
-  try {
-    const wb = XLSX.read(readFileSync(REVIEW_WORKBOOK_URL));
-    const name = wb.SheetNames.find((n) => n.trim() === "Private Investments");
-    if (!name) return null;
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, blankrows: true, defval: "" });
-    // Columns by their HEADER TEXT, never by position: the Total row carries a
-    // stray figure in its date column, which a positional read takes for a cost.
-    const hdr = rows.findIndex((r) => r.some((c) => /^investment at cost$/i.test(String(c).trim())));
-    if (hdr < 0) return null;
-    const costCol = rows[hdr].findIndex((c) => /^investment at cost$/i.test(String(c).trim()));
-    const nameCol = rows[hdr].findIndex((c) => /^product$/i.test(String(c).trim()));
-    const head = rows.findIndex((r, i) => i > hdr && /^private equity$/i.test(String(r[nameCol] ?? "").trim()));
-    const total = rows.findIndex((r, i) => i > head && /^total$/i.test(String(r[nameCol] ?? "").trim()));
-    if (nameCol < 0 || head < 0 || total < 0) return null;
-    let lines = 0;
-    for (let i = head + 1; i < total; i++) if (String(rows[i][nameCol] ?? "").trim()) lines++;
-    const cost = Number(rows[total][costCol]);
-    return Number.isFinite(cost) ? { lines, cost: cost * 1e7 } : null;
-  } catch { return null; }
-})();
-
-/**
- * EVERY LINE'S DATE, AS THE WORKBOOK'S OWN CELL HOLDS IT. Excel keeps a single
- * date as a serial (45631 is 5 Dec 2024), and the tab once printed the serial;
- * a month range is the review's own words ("Sept 20 - March 24"). Read here
- * cell by cell off the sheet each line names — the date column found by its
- * HEADER, scanning up from the line, never by position — and formatted a second
- * way, never through the generator. `null` where the workbook cannot be read.
- */
-const REVIEW_DATE_BOOK = (() => {
-  try {
-    const wb = XLSX.read(readFileSync(REVIEW_WORKBOOK_URL));
-    const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const HEAD = /date investment range|investment date range/i;
-    return (tab, row) => {
-      const name = wb.SheetNames.find((n) => n.trim() === tab);
-      if (!name || !Number.isInteger(row)) return { missing: true };
-      const ws = wb.Sheets[name];
-      const at = (r, c) => ws[XLSX.utils.encode_cell({ r: r - 1, c })]?.v;
-      let col = -1;
-      for (let r = row - 1; r >= 1 && col < 0; r--) for (let c = 0; c < 30; c++) if (HEAD.test(String(at(r, c) ?? ""))) { col = c; break; }
-      if (col < 0) return { missing: true };
-      const v = at(row, col);
-      if (v === undefined || v === null || String(v).trim() === "") return { text: null };
-      if (typeof v === "number" || /^\d+$/.test(String(v).trim())) {
-        const n = Number(v);
-        const t = new Date(Date.UTC(1899, 11, 30) + n * 864e5);
-        return { serial: n, text: `${t.getUTCDate()} ${MON[t.getUTCMonth()]} ${t.getUTCFullYear()}` };
-      }
-      const toks = [...String(v).matchAll(/([a-z]{3,})[\s'-]*(\d{2,4})/gi)];
-      if (!toks.length) return { text: String(v).trim() };
-      const m = (tk) => {
-        const i = MON.findIndex((x) => x.toLowerCase() === tk[1].slice(0, 3).toLowerCase());
-        return i < 0 ? null : `${MON[i]} ${tk[2].length === 2 ? `20${tk[2]}` : tk[2]}`;
-      };
-      const a = m(toks[0]), b = m(toks[toks.length - 1]);
-      if (!a || !b) return { text: String(v).trim() };
-      return { text: a === b ? a : `${a} – ${b}` };
-    };
-  } catch { return null; }
-})();
-
-const REVIEW_TAB_CHECKS = [
-  ["the review tab draws every line of its blocks once, each block open on arrival, and the footer counts them all", (t, ctx) => {
-    // THIS ROUTE DRAWS THE REVIEW TABLE, so a probe that found none is the table gone — a finding, never an abstention.
-    const rv = ctx?.reviewTab;
-    if (!rv) return false;
-    const keys = rv.rows.map((r) => r.key);
-    return rv.bands.length > 0 && rv.bands.every((b) => b.open)
-      && keys.length > 0 && keys.length === new Set(keys).size
-      && rv.bands.every((b) => rv.rows.filter((r) => r.band === b.key).length === b.lines)
-      && rv.foot?.lines === keys.length;
-  }],
-  ["…every line of the review's Private Investments tab is a row here, and their cost is that tab's own Total, to the rupee", (t, ctx) => {
-    const rv = ctx?.reviewTab;
-    if (!rv || !REVIEW_PI_BOOK) return false;
-    const pi = rv.rows.filter((r) => r.tab === "Private Investments");
-    const cost = pi.reduce((a, r) => a + (r.invested ?? 0), 0);
-    return pi.length === REVIEW_PI_BOOK.lines && Math.abs(cost - REVIEW_PI_BOOK.cost) <= 1;
-  }],
-  ["each block's lines add to the review's own head, and the band prints that sum", (t, ctx) => {
-    const rv = ctx?.reviewTab;
-    if (!rv) return false;
-    const sum = (b, f) => rv.rows.filter((r) => r.band === b.key).reduce((a, r) => a + (r[f] ?? 0), 0);
-    return rv.bands.some((b) => b.headInvested !== null)
-      && rv.bands.every((b) =>
-        (b.invested === null || Math.abs(sum(b, "invested") - b.invested) <= 1)
-        && (b.value === null || Math.abs(sum(b, "value") - b.value) <= 1)
-        && (b.headInvested === null || (Math.abs(sum(b, "invested") - b.headInvested) <= 1
-          && Math.abs(sum(b, "value") - (b.headValue ?? NaN)) <= 1)));
-  }],
-  ["the footer is its rows' own sum", (t, ctx) => {
-    const rv = ctx?.reviewTab;
-    if (!rv?.foot) return false;
-    const sum = (f) => rv.rows.reduce((a, r) => a + (r[f] ?? 0), 0);
-    return Math.abs(sum("invested") - (rv.foot.invested ?? NaN)) <= 1 && Math.abs(sum("value") - (rv.foot.value ?? NaN)) <= 1;
-  }],
-  ["a gain is value plus paid back less what was put in, on the basis the line has, and its Return cell prints gain ÷ that base", (t, ctx) => {
-    const rv = ctx?.reviewTab;
-    if (!rv) return false;
-    const struck = rv.rows.filter((r) => r.gain !== null);
-    return struck.length > 0 && rv.rows.every((r) => {
-      if (r.gain === null) return r.ret === null && !/%/.test(r.retCell?.text ?? "");
-      const base = r.basis === "rows" ? r.paidIn : r.basis === "cost" ? r.invested : null;
-      if (!base) return false;
-      const gain = (r.value ?? 0) + (r.paidBack ?? 0) - base;
-      return Math.abs(gain - r.gain) <= 1 && r.ret !== null && Math.abs(r.ret - r.gain / base) <= 1e-9
-        && Math.abs(pctOfCell(r.retCell?.text) - r.ret * 100) <= 0.006;
-    });
-  }],
-  ["a rate over less than a year is never shown, and this tab has one to refuse", (t, ctx) => {
-    const rv = ctx?.reviewTab;
-    if (!rv) return false;
-    const rated = rv.rows.filter((r) => r.xirr !== null);
-    const sub = rated.filter((r) => r.days !== null && r.days < 365);
-    const year = rated.filter((r) => r.days !== null && r.days >= 365);
-    return sub.length > 0 && rated.every((r) => r.days !== null)
-      && sub.every((r) => !/%/.test(r.xirrCell?.text ?? "") && new RegExp(`\\b${r.days} days\\b`).test(r.xirrCell?.title ?? ""))
-      && year.every((r) => Math.abs(pctOfCell(r.xirrCell?.text) - r.xirr * 100) <= 0.006);
-  }],
-  ["a line whose printed return differs from its own rows is marked ≠, and no other is", (t, ctx) => {
-    const rv = ctx?.reviewTab;
-    if (!rv) return false;
-    const off = rv.rows.filter((r) => r.ret !== null && r.retPrinted !== null && Math.abs(r.ret - r.retPrinted) > 1e-4);
-    return off.length > 0 && rv.rows.every((r) =>
-      r.mismatch.includes("return") === (r.ret !== null && r.retPrinted !== null && Math.abs(r.ret - r.retPrinted) > 1e-4));
-  }],
-  ["an absent figure is a dash with its reason, and a written-off line is a measured ₹0", (t, ctx) => {
-    const rv = ctx?.reviewTab;
-    if (!rv) return false;
-    return rv.rows.every((r) => {
-      if (r.kind === "written-off") return /₹\s*0\b/.test(r.valueCell?.text ?? "") && /written off/i.test(r.valueCell?.title ?? "");
-      const v = r.valueCell, c = r.investedCell;
-      const okValue = r.value === null ? (v?.text === "—" && !!v?.title) : /₹/.test(v?.text ?? "");
-      const okCost = r.invested === null ? (c?.text === "—" && !!c?.title) : /₹/.test(c?.text ?? "");
-      return okValue && okCost;
-    });
-  }],
-  ["every line prints the date its own review cell holds, as a date — never an Excel serial (Stage 10dg)", (t, ctx) => {
-    // The tab once printed "45631" under Integris: a serial, which is 5 Dec 2024.
-    // Each line's date is held to the WORKBOOK's own cell on the row it names,
-    // read and formatted a second way, and must be on the row's face.
-    const rv = ctx?.reviewTab;
-    if (!rv || !REVIEW_DATE_BOOK) return false;
-    let serials = 0;
-    const ok = rv.rows.length > 0 && rv.rows.every((r) => {
-      const want = REVIEW_DATE_BOOK(r.tab, r.xlrow);
-      if (want.missing) return false;
-      if (want.serial !== undefined) serials++;
-      const shown = r.dates || null;
-      if (want.text === null) return shown === null;
-      return shown === want.text && (r.nameText ?? "").includes(want.text)
-        && !/\b\d{5}\b/.test(r.nameText ?? "");
-    });
-    // LOAD-BEARING: the workbook keeps most of these lines' dates as serials.
-    return ok && serials > 0;
-  }],
-  ["the members band is the review's Investorwise summary of these lines, and it and the disagreements are closed on arrival", (t, ctx) => {
-    const rv = ctx?.reviewTab;
-    if (!rv?.members || !rv?.checks) return false;
-    // The review's own basis: PE funds and unlisted shares at its value, private investments at cost; credit is filed under Debt.
-    const lines = rv.rows.filter((r) => r.band !== "credit")
-      .reduce((a, r) => a + (r.tab === "Private Investments" ? (r.invested ?? 0) : (r.value ?? 0)), 0);
-    return rv.members.count > 0 && Math.abs(rv.members.value - lines) <= 2
-      && !rv.members.open && rv.members.rows === 0
-      && rv.checks.count > 0 && !rv.checks.open && rv.checks.rows === 0;
-  }],
-];
-
 const pmViewChecks = (expected) => [
   /**
-   * FOUR TABS, AND `folios` IS STILL GONE FROM THE CONTROL.
+   * THREE TABS, AND NEITHER `folios` NOR `review` IS ONE OF THEM.
    *
    *   *"keep default view as fund only… And remove folio as the toggle button."*
    *   *"cant it be a transactions tab in the same table view"*
-   *   *"show the private market data in the dashboard using the data provided
-   *    in the motilal excel sheet"* — the fourth, the MOPWM review (Stage 10dg).
+   *   *"for private market data you can use the MOPWM as the source, no need to
+   *    make it a separate tab… just integrate it normally as the source"*
+   *    — Stage 10dh, which took the Stage 10dg review tab away: the review's
+   *    lines are rows of these three tabs now, not a fourth.
    *
    * Struck on the control, never on the labels — "By fund", "By owner" and
    * "Transactions" are phrases this page's own prose uses, so a text match
    * cannot tell a rendered button from a sentence about one.
    */
-  [`the private book is one card with four tabs, and this address opens on ${expected}`, (t, ctx) => {
+  [`the private book is one card with three tabs, and this address opens on ${expected}`, (t, ctx) => {
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     const keys = pv.views.map((v) => v.key);
-    return keys.length === 4
-      && ["funds", "owners", "transactions", "review"].every((k) => keys.includes(k))
-      && !keys.includes("folios")
+    return keys.length === 3
+      && ["funds", "owners", "transactions"].every((k) => keys.includes(k))
+      && !keys.includes("folios") && !keys.includes("review")
       && pv.views.find((v) => v.active)?.key === expected;
   }],
   [`…and it draws the ${expected} table and only that one`, (t, ctx) => {
@@ -16891,8 +16821,10 @@ const CIO_MOVERS = [
  * ── THE CONSOLIDATED RETURN TILE NAMES ITS SET ON ITS FACE (B-07) ──────────
  *
  * The whole-book return on cost is struck over the holdings whose statement
- * reports a cost (Stage 10ca), and the tile says which on its face: "on the ₹X
- * of ₹Y that reports a cost · N of M holdings". Walked on `cio` and
+ * reports a cost (Stage 10ca) and — since Stage 10dh — a valuation of its own,
+ * so a review line held at cost is in Invested and in no gain. The tile says
+ * which on its face: "on the ₹X of ₹Y valued against a cost · N of M
+ * holdings", and its gain line counts that set. Walked on `cio` and
  * `cio-allocation` only — the live-mocked walks price every quote ×1.10, which
  * moves the figure off the statement book `COSTED_BOOK` is struck on.
  */
@@ -16928,7 +16860,7 @@ const CIO_BOOK_RETURN = [
     if (!tile) return false;
     const p = pctIn(tile.second);
     return !!p && Math.abs(p.v - COSTED_BOOK.pct) <= p.tie
-      && (tile.sub ?? "").includes(`${COSTED_BOOK.costedCount} of ${COSTED_BOOK.holdings} holdings`);
+      && (tile.sub ?? "").includes(`${COSTED_BOOK.struckCount} of ${COSTED_BOOK.holdings} holdings`);
   }],
   ["annualised return never substitutes the short-period percentage", (t, ctx) => {
     const tile = ctx?.kpiTiles?.find((x) => x.slot === "annualised");
@@ -17525,13 +17457,28 @@ const CIO_ALLOC = [
      * ÷ Invested" within the FIFO realised term, the same ±0.6 point bound this
      * check always allowed — and never to the Current beside it, which is every
      * holding's value.
+     *
+     * SINCE Stage 10dh THE INVESTED TOTAL CARRIES WHAT NO RETURN DIVIDES BY. A
+     * review line held at cost is in Invested — it is capital the family put
+     * in — and in no gain, so its row's Invested is taken back out before the
+     * tie: the label names the set valued against a cost, and that set is what
+     * the return is over. The at-cost row's own Invested is held to the book's
+     * at-cost lines, so a row that drifted cannot quietly absorb the difference.
      */
     ["the allocation total ties to its own Invested and the value of the set its label names (B-07)", (t, ctx) => {
       const f = ctx?.allocTable?.foot;
-      if (!f) return false;
-      const p = pctIn(f.retText), inv = money2cr(f.invested);
+      if (!f || !COSTED_BOOK) return false;
+      const p = pctIn(f.retText), all = money2cr(f.invested);
       const m = COSTED_LABEL_RE.exec(f.label ?? "");
-      if (!p || !Number.isFinite(inv) || !(inv > 0) || !m) return false;
+      if (!p || !Number.isFinite(all) || !(all > 0) || !m) return false;
+      const atRow = (ctx.allocTable.cells ?? []).find((c) => c.key === "Private investments at cost");
+      const atInv = atRow ? money2cr(atRow.invested) : 0;
+      if (COSTED_BOOK.atCostCount > 0) {
+        if (!atRow || !Number.isFinite(atInv)) return false;
+        if (Math.abs(atInv - COSTED_BOOK.atCostCost / 1e7) > compactTieCr(atInv)) return false;
+      } else if (atRow) return false;
+      const inv = all - atInv;
+      if (!(inv > 0)) return false;
       const costed = money2cr(m[1]);
       return Math.abs(p.v - ((costed - inv) / inv) * 100) <= 0.6;
     }],
@@ -26933,17 +26880,6 @@ const INVARIANTS = {
    * would have reported NOT CHECKED against a table that is correctly not drawn
    * there, which is an abstention and reads as a clean run.
    */
-  /**
-   * THE MOPWM REVIEW TAB (Stage 10dg) — the family's consolidated review's
-   * private-market lines, as it prints them, in no total of this book.
-   */
-  "private-market-review": [
-    ...pmViewChecks("review"),
-    ...REVIEW_TAB_CHECKS,
-    PM_FIT_CHECK,
-    PRIVATE_SIDES_GONE,
-    PM_NO_PROSE,
-  ],
   "private-market-transactions": [
     PM_CALL_RUPEES_CHECK,
     ...pmViewChecks("transactions"),
@@ -31464,16 +31400,21 @@ const INVARIANTS = {
     // ...AND THE RETURN SAYS WHICH HOLDINGS IT IS STRUCK OVER, as the P&L beside
     // it does: on an entity some of whose statements report no cost, the figure
     // covers only the costed part, and the popover must give the count.
-    ["...and where some of an entity's holdings report no cost, the return's popover gives the count it covers", (t, ctx) => {
+    // Since Stage 10dh the count also leaves out the lines the family's review
+    // holds at cost — they report a cost, and carry no gain to strike — and
+    // the popover names how many there are.
+    ["...and where some of an entity's holdings report no cost or are held at cost, the return's popover gives the count it covers", (t, ctx) => {
       const L = ctx.familyLayout;
       if (!L) return { notChecked: "the layout probe did not run" };
       if (!FAMILY_BOOK) return false;
-      const partial = FAMILY_BOOK.owners.filter((o) => o.withoutCost > 0 && o.count > o.withoutCost);
-      if (!partial.length) return { notChecked: "every entity with a cost reports it on every holding" };
+      const partial = FAMILY_BOOK.owners.filter((o) => o.withoutCost + o.atCost > 0 && o.count > o.withoutCost + o.atCost);
+      if (!partial.length) return { notChecked: "every entity with a cost reports it on every holding, and none holds a line at cost" };
       return partial.every((o) => {
         const r = (L.rows ?? []).find((x) => Math.abs(x.mv - o.mv) <= 1 && x.count === o.count);
-        const m = /Struck over the (\d+) of (\d+) holdings/.exec(r?.returnPlain ?? "");
-        return !!m && Number(m[1]) === o.count - o.withoutCost && Number(m[2]) === o.count;
+        const plain = r?.returnPlain ?? "";
+        const m = /Struck over the (\d+) of (\d+) holdings/.exec(plain);
+        return !!m && Number(m[1]) === o.count - o.withoutCost - o.atCost && Number(m[2]) === o.count
+          && (o.atCost === 0 || new RegExp(`\\b${o.atCost} (is a private investment|are private investments) the family's consolidated review holds at cost`).test(plain));
       });
     }],
     /**
@@ -34392,6 +34333,25 @@ for (const theme of THEMES) {
   for (const width of WIDTHS) {
     for (const [name, route] of ROUTES) {
       if (!walked(name)) continue;
+      // TEMP-CTX-REPLAY (not for commit)
+      if (process.env.CTX_REPLAY) {
+        if (theme !== THEMES[0] || width !== WIDTHS[0]) continue;
+        const fsr = await import("node:fs");
+        const f = `${process.env.CTX_REPLAY}/ctx-${name}.json`;
+        if (!fsr.existsSync(f)) continue;
+        const reviver = (k, v) => (v && typeof v === "object" && !Array.isArray(v) ? (v.__map ? new Map(v.__map) : v.__set ? new Set(v.__set) : v) : v);
+        const { text, args } = JSON.parse(fsr.readFileSync(f, "utf8"), reviver);
+        const checks = INVARIANTS[name] ?? (name === "holdings-basket" || name === "holdings-family-class" ? INVARIANTS["holdings-alloc-row"] : null) ?? INVARIANTS[name.replace(/-\d+$/, "")];
+        const invariants = [], notCheckedHere = [];
+        for (const [desc, test] of checks ?? []) {
+          let r;
+          try { r = test(text, args); } catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
+          if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
+          else if (!r) invariants.push(desc);
+        }
+        report.push({ theme, width, name, path: "(replay)", errors: [], failed: [], overflow: null, contrast: [], zeros: [], invariants, unchecked: notCheckedHere });
+        continue;
+      }
       // A route may resolve its own address from what an earlier route rendered
       // (the mandate drill-down does). Resolved at navigation time, so it sees
       // this sweep's monitor rather than a previous run's.
@@ -38622,75 +38582,6 @@ for (const theme of THEMES) {
        * once looks, in `innerText`, exactly like three views that each draw
        * their own. `data-pm-table` is what says only one is on screen.
        */
-      /**
-       * THE MOPWM REVIEW TAB (Stage 10dg), read off its own handles: every band,
-       * every line, the footer, and the two closed bands under it. Figures are
-       * read off attributes in RUPEES so a sum is exact rather than read
-       * through a compact "₹20.9 Cr", and the rendered text is kept beside them
-       * so a cell that stopped printing its own attribute fails on the pair.
-       */
-      const reviewTab = FAST ? null : await page.evaluate(() => {
-        const table = document.querySelector("main table[data-pm-table='review']");
-        if (!table) return null;
-        const num = (e, a) => { const v = e?.getAttribute(a); return v == null || v === "" ? null : Number(v); };
-        const txt = (e) => (e?.innerText ?? "").replace(/\s+/g, " ").trim();
-        const heads = [...table.querySelectorAll("thead tr:last-child > th")].map((th) => th.getAttribute("data-col"));
-        const cellText = (tr, col) => {
-          let i = 0;
-          for (const td of tr.children) {
-            if (heads[i] === col) return { text: txt(td), title: td.getAttribute("title") ?? td.querySelector("[title]")?.getAttribute("title") ?? null };
-            i += Number(td.getAttribute("colspan")) || 1;
-          }
-          return null;
-        };
-        return {
-          heads,
-          bands: [...table.querySelectorAll("tr[data-review-section]")].map((e) => ({
-            key: e.getAttribute("data-review-section"), lines: num(e, "data-review-lines"),
-            open: e.getAttribute("data-review-open") === "true",
-            invested: num(e, "data-review-invested"), value: num(e, "data-review-value"),
-            headInvested: num(e, "data-review-head-invested"), headValue: num(e, "data-review-head-value"),
-          })),
-          // Each line with the band it is drawn under — the rows follow their band in the DOM.
-          rows: (() => {
-            const out = [];
-            let band = null;
-            for (const tr of table.querySelectorAll("tbody tr")) {
-              if (tr.hasAttribute("data-review-section")) { band = tr.getAttribute("data-review-section"); continue; }
-              if (!tr.hasAttribute("data-review-row")) continue;
-              out.push({
-                key: tr.getAttribute("data-review-row"), band, kind: tr.getAttribute("data-review-kind"),
-                tab: tr.getAttribute("data-review-tab"), basis: tr.getAttribute("data-review-basis"),
-                xlrow: num(tr, "data-review-xlrow"), dates: tr.getAttribute("data-review-dates"), nameText: txt(tr.children[0]),
-                invested: num(tr, "data-review-invested"), value: num(tr, "data-review-value"),
-                paidIn: num(tr, "data-review-paidin"), paidBack: num(tr, "data-review-paidback"),
-                gain: num(tr, "data-review-gain"), ret: num(tr, "data-review-ret"), retPrinted: num(tr, "data-review-ret-printed"),
-                xirr: num(tr, "data-review-xirr"), days: num(tr, "data-review-days"),
-                mismatch: [...tr.querySelectorAll("[data-review-mismatch]")].map((m) => m.getAttribute("data-review-mismatch")),
-                stmts: num(tr.querySelector("[data-review-stmts]"), "data-review-stmts"),
-                retCell: cellText(tr, "ret"), xirrCell: cellText(tr, "xirr"), valueCell: cellText(tr, "value"),
-                investedCell: cellText(tr, "invested"),
-              });
-            }
-            return out;
-          })(),
-          foot: (() => {
-            const f = table.querySelector("tr[data-review-foot]");
-            return f ? { lines: num(f, "data-review-lines"), invested: num(f, "data-review-invested"), value: num(f, "data-review-value"), text: txt(f) } : null;
-          })(),
-          members: (() => {
-            const m = table.querySelector("tr[data-review-members]");
-            return m ? { count: num(m, "data-review-members"), value: num(m, "data-review-members-value"),
-              open: m.getAttribute("data-review-open") === "true", text: txt(m),
-              rows: table.querySelectorAll("tr[data-review-member]").length } : null;
-          })(),
-          checks: (() => {
-            const c = table.querySelector("tr[data-review-checks]");
-            return c ? { count: num(c, "data-review-checks"), open: c.getAttribute("data-review-open") === "true",
-              rows: table.querySelectorAll("tr[data-review-check]").length } : null;
-          })(),
-        };
-      });
       const pmView = FAST ? null : await page.evaluate(() => {
         const table = document.querySelector("main table[data-pm-table]");
         // THE COLUMNS AS DRAWN, so every cell is read by the column its header
@@ -41222,6 +41113,14 @@ for (const theme of THEMES) {
         // same claims and only the scope in the address differs.
         ?? (name === "holdings-basket" || name === "holdings-family-class" ? INVARIANTS["holdings-alloc-row"] : null)
         ?? INVARIANTS[name.replace(/-\d+$/, "")];
+      // TEMP-CTX-REPLAY (not for commit)
+      const __invArgs = { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross };
+      if (process.env.CTX_DUMP && !FAST && theme === THEMES[0] && width === WIDTHS[0]) {
+        const fsd = await import("node:fs");
+        const replacer = (k, v) => (v instanceof Map ? { __map: [...v.entries()] } : v instanceof Set ? { __set: [...v] } : v);
+        fsd.mkdirSync(process.env.CTX_DUMP, { recursive: true });
+        fsd.writeFileSync(`${process.env.CTX_DUMP}/ctx-${name}.json`, JSON.stringify({ text, args: __invArgs }, replacer));
+      }
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && checks) {
         for (const [desc, test] of checks) {
           let r;
@@ -41232,7 +41131,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmView, reviewTab, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
+          try { r = test(text, __invArgs); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

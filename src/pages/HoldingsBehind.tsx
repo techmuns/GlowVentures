@@ -786,7 +786,7 @@ export function HoldingsBehind() {
                       row print beside the same figure. */}
                   {bookReturn?.pct != null ? (
                     <span className="text-slate-500" data-costed-label
-                      title={`The whole-book return on cost is struck over the holdings whose statement reports a cost; the ${money(bookReturn.set.bookValue - bookReturn.set.costedValue)} that reports none is in the value and in no capital figure. A depository reports what is held, never what it was bought for.`}>
+                      title={`The whole-book return on cost is struck over the holdings whose statement reports a cost and that carry a valuation of their own${bookReturn.set.atCost > 0 ? `; the ${fmtNum(bookReturn.set.atCost)} line${bookReturn.set.atCost === 1 ? "" : "s"} the family's consolidated review holds at cost (${money(bookReturn.set.atCostValue)}) ${bookReturn.set.atCost === 1 ? "is" : "are"} in the capital invested and in no gain` : ""}; the ${money(bookReturn.set.bookValue - bookReturn.set.costedValue)} that reports no cost is in the value and in no capital figure. A depository reports what is held, never what it was bought for.`}>
                       {" "}{bookReturnLabel}
                     </span>
                   ) : noCost.length > 0 && (
