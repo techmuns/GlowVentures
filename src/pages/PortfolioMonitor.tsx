@@ -21,7 +21,7 @@ import {
   mandateLabel, MANDATE_BUCKET,
   measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate,
   type ReturnMeasure, type ReturnInput, type RowCapital,
-  costCoversSet, unstruckValue, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
+  costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
 import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
@@ -29,7 +29,7 @@ import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/ac
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, type Txn, type TxnData } from "@/lib/ledger";
-import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, realisedWindowNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
+import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, realisedWindowNote, atCostNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
 import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
 import {
@@ -605,6 +605,13 @@ type BucketTotals = {
   pnl: number | null;
   costedMV: number;
   costedCount: number;
+  /**
+   * The review's lines HELD AT COST (Stage 10dh): in `cost` and `costedMV` —
+   * what was paid is a cost reported — and in no gain. Value no gain is struck
+   * on, like a holding that reports no cost, so it counts against the return.
+   */
+  atCostMV: number;
+  atCostCount: number;
   heldCount: number;
   /** Distinct securities among those holdings — the drill-down's "names". */
   names: Set<string>;
@@ -1871,7 +1878,7 @@ export function PortfolioMonitor() {
     for (const x of db) {
       const k = groupKeyFor(groupAxis, accIdx, x);
       let t = bucketTotals.get(k);
-      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, heldCount: 0, names: new Set<string>(), fifo: fifoTotals([]), vacuous: false, dupCost: 0, dupPnl: 0 }));
+      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, atCostMV: 0, atCostCount: 0, heldCount: 0, names: new Set<string>(), fifo: fifoTotals([]), vacuous: false, dupCost: 0, dupPnl: 0 }));
       t.mv += x.marketValue;
       t.heldCount += 1;
       t.names.add(x.securityKey);
@@ -1879,6 +1886,9 @@ export function PortfolioMonitor() {
       // contributes NOTHING rather than a zero, and a category where none of
       // them does stays null and renders an em dash with its reason.
       if (x.costBasis != null) { t.cost = (t.cost ?? 0) + x.costBasis; t.costedMV += x.marketValue; t.costedCount += 1; }
+      // A line held at cost is in the cost and in no gain (`unrealizedPnL` is
+      // null on it), and it is named apart so the cells can say so.
+      if (x.costBasis != null && isValuedAtCost(x)) { t.atCostMV += x.marketValue; t.atCostCount += 1; }
       if (x.unrealizedPnL != null) t.pnl = (t.pnl ?? 0) + x.unrealizedPnL;
     }
     // Each section's FIFO totals, over exactly the positions its totals row sums
@@ -1983,7 +1993,10 @@ export function PortfolioMonitor() {
        * reads `totFifo`, which is the same figure — an uncosted holding carries
        * no realised half in `fifoTotals`.
        */
-      totFifoCosted: fifoTotals(db.filter((x) => x.costBasis != null && !x.costUnavailable), fifoOpts),
+      // Over the holdings a gain is struck on (`strikesGain`): a review line
+      // HELD AT COST reports a cost and no valuation, so it is in Invested and
+      // in no return (Stage 10dh) — Morning CIO's Consolidated return does the same.
+      totFifoCosted: fifoTotals(db.filter(strikesGain), fifoOpts),
       rawMV: sum(out.map((r) => r.marketValue)),
       costedMV: sum(costed.map((x) => x.marketValue)),
       costedCount: costed.length,
@@ -2173,16 +2186,25 @@ export function PortfolioMonitor() {
     ? "company shares only, held directly or inside a manager's mandate; a company the family reaches only through a fund is in Via funds, not here"
     : "every asset class in view, listed and private alike";
   const footCostedLines = footCover.lines - footCover.uncosted.lines;
+  // The holdings a gain is struck on: a cost AND a valuation (Stage 10dh). A
+  // line held at cost is in Invested and in no gain or return.
+  const footStruckLines = footCostedLines - footCover.atCost.lines;
+  const footStruckValue = footCover.costedValue - footCover.atCost.value;
+  const atCostFootNote = footCover.atCost.lines > 0
+    ? `${footCover.atCost.lines === 1 ? "1 holding" : `${footCover.atCost.lines} holdings`} worth ${money(footCover.atCost.value)} ${footCover.atCost.lines === 1 ? "is a private investment" : "are private investments"} held at cost — the family's consolidated review records what was paid and no valuation — so ${footCover.atCost.lines === 1 ? "it is" : "they are"} in Invested and in no gain or return.`
+    : "";
   const investedFootNote = [
     footCover.complete ? ""
       : `Only the ${footCostedLines} of ${footCover.lines} holdings whose statement reports a cost are in this figure; the other ${footCover.uncosted.lines} hold ${money(footCover.uncosted.value)} and report no cost, so they are in Market value and not here — never counted at zero.`,
+    atCostFootNote,
     dupCost > 1
       ? `The rows above are each member's statement as printed, so their cost adds to ${money((totCost ?? 0) + dupCost)}; this total counts a holding two members both report once — a ${money(dupCost)} overlap.`
       : "",
   ].filter(Boolean).join(" ");
   const pnlFootNote = [
     footCover.complete ? ""
-      : `The gain of the ${footCostedLines} of ${footCover.lines} holdings whose statement reports a cost; the other ${footCover.uncosted.lines} (${money(footCover.uncosted.value)}) report none and are in no gain here.`,
+      : `The gain of the ${footStruckLines} of ${footCover.lines} holdings whose statement reports a cost and a valuation; the other ${footCover.uncosted.lines} (${money(footCover.uncosted.value)}) report no cost and are in no gain here.`,
+    atCostFootNote,
     dupCost > 1 && dupPnl !== 0
       ? `The rows above count ${money(dupPnl, true)} of gain twice — a holding two members both report — and this total counts it once.`
       : "",
@@ -2445,9 +2467,12 @@ export function PortfolioMonitor() {
    */
   /** What the footer's Realised counts, said on its face and in its hover (MH-05). */
   const realisedBasis = realisedBasisNote(totFifo, realisedFacts, (n) => money(n, true), fmtDate);
-  const returnSetLine = footCover.uncosted.lines === 0 || footCover.uncosted.value === 0
+  // The words Morning CIO's tile and `/holdings` print for the same set
+  // (`costedSetLabel`): a return covers the holdings with a cost AND a
+  // valuation — never a depository row, and never a line held at cost.
+  const returnSetLine = (footCover.uncosted.lines === 0 || footCover.uncosted.value === 0) && footCover.atCost.lines === 0
     ? `every one of the ${footCover.lines} ${footCover.lines === 1 ? "holding reports" : "holdings reports"} a cost`
-    : `on the ${money(footCover.costedValue)} of ${money(footCover.value)} that reports a cost · ${footCover.lines - footCover.uncosted.lines} of ${footCover.lines} holdings`;
+    : `on the ${money(footStruckValue)} of ${money(footCover.value)} that reports a cost and a valuation · ${footStruckLines} of ${footCover.lines} holdings`;
   // ── WHAT A ROW OPENS INTO: ROWS OF THIS TABLE, IN ITS COLUMNS ─────────────
   //
   //   *"i hope the ui design upgrades you are doing and making it much amazing
@@ -3696,7 +3721,12 @@ export function PortfolioMonitor() {
                       // family axes are already the family's wording and render
                       // verbatim; only the category axis has a label function.
                       const label = groupLabelFor(groupAxis)(grp.key);
-                      const covered = costCoversSet(tot.mv, uncostedMV);
+                      // A line held at cost is value no gain is struck on, like a
+                      // holding that reports no cost: both count against the return.
+                      const covered = costCoversSet(tot.mv, uncostedMV + tot.atCostMV);
+                      // Every costed line here is held at cost (the review's own
+                      // section, or a family-axis row made only of such lines).
+                      const allAtCost = tot.atCostCount > 0 && tot.atCostCount === tot.costedCount;
                       // FIFO over the section's own positions — the realised gain on
                       // units already sold stays in it, and a whole mandate is struck
                       // on its capital since inception (`fifoTotals`).
@@ -3717,9 +3747,13 @@ export function PortfolioMonitor() {
                         tot.vacuous ? `${VACUOUS_COST_REASON}, and a return on cost has nothing to divide`
                         : tot.cost === null ? `no statement behind ${label} reports a cost, so there is nothing to measure a return against`
                         : tot.mv <= 0 ? `${label} is measured at nil — every statement behind it reports a zero balance — so there is no value to measure a return on`
+                        : allAtCost ? `every holding in ${label} that reports a cost is ${AT_COST_RETURN}`
                         : tot.pnl === null ? `no holding in ${label} reports an unrealised gain, so there is no numerator to divide`
                         : tot.cost <= 0 ? `${label} reports a cost of zero, and a return on cost has nothing to divide by`
-                        : `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount} costed holdings show their own return on their own rows.`;
+                        : [uncostedMV > 1 ? `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost` : "",
+                            tot.atCostMV > 1 ? `${fmtFromBase(tot.atCostMV, { compact: true })} of it is private investments held at cost, with no valuation to strike a gain on` : ""]
+                            .filter(Boolean).join(", and ")
+                          + `, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount - tot.atCostCount} holdings with a cost and a valuation show their own return on their own rows.`;
                       const realised = tot.fifo.realised;
                       /**
                        * THE SECTION'S INVESTED IS THE SUM OF ITS ROWS', and a
@@ -3730,6 +3764,11 @@ export function PortfolioMonitor() {
                       const totInvested = investedWithCapital(tot.cost, tot.fifo);
                       const capitalWhy = investedBasisNote(tot.fifo, (v) => fmtFromBase(v, { compact: true }));
                       const costCover = `Added over the ${tot.costedCount} of ${tot.heldCount} holdings in ${label} whose statement reports a cost; the other ${tot.heldCount - tot.costedCount} hold ${fmtFromBase(uncostedMV, { compact: true })} and are in Market value only.`;
+                      // The lines held at cost, said where they are: in Invested,
+                      // in no gain (Stage 10dh).
+                      const atCostCover = tot.atCostCount > 0
+                        ? `${tot.atCostCount === 1 ? "1 holding" : `${tot.atCostCount} holdings`} worth ${fmtFromBase(tot.atCostMV, { compact: true })} ${tot.atCostCount === 1 ? "is a private investment" : "are private investments"} held at cost — the family's consolidated review records what was paid and no valuation — so ${tot.atCostCount === 1 ? "it is" : "they are"} in Invested and in no gain.`
+                        : "";
                       return (
                         /* A `<Tr>` RATHER THAN A `<TrFoot>`, because this row
                            carries a cell under EVERY column — its label spans
@@ -3754,7 +3793,7 @@ export function PortfolioMonitor() {
                           <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
                             {tot.cost === null
                               ? <AbsentCell reason={tot.vacuous ? `in ${label}, ${VACUOUS_COST_REASON}` : `no statement behind ${label} reports a cost — these are depository holdings, which record what is held and never what it was bought for. A ₹0 here would report the whole category as profit.`} />
-                              : <span title={[capitalWhy, uncostedMV > 1 ? costCover : "",
+                              : <span title={[capitalWhy, uncostedMV > 1 ? costCover : "", atCostCover,
                                     tot.dupCost > 1 ? `The rows above are each member's statement as printed, so their Invested adds to ${fmtFromBase((totInvested ?? 0) + tot.dupCost, { compact: true })}; this total counts a holding two members both report once — a ${fmtFromBase(tot.dupCost, { compact: true })} overlap.` : ""].filter(Boolean).join(" · ") || undefined}
                                   data-invested-overlap={tot.dupCost > 1 ? tot.dupCost : undefined}
                                   data-invested-capital={capitalWhy ? totInvested ?? undefined : undefined}
@@ -3797,12 +3836,14 @@ export function PortfolioMonitor() {
                           </td>
                           <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${tot.pnl === null ? "text-slate-500" : changeColor(tot.pnl)}`}>
                             {tot.pnl === null
-                              ? <AbsentCell reason={tot.vacuous ? `an unrealised gain is market value less cost, and in ${label}, ${VACUOUS_COST_REASON}` : `an unrealised gain is market value less cost, and no statement behind ${label} reports a cost`} />
-                              : <span title={[uncostedMV > 1 ? costCover : "",
+                              ? <AbsentCell reason={tot.vacuous ? `an unrealised gain is market value less cost, and in ${label}, ${VACUOUS_COST_REASON}`
+                                  : allAtCost ? `every holding in ${label} that reports a cost is ${AT_COST_PNL}`
+                                  : `an unrealised gain is market value less cost, and no statement behind ${label} reports a cost`} />
+                              : <span title={[uncostedMV > 1 ? costCover : "", atCostCover,
                                     tot.dupPnl !== 0 && tot.dupCost > 1 ? `The rows above are each member's statement as printed, so their gain adds to ${fmtFromBase(tot.pnl + tot.dupPnl, { compact: true, sign: true })}; this total counts a holding two members both report once — a ${fmtFromBase(tot.dupPnl, { compact: true, sign: true })} overlap.` : ""].filter(Boolean).join(" · ") || undefined}
                                   data-pnl-overlap={tot.dupPnl !== 0 && tot.dupCost > 1 ? tot.dupPnl : undefined}>
                                   {fmtFromBase(tot.pnl, { compact: true, sign: true })}
-                                  {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
+                                  {(uncostedMV > 1 || tot.atCostMV > 1) && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
                                 </span>}
                           </td>
                           {/* Realised is reported PER SECURITY across the whole
@@ -4653,6 +4694,8 @@ export function PortfolioMonitor() {
                     <td key="pnl" className="px-2 py-1.5 text-right mono whitespace-nowrap text-slate-500">
                       <AbsentCell reason={footCover.vacuous
                         ? `an unrealised gain is market value less cost, and across the holdings in view, ${VACUOUS_COST_REASON}`
+                        : totCost !== null && footStruckLines === 0 && footCover.atCost.lines > 0
+                        ? `every holding in view that reports a cost is ${AT_COST_PNL}`
                         : "an unrealised gain is market value less cost, and no statement behind the holdings in view reports a cost"} />
                     </td>
                     ) : (
@@ -4665,11 +4708,11 @@ export function PortfolioMonitor() {
                                     // A CAPTION THAT WIDENS ITS FIGURE IS THE SAME FAILURE AS ONE THAT
                                     // NARROWS IT: this is struck over the costed holdings only, which
                                     // is what makes it tie to the Invested cell beside it.
-                                    plain: footCover.complete
+                                    plain: footCover.complete && footCover.atCost.lines === 0
                                       ? "Every holding's on-paper gain or loss, added up."
-                                      : `The on-paper gain or loss of the ${footCover.lines - footCover.uncosted.lines} of ${footCover.lines} holdings whose statement reports a cost, added up. The other ${footCover.uncosted.lines} hold ${money(footCover.uncosted.value)} and report no cost, so they are in Market value and not here — never counted at zero.`,
+                                      : `The on-paper gain or loss of the ${footStruckLines} of ${footCover.lines} holdings whose statement reports a cost and a valuation, added up.${footCover.complete ? "" : ` The other ${footCover.uncosted.lines} hold ${money(footCover.uncosted.value)} and report no cost, so they are in Market value and not here — never counted at zero.`}${atCostFootNote ? ` ${atCostFootNote}` : ""}`,
                                     worked: `= ${money(footCover.costedValue)} − ${money(totCost)} = ${money(totPnL, true)}` }}>{fmtFromBase(totPnL, { compact: true, sign: true })}</Auditable>}
-                      {!footCover.complete && <span className="ml-1 text-[10px] font-normal text-amber-400/80" data-pnl-partial="">◦</span>}
+                      {(!footCover.complete || footCover.atCost.lines > 0) && <span className="ml-1 text-[10px] font-normal text-amber-400/80" data-pnl-partial="">◦</span>}
                     </td>
                     ),
                     /* THE FOOTER'S REALISED IS THE SUM OF THE SECTIONS', which
@@ -4717,11 +4760,13 @@ export function PortfolioMonitor() {
                           {!onCost
                             ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
                             : totalRet === null
-                            ? <AbsentCell reason="no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row" />
+                            ? <AbsentCell reason={footStruckLines === 0 && footCover.atCost.lines > 0
+                                ? `every holding in this table that reports a cost is ${AT_COST_RETURN}`
+                                : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row"} />
                             : <>{feedLive ? fmtPct(totalRet, { sign: true })
-                            : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                            : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                               <span className="mt-0.5 ml-auto block max-w-[12rem] whitespace-normal text-right text-[10px] font-normal leading-tight text-slate-500"
-                                data-footer-return-set={`${footCover.lines - footCover.uncosted.lines}/${footCover.lines}`}>{returnSetLine}</span></>}
+                                data-footer-return-set={`${footStruckLines}/${footCover.lines}`}>{returnSetLine}</span></>}
                         </td>
                       )];
                     })),
