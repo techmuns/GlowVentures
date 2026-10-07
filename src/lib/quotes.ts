@@ -1,19 +1,12 @@
 // Live intraday quotes via the /api/quotes server proxy — from Upstox where its
-// token is set (one call prices the whole book), with the in-house muns batch
+// token is set (500 instruments per batch), with the in-house muns batch
 // API as the fallback. Both tokens live in the Cloudflare environment, never
 // the browser; each quote says which feed priced it.
 //
-// The quote API works in NSE symbols. A position may already carry one (some
-// statements print the ticker); otherwise `nseSymbols.json` bridges it.
-//
-// THE BRIDGE IS KEYED ON securityKey, NOT ISIN. That is not a preference — no
-// provider in this book prints an ISIN in its holdings column, so an ISIN-keyed
-// lookup resolves nothing for 143 of 143 positions and the entire live layer
-// silently stays dark while looking wired up. `npm run build-symbols` resolves
-// NAMES to symbols for exactly that reason and emits a securityKey-keyed map;
-// this reads it on the same key. (This file previously exported
-// `symbolForIsin(p.isin)` against that map — two identifier spaces, one
-// dictionary, and no error anywhere to show for it.)
+// The quote API accepts NSE symbols and exchange-qualified BSE quote keys.
+// The Upstox map resolves exact ISINs and verified security/issuer keys for
+// direct and fund-only companies. NSE-only vendor calls keep the older
+// `nseSymbols.json` bridge, since many statements carry names without ISINs.
 //
 // A name the resolver could not place with certainty is simply absent from the
 // map: the position keeps its statement mark and is flagged not-live, because a
@@ -22,6 +15,7 @@ import nseSymbols from "@/data/nseSymbols.json";
 import type { Position } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 import { requestDeadline } from "./requestDeadline";
+import { UPSTOX_ISIN_SYMBOLS, UPSTOX_SECURITY_SYMBOLS } from "../../shared/upstoxInstruments.mjs";
 
 const KEY_TO_SYMBOL = nseSymbols as Record<string, string>;
 
@@ -35,12 +29,22 @@ export function symbolFor(p: Pick<Position, "symbol" | "securityKey">): string |
   return p.symbol || symbolForKey(p.securityKey);
 }
 
+/** Quote identity covers both exchanges; other vendors still use NSE symbols. */
+export function quoteSymbolFor(p: { securityKey: string; symbol?: string | null; isin?: string | null }): string | null {
+  return (p.isin ? UPSTOX_ISIN_SYMBOLS[p.isin.trim().toUpperCase()] : null)
+    || UPSTOX_SECURITY_SYMBOLS[p.securityKey] || symbolFor(p);
+}
+
+export function quoteSymbolsFor(positions: readonly { securityKey: string; symbol?: string | null; isin?: string | null }[]): string[] {
+  return [...new Set(positions.map(quoteSymbolFor).filter((s): s is string => !!s))];
+}
+
 /** How much of a book the live layer can even ask about, before any fetch. */
 export function symbolCoverage(positions: Position[]): { withSymbol: number; withoutSymbol: number; names: string[] } {
   const seen = new Map<string, boolean>();
-  for (const p of positions) if (!seen.has(p.securityKey)) seen.set(p.securityKey, !!symbolFor(p));
+  for (const p of positions) if (!seen.has(p.securityKey)) seen.set(p.securityKey, !!quoteSymbolFor(p));
   const names = positions
-    .filter((p) => !symbolFor(p))
+    .filter((p) => !quoteSymbolFor(p))
     .map((p) => p.security);
   return {
     withSymbol: [...seen.values()].filter(Boolean).length,
@@ -221,7 +225,7 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
     // a quote that happened to resolve would move a value the review struck. And
     // a line recorded with no unit count has no per-unit price to apply at all.
     if (p.review || p.quantity === null) return { ...p, live: false };
-    const sym = symbolFor(p);
+    const sym = quoteSymbolFor(p);
     const q = sym ? feed.quotes[sym] : undefined;
     if (!q || !(q.price > 0)) return { ...p, live: false };
     if (!priceLooksLikeSameSecurity(q.price, p.currentPrice)) {
@@ -246,7 +250,7 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
     return {
       ...p,
       live: true,
-      symbol: sym ?? undefined,
+      symbol: sym?.startsWith("BSE:") ? p.symbol : sym ?? undefined,
       currentPrice: q.price,
       marketValue,
       unrealizedPnL,

@@ -1,5 +1,5 @@
 import type { Account, Position } from "./types";
-import { applyQuotes, symbolFor, type QuoteFeed } from "./quotes";
+import { applyQuotes, symbolFor, quoteSymbolFor, type QuoteFeed } from "./quotes";
 import { requestDeadline } from "./requestDeadline";
 import { isCounted } from "./analytics";
 import { validActionFeed, type ActionFeed, type ResearchAction } from "../../shared/corporateActions.mjs";
@@ -179,7 +179,7 @@ export function applyCorporateActionQuotes(
     // review's private investments, Stage 10dh) has nothing to adjust and is
     // never priced live, so it takes the plain overlay, which leaves it alone.
     if (p.assetClass !== "Equity" || !isCounted(p)) return applyQuotes([p], quotes)[0];
-    const sym = symbolFor(p);
+    const sym = quoteSymbolFor(p);
     const q = quotes?.quotes[sym || ""];
     const start = dates.get(p.accountId) || "";
     const end = q ? marketDay(q.tradedAt || quotes!.asOf) : start;

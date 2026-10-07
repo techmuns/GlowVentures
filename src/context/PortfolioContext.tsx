@@ -11,7 +11,7 @@ import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
-import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
+import { fetchQuotes, symbolsFor, quoteSymbolsFor, quoteSymbolFor, applyQuotes, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
 import { applyFundNavs, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
 import { depositoryShareHoldings, depositoryShareIsins, depositoryShareSymbols, shareCandidates } from "@/lib/depositoryShares";
 import { applyCorporateActionQuotes, fetchCorporateActions, liveWithheldReason, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
@@ -316,7 +316,7 @@ function liveCounts(positions: readonly Position[], returns: Map<string, ActionR
   for (const p of positions) {
     const e = bySecurity.get(p.securityKey) ?? { live: false, hasSymbol: false, withheld: false };
     e.live = e.live || !!p.live;
-    e.hasSymbol = e.hasSymbol || !!symbolFor(p);
+    e.hasSymbol = e.hasSymbol || !!quoteSymbolFor(p);
     e.withheld = e.withheld || !!liveWithheldReason(p, returns);
     bySecurity.set(p.securityKey, e);
   }
@@ -360,7 +360,7 @@ const PRIORITY_SYMBOLS = (() => {
   const out = new Set<string>();
   for (const p of BOOK_POSITIONS) {
     if (holdingBucket(p, engagementOf(accIdx, p)) !== DIRECT_EQUITY_BUCKET) continue;
-    const sym = symbolFor(p);
+    const sym = quoteSymbolFor(p);
     if (sym) out.add(sym);
   }
   // The listed shares a depository reports — on a transaction-only demat
@@ -494,6 +494,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // The live-only funds are asked for too: a liquid ETF among them prices
     // intraday the way its siblings on the statements do.
     const symbols = [...new Set([...symbolsFor(BOOK_POSITIONS), ...symbolsFor(LIVE_ONLY_FUNDS), ...depositoryShareSymbols(),
+      ...quoteSymbolsFor(BOOK_POSITIONS), ...quoteSymbolsFor(BOOK_UNVALUED_HOLDINGS),
       // …and whatever a card has registered since (see `requestSymbols`).
       ...extraSymbols.current])];
     if (!symbols.length) { setQuotesStatus("unavailable"); return 0; }

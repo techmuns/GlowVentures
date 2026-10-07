@@ -3,7 +3,7 @@
 // ── UPSTOX FIRST, muns AS THE FALLBACK ──────────────────────────────────────
 // Where an Upstox token is set (`UPSTOX_ACCESS_TOKEN`, or `UPSTOX_TOKEN`), every
 // symbol with an instrument in `shared/upstoxInstruments.mjs` is priced from
-// Upstox's full market quote in ONE call; muns prices only what Upstox did not.
+// Upstox's full market quote in batches of up to 500; muns prices only what Upstox did not.
 // The response shape is unchanged, so nothing downstream had to move. Each quote
 // says which feed priced it (`source`), and `GET /api/quotes?check=1` answers
 // "is the Upstox token working?" in a sentence. See shared/upstoxQuotes.mjs.
@@ -40,14 +40,16 @@ import { bundleCache, ageS } from "../../shared/edgeBundleCache.js";
 import { upstoxToken, fetchUpstoxQuotes, UPSTOX_TOKEN_VARS } from "../../shared/upstoxQuotes.mjs";
 import { UPSTOX_INSTRUMENTS, UPSTOX_INSTRUMENT_COVERAGE } from "../../shared/upstoxInstruments.mjs";
 
-const VERSION = "quotes-fn/5";
+const VERSION = "quotes-fn/6";
 const UPSTREAM = "https://fastapi.muns.io/stock-data/batch";
 const COUNTRY = "INDIA";
 const CHUNK = 32;               // upstream caps at 80; 32 is where timeouts stop
 const CONCURRENCY = 4;
 const UPSTREAM_BUDGET_MS = 20000;
 const CHUNK_TIMEOUT_MS = 26000;
-const MAX_SYMBOLS = 400;
+// The company table includes hundreds of fund-disclosed names. Upstox's
+// 500-instrument cap is per upstream batch, not a cap on this table's scope.
+const MAX_SYMBOLS = 1000;
 const FRESH_S = 60;
 const STALE_S = 900;
 const BODY_PREVIEW = 300;
@@ -302,7 +304,7 @@ export async function onRequest(context) {
   const probe = !!payload.probe;
 
   const clean = (list) => [...new Set((Array.isArray(list) ? list : [])
-    .filter((s) => typeof s === "string" && /^[A-Za-z0-9&.\-]{1,20}$/.test(s))
+    .filter((s) => typeof s === "string" && /^(?:BSE:)?[A-Za-z0-9&.\-]{1,20}$/i.test(s))
     .map((s) => s.toUpperCase()))];
   const symbols = clean(payload.symbols).slice(0, probe ? 3 : MAX_SYMBOLS);
   // The caller's own ordering hint. It never widens what is fetched — a symbol
@@ -345,10 +347,10 @@ export async function onRequest(context) {
     candidates = stalest.map((c) => c.sym);
   }
 
-  // 2a. UPSTOX FIRST — every candidate it has an instrument for, in ONE call.
-  //     Upstox answers up to 500 instruments per request, so where it is
-  //     configured the whole book lands in the first round and nothing is left
-  //     to defer. See shared/upstoxQuotes.mjs for the identity gate and why the
+  // 2a. UPSTOX FIRST — every candidate it has an instrument for, in bounded batches.
+  //     Upstox answers up to 500 instruments per request; larger company scopes
+  //     use multiple batches within this round. See shared/upstoxQuotes.mjs
+  //     for the identity gate and why the
   //     previous close is `last_price − net_change`.
   let fetched = 0;
   let upstox = null;
@@ -377,8 +379,11 @@ export async function onRequest(context) {
   let needed = [];
   let pending = [];
   if (token) {
-    needed = probe ? remaining : remaining.slice(0, MAX_FETCH_PER_REQUEST);
-    pending = remaining.slice(needed.length);
+    // The fallback accepts NSE tickers only. Stripping a BSE prefix could
+    // silently price an unrelated NSE instrument with the same symbol.
+    const nseRemaining = remaining.filter((s) => !s.startsWith("BSE:"));
+    needed = probe ? nseRemaining : nseRemaining.slice(0, MAX_FETCH_PER_REQUEST);
+    pending = nseRemaining.slice(needed.length);
   }
   const pendingSet = new Set(pending);
 
