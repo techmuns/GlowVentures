@@ -124,8 +124,11 @@ ok("the context is a non-empty set of named blocks",
   near("...and its private side", s.privateCr, split.private / CR);
   // SC-D3: the third side is small here, and two decimals of a crore rounded
   // ₹98,742 UP to a lakh. Held to 1% of the rupee figure, not to a paisa-crore.
+  // Since Stage 10dh the review places every private line, so this side can be
+  // a MEASURED zero; it must then be sent as zero, never rounded or omitted.
   ok("...and the side nothing places, at a precision that does not round it up to a lakh",
-    split.unplaced > 0 && Math.abs(s.notPlacedCr * CR - split.unplaced) / split.unplaced < 0.01,
+    split.unplaced === 0 ? s.notPlacedCr === 0
+      : split.unplaced > 0 && Math.abs(s.notPlacedCr * CR - split.unplaced) / split.unplaced < 0.01,
     `${s.notPlacedCr} Cr vs ₹${split.unplaced}`);
   near("...and the three sides reconstruct the whole", s.listedCr + s.privateCr + s.notPlacedCr, s.currentValueOfHoldingsCr, 0.03);
   const nav = current.filter((p) => p.navPriced && !p.live);
@@ -204,14 +207,14 @@ ok("the context is a non-empty set of named blocks",
     valueCr: number | null; valueNote: string | null; valueBasis: string | null; statementAsOf: string | null }[] }>("accounts");
   ok("every account is sent, none cut by a cap", acc.shown === BOOK_ACCOUNTS.length && acc.rows.length === BOOK_ACCOUNTS.length,
     `${acc.rows.length} of ${BOOK_ACCOUNTS.length}`);
-  const byNo = new Map(acc.rows.map((r) => [`${r.provider}|${r.accountNo}`, r]));
+  const byNo = new Map(acc.rows.map((r) => [`${(r as { owner?: string | null }).owner}|${r.provider}|${r.accountNo}`, r]));
   const wrongCount: string[] = [];
   let specked = 0;
   for (const a of BOOK_ACCOUNTS) {
     const rows = positions.filter((p) => p.accountId === a.accountId);
     const listed = rows.filter((p) => !closed(p) && !speck(p.securityKey));
     if (listed.length < rows.filter((p) => !closed(p)).length) specked++;
-    const r = byNo.get(`${a.provider}|${a.accountNo}`);
+    const r = byNo.get(`${a.owner}|${a.provider}|${a.accountNo}`);
     if (!r || r.holdings !== listed.length) wrongCount.push(`${a.accountNo}: ${r?.holdings} vs ${listed.length}`);
     if (r && r.statementAsOf !== a.asOf) wrongCount.push(`${a.accountNo} as-of`);
   }
@@ -219,7 +222,7 @@ ok("the context is a non-empty set of named blocks",
     wrongCount.length === 0, wrongCount.slice(0, 4).join("; "));
   ok("...and this book has an account holding such specks, so the count is load-bearing", specked > 0, `${specked} accounts`);
   ok("a valued account names its price basis", acc.rows.filter((r) => typeof r.valueCr === "number" && r.valueCr !== 0)
-    .every((r) => !!r.valueBasis && /mark|NAV|quote/.test(r.valueBasis)));
+    .every((r) => !!r.valueBasis && /mark|NAV|quote|consolidated review/.test(r.valueBasis)));
 }
 
 // ── SC-A1: AN ACCOUNT NO STATEMENT VALUES IS NULL; A REDEEMED ONE IS A MEASURED 0
@@ -233,10 +236,10 @@ ok("the context is a non-empty set of named blocks",
 // payload account by account.
 {
   const acc = block<{ rows: { accountNo: string; provider: string; valueCr: number | null; valueNote: string | null }[] }>("accounts");
-  const byNo = new Map(acc.rows.map((r) => [`${r.provider}|${r.accountNo}`, r]));
+  const byNo = new Map(acc.rows.map((r) => [`${(r as { owner?: string | null }).owner}|${r.provider}|${r.accountNo}`, r]));
   const absent: string[] = [], nil: string[] = [], specksOnly: string[] = [], wrong: string[] = [];
   for (const a of BOOK_ACCOUNTS) {
-    const r = byNo.get(`${a.provider}|${a.accountNo}`);
+    const r = byNo.get(`${a.owner}|${a.provider}|${a.accountNo}`);
     if (!r) continue;
     // The rows of the book HANDED IN — the live one, where a transaction-only
     // demat carries the cash-equivalent funds its depository reports (10ce).
@@ -286,7 +289,7 @@ ok("the context is a non-empty set of named blocks",
   ok("...and an account the live book values only in part says so, in the registry's own words",
     partialNote.size > 0 && [...partialNote.keys()].every((id) => {
       const a = liveAccounts.find((x) => x.accountId === id)!;
-      const r = byNo.get(`${a.provider}|${a.accountNo}`);
+      const r = byNo.get(`${a.owner}|${a.provider}|${a.accountNo}`);
       return !!r && typeof r.valueCr === "number" && r.valueCr > 0 && r.valueNote === `Partly valued — ${a.partialValuation}`;
     }), `${partialNote.size} partly valued`);
 }
@@ -438,7 +441,7 @@ ok("the context is a non-empty set of named blocks",
   ok("...named, so the model can recognise a question about it", !!f.security, String(f.security));
   const fencedAccts = [...new Set(BOOK_POLYCAB.map((p) => p.accountId))].map((id) => acct.get(id)!);
   ok("...with its share count, its statement's date and the account it covers",
-    f.shares === add(BOOK_POLYCAB.map((p) => p.quantity))
+    f.shares === add(BOOK_POLYCAB.map((p) => p.quantity!))
       && f.heldIn.length === fencedAccts.length && f.heldIn.every((h, i) => h.accountNo === fencedAccts[i].accountNo && h.statementAsOf === fencedAccts[i].asOf)
       && (f.statementAsOf === fencedAccts[0]?.asOf),
     `${f.shares} shares, ${JSON.stringify(f.statementAsOf)}`);
@@ -595,7 +598,7 @@ ok("the context is a non-empty set of named blocks",
   // A line the NAV values but whose whole holding is under the ₹1,000 floor is
   // on no screen (`currentHoldings` drops it everywhere), so the dashboard does
   // NOT show it and must not say it does — the same `speck` rule as above.
-  const unitKey = (u: { accountId: string; quantity: number }) => `${u.accountId}|${u.quantity}`;
+  const unitKey = (u: { accountId: string; quantity: number | null }) => `${u.accountId}|${u.quantity}`;
   const liveUnits = new Set(UNPRICED.filter((u) => !speck(u.securityKey)).map(unitKey));
   const speckUnits = new Set(UNPRICED.filter((u) => speck(u.securityKey)).map(unitKey));
   ok("...each says whether the dashboard values it now — true of every line a fund's NAV values here",

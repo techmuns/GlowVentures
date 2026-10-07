@@ -83,7 +83,7 @@ export declare function readAifCategory(
 export type MarketSide = "listed" | "private";
 
 /** The shape `marketSideOf` needs of a position. A real `Position` satisfies it. */
-export type SidePosition = { assetClass: string; security: string; securityKey?: string | null };
+export type SidePosition = { assetClass: string; security: string; securityKey?: string | null; review?: boolean };
 
 export declare function marketSideOf(
   position: SidePosition,

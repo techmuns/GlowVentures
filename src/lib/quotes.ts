@@ -215,6 +215,12 @@ export function priceLooksLikeSameSecurity(live: number, mark: number | null): b
 export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Position[] {
   if (!feed) return positions.map((p) => ({ ...p, live: false }));
   return positions.map((p) => {
+    // THE REVIEW'S LINES ARE NEVER PRICED HERE (Stage 10dh). The family's
+    // consolidated review is the source for private-market holdings, and those
+    // are unlisted shares, preference shares and fund units no exchange quotes;
+    // a quote that happened to resolve would move a value the review struck. And
+    // a line recorded with no unit count has no per-unit price to apply at all.
+    if (p.review || p.quantity === null) return { ...p, live: false };
     const sym = symbolFor(p);
     const q = sym ? feed.quotes[sym] : undefined;
     if (!q || !(q.price > 0)) return { ...p, live: false };

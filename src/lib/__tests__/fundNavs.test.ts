@@ -82,7 +82,7 @@ ok("every scheme cleared for value is within a factor of two of the book's own m
  */
 const wouldBreak = BOOK_POSITIONS.filter((p) => {
   const e = fundNavFor(p);
-  if (!e || !(p.currentPrice as number) || !(p.quantity > 0)) return false;
+  if (!e || !(p.currentPrice as number) || !((p.quantity ?? 0) > 0)) return false;
   const r = e.nav / (p.currentPrice as number);
   return r < 0.5 || r > 2;
 });
@@ -131,7 +131,7 @@ ok("quantity, cost, realised, dividends, dated fields and the INTRADAY fields ar
 ok("a repriced row's value is exactly its own units times the published NAV",
   moved.every((p) => {
     const e = fundNavFor(p);
-    return !!e && Math.abs(p.marketValue - p.quantity * e.nav) < 0.000001;
+    return !!e && Math.abs(p.marketValue - p.quantity! * e.nav) < 0.000001;
   }));
 ok("...and its price IS that NAV, never a value divided back out",
   moved.every((p) => p.currentPrice === fundNavFor(p)?.nav));
@@ -150,7 +150,7 @@ ok("a holding the quote feed already priced is left alone",
 // closed position is a measured zero either way, and overlaying it would mark a
 // row the family no longer holds as though it had been revalued.
 ok("a holding with no units is never repriced",
-  after.every((p, i) => (before[i].quantity > 0) || p.marketValue === before[i].marketValue));
+  after.every((p, i) => ((before[i].quantity ?? 0) > 0) || p.marketValue === before[i].marketValue));
 
 /**
  * ── A LAST DEPOSITORY MOVEMENT'S PRICE IS NEVER A MARK IN THE BOOK (Stage 10cz)
@@ -220,7 +220,7 @@ ok("every row's units are the depository's own closing balance, from a block tha
   offUnits.length === 0, offUnits.map((p) => p.securityKey).join("; "));
 const offValue = DEP.filter((p) => {
   const e = p.isin ? navByIsin.get(p.isin) : undefined;
-  return !e || !e.usableForValue || p.currentPrice !== e.nav || p.marketValue !== p.quantity * e.nav
+  return !e || !e.usableForValue || p.currentPrice !== e.nav || p.marketValue !== p.quantity! * e.nav
     || p.navDate !== e.date;
 });
 ok("...and its value is exactly those units × the NAV AMFI published, dated as AMFI dated it",
@@ -230,7 +230,7 @@ ok("no row carries a cost — a depository holds units and did not buy them, and
 ok("every row says where it came from: the depository's window and the NAV's own date",
   DEP.every((p) => p.navPriced === true && !!p.navDate && !!p.depositoryUnits?.asOf && !!p.depositoryUnits?.source));
 const doubled = DEP.filter((p) => BOOK_POSITIONS.some((b) =>
-  b.isin && p.isin && b.isin.toUpperCase() === p.isin.toUpperCase() && Math.abs(b.quantity - p.quantity) < 0.0005));
+  b.isin && p.isin && b.isin.toUpperCase() === p.isin.toUpperCase() && Math.abs((b.quantity ?? NaN) - (p.quantity ?? NaN)) < 0.0005));
 ok("no row repeats a book position — same ISIN and the same units would be one holding counted twice",
   doubled.length === 0, doubled.map((p) => p.securityKey).join("; "));
 ok("the generated book carries no position on a transaction-only account — none of this is in `glowData.ts`",
@@ -307,7 +307,7 @@ ok("every fund row's units are the depository's own reconciled closing balance",
   offUnitsF.length === 0, offUnitsF.map((p) => p.securityKey).join("; "));
 const offValueF = FUNDS.filter((p) => {
   const e = p.isin ? navByIsin.get(p.isin) : undefined;
-  return !e || !e.usableForValue || p.currentPrice !== e.nav || p.marketValue !== p.quantity * e.nav || p.navDate !== e.date;
+  return !e || !e.usableForValue || p.currentPrice !== e.nav || p.marketValue !== p.quantity! * e.nav || p.navDate !== e.date;
 });
 ok("...its value exactly those units × AMFI's NAV, dated as AMFI dated it",
   offValueF.length === 0, offValueF.map((p) => p.securityKey).join("; "));
@@ -315,7 +315,7 @@ ok("...with no cost, and saying where it came from",
   FUNDS.every((p) => p.costBasis === null && p.unrealizedPnL === null && p.costUnavailable === true
     && p.navPriced === true && !!p.depositoryUnits?.asOf && !!p.depositoryUnits?.source));
 const doubledF = FUNDS.filter((p) => BOOK_POSITIONS.some((b) =>
-  b.isin && p.isin && b.isin.toUpperCase() === p.isin.toUpperCase() && Math.abs(b.quantity - p.quantity) < 0.0005));
+  b.isin && p.isin && b.isin.toUpperCase() === p.isin.toUpperCase() && Math.abs((b.quantity ?? NaN) - (p.quantity ?? NaN)) < 0.0005));
 ok("...and none repeats a book position of the same ISIN and units",
   doubledF.length === 0, doubledF.map((p) => p.securityKey).join("; "));
 
@@ -401,7 +401,7 @@ ok("every candidate's NSE symbol is reached by its ISIN — a book holding of th
   unIdentified.length === 0, unIdentified.map((p) => `${p.symbol} ${p.isin}`).join("; "));
 const noSymbol = blocks.filter((w) => txOnly.has(w.accountId) && w.reason === null && (w.closing ?? 0) > 0
   && /^INE/i.test(w.isin ?? "") && !CAND.some((p) => p.isin === w.isin)
-  && !BOOK_POSITIONS.some((b) => b.isin?.toUpperCase() === w.isin?.toUpperCase() && Math.abs(b.quantity - (w.closing as number)) < 0.0005));
+  && !BOOK_POSITIONS.some((b) => b.isin?.toUpperCase() === w.isin?.toUpperCase() && Math.abs((b.quantity ?? NaN) - (w.closing as number)) < 0.0005));
 ok("an equity balance no identifier resolves to a symbol is no candidate — nothing could price it, and it stays named as not valued",
   noSymbol.every((w) => !upstox[Object.keys(upstox).find((k) => upstox[k].key === `NSE_EQ|${(w.isin ?? "").toUpperCase()}`) ?? ""]),
   noSymbol.map((w) => w.securityKey).join("; "));

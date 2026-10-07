@@ -48,7 +48,8 @@
  */
 import type { Position } from "./types";
 import {
-  dedupedPositions, currentHoldings, costCoversSet, holdingRoute, sum, sumOrNull, type HoldingRoute,
+  dedupedPositions, currentHoldings, costCoversSet, holdingRoute, sum, sumOrNull, totalQuantity, isValuedAtCost,
+  type HoldingRoute,
 } from "./analytics";
 import { familyValue, type FundExposureRow, type FundExposureSkip, type StockExposureState } from "./lookthrough";
 import { fifoTotals, type FifoTotals } from "./fifo";
@@ -231,17 +232,33 @@ export function fundLinesFor(
 export type MeasuredTotals = {
   /** Statement rows in the set, as printed. */
   rows: number;
-  qty: number;
+  /**
+   * Σ units, each `dedupeGroup` once — null where a row carries no unit count
+   * (a review line the family's consolidated review records with no count,
+   * Stage 10dh). A total over the rows that DO carry one would be a count of
+   * part of the holding printed as the whole of it.
+   */
+  qty: number | null;
   /** Market value, each `dedupeGroup` once. */
   mv: number;
   /** Market value as printed — above `mv` only where a holding is reported twice. */
   printed: number;
   /** Σ cost over the rows reporting one, or null where none does. */
   cost: number | null;
-  /** The quantity those costed rows hold — the ONLY denominator for an average cost. */
-  costedQty: number;
+  /**
+   * The quantity those costed rows hold — the ONLY denominator for an average
+   * cost. Null where a costed row carries no unit count, so no average is struck.
+   */
+  costedQty: number | null;
   /** Market value of the rows that report no cost. */
   uncostedMV: number;
+  /**
+   * Rows HELD AT COST (Stage 10dh): the review records what was paid and no
+   * valuation, so their value IS their cost. They are in `cost` and in no gain,
+   * and a return covering the rest does not cover them (`covers`).
+   */
+  atCostRows: number;
+  atCostMV: number;
   pnl: number | null;
   /** `cost ÷ costedQty`, never `cost ÷ qty`. */
   avgCost: number | null;
@@ -249,7 +266,11 @@ export type MeasuredTotals = {
   costedReturn: number | null;
   /** The FIFO totals behind `costedReturn`, for the words that explain it (`fifoBasisNote`). */
   fifo: FifoTotals;
-  /** Whether the costed rows are essentially the whole set (`costCoversSet`). */
+  /**
+   * Whether the rows a gain is struck on are essentially the whole set
+   * (`costCoversSet`) — neither the rows reporting no cost nor the rows held at
+   * cost are in it.
+   */
   covers: boolean;
 };
 
@@ -260,19 +281,23 @@ export function measuredTotals(rows: readonly Position[]): MeasuredTotals {
   const fifo = fifoTotals(costed.filter((p) => !p.costUnavailable));
   const cost = sumOrNull(d.map((p) => p.costBasis));
   const pnl = sumOrNull(d.map((p) => p.unrealizedPnL));
-  const costedQty = sum(costed.map((p) => p.quantity));
+  const costedQty = totalQuantity(costed);
   const mv = sum(d.map((p) => p.marketValue));
   const uncostedMV = sum(d.filter((p) => p.costBasis == null).map((p) => p.marketValue));
+  const atCost = d.filter(isValuedAtCost);
+  const atCostMV = sum(atCost.map((p) => p.marketValue));
   return {
     rows: rows.length,
-    qty: sum(d.map((p) => p.quantity)),
+    qty: totalQuantity(d),
     mv,
     printed: sum(rows.map((p) => p.marketValue)),
     cost,
     costedQty,
     uncostedMV,
+    atCostRows: atCost.length,
+    atCostMV,
     pnl,
-    avgCost: cost !== null && costedQty > 0 ? cost / costedQty : null,
+    avgCost: cost !== null && costedQty !== null && costedQty > 0 ? cost / costedQty : null,
     /**
      * NO `cost > 0` GUARD (Stage 10df). It was a division guard from before the
      * return was FIFO's, and FIFO divides by the capital DEPLOYED — the cost of
@@ -285,7 +310,7 @@ export function measuredTotals(rows: readonly Position[]): MeasuredTotals {
      */
     costedReturn: cost !== null && pnl !== null ? fifo.returnPct : null,
     fifo,
-    covers: costCoversSet(mv, uncostedMV),
+    covers: costCoversSet(mv, uncostedMV + atCostMV),
   };
 }
 

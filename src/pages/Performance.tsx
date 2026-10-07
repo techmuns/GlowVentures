@@ -7,7 +7,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue, sumOrNull, currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, dedupedPositions } from "@/lib/analytics";
+import { sum, consolidatedMarketValue, currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, dedupedPositions } from "@/lib/analytics";
 import { fmtPct, fmtDate } from "@/lib/format";
 import { valuationBasis, navBasisLabel, navBasisTitle } from "@/lib/valuationBasis";
 import { SortHeader, Tr } from "@/components/SortHeader";
@@ -20,11 +20,11 @@ import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
-import { fifoTotals } from "@/lib/fifo";
+import { bookReturnOnCost, costedSetLabel } from "@/lib/drilldown";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { AccountBridge, ReturnSeries } from "@/lib/types";
 import { measuredAccountsReturn, accountHasOpeningValue } from "@/lib/returns";
-import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_UNDATED_CAPITAL } from "@/data/glowData";
+import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_UNDATED_CAPITAL, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { capitalMovesWithCalls } from "@/lib/tranches";
 
 // NAV & Performance — built from what these statements actually carry.
@@ -147,7 +147,7 @@ const bridgeLinesFor = (b: AccountBridge, flow: string) => (b.lines ?? []).filte
  * statements" was false of every one of those rows. The count is struck on the
  * one record that card reads, never on a second copy of it.
  */
-const CAPITAL_RECORD_COUNT = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS)
+const CAPITAL_RECORD_COUNT = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS)
   .reduce<Record<string, number>>((m, x) => { m[x.accountId] = (m[x.accountId] ?? 0) + 1; return m; }, {});
 /**
  * CAPITAL NO DATED ROW CARRIES, NAMED BESIDE THE RATE IT IS MISSING FROM
@@ -222,26 +222,35 @@ export function Performance() {
   // The per-account figures below filter by accountId and are unaffected.
   const listedMV = consolidatedMarketValue(p);
   /**
-   * FIFO — the same aggregator AND THE SAME SET as Morning CIO's Consolidated
-   * return, so the two pages cannot print two figures for one book: unrealised
-   * on what is held plus realised on units already sold, over the capital that
-   * bought them, with each whole mandate struck on its capital since inception.
-   * Null, not 0, where no cost is reported.
+   * ── THE WHOLE-BOOK RETURN, THROUGH THE ONE HELPER (B-07) ──────────────
    *
-   * THE SET IS `currentHoldings`, AND THIS COMMENT CLAIMED IT BEFORE IT WAS
-   * TRUE. It read "the same costed set as Morning CIO's" over `consolidated` —
+   * `bookReturnOnCost` is where this figure is struck — for Morning CIO's
+   * Consolidated return tile, for its allocation Total row, for the page that
+   * tile opens, and for this one — so no two of them can print two figures for
+   * one book: unrealised on what is held plus realised on units already sold,
+   * over the capital that bought them, with each whole mandate struck on its
+   * capital since inception. Null, not 0, where no cost is reported.
+   *
+   * THE SET IS `costedBookSet`'s STRUCK HALF, AND THIS PAGE COMPUTED IT ITSELF
+   * UNTIL IT PRINTED A DASH. It passed `held.filter(reports a cost)` to
+   * `fifoTotals` directly — which is the COSTED set, the family's 76
+   * at-cost review lines among it (₹140.68 Cr, a value that IS their cost and
+   * therefore no gain to strike). `fifoTotals` counts those against its own
+   * coverage, so the gate refused the return and the tile read "—" while
+   * Morning CIO, which asks `bookReturnOnCost` over the STRUCK set, printed the
+   * figure. Two surfaces, one quantity, one of them a dash: the defect
+   * `bookReturnOnCost` was extracted to end, re-committed here by computing it
+   * a second time. The set is named on the tile's own face, in the same words
+   * (`costedSetLabel`), so a reader is told which holdings it covers.
+   *
+   * THE SET WAS WRONG ONCE BEFORE, THE SAME WAY. It read `consolidated` —
    * which still carries the funds redeemed to nil — so 3P India Equity Fund 1,
    * redeemed on 31 July, put its ₹2.56 Cr realised gain and ₹28.50 Cr cost of
    * units sold into this tile and not into Morning CIO's: +16.24% here against
-   * +16.68% there, for one book. Morning CIO's own predicate, over Morning
-   * CIO's own set, with the same universe for "a mandate held whole".
+   * +16.68% there, for one book.
    */
   const held = currentHoldings(consolidated);
-  const costed = held.filter((x) => x.costBasis != null && !x.costUnavailable);
-  const listedCost = sumOrNull(costed.map((x) => x.costBasis));
-  const listedPnL = sumOrNull(costed.map((x) => x.unrealizedPnL));
-  const bookFifo = fifoTotals(costed, { accounts, universe: held });
-  const embeddedRet = listedCost !== null && listedPnL !== null && listedCost > 0 ? bookFifo.returnPct : null;
+  const { set: costedSet, fifo: bookFifo, pct: embeddedRet } = bookReturnOnCost(held, { accounts, universe: held });
 
   // ── Money-weighted return, per account and consolidated ──
   //
@@ -488,6 +497,10 @@ export function Performance() {
             plain: "Everything the book has produced — the unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out — over every rupee that bought a unit of it. A whole mandate is struck on its capital since inception.",
             worked: `= (${money(bookFifo.unrealised, true)} + ${money(bookFifo.realised, true)}) ÷ ${money(bookFifo.deployed)} × 100 = ${fmtPct(embeddedRet, { sign: true })}`,
           }}><span data-xa="perf-fifo" data-value={embeddedRet ?? ""}>{fmtPct(embeddedRet, { sign: true })}</span></Auditable>}
+          title={`${costedSetLabel(costedSet, (n) => money(n))}. ${
+            costedSet.atCost > 0
+              ? `The ${costedSet.atCost} private investments the family's consolidated review holds at cost (${money(costedSet.atCostValue)}) are outside it: their value IS what was paid, so there is no gain on them to strike. `
+              : ""}${money(costedSet.bookValue - costedSet.costedValue)} reports no cost at all. Morning CIO's Consolidated return is this figure, over this set.`}
           sub={<>{money(bookFifo.unrealised, true)} unrealised + {money(bookFifo.realised, true)} realised</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
 
         {consolidatedXirr == null ? (

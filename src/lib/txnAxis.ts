@@ -107,7 +107,12 @@ export type TxnSections = {
   /** The section a trade belongs in, on the chosen axis. */
   forTxn: (axis: GroupAxis, t: SectionableTxn) => string;
   /** The section an ACCOUNT's own capital record belongs in. */
-  forAccount: (axis: GroupAxis, accountId: string) => string;
+  /**
+   * `securityKey` narrows a review holder bucket to the one line a row stands
+   * for (Stage 10dh): the bucket groups separate investments, so its section is
+   * the line's, never the bucket's mix.
+   */
+  forAccount: (axis: GroupAxis, accountId: string, securityKey?: string | null) => string;
 };
 
 /**
@@ -192,8 +197,8 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
     return groupKeyFor(axis, idx, what);
   };
 
-  const forAccount = (axis: GroupAxis, accountId: string): string => {
-    const all = byAccount.get(accountId) ?? [];
+  const forAccount = (axis: GroupAxis, accountId: string, securityKey?: string | null): string => {
+    const all = (byAccount.get(accountId) ?? []).filter((p) => !securityKey || p.securityKey === securityKey);
     /**
      * AN ACCOUNT THAT HOLDS NO VALUED POSITION IS STILL AN AIF ON THE CATEGORY
      * AXIS, WHEN ITS OWN STATEMENT SAYS SO.

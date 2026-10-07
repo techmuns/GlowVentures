@@ -31,10 +31,15 @@
 //     same account's profit-and-loss account WITNESSES them — its Capital
 //     Contribution and Withdrawals lines, struck on the bank book's own closing
 //     date, reproduce the rows' sums to the paisa (the two ASK PMS accounts in
-//     the September 2026 delivery, which publish nothing else dated).
+//     the September 2026 delivery, which publish nothing else dated);
+//   · since Stage 10dh a private-market line the family's consolidated review
+//     dates is dated by the review's own rows and nothing else (BOOK_REVIEW_FLOWS)
+//     — and those rows are HELD TO THE STATEMENTS here: every call and payout a
+//     statement prints for that account must be one of the review's rows, or the
+//     difference must be named on the line itself, where a reader sees it.
 import fs from "node:fs";
 import path from "node:path";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITIONS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITIONS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { capitalMovesWithCalls } from "@/lib/tranches";
 
 let fails = 0;
@@ -46,7 +51,7 @@ const ok = (name: string, pass: boolean, detail = "") => {
 type Row = Record<string, any>;
 type Doc = { docKey: string; provider: string; accountNo: string; reportType: string; asOf: string | null; status?: string;
   periodFrom?: string | null; periodTo?: string | null; flows?: Row | null;
-  cashFlows?: Row[]; commitment?: { calls?: Row[] } | null };
+  cashFlows?: Row[]; commitment?: { calls?: Row[]; payouts?: Row[] | null } | null };
 
 const AUDIT = path.resolve("public/audit");
 const docs: Doc[] = fs.readdirSync(AUDIT).sort()
@@ -62,7 +67,7 @@ const byPA = new Map(BOOK_ACCOUNTS.map((a) => [`${a.provider}::${a.accountNo}`, 
 const num = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const within = (a: number, b: number) => Math.abs(a - b) <= 1;
 
-type Archive = { typed: Row[]; calls: Row[]; register: Row[]; switches: Row[]; bank: BankDay[] };
+type Archive = { typed: Row[]; calls: Row[]; payouts: Row[]; register: Row[]; switches: Row[]; bank: BankDay[] };
 type BankDay = { date: string; ins: number; outs: number };
 const archive = new Map<string, Archive>();
 const bankBooks = new Map<string, Doc[]>();
@@ -70,7 +75,7 @@ const profitAndLoss = new Map<string, Doc[]>();
 for (const d of docs) {
   const accountId = byPA.get(`${d.provider}::${d.accountNo}`);
   if (!accountId) continue;
-  const a = archive.get(accountId) ?? { typed: [], calls: [], register: [], switches: [], bank: [] };
+  const a = archive.get(accountId) ?? { typed: [], calls: [], payouts: [], register: [], switches: [], bank: [] };
   if (d.reportType === "bank-book" && (d.cashFlows ?? []).length) bankBooks.set(accountId, [...(bankBooks.get(accountId) ?? []), d]);
   if (d.reportType === "profit-and-loss" && num(d.flows?.contribution) && num(d.flows?.withdrawal))
     profitAndLoss.set(accountId, [...(profitAndLoss.get(accountId) ?? []), d]);
@@ -82,6 +87,7 @@ for (const d of docs) {
       && !/^opening balance/i.test(c.description ?? "")) a.register.push(c);
   }
   for (const k of d.commitment?.calls ?? []) if (k.date && num(k.amount)) a.calls.push(k);
+  for (const k of d.commitment?.payouts ?? []) if (k.date && num(k.gross)) a.payouts.push(k);
   archive.set(accountId, a);
 }
 // A call or a register row printed on two issues of one statement is one row.
@@ -91,6 +97,7 @@ const dedupe = (rows: Row[], key: (r: Row) => string) => {
 };
 for (const a of archive.values()) {
   a.calls = dedupe(a.calls, (k) => `${k.date}|${k.amount}|${k.label ?? ""}`);
+  a.payouts = dedupe(a.payouts, (k) => `${k.date}|${k.kind ?? ""}|${k.gross}`);
   a.register = dedupe(a.register, (c) => `${c.date}|${c.description ?? ""}|${c.amount}|${c.balance ?? ""}`);
 }
 /**
@@ -147,13 +154,18 @@ for (const [accountId, a] of archive) {
   if (money.some((c) => c.amount > 0)) expected.add(accountId);
   else withdrawalsOnly.push(accountId);
 }
-const RECORD = capitalMovesWithCalls([...BOOK_CAPITAL_MOVES], [...BOOK_COMMITMENTS], BOOK_ACCOUNTS);
+const RECORD = capitalMovesWithCalls([...BOOK_CAPITAL_MOVES], [...BOOK_COMMITMENTS], BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS);
 const listed = new Set(RECORD.map((m) => m.accountId));
+// The accounts the family's consolidated review dates (Stage 10dh). Read off the
+// generated book, which is what every page reads; the review's rows are then held
+// to the archive below rather than trusted.
+const REVIEWED = new Set(BOOK_REVIEW_FLOWS.map((f) => f.accountId));
 const missing = [...expected].filter((a) => !listed.has(a)).sort();
-const extra = [...listed].filter((a) => !expected.has(a)).sort();
+const extra = [...listed].filter((a) => !expected.has(a) && !REVIEWED.has(a)).sort();
 ok("every account with a dated capital record in the archive is on the record", missing.length === 0,
   missing.join(", ") || `${expected.size} account(s)`);
-ok("…and no account is there without one", extra.length === 0, extra.join(", ") || "none");
+ok("…and no account is there without one — a statement or the family's review dates every one", extra.length === 0,
+  extra.join(", ") || `none · ${[...REVIEWED].filter((a) => !expected.has(a)).length} dated by the review alone`);
 ok("a register holding nothing but withdrawals, for an account with no other dated capital, is NOT listed",
   withdrawalsOnly.every((a) => !listed.has(a)),
   withdrawalsOnly.length ? `${withdrawalsOnly.length} held back: ${withdrawalsOnly.join(", ")}` : "none in this archive");
@@ -168,14 +180,97 @@ const viaBank = [...expected].filter((a) => archive.get(a)!.bank.length && !type
 ok("…and a bank book its profit-and-loss account witnesses reaches accounts nothing else dates", viaBank.length > 0,
   viaBank.join(", ") || "none");
 
+// ── THE REVIEW DATES ITS OWN LINES, AND NOTHING ELSE DATES THEM ────────────
+// A line the family's review dates is on the record through the review's rows
+// alone: one row per review row, at its own date, amount and direction, and no
+// statement row beside them — two records of one holding's capital would be
+// summed into one.
+const directionOf = (f: { kind: string }) => (f.kind === "purchase" ? "in" : "out");
+const reviewProblems: string[] = [];
+for (const id of [...REVIEWED].sort()) {
+  const rows = RECORD.filter((m) => m.accountId === id);
+  const flows = BOOK_REVIEW_FLOWS.filter((f) => f.accountId === id);
+  const tally = (keys: string[]) => keys.reduce((t, k) => t.set(k, (t.get(k) ?? 0) + 1), new Map<string, number>());
+  const want = tally(flows.map((f) => `${f.date}|${directionOf(f)}|${Math.round((f.amount ?? 0) * 100)}`));
+  const got = tally(rows.map((m) => `${m.date}|${m.direction}|${Math.round((m.amount ?? 0) * 100)}`));
+  const off = [...new Set([...want.keys(), ...got.keys()])].filter((k) => want.get(k) !== got.get(k));
+  if (off.length) reviewProblems.push(`${id}: ${off.slice(0, 3).map((k) => `${k} ${got.get(k) ?? 0} for ${want.get(k) ?? 0}`).join(", ")}`);
+  if (rows.some((m) => !m.fromReview)) reviewProblems.push(`${id}: ${rows.filter((m) => !m.fromReview).length} statement row(s) beside the review's`);
+}
+ok("every account the review dates is on the record through the review's own rows, and nothing else",
+  REVIEWED.size > 0 && reviewProblems.length === 0, reviewProblems.slice(0, 6).join("; ") || `${REVIEWED.size} account(s)`);
+// LOAD-BEARING: some account the review dates must ALSO be dated by a statement,
+// or "nothing else dates them" is never put to a test.
+const replaced = [...REVIEWED].filter((a) => { const x = archive.get(a); return !!x && (x.calls.length > 0 || x.typed.length > 0); }).sort();
+ok("…and the review stands in for a statement's own dated record on some of them", replaced.length > 0,
+  `${replaced.length}: ${replaced.join(", ")}`);
+
+// ── …AND THE REVIEW'S ROWS ARE HELD TO WHAT THE STATEMENTS PRINT ────────────
+// Every call a statement prints for an account the review dates is one of the
+// review's purchases, amount for amount; and its payouts add to what the review
+// paid back. Where they do not — a call the review does not carry, a date more
+// than a month away, a payout total that differs — the line's own hover must
+// name the statement's figure (BOOK_POSITIONS' reviewNote, which is what a reader
+// sees), never only the review's.
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const dayText = (iso: string) => `${Number(iso.slice(8, 10))} ${MON[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+const inr = (n: number) => n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+const daysApart = (a: string, b: string) => Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86400000;
+const notesOf = (id: string) => BOOK_POSITIONS.filter((p) => p.accountId === id && p.review).map((p) => String(p.reviewNote ?? "")).join(" ");
+const witnessProblems: string[] = [];
+const named: string[] = [];
+let callsHeld = 0;
+let payoutsHeld = 0;
+for (const id of replaced) {
+  const a = archive.get(id)!;
+  const note = notesOf(id);
+  const names = (...parts: string[]) => parts.every((s) => note.includes(s));
+  const buys = BOOK_REVIEW_FLOWS.filter((f) => f.accountId === id && f.kind === "purchase");
+  // Pair by amount, in date order within each amount.
+  const amounts = new Set([...a.calls.map((k) => Math.round(k.amount)), ...buys.map((f) => Math.round(f.amount))]);
+  for (const amt of amounts) {
+    const cs = a.calls.filter((k) => Math.round(k.amount) === amt).sort((x, y) => x.date.localeCompare(y.date));
+    const bs = buys.filter((f) => Math.round(f.amount) === amt).sort((x, y) => x.date.localeCompare(y.date));
+    for (let i = 0; i < Math.max(cs.length, bs.length); i++) {
+      const c = cs[i]; const b = bs[i];
+      if (c) callsHeld++;
+      if (c && b) {
+        if (daysApart(c.date, b.date) <= 31) continue;
+        const said = names(`₹${inr(amt)}`, dayText(c.date), dayText(b.date));
+        (said ? named : witnessProblems).push(`${id}: the ₹${inr(amt)} call the statement dates ${dayText(c.date)} is the review's ${dayText(b.date)}`);
+      } else if (c) {
+        const said = names(`₹${inr(amt)}`, dayText(c.date));
+        (said ? named : witnessProblems).push(`${id}: the statement's ${dayText(c.date)} call of ₹${inr(amt)} is on no review row`);
+      } else if (b) {
+        const said = names(`₹${inr(amt)}`, dayText(b.date));
+        (said ? named : witnessProblems).push(`${id}: the review's ${dayText(b.date)} purchase of ₹${inr(amt)} is no call the statement prints`);
+      }
+    }
+  }
+  if (a.payouts.length) {
+    payoutsHeld++;
+    const printed = a.payouts.reduce((t, k) => t + k.gross, 0);
+    const review = BOOK_REVIEW_FLOWS.filter((f) => f.accountId === id && f.kind !== "purchase").reduce((t, f) => t + (f.amount ?? 0), 0);
+    if (!within(printed, review)) {
+      const said = names(`₹${inr(Math.round(printed))}`, `₹${inr(Math.round(review))}`);
+      (said ? named : witnessProblems).push(`${id}: the statement pays out ₹${inr(Math.round(printed))} where the review carries ₹${inr(Math.round(review))}`);
+    }
+  }
+}
+ok("every call and payout a statement prints for a line the review dates is one of the review's rows, or the line names the difference",
+  callsHeld > 0 && witnessProblems.length === 0,
+  witnessProblems.slice(0, 6).join("; ") || `${callsHeld} call(s) and ${payoutsHeld} payout record(s) held; named on the line: ${named.join("; ") || "none"}`);
+
 // ── EVERY DATED CALL IS ONE ROW ────────────────────────────────────────────
 // Grouped per (account, date, amount), because two calls of one size on one day
 // would be two rows; each group must be matched by exactly as many `in` moves.
+// An account the family's review dates is held to the review above, not here.
 const movesOf = (accountId: string, date: string, direction: "in" | "out") =>
   RECORD.filter((m) => m.accountId === accountId && m.date === date && m.direction === direction && m.payoutKind == null);
 let callsChecked = 0;
 const callProblems: string[] = [];
 for (const [accountId, a] of archive) {
+  if (REVIEWED.has(accountId)) continue;
   const groups = new Map<string, { date: string; amount: number; n: number }>();
   for (const k of a.calls) {
     const g = groups.get(`${k.date}|${k.amount}`) ?? { date: k.date, amount: k.amount, n: 0 };
@@ -265,18 +360,54 @@ ok("the largest register deposit in the archive is on the record at its own date
 // value to set against India SME or Sky Capital, so it names them and moves on.
 // Their own statements print what was called; the rows must add to exactly that
 // — the running-balance trap doubles it, and so would a call counted twice.
+//
+// NO SUBJECT ON THIS BOOK SINCE Stage 10dh: India SME's and Sky Capital's
+// folios are lines of the family's consolidated review now, held at cost, so
+// every funded account holds a position — and their dated rows are the review's,
+// held to the statements' own calls by the witness check above. The rule is held
+// on a constructed fund, so it still fails the day a drop brings an unvalued
+// drawdown fund back.
 const held = new Set(BOOK_POSITIONS.map((p) => p.accountId));
 const unvaluedFunded = [...listed].filter((a) => !held.has(a)).sort();
+const callsIn = (rows: ReturnType<typeof capitalMovesWithCalls>, accountId: string) =>
+  rows.filter((m) => m.accountId === accountId && m.direction === "in" && m.payoutKind == null).reduce((s, m) => s + (m.amount ?? 0), 0);
 const ceilingProblems: string[] = [];
 for (const accountId of unvaluedFunded) {
   const c = BOOK_COMMITMENTS.find((x) => x.accountId === accountId);
   const printed = [c?.called, c?.paid].find(num);
-  const paid = RECORD.filter((m) => m.accountId === accountId && m.direction === "in" && m.payoutKind == null)
-    .reduce((s, m) => s + (m.amount ?? 0), 0);
+  const paid = callsIn(RECORD, accountId);
   if (!num(printed) || !within(paid, printed)) ceilingProblems.push(`${accountId}: ${paid} in against a printed ${printed ?? "nothing"}`);
 }
-ok("an account no statement values carries exactly the calls its own statement prints", unvaluedFunded.length > 0
-  && ceilingProblems.length === 0, ceilingProblems.join("; ") || `${unvaluedFunded.length} account(s): ${unvaluedFunded.join(", ")}`);
+if (unvaluedFunded.length) {
+  ok("an account no statement values carries exactly the calls its own statement prints", ceilingProblems.length === 0,
+    ceilingProblems.join("; ") || `${unvaluedFunded.length} account(s): ${unvaluedFunded.join(", ")}`);
+} else {
+  ok("…every funded account holds a position — the review values or holds at cost each line no statement values",
+    listed.size > 0 && [...listed].every((a) => held.has(a)), `${listed.size} funded account(s)`);
+  console.log("NOT CHECKED an account no statement values carries exactly the calls its own statement prints, on this book: none is unvalued since Stage 10dh — the constructed fund below holds the rule");
+}
+{
+  const fund = { accountId: "constructed-fund", name: "Constructed Fund II — Class A2", provider: "Constructed", ownerId: null,
+    asOf: "2026-06-30", committed: 2e7, drawn: 1.5e7, undrawn: 5e6, distributed: null, called: 1.5e7, paid: 1.5e7, pending: 0,
+    calls: [{ date: "2025-01-15", amount: 1e7, label: "Drawdown 1" }, { date: "2025-09-15", amount: 5e6, label: "Drawdown 2" }],
+    payouts: null } as unknown as (typeof BOOK_COMMITMENTS)[number];
+  const rows = capitalMovesWithCalls([], [fund], [{ accountId: fund.accountId, asOf: "2026-06-30" }], []);
+  ok("a constructed fund no statement values carries exactly the calls its own statement prints, each marked a call",
+    rows.length === 2 && within(callsIn(rows, fund.accountId), 1.5e7) && rows.every((m) => m.fromCall === true),
+    `${rows.length} row(s), ${callsIn(rows, fund.accountId)} in`);
+  // …and the same running-balance trap the rule exists for: a call list that
+  // carried a cumulative figure would put ₹2.5 Cr in against ₹1.5 Cr called.
+  const doubled = capitalMovesWithCalls([], [{ ...fund, calls: [...fund.calls, { date: "2025-09-15", amount: 1.5e7, label: "Balance" }] }],
+    [{ accountId: fund.accountId, asOf: "2026-06-30" }], []);
+  ok("…and a call list carrying a running balance is caught by it",
+    !within(callsIn(doubled, fund.accountId), fund.called as number), String(callsIn(doubled, fund.accountId)));
+  // …and a fund the review dates draws none of its statement's calls.
+  const reviewed = capitalMovesWithCalls([], [fund], [{ accountId: fund.accountId, asOf: "2026-06-30" }],
+    [{ accountId: fund.accountId, securityKey: "constructed-fund", security: fund.name, date: "2025-01-20", kind: "purchase",
+      amount: 1.5e7, units: null, rate: null, reviewRow: 1 }] as unknown as typeof BOOK_REVIEW_FLOWS);
+  ok("…and a fund the review dates is on the record through the review's row alone, none of its calls",
+    reviewed.length === 1 && reviewed[0].fromReview === true && !reviewed.some((m) => m.fromCall));
+}
 
 // ── THE CALLS ARE JOINED ONCE, AND IN ONE PLACE ────────────────────────────
 // `capitalMovesWithCalls` adds a fund's calls only where the account publishes
@@ -292,8 +423,15 @@ const callOnly = [...archive].filter(([, a]) => a.calls.length && !a.typed.lengt
 const builtIn = callOnly.filter((a) => BOOK_CAPITAL_MOVES.some((m) => m.accountId === a));
 ok("a fund's dated calls are not copied into BOOK_CAPITAL_MOVES", callOnly.length > 0 && builtIn.length === 0,
   builtIn.join(", ") || `${callOnly.length} call-only account(s)`);
-ok("…and on the record every purchase of a call-only account is marked as a call",
-  callOnly.every((a) => RECORD.filter((m) => m.accountId === a && m.direction === "in" && m.payoutKind == null).every((m) => m.fromCall === true)));
+// A call-only account the family's review dates is dated by the review's rows
+// (held above), so the call mark is asked only of the ones a statement dates.
+const callDated = callOnly.filter((a) => !REVIEWED.has(a));
+ok("…and on the record every purchase of a call-only account a statement dates is marked as a call",
+  callDated.length > 0 && callDated.every((a) => RECORD.filter((m) => m.accountId === a && m.direction === "in" && m.payoutKind == null).every((m) => m.fromCall === true)),
+  `${callDated.length}: ${callDated.join(", ")}`);
+ok("…and every purchase of a call-only account the review dates is the review's",
+  callOnly.filter((a) => REVIEWED.has(a)).every((a) => RECORD.filter((m) => m.accountId === a && m.direction === "in").every((m) => m.fromReview === true)),
+  `${callOnly.filter((a) => REVIEWED.has(a)).length} account(s)`);
 
 // ── THE RECORD RUNS AS FAR AS THE REGISTER THAT WITNESSES IT ───────────────
 // A register whose movements carry its own Opening Balance to its own last

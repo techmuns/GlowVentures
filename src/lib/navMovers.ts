@@ -312,7 +312,10 @@ export function navMoverModel(
     const cur = byScheme.get(id);
     if (cur) {
       cur.value += p.marketValue;
-      cur.quantity += p.quantity;
+      // A review line with no unit count never reaches this card — its scope is
+      // mutual funds and ETFs, and the review's lines are AIFs and unlisted
+      // holdings (Stage 10dh) — so a null adds nothing here.
+      cur.quantity += p.quantity ?? 0;
       if (onNav) cur.navValue += p.marketValue; else cur.stValue += p.marketValue;
       cur.positions += 1;
       if (owner && !cur.entities.includes(owner)) cur.entities.push(owner);
@@ -338,7 +341,7 @@ export function navMoverModel(
         positions: 1,
         nav: rec.nav, navDate: rec.date, prevNav: rec.prev, prevNavDate: rec.prevDate,
         changePct: rec.changePct,
-        value: p.marketValue, valueAsOf: asOf, quantity: p.quantity,
+        value: p.marketValue, valueAsOf: asOf, quantity: p.quantity ?? 0,
         navValue: onNav ? p.marketValue : 0, stValue: onNav ? 0 : p.marketValue,
         matchedVia: rec.matchedVia, entities: owner ? [owner] : [],
       });

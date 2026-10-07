@@ -177,7 +177,8 @@ export function depositoryShareCandidates(
     const symbol = symbolByIdentifier(isin, w.securityKey, positions);
     if (!symbol) continue;                                                             // gate 4
     const closing = w.closing;
-    if (positions.some((p) => isinOf(p) === isin && Math.abs(p.quantity - closing) < 0.0005)) continue; // gate 5
+    // A line with no unit count (the review's, Stage 10dh) cannot be the same units.
+    if (positions.some((p) => isinOf(p) === isin && p.quantity !== null && Math.abs(p.quantity - closing) < 0.0005)) continue; // gate 5
     const book = bookRowFor(isin, symbol, positions);
     const securityKey = book?.securityKey ?? w.securityKey;
     out.push({
@@ -258,7 +259,7 @@ export function unpricedStatementShareCandidates(
     if (u.sameUnitsReportedBy) continue;                                                     // gate 2
     if (positions.some((p) => p.accountId === u.accountId && isinOf(p) === isin)) continue;  // gate 3
     const owner = ownerOf.get(u.accountId) ?? u.ownerId;
-    if (positions.some((p) => isinOf(p) === isin && Math.abs(p.quantity - qty) < 0.0005
+    if (positions.some((p) => isinOf(p) === isin && p.quantity !== null && Math.abs(p.quantity - qty) < 0.0005
       && (ownerOf.get(p.accountId) ?? null) === owner)) continue;                            // gate 4
     const symbol = symbolByIdentifier(isin, u.securityKey, positions);
     if (!symbol) continue;                                                                   // gate 5
@@ -327,7 +328,8 @@ export function combinedShareCandidates(
   for (const p of lists.flat()) {
     const owner = ownerOf.get(p.accountId) ?? null;
     const isin = isinOf(p);
-    if (kept.some((k) => isinOf(k) === isin && Math.abs(k.quantity - p.quantity) < 0.0005
+    if (kept.some((k) => isinOf(k) === isin && k.quantity !== null && p.quantity !== null
+      && Math.abs(k.quantity - p.quantity) < 0.0005
       && (ownerOf.get(k.accountId) ?? null) === owner)) continue;
     kept.push(p);
   }

@@ -24,7 +24,7 @@
 //
 // Every expectation is derived from `glowData.ts` on the run, or written as a
 // relation that survives the next drop moving it.
-import { BOOK_POSITIONS, BOOK_ACCOUNTS } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
 import type { Account } from "@/lib/types";
 import { accountIndex } from "@/lib/accounts";
 import { currentHoldings, dedupedPositions, sum } from "@/lib/analytics";
@@ -230,11 +230,39 @@ ok("an unknown section sorts last", aifSectionOrd("something else") >= AIF_SECTI
 {
   const withPositions = new Set(BOOK_POSITIONS.map((p) => p.accountId));
   const un = unvaluedAifFolios(BOOK_ACCOUNTS, withPositions, new Map());
-  ok("the book carries AIF folios that value nothing", un.length > 0, `${un.length} folios`);
-  ok("every one carries a section", un.every((f) => AIF_SECTION_ORDER.includes(f.section)));
-  ok("every one names its owner and account", un.every((f) => !!f.owner && !!f.accountNo));
+  if (un.length) {
+    ok("every one carries a section", un.every((f) => AIF_SECTION_ORDER.includes(f.section)));
+    ok("every one names its owner and account", un.every((f) => !!f.owner && !!f.accountNo));
+  } else {
+    // SINCE Stage 10dh THE FAMILY'S CONSOLIDATED REVIEW CARRIES EVERY SUCH FOLIO
+    // — India SME at the review's own value, Sky Capital's angel folios at cost —
+    // so no AIF account is left holding nothing on this book. That is evidence,
+    // not a pass: the folios the statements valued nothing for must each be a
+    // review row now, or the list is empty because a folio went missing.
+    const tookOver = new Set(BOOK_REVIEW_SUPERSEDED.filter((s) => s.kind === "unvalued").map((s) => s.accountId));
+    const aifTaken = BOOK_ACCOUNTS.filter((a) => a.engagement === "AIF" && tookOver.has(a.accountId));
+    ok("no AIF folio is left valuing nothing — the review carries each one a statement did not value",
+      aifTaken.length > 0 && aifTaken.every((a) => BOOK_POSITIONS.some((p) => p.accountId === a.accountId && p.review)),
+      aifTaken.map((a) => a.accountId).join(", "));
+    // …AND THE RULE IS HELD ON A CONSTRUCTED FOLIO, so the list still names one
+    // the day a drop brings an angel fund nothing values: Sky Capital's own
+    // account as it stood before the review carried it.
+    const sky = BOOK_ACCOUNTS.find((a) => a.accountId === "sky-capital-rising-titans-fund-SKY022");
+    const built = sky ? unvaluedAifFolios(
+      [{ ...sky, noPositionsReason: "this fund publishes no NAV: its statement carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation" }],
+      new Set(), new Map(),
+    ) : [];
+    ok("a constructed folio publishing no NAV is named, under Category I, with its owner and account",
+      built.length === 1 && built[0].section === CATEGORY_I && !!built[0].owner && !!built[0].accountNo,
+      JSON.stringify(built[0] ?? null));
+    console.log("NOT CHECKED the unvalued list's sections and owners on this book: it leaves no AIF folio unvalued since Stage 10dh, so the constructed folio above holds the rule");
+  }
   const catI = un.filter((f) => f.section === CATEGORY_I);
   const drawnI = bySection.has(CATEGORY_I);
+  // THE CLAIM THE LIST EXISTS FOR, struck either way: Category I is on the page,
+  // drawn in the table or named under it — never silently absent.
+  ok("Category I is shown — drawn as a holding or named as an unvalued folio", drawnI || catI.length > 0,
+    `drawn: ${drawnI}, named: ${catI.length}`);
   if (catI.length > 0) {
     ok("Category I appears in the unvalued list where no holding carries it",
       !drawnI, `${catI.length} Category I folios, drawn in the table: ${drawnI}`);

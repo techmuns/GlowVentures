@@ -19,7 +19,7 @@
 import { commonValueDate, valueDateOf } from "@/lib/analytics";
 import { fmtDate } from "@/lib/format";
 
-export type ValuedBy = "live" | "nav" | "statement" | "mixed";
+export type ValuedBy = "live" | "nav" | "statement" | "review" | "mixed";
 
 export type ValuedRow = {
   accountId: string;
@@ -29,6 +29,14 @@ export type ValuedRow = {
   quoteAgeS?: number | null;
   /** The day the statement's prices are of, where it differs from its balances' (VD-17). */
   priceAsOf?: string | null;
+  /**
+   * A line the family's consolidated review values (Stage 10dh): its date is the
+   * review's closing for it, and no statement marks it — so the words must not
+   * call it a statement's mark.
+   */
+  review?: boolean;
+  /** …and a review line held at what was paid, with no valuation at all. */
+  valuedAtCost?: boolean;
 };
 
 export type HoldingValuation = {
@@ -44,7 +52,12 @@ export type HoldingValuation = {
   why: string;
 };
 
-const KIND = (r: ValuedRow): Exclude<ValuedBy, "mixed"> => (r.live ? "live" : r.navPriced ? "nav" : "statement");
+const KIND = (r: ValuedRow): Exclude<ValuedBy, "mixed"> =>
+  (r.live ? "live" : r.navPriced ? "nav" : r.review ? "review" : "statement");
+/** What each kind IS, for a sentence naming a mix of them. */
+const KIND_WORDS: Record<Exclude<ValuedBy, "mixed">, string> = {
+  live: "a live quote", nav: "AMFI's published NAV", statement: "a statement's own mark", review: "the family's consolidated review",
+};
 
 export function holdingValuation(
   rows: readonly ValuedRow[],
@@ -58,10 +71,15 @@ export function holdingValuation(
   const by: ValuedBy = kinds.length === 1 ? kinds[0] : "mixed";
   const dates = new Set(ds).size;
   const d = at ? fmtDate(at) : null;
+  // A review line held at cost is not VALUED on its date — the review records
+  // what was paid and no valuation — so the words say so rather than "valued".
+  const allAtCost = rows.every((r) => r.valuedAtCost === true);
+  const someAtCost = rows.some((r) => r.valuedAtCost === true);
   const words = d == null ? `valued on ${dates} dates`
     : by === "live" ? `live price · ${d}`
     : by === "nav" ? `AMFI NAV · ${d}`
     : by === "statement" ? `statement mark · ${d}`
+    : by === "review" ? (allAtCost ? `held at cost · review, ${d}` : `consolidated review · ${d}`)
     : `valued ${d}`;
   const kept = "Quantity, cost and realised gains stay exactly as the statements print them.";
   // A statement that PRICES its balances on another day says so: ICICI's NSDL
@@ -77,6 +95,9 @@ export function holdingValuation(
     : by === "live" ? `Marked to a live quote, ${d}. ${kept}`
     : by === "nav" ? `Valued at AMFI's published NAV of ${d} — newer than the statement's own mark; only the value moves. ${kept}`
     : by === "statement" ? `Valued at the statement's own mark, dated ${d} — that day's prices, not today's.${priced} No live quote or published NAV reaches this holding.`
-    : `Valued on ${d}, some rows by a live or published price and some by their statement's own mark.`;
+    : by === "review" ? (allAtCost
+      ? `Held at cost on the family's consolidated review (MOPWM), as of ${d}: the review records what was paid for this holding and no valuation, so its value is its cost and no gain is struck on it. No statement, live quote or published NAV values it.`
+      : `Valued by the family's consolidated review (MOPWM), as of ${d} — the review's own figure for this holding, a total with no price per unit${someAtCost ? "; the lines it records with no valuation are held at what was paid" : ""}. No statement, live quote or published NAV values it.`)
+    : `Valued on ${d}, by more than one source: ${kinds.map((k) => KIND_WORDS[k]).join(" and ")}.`;
   return { at, by, dates, words, why };
 }

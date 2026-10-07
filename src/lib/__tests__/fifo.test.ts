@@ -256,7 +256,7 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
   if (!a4) ok(`C2 ${id}: FIFO runs over the fund's own unit record`, false, run?.reason ?? "no switch or sale in the record");
   else {
     near(`C2 ${id}: FIFO over the unit record reproduces the carried cost`, a4.costHeld, p.costBasis ?? NaN, 1);
-    near(`C2 ${id}: …holds exactly the units the statement prints`, a4.unitsHeld, p.quantity, 0.0005);
+    near(`C2 ${id}: …holds exactly the units the statement prints`, a4.unitsHeld, p.quantity!, 0.0005);
     ok(`C2 ${id}: …and finds nothing sold`, a4.realised.length === 0 && run!.ledger!.shortfalls.length === 0);
   }
   // What the family paid in, plus any distribution the fund reinvested into
@@ -404,7 +404,7 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
     return hits.length === 1 ? hits[0] : l.securityKey;
   };
   const after = new Set(lots.filter((l) => asOf && l.saleDate > asOf).map(holdingOf));
-  const held = accountsOf(id).filter((p) => p.quantity > 0);
+  const held = accountsOf(id).filter((p) => (p.quantity ?? 0) > 0);
   if (!asOf || !after.size) skip("C5 LKP", "no capital gain lot dated after the holding statement");
   else {
     const flagged = held.filter((p) => (p.realizedLotsAfter ?? 0) > 0);

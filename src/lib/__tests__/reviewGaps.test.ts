@@ -233,7 +233,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   // module, so a module that stopped reading one of the three sources fails.
   const up = (x: string | null | undefined) => (x ?? "").trim().toUpperCase();
   const statementIsins = new Set([
-    ...BOOK_POSITIONS.filter((p) => p.quantity > 0).map((p) => up(p.isin)),
+    ...BOOK_POSITIONS.filter((p) => !p.review && (p.quantity ?? 0) > 0).map((p) => up(p.isin)),
     ...BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0).map((u) => up(u.isin)),
     ...Object.values(BOOK_SHARE_MOVEMENTS).filter((w) => w.reason == null).map((w) => up(w.isin)),
   ].filter(Boolean));
@@ -309,7 +309,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
         out.push({ isin, owner: ownerOf.get(w.accountId) ?? "", units, how: "the depository's own balance that day" });
     }
     for (const p of BOOK_POSITIONS)
-      if (isins.includes(up(p.isin)) && p.quantity > 0)
+      if (!p.review && isins.includes(up(p.isin)) && p.quantity !== null && p.quantity > 0)
         out.push({ isin: up(p.isin), owner: ownerOf.get(p.accountId) ?? "", units: p.quantity, how: "a holding statement's quantity" });
     for (const u of BOOK_UNVALUED_HOLDINGS)
       if (isins.includes(up(u.isin)) && (u.quantity ?? 0) > 0)
@@ -361,7 +361,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   for (const [name, isins] of REVIEW_LINE_ISINS) {
     const rows = live.filter((p) => isins.includes(up(p.isin)) && p.depositoryUnits?.kind === "no-rate");
     if (!rows.length) continue;
-    const unwitnessed = rows.filter((p) => !closings.some((c) => c.product === name && same(c.units, p.quantity)));
+    const unwitnessed = rows.filter((p) => !closings.some((c) => c.product === name && same(c.units, p.quantity ?? NaN)));
     ok(`${name}: the review closes each holder at the statement's own balance, unit for unit`,
       unwitnessed.length === 0, unwitnessed.map((p) => `${p.accountId} ${p.quantity}`).join("; "));
   }

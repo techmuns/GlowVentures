@@ -38,7 +38,7 @@ import { privateScope } from "@/lib/privateMarket";
 import { familyAssetClass } from "@/lib/familyTaxonomy";
 import { isMandateHeld } from "@/lib/analytics";
 import { engagementOf } from "@/lib/accounts";
-import { SEPARATE_INVESTMENTS } from "../../../shared/separateInvestments.mjs";
+import { SEPARATE_INVESTMENTS, sameAccount } from "../../../shared/separateInvestments.mjs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -111,7 +111,14 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
     const fam = familyEntries(p, acct);
     const pe = readsAsPrivateEquity(p, acct);
     const cat = readAifCategory(p, acct).category;
-    const want = fam.length ? fam[0].side
+    // A ROW THE BOOK TAKES FROM THE FAMILY'S REVIEW IS PRIVATE, FIRST (Stage
+    // 10dh): "for private market data … we will use the reconciliation sheet as
+    // the source" (5 Oct 2026). Every such line is a private-market line by the
+    // review's own tabs, whatever wrapper it is — so an AIF the statements never
+    // placed (Blue Ashva, AL Trust, Pivot Ventures …) is private because the
+    // review files it there, not because a category or a placing says so.
+    const want = p.review ? "private"
+      : fam.length ? fam[0].side
       : pe ? "private"
       : cat === CATEGORY_III ? "listed"
       : cat === CATEGORY_I || cat === CATEGORY_II ? "private"
@@ -126,9 +133,16 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
   ok("Unlisted and Structured Product are private whatever they print",
     deduped.filter((p) => p.assetClass === "Unlisted" || p.assetClass === "Structured Product")
       .every((p) => p.marketSide === "private"));
-  ok("company shares, funds, ETFs and cash are listed",
-    deduped.filter((p) => ["Equity", "Mutual Fund", "ETF", "Cash"].includes(p.assetClass))
+  ok("company shares, funds, ETFs and cash are listed — on a statement",
+    deduped.filter((p) => !p.review && ["Equity", "Mutual Fund", "ETF", "Cash"].includes(p.assetClass))
       .every((p) => p.marketSide === "listed"));
+  // …AND EVERY REVIEW LINE IS PRIVATE WHATEVER ITS CLASS — the private-credit
+  // line is a `Bond`, which on a statement would be listed.
+  const reviewRows = deduped.filter((p) => p.review);
+  ok("this book carries the review's private-market lines", reviewRows.length > 0, String(reviewRows.length));
+  ok("every review line is on the private side, whatever wrapper it is",
+    reviewRows.every((p) => p.marketSide === "private"),
+    reviewRows.filter((p) => p.marketSide !== "private").map((p) => `${p.security.slice(0, 30)}=${p.marketSide}`).join(", "));
 }
 
 // ── 3b. THE FAMILY'S OWN PLACING, FUND BY FUND ──────────────────────────────
@@ -259,8 +273,17 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
   // and a guard that moved the right AMOUNT of the wrong funds fails here.
   const aifListed = sum(deduped.filter((p) => p.assetClass === "AIF" && p.marketSide === "listed").map((p) => p.marketValue));
   const unplaced = sum(deduped.filter(isUnplacedSide).map((p) => p.marketValue));
-  near("what left the private side is exactly the AIFs placed listed plus the unplaced",
-    oldPrivate - nowPrivate, aifListed + unplaced);
+  // …LESS WHAT JOINED IT: a review line whose wrapper the old class rule would
+  // have called listed — the private-credit line, a `Bond` (Stage 10dh). Named
+  // and asserted on its own, so a rule that let a statement bond onto the
+  // private side cannot hide inside this term.
+  const joined = deduped.filter((p) => p.marketSide === "private"
+    && !["AIF", "Unlisted", "Structured Product"].includes(p.assetClass));
+  ok("what joined the private side outside the old classes is the review's own lines",
+    joined.length > 0 && joined.every((p) => p.review),
+    joined.map((p) => `${p.security.slice(0, 30)}${p.review ? "" : " (NOT a review line)"}`).join(", "));
+  near("what left the private side is exactly the AIFs placed listed plus the unplaced, less what the review added",
+    oldPrivate - nowPrivate, aifListed + unplaced - sum(joined.map((p) => p.marketValue)));
   // THE CATEGORY III BLOCK IS INSIDE IT, and so is what the family moved. Both
   // halves asserted, so neither rule can be dropped without this firing.
   const catIII = sum(deduped.filter((p) => p.assetClass === "AIF"
@@ -371,11 +394,20 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
   // page's whole double count until *"both are separate investments"* (28 Sep
   // 2026, `shared/separateInvestments.mjs`); now each is two holdings, so every
   // row of each is counted and nothing on the page is counted once.
+  // Struck on the rows IN THE NAMED ACCOUNTS: since Stage 10dh the review also
+  // carries Ankita's own 2,500 Transition Venture units under the same key, in
+  // her review account, which is a third holding and no part of the pair.
+  const inPair = (d: typeof SEPARATE_INVESTMENTS[number]) => (p: { securityKey: string; accountId: string }) => {
+    const a = idx.get(p.accountId);
+    return p.securityKey === d.securityKey && !!a
+      && d.accounts.some((n) => sameAccount(n, { provider: a.provider, accountNo: a.accountNo }));
+  };
   ok("both pairs the family confirmed separate are in the private scope, every statement of each counted",
     SEPARATE_INVESTMENTS.length > 0
-      && SEPARATE_INVESTMENTS.every((d) => scope.dedupedRows.filter((p) => p.securityKey === d.securityKey).length === d.accounts.length)
+      && SEPARATE_INVESTMENTS.every((d) => scope.dedupedRows.filter(inPair(d)).length === d.accounts.length)
       && scope.rows.length === scope.dedupedRows.length,
-    `${scope.rows.length} raw, ${scope.dedupedRows.length} counted`);
+    `${scope.rows.length} raw, ${scope.dedupedRows.length} counted · `
+      + SEPARATE_INVESTMENTS.map((d) => `${d.securityKey}: ${scope.dedupedRows.filter(inPair(d)).length} of ${d.accounts.length}`).join(", "));
 }
 
 // ── 8. `marketSides` LEAVES OUT A SIDE THE BOOK DOES NOT HAVE ───────────────

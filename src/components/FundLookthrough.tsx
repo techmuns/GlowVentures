@@ -379,9 +379,10 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
             title={holdingValue == null
               ? `A scheme discloses its portfolio monthly. ${UNVALUED_WHY}`
               : `A scheme discloses its portfolio monthly; the family's units are valued ${valuedBy === "nav" ? "at AMFI's published NAV"
-              : valuedBy === "live" ? "at a live quote" : valuedBy === "statement" ? "at their statement's own mark" : "on their own dates"}${valuedAt ? ` of ${fmtDate(valuedAt)}` : ""}. The two rarely coincide, so both are shown rather than one standing for the other — and the look-through column is the family's value on that date times the portfolio's weights.`}>
+              : valuedBy === "live" ? "at a live quote" : valuedBy === "statement" ? "at their statement's own mark"
+              : valuedBy === "review" ? "by the family's consolidated review" : "on their own dates"}${valuedAt ? ` of ${fmtDate(valuedAt)}` : ""}. The two rarely coincide, so both are shown rather than one standing for the other — and the look-through column is the family's value on that date times the portfolio's weights.`}>
             portfolio {p.holdingsAsOf ? fmtDate(p.holdingsAsOf) : DASH} · {holdingValue == null ? "your holding not valued" : <>your holding valued {valuedAt ? fmtDate(valuedAt)
-              : valuedDates && valuedDates > 1 ? `on ${valuedDates} dates` : fmtDate(asOfHolding)}{valuedBy === "nav" ? " (AMFI NAV)" : valuedBy === "live" ? " (live)" : valuedBy === "statement" ? " (statement)" : ""}</>}
+              : valuedDates && valuedDates > 1 ? `on ${valuedDates} dates` : fmtDate(asOfHolding)}{valuedBy === "nav" ? " (AMFI NAV)" : valuedBy === "live" ? " (live)" : valuedBy === "statement" ? " (statement)" : valuedBy === "review" ? " (review)" : ""}</>}
           </span>
         </Pill>
         {p.holdingsSource && (

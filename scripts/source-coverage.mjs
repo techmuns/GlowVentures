@@ -10,8 +10,12 @@
 //   read                  — one or more documents in `public/audit/`
 //   read-via-duplicate    — byte-identical to a file that was read; the pipeline
 //                           reads each md5 once, so its data IS in the archive
+//   read-by-build-book    — read straight from `source/` by `build-book`, for the
+//                           lines it is the book's source of: the family's
+//                           consolidated review, for every private-market line
+//                           since Stage 10dh. Still only a cross-check for the rest
 //   held-out-by-decision  — read perfectly and deliberately not a source (the
-//                           consolidated review, the family's investment register)
+//                           family's investment register)
 //   not-a-document        — a macOS `__MACOSX/._*` resource fork: a 212- or
 //                           477-byte AppleDouble stub with no `%PDF` header,
 //                           created by zipping on a Mac. There is nothing in it.
@@ -30,6 +34,7 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { listEntries, readEntry, isMacMetadata } from "./ingest/lib/unzip.mjs";
+import { REVIEW_WORKBOOK } from "./lib/reviewPrivateRead.mjs";
 
 // Run against the committed tree by default, from wherever it is invoked; the
 // three GLOW_* variables `extract.mjs` honours point it at a scratch run
@@ -153,7 +158,7 @@ for (const f of files) {
   byHash.get(h).push(f);
 }
 
-const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "held-out-by-decision", "not-a-document", "excluded-by-policy", "unread"];
+const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "read-by-build-book", "held-out-by-decision", "not-a-document", "excluded-by-policy", "unread"];
 const rows = [];
 for (const f of files) {
   let docs = bySource.get(f) ?? [];
@@ -162,10 +167,16 @@ for (const f of files) {
     if (alt) docs = bySource.get(alt) ?? [];
   }
   if (docs.length) {
+    // THE REVIEW IS THE BOOK'S PRIVATE-MARKET SOURCE (Stage 10dh). The archive
+    // still records it held out — it is no statement, and `extract.mjs` reads no
+    // fact from it — and `build-book` reads its private-market lines straight from
+    // this path. Named by the path the builder reads, never by a provider match,
+    // so a second copy of the workbook is not mistaken for the one it reads.
+    const reviewSource = f === REVIEW_WORKBOOK;
     const heldOut = docs.every((d) => (d.status === "failed")
       && /Family investment register|Consolidated family review/.test(d.provider ?? ""));
     const witness = docs.every((d) => d.twinOf);
-    rows.push({ f, cls: heldOut ? "held-out-by-decision" : witness ? "read-as-witness" : "read", docs,
+    rows.push({ f, cls: reviewSource ? "read-by-build-book" : heldOut ? "held-out-by-decision" : witness ? "read-as-witness" : "read", docs,
       note: witness ? `witness of ${docs.map((d) => d.twinOf).join(", ")}` : docs.map((d) => d.docKey).join(", ") });
     continue;
   }
@@ -195,6 +206,7 @@ say("| --- | ---: | --- |");
 say(`| Read | ${count("read")} | one or more documents in \`public/audit/\` |`);
 say(`| Read via a byte-identical twin | ${count("read-via-duplicate")} | the pipeline reads each md5 once; the data IS in the archive |`);
 if (count("read-as-witness")) say(`| Read as a witness | ${count("read-as-witness")} | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |`);
+say(`| Read by \`build-book\` | ${count("read-by-build-book")} | the family's consolidated review — the book's source for every private-market line |`);
 say(`| Held out by decision | ${count("held-out-by-decision")} | read perfectly and deliberately not a source |`);
 say(`| Not a document | ${count("not-a-document")} | macOS \`__MACOSX/._*\` resource forks — checked, not assumed |`);
 say(`| Excluded by policy | ${count("excluded-by-policy")} | the drop's own password notes |`);
@@ -211,11 +223,25 @@ if (unread.length) {
   say();
 }
 
+say("## Read by `build-book`");
+say();
+say("The family asked for the consolidated review (MOPWM, as on 30 June 2026) to be the source of");
+say("every private-market figure on the dashboard (Stage 10dh). `build-book` reads those lines");
+say("straight from the workbook (`scripts/lib/reviewBook.mjs`); every other figure in the book is");
+say("still the statements', and for those the review stays an independent cross-check.");
+say();
+say("| File | Where its data goes |");
+say("| --- | --- |");
+for (const r of rows.filter((x) => x.cls === "read-by-build-book")) {
+  say(`| \`${r.f}\` | the book's private-market lines; \`npm run reconcile:review\` cross-checks the rest |`);
+}
+say();
+
 say("## Held out by decision");
 say();
-say("Read perfectly, and deliberately not a source. No institution issued either, so folding them");
-say("in would end the guarantee that every figure traces to the statement of the institution that");
-say("struck it. Both are recorded in the archive with that reason — they are NOT missing readers.");
+say("Read perfectly, and deliberately not a source. No institution issued it, so folding it in");
+say("would end the guarantee that every figure traces to the statement of the institution that");
+say("struck it. It is recorded in the archive with that reason — it is NOT a missing reader.");
 say();
 say("| File | Where its data goes instead |");
 say("| --- | --- |");

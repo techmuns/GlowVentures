@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { Card } from "./Card";
 import { AbsentCell } from "./Absent";
-import { currentHoldings, dedupedPositions } from "@/lib/analytics";
+import { currentHoldings, dedupedPositions, isCounted } from "@/lib/analytics";
 import { positionActionKey } from "@/lib/corporateActions";
 import { fmtDate, fmtNum, fmtPct } from "@/lib/format";
 import { useTableView, sortRows } from "@/lib/tableView";
@@ -48,6 +48,9 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
     // EFPL, both under ₹1,000, as two of its 300). `currentHoldings` is the one
     // definition, applied to the consolidated set as the Monitor applies it.
     const positions = currentHoldings(dedupedPositions(statementPortfolio?.positions ?? []))
+      // A share with a unit count: an event's ratio multiplies the count, and a
+      // line recorded with none has no statement → adjusted pair to show.
+      .filter(isCounted)
       .filter((p) => p.assetClass === "Equity" && (!securityKey || p.securityKey === securityKey));
     const accounts = new Map(statementPortfolio?.accounts.map((a) => [a.accountId, a]));
     const items = positions.map((p) => ({ p, account: accounts.get(p.accountId), result: corporateActionReturns.get(positionActionKey(p)) }))

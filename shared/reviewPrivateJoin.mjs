@@ -1,15 +1,20 @@
 // Where each private-market line of the family's consolidated review sits in THIS
 // book's statements — a hand-checked table, never a name matcher.
 //
-// Each entry names the review line by a pattern the builder requires to match
-// EXACTLY ONE line, and the book's own securityKeys. A join is licensed by an
-// arithmetic WITNESS (the review's cost ÷ the statement's units is a clean price)
-// or by the company's own name on both documents; `why` says which. A line with
-// no entry is NAMED as on no statement in this drop — never guessed. A near miss
-// is refused and listed in REFUSED, with the reason.
+// Each entry names the review line by a pattern that must match EXACTLY ONE line,
+// and the book's own securityKeys. A join is licensed by an arithmetic WITNESS
+// (the review's cost ÷ the statement's units is a clean price) or by the company's
+// own name on both documents; `why` says which. A line with no entry is on no
+// statement in this drop — never guessed. A near miss is refused and listed in
+// REFUSED, with the reason.
 //
-// Nothing here moves a figure: the review's numbers stay the review's, the
-// book's stay the book's. It decides only what the "In the statements" column says.
+// Since Stage 10dh the review is the book's SOURCE for private-market lines, so
+// this table is load-bearing rather than a column on a page: `reviewBook.mjs`
+// reads it to name the line a superseded statement row was replaced by, and to
+// name the lines now listed on an exchange; and it REFUSES the build where the
+// holder table or the superseded list joins a line to a key REFUSED names —
+// joining one would put the review's line on a statement row that is not the same
+// holding, and take that row out of the book.
 
 export const REVIEW_PRIVATE_JOIN = [
   // ── Private investments, held at cost ──
@@ -24,6 +29,7 @@ export const REVIEW_PRIVATE_JOIN = [
   { line: /^Borosil Renewables$/, keys: ["borosil-renewables-limited-warrants-13ag26"], why: "₹3.75 Cr ÷ 2,83,018 warrants = ₹132.50, the 25% subscribed on a ₹530 warrant" },
   { line: /^BIG BANG BOOM$/, keys: ["big-bang-boom-solutions-private-limited-0-001-pref-12sp44"], why: "₹4.032 Cr ÷ 48 preference shares = ₹8,40,000 a share" },
   { line: /^RAY's$/, keys: ["rays-power-experts"], why: "₹2.006 Cr ÷ 59,000 shares = ₹340 a share" },
+  { line: /^Pivot Ventures/, keys: ["pvc-ii-class-a1"], why: "₹1.6 Cr ÷ 16,000 units = ₹1,000 a unit, the face value" },
   { line: /^The OAKS Consumer Fund I/, keys: ["tocf-i-class-a2"], why: "The OAKS Consumer Fund I — TOCF-I on the depository" },
   { line: /^SOTEFIN$/, keys: ["sotefin-bharat"], why: "the company's name on both" },
   { line: /^Zenith$/, keys: ["zenith-leisure-holidays"], why: "₹1 Cr ÷ 32,791 shares = ₹305 a share" },

@@ -636,7 +636,11 @@ export function SectorComposition() {
       exposure.fencedValue > 0 && `${money(exposure.fencedValue)} a fund discloses of the one holding the family keep out of every portfolio total`,
       arb > 0 && `${money(arb)} in the arbitrage funds the family counts as cash, which are not looked through`,
       cash > 0 && `${money(cash)} of the book's own cash`,
-      other > 0 && `${money(other)} of ${[...new Set(otherRows.map((x) => assetClassLabel(x.assetClass)))].join(", ")}, neither a share nor a fund`,
+      // Stage 10dh: these are the review's unlisted stakes and private credit.
+      // "Neither a share nor a fund" was true of a set the book carried none
+      // of, and false of an unlisted company's shares, so the part says what
+      // is true of every row in it: this page does not sort it by sector.
+      other > 0 && `${money(other)} of ${[...new Set(otherRows.map((x) => assetClassLabel(x.assetClass)))].join(" and ")} holdings, which this page does not sort by sector`,
       floor > 0 && `${money(floor)} in holdings under the ₹1,000 floor, which no table draws`,
       Math.abs(unnamed) >= 1 && `and ${money(unnamed)} that none of these names`,
     ].filter(Boolean) as string[];

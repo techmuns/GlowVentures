@@ -12,7 +12,7 @@
  */
 import { useMemo } from "react";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION } from "@/data/glowData";
+import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { buildDatedCapital, type DatedCapital } from "./datedCapital";
 import { currentHoldings } from "./analytics";
 import type { Position } from "./types";
@@ -23,6 +23,7 @@ export function useDatedCapital(): { dated: DatedCapital | null; universe: Posit
     moves: BOOK_CAPITAL_MOVES, commitments: BOOK_COMMITMENTS,
     accounts: statementPortfolio.accounts, positions: statementPortfolio.positions,
     tranches: BOOK_POSITION_TRANCHES, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
+    reviewFlows: BOOK_REVIEW_FLOWS,
   }) : null, [statementPortfolio]);
   const universe = useMemo(() => currentHoldings(portfolio?.positions ?? []), [portfolio?.positions]);
   return { dated, universe };

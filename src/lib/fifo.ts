@@ -55,7 +55,7 @@
  * contributes a realised of nothing measured, and is counted too.
  */
 import type { Account, Position } from "./types";
-import { costCoversSet, currentHoldings } from "./analytics";
+import { costCoversSet, currentHoldings, REVIEW_NO_REALISED } from "./analytics";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 export { fifoReturnPct };
@@ -99,6 +99,15 @@ export type FifoTotals = {
   /** Market value of the holdings that report no cost, and how many. */
   uncostedValue: number;
   uncosted: number;
+  /**
+   * HELD AT COST (Stage 10dh): the review lines whose value IS what was paid.
+   * Their cost is in `invested` — it is capital the family put in — and their
+   * value in `marketValue`; they are in no gain and no capital deployed, so a
+   * return over them is never a 0% blended in. Counted against coverage, like
+   * a holding with no cost: a set mostly at cost refuses its return.
+   */
+  atCostValue: number;
+  atCost: number;
   /** Holdings with no realised record, and how many carry one. */
   realisedCovered: number;
   holdings: number;
@@ -117,6 +126,8 @@ const accountOf = (idx: AccountIndex | undefined, id: string): Account | undefin
 
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const costed = (p: Position) => !p.costUnavailable && isNum(p.costBasis);
+/** A review line held at cost: a cost, and no valuation to strike a gain on (Stage 10dh). */
+const atCostLine = (p: Position) => p.valuedAtCost === true && costed(p);
 
 export type FifoOptions = {
   /** The accounts, for a mandate's capital. Without them nothing is struck whole. */
@@ -179,7 +190,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     }
   }
 
-  let marketValue = 0, uncostedValue = 0, uncosted = 0, realisedCovered = 0;
+  let marketValue = 0, uncostedValue = 0, uncosted = 0, realisedCovered = 0, atCostValue = 0, atCost = 0;
   let costHeld: number | null = null, unrealised: number | null = null;
   let realised: number | null = null, deployed: number | null = null, invested: number | null = null;
   let wholeCostHeld = 0, wholeContributed = 0, wholeWithdrawn = 0;
@@ -189,6 +200,18 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
   const mandateCost = new Map<string, number>();
   for (const p of set) {
     marketValue += p.marketValue;
+    /**
+     * A LINE HELD AT COST IS CAPITAL IN AND NOTHING ELSE. Its cost is what the
+     * family paid, so it is in `invested`; its value is that same cost, so a
+     * gain struck on it would be a 0% nobody measured. It enters neither the
+     * gain nor the capital deployed, and is counted against coverage below.
+     * No review line sits in a PMS mandate, so this never meets a whole one.
+     */
+    if (atCostLine(p) && !whole.has(p.accountId)) {
+      atCostValue += p.marketValue; atCost += 1;
+      invested = add(invested, p.costBasis as number);
+      continue;
+    }
     if (whole.has(p.accountId)) {
       mandateMV.set(p.accountId, (mandateMV.get(p.accountId) ?? 0) + p.marketValue);
       if (costed(p)) {
@@ -222,12 +245,12 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
   }
 
   const gain = unrealised === null && realised === null ? null : (unrealised ?? 0) + (realised ?? 0);
-  const covers = costCoversSet(marketValue, uncostedValue) || (marketValue === 0 && isNum(deployed) && deployed > 0);
+  const covers = costCoversSet(marketValue, uncostedValue + atCostValue) || (marketValue === 0 && isNum(deployed) && deployed > 0);
   const returnPct = covers && gain !== null && isNum(deployed) && deployed > 0 ? (gain / deployed) * 100 : null;
   return {
     marketValue, costHeld, unrealised, realised, deployed, invested, gain, returnPct,
     wholeCostHeld, wholeContributed, wholeWithdrawn,
-    uncostedValue, uncosted, realisedCovered, holdings: set.length, wholeMandates: [...whole].sort(),
+    uncostedValue, uncosted, atCostValue, atCost, realisedCovered, holdings: set.length, wholeMandates: [...whole].sort(),
   };
 }
 
@@ -249,8 +272,9 @@ export function fifoBasisNote(t: FifoTotals, money: (n: number) => string): stri
    * is here, and the lot clause is kept only for the holdings it describes.
    */
   if (n > 0 && Math.abs(t.deployed - t.wholeContributed) <= 1) {
-    return `Return on capital, not lot FIFO: (value ${money(t.marketValue)} + withdrawn ${money(t.wholeWithdrawn)} − paid in ${money(t.wholeContributed)}) ÷ paid in ${money(t.wholeContributed)}`
-      + ` · ${n === 1 ? "a whole mandate is" : `${n} whole mandates are`} struck on the capital since inception, so the gain carries every sale the manager made and the income less fees; its lots are not all on record`;
+    return `Return on capital, not lot FIFO: (value ${money(t.marketValue - t.atCostValue)} + withdrawn ${money(t.wholeWithdrawn)} − paid in ${money(t.wholeContributed)}) ÷ paid in ${money(t.wholeContributed)}`
+      + ` · ${n === 1 ? "a whole mandate is" : `${n} whole mandates are`} struck on the capital since inception, so the gain carries every sale the manager made and the income less fees; its lots are not all on record`
+      + (t.atCost > 0 ? ` · ${atCostNote(t, money)}` : "");
   }
   const parts = [`FIFO: (unrealised ${money(t.unrealised ?? 0)} + realised ${money(t.realised ?? 0)}) ÷ capital deployed ${money(t.deployed)}`];
   if (n) {
@@ -259,7 +283,18 @@ export function fifoBasisNote(t: FifoTotals, money: (n: number) => string): stri
   parts.push(n
     ? "for every other holding, capital deployed is the cost of the units still held plus the cost of the units already sold"
     : "capital deployed is the cost of the units still held plus the cost of the units already sold");
+  if (t.atCost > 0) parts.push(atCostNote(t, money));
   return parts.join(" · ");
+}
+
+/**
+ * The words for the lines a FIFO total leaves out because they are HELD AT
+ * COST (Stage 10dh): what they are worth, and why no gain is struck on them.
+ * Empty where the set holds none.
+ */
+export function atCostNote(t: Pick<FifoTotals, "atCost" | "atCostValue">, money: (n: number) => string): string {
+  if (!(t.atCost > 0)) return "";
+  return `${t.atCost === 1 ? "1 private investment" : `${t.atCost} private investments`} held at cost (${money(t.atCostValue)}) ${t.atCost === 1 ? "is" : "are"} in Invested and in the value, and in no gain: the family's consolidated review records what was paid and no valuation`;
 }
 
 /**
@@ -391,13 +426,17 @@ export function realisedBasisNote(
 }
 
 /** Why a holding's realised cell is empty, in the book's own terms. */
-export function realisedReason(p: Pick<Position, "realizedPnL" | "realizedLotsAfter">): string {
+export function realisedReason(p: Pick<Position, "realizedPnL" | "realizedLotsAfter"> & { review?: boolean }): string {
   if (p.realizedLotsAfter) {
     return `${p.realizedLotsAfter} sale(s) of this holding came after its statement's date, so those units are still in it at that statement's mark — the gain is on the capital gain statement and is not added here`;
   }
+  // A line the consolidated review supplies (Stage 10dh) is on no statement at
+  // all, so "no capital gain statement covers this account" would send a reader
+  // looking for one; the review is what carries it, and it records no sale.
+  if (p.review) return REVIEW_NO_REALISED;
   return "no capital gain statement or dated unit record covers this account, so what its sales realised is not reported";
 }
 
 /** Convenience for one holding: its own FIFO return, recomputed from its fields. */
 export const positionFifoReturn = (p: Position): number | null =>
-  costed(p) ? fifoReturnPct(p.marketValue, p.costBasis, p.realizedPnL, p.costOfUnitsSold) : null;
+  costed(p) && !atCostLine(p) ? fifoReturnPct(p.marketValue, p.costBasis, p.realizedPnL, p.costOfUnitsSold) : null;

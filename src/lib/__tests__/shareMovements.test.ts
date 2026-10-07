@@ -6,7 +6,7 @@
  * would prove only that two inventions agree with each other, and the whole
  * claim here is that the demat statements' own arithmetic reproduces itself.
  */
-import { BOOK_SHARE_MOVEMENTS, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_SHARE_MOVEMENTS, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_UNVALUED_HOLDINGS, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
 import type { ShareMovement } from "@/lib/types";
 import { movementIdentityHolds, movementNet } from "@/lib/shareMovements";
 import { securityKeyOf } from "@/lib/securityKey";
@@ -123,6 +123,21 @@ ok("...and every window that joins nothing closes at nil, sits on an account tha
     : `${nilClose.length} nil · ${rest.filter((m) => (m.closing ?? 0) !== 0 && txnOnly.has(m.accountId)).length} on a transaction-only account · ${rest.length - nilClose.length - rest.filter((m) => (m.closing ?? 0) !== 0 && txnOnly.has(m.accountId)).length} AIF copies`);
 ok("...and the nil closes are there — securities an account sold out of during the year, which is the point",
   nilClose.length > 0, `${nilClose.length} window(s)`);
+// A WINDOW THE REVIEW SUPERSEDES GOES WITH ITS LINE, AND IS NAMED (Stage 10dh).
+// A window is a line's quantity account; where the family's consolidated review
+// now stands for the line, its window leaves the movements with it — the Zepto
+// pair on Ajay's demat, and the Everest Fleet preference shares on Ankita's,
+// named by the ISIN its tape prints. Each is NAMED in BOOK_REVIEW_SUPERSEDED with
+// the depository's own spelling and the units it closed at, never dropped.
+const supWindows = BOOK_REVIEW_SUPERSEDED.filter((s) => s.kind === "window");
+ok("this book supersedes depository windows with the review's lines", supWindows.length > 0, `${supWindows.length} window(s)`);
+ok("...and none of them is still among the movements",
+  supWindows.every((s) => !all.some((m) => m.accountId === s.accountId && m.securityKey === s.securityKey)),
+  supWindows.filter((s) => all.some((m) => m.accountId === s.accountId && m.securityKey === s.securityKey)).map((s) => s.securityKey).join(", "));
+ok("...and each is named with the depository's own spelling and a review line",
+  supWindows.every((s) => !!s.securityKey && !!s.security && s.security !== s.reviewLine && !!s.reviewLine),
+  supWindows.filter((s) => !(s.securityKey && s.security && s.security !== s.reviewLine)).map((s) => `${s.accountId.slice(-16)} ${s.securityKey}`).join(", "));
+
 const knownAcct = new Set(BOOK_ACCOUNTS.map((a) => a.accountId));
 ok("every movement names an account in the registry",
   all.every((m) => knownAcct.has(m.accountId)));
