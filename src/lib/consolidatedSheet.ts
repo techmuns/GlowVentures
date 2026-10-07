@@ -80,10 +80,14 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   function register(name: keyof typeof template, records: RecordRow[], note?: string, links?: (r: RecordRow) => Record<string, ConsolidatedLink>) {
     return add(name, template[name], records, note, links);
   }
-  const entityLinks = (r: RecordRow) => ({ ent: { sheet: "Entities", find: String(r.ent) }, entname: { sheet: "Entities", find: String(r.entname) } });
+  const entityLinks = (r: RecordRow): Record<string, ConsolidatedLink> => ({
+    ...(r.ent ? { ent: { sheet: "Entities", where: { name: String(r.ent) } } } : {}),
+    ...(r.entname ? { entname: { sheet: "Entities", where: { name: String(r.entname) } } } : {}),
+  });
   const registerLinks = (r: RecordRow): Record<string, ConsolidatedLink> => ({ ...entityLinks(r),
-    acct: { sheet: "Accounts", find: String(r.acct) }, sec: { sheet: "Securities", find: String(r.sec) },
-    name: { sheet: "Securities", find: String(r.sec) }, fund: { sheet: "Holdings", find: String(r.sec ?? r.acct) },
+    ...(r.acct ? { acct: { sheet: "Accounts", where: { id: String(r.acct) } } } : {}),
+    ...(r.sec ? { sec: { sheet: "Securities", where: { id: String(r.sec) } }, name: { sheet: "Securities", where: { id: String(r.sec) } } } : {}),
+    ...(r.sec || r.acct ? { fund: { sheet: "Holdings", where: r.sec ? { sec: String(r.sec) } : { acct: String(r.acct) } } } : {}),
     src: r._source ? { file: String(r._source) } : { sheet: "Column Mapping" },
     notes: r._source ? { file: String(r._source) } : { sheet: "Column Mapping" },
   });
@@ -133,11 +137,11 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       type: owner?.kind ?? null, rel: null, pan: owner?.pans?.[0] ? mask(owner.pans[0]) : null, res: null,
       notes: "Source-verified owner registry; relationship and residency not inferred.", check: id === "unattributed" ? "Owner not resolved" : "OK" };
   });
-  register("Entities", entities, defaultNote, r => ({ name: { sheet: "Accounts", find: String(r.id) } }));
+  register("Entities", entities, defaultNote, r => ({ name: { sheet: "Accounts", where: { ent: String(r.id) } } }));
   register("Accounts", accounts.map(a => ({ id: a.accountId, ent: a.ownerId ?? "unattributed", entname: ownerDisplayName(a.ownerId),
     type: a.reviewHolder ? "Review holder" : a.engagement, provider: a.custodian ?? a.provider, adv: a.provider, strategy: a.strategy,
     acno: mask(a.accountNo), asof: a.asOf, ccy: "INR", notes: a.noPositionsReason ?? null, check: a.engagement === "unknown" ? "Engagement not stated" : "OK" })),
-    defaultNote, r => ({ ...entityLinks(r), id: { sheet: "Holdings", find: String(r.id) }, ent: { sheet: "Entities", find: String(r.ent) } }));
+    defaultNote, r => ({ ...entityLinks(r), id: { sheet: "Holdings", where: { acct: String(r.id) } }, ent: { sheet: "Entities", where: { id: String(r.ent) } } }));
   const allSecurities = new Map<string, { name: string; isin: string | null }>();
   for (const p of positions) allSecurities.set(p.securityKey, { name: p.security, isin: p.isin ?? null });
   for (const u of BOOK_UNVALUED_HOLDINGS) if (!allSecurities.has(u.securityKey)) allSecurities.set(u.securityKey, { name: u.security, isin: u.isin });
@@ -157,7 +161,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       basis: one(ps.map(p => p.valuedAtCost ? "At cost" : p.review ? "Review value" : "Statement value")),
       price: one(ps.map(p => p.currentPrice)), pdate: one(ps.map(p => p.priceAsOf ?? accountById.get(p.accountId)?.asOf ?? null)),
       gf: fmvs.length === 1 ? fmvs[0] : null, notes: "Account-specific marks and classifications remain on Holdings. FMV is retained only where source lots agree; benchmark returns are not supplied.", check: p ? "OK" : "No valued position" };
-  }), defaultNote, r => ({ id: { sheet: "Holdings", find: String(r.id) }, name: { sheet: "Holdings", find: String(r.id) } }));
+  }), defaultNote, r => ({ id: { sheet: "Holdings", where: { sec: String(r.id) } }, name: { sheet: "Holdings", where: { sec: String(r.id) } } }));
 
   const lots: RecordRow[] = realised.lots.map((l, i) => {
     const a = sourceAccount(l.source), c = a && l.assetClass ? classify({ accountId: a.accountId, securityKey: l.securityKey, assetClass: l.assetClass as Position["assetClass"] }) : null;
@@ -307,7 +311,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     pct("return", "Return (%)"), pct("breturn", "Benchmark return (%)"), pct("alpha", "Alpha (% points)"), col("bench", "Benchmark")],
     counted.map(h => ({ ...h, cost: h.cost == null ? null : (h.cost as number) / 1e7, mv: (h.mv as number) / 1e7, ugain: h.ugain == null ? null : (h.ugain as number) / 1e7,
       weight: ratio(h.mv as number, sum(counted.filter(r => r.basket === h.basket).map(r => r.mv as number))), return: h.xirr ?? h.absret })), overviewNote,
-    r => ({ name: { sheet: "Holdings", find: String(r.hid) }, ent: { sheet: "Entities", find: String(r.ent) } }));
+    r => ({ name: { sheet: "Holdings", where: { hid: String(r.hid) } }, ent: { sheet: "Entities", where: { name: String(r.ent) } } }));
   const investorColumns = [col("category", "Category"), ...entities.flatMap(e => [money(`${e.id}:value`, `${e.name} — Value`), pct(`${e.id}:weight`, `${e.name} — Allocation`)]), money("family", "Family")];
   add("Investor Summary", investorColumns, groups.map(g => ({ category: g.label, family: g.ps.reduce((s, p) => s + p.marketValue, 0) / 1e7, _kind: g.kind ?? null, _ac: g.ps[0] ? classify(g.ps[0]).ac : null,
     ...Object.fromEntries(entities.flatMap(e => {
@@ -321,9 +325,11 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   add("Period Change", [col("category", "Category"), money("opening", "Value on previous date"), money("invested", "Invested"), money("redeemed", "Redeemed / distributed"),
     money("marketGain", "Gain in value (market)"), money("closing", "Value on current date"), money("income", "Dividend / interest received (gross)"), money("fees", "Fees paid from outside"),
     money("netGain", "Net gain"), pct("return", "Return for the period (%)"), col("count", "Transactions in the period", "#,##0"), col("notes", "Missing inputs", "", 55)],
-    groups.map(g => ({ category: g.label, closing: g.ps.reduce((s, p) => s + p.marketValue, 0) / 1e7, _kind: g.kind ?? null,
+    groups.map(g => ({ category: g.label, closing: g.ps.reduce((s, p) => s + p.marketValue, 0) / 1e7, _kind: g.kind ?? null, _ac: g.ps[0] ? classify(g.ps[0]).ac : null,
       notes: "No complete common previous-date holding snapshot and matching cash-flow window. Period gain and return withheld." })),
-    "Figures in ₹ Crore. Current account marks span multiple dates; a partial earlier panel is not a whole-family opening value.", r => ({ category: { sheet: "Transactions", find: r.category === "Total" ? undefined : String(r.category) } }));
+    "Figures in ₹ Crore. Current account marks span multiple dates; a partial earlier panel is not a whole-family opening value.",
+    (r): Record<string, ConsolidatedLink> => ({ category: { sheet: "Transactions", where: r.category === "Total" ? undefined
+      : r._kind === "group" ? { ac: String(r.category) } : { ac: String(r._ac), cat: String(r.category) } } }));
   add("Tax Summary", [col("taxpayer", "Taxpayer"), col("lots", "Lots on file", "#,##0"), money("rst", "Realised — book profit: Short term"), money("rlt", "Realised — book profit: Long term"),
     money("tst", "Realised — taxable gain: Short term"), money("tlt", "Realised — taxable gain: Long term"), money("ust", "Unrealised — book profit: Short term"), money("ult", "Unrealised — book profit: Long term"),
     money("utst", "Unrealised — taxable gain: Short term"), money("utlt", "Unrealised — taxable gain: Long term"), money("div", "Dividend on lots (DPS × closing qty)"),
@@ -333,7 +339,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       return { taxpayer: e.name, lots: ls.length, rst: amount("_st"), rlt: amount("_lt"), tst: amount("_tst"), tlt: amount("_tlt"),
         notes: `${ls.filter(l => l.rbook != null).length} realised lots; ${ls.filter(l => l.rtax != null).length} with tax-effective figures. Current tax-lot coverage is incomplete.`, _kind: e.name === "Total" ? "total" : null };
     }), "Figures in ₹ Crore; every financial year on file. Book gains retain source short/long splits. Taxable columns cover only statements reporting tax-effective figures. A complete current tax-lot schedule is unavailable.",
-    r => ({ taxpayer: { sheet: "Tax Lots", find: r.taxpayer === "Total" ? undefined : String(r.taxpayer) } }));
+    r => ({ taxpayer: { sheet: "Tax Lots", where: r.taxpayer === "Total" ? undefined : { ent: String(r.taxpayer) } } }));
 
   const delta = (tabs.get("Portfolio Allocation")!.rows.at(-1)!.values[3] as number) * 1e7 - totalValue;
   add("Checks", [col("check", "Check"), col("result", "Result"), col("detail", "Details", "", 70)], [

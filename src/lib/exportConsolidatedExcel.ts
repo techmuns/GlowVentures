@@ -7,6 +7,7 @@ export function consolidatedExcelTarget(book: ConsolidatedBook, link: Consolidat
   if (!tab) return null;
   const match = link.find || link.where ? tab.rows.findIndex(r => (!link.find || r.values.some(v => String(v ?? "") === link.find))
     && Object.entries(link.where ?? {}).every(([key, v]) => r.values[tab.columns.findIndex(c => c.key === key)] === v)) : -1;
+  if ((link.find || link.where) && match < 0 && link.row == null) return null;
   const row = link.row ?? (match >= 0 ? match + 6 : 5);
   return `#'${tab.name.replace(/'/g, "''")}'!A${row}`;
 }

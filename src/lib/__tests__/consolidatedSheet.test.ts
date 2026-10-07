@@ -41,6 +41,11 @@ const debtAifTarget = consolidatedExcelTarget(book, scopedAif.links!.category)!;
 const targetRow = Number(/A(\d+)$/.exec(debtAifTarget)![1]) - 6;
 assert.equal(value("Holdings", targetRow, "ac"), "Debt");
 assert.equal(value("Holdings", targetRow, "cat"), "AIF");
+const firstHolding = sheet("Holdings").rows[0];
+assert.deepEqual(firstHolding.links!.acct.where, { id: value("Holdings", 0, "acct") });
+assert.deepEqual(firstHolding.links!.ent.where, { name: value("Holdings", 0, "ent") });
+const entityTarget = consolidatedExcelTarget(book, firstHolding.links!.ent)!;
+assert.equal(value("Entities", Number(/A(\d+)$/.exec(entityTarget)![1]) - 6, "name"), value("Holdings", 0, "ent"));
 assert.ok(!JSON.stringify(book).match(/#REF!|#DIV\/0!|NaN|Infinity/));
 for (const t of book.tabs) for (const r of t.rows) for (const link of Object.values(r.links ?? {})) {
   if (link.sheet) assert.ok(sheet(link.sheet), `missing linked subtab ${link.sheet}`);
@@ -75,6 +80,7 @@ near(pa.getCell(sheet("Portfolio Allocation").rows.length + 5, 4).value as numbe
 assert.equal(pa.getCell(6, 4).numFmt, "#,##0.00");
 assert.match((pa.getCell(6, 1).value as ExcelJS.CellHyperlinkValue).hyperlink, /^#'Holdings'!A\d+$/);
 assert.equal(consolidatedExcelTarget(book, { sheet: "Accounts", find: BOOK_ACCOUNTS[0].accountId }), "#'Accounts'!A6");
+assert.equal(consolidatedExcelTarget(book, { sheet: "Accounts", where: { id: "unreported-account" } }), null, "a missing target is not redirected to an unrelated row");
 const hs = reopened.getWorksheet("Holdings")!;
 const dateCol = sheet("Holdings").columns.findIndex(c => c.key === "stmt") + 1;
 assert.ok(hs.getCell(6, dateCol).value instanceof Date, "Excel dates remain typed dates");
