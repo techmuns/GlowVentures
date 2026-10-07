@@ -30,9 +30,13 @@
  *      written: 40 symbols carry a book ISIN and all 40 agree.)
  *   4. A SYMBOL WITH NO EXACT MATCH IS JOINED ON THE BOOK'S OWN ISIN, IF IT HAS
  *      ONE — an identifier, not a name: a renamed ticker keeps its ISIN. There is
- *      no fuzzy tier. HEG (renamed HEG Advanced Material, now HEGAM) is the case
- *      that stays unmapped, because the book carries no ISIN for it; it is named
- *      in the report, and `/api/quotes` falls back to the muns feed for it.
+ *      no fuzzy tier. HEG (renamed HEG Advanced Material, now HEGAM) was the
+ *      case that stayed unmapped, because the book carries no ISIN for it. It
+ *      maps since Stage 10di, and not through this rule: `build-nse-symbols`
+ *      carries a cited `heg → HEGAM` override, `build-book` puts HEGAM on the
+ *      position, and rule 1 then matches it exactly. A symbol that still has no
+ *      match is named in the report, and `/api/quotes` falls back to the muns
+ *      feed for it.
  *
  * WHAT IT WRITES IS A MAP, NOT A PRICE. `shared/upstoxInstruments.mjs` is
  * imported by `functions/api/quotes.js`; it carries no figure and never enters
