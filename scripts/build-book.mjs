@@ -2558,7 +2558,18 @@ function build(archived) {
         : value === null && heldRows.some((h) => isNum(h.lastMovementRate) && h.lastMovementRate > 0)
           ? `its statement prints ${heldRows.length} holding(s) as quantities, with the price of each one's last depository movement rather than a valuation, so it states no value`
           : null;
-      excludedAccounts.push({ accountId, provider, accountNo, owner: group.map((d) => d.owner).find(Boolean) ?? null, value, valueWhy, reason: excluded });
+      /**
+       * WHICH KIND OF EXCLUSION THIS IS, because the report's own prose cannot
+       * be true of both. An account held by another taxpayer belongs to somebody
+       * else and ENTERS THE BOOK with one entry in `shared/owners.mjs`; the
+       * family's own savings account belongs to them, is excluded for what it IS
+       * rather than for whose it is, and no owner entry would ever bring it in —
+       * that is their decision about what Cash means, taken against the balance
+       * in the bank-account section below. Said of every row at once, each
+       * sentence is false of half the table.
+       */
+      const kind = bankDocs.length ? "own-bank-account" : "other-holder";
+      excludedAccounts.push({ accountId, provider, accountNo, owner: group.map((d) => d.owner).find(Boolean) ?? null, value, valueWhy, reason: excluded, kind });
       notes.push(`account ${accountNo} (${provider}) is NOT in the book: ${excluded}`
         + (value !== null ? ` Value on its own statement: ${value.toLocaleString("en-IN")}.` : "")
         + (valueWhy ? ` Value: none stated — ${valueWhy}.` : ""));
@@ -2599,6 +2610,7 @@ function build(archived) {
         owner: group.map((d) => d.owner).find(Boolean) ?? null,
         value: group.map((d) => d.totals?.totalMarketValue).find(isNum) ?? null,
         reason,
+        kind: "unresolved-holder",
       });
       notes.push(`account ${accountNo} (${provider}) is NOT in the book: ${reason}. `
         + "It is excluded rather than carried with an empty owner, because an account attributed to nobody is a worse figure than a named absence.");
@@ -4753,11 +4765,41 @@ function report(book) {
   if (!book.excludedAccounts?.length) {
     L.push("_None — every account this pipeline could read belongs to a canonical owner._");
   } else {
-    L.push("These statements were read COMPLETELY. They are absent from every total above");
-    L.push("because they belong to somebody else, and that is a different thing from a");
+    /**
+     * THE INTRO SAYS ONLY WHAT IS TRUE OF EVERY ROW, and the rest is said per
+     * kind. It read "they belong to somebody else" and "each one becomes part of
+     * the book with a single entry in `shared/owners.mjs`" — both true of a
+     * folio held by another taxpayer and both FALSE of the family's own savings
+     * account, which is in this table for what it IS rather than for whose it
+     * is. A sentence that is false of half the rows it covers is the caption
+     * failure this book keeps paying for, arriving in a report.
+     */
+    const kindsOf = (k) => book.excludedAccounts.filter((a) => (a.kind ?? "other-holder") === k);
+    const others = [...kindsOf("other-holder"), ...kindsOf("unresolved-holder")];
+    const ownBank = kindsOf("own-bank-account");
+    L.push("These statements were read COMPLETELY, and that is a different thing from a");
     L.push("document the pipeline could not open — the coverage table in");
-    L.push("`docs/EXTRACTION-REPORT.md` has those. Each one becomes part of the book with a");
-    L.push("single entry in `shared/owners.mjs`, if the family says it should be.");
+    L.push("`docs/EXTRACTION-REPORT.md` has those. Each is absent from every total above for");
+    L.push("the reason its own row states.");
+    if (others.length) {
+      const one = others.length === 1;
+      L.push("");
+      L.push(`**${others.length} of them ${one ? "belongs" : "belong"} to somebody else** — another taxpayer's folio, or an`);
+      L.push("account no statement in the drop resolves to a canonical owner. Each becomes part");
+      L.push("of the book with a single entry in `shared/owners.mjs`, if the family says it");
+      L.push("should be.");
+    }
+    if (ownBank.length) {
+      const one = ownBank.length === 1;
+      L.push("");
+      L.push(`**${ownBank.length} of them ${one ? "is the family's OWN bank account" : "are the family's OWN bank accounts"}**, `
+        + `excluded for what ${one ? "it is" : "they are"}`);
+      L.push(`rather than for whose ${one ? "it is" : "they are"}: a savings account holds no investment, so it has no`);
+      L.push(`market value to sum, and no owner entry would ever bring one in. Whether ${one ? "its" : "their"}`);
+      L.push(`${one ? "closing balance" : "closing balances"} should count as Cash is the family's decision and is open — see`);
+      L.push("the bank-account section below, which carries the four figures each statement");
+      L.push("prints.");
+    }
     L.push("");
     L.push("| Account | Provider | Holder | Value on its own statement | Why it is out |");
     L.push("| --- | --- | --- | ---: | --- |");

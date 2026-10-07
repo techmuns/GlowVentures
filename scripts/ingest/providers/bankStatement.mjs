@@ -211,12 +211,46 @@ export function joinNarration(chunks, { wrap = "fixed-width", left = null } = {}
     const text = p.text.replace(/\s+/g, " ").trim();
     if (i === 0) { out = text; continue; }
     if (wrap === "pixel") out += /-$/.test(out) ? text : ` ${text}`;
-    else out += p.x - edge > INDENT ? ` ${text}` : text;
+    else out += startsWord(p.x, edge) ? ` ${text}` : text;
   }
   return out.trim();
 }
 /** Half a character at the size these statements print narration at. */
 const INDENT = 1.2;
+
+/**
+ * DOES THIS CHUNK BEGIN A WORD, or continue the one above it?
+ *
+ * Flush with the narration column's own left edge it continues; indented from
+ * that edge it began with a space the grid trimmed away. ONE function, because
+ * two places ask the same question — the join between a row's own chunks, and
+ * the join of a CONTINUATION ROW onto the row above it — and the second was
+ * asking it of nothing. `joinNarration` makes no decision about its own first
+ * chunk, there being nothing before it to join to, so appending its answer with
+ * `+=` lost the space on every continuation whose first chunk was indented:
+ * `… THIRD PARTY …` came back as `… THIRDPARTY …`, a narration reading as one
+ * word where the statement printed two.
+ */
+export const startsWord = (x, left) => (x ?? 0) - (left ?? 0) > INDENT;
+
+/**
+ * The x of the first chunk that carries text — the one whose own offset answers
+ * the question above. In document order, which is the order `joinNarration`
+ * joins them in.
+ */
+export function leadX(chunks) {
+  for (const c of chunks ?? []) if (String(c.text ?? "").trim()) return c.x ?? 0;
+  return null;
+}
+
+/**
+ * THE THREE COLUMNS THAT MAKE A ROW A MOVEMENT RATHER THAN A WRAP.
+ *
+ * A dateless row carrying one of these is a parse failure; a dateless row
+ * carrying none is the rest of the narration above it. See the `!date` branch of
+ * either reader for why the test is on these three and not on every cell.
+ */
+const AMOUNT_FIELDS = ["withdrawal", "deposit", "balance"];
 
 // ── The gate ─────────────────────────────────────────────────────────────────
 
@@ -237,10 +271,29 @@ export function tieOut(rows, printed, opts = {}) {
   const failures = [];
   const notApplicable = [];
   const passed = [];
-  const { openingDerived = false, serials = false } = opts;
+  const { openingDerived = false, serials = false, orphans = [] } = opts;
   const note = (name, ok, detail) => (ok ? passed.push(name) : failures.push(`${name}: ${detail}`));
 
-  if (!rows.length) return { ok: false, failures: ["rows: the table located no dated row"], notApplicable, passed };
+  // 0. EVERY ROW CARRYING AN AMOUNT CARRIES A DATE.
+  //
+  // The reader hands over the rows it could not read as movements: dateless, and
+  // with a withdrawal, a deposit or a balance in them. NONE OF THE CHECKS BELOW
+  // CAN SEE ONE. A row lost from the end of an ICICI tape leaves an opening
+  // derived from the first row the reader kept, a closing copied from the last
+  // and serials that still run 1..N — a tape that reconciles with itself and is
+  // short. So it is named here, where every other all-or-nothing refusal is,
+  // and the failure carries the row's own cells so the next reader can see what
+  // it was.
+  if (orphans.length) {
+    failures.push(`every row with an amount carries a date: ${orphans.length} row(s) carry an amount `
+      + "and no readable date — "
+      + orphans.map((o) => `[${(o.carried ?? []).join(", ")}] in [${(o.cells ?? []).join(" | ")}]`).join("; "));
+  } else passed.push("every row with an amount carries a date");
+
+  if (!rows.length) {
+    failures.push("rows: the table located no dated row");
+    return { ok: false, failures, notApplicable, passed };
+  }
 
   // 1. EXACTLY ONE SIDE PER ROW. A row with neither is not a movement and a row
   //    with two is a misread column, and both would leave the running balance to
@@ -307,7 +360,17 @@ export function tieOut(rows, printed, opts = {}) {
     `last row ${inr(last.balance)} against a printed ${inr(printed.closing)}`);
 
   // 6. ICICI's serial, 1..N with no gap — a dropped row is a hole in a sequence.
-  if (serials) {
+  //
+  //    `serials` is whether the LAYOUT MATCHED A SERIAL COLUMN, and not whether
+  //    every cell in it parsed. Gated on the cells, one unreadable serial turned
+  //    the check off — on exactly the document that needed it, since a serial
+  //    that does not parse is a column the reader lost its grip on. A matched
+  //    column with a null or out-of-order serial FAILS below; an unmatched one
+  //    is not applicable, which is this function's own third outcome and belongs
+  //    in the summary sheet rather than in silence.
+  if (!serials) {
+    notApplicable.push("serial numbers: the statement's layout prints no serial column");
+  } else {
     const got = rows.map((r) => r.serial);
     const bad = got.findIndex((s, i) => s !== i + 1);
     note("serial numbers run 1..N", bad < 0,
@@ -397,15 +460,34 @@ function readSummaryByCentre(pages, labels) {
         .map((it) => ({ centre: (it.x ?? 0) + (it.width ?? 0) / 2, text: clean(it.text) }))
         .filter((v) => parseNumInfo(v.text).status === "ok");
       if (!values.length) continue;
+      /**
+       * ONE PRINTED VALUE IS ONE FIGURE, AND IT BELONGS TO ONE LABEL.
+       *
+       * Nearest-centre per label, decided independently, lets TWO labels take
+       * the SAME value: a block printing six labels and five values binds the
+       * nearest one twice, and the archive then carries one printed figure as
+       * two printed primitives. That is not merely untidy — a duplicate of the
+       * right size can satisfy the check it was never printed for, which is the
+       * one thing this reader's gate exists to make impossible.
+       *
+       * So every (label, value) pair is scored, sorted by distance and assigned
+       * GREEDILY, CONSUMING each value; a label left with nothing is absent from
+       * `out` and its figure reads as not printed, which is what it is. The
+       * tie-break is by key and then by position so the assignment is
+       * deterministic rather than dependent on object order.
+       */
+      const pairs = [];
       for (const [key, label] of found) {
         if (key in out) continue;
         const centre = (label.x ?? 0) + (label.width ?? 0) / 2;
-        let best = null, dist = Infinity;
-        for (const v of values) {
-          const d = Math.abs(v.centre - centre);
-          if (d < dist) { dist = d; best = v; }
-        }
-        if (best) out[key] = best.text;
+        for (const [vi, v] of values.entries()) pairs.push({ key, vi, d: Math.abs(v.centre - centre) });
+      }
+      pairs.sort((a, b) => a.d - b.d || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0) || a.vi - b.vi);
+      const taken = new Set();
+      for (const p of pairs) {
+        if (p.key in out || taken.has(p.vi)) continue;
+        out[p.key] = values[p.vi].text;
+        taken.add(p.vi);
       }
     }
   }
@@ -450,6 +532,7 @@ function readPeriod(pages) {
 
 function readHdfc(pages, warnings) {
   const rows = [];
+  const orphans = [];
   let missing = null;
 
   for (const page of pages) {
@@ -491,9 +574,27 @@ function readHdfc(pages, warnings) {
       if (!date) {
         // A CONTINUATION LINE: no date, narration only, and it can cross a page
         // break. It is the rest of the row above it, never a row of its own.
+        //
+        // UNLESS IT CARRIES MONEY. A dateless row with a withdrawal, a deposit
+        // or a balance in it is a MOVEMENT whose date the reader failed to read,
+        // and the test is on those three columns rather than on every cell: a
+        // continuation legitimately carries a figure inside its narration (a
+        // cheque number, an IFSC, a UTR), and refusing on any parseable cell
+        // would refuse a tape over a reference number. Collected and handed to
+        // the gate, which refuses the whole document and prints the row's own
+        // cells — never appended to the row above, where its amount would be
+        // silently lost and the running balance would still tie.
+        const carried = AMOUNT_FIELDS
+          .map((f) => [f, cellOf(f)])
+          .filter(([, t]) => parseNumInfo(t).status === "ok");
+        if (carried.length) {
+          orphans.push({ cells: rowText(row), carried: carried.map(([f, t]) => `${f} ${t}`) });
+          continue;
+        }
         const prev = rows[rows.length - 1];
-        if (prev && narration && !row.cells.some((c) => parseNumInfo(c.text).status === "ok")) {
-          prev.narration += narration;
+        if (prev && narration) {
+          const lead = leadX(chunks);
+          prev.narration += (lead !== null && startsWord(lead, left) ? " " : "") + narration;
           prev.chunkLines += 1;
         }
         continue;
@@ -521,6 +622,7 @@ function readHdfc(pages, warnings) {
   };
   return {
     rows,
+    orphans,
     printed: {
       opening: paise(s.opening ?? null),
       debits: paise(s.debits ?? null),
@@ -540,6 +642,9 @@ function readHdfc(pages, warnings) {
 
 function readIcici(pages, warnings) {
   const rows = [];
+  const orphans = [];
+  // Whether the LAYOUT matched a serial column on any page — see check 6.
+  let serialSeen = false;
   let missing = null;
 
   for (const page of pages) {
@@ -547,6 +652,7 @@ function readIcici(pages, warnings) {
     if (!table) continue;
     if (!["date", "narration", "withdrawal", "deposit", "balance"].every((f) => f in table.columns)) continue;
     missing ??= table.missing;
+    serialSeen ||= "serial" in table.columns;
 
     const narrationCol = table.columns.narration;
     const start = table.bodyFrom ?? table.headerRows ?? 1;
@@ -565,8 +671,18 @@ function readIcici(pages, warnings) {
       const narration = joinNarration(chunks, { wrap: "pixel" });
 
       if (!date) {
+        // As HDFC's branch above, and for the same reason: money with no date is
+        // a movement the reader lost, and it goes to the gate rather than onto
+        // the narration of the row before it.
+        const carried = AMOUNT_FIELDS
+          .map((f) => [f, cellOf(f)])
+          .filter(([, t]) => parseNumInfo(t).status === "ok");
+        if (carried.length) {
+          orphans.push({ cells: rowText(row), carried: carried.map(([f, t]) => `${f} ${t}`) });
+          continue;
+        }
         const prev = rows[rows.length - 1];
-        if (prev && narration && !row.cells.some((c) => parseNumInfo(c.text).status === "ok")) {
+        if (prev && narration) {
           prev.narration += /-$/.test(prev.narration) ? narration : ` ${narration}`;
           prev.chunkLines += 1;
         }
@@ -611,6 +727,7 @@ function readIcici(pages, warnings) {
   const last = [...rows].reverse().find((r) => r.balance !== null) ?? null;
   return {
     rows,
+    orphans,
     printed: {
       opening,
       debits: null,
@@ -624,7 +741,7 @@ function readIcici(pages, warnings) {
       crCount: null,
     },
     openingDerived: true,
-    serials: rows.length > 0 && rows.every((r) => r.serial !== null),
+    serials: serialSeen && rows.length > 0,
     accountNo: readAccountNo(pages),
     period: readPeriod(pages),
   };
@@ -713,7 +830,8 @@ export function extract({ grid, meta = {} }) {
   }
 
   const read = layout === HDFC ? readHdfc(pages, warnings) : readIcici(pages, warnings);
-  const gate = tieOut(read.rows, read.printed, { openingDerived: read.openingDerived, serials: read.serials });
+  const gate = tieOut(read.rows, read.printed,
+    { openingDerived: read.openingDerived, serials: read.serials, orphans: read.orphans });
 
   const accountNo = read.accountNo ?? meta.accountNo ?? null;
   if (!read.accountNo) warn(warnings, "account-number-from-classifier",

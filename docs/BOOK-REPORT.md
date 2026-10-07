@@ -103,11 +103,15 @@ twice looks. The family has said each is a separate investment, so every figure 
 
 ## Read, and deliberately NOT in the book
 
-These statements were read COMPLETELY. They are absent from every total above
-because they belong to somebody else, and that is a different thing from a
+These statements were read COMPLETELY, and that is a different thing from a
 document the pipeline could not open — the coverage table in
-`docs/EXTRACTION-REPORT.md` has those. Each one becomes part of the book with a
-single entry in `shared/owners.mjs`, if the family says it should be.
+`docs/EXTRACTION-REPORT.md` has those. Each is absent from every total above for
+the reason its own row states.
+
+**4 of them belong to somebody else** — another taxpayer's folio, or an
+account no statement in the drop resolves to a canonical owner. Each becomes part
+of the book with a single entry in `shared/owners.mjs`, if the family says it
+should be.
 
 | Account | Provider | Holder | Value on its own statement | Why it is out |
 | --- | --- | --- | ---: | --- |

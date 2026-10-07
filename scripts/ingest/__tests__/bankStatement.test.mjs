@@ -388,6 +388,54 @@ const h = run(hdfc());
       d2.cashFlows?.[1]?.description === "NEFT CR-TESTBANK0002-RECEIPTS FROM TEST PAYER TWO",
     `${d2.cashFlows?.length} · ${JSON.stringify(d2.cashFlows?.[1]?.description)}`);
   ok("…and that tape reconciles too", d2.status === "ok", failed(d2));
+
+  // AN INDENTED CONTINUATION BEGAN WITH A SPACE THE GRID TRIMMED AWAY, and the
+  // row above it must get that space back. Flush with the narration column's own
+  // left edge the chunk continues the word above (the case two assertions up);
+  // indented from it, the statement printed two words and `… THIRD PARTY …` came
+  // back as `… THIRDPARTY …`. `joinNarration` makes no decision about its own
+  // first chunk, there being nothing before it to join to, so the row above has
+  // to ask the same question of it — which is `startsWord` and `leadX`.
+  const g3 = hdfc();
+  const r3 = g3.pages[0].rows;
+  const j = r3.indexOf(rowWith(g3, "UPI-TEST PAYEE-TESTUPI"));
+  r3.splice(j + 1, 0, row(536.0, it(72.0, 60.0, "THIRD PARTY TRANSFER")));
+  const d3 = run(g3);
+  ok("an indented continuation keeps the space the grid trimmed",
+    d3.cashFlows?.[2]?.description === "UPI-TEST PAYEE-TESTUPI THIRD PARTY TRANSFER",
+    JSON.stringify(d3.cashFlows?.[2]?.description));
+  ok("…and that tape reconciles too", d3.status === "ok", failed(d3));
+
+  // A DATELESS ROW CARRYING MONEY IS NOT A CONTINUATION — it is a movement whose
+  // date the reader failed to read, and appending it to the row above would lose
+  // its amount while the running balance went on tying. It refuses the document.
+  const g4 = hdfc();
+  const r4 = g4.pages[0].rows;
+  const k = r4.indexOf(rowWith(g4, "IMPS CR-TESTBANK0003-REFUND"));
+  r4.splice(k + 1, 0, row(520.0,
+    it(68.0, 80.0, "NEFT CR-TESTBANK0004-LATE"), atRight(RIGHT.deposit, "5,000.00")));
+  const d4 = run(g4);
+  ok("a dateless row carrying money refuses the document",
+    d4.status !== "ok" && /every row with an amount carries a date/.test(failed(d4)), failed(d4));
+  ok("…and the refusal prints the row's own cells and the amount it carried",
+    /deposit 5,000\.00/.test(failed(d4)) && /NEFT CR-TESTBANK0004-LATE/.test(failed(d4)), failed(d4));
+  ok("…and it is never appended to the narration above it",
+    !/LATE/.test(JSON.stringify(d4.cashFlows ?? [])), JSON.stringify(d4.cashFlows?.[3]?.description));
+
+  // A CONTINUATION CARRYING A FIGURE INSIDE ITS NARRATION IS STILL A
+  // CONTINUATION. The test is on the three MONEY columns and not on every
+  // parseable cell, because a wrap legitimately carries a cheque number, an
+  // IFSC or a UTR — refusing on any parseable cell would refuse a tape over a
+  // reference number.
+  const g5 = hdfc();
+  const r5 = g5.pages[0].rows;
+  const m = r5.indexOf(rowWith(g5, "NEFT DR-TESTBANK0001-PAY"));
+  r5.splice(m + 1, 0, row(568.0, it(72.0, 60.0, "REF 0000123456")));
+  const d5 = run(g5);
+  ok("a continuation carrying a reference number is still a continuation",
+    d5.status === "ok" && d5.cashFlows?.length === 4
+      && d5.cashFlows?.[0]?.description === "NEFT DR-TESTBANK0001-PAY REF 0000123456",
+    `${d5.status} · ${JSON.stringify(d5.cashFlows?.[0]?.description)}`);
 }
 
 // ── 6. THE ICICI STATEMENT, AND A DERIVED OPENING LABELLED AS DERIVED ───────
@@ -437,6 +485,42 @@ const i = run(icici());
     /running balance \(opening derived\)/.test(
       String((i.sections?.summary?.rows ?? []).find((r) => r[0] === "Checks passed")?.[1])),
     String((i.sections?.summary?.rows ?? []).find((r) => r[0] === "Checks passed")?.[1]));
+
+  // THE SERIAL CHECK IS ON WHETHER THE LAYOUT MATCHED THE COLUMN, never on
+  // whether every cell in it parsed. Gated on the cells, ONE unreadable serial
+  // turned the check off — on exactly the document that needed it, since a
+  // serial that does not parse is a column the reader lost its grip on, and the
+  // tape then published with the one check that can see a dropped row silently
+  // not applicable.
+  ok("ICICI's serials ARE checked", /serial numbers run 1\.\.N/.test(
+    String((i.sections?.summary?.rows ?? []).find((r) => r[0] === "Checks passed")?.[1])),
+    String((i.sections?.summary?.rows ?? []).find((r) => r[0] === "Checks passed")?.[1]));
+  const gs = icici();
+  itemOf(gs, "2").text = "-";
+  const ds = run(gs);
+  ok("an unreadable serial cell refuses the document rather than turning the check off",
+    ds.status !== "ok" && /serial numbers run 1\.\.N/.test(failed(ds)), `${ds.status} · ${failed(ds)}`);
+  ok("…naming the row it could not number", /row 2 is numbered nothing/.test(failed(ds)), failed(ds));
+
+  // A DATELESS ROW CARRYING MONEY, ON ICICI'S LAYOUT TOO. The gate's own case
+  // further down calls `tieOut` directly, and the HDFC case in section 5 drives
+  // one reader; this is the other reader's branch, which is byte-identical and
+  // therefore the one a copy-and-paste edit breaks without the suite noticing.
+  // Nothing else may fire on it: the orphan is skipped before it becomes a row,
+  // so rows 1..3 still reconcile and still run 1..N.
+  const io_ = icici();
+  io_.pages[0].rows.push(row(608.0,
+    it(192.0, 120.0, "RTGS-TESTREF0004-LATE PAYER"), atRight(519.0, "9,000.00")));
+  const dl = run(io_);
+  ok("a dateless row carrying a deposit refuses ICICI's tape as well",
+    dl.status !== "ok" && /every row with an amount carries a date/.test(failed(dl)),
+    `${dl.status} · ${failed(dl)}`);
+  ok("…and the failure prints what it carried", /deposit 9,000\.00/.test(failed(dl)), failed(dl));
+  ok("…and it is the only check that fires on it",
+    !/running balance|serial numbers/.test(failed(dl)), failed(dl));
+  ok("…and the row never reaches the narration above it",
+    !/LATE PAYER/.test(JSON.stringify(dl.cashFlows ?? [])),
+    JSON.stringify((dl.cashFlows ?? []).map((f) => f.description)));
 }
 
 // ── 7. THE GATE, BROKEN ONE FIGURE AT A TIME ────────────────────────────────
@@ -483,7 +567,50 @@ for (const [label, break_, expect] of GATE) {
   ok("…and names the count", /drCount/.test(failed(d)), failed(d));
 }
 
-// ── 9. THE GATE ITSELF, ON CONSTRUCTED ROWS ─────────────────────────────────
+// ── 9. A LABEL WITH NO VALUE IS NOT PRINTED, NEVER A NEIGHBOUR'S FIGURE ──
+{
+  // The summary block prints six labels over six values, and the labels are
+  // nowhere near their own columns. Drop ONE value and nearest-centre per
+  // label, decided independently, hands `Debits` (centre 360) the Cr count's
+  // "2" at 269 — 91pt away against the credit total's 96 — so a figure the bank
+  // printed once reaches the archive as two printed primitives, and the debits
+  // check then fails against a COUNT OF TRANSACTIONS. Assigned greedily and
+  // consuming each value, `Debits` is left with nothing: its figure reads as
+  // not printed, which is what it is, and its check is NOT APPLICABLE.
+  const g = hdfc();
+  const vrow = rowWith(g, "100,000.00");
+  const i = vrow.items.findIndex((x) => x.text === "33,000.00");
+  vrow.items.splice(i, 1);
+  const d = run(g);
+  const srows = d.sections?.summary?.rows ?? [];
+  const src = (figure) => srows.find((r) => r[0] === figure)?.[2];
+  const val = (figure) => srows.find((r) => r[0] === figure)?.[1];
+  const na = String(srows.find((r) => r[0] === "Checks not applicable")?.[1] ?? "");
+
+  ok("a summary value the statement did not print still publishes the tape",
+    d.status === "ok" && (d.cashFlows ?? []).length === 4,
+    `${d.status} · ${(d.cashFlows ?? []).length} rows · ${failed(d)}`);
+  ok("…and the unmatched label carries no figure", d.flows?.debits == null, String(d.flows?.debits));
+  ok("…which the summary sheet names as not printed", src("Debits") === "not printed",
+    JSON.stringify(srows.map((r) => [r[0], r[2]])));
+  ok("…and its check is not applicable rather than failed",
+    /debits total/.test(na) && !/debits total/.test(failed(d)), `${na} — ${failed(d)}`);
+  // THE HALF THAT CATCHES THE DEFECT, and it has to name the empty cell as well
+  // as the full ones: every other label still reads correctly under the
+  // independent assignment, so an assertion over those alone cannot fail. What
+  // moves is `Debits`, which prints 2.00 — the Cr COUNT, read as a rupee total.
+  ok("…and no label takes a neighbour's figure",
+    val("Debits") === "—" && val("Dr count") === 2 && val("Cr count") === 2
+      && val("Credits") === "18500.50" && val("Opening balance") === "100000.00"
+      && val("Closing balance") === "85500.50",
+    JSON.stringify([val("Opening balance"), val("Dr count"), val("Cr count"),
+      val("Debits"), val("Credits"), val("Closing balance")]));
+  ok("…so the sheet names five printed figures where the statement printed five",
+    srows.filter((r) => r[2] === "printed").length === 5,
+    JSON.stringify(srows.map((r) => r[2])));
+}
+
+// ── 10. THE GATE ITSELF, ON CONSTRUCTED ROWS ─────────────────────────────────
 //
 // `tieOut` is called by the reader on what it read; these cases call it
 // directly, so a check can be shown LOAD-BEARING rather than merely present.
@@ -495,10 +622,16 @@ for (const [label, break_, expect] of GATE) {
   const printed = { opening: 10000000, debits: 2500000, credits: 1050050, closing: 8550050, drCount: 1, crCount: 1 };
   const g = tieOut(rows, printed);
   ok("a reconciling tape passes every check", g.ok && g.failures.length === 0, g.failures.join(" | "));
-  ok("…and none of its checks is not-applicable", g.notApplicable.length === 0, g.notApplicable.join(" | "));
-  ok("…and it names the seven it passed", g.passed.length === 7, g.passed.join(" · "));
-  ok("…which are the seven the statement's own figures support",
-    g.passed.join(" · ") === "one amount side per row · running balance · debits total · credits total"
+  // ONE CHECK IS NOT-APPLICABLE ON A TAPE THAT RECONCILES, and it is the serial
+  // one: a layout printing no serial column prints nothing to run 1..N. Named
+  // here rather than counted as a pass, which is this gate's whole third
+  // outcome — see check 6.
+  ok("…and the one check it cannot make is the serial one",
+    g.notApplicable.length === 1 && /serial/.test(g.notApplicable[0]), g.notApplicable.join(" | "));
+  ok("…and it names the eight it passed", g.passed.length === 8, g.passed.join(" · "));
+  ok("…which are the eight the statement's own figures support",
+    g.passed.join(" · ") === "every row with an amount carries a date · one amount side per row"
+      + " · running balance · debits total · credits total"
       + " · drCount · crCount · closing balance", g.passed.join(" · "));
 
   // NO ROWS IS A FAILURE, NEVER A PASS. A gate that passed over an empty table
@@ -510,9 +643,10 @@ for (const [label, break_, expect] of GATE) {
   // A STATEMENT THAT PRINTS NOTHING TO COMPARE AGAINST CANNOT PASS A CHECK IT
   // DID NOT MAKE.
   const bare = tieOut(rows, { opening: null, debits: null, credits: null, closing: null, drCount: null, crCount: null });
-  ok("a statement printing no figures passes only the one check its rows support",
-    bare.ok && bare.passed.length === 1 && bare.passed[0] === "one amount side per row", bare.passed.join(" · "));
-  ok("…and names the six it could not make", bare.notApplicable.length === 6, bare.notApplicable.join(" | "));
+  ok("a statement printing no figures passes only the two checks its rows support",
+    bare.ok && bare.passed.join(" · ") === "every row with an amount carries a date · one amount side per row",
+    bare.passed.join(" · "));
+  ok("…and names the seven it could not make", bare.notApplicable.length === 7, bare.notApplicable.join(" | "));
 
   // THE SERIAL CHECK: a dropped row is a hole in a sequence rather than a silent
   // absence, which is the only thing that makes ICICI's layout checkable in a
@@ -523,10 +657,39 @@ for (const [label, break_, expect] of GATE) {
     s.failures.join(" | "));
   const withSerials = tieOut(rows, printed, { serials: true });
   ok("…and a complete sequence passes", withSerials.ok, withSerials.failures.join(" | "));
-  ok("…as an eighth check, named", withSerials.passed.length === 8
+  ok("…as a ninth check, named", withSerials.passed.length === 9
     && withSerials.passed.includes("serial numbers run 1..N"), withSerials.passed.join(" · "));
-  ok("…while serials are not checked on a statement that prints none",
-    tieOut(rows, printed).notApplicable.every((n) => !/serial/.test(n)));
+  ok("…while a layout with no serial column is named not-applicable, never passed",
+    tieOut(rows, printed).notApplicable.some((n) => /serial/.test(n))
+      && !tieOut(rows, printed).passed.some((n) => /serial/.test(n)));
+
+  // A MATCHED SERIAL COLUMN WITH AN UNREADABLE CELL IS A FAILURE, NOT A SILENT
+  // ABSENCE. `serials` is whether the LAYOUT matched the column; gated on the
+  // cells instead, one unparseable serial turned the check off on exactly the
+  // document that needed it — a serial that does not parse is a column the
+  // reader lost its grip on.
+  const nullSerial = tieOut([rows[0], { ...rows[1], serial: null }], printed, { serials: true });
+  ok("a matched serial column with an unreadable cell fails",
+    !nullSerial.ok && /row 2 is numbered nothing/.test(nullSerial.failures.join(" ")),
+    nullSerial.failures.join(" | "));
+
+  // CHECK 0: A ROW CARRYING AN AMOUNT AND NO DATE REFUSES THE WHOLE DOCUMENT,
+  // and the failure carries the row's own cells. None of the checks below it can
+  // see one: a row lost from the end of an ICICI tape leaves an opening derived
+  // from the first row the reader kept, a closing copied from the last and
+  // serials that still run 1..N — a tape that reconciles with itself and is
+  // short.
+  const orphaned = tieOut(rows, printed, {
+    orphans: [{ cells: ["", "NEFT CR HDFC", "", "1,00,000.00", "1,85,500.50"], carried: ["deposit 1,00,000.00"] }],
+  });
+  ok("a row with an amount and no date refuses the document",
+    !orphaned.ok && /every row with an amount carries a date/.test(orphaned.failures.join(" ")),
+    orphaned.failures.join(" | "));
+  ok("…and the failure prints the row's own cells and what it carried",
+    /deposit 1,00,000\.00/.test(orphaned.failures.join(" "))
+      && /NEFT CR HDFC/.test(orphaned.failures.join(" ")), orphaned.failures.join(" | "));
+  ok("…and it is load-bearing: every other check passes on the same tape",
+    orphaned.failures.length === 1, orphaned.failures.join(" | "));
 
   // A ROW THAT MOVED NOTHING is carried and counted as neither a debit nor a
   // credit — the running balance is what proves it.
@@ -547,7 +710,7 @@ for (const [label, break_, expect] of GATE) {
     `${nb.ok} · ${nb.failures.join(" | ")}`);
 }
 
-// ── 10. REFUSALS THAT ARE NOT TIE-OUTS ──────────────────────────────────────
+// ── 11. REFUSALS THAT ARE NOT TIE-OUTS ──────────────────────────────────────
 {
   const none = extract({ grid: { pages: [] }, meta: { docKey: "test-doc" } });
   ok("a document with no pages is refused", none.status === "failed" && codes(none).includes("no-pages"),
@@ -567,7 +730,7 @@ for (const [label, break_, expect] of GATE) {
   ok("…while still naming what it is", /savings-account statement/.test(d.excludedFromBook ?? ""));
 }
 
-// ── 11. THE SHAPES THE PIPELINE READS ───────────────────────────────────────
+// ── 12. THE SHAPES THE PIPELINE READS ───────────────────────────────────────
 {
   // `reconcile.mjs` renders every warning as `${w.code}: ${w.detail}` and
   // `extract.mjs` matches `w.code`. A string reads `undefined: undefined` there.
@@ -585,7 +748,7 @@ for (const [label, break_, expect] of GATE) {
       .every((pats) => Array.isArray(pats) && pats.length && pats.every((p) => p instanceof RegExp)));
 }
 
-// ── 12. WHICH DOCUMENT THE CLASSIFIER SAYS THIS IS ──────────────────────────
+// ── 13. WHICH DOCUMENT THE CLASSIFIER SAYS THIS IS ──────────────────────────
 //
 // THE READER IS NEVER REACHED UNLESS THE CLASSIFIER NAMES THE BANK, and the one
 // thing that stops it is a NARRATION. Both seeded house matchers and

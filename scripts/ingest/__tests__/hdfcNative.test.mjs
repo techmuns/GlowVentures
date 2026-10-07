@@ -387,5 +387,121 @@ if (REAL_BYTES === null) {
     near(printedSum, 577743588.9 - 2 * 2280, 0.001), `got ${printedSum}`);
 }
 
+// ── 7. THE NSE SYMBOL EVERY HOLDING MUST REACH THE LIVE LAYER BY ────────────
+//
+// This statement PRINTS a rate, so every holding on it carries a value on the
+// statement basis the moment the delivery lands. What a symbol buys is the half
+// a statement cannot: a live quote, the day's move, the price history and the
+// returns table, the ratios and the filings. Every one of those endpoints is
+// keyed on the NSE TRADING SYMBOL and takes neither an ISIN nor a name
+// (`docs/SECURITY-IDENTIFIERS.md`), so "is this holding fully on the dashboard?"
+// reduces to "did a symbol resolve?" — and this table is that question answered
+// per holding.
+//
+// ── WHY A TABLE HERE AND NOT AN `OVERRIDES` ENTRY ───────────────────────────
+//
+// `build-nse-symbols.mjs` resolves ISIN → exact name → securityKey → override,
+// and where both an identifier and a name answer it COMPARES them: a
+// disagreement leaves the security unresolved rather than letting either side
+// win silently. An `OVERRIDES` entry RETURNS BEFORE that comparison, which is
+// why its own comment reserves it for "a name difference the automatic tiers
+// cannot bridge" — a renamed listing, or a symbol that contracts the name.
+//
+// EVERY ROW OF THIS STATEMENT PRINTS ITS ISIN. So the ISIN tier answers for all
+// eight listed holdings, and an override would trade the stronger check for the
+// weaker one on a book where nothing needs it. The symbols below are therefore
+// an EXPECTATION THE RESOLVER MUST MEET, never an input it reads: the resolver
+// goes on resolving them from NSE's own master, and this table is what says it
+// resolved each one to the company whose shares the family actually holds.
+//
+// `null` is NOT "we could not find it" — it is the company not being listed at
+// all, which is a permanent absence rather than a missing identifier, and the
+// identifiers report already words those two apart. Both are corroborated by
+// the statement itself: see the face-value check below.
+const SYMBOLS = [
+  // Verified 2026-10-07 by searching each ISIN, never each name. The first two
+  // are corroborated by an identifier already committed to this repository:
+  // `shared/upstoxInstruments.mjs` carries VAML → `NSE_EQ|INE1CDF01017` and
+  // VEDL → `NSE_EQ|INE205A01025`, the exact ISINs this statement prints.
+  ["INE1CDF01017", "vedanta-aluminium-metal", "VAML"],
+  ["INE205A01025", "vedanta", "VEDL"],
+  ["INE501A01019", "deepak-fertilisers-and-petrochemicals", "DEEPAKFERT"],
+  ["INE473D01015", "kingfa-science-and-technology-india", "KINGFA"],
+  ["INE993A01026", "man-industries-india", "MANINDS"],
+  ["INE00VM01036", "manorama-industries", "MANORAMA"],
+  ["INE089C01029", "sterlite-technologies", "STLTECH"],
+  // Demerged out of Sterlite Technologies and listed on both exchanges on
+  // 31 Mar 2025; it trades as STLNETWORK and operates as Invenia.
+  ["INE1VXE01018", "stl-networks", "STLNETWORK"],
+  // UNLISTED, so no symbol can exist. Sterlite Electric (formerly Sterlite
+  // Power Transmission) has filed a DRHP and has not listed; Sterlite Grid 5 is
+  // the transmission platform SPTL's infrastructure business was transferred
+  // into. Both trade only on the unlisted market.
+  ["INE110V01015", "sterlite-electric", null],
+  ["INE03QT01027", "sterlite-grid-5", null],
+];
+
+// THE TABLE COVERS THE STATEMENT, ONCE EACH. A holding this statement carries
+// and this table does not is one nobody decided about — which is how a future
+// delivery's new company goes quietly unpriced, the thing this section exists
+// to stop.
+{
+  const read = (base.holdings ?? []).map((h) => h.isin).sort();
+  const listed = SYMBOLS.map(([i]) => i).sort();
+  ok("every holding the statement carries is in the symbol table, once each",
+    read.length === listed.length && read.every((i, n) => i === listed[n]),
+    `statement ${read.join(",")}\n       table     ${listed.join(",")}`);
+}
+
+// AND THE STATEMENT ITSELF SAYS WHICH TWO ARE UNLISTED. The reader refuses a
+// rate that is exactly a face value, and the two holdings it refuses are the
+// two NSE does not list — two independent documents agreeing, which is what
+// earns `null` its place over "a symbol we failed to find".
+for (const [isin, , symbol] of SYMBOLS) {
+  const h = holding(base, isin);
+  if (!h) continue;
+  const priced = h.marketPrice != null;
+  ok(`${isin} is priced by the statement if and only if NSE lists it`,
+    priced === (symbol !== null),
+    `rate ${h.marketPrice} · symbol ${symbol ?? "none"}`);
+}
+
+// WHERE THE RESOLVER HAS ALREADY ANSWERED, IT MUST HAVE ANSWERED THIS. Three of
+// the eight are in the book from other accounts, so their symbols are checked
+// against the generated map on every tree. The other five arrive with the
+// delivery, so they are REPORTED rather than passed: a check with no subject
+// must never read as one that held.
+{
+  const MAP = path.join(ROOT, "src/data/nseSymbols.json");
+  const resolved = JSON.parse(fs.readFileSync(MAP, "utf8"));
+  const { UPSTOX_INSTRUMENTS } = await import("../../../shared/upstoxInstruments.mjs");
+  const awaiting = [];
+  for (const [isin, key, symbol] of SYMBOLS) {
+    if (symbol === null) {
+      ok(`${key} is in neither symbol map, because it is not listed`,
+        !(key in resolved) && !(symbol in UPSTOX_INSTRUMENTS));
+      continue;
+    }
+    if (key in resolved) {
+      ok(`${key} resolves to ${symbol}`, resolved[key] === symbol, `got ${resolved[key]}`);
+    } else awaiting.push(`${key} → ${symbol}`);
+    // UPSTOX MUST AGREE ON THE IDENTIFIER, NOT ON THE NAME. Its instrument key
+    // IS the ISIN, so where it carries the symbol the two documents are
+    // checked against each other rather than one being trusted.
+    const inst = UPSTOX_INSTRUMENTS[symbol];
+    if (inst) {
+      ok(`${symbol} is Upstox's instrument for ${isin}`, inst.key === `NSE_EQ|${isin}`,
+        `got ${inst.key}`);
+    }
+  }
+  if (awaiting.length) {
+    console.log(`  (${awaiting.length} symbol(s) are not in the generated map yet, because the`);
+    console.log("   holdings reach the archive with the delivery and NSE's masters are not");
+    console.log("   reachable from every environment · they are NOT counted as checked:");
+    for (const a of awaiting) console.log(`     ${a}`);
+    console.log("   `npm run build-symbols` resolves each by the ISIN this statement prints)");
+  }
+}
+
 console.log(`  ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

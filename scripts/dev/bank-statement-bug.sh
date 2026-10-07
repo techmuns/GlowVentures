@@ -38,7 +38,17 @@ restore() {
   for f in "${FILES[@]}"; do cmp -s "$SNAP/$f" "$f" || echo "!! restore of $f DID NOT TAKE"; done
   rm -rf "$SNAP"
 }
-trap restore EXIT
+# ON EXIT **AND ON A SIGNAL**. Bash does not run an EXIT trap on SIGTERM unless a
+# trap for it exists, so a `timeout` around this harness — or a Ctrl-C — left the
+# tree carrying whichever bug was in at the time, with the restore reporting
+# nothing. The hazard was met from the OTHER side in this file's own session: a
+# `git checkout -- scripts/ingest/extract.mjs` was run against a tree a live
+# case had patched, which left that case's result meaningless and is why its
+# reported figure was thrown away rather than recorded. A restore that cannot
+# restore looks exactly like one that did, so the trap covers the signals a
+# `timeout` or a Ctrl-C sends as well as a clean exit, and the rule above — do
+# not touch a file in `FILES` while this runs — covers the rest.
+trap restore EXIT INT TERM
 put_back() { for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; }
 
 # The suite this change is about: every claim is named, so a case can be pointed
@@ -141,8 +151,9 @@ run_case 6 no "a row carrying both a withdrawal and a deposit is accepted" \
 # ── 7 ── ICICI's serial sequence is not checked
 run_case 7 no "a gap in ICICI's serials is not a failure" \
   sub $READER \
-    '  if (serials) {' \
-    '  if (false) {'
+    '    note("serial numbers run 1..N", bad < 0,
+      bad < 0 ? "" : `row ${bad + 1} is numbered ${got[bad] ?? "nothing"}`);' \
+    '    void bad;'
 
 # ── 8 ── a check the statement cannot support is counted as a pass
 run_case 8 no "a not-applicable check is counted among the ones that passed" \
@@ -182,23 +193,27 @@ run_case 11 no "ICICI's derived opening is carried into the flows as a printed f
     '    openingBalance: read.openingDerived ? null : rupees(read.printed.opening),' \
     '    openingBalance: rupees(read.printed.opening),'
 
-# ── 12 ── a continuation line becomes a movement of its own
-run_case 12 no "a continuation line is read as a row of its own rather than the row above it" \
+# ── 12 ── half a narration
+#
+# The row is still skipped rather than becoming a movement — the gate's own
+# check 0 is what makes that impossible now (case 28) — so what this drops is
+# the continuation's TEXT, and the archive carries half a narration against a
+# row whose figures all tie.
+run_case 12 no "a continuation line's own text never reaches the row above it" \
   sub $READER \
-    '        if (prev && narration && !row.cells.some((c) => parseNumInfo(c.text).status === "ok")) {
-          prev.narration += narration;
+    '        if (prev && narration) {
+          const lead = leadX(chunks);
+          prev.narration += (lead !== null && startsWord(lead, left) ? " " : "") + narration;
           prev.chunkLines += 1;
-        }
-        continue;' \
-    '        if (prev && narration && !row.cells.some((c) => parseNumInfo(c.text).status === "ok")) {
+        }' \
+    '        if (prev && narration) {
           prev.chunkLines += 1;
-        }
-        continue;'
+        }'
 
 # ── 13 ── HDFC's wrap joins with a space, mid-word
 run_case 13 no "HDFC's mid-word wrap joins with a space rather than nothing" \
   sub $READER \
-    '    else out += p.x - edge > INDENT ? ` ${text}` : text;' \
+    '    else out += startsWord(p.x, edge) ? ` ${text}` : text;' \
     '    else out += ` ${text}`;'
 
 # ── 14 ── ICICI's pixel wrap is joined by HDFC's fixed-width rule
@@ -354,6 +369,126 @@ run_case 27 no "the guard counts are reported only when one of them fired" \
     '    const guards = bankGuardCounts();
     if (guards.match360One || guards.matchGoldstandard) console.log('
 
+# ── A ROW WITH MONEY AND NO DATE ────────────────────────────────────────────
+#
+# The five cases below are one defect seen from five places. A dateless row is
+# a CONTINUATION — the rest of the row above it, wrapped — and the readers
+# appended its narration to that row and moved on. A dateless row CARRYING A
+# WITHDRAWAL, A DEPOSIT OR A BALANCE is not a continuation: it is a movement
+# whose date the reader failed to read, and appending it loses the amount while
+# leaving the running balance, the printed totals, the counts and ICICI's own
+# serials all reconciling. A tape that is short and agrees with itself.
+
+# ── 28 ── the gate never names them
+run_case 28 no "the orphan check is removed, so a row the reader could not read reaches nothing" \
+  sub $READER \
+    '  if (orphans.length) {
+    failures.push(`every row with an amount carries a date: ${orphans.length} row(s) carry an amount `
+      + "and no readable date — "
+      + orphans.map((o) => `[${(o.carried ?? []).join(", ")}] in [${(o.cells ?? []).join(" | ")}]`).join("; "));
+  } else passed.push("every row with an amount carries a date");' \
+    '  void orphans;'
+
+# ── 29 ── HDFC appends it anyway (the original defect)
+run_case 29 no "HDFC folds a dateless row carrying a deposit into the narration above it" \
+  sub $READER \
+    '        const carried = AMOUNT_FIELDS
+          .map((f) => [f, cellOf(f)])
+          .filter(([, t]) => parseNumInfo(t).status === "ok");
+        if (carried.length) {
+          orphans.push({ cells: rowText(row), carried: carried.map(([f, t]) => `${f} ${t}`) });
+          continue;
+        }
+        const prev = rows[rows.length - 1];
+        if (prev && narration) {
+          const lead = leadX(chunks);' \
+    '        const prev = rows[rows.length - 1];
+        if (prev && narration) {
+          const lead = leadX(chunks);'
+
+# ── 30 ── and ICICI likewise. The two branches are byte-identical, so this one
+#          is scoped to its own function rather than matched across the file.
+run_case 30 no "ICICI folds a dateless row carrying a deposit into the narration above it" \
+  subIn $READER 'function readIcici' \
+    '        const carried = AMOUNT_FIELDS
+          .map((f) => [f, cellOf(f)])
+          .filter(([, t]) => parseNumInfo(t).status === "ok");
+        if (carried.length) {
+          orphans.push({ cells: rowText(row), carried: carried.map(([f, t]) => `${f} ${t}`) });
+          continue;
+        }
+' \
+    ''
+
+# ── 31 ── the reader collects them and the gate is never told
+#
+# Which is the half a reader of either branch alone cannot see: both readers do
+# the right thing, `extract` drops the field on the way to `tieOut`, and the
+# document publishes.
+run_case 31 no "the orphans are collected and never handed to the gate" \
+  sub $READER \
+    '    { openingDerived: read.openingDerived, serials: read.serials, orphans: read.orphans });' \
+    '    { openingDerived: read.openingDerived, serials: read.serials });'
+
+# ── 32 ── a wrap that is a new word is joined with no space
+#
+# HDFC wraps on CHARACTER WIDTH, so a chunk starting at the column's own left
+# edge is the middle of a word and joins with nothing. A chunk INDENTED from
+# that edge is a space the grid trimmed, and joining it with nothing runs two
+# words together — `TESTUPITHIRD PARTY TRANSFER`.
+run_case 32 no "an indented continuation is joined with no space, running two words together" \
+  sub $READER \
+    '          prev.narration += (lead !== null && startsWord(lead, left) ? " " : "") + narration;' \
+    '          void lead;
+          prev.narration += narration;'
+
+# ── 33 ── the serial check turns itself off on the document that needs it
+#
+# `serials` is whether the LAYOUT matched a serial column. Gated on the CELLS
+# instead, one unreadable serial makes the check not-applicable — and a serial
+# that does not parse is a column the reader lost its grip on, which is exactly
+# when the only check that can see a dropped row must not stand down.
+run_case 33 no "the serial check is gated on the cells, so one unreadable serial switches it off" \
+  sub $READER \
+    '    serials: serialSeen && rows.length > 0,' \
+    '    serials: rows.length > 0 && rows.every((r) => r.serial !== null),'
+
+# ── 34 ── two summary labels take one printed figure
+#
+# The summary block's labels are nowhere near their own columns, so each is
+# bound to the value whose CENTRE is nearest. Decided independently per label,
+# a block printing six labels over five values binds the nearest value twice:
+# `Debits` (centre 360) takes the Cr count's "2" at 269, 91pt away against the
+# credit total's 96, and one printed figure reaches the archive as two printed
+# primitives — so the debits check fails against a COUNT OF TRANSACTIONS rather
+# than standing down. Assigned greedily and consuming each value, the unmatched
+# label reads as not printed, which is what it is.
+run_case 34 no "two summary labels take one printed figure, so a count is read as a total" \
+  sub $READER \
+    '      const pairs = [];
+      for (const [key, label] of found) {
+        if (key in out) continue;
+        const centre = (label.x ?? 0) + (label.width ?? 0) / 2;
+        for (const [vi, v] of values.entries()) pairs.push({ key, vi, d: Math.abs(v.centre - centre) });
+      }
+      pairs.sort((a, b) => a.d - b.d || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0) || a.vi - b.vi);
+      const taken = new Set();
+      for (const p of pairs) {
+        if (p.key in out || taken.has(p.vi)) continue;
+        out[p.key] = values[p.vi].text;
+        taken.add(p.vi);
+      }' \
+    '      for (const [key, label] of found) {
+        if (key in out) continue;
+        const centre = (label.x ?? 0) + (label.width ?? 0) / 2;
+        let best = null;
+        for (const v of values) {
+          const d = Math.abs(v.centre - centre);
+          if (!best || d < best.d) best = { d, text: v.text };
+        }
+        if (best) out[key] = best.text;
+      }'
+
 # ── NO SUBJECT ON THIS TREE, AND SAID SO RATHER THAN SHIPPED AS A CLEAN CASE ──
 #
 # Three more bugs are available and NOTHING IN THIS REPOSITORY WOULD FIRE ON
@@ -372,6 +507,15 @@ run_case 27 no "the guard counts are reported only when one of them fired" \
 #     struck on the archive rather than on the reader, so a merge or a hand-edit
 #     that moved a row after extraction is what it catches. It has nothing to
 #     walk until the tape lands.
+#   * `build-book`'s excluded-accounts intro back to one blanket sentence — "they
+#     belong to somebody else", "each one becomes part of the book with a single
+#     entry in `shared/owners.mjs`". Both are TRUE of every row in that table on
+#     this tree, because the only rows in it are another taxpayer's folios; both
+#     go false the moment a savings account joins them, which is for what it IS
+#     rather than for whose it is and which no owner entry would ever bring in.
+#     So the defect's subject arrives with the delivery. It was verified by
+#     RENDERING both branches against a synthetic archive rather than reasoned
+#     about, which is also what caught a plural verb against a count of one.
 #
 # Each becomes reachable on the run that lands the delivery, and each is named
 # here so the next session does not read a clean case as a verified one.
