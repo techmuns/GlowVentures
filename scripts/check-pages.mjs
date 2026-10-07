@@ -1328,7 +1328,7 @@ const HELD_BOOK = (() => {
       };
     };
     /**
-     * A COMPANY HELD ONLY INSIDE FUNDS COMES IN TWO KINDS SINCE Stage 10dj, and
+     * A COMPANY HELD ONLY INSIDE FUNDS COMES IN TWO KINDS SINCE Stage 10dk, and
      * the Price & returns and Research tabs treat them differently on purpose.
      * `build-symbols`' fill-only second pass reads a fund's own disclosure, so
      * 33 of the 475 such companies resolve an NSE symbol (13 already did on
@@ -8429,7 +8429,7 @@ const ROUTES = [
   // family's own to split, and Price & returns and Research each say once why a
   // company no statement names has no symbol looked up.
   ["stock-funds-only-activity", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=activity` : "/stock/no-company-held-only-inside-funds?tab=activity")],
-  // Those two walk the largest such company WITH NO NSE SYMBOL (Stage 10dj):
+  // Those two walk the largest such company WITH NO NSE SYMBOL (Stage 10dk):
   // a disclosure now resolves a symbol for 30 of them, and the page looks a
   // symbol's price history and research up — so the largest of all, HDFC Bank,
   // would walk the other branch. The `-sym` pair walks that branch.
@@ -21033,7 +21033,7 @@ function pricedPairOf(title) {
 }
 
 /**
- * ── THE MOVERS TOGGLE'S THIRD BRANCH — THE COMPANIES INSIDE (Stage 10dj) ─────
+ * ── THE MOVERS TOGGLE'S THIRD BRANCH — THE COMPANIES INSIDE (Stage 10dk) ─────
  *
  * *"we will not show that particular AIF or the PMS that is having the highest
  * gain or lose but we will show the holding INSIDE all of the AIF and PMS which
@@ -29783,7 +29783,7 @@ const INVARIANTS = {
      * renders whether or not a quote has landed, so a build that drew it on
      * only one branch has to fail somewhere. The four-tab group of Stage 10ad
      * must equally not come back, which `tabs.length === 3` is what rules out —
-     * three is the AIF & PMS branch (Stage 10dj) and not one of those four.
+     * three is the AIF & PMS branch (Stage 10dk) and not one of those four.
      */
     ["the movers toggle offers exactly three branches with a feed too", (t, ctx) => {
       const tabs = ctx?.moverScopes;
@@ -34559,7 +34559,7 @@ const INVARIANTS = {
   ],
   /**
    * …AND A COMPANY HELD ONLY INSIDE FUNDS THAT DOES RESOLVE A SYMBOL (Stage
-   * 10dj) IS LOOKED UP BY IT. `build-symbols` reads a fund's own disclosure as a
+   * 10dk) IS LOOKED UP BY IT. `build-symbols` reads a fund's own disclosure as a
    * fill-only second pass, so the largest such company — HDFC Bank on this book —
    * now has an NSE symbol, and telling a reader "no symbol has been looked up for
    * it" would be false. So these tabs draw the price card and the research card,
@@ -35683,6 +35683,13 @@ const INVARIANTS = {
    * archive's own manifest, read here rather than off the page.
    */
   audit: [
+    ["the consolidated sheet is primary and original documents are a collapsed source footnote", (t, ctx) => {
+      return xaEl(ctx, "consolidated-sheet")?.attrs.tabs === "17"
+        && xaEl(ctx, "audit-sources")?.attrs.open === "false"
+        && !(ctx?.xa ?? []).some(x => x.xa === "audit-chip");
+    }],
+  ],
+  "audit-short-rows": [
     ["every document chip names its account, its report type and its date, and no two read alike", (t, ctx) => {
       const want = XA_BOOK?.auditChips;
       if (!want?.length) return { notChecked: "the audit manifest could not be read" };
@@ -35696,9 +35703,7 @@ const INVARIANTS = {
         return (!account || g.text.includes(account)) && (!type || g.text.includes(type)) && (!w.fy || g.text.includes(w.fy));
       });
     }],
-  ],
-
-  /**
+    /**
    * ── A SHORT ROW IS NOT PLACED BY POSITION (XA-20) ────────────────────────
    *
    * The extracted tables keep a row's cells in printed order and drop the
@@ -35707,7 +35712,6 @@ const INVARIANTS = {
    * under "expenses". Walked on the table with the most such rows, derived
    * from the archive.
    */
-  "audit-short-rows": [
     ["a row with fewer cells than its headings is shown unaligned, never placed by position", (t, ctx) => {
       const a = XA_BOOK?.auditShort;
       if (!a) return { notChecked: "no extracted table in the archive has a row shorter than its headings" };
@@ -36271,7 +36275,7 @@ for (const theme of THEMES) {
         }, null, { timeout: 15000 }).catch(() => {});
       }
       /**
-       * THE AIF & PMS CARD ASKS FOR ITS PRICES IN A SECOND ROUND (Stage 10dj).
+       * THE AIF & PMS CARD ASKS FOR ITS PRICES IN A SECOND ROUND (Stage 10dk).
        *
        * It registers the 28 symbols only a fund's disclosure reaches after the
        * book's own ask has answered, so `networkidle` can resolve in the quiet
@@ -38495,7 +38499,7 @@ for (const theme of THEMES) {
         };
       });
       /**
-       * ── THE AIF & PMS CARD, AND WHICH HALF EACH ROW IS FROM (Stage 10dj) ──
+       * ── THE AIF & PMS CARD, AND WHICH HALF EACH ROW IS FROM (Stage 10dk) ──
        *
        * *"we will not show that particular AIF or the PMS that is having the
        * highest gain or lose but we will show the holding inside."* That is a

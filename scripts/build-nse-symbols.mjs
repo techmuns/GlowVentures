@@ -126,7 +126,7 @@ export const OVERRIDES = {
   // ISIN, so neither name tier reaches it and there is nothing to compare an
   // identifier against; the listing date and the ISIN on NSE's side are the
   // corroboration. Added on the run that first regenerated this map after the
-  // rename (Stage 10dj), which is where the symbol would otherwise have been
+  // rename (Stage 10dk), which is where the symbol would otherwise have been
   // lost for a holding that had one the day before.
   "heg": "HEGAM",                              // renamed HEG Advanced Materials
   // Listings NSE symbolises as a contraction of the printed name.

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { readMemory, subscribeMemory, writeMemory } from "@/lib/viewMemory";
+import { reviewColumnIds, type ReviewKind } from "@/lib/reviewColumns";
 
 export type SortDir = "asc" | "desc";
 export type TableSort = { col: string; dir: SortDir } | null;
@@ -8,10 +9,17 @@ export type TableSort = { col: string; dir: SortDir } | null;
 export type Accessor<T> = (r: T) => number | string | null | undefined;
 
 export type TableView = {
+  storageKey: string;
+  availableOrder: readonly string[];
+  hidden: readonly string[];
+  setVisible: (col: string, visible: boolean) => void;
+  manualEditor: boolean;
   /** The columns left to right as they are drawn now. The first never moves. */
   order: readonly string[];
   /** The columns in the order this table DECLARES, which is what a row's cells arrive in. */
   columns: readonly string[];
+  baseColumns: readonly string[];
+  additionalColumns: readonly string[];
   sort: TableSort;
   toggleSort: (col: string) => void;
   /** Put `col` immediately before `before`, or last when `before` is null. */
@@ -30,7 +38,7 @@ export type TableView = {
  * the reader's order — INCLUDING the ones not drawn right now — and its sort.
  * An empty `order` means "never arranged": the table follows its declared order.
  */
-export type StoredView = { order: readonly string[]; sort: TableSort };
+export type StoredView = { order: readonly string[]; sort: TableSort; visibility?: Readonly<Record<string, boolean>> };
 
 const KEY = (k: string) => `glow:tableView:${k}:v1`;
 const EMPTY: StoredView = Object.freeze({ order: Object.freeze([]) as readonly string[], sort: null });
@@ -39,7 +47,7 @@ const NO_LEGACY: readonly string[] = [];
 /** Read what a table saved, from any build: unknown fields are ignored, a bad sort is dropped. */
 export function parseStoredView(raw: unknown): StoredView | null {
   if (!raw || typeof raw !== "object") return null;
-  const r = raw as { order?: unknown; sort?: unknown };
+  const r = raw as { order?: unknown; sort?: unknown; visibility?: unknown };
   const order: string[] = [];
   if (Array.isArray(r.order)) {
     for (const c of r.order) if (typeof c === "string" && c && !order.includes(c)) order.push(c);
@@ -47,7 +55,18 @@ export function parseStoredView(raw: unknown): StoredView | null {
   const s = r.sort as { col?: unknown; dir?: unknown } | null | undefined;
   const sort: TableSort = s && typeof s === "object" && typeof s.col === "string" && (s.dir === "asc" || s.dir === "desc")
     ? { col: s.col, dir: s.dir } : null;
-  return { order, sort };
+  const visibility: Record<string, boolean> = {};
+  if (r.visibility && typeof r.visibility === "object" && !Array.isArray(r.visibility)) {
+    for (const [col, value] of Object.entries(r.visibility)) {
+      if (col && typeof value === "boolean") visibility[col] = value;
+    }
+  }
+  return { order, sort, ...(Object.keys(visibility).length ? { visibility } : {}) };
+}
+
+/** Visibility is a preference, never a change to records or calculations. */
+export function selectedColumns(declared: readonly string[], visibility: StoredView["visibility"], optional: readonly string[] = []): string[] {
+  return declared.filter((col, i) => i === 0 || (visibility?.[col] ?? !optional.includes(col)));
 }
 
 /**
@@ -227,15 +246,17 @@ export function nudgeColumn(stored: readonly string[], declared: readonly string
  * is read before the first paint, so a page never opens on the declared order
  * and then jumps. `legacyKeys` names keys a merged table used to save under.
  * Deliberately NOT a URL param: there are fifty-odd tables and a param each
- * would make every address unreadable, and nothing here changes WHICH FIGURES
- * are on screen — only the order they are read in.
+ * would make every address unreadable. Visibility and arrangement only change
+ * presentation; the records, calculations and export data remain intact.
  */
-export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[] }): TableView {
+export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[]; optional?: readonly string[]; manualEditor?: boolean; reviewKind?: ReviewKind }): TableView {
   // Keyed on the CONTENT of the list, so a caller that rebuilds the same list
   // every render does not re-derive the arrangement every render.
   const colKey = columns.join("\u0001");
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const declared = useMemo(() => columns.filter((c, i) => columns.indexOf(c) === i), [colKey]);
+  const baseColumns = useMemo(() => columns.filter((c, i) => columns.indexOf(c) === i), [colKey]);
+  const additionalColumns = useMemo(() => opts?.reviewKind ? reviewColumnIds(opts.reviewKind).filter((c) => !baseColumns.includes(c)) : [], [opts?.reviewKind, baseColumns]);
+  const declared = useMemo(() => [...baseColumns, ...additionalColumns], [baseColumns, additionalColumns]);
   const fixed = declared[0] ?? "";
   const legacy = opts?.legacyKeys ?? NO_LEGACY;
   const legacyKey = legacy.join("\u0001");
@@ -243,9 +264,14 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   const subscribe = useCallback((l: () => void) => subscribeMemory(KEY(storageKey), l), [storageKey]);
   const read = () => storedView(storageKey, legacy);
   const stored = useSyncExternalStore(subscribe, read, read);
-
-  const order = useMemo(() => visibleOrder(stored.order, declared), [stored.order, declared]);
-  const sort = visibleSort(stored.sort, declared);
+  const optionalKey = opts?.optional?.join("\u0001") ?? "";
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const optional = useMemo(() => [...additionalColumns, ...(opts?.optional ?? NO_LEGACY)], [additionalColumns, optionalKey]);
+  const drawn = selectedColumns(declared, stored.visibility, optional);
+  const availableOrder = useMemo(() => visibleOrder(stored.order, declared), [stored.order, declared]);
+  const order = availableOrder.filter((col) => drawn.includes(col));
+  const hidden = declared.filter((col) => !drawn.includes(col));
+  const sort = visibleSort(stored.sort, drawn);
 
   // Every change reads what is saved NOW rather than what this render saw, so
   // two quick changes cannot write over each other.
@@ -255,7 +281,9 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
 
   const toggleSort = useCallback((col: string) => {
     const cur = current();
-    const eff = visibleSort(cur.sort, declared);
+    const shown = selectedColumns(declared, cur.visibility, optional);
+    if (!shown.includes(col)) return;
+    const eff = visibleSort(cur.sort, shown);
     /**
      * THREE STATES, NOT TWO, AND THE THIRD IS THE ONE THAT MATTERS. A third
      * click clears the sort and puts the table back in the order its own page
@@ -265,26 +293,34 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
      */
     const next: TableSort = eff?.col !== col ? { col, dir: "desc" }
       : eff.dir === "desc" ? { col, dir: "asc" } : null;
-    save({ order: cur.order, sort: next });
-  }, [current, declared, save]);
+    save({ ...cur, sort: next });
+  }, [current, declared, optional, save]);
 
   const move = useCallback((col: string, before: string | null) => {
     const cur = current();
-    const next = moveColumn(cur.order, declared, col, before);
-    if (next) save({ order: next, sort: cur.sort });
-  }, [current, declared, save]);
+    const next = moveColumn(arrangeColumns(cur.order, declared), selectedColumns(declared, cur.visibility, optional), col, before);
+    if (next) save({ ...cur, order: next });
+  }, [current, declared, optional, save]);
 
   const nudge = useCallback((col: string, delta: -1 | 1) => {
     const cur = current();
-    const next = nudgeColumn(cur.order, declared, col, delta);
-    if (next) save({ order: next, sort: cur.sort });
-  }, [current, declared, save]);
+    const next = nudgeColumn(arrangeColumns(cur.order, declared), selectedColumns(declared, cur.visibility, optional), col, delta);
+    if (next) save({ ...cur, order: next });
+  }, [current, declared, optional, save]);
+
+  const setVisible = useCallback((col: string, visible: boolean) => {
+    if (col === fixed || !declared.includes(col)) return;
+    const cur = current();
+    save({ ...cur, order: arrangeColumns(cur.order, declared), visibility: { ...cur.visibility, [col]: visible } });
+  }, [current, declared, fixed, save]);
 
   const reset = useCallback(() => save({ order: [], sort: null }), [save]);
 
-  const isDefault = sort == null && order.every((c, i) => c === declared[i]);
+  const defaults = selectedColumns(declared, undefined, optional);
+  const isDefault = sort == null && order.length === defaults.length && order.every((c, i) => c === defaults[i]);
 
-  return { order, columns: declared, sort, toggleSort, move, nudge, reset, isDefault, fixed };
+  return { storageKey, availableOrder, hidden, setVisible, manualEditor: opts?.manualEditor ?? false,
+    order, columns: declared, baseColumns, additionalColumns, sort, toggleSort, move, nudge, reset, isDefault, fixed };
 }
 
 /**

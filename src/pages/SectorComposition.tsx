@@ -20,6 +20,7 @@ import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { fmtPct, fmtCurrency, changeColor, fmtDate } from "@/lib/format";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 import type { Position } from "@/lib/types";
 
 /** The sector table's columns, in the order its rows write their cells. */
@@ -247,11 +248,11 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
 }
 
 export function SectorComposition() {
-  const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const sectorView = useTableView("sectors", SECTOR_COLS);
+  const sectorView = useTableView("sectors", SECTOR_COLS, { reviewKind: "sector" });
   const companyView = useTableView("sector-companies", SECTOR_COMPANY_COLS);
-  const holdingView = useTableView("sector-holdings", SECTOR_HOLDING_COLS);
+  const holdingView = useTableView("sector-holdings", SECTOR_HOLDING_COLS, { reviewKind: "holding" });
   /**
    * THE SECTORS BEING COMPARED. `null` until the reader picks, which reads as
    * "the four largest" — a default of the largest by value is an ORDERING, not
@@ -478,7 +479,7 @@ export function SectorComposition() {
    * it, and the swatch colour is keyed on a sector's place in it — so the table
    * sorts a copy and never that array.
    */
-  const sectorRows = sortRows(sectors, sectorView.sort, {
+  const sectorRows = sortRows(sectors, sectorView.sort, withReviewAccessors<typeof sectors[number]>({
     sector: (x) => x.key,
     value: (x) => x.mv,
     // Weight is this sector's value over the page's, so it orders as Value does.
@@ -486,7 +487,7 @@ export function SectorComposition() {
     count: (x) => x.count,
     return: (x) => x.returnPct,
     top: (x) => x.top,
-  });
+  }, (s) => ({ sector: s.key }), memberScope.owners !== null));
 
   /**
    * THE COLOUR FOLLOWS THE SECTOR, NOT THE ROW. `CHART_COLORS[i % n]` keyed on a
@@ -1021,7 +1022,7 @@ export function SectorComposition() {
                 <tbody className="divide-y divide-ink-700/70">
                   {sectorRows.map((s) => {
                     const isOpen = expanded.has(s.key);
-                    const rows = sortRows(holdingsBySector[s.key] ?? [], holdingView.sort, {
+                    const rows = sortRows(holdingsBySector[s.key] ?? [], holdingView.sort, withReviewAccessors<Position>({
                       security: (h) => h.security,
                       entity: (h) => ownerOf(accIdx, h),
                       heldVia: (h) => ROUTE_LABEL[routeOf(h)],
@@ -1029,7 +1030,7 @@ export function SectorComposition() {
                       // A share of the sector's own value, so it orders as Value does.
                       share: (h) => h.marketValue,
                       return: (h) => (h.costUnavailable ? null : h.returnPct),
-                    });
+                    }, (h) => ({ positions: [h] }), memberScope.owners !== null));
                     const companies = sortRows(companiesBySector[s.key] ?? [], companyView.sort, {
                       company: (e) => e.name,
                       measured: (e) => (e.positions.length ? e.measured : null),
@@ -1039,7 +1040,7 @@ export function SectorComposition() {
                     });
                     return (
                       <Fragment key={s.key}>
-                        <Tr view={sectorView} className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(s.key)} aria-expanded={isOpen}
+                        <Tr view={sectorView} reviewScope={{ sector: s.key }} className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(s.key)} aria-expanded={isOpen}
                           data-sector-row={s.key}>
                           <td className="px-3 py-2">
                             {/* THE `title` GOES ON THE EXISTING SPAN, never on a new one
@@ -1100,7 +1101,7 @@ export function SectorComposition() {
                         </Tr>
                         {isOpen && (
                           <tr className="bg-ink-900/50">
-                            <td colSpan={SECTOR_COLS.length} className="px-3 pb-3 pt-1">
+                            <td colSpan={sectorView.order.length} className="px-3 pb-3 pt-1">
                               <div className="overflow-hidden rounded-lg border border-ink-700 bg-ink-800">
                                 <div className="max-h-[320px] overflow-auto">
                                   {consolidatedView ? (
@@ -1163,7 +1164,7 @@ export function SectorComposition() {
                                       </thead>
                                       <tbody className="divide-y divide-ink-700/50">
                                         {rows.map((h) => (
-                                          <Tr view={holdingView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/30">
+                                          <Tr view={holdingView} reviewScope={{ positions: [h] }} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/30">
                                             <td className="px-3 py-1.5 text-slate-200"><StockLink securityKey={h.securityKey} name={h.security} /></td>
                                             <td className="px-3 py-1.5 text-slate-400">{ownerOf(accIdx, h)}</td>
                                             <td className="px-3 py-1.5 text-[11.5px] text-slate-500" title={ROUTE_NOTE[routeOf(h)]}>{ROUTE_LABEL[routeOf(h)]}</td>

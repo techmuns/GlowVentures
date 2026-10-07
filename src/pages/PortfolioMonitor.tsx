@@ -93,6 +93,8 @@ import {
   TREE_ROW_DENSE, TREE_CELL_DENSE, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
 } from "@/components/TreeTable";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
+import { withReviewAccessors, type ReviewScope } from "@/lib/reviewColumns";
+import { EditColumns } from "@/components/EditColumns";
 
 /**
  * ── THROUGH WHAT MEANS A NAME IS HELD — one entry per ACCOUNT ───────────────
@@ -508,6 +510,9 @@ type Row = {
    */
   measuredNA?: boolean;
 };
+const monitorReviewScope = (r: Row): ReviewScope => r.kind === "mandate"
+  ? { accountId: r.mandate?.accountId, isMandate: true }
+  : r.measuredNA ? {} : { positions: r.trancheSet, securityKey: r.securityKey };
 /**
  * ── WHICH ROWS A FUND LOOK-THROUGH CAN SPEAK FOR ────────────────────────────
  *
@@ -959,7 +964,7 @@ export function PortfolioMonitor() {
   const holdCols = useMemo(
     () => withReturnCols(bySecurity ? MONITOR_STOCK_COLS : MONITOR_COLS, returnMeasures),
     [bySecurity, returnMeasures]);
-  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS });
+  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true });
   /**
    * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
    * figure it prints rather than on `returnPct` for all of them.
@@ -968,8 +973,8 @@ export function PortfolioMonitor() {
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
     // after one; these accessors are only ever called from `sortRows` under it,
     // so the fallback is unreachable rather than a default date standing in.
-    () => ({ ...MONITOR_ACCESSORS, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(r, m, portfolio?.asOf ?? "")) }),
-    [returnMeasures, portfolio?.asOf]);
+    () => withReviewAccessors<Row>({ ...MONITOR_ACCESSORS, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(r, m, portfolio?.asOf ?? "")) }, monitorReviewScope, memberScope.owners !== null),
+    [returnMeasures, portfolio?.asOf, memberScope.owners]);
   // ORDER-INDEPENDENT BY CONSTRUCTION: a span struck on the view's own column
   // count cannot drift from the header when a reader moves a column, where the
   // literal it replaced had to be kept in step by hand.
@@ -2524,7 +2529,7 @@ export function PortfolioMonitor() {
   // "nobody measured it".
   type ChildCells = Partial<Record<"qty" | "avgCost" | "invested" | "investedOn" | "cmp" | "day" | "mv"
     | "viaFunds" | "totalExposure" | "weight" | "pnl" | "realised" | "sector" | "entity", ReactNode>>
-    & { ret?: (measure: ReturnMeasure) => ReactNode };
+    & { ret?: (measure: ReturnMeasure) => ReactNode; reviewScope?: ReviewScope };
   const CHILD_NUM = `${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-400`;
   /** A child's cells, in the table's DECLARED column order — which is what `<Tr>` permutes from. */
   const childTds = (c: ChildCells) => [
@@ -2632,7 +2637,7 @@ export function PortfolioMonitor() {
     /** A line that opens rows of its own — a fund line into its instruments. */
     toggle?: { open: boolean; label: string };
   }, cells: ChildCells, data: Record<string, string | number | undefined> = {}, adjust = false) => (
-    <Tr view={holdView} key={key}
+    <Tr view={holdView} reviewScope={cells.reviewScope} key={key}
       className={`${adjust ? TREE_ROW_DENSE.adjust : TREE_ROW_DENSE.child}${name.toggle ? " cursor-pointer" : ""}`}
       {...(name.toggle ? rowToggle(() => toggleRow(key)) : {})}
       data-tree-child={kind} {...data}>
@@ -2921,6 +2926,7 @@ export function PortfolioMonitor() {
         sub: m.accountMV > 0 ? `${((h.marketValue / m.accountMV) * 100).toFixed(1)}% of the mandate` : undefined,
         last: i === m.holdings.length - 1,
       }, {
+        reviewScope: { securityKey: h.securityKey, accountId: h.accountId },
         qty: h.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(h.quantity),
         avgCost: h.costNA ? <AbsentCell reason={NO_COST_LINE} />
           : h.avgCost === null ? <AbsentCell reason={h.quantity === null ? NO_UNIT_COUNT : h.quantity === 0 ? "this line holds no units to divide its cost by" : "this provider prints no per-unit cost for the holding"} />
@@ -3028,6 +3034,7 @@ export function PortfolioMonitor() {
           ? <> · {(v.share * 100).toFixed(1)}% of the {asClass ? "fund" : "holding"}</> : null}</>,
         last: lastLine,
       }, {
+        reviewScope: { positions: v.positions },
         qty: v.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(v.quantity),
         avgCost: v.costNA ? <AbsentCell reason={NO_COST_LINE} />
           : v.avgCost === null ? <AbsentCell reason={v.quantity === null ? NO_UNIT_COUNT : "this line holds no units to divide its cost by"} />
@@ -3337,6 +3344,7 @@ export function PortfolioMonitor() {
           the account's real dated purchases and redemptions here.
         */}
         <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} source={returnSource} />
+        {view === "holdings" && <EditColumns view={holdView} />}
         {/* EXPAND ALL — the standard's one control for every row the table can
             open. Beside the return picker, with the other controls that arrange
             the table rather than narrow it; absent on the security axis, where
@@ -3799,7 +3807,7 @@ export function PortfolioMonitor() {
                            one, not the footer's three — so it permutes like an
                            ordinary row and stays cell-for-cell under the
                            headings above it. */
-                        <Tr view={holdView} className={`${TREE_ROW_DENSE.total} font-semibold`}
+                        <Tr view={holdView} reviewScope={activeAxis === "basket" ? { basket: grp.key } : activeAxis === "assetClass" ? { category: grp.key } : undefined} className={`${TREE_ROW_DENSE.total} font-semibold`}
                           data-category-total={grp.key}
                           // ── WHAT A LINE HELD AT COST TAKES OUT OF THE COVERAGE
                           //    (Stage 10dh) ─────────────────────────────────────
@@ -4074,7 +4082,7 @@ export function PortfolioMonitor() {
                           popover inside it, which keep their own meaning: the
                           name still opens the holding's page, a formula still
                           opens its arithmetic. */}
-                      <Tr view={holdView} className={expandable ? TREE_ROW_DENSE.parent : "hover:bg-ink-700/40"}
+                      <Tr view={holdView} reviewScope={monitorReviewScope(r)} className={expandable ? TREE_ROW_DENSE.parent : "hover:bg-ink-700/40"}
                         {...(expandable ? rowToggle(() => toggleRow(r.key)) : {})}
                         data-tree-parent={expandable ? (isOpen ? "open" : "closed") : undefined}
                         {...(contributions > 0 ? { "data-tranche-rows": String(contributions) } : {})}

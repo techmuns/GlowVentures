@@ -32,7 +32,7 @@
  *      ONE — an identifier, not a name: a renamed ticker keeps its ISIN. There is
  *      no fuzzy tier. HEG (renamed HEG Advanced Material, now HEGAM) was the
  *      case that stayed unmapped, because the book carries no ISIN for it. It
- *      maps since Stage 10dj, and not through this rule: `build-nse-symbols`
+ *      maps since Stage 10dk, and not through this rule: `build-nse-symbols`
  *      carries a cited `heg → HEGAM` override, `build-book` puts HEGAM on the
  *      position, and rule 1 then matches it exactly. A symbol that still has no
  *      match is named in the report, and `/api/quotes` falls back to the muns

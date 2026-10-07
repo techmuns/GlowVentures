@@ -672,7 +672,7 @@ export function Polycab() {
                   })}
                   {actionRows.length === 0 && (
                     <tr>
-                      <td colSpan={ACTION_COLS.length} className={`${CELL} text-[12px] text-slate-500`}>
+                      <td colSpan={actionView.order.length} className={`${CELL} text-[12px] text-slate-500`}>
                         <AbsentCell reason="the exchange's corporate-action record could not be read on the last refresh, so no declared action is listed" />
                       </td>
                     </tr>
@@ -748,7 +748,7 @@ export function Polycab() {
                   })}
                   {quarterRows.length === 0 && (
                     <tr>
-                      <td colSpan={QUARTER_COLS.length} className={CELL}>
+                      <td colSpan={quarterView.order.length} className={CELL}>
                         <AbsentCell reason="no promoter disclosure could be read on the last refresh, and none is stored" />
                       </td>
                     </tr>

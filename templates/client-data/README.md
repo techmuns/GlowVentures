@@ -15,7 +15,24 @@ It combines the two example formats:
 
 The workbook holds **demo data only**: a fictional family, fictional
 securities and fictional figures. Nothing from either client's file is in it.
-This folder does not touch the dashboard, and nothing in the app reads it.
+The dashboard's **Data Audit → Consolidated Sheet** now uses this format with
+Glow Ventures' actual data. `src/data/consolidatedTemplate.json` records the
+visible register columns from this template; fictional demo data is never used.
+`src/lib/consolidatedSheet.ts` projects the canonical book and reconciled archive
+into all 17 tabs during `npm run build:views` (also run before dev, build and tests).
+Newly wired statements therefore update the same sheet on the next deployment.
+The sheet is a view of the canonical book, not a separately edited data store.
+
+Data Audit opens on Portfolio Allocation. Original statement tables are retained
+in the collapsed **Sources** footnote; existing source deep links open it directly.
+Summary links lead to detail tabs, and **Download Excel** exports all 17 tabs with
+typed values, dates and internal navigation. Excel is a dated snapshot of the
+displayed revision. Registers use full INR; summary views use ₹ Crore.
+
+Unavailable period snapshots, benchmark returns, current tax-lot inputs and basket
+targets stay blank, with coverage explained in the sheet notes and Checks.
+Realised lots retain any source-stated grandfathering FMV and effective tax cost.
+Statement dates, at-cost holdings and unvalued units remain explicit.
 
 ## How it is laid out
 

@@ -925,6 +925,53 @@ function datedTableChecks(docs) {
       }
       if (isNum(c.balance)) prev = c.balance;
     }
+
+    /**
+     * A SAVINGS STATEMENT'S OWN FOUR PRINTED FIGURES, SET AGAINST ITS OWN ROWS.
+     *
+     * `bankStatement.mjs` already ties all of this in PAISE INTEGERS and
+     * publishes nothing at all where it does not, so this is not a second
+     * chance for the reader. It is a second PATH, struck on the ARCHIVE the
+     * book actually reads: a merge, a replay or a hand-edit that moved a row
+     * after extraction is a break this reports and the reader cannot see.
+     *
+     * Held to the PAISE (tolerance 0, in rupees after `round2`). Every figure a
+     * bank prints is exact to two decimals and no step is struck on a rounded
+     * rate, so there is no residual for a tolerance to cover — the allowance
+     * that exists for a four-decimal trade rate would only hide a misread
+     * paisa here.
+     *
+     * WHERE THE STATEMENT PRINTS NO OPENING BALANCE the chain starts at the
+     * first row's own printed balance and that row's step is NOT CHECKED.
+     * ICICI prints none, so its opening is derived from the first row and
+     * `flows.openingBalance` is null; checking row 1 against a figure derived
+     * from row 1 would be a check comparing a figure with its own copy.
+     */
+    const bank = (doc.cashFlows ?? []).filter((c) => c.kind === "bank-statement");
+    if (bank.length) {
+      const f = doc.flows ?? {};
+      let bal = isNum(f.openingBalance) ? f.openingBalance : null;
+      let debits = 0;
+      let credits = 0;
+      for (const c of bank) {
+        const d = isNum(c.debit) ? c.debit : 0;
+        const cr = isNum(c.credit) ? c.credit : 0;
+        debits += d;
+        credits += cr;
+        if (bal !== null) {
+          add(doc, "bank statement running balance", `${c.date} ${c.description}`,
+            round2(bal + cr - d), c.balance, 0);
+        }
+        // A row whose own balance could not be read breaks the chain rather
+        // than being carried forward from the row before it, which would make
+        // the next row's step look right over two rows' movement.
+        bal = isNum(c.balance) ? c.balance : null;
+      }
+      add(doc, "bank statement totals", "debits", round2(debits), f.debits, 0);
+      add(doc, "bank statement totals", "credits", round2(credits), f.credits, 0);
+      const last = bank[bank.length - 1];
+      add(doc, "bank statement totals", "closing balance", last.balance, f.closingBalance, 0);
+    }
   }
 
   // Realised gain: the lots against the account's own statement of it. Same
