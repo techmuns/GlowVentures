@@ -11319,9 +11319,9 @@ const WITHHELD_PILL = [
  * of gainers the card must show on the `cio-live` walk.
  *
  * *"we will only show direct equity as default."* The claim that the card
- * covers THAT SET cannot be checked on the ROWS: the lists show six, and on any
- * day the mandate names happen not to move a rows-only assertion passes over a
- * card that had quietly widened.
+ * covers THAT SET cannot be checked on the ROWS alone: since Stage 10di the lists
+ * show every name, but on any day the mandate names happen not to move a
+ * rows-only assertion still passes over a card that had quietly widened.
  *
  * It can be checked on the COUNT. Every fixture price is the mark × 1.10, so
  * every priceable name rises and the gainer count is exactly the size of the
@@ -11336,6 +11336,35 @@ const WITHHELD_PILL = [
  * is the independent check, and a check that imports the helper it is checking
  * agrees with itself by construction.
  */
+/**
+ * EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10di).
+ *
+ * *"IT is showing 18 top gainers and losers so we need to show the complete
+ * list and not just the top 6."* Each list's heading counts every name that
+ * moved that way, and the rows drawn under it must be exactly that many — read
+ * off the list's own heading and its own `data-mover-row`s, so a cap put back
+ * at any length fails rather than a cap at six alone. And the gainers must be
+ * the whole priced Direct Equity scope, derived from the book: a list and a
+ * heading both cut to the same wrong number would agree with each other.
+ */
+const MOVERS_FULL_LIST = [
+  ["every gainer and every loser is listed — each list draws as many rows as its heading counts", (t, ctx) => {
+    const totals = ctx?.cioLayout?.moverTotals;
+    const rows = ctx?.cioLayout?.moverRows;
+    if (!totals || !rows) return false;
+    for (const [k, id] of [["gain", "movers-gain"], ["loss", "movers-loss"]]) {
+      const head = totals[k]?.heading;
+      if (head == null) return false;
+      const m = /^(\d+)\s+(?:gainer|loser)s?$/i.exec(head);
+      if (!m) return false;
+      if (rows.filter((r) => r.list === id).length !== Number(m[1])) return false;
+    }
+    if (PRICED_DIRECT_EQUITY == null) return { notChecked: "the book could not be read, so the priced scope could not be derived" };
+    return rows.filter((r) => r.list === "movers-gain").length === PRICED_DIRECT_EQUITY.ranked
+      && PRICED_DIRECT_EQUITY.ranked > 6;
+  }],
+];
+
 const PRICED_DIRECT_EQUITY = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -17961,28 +17990,49 @@ const CIO_ALLOC = [
     return ctx.allocTable.links >= 2;
   }],
   /**
-   * ── THE BAR CHART OPENS WHAT ITS ROW OPENS ────────────────────────────────
+   * ── THE PIE OPENS WHAT ITS ROW OPENS (Stage 10di) ─────────────────────────
    *
-   * *"the bar graphs should also be clickable just like the rows in the table
-   * and should show the same drill down pages as the table ones do."* So the
-   * claim is a PAIRING, not a count: one bar per section, and each bar's href is
-   * its row's href — both null where the row is a non-clickable fund-of-funds
-   * line. Struck on `data-alloc-bar` against `data-alloc-row`, so a bar that
-   * quietly pointed elsewhere (or stopped being a link) is a failure rather than
-   * a page that still renders every figure correctly. Verified by reintroducing
-   * both bugs — a bar with a wrong href, and a bar that is not a link.
+   * *"In the allocation by asset class and mandate in all the tabs replace bar
+   * graph with pie chart."* Three claims, none implying another:
+   *
+   * 1. The chart IS a pie and the bar chart is gone — struck on the handles,
+   *    because a page drawing both renders every figure correctly.
+   * 2. Every legend entry and every wedge opens its row's drill-down — the
+   *    PAIRING the bar chart was held to (Stage 10ac's "the bar graphs should
+   *    also be clickable just like the rows"), null against null for a
+   *    fund-of-funds line that is not a link.
+   * 3. Each wedge's angle is its section's share of the positive total, read
+   *    off the legend's own values, and only a section worth more than zero
+   *    draws one — a pie cannot draw ₹0 or a payable, and a wedge for one
+   *    would be a slice of nothing.
    */
-  ["every allocation bar opens the same drill-down as its row", (t, ctx) => {
+  ["the allocation chart is a pie, and the bar chart is gone", (t, ctx) => {
     const a = ctx?.allocTable;
     if (!a) return { notChecked: "the allocation table was not found on this run" };
-    if (!a.bars || !a.bars.length) return false;   // the chart must be there
+    return a.barChart === 0 && Array.isArray(a.wedges) && a.wedges.length >= 1;
+  }],
+  ["every pie slice and wedge opens the same drill-down as its row", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not found on this run" };
+    if (!a.slices || !a.slices.length || !a.wedges) return false;
     const rowKeys = Object.keys(a.rowHrefs);
-    // one bar per row (keys are unique per section, so equal counts plus every
-    // bar key being a row key means the two sets coincide), and each bar's
-    // destination is its row's — null against null for a non-clickable line.
-    if (a.bars.length !== rowKeys.length) return false;
-    return a.bars.every((b) => Object.prototype.hasOwnProperty.call(a.rowHrefs, b.key)
-      && b.href === a.rowHrefs[b.key]);
+    const has = (k) => Object.prototype.hasOwnProperty.call(a.rowHrefs, k);
+    if (a.slices.length !== rowKeys.length) return false;
+    if (!a.slices.every((s) => has(s.key) && s.href === a.rowHrefs[s.key])) return false;
+    return a.wedges.every((w) => has(w.key) && (w.href ?? null) === a.rowHrefs[w.key]);
+  }],
+  ["each wedge is its section's share of the pie, and only a positive section draws one", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not found on this run" };
+    if (!a.slices?.length || !a.wedges) return false;
+    const positive = a.slices.filter((s) => Number.isFinite(s.value) && s.value > 0);
+    const total = positive.reduce((x, s) => x + s.value, 0);
+    if (total <= 0) return a.wedges.length === 0;
+    if (a.wedges.length !== positive.length) return false;
+    const byKey = new Map(positive.map((s) => [s.key, s.value]));
+    const sum = a.wedges.reduce((x, w) => x + w.share, 0);
+    return Math.abs(sum - 1) < 1e-4
+      && a.wedges.every((w) => byKey.has(w.key) && Math.abs(w.share - byKey.get(w.key) / total) < 1e-5);
   }],
   /**
    * ── THE ROADMAP PLACEHOLDER IS GONE, AND THE OLDER CLAIM STILL HOLDS ───────
@@ -29213,6 +29263,7 @@ const INVARIANTS = {
         return g.text === "—" && g.absent === priceOnly
           && new RegExp(`^No total: ${priceOnly} of these ${ranked} names? ha(?:s|ve) an unverified share count`).test(g.title ?? "");
       }],
+    ...MOVERS_FULL_LIST,
     /**
      * EVERY DRAWN ROW'S MONEY CELL IS THE BOOK'S ANSWER FOR THAT NAME (Stage
      * 10dc), held row by row against the names the book says are withheld. A
@@ -37733,16 +37784,25 @@ for (const theme of THEMES) {
            */
           buttons: [...t.querySelectorAll("tbody button, tfoot button")].length,
           links: t.querySelectorAll("a[href]").length,
-          // THE BAR CHART ABOVE THE TABLE, paired with the rows below it. Each
-          // bar carries `data-alloc-bar` (its section key) and IS the same
-          // `<Link>` its row is, so a bar and its row must open the same
-          // drill-down — and a fund-of-funds row that is not a link has a bar
-          // that is not one either. `rowHrefs` is the row's own destination per
-          // key; the invariant holds `bars` to it.
-          bars: [...document.querySelectorAll("main [data-alloc-bars] [data-alloc-bar]")].map((el) => ({
-            key: el.getAttribute("data-alloc-bar"),
+          // THE PIE ABOVE THE TABLE, paired with the rows below it (Stage 10di).
+          // Each legend entry carries `data-alloc-slice` (its section key) and
+          // IS the same `<Link>` its row is; each wedge carries
+          // `data-alloc-wedge`, the same destination as `data-href`, and its
+          // share of the pie as `data-alloc-share`. `rowHrefs` is the row's own
+          // destination per key; the invariants hold both to it.
+          slices: [...document.querySelectorAll("main [data-alloc-pie] [data-alloc-slice]")].map((el) => ({
+            key: el.getAttribute("data-alloc-slice"),
             href: el.matches("a[href]") ? el.getAttribute("href") : null,
+            value: Number(el.getAttribute("data-alloc-value")),
           })),
+          wedges: [...document.querySelectorAll("main [data-alloc-pie] svg [data-alloc-wedge]")].map((el) => ({
+            key: el.getAttribute("data-alloc-wedge"),
+            href: el.getAttribute("data-href"),
+            share: Number(el.getAttribute("data-alloc-share")),
+            tag: el.tagName.toLowerCase(),
+          })),
+          // The bar chart this replaced, which must stay gone.
+          barChart: document.querySelectorAll("main [data-alloc-bars], main [data-alloc-bar]").length,
           rowHrefs: Object.fromEntries([...t.querySelectorAll("tbody tr[data-alloc-row]")].map((r) => {
             const a = r.querySelector("a[href]");
             return [r.getAttribute("data-alloc-row"), a ? a.getAttribute("href") : null];
@@ -37892,6 +37952,9 @@ for (const theme of THEMES) {
             const pill = root.firstElementChild?.lastElementChild;
             const absent = root.querySelector("[data-mover-total-absent]");
             return [k, {
+              /* The list's own heading — "15 gainers" — which is the count its
+                 rows must reach since Stage 10di lists every mover. */
+              heading: (root.firstElementChild?.firstElementChild?.textContent ?? "").trim(),
               text: (pill?.textContent ?? "").trim(),
               absent: absent ? Number(absent.getAttribute("data-mover-total-absent")) : null,
               title: absent?.getAttribute("title") ?? null,

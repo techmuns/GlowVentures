@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
+import { AllocationPie } from "@/components/AllocationPie";
 import { Pill } from "@/components/Pill";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
 import { StockLink } from "@/components/StockLink";
@@ -969,11 +970,6 @@ export function MorningCIO() {
     // Weight is `current ÷ the book`, so it orders exactly as Current does.
     weight: (b) => b.current,
   });
-  // The bar chart above the table scales each bar against the LARGEST bucket's
-  // current value, so the biggest fills the track and the rest read proportional
-  // to it. The actual figure and weight print beside every bar, so the bar is a
-  // visual encoding rather than one of the page's figures.
-  const maxCurrent = Math.max(0, ...sections.map((b) => b.current));
   /**
    * HOW MUCH OF THIS VIEW THE FAMILY NAMED PRODUCT BY PRODUCT, summed off the
    * rows on screen rather than recomputed from the book — a caption struck on a
@@ -1548,52 +1544,29 @@ export function MorningCIO() {
                 </Pill>
               </div>
             }>
-            {/* THE ALLOCATION BAR CHART, above the table. The donut this replaced
-                was removed for restating the Weight column as a wedge; a horizontal
-                bar chart is the same encoding without the wasted centre, and it
-                fills the space the donut's removal left below the table (the card
-                is `self-start`, so its height is its content).
+            {/* THE ALLOCATION PIE, above the table (Stage 10di) — *"in all the
+                tabs replace bar graph with pie chart."* It replaced a bar chart,
+                which had replaced a donut; the pie is drawn on every axis, and
+                the legend beside it is the bar list's figures.
 
-                EACH BAR IS THE SAME LINK ITS ROW IS. A `fromPositions` section is a
-                `<Link>` to `drilldownHref(AXIS_SCOPE[allocAxis], b.key)` — the exact
-                href the row builds — so a bar and its row open the same drill-down;
-                a fund-of-funds row carries no positions and its bar is a plain
-                `<div>`, exactly as the row is not a link. The bar WIDTH is relative
-                to the largest bucket; the value and weight print beside it, so the
-                bar encodes nothing the row does not also state as a figure. Keyed by
-                `data-alloc-bar` so `check:pages` can pair each bar with its row. */}
-            <div className="mb-5 flex flex-col gap-2" data-alloc-bars>
-              {sections.map((b) => {
-                const pct = m.totalValue > 0 ? (b.current / m.totalValue) * 100 : 0;
-                const barW = maxCurrent > 0 ? (b.current / maxCurrent) * 100 : 0;
-                const inner = (
-                  <>
-                    <span className="flex min-w-[8.5rem] max-w-[8.5rem] items-center gap-2 text-sm font-medium text-slate-100">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                      <span className="truncate">{sectionLabel(b.key)}</span>
-                    </span>
-                    <span className="relative h-3 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(148,163,184,0.16)" }}>
-                      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${barW}%`, background: b.color }} />
-                    </span>
-                    <span className="mono w-24 shrink-0 text-right text-sm text-slate-200 whitespace-nowrap">{money(b.current)}</span>
-                    <span className="w-14 shrink-0 text-right text-xs text-slate-400">{m.totalValue > 0 ? `${pct.toFixed(1)}%` : DASH}</span>
-                  </>
-                );
-                return b.fromPositions ? (
-                  <Link key={b.key} data-alloc-bar={b.key} to={drilldownHref(AXIS_SCOPE[allocAxis], b.key)}
-                    title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`}
-                    className="flex items-center gap-3 rounded px-1 py-1 transition-colors hover:bg-ink-700/40 hover:text-champagne-400">
-                    {inner}
-                  </Link>
-                ) : (
-                  <div key={b.key} data-alloc-bar={b.key} data-alloc-bar-static
-                    className="flex items-center gap-3 rounded px-1 py-1"
-                    title="This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.">
-                    {inner}
-                  </div>
-                );
-              })}
-            </div>
+                EACH WEDGE AND EACH LEGEND ENTRY IS THE SAME LINK ITS ROW IS — the
+                exact `drilldownHref(AXIS_SCOPE[allocAxis], b.key)` the row builds —
+                and a fund-of-funds line opens nothing, exactly as its row is not
+                a link. Keyed by `data-alloc-slice` / `data-alloc-wedge` so
+                `check:pages` pairs each with its row and checks each angle. */}
+            <AllocationPie
+              ariaLabel={`${ALLOC_TITLE[allocAxis]} — pie chart`}
+              slices={sections.map((b) => ({
+                key: b.key,
+                label: sectionLabel(b.key),
+                value: b.current,
+                color: b.color,
+                href: b.fromPositions ? drilldownHref(AXIS_SCOPE[allocAxis], b.key) : null,
+                valueText: money(b.current),
+                weightText: m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH,
+                title: `Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`,
+                staticTitle: "This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.",
+              }))} />
             <div className="overflow-x-auto">
                 {/* `data-alloc-table` / `data-alloc-axis` are the STRUCTURAL handle
                     this table is asserted through. `check:pages` used to find it
