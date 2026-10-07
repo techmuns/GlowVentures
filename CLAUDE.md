@@ -575,18 +575,19 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** EIGHT DELIVERIES, and every one stays:
+**What is actually in `source/` today.** NINE DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder,
-`august-2026-b/` to `august-2026-f/` — statements that arrived after it — and
-`september-2026/`, the client's `Jaisinghani_Reports.zip` (Stage 10da). **ALL EIGHT
+`august-2026-b/` to `august-2026-f/` — statements that arrived after it —
+`september-2026/`, the client's `Jaisinghani_Reports.zip` (Stage 10da), and
+`october-2026/`, Green Lantern 510861 since inception (Stage 10dj). **ALL NINE
 have been through `npm run extract`**: `august-2026-f/`'s two outlined-text
 statements are read by rendering their glyphs (see its own section) and its third
 file is a register held out of the book by decision. 38 provider names in the
 archive — ASK's PMS, the ASK Absolute Return Fund and Marathon are the newest —
 **64 accounts** in the book, seven holders (three of them family trusts, Stage 10db)
-and one `Not attributed to a member` bucket (Stage 10dh), and **361 leaf
-files** — of which **307 documents** are in the archive (18 of them spreadsheet
-exports read as WITNESSES of the PDF beside each), 238 read fully, 66 partially and
+and one `Not attributed to a member` bucket (Stage 10dh), and **363 leaf
+files** — of which **309 documents** are in the archive (18 of them spreadsheet
+exports read as WITNESSES of the PDF beside each), 242 read fully, 64 partially and
 **exactly ONE not at all**:
 
 - Bharat's HDFC NSDL holding statement from `august-2026-e/`, which is a SCAN —
@@ -610,7 +611,8 @@ Measured on the September 2026 delivery (Stage 10da): 277 read, 4 read via a
 byte-identical twin, 18 read as witnesses of the PDF beside them, 2 held out by
 decision, 58 macOS `__MACOSX/._*` resource forks (checked per file for a `%PDF`
 header, never assumed from the path), 2 password notes excluded by policy, and
-**0 unread** — 361 leaf files. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
+**0 unread** — 361 leaf files. On the October 2026 delivery (Stage 10dj) it is 363
+leaf files, 279 read, and still **0 unread**. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
 paragraph come from it and from `docs/BOOK-REPORT.md`, and should be re-read from
 them rather than edited to taste.
 
@@ -26402,6 +26404,40 @@ page will remain the same."*
 `cio-scope-unknown`), every expectation derived from `glowData.ts`; and a
 `check:family` walk that clicks the selector, ticks two, follows a sidebar link
 and goes back to the whole family.
+
+### Stage 10dj — GREEN LANTERN 510861 SINCE INCEPTION, AND A REGISTER LONGER THAN ITS WINDOW
+
+*"integrate this new data from the client into the dashboard data without any
+logical/calculation errors"* — `source/october-2026/`: Green Lantern 510861's
+capital register and transaction statement, both since inception (16 Jan 2025 →
+22 Sep 2026). 516 trades and 48 register rows reach the archive (309 documents).
+**`BOOK_SUMMARY` does not move, and `glowData.ts` is byte-identical to main.**
+
+- **A header label printed ABOVE the header line.** The transaction statement
+  prints "Settlement" above its header and "Date" below it. `findTable` takes
+  that line as a donor only with `labelLineAbove` (the PMS transaction reader
+  opts in), only if nothing else on it reads as a label or a figure, and only
+  where it maps strictly more columns. Re-reading all 21 archived PDF
+  transaction statements gives the same trades; V.E.C's two now fill their
+  settlement dates.
+- **A register from inception prints no opening-balance row.** Its first
+  balance is its own amount, so it opens from nil, and its walk is witnessed.
+- **The money-weighted window is cut to [opening value date, account as-of].**
+  Read whole, the register put the ₹10 Cr Corpus Deposit in twice (as itself
+  and inside the 1 Apr 2026 opening value) and eleven TDS rows (₹30,846.80)
+  after 27 Jul into a value that does not hold them yet. Measured with the cut
+  removed: the tile reads 24.1% over 574 days instead of 26.5% over 134.
+- **A dated capital move after its account's value date is named, not listed.**
+- **The register ties to the manager's own Net Capital In/Out** (FY and since
+  inception) once the two TDS rows dated 10 Aug, the statement's own day, are
+  left out — named in `docs/BOOK-REPORT.md`.
+
+**Checks:** `pmsReaders.test.mjs` (the donor line, both ways, and a header that
+already reads is unchanged), `accountXirr.test.ts` (every flow inside its
+window, no move after its account's value date) and
+`capitalRecordArchive.test.ts` (register days after the value date are ABSENT,
+load-bearing on this register). Six bugs put back, each caught: donor off,
+donor removed, donor winning ties, and the opening, closing and value-date cuts.
 
 ### Stage 10k — News & Announcements: REMOVED
 
