@@ -235,7 +235,7 @@ const SECTION_COPY: Record<BookSectionId, { title: string; marker: ReactNode; de
    * arrival, because they are most of the private book's value; a band of their
    * own, because a return struck over them would be a 0% nobody measured.
    */
-  atCost: { title: "Held at cost", marker: null, defaultOpen: true },
+  atCost: { title: "Private Companies ( Held at cost )", marker: null, defaultOpen: true },
   unvalued: {
     title: "Not valued",
     marker: <Pill tone="warn" className="whitespace-nowrap">missing data</Pill>,
@@ -974,7 +974,7 @@ export function PrivateMarket() {
         tableCounts.noNavFunds ? `${tableCounts.noNavFunds} with no NAV` : null,
       ].filter(Boolean).join(" · "),
       detail: `Every fund row the table draws: the ${tableCounts.valuedFunds} under Private funds, each counted once however many folios hold it`
-        + (tableCounts.atCostFunds ? `, the ${tableCounts.atCostFunds} under Held at cost, which the family's consolidated review records at what was paid and no valuation` : "")
+        + (tableCounts.atCostFunds ? `, the ${tableCounts.atCostFunds} under ${SECTION_COPY.atCost.title}, which the family's consolidated review records at what was paid and no valuation` : "")
         + (tableCounts.noNavFunds ? `, and the ${tableCounts.noNavFunds} under Not valued, which publish no NAV` : "")
         + ".",
     },
