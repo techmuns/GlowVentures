@@ -1327,14 +1327,34 @@ const HELD_BOOK = (() => {
         fundLines: linesOf(key),
       };
     };
-    let only = null;
+    /**
+     * A COMPANY HELD ONLY INSIDE FUNDS COMES IN TWO KINDS SINCE Stage 10di, and
+     * the Price & returns and Research tabs treat them differently on purpose.
+     * `build-symbols`' fill-only second pass reads a fund's own disclosure, so
+     * 33 of the 475 such companies resolve an NSE symbol (13 already did on
+     * main, through a depository's recorded line) — HDFC Bank, the largest,
+     * among the 20 the pass added — and the page looks their price history and
+     * research up by it. The rest still have none, and those tabs say once why.
+     * Main walked only the largest, which had no symbol, so its symbol branch
+     * was checked by nothing. One subject per kind,
+     * each the largest of its kind, read off the committed symbol map rather
+     * than off the page; `fundsOnly` itself stays the largest of either, because
+     * the Position, Transactions and My targets tabs do not depend on a symbol.
+     */
+    let symbols = {};
+    try { symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8")); } catch { /* none */ }
+    let only = null, onlyNoSym = null, onlySym = null;
     for (const e of SECURITY_AXIS_BOOK.derivedByKey.values()) {
       if (byKey.has(e.key)) continue;
       if (!only || e.value > only.value) only = e;
+      if (symbols[e.key]) { if (!onlySym || e.value > onlySym.value) onlySym = e; }
+      else if (!onlyNoSym || e.value > onlyNoSym.value) onlyNoSym = e;
     }
     return {
       both: both ? company(both.key) : null,
       fundsOnly: only ? company(only.key) : null,
+      fundsOnlyNoSym: onlyNoSym ? company(onlyNoSym.key) : null,
+      fundsOnlySym: onlySym ? { ...company(onlySym.key), symbol: symbols[onlySym.key] } : null,
       fundHolding: Object.fromEntries(fundHolding),
       aifCount: SECURITY_AXIS_BOOK.aifCount,
     };
@@ -8347,8 +8367,14 @@ const ROUTES = [
   // family's own to split, and Price & returns and Research each say once why a
   // company no statement names has no symbol looked up.
   ["stock-funds-only-activity", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=activity` : "/stock/no-company-held-only-inside-funds?tab=activity")],
-  ["stock-funds-only-market", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=market` : "/stock/no-company-held-only-inside-funds?tab=market")],
-  ["stock-funds-only-research", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=research` : "/stock/no-company-held-only-inside-funds?tab=research")],
+  // Those two walk the largest such company WITH NO NSE SYMBOL (Stage 10di):
+  // a disclosure now resolves a symbol for 30 of them, and the page looks a
+  // symbol's price history and research up — so the largest of all, HDFC Bank,
+  // would walk the other branch. The `-sym` pair walks that branch.
+  ["stock-funds-only-market", () => (HELD_BOOK?.fundsOnlyNoSym ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnlyNoSym.key)}?tab=market` : "/stock/no-company-held-only-inside-funds?tab=market")],
+  ["stock-funds-only-research", () => (HELD_BOOK?.fundsOnlyNoSym ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnlyNoSym.key)}?tab=research` : "/stock/no-company-held-only-inside-funds?tab=research")],
+  ["stock-funds-only-sym-market", () => (HELD_BOOK?.fundsOnlySym ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnlySym.key)}?tab=market` : "/stock/no-fund-only-company-with-a-symbol?tab=market")],
+  ["stock-funds-only-sym-research", () => (HELD_BOOK?.fundsOnlySym ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnlySym.key)}?tab=research` : "/stock/no-fund-only-company-with-a-symbol?tab=research")],
   // ...and its My targets tab, where the price alerts card is (Stage 10cq).
   ["stock-funds-only-targets", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=targets` : "/stock/no-company-held-only-inside-funds?tab=targets")],
   // ...and an AIF's My targets tab WITH A LEVEL SAVED on it (Stage 10cq): the
@@ -34389,6 +34415,29 @@ const INVARIANTS = {
         && (ctx.stockPage?.research ?? []).length === 0],
   ],
   /**
+   * …AND A COMPANY HELD ONLY INSIDE FUNDS THAT DOES RESOLVE A SYMBOL (Stage
+   * 10di) IS LOOKED UP BY IT. `build-symbols` reads a fund's own disclosure as a
+   * fill-only second pass, so the largest such company — HDFC Bank on this book —
+   * now has an NSE symbol, and telling a reader "no symbol has been looked up for
+   * it" would be false. So these tabs draw the price card and the research card,
+   * and the funds-only absence must NOT be on them. The route is the largest such
+   * company off the committed symbol map; a book with none fails rather than
+   * walking a page that proves nothing.
+   */
+  "stock-funds-only-sym-market": [
+    ...stockTabChecks("market", { fundsOnly: true }),
+    ["a company held only inside funds that resolves an NSE symbol draws its price card, not the funds-only absence",
+      (t, ctx) => !!HELD_BOOK?.fundsOnlySym && ctx.heldTable?.research == null
+        && /Price history & returns/i.test(t) && !/No price history — held only inside your funds/i.test(t)
+        && /The price service (?:did not answer|timed out)/.test(t)],
+  ],
+  "stock-funds-only-sym-research": [
+    ...stockTabChecks("research", { fundsOnly: true }),
+    ["a company held only inside funds that resolves an NSE symbol draws its research card, not the funds-only absence",
+      (t, ctx) => !!HELD_BOOK?.fundsOnlySym && ctx.heldTable?.research == null
+        && (ctx.stockPage?.research ?? []).length > 0 && !/No research — held only inside your funds/i.test(t)],
+  ],
+  /**
    * ── THE ALERT CARD MUST NOT CONTRADICT THE BADGE ABOVE IT (Stage 10cq) ───
    *
    * The page says "Held only inside your funds", and the card's reason for
@@ -36077,6 +36126,22 @@ for (const theme of THEMES) {
           const s = document.querySelector("[data-research-summary]");
           return !!s && (s.getAttribute("data-waiting") === "0" || !!s.getAttribute("data-code"));
         }, null, { timeout: 15000 }).catch(() => {});
+      }
+      /**
+       * THE AIF & PMS CARD ASKS FOR ITS PRICES IN A SECOND ROUND (Stage 10di).
+       *
+       * It registers the 28 symbols only a fund's disclosure reaches after the
+       * book's own ask has answered, so `networkidle` can resolve in the quiet
+       * between the two rounds — measured, the second ask goes ~100 ms after the
+       * first answers, which a loaded machine stretches past the 500 ms idle
+       * window. Read then, the card is still loading and every claim about it
+       * fails against a page that is fine. So the walk waits for the card to
+       * leave its loading state; a card that never does still fails by name,
+       * because the wait gives up and the claims read the loading card.
+       */
+      if (name === "cio-movers-inside-live") {
+        await page.waitForFunction(() => !!document.querySelector('[data-testid="inside-mandate-tile"]')
+          || !!document.querySelector('[data-testid="movers-unavailable"]'), null, { timeout: 20000 }).catch(() => {});
       }
       if (name === "cio-cached") {
         /**

@@ -26543,6 +26543,20 @@ Three more things the pass forced:
   speaks when it fires is indistinguishable, on a clean run, from one that was
   deleted. Measured: **201 reachable · 92 not reachable · 8 not securities at
   all**.
+- **AND IT GAVE COMPANIES HELD ONLY INSIDE FUNDS A SYMBOL, WHICH MOVED TWO
+  CHECKS OFF THEIR SUBJECT.** Stage 10ck's page for such a company says its
+  price history and research are absent because no symbol was looked up. Of the
+  book's 475 fund-only companies, **33 resolve a symbol now: 13 already did on
+  main** (a depository's recorded line), **and the pass added 20** — HDFC Bank,
+  the largest, among them. With a symbol the page draws the price card and the
+  research card (`researchAbsent = fundOnly && !sym`), which is right, and
+  `stock-funds-only-market` and `-research`, which walked HDFC Bank, failed on a
+  correct page. `HELD_BOOK` now derives two subjects off the committed symbol
+  map: the largest fund-only company with no symbol (`fundsOnlyNoSym`, which the
+  two routes walk now) and the largest with one (`fundsOnlySym`). Two new routes,
+  `stock-funds-only-sym-market` and `-research`, assert the absence is NOT drawn
+  there. Main walked only the largest, which had no symbol, so the symbol branch
+  had been checked by nothing.
 
 #### 4. The fixture's own gate, and the defect its first draft had
 
@@ -26607,9 +26621,16 @@ ALREADY RECORDS:**
   half stays exact to ±0.06 Cr because no AIF folio resolves a symbol and nothing
   there can move.
 - **`label-xs` IS `uppercase` AND `innerText` RETURNS THE TRANSFORMED TEXT**, so
-  `/(\d+) gainers/` matched nothing against a card rendering `163 GAINERS`. The
+  `/(\d+) gainers/` matched nothing against a card rendering `161 GAINERS`. The
   third time that trap has bitten here, after Stage 10p's "Listed NAV" and Stage
   10at's left-out card; fixed with `/i`.
+
+**AND THE WALK WAITS FOR THE CARD, BECAUSE IT ASKS FOR ITS PRICES TWICE.** The
+first price request is the book's own ask (162 symbols); the card then registers
+its 28 more and a second request follows (190). `networkidle` can settle between
+the two, and under the full sweep's load it did: `cio-movers-inside-live` failed
+seven checks on a card still loading, and passed alone. The walk now waits for
+the card's mandate tile (or its no-feed state) before it reads anything.
 
 **AND A CLAIM THAT NO NAMED LINE IS A POSITION IN THE BOOK WOULD BE FALSE**, so
 it is not made: `ICICI BANK LTD` normalises onto `icici-bank`, which the family
