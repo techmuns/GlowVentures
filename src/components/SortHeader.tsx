@@ -1,7 +1,10 @@
-import { Children, ReactNode, isValidElement } from "react";
+import { Children, ReactNode, isValidElement, useRef } from "react";
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical } from "lucide-react";
 import { useTableView, type TableView } from "@/lib/tableView";
 import { pressColumn } from "@/lib/columnDrag";
+import { AutoEditColumns, columnText } from "./EditColumns";
+import { reviewColumn, REVIEW_NOTE, type ReviewScope } from "@/lib/reviewColumns";
+import { ReviewColumnCell } from "./ReviewColumnCell";
 
 /**
  * ── ONE HEADER CELL FOR EVERY TABLE IN THE APP ──────────────────────────────
@@ -166,8 +169,20 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
  * DECLARED order instead, so the row is right even if it does not follow the
  * drag, and the mismatch is loud in development.
  */
-export function Tr({ view, children, ...rest }: { view: TableView; children: ReactNode } & React.HTMLAttributes<HTMLTableRowElement>) {
+export function Tr({ view, children, reviewScope, ...rest }: { view: TableView; children: ReactNode; reviewScope?: ReviewScope } & React.HTMLAttributes<HTMLTableRowElement>) {
+  const row = useRef<HTMLTableRowElement>(null);
   const cells = Children.toArray(children).filter((c) => isValidElement(c) || c === 0 || !!c);
+  const header = cells.some((cell) => isValidElement(cell) && cell.type === SortHeader);
+  if (cells.length === view.baseColumns.length) for (const id of view.additionalColumns) {
+    const column = reviewColumn(id)!;
+    cells.push(header
+      ? <SortHeader key={id} col={id} view={view} align={column.format === "text" ? "left" : "right"} note="30 Jun 2026 review" title={REVIEW_NOTE}>{column.label}</SortHeader>
+      : <ReviewColumnCell key={id} id={id} scope={reviewScope} />);
+  }
+  const labels = Object.fromEntries(cells.flatMap((cell) => {
+    if (!isValidElement<{ col?: string; children?: ReactNode; title?: string }>(cell) || !cell.props.col) return [];
+    return [[cell.props.col, { label: columnText(cell.props.children), detail: reviewColumn(cell.props.col) ? REVIEW_NOTE : undefined }]];
+  }));
   if (cells.length !== view.columns.length) {
     if (import.meta.env.DEV) {
       // eslint-disable-next-line no-console
@@ -176,7 +191,7 @@ export function Tr({ view, children, ...rest }: { view: TableView; children: Rea
     return <tr {...rest}>{children}</tr>;
   }
   const byCol = new Map(view.columns.map((c, i) => [c, cells[i]]));
-  return <tr {...rest}>{view.order.map((c) => byCol.get(c))}</tr>;
+  return <tr ref={row} {...rest}>{header && <AutoEditColumns view={view} row={row} labels={labels} />}{view.order.map((c) => byCol.get(c))}</tr>;
 }
 
 /**

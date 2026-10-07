@@ -302,6 +302,21 @@ export function readXlsx(buf) {
   return sheets;
 }
 
+/** Number formats are needed to distinguish an actual day from an Excel month cell. */
+export function readXlsxFormats(buf) {
+  const entries = listEntries(buf);
+  const read = (name) => { const entry = entries.find((e) => e.name === name); return entry ? readEntry(buf, entry).toString("utf8") : ""; };
+  const styles = read("xl/styles.xml");
+  const formats = new Map([[0, "General"], [14, "mm-dd-yy"], [15, "d-mmm-yy"], [16, "d-mmm"], [17, "mmm-yy"]]);
+  const attr = (xml, key) => new RegExp(`\\b${key}="([^"]*)"`).exec(xml)?.[1];
+  for (const match of styles.matchAll(/<numFmt\b[^>]*\/>/g)) formats.set(Number(attr(match[0], "numFmtId")), unescapeHtml(attr(match[0], "formatCode") ?? ""));
+  const xfs = /<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/.exec(styles)?.[1] ?? "";
+  const indexed = [...xfs.matchAll(/<xf\b[^>]*>/g)].map((match) => formats.get(Number(attr(match[0], "numFmtId"))) ?? "General");
+  const names = [...read("xl/workbook.xml").matchAll(/<sheet\b[^>]*name="([^"]*)"/g)].map((m) => unescapeHtml(m[1]).trim());
+  const files = entries.filter((e) => /^xl\/worksheets\/sheet\d+\.xml$/.test(e.name)).sort((a, b) => Number(/sheet(\d+)/.exec(a.name)[1]) - Number(/sheet(\d+)/.exec(b.name)[1]));
+  return Object.fromEntries(files.map((entry, i) => [names[i], Object.fromEntries([...readEntry(buf, entry).toString("utf8").matchAll(/<c\b([^>]*?)(?:\/>|>)/g)].map((m) => [attr(m[1], "r"), indexed[Number(attr(m[1], "s") ?? 0)] ?? "General"]))]));
+}
+
 /**
  * Read any spreadsheet this drop carries.
  *

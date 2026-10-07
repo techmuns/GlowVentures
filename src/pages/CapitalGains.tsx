@@ -801,7 +801,7 @@ export function CapitalGains() {
                       </Tr>
                     ))}
                     {harvestRows.length === 0 && (
-                      <tr><td colSpan={6} className="py-10 text-center text-sm text-slate-500">
+                      <tr><td colSpan={harvestView.order.length} className="py-10 text-center text-sm text-slate-500">
                         No security matches "{harvestQ}".
                       </td></tr>
                     )}
