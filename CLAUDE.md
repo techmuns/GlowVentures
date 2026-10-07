@@ -27324,6 +27324,42 @@ combinations with one finding, *the page does not scroll* on `family`, and
 before #126. It is main's, from a change after #122's sweep, and is named here,
 not fixed.
 
+### Stage 10dm — FAMILY & ENTITIES STOPS SCROLLING, WHERE #122 NAMED IT AND LEFT IT
+
+Stage 10dl's own note records the full sweep finding *the page does not scroll*
+on `family`, measured failing on main's own build and named rather than fixed:
+*"It is main's … and is named here, not fixed."* This is that small fix.
+
+**THE TABLE CARD HAD OUTGROWN THE PIE BESIDE IT.** Stage 10bl laid the entity
+table (`lg:col-span-2`, LEFT) beside the in-house-vs-external custody pie (RIGHT)
+on `items-start`, which was right while the pie's ~17-row legend was the taller
+card. Two later changes made the table the taller one, and neither is removable:
+#124's Edit-columns toolbar, and four entity NAMES that wrap to two lines
+(Bharat Jaisinghani Family Trust 2 and 3, and "Not attributed to a member"). So
+the `/family` INDEX overflowed `<main>` by 32px at the sweep's 1500×1000, which
+is the one thing the family asked this layout never to do.
+
+**THE FIX IS THE PAGE'S OWN PRECEDENT.** The table wrapper is
+`max-h-[600px] overflow-auto` now, the same cap the ENTITY view's holdings card
+one block down already uses (`max-h-[520px]`). The table scrolls inside its own
+card where it outgrows the cap (172px at 1500×1000), `<main>` does not scroll
+(`over=0`), and the two cards still read as the pair they were meant to be —
+table left, pie right, `items-start` unchanged. **No figure is removed**, and the
+ENTITY view is still free to scroll, both unchanged from Stage 10bl's intent.
+
+**THE CAP IS IN CSS PX, AND THAT WAS MEASURED RATHER THAN REASONED.** `#root`
+carries `--app-zoom: 0.875` at ≥1024px (Stage 10n), so a `max-h-[Npx]` paints at
+N × 0.875 while `main.scrollHeight`/`clientHeight` are in layout space. The cap
+was chosen against the `over` metric directly — 620 is break-even, 600 leaves a
+margin so a 1px shift cannot re-break the sweep's ±2px-tolerant check — never
+against a painted height.
+
+**Verification** (fix on `origin/main` at `fef4c0a7`): `build` · `tsc` ·
+`test:family` 0 failed · `check:family` **135/0** · `build-book` byte-identical
+(`glowData.ts` md5 unchanged, no diff) · `check:pages`
+`ONLY=family,family-entity` **4 combinations clean**, the `family` scroll
+failure gone. A layout cap moves no figure in the book.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
