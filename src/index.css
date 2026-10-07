@@ -30,6 +30,7 @@
   --chart-index: #4f46e5;
   --chart-nav: #7b8598;
   --chart-band: rgba(138, 106, 28, 0.07);
+  --table-grid: #9690a3;
 }
 
 html.dark {
@@ -45,6 +46,7 @@ html.dark {
   --chart-index: #818cf8;
   --chart-nav: #64748b;
   --chart-band: rgba(217, 196, 143, 0.07);
+  --table-grid: #716b91;
 }
 
 html, body, #root { height: 100%; }
@@ -546,6 +548,44 @@ html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; backgro
    drag-over highlight, a sticky column's own surface) still wins. */
 :where(html:not(.dark) thead) th { background-color: #faf8f1; }
 
+/* One grid for every dashboard table, including nested and expanded tables.
+   Separate borders stay attached to sticky headers, totals and pinned columns
+   while scrolling. Each cell draws only its right/bottom edge to avoid doubling
+   the grid; merged cells retain their spans. Compensate for the app's zoom so
+   the lines still paint at 2px on desktop. Scope through #root so border
+   utilities and light-theme remaps cannot weaken the grid. */
+#root table {
+  --table-grid-width: calc(2px / var(--app-zoom));
+  --table-section-width: calc(3px / var(--app-zoom));
+  border-collapse: separate;
+  border-spacing: 0;
+}
+html #root table :is(th, td) {
+  border: 0 solid var(--table-grid);
+  border-right-width: var(--table-grid-width);
+  border-bottom-width: var(--table-grid-width);
+}
+html #root table tr > :is(th, td):first-child {
+  border-left-width: var(--table-grid-width);
+}
+html #root table > :is(thead, tbody, tfoot):where(:first-of-type) > tr:where(:first-child) > :is(th, td) {
+  border-top-width: var(--table-grid-width);
+}
+/* Only the table's first row needs an outside top edge. */
+html #root table > thead ~ tbody > tr:first-child > :is(th, td),
+html #root table > tbody ~ tbody > tr:first-child > :is(th, td) {
+  border-top-width: 0;
+}
+html #root table thead > tr:last-child > :is(th, td) {
+  border-bottom-width: var(--table-section-width);
+}
+html #root table tfoot > tr:first-child > :is(th, td) {
+  border-top-width: var(--table-section-width);
+}
+html #root table:has(> tfoot) > tbody:last-of-type > tr:last-child > :is(th, td) {
+  border-bottom-width: 0;
+}
+
 /* EXPORT EXCEL IS GREEN, AS GCR'S IS — as a tint with deep-green type, for the
    reason at the top of this block. #045f45 on #e8f3ee is 6.8:1. */
 .btn-excel {
@@ -608,6 +648,7 @@ html:not(.dark) .preview-hatch {
    click on paper, and the scroll containers that would otherwise clip a wide
    table to whatever happened to be in view. */
 @media print {
+  html:root { --table-grid: #9690a3; }
   @page { size: A4 landscape; margin: 12mm; }
 
   html, body {

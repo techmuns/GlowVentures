@@ -9,6 +9,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
+import { OutOfScope } from "@/components/MemberScopeSelect";
 import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare, NO_UNIT_COUNT } from "@/lib/analytics";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
@@ -217,7 +218,7 @@ const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"
 
 export function MandateHoldings() {
   const { accountId = "" } = useParams();
-  const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus } = usePortfolio();
+  const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, scope } = usePortfolio();
   const [q, setQ] = useState("");
 
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
@@ -326,6 +327,23 @@ export function MandateHoldings() {
     (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : null);
 
   if (!portfolio) return null;
+
+  // ── The account is in the book, and the member scope leaves it out ──────────
+  // "No account in this book" would be false: the book carries it. What is true
+  // is that the members chosen at the top of the page do not include its owner.
+  const outOfScope = !account && scope.selected ? BOOK_ACCOUNTS.find((a) => a.accountId === accountId) : undefined;
+  if (outOfScope) {
+    const name = outOfScope.strategy || `${outOfScope.provider} ${outOfScope.accountNo}`;
+    return (
+      <div>
+        <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: name }]} />
+        <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-slate-100">{name}</h1>
+        <Card>
+          <OutOfScope what={`${outOfScope.provider} ${outOfScope.accountNo}`} ownerIds={outOfScope.ownerId ? [outOfScope.ownerId] : []} />
+        </Card>
+      </div>
+    );
+  }
 
   // ── The address does not name an account in this book ──────────────────────
   if (!account) {
