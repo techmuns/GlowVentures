@@ -34,13 +34,13 @@ import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, real
 import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
 import {
-  trancheTable, trancheKey, capitalRollup, capitalMovesWithCalls, capitalReturn, capitalReturnCoverage,
+  trancheTable, trancheKey, capitalRollup, capitalMovesWithCalls, capitalReturn, clubCapitalReturn, capitalReturnCoverage,
   carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote, boughtNavOf, callDatesByHolding,
   type TrancheTable, type TrancheRow, type CapitalSide, type CapitalGroup,
 } from "@/lib/tranches";
 // THE TWO DATED RECORDS, MERGED INTO ONE ROW SET — and the two money blocks
 // that must never be added. See its header for what that was measured at.
-import { mergeDatedRecords, datedTotals, datedSectionRollup, type DatedRow } from "@/lib/txnLedger";
+import { mergeDatedRecords, datedTotals, datedSectionRollup, clubDatedRows, type DatedRow, type DatedUnit, type DatedSectionRows } from "@/lib/txnLedger";
 import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_GAINS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
@@ -5724,6 +5724,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    */
   const [sort, setSort] = useState<TxnSort>("recent");
   const [openRow, setOpenRow] = useState<Set<string>>(new Set());
+  const [openClub, setOpenClub] = useState<Set<string>>(new Set());
   const [openInstrument, setOpenInstrument] = useState<Set<string>>(new Set());
   const toggle = (set: (f: (s: Set<string>) => Set<string>) => void, key: string) =>
     set((prev) => { const nx = new Set(prev); if (nx.has(key)) nx.delete(key); else nx.add(key); return nx; });
@@ -6015,6 +6016,126 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
     return [...names].sort();
   };
 
+  /**
+   * ONE HOLDING, ONE LINE (`clubDatedRows`). A section's rows are drawn as
+   * UNITS: an ordinary row as it always was, and a holding two or more accounts
+   * carry as ONE line whose figures are the accounts' own totals — each summed
+   * the way the footer sums it, so a figure some accounts withhold says how
+   * many it covers — opening into those accounts, each the row it always was.
+   * The footer is unchanged: it sums the rows themselves, never the clubs.
+   */
+  const renderUnits = (
+    sec: DatedSectionRows, dv: TableView, cols: number,
+    acc: Record<string, (r: DatedRow) => string | number | null | undefined>,
+    renderRow: (r: DatedRow, clubOf?: string) => ReactNode,
+  ): ReactNode[] => {
+    const units = clubDatedRows(sec.rows, sort, splitFundClass);
+    const caps = (u: Extract<DatedUnit, { kind: "club" }>) => u.members.map((m) => m.capital);
+    const clubRet = (u: Extract<DatedUnit, { kind: "club" }>, m: ReturnMeasure) => {
+      const cs = caps(u);
+      return cs.every(Boolean) ? clubCapitalReturn(cs as CapitalGroup[], m) : null;
+    };
+    const spanOf = (vals: (string | null | undefined)[]) => {
+      const v = vals.filter((x): x is string => !!x).sort();
+      return v.length ? [v[0], v[v.length - 1]] as const : null;
+    };
+    const clubAcc: Record<string, (u: Extract<DatedUnit, { kind: "club" }>) => string | number | null | undefined> = {
+      name: (u) => u.label,
+      how: (u) => u.totals.contributions || null,
+      committed: (u) => u.totals.committed,
+      in: (u) => (u.totals.contributions > 0 ? u.totals.paidIn : null),
+      out: (u) => u.totals.redemption,
+      realisedGain: (u) => u.totals.realisedGain,
+      unrealisedGain: (u) => u.totals.unrealisedGain,
+      investedOn: (u) => spanOf(u.members.map((m) => m.capital?.boughtFirst))?.[0] ?? null,
+      trades: (u) => (u.members.some((m) => m.trades) ? u.totals.trades : null),
+      bought: (u) => (u.totals.buys > 0 ? u.totals.bought : null),
+      sold: (u) => (u.totals.sells > 0 ? u.totals.sold : null),
+      realised: (u) => u.totals.realized,
+      traded: (u) => spanOf(u.members.map((m) => m.trades?.first))?.[0] ?? null,
+      value: (u) => u.totals.value,
+      ...Object.fromEntries(returnMeasures.map((m) => [`ret:${m}`, (u: Extract<DatedUnit, { kind: "club" }>) => {
+        const res = clubRet(u, m);
+        return res?.shown ? res.pct : null;
+      }])),
+      entity: (u) => [...new Set(u.members.flatMap(entitiesOf))].sort()[0] ?? null,
+    };
+    const unitAcc = Object.fromEntries(Object.keys(acc).map((k) => [k, (u: DatedUnit) =>
+      u.kind === "row" ? acc[k](u.row) : (clubAcc[k]?.(u) ?? null)]));
+    const ordered = sortRows(units, dv.sort, unitAcc);
+    const n = (k: number, of: number, what: string) => k < of
+      ? <span className="ml-1 text-[10px] text-slate-500" data-club-covers={`${k}/${of}`} title={`${k} of the ${of} accounts on this line ${what}; the rest are not added in as zero.`}>{k}/{of}</span>
+      : null;
+    return ordered.flatMap((u): ReactNode[] => {
+      if (u.kind === "row") return [renderRow(u.row)];
+      const t = u.totals;
+      const isOpen = openClub.has(u.key);
+      const ents = [...new Set(u.members.flatMap(entitiesOf))].sort();
+      const providers = [...new Set(u.members.map((m) => (m.accountId ? accIdx.get(m.accountId)?.provider : null)).filter(Boolean))];
+      const capOf = u.members.filter((m) => m.capital).length;
+      const trdOf = u.members.filter((m) => m.trades).length;
+      const inv = spanOf(u.members.map((m) => m.capital?.boughtFirst));
+      const invLast = spanOf(u.members.map((m) => m.capital?.boughtLast));
+      const trFirst = spanOf(u.members.map((m) => m.trades?.first));
+      const trLast = spanOf(u.members.map((m) => m.trades?.last));
+      const td = "px-3 py-2.5 text-right mono whitespace-nowrap";
+      const noCap = <AbsentCell reason="none of the accounts on this line carries a dated capital record" />;
+      const noTrd = <AbsentCell reason={NO_TRADES_WHY} />;
+      const head = (
+        <Tr key={u.key} view={dv} data-dated-club={u.key} data-dated-club-members={u.members.length}
+          data-dated-section={sec.key} data-dated-label={u.label} data-dated-first={u.first} data-dated-last={u.last}
+          data-club-paid={t.contributions > 0 ? t.paidIn : undefined} data-club-value={t.value ?? undefined}
+          data-club-bought={t.buys > 0 ? t.bought : undefined}
+          className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenClub, u.key)}>
+          <td className="px-3 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+              <div>
+                <div className="font-medium text-slate-100">{u.label}</div>
+                <div className="text-[10.5px] text-slate-500" title={u.members.map((m) => [m.label, m.sublabel].filter(Boolean).join(" · ")).join("\n")}>
+                  {u.members.length} accounts{providers.length === 1 ? ` · ${providers[0]}` : ""}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td className="px-3 py-2.5 whitespace-nowrap">
+            {capOf === 0 ? noCap : <span className="pill" data-club-how>{t.contributions === 1 ? "1 payment" : `${t.contributions} payments`}</span>}
+          </td>
+          <td className={`${td} text-slate-400`}>{t.committed == null ? <AbsentCell reason="no account on this line prints a commitment" /> : <>{money(t.committed)}{n(t.committedOf, capOf, "print a commitment")}</>}</td>
+          <td className={`${td} text-slate-200`} data-club-cell="in">{t.contributions > 0 ? money(t.paidIn) : capOf ? <AbsentCell reason="no purchase on these accounts falls in view" /> : noCap}</td>
+          <td className={`${td} text-slate-300`} data-club-cell="out">{t.redemption == null ? (capOf ? <AbsentCell reason="no account on this line states what came back" /> : noCap) : <>{money(t.redemption)}{n(t.redemptionOf, capOf, "state what came back")}</>}</td>
+          <td className={td} data-club-cell="realisedGain">{t.realisedGain == null ? (capOf ? <AbsentCell reason="no account on this line states a realised gain" /> : noCap) : <><span className={changeColor(t.realisedGain)}>{money(t.realisedGain)}</span>{n(t.realisedGainOf, capOf, "state a realised gain")}</>}</td>
+          <td className={td} data-club-cell="unrealisedGain">{t.unrealisedGain == null ? (capOf ? <AbsentCell reason="no account on this line states an unrealised gain" /> : noCap) : <><span className={changeColor(t.unrealisedGain)}>{money(t.unrealisedGain)}</span>{n(t.unrealisedGainOf, capOf, "state an unrealised gain")}</>}</td>
+          <td className={`${td} text-slate-100`} data-club-cell="value">{t.value == null ? <AbsentCell reason="no statement values any account on this line" /> : <>{money(t.value)}{n(t.valueOf, u.members.length, "are valued by a statement")}</>}</td>
+          {returnMeasures.map((m) => {
+            const def = returnMeasureDef(m);
+            const res = clubRet(u, m);
+            if (!res) return <td key={m} data-return-cell={m} className={td}><AbsentCell reason="a return is struck on the family's own purchases, and not every account on this line carries a dated capital record" /></td>;
+            const off = m === "auto" || res.tag !== def.tag;
+            return (
+              <td key={m} data-return-cell={m} data-return-tag={off ? res.tag : undefined} data-return-pct={res.shown ? res.pct : undefined} className={td}>
+                {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
+                {res.shown ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span> : <AbsentCell reason={res.reason} />}
+              </td>
+            );
+          })}
+          <td className="px-3 py-2.5 text-[12px] mono text-slate-500 whitespace-nowrap">{inv ? period(inv[0], invLast?.[1] ?? inv[1]) : (capOf ? <AbsentCell reason="no purchase on these accounts is dated" /> : noCap)}</td>
+          <td className={`${td} text-slate-300`}>{trdOf === 0 ? noTrd : <>{fmtNum(t.trades)}<span className="ml-1 text-[10px] text-slate-500">{t.buys}B/{t.sells}S</span></>}</td>
+          <td className={`${td} text-slate-300`}>{t.buys > 0 && t.bought != null ? money(t.bought) : trdOf ? <AbsentCell reason="nothing was bought on these accounts in view" /> : noTrd}</td>
+          <td className={`${td} text-slate-300`}>{t.sells > 0 && t.sold != null ? money(t.sold) : trdOf ? <AbsentCell reason="nothing was sold on these accounts in view" /> : noTrd}</td>
+          <td className={td}>{t.realized == null ? (trdOf ? <AbsentCell reason="no capital gain statement covers these accounts' sales" /> : noTrd) : <><span className={changeColor(t.realized)}>{money(t.realized)}</span>{n(t.realizedOf, t.sells, "sales carry a realised figure")}</>}</td>
+          <td className="px-3 py-2.5 whitespace-nowrap mono text-[11px] text-slate-400">{trFirst ? period(trFirst[0], trLast?.[1] ?? trFirst[1]) : noTrd}</td>
+          <td className="px-3 py-2.5 text-[12px] text-slate-400 whitespace-nowrap">
+            {ents.length === 0 ? <AbsentCell reason="no account on this line names a holder this book can resolve to a family member" />
+              : ents.length === 1 ? ents[0] : <span title={ents.join(" · ")}>{ents.length} entities</span>}
+          </td>
+        </Tr>
+      );
+      if (!isOpen) return [head];
+      return [head, ...sortRows(u.members, dv.sort, acc).map((m) => renderRow(m, u.key))];
+    });
+  };
+
   return (
     /*
       ONE CARD, ONE TABLE, SCROLLING ITSELF — the Holdings view's own layout.
@@ -6200,7 +6321,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                       share with the holdings table; a section is a partition of
                       the same list, so ranking inside each one is the same
                       ordering the card's own Recent/Largest control produces. */}
-                  {sortRows(sec.rows, dv.sort, {
+                  {renderUnits(sec, dv, COLS, {
                     name: (r) => r.label,
                     how: (r) => r.capital?.contributions ?? null,
                     committed: (r) => r.capital?.committed ?? null,
@@ -6224,7 +6345,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                       return res.shown ? res.pct : null;
                     }])),
                     entity: (r) => entitiesOf(r)[0] ?? null,
-                  }).map((r) => {
+                  }, (r: DatedRow, clubOf?: string) => {
                     const isOpen = openRow.has(r.key);
                     const cap = r.capital;
                     const trd = r.trades;
@@ -6246,6 +6367,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           data-dated-account={r.accountId ?? undefined}
                           data-dated-accounts={trd ? [...new Set(trd.instruments.flatMap((i) => i.tranches.map((t) => acctKey(t.provider, t.accountNo))))].join(";") : undefined}
                           data-dated-first={r.first} data-dated-last={r.last}
+                          data-dated-club-member={clubOf}
                           data-mine-row={cap ? r.accountId : undefined}
                           /*
                             ...AND THE ROW'S OWN KEY BESIDE IT (Stage 10dh).
@@ -6278,7 +6400,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           data-group-kind={trd ? (r.kind === "account" ? "mandate" : "security") : undefined}
                           data-group-label={trd ? r.label : undefined}
                           className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenRow, r.key)}>
-                          <td className="px-3 py-2.5">
+                          <td className={clubOf ? "py-2.5 pl-8 pr-3" : "px-3 py-2.5"}>
                             {/*
                               ONE AFFORDANCE, AND THE ROW IS IT.
 

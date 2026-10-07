@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
-import { AllocationPie } from "@/components/AllocationPie";
+import { AllocationChart } from "@/components/AllocationViews";
 import { Pill } from "@/components/Pill";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
 import { StockLink } from "@/components/StockLink";
@@ -1554,7 +1554,7 @@ export function MorningCIO() {
                 and a fund-of-funds line opens nothing, exactly as its row is not
                 a link. Keyed by `data-alloc-slice` / `data-alloc-wedge` so
                 `check:pages` pairs each with its row and checks each angle. */}
-            <AllocationPie
+            <AllocationChart
               ariaLabel={`${ALLOC_TITLE[allocAxis]} — pie chart`}
               slices={sections.map((b) => ({
                 key: b.key,

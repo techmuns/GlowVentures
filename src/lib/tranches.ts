@@ -1255,6 +1255,105 @@ export function capitalReturn(g: CapitalGroup, measure: ReturnMeasure): Measured
     note: `One purchase held ${w.days} days, so the return is annualised.` };
 }
 
+/**
+ * ONE RETURN OVER SEVERAL ACCOUNTS' CAPITAL — the Transactions table's clubbed
+ * row, where one fund or one strategy is held by several family members and
+ * the family asked to see it as one line.
+ *
+ * Struck on the SUMS, never as an average of the members' percentages (which
+ * would weight a ₹5 L folio like a ₹5 Cr one), and only where every member can
+ * strike its own: a member whose appreciation is withheld leaves the pooled
+ * figure with a part missing, so the whole is refused and says how many. The
+ * money-weighted rate pools every member's dated flows, each member closing on
+ * ITS OWN value date — the `pooledXirr` rule. Nothing under a year is
+ * annualised (Stage 10g(ii)); a CAGR is refused wherever the money went in on
+ * more than one date, exactly as it is for one account.
+ */
+export function clubCapitalReturn(caps: CapitalGroup[], measure: ReturnMeasure): MeasuredReturn {
+  if (caps.length === 1) return capitalReturn(caps[0], measure);
+  const tagOf = (m: ReturnMeasure) => RETURN_MEASURES.find((x) => x.key === m)?.tag ?? "AUTO";
+  const withheld = caps.filter((g) => g.appreciation == null);
+  if (withheld.length > 0) {
+    const reasons = [...new Set(withheld.map((g) => g.appreciationReason).filter((x): x is string => !!x))];
+    return { shown: false, tag: tagOf(measure),
+      reason: reasons.length === 1 && withheld.length === caps.length
+        ? reasons[0]
+        : `${withheld.length} of the ${caps.length} accounts behind this line withhold their appreciation${reasons[0] ? ` (${reasons[0]})` : ""}, so a return over all of them would leave part of the money out` };
+  }
+  const paid = caps.reduce((a, g) => a + g.paidIn, 0);
+  if (!(paid > 0)) return { shown: false, tag: tagOf(measure), reason: "nothing was purchased in view, so there is nothing to strike a return against" };
+  const hpr = (caps.reduce((a, g) => a + (g.appreciation ?? 0), 0) / paid) * 100;
+  const wins = caps.map(capitalWindow);
+  const known = wins.filter((w): w is NonNullable<typeof w> => w != null);
+  const from = known.map((w) => w.from).sort()[0] ?? null;
+  const to = known.map((w) => w.to).sort().at(-1) ?? null;
+  const days = from && to ? dayDiff(from, to) : null;
+  const n = caps.length;
+  const hprNote = (why: string) => ({ shown: true as const, pct: hpr, tag: "HPR", note: why });
+
+  if (measure === "absolute") {
+    return hprNote(`Appreciation across the ${n} accounts divided by what they paid in together — not annualised.`);
+  }
+  if (measure === "calendar") {
+    return { shown: false, tag: "CY",
+      reason: "a calendar-year return needs these accounts' value at the start and end of that year, and no statement here values them at a past year-end" };
+  }
+  if (measure === "ytd") {
+    const inYear = caps.every((g, i) => {
+      const w = wins[i];
+      const yearStart = g.valueAsOf ? `${g.valueAsOf.slice(0, 4)}-01-01` : null;
+      return w != null && yearStart != null && w.from >= yearStart;
+    });
+    if (inYear) return { shown: true, pct: hpr, tag: "YTD",
+      note: `Every one of the ${n} accounts was first funded inside the current year, so their year-to-date return is their whole return since then.` };
+    return { shown: false, tag: "YTD",
+      reason: "at least one of these accounts was funded before 1 January, and a year-to-date return needs its value on that date — no statement here is dated then" };
+  }
+  const sub = days != null && days < YEAR;
+  const subNote = days != null ? `The money has been in for ${days} days — under a year — so this is the holding-period return, not an annual rate.` : "";
+  const flowDates = new Set(caps.flatMap((g) => (g.flows ?? []).map((f) => f.date)));
+  const multi = flowDates.size > 1 || caps.some((g) => g.undatedOut != null);
+  if (measure === "cagr") {
+    if (multi) return { shown: false, tag: "CAGR",
+      reason: "the money went in and came out over several dates across these accounts, so a single-start compound rate would treat all of it as invested on the first date — the money-weighted rate for this line is XIRR" };
+    if (days == null) return { shown: false, tag: "CAGR", reason: "these accounts carry no purchase date to measure a year from" };
+    if (sub) return hprNote(subNote);
+    const growth = 1 + hpr / 100;
+    if (growth <= 0) return { shown: false, tag: "CAGR", reason: "these accounts are worth nothing against what was paid, so they have no compound rate — only a total loss" };
+    return { shown: true, pct: (Math.pow(growth, YEAR / days) - 1) * 100, tag: "CAGR",
+      note: `One purchase date across the ${n} accounts, compounded over the ${days} days since ${from}.` };
+  }
+  const xirrOrWhy = (): MeasuredReturn => {
+    if (caps.some((g) => g.undatedOut != null)) return { shown: false, tag: "XIRR",
+      reason: "a fund behind this line prints its payouts as one undated total, so they cannot be placed in time — and a money-weighted rate solved without them would read as if it had paid nothing back" };
+    if (caps.some((g) => !g.flows || g.flows.length === 0 || g.value == null)) return { shown: false, tag: "XIRR",
+      reason: "an account behind this line has no dated flows or no value to close on, so the accounts cannot be pooled into one money-weighted rate" };
+    if (sub) return hprNote(subNote);
+    const flows: DatedFlow[] = [];
+    for (let i = 0; i < caps.length; i++) {
+      const g = caps[i], w = wins[i];
+      for (const f of g.flows ?? []) flows.push({ date: new Date(f.date), amount: f.amount });
+      if ((g.value ?? 0) > 0 && w) flows.push({ date: new Date(w.to), amount: g.value as number });
+    }
+    const x = xirrPct(flows);
+    if (x == null) return { shown: false, tag: "XIRR", reason: "these dated flows do not yield a money-weighted rate" };
+    return { shown: true, pct: x, tag: "XIRR",
+      note: `Money-weighted over the ${n} accounts' ${flows.length} dated flows, each account closing on its own value date, from ${from} to ${to}.` };
+  };
+  if (measure === "xirr") return xirrOrWhy();
+
+  // auto — the family's rule, over the pooled money
+  if (days == null || sub) return hprNote(days != null ? subNote : "No purchase date to measure a year from, so this is the holding-period return.");
+  if (multi) {
+    const r = xirrOrWhy();
+    return r.shown ? r : hprNote(`Several dated flows call for XIRR, and ${r.reason} — so this is the holding-period return.`);
+  }
+  const growth = 1 + hpr / 100;
+  if (growth <= 0) return hprNote("A total loss has no compound rate, so this is the holding-period return.");
+  return { shown: true, pct: (Math.pow(growth, YEAR / days) - 1) * 100, tag: "CAGR",
+    note: `One purchase date across the ${n} accounts, held ${days} days, so the return is annualised.` };
+}
+
 /** How many rows a measure answers, for the column header — counted, never claimed. */
 export function capitalReturnCoverage(groups: CapitalGroup[], measure: ReturnMeasure) {
   let shown = 0, absent = 0, annual = 0, hpr = 0;
