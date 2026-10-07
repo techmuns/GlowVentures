@@ -14,11 +14,26 @@ import { useTableView, sortRows } from "@/lib/tableView";
 /** The columns, in the order this table's rows write their cells. */
 const HISTORY_COLS = ["asOf", "nav", "change", "flowIn", "marked"] as const;
 import { BOOK_NAV_COVERAGE } from "@/data/glowData";
+import { wholeFamilyOnly } from "@/lib/memberScope";
 
 export function UploadHistory() {
   const view = useTableView("upload-history", HISTORY_COLS);
-  const { portfolio, statementPortfolio, fmtFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, fmtFromBase, scope } = usePortfolio();
   if (!portfolio) return null;
+  // The dated series is chained over the whole covered panel and is not split by
+  // member (Stage 10di), so a scoped view names that rather than drawing the
+  // family's line under the chosen members' name — or an empty table.
+  if (scope.selected) {
+    return (
+      <div className="mx-auto max-w-4xl">
+        <PageHeader eyebrow="Admin" title="Snapshot History" />
+        <div data-nav-scope-absent>
+          <AbsentSection what={`Whole family only · not shown for ${scope.label}`}
+            needs={wholeFamilyOnly("The dated NAV series", scope.label)} />
+        </div>
+      </div>
+    );
+  }
   /**
    * WHAT THIS SERIES IS CHANGED UNDER THIS PAGE, AND THE CAPTIONS HAD TO MOVE.
    *

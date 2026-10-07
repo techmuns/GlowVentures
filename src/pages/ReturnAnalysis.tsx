@@ -26,6 +26,7 @@ import { valuationBasis, dateSpan, navBasisLabel, navBasisTitle } from "@/lib/va
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { stockHref } from "@/lib/auditFormulas";
 import { bookDrawdown } from "@/lib/drawdown";
+import { wholeFamilyOnly } from "@/lib/memberScope";
 import { BOOK_NAV_COVERAGE } from "@/data/glowData";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
@@ -82,7 +83,7 @@ const acctEnd = (a: { provider: string; accountNo: string }) =>
   `${a.provider.split(" ")[0]} ${a.accountNo}`;
 
 export function ReturnAnalysis() {
-  const { portfolio, statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, fmtFromBase, scope } = usePortfolio();
   const sectorView = useTableView("returns-sectors", RA_SECTOR_COLS);
   const accountView = useTableView("returns-accounts", RA_ACCOUNT_COLS);
   /**
@@ -423,6 +424,11 @@ export function ReturnAnalysis() {
             hint={`On the dated NAV series of the ${ddCovered} accounts that publish one`}
             title={ddNote}
             icon={<TrendingDown className="h-4 w-4" />} />
+        ) : scope.selected ? (
+          <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}
+            sub="whole family only"
+            hint={wholeFamilyOnly("The dated NAV series a drawdown is struck on", scope.label)}
+            icon={<TrendingDown className="h-4 w-4" />} />
         ) : (
           <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}
             sub="needs a valuation series"
@@ -624,6 +630,11 @@ export function ReturnAnalysis() {
         subtitle={dd ? `Peak-to-trough on the book's dated NAV series, rebased to 100 at ${fmtDate(dd.from)}. ${ddNote}` : "Peak-to-trough decline in the book's value"}>
         {dd ? (
           <DrawdownTable index={ddIndex} />
+        ) : scope.selected ? (
+          <div data-nav-scope-absent>
+            <AbsentSection what={`Whole family only · not shown for ${scope.label}`}
+              needs={wholeFamilyOnly("The dated NAV series a drawdown is struck on", scope.label)} />
+          </div>
         ) : (
           <AbsentSection
             what="No drawdown can be computed for this book"
