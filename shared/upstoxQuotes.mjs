@@ -11,9 +11,9 @@
 // ── WHY UPSTOX IS THE PRIMARY FEED ──────────────────────────────────────────
 //
 // The muns batch endpoint prices a BOUNDED SLICE per request (64 of this book's
-// 161 symbols), so the dashboard used to need three rounds before Today's movers
+// original direct-holdings scope), so the dashboard used to need three rounds before Today's movers
 // could rank anything. Upstox's full market quote answers up to 500 instruments
-// in ONE call, so the whole book lands in the first round. muns stays as the
+// per batch, so the full company scope lands in the first round. muns stays as the
 // fallback for whatever Upstox could not price.
 //
 // ── THE TOKEN IS SHARED, SO THE CALLS ARE FEW ───────────────────────────────
@@ -21,8 +21,8 @@
 // The same Analytics Token serves Glow Central Research and Sattva Central
 // Research. Upstox enforces its limits PER API, PER USER (50/s, 500/min,
 // 2,000/30 min), so the three dashboards share one budget. This function spends
-// ONE call per edge cache refresh — every 60 seconds at most per data centre —
-// which is a rounding error against it.
+// one call per 500 mapped symbols at each edge cache refresh, every 60 seconds
+// at most per data centre.
 //
 // ── FOUR RULES, EACH A WRONG FIGURE AVOIDED ─────────────────────────────────
 //
@@ -69,7 +69,7 @@ export function upstoxToken(env) {
   return null;
 }
 
-/** The committed instrument for an NSE symbol, or null when it is not mapped. */
+/** The committed instrument for an NSE symbol or BSE quote key, or null. */
 export function instrumentFor(symbol) {
   return Object.prototype.hasOwnProperty.call(UPSTOX_INSTRUMENTS, symbol) ? UPSTOX_INSTRUMENTS[symbol] : null;
 }
@@ -119,7 +119,8 @@ function upstoxError(body) {
 }
 
 /**
- * Price `symbols` from Upstox. Never throws. Returns what was priced, what was
+ * Price NSE symbols and exchange-qualified BSE quote keys from Upstox in
+ * batches of at most 500. Never throws. Returns what was priced, what was
  * not and why — each symbol asked for lands in exactly one of `quotes`,
  * `unmapped` (no instrument in the committed map), `refused` (the row did not
  * echo the identity it was asked for) or `notReturned` (asked, and no row came

@@ -117,8 +117,8 @@ const priced = (b: Record<string, any>) => Object.keys(b.quotes ?? {});
 ok("the committed instrument map covers the book's symbols",
    MAPPED.length === UPSTOX_INSTRUMENT_COVERAGE.mapped && MAPPED.length >= 150,
    `${MAPPED.length} of ${UPSTOX_INSTRUMENT_COVERAGE.asked} mapped · not mapped: ${UPSTOX_INSTRUMENT_COVERAGE.unmapped.join(", ") || "none"}`);
-ok("every mapped key is an NSE cash-market ISIN key",
-   Object.values(UPSTOX_INSTRUMENTS).every((i) => /^NSE_EQ\|IN[A-Z0-9]{10}$/.test(i.key)));
+ok("every mapped key is an NSE or BSE cash-market ISIN key",
+   Object.values(UPSTOX_INSTRUMENTS).every((i) => /^(NSE|BSE)_EQ\|IN[A-Z0-9]{10}$/.test(i.key)));
 
 // ── 1. THE WHOLE ASK IN ONE ROUND, AND NOTHING LEFT PENDING ─────────────────
 // The point of the change: muns prices 64 a request, Upstox answers every
@@ -126,8 +126,8 @@ ok("every mapped key is an NSE cash-market ISIN key",
 {
   const symbols = [...MAPPED, UNMAPPED];
   const { body, upstoxSeen, munsAsked } = await call({ env: { UPSTOX_ACCESS_TOKEN: TOKEN }, symbols });
-  ok("every mapped symbol is priced by Upstox in ONE call",
-     upstoxSeen.length === 1 && upstoxSeen[0].keys.length === MAPPED.length
+  ok("every mapped symbol, including the tail beyond 400, is priced in bounded Upstox batches",
+     upstoxSeen.length === Math.ceil(MAPPED.length / 500) && upstoxSeen.every((c) => c.keys.length <= 500)
      && MAPPED.every((s) => body.quotes[s]?.source === "upstox"),
      `${upstoxSeen.length} call · ${upstoxSeen[0]?.keys.length} keys · ${priced(body).length} priced`);
   ok("with no muns token, nothing is pending — the unmapped symbol is `missing`",
@@ -139,6 +139,16 @@ ok("every mapped key is an NSE cash-market ISIN key",
   ok("the response counts which feed priced what",
      body.sources?.upstox === MAPPED.length && body.upstox?.priced === MAPPED.length,
      JSON.stringify(body.sources));
+}
+
+{
+  const symbol = "BSE:YASHHV";
+  const { body, upstoxSeen } = await call({ env: { UPSTOX_ACCESS_TOKEN: TOKEN }, symbols: [symbol] });
+  ok("Yash Highvoltage is requested by its exact BSE equity ISIN and returned as CMP",
+     upstoxSeen[0]?.keys[0] === "BSE_EQ|INE00GK01023" && body.quotes[symbol]?.price === 102.5);
+  const fallback = await call({ env: { MUNS_TOKEN: "stub" }, symbols: [symbol, SOME[0]] });
+  ok("a BSE quote never reaches the NSE-only fallback under the wrong exchange",
+     fallback.munsAsked.flat().every((s) => !s.startsWith("BSE:")) && fallback.body.missing.includes(symbol));
 }
 
 // ── 2. THE PREVIOUS CLOSE IS last_price − net_change, NEVER ohlc.close ──────
