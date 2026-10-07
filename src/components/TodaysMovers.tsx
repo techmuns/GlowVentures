@@ -81,7 +81,7 @@ import { liveWithheldReason } from "@/lib/corporateActions";
 
 type Row = DailyMover;
 
-// EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10dm). The headings count
+// EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10dn). The headings count
 // every name that moved each way — "15 gainers", "23 losers" — and a list cut to
 // six under that count read as a card that had lost the rest. The family asked
 // for the whole list; the ranking still decides the ORDER, never the length.

@@ -49,6 +49,7 @@ import { NavVsIndex } from "@/components/NavVsIndex";
 import { valuationDates, valuationNote, dateSpan } from "@/components/BasisPill";
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import { DailyMovers } from "@/components/DailyMovers";
+import { SectorComposition } from "@/pages/SectorComposition";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { INVESTOR_DEFAULT_TILES, investorPeriodReturn, investorAnnualReturn } from "@/lib/investorSummary";
 
@@ -190,6 +191,17 @@ const CIO_TABS = [
   // business day, a fortnight old on this book, and the direct-equity branch is
   // the last session the quote feed priced. Each card dates its own figure.
   { key: "movers", label: "Daily Movers", title: "The latest move — the family's own direct equity on its last priced session, and their funds' last published NAV, each dated on its own card" },
+  /**
+   * ...AND SECTOR COMPOSITION, NEXT TO DAILY MOVERS. *"next to daily movers add
+   * a new tab sector composition … give option to select either consolidated
+   * view or direct equity. Do not add the compare sectors tab."* The panel is
+   * the `/sectors` page itself (`<SectorComposition embedded />`), Consolidated
+   * and Direct Equity only, scoped to whichever family members the TopBar
+   * selector holds — so "show these members' sector allocation" needs no wiring
+   * here beyond mounting the panel. It sits SECOND so the family's three
+   * arranged panels and All alerts keep their order after it.
+   */
+  { key: "sectors", label: "Sector Composition", title: "What the book is exposed to by sector — every issuer their statements report and their funds disclose (Consolidated), or the shares the family bought themselves (Direct Equity), for the members currently selected" },
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
   { key: "nav", label: "NAV vs Nifty 500", title: "The book's own dated valuation series against the index, net of capital in and out" },
   /**
@@ -1465,6 +1477,18 @@ export function MorningCIO() {
           </div>
         )}
 
+        {/* SECTOR COMPOSITION — the `/sectors` page embedded, Consolidated and
+            Direct Equity only. `h-full` so its own two-column layout (the donut
+            left, the sector table right, each card scrolling inside itself) gets
+            the panel's height and the page itself still does not scroll. It
+            reads the same scoped book the rest of this page does, so the member
+            selector narrows it with nothing special-cased here. */}
+        {tab === "sectors" && (
+          <div className="h-full" data-cio-section="sectors">
+            <SectorComposition embedded />
+          </div>
+        )}
+
         {/* Allocation hero + right column */}
         {tab === "allocation" && (
           <div className="grid gap-5 lg:grid-cols-3" data-cio-section="allocation">
@@ -1545,7 +1569,7 @@ export function MorningCIO() {
                 </Pill>
               </div>
             }>
-            {/* THE ALLOCATION PIE, above the table (Stage 10dm) — *"in all the
+            {/* THE ALLOCATION PIE, above the table (Stage 10dn) — *"in all the
                 tabs replace bar graph with pie chart."* It replaced a bar chart,
                 which had replaced a donut; the pie is drawn on every axis, and
                 the legend beside it is the bar list's figures.

@@ -62,7 +62,7 @@ import { splitFundClass } from "../../shared/securityKey.mjs";
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Row = InsideMoverRow;
-// EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10dm), as on the Direct
+// EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10dn), as on the Direct
 // Equity branch: the headings count every company that moved each way, and the
 // ranking decides the ORDER, never the length.
 const SCOPE_LABEL = "AIF & PMS";

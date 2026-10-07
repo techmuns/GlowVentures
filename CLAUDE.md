@@ -27324,7 +27324,43 @@ combinations with one finding, *the page does not scroll* on `family`, and
 before #126. It is main's, from a change after #122's sweep, and is named here,
 not fixed.
 
-### Stage 10dm — EVERY MOVER, A CHART THE READER PICKS, ONE ROW PER HOLDING, AND STRIPED ROWS
+### Stage 10dm — FAMILY & ENTITIES STOPS SCROLLING, WHERE #122 NAMED IT AND LEFT IT
+
+Stage 10dl's own note records the full sweep finding *the page does not scroll*
+on `family`, measured failing on main's own build and named rather than fixed:
+*"It is main's … and is named here, not fixed."* This is that small fix.
+
+**THE TABLE CARD HAD OUTGROWN THE PIE BESIDE IT.** Stage 10bl laid the entity
+table (`lg:col-span-2`, LEFT) beside the in-house-vs-external custody pie (RIGHT)
+on `items-start`, which was right while the pie's ~17-row legend was the taller
+card. Two later changes made the table the taller one, and neither is removable:
+#124's Edit-columns toolbar, and four entity NAMES that wrap to two lines
+(Bharat Jaisinghani Family Trust 2 and 3, and "Not attributed to a member"). So
+the `/family` INDEX overflowed `<main>` by 32px at the sweep's 1500×1000, which
+is the one thing the family asked this layout never to do.
+
+**THE FIX IS THE PAGE'S OWN PRECEDENT.** The table wrapper is
+`max-h-[600px] overflow-auto` now, the same cap the ENTITY view's holdings card
+one block down already uses (`max-h-[520px]`). The table scrolls inside its own
+card where it outgrows the cap (172px at 1500×1000), `<main>` does not scroll
+(`over=0`), and the two cards still read as the pair they were meant to be —
+table left, pie right, `items-start` unchanged. **No figure is removed**, and the
+ENTITY view is still free to scroll, both unchanged from Stage 10bl's intent.
+
+**THE CAP IS IN CSS PX, AND THAT WAS MEASURED RATHER THAN REASONED.** `#root`
+carries `--app-zoom: 0.875` at ≥1024px (Stage 10n), so a `max-h-[Npx]` paints at
+N × 0.875 while `main.scrollHeight`/`clientHeight` are in layout space. The cap
+was chosen against the `over` metric directly — 620 is break-even, 600 leaves a
+margin so a 1px shift cannot re-break the sweep's ±2px-tolerant check — never
+against a painted height.
+
+**Verification** (fix on `origin/main` at `fef4c0a7`): `build` · `tsc` ·
+`test:family` 0 failed · `check:family` **135/0** · `build-book` byte-identical
+(`glowData.ts` md5 unchanged, no diff) · `check:pages`
+`ONLY=family,family-entity` **4 combinations clean**, the `family` scroll
+failure gone. A layout cap moves no figure in the book.
+
+### Stage 10dn — EVERY MOVER, A CHART THE READER PICKS, ONE ROW PER HOLDING, AND STRIPED ROWS
 
 *"Open PR and do not merge to main until i tell you to … show the complete list
 of daily movers … give a view selector … bar graph or a pie chart or any other
@@ -27378,6 +27414,23 @@ the headings check found the shared letter. This branch's 39 references moved,
 main's 10 stayed. `index.css` keeps #125's grid borders beside the stripe;
 `MorningCIO.tsx` takes #124's review accessors; `PortfolioMonitor.tsx` carries
 #124's review scope onto every line. The probe literal is 126 keys, none lost.
+
+**Merged again, on the family's go-ahead.** #129, #127 and #130 landed while
+this waited. #130 took `10dm`, so this is `10dn`: git marked that conflict,
+main's section comes first, and every `10dm` in this branch's code moved. #127
+(a Sector Composition tab on Morning CIO) wrote no stage section and merged
+without a marker; its tab and this branch's allocation picker sit side by side.
+#130 fixes the `family` scroll finding the earlier sweep named as main's.
+
+On that tree (main `e083467`): `build`, `tsc`, `test:ingest` (golden 140
+passed, 2 not checked, 0 blocked), `test:family` (0 failed), `check:family`
+**136/0**, `build-book` byte-identical, and the probe literal is the same 126
+keys on both sides. `check:pages` on the routes this touches and #127's
+`cio-sectors`, `family` and `family-entity`: 26 combinations, two findings,
+**both main's**, measured on a worktree of main alone with the same two failing:
+*the quote request names the card's own scope as priority* on `cio-live`, and
+*a statement value priced on another day … names both dates (VD-17)* on
+`monitor`. They are main's, and are named here rather than fixed.
 
 **Verification**, on the tree merged with #120 (main `0643a24`):
 

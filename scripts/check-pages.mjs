@@ -4755,7 +4755,7 @@ const rowUnits = (B, c) => {
   const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
   if (!keys.size) return undefined;
   if (c.mandate) {
-    // A mandate row is every account its strategy is run in (Stage 10dm): the
+    // A mandate row is every account its strategy is run in (Stage 10dn): the
     // holdings of those accounts under the row's own keys, whole or not.
     const ids = c.mandateAccounts?.length ? c.mandateAccounts : c.capitalAccounts;
     if (!ids.length) return null;
@@ -7539,6 +7539,16 @@ const ROUTES = [
     const six = [...CIO_TILE_OPTIONS].sort((a, b) => b.label.length - a.label.length).slice(0, 6).map((o) => o.id);
     return six.length === 6 ? `/cio?tiles=${six.join(",")}` : "/cio?tiles=no-catalogue-captured-from-the-picker";
   }],
+  /**
+   * ── THE SECTOR COMPOSITION PANEL ─────────────────────────────────────────
+   * The `/sectors` page embedded as Morning CIO's second tab. It is walked on
+   * its own address because its set toggle must offer Consolidated and Direct
+   * Equity ALONE — the family asked for Compare sectors to stay off the tab —
+   * and that is a claim a check on the standalone `/sectors` (which keeps all
+   * three) cannot make. The sector figures themselves are verified on the
+   * `/sectors` routes; this walk asserts the embed's own two facts.
+   */
+  ["cio-sectors", "/cio?tab=sectors"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -7582,7 +7592,7 @@ const ROUTES = [
   // with no allocation table on it at all.
   ["cio-alloc-basket", "/cio?tab=allocation&alloc=basket"],
   ["cio-alloc-class", "/cio?tab=allocation&alloc=assetClass"],
-  // THE OTHER TWO DRAWINGS OF THE SAME ROWS (Stage 10dm). Each is walked by its
+  // THE OTHER TWO DRAWINGS OF THE SAME ROWS (Stage 10dn). Each is walked by its
   // own address, so the bar lengths and the treemap areas are held to the table
   // under them exactly as the pie is on `cio-allocation`.
   ["cio-alloc-bars", "/cio?tab=allocation&chart=bar"],
@@ -11466,7 +11476,7 @@ const WITHHELD_CHECKS = (mode) => {
     }],
     ["a mandate some of whose shares were held back says how many, of how many, and why", (t, ctx) => {
       const r = ready(ctx); if (!r.B) return out(r);
-      // A row is a STRATEGY now (Stage 10dm), so its held count is summed over
+      // A row is a STRATEGY now (Stage 10dn), so its held count is summed over
       // every account it stands for.
       const heldOf = (x) => (x.mandateAccounts ?? []).reduce((n, a) => n + r.B.heldIn(a), 0);
       const ms = r.rows.filter((x) => x.mandate && heldOf(x) > 0);
@@ -11534,7 +11544,7 @@ const WITHHELD_PILL = [
  * of gainers the card must show on the `cio-live` walk.
  *
  * *"we will only show direct equity as default."* The claim that the card
- * covers THAT SET cannot be checked on the ROWS alone: since Stage 10dm the lists
+ * covers THAT SET cannot be checked on the ROWS alone: since Stage 10dn the lists
  * show every name, but on any day the mandate names happen not to move a
  * rows-only assertion still passes over a card that had quietly widened.
  *
@@ -11552,7 +11562,7 @@ const WITHHELD_PILL = [
  * agrees with itself by construction.
  */
 /**
- * EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10dm).
+ * EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10dn).
  *
  * *"IT is showing 18 top gainers and losers so we need to show the complete
  * list and not just the top 6."* Each list's heading counts every name that
@@ -11581,7 +11591,7 @@ const MOVERS_FULL_LIST = [
 ];
 
 /**
- * …AND ON THE AIF & PMS BRANCH TOO (Stage 10dm). #120 added that branch with
+ * …AND ON THE AIF & PMS BRANCH TOO (Stage 10dn). #120 added that branch with
  * its own six-row cap, under a heading that counts every company inside the
  * funds and mandates that moved. The same claim, struck the same way: each list
  * draws as many rows as its heading counts. A cap only shows where a list is
@@ -12596,7 +12606,7 @@ const FIFO_BOOK = (() => {
  * ── ONE ROW PER STRATEGY: WHICH ACCOUNTS EACH PMS ROW SHOULD STAND FOR ──────
  *
  * *"we are showing Green Lantern Capital LP as 2 separate lines… they need to
- * be one."* (Stage 10dm.) Re-expressed off `glowData.ts`: every PMS account
+ * be one."* (Stage 10dn.) Re-expressed off `glowData.ts`: every PMS account
  * that holds a current position, grouped on its provider and the strategy its
  * statement prints (the provider where it prints none), compared case-blind —
  * never through the page's own `mandateLabel`, which is the code under test.
@@ -13272,7 +13282,7 @@ const DERIVED_ONLY_C = [
 /**
  * Opened, a strategy's accounts and a holding's accounts each carry their own
  * realised (DL-8). A strategy row opens onto one line per ACCOUNT since Stage
- * 10dm — its shares are on that account's own page — and an account line's
+ * 10dn — its shares are on that account's own page — and an account line's
  * realised is everything that account has booked since it opened, which is what
  * its hover says; a holding's line keeps its own FIFO sentence. Both kinds must
  * be present, so a build that stopped drawing either cannot pass on the other.
@@ -18260,7 +18270,7 @@ const ALLOC_DERIVED = [
  *
  * *"instead of removing the bar graphs just give a view selector for the user
  * then he can simply select whether he wants to see all the view as a bar graph
- * or a pie chart or any other suitable view."* (Stage 10dm.) Three claims, none
+ * or a pie chart or any other suitable view."* (Stage 10dn.) Three claims, none
  * implying another, and each struck on the drawing THIS address names — the pie
  * by default, `?chart=bar` and `?chart=treemap` on their own routes:
  *
@@ -19561,11 +19571,14 @@ const CIO_TAB_CONTROL = [
    * default is still the movers panel — which is why the order is asserted
    * rather than the membership alone.
    */
-  ["Morning CIO offers exactly the four panels, the three the family arranged and then All alerts", (t, ctx) => {
+  ["Morning CIO offers exactly the five panels — Daily Movers, Sector Composition, the two the family arranged and then All alerts", (t, ctx) => {
     const tabs = ctx?.cioTabs;
     if (tabs == null) return notChecked("the tab probe did not run on this pass");
-    return tabs.length === 4
-      && tabs.map((x) => x.key).join(",") === "movers,allocation,nav,alerts"
+    // SECTOR COMPOSITION SITS SECOND, right after Daily Movers, as asked — so
+    // the order is asserted, not just the membership. The three panels the
+    // family arranged (allocation, nav) and All alerts keep their places after it.
+    return tabs.length === 5
+      && tabs.map((x) => x.key).join(",") === "movers,sectors,allocation,nav,alerts"
       // EXACTLY ONE ACTIVE. Two would mean two panels are drawn at once, which
       // is the state this split exists to end; none would mean the route landed
       // somewhere the control does not describe.
@@ -19674,6 +19687,47 @@ const CIO_TAB_CONTROL = [
     const g = ctx?.cioLayout;
     if (!g || !g.strip || !g.panelBox) return notChecked("the layout probe did not run on this pass");
     return g.strip.bottom <= g.viewportH + 1 && g.panelBox.top >= g.strip.bottom - 1;
+  }],
+];
+
+/**
+ * ── THE SECTOR COMPOSITION PANEL, ON `/cio?tab=sectors` ──────────────────────
+ *
+ *   *"next to daily movers add a new tab sector composition … give option to
+ *    select either consolidated view or direct equity. Do not add the compare
+ *    sectors tab."*
+ *
+ * The panel IS the `/sectors` page (`<SectorComposition embedded />`), so its
+ * figures, donut and table are the ones the `/sectors` routes already verify —
+ * nothing here re-checks a sector's value. What this walk asserts is the two
+ * things the embed changes and the standalone page cannot show: the set toggle
+ * offers Consolidated and Direct Equity ALONE, with Compare left off, and the
+ * sector page really is drawn (a donut and a sector table), so a reader who
+ * opens the tab gets the page rather than an empty shell.
+ *
+ * A MISSING LAYOUT IS A FINDING, NOT AN ABSTENTION: this route asks for the
+ * sectors panel outright, so a null `sectorLayout` means the panel did not
+ * render it — only the probe failing to run abstains.
+ */
+const CIO_SECTORS = [
+  ["the Sector Composition panel offers Consolidated and Direct Equity alone — Compare sectors is left off the tab", (t, ctx) => {
+    const L = ctx?.sectorLayout;
+    if (L === undefined) return notChecked("the sector probe did not run on this pass");
+    if (!L) return false;   // the panel did not draw the sector page
+    return L.views.map((v) => v.key).join(",") === "consolidated,direct"
+      && !L.views.some((v) => v.key === "compare" || /compare/i.test(v.label))
+      // Exactly one set is active, and the default is Consolidated — the widest
+      // set, and the one `/sectors` opens on, so the tab opens on it too.
+      && L.views.filter((v) => v.active).length === 1
+      && L.views.find((v) => v.active)?.key === "consolidated";
+  }],
+  ["...and it is the sector page itself — the donut is drawn and the sector table beside it", (t, ctx) => {
+    const L = ctx?.sectorLayout;
+    if (L === undefined) return notChecked("the sector probe did not run on this pass");
+    if (!L) return false;
+    // The two-column layout, with no Compare picker and no legend creeping back
+    // into the left half (every row of it is a row of the table beside it).
+    return L.cards.length === 2 && L.table && L.wedges > 0 && !L.hasPicker && L.leftLists === 0;
   }],
 ];
 
@@ -22433,7 +22487,7 @@ const INVARIANTS = {
        * about in the first place and would have been the check inventing it.
        */
       /**
-       * …AND ON WHAT THE READER RANKS. Since Stage 10dm a holding two or more
+       * …AND ON WHAT THE READER RANKS. Since Stage 10dn a holding two or more
        * accounts carry is ONE line, ranked on its own newest movement, with its
        * accounts drawn under it — so they are ordered INSIDE the line, newest
        * first, and never against the rows around it.
@@ -22449,7 +22503,7 @@ const INVARIANTS = {
       return inClubs && [...bySection.values()].every((rs) => rs.every((r, i) => i === 0 || rs[i - 1].last >= r.last));
     }],
     /**
-     * ── ONE HOLDING, ONE LINE (Stage 10dm) ───────────────────────────────────
+     * ── ONE HOLDING, ONE LINE (Stage 10dn) ───────────────────────────────────
      *
      *   *"If there are 2 separate transactions of the same holding then we need
      *    to show that in drop down and label them as a single line item and
@@ -25673,6 +25727,7 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC.filter(([description]) => !CIO_OPTIONAL_CAPITAL_CHECKS.has(description)), ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
+  "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-return-metrics": [...CIO_MWR, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
@@ -30285,7 +30340,7 @@ const INVARIANTS = {
     ["every mandate row's Return is FIFO's, struck on the mandate's own capital since inception — or the XIRR where the methodology names it", (t, ctx) => {
       if (!FIFO_BOOK) return false;
       /*
-       * ONE ROW PER STRATEGY (Stage 10dm): a row stands for every account its
+       * ONE ROW PER STRATEGY (Stage 10dn): a row stands for every account its
        * strategy is run in, so its FIFO return is POOLED over them — Σ value +
        * Σ withdrawn − Σ paid in, over Σ paid in — and its XIRR is solved over
        * all their dated flows together. Every account with a capital record
@@ -30329,7 +30384,7 @@ const INVARIANTS = {
      */
     ["every mandate row's Invested is the capital paid into it, which its Return divides by", (t, ctx) => {
       if (!FIFO_BOOK) return false;
-      // One row per strategy (Stage 10dm): its Invested is what was paid into
+      // One row per strategy (Stage 10dn): its Invested is what was paid into
       // EVERY account it stands for, summed.
       const rows = (ctx.mandateRows ?? []).filter((r) => r.mandateAccounts.some((id) => FIFO_BOOK.byAccountId.has(id)));
       const covered = rows.flatMap((r) => r.mandateAccounts.filter((id) => FIFO_BOOK.byAccountId.has(id)));
@@ -30668,7 +30723,7 @@ const INVARIANTS = {
     // ...and each of those rows is a way IN. A mandate a reader cannot open is
     // a section that hides 271 positions instead of filing them.
     /**
-     * ONE ROW PER STRATEGY (Stage 10dm): a strategy run in ONE account links
+     * ONE ROW PER STRATEGY (Stage 10dn): a strategy run in ONE account links
      * from its name; one run in several opens onto a line per account, each a
      * link (asserted with every row open, on `monitor-open-all`). So the closed
      * page carries exactly one mandate link per single-account row, and a
@@ -32534,7 +32589,7 @@ const INVARIANTS = {
     }],
     /**
      * ONE ROW PER STRATEGY, ITS ACCOUNTS AND THEIR SHARES ONE CLICK IN (Stage
-     * 10dm). A strategy run in several accounts opens onto exactly one line per
+     * 10dn). A strategy run in several accounts opens onto exactly one line per
      * account — each linking to that account's own page — and under each line
      * the shares IN THAT ACCOUNT, as its own page lists them. A strategy run in
      * one account opens straight onto its shares, and its name is the link.
@@ -37115,7 +37170,7 @@ for (const theme of THEMES) {
          */
         await page.waitForSelector("[data-dated-table] tr[data-dated-total]", { timeout: 45000 }).catch(() => {});
         /**
-         * EVERY CLUB OPEN, AND OPENED AGAIN AFTER EVERY FILTER (Stage 10dm).
+         * EVERY CLUB OPEN, AND OPENED AGAIN AFTER EVERY FILTER (Stage 10dn).
          * A holding two or more accounts carry is ONE line now, and its
          * accounts are drawn only once it is opened — so every claim below that
          * reads the table's rows would read fewer accounts than the footer sums
@@ -38786,7 +38841,7 @@ for (const theme of THEMES) {
            */
           buttons: [...t.querySelectorAll("tbody button, tfoot button")].length,
           links: t.querySelectorAll("a[href]").length,
-          // THE PIE ABOVE THE TABLE, paired with the rows below it (Stage 10dm).
+          // THE PIE ABOVE THE TABLE, paired with the rows below it (Stage 10dn).
           // Each legend entry carries `data-alloc-slice` (its section key) and
           // IS the same `<Link>` its row is; each wedge carries
           // `data-alloc-wedge`, the same destination as `data-href`, and its
@@ -38803,7 +38858,7 @@ for (const theme of THEMES) {
             share: Number(el.getAttribute("data-alloc-share")),
             tag: el.tagName.toLowerCase(),
           })),
-          // THE VIEW PICKER and the drawing it chose (Stage 10dm): pie, bars or
+          // THE VIEW PICKER and the drawing it chose (Stage 10dn): pie, bars or
           // a treemap — three drawings of the same rows, each paired below.
           chartView: document.querySelector("main [data-alloc-chart]")?.getAttribute("data-alloc-chart") ?? null,
           chartPicker: [...document.querySelectorAll("main [data-alloc-chart-picker] [data-alloc-chart-view]")].map((b) => ({
@@ -39019,7 +39074,7 @@ for (const theme of THEMES) {
             const absent = root.querySelector("[data-mover-total-absent]");
             return [k, {
               /* The list's own heading — "15 gainers" — which is the count its
-                 rows must reach since Stage 10dm lists every mover. */
+                 rows must reach since Stage 10dn lists every mover. */
               heading: (root.firstElementChild?.firstElementChild?.textContent ?? "").trim(),
               text: (pill?.textContent ?? "").trim(),
               absent: absent ? Number(absent.getAttribute("data-mover-total-absent")) : null,
@@ -39081,7 +39136,7 @@ for (const theme of THEMES) {
             rows: [...sec.querySelectorAll("tr[data-alert-row]")].map((tr, _i, all) => {
               const st = tr.querySelector("[data-alert-status-cell]");
               const bg = getComputedStyle(tr).backgroundColor;
-              // The STRIPE is not a tint (Stage 10dm): every table paints its
+              // The STRIPE is not a tint (Stage 10dn): every table paints its
               // even plain rows in `--row-alt`, so a watched row at an even place
               // carries that shade and nothing else. Resolved off the table's own
               // computed colour, never typed, so a theme change cannot desync it.
@@ -39298,7 +39353,7 @@ for (const theme of THEMES) {
            */
           withheld: !!tr.querySelector("[data-cmp-withheld]"),
           /**
-           * ONE ROW PER STRATEGY, NOT PER ACCOUNT (Stage 10dm): a mandate the
+           * ONE ROW PER STRATEGY, NOT PER ACCOUNT (Stage 10dn): a mandate the
            * family runs in several accounts is one row now, so the row names
            * every account it stands for. `mandateAccount` is that account only
            * where there is exactly one — a claim struck on one account's lines
@@ -39323,7 +39378,7 @@ for (const theme of THEMES) {
        * whose fixture quotes the book, where there is something to hold back.
        */
       const quoteHold = (FAST || !/^(monitor-withheld|performance-live)/.test(name)) ? null : await page.evaluate((cmpAt) => ({
-        // A strategy's shares are on its accounts' own pages since Stage 10dm,
+        // A strategy's shares are on its accounts' own pages since Stage 10dn,
         // so the lines a row opens into that carry a quote are a holding's.
         lines: [...document.querySelectorAll('tbody tr[data-tree-child="venue"]')].map((tr) => ({
           kind: tr.getAttribute("data-tree-child"),
@@ -39992,7 +40047,7 @@ for (const theme of THEMES) {
             trades: tr.hasAttribute("data-trades"),
             windowed: tr.hasAttribute("data-mine-windowed"),
             // The ONE LINE this row is drawn under, where two or more accounts
-            // carry the same holding (Stage 10dm); null on a row of its own.
+            // carry the same holding (Stage 10dn); null on a row of its own.
             club: tr.getAttribute("data-dated-club-member"),
             titles: [...tr.querySelectorAll("[title]")].map((e) => e.getAttribute("title") ?? ""),
             cells: cells(tr),
@@ -40452,7 +40507,7 @@ for (const theme of THEMES) {
             .filter((tr) => kindOf(tr) !== "lookthrough")
             .reduce((n, tr) => n + tr.querySelectorAll("table").length, 0),
           /*
-           * ONE ROW PER STRATEGY (Stage 10dm): a mandate run in several accounts
+           * ONE ROW PER STRATEGY (Stage 10dn): a mandate run in several accounts
            * opens onto one line per account, each linking to that account's own
            * page, where its shares are. A mandate run in one account opens
            * nothing — its name IS the link — and the shares a row used to open
@@ -42484,7 +42539,7 @@ for (const theme of THEMES) {
             rowKey: td.closest("tr")?.getAttribute("data-security-key") ?? null,
             mandate: !!td.closest("tr")?.hasAttribute("data-mandate"),
             // The accounts a mandate row STANDS FOR — every account its strategy
-            // is run in (Stage 10dm), read off the row rather than off the
+            // is run in (Stage 10dn), read off the row rather than off the
             // return cell, so the units are restated from the row.
             mandateAccounts: (td.closest("tr")?.getAttribute("data-mandate-accounts") || "").split(" ").filter(Boolean),
             clubbed: !!td.closest("tr")?.querySelector("[data-fund-classes]"),
@@ -42533,7 +42588,7 @@ for (const theme of THEMES) {
       // checked against it — and the address of the drill-down itself.
       if (name === "monitor") {
         MANDATE_PATH = hrefs.find((h) => /^\/mandate\/./.test(h)) ?? MANDATE_PATH;
-        // One entry per ACCOUNT, because a row is a strategy now (Stage 10dm)
+        // One entry per ACCOUNT, because a row is a strategy now (Stage 10dn)
         // and the drill-down is one account's page: each account carries the
         // holding count of its own line on the row.
         for (const m of mandateRows ?? []) {

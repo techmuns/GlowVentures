@@ -798,7 +798,7 @@ if (await catTab.count()) {
     })));
   const rowsPill = Number(/(\d+)\s+rows/.exec(text)?.[1] ?? NaN);
   const links = await page.locator('a[href^="/mandate/"]').count();
-  // ONE ROW PER STRATEGY since Stage 10dm. A strategy run for one account links
+  // ONE ROW PER STRATEGY since Stage 10dn. A strategy run for one account links
   // its name to that account's page; one run for several (Aristos for Ajay and
   // for Ankita) is not a link — it would have to pick one member — and each of
   // its account lines links instead. So the collapsed table carries exactly one
