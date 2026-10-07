@@ -203,7 +203,7 @@ function groupRows(
 const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "costShare", "pnl", "return"] as const;
 
 export function HoldingsBehind() {
-  const { portfolio, consolidated, statementPortfolio, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, statementPortfolio, fmtFromBase, scope: memberScope } = usePortfolio();
   const [params] = useSearchParams();
   const [q, setQ] = useState("");
   /** Which grouped rows are expanded to their statement lines. */
@@ -446,7 +446,7 @@ export function HoldingsBehind() {
       costShare: (g) => g.invested,
       pnl: (g) => g.pnl,
       return: (g) => coveredReturn(g.rows, fifoOpts).pct,
-    }, (g) => g.kind === "mandate" ? { accountId: g.rows[0].accountId, isMandate: true } : { positions: g.rows }),
+    }, (g) => g.kind === "mandate" ? { accountId: g.rows[0].accountId, isMandate: true } : { positions: g.rows }, memberScope.owners !== null),
   );
   /**
    * ── THE AIF DRILL-DOWN IS CLUBBED BY SEBI CATEGORY ─────────────────────────

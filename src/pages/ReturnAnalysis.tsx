@@ -328,7 +328,7 @@ export function ReturnAnalysis() {
     pnl: (x) => x.pnl,
     return: (x) => x.returnPct,
     contrib: (x) => x.contribPct,
-  }, (x) => ({ sector: x.sector }))) : [];
+  }, (x) => ({ sector: x.sector }), scope.owners !== null)) : [];
   const accountRows = m ? sortRows(m.byAccount, accountView.sort, {
     account: (a) => acctLabel(a.account),
     names: (a) => (a.cost === null ? null : a.names),
@@ -654,13 +654,14 @@ function ContribTable({ rows, money, storageKey }: {
   /** Contributors and detractors are two tables, so each keeps its own order. */
   storageKey: string;
 }) {
+  const { scope } = usePortfolio();
   const view = useTableView(storageKey, RA_CONTRIB_COLS, { reviewKind: "holding" });
   const shown = sortRows(rows, view.sort, withReviewAccessors<typeof rows[number]>({
     security: (r) => r.security,
     pnl: (r) => r.pnl,
     return: (r) => r.returnPct,
     contrib: (r) => r.contribPct,
-  }, (r) => ({ securityKey: r.key })));
+  }, (r) => ({ securityKey: r.key }), scope.owners !== null));
   if (!rows.length) {
     return <p className="py-6 text-center text-[11.5px] text-slate-500">{DASH} no priced positions in the book</p>;
   }

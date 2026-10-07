@@ -14,6 +14,7 @@ export type ReviewKind = "holding" | "category" | "entity" | "sector";
 export type ReviewScope = {
   positions?: readonly Position[]; securityKey?: string; accountId?: string; isMandate?: boolean;
   product?: string; category?: string; basket?: string; entity?: string; sector?: string;
+  familySubset?: boolean;
 };
 type Format = "text" | "currency" | "percent" | "number";
 export type ReviewColumn = { id: string; field: string; label: string; format: Format; kinds: readonly ReviewKind[] };
@@ -54,6 +55,7 @@ export const REVIEW_COLUMNS: readonly ReviewColumn[] = [
 export const reviewColumn = (id: string) => REVIEW_COLUMNS.find((c) => c.id === id);
 export const reviewColumnIds = (kind: ReviewKind) => REVIEW_COLUMNS.filter((c) => c.kinds.includes(kind)).map((c) => c.id);
 export const REVIEW_NOTE = "Motilal consolidated review · 30 Jun 2026. Source product figures cover the family investment, not an individual account. Unmatched or ambiguous records show a dash.";
+const INSTRUMENT_FIELDS = new Set(["fundManager", "fundAum", "investmentStyle", "regularExpense", "directExpense", "managementFee", "exitLoad", "lockIn", "benchmark", "status", "valuationNote"]);
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9%]+/g, " ").trim();
 
 /** Only an exact source row, security identity, or the existing audited taxonomy can join a product. */
@@ -70,6 +72,7 @@ function productRecord(scope: ReviewScope, p?: Position): ReviewRecord | undefin
 export function reviewField(scope: ReviewScope | undefined, field: string): ReviewField {
   const missing: ReviewField = { value: null, source: "", note: "This row has no exact matching record for this field in the Motilal June review." };
   if (!scope) return missing;
+  if (scope.familySubset && !INSTRUMENT_FIELDS.has(field)) return { ...missing, note: "The June review reports this field for the whole family. It cannot be apportioned to the selected members; choose Whole family to see it." };
   const groups: [string | undefined, Record<string, ReviewRecord>][] = [
     [scope.entity, REVIEW_COLUMN_DATA.byEntity], [scope.category, REVIEW_COLUMN_DATA.byCategory],
     [scope.basket, REVIEW_COLUMN_DATA.byBasket], [scope.sector, REVIEW_COLUMN_DATA.bySector],
@@ -87,9 +90,10 @@ export function reviewField(scope: ReviewScope | undefined, field: string): Revi
 }
 
 /** Sorting and cells resolve exactly the same source field; missing figures sort last. */
-export function withReviewAccessors<T>(accessors: Record<string, Accessor<T>>, scope: (row: T) => ReviewScope): Record<string, Accessor<T>> {
+export function withReviewAccessors<T>(accessors: Record<string, Accessor<T>>, scope: (row: T) => ReviewScope, familySubset = false): Record<string, Accessor<T>> {
   return { ...accessors, ...Object.fromEntries(REVIEW_COLUMNS.map((c) => [c.id, (row: T) => {
-    const field = reviewField(scope(row), c.field);
+    const resolved = scope(row);
+    const field = reviewField({ ...resolved, familySubset: familySubset || resolved.familySubset }, c.field);
     return field.value == null ? null : field.sortValue ?? field.value;
   }])) };
 }

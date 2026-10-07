@@ -213,7 +213,7 @@ const sectionColor = (axis: GroupAxis, key: string, i: number) => {
 };
 
 export function MorningCIO() {
-  const { consolidated, portfolio, statementPortfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { consolidated, portfolio, statementPortfolio, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
   /**
    * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
    * every other view in this app, and for the reason the Portfolio Monitor's
@@ -969,7 +969,7 @@ export function MorningCIO() {
     return: (b) => b.retPct,
     // Weight is `current ÷ the book`, so it orders exactly as Current does.
     weight: (b) => b.current,
-  }, (b) => allocAxis === "basket" ? { basket: b.key } : { category: sectionLabel(b.key) }));
+  }, (b) => allocAxis === "basket" ? { basket: b.key } : { category: sectionLabel(b.key) }, memberScope.owners !== null));
   // The bar chart above the table scales each bar against the LARGEST bucket's
   // current value, so the biggest fills the track and the rest read proportional
   // to it. The actual figure and weight print beside every bar, so the bar is a

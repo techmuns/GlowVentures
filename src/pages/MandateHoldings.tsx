@@ -656,7 +656,7 @@ export function MandateHoldings() {
     mv: (r) => r.marketValue,
     weight: (r) => (mv > 0 ? r.marketValue : null),
     pnl: (r) => r.unrealizedPnL,
-  }, (r) => ({ positions: [r] })));
+  }, (r) => ({ positions: [r] }), scope.owners !== null));
   const hidden = rows.length - shown.length;
   /**
    * A MANDATE WITH NO HOLDING STATEMENT IS NOT A MANDATE HOLDING NOTHING

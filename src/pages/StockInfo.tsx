@@ -1106,7 +1106,7 @@ export function StockInfo() {
    *  route — a section is a partition of the table, so ranking across routes
    *  would put a derived line between two of a manager's rows. */
   const sortedPositions = (ps: Position[]) =>
-    sortRows([...ps].sort((a, b) => b.marketValue - a.marketValue), posView.sort, withReviewAccessors(posAccessors, (p) => ({ positions: [p] })));
+    sortRows([...ps].sort((a, b) => b.marketValue - a.marketValue), posView.sort, withReviewAccessors(posAccessors, (p) => ({ positions: [p] }), scope.owners !== null));
   /** A fund line has a holder, a fund and a derived value — every other column
    *  is absent on it, so it sorts LAST on those rather than as a zero. */
   const sortedFunds = (ls: FundLine[]) => sortRows(ls, posView.sort, {

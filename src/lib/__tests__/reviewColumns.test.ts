@@ -53,4 +53,11 @@ const accessors = withReviewAccessors({}, (p: typeof BOOK_POSITIONS[number]) => 
 const sorted = sortRows(reviewPositions, { col: "review:investmentRange", dir: "asc" }, accessors);
 const dates = sorted.map((p) => String(reviewField({ positions: [p] }, "investmentRange").sortValue));
 assert.deepEqual(dates, [...dates].sort());
+assert.equal(reviewField({ positions: [reviewPositions[0]], familySubset: true }, "investmentRange").value, null);
+assert.equal(reviewField({ category: "Equity", familySubset: true }, "reviewValue").value, null);
+assert.match(reviewField({ category: "Equity", familySubset: true }, "reviewValue").note!, /whole family/);
+const feeScope = { product: "Motilal Oswal Founders Fund II", familySubset: true };
+assert.equal(reviewField(feeScope, "managementFee").value, "1.05%", "Instrument metadata remains applicable to a selected member");
+const scopedAccessors = withReviewAccessors({}, (p: typeof BOOK_POSITIONS[number]) => ({ positions: [p] }), true);
+assert.ok(reviewPositions.every((p) => scopedAccessors["review:investmentRange"](p) === null), "Member-scoped sorting must use the same absent values as cells");
 console.log(`ok ${checked} independent source amount/unit checks; all 87 private dates and ${reviewPositions.length} book joins; precision, sparse/ambiguous matches, valuation notes and sorting`);

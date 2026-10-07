@@ -368,7 +368,7 @@ export function PrivateMarket() {
    * at its current value, a live price where a quote has landed and each mutual
    * fund at its published NAV. One figure, one value, on one screen.
    */
-  const { statementPortfolio: portfolio, portfolio: live, fmtFromBase } = usePortfolio();
+  const { statementPortfolio: portfolio, portfolio: live, fmtFromBase, scope: memberScope } = usePortfolio();
   const [q, setQ] = useState("");
   /**
    * WHICH TAB. In the URL like every other view in this app, so a tab is a link
@@ -1574,7 +1574,7 @@ export function PrivateMarket() {
         fig: { ...folioFigures(f), callKey: grouping === "owner" ? folioCallKey(f) : null, ret: folioRet(f) },
       })),
       bookView.sort,
-      withReviewAccessors(Object.fromEntries(Object.entries(nameAcc).map(([c, a]) => [c, (x: { fig: RowFigures; label: string; f: BookFolio }) => a({ ...x.fig, label: x.label })])), (x) => folioReviewScope(x.f)),
+      withReviewAccessors(Object.fromEntries(Object.entries(nameAcc).map(([c, a]) => [c, (x: { fig: RowFigures; label: string; f: BookFolio }) => a({ ...x.fig, label: x.label })])), (x) => folioReviewScope(x.f), memberScope.owners !== null),
     );
     const scheme = (f: BookFolio) => f.capital;
     const fundCall = groupCallKey(g);
@@ -1764,7 +1764,7 @@ export function PrivateMarket() {
     // return columns order the rows on the figure each one prints.
     const shown = sortRows(
       s.groups.filter(groupMatches).map((g) => ({ ...g, ret: groupRet(g) })),
-      bookView.sort, withReviewAccessors(nameAcc as Record<string, Accessor<BookGroup & { ret: (m: ReturnMeasure) => MeasuredReturn }>>, groupReviewScope));
+      bookView.sort, withReviewAccessors(nameAcc as Record<string, Accessor<BookGroup & { ret: (m: ReturnMeasure) => MeasuredReturn }>>, groupReviewScope, memberScope.owners !== null));
     const noun = grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds") : (s.groups.length === 1 ? "member" : "members");
     // COUNTS ON THE FACE, THE BASIS IN THE HOVER. *"its obvious from the table
     // what it is"* — the band said which basis it is on and why the missing-data

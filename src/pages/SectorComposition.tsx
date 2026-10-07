@@ -248,7 +248,7 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
 }
 
 export function SectorComposition() {
-  const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const sectorView = useTableView("sectors", SECTOR_COLS, { reviewKind: "sector" });
   const companyView = useTableView("sector-companies", SECTOR_COMPANY_COLS);
@@ -487,7 +487,7 @@ export function SectorComposition() {
     count: (x) => x.count,
     return: (x) => x.returnPct,
     top: (x) => x.top,
-  }, (s) => ({ sector: s.key })));
+  }, (s) => ({ sector: s.key }), memberScope.owners !== null));
 
   /**
    * THE COLOUR FOLLOWS THE SECTOR, NOT THE ROW. `CHART_COLORS[i % n]` keyed on a
@@ -1030,7 +1030,7 @@ export function SectorComposition() {
                       // A share of the sector's own value, so it orders as Value does.
                       share: (h) => h.marketValue,
                       return: (h) => (h.costUnavailable ? null : h.returnPct),
-                    }, (h) => ({ positions: [h] })));
+                    }, (h) => ({ positions: [h] }), memberScope.owners !== null));
                     const companies = sortRows(companiesBySector[s.key] ?? [], companyView.sort, {
                       company: (e) => e.name,
                       measured: (e) => (e.positions.length ? e.measured : null),

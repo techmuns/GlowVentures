@@ -201,7 +201,7 @@ const unprinted = (reportType: string, period: string) => (UNPRINTED[reportType]
 export function Performance() {
   const [params] = useSearchParams();
   const summary = params.get("summary");
-  const { portfolio, statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, fmtFromBase, scope: memberScope } = usePortfolio();
   const xirrView = useTableView("performance-xirr", XIRR_COLS, { reviewKind: "holding" });
 
   const p = portfolio?.positions ?? [];
@@ -337,7 +337,7 @@ export function Performance() {
     mv: (x) => (x.unvalued ? null : x.mv),
     terminal: (x) => x.account.asOf ?? null,
     return: (x) => x.toDate,
-  }, (x) => reviewScopeForAccount(x.account)));
+  }, (x) => reviewScopeForAccount(x.account), memberScope.owners !== null));
   const measurable = xirrByAccount.filter((x) => measuredIds.has(x.account.accountId));
   // Every rupee a pooled account's printed totals carry and no dated row does —
   // named in the pooled figure's hover as it is on the account's own row.

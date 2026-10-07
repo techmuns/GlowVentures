@@ -112,11 +112,21 @@ try {
     await table(key).waitFor();
     assert.ok((await order(key)).includes(field) === !before.includes(field));
   }
+  await page.goto(BASE + "/monitor?members=ajay-jaisinghani", { waitUntil: "domcontentloaded" });
+  await table("monitor").waitFor();
+  const scopedDates = table("monitor").locator('[data-col-cell="review:investmentRange"]');
+  assert.ok(await scopedDates.count() > 0);
+  assert.ok((await scopedDates.allTextContents()).every((value) => value.trim() === "—"), "Family-wide dates leaked into a member-scoped row");
+  await page.goto(BASE + "/family?members=ajay-jaisinghani", { waitUntil: "domcontentloaded" });
+  await table("family-entities").waitFor();
+  assert.ok(await table("family-entities").locator('[data-review-source^="Investorwise Summary!"]').count() > 0, "Whole-family entity page lost its exact review values");
+  await page.goto(BASE + "/private-market?view=transactions&members=", { waitUntil: "domcontentloaded" });
+  await table("pm-calls").waitFor();
   await page.setViewportSize({ width: 390, height: 844 });
   await picker("pm-calls");
   const box = await page.locator('[data-column-editor="pm-calls"]').boundingBox();
   assert.ok(box.x >= 0 && box.x + box.width <= 391 && box.y >= 0 && box.y + box.height <= 845, "Picker overflows the phone viewport");
   assert.deepEqual(errors, []);
   await page.screenshot({ path: "/tmp/glow-edit-columns-mobile.png" });
-  console.log("ok source dates, show/hide, keyboard and pointer movement, reload and axis persistence, unchanged totals, table alignment, reset and mobile picker");
+  console.log("ok source dates, show/hide, keyboard and pointer movement, reload and axis persistence, unchanged totals, table alignment, reset, member scope fence and mobile picker");
 } finally { await browser.close(); }

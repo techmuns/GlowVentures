@@ -2,9 +2,9 @@ import { reviewColumn, reviewField, REVIEW_NOTE, type ReviewScope } from "@/lib/
 import { usePortfolio } from "@/context/PortfolioContext";
 
 export function ReviewColumnCell({ id, scope }: { id: string; scope?: ReviewScope }) {
-  const { fmtFromBase } = usePortfolio();
+  const { fmtFromBase, scope: memberScope } = usePortfolio();
   const column = reviewColumn(id);
-  const field = reviewField(scope, column?.field ?? "");
+  const field = reviewField(scope ? { ...scope, familySubset: memberScope.owners !== null } : undefined, column?.field ?? "");
   const value = field.value;
   const content = value == null ? "—" : typeof value !== "number" ? value
     : column?.format === "currency" ? fmtFromBase(value, { compact: true })
