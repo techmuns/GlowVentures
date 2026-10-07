@@ -26286,6 +26286,29 @@ assumed.
   distinct security names, 0 carrying more than one stored key) and
   `node scripts/review-reconcile.mjs --check` (42 lines no name reaches) are each
   a no-op, and the tree is clean after all eight.
+- `npm run check:pages` — **382 combinations clean, 0 invariant failures**, and
+  not one console error, failed request, overflow or contrast finding on any of
+  them. 191 routes in two themes: **183 declared** — one fewer than main, the
+  review tab's route gone with the tab — and **8 generated**, one per allocation
+  bucket, where main generates 5. Main's own sweep is 378, and 184 + 5 = 189
+  against 183 + 8 = 191 reconciles only because this one was re-run.
+  **53 invariants were NOT CHECKED, every one on the light walk** where the
+  invariants run, read out of `report.json` by route:
+  - **22 are this change's, each because the review now supplies the very thing
+    the claim was struck on.** Four on `holdings-aif`: every AIF folio carries a
+    valued position, and the book values a Category I AIF, so the table draws
+    one. One each on `private-market`, `-tiles`, `-folios` and `-owners`: every
+    private account is valued, so the section of accounts nothing values has no
+    subject. One on `private-market-owners-returns`: no member holds exactly one
+    fund. The two on `monitor-txns` the section above names. And **eleven on
+    `holdings-unplaced`**, because nothing is on neither side of the book any
+    more — so that scope draws no table, no headline, no filter box and no
+    facet, and every claim about one says so.
+  - **31 predate it**, each an existing claim with nothing on this book to
+    check: 13 on Morning CIO's routes (11 of them the money-weighted tile its
+    strip does not show by default), 10 on the Portfolio Monitor's, 5 on Private
+    Market's, and 3 others — a partial realised figure on a mandate's trades,
+    the not-found drill-down's crumb, and the ledger's own window.
 
 ### Stage 10k — News & Announcements: REMOVED
 
