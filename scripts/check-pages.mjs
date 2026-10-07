@@ -21321,8 +21321,23 @@ const INVARIANTS = {
       const rowsClaimed = /Total · ([\d,]+) rows?/.exec(tbl.foot[0] ?? "")?.[1];
       if (!rowsClaimed) return false;
       const trades = tbl.groups.reduce((a, g) => a + (g.trades || 0), 0);
+      /**
+       * AND THE ACCOUNT COUNT IS DISTINCT ACCOUNTS, NOT ROWS (Stage 10dh).
+       *
+       * The two parted when a member's review holder bucket began drawing one
+       * row per LINE: summed as the ROW count the label read "39 of 64
+       * accounts" over a record 38 accounts publish. It is struck twice, on
+       * the handle and on the rendered label, against the accounts the rows
+       * themselves name (`data-mine-row`), so a footer back on the row count
+       * fails by name.
+       */
+      const accClaimed = /\b([\d,]+) of ([\d,]+) accounts/.exec(tbl.foot[0] ?? "");
+      if (!accClaimed) return false;
+      const drawnAccounts = new Set(tbl.rows.map((r) => r.accountId).filter(Boolean)).size;
       return Number(rowsClaimed.replace(/,/g, "")) === tbl.rows.length
-        && d.rows === tbl.rows.length && trades === d.trades;
+        && d.rows === tbl.rows.length && trades === d.trades
+        && d.accounts === drawnAccounts
+        && Number(accClaimed[1].replace(/,/g, "")) === drawnAccounts;
     }],
     /**
      * ── THE REALISED TOTAL IS THE STATEMENTS' OWN (A-08) ──────────────────────

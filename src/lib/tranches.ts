@@ -1270,7 +1270,14 @@ export function capitalReturnCoverage(groups: CapitalGroup[], measure: ReturnMea
 /** Column totals, summed FROM the rows so the footer cannot disagree with them. */
 export function capitalTotals(groups: CapitalGroup[]) {
   return {
-    accounts: groups.length,
+    /**
+     * DISTINCT ACCOUNTS, NOT ROWS — and the two parted at Stage 10dh. The
+     * footer prints "N of M accounts" beside its own row count, and a review
+     * holder bucket draws one row per LINE, so `groups.length` is the ROW
+     * count: on this book it would read 39 of 64 accounts where 38 publish a
+     * dated record. `rows` is the row count and this is the accounts'.
+     */
+    accounts: new Set(groups.map((g) => g.accountId)).size,
     contributions: groups.reduce((a, g) => a + g.contributions, 0),
     withdrawals: groups.reduce((a, g) => a + g.withdrawals, 0),
     paidIn: groups.reduce((a, g) => a + g.paidIn, 0),
