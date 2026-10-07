@@ -38463,9 +38463,21 @@ for (const theme of THEMES) {
               reached: num(s, "data-reached"), watching: num(s, "data-watching"), checking: num(s, "data-checking"),
               unchecked: num(s, "data-unchecked"), total: num(s, "data-total"), text: (s.textContent ?? "").trim(),
             } : null,
-            rows: [...sec.querySelectorAll("tr[data-alert-row]")].map((tr) => {
+            rows: [...sec.querySelectorAll("tr[data-alert-row]")].map((tr, _i, all) => {
               const st = tr.querySelector("[data-alert-status-cell]");
               const bg = getComputedStyle(tr).backgroundColor;
+              // The STRIPE is not a tint (Stage 10dl): every table paints its
+              // even plain rows in `--row-alt`, so a watched row at an even place
+              // carries that shade and nothing else. Resolved off the table's own
+              // computed colour, never typed, so a theme change cannot desync it.
+              const stripe = (() => {
+                const probe = document.createElement("tr");
+                probe.style.backgroundColor = "var(--row-alt)";
+                all[0].parentElement.appendChild(probe);
+                const c = getComputedStyle(probe).backgroundColor;
+                probe.remove();
+                return c;
+              })();
               return {
                 id: tr.getAttribute("data-alert-row"),
                 kind: tr.getAttribute("data-alert-kind"),
@@ -38481,8 +38493,9 @@ for (const theme of THEMES) {
                 titles: [...tr.querySelectorAll("[title]")].map((el) => el.getAttribute("title") ?? ""),
                 edit: tr.querySelector("[data-alert-edit]")?.getAttribute("href") ?? null,
                 // A fired row is TINTED and a watched one is not. Transparent is
-                // `rgba(0, 0, 0, 0)`; anything with a non-zero alpha is a tint.
-                tinted: !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$|^transparent$/.test(bg),
+                // `rgba(0, 0, 0, 0)`, and the row stripe is the table's own; any
+                // other colour is a tint.
+                tinted: !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$|^transparent$/.test(bg) && bg !== stripe,
               };
             }),
           } : null,
