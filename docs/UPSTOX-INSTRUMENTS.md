@@ -11,13 +11,13 @@ MAPPING does.)
 
 | | |
 | --- | ---: |
-| NSE symbols the dashboard can ask about | **161** |
-| Mapped to an Upstox instrument | **160** |
-| …on the symbol, with the book's own ISIN agreeing | 40 |
-| …on the symbol alone (the book prints no ISIN for it) | 120 |
+| NSE symbols the dashboard can ask about | **162** |
+| Mapped to an Upstox instrument | **162** |
+| …on the symbol, with the book's own ISIN agreeing | 41 |
+| …on the symbol alone (the book prints no ISIN for it) | 121 |
 | …on the book's ISIN (the ticker has changed) | 0 |
-| Not mapped — priced by the muns feed instead, if at all | 1 |
+| Not mapped — priced by the muns feed instead, if at all | 0 |
 
 ## Not mapped
 
-- **HEG** (HEG Ltd) — no NSE cash instrument trades as HEG, and the book carries no ISIN to join on — the symbol may have been renamed; this holding stays on the muns feed.
+_None._

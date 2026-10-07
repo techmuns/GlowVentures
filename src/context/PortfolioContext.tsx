@@ -272,6 +272,28 @@ type Ctx = {
   quotesPending: ReadonlySet<string>;
   /** Which of these symbols the feed has still to answer for. */
   pendingFor: (symbols: readonly string[]) => string[];
+  /**
+   * SYMBOLS A CARD NEEDS THAT THE BOOK'S OWN POSITIONS DO NOT NAME.
+   *
+   * The base ask is committed: the book's positions, the live-only funds and
+   * the depository's own balances, so the first round goes out before a single
+   * fetch returns. A company a FUND DISCLOSED is in none of them — it reaches
+   * this dashboard through a read model the browser loads after that round has
+   * already gone, so nothing committed can name it in time.
+   *
+   * AND A SYMBOL NOBODY ASKS ABOUT IS PENDING FOR EVER. `pendingAmong` counts
+   * a symbol the feed never mentioned as pending, deliberately — the
+   * alternative is calling a set complete on a response that said nothing
+   * about it — so a card that waits on its own scope holds on the loading
+   * branch for the life of the tab. Measured on the AIF & PMS card before this
+   * existed: 135 of 163 names landed and the other 28 were never requested.
+   *
+   * So a card REGISTERS what it needs and the next round carries it. Union
+   * only, because a card never narrows the ask; and a registration that adds
+   * nothing kicks no fetch, so a card re-rendering on every poll cannot make
+   * the poll recur.
+   */
+  requestSymbols: (symbols: readonly string[]) => void;
   refreshQuotes: () => void;
   corporateActions: ActionFeed | null;
   corporateActionsStatus: "loading" | "current" | "saved" | "unavailable";
@@ -437,6 +459,16 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [quotes, setQuotes] = useState<QuoteFeed | null>(readCachedQuotes);
   const [quotesStatus, setQuotesStatus] = useState<QuotesStatus>("loading");
   const inFlight = useRef(false);
+  // What the cards have registered on top of the committed ask (see
+  // `requestSymbols`). A ref, because the set must be readable by a fetch in
+  // flight; the counter beside it is what makes a GROWTH re-run the poll.
+  const extraSymbols = useRef<Set<string>>(new Set());
+  const [extraTick, setExtraTick] = useState(0);
+  const requestSymbols = useCallback((symbols: readonly string[]) => {
+    let grew = false;
+    for (const s of symbols) if (s && !extraSymbols.current.has(s)) { extraSymbols.current.add(s); grew = true; }
+    if (grew) setExtraTick((n) => n + 1);
+  }, []);
 
   // Merge each round into what we already have. The upstream only prices part of
   // the book per call, so a later round that returns fewer names must not wipe
@@ -453,10 +485,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadQuotes = useCallback(async (refresh = false) => {
-    if (inFlight.current) return 0;
+    // A ROUND SKIPPED IS NOT A ROUND SETTLED. `0` schedules the sixty-second
+    // cadence, which is what a complete feed deserves; a call that never went
+    // out has at least one thing still to do, so it takes the fill cadence and
+    // comes back in four seconds. Without it a card that registers new symbols
+    // while a round is in flight waits out a whole poll for its first price.
+    if (inFlight.current) return 1;
     // The live-only funds are asked for too: a liquid ETF among them prices
     // intraday the way its siblings on the statements do.
-    const symbols = [...new Set([...symbolsFor(BOOK_POSITIONS), ...symbolsFor(LIVE_ONLY_FUNDS), ...depositoryShareSymbols()])];
+    const symbols = [...new Set([...symbolsFor(BOOK_POSITIONS), ...symbolsFor(LIVE_ONLY_FUNDS), ...depositoryShareSymbols(),
+      // …and whatever a card has registered since (see `requestSymbols`).
+      ...extraSymbols.current])];
     if (!symbols.length) { setQuotesStatus("unavailable"); return 0; }
     inFlight.current = true;
     // Keep the last failure visible until a successful response replaces it.
@@ -475,7 +514,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     } finally {
       inFlight.current = false;
     }
-  }, [mergeFeed]);
+    // `extraTick` is a dependency rather than a read: changing this callback's
+    // identity restarts the polling effect below, which ticks immediately — so
+    // a newly registered symbol is asked for at once rather than at the next
+    // poll. The set itself is read off the ref, so a round in flight sees it.
+  }, [mergeFeed, extraTick]);
 
   useEffect(() => {
     let alive = true;
@@ -703,10 +746,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const quoteFeeds = useMemo(() => quoteFeedNames(quotes), [quotes]);
   const shared = useMemo(() => ({
     bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
-    quotesStatus, quoteFeed: quotes, quotesAsOf: quotes?.asOf ?? null, quoteFeeds, quotesPending, pendingFor, refreshQuotes,
+    quotesStatus, quoteFeed: quotes, quotesAsOf: quotes?.asOf ?? null, quoteFeeds, quotesPending, pendingFor, requestSymbols, refreshQuotes,
     corporateActions, corporateActionsStatus, corporateActionReturns: corporateActionLayer.returns,
   }), [bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
-    quotesStatus, quotes, quoteFeeds, quotesPending, pendingFor, refreshQuotes, corporateActions, corporateActionsStatus, corporateActionLayer]);
+    quotesStatus, quotes, quoteFeeds, quotesPending, pendingFor, requestSymbols, refreshQuotes, corporateActions, corporateActionsStatus, corporateActionLayer]);
   const value = useMemo<Ctx>(
     () => ({
       ...shared, portfolio: scopedPortfolio, consolidated, statementPortfolio: scopedStatement, basis,
