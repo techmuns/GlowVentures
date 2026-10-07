@@ -6,6 +6,7 @@ import { BasisPill } from "@/components/BasisPill";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
+import { ConsolidatedSheet } from "@/components/ConsolidatedSheet";
 
 // The Data Audit archive lives in public/audit/ and is served at /audit/* in dev,
 // preview and production. On the hosted site those requests sit behind the edge
@@ -100,7 +101,7 @@ function fmtCell(v: Cell, decimals: number | null = null): { text: string; num: 
   return { text: dateOnly ? dateOnly[1] : s, num: false, full: s };
 }
 
-export function DataAudit() {
+function SourceArchive() {
   const [status, setStatus] = useState<"loading" | "ready" | "restricted">("loading");
   const [manifest, setManifest] = useState<FileMeta[]>([]);
   const [fileKey, setFileKey] = useState("");
@@ -175,7 +176,7 @@ export function DataAudit() {
     else { setQuery(""); setExact(false); }
     setShowAll(false);
     const id = `${fileKey}/${sheetKey}`;
-    if (cache.current[id]) { setSheet(cache.current[id]); return; }
+    if (cache.current[id]) { setSheet(cache.current[id]); setSheetLoading(false); return; }
     let alive = true;
     setSheetLoading(true); setSheet(null);
     fetch(`${BASE}audit/${fileKey}/${sheetKey}.json`, { cache: "no-store" })
@@ -291,8 +292,6 @@ export function DataAudit() {
   if (status === "restricted") {
     return (
       <div className="flex h-full flex-col">
-        <PageHeader eyebrow="Setup" title="Data Audit"
-          subtitle="Extracted statement tables — one entry per source document, exactly as parsed." />
         <div className="grid flex-1 place-items-center py-16 text-center">
           <div className="max-w-lg">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-400">
@@ -312,7 +311,7 @@ export function DataAudit() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader eyebrow="Setup" title="Data Audit"
+      <PageHeader eyebrow="Sources" title="Original statement tables"
         subtitle="Extracted statement tables — one entry per source document, exactly as parsed."
         right={<span className="inline-flex items-center gap-1.5">
           {/* Always STATEMENT: these ARE the source tables. A live price has no
@@ -496,4 +495,27 @@ export function DataAudit() {
       </Card>
     </div>
   );
+}
+
+export function DataAudit() {
+  const [params] = useSearchParams();
+  const [sourceCount, setSourceCount] = useState<number | null>(null);
+  const [sourcesOpen, setSourcesOpen] = useState(() => params.has("file") || params.has("sources") || params.has("find") || params.has("eq"));
+  const sourcesRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (params.has("file") || params.has("sources") || params.has("find") || params.has("eq")) {
+      setSourcesOpen(true);
+      requestAnimationFrame(() => sourcesRef.current?.scrollIntoView({ block: "start" }));
+    }
+  }, [params, sourceCount]);
+  return <div className="flex min-w-0 flex-col">
+    <PageHeader eyebrow="Admin" title="Data Audit" subtitle="Glow Ventures consolidated sheet. Updated automatically as new statements are wired into the dashboard."
+      right={<BasisPill statement liveText="Consolidated statement data" hint="The consolidated sheet uses the canonical statement and review book, with each account's own date. Live quotes do not change the audit record." />} />
+    <ConsolidatedSheet onSources={() => setSourcesOpen(true)} onLoaded={setSourceCount} />
+    <details ref={sourcesRef} open={sourcesOpen} onToggle={e => setSourcesOpen(e.currentTarget.open)} className="mt-8 border-t border-ink-700 pt-4" data-audit-sources="footnote" data-xa="audit-sources" data-open={String(sourcesOpen)}>
+      <summary className="cursor-pointer text-sm font-medium text-slate-400">Sources{sourceCount != null ? ` · ${sourceCount} original documents` : ""}</summary>
+      <p data-prose-ok="source footnote requested by the customer" className="my-3 text-xs text-slate-500">Original extracted tables support the consolidated sheet above. Open a document to inspect its statement rows.</p>
+      {sourcesOpen && <SourceArchive />}
+    </details>
+  </div>;
 }

@@ -196,7 +196,7 @@ export function TopBar() {
         <SmartSearch />
       </div>
       <div className="ml-auto flex items-center gap-3">
-        <div className="hidden items-center gap-2 text-xs md:flex"><QuoteStatus /></div>
+        <div className="hidden items-center gap-2 text-xs lg:flex"><QuoteStatus /></div>
         <CurrencySwitch />
         {/* A scope with no holding draws no total: ₹0 would read as a measured
             nothing, and the page below already says why it is empty. */}
