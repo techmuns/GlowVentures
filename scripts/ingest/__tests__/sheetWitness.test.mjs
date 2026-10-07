@@ -328,7 +328,7 @@ function committedExports() {
  */
 const WITHHELD_SOURCE_PREFIXES = Object.freeze([
   // The three HDFC and two ICICI savings statements and their exports, and
-  // Ajay's own HDFC NSDL statement — Stage 10di. Read, archived, and not
+  // Ajay's own HDFC NSDL statement — Stage 10dj. Read, archived, and not
   // committed at the family's request.
   "source/october-2026/",
 ]);

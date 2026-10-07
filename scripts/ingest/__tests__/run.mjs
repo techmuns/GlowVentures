@@ -37,7 +37,7 @@ const SUITES = [
   { name: "bankStatement", file: "bankStatement.test.mjs", required: true },
   // RENDERS the book report's bank section against a synthetic archive — the one
   // branch of that report no archived document reaches, and the one where four
-  // claims were wrong when it was first rendered. See Stage 10di.
+  // claims were wrong when it was first rendered. See Stage 10dj.
   { name: "bankReport", file: "bankReport.test.mjs", required: true },
   // Exit 2 = BLOCKED: the real statements are not present. Reported, not failed.
   { name: "golden",   file: "golden.mjs",        required: false },

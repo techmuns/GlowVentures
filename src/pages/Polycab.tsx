@@ -7,6 +7,8 @@ import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useViewParam } from "@/components/ViewToggle";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
+import { OutOfScope } from "@/components/MemberScopeSelect";
+import { inScopeAccount } from "@/lib/memberScope";
 import { fmtCurrency, fmtNum, fmtDate, fmtPct, displaySecurity, changeColor } from "@/lib/format";
 import { sumOrNull } from "@/lib/analytics";
 import { BOOK_POLYCAB, BOOK_ACCOUNTS } from "@/data/glowData";
@@ -183,7 +185,7 @@ const MARK_HOW = MARK_WHENS.length === 1 && MARK_WHENS[0]
     : `${MARK_DERIVED} It is the statement's own valuation, ${MARK_UNDATED} ${MARK_NOT_LIVE}`;
 
 export function Polycab() {
-  const { fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { fmtFromBase, convertFromBase, displayCurrency, scope } = usePortfolio();
   const [view, setView] = useViewParam(POLYCAB_VIEWS, {}, "view");
   const holdingView = useTableView("polycab-holding", HOLDING_COLS);
   const actionView = useTableView("polycab-dividends", ACTION_COLS);
@@ -333,6 +335,28 @@ export function Polycab() {
           what="No ring-fenced Polycab holding in this book"
           needs="The promoter stock is folded into the main book — remove or check RINGFENCED_SECURITY_KEYS in build-book.mjs. When it is ring-fenced, it is carried in BOOK_POLYCAB and shown here."
         />
+      </div>
+    );
+  }
+
+  /**
+   * THE MEMBER SCOPE (Stage 10di). The block is one demat today, Ajay's. Every
+   * figure on this page — the holding, the entitlement each dividend gives it —
+   * is that block's, so a scope that leaves out a demat holding it does not get
+   * a page about another member's shares: it says whose they are. A scope that
+   * takes part of a block of several demats is not possible on this book, and
+   * is treated the same way rather than splitting figures this page strikes
+   * over the whole block.
+   */
+  const outside = BOOK_POLYCAB.filter((p) => !inScopeAccount(scope.accountIds, p.accountId));
+  if (outside.length) {
+    const owners = [...new Set(outside.map((p) => ACCOUNT_BY_ID.get(p.accountId)?.ownerId).filter((o): o is string => !!o))];
+    return (
+      <div>
+        <PageHeader eyebrow="Daily" title="Polycab" />
+        <Card>
+          <OutOfScope what="The ring-fenced Polycab holding" ownerIds={owners} />
+        </Card>
       </div>
     );
   }

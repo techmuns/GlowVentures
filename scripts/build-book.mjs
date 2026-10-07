@@ -5044,7 +5044,7 @@ function report(book) {
      * structurally cannot strike, because it prints no debit total, no credit
      * total and no Dr/Cr count. A sentence claiming a reconciliation the
      * document could not supply a figure for is the same failure as a caption
-     * that does not describe its own figure, and this file's own Stage 10di
+     * that does not describe its own figure, and this file's own Stage 10dj
      * record already says the two banks differ. So the claim is now what the
      * gate actually guarantees — every check the statement ANSWERS — and the
      * `Checks` column and the list under the table carry the rest, read off
