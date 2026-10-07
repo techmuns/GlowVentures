@@ -172,7 +172,7 @@ const overlapWording = (groups: { owners: string[]; rows: number }[], names: str
 });
 
 export function FamilyEntities() {
-  const { portfolio, statementPortfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase, scope: memberScope } = usePortfolio();
   const [searchParams, setSearchParams] = useSearchParams();
   const [holdingsQ, setHoldingsQ] = useState("");
   const entityView = useTableView("family-entities", ENTITY_COLS);
@@ -1022,6 +1022,13 @@ export function FamilyEntities() {
       <PageHeader eyebrow="Allocation" title="Family & Entities"
         right={<div className="flex items-center gap-2">
           <BasisPill liveText="Live prices" hint="Entity NAVs are rebuilt from live prices where a quote exists; cost basis comes from the statements." />
+          {/* THE TOP BAR'S MEMBER SELECTOR DOES NOT NARROW THIS PAGE (Stage 10di) —
+              it is about every member — so where a scope is picked, it says so. */}
+          {memberScope.selected && (
+            <span data-family-whole title={`The top bar shows ${memberScope.label}. This page always shows every member and trust.`}>
+              <Pill tone="info">Whole family</Pill>
+            </span>
+          )}
           <Pill tone="info">{entities.length} entities</Pill>
         </div>} />
       {/*

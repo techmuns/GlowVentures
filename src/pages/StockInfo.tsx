@@ -5,7 +5,9 @@ import { Wallet, Layers, TrendingUp, Coins, Activity, Tag } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
-import { usePortfolio } from "@/context/PortfolioContext";
+import { usePortfolio, useWholePortfolio } from "@/context/PortfolioContext";
+import { OutOfScope } from "@/components/MemberScopeSelect";
+import { inScopeAccount, labelInScope, wholeFamilyOnly } from "@/lib/memberScope";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare, assetClassLabel,
   measuredReturn, valueDateOf, type RowCapital,
@@ -270,7 +272,8 @@ export function StockInfo() {
   // Keyed by securityKey — this book's providers mostly print a name and nothing
   // else, so an ISIN route would leave most holdings unreachable.
   const { securityKey = "" } = useParams();
-  const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, corporateActionReturns } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, corporateActionReturns, scope } = usePortfolio();
+  const wholePortfolio = useWholePortfolio();
   // WHICH TAB IS OPEN — see `STOCK_TABS` for what the five are and why the
   // choice lives in the URL.
   const [tab, setTab] = useViewParam(STOCK_TABS, {}, "tab");
@@ -278,13 +281,21 @@ export function StockInfo() {
   const [heldTabParam, setHeldTab] = useViewParam(HELD_TABS, {}, "held");
   // Which account rows ARE a whole account on a dated record, for the XIRR line.
   const { dated: datedCap, universe: holdingsUniverse } = useDatedCapital();
-  const [led, setLed] = useState<StockLedger | null | undefined>(undefined);
+  const [ledWhole, setLed] = useState<StockLedger | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
     setLed(undefined);
     loadStockLedger(securityKey).then((r) => { if (alive) setLed(r); });
     return () => { alive = false; };
   }, [securityKey]);
+  // THE DATED RECORD, NARROWED TO THE CHOSEN MEMBERS (Stage 10di). The read
+  // model is the whole family's: a trade keeps its account label, so the
+  // chosen members' trades are kept by account number. Its realised figure is
+  // struck over every account's lots and is not split by member, so a scoped
+  // view carries none rather than another member's.
+  const led = useMemo<StockLedger | null | undefined>(() => (ledWhole && scope.owners
+    ? { ...ledWhole, txns: ledWhole.txns.filter((t) => labelInScope(portfolio?.accounts ?? [], t.account)), realizedProfit: null }
+    : ledWhole), [ledWhole, scope.owners, portfolio]);
 
   const rows = useMemo(() => (portfolio ? portfolio.positions.filter((p) => p.securityKey === securityKey) : []), [portfolio, securityKey]);
   // COUNT ONCE. Two of this book's securities are reported under two members
@@ -452,7 +463,27 @@ export function StockInfo() {
    * page with one is never "fully exited". `recordedHoldings.ts` files each
    * under the company the live layer would file it under once priced.
    */
-  const recorded = useMemo(() => recordedFor(securityKey, portfolio?.positions ?? []), [securityKey, portfolio]);
+  const recorded = useMemo(() => recordedFor(securityKey, portfolio?.positions ?? [])
+    .filter((l) => inScopeAccount(scope.accountIds, l.accountId)), [securityKey, portfolio, scope.accountIds]);
+  /**
+   * WHO HOLDS IT, WHEN THE MEMBER SCOPE LEAVES IT OUT (Stage 10di). A name the
+   * chosen members do not hold, trade or record — while the whole family does
+   * — is neither "fully exited" nor "held only inside your funds": both are
+   * claims about the BOOK. The owners are read off the whole family's rows,
+   * recorded lines and dated trades, so the page can name them.
+   */
+  const outOfScopeOwners = useMemo(() => {
+    if (!scope.owners || !wholePortfolio) return [];
+    const accounts = new Map(wholePortfolio.accounts.map((a) => [a.accountId, a]));
+    const owners = new Set<string>();
+    const add = (accountId: string) => { const o = accounts.get(accountId)?.ownerId; if (o && !scope.owners!.has(o)) owners.add(o); };
+    for (const p of wholePortfolio.positions) if (p.securityKey === securityKey) add(p.accountId);
+    for (const l of recordedFor(securityKey, wholePortfolio.positions)) add(l.accountId);
+    for (const t of ledWhole?.txns ?? []) {
+      for (const a of wholePortfolio.accounts) if (labelInScope([a], t.account)) add(a.accountId);
+    }
+    return [...owners];
+  }, [scope.owners, wholePortfolio, securityKey, ledWhole]);
   const recordedOnly = rows.length === 0 && recorded.length > 0;
   const recordedUnits = recorded.reduce((a, l) => a + l.quantity, 0);
   /** A unit count as its statement prints it — a fund's fractional units are not rounded away. */
@@ -497,6 +528,21 @@ export function StockInfo() {
   }
 
   const recordedHead = recorded.find((l) => l.securityKey === securityKey) ?? recorded[0];
+  // The chosen members hold, record and traded none of it; the whole family does.
+  if (scope.owners && rows.length === 0 && recorded.length === 0 && !fundOnly && !resolving
+    && (led?.txns.length ?? 0) === 0 && outOfScopeOwners.length > 0) {
+    const wholeRow = wholePortfolio?.positions.find((p) => p.securityKey === securityKey);
+    const heading = wholeRow ? securityLabel(securityKey, wholeRow.security) : ledWhole?.name ?? securityKey;
+    return (
+      <div>
+        <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: heading }]} />
+        <h1 className="mb-4 font-display text-xl font-bold tracking-tight text-slate-100">{heading}</h1>
+        <Card>
+          <OutOfScope what={heading} ownerIds={outOfScopeOwners} />
+        </Card>
+      </div>
+    );
+  }
   const name = rows[0]?.security ?? (recordedHead ? securityLabel(securityKey, recordedHead.security) : undefined) ?? fundHit?.name ?? led?.name ?? securityKey;
   /**
    * A FUND UNIT IS NOT A COMPANY, AND THIS PAGE MUST NOT RESEARCH IT AS ONE.
@@ -753,7 +799,7 @@ export function StockInfo() {
    * the holding's own statement: those units are still in it at its mark, so
    * their gain is not in this figure, and the tile says so.
    */
-  const rt = realisedTile(drows, led === undefined ? undefined : led?.realizedProfit ?? null);
+  const rt = realisedTile(drows, scope.owners ? (led === undefined ? undefined : null) : led === undefined ? undefined : led?.realizedProfit ?? null);
   const realised = rt.value;
   const lotsAfterRow = drows.find((r) => (r.realizedLotsAfter ?? 0) > 0) ?? null;
   const lotsAfterDate = lotsAfterRow ? accIdx.get(lotsAfterRow.accountId)?.asOf ?? null : null;
@@ -782,6 +828,7 @@ export function StockInfo() {
   const realisedNote = rt.basis === "statements"
     ? led === undefined ? "loading the capital gain statements…"
       : led === null ? "the dated record did not load"
+      : scope.owners ? "whole family only · not split by member"
       : realised == null ? "no capital gain statement covers this name"
       : "booked on exits · from the capital gain statements"
     : rt.lotsAfter > 0
@@ -796,7 +843,9 @@ export function StockInfo() {
     : rt.source === "mixed" ? (realisedCover ? `booked on units sold · FIFO · two records${realisedCover}` : "booked on units sold · FIFO · statements and the fund's own record")
     : rt.nothingSold ? `nothing sold · FIFO${realisedCover}`
     : `booked on units sold · FIFO${realisedCover}`;
-  const realisedWhy = rt.basis === "statements"
+  const realisedWhy = rt.basis === "statements" && scope.owners
+    ? wholeFamilyOnly("The realised gain on a name no chosen member holds today, which the capital gain statements record for every account together,", scope.label)
+    : rt.basis === "statements"
     ? "No statement in this book reports a current holding in this name, so the capital gain statements' own lots are the only record of what its sales realised — and no units are shown as held that they could be counted against twice."
     : rt.lotsAfter > 0 && lotsAfterRow ? realisedReason(lotsAfterRow)
     : rt.unreconciled != null

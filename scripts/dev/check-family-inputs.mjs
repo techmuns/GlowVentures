@@ -1402,6 +1402,90 @@ const RESEARCH_SHARE = (() => {
   }
 }
 
+
+// ── THE MEMBER SCOPE AT THE TOP OF THE PAGE, DRIVEN (Stage 10di) ─────────────
+//
+//   *"There should be option to select each family member or family entity …
+//    they should be able to multi select … The families and entities page will
+//    remain the same for all the members."*
+//
+// `check:pages` walks scoped ADDRESSES; only this suite can click the selector
+// and watch what a click does — tick two, read the button, carry the choice
+// across a sidebar link, and go back to the whole family. Every claim is read
+// off the selector's own handles and the top bar's total, never its prose.
+{
+  const scopeAttr = () => page.$eval("[data-member-scope]", (el) => el.getAttribute("data-member-scope")).catch(() => null);
+  const scopeLabel = () => page.$eval("[data-member-scope-label]", (el) => (el.textContent ?? "").trim()).catch(() => null);
+  const topTotal = async () => {
+    const t = await page.$eval("[data-topbar-total]", (el) => (el.textContent ?? "").replace(/\s+/g, " ")).catch(() => null);
+    const m = t?.match(/₹\s?([\d,]+(?:\.\d+)?)\s*Cr/);
+    return m ? Number(m[1].replace(/,/g, "")) : null;
+  };
+  await page.goto(`${BASE}/cio`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(700);
+  const wholeTotal = await topTotal();
+  check("the selector sits at the top and opens on the whole family",
+    (await scopeAttr()) === "whole" && (await scopeLabel()) === "Whole family" && wholeTotal != null,
+    `${await scopeAttr()} · ${await scopeLabel()} · ₹${wholeTotal} Cr`);
+
+  await page.locator("[data-member-scope-toggle]").click();
+  await page.waitForTimeout(300);
+  const opts = await page.$$eval("[data-member-option]", (els) => els.map((el) => ({
+    id: el.getAttribute("data-member-option"), text: (el.textContent ?? "").replace(/\s+/g, " ").trim() })));
+  const members = opts.filter((o) => o.id !== "whole");
+  check("the list offers the whole family first, then every member and trust",
+    opts[0]?.id === "whole" && members.length >= 3 && members.some((o) => /trust/i.test(o.text)),
+    opts.map((o) => o.id).join(", "));
+  const [m1, m2] = members;
+  if (m1 && m2) {
+    await page.locator(`[data-member-option="${m1.id}"]`).click();
+    await page.waitForTimeout(400);
+    await page.locator(`[data-member-option="${m2.id}"]`).click();
+    await page.waitForTimeout(900);
+  }
+  const pairAttr = (await scopeAttr()) ?? "";
+  const pairUrl = new URL(page.url());
+  const first = (o) => o.text.split(" ")[0];
+  check("ticking two members scopes the page to both, and the address carries it",
+    m1 && m2 && pairAttr.split(",").sort().join() === [m1.id, m2.id].sort().join()
+      && (pairUrl.searchParams.get("members") ?? "").split(",").sort().join() === [m1.id, m2.id].sort().join(),
+    `${pairAttr} · ${pairUrl.search}`);
+  check("…and the button names both", (await scopeLabel()) === `${first(m1)} + ${first(m2)}`, await scopeLabel());
+  const pairTotal = await topTotal();
+  check("…and the top bar's total is theirs, smaller than the family's",
+    pairTotal != null && wholeTotal != null && pairTotal < wholeTotal, `₹${pairTotal} of ₹${wholeTotal} Cr`);
+  await page.keyboard.press("Escape");
+
+  // A SIDEBAR LINK carries no query — the choice must survive it anyway, or a
+  // reader who scoped Morning CIO lands on the Monitor showing the whole family.
+  await page.locator('aside a[href="/monitor"]').first().click();
+  await page.waitForTimeout(1200);
+  const monUrl = new URL(page.url());
+  check("the choice survives a sidebar link",
+    monUrl.pathname === "/monitor" && (await scopeAttr()) === pairAttr && monUrl.searchParams.has("members"),
+    `${monUrl.pathname}${monUrl.search}`);
+
+  // FAMILY & ENTITIES ALWAYS SHOWS EVERY MEMBER, whatever is chosen above.
+  await page.locator('aside a[href="/family"]').first().click();
+  await page.waitForTimeout(1500);
+  const famRows = await page.$$eval("[data-family-table] tbody tr", (rs) => rs.map((r) => (r.cells[0]?.textContent ?? "").trim()));
+  const others = members.filter((o) => o.id !== m1?.id && o.id !== m2?.id);
+  check("Family & Entities still lists members the scope leaves out",
+    (await scopeAttr()) === pairAttr && others.some((o) => famRows.some((r) => r.startsWith(o.text))),
+    `${famRows.length} rows`);
+
+  await page.goto(`${BASE}/cio?members=${encodeURIComponent(pairAttr)}`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(700);
+  await page.locator("[data-member-scope-toggle]").click();
+  await page.waitForTimeout(300);
+  await page.locator('[data-member-option="whole"]').click();
+  await page.waitForTimeout(900);
+  const backUrl = new URL(page.url());
+  check("Whole family takes the choice off the page and the address",
+    (await scopeAttr()) === "whole" && !backUrl.searchParams.has("members") && (await topTotal()) === wholeTotal,
+    `${await scopeAttr()} · ${backUrl.search || "(no query)"}`);
+}
+
 await browser.close();
 
 const failed = checks.filter((c) => !c.ok);
