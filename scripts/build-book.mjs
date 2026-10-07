@@ -1339,7 +1339,7 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
  * and `typedReach` how far it runs on its own (the `capitalRecordTo` main's
  * Stage 10cf computes from the documents carrying a typed payment row).
  */
-function datedCapitalElsewhere({ accountId, allIssues, existing, typedReach, reclassificationsHere, notes, label }) {
+function datedCapitalElsewhere({ accountId, allIssues, existing, typedReach, valueDate = null, reclassificationsHere, notes, label }) {
   const out = [];
   const same = (m, date, direction, amount) => m.date === date && m.direction === direction
     && isNum(m.amount) && Math.abs(m.amount - amount) <= 1;
@@ -1353,13 +1353,23 @@ function datedCapitalElsewhere({ accountId, allIssues, existing, typedReach, rec
   const witnessed = [];
   for (const d of allIssues.filter((x) => x.reportType === "capital-register")) {
     const reg = (d.cashFlows ?? []).filter((c) => c.kind === "capital-register" && c.date);
-    const open = reg.find((c) => /^opening balance/i.test(c.description ?? "") && isNum(c.balance));
+    const printedOpen = reg.find((c) => /^opening balance/i.test(c.description ?? "") && isNum(c.balance));
+    /**
+     * A REGISTER FROM INCEPTION PRINTS NO OPENING BALANCE ROW — it opens from nil.
+     * Green Lantern 510861's since-inception register (the `october-2026`
+     * delivery) starts on its ₹10 Cr Corpus Deposit with a balance of exactly
+     * that deposit. Where the first row's balance IS its own amount, the register
+     * opened at nil on that row's date, and the walk below holds every row to it.
+     */
+    const first = printedOpen ? null : reg.find((c) => isNum(c.balance) && isNum(c.amount));
+    const fromNil = first && Math.abs(first.balance - first.amount) <= 1 ? first : null;
+    const open = printedOpen ?? (fromNil ? { date: fromNil.date, balance: 0 } : null);
     const last = [...reg].reverse().find((c) => isNum(c.balance));
-    const moves = reg.filter((c) => c !== open && isNum(c.amount) && c.amount !== 0);
+    const moves = reg.filter((c) => c !== printedOpen && isNum(c.amount) && c.amount !== 0);
     if (!moves.length) continue;
     if (!open || !last) {
-      notes.push(`${label}: the ${d.asOf} capital register prints no opening and closing balance, so nothing `
-        + "witnesses its movements and they are not listed as dated capital");
+      notes.push(`${label}: the ${d.asOf} capital register prints no opening balance and does not open from nil, so `
+        + "nothing witnesses its movements and they are not listed as dated capital");
       continue;
     }
     const gap = last.balance - open.balance - sum(moves.map((c) => c.amount));
@@ -1374,8 +1384,27 @@ function datedCapitalElsewhere({ accountId, allIssues, existing, typedReach, rec
     const opens = open.date;
     const dayBefore = opens ? new Date(Date.parse(`${opens}T00:00:00Z`) - 86400000).toISOString().slice(0, 10) : null;
     const contiguous = !existing.length || (!!typedReach && !!dayBefore && typedReach >= dayBefore);
-    if (d.asOf && contiguous) witnessed.push(d.asOf);
+    /**
+     * …AND ONLY UP TO THE DATE THE ACCOUNT'S VALUE IS STRUCK. A dated capital
+     * record is set against the account's value on its own statement date
+     * (`capitalRollup`), so a movement after that date is not yet in the value it
+     * would be set against, and listing it books it against the wrong figure.
+     * 510861's since-inception register runs to 22 September while its holdings
+     * are struck on 27 July: the eleven TDS rows between are named, not listed,
+     * and the record is said to reach 27 July — which the register's unbroken
+     * walk witnesses, since it passes through that date.
+     */
+    const reach = valueDate && d.asOf && d.asOf > valueDate ? valueDate : d.asOf;
+    if (reach && contiguous) witnessed.push(reach);
+    const late = valueDate ? moves.filter((c) => c.date > valueDate) : [];
+    if (late.length) {
+      notes.push(`${label}: the ${d.asOf} capital register's ${late.length} movement(s) after ${valueDate}, the date the `
+        + `account's value is struck (${r2(sum(late.filter((c) => c.amount > 0).map((c) => c.amount)))} in, `
+        + `${r2(sum(late.filter((c) => c.amount < 0).map((c) => -c.amount)))} out), are not listed as dated capital: `
+        + "they are not yet in that value");
+    }
     for (const c of moves) {
+      if (valueDate && c.date > valueDate) continue;
       const k = `${c.date}|${c.description ?? ""}|${c.amount}|${c.balance ?? ""}`;
       if (seenRow.has(k)) continue;
       seenRow.add(k);
@@ -3670,7 +3699,7 @@ function build(archived) {
      */
     const commitmentsHere = commitments.filter((c) => c.accountId === accountId);
     const merged = datedCapitalElsewhere({
-      accountId, allIssues, existing: typedMoves, typedReach: capitalRecordTo,
+      accountId, allIssues, existing: typedMoves, typedReach: capitalRecordTo, valueDate: asOf,
       reclassificationsHere: switchesHere, notes, label: `account ${accountNo}`,
     });
     /**
@@ -3807,7 +3836,29 @@ function build(archived) {
     const register = group.find((d) => d.reportType === "capital-register" && (d.cashFlows ?? []).length);
     const bank = group.find((d) => d.reportType === "bank-book" && (d.cashFlows ?? []).length);
     const src = register ?? bank;
+    /**
+     * THE SERIES RUNS OVER ONE WINDOW: FROM THE OPENING VALUE TO THE CLOSING ONE.
+     *
+     * The app closes this series on the account's own holdings value, struck at
+     * `asOf`; where a performance summary supplies the window's OPENING value, the
+     * series opens on that value's date. A movement outside the two is either
+     * already inside the opening value or not yet inside the closing one, so it
+     * is not a flow of this window.
+     *
+     * Every register in this book covered exactly that window until Green Lantern
+     * 510861 sent one since inception (the `october-2026` delivery, 2025-01-16 →
+     * 2026-09-22). Read whole beside the 1 April opening value, it put the
+     * ₹10 Cr first deposit in TWICE — once as itself and once inside the opening
+     * value — and eleven TDS rows dated after the 27 July value the series closes
+     * on. Rows outside the window are left out, and counted in the notes.
+     */
+    const perf = group.find((d) => d.reportType === "performance-summary" && isNum(d.flows?.openingCorpus));
+    const opensOn = perf ? (perf.flows.periodFrom ?? src?.periodFrom ?? asOf) : null;
     const flows = [];
+    /** Every register (or bank-book) movement, the window aside — what the cross-check below sums. */
+    const moves = [];
+    let beforeWindow = 0;
+    let afterWindow = 0;
     if (src) {
       // A CLASS SWITCH IS NOT A FLOW HERE EITHER (XA-23) — the rule
       // `datedCapitalElsewhere` applies to the dated capital record, on the
@@ -3823,11 +3874,21 @@ function build(archived) {
         const move = c.kind === "capital-register" ? c.amount : c.depositWithdrawal;
         if (!isNum(move) || move === 0) continue;
         if (switchLeg(c, move)) { legs += 1; continue; }
+        moves.push({ date: c.date, move });
+        if (opensOn && c.date < opensOn) { beforeWindow += 1; continue; }
+        if (asOf && c.date > asOf) { afterWindow += 1; continue; }
         flows.push({ date: c.date, amount: r2(-move), description: c.description });
       }
       if (legs) {
         notes.push(`account ${accountNo}: ${legs} cash-flow row(s) are the legs of a class switch the fund's own `
           + "reclassification record prints on the same date for the same rupees — not money moving, so not a flow");
+      }
+      if (beforeWindow || afterWindow) {
+        notes.push(`account ${accountNo}: its ${src.reportType} runs ${src.periodFrom ?? "?"} → ${src.periodTo ?? "?"}, so `
+          + [beforeWindow ? `${beforeWindow} row(s) before the ${opensOn} opening value (already inside it)` : null,
+            afterWindow ? `${afterWindow} row(s) after the ${asOf} value the series closes on (not yet inside it)` : null]
+            .filter(Boolean).join(" and ")
+          + " are not flows of its money-weighted window");
       }
     }
 
@@ -3835,10 +3896,9 @@ function build(archived) {
     // capital already at work on day one. Without it a return over the window is
     // computed against the few thousand rupees of TDS that moved during it, and
     // comes out absurd. The closing value is appended by the app at compute time.
-    const perf = group.find((d) => d.reportType === "performance-summary" && isNum(d.flows?.openingCorpus));
     if (perf && flows.length) {
       flows.push({
-        date: perf.flows.periodFrom ?? src?.periodFrom ?? asOf,
+        date: opensOn,
         amount: r2(-perf.flows.openingCorpus),
         description: `Opening portfolio value ${perf.flows.periodFrom ?? ""}`.trim(),
       });
@@ -3851,15 +3911,33 @@ function build(archived) {
       flows.sort((a, b) => a.date.localeCompare(b.date) || a.amount - b.amount);
       accountCashFlows[accountId] = flows;
 
-      // Cross-check against the provider's own statement of the same figure.
-      const net = r2(sum(flows
-        .filter((f) => !/^opening portfolio value/i.test(f.description))
-        .map((f) => -f.amount)));
-      const stated = group.find((d) => isNum(d.flows?.netCapitalInOut)
-        && d.flows.periodFrom === src?.periodFrom && d.flows.periodTo === src?.periodTo);
-      if (stated && Math.abs(net - stated.flows.netCapitalInOut) > 1) {
-        notes.push(`account ${accountNo}: cash flows sum to ${net} but the performance `
-          + `summary states Net Capital In/Out of ${stated.flows.netCapitalInOut} over the same window`);
+      // Cross-check against the provider's own statement of the same figure, over
+      // every window the source covers whole — summed from the source's own rows,
+      // so a since-inception register is held to the since-inception figure too.
+      const covers = (d) => !!src?.periodFrom && !!src?.periodTo && !!d.flows?.periodFrom && !!d.flows?.periodTo
+        && src.periodFrom <= d.flows.periodFrom && d.flows.periodTo <= src.periodTo;
+      for (const stated of group.filter((d) => isNum(d.flows?.netCapitalInOut) && covers(d))) {
+        const { periodFrom: from, periodTo: to } = stated.flows;
+        const net = r2(sum(moves.filter((m) => m.date >= from && m.date <= to).map((m) => m.move)));
+        /**
+         * A STATEMENT STRUCK BEFORE ITS CLOSING DAY'S OWN MOVEMENTS POSTED. Green
+         * Lantern's performance summary and history both close on 10 August and
+         * both leave out the two TDS rows the register dates that day (₹2,376 and
+         * ₹1,128): the register's balance just before them is ₹99,885,169, the
+         * since-inception figure the history prints. Reproduced exactly — the
+         * closing day's rows left out and nothing else — never a widened bound.
+         */
+        const onClose = moves.filter((m) => m.date === to);
+        const beforeClose = r2(net - sum(onClose.map((m) => m.move)));
+        if (Math.abs(net - stated.flows.netCapitalInOut) > 1 && onClose.length
+          && Math.abs(beforeClose - stated.flows.netCapitalInOut) <= 1) {
+          notes.push(`account ${accountNo}: its ${src.reportType} reproduces the ${stated.reportType}'s Net Capital In/Out of `
+            + `${stated.flows.netCapitalInOut} over ${from} → ${to} once the ${onClose.length} row(s) dated ${to} itself `
+            + `(${r2(sum(onClose.map((m) => m.move)))}) are left out — the statement was struck before that day's movements posted`);
+        } else if (Math.abs(net - stated.flows.netCapitalInOut) > 1) {
+          notes.push(`account ${accountNo}: cash flows sum to ${net} but the ${stated.reportType} states Net Capital `
+            + `In/Out of ${stated.flows.netCapitalInOut} over ${from} → ${to}`);
+        }
       }
     } else {
       notes.push(`account ${accountNo}: no external capital movements found, so no `

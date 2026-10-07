@@ -2,6 +2,7 @@
  "name": "transactions",
  "rows": [
   [
+   "settleDate",
    "description",
    "tranDate",
    "security",
@@ -11,9 +12,6 @@
    "brokerage",
    "stt",
    "settlement"
-  ],
-  [
-   "Date"
   ],
   [
    "Current Period Transactions"
