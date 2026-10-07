@@ -32,9 +32,9 @@ jobs:
       - name: Book is byte-identical to its archive
         run: |
           npm run build-book
-          if ! git diff --quiet -- src/data/glowData.ts docs/BOOK-REPORT.md; then
-            echo "::error::glowData.ts / BOOK-REPORT.md are not byte-identical to what the audit archive regenerates."
-            git --no-pager diff --stat -- src/data/glowData.ts docs/BOOK-REPORT.md
+          if ! git diff --quiet -- src/data/glowData.ts src/data/reviewColumns.ts docs/BOOK-REPORT.md; then
+            echo "::error::The book or review columns are not byte-identical to their committed sources."
+            git --no-pager diff --stat -- src/data/glowData.ts src/data/reviewColumns.ts docs/BOOK-REPORT.md
             exit 1
           fi
 
