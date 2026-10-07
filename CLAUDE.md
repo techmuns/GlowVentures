@@ -575,7 +575,8 @@ have been through `npm run extract`**: `august-2026-f/`'s two outlined-text
 statements are read by rendering their glyphs (see its own section) and its third
 file is a register held out of the book by decision. 38 provider names in the
 archive — ASK's PMS, the ASK Absolute Return Fund and Marathon are the newest —
-**58 accounts** in the book, seven holders (three of them family trusts, Stage 10db), and **361 leaf
+**64 accounts** in the book, seven holders (three of them family trusts, Stage 10db)
+and one `Not attributed to a member` bucket (Stage 10dh), and **361 leaf
 files** — of which **307 documents** are in the archive (18 of them spreadsheet
 exports read as WITNESSES of the PDF beside each), 238 read fully, 66 partially and
 **exactly ONE not at all**:
@@ -620,13 +621,16 @@ every ZIP already at the top level.
 
 | Provider | Account | Owner | As of | Market value |
 | --- | --- | --- | --- | ---: |
+| Consolidated review (MOPWM) | MOPWM | Ajay Jaisinghani | 2026-06-30 | ₹125.40 Cr |
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
-| ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | ₹63.78 Cr\*\* |
+| ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | ₹63.76 Cr\*\* |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-08-31 | ₹50.33 Cr |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-08-10 | ₹39.53 Cr |
+| Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani | 2026-06-30 | ₹37.26 Cr |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | ₹31.00 Cr |
 | Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹29.42 Cr |
 | Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹29.35 Cr |
+| Consolidated review (MOPWM) | MOPWM | Ankita Jaisinghani | 2026-06-30 | ₹29.04 Cr |
 | Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹28.46 Cr |
 | Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-08-31 | ₹28.27 Cr |
 | Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-07-31 | ₹21.83 Cr |
@@ -640,44 +644,47 @@ every ZIP already at the top level.
 | Motilal Oswal Delphi Equity Fund | 9049241536 | Ajay Jaisinghani | 2026-06-30 | ₹11.13 Cr |
 | Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-07-31 | ₹10.99 Cr |
 | SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-07-31 | ₹10.70 Cr |
+| India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | ₹9.56 Cr |
 | Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | 2026-08-11 | ₹8.02 Cr |
+| Consolidated review (MOPWM) | MOPWM | Not attributed to a member | 2026-06-30 | ₹7.26 Cr |
 | V.E.C Assago Capital Management LLP | 128004 | Ankita Jaisinghani | 2026-08-13 | ₹6.50 Cr |
 | Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | 2026-07-27 | ₹5.80 Cr |
 | Neo Infra Income Opportunities Fund | 9039920536 | Ajay Jaisinghani | 2026-06-30 | ₹5.55 Cr |
+| India SME Investments | 175964 | Bharat Jaisinghani | 2026-06-30 | ₹3.19 Cr |
+| India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | ₹3.19 Cr |
 | Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | ₹1.88 Cr |
-| Transition Venture Capital | TVC262 | Bharat Jaisinghani Family Trust 2 | 2026-03-31 | ₹1.71 Cr\* |
-| Transition Venture Capital | TVC263 | Bharat Jaisinghani Family Trust 3 | 2026-03-31 | ₹1.71 Cr\* |
-| 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-07-31 | ₹1.47 Cr\* |
+| Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-07-31 | ₹1.72 Cr |
+| Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-07-31 | ₹1.50 Cr |
+| 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-07-31 | ₹1.46 Cr\* |
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-06-30 | ₹1.46 Cr\* |
+| Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 2 | 2026-06-30 | ₹1.35 Cr |
+| Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 3 | 2026-06-30 | ₹1.35 Cr |
 | Molecule Ventures LLP | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
+| Transition Venture Capital | TVC262 | Bharat Jaisinghani Family Trust 2 | 2026-03-31 | ₹0.97 Cr\* |
+| Transition Venture Capital | TVC263 | Bharat Jaisinghani Family Trust 3 | 2026-03-31 | ₹0.97 Cr\* |
+| Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-07-31 | ₹0.75 Cr |
+| Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-07-31 | ₹0.75 Cr |
 | ASK Investment Managers Limited | 10034025 | Ajay Jaisinghani | 2026-09-08 | ₹0.34 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
 | ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | ₹0.01 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
-| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-08-06 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
+| 360 ONE Alternates Asset Management | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
+| 360 ONE Alternates Asset Management | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
 | 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — every class redeemed to nil) |
 | ASK Absolute Return Fund | 9039917111 | Ajay Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
 | ASK Absolute Return Fund | 9039917144 | Ankita Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
-| 360 ONE Alternates Asset Management | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
-| 360 ONE Alternates Asset Management | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
+| HDFC Bank (NSDL demat) | 67786137 | Bharat Jaisinghani Family Trust 3 | 2026-08-29 | — (**its private holding is counted under the review**, Stage 10dh) |
+| HDFC Bank (NSDL demat) | 67786547 | Bharat Jaisinghani Family Trust 2 | 2026-08-29 | — (**its private holding is counted under the review**, Stage 10dh) |
+| HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-08-06 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
+| Marathon Trends Advisory Pvt Ltd | 5110758 | Ankita Jaisinghani | 2026-09-09 | — (**no holdings statement** in the drop — its dated statements only) |
+| Marathon Trends Advisory Pvt Ltd | 5110837 | Ajay Jaisinghani | 2026-09-09 | — (**no holdings statement** in the drop — its dated statements only) |
 | Motilal Oswal Financial Services (demat) | 1201090012539150 | Ajay Jaisinghani | 2026-07-31 | — (**transaction statement only**, no holdings) |
-| Motilal Oswal Financial Services (demat) | 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
+| Motilal Oswal Financial Services (demat) | 1201090012838316 | Ankita Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz; 10 of its lines are private and counted under the review, Stage 10dh) |
 | Motilal Oswal Financial Services (demat) | 1201090012838320 | Bharat Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
 | Motilal Oswal Financial Services (demat) | 1201090012838335 | Aarti Jaisinghani | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
 | Motilal Oswal Financial Services (demat) | 1201090032387399 | Bharat Jaisinghani Family Trust | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
 | Motilal Oswal Financial Services (demat) | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (**quantity only** — the rate printed is face value) |
 | Motilal Oswal Financial Services (demat) | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
-| India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | — (no NAV published) |
-| India SME Investments | 175964 | Bharat Jaisinghani | 2026-06-30 | — (no NAV published) |
-| India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | — (no NAV published) |
-| Marathon Trends Advisory Pvt Ltd | 5110758 | Ankita Jaisinghani | 2026-09-09 | — (**no holdings statement** in the drop — its dated statements only) |
-| Marathon Trends Advisory Pvt Ltd | 5110837 | Ajay Jaisinghani | 2026-09-09 | — (**no holdings statement** in the drop — its dated statements only) |
-| HDFC Bank (NSDL demat) | 67786137 | Bharat Jaisinghani Family Trust 3 | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
-| HDFC Bank (NSDL demat) | 67786547 | Bharat Jaisinghani Family Trust 2 | 2026-08-29 | — (**quantity only** — the rate printed is face value) |
 | Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
-| Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-07-31 | — (no NAV published) |
-| Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-07-31 | — (no NAV published) |
-| Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-07-31 | — (no NAV published) |
-| Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-07-31 | — (no NAV published) |
 
 **THIS COLUMN WAS TEN TIMES THE BOOK.** Every row read ₹976.8 Cr, ₹103.8 Cr,
 ₹11.2 Cr — while the consolidated figure below it, which is generated, was
@@ -687,27 +694,55 @@ cells and gets a different answer has found one, and no prose rescues it. The
 column is regenerated from `BOOK_POSITIONS` now, and it is regenerated EVERY
 TIME rather than patched: hand-merging rows to keep it short is what let eight
 accounts go unlisted, and a row added by hand is a figure copied into prose. It
-is one row per account, all 58 of them, sorted by value — and the words in the
+is one row per account, all 64 of them, sorted by value — and the words in the
 right-hand cell are `Account.noPositionsReason`, routed rather than written, so
 an account that changes WHY it is empty changes this table on the next run.
 
+**AND THE RULE WAS ASPIRATIONAL UNTIL THERE WAS SOMETHING TO RUN.** It said
+"regenerated" and nothing regenerated it, so the merge that brought the six
+review accounts into the book (Stage 10dh) left this table untouched —
+**six accounts unlisted, fourteen of the other fifty-eight carrying a stale
+cell, and a column summing to ₹613.01 Cr against a book of ₹833.80 Cr.** Seven
+of those fourteen read "no NAV published" over a holding the review values;
+two named a face value where the review carries the line; three marks were the
+statement's where the review's now stands; the ring-fenced account's fell by the
+two private lines the review took over; and one demat's own reason gained the
+count of its lines the review carries. That is the same defect as the
+ten-times one, found the same way — by adding the printed cells up.
+**`npm run accounts-table` prints it and `-- --write` splices it in**, and it
+REFUSES rather than emitting one nobody can check: a `noPositionsReason` that
+routes to no words, or a column that does not tie to `BOOK_SUMMARY.totalValue`,
+exits non-zero. Both footnote markers are routed too — `\*` off
+`SEPARATE_INVESTMENTS` and `\*\*` off `BOOK_POLYCAB`'s own account — because a
+marker typed per row drifts, and the one hand-written attempt at these 64 rows
+dropped `\*` from the two Transition ones.
+
 \* one of two holdings of the same fund whose figures coincide on two accounts'
 statements. The family confirmed on 28 Sep 2026 that each pair is two separate
-investments, so every row is counted in full — see §4c and Stage 10cx.
+investments, so every row is counted in full — see §4c and Stage 10cx. **All
+four cells are the REVIEW's mark since Stage 10dh**, which is why both 360 ONE
+rows read ₹1.46 Cr again where CRN37702's own statement of 31 Jul values the
+same units at ₹1,46,68,362.66 — a disagreement `docs/BOOK-REPORT.md` names
+rather than resolves.
 
 \*\* **THE FAMILY HAVE SINCE SAID SO, AND POLYCAB IS RING-FENCED.** That row used to
 read ₹12,415.02 Cr, of which **₹12,351.24 Cr was POLYCAB INDIA** — the family's
 promoter stock rather than a portfolio position. The paragraph here posed the
 question and named the reversal; the family answered it, and the answer is the
-`/polycab` page. The account keeps its other 11 holdings and its own as-of; the
-promoter row is out of this column and out of every total below it. See **The
+`/polycab` page. The account keeps its other 9 holdings and its own as-of; the
+promoter row is out of this column and out of every total below it. *(It kept
+11 until Stage 10dh: Blue Ashva and the Borosil warrant are private lines the
+review carries, so they are counted under the review's own accounts now.)* See **The
 ring-fence** section.
 
-**Consolidated ₹613.01 Cr**: listed ₹599.21 Cr, private ₹13.79 Cr, and
-₹98,742 (Blue Ashva) that nothing places on either side. *(It was ₹713.56 Cr until
-Stage 10cz found the three Motilal Oswal demats' Rate column to be the last
-movement's price rather than a mark, ₹611.40 Cr after it, and ₹613.01 Cr since
-Stage 10da read Buoyant's 31 Aug snaps — both folios' units at the 31 Aug NAV.)* The split reads the
+**Consolidated ₹833.80 Cr**: listed ₹599.20 Cr, private ₹234.59 Cr, and
+**nothing left on neither side** — Blue Ashva was the one holding no document
+placed, and the review names it. *(It was ₹713.56 Cr until Stage 10cz found the
+three Motilal Oswal demats' Rate column to be the last movement's price rather
+than a mark, ₹611.40 Cr after it, ₹613.01 Cr since Stage 10da read Buoyant's
+31 Aug snaps — both folios' units at the 31 Aug NAV — and ₹833.80 Cr since
+Stage 10dh made the family's consolidated review the source for the 89 private
+lines no statement carries.)* The split reads the
 family's own placing of a fund first and the SEBI category the statements print
 second — see `shared/aifCategory.mjs`, Stage 10bp and Stage 10bw. *(It was
 listed ₹655.82 Cr · private ₹37.88 Cr · not placed ₹16.69 Cr on the category
@@ -727,7 +762,10 @@ Carnelian Bharat Amritkaal**: open-ended funds trading LISTED securities,
 reported as private capital. *"These are not private market investments"*, as the
 family put it.
 
-**AND THE LISTED HALF IS NOW THE SMALLER ONE — because ₹12,351.24 Cr LEFT IT.**
+**AND THE RING-FENCE TOOK ₹12,351.24 Cr OFF THE LISTED SIDE.** This heading read
+*the listed half is now the smaller one* — true of the book it was written
+against, where the fence left listed ₹358.04 Cr against private ₹352.35 Cr, and
+false since Stage 10bw moved the Category III folios onto the listed side.
 Before the ring-fence this book read ₹13,061.63 Cr, listed ₹12,709.28 Cr; the
 promoter block was 95% of the whole and 97% of the listed side. Anything that
 compares this book against an older figure of its own is comparing two different
@@ -738,10 +776,13 @@ Carnelian, V.E.C Assago, Molecule, and SVAN's SEBI report); five are Category-II
 AIF folios; six are drawdown AIF capital accounts, four of them Sky Capital's
 angel-fund folios and two held by TRUSTS; two are 360 ONE Distribution
 engagements; SEVEN are the family's own CDSL demat accounts at Motilal Oswal
-and one more at LKP; one is a joint mutual-fund folio. The rest are
-single-scheme fund accounts, each issuing one statement.
+and one more at LKP; one is a joint mutual-fund folio; and SIX issue no
+statement at all — they are the holders of the private lines the family's
+consolidated review carries, one per member plus `Not attributed to a member`
+(Stage 10dh). The rest are single-scheme fund accounts, each issuing one
+statement.
 
-**TWO OF THE 42 HOLD NOTHING, AND THAT IS A MEASUREMENT.** HDFC 16180583's two
+**SIX OF THE 64 HOLD NOTHING, AND THAT IS A MEASUREMENT.** HDFC 16180583's two
 schemes are redeemed to nil units, and both classes of Motilal Oswal's Hedged
 Equity Multi Factor Strategy are redeemed — Class B2 switched out, Class F1 paid
 out ₹11.19 Cr on 31 July 2025 — with the Account Summary printing a DASH for
@@ -751,6 +792,10 @@ zero value would book the whole of it as an unrealised loss against money the
 fund has already paid back. The account is kept and states the reason, which is
 why the two look nothing alike from a page: an account nobody wired and an
 account that holds nothing are both empty, and only one of them is a defect.
+The other four are in the table above with their own words, and they split the
+same two ways: 3P's three classes and both ASK Absolute Return Fund folios carry
+a position at a MEASURED ₹0, and Motilal Oswal demat 1201090037436848 carries
+none, because its statement prints a nil balance.
 
 **Read completely, and deliberately NOT in the book.** Four mutual-fund folios
 (₹32,70,831.46) are held by `HOPE INDIA TRUST` — a separate taxpayer, filed by
@@ -789,7 +834,10 @@ matching them. It still matched their JUNE issues, and tagged those. But
 `newestPerReportType` supersedes: `build-book.mjs` takes 37702's JULY holdings,
 which carry no tag, so the group reached the book with ONE member,
 `dedupedPositions` had nothing to collapse, and the same units were counted under
-both CRNs.
+both CRNs. *(The divergence is no longer on screen: since Stage 10dh the review
+is what values 37702's row, at ₹1,45,80,413 against the statement's
+₹1,46,68,362.66, so the accounts table above reads ₹1.46 Cr on both CRNs. The
+defect below is about the TAG, which is unchanged.)*
 
 Nothing failed and nothing said so — the consolidated total ran ₹1,45,80,412.51
 above the truth, and the AIF section beneath it was over by the same amount.
@@ -27300,6 +27348,20 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   `buoyantSnap.test.mjs` and `sheetWitness.test.mjs` do the same for the ASK
   Absolute Return Fund statement, Buoyant's Portfolio Snap Report and every
   spreadsheet export held to its PDF (Stage 10da).
+- `npm run accounts-table` regenerates the data-model section's one-row-per-account
+  table in this file, from `src/data/glowData.ts` alone — `-- --write` splices it
+  in, no argument prints it. It is what makes that passage's own rule
+  ("regenerated EVERY TIME rather than patched") enforceable rather than
+  aspirational: the Stage 10dh merge left the table six accounts short with
+  fourteen stale cells, because nothing regenerated it. Nothing in it is typed —
+  the money is summed off each account's positions, the words for an empty
+  account are ROUTED from `Account.noPositionsReason`, and both footnote markers
+  come off `SEPARATE_INVESTMENTS` and `BOOK_POLYCAB`. It REFUSES rather than
+  emitting a table nobody can check: a reason that routes to no words, or a
+  column that does not tie to `BOOK_SUMMARY.totalValue`, exits non-zero, and so
+  does a splice that cannot find the table's header row exactly once. Idempotent
+  — a second `-- --write` changes nothing, which is the control run. Run it after
+  `build-book`.
 - `npm run reconcile:review` checks the book against the adviser's consolidated
   review; `npm run reconcile:register` checks it against the family's own
   investment register. **Neither ever writes to the book** — both are independent
