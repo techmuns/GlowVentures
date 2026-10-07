@@ -147,7 +147,7 @@ Where a statement disagrees, the review is followed and the statement named (11 
 - india-sme-investments-175964 · India SME Investments Fund II — Class A2: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held.
 - india-sme-investments-177302 · India SME Investments Fund II — Class A2: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held; the fund's statement dates the ₹50,00,000 call the review puts on 29 Nov 2024 on 14 Jul 2025.
 - review-ajay-jaisinghani · Blue Ashva Varenya Account: the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742.
-- review-ajay-jaisinghani · Borosil Renewables: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50.
+- review-ajay-jaisinghani · Borosil Renewables - Warrants 13AG26: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50.
 - review-ajay-jaisinghani · Zepto: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026.
 - sky-capital-rising-titans-fund-SKY003 · Sky Capital Rising Titans Fund I: SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review.
 - transition-venture-capital-TVC262 · Transition Venture Capital Fund I — Class A1: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark.
@@ -168,7 +168,7 @@ The review's dated rows behind the holdings it values (65 rows, `BOOK_REVIEW_FLO
 | review-ajay-jaisinghani · Assetgro Fintech Private Limited — Series B Preference | 1 | 0 | 0 |
 | review-ajay-jaisinghani · Zepto | 1 | 0 | 0 |
 | review-ankita-jaisinghani · Transition Venture Capital Fund I — Class A1 | 1 | 0 | 0 |
-| review-bharat-jaisinghani · 15% K M Global - Credit Private Limited | 3 | 0 | 0 |
+| review-bharat-jaisinghani · K M Global - Credit Private Limited | 3 | 0 | 0 |
 | sky-capital-rising-titans-fund-SKY003 · Sky Capital Rising Titans Fund I | 5 | 0 | 0 |
 | sky-capital-rising-titans-fund-SKY022 · Sky Capital Rising Titans Fund I | 1 | 0 | 0 |
 | sky-capital-rising-titans-fund-SKY023 · Sky Capital Rising Titans Fund I | 1 | 0 | 0 |

@@ -188,6 +188,14 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     if (!Number.isInteger(row)) fail(`${tab}: a review row carries no Excel row number`);
     return { sheet, block, row };
   };
+  // A row's name against the review's own text for its line, for the two name
+  // gates in section 5 — the override is a decision about the SCREEN and the
+  // review's own words stay in the archive and in the report (Stage 10dh).
+  // `overrides` is the at-cost lines alone: there a name DEFAULTS to the review's
+  // text, so an entry's own `name` is an exception that has to earn its place. On
+  // the valued tabs the entry always names the fund (the review clips `India SME`),
+  // so there is nothing there for a staleness gate to measure.
+  const reviewText = new Map(), overrides = new Set();
   const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row }) => {
     if (key !== securityKeyOf(security) && !statementKeys.has(key)) {
       fail(`${security}: key ${key} is neither its name's own (${securityKeyOf(security)}) nor a statement row's`);
@@ -238,7 +246,9 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   for (const e of PRIVATE_INVESTMENT_ELSEWHERE) { claim(e, "elsewhere"); }
   for (const e of PRIVATE_INVESTMENT_HOLDERS) {
     const l = claim(e, "held");
-    const name = displayName(l.product);
+    const name = e.name ?? displayName(l.product);
+    reviewText.set(name, displayName(l.product));
+    if (e.name) overrides.add(name);
     const key = e.key ?? securityKeyOf(name);
     const bare = e.split.filter((s) => s.cost === undefined);
     if (bare.length > 1) fail(`${name}: more than one part takes the remainder`);
@@ -260,6 +270,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     const hits = block.lines.filter((l) => e.line.test(l.product));
     if (hits.length !== 1) fail(`${e.line} matches ${hits.length} ${tabName} lines, not one`);
     const l = hits[0];
+    reviewText.set(e.name, displayName(l.product));
     (byTab[e.tab] ??= new Set()).add(l.row);
     const parts = e.split;
     if (!e.atCost && !near(sum(parts.map((s) => s.value)), l.value)) fail(`${e.name}: the parts' value ${sum(parts.map((s) => s.value))} is not the line's ${l.value}`);
@@ -318,13 +329,33 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   const gap = sum(Object.entries(r.members.peAtCost.byMember).map(([m, v]) => v - (held.peAtCost.get(INVESTOR[m]) ?? 0)));
   if (!near(gap, (held.peAtCost.get(NOT_ATTRIBUTED) ?? 0) + elsewhereCost, 2)) fail(`Investorwise Private Equity: members leave ₹${gap}, not the not-attributed rows and the lines counted elsewhere`);
 
-  // Keys unique per (account, security).
+  // ── 5. Keys unique per (account, security), and the name a reader reads ────
   const seen = new Set();
   for (const p of out) {
     const id = `${p.accountId}|${p.securityKey}`;
     if (seen.has(id)) fail(`two rows for ${id}`);
     seen.add(id);
     if (/Polycab|AVENDUS/i.test(JSON.stringify(p))) fail(`${p.security} carries a name this dashboard keeps off every page`);
+  }
+
+  // A NAME MUST NOT READ AS ANOTHER HOLDING, AND MUST NOT BE AN INSTRUMENT'S.
+  // Both are struck on the BOOK the review layer leaves behind: every key a
+  // statement still carries, plus the review's own.
+  const bookKeys = new Set(out.map((p) => p.securityKey));
+  for (const p of positions) if (!removePositions.has(`${p.accountId}|${p.securityKey}`)) bookKeys.add(p.securityKey);
+  for (const u of unvalued) if (!removeUnvalued.has(`${u.accountId}|${u.securityKey}`)) bookKeys.add(u.securityKey);
+  const collidesWith = (name, own) => { const k = securityKeyOf(name); return k !== own && bookKeys.has(k) ? k : null; };
+  const namedByInstrument = (x) => /\d%|\(\d{1,2}\/\d{1,2}\/\d{2,4}\)|\bMAT\s*\d{6}|[*#^$@~]\s*$/.test(x);
+  for (const p of out) {
+    const own = reviewText.get(p.security) ?? fail(`${p.security}: no review text recorded for it`);
+    // The review's own name would read as another holding in the book, so the
+    // row takes the instrument its key names (Stage 10ak: a warrant is not the
+    // equity). An override whose review text collides with nothing is stale.
+    const was = collidesWith(own, p.securityKey);
+    const now = collidesWith(p.security, p.securityKey);
+    if (now) fail(`${p.security} normalises to ${now}, another holding in this book — name it by the instrument its key names`);
+    if (overrides.has(p.security) && !was) fail(`${p.security}: the review's own \`${own}\` collides with nothing, so the override says nothing`);
+    if (namedByInstrument(p.security)) fail(`${p.security} is named by an instrument — a coupon, a maturity or a filer's mark — not by its issuer`);
   }
   notes.push(`review: ${out.length} private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — ${superseded.length} statement rows superseded, ${writtenOff.length} written-off lines named`);
 

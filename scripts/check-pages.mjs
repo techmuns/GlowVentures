@@ -2450,7 +2450,37 @@ const AIF_BOOK = (() => {
       if (seen.has(p.dedupeGroup)) return false;
       seen.add(p.dedupeGroup); return true;
     });
-    const rows = ded.filter((p) => p.assetClass === "AIF" && acc.get(p.accountId)?.engagement !== "PMS");
+    /**
+     * AND A LINE THE REVIEW HOLDS AT COST IS IN ITS OWN BUCKET, NOT THIS ONE.
+     *
+     * This drill-down is the ALLOCATION bucket's — `?of=bucket&key=AIF` — and
+     * since Stage 10dh a review line the family's own consolidated review
+     * records at cost is its own bucket (`AT_COST_BUCKET`, which `holdingBucket`
+     * answers before the asset class). So 14 of this book's 35 AIF rows, 8 of
+     * its 19 funds and \u20b911.72 Cr of cost are drawn on the at-cost row rather
+     * than here, and a filter struck on the asset class alone reported three
+     * failures against a page that was right.
+     *
+     * Re-expressed on the book's own `valuedAtCost` rather than through
+     * `holdingBucket`, on the standing terms: a check that imports the helper it
+     * is checking agrees with it by construction.
+     */
+    const atCost = (p) => p.valuedAtCost === true;
+    const rows = ded.filter((p) => p.assetClass === "AIF"
+      && acc.get(p.accountId)?.engagement !== "PMS" && !atCost(p));
+    /**
+     * \u2026AND WHAT LEFT IS NAMED, which is the half a reader can be misled by.
+     *
+     * Every Category I AIF this family owns is Sky Capital's angel fund, and the
+     * review records all four folios at cost — so this table has no Category I
+     * heading at all, and the fold that used to carry them is empty because they
+     * now carry a position. A page clubbed by category that is simply silent
+     * about a category tells a reader they hold none, which is the one way this
+     * change could mislead (Stage 10bp: a fund that leaves a page is NAMED on
+     * it, with its value and where it is shown).
+     */
+    const atCostRows = ded.filter((p) => p.assetClass === "AIF"
+      && acc.get(p.accountId)?.engagement !== "PMS" && atCost(p));
     /**
      * THE PAGE DRAWS ONE ROW PER FUND, NOT PER STATEMENT, which is the whole of
      * what "club कर दो" asked for: Sanshi Class E reaches this book under one
@@ -2536,8 +2566,24 @@ const AIF_BOOK = (() => {
         const named = cats(a.providerEngagement);
         return isPE(null, a) ? "Private Equity" : named.length === 1 ? named[0] : "Category not stated";
       });
+    // The at-cost lines by the SAME section read, one entry per fund.
+    const atCostBy = new Map();
+    for (const p of atCostRows) {
+      const a = acc.get(p.accountId);
+      const named = [...new Set([...cats(p.security), ...cats(a?.providerEngagement)])];
+      const declared = named.length === 0 ? DECLARED_CATS?.get(p.securityKey) : undefined;
+      const key = isPE(p, a) ? "Private Equity"
+        : named.length === 1 ? named[0] : declared ?? "Category not stated";
+      const e = atCostBy.get(key) ?? { cost: 0, keys: new Set() };
+      e.cost += Number(p.marketValue) || 0; e.keys.add(p.securityKey); atCostBy.set(key, e);
+    }
     return {
       total: rows.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
+      /** The AIF lines the review holds at cost — on the at-cost row, not this one. */
+      atCostFunds: new Set(atCostRows.map((p) => p.securityKey)).size,
+      atCostCost: atCostRows.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
+      atCostSections: [...atCostBy].map(([key, v]) => ({ key, cost: v.cost, funds: v.keys.size }))
+        .sort((x, y) => y.cost - x.cost),
       /** Statement rows behind the table. */
       rows: rows.length,
       /** Rows the table actually draws — one per fund. */
@@ -21669,13 +21715,22 @@ const INVARIANTS = {
      */
     ["the footer's payment count is the sum of the rows'",
       (t, ctx) => {
-        // "Total · 34 rows · 11 of 51 accounts" — the row count leads because
-        // the table is over both records now, and the ACCOUNT count follows it
-        // because Capital in is struck over those alone.
-        const m = /Total · [\d,]+ rows? · (\d+) of (\d+) accounts\t(\d+) payments/.exec(t);
+        // "Total · 61 rows · 38 of 64 accounts · 116 payments". THREE
+        // DIFFERENT SETS, and this read one figure against another's count
+        // twice over. The ROW count is the whole merged table's, both records
+        // (61); the ACCOUNTS are the ones publishing a dated capital record
+        // (38); and the PAYMENTS are those accounts' purchases (116). Rows and
+        // accounts coincided until Stage 10dh, when a review holder bucket
+        // began drawing one row per LINE.
+        const m = /Total · ([\d,]+) rows? · (\d+) of (\d+) accounts\t(\d+) payments/.exec(t);
         if (!m) return false;
-        const rows = ctx.mineRows.reduce((a, r) => a + r.contributions, 0);
-        return Number(m[1]) === ctx.mineRows.length && Number(m[3]) === rows;
+        const drawn = ctx.datedTable?.rows?.length;
+        if (drawn == null) return false;
+        const payments = ctx.mineRows.reduce((a, r) => a + r.contributions, 0);
+        const accounts = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
+        return Number(m[1].replace(/,/g, "")) === drawn
+          && Number(m[2]) === accounts
+          && Number(m[4]) === payments;
       }],
 
     /**
@@ -21690,8 +21745,18 @@ const INVARIANTS = {
      */
     ["the total names the fraction of the book's accounts it covers",
       (t, ctx) => {
-        const m = /Total · [\d,]+ rows? · (\d+) of (\d+) accounts/.exec(t);
-        return !!m && Number(m[1]) === ctx.mineRows.length && Number(m[2]) === BOOK_ACCOUNT_COUNT;
+        // THE FRACTION IS OF THE ACCOUNTS, NOT OF THE ROWS. This read the
+        // accounts figure against the rows carrying a capital record, which
+        // coincided until Stage 10dh gave a review holder bucket one row per
+        // LINE — 39 such rows over 38 accounts, on a footer that was right.
+        const m = /Total · ([\d,]+) rows? · (\d+) of (\d+) accounts/.exec(t);
+        if (!m) return false;
+        const drawn = ctx.datedTable?.rows?.length;
+        if (drawn == null) return false;
+        const accounts = new Set(ctx.mineRows.map((r) => r.accountId).filter(Boolean)).size;
+        return Number(m[1].replace(/,/g, "")) === drawn
+          && Number(m[2]) === accounts
+          && Number(m[3]) === BOOK_ACCOUNT_COUNT;
       }],
 
     /**
@@ -25133,6 +25198,65 @@ const INVARIANTS = {
       const got = [...cats].sort();
       return got.length === AIF_BOOK.rowCats.length
         && got.every((c, i) => c === AIF_BOOK.rowCats[i]);
+    }],
+    /**
+     * ── …AND THE AIF FUNDS THE REVIEW HOLDS AT COST ARE NAMED ───────────
+     *
+     * Since Stage 10dh a line the family's own consolidated review records at
+     * cost is its OWN allocation bucket, so eight of this book's AIF funds are
+     * drawn on that row rather than this one. Dropping a fund from a page
+     * silently is the same defect as drawing a ₹0 one — the treatment Stage
+     * 10bp gave the Category III funds that left Private Market — so each is
+     * named with its category, its cost and where it IS shown.
+     *
+     * Gated on the BOOK, so it abstains only where no AIF line is held at cost
+     * rather than wherever the page stopped naming them.
+     */
+    ["the AIF funds the review holds at cost are named, with their category and their cost", (t, ctx) => {
+      if (!AIF_BOOK) return false;
+      if (!AIF_BOOK.atCostFunds) return { notChecked: "no AIF line in this book is held at cost on the family's review" };
+      const f = ctx?.aifSections?.atCostFold;
+      const rows = ctx?.aifSections?.atCost;
+      if (!f || f.tag !== "DETAILS" || f.open || !rows?.length) return false;
+      // One line per fund, filed under the same section the book gives it —
+      // compared as a MULTISET, so this asserts no ordering of its own.
+      const want = AIF_BOOK.atCostSections.flatMap((s) => Array(s.funds).fill(s.key)).sort();
+      const got = [...rows].sort();
+      const sum = String(f.summary ?? "");
+      return got.length === want.length && got.every((k, i) => k === want[i])
+        && new RegExp(`\\b${AIF_BOOK.atCostFunds} AIF funds? at cost\\b`).test(sum)
+        && AIF_BOOK.atCostSections.every((s) => sum.includes(`${s.key} ×${s.funds}`))
+        && /in no total/.test(sum)
+        // AND IT IS A LINE RATHER THAN A SENTENCE, on main's own bound. The
+        // page-wide prose check would pass a fold that simply stopped drawing
+        // the summary; this one holds the words it does draw, so a book whose
+        // section names tip the count over ten fails here by name.
+        && !(sum.length > PROSE_LINE_MAX && proseWords(sum) >= PROSE_WORDS)
+        // AND WHERE THEY ARE SHOWN, which is the half that makes the fund
+        // findable rather than merely accounted for.
+        && /[?&]of=bucket(&|$)/.test(String(f.href ?? ""))
+        && /key=Private\+investments\+at\+cost/.test(String(f.href ?? ""));
+    }],
+    /**
+     * …AND THE CATEGORY THIS ROW NO LONGER CARRIES IS STILL NAMED, which is
+     * the load-bearing half.
+     *
+     * Every Category I AIF this family owns is Sky Capital's angel fund, and the
+     * review records all four folios at cost — so this table has no Category I
+     * heading at all. A page clubbed by category that is simply silent about one
+     * tells a reader they hold none, which is false, and it is the one way the
+     * move could mislead. Struck on the BOOK's two sets rather than on the word
+     * "Category I", so a book whose at-cost funds all share a section with a
+     * drawn one abstains with the evidence instead of asserting nothing.
+     */
+    ["a SEBI category this row no longer carries is named in the at-cost fold", (t, ctx) => {
+      if (!AIF_BOOK) return false;
+      const drawn = new Set(AIF_BOOK.sections.map((s) => s.key));
+      const only = AIF_BOOK.atCostSections.map((s) => s.key).filter((k) => !drawn.has(k));
+      if (!only.length) return { notChecked: "every section this book holds at cost is also a section this row draws" };
+      const sum = String(ctx?.aifSections?.atCostFold?.summary ?? "");
+      if (!sum) return false;
+      return only.every((k) => sum.includes(k));
     }],
     /**
      * ── AND THE FOLIOS THAT VALUE NOTHING ARE NAMED ────────────────────────
@@ -38370,6 +38494,22 @@ for (const theme of THEMES) {
           key: e.closest("[data-hb-key]")?.getAttribute("data-hb-key") ?? null,
           text: e.textContent ?? "",
         })),
+        // AND THE AIF FUNDS THE REVIEW HOLDS AT COST, which this allocation row
+        // no longer carries — the only place a reader of this page learns a
+        // Category I AIF exists at all, now that Sky Capital's four folios are
+        // valued at cost and so left this bucket (Stage 10dh).
+        atCost: [...document.querySelectorAll("[data-aif-at-cost]")].map((e) => e.getAttribute("data-aif-at-cost")),
+        atCostFold: (() => {
+          const el = document.querySelector("[data-testid='aif-at-cost']");
+          if (!el) return null;
+          return {
+            tag: el.tagName,
+            open: el.tagName === "DETAILS" ? el.open : true,
+            summary: el.querySelector("summary")?.innerText ?? null,
+            why: el.querySelector("summary")?.getAttribute("title") ?? null,
+            href: el.querySelector("[data-aif-at-cost-href]")?.getAttribute("href") ?? null,
+          };
+        })(),
       }));
       /**
        * ── THE DAILY-NAV MOVERS CARD, READ AS STRUCTURE ───────────────────────

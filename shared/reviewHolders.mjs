@@ -49,6 +49,15 @@ const one = (owner, why = "one holder on the review's own Transactions and on th
  * one holding; otherwise the line's own key, `securityKeyOf` of the name it is
  * shown under — never one typed by hand, which joins nothing (the builder refuses
  * a key that is neither, Stage 10dh). `assetClass` is what the line IS.
+ *
+ * `name` overrides the review's own text on screen, and is for ONE case: the
+ * review names a company where its key names a particular INSTRUMENT of it, and
+ * the book holds another. `Borosil Renewables` normalises to `borosil-renewables`,
+ * which is the SVAN mandates' equity — so under the review's own name the warrant
+ * and the equity read as one holding, which is the merge Stage 10ak forbids. The
+ * name takes the instrument from the statement its own key supersedes. The builder
+ * refuses an override whose review text collides with nothing, and refuses a
+ * collision no override names (Stage 10dh).
  */
 export const PRIVATE_INVESTMENT_HOLDERS = [
   { line: /^Everest Fleet Private Ltd/, key: "everest-fleet", assetClass: "Unlisted",
@@ -71,7 +80,8 @@ export const PRIVATE_INVESTMENT_HOLDERS = [
   { line: /^Innoviti Payment Solutions/, assetClass: "Unlisted",
     split: [{ owner: AJ, cost: 14999980.38 }, { owner: BH, cost: 4999993.46 }], why: `two holders; ${REG} records each one's payment` },
   { line: /^Oil Max$/, key: "oilmax-energy", assetClass: "Unlisted", ...one(AJ, "the ICICI Bank NSDL statement holds the 17,000 shares in Ajay's account") },
-  { line: /^Borosil Renewables$/, key: "borosil-renewables-limited-warrants-13ag26", assetClass: "Unlisted", ...one(AJ) },
+  { line: /^Borosil Renewables$/, key: "borosil-renewables-limited-warrants-13ag26", assetClass: "Unlisted",
+    name: "Borosil Renewables - Warrants 13AG26", ...one(AJ) },
   { line: /^BIG BANG BOOM$/, key: "big-bang-boom-solutions-private-limited-0-001-pref-12sp44", assetClass: "Unlisted",
     split: [{ owner: AJ, cost: 30240000 }, { owner: BH, cost: 10080000 }], why: `two holders; ${REG} records each one's payment` },
   { line: /^RAY's$/, key: "rays-power-experts", assetClass: "Unlisted", ...one(AJ) },
@@ -188,7 +198,11 @@ export const VALUED_HOLDERS = [
   { tab: "unlisted", line: /^Zepto$/, name: "Zepto", key: "zepto", assetClass: "Unlisted",
     split: [{ owner: AJ, cost: 150015960, value: 228285156.52, qty: 4716 }],
     why: "the review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025" },
-  { tab: "credit", line: /^15% K M Global/, name: "15% K M Global - Credit Private Limited", key: "15-k-m-global-credit", assetClass: "Bond",
+  // Named by its ISSUER and never by its coupon: the review prints
+  // `15% K M Global - Credit Private Limited`, and a row named by its instrument
+  // is the failure Stage 10cc records (`issuerNameOf`). The review's own text is
+  // in the archive and in the reconciliation report.
+  { tab: "credit", line: /^15% K M Global/, name: "K M Global - Credit Private Limited", key: "k-m-global-credit", assetClass: "Bond",
     split: [{ owner: BH, cost: 7000149.8, value: 10434584.46 }],
     why: "Bharat's, on the review's own Transactions; the Private Investments tab's ₹20 L Credit Fair-K M Global line is the same loan, counted here once" },
 ];

@@ -6898,7 +6898,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "securityKey": "borosil-renewables-limited-warrants-13ag26",
-    "security": "Borosil Renewables",
+    "security": "Borosil Renewables - Warrants 13AG26",
     "symbol": null,
     "isin": "INE666D13019",
     "accountId": "review-ajay-jaisinghani",
@@ -8350,46 +8350,6 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ankita Jaisinghani's ₹1,25,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
-    "securityKey": "15-k-m-global-credit",
-    "security": "15% K M Global - Credit Private Limited",
-    "symbol": null,
-    "accountId": "review-bharat-jaisinghani",
-    "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Bond",
-    "marketSide": "private",
-    "quantity": null,
-    "avgCost": null,
-    "currentPrice": null,
-    "costBasis": 7000149.8,
-    "costBasisSource": "review",
-    "marketValue": 10434584.46,
-    "unrealizedPnL": 3434434.66,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": 49.06,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
-    "priceAsOf": "2026-06-30",
-    "accruedIncome": null,
-    "dividendReceived": null,
-    "positionIrrPct": null,
-    "review": true,
-    "reviewTaxonomy": {
-      "assetClass": "Debt",
-      "basket": "Thematic & Tactical"
-    },
-    "reviewSource": {
-      "sheet": "Debt",
-      "block": "Debt",
-      "row": 11
-    },
-    "reviewNote": "Valued at ₹1,04,34,584.46 on the family's consolidated review (MOPWM, 30 Jun 2026), Debt row 11, its closing of 30 Jun 2026. Bharat's, on the review's own Transactions; the Private Investments tab's ₹20 L Credit Fair-K M Global line is the same loan, counted here once."
-  },
-  {
     "securityKey": "a-k-enterprises",
     "security": "A K Enterprises",
     "symbol": null,
@@ -9006,6 +8966,46 @@ export const BOOK_POSITIONS: Position[] = [
       "row": 7
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Bharat Jaisinghani's ₹2,99,99,419 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
+  },
+  {
+    "securityKey": "k-m-global-credit",
+    "security": "K M Global - Credit Private Limited",
+    "symbol": null,
+    "accountId": "review-bharat-jaisinghani",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Bond",
+    "marketSide": "private",
+    "quantity": null,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": 7000149.8,
+    "costBasisSource": "review",
+    "marketValue": 10434584.46,
+    "unrealizedPnL": 3434434.66,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 49.06,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-06-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "review": true,
+    "reviewTaxonomy": {
+      "assetClass": "Debt",
+      "basket": "Thematic & Tactical"
+    },
+    "reviewSource": {
+      "sheet": "Debt",
+      "block": "Debt",
+      "row": 11
+    },
+    "reviewNote": "Valued at ₹1,04,34,584.46 on the family's consolidated review (MOPWM, 30 Jun 2026), Debt row 11, its closing of 30 Jun 2026. Bharat's, on the review's own Transactions; the Private Investments tab's ₹20 L Credit Fair-K M Global line is the same loan, counted here once."
   },
   {
     "securityKey": "lv-angel-fund-lets-venture-hoopr-vaibhav-karnavat",
@@ -15982,8 +15982,8 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
   },
   {
     "accountId": "review-bharat-jaisinghani",
-    "securityKey": "15-k-m-global-credit",
-    "security": "15% K M Global - Credit Private Limited",
+    "securityKey": "k-m-global-credit",
+    "security": "K M Global - Credit Private Limited",
     "date": "2020-09-21",
     "kind": "purchase",
     "amount": 1000000,
@@ -15993,8 +15993,8 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
   },
   {
     "accountId": "review-bharat-jaisinghani",
-    "securityKey": "15-k-m-global-credit",
-    "security": "15% K M Global - Credit Private Limited",
+    "securityKey": "k-m-global-credit",
+    "security": "K M Global - Credit Private Limited",
     "date": "2020-09-30",
     "kind": "purchase",
     "amount": 1000000,
@@ -16004,8 +16004,8 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
   },
   {
     "accountId": "review-bharat-jaisinghani",
-    "securityKey": "15-k-m-global-credit",
-    "security": "15% K M Global - Credit Private Limited",
+    "securityKey": "k-m-global-credit",
+    "security": "K M Global - Credit Private Limited",
     "date": "2024-03-22",
     "kind": "purchase",
     "amount": 5000149.8,

@@ -8,7 +8,7 @@ import { PageNav } from "@/components/PageNav";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, dedupedPositions, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
+import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, dedupedPositions, isValuedAtCost, AT_COST_BUCKET, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import {
   aifSectionOf, aifCategoryOf, aifCategoryWhy, isAifHolding, aifSectionOrd,
   unvaluedAifFolios, AIF_UNSTATED_SECTION, PRIVATE_EQUITY_SECTION,
@@ -530,6 +530,41 @@ export function HoldingsBehind() {
     return [...by.entries()].sort((a, b) => aifSectionOrd(a[0]) - aifSectionOrd(b[0]));
   }, [unvalued]);
   const unvaluedDrawn = useMemo(() => sumOrNull(unvalued.map((f) => f.drawn)), [unvalued]);
+
+  /**
+   * …AND THE AIF LINES THE REVIEW HOLDS AT COST, WHICH THIS ROW NO LONGER
+   * CARRIES.
+   *
+   * Since Stage 10dh a line the family's own consolidated review records at
+   * cost is its own allocation bucket, so eight of this book's AIF funds —
+   * Sky Capital's angel fund among them — are drawn on that row and not here.
+   * EVERY CATEGORY I AIF THIS FAMILY OWNS IS THAT ANGEL FUND, so without this
+   * the table is clubbed by category and simply silent about one: a reader is
+   * told they hold no Category I, which is false and is the one way the move
+   * could mislead. Named with its category, its cost and where it IS shown —
+   * the treatment Stage 10bp gave the funds that left Private Market.
+   *
+   * One entry per FUND, which is the unit a row of this table is, with its cost
+   * summed over the folios that hold it.
+   */
+  const atCost = useMemo(() => {
+    if (!aifSectioned || !portfolio) return [];
+    const by = new Map<string, { key: string; section: string; security: string; cost: number; lines: number }>();
+    for (const p of portfolio.positions) {
+      if (!isAifHolding(accIdx, p) || !isValuedAtCost(p)) continue;
+      const section = aifSectionOf(accIdx, p);
+      const id = `${section}|${p.securityKey}`;
+      const e = by.get(id) ?? { key: p.securityKey, section, security: p.security, cost: 0, lines: 0 };
+      e.cost += p.marketValue; e.lines += 1; by.set(id, e);
+    }
+    return [...by.values()].sort((a, b) => aifSectionOrd(a.section) - aifSectionOrd(b.section) || b.cost - a.cost);
+  }, [aifSectioned, portfolio, accIdx]);
+  /** The same reading order the sections are in, so the summary states the categories. */
+  const atCostBySection = useMemo(() => {
+    const by = new Map<string, number>();
+    for (const f of atCost) by.set(f.section, (by.get(f.section) ?? 0) + 1);
+    return [...by.entries()].sort((a, b) => aifSectionOrd(a[0]) - aifSectionOrd(b[0]));
+  }, [atCost]);
 
   /** What one row of this table IS, so the header and the footer can say it. */
   const anyMandate = groups.some((g) => g.kind === "mandate");
@@ -1243,6 +1278,53 @@ export function HoldingsBehind() {
                     </li>
                   ))}
                 </ul>
+              </details>
+            )}
+
+            {/* ── …AND THE AIF LINES THE REVIEW HOLDS AT COST ───────────────
+
+              The same shape as the fold above, and a DIFFERENT fact: those
+              folios publish no NAV at all, these are valued — at what the
+              family paid — on the row this bucket's at-cost sibling opens. Two
+              folds rather than one, because a reader who opens either must not
+              be told the other's reason. Closed, and the summary carries the
+              counts, the categories and the cost, so the Category I claim is on
+              the page without opening anything.
+            */}
+            {atCost.length > 0 && (
+              <details className="group border-t border-ink-700/60 px-5 pt-4" data-testid="aif-at-cost">
+                <summary className="cursor-pointer list-none text-[11.5px] text-slate-400 [&::-webkit-details-marker]:hidden"
+                  title={`${fmtNum(atCost.length)} AIF ${atCost.length === 1 ? "fund is" : "funds are"} recorded by the family's own consolidated review at what was paid for ${atCost.length === 1 ? "it" : "them"} and at no valuation, so ${atCost.length === 1 ? "it is" : "they are"} drawn on the ${bucketLabel(AT_COST_BUCKET)} row rather than here and ${atCost.length === 1 ? "its" : "their"} cost is in none of this table's totals. Every Category I AIF this family owns is among them.`}>
+                  <span className="inline-flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform group-open:rotate-90" />
+                    <span className="label-xs text-slate-300">Held at cost, on another row</span>
+                  </span>
+                  {/* THE SAME SHAPE AS THE FOLD ABOVE, AND FOR ITS REASON: a count,
+                      the categories and the money, in as few lower-case words as
+                      will carry them. Past 60 characters a block of ten or more
+                      such words reads as a sentence and is a note about the page
+                      rather than a figure on it (Stage 10cp), and the first
+                      draft of this line carried twelve. What it says at length
+                      is the summary's own hover. */}
+                  <span className="ml-2" data-aif-at-cost-summary>
+                    {fmtNum(atCost.length)} AIF {atCost.length === 1 ? "fund" : "funds"} at cost
+                    {" · "}{atCostBySection.map(([k, n]) => `${k} ×${n}`).join(", ")}
+                    {" · "}<span className="mono">{money(sum(atCost.map((f) => f.cost)))}</span> in no total
+                  </span>
+                </summary>
+                <ul className="mt-2 space-y-1">
+                  {atCost.map((f) => (
+                    <li key={`${f.section}|${f.key}`} className="text-[11.5px] text-slate-400" data-aif-at-cost={f.section}>
+                      <span className="text-slate-300">{f.section}</span> · {f.security} ·{" "}
+                      <span className="mono">{money(f.cost)}</span> at cost
+                      {f.lines > 1 && <> · {fmtNum(f.lines)} lines</>}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-2 text-[11.5px]">
+                  <Link to={drilldownHref("bucket", AT_COST_BUCKET)} className="text-champagne-400 hover:underline"
+                    data-aif-at-cost-href>{bucketLabel(AT_COST_BUCKET)} →</Link>
+                </div>
               </details>
             )}
           </Card>
