@@ -20,13 +20,14 @@ import { useTableView, sortRows } from "@/lib/tableView";
 /** The account table's columns, in the order its rows write their cells. */
 const ACCOUNT_COLS = ["provider", "account", "owner", "strategy", "engagement", "asOf"] as const;
 import { DASH, absentTile } from "@/components/Absent";
+import { wholeFamilyOnly } from "@/lib/memberScope";
 
 // Provenance and status of the ingested book. Unlike the analytics pages this
 // one is NOT gated on a non-empty book — when nothing has been ingested yet,
 // "nothing has been ingested yet" is exactly what this page exists to say.
 export function DataRefresh() {
   const view = useTableView("data-refresh-accounts", ACCOUNT_COLS);
-  const { portfolio, statementPortfolio, consolidated, bookIsEmpty, fmtFromBase, clearPortfolio } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, bookIsEmpty, fmtFromBase, clearPortfolio, scope } = usePortfolio();
   /**
    * ── ONE CLASSIFICATION, THE ONE SECTOR COMPOSITION DRAWS ─────────────────
    *
@@ -450,7 +451,10 @@ export function DataRefresh() {
               muted={!hasPrivate}
               title={hasPrivate ? undefined
                 : "The private-instrument register — a fund-of-funds structure carrying its own TVPI and DPI — is empty because no statement in this drop reports one, not because the family holds nothing private. What they do hold in private classes is carried as ordinary positions."} />
-            <Row label="NAV snapshots" value={portfolio.navHistory.length ? `${portfolio.navHistory.length}` : "None ingested"} muted={!portfolio.navHistory.length} />
+            <Row label="NAV snapshots"
+              value={scope.selected ? "whole family only" : portfolio.navHistory.length ? `${portfolio.navHistory.length}` : "None ingested"}
+              muted={scope.selected != null || !portfolio.navHistory.length}
+              title={scope.selected ? wholeFamilyOnly("The dated NAV series", scope.label) : undefined} />
           </ul>
           {/* WHICH TIER PLACED EACH COMPANY, and what none of them could. The
               two lower tiers are BORROWED EVIDENCE rather than the family's own

@@ -5,6 +5,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { buildSearchIndex, fencedIdentityOf, searchEntries, type SearchEntry, type SearchHit } from "@/lib/searchIndex";
 import { BOOK_CAPITAL_MOVES, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { AbsentFromBook } from "@/components/Absent";
+import { inScopeAccount } from "@/lib/memberScope";
 
 // ── THE SEARCH BOX IN THE TOP BAR ────────────────────────────────────────────
 //
@@ -75,7 +76,7 @@ const isTypingIn = (t: EventTarget | null) => {
 };
 
 export function SmartSearch() {
-  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, scope } = usePortfolio();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -91,15 +92,17 @@ export function SmartSearch() {
       // What a statement records at a quantity and nothing values is still a
       // holding a reader may type (Stage 10cz); the index offers it only where
       // no valued row already stands for it.
-      recorded: BOOK_UNVALUED_HOLDINGS,
+      // Both generated tables are the whole family's; the member scope keeps
+      // only the chosen members' accounts, as the positions above already are.
+      recorded: BOOK_UNVALUED_HOLDINGS.filter((l) => inScopeAccount(scope.accountIds, l.accountId)),
       // Whether a redemption is really on the Transactions tab (SC-C5) — the
       // family's own dated capital record, which that tab draws.
-      capitalMoves: BOOK_CAPITAL_MOVES,
+      capitalMoves: BOOK_CAPITAL_MOVES.filter((m) => inScopeAccount(scope.accountIds, m.accountId)),
       // The ring-fenced security's IDENTITY for the Polycab page's own entry
       // (PC-05) — its name and codes, never a quantity or a value.
       fenced: fencedIdentityOf(BOOK_POLYCAB),
     }) : []),
-    [portfolio, consolidated, fmtFromBase],
+    [portfolio, consolidated, fmtFromBase, scope.accountIds],
   );
 
   const query = q.trim();

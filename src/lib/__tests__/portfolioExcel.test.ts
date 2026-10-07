@@ -862,8 +862,13 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   const ROOT = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures", "../../../..");
   const page = readFileSync(path.join(ROOT, "src/pages/PortfolioMonitor.tsx"), "utf8");
   const call = /exportPortfolioExcel\(\s*positions\s*,\s*portfolio\.accounts\s*,\s*([^)]*)\)/.exec(page);
+  // A member scope (Stage 10di) narrows the answer to the chosen members'
+  // dealing — still the loader's whole answer for them, and still `data`
+  // itself, null included, wherever the loader answered null.
+  const arg = call?.[1].trim();
+  const scopedIsData = /const scoped = data && [^;]*: data;/.test(page);
   ok("the Portfolio Monitor's Export hands the sheet the loader's whole answer, null included",
-     !!call && call[1].trim() === "data", call ? call[1].trim() : "no exportPortfolioExcel call found");
+     !!call && (arg === "data" || (arg === "scoped" && scopedIsData)), call ? `${arg}${arg === "scoped" ? ` (null passes through: ${scopedIsData})` : ""}` : "no exportPortfolioExcel call found");
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");
