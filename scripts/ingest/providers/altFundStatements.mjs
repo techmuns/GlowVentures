@@ -75,6 +75,7 @@ export const PROVIDERS = {
   delphi: "Motilal Oswal Delphi Equity Fund",
   hedgedEquity: "Motilal Oswal Hedged Equity Multi Factor Strategy",
   askArf: "ASK Absolute Return Fund",
+  avendus: "Avendus Absolute Return Fund",
 };
 
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
@@ -1636,6 +1637,134 @@ function buoyantSnapSections(text) {
   return out;
 }
 
+/**
+ * AVENDUS ABSOLUTE RETURN FUND — a CAMS statement of account per folio, from
+ * the `october-2026` delivery. Every class on all four folios is REDEEMED TO
+ * NIL: the Account Portfolio Summary prints 0.000 units and 0.00 under every
+ * valuation column, "As on 10 February 2025". It prints NO NAV, so the holding
+ * is a MEASURED zero with no price — never a price of 0, which nobody struck.
+ *
+ * What the family PAID and RECEIVED is the dated record, and only these rows
+ * move the family's money:
+ *   - `Capital Contribution` / `Additional Capital Contribution` — the net
+ *     invested, with the stamp duty on the line under it and the gross on the
+ *     line under that (`amount of Rs.X-Inclusive basis`);
+ *   - `Amount being distributed` — what was paid out of a class on a date;
+ *     where a date prints no such row, its `Net Return of Capital Contribution`
+ *     was paid out whole (Ankita's 2022 returns of capital);
+ *   - `Amount being distributed towards undistributed Amount` — the later
+ *     payment out of the amount first held back.
+ * Income from the fund's liquid sweep, its stamp duty, tax and performance fee
+ * are the FUND's own entries and are archived as rows, never as family flows.
+ * What is still `held back` is a receivable the statement does not value, so
+ * it is named in the note and in no figure.
+ *
+ * Published only where every date's arithmetic ties to its own printed figures
+ * (net + stamp = gross; return − tax − fee = net return; distributed +
+ * undistributed = net return; held back + paid = balance); otherwise nothing
+ * dated is emitted and the reason is warned.
+ */
+const AV_SERIES = String.raw`Avendus\s+Absolute\s+Return\s+Fund\s+-\s+Class\s+(A\d+)\s*-?\s*(\d{1,2}[\s-][A-Za-z]{3}[\s-]\d{4})`;
+const AV_SUMMARY_ROW = new RegExp(String.raw`^\s*` + AV_SERIES + String.raw`\s+([\d,]+\.\d+)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d.]+)%\s*$`);
+const AV_TXN_ROW = new RegExp(String.raw`^(\d{2}-[A-Za-z]{3}-\d{4})\s+` + AV_SERIES + String.raw`\s+(\S.*?\S)\s+(\(?[\d,]+\.\d{2}\)?)\s*$`);
+const AV_CONT_ROW = /^\s{20,}(\S.*?\S)\s+(\(?[\d,]+\.\d{2}\)?)\s*$/;
+const AV_GROSS = /amount\s+of\s+Rs\.([\d,]+\.\d{2})-Inclusive\s+basis/i;
+const avClassName = (cls, series) => `Avendus Absolute Return Fund — Class ${cls} (${toIso(series.replace(/-/g, " ")) ?? series})`;
+
+function avendusParse(text) {
+  const series = [];
+  const rows = [];
+  let last = null;
+  for (const line of text.split("\n")) {
+    const s = AV_SUMMARY_ROW.exec(line);
+    if (s) { series.push({ cls: s[1], series: s[2], units: n(s[3]), gross: n(s[4]), netFee: n(s[5]), netFeeTax: n(s[6]) }); continue; }
+    const t = AV_TXN_ROW.exec(line);
+    if (t) {
+      last = { date: toIso(t[1]), cls: t[2], series: t[3], description: t[4].replace(/\s+/g, " ").trim(), amount: Math.abs(n(t[5])), sub: [] };
+      rows.push(last);
+      continue;
+    }
+    if (!last) continue;
+    const g = AV_GROSS.exec(line);
+    if (g && last.sub.length) { last.sub[last.sub.length - 1].gross = n(g[1]); continue; }
+    const c = AV_CONT_ROW.exec(line);
+    if (c && !/Page\s+\d|Total\s*:/i.test(c[1])) last.sub.push({ description: c[1].replace(/\s+/g, " ").trim(), amount: Math.abs(n(c[2])) });
+  }
+  return { series, rows };
+}
+
+function avendusFlows(text, warn) {
+  const { rows } = avendusParse(text);
+  const fails = [];
+  const out = [];
+  const close = (a, b) => Math.abs(a - b) <= 0.02;
+  const groups = new Map();
+  for (const r of rows) {
+    const k = `${r.date}|${r.cls}|${r.series}`;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  }
+  for (const [k, g] of groups) {
+    const [date, cls, ser] = k.split("|");
+    const security = avClassName(cls, ser);
+    const one = (re) => g.filter((r) => re.test(r.description));
+    const sum = (rs) => rs.reduce((a, r) => a + r.amount, 0);
+    for (const c of one(/^(Additional\s+)?Capital\s+Contribution$/i)) {
+      const stamp = c.sub.find((x) => /Stamp\s+duty/i.test(x.description));
+      if (!stamp || stamp.gross == null || !close(c.amount + stamp.amount, stamp.gross)) {
+        fails.push(`${date} ${cls}: the contribution ${c.amount} and its stamp duty ${stamp?.amount ?? "—"} do not add to the gross ${stamp?.gross ?? "—"} the statement prints`);
+        continue;
+      }
+      out.push(makeCashFlow({ date, description: c.description, security, kind: "contribution",
+        amount: stamp.gross, netAmount: c.amount, expenses: stamp.amount,
+        notes: "the fund's own net investment, with the stamp duty the statement prints under it; the gross is the amount paid" }));
+    }
+    const ret = one(/^Return\s+of\s+Capital\s+Contribution$/i);
+    const net = one(/^Net\s+Return\s+of\s+Capital\s+Contribution$/i);
+    const charges = one(/^(Tax\s+on\s+Income\s+\(incl|Performance\s+Fee\s+on\s+Return|Tax\s+on\s+Return\s+of\s+Capital)/i);
+    if (ret.length || net.length) {
+      if (ret.length !== 1 || net.length !== 1 || !close(ret[0].amount - sum(charges), net[0].amount)) {
+        fails.push(`${date} ${cls}: the return of capital less its tax and fee does not give the net return the statement prints`);
+        continue;
+      }
+    }
+    const paid = one(/^Amount\s+being\s+distributed$/i);
+    const undistributed = one(/^Undistributed\s+Amount$/i);
+    if (paid.length) {
+      if (net.length !== 1 || !close(sum(paid) + sum(undistributed), net[0].amount)) {
+        fails.push(`${date} ${cls}: the amount distributed and the amount held back do not add to the net return`);
+        continue;
+      }
+    }
+    const later = one(/^Amount\s+being\s+distributed\s+towards\s+undistributed\s+Amount$/i);
+    const balance = one(/^Balance\s+undistributed\s+amount$/i);
+    const heldBack = one(/^Balance\s+undistributed\s+amount\s+held\s+back$/i);
+    if (later.length && (balance.length !== 1 || !close(sum(later) + sum(heldBack), balance[0].amount))) {
+      fails.push(`${date} ${cls}: the later distribution and the amount still held back do not add to the balance undistributed`);
+      continue;
+    }
+    const cash = paid.length ? sum(paid) : later.length ? sum(later) : net.length ? net[0].amount : null;
+    if (cash != null && cash > 0) {
+      out.push(makeCashFlow({ date, description: paid.length ? "Amount being distributed" : later.length ? "Amount being distributed towards undistributed Amount" : "Net Return of Capital Contribution",
+        security, kind: "withdrawal", amount: cash,
+        notes: heldBack.length ? `the fund still holds back ${heldBack.map((h) => h.amount).join(" + ")} of this class towards tax liabilities and obligations — not paid, and valued by no figure here` : null }));
+    }
+  }
+  if (fails.length) { warn("dated-table-does-not-tie", fails.join("; ")); return []; }
+  return out;
+}
+
+function avendusSections(text) {
+  const { series, rows } = avendusParse(text);
+  return {
+    "account-summary": { name: "account-summary", rows: [["series", "units", "valuationGross", "valuationNetOfFee", "valuationNetOfFeeAndTaxes"],
+      ...series.map((s) => [avClassName(s.cls, s.series), s.units, s.gross, s.netFee, s.netFeeTax])] },
+    "transaction-details": { name: "transaction-details", rows: [["date", "series", "description", "amount"],
+      ...rows.flatMap((r) => [[r.date, avClassName(r.cls, r.series), r.description, r.amount],
+        ...r.sub.map((x) => [r.date, avClassName(r.cls, r.series), x.description + (x.gross != null ? ` (gross ${x.gross})` : ""), x.amount])])] },
+  };
+}
+
 const LAYOUTS = [
   {
     key: "buoyant",
@@ -1710,7 +1839,12 @@ const LAYOUTS = [
     }),
     security: (_t, r) => `Motilal Oswal Founders Fund Series II — Class ${r.klass}`,
     account: (text) => FIELD(text, "Account No", String.raw`(\d{6,})`),
-    asOf: (text) => toIso((/As on\s*:?\s*(\d{2}\s+\w{3}\s+\d{4})/i.exec(text) ?? [])[1]),
+    // THE CLASS ROW'S OWN NAV DATE FIRST: that is the day the valuation is
+    // struck. The header's "As on" is the day the statement was RUN, and it
+    // prints a single-digit day ("As on : 5 Oct 2026") that a two-digit
+    // pattern does not match — which filed the September issue as "unknown".
+    asOf: (text) => toIso((/CLASS\s+[A-Z]\d?\s+(\d{2}-\d{2}-\d{4})\s+[\d,]+\.\d+/.exec(text) ?? [])[1])
+      ?? toIso((/As on\s*:?\s*(\d{1,2}\s+\w{3}\s+\d{4})/i.exec(text) ?? [])[1]),
     holder: (text) => FIELD(text, "Name"),
     // THE NAV IS POST-TAX AND THE STATEMENT SAYS WHAT THAT MEANS: tax on
     // realised gains only, nothing for unrealised. Recorded rather than
@@ -2405,6 +2539,29 @@ const LAYOUTS = [
       ? ["redeemed-to-nil", "every unit of this series has been redeemed: the Account Summary prints a dash for units and 0.00 for every valuation, so the holding is carried as a MEASURED zero at the NAV the statement prints — what the family received is the dated withdrawals, not a value"]
       : null,
     note: "valued at the NAV NET OF FEE, before tax — the basis the statement's Total row and the family's consolidated review both carry; the NAV net of fee and tax is printed beside it and kept in the archive. The statement prints no realised gain and no SEBI category, so the book carries neither",
+    okWhenClean: true,
+  },
+  {
+    /** AVENDUS ABSOLUTE RETURN FUND — see the block above `avendusParse`. */
+    key: "avendus",
+    engagement: "AIF",
+    providerEngagement: "AIF statement of account — the statement prints no SEBI category",
+    provider: PROVIDERS.avendus,
+    match: /Avendus\s+Absolute\s+Return\s+Fund/i,
+    assetClass: "AIF",
+    rowsFrom: (text) => avendusParse(text).series,
+    read: (s) => ({ cls: s.cls, series: s.series, quantity: s.units, marketPrice: null, printedValue: s.netFeeTax }),
+    security: (_t, r) => avClassName(r.cls, r.series),
+    account: (text) => (/Folio\s+No\.\s*:\s*(\d{3,})/i.exec(text) ?? [])[1] ?? null,
+    asOf: (text) => toIso((/Account\s+Portfolio\s+Summary\s+As\s+on\s+(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i.exec(text.replace(/\s+/g, " ")) ?? [])[1]),
+    holder: (text) => (/Personal\s+Information[^\n]*\n\s*([A-Z][A-Za-z .]{2,60}?)\s{2,}/.exec(text) ?? [])[1]?.trim() ?? null,
+    flowsFrom: avendusFlows,
+    sectionsFrom: avendusSections,
+    totalsFrom: (text, holdings) => holdings.length ? { totalMarketValue: 0, totalCost: null, positionCount: holdings.length } : null,
+    infoFrom: (holdings) => holdings.length && holdings.every((h) => h.quantity === 0)
+      ? ["redeemed-to-nil", "every class on this statement is redeemed: the Account Portfolio Summary prints 0.000 units and 0.00 under every valuation column, so each holding is carried as a MEASURED zero with no price — what the family received is the dated distributions, not a value"]
+      : null,
+    note: "every class is redeemed to nil as on 10 February 2025. The statement prints no NAV, no realised gain and no SEBI category, so the book carries none. The fund still holds back part of the proceeds towards tax liabilities and obligations; that amount is named on each payout's own row and valued by no figure here",
     okWhenClean: true,
   },
 ];

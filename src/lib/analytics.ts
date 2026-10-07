@@ -270,8 +270,11 @@ export const isFundVehicle = (p: { assetClass: string }) => FUND_CLASSES.has(p.a
  * (Buoyant's sleeve twice, Molecule's TDS), which are nil and not redeemed. The
  * other five are this: 3P's three classes and HDFC's two schemes.
  */
-export const isRedeemedToNil = (p: { assetClass: string; quantity: number | null; currentPrice: number | null }) =>
-  isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null;
+export const isRedeemedToNil = (p: { assetClass: string; quantity: number | null; currentPrice: number | null; redeemedToNil?: boolean }) =>
+  // A fund that publishes no NAV (Avendus) has no price to be the witness, so
+  // its OWN statement's "redeemed to nil" is: 0 units and 0.00 under every
+  // valuation column, carried by the book as `redeemedToNil` (Stage 10dl).
+  isFundVehicle(p) && p.quantity === 0 && (p.currentPrice != null || p.redeemedToNil === true);
 
 /**
  * ── WHAT THE FAMILY STILL HOLDS ─────────────────────────────────────────────

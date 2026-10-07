@@ -880,6 +880,11 @@ const ISSUER_PROVIDER_RULES = [
    * `august-2026-d` block above already documents.
    */
   [/ASK\s+Absolute\s+Return\s+Fund/i, "ASK Absolute Return Fund"],
+  // AVENDUS'S ABSOLUTE RETURN FUND, by its own statement's name. Its CAMS
+  // statement of account prints `Broker Name : Motilal Oswal Wealth`, so before
+  // this rule all four folios landed under the bare `Motilal Oswal` rule below,
+  // with no reader. Same band, same reason, as the ASK rule above.
+  [/Avendus\s+Absolute\s+Return\s+Fund/i, "Avendus Absolute Return Fund"],
   // A bank payment advice, not a statement. `3P_Folio 3000049.pdf` is named for
   // the folio the money went to and is an ICICI receipt for the transfer.
   [/ICICI\s+Bank\s+Advice\s+Receipt/i, "ICICI Bank (payment advice)"],
@@ -1048,6 +1053,24 @@ export function classify({ fileName, text }) {
    * It is a single-scheme ACCOUNT STATEMENT — units, NAVs and the dated record —
    * which is what every other fund this book reads is typed as.
    */
+  /**
+   * AVENDUS ABSOLUTE RETURN FUND prints `Folio No. : 8307` beside the investor's
+   * own BANK account number, which the generic pattern below would take first.
+   * The folio is the account; the first holder is the name under `Personal
+   * Information`; the as-of is the Account Portfolio Summary's own date, not
+   * the day the statement was run.
+   */
+  if (provider === "Avendus Absolute Return Fund") {
+    const folio = (t.match(/Folio\s+No\.\s*:\s*(\d{3,})/i) || [])[1] || null;
+    const holder = (t.match(/Personal\s+Information[^\n]*\n\s*([A-Z][A-Za-z .]{2,60}?)\s{2,}/) || [])[1] || null;
+    const asOfDate = toIso((t.replace(/\s+/g, " ").match(/Account\s+Portfolio\s+Summary\s+As\s+on\s+(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i) || [])[1]) || genericAsOf(t) || dateFromName(name);
+    return {
+      provider, ownerName: trimPersonName(holder), accountNo: folio, asOfDate,
+      reportType: "holdings", sections: ["holdings"], familyGroup: null, strategy: null,
+      confidence: folio && asOfDate ? "high" : "medium",
+      matchedBy: "Avendus Absolute Return Fund statement of account",
+    };
+  }
   if (provider === "ASK Absolute Return Fund") {
     const folio = (t.match(/Folio\s+Number\s*:?\s*(\d{6,})/i) || [])[1] || null;
     const holder = (t.match(/\bName\s*:\s*([A-Za-z][A-Za-z .'-]{2,60}?)\s+Bank\s*&/) || [])[1] || null;

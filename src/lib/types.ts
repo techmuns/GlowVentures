@@ -352,6 +352,12 @@ export type Position = {
   avgCost: number | null;
   currentPrice: number | null;
   /**
+   * A fund holding its own statement prints at 0 units and 0.00 value where
+   * the statement prints NO NAV (Avendus). The NAV is what `isRedeemedToNil`
+   * reads as the witness elsewhere; here the statement's own summary is.
+   */
+  redeemedToNil?: boolean;
+  /**
    * Cost of lots held under / over a year, on India's 12-month threshold for
    * listed equity.
    *

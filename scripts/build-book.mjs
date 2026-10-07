@@ -3421,6 +3421,10 @@ function build(archived) {
         quantity: h.quantity,
         avgCost: h.unitCost,
         currentPrice: h.marketPrice,
+        // A MEASURED nil on a statement that prints no NAV (Avendus, Stage 10dl):
+        // 0 units, 0.00 value, and the statement's own "redeemed-to-nil" note.
+        ...(h.quantity === 0 && h.marketValue === 0 && h.marketPrice == null
+          && (holdingsDoc?.warnings ?? []).some((w) => w.code === "redeemed-to-nil") ? { redeemedToNil: true } : {}),
         costBasis,
         /**
          * "opening-position" where the cost came from the broker's ledger, not

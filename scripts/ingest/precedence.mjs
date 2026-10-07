@@ -526,6 +526,10 @@ for (const provider of [
   // category, so none is claimed here (Stage 10cv). Not the ASK PMS
   // mandates above: a different issuer, a different document, a different book.
   "ASK Absolute Return Fund",
+  // Avendus's AIF — a CAMS statement of account per folio, from the
+  // `october-2026` delivery. Every class is redeemed to nil; the statement is
+  // the only record of what was paid in and paid out.
+  "Avendus Absolute Return Fund",
   // Redeemed to nil and carrying no holding — the entry is here anyway, because
   // a provider with no precedence block contributes nothing SILENTLY, and an
   // account that holds nothing and an account nobody wired look identical from
