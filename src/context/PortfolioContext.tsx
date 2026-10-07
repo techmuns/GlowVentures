@@ -19,8 +19,13 @@ import { readCachedQuotes, writeCachedQuotes, mergeQuoteFeeds, retainQuotes } fr
 import { fmtCurrency } from "@/lib/format";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
-  BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
+  MEMBERS_PARAM, accountIdsFor, memberOptions, parseMembersParam, scopeLabel, scopePortfolio, serializeMembers,
+  type MemberOption,
+} from "@/lib/memberScope";
+import {
+  BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_OWNERS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
   BOOK_ACCOUNT_CASH_FLOWS, BOOK_ENTITY_CASH_FLOWS,
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
   BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS,
@@ -149,6 +154,31 @@ export type QuotesStatus = "loading" | "live" | "unavailable";
  */
 export type Basis = "STATEMENT" | "LIVE";
 
+/**
+ * WHOSE BOOK THIS VIEW SHOWS (Stage 10di). The top bar's selector picks it, the
+ * address carries it (`?members=`), and every figure reached through this
+ * context is struck over those members' accounts alone.
+ */
+export type MemberScope = {
+  /** What the selector shows as picked — null is the whole family. */
+  selected: string[] | null;
+  /** Owner ids the address named that the book does not carry. */
+  unknown: string[];
+  options: MemberOption[];
+  /** The selector's own label: "Whole family", a name, "Ajay + Ankita", "3 members". */
+  label: string;
+  setSelected: (ids: string[] | null) => void;
+  /**
+   * The owners THIS view is filtered to, and their accounts. Null is the whole
+   * family — always, under `<WholeFamily>`, whatever the selector shows. A page
+   * that reads a generated table directly (a dated record, a lot register)
+   * filters on `accountIds`, so it agrees with the positions this context hands
+   * out.
+   */
+  owners: ReadonlySet<string> | null;
+  accountIds: ReadonlySet<string> | null;
+};
+
 type Ctx = {
   /** The book with live prices overlaid where a quote exists. */
   portfolio: Portfolio | null;
@@ -268,9 +298,38 @@ type Ctx = {
   corporateActions: ActionFeed | null;
   corporateActionsStatus: "loading" | "current" | "saved" | "unavailable";
   corporateActionReturns: Map<string, ActionReturn>;
+  scope: MemberScope;
 };
 
 const PortfolioContext = createContext<Ctx | null>(null);
+/**
+ * THE SAME VALUE, NEVER SCOPED. Family & Entities is the one page that always
+ * shows every member whatever the selector holds — *"the families and entities
+ * page will remain the same … irrespective of the members selected"* — so it is
+ * rendered under `<WholeFamily>`, which re-provides this.
+ */
+const WholeFamilyContext = createContext<Ctx | null>(null);
+
+/** Live-price counts over one portfolio — see the long note where they are used. */
+function liveCounts(positions: readonly Position[], returns: Map<string, ActionReturn>) {
+  const bySecurity = new Map<string, { live: boolean; hasSymbol: boolean; withheld: boolean }>();
+  for (const p of positions) {
+    const e = bySecurity.get(p.securityKey) ?? { live: false, hasSymbol: false, withheld: false };
+    e.live = e.live || !!p.live;
+    e.hasSymbol = e.hasSymbol || !!symbolFor(p);
+    e.withheld = e.withheld || !!liveWithheldReason(p, returns);
+    bySecurity.set(p.securityKey, e);
+  }
+  const all = [...bySecurity.values()];
+  return {
+    livePriced: all.filter((e) => e.live).length,
+    notLive: all.filter((e) => !e.live && e.hasSymbol && !e.withheld).length,
+    liveWithheld: all.filter((e) => !e.live && e.hasSymbol && e.withheld).length,
+    unpriceable: all.filter((e) => !e.hasSymbol).length,
+  };
+}
+
+const OWNER_ORDER = BOOK_OWNERS.map((o) => o.ownerId);
 
 // How often to re-poll the quote feed while a tab is open. The server holds each
 // symbol for 60s, so anything shorter just re-reads the edge cache.
@@ -570,11 +629,72 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     };
   }, [basePortfolio, corporateActionLayer, quotes, corporateActions]);
 
+  // ── THE MEMBER SCOPE (Stage 10di) ──────────────────────────────────────────
+  //
+  // THE ADDRESS IS THE SOURCE, AND THE SELECTION OUTLIVES A LINK THAT DROPS IT.
+  // `?members=` decides the scope wherever it is present, so a scoped view is a
+  // link and `check:pages` reaches it by URL. A sidebar link, a breadcrumb or a
+  // page's own `?tab=` link does not carry it — so the last selection is kept
+  // and put back on the address, and the scope is a SETTING like the display
+  // currency rather than something a click silently resets. Read during render
+  // (never set from an effect first), so the page never paints the whole family
+  // for one frame before narrowing.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const memberOpts = useMemo(() => memberOptions(BOOK_ACCOUNTS, BOOK_OWNERS), []);
+  const knownOwners = useMemo(() => new Set(memberOpts.map((o) => o.ownerId)), [memberOpts]);
+  const rawMembers = new URLSearchParams(location.search).get(MEMBERS_PARAM);
+  const lastMembers = useRef<string | null>(null);
+  const effectiveRaw = rawMembers ?? lastMembers.current;
+  const parsedScope = useMemo(() => parseMembersParam(effectiveRaw, knownOwners), [effectiveRaw, knownOwners]);
+  useEffect(() => {
+    if (rawMembers != null) { lastMembers.current = rawMembers || null; return; }
+    if (lastMembers.current == null) return;
+    const q = new URLSearchParams(location.search);
+    q.set(MEMBERS_PARAM, lastMembers.current);
+    navigate({ pathname: location.pathname, search: `?${q}`, hash: location.hash }, { replace: true });
+  }, [rawMembers, location.pathname, location.search, location.hash, navigate]);
+  const setSelected = useCallback((ids: string[] | null) => {
+    const value = serializeMembers(ids, OWNER_ORDER);
+    lastMembers.current = value;
+    const q = new URLSearchParams(location.search);
+    if (value) q.set(MEMBERS_PARAM, value); else q.delete(MEMBERS_PARAM);
+    const search = q.toString();
+    navigate({ pathname: location.pathname, search: search ? `?${search}` : "", hash: location.hash }, { replace: true });
+  }, [location.pathname, location.search, location.hash, navigate]);
+
+  const scopeOwners = useMemo(() => (parsedScope.ids ? new Set(parsedScope.ids) : null), [parsedScope]);
+  const scopedPortfolio = useMemo(
+    () => (portfolio && scopeOwners ? scopePortfolio(portfolio, scopeOwners) : portfolio),
+    [portfolio, scopeOwners],
+  );
+  const scopedStatement = useMemo(
+    () => (basePortfolio && scopeOwners ? scopePortfolio(basePortfolio, scopeOwners) : basePortfolio),
+    [basePortfolio, scopeOwners],
+  );
+  const scopeAccountIds = useMemo(
+    () => (scopeOwners ? accountIdsFor(BOOK_ACCOUNTS, scopeOwners) : null),
+    [scopeOwners],
+  );
+  const scopeLabelText = scopeLabel(parsedScope.ids, memberOpts);
+  const scope = useMemo<MemberScope>(() => ({
+    selected: parsedScope.ids, unknown: parsedScope.unknown, options: memberOpts, label: scopeLabelText,
+    setSelected, owners: scopeOwners, accountIds: scopeAccountIds,
+  }), [parsedScope, memberOpts, scopeLabelText, setSelected, scopeOwners, scopeAccountIds]);
+  const wholeScope = useMemo<MemberScope>(() => ({ ...scope, owners: null, accountIds: null }), [scope]);
+
   const consolidated = useMemo(
+    () => dedupedPositions(scopedPortfolio?.positions ?? []),
+    [scopedPortfolio],
+  );
+  const wholeConsolidated = useMemo(
     () => dedupedPositions(portfolio?.positions ?? []),
     [portfolio],
   );
 
+  // An empty book is checked on the WHOLE book: a member with nothing in it is
+  // a scope with nothing in it, which <Gate> names as such rather than calling
+  // the book unloaded.
   const bookIsEmpty = useMemo(() => isEmptyBook(portfolio), [portfolio]);
 
   // Counted by security, not by position row: the same holding is often held by
@@ -590,23 +710,18 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // is not waiting on the feed either — it is waiting on a share count (DL-9).
   // Counted where a quote was held back on at least one of its lines and none
   // of them went live, so the three counts partition the not-live securities.
-  const { livePriced, notLive, liveWithheld, unpriceable } = useMemo(() => {
-    const bySecurity = new Map<string, { live: boolean; hasSymbol: boolean; withheld: boolean }>();
-    for (const p of portfolio?.positions ?? []) {
-      const e = bySecurity.get(p.securityKey) ?? { live: false, hasSymbol: false, withheld: false };
-      e.live = e.live || !!p.live;
-      e.hasSymbol = e.hasSymbol || !!symbolFor(p);
-      e.withheld = e.withheld || !!liveWithheldReason(p, corporateActionLayer.returns);
-      bySecurity.set(p.securityKey, e);
-    }
-    const all = [...bySecurity.values()];
-    return {
-      livePriced: all.filter((e) => e.live).length,
-      notLive: all.filter((e) => !e.live && e.hasSymbol && !e.withheld).length,
-      liveWithheld: all.filter((e) => !e.live && e.hasSymbol && e.withheld).length,
-      unpriceable: all.filter((e) => !e.hasSymbol).length,
-    };
-  }, [portfolio, corporateActionLayer]);
+  //
+  // Counted over the SCOPED book for the scoped view and the whole book for
+  // `<WholeFamily>`, so the top bar describes the holdings on screen.
+  const wholeCounts = useMemo(
+    () => liveCounts(portfolio?.positions ?? [], corporateActionLayer.returns),
+    [portfolio, corporateActionLayer],
+  );
+  const scopedCounts = useMemo(
+    () => (scopedPortfolio === portfolio ? wholeCounts : liveCounts(scopedPortfolio?.positions ?? [], corporateActionLayer.returns)),
+    [scopedPortfolio, portfolio, wholeCounts, corporateActionLayer],
+  );
+  const { livePriced, notLive, liveWithheld, unpriceable } = scopedCounts;
 
   // The basis the merged book is actually on. LIVE the moment any position
   // carries a live price — from then on the consolidated total no longer equals
@@ -629,18 +744,56 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const quotesPending = useMemo(() => new Set(quotes?.pending ?? []), [quotes]);
   const pendingFor = useCallback((symbols: readonly string[]) => pendingAmong(quotes, symbols), [quotes]);
   const quoteFeeds = useMemo(() => quoteFeedNames(quotes), [quotes]);
+  const shared = useMemo(() => ({
+    bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
+    quotesStatus, quoteFeed: quotes, quotesAsOf: quotes?.asOf ?? null, quoteFeeds, quotesPending, pendingFor, requestSymbols, refreshQuotes,
+    corporateActions, corporateActionsStatus, corporateActionReturns: corporateActionLayer.returns,
+  }), [bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
+    quotesStatus, quotes, quoteFeeds, quotesPending, pendingFor, requestSymbols, refreshQuotes, corporateActions, corporateActionsStatus, corporateActionLayer]);
   const value = useMemo<Ctx>(
     () => ({
-      portfolio, consolidated, statementPortfolio: basePortfolio, basis,
-      bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
-      quotesStatus, quoteFeed: quotes, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, liveWithheld, quoteFeeds, unpriceable, quotesPending, pendingFor, requestSymbols, refreshQuotes,
-      corporateActions, corporateActionsStatus, corporateActionReturns: corporateActionLayer.returns,
+      ...shared, portfolio: scopedPortfolio, consolidated, statementPortfolio: scopedStatement, basis,
+      livePriced, notLive, liveWithheld, unpriceable, scope,
     }),
-    [portfolio, consolidated, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
-     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, liveWithheld, quoteFeeds, unpriceable, quotesPending, pendingFor, requestSymbols, refreshQuotes,
-     corporateActions, corporateActionsStatus, corporateActionLayer],
+    [shared, scopedPortfolio, consolidated, scopedStatement, basis, livePriced, notLive, liveWithheld, unpriceable, scope],
   );
-  return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
+  const wholeValue = useMemo<Ctx>(
+    () => ({
+      ...shared, portfolio, consolidated: wholeConsolidated, statementPortfolio: basePortfolio,
+      basis: wholeCounts.livePriced > 0 ? "LIVE" : "STATEMENT", ...wholeCounts, scope: wholeScope,
+    }),
+    [shared, portfolio, wholeConsolidated, basePortfolio, wholeCounts, wholeScope],
+  );
+  return (
+    <WholeFamilyContext.Provider value={wholeValue}>
+      <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>
+    </WholeFamilyContext.Provider>
+  );
+}
+
+/**
+ * Renders its children on the WHOLE family's book, whatever the selector holds.
+ * Family & Entities is wrapped in it: that page is about every member, and the
+ * family asked for it to stay so.
+ */
+export function WholeFamily({ children }: { children: React.ReactNode }) {
+  const whole = useContext(WholeFamilyContext);
+  if (!whole) throw new Error("WholeFamily must be used within PortfolioProvider");
+  return <PortfolioContext.Provider value={whole}>{children}</PortfolioContext.Provider>;
+}
+
+/**
+ * The whole family's book, whatever the selector holds. Only for saying WHOSE
+ * something is when the scope leaves it out — "another member holds this" is
+ * true where "nobody holds this" would be false. Never for a figure.
+ */
+export function useWholePortfolio(): Portfolio | null {
+  return useContext(WholeFamilyContext)?.portfolio ?? null;
+}
+
+/** The scope the current view is on — see `MemberScope`. */
+export function useMemberScope(): MemberScope {
+  return usePortfolio().scope;
 }
 
 export function usePortfolio() {

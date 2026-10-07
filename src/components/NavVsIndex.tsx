@@ -7,6 +7,7 @@ import { Card } from "@/components/Card";
 import { AbsentSection, AbsentCell } from "@/components/Absent";
 import { useViewParam } from "@/components/ViewToggle";
 import { usePortfolio } from "@/context/PortfolioContext";
+import { wholeFamilyOnly } from "@/lib/memberScope";
 import { BOOK_NAV_COVERAGE } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
@@ -94,7 +95,7 @@ function axisTicks(dates: string[], spanDays: number): { ticks: number[]; fmt: (
 }
 
 export function NavVsIndex() {
-  const { portfolio, statementPortfolio, fmtFromBase, livePriced } = usePortfolio();
+  const { portfolio, statementPortfolio, fmtFromBase, livePriced, scope } = usePortfolio();
   /**
    * WHICH BENCHMARK THE BOOK IS SET AGAINST. In the URL (`?bench=`) like every
    * other view in this app, so "send me the book against the Sensex" is a link
@@ -334,6 +335,21 @@ export function NavVsIndex() {
   // `rows.length` test and draw an index alone under a heading promising a
   // comparison. `dates` is the book's, and is the only thing this branch is
   // about.
+  // THE SERIES IS THE WHOLE FAMILY'S, AND A MEMBER SCOPE SAYS SO (Stage 10di).
+  // It is chained over the covered panel of accounts and split by no owner, so
+  // under a scope the book's own dates are empty — and the sentence below, that
+  // no account publishes two valuations, would be false about the family.
+  if (scope.selected) {
+    return (
+      <Card className="flex flex-col" title={`Portfolio NAV vs ${bench.label}`}
+        subtitle="Dated portfolio values from the statements, against the index">
+        <div data-nav-scope-absent>
+          <AbsentSection what={`Whole family only · not shown for ${scope.label}`}
+            needs={wholeFamilyOnly("The dated NAV series", scope.label)} />
+        </div>
+      </Card>
+    );
+  }
   if (model.dates.length < 2) {
     return (
       <Card className="flex flex-col" title={`Portfolio NAV vs ${bench.label}`}

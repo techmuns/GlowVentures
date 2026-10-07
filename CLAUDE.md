@@ -466,6 +466,14 @@ cash holding's genuinely-zero return both match, and both are correct.
   breadcrumb, so the two cannot file a page under different groups.
   `src/components/PageNav.tsx` renders the back / forward / home controls and
   that crumb on every route. See Stage 10bh.
+- `src/lib/memberScope.ts` + `src/components/MemberScopeSelect.tsx` — WHOSE
+  BOOK THE DASHBOARD SHOWS. The top bar's selector (Whole family by default,
+  any members or trusts ticked together) writes `?members=`, and
+  `PortfolioContext` narrows `portfolio` and `statementPortfolio` to those
+  members' accounts at ONE seam (`scopePortfolio`), so every page follows with
+  no edit of its own. `useMemberScope()` reads it, `<WholeFamily>` /
+  `useWholePortfolio()` undo it for Family & Entities, and `OutOfScope` is what
+  a page about another member's holding draws. See Stage 10di.
 - `src/lib/fundNavs.ts` — THE PUBLISHED NAV'S READ SIDE. `applyFundNavs` is
   applied at ONE seam (`PortfolioContext`, beside `applyQuotes`), which is what
   makes a current fund value reach every page rather than needing a per-page
@@ -565,7 +573,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   card can rank both halves. Deliberately NOT routed through `companyExposure`:
   `src/lib/fundDisclosures.ts` reads `deriveFundDisclosures`' own read model —
   the AIFs' own snaps, a name and a weight, never `lookthrough.json`, on which
-  every stock-axis figure rests. See Stage 10di.
+  every stock-axis figure rests. See Stage 10dj.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -26371,7 +26379,41 @@ assumed.
     Market's, and 3 others — a partial realised figure on a mandate's trades,
     the not-found drill-down's crumb, and the ledger's own window.
 
-### Stage 10di — THE MOVERS' THIRD BRANCH: THE COMPANIES INSIDE THE AIFs AND THE MANDATES
+### Stage 10di — A MEMBER SELECTOR AT THE TOP OF THE DASHBOARD
+
+*"There should be option to select each family member or family entity so that
+the whole dashboard is then only showing information regarding that particular
+family member … they should be able to multi select … The families and entities
+page will remain the same."*
+
+- **One selector in the top bar**, Whole family by default. Any members or
+  trusts can be ticked together; the button reads the name, "Ajay + Ankita", or
+  "3 members". The choice is `?members=` and survives a sidebar link.
+- **One seam.** `scopePortfolio` keeps the chosen members' accounts and
+  everything keyed on them — positions, the three sides, capital gains,
+  commitments, dated flows. Every page reads the scoped book with no edit of its
+  own. The suite holds each owner's book to the family's, to the paisa.
+- **Family & Entities always shows every member** (`<WholeFamily>`).
+- **What only the whole family has says so.** The NAV series is struck over the
+  family's accounts together, so NAV vs Nifty 500, NAV & Performance's chart and
+  Upload History's series say they are whole-family only rather than drawing a
+  line under one member's name. Capital Gains, Ledger Insights, the Monitor's
+  trades and export, and the search follow the scope.
+- **A page about another member's holding says whose it is** (`OutOfScope`),
+  never "no such account" or "fully exited", and offers to add them or show the
+  whole family.
+- **A scope with nothing in it is named, not drawn as ₹0.** The page says the
+  members' accounts hold nothing a statement values, or that the address names
+  nobody this book carries, and the top bar prints no total.
+
+**Checks:** `memberScope.test.ts`; eight `check:pages` routes
+(`cio-scope`, `family-scoped`, `cio-nav-scoped`, `history-scoped`,
+`ledger-scoped`, `mandate-out-of-scope`, `polycab-out-of-scope`,
+`cio-scope-unknown`), every expectation derived from `glowData.ts`; and a
+`check:family` walk that clicks the selector, ticks two, follows a sidebar link
+and goes back to the whole family.
+
+### Stage 10dj — THE MOVERS' THIRD BRANCH: THE COMPANIES INSIDE THE AIFs AND THE MANDATES
 
 *"In the daily movers section we have 2 scopes as of now, Direct equity and ETF
 and mutual funds. We need to add another section that would be AIF and PMS …
@@ -27698,7 +27740,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   the rendered figures back, so a correct helper wired into nothing fails. Needs
   a `vite preview` on :4173, same as `check:pages`.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol, from NSE's own
-  three masters. Since Stage 10di it reads a fund's own PORTFOLIO DISCLOSURE as a
+  three masters. Since Stage 10dj it reads a fund's own PORTFOLIO DISCLOSURE as a
   FILL-ONLY second pass — a key pass 1 did not produce, never one it did — gated
   on the document carrying a family holding, which is the difference between 31
   keys and the 183 every scheme filing in the archive mentions. A disclosed-only
