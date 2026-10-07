@@ -6,6 +6,8 @@ import { Card } from "@/components/Card";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
+import { withReviewAccessors, type ReviewScope } from "@/lib/reviewColumns";
+import { EditColumns } from "@/components/EditColumns";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
 import { useViewParam } from "@/components/ViewToggle";
@@ -270,6 +272,8 @@ type RowReturn = MeasuredReturn & {
   withoutSubYear?: number | null;
 };
 
+const folioReviewScope = (f: BookFolio): ReviewScope => ({ positions: f.position ? [f.position] : [], securityKey: f.securityKey ?? undefined, accountId: f.accountId });
+const groupReviewScope = (g: BookGroup): ReviewScope => ({ positions: g.folios.flatMap((f) => f.position ? [f.position] : []), securityKey: g.securityKey ?? undefined });
 const folioFigures = (f: BookFolio): RowFigures => ({
   committed: f.capital?.committed ?? null,
   called: f.capital?.called ?? null,
@@ -389,8 +393,8 @@ export function PrivateMarket() {
   const measureKey = returnMeasures.join(",");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const bookCols = useMemo(() => withReturnCols(BOOK_COLS, returnMeasures), [measureKey]);
-  const bookView = useTableView("pm-book", bookCols);
-  const callView = useTableView("pm-calls", CALL_COLS);
+  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", manualEditor: true });
+  const callView = useTableView("pm-calls", CALL_COLS, { manualEditor: true });
   /**
    * THE CALLS THE FAMILY HAS ENTERED, and which row's editor is open. Called up
    * here with the page's other hooks, before any early return — a hook below
@@ -1570,14 +1574,14 @@ export function PrivateMarket() {
         fig: { ...folioFigures(f), callKey: grouping === "owner" ? folioCallKey(f) : null, ret: folioRet(f) },
       })),
       bookView.sort,
-      Object.fromEntries(Object.entries(nameAcc).map(([c, a]) => [c, (x: { fig: RowFigures; label: string }) => a({ ...x.fig, label: x.label })])),
+      withReviewAccessors(Object.fromEntries(Object.entries(nameAcc).map(([c, a]) => [c, (x: { fig: RowFigures; label: string; f: BookFolio }) => a({ ...x.fig, label: x.label })])), (x) => folioReviewScope(x.f)),
     );
     const scheme = (f: BookFolio) => f.capital;
     const fundCall = groupCallKey(g);
     const fundRowId = `fund:${g.key}`;
     return (
       <Fragment key={key}>
-        <Tr view={bookView} className={TREE_ROW.parent} {...rowToggle(toggle)}
+        <Tr view={bookView} reviewScope={groupReviewScope(g)} className={TREE_ROW.parent} {...rowToggle(toggle)}
           data-pm-group={g.key} data-pm-kind={g.kind} data-pm-row-section={g.section}
           {...(g.kind === "fund" ? { "data-pm-fund": g.key } : { "data-pm-owner": g.key })}
           data-pm-folios={g.folios.length} data-pm-value={g.value ?? undefined}
@@ -1624,7 +1628,7 @@ export function PrivateMarket() {
           const viewOfLine = f.viewOf ? accName(f.viewOf) : null;
           return (
             <Fragment key={f.key}>
-            <Tr view={bookView} className={TREE_ROW.child}
+            <Tr view={bookView} reviewScope={folioReviewScope(f)} className={TREE_ROW.child}
               data-pm-folio-row={g.key} data-pm-row-section={g.section} data-account={f.accountId}
               data-pm-capital-account={f.capital?.accountId ?? undefined}
               data-pm-capital-counted={f.capital ? (f.capitalCounted ? "true" : "false") : undefined}
@@ -1760,7 +1764,7 @@ export function PrivateMarket() {
     // return columns order the rows on the figure each one prints.
     const shown = sortRows(
       s.groups.filter(groupMatches).map((g) => ({ ...g, ret: groupRet(g) })),
-      bookView.sort, nameAcc as Record<string, Accessor<BookGroup & { ret: (m: ReturnMeasure) => MeasuredReturn }>>);
+      bookView.sort, withReviewAccessors(nameAcc as Record<string, Accessor<BookGroup & { ret: (m: ReturnMeasure) => MeasuredReturn }>>, groupReviewScope));
     const noun = grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds") : (s.groups.length === 1 ? "member" : "members");
     // COUNTS ON THE FACE, THE BASIS IN THE HOVER. *"its obvious from the table
     // what it is"* — the band said which basis it is on and why the missing-data
@@ -1960,6 +1964,7 @@ export function PrivateMarket() {
         right={
           <div className="flex flex-wrap items-center justify-end gap-2">
             {tabs}
+            <EditColumns view={view === "transactions" ? callView : bookView} />
             <SearchInput value={q} onChange={setQ}
               placeholder={view === "transactions" ? "Search calls…" : view === "owners" ? "Search members or funds…" : "Search funds or members…"}
               className="w-56"

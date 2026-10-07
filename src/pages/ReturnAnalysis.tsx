@@ -11,6 +11,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 
 /** Each table's columns, in the order its rows write their cells. */
 const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
@@ -84,7 +85,7 @@ const acctEnd = (a: { provider: string; accountNo: string }) =>
 
 export function ReturnAnalysis() {
   const { portfolio, statementPortfolio, consolidated, fmtFromBase, scope } = usePortfolio();
-  const sectorView = useTableView("returns-sectors", RA_SECTOR_COLS);
+  const sectorView = useTableView("returns-sectors", RA_SECTOR_COLS, { reviewKind: "sector" });
   const accountView = useTableView("returns-accounts", RA_ACCOUNT_COLS);
   /**
    * ── A COMPANY'S SECTOR IS THE ONE SECTOR COMPOSITION DRAWS ────────────────
@@ -322,12 +323,12 @@ export function ReturnAnalysis() {
   const ddNote = dd
     ? `On the book's dated NAV series — ${dd.points} statement dates, ${fmtDate(dd.from)} → ${fmtDate(dd.to)}, chained over the accounts valued at both ends of each interval and net of the external capital that entered it. It covers the ${ddCovered} accounts that publish a series; between statement dates each is held at its latest mark, so a fall and recovery inside one interval is not seen.`
     : "";
-  const sectorRows = m ? sortRows(m.sectors, sectorView.sort, {
+  const sectorRows = m ? sortRows(m.sectors, sectorView.sort, withReviewAccessors<typeof m.sectors[number]>({
     sector: (x) => x.label,
     pnl: (x) => x.pnl,
     return: (x) => x.returnPct,
     contrib: (x) => x.contribPct,
-  }) : [];
+  }, (x) => ({ sector: x.sector }))) : [];
   const accountRows = m ? sortRows(m.byAccount, accountView.sort, {
     account: (a) => acctLabel(a.account),
     names: (a) => (a.cost === null ? null : a.names),
@@ -493,7 +494,7 @@ export function ReturnAnalysis() {
               </thead>
               <tbody>
                 {sectorRows.map((s) => (
-                  <Tr view={sectorView} key={s.sector} className="border-t border-ink-700/60">
+                  <Tr view={sectorView} reviewScope={{ sector: s.sector }} key={s.sector} className="border-t border-ink-700/60">
                     <td className="px-2 py-2 text-slate-200" data-xa="returns-sector-row" data-sector={s.sector}
                       data-class={s.isClass ? "1" : "0"} data-companies={s.companies} data-pnl={s.pnl}>{s.label}</td>
                     <td className={`px-2 py-2 text-right mono ${changeColor(s.pnl)}`}>{money(s.pnl, true)}</td>
@@ -653,13 +654,13 @@ function ContribTable({ rows, money, storageKey }: {
   /** Contributors and detractors are two tables, so each keeps its own order. */
   storageKey: string;
 }) {
-  const view = useTableView(storageKey, RA_CONTRIB_COLS);
-  const shown = sortRows(rows, view.sort, {
+  const view = useTableView(storageKey, RA_CONTRIB_COLS, { reviewKind: "holding" });
+  const shown = sortRows(rows, view.sort, withReviewAccessors<typeof rows[number]>({
     security: (r) => r.security,
     pnl: (r) => r.pnl,
     return: (r) => r.returnPct,
     contrib: (r) => r.contribPct,
-  });
+  }, (r) => ({ securityKey: r.key })));
   if (!rows.length) {
     return <p className="py-6 text-center text-[11.5px] text-slate-500">{DASH} no priced positions in the book</p>;
   }
@@ -676,7 +677,7 @@ function ContribTable({ rows, money, storageKey }: {
         </thead>
         <tbody>
           {shown.map((r) => (
-            <Tr view={view} key={r.key} className="border-t border-ink-700/60">
+            <Tr view={view} reviewScope={{ securityKey: r.key }} key={r.key} className="border-t border-ink-700/60">
               <td className="px-2 py-2" data-xa={`${storageKey}-row`} data-key={r.key} data-pnl={r.pnl} data-accounts={r.accounts}>
                 <a className="text-slate-200 hover:text-accent-400" href={stockHref(r.key)}>{r.security}</a>
                 {r.accounts > 1 && <span className="ml-1.5 text-[10.5px] text-slate-500"

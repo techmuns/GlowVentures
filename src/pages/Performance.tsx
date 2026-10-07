@@ -12,6 +12,7 @@ import { fmtPct, fmtDate } from "@/lib/format";
 import { valuationBasis, navBasisLabel, navBasisTitle } from "@/lib/valuationBasis";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 
 /** The XIRR table's columns, in the order its rows write their cells. */
 const XIRR_COLS = ["account", "flows", "mv", "terminal", "return"] as const;
@@ -22,7 +23,7 @@ import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent
 import { NavVsIndex } from "@/components/NavVsIndex";
 import { bookReturnOnCost, costedSetLabel } from "@/lib/drilldown";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
-import type { AccountBridge, ReturnSeries } from "@/lib/types";
+import type { Account, AccountBridge, ReturnSeries } from "@/lib/types";
 import { measuredAccountsReturn, accountHasOpeningValue } from "@/lib/returns";
 import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_UNDATED_CAPITAL, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { capitalMovesWithCalls } from "@/lib/tranches";
@@ -201,7 +202,7 @@ export function Performance() {
   const [params] = useSearchParams();
   const summary = params.get("summary");
   const { portfolio, statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
-  const xirrView = useTableView("performance-xirr", XIRR_COLS);
+  const xirrView = useTableView("performance-xirr", XIRR_COLS, { reviewKind: "holding" });
 
   const p = portfolio?.positions ?? [];
   // Concentration numerator counts each dedupeGroup once — over the raw set,
@@ -327,13 +328,16 @@ export function Performance() {
   // own report date (`pooledXirr`).
   const mw = measuredAccountsReturn(statement, accounts);
   const measuredIds = new Set(mw.parts.map((x) => x.accountId));
-  const xirrRows = sortRows(xirrByAccount, xirrView.sort, {
+  const reviewScopeForAccount = (account: Account) => account.engagement === "PMS"
+    ? { accountId: account.accountId, isMandate: true }
+    : { positions: portfolio.positions.filter((p) => p.accountId === account.accountId) };
+  const xirrRows = sortRows(xirrByAccount, xirrView.sort, withReviewAccessors<typeof xirrByAccount[number]>({
     account: (x) => acctLabel(x.account),
     flows: (x) => x.flows,
     mv: (x) => (x.unvalued ? null : x.mv),
     terminal: (x) => x.account.asOf ?? null,
     return: (x) => x.toDate,
-  });
+  }, (x) => reviewScopeForAccount(x.account)));
   const measurable = xirrByAccount.filter((x) => measuredIds.has(x.account.accountId));
   // Every rupee a pooled account's printed totals carry and no dated row does —
   // named in the pooled figure's hover as it is on the account's own row.
@@ -788,7 +792,7 @@ export function Performance() {
             </thead>
             <tbody>
               {xirrRows.map((x) => (
-                <Tr view={xirrView} key={x.account.accountId} className="border-t border-ink-700/60"
+                <Tr view={xirrView} reviewScope={reviewScopeForAccount(x.account)} key={x.account.accountId} className="border-t border-ink-700/60"
                   data-xirr-row={x.account.accountId} data-xirr-mv={x.unvalued ? "" : x.mv}
                   data-xirr-pct={x.pct ?? ""} data-xirr-todate={x.toDate ?? ""} data-xirr-days={x.windowDays ?? ""}>
                   <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(x.account)}</td>

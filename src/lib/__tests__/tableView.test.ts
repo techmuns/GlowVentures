@@ -22,7 +22,7 @@
 //     loops on anything else), tells every reader of a key when it changes, and
 //     re-reads a key another browser tab wrote.
 import {
-  arrangeColumns, visibleOrder, moveColumn, nudgeColumn, parseStoredView, visibleSort, storedView,
+  arrangeColumns, visibleOrder, moveColumn, nudgeColumn, parseStoredView, visibleSort, storedView, selectedColumns,
 } from "../tableView";
 import {
   DEFAULT_RETURN_MEASURES, normaliseMeasures, resolveReturnMeasures, parseSavedMeasures, returnMeasuresKey,
@@ -234,6 +234,21 @@ const oldRule = (stored: string[], declared: string[]) => {
   ok("a blocked store reads as nothing saved", readMemory(key, parseStoredView) === null);
   writeMemory(key, { order: ["security", "qty"], sort: null });
   ok("…and a change is still kept for this page load", readMemory(key, parseStoredView)?.order[1] === "qty");
+}
+
+// Visibility keeps the stored arrangement and sort, including across a different axis declaration.
+{
+  const declared = ["security", "qty", "mv", "review:investmentRange", "review:advisor"];
+  const optional = ["review:investmentRange", "review:advisor"];
+  const stored = parseStoredView({ order: ["security", "review:investmentRange", "mv", "qty"], sort: { col: "mv", dir: "asc" }, visibility: { security: false, qty: false, "review:investmentRange": true, junk: "true" } })!;
+  const selected = selectedColumns(declared, stored.visibility, optional);
+  ok("new workbook fields start hidden while existing columns stay visible", same(selectedColumns(declared, undefined, optional), ["security", "qty", "mv"]));
+  ok("the row identity stays visible and malformed visibility is ignored", same(selected, ["security", "mv", "review:investmentRange"]) && !("junk" in stored.visibility!));
+  const moved = moveColumn(arrangeColumns(stored.order, declared), selected, "mv", "review:investmentRange")!;
+  ok("moving visible columns keeps both hidden columns in the arrangement", moved.includes("qty") && moved.includes("review:advisor"));
+  const restored = selectedColumns(declared, { ...stored.visibility, qty: true, "review:advisor": true }, optional);
+  ok("restoring a column gives back its retained place", same(visibleOrder(moved, restored), moved));
+  ok("a hidden sort is suspended without deleting the saved sort", visibleSort(stored.sort, ["security"]) === null && visibleSort(stored.sort, restored)?.col === "mv");
 }
 
 if (fails) {

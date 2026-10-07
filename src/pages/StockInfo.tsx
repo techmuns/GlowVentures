@@ -47,6 +47,7 @@ import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { movementsFor, unmovedAccountsFor } from "@/lib/shareMovements";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 import { useDatedCapital } from "@/lib/useDatedCapital";
 import { TREE_ROW, TreeSectionCell } from "@/components/TreeTable";
 import { ownerDisplayName } from "@/lib/owners";
@@ -322,7 +323,7 @@ export function StockInfo() {
   // page calls is declared here for that reason, including the four memos that
   // used to sit after the return and were a hooks-order bug waiting for a
   // render on which the book had not loaded.
-  const posView = useTableView("stock-positions", POS_COLS);
+  const posView = useTableView("stock-positions", POS_COLS, { reviewKind: "holding" });
   const txnView = useTableView("stock-txns", STOCK_TXN_COLS);
   /**
    * HOW THIS NAME IS HELD, not just what it is.
@@ -1105,7 +1106,7 @@ export function StockInfo() {
    *  route — a section is a partition of the table, so ranking across routes
    *  would put a derived line between two of a manager's rows. */
   const sortedPositions = (ps: Position[]) =>
-    sortRows([...ps].sort((a, b) => b.marketValue - a.marketValue), posView.sort, posAccessors);
+    sortRows([...ps].sort((a, b) => b.marketValue - a.marketValue), posView.sort, withReviewAccessors(posAccessors, (p) => ({ positions: [p] })));
   /** A fund line has a holder, a fund and a derived value — every other column
    *  is absent on it, so it sorts LAST on those rather than as a zero. */
   const sortedFunds = (ls: FundLine[]) => sortRows(ls, posView.sort, {
@@ -1166,7 +1167,7 @@ export function StockInfo() {
          while every cell is one line — and the MANAGED BY cell below carries a
          strategy sub-line whenever the account prints one. `data-held-route`
          is the route the row is filed under, read the same way. */
-      <Tr view={posView} key={r.accountId} data-account-row={r.accountId} data-held-route={heldRouteOf(route)} className="hover:bg-ink-700/40">
+      <Tr view={posView} reviewScope={{ positions: [r] }} key={r.accountId} data-account-row={r.accountId} data-held-route={heldRouteOf(route)} className="hover:bg-ink-700/40">
         <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
         {/* THE WIDEST TEXT IN THE TABLE MAY WRAP; A FIGURE MAY NOT. The table
             is `whitespace-nowrap` so figures never break, and a provider's

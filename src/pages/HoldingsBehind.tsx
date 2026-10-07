@@ -7,6 +7,7 @@ import { AbsentSection, AbsentCell, AbsentFromBook, DASH } from "@/components/Ab
 import { PageNav } from "@/components/PageNav";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, dedupedPositions, isValuedAtCost, AT_COST_BUCKET, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import {
@@ -208,7 +209,7 @@ export function HoldingsBehind() {
   /** Which grouped rows are expanded to their statement lines. */
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   // A HOOK, so it sits above this page's early returns.
-  const view = useTableView("holdings-behind", HB_COLS);
+  const view = useTableView("holdings-behind", HB_COLS, { reviewKind: "holding" });
 
   const scope = useMemo(() => parseDrilldown(params), [params]);
   /* CURRENT HOLDINGS ONLY, AND THE FILTER IS INSIDE `resolveDrilldown` — see the
@@ -434,7 +435,7 @@ export function HoldingsBehind() {
   const groups = sortRows(
     groupRows(shown, accIdx, d.deduped ? consolidated : portfolio.positions, fifoOpts),
     view.sort,
-    {
+    withReviewAccessors<ReturnType<typeof groupRows>[number]>({
       unit: (g) => g.label,
       heldIn: (g) => [...new Set(g.rows.map((x) => ownerOf(accIdx, x)))].join(", "),
       invested: (g) => g.invested,
@@ -445,7 +446,7 @@ export function HoldingsBehind() {
       costShare: (g) => g.invested,
       pnl: (g) => g.pnl,
       return: (g) => coveredReturn(g.rows, fifoOpts).pct,
-    },
+    }, (g) => g.kind === "mandate" ? { accountId: g.rows[0].accountId, isMandate: true } : { positions: g.rows }),
   );
   /**
    * ── THE AIF DRILL-DOWN IS CLUBBED BY SEBI CATEGORY ─────────────────────────
@@ -1004,7 +1005,7 @@ export function HoldingsBehind() {
                               not on a rendered name. `g.key` carries an `S:`/`M:`
                               prefix saying how the row was grouped rather than
                               what it is, which is why this is the security's. */}
-                          <Tr view={view} className="hover:bg-ink-700/40" data-hb-key={g.rows[0].securityKey}>
+                          <Tr view={view} reviewScope={g.kind === "mandate" ? { accountId: g.rows[0].accountId, isMandate: true } : { positions: g.rows }} className="hover:bg-ink-700/40" data-hb-key={g.rows[0].securityKey}>
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-1.5">
                                 {/* THE ROW OPENS THE THING IT NAMES. A mandate
@@ -1149,7 +1150,7 @@ export function HoldingsBehind() {
                               global mode — per row, opened on demand, rather than
                               a switch that reshapes the whole table. */}
                           {isOpen && g.rows.map((x) => (
-                            <Tr view={view} key={`${g.key}-${x.accountId}-${x.assetClass}`} className="bg-ink-900/40 text-[12px]">
+                            <Tr view={view} reviewScope={{ positions: [x] }} key={`${g.key}-${x.accountId}-${x.assetClass}`} className="bg-ink-900/40 text-[12px]">
                               <td className="py-1.5 pl-10 pr-4 text-slate-400">
                                 {g.kind === "mandate"
                                   ? <Link to={stockHref(x.securityKey)} className="hover:text-champagne-400">{x.security}</Link>

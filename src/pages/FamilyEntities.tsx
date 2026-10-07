@@ -35,6 +35,7 @@ import { capitalMovesWithCalls } from "@/lib/tranches";
 import { displayDepositoryName, fmtNum, fmtPct, changeColor, fmtCurrency, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
 import { pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
@@ -175,8 +176,8 @@ export function FamilyEntities() {
   const { portfolio, statementPortfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase, scope: memberScope } = usePortfolio();
   const [searchParams, setSearchParams] = useSearchParams();
   const [holdingsQ, setHoldingsQ] = useState("");
-  const entityView = useTableView("family-entities", ENTITY_COLS);
-  const holdView = useTableView("family-holdings", FE_HOLDING_COLS);
+  const entityView = useTableView("family-entities", ENTITY_COLS, { reviewKind: "entity" });
+  const holdView = useTableView("family-holdings", FE_HOLDING_COLS, { reviewKind: "holding" });
   /**
    * ── THE SECTORS ARE SECTOR COMPOSITION'S, NOT THIS PAGE'S OWN ─────────────
    *
@@ -426,7 +427,7 @@ export function FamilyEntities() {
   const overlapSaid = overlapWording(overlap, overlapNames);
   const entityWeightOf = weightOfEntities((n) => money(n), perStatementMV, totalMV, overlapSaid);
   // The table's own order; the default is `byEntity`'s (largest first).
-  const entityRows = sortRows(entities, entityView.sort, {
+  const entityRows = sortRows(entities, entityView.sort, withReviewAccessors<typeof entities[number]>({
     entity: (e) => e.key,
     nav: (e) => e.mv,
     // Weight is this entity's value over the book's, so it orders as NAV does.
@@ -436,7 +437,7 @@ export function FamilyEntities() {
     return: (e) => e.returnPct,
     toDate: (e) => ownerMeasuredReturn(statementPortfolio ?? portfolio, p, e.key).toDatePct,
     ytd: (e) => entityYtdPct(portfolio, e.key, e.mv),
-  });
+  }, (e) => ({ entity: e.key })));
   // See ENTITY_PARAM above. Resolved against the entities THIS BOOK carries, so
   // a name that resolves in the registry but owns nothing here still falls back
   // to All rather than drawing an entity with no rows.
@@ -850,7 +851,11 @@ export function FamilyEntities() {
   ].filter(Boolean).join("\n\n");
   const holdings = (() => {
     if (!selected) return [];
-    const rows = [...selRows].sort((a, b) => b.marketValue - a.marketValue);
+    const rows = sortRows([...selRows].sort((a, b) => b.marketValue - a.marketValue), holdView.sort, withReviewAccessors<Position>({
+      security: (h) => h.security, heldVia: (h) => ROUTE_LABEL[holdingRoute(engagementOf(accIdx, h) || null)],
+      sector: (h) => sectorAbsentWhy(h) ? null : sectorOf(h), value: (h) => h.marketValue,
+      return: (h) => h.costUnavailable || h.costBasis == null || isValuedAtCost(h) ? null : h.returnPct,
+    }, (h) => ({ positions: [h] })));
     const s = holdingsQ.trim().toLowerCase();
     return s ? rows.filter((h) => h.security.toLowerCase().includes(s) || (h.isin ?? "").toLowerCase().includes(s)) : rows;
   })();
@@ -975,7 +980,7 @@ export function FamilyEntities() {
     const atCost = isValuedAtCost(h);
     const noSector = sectorAbsentWhy(h);
     return (
-      <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40"
+      <Tr view={holdView} reviewScope={{ positions: [h] }} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40"
         data-fe-holding-key={h.securityKey} data-fe-holding-account={h.accountId}>
         <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
         {/* WHO CHOSE THIS ROW. A section heading answers it for a group and stops
@@ -1236,7 +1241,7 @@ export function FamilyEntities() {
                       return noCost;
                     };
                     return (
-                      <Tr view={entityView} key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}
+                      <Tr view={entityView} reviewScope={{ entity: e.key }} key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}
                         data-entity-mv={e.mv} data-entity-count={e.count}>
                         {/* The platform list the Custody column used to carry.
                             A hover is weaker than a column; what makes the trade
@@ -1323,7 +1328,7 @@ export function FamilyEntities() {
                         a line of figures, not prose — and the holdings it is made
                         of, and why the weights divide by the rows' own total, are
                         its hover. */}
-                    <td colSpan={ENTITY_COLS.length} className="px-4 pb-2.5 pt-0 text-[11.5px] leading-snug text-slate-500" data-family-overlap
+                    <td colSpan={entityView.order.length} className="px-4 pb-2.5 pt-0 text-[11.5px] leading-snug text-slate-500" data-family-overlap
                       title={overlap.length > 0
                         ? `The entities add to ${money(perStatementMV)}; the book is ${money(totalMV)}, ${money(overlapMV)} less — ${overlap.length === 1 ? "one holding is" : `${overlap.length} holdings are`} ${overlapSaid.how} and counted once there: ${overlapNames.join("; ")}. Each entity's row is its own statements as printed, so the weights divide by ${money(perStatementMV)}, the total the rows add to.`
                         : `No holding is reported by two entities, so the entities add to the book, ${money(totalMV)}, and the weights divide by it.`}>
@@ -1511,7 +1516,7 @@ export function FamilyEntities() {
                     <Fragment key={grp.key}>
                       {showSections && (
                         <tr className="bg-ink-900/50" data-fe-section={grp.key} data-fe-section-mv={grp.mv} data-fe-section-count={grp.rows.length}>
-                          <td colSpan={5} className="px-4 py-1.5">
+                          <td colSpan={holdView.order.length} className="px-4 py-1.5">
                             <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
                               {bucketLabel(grp.key)}
                               <span className="font-normal normal-case tracking-normal text-slate-500">
@@ -1540,7 +1545,7 @@ export function FamilyEntities() {
                                     read in both themes, and a translucent tint over
                                     a white card in light mode does not. */}
                                 <tr className="bg-ink-900/40">
-                                  <td colSpan={5} className="py-1.5 pl-9 pr-4">
+                                  <td colSpan={holdView.order.length} className="py-1.5 pl-9 pr-4">
                                     <span className="flex flex-wrap items-center gap-2 text-[11.5px]">
                                       <Link to={`/mandate/${encodeURIComponent(mg.accountId)}`}
                                         title={`${mandateLabel(acc)} — ${acc?.provider ?? "manager not in the account registry"}, account ${acc?.accountNo ?? "—"}. Open the mandate drill-down.`}
@@ -1573,7 +1578,7 @@ export function FamilyEntities() {
                       carries that no statement reports, say so rather than leaving
                       the reader to read an empty table as a lost position. */}
                   {holdings.length === 0 && (
-                    <tr><td colSpan={5} className="py-10 text-center text-sm text-slate-500">
+                    <tr><td colSpan={holdView.order.length} className="py-10 text-center text-sm text-slate-500">
                       No holdings match “{holdingsQ}”.
                       <AbsentFromBook query={holdingsQ} className="mx-auto mt-3 max-w-xl" />
                     </td></tr>

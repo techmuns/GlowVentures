@@ -33,6 +33,7 @@ import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 /** The allocation table's columns, in the order its rows write their cells. */
 const ALLOC_COLS = ["section", "invested", "current", "return", "weight"] as const;
 import { useTableView, sortRows } from "@/lib/tableView";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum, fmtDate } from "@/lib/format";
 import { type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { fifoTotals, investedWithCapital, type FifoTotals } from "@/lib/fifo";
@@ -240,7 +241,7 @@ export function MorningCIO() {
   // A HOOK, so it is declared here rather than beside the rows it arranges:
   // this component returns early on an unloaded book, and a hook after that is
   // a different bug from the one being fixed.
-  const allocView = useTableView("cio-allocation", ALLOC_COLS);
+  const allocView = useTableView("cio-allocation", ALLOC_COLS, { reviewKind: "category" });
   // One "today" for every XIRR on the page, so every figure closes on the same
   // date against the same valuation.
   const today = useMemo(() => new Date(), []);
@@ -961,14 +962,14 @@ export function MorningCIO() {
    * The allocation table's own arrangement. Its default order is the axis's own
    * (largest first), which a third click on any heading hands back.
    */
-  const sections = sortRows(m.bucketsByAxis[allocAxis] ?? m.buckets, allocView.sort, {
+  const sections = sortRows(m.bucketsByAxis[allocAxis] ?? m.buckets, allocView.sort, withReviewAccessors<typeof m.buckets[number]>({
     section: (b) => sectionLabel(b.key),
     invested: (b) => b.invested,
     current: (b) => b.current,
     return: (b) => b.retPct,
     // Weight is `current ÷ the book`, so it orders exactly as Current does.
     weight: (b) => b.current,
-  });
+  }, (b) => allocAxis === "basket" ? { basket: b.key } : { category: sectionLabel(b.key) }));
   // The bar chart above the table scales each bar against the LARGEST bucket's
   // current value, so the biggest fills the track and the rest read proportional
   // to it. The actual figure and weight print beside every bar, so the bar is a
@@ -1616,7 +1617,7 @@ export function MorningCIO() {
                   </thead>
                   <tbody className="divide-y divide-ink-700/60">
                     {sections.map((b) => (
-                      <Tr view={allocView} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key} data-alloc-unplaced-row={b.unplaced ? "1" : undefined}>
+                      <Tr view={allocView} reviewScope={allocAxis === "basket" ? { basket: b.key } : { category: sectionLabel(b.key) }} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key} data-alloc-unplaced-row={b.unplaced ? "1" : undefined}>
                         <td className="px-2 py-2.5">
                           {/* THE ROW OPENS THE HOLDINGS BEHIND IT — on whichever
                               axis the table is grouped by. AIF, PMS mandates,
