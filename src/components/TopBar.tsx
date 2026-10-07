@@ -198,7 +198,9 @@ export function TopBar() {
       <div className="ml-auto flex items-center gap-3">
         <div className="hidden items-center gap-2 text-xs md:flex"><QuoteStatus /></div>
         <CurrencySwitch />
-        {portfolio && (
+        {/* A scope with no holding draws no total: ₹0 would read as a measured
+            nothing, and the page below already says why it is empty. */}
+        {portfolio && (!scope.owners || portfolio.positions.length > 0) && (
           <span className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 px-3 py-1.5 text-xs text-slate-200"
             title={scope.selected ? `Current Value of Holdings · ${scope.label}` : "Current Value of Holdings"} data-topbar-total>
             <TrendingUp className="h-3.5 w-3.5 text-champagne-400" /> {fmtFromBase(portfolio.totalValue, { compact: true })}

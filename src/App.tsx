@@ -1,12 +1,14 @@
 import { lazy, Suspense, useSyncExternalStore } from "react";
 import { deploymentChanged, subscribeToDeployment } from "@/lib/deploymentVersion";
-import { Navigate, Route, Routes, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { BOOK_POLYCAB } from "@/data/glowData";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { IndexStrip } from "@/components/IndexStrip";
 import { ResearchLevelSync } from "@/lib/useResearchSync";
 import { EmptyState } from "@/components/EmptyState";
+import { PageNav } from "@/components/PageNav";
+import { navEntry } from "@/lib/nav";
 import { usePortfolio, WholeFamily } from "@/context/PortfolioContext";
 const MorningCIO = lazy(() => import("@/pages/MorningCIO").then((m) => ({ default: m.MorningCIO })));
 const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.Polycab })));
@@ -44,13 +46,20 @@ function Gate({ children }: { children: React.ReactNode }) {
 
 function EmptyScope() {
   const { scope } = usePortfolio();
+  const { pathname } = useLocation();
   const named = scope.selected?.length ? scope.label : null;
+  // The same back / forward / home row every page carries: a scoped page that
+  // is empty is still a page, and a reader needs the way out of it.
+  const entry = navEntry(pathname);
+  const trail = entry ? [{ label: entry.group }, { label: entry.label }] : [{ label: named ?? "No member" }];
   return (
-    <div className="grid place-items-center py-24 text-center" data-empty-scope={scope.selected?.join(",") ?? ""}>
+    <div data-empty-scope={scope.selected?.join(",") ?? ""}>
+      <PageNav className="mb-2" trail={trail} />
+      <div className="grid place-items-center py-24 text-center">
       <div className="max-w-md">
-        <h2 className="text-lg font-semibold text-slate-100">
+        <h1 className="font-display text-xl font-bold tracking-tight text-slate-100">
           {named ? `No valued holding for ${named}` : "No member in this address"}
-        </h2>
+        </h1>
         <p className="mt-2 text-sm text-slate-400" data-prose-ok="the reason a scoped page is empty"
           title={named
             ? "Their accounts carry no position any statement values — a quantity alone, or nothing held."
@@ -60,6 +69,7 @@ function EmptyScope() {
         <button type="button" className="btn-primary mt-5" data-empty-scope-reset onClick={() => scope.setSelected(null)}>
           Show whole family
         </button>
+      </div>
       </div>
     </div>
   );
