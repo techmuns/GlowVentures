@@ -26520,9 +26520,21 @@ Three more things the pass forced:
   because the book prints no ISIN for it and *"a name is all there is to join
   on"*. NSE's own master row carries ISIN INE545A01024 listed 10-MAY-1995 — an
   identifier nobody in this join controls — so the override is cited rather than
-  guessed. `heg` is a MANDATE key whose position PRINTS `HEG`, and the card
-  resolves `p.symbol || symbolForKey(p.securityKey)`, so it still asks `HEG`:
-  a statement's own printed symbol is the stronger evidence.
+  guessed. **SVAN's statement prints no symbol at all** — `Position.symbol` is
+  `build-book`'s output from this map — so the override reaches the position
+  only once the book is regenerated. The first push of this change did not
+  regenerate it, and CI's `build-book` diff failed on exactly two lines: SVAN's
+  two HEG positions, `HEG` against `HEGAM`. Regenerated, the card, the book's
+  ask and the quote feed all ask `HEGAM`, and two maps keyed on the old symbol
+  followed it: `npm run build-upstox-instruments` now maps **162 of 162**
+  symbols (HEGAM by its exact symbol; ESDS was missing from main's own map too,
+  measured on a worktree of main), and `npm run build-sectors` re-keys
+  screener.in's sector under `HEGAM`, so SVAN's HEG keeps its Industrials
+  placement. The same rebuild places ESDS (Information Technology), which
+  main's sector map lacked as well. `docs/SCREENER-SECTORS.md` reads **161
+  placed, of 162 company shares carrying a symbol** — two keys resolve to
+  CLEANMAX, so 161 is every distinct symbol — and the cross-check is still 80
+  of 84.
 - **A DISCLOSED-ONLY ROW IS MARKED, AND ITS COUNT PRINTS AT ZERO.**
   `docs/SECURITY-IDENTIFIERS.md` gains a `From` column on both tables, a
   disclosed-only row's unresolved reason reads *no issuer to ask for an ISIN*
@@ -26554,9 +26566,11 @@ yields **28**. `DISCLOSED_MARK_BY_SYMBOL` is declared AFTER
 **AND THE CARD'S OWN MEASUREMENT CORROBORATES IT BY A SECOND PATH.** Its scope is
 **163 symbols**, of which **135 are already in the book's ask and 28 are
 registered** — the same 28, reached through the card's `p.symbol`-first
-precedence rather than through the raw map. A first measurement of that over-counted
-by one, inventing `HEGAM`, because it resolved both halves through the map and
-ignored the printed symbol.
+precedence rather than through the raw map. A first measurement of that read
+`HEGAM` as a symbol the book does not ask for. It was measured against a
+`glowData.ts` that had not been regenerated after the override, so the book
+still asked `HEG`; on the regenerated book every half asks `HEGAM`, and the
+counts are as stated.
 
 #### 5. Eight checks, and the two corrections they needed
 
