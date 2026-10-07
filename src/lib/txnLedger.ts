@@ -156,8 +156,9 @@ export type DatedRow = {
 export function mergeDatedRecords(
   capital: CapitalGroup[],
   trades: GroupRow[],
-  sectionOfAccount: (accountId: string) => string,
-  valueOfAccount: (accountId: string) => number | null,
+  /** `securityKey` is set for a line of a review holder bucket (Stage 10dh), whose row is that line alone. */
+  sectionOfAccount: (accountId: string, securityKey?: string | null) => string,
+  valueOfAccount: (accountId: string, securityKey?: string | null) => number | null,
   sort: TxnSort = "recent",
 ): DatedRow[] {
   const byKey = new Map<string, DatedRow>();
@@ -170,18 +171,22 @@ export function mergeDatedRecords(
   };
 
   for (const g of capital) {
-    const section = sectionOfAccount(g.accountId);
-    const key = `${section}\u0000acct:${acctKey(g.provider, g.accountNo)}`;
+    const section = sectionOfAccount(g.accountId, g.securityKey);
+    // A REVIEW HOLDER BUCKET'S LINES ARE ROWS OF THEIR OWN (Stage 10dh): the
+    // bucket shares one provider and number across separate investments, so its
+    // key carries the line. No trades group ever lands on it — a bucket issues
+    // no transaction statement.
+    const key = `${section}\u0000acct:${acctKey(g.provider, g.accountNo)}${g.securityKey ? `\u0000line:${g.securityKey}` : ""}`;
     const row: DatedRow = {
       key, section, kind: "account",
       label: g.label,
       // THE PROVIDER IS ALWAYS ON THE SECOND LINE, for the reason `txnRollup`
       // gives: a strategy name is whatever the manager printed, and Molecule's
       // is the single word "GROWTH", which as a heading names nobody.
-      sublabel: [g.owner, g.label === g.provider ? null : g.provider, g.accountNo].filter(Boolean).join(" · ") || null,
+      sublabel: (g.securityKey ? [g.owner, g.provider] : [g.owner, g.label === g.provider ? null : g.provider, g.accountNo]).filter(Boolean).join(" · ") || null,
       accountId: g.accountId,
       capital: g, trades: null,
-      value: valueOfAccount(g.accountId),
+      value: valueOfAccount(g.accountId, g.securityKey),
       first: "", last: "",
     };
     span(row);

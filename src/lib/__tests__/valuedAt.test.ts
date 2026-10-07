@@ -64,13 +64,15 @@ for (const p of book) (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).
 // Re-expressed: no quote reaches a headless suite, so a row is its NAV's date if
 // the NAV priced it, else the day its own statement prices — `priceAsOf` where
 // the statement names one apart from its balances' date (VD-17).
+// A row the family's consolidated review values (Stage 10dh) is the REVIEW's,
+// dated as the review dates its line — `priceAsOf` — and never a statement's mark.
 const expectedDate = (p: Position) => (p.navPriced && p.navDate ? p.navDate : p.priceAsOf ?? stmt(p.accountId));
 let checked = 0, wrong: string[] = [];
 for (const [key, ps] of byKey) {
   const v = holdingValuation(ps, stmt, NOW);
   const ds = new Set(ps.map(expectedDate));
   const at = ds.size === 1 ? [...ds][0] ?? null : null;
-  const kinds = new Set(ps.map((p) => (p.navPriced ? "nav" : "statement")));
+  const kinds = new Set(ps.map((p) => (p.navPriced ? "nav" : p.review ? "review" : "statement")));
   const by = kinds.size === 1 ? [...kinds][0] : "mixed";
   const wordsOk = at ? (v.words ?? "").endsWith(fmtDate(at)) : v.words === `valued on ${ds.size} dates`;
   checked++;
@@ -118,6 +120,26 @@ ok("every held security is dated and sourced exactly as its rows' own dates say"
     const v = holdingValuation(split, stmt, NOW);
     ok("…and a holding struck on several dates names how many, never one of them", v.at === null && v.dates > 1
       && v.words === `valued on ${v.dates} dates`, `${split[0].securityKey}: ${v.words}`);
+  }
+}
+{
+  // A LINE THE REVIEW CARRIES IS THE REVIEW'S, NEVER A STATEMENT'S (Stage 10dh).
+  // Held at cost it is not VALUED on its date, and the words say so; valued, it
+  // names the review — a statement's words on either would send a reader to a
+  // document that does not value it.
+  const all = [...byKey.values()];
+  const atCost = all.find((ps) => ps.every((p) => p.review && p.valuedAtCost));
+  const valued = all.find((ps) => ps.every((p) => p.review && !p.valuedAtCost));
+  if (!atCost || !valued) ok("the book carries a review line held at cost and one the review values", false);
+  else {
+    const c = holdingValuation(atCost, stmt, NOW);
+    ok("a review line held at cost says so, on the review's date, never a statement mark",
+      c.by === "review" && /^held at cost · review, /.test(c.words ?? "") && !/statement mark/.test(c.words ?? "")
+      && /records what was paid/.test(c.why), `${atCost[0].securityKey}: ${c.words}`);
+    const v = holdingValuation(valued, stmt, NOW);
+    ok("…and a line the review values names the review and the review's date",
+      v.by === "review" && v.at === valued[0].priceAsOf && /^consolidated review · /.test(v.words ?? ""),
+      `${valued[0].securityKey}: ${v.words}`);
   }
 }
 

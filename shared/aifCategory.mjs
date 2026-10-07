@@ -61,8 +61,11 @@
 // audit. So the "disagreement" was the review against an invention, and the
 // review was the one reading the fund correctly. The family have since placed
 // Founders themselves (`FAMILY_MARKET_SIDE`), which is where its side comes
-// from today. The review is still never a tier here: it is not a total function
-// onto this axis (its `Debt` maps to neither side).
+// from today. For a STATEMENT row the review is still never a tier here: it is
+// not a total function onto this axis (its `Debt` maps to neither side). A row
+// the book takes FROM the review is another matter — since Stage 10dh the review
+// is the source of every private-market figure, and its lines are private by the
+// review's own tabs (`marketSideOf`, below).
 
 // ── THE READ ITSELF, AND THE TWO PLACES A CATEGORY IS PRINTED ──────────────
 //
@@ -433,8 +436,16 @@ export function fundMarketSideBasis(name, account, securityKey) {
  * Founders Fund, which this comment once said "prints Category II", prints no
  * category at all — its reader wrote one — so it is the family's placing alone
  * that puts it on the listed side, as it does Delphi.
+ *
+ * AND A POSITION THE FAMILY'S CONSOLIDATED REVIEW STANDS FOR IS PRIVATE, FIRST.
+ * The family asked on 5 Oct 2026 for the review (MOPWM, 30 June 2026) to be the
+ * source of every private-market figure (Stage 10dh). Every line the book takes
+ * from it is a private-market line by the review's own tabs — Private
+ * Investments, PE funds, Unlisted, the private-credit line — so its side is the
+ * review's, whatever wrapper the line is (a fund, a company's shares, a loan).
  */
 export function marketSideOf(position, account) {
+  if (position?.review) return "private";
   const cls = position?.assetClass;
   if (ALWAYS_PRIVATE.has(cls)) return "private";
   if (cls !== "AIF") return "listed";

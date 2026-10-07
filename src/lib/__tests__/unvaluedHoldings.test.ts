@@ -17,7 +17,7 @@
 //     precision — so a screen can list the holding once.
 import fs from "node:fs";
 import path from "node:path";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
 // @ts-ignore — precedence.mjs is a plain-JS committed decision table with no
 // declaration file; the suite reads the decision itself, not the builder's use of it.
 import { sourceFor } from "../../../scripts/ingest/precedence.mjs";
@@ -43,7 +43,7 @@ const docs: Doc[] = fs.readdirSync(AUDIT).sort()
 const FENCED = new Set(BOOK_POLYCAB.map((p) => p.securityKey));
 
 // ── WHAT THE ARCHIVE SAYS EACH ACCOUNT HOLDS AND NOTHING VALUES ──────────────
-const expected: { accountId: string; securityKey: string; quantity: number | null; faceValue: number | null; custody: boolean;
+const archived: { accountId: string; securityKey: string; quantity: number | null; faceValue: number | null; custody: boolean;
   lastMovementRate: number | null; lastMovementValue: number | null }[] = [];
 for (const a of BOOK_ACCOUNTS) {
   const mine = docs.filter((d) => d.provider === a.provider && d.accountNo === a.accountNo);
@@ -59,7 +59,7 @@ for (const a of BOOK_ACCOUNTS) {
   }
   for (const h of doc?.holdings ?? []) {
     if (num(h.marketValue) || !h.securityKey || FENCED.has(h.securityKey)) continue;
-    expected.push({
+    archived.push({
       accountId: a.accountId, securityKey: h.securityKey, quantity: num(h.quantity) ? h.quantity : null,
       faceValue: num(h.faceValue) ? h.faceValue : null, custody: /demat/i.test(a.provider),
       // The Motilal Oswal statements print, where they print a rate at all, the
@@ -70,6 +70,25 @@ for (const a of BOOK_ACCOUNTS) {
     });
   }
 }
+
+// THE REVIEW NOW STANDS FOR SOME OF THEM (Stage 10dh). The family made their
+// consolidated review the source for private markets, so a quantity line a
+// statement records for a private holding the review carries is taken out of
+// this list and NAMED in BOOK_REVIEW_SUPERSEDED with its own units — the review's
+// line is the holding now. Each superseded row must be one the archive really
+// records, at the units it records, so the supersede list cannot hide a row.
+const supersededId = new Set(BOOK_REVIEW_SUPERSEDED.filter((s) => s.kind === "unvalued").map((s) => `${s.accountId}|${s.securityKey}`));
+const expected = archived.filter((e) => !supersededId.has(`${e.accountId}|${e.securityKey}`));
+const supersededArchived = archived.filter((e) => supersededId.has(`${e.accountId}|${e.securityKey}`));
+const supNamed = BOOK_REVIEW_SUPERSEDED.filter((s) => s.kind === "unvalued");
+ok("the review supersedes quantity lines this archive records", supNamed.length > 0, `${supNamed.length} line(s)`);
+const supUnmatched = supNamed.filter((s) => {
+  const hits = supersededArchived.filter((e) => e.accountId === s.accountId && e.securityKey === s.securityKey);
+  return hits.length !== 1 || hits[0].quantity !== (s.quantity ?? null);
+});
+ok("…and each is one row an authoritative holdings document records, at its own units", supUnmatched.length === 0,
+  supUnmatched.slice(0, 5).map((s) => `${s.accountId}|${s.securityKey}|${s.quantity}`).join("; ") || `${supersededArchived.length} row(s)`);
+ok("…and none of them is still carried as a quantity", BOOK_UNVALUED_HOLDINGS.every((u) => !supersededId.has(`${u.accountId}|${u.securityKey}`)));
 
 const key = (r: { accountId: string; securityKey: string; quantity: number | null }) => `${r.accountId}|${r.securityKey}|${r.quantity}`;
 const count = <T,>(xs: T[], k: (x: T) => string) => { const m = new Map<string, number>(); for (const x of xs) m.set(k(x), (m.get(k(x)) ?? 0) + 1); return m; };

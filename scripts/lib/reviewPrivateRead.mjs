@@ -1,11 +1,12 @@
 // What the family's consolidated review (MOPWM, as on 30 June 2026) prints about
 // PRIVATE MARKETS — read whole, every row with the Excel row it came from.
 //
-// The family's instruction of 5 Oct 2026 is to SHOW this on the dashboard. The
-// review is still not a source for the BOOK (CLAUDE.md, "the consolidated review
-// workbook is not a source — by decision"): nothing read here reaches
-// glowData.ts, NAV or any statement total. It is shown beside them, as the
-// review's own figures, at the review's own basis — private investments AT COST.
+// Since Stage 10dh this is the book's SOURCE for every private-market line: the
+// family asked for the review to feed the whole dashboard rather than a tab of its
+// own. `scripts/lib/reviewBook.mjs` turns what is read here into book rows, and
+// `build-book` splices them in. For everything else the review is still only a
+// cross-check (`npm run reconcile:review`), and nothing read here moves a listed
+// figure. Private investments are carried AT COST, as the review carries them.
 //
 // Columns are found by HEADER TEXT, never by position (lib/table.mjs's rule): the
 // review's tabs put the product in column 1 on some and column 2 on others.

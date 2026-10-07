@@ -12,7 +12,8 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 | Read | 277 | one or more documents in `public/audit/` |
 | Read via a byte-identical twin | 4 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
-| Held out by decision | 2 | read perfectly and deliberately not a source |
+| Read by `build-book` | 1 | the family's consolidated review — the book's source for every private-market line |
+| Held out by decision | 1 | read perfectly and deliberately not a source |
 | Not a document | 58 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
 | **Unread** | **0** | **must be zero** |
@@ -20,15 +21,25 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 
 Those files produce **307 documents** in the archive.
 
+## Read by `build-book`
+
+The family asked for the consolidated review (MOPWM, as on 30 June 2026) to be the source of
+every private-market figure on the dashboard (Stage 10dh). `build-book` reads those lines
+straight from the workbook (`scripts/lib/reviewBook.mjs`); every other figure in the book is
+still the statements', and for those the review stays an independent cross-check.
+
+| File | Where its data goes |
+| --- | --- |
+| `source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx` | the book's private-market lines; `npm run reconcile:review` cross-checks the rest |
+
 ## Held out by decision
 
-Read perfectly, and deliberately not a source. No institution issued either, so folding them
-in would end the guarantee that every figure traces to the statement of the institution that
-struck it. Both are recorded in the archive with that reason — they are NOT missing readers.
+Read perfectly, and deliberately not a source. No institution issued it, so folding it in
+would end the guarantee that every figure traces to the statement of the institution that
+struck it. It is recorded in the archive with that reason — it is NOT a missing reader.
 
 | File | Where its data goes instead |
 | --- | --- |
-| `source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx` | `npm run reconcile:review` — an independent cross-check of the generated book |
 | `source/august-2026-f/NEW INVESTMENT SHEET.xlsx` | `npm run reconcile:register` — an independent cross-check of the generated book |
 
 ## Excluded by policy

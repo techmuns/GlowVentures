@@ -26,6 +26,26 @@ export const sumOrNull = (xs: (number | null | undefined)[]): number | null => {
 };
 
 /**
+ * A UNIT COUNT ACROSS SEVERAL ROWS — `null` the moment any row has no count.
+ *
+ * Unlike `sumOrNull`, which skips a missing money figure and lets a caption name
+ * the coverage, a count over SOME of the rows is not a count of the holding: the
+ * family's consolidated review records most private investments as an amount
+ * paid with no share count (Stage 10dh), and adding the rows that do print one
+ * would state a holding of fewer shares than it is. So it is all or nothing.
+ */
+export const totalQuantity = (rows: readonly { quantity: number | null }[]): number | null =>
+  rows.length && rows.every((r) => r.quantity != null) ? rows.reduce((a, r) => a + (r.quantity as number), 0) : null;
+
+/**
+ * A row that carries a unit count — what a price, a split or a NAV can be
+ * applied to (Stage 10dh). A type guard, so a caller that has checked it may
+ * multiply by the count; the review's lines recorded with no count fail it.
+ */
+export const isCounted = <T extends { quantity: number | null }>(p: T): p is T & { quantity: number } =>
+  typeof p.quantity === "number" && Number.isFinite(p.quantity);
+
+/**
  * DUPLICATE POLICY — carry both, count once.
  *
  * PENDING CONFIRMATION FROM THE PROVIDER. Reversible policy, not a fact, and it
@@ -161,14 +181,21 @@ export type MarketSideRow = {
  * on its registration line and is private. `shared/aifCategory.mjs` is the
  * order — the family's placing, then a fund whose own name says private equity
  * or venture, then the category its statement prints — and these say that order.
+ *
+ * AND THE REVIEW'S PRIVATE-MARKET LINES COME BEFORE ALL OF IT (Stage 10dh). The
+ * family made their consolidated review (MOPWM) the source of every
+ * private-market figure on 5 Oct 2026, and every line the book takes from it is
+ * private by the review's own tabs, whatever wrapper it is — so the private
+ * reason names it first.
  */
 export const SIDE_NOTE = {
   listed: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the AIFs that trade"
     + " listed securities — placed there by the family's own word for each fund, or by the Category III its"
     + " statement prints where they have not said.",
-  private: "Private capital: unlisted holdings, structured products, and the AIFs that invest privately — placed"
-    + " there by the family's own word for each fund, by a fund whose own name says private equity or venture,"
-    + " or by the Category I or II its statement prints.",
+  private: "Private capital: every private-market line of the family's consolidated review (MOPWM, 30 Jun 2026),"
+    + " which is the source for private markets; and on the statements, unlisted holdings, structured products"
+    + " and the AIFs that invest privately — placed there by the family's own word for each fund, by a fund whose"
+    + " own name says private equity or venture, or by the Category I or II its statement prints.",
   unplaced: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; one line from the`
     + " family, or the fund's own SEBI registration, would settle each one.",
 } as const;
@@ -243,7 +270,7 @@ export const isFundVehicle = (p: { assetClass: string }) => FUND_CLASSES.has(p.a
  * (Buoyant's sleeve twice, Molecule's TDS), which are nil and not redeemed. The
  * other five are this: 3P's three classes and HDFC's two schemes.
  */
-export const isRedeemedToNil = (p: { assetClass: string; quantity: number; currentPrice: number | null }) =>
+export const isRedeemedToNil = (p: { assetClass: string; quantity: number | null; currentPrice: number | null }) =>
   isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null;
 
 /**
@@ -389,7 +416,7 @@ export function negligibleKeys<T extends NegligibleInput>(positions: readonly T[
 }
 
 type NegligibleInput = {
-  assetClass: string; quantity: number; currentPrice: number | null;
+  assetClass: string; quantity: number | null; currentPrice: number | null;
   securityKey: string; marketValue: number; dedupeGroup?: string;
 };
 
@@ -550,6 +577,49 @@ export const DIRECT_EQUITY_BUCKET = "Direct Equity";
 export const MANDATE_BUCKET = "PMS mandates";
 /** Shares whose account states no engagement — neither claim can be made. */
 export const UNROUTED_EQUITY_BUCKET = "Equity — how it is held is not stated";
+
+/**
+ * ── HELD AT COST: WHAT WAS PAID, AND NO VALUATION (Stage 10dh) ──────────────
+ *
+ * The family's consolidated review is the source for private-market holdings,
+ * and it records most of its private investments as an amount PAID with no
+ * valuation. `build-book` carries each as a position whose value IS its cost
+ * and marks it `valuedAtCost` (`types.ts`). Its gain and its return are not
+ * zero; they are not measured, and nothing may divide by them.
+ *
+ * SO THEY ARE ONE SECTION OF THEIR OWN ON THE CATEGORY AXIS. Measured on this
+ * book, the at-cost AIF lines are ₹11.73 Cr of a ₹383.61 Cr AIF row, 3.06%,
+ * over the half a percent `costCoversSet` allows. Left under AIF they would
+ * either refuse the AIF row's return outright, or — counted as invested and as
+ * value — blend a 0% gain nobody measured into the return the family reads for
+ * its valued funds. A section of their own keeps every other row's return
+ * honest and states the at-cost money in one place, with no return beside it.
+ *
+ * On the family's own axes (their asset class and basket) an at-cost line goes
+ * where the review files it, and the row it lands in counts its value as
+ * uncovered: a return there is refused and says why.
+ */
+export const AT_COST_BUCKET = "Private investments at cost";
+/** Is this a review line held at cost — a value that is its cost, and no measured gain? */
+export const isValuedAtCost = (p: { valuedAtCost?: boolean }): boolean => p.valuedAtCost === true;
+/** The reason a return is absent on a line held at cost, in one wording for every surface. */
+export const AT_COST_RETURN =
+  "held at cost: the family's consolidated review records what was paid and no valuation, so there is no gain to strike a return on";
+/** Why a line held at cost shows no gain — its value is its cost, never a measured ₹0. */
+export const AT_COST_PNL =
+  "held at cost: the family's consolidated review records what was paid and no valuation, so its value is its cost and there is no gain to show — a ₹0 would read as a measured holding that did not move";
+/** Why a review line, or a row holding one, has no unit count. */
+export const NO_UNIT_COUNT =
+  "the family's consolidated review records what was paid for this private investment and no unit count — a count here would be a figure no document states";
+/** Why a line held at cost has no per-unit mark. */
+export const AT_COST_MARK =
+  "held at cost: the family's consolidated review records what was paid and no valuation, so there is no price per unit to show";
+/** Why a review line it DOES value has no per-unit mark: the review values it as a total. */
+export const REVIEW_NO_MARK =
+  "the family's consolidated review values this holding as a total and prints no price per unit, so there is no price to show";
+/** Why a review line carries no realised gain. */
+export const REVIEW_NO_REALISED =
+  "the family's consolidated review records what this holding cost and what it is worth, not what any sale or payout realised, so no realised gain is reported";
 
 /**
  * ── CASH IS CASH, WHATEVER WRAPPER IT ARRIVED IN ────────────────────────────
@@ -769,7 +839,7 @@ export function cashEquivalentCandidates<T extends { securityKey: string; securi
  */
 export const UNSTATED_BUCKET = "Not classified by the statement";
 
-export function holdingBucket(p: { assetClass: string | null; securityKey?: string }, engagement: string | null | undefined): string {
+export function holdingBucket(p: { assetClass: string | null; securityKey?: string; valuedAtCost?: boolean }, engagement: string | null | undefined): string {
   const route = holdingRoute(engagement);
   // A mandate takes its whole account — the shares AND the cash sleeve beside
   // them — because that is what the manager runs and what the statement totals.
@@ -784,6 +854,8 @@ export function holdingBucket(p: { assetClass: string | null; securityKey?: stri
    * the identical reason the ordinary cash sleeve is not lifted either.
    */
   if (isCashEquivalent(p)) return "Cash";
+  // A review line held at cost has no measured gain; see `AT_COST_BUCKET`.
+  if (isValuedAtCost(p)) return AT_COST_BUCKET;
   /**
    * AN UNREADABLE ENGAGEMENT DOES NOT BECOME "DIRECT".
    *
@@ -832,6 +904,25 @@ const COST_COVERAGE_TOLERANCE = 0.005;   // not exported: nothing outside reads 
  */
 export const costCoversSet = (mv: number, uncostedMV: number) =>
   mv > 0 && uncostedMV <= mv * COST_COVERAGE_TOLERANCE;
+
+type GainInput = { costBasis: number | null; costUnavailable?: boolean; valuedAtCost?: boolean };
+/**
+ * A HOLDING A GAIN CAN BE STRUCK ON: a usable cost AND a valuation of its own.
+ * A depository row fails the first — it reports no cost — and a review line
+ * held at cost fails the second, because its value IS its cost (Stage 10dh).
+ * Every return set reads this one test, so no page strikes a return over a line
+ * the page beside it refuses.
+ */
+export const strikesGain = (p: GainInput): boolean =>
+  typeof p.costBasis === "number" && Number.isFinite(p.costBasis) && !p.costUnavailable && !isValuedAtCost(p);
+
+/**
+ * The market value in a set that no gain can be struck on — holdings that
+ * report no cost, and lines held at cost. It is `costCoversSet`'s second
+ * argument wherever a caller holds the rows themselves.
+ */
+export const unstruckValue = (set: readonly (GainInput & { marketValue: number })[]): number =>
+  set.reduce((s, p) => (strikesGain(p) ? s : s + p.marketValue), 0);
 
 /** The screen label for a bucket. Class keys fall through to `assetClassLabel`. */
 export const bucketLabel = (key: string) => (key === MANDATE_BUCKET ? MANDATE_BUCKET : assetClassLabel(key));
@@ -978,10 +1069,12 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
     if (p.costBasis === null || p.costBasis === undefined) c.withoutCost += 1;
     // FIFO: the realised gain on units already sold, and what they cost. A
     // holding with no cost contributes neither — it is not in the denominator
-    // either, so leaving its realised out keeps the two on one set.
-    if (typeof p.costBasis === "number" && Number.isFinite(p.costBasis)) {
+    // either, so leaving its realised out keeps the two on one set. A line HELD
+    // AT COST (Stage 10dh) is in the cost and in no gain, so it stays out of
+    // the capital deployed too: in it, it would blend a 0% nobody measured.
+    if (strikesGain(p)) {
       if (typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL)) c.realised += p.realizedPnL;
-      c.deployed.push(p.costBasis + (typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0));
+      c.deployed.push((p.costBasis as number) + (typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0));
     }
     m.set(k, c);
   }
@@ -1401,6 +1494,12 @@ export type ReturnInput = {
    * account that does not exist.
    */
   measuredNA?: boolean;
+  /**
+   * A REVIEW LINE HELD AT COST (Stage 10dh): its value is what was paid, so
+   * every measure is refused with `AT_COST_RETURN` — never a 0% return, which
+   * would read as a measurement of a holding that did not move.
+   */
+  valuedAtCost?: boolean;
 };
 
 /**
@@ -1505,6 +1604,7 @@ function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>
  */
 export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: string): MeasuredReturn {
   if (p.measuredNA) return { shown: false, tag: returnMeasureDef(measure).tag, reason: DERIVED_ONLY_RETURN };
+  if (p.valuedAtCost) return { shown: false, tag: returnMeasureDef(measure).tag, reason: AT_COST_RETURN };
   const noCost = !!p.costNA || p.returnPct === null || p.returnPct === undefined;
   /**
    * A LINE THAT HOLDS NOTHING HAS NO RETURN ON ANY MEASURE (MH-15). With every

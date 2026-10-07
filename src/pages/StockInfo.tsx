@@ -12,6 +12,7 @@ import {
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, isCashEquivalent,
+  totalQuantity, isValuedAtCost, AT_COST_PNL, AT_COST_MARK, REVIEW_NO_MARK, NO_UNIT_COUNT, AT_COST_RETURN,
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { fifoBasisNote, realisedReason } from "@/lib/fifo";
@@ -587,7 +588,18 @@ export function StockInfo() {
   /* The holding-level mark is resolved below, once `price` exists — whether
      one can be shown at all is a question about what the RENDERER can
      distinguish, so it cannot be answered before the renderer is defined. */
-  const qty = sum(drows.map((r) => r.quantity));
+  /* NULL WHERE ANY ROW HAS NO UNIT COUNT (Stage 10dh). The family's
+     consolidated review records most private investments as an amount paid and
+     no count, and a total over the rows that print one would state a smaller
+     holding than the family has — `totalQuantity` is all or nothing. */
+  const qty = totalQuantity(drows);
+  /** Every row is the family's consolidated review's, not a statement's (Stage 10dh). */
+  const reviewAll = drows.length > 0 && drows.every((r) => r.review === true);
+  /** …and the review records what was paid and no valuation, so value is cost. */
+  const atCostAll = drows.length > 0 && drows.every(isValuedAtCost);
+  /** The newest closing date the review gives these rows — the date their value is of. */
+  const reviewAsOf = reviewAll
+    ? drows.map((r) => r.priceAsOf).filter((d): d is string => !!d).sort().pop() ?? null : null;
   const cost = sumOrNull(drows.map((r) => r.costBasis));
   const mv = sum(drows.map((r) => r.marketValue));
   const pnl = sumOrNull(drows.map((r) => r.unrealizedPnL));
@@ -615,7 +627,8 @@ export function StockInfo() {
   const fifo = whole.fifo;
   const ret = whole.costedReturn;
   /** "7,000 of 21,500 shares" — only where a cost covers some units and not all. */
-  const costedShare = cost !== null && whole.costedQty > 0 && whole.costedQty < qty - 1e-6
+  const costedShare = cost !== null && qty !== null && whole.costedQty !== null
+    && whole.costedQty > 0 && whole.costedQty < qty - 1e-6
     ? `${fmtNum(whole.costedQty)} of ${fmtNum(qty)} ${assetClass === "Equity" ? "shares" : "units"}`
     : null;
   /**
@@ -774,6 +787,9 @@ export function StockInfo() {
     : rt.lotsAfter > 0
       ? `${rt.lotsAfter} sale${rt.lotsAfter === 1 ? "" : "s"} after ${fmtDate(lotsAfterDate ?? "")} not counted`
     : rt.unreconciled != null ? `the capital gain statements record ${money(rt.unreconciled, true)} on this name — not in this figure`
+    // A review line is on no statement at all (Stage 10dh): "no capital gain
+    // statement covers the accounts" would send a reader looking for one.
+    : realised == null && reviewAll ? "not reported by the consolidated review"
     : realised == null ? "no capital gain statement covers the accounts that hold it"
     : rt.source === "unit-record" ? `from the fund's dated redemption record · FIFO${realisedCover}`
     // Kept under ten small words so the line stays a figure's note (#95).
@@ -892,6 +908,21 @@ export function StockInfo() {
           cmpDates.length > 1 ? `drawn ${cmpDates[0]} to ${cmpDates[cmpDates.length - 1]}` : `all drawn ${cmpDates[0] ?? portfolio.asOf}`
         }. No one price covers them, and a weighted mean of them is a figure no statement printed, so none is shown here. Each is beside its own statement on the Position tab.`,
       }
+    /* THE FAMILY'S CONSOLIDATED REVIEW IS THIS HOLDING'S SOURCE (Stage 10dh),
+       and it prints no price per unit — a line held at cost records what was
+       paid, a line it values records a total. "no per-unit price in the book"
+       is true of both and says nothing about why; the line names the review and
+       the date its figure is of. */
+    : reviewAll && cmp === null
+    ? atCostAll
+      ? {
+          line: `held at cost · review, ${fmtDate(reviewAsOf ?? "")}`,
+          tip: `The family's consolidated review (MOPWM) records what was paid for this holding and no valuation, so it is held at cost: its value is its cost, and there is no price per unit to show. No statement, live quote or published NAV values it.`,
+        }
+      : {
+          line: `consolidated review, ${fmtDate(reviewAsOf ?? "")} · a total`,
+          tip: `The family's consolidated review (MOPWM) values this holding as a total, of ${fmtDate(reviewAsOf ?? "")}, and prints no price per unit, so there is no price to show. No statement, live quote or published NAV values it.`,
+        }
     : cmp === null
     ? {
         line: "no per-unit price in the book — valued as a total",
@@ -1125,14 +1156,17 @@ export function StockInfo() {
             </div>
           </div>
         </td>
-        <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
-        <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : price(r.avgCost)}</td>
+        <td className="px-4 py-2.5 text-right mono text-slate-300">{r.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(r.quantity)}</td>
+        <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason={r.review && r.quantity === null ? NO_UNIT_COUNT
+          : r.review ? "the family's consolidated review prints no per-unit cost for this holding"
+          : "this provider prints no per-unit cost for the holding"} /> : price(r.avgCost)}</td>
         {/* THE MARK, PER STATEMENT, WITH THE DATE IT WAS STRUCK. The date is
             the cell's own hover rather than a second column. Guarded before
             `price()`, which returns a BARE dash — an absence names its cause. */}
         <td className="px-4 py-2.5 text-right mono text-slate-400" data-cmp={r.currentPrice ?? ""}>
           {r.currentPrice === null
-            ? <AbsentCell reason="the book carries this row's value as a total and no price per unit, so there is no mark to show" />
+            ? <AbsentCell reason={r.valuedAtCost ? AT_COST_MARK : r.review ? REVIEW_NO_MARK
+                : "the book carries this row's value as a total and no price per unit, so there is no mark to show"} />
             : <span title={r.depositoryUnits && !r.navPriced
                 /* A LISTED SHARE A DEPOSITORY REPORTS (Stage 10cy) has no NAV:
                    its price is the live quote, and the row exists only while
@@ -1169,11 +1203,13 @@ export function StockInfo() {
             ? <AbsentCell reason={`no cost on the ${providerOf(accIdx, r)} statement for this holding`} />
             : money(r.costBasis)}
         </td>
-        <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
+        <td className="px-4 py-2.5 text-right mono text-slate-200" title={r.review ? r.reviewNote : undefined}
+          data-review-row={r.review ? (r.valuedAtCost ? "at-cost" : "valued") : undefined}>{money(r.marketValue)}</td>
         <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>
           {r.unrealizedPnL === null
             ? <AbsentCell reason={r.costBasis === null
                 ? `needs a cost — no cost on the ${providerOf(accIdx, r)} statement for this holding`
+                : r.valuedAtCost ? AT_COST_PNL
                 : "the statement reports no unrealised figure for this holding"} />
             : money(r.unrealizedPnL, true)}
         </td>
@@ -1347,7 +1383,11 @@ export function StockInfo() {
     const marks = [...new Set(ps.map((r) => r.currentPrice)
       .filter((v): v is number => typeof v === "number" && Number.isFinite(v)).map(price))];
     const unitNoun = ps.every(isCompanyShare) ? "shares" : "units";
-    const partial = t.cost !== null && t.costedQty < t.qty - 1e-6;
+    // A unit count the review does not record leaves no units to compare (Stage 10dh).
+    const cq = t.costedQty ?? 0, tq = t.qty ?? 0;
+    const partial = t.cost !== null && t.costedQty !== null && t.qty !== null && cq < tq - 1e-6;
+    const allReview = ps.length > 0 && ps.every((r) => r.review === true);
+    const allAtCost = ps.length > 0 && ps.every(isValuedAtCost);
     const noCostWhy = (() => {
       const who = [...new Set(ps.map((r) => providerOf(accIdx, r)).filter(Boolean))];
       return who.length === 1 ? `no cost on the ${who[0]} statement for these rows` : "no statement for these rows reports a cost";
@@ -1361,17 +1401,17 @@ export function StockInfo() {
            row, in words a reader sees, rather than only in three hovers. */
         label={partial
           ? <>{label}<div className="max-w-[22rem] whitespace-normal text-[10.5px] font-normal leading-snug text-slate-500"
-              data-held-foot-coverage={t.costedQty}>
-              Invested, avg cost, P&amp;L and return are on the {fmtNum(t.costedQty)} of {fmtNum(t.qty)} {unitNoun} that report a cost.
+              data-held-foot-coverage={cq}>
+              Invested, avg cost, P&amp;L and return are on the {fmtNum(cq)} of {fmtNum(tq)} {unitNoun} that report a cost.
             </div></>
           : label}
         cells={{
-          qty: <td key="qty" className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(t.qty)}</td>,
+          qty: <td key="qty" className="px-4 py-2.5 text-right mono text-slate-300">{t.qty === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(t.qty)}</td>,
           avgCost: (
             <td key="avgCost" className="px-4 py-2.5 text-right mono text-slate-300" data-held-foot-avg={t.avgCost ?? ""}>
               {t.avgCost === null
-                ? <AbsentCell reason={noCostWhy} />
-                : <span title={partial ? `Cost over the ${fmtNum(t.costedQty)} of these ${fmtNum(t.qty)} ${unitNoun} that report one — the rest are in an account whose statement reports no cost.` : undefined}>
+                ? <AbsentCell reason={t.cost !== null && t.costedQty === null ? NO_UNIT_COUNT : noCostWhy} />
+                : <span title={partial ? `Cost over the ${fmtNum(cq)} of these ${fmtNum(tq)} ${unitNoun} that report one — the rest are in an account whose statement reports no cost.` : undefined}>
                     {price(t.avgCost)}</span>}
             </td>
           ),
@@ -1380,32 +1420,33 @@ export function StockInfo() {
               {marks.length > 1
                 ? <AbsentCell reason={`the statements reporting this holding do not agree on a mark — ${marks.join(" and ")}. No one price covers the rows, and a weighted mean of them is a figure no statement printed`} />
                 : marks.length === 0
-                ? <AbsentCell reason="the book carries no per-unit price for this holding — only its total value" />
+                ? <AbsentCell reason={allAtCost ? AT_COST_MARK : allReview ? REVIEW_NO_MARK
+                    : "the book carries no per-unit price for this holding — only its total value"} />
                 : marks[0]}
             </td>
           ),
           invested: (
             <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300"
-              title={partial ? `Covers the ${fmtNum(t.costedQty)} of these ${fmtNum(t.qty)} ${unitNoun} that report a cost.` : undefined}>
+              title={partial ? `Covers the ${fmtNum(cq)} of these ${fmtNum(tq)} ${unitNoun} that report a cost.` : undefined}>
               {t.cost === null ? <AbsentCell reason={noCostWhy} /> : money(t.cost)}
             </td>
           ),
           current: <td key="current" className="px-4 py-2.5 text-right mono text-slate-100">{money(t.mv)}</td>,
           pnl: (
             <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(t.pnl)}`}
-              title={partial ? `On the ${fmtNum(t.costedQty)} ${unitNoun} that report a cost.` : undefined}>
-              {t.pnl === null ? <AbsentCell reason={noCostWhy} /> : money(t.pnl, true)}
+              title={partial ? `On the ${fmtNum(cq)} ${unitNoun} that report a cost.` : undefined}>
+              {t.pnl === null ? <AbsentCell reason={t.cost !== null ? AT_COST_PNL : noCostWhy} /> : money(t.pnl, true)}
             </td>
           ),
           return: (
             <td key="return" className={`px-4 py-2.5 text-right mono ${changeColor(t.costedReturn)}`}
               data-stock-foot-return data-held-foot-return={t.costedReturn ?? ""}
               title={t.costedReturn === null ? undefined
-                : `The holding-period return across ${partial ? `the ${fmtNum(t.costedQty)} ${unitNoun} above that report a cost` : "every row above"}, FIFO — the unrealised gain on what is held and the realised gain on units already sold, over the cost of both. Not annualised: these rows were bought on different dates, so there is no single window to compound over. ${fifoBasisNote(t.fifo, (n) => money(n))}`}>
+                : `The holding-period return across ${partial ? `the ${fmtNum(cq)} ${unitNoun} above that report a cost` : "every row above"}, FIFO — the unrealised gain on what is held and the realised gain on units already sold, over the cost of both. Not annualised: these rows were bought on different dates, so there is no single window to compound over. ${fifoBasisNote(t.fifo, (n) => money(n))}`}>
               {t.cost === null
                 ? <AbsentCell reason={noCostWhy} />
                 : t.costedReturn === null
-                ? <AbsentCell reason="no statement for these rows reports the P&L a return is struck on" />
+                ? <AbsentCell reason={t.pnl === null && t.cost !== null ? AT_COST_RETURN : "no statement for these rows reports the P&L a return is struck on"} />
                 : <><span className="ret-tag mr-0.5">HPR</span>{fmtPct(t.costedReturn, { sign: true, decimals: 1 })}</>}
             </td>
           ),
@@ -1733,8 +1774,14 @@ export function StockInfo() {
             asset class the row carries, and an unstated class gets the noun that
             claims nothing. */}
         <Kpi label="Quantity"
-          value={exited ? <AbsentValue /> : <span data-stock-qty={recordedOnly ? recordedUnits : qty}>{recordedOnly ? unitsText(recordedUnits) : fmtNum(qty)}</span>}
+          value={exited ? <AbsentValue />
+            : recordedOnly ? <span data-stock-qty={recordedUnits}>{unitsText(recordedUnits)}</span>
+            /* NO COUNT IS NOT ZERO (Stage 10dh): the review records an amount
+               paid for most private investments and no unit count. */
+            : qty === null ? <span data-stock-qty-absent><AbsentValue /></span>
+            : <span data-stock-qty={qty}>{fmtNum(qty)}</span>}
           sub={exited ? <span className="text-slate-500">{unchecked ? "no direct holding" : "no current holding"}</span>
+            : !recordedOnly && qty === null ? <span className="text-slate-500" title={NO_UNIT_COUNT} data-stock-no-count>no unit count</span>
             : recorded.length > 0
               ? <span title={RECORDED_TIP} data-stock-recorded-units={recordedUnits}>
                   {recordedOnly ? `${qtyNoun} · not valued` : `${qtyNoun} · +${unitsText(recordedUnits)} not valued`}</span>
@@ -1751,6 +1798,10 @@ export function StockInfo() {
         <Kpi label="Avg cost"
           value={avgCost === null ? <AbsentValue /> : <span className="mono" data-stock-avg-cost={avgCost}>{price(avgCost)}</span>}
           sub={cost === null ? <span className="text-slate-500">{costWhy}</span>
+            // A cost with no unit count to divide it by — the review's records
+            // of what was paid (Stage 10dh). The cost is real; the average is not.
+            : avgCost === null && whole.costedQty === null
+            ? <span className="text-slate-500" title={NO_UNIT_COUNT} data-stock-avg-no-count>invested {money(cost)} &middot; no unit count</span>
             : carried ? <span title={carriedWhy} data-stock-cost-carried={carried.paid}>invested {money(cost)} &middot; as paid, across a class switch</span>
             : gross ? <span title={grossWhy} data-stock-cost-gross={gross.paid}>invested {money(cost)} &middot; as paid, stamp duty included</span>
             : costedShare ? <span data-stock-cost-covers={costedShare}
@@ -1770,7 +1821,11 @@ export function StockInfo() {
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
           delta={ret}
-          sub={pnl === null ? <span className="text-slate-500">{costWhy}</span>
+          sub={pnl === null && atCostAll
+            // HELD AT COST IS NOT "NO COST" (Stage 10dh): the review records the
+            // cost and no valuation, so no gain was measured — and never a ₹0.
+            ? <span className="text-slate-500" title={AT_COST_PNL} data-stock-at-cost>held at cost · no valuation</span>
+            : pnl === null ? <span className="text-slate-500">{costWhy}</span>
             // A COMPUTED ZERO KEEPS ITS ZERO, AND ITS REASON GOES IN THE TILE.
             // (Measured: the book's cash rows net to ₹0.11 of paise rounding
             // between the printed cost and value, so "no P&L" would overstate it.)

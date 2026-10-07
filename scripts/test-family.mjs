@@ -41,7 +41,7 @@ const SUITES = [
   ["account XIRR", "src/lib/__tests__/accountXirr.test.ts"],
   ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["private market table", "src/lib/__tests__/privateBook.test.ts"],
-  ["MOPWM review tab", "src/lib/__tests__/reviewPrivate.test.ts"],
+  ["review as private-market source", "src/lib/__tests__/reviewBook.test.ts"],
   ["separate investments", "src/lib/__tests__/separateInvestments.test.ts"],
   ["keep unvalued", "src/lib/__tests__/keptUnvalued.test.ts"],
   ["capital calls", "src/lib/__tests__/capitalCalls.test.ts"],
@@ -100,7 +100,11 @@ const SUITES = [
 ];
 
 let failed = 0;
+// `ONLY=<name>,<name>` runs a subset, matched on the suite's name — for
+// re-running one suite while fixing it. The default is every suite.
+const ONLY = (process.env.ONLY ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 for (const [name, rel] of SUITES) {
+  if (ONLY.length && !ONLY.includes(name)) continue;
   const out = path.join(DIR, path.basename(rel).replace(/\.ts$/, ".mjs"));
   const build = spawnSync(
     path.join(ROOT, "node_modules/.bin/esbuild"),

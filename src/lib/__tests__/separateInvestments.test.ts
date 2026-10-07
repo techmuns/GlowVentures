@@ -19,6 +19,7 @@ import { BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_POSITIONS, BOOK_SUMMARY } from "@
 import { dedupedPositions, currentHoldings, isPrivateClass } from "@/lib/analytics";
 import { privateCapital } from "@/lib/privateMarket";
 import { SEPARATE_INVESTMENTS, sameAccount } from "../../../shared/separateInvestments.mjs";
+import { VALUED_HOLDERS } from "../../../shared/reviewHolders.mjs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -60,8 +61,22 @@ ok("the decision reaches four rows — both pairs, both accounts each", named.le
   console.log(`     ${tagged.length} position(s) in the book carry a dedupe tag for a pair the family has not been asked about`);
   const byKey = SEPARATE_INVESTMENTS.map((d) => ({ key: d.securityKey, second: named.filter((n) => n.key === d.securityKey).slice(1) }));
   const added = byKey.flatMap((b) => b.second).reduce((t, n) => t + n.marketValue, 0);
-  ok("the second statement of each pair is ₹3.17 Cr — what counting both adds",
-    Math.abs(added - 31726374.76) < 0.01, rupees(added));
+  // Since Stage 10dh both pairs are private-market lines of the family's
+  // consolidated review, which is their source: each second row carries the
+  // review's own value of that holder's line, read here off the table the book
+  // was built from (by key AND account) rather than typed. It was the
+  // statements' ₹3.17 Cr while the statements were the source.
+  const reviewValueOf = (key: string, accountId: string) => VALUED_HOLDERS
+    .filter((h) => h.key === key).flatMap((h) => h.split).find((s) => s.account === accountId)?.value;
+  const expected = byKey.flatMap((b) => b.second).map((n) => reviewValueOf(n.key, n.accountId));
+  ok("the second statement of each pair carries the review's own value of that line",
+    expected.length === 2 && expected.every((v): v is number => typeof v === "number" && v > 0)
+      && byKey.flatMap((b) => b.second).every((n, i) => Math.abs(n.marketValue - (expected[i] as number)) < 0.01),
+    byKey.flatMap((b) => b.second).map((n, i) => `${n.accountId} ${n.marketValue} vs ${expected[i]}`).join("; "));
+  ok("…so counting both adds the review's own figures, not a figure nobody printed",
+    added > 0 && Math.abs(added - expected.reduce<number>((t, v) => t + (v ?? 0), 0)) < 0.01, rupees(added));
+  ok("…and every named row is a review row, as the family's review is their source",
+    named.every((n) => BOOK_POSITIONS.some((p) => p.accountId === n.accountId && p.securityKey === n.key && p.review)));
   const priv = BOOK_POSITIONS.filter((p) => p.marketSide === "private").reduce((t, p) => t + p.marketValue, 0);
   ok("…and the private side is the plain sum of its rows",
     Math.abs(priv - BOOK_SUMMARY.privateValue) < 0.01, `${rupees(priv)} vs ${rupees(BOOK_SUMMARY.privateValue)}`);

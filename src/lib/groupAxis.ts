@@ -51,7 +51,7 @@
 import type { AccountIndex } from "./accounts";
 import {
   holdingBucket, bucketLabel, isMandateHeld,
-  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
+  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, AT_COST_BUCKET,
 } from "./analytics";
 import {
   basketKeyOf, familyClassKeyOf, basketOrd, familyClassOrd,
@@ -93,7 +93,7 @@ export const heldUnderMandate = (idx: AccountIndex, p: Classifiable) => isMandat
  * entry dead: the key that actually arrives fell through the `i < 0` branch and
  * sorted the section BELOW Cash, which is the opposite of what it claimed.
  */
-export const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
+export const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", AT_COST_BUCKET, "Cash"];
 export const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
 
 export const GROUP_AXES = ["category", "assetClass", "basket"] as const;

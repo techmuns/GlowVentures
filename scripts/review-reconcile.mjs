@@ -1,5 +1,12 @@
-// THE FAMILY'S OWN CONSOLIDATED REVIEW, USED AS THE CROSS-CHECK IT WAS ALWAYS
-// MEANT TO BE — and never as a source.
+// THE FAMILY'S OWN CONSOLIDATED REVIEW: THE SOURCE OF ITS PRIVATE-MARKET LINES,
+// AND THE CROSS-CHECK FOR EVERYTHING ELSE.
+//
+// Until Stage 10dh the review had no reader by decision (below). On 5 Oct 2026
+// the family asked for it to be the source of every private-market figure, so
+// `scripts/lib/reviewBook.mjs` now carries the PE Funds block, the unlisted
+// shares, the `Private Investments` tab and the K M Global credit line at the
+// review's own 30 June figures, each row tagged `reviewSource`. Everything else
+// is still the statements'. Section C0 holds the carried lines to the book's rows.
 //
 // `source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30
 // June 2026.xlsx` is the adviser's 25-tab aggregation of the whole book. It has
@@ -36,15 +43,18 @@
 //      31 March to 13 August 2026 (§3). Every price-driven difference below is
 //      partly this, and a line whose QUANTITY matches exactly while its value
 //      does not is almost always only this.
-//   3. PRIVATE HOLDINGS ARE CARRIED AT COST IN THE REVIEW. On the `Private
-//      Investments` tab cost and market value are equal on every row. This book
-//      carries what each statement reports, which for a depository row with no
-//      price is no value at all (see `nsdlDemat.mjs`).
+//   3. THE REVIEW CARRIES PRIVATE HOLDINGS AT COST. On the `Private Investments`
+//      tab cost and market value are equal on every row. Since Stage 10dh the
+//      book carries those lines at the review's own figures, so the two agree on
+//      them by construction (section C0); a private holding the review does not
+//      carry is valued as its own statement reports it.
 //
 // Run: node scripts/review-reconcile.mjs   ->  docs/REVIEW-RECONCILIATION.md
 import { readFileSync, writeFileSync } from "node:fs";
 import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
+import { readReviewPrivate } from "./lib/reviewPrivateRead.mjs";
+import { PRIVATE_INVESTMENT_ELSEWHERE } from "../shared/reviewHolders.mjs";
 import { makeSecurityMatcher } from "../shared/nameMatch.mjs";
 
 const WORKBOOK = "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx";
@@ -578,9 +588,10 @@ say("**If you read one section, read G** — it answers the question this audit 
 say("for (*is invested capital too low, and does NAV follow?*), and **D1** is the list of");
 say("documents to send the client. Everything between them is the evidence.");
 say();
-say("The review is **not a source and never becomes one** — every figure in this book traces");
-say("to the statement of the institution that struck it. This is the independent check on the");
-say("generated book, the role `golden.mjs` plays for the extractors.");
+say("Since Stage 10dh the review is the **source of the book's private-market lines** (section C0),");
+say("at its own 30 June figures. Every other figure in this book traces to the statement of the");
+say("institution that struck it, and this report is the independent check on those, the role");
+say("`golden.mjs` plays for the extractors.");
 say();
 
 // ── A. why the totals differ before a single line is compared ───────────────
@@ -642,9 +653,9 @@ for (const [d, n] of [...byDate].sort()) say(`| ${d} | ${n} |`);
 say();
 say("A line whose QUANTITY matches exactly while its value does not is almost always only this.");
 say();
-say("**3. PRIVATE HOLDINGS ARE CARRIED AT COST IN THE REVIEW.** On the `Private Investments`");
-say("tab, cost and market value are equal on every row. This book carries what each statement");
-say("reports, and for a depository row with no price that is no value at all.");
+say("**3. THE REVIEW CARRIES PRIVATE HOLDINGS AT COST.** On the `Private Investments` tab, cost");
+say("and market value are equal on every row. Since Stage 10dh the book carries those lines at the");
+say("review's own figures (section C0), so on them the two agree by construction.");
 say();
 
 // ── B. per holder ──────────────────────────────────────────────────────────
@@ -789,8 +800,10 @@ for (const q of quantityOnlyHolders) {
  *   the review's figure; those printed totals include accrued income and
  *   declared dividends, which this book keeps out of market value (§4b).
  *
- * The review is still not a source: nothing here reaches `glowData.ts` or
- * `src/data/reviewGaps.ts`, and every figure below is labelled by whose it is.
+ * Nothing in this section reaches `glowData.ts` or `src/data/reviewGaps.ts`;
+ * the private-market lines the book carries from the review come from
+ * `scripts/lib/reviewBook.mjs`, not from here. Every figure below is labelled
+ * by whose it is.
  */
 const H_ROWS = sheet("Transactions since inception");
 const hSerial = (v) => (/^\d+(\.\d+)?$/.test(String(v ?? "").trim())
@@ -809,7 +822,12 @@ const H_OWNER = new Map([
   ["Bharat Jaisinghani Family Trust III", "bharat-jaisinghani-family-trust-3"],
   ["Bharat Jaisinghani Family Trust", "bharat-jaisinghani-family-trust"],
 ]);
-/** Mirror of `REVIEW_LINE_ISINS` in src/lib/reviewGaps.ts — kept in step by hand, on purpose. */
+/**
+ * Mirror of `REVIEW_LINE_ISINS` in src/lib/reviewGaps.ts — kept in step by hand,
+ * on purpose — with one entry more: Zepto left that table at Stage 10dh, because
+ * its line is carried from the review, and stays here because section H joins
+ * its closing to Ajay's superseded demat window.
+ */
 const H_LINE_ISINS = new Map([
   ["Motilal Oswal Arbitrage Fund Direct (G)", ["INF247L01ED1"]], ["HDFC Liquid Fund -Direct(G)", ["INF179KB1HP9"]],
   ["Aditya Birla SL Balanced Advantage Fund(G)", ["INF084M01AB8"]],
@@ -843,7 +861,16 @@ for (const d of H_MANIFEST) {
       date: d.asOf, account: hAccountOf(d.provider, d.accountNo), how: `${d.provider} ${d.accountNo}, ${hKind(d.reportType)} of ${d.asOf}` });
   }
 }
-const H_WINDOWS = Object.values(grab(src, "BOOK_SHARE_MOVEMENTS"));
+/**
+ * Every depository window the statements print — the book's own, and the ones a
+ * review line superseded at Stage 10dh. A superseded window still REPORTS the
+ * holding; it only no longer decides the book's figure, so the review is still
+ * set against it here rather than called "on no statement".
+ */
+const H_WINDOWS = [
+  ...Object.values(grab(src, "BOOK_SHARE_MOVEMENTS")),
+  ...grab(src, "BOOK_REVIEW_SUPERSEDED").filter((s) => s.kind === "window" && s.window).map((s) => s.window),
+];
 /** The depository's own balance on `date`, read off the tape's running balance — the same date, never the nearest. */
 function hBalancesOn(date) {
   const out = [];
@@ -1102,11 +1129,71 @@ const assetLines = assetTabs.flatMap((t) => t.lines.map((l) => ({
   section: l.section,
   aggregate: l.aggregate,
   tab: l.tab,
+  row: l.row,
   isSection: false,
 })));
 
+/**
+ * THE REVIEW'S PRIVATE-MARKET LINES ARE BOOK ROWS SINCE Stage 10dh, and they are
+ * joined here on the row each was read from (`Position.reviewSource`), never on a
+ * name. A carried line is IN the book at the review's own figure, so it is neither
+ * missing (section D) nor a manager's drift (C1): it leaves the routing below and
+ * is listed in C0, where its figure is held to the book's rows.
+ *
+ * The `Private Equity` aggregate on the Alternate tab is the one line carried in
+ * part. Its rows are the `Private Investments` tab's, and what the book does not
+ * carry of it is named from that tab's own lines (`PRIVATE_INVESTMENT_ELSEWHERE`),
+ * never as a difference: ESDS is on a statement as a face-value quantity, and
+ * Credit Fair is counted again inside the review's own K M Global line.
+ */
+const REVIEW_BY_ROW = new Map();
+for (const p of POSITIONS) {
+  if (!p.review || !p.reviewSource) continue;
+  const k = `${p.reviewSource.sheet}|${p.reviewSource.row}`;
+  REVIEW_BY_ROW.set(k, [...(REVIEW_BY_ROW.get(k) ?? []), p]);
+}
+const RP = readReviewPrivate(wb);
+const PI_LINES = RP.privateInvestments.lines;
+const piCarried = (l) => (REVIEW_BY_ROW.get(`Private Investments|${l.row}`) ?? []);
+const piElsewhere = PI_LINES.map((l) => ({ l, e: PRIVATE_INVESTMENT_ELSEWHERE.find((x) => x.line.test(l.product)) }))
+  .filter((x) => x.e && piCarried(x.l).length === 0 && (x.l.value ?? 0) > 0);
+const ESDS_LINE = piElsewhere.find((x) => /^ESDS$/.test(x.l.product))?.l ?? null;
+const CREDIT_FAIR_LINE = piElsewhere.find((x) => /^Credit Fair/.test(x.l.product))?.l ?? null;
+{
+  // Every Private Investments line is exactly one of: carried, named elsewhere,
+  // or a measured ₹0 (now listed, or written off). Anything else stops the run.
+  const bad = PI_LINES.filter((l) => {
+    const n = (piCarried(l).length > 0) + piElsewhere.some((x) => x.l === l) + ((l.value ?? 0) === 0);
+    return n !== 1;
+  });
+  if (bad.length) throw new Error(`Private Investments lines neither carried, named elsewhere nor ₹0: ${bad.map((l) => `row ${l.row} ${l.product}`).join("; ")}`);
+}
+function carriedOf(l) {
+  if (l.aggregate) {
+    const rows = [...REVIEW_BY_ROW].filter(([k]) => k.startsWith("Private Investments|")).flatMap(([, v]) => v);
+    return rows.length ? rows : null;
+  }
+  const sheetName = l.tab ?? "Equity";
+  return REVIEW_BY_ROW.get(`${sheetName}|${l.row}`) ?? null;
+}
+const carriedLines = [];
+for (const l of [...eq.filter((x) => !x.isSection), ...assetLines]) {
+  const rows = carriedOf(l);
+  if (!rows) continue;
+  const bookMv = rows.reduce((t, p) => t + (p.marketValue ?? 0), 0);
+  // The aggregate is carried less what the Private Investments tab names elsewhere.
+  const expect = l.aggregate
+    ? l.mv * CR - (ESDS_LINE?.value ?? 0) - (CREDIT_FAIR_LINE?.value ?? 0)
+    : l.mv * CR;
+  if (Math.abs(bookMv - expect) > Math.max(1, Math.abs(expect) * 1e-6)) {
+    throw new Error(`carried review line '${l.product}' (${l.tab ?? "Equity"} row ${l.row}): book ₹${bookMv.toFixed(2)} vs review ₹${expect.toFixed(2)}`);
+  }
+  carriedLines.push({ ...l, rows, bookMv });
+}
+const isCarried = (l) => carriedLines.some((c) => c.row === l.row && (c.tab ?? "Equity") === (l.tab ?? "Equity"));
+
 const products = [...eq.filter((l) => !l.isSection), ...assetLines]
-  .filter((l) => l.mv != null && l.mv !== 0);
+  .filter((l) => l.mv != null && l.mv !== 0 && !isCarried(l));
 const matchedProviders = new Map();
 const unmatchedLines = [];
 const securityLines = [];
@@ -1120,6 +1207,34 @@ for (const l of products) {
   } else {
     unmatchedLines.push(l);
   }
+}
+{
+  // A provider is either carried from the review or read from its statements —
+  // never both, or C1 would set a statement's figure against a review line the
+  // book already carries.
+  const both = carriedLines.map((l) => providerFor(l.product)).filter((prov) => prov && matchedProviders.has(prov));
+  if (both.length) throw new Error(`provider both carried from the review and matched on a statement: ${[...new Set(both)].join(", ")}`);
+}
+say("### C0. The review's private-market lines, carried in the book at the review's own figures");
+say();
+say("Since Stage 10dh the book carries these lines from the review itself, each row tagged with the");
+say("tab and row it was read from. Each is held here to the book's own rows, so the two agree by");
+say("construction and none of them is missing from the book or drift against it.");
+say();
+say("| Review line | Tab · row | Book rows | Review | Book |");
+say("| --- | --- | ---: | ---: | ---: |");
+for (const l of carriedLines) {
+  say(`| ${l.product} | ${l.tab ?? "Equity"} · ${l.row} | ${l.rows.length} | ₹${cr(l.mv)} Cr | ₹${cr(l.bookMv / CR)} Cr |`);
+}
+say(`| **Total** | | **${carriedLines.reduce((t, l) => t + l.rows.length, 0)}** | **₹${cr(carriedLines.reduce((t, l) => t + l.mv, 0))} Cr** | **₹${cr(carriedLines.reduce((t, l) => t + l.bookMv, 0) / CR)} Cr** |`);
+say();
+if (ESDS_LINE || CREDIT_FAIR_LINE) {
+  say("The `Private Equity` line is carried less two of its own `Private Investments` lines, each named");
+  say("rather than taken as a difference:");
+  say();
+  if (ESDS_LINE) say(`- **${ESDS_LINE.product}**, ₹${cr(ESDS_LINE.value / CR)} Cr — listed since; the ICICI Bank NSDL statement holds the shares at face value, so the book records them as a quantity and the live layer values them at the quote. In section F's quantity step.`);
+  if (CREDIT_FAIR_LINE) say(`- **${CREDIT_FAIR_LINE.product}**, ₹${cr(CREDIT_FAIR_LINE.value / CR)} Cr — the review counts it twice: here, and inside its own 15% K M Global credit line on the Debt tab, which the book carries once. Its own step in section F.`);
+  say();
 }
 say("### C1. Managed strategies — matched to a manager in the book");
 say();
@@ -1225,6 +1340,9 @@ say();
 // table to disagree about the same positions.
 const reviewNames = new Set(products.map((l) => securityKeyOf(l.product)));
 const orphan = CONSOLIDATED.filter((p) => {
+  // A review row is the review's own line, carried (C0) — never "a holding the
+  // review does not carry".
+  if (p.review) return false;
   // The promoter-stock skip that used to sit here is GONE, not disabled: `poly`
   // is read from `BOOK_POLYCAB` and `p` iterates `CONSOLIDATED`, so `p === poly`
   // can never be true and the branch was dead. Ring-fencing already keeps the
@@ -1312,7 +1430,7 @@ function custodianNote(l) {
   if (l.aggregate) {
     return "**an AGGREGATE line, not a holding** — the review reports this block only as a total on the "
       + "`" + l.tab + "` tab and itemises it on its own `Private Investments` tab, every line of which the Private "
-      + "Market page's MOPWM review tab draws (Stage 10dg); the family's investment register carries it too "
+      + "Market page draws as book rows when `PRIVATE_MARKET_FROM_REVIEW` is on (Stage 10dh); the family's investment register carries it too "
       + "(`docs/REGISTER-RECONCILIATION.md`). No custodian issues a statement for a block, so this is not a document to ask for";
   }
   if (l.tab) {
@@ -1558,6 +1676,10 @@ const costless = CONSOLIDATED.filter((p) => p.costBasis == null);
 const bookInvested = costed.reduce((t, p) => t + p.costBasis, 0) / CR;
 const costlessMV = costless.reduce((t, p) => t + p.marketValue, 0) / CR;
 const absentValue = gapNoStatement - aggregateTotal;
+// The two `Private Investments` lines the book does not carry (C0), in crores.
+const esdsCr = (ESDS_LINE?.value ?? 0) / CR;
+const creditFairCr = (CREDIT_FAIR_LINE?.value ?? 0) / CR;
+const quantityCr = gapReportedUnvalued + esdsCr;
 
 say("## G. Invested capital — the client's own question, answered");
 say();
@@ -1594,8 +1716,8 @@ say("| Cause | Invested | NAV | Size |");
 say("| --- | :---: | :---: | ---: |");
 say(`| **A. Held, valued, and no cost reported** — ${costless.length} of ${CONSOLIDATED.length} positions | understated | **not affected** | ₹${cr(costlessMV)} Cr of market value already in NAV |`);
 say(`| **B. On no statement in \`source/\`** — section D | understated | understated | ₹${cr(absentValue)} Cr at the review's marks |`);
-say(`| **B2. On a statement as a quantity this book does not value** — section D | understated | understated | ₹${cr(gapReportedUnvalued)} Cr at the review's marks |`);
-say(`| **C. An aggregate block, itemised only on the review's own \`Private Investments\` tab** | understated | understated | ₹${cr(aggregateTotal)} Cr at the review's marks |`);
+say(`| **B2. On a statement as a quantity this book does not value** — section D${esdsCr > 0 ? ", and ESDS (C0)" : ""} | understated | understated | ₹${cr(quantityCr)} Cr at the review's marks |`);
+if (aggregateTotal > 0) say(`| **C. An aggregate block, itemised only on the review's own \`Private Investments\` tab** | understated | understated | ₹${cr(aggregateTotal)} Cr at the review's marks |`);
 say();
 say("**CAUSE A IS THE WHOLE OF WHY INVESTED CAPITAL LOOKS WRONG WITHOUT NAV LOOKING WRONG.**");
 say(`${costless.filter((p) => (p.marketValue ?? 0) > 0).length} of those ${costless.length} positions carry a value; by account:`);
@@ -1630,7 +1752,7 @@ say("measures which, in `docs/REGISTER-RECONCILIATION.md`.");
 say();
 say("**AND CAUSE A CANNOT RAISE NAV.** Those rows are already in the ₹" + cr(SUMMARY.totalValue / CR) + " Cr at their");
 say("statement marks. Supplying their cost raises invested capital, lowers the reported return on");
-say("cost, and leaves NAV where it is. NAV rises only on B and C — the holdings that are absent.");
+say(`cost, and leaves NAV where it is. NAV rises only on ${aggregateTotal > 0 ? "B and C" : "B and B2"} — the holdings that are absent or not valued.`);
 say();
 
 say("## F. The bridge — review total to book total");
@@ -1645,12 +1767,15 @@ const steps = [
   ["Review portfolio total, 30 June 2026", reviewTotal, null],
   ["less: holders with no account in this book", -absentHolders,
     `the review's holders the account registry has no account for, section B — ${noAccountHolders.map((h) => (/hope india/i.test(h) ? `the ${h}, a separate taxpayer kept out by decision` : h)).join("; ") || "none"}. A holder with an account and no valued position is not one: its lines are in the steps below, once`],
-  ["less: aggregate blocks itemised only on another tab", -aggregateTotal,
-    `${aggregateLines.map((l) => "`" + l.product + "`").join(", ") || "—"} — reported on the \`Alternate\` tab as a total and itemised on the review's own \`Private Investments\` tab, which the Private Market page's MOPWM review tab draws line by line. Not a missing statement: see \`docs/REGISTER-RECONCILIATION.md\`, which measures the family's own record of this money`],
+  ...(aggregateTotal > 0 ? [["less: aggregate blocks itemised only on another tab", -aggregateTotal,
+    `${aggregateLines.map((l) => "`" + l.product + "`").join(", ") || "—"} — reported on the \`Alternate\` tab as a total and itemised on the review's own \`Private Investments\` tab, which the book carries line by line when \`PRIVATE_MARKET_FROM_REVIEW\` is on (Stage 10dh). Not a missing statement: see \`docs/REGISTER-RECONCILIATION.md\`, which measures the family's own record of this money`],
+  ] : []),
   ["less: lines no statement in `source/` reports", -(gapNoStatement - aggregateTotal),
     "section D, read on the holders' own statements — the HDFC Bank, Motilal Oswal and AMC statements that have not been supplied"],
-  ["less: lines a statement reports as a quantity this book does not value", -gapReportedUnvalued,
-    "section D — on a statement, but as a quantity with no value: a depository's last-movement rate, a face value, a transaction tape with no holding statement"],
+  ["less: lines a statement reports as a quantity this book does not value", -quantityCr,
+    `section D${esdsCr > 0 ? ", and ESDS from the review's `Private Investments` tab (C0)" : ""} — on a statement, but as a quantity with no value: a depository's last-movement rate, a face value, a transaction tape with no holding statement`],
+  ...(creditFairCr > 0 ? [["less: a line the review counts twice", -creditFairCr,
+    `\`${CREDIT_FAIR_LINE.product}\` — on the \`Private Investments\` tab and again inside the review's own 15% K M Global credit line on its Debt tab, which the book carries once (C0)`]] : []),
 ];
 let running = 0;
 say("| Step | Amount | Running | Why |");
@@ -1766,7 +1891,8 @@ say("- **Three rows left section E.** Neo Infra (Debt), Baring PE and Transition
 say("  Alternate) were reported as holdings the review does not carry, while the review carried");
 say("  every one of them on a tab nothing read.");
 say("- **Five managers joined C1** — India SME, Sky Capital, Neo Infra, Transition Venture and");
-say("  Baring PE — two of them the ₹0 case F1 exists for.");
+say("  Baring PE. Since Stage 10dh four of them are carried from the review itself and listed in");
+say("  C0; Neo Infra stays in C1, on its own statement.");
 say("- **The DSP Gold and Silver ETFs joined D0**: held in the book through the Motilal demat, and");
 say("  on the client ask list until this ran.");
 say("- **The residual fell from −₹263.10 Cr to what section F now prints.**");
@@ -1792,9 +1918,9 @@ say("   line in section C2 whose quantity ties exactly and whose value does not 
 say(`2. **Partly-held names.** ${partial} direct-equity line${partial === 1 ? " is" : "s are"} only partly on the holders' own`);
 say("   statements: one holder's closing ties and another's is on no statement in the drop. Section C2");
 say("   names each holder; the missing part is in the residual, not in a step above.");
-say("3. **Private holdings the review carries at cost and this book cannot value.** The");
-say("   `Private Investments` tab prices every row at its cost; a depository row with no price");
-say("   carries no value here at all.");
+say("3. **Holdings found by name and valued differently.** Section D0 lists review lines the");
+say("   book holds under another name; where the book records one as a quantity, or at an older");
+say("   statement's mark, the difference stays here rather than in a step above.");
 say();
 say("Closing the residual line by line needs the statements in section D1. Until they arrive");
 say("it stays stated rather than distributed across the book.");
@@ -1853,10 +1979,10 @@ console.log(`  direct equity     ${tiedQty} of ${securityLines.length} tie exact
  * assumes the second.
  *
  * NOT ONE FIGURE OF THE REVIEW'S CROSSES OVER, and that is the whole licence
- * for publishing any of it. The consolidated review is NOT A SOURCE — by
- * decision — because it carries someone else's choices about what to include
- * and how to value it, and folding a cell in would end this book's own
- * guarantee on the first one. What travels here is the NAME, where the review
+ * for publishing any of it. Outside its private-market lines — which the book
+ * carries from the review since Stage 10dh, through `scripts/lib/reviewBook.mjs`
+ * and never through here — the consolidated review is a cross-check, because it
+ * carries someone else's choices about what to include and how to value it. What travels here is the NAME, where the review
  * says it is held, and the two sentences the report above already prints: an
  * ABSENCE and a document to ask for, neither of which is a valuation. The
  * emitter refuses to write a numeric field, and `reviewGaps.test.ts` asserts
@@ -1927,8 +2053,9 @@ const plain = (s) => s.replace(/\*\*/g, "").replace(/`/g, "");
     "// one of these names is told why it is absent and which document would close",
     "// it, rather than being shown an empty result they cannot tell from a defect.",
     "//",
-    "// NOT A SOURCE, AND NOT ONE FIGURE OF ONE. The consolidated review is held",
-    "// out of the book by decision; what travels here is a NAME, a custodian and",
+    "// NOT ONE FIGURE OF THE REVIEW TRAVELS HERE. Since Stage 10dh the book carries",
+    "// the review's private-market lines through scripts/lib/reviewBook.mjs; every",
+    "// other review line is a cross-check. What travels here is a NAME, a custodian and",
     "// two sentences — an absence and a document to ask for. There is deliberately",
     "// no value and no quantity on this type, and the generator throws rather than",
     "// emit one. Nothing here reaches `glowData.ts`, any total, or any allocation.",

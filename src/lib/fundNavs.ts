@@ -79,6 +79,10 @@ export const FUND_NAV_COUNT = BOOK_FUND_NAVS.filter((e) => e.usableForValue).len
 export function applyFundNavs(positions: Position[]): Position[] {
   return positions.map((p) => {
     if (p.live) return p;                       // an intraday quote wins
+    // The review's lines keep the review's value (Stage 10dh): no AMFI scheme
+    // publishes a NAV for an AIF or an unlisted share, and a line with no unit
+    // count cannot be valued at units × NAV.
+    if (p.review || p.quantity === null) return p;
     const e = BY_KEY.get(p.securityKey);
     if (!e || !e.usableForValue) return p;      // no NAV, or not on this book's basis
     if (!(e.nav > 0) || !(p.quantity > 0)) return p;
@@ -244,7 +248,7 @@ export function depositoryFundHoldings(
     if (!admitted) continue;                                                          // gate 4
     const closing = w.closing;
     if (positions.some((p) => p.isin?.trim().toUpperCase() === isin
-      && Math.abs(p.quantity - closing) < 0.0005)) continue;                         // gate 5
+      && p.quantity !== null && Math.abs(p.quantity - closing) < 0.0005)) continue;  // gate 5
     const printed = book?.security ?? w.security ?? securityKey;
     out.push({
       securityKey,
@@ -420,7 +424,7 @@ export function unpricedStatementUnits(
     if (!(ratio > 1 / BASIS_FACTOR && ratio < BASIS_FACTOR)) continue;                           // gate 5
     if (positions.some((p) => p.accountId === u.accountId && isinOf(p) === isin)) continue;      // gate 6
     const owner = ownerOf(u.accountId);
-    if (positions.some((p) => isinOf(p) === isin && Math.abs(p.quantity - qty) < 0.0005
+    if (positions.some((p) => isinOf(p) === isin && p.quantity !== null && Math.abs(p.quantity - qty) < 0.0005
       && ownerOf(p.accountId) === owner)) continue;                                               // gate 7
     const book = positions.find((p) => p.securityKey === u.securityKey);
     out.push({
@@ -583,7 +587,7 @@ export function depositoryBalancesOf(
       const closing = w.closing as number;
       const v = valued.find((p) => p.accountId === accountId && !!i && isin(p) === i) ?? null;
       const rep = v ? null : positions.find((p) => p.accountId !== accountId && (
-        (!!i && isin(p) === i && tie(p.quantity, closing))
+        (!!i && isin(p) === i && p.quantity !== null && tie(p.quantity, closing))
         || (p.assetClass === "AIF" && !!owner && ownerOf.get(p.accountId) === owner
           && tie(recorded.get(`${p.accountId}\u0000${p.securityKey}`) ?? NaN, closing)))) ?? null;
       return { window: w, valued: v, reportedBy: rep };

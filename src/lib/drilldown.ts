@@ -26,7 +26,7 @@
 // one level down.
 import type { Portfolio, Position } from "./types";
 import { accountIndex } from "./accounts";
-import { costCoversSet, currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, SIDE_NOTE, sum } from "./analytics";
+import { costCoversSet, currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, SIDE_NOTE, strikesGain, sum, unstruckValue } from "./analytics";
 import { fifoTotals, type FifoOptions, type FifoTotals } from "./fifo";
 /**
  * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
@@ -579,7 +579,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         { key: wantWin ? "winners" : "losers", label: wantWin ? "Showing a gain" : "Showing a loss", note: "", rows, excluded: excludedWhere(inCount) },
         ...(other.length ? [{
           key: "neither", label: "In neither count",
-          note: "A return of exactly zero is a measurement and belongs under neither heading; a holding whose cost is unavailable has no return to measure. Both are here so the two counts on Morning CIO can be reconciled against the book rather than assumed to cover it.",
+          note: "A return of exactly zero is a measurement and belongs under neither heading; a holding whose cost is unavailable or unreported, or a private investment held at cost, has no return to measure. All are here so the two counts on Morning CIO can be reconciled against the book rather than assumed to cover it.",
           rows: other,
           excluded: excludedWhere(inNeither),
         }] : []),
@@ -656,8 +656,9 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       const costFacets: Facet[] = costed.length && without.length ? [
         {
           key: "costed", label: "Cost reported", group: "cost",
-          note: "The holdings whose statement reports what they cost — the rows Capital invested and the"
-            + " Consolidated return are summed over.",
+          note: "The holdings whose statement reports what they cost — the rows Capital invested is summed"
+            + " over. The Consolidated return is struck over the ones that also carry a valuation: a private"
+            + " investment the family's consolidated review holds at cost is in Invested and in no gain.",
           rows: costed,
           excluded: excludedWhere(reportsCost),
         },
@@ -753,8 +754,9 @@ function ownerLabel(accIdx: ReturnType<typeof accountIndex>, p: Position): strin
  */
 export function coveredReturn(set: readonly Position[], opts: FifoOptions = {}) {
   const mv = set.reduce((a, p) => a + p.marketValue, 0);
-  const withoutCostMV = set.filter((p) => p.costBasis == null || p.costUnavailable).reduce((a, p) => a + p.marketValue, 0);
-  const covers = costCoversSet(mv, withoutCostMV);
+  // A holding that reports no cost, and a review line HELD AT COST (Stage
+  // 10dh), are both value no gain is struck on — `unstruckValue` counts both.
+  const covers = costCoversSet(mv, unstruckValue(set));
   // FIFO, through the one aggregator every other return on the dashboard uses:
   // the realised gain on units already sold stays in the return, and a whole
   // mandate is struck on its capital since inception.
@@ -769,40 +771,76 @@ export function coveredReturn(set: readonly Position[], opts: FifoOptions = {}) 
  * cost — Stage 10ca's decision, and main records the refusal version (a bare
  * "—" wherever ₹168 Cr of depository holdings report no cost) as a regression.
  * WHEREVER IT APPEARS IT NAMES THAT SET ON ITS FACE, not only in a hover:
- * "on the ₹X of ₹Y that reports a cost · N of M holdings". Morning CIO's
+ * "on the ₹X of ₹Y valued against a cost · N of M holdings" (it read "that
+ * reports a cost" until Stage 10dh, when the review's lines held AT COST made
+ * the two sets differ). Morning CIO's
  * Consolidated return tile, its allocation table's Total row and the Portfolio
  * Monitor's footer all print this ONE figure over this ONE set, so the set and
  * its words are built here once.
  */
 export type CostedBookSet = {
-  /** The current holdings whose statement reports what they cost. */
+  /**
+   * The current holdings whose statement reports what they cost — Capital
+   * invested's set, and the "Cost reported" facet. It includes the review's
+   * lines HELD AT COST (Stage 10dh): what was paid is a cost reported.
+   */
   costed: Position[];
-  /** What those are worth — the X in the label. */
   costedValue: number;
+  costedCount: number;
+  /**
+   * The holdings a gain can be struck on — a cost AND a valuation of their own
+   * (`strikesGain`). The whole-book return is struck over this set, and the
+   * label names it: a line held at cost is value no gain is measured on.
+   */
+  struck: Position[];
+  /** What the struck holdings are worth — the X in the label. */
+  struckValue: number;
+  struckCount: number;
+  /** The lines held at cost: in `costed`, not in `struck`. */
+  atCost: number;
+  atCostValue: number;
   /** What every current holding is worth — the Y, the book the top bar shows. */
   bookValue: number;
-  costedCount: number;
   holdings: number;
 };
-/** Whether a holding's statement reports what it cost — `costedBookSet`'s test, and the cost facets'. */
+/** Whether a holding's statement reports what it cost — Capital invested's test, and the cost facets'. */
 export const reportsCost = (p: Pick<Position, "costBasis" | "costUnavailable">): boolean =>
   p.costBasis != null && !p.costUnavailable;
 export function costedBookSet(current: readonly Position[]): CostedBookSet {
   const costed = current.filter(reportsCost);
+  const struck = costed.filter(strikesGain);
+  const costedValue = sum(costed.map((p) => p.marketValue));
+  const struckValue = sum(struck.map((p) => p.marketValue));
   return {
-    costed,
-    costedValue: sum(costed.map((p) => p.marketValue)),
+    costed, costedValue, costedCount: costed.length,
+    struck, struckValue, struckCount: struck.length,
+    atCost: costed.length - struck.length,
+    atCostValue: costedValue - struckValue,
     bookValue: sum(current.map((p) => p.marketValue)),
-    costedCount: costed.length,
     holdings: current.length,
   };
 }
-/** The words, in the reader's currency: "on the ₹X of ₹Y that reports a cost · N of M holdings". */
+/**
+ * The words, in the reader's currency: "on the ₹X of ₹Y valued against a cost
+ * · N of M holdings". It names the RETURN's set, so it counts the struck
+ * holdings: a depository row reports no cost and a review line held at cost no
+ * valuation, and a return covers neither.
+ *
+ * AND IT IS NINE SMALL WORDS, NOT TEN, WHICH IS MEASURED RATHER THAN CHOSEN.
+ * This label stands on the `/holdings` headline's own face, after "Invested ₹X
+ * · gain +₹Y (+Z%)", and Stage 10cp's prose rule fails a line outside a table
+ * that runs past 60 characters AND carries ten or more lower-case words. Its
+ * first wording here, "with a cost and a valuation", carried four of them
+ * (with · cost · and · valuation) where "that reports a cost" had carried
+ * three, which took that line to exactly ten and failed `holdings-book`,
+ * `-filter`, `-invested` and `-invested-legacy` on a page that was right.
+ * "valued against a cost" says the same thing in three.
+ */
 export function costedSetLabel(
-  s: Pick<CostedBookSet, "costedValue" | "bookValue" | "costedCount" | "holdings">,
+  s: Pick<CostedBookSet, "struckValue" | "bookValue" | "struckCount" | "holdings">,
   money: (n: number) => string,
 ): string {
-  return `on the ${money(s.costedValue)} of ${money(s.bookValue)} that reports a cost · ${s.costedCount} of ${s.holdings} holdings`;
+  return `on the ${money(s.struckValue)} of ${money(s.bookValue)} valued against a cost · ${s.struckCount} of ${s.holdings} holdings`;
 }
 
 /**
@@ -814,7 +852,7 @@ export function costedSetLabel(
 export type BookReturnOnCost = { set: CostedBookSet; fifo: FifoTotals; pct: number | null };
 export function bookReturnOnCost(current: readonly Position[], opts: FifoOptions): BookReturnOnCost {
   const set = costedBookSet(current);
-  const fifo = fifoTotals(set.costed, opts);
+  const fifo = fifoTotals(set.struck, opts);
   return { set, fifo, pct: fifo.returnPct };
 }
 

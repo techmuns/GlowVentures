@@ -156,6 +156,16 @@ export type Account = {
    */
   partialValuation?: string | null;
   /**
+   * TRUE ON ONE OF THE REVIEW'S HOLDER BUCKETS (Stage 10dh) — the account a
+   * member's private investments sit under when the family's consolidated
+   * review (MOPWM) is their source and no custodian account carries them.
+   * It is a GROUPING, not a custodian: its lines are separate investments,
+   * each with its own dated purchases, so a dated record over it is struck per
+   * LINE (`capitalRollup`, `datedCapital`), never pooled across lines into one
+   * account return. Absent on every statement account.
+   */
+  reviewHolder?: true;
+  /**
    * A PMS MANDATE'S CAPITAL, SINCE INCEPTION, AS AT THE HOLDINGS' OWN DATE —
    * what the family paid in and took out, from a statement that states it over
    * that window (or the account's own dated capital record where it starts at
@@ -213,9 +223,15 @@ export type Position = {
    * that rather than trusting it.
    */
   marketSide?: MarketSide | null;
-  // Quantity and market value are on every position in this book: every
-  // holdings statement in the drop prints both for every row including cash.
-  quantity: number;
+  /**
+   * QUANTITY — every holdings statement in the drop prints one for every row,
+   * cash included. It is NULLABLE since Stage 10dh, because the family's
+   * consolidated review is the source for private-market holdings and records
+   * most of its private investments as an amount paid, with no share count: a
+   * count nobody printed is `null`, never 0 (§1). Every statement row still
+   * carries one.
+   */
+  quantity: number | null;
   marketValue: number;      // INR
   /**
    * COST, AND THE TWO FIGURES DERIVED FROM IT — NULLABLE, because a DEPOSITORY
@@ -279,13 +295,44 @@ export type Position = {
    * the statement's net stays beside it as `printedCostBasis`. See
    * `grossPaidCost` in `scripts/build-book.mjs`.
    */
-  costBasisSource?: "opening-position" | "carried-through-switch" | "fifo" | "gross-paid";
+  costBasisSource?: "opening-position" | "carried-through-switch" | "fifo" | "gross-paid" | "review";
   /**
    * The cost the statement's own cost column prints, kept ONLY where the book's
    * cost differs from it (`costBasisSource`) — a CHECK beside the figure, never
    * a source. Undefined everywhere else.
    */
   printedCostBasis?: number;
+  /**
+   * FROM THE FAMILY'S CONSOLIDATED REVIEW (MOPWM, 30 June 2026), NOT A STATEMENT.
+   *
+   * At the family's instruction the review is the SOURCE for private-market
+   * holdings (Stage 10dh): every private-market line it carries is a position
+   * here, under its holder's own account where a statement names one and under
+   * a `review-<member>` account where none does. `costBasisSource` is then
+   * `"review"` and `reviewNote` says which review line it is and how it was
+   * split among the family. Set only on those rows; a statement row never
+   * carries it. The listed book is still read from the statements.
+   */
+  review?: boolean;
+  /**
+   * HELD AT COST: the review records an amount paid and no valuation, so the
+   * position's value IS its cost. `unrealizedPnL`, `returnPct`, `avgCost` and
+   * `currentPrice` are `null`, never a computed zero — "held at cost" is not a
+   * measured return of 0%. Every return and gain figure treats such a row as
+   * uncovered, and says so (`isValuedAtCost` in ./analytics).
+   */
+  valuedAtCost?: boolean;
+  /** Which review line this row is, and how the line was split among the family. */
+  reviewNote?: string;
+  /** The review's own asset class and basket for the line (Stage 10dh). */
+  reviewTaxonomy?: { assetClass: "Equity" | "Debt" | "Alternate" | "Cash"; basket: "Stable Growth" | "Entrepreneurial Growth" | "Thematic & Tactical" | "Liquidity" };
+  /**
+   * WHICH CELL OF THE REVIEW WORKBOOK this row came from (Stage 10dh): the sheet,
+   * the block on it and the Excel row. Data, never prose — the reconciler joins
+   * the review's own lines to the book's on it, and `reviewNote` is a sentence a
+   * redesign is free to reword.
+   */
+  reviewSource?: { sheet: "Private Investments" | "Alternate" | "Equity" | "Debt"; block: "Private Investments" | "PE Funds" | "Direct Equity - Unlisted" | "Debt"; row: number };
   /**
    * PER-UNIT figures, and NULLABLE — not every provider prints them.
    *
@@ -791,6 +838,16 @@ export type CapitalMove = {
    */
   payoutKind?: "income" | "capital" | "equalisation";
   /**
+   * Set where this movement is one of the family's CONSOLIDATED REVIEW's dated
+   * rows (`BOOK_REVIEW_FLOWS`) — a purchase, a sale or an income payout on the
+   * review's Transactions tab — rather than a statement's. At the family's
+   * instruction the review is the source for private-market holdings (Stage
+   * 10dh), so for an account the review values, `capitalMovesWithCalls` puts
+   * these in place of the statement's record and calls: the value the account
+   * closes on is the review's, and its dated rows must be the same document's.
+   */
+  fromReview?: true;
+  /**
    * PRESENT ONLY ON A TRANCHE, and only where the fund later moved these units
    * into another of its classes. The move is then shown in the class it sits in
    * today — `units` converted at the switch's own printed ratio, `security` the
@@ -1187,6 +1244,72 @@ export type UnvaluedStatementHolding = {
   asOf: string | null;
   sameUnitsReportedBy: string | null;
   reason: string;
+};
+
+/**
+ * A STATEMENT ROW THE FAMILY'S CONSOLIDATED REVIEW NOW STANDS FOR (Stage 10dh).
+ *
+ * At the family's instruction the review is the source for private-market
+ * holdings, so a statement row of the same holding — a fund's own folio
+ * statement, a depository's copy of AIF units, an unlisted share a demat
+ * records — leaves the book and the review's line counts instead. Each is
+ * listed here with what the statement said, so nothing a statement carried
+ * disappears without a word, and nothing is counted twice. `kind` says what
+ * the row was: a valued position, a quantity with no value, or a depository
+ * window of dated movements.
+ */
+export type ReviewSuperseded = {
+  accountId: string;
+  securityKey: string;
+  kind: "position" | "unvalued" | "window";
+  /** The review line that now counts the holding. */
+  reviewLine: string;
+  security: string;
+  /** The units the statement printed (a window's closing balance); null where it printed none. */
+  quantity: number | null;
+  marketValue: number | null;
+  /**
+   * For a window, the depository's own window as printed. The statement still
+   * REPORTS the holding — it only no longer decides the book's figure for it —
+   * so a cross-check against the review reads its dated balance from here.
+   */
+  window?: ShareMovement;
+};
+
+/**
+ * A PRIVATE INVESTMENT THE REVIEW WRITES OFF. The review prints no cost and no
+ * value for these, only a remark — they are listed, never summed, and never a
+ * ₹0 position, because the review records no figure for them at all.
+ */
+export type ReviewWrittenOff = {
+  security: string;
+  /** The row on the review's Private Investments tab. */
+  reviewRow: number;
+  remark: string;
+  /** The dates the review prints for the investment, as text. */
+  dates: string | null;
+};
+
+/**
+ * ONE DATED ROW OF THE REVIEW'S TRANSACTIONS TAB, behind a holding the review
+ * values (Stage 10dh): a purchase, a sale or an income payout ("Div / Int"),
+ * each on its own date. What a private fund's money-weighted return is struck
+ * on, on the Private Market page and the Transactions card alike — the value it
+ * closes on is the review's, so its flows are the same document's. `amount` is
+ * always positive; `kind` says which way the money went. `units` and `rate` are
+ * what the row prints, null where it prints none (an income row never does).
+ */
+export type ReviewFlow = {
+  accountId: string;
+  securityKey: string;
+  security: string;
+  date: string;
+  kind: "purchase" | "sale" | "income";
+  amount: number;
+  units: number | null;
+  rate: number | null;
+  /** The row on the review's Transactions since inception tab. */
+  reviewRow: number;
 };
 
 /**

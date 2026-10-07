@@ -7,7 +7,7 @@ import { parseAction, normalizeActionFeed, validActionFeed, type ActionFeed } fr
 import type { Position, Account } from "../types";
 import type { QuoteFeed } from "../quotes";
 
-const p: Position = { ...BOOK_POSITIONS.find((p) => p.assetClass === "Equity")!, accountId: "test", securityKey: "test",
+const p: Position & { quantity: number } = { ...BOOK_POSITIONS.find((p) => p.assetClass === "Equity")!, accountId: "test", securityKey: "test",
   security: "Test equity", symbol: "TEST", isin: null, quantity: 100, avgCost: 10, currentPrice: 10,
   costBasis: 1000, marketValue: 1000, unrealizedPnL: 0, realizedPnL: 0, costOfUnitsSold: 0, realizedLotsAfter: 0,
   returnPct: 0, dividendReceived: 23 };

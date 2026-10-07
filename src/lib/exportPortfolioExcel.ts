@@ -30,6 +30,7 @@ import { displaySecurity, fmtCr, fmtCurrency, DASH } from "./format";
 import {
   valueDateOf, commonValueDate, measuredReturn, isFixedIncome,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
+  totalQuantity, AT_COST_PNL, NO_UNIT_COUNT, AT_COST_MARK, REVIEW_NO_MARK,
 } from "./analytics";
 import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
 import { fifoTotals } from "./fifo";
@@ -40,6 +41,7 @@ import { describeDepositoryUnits } from "./fundNavs";
 import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
+  BOOK_REVIEW_FLOWS,
 } from "@/data/glowData";
 import {
   sumOrNull, dedupedPositions, consolidatedMarketValue,
@@ -62,11 +64,16 @@ const C = {
   totalFill: "FFF4F2EC",
 };
 
-/** How a line's value was struck — the three bases a figure on the tab can carry. */
-type Basis = "live" | "nav" | "statement";
-const BASIS_LABEL: Record<Basis, string> = { live: "Live quote", nav: "AMFI NAV", statement: "Statement" };
-/** The basis a live quote, a published NAV and a statement mark each carry — the overlays' own flags. */
-const basisOf = (p: Position): Basis => (p.live ? "live" : p.navPriced ? "nav" : "statement");
+/**
+ * How a line's value was struck — the four bases a figure on the tab can carry.
+ * "review" is the family's consolidated review (MOPWM), the source for
+ * private-market holdings since Stage 10dh: its figure is not a statement's,
+ * and a line it holds at cost carries what was paid rather than a valuation.
+ */
+type Basis = "live" | "nav" | "statement" | "review";
+const BASIS_LABEL: Record<Basis, string> = { live: "Live quote", nav: "AMFI NAV", statement: "Statement", review: "Review (MOPWM)" };
+/** The basis a live quote, a published NAV, a statement mark and the review each carry — the overlays' own flags. */
+const basisOf = (p: Position): Basis => (p.live ? "live" : p.navPriced ? "nav" : p.review ? "review" : "statement");
 
 /**
  * Rupees for a sentence: compact above a lakh, to the paisa below it — a
@@ -89,6 +96,7 @@ function bookDatedCapital(): DatedCapital {
     moves: BOOK_CAPITAL_MOVES, commitments: BOOK_COMMITMENTS,
     accounts: labelledAccounts(BOOK_ACCOUNTS), positions: labelledPositions(BOOK_POSITIONS),
     tranches: BOOK_POSITION_TRANCHES, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
+    reviewFlows: BOOK_REVIEW_FLOWS,
   }));
 }
 
@@ -114,7 +122,15 @@ type HoldingRow = {
    * counts this beside the rows that report no cost at all.
    */
   uncostedValue: number;
-  qty: number; avgCost: number | null; cmp: number | null; marketValue: number;
+  /**
+   * The value of the lines HELD AT COST (Stage 10dh): the review records what
+   * was paid and no valuation, so they are in the cost and in no gain — a
+   * different finding from a line whose statement reports no cost, and counted
+   * apart from it under the total.
+   */
+  atCostValue: number;
+  /** Null where a line carries no unit count — the review records none for many private investments. */
+  qty: number | null; avgCost: number | null; cmp: number | null; marketValue: number;
   weight: number | null; pnl: number | null;
   /**
    * THE TAB'S DEFAULT RETURN, NOT A SECOND ONE (MSX-10). `measuredReturn(…,
@@ -231,7 +247,10 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
       // statement reported no cost contributes nothing, never a zero.
       const cf = costedFigures(ps);
       const cost = cf.cost;
-      const qty = ps.reduce((s, x) => s + x.quantity, 0);
+      // NULL WHERE ANY LINE CARRIES NO UNIT COUNT (Stage 10dh) — a sum over
+      // the lines that do would be a count no document states for the row.
+      const qty = totalQuantity(ps);
+      const allAtCost = ps.every((x) => x.valuedAtCost === true);
       const zeroCost = cost === 0 && mv > 0;
       const costNA = cost === null || zeroCost;
       // ONE MARK OR NONE (A-03): where the statements disagree on a price no
@@ -266,7 +285,7 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
        * carries none (`null`), and every rule below it is unchanged.
        */
       const capital = dated.behind(ps, held) ?? undefined;
-      const input = { returnPct: fifoRet, heldSince: since, valuedAt, assetClass: ps[0].assetClass, costNA, capital };
+      const input = { returnPct: fifoRet, heldSince: since, valuedAt, assetClass: ps[0].assetClass, costNA, capital, valuedAtCost: allAtCost };
       const ret = measuredReturn(input, "auto", bookAsOf);
 
       // How each line was priced and on what date, oldest first.
@@ -288,8 +307,13 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
           : zeroCost ? "the statement reports a cost of zero against a positive market value, which would book the whole holding as profit, so no cost-based figure is struck on it"
           : `no statement behind this holding reports what it cost — it is reported by ${sources}. A ₹0 here would report the whole holding as profit`;
         notes.push(`Avg Cost, Unreal. P&L, Return — ${why}`);
+      } else if (allAtCost) {
+        // HELD AT COST (Stage 10dh): the value IS the cost, so there is no gain
+        // and no return — never a 0% nobody measured.
+        if (avgCost === null) notes.push(`Avg Cost — ${NO_UNIT_COUNT}`);
+        notes.push(`Unreal. P&L, Return — ${AT_COST_PNL}`);
       } else {
-        if (avgCost === null) notes.push("Avg Cost — the lines that report a cost hold no units to divide it by");
+        if (avgCost === null) notes.push(qty === null ? `Avg Cost — ${NO_UNIT_COUNT}` : "Avg Cost — the lines that report a cost hold no units to divide it by");
         if (!cf.complete && cf.uncosted.value !== 0) {
           notes.push(`Avg Cost, Unreal. P&L${ret.shown ? ", Return" : ""} — struck over the costed units alone: `
             + `${cf.uncosted.lines} line${cf.uncosted.lines === 1 ? "" : "s"} worth ${inr(cf.uncosted.value)} `
@@ -313,15 +337,28 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
         notes.push(`Qty — ${depoLines.length === ps.length ? "these units are" : "some of these units are"} `
           + `${phrases.join("; and ")} — no statement priced them, and they are valued at ${at}`);
       }
+      if (qty === null) notes.push(`Qty — ${NO_UNIT_COUNT}`);
+      // WHERE A REVIEW LINE'S FIGURE CAME FROM: the family's consolidated
+      // review, not a statement (Stage 10dh). The provider named in Entities
+      // may be the fund whose statement the review supersedes.
+      const reviewLines = ps.filter((x) => x.review);
+      if (reviewLines.length) {
+        notes.push(`Market Value — ${reviewLines.length === ps.length ? "from" : "partly from"} the family's consolidated review (MOPWM), not a statement`
+          + (reviewLines.some((x) => x.valuedAtCost) ? "; held at cost, it is what was paid" : ""));
+      }
       if (mark.price === null) {
         // The tab's own sentence names the marks and then says "open the row";
         // a workbook row does not open, so the sheet says what the lines are.
-        notes.push(`CMP — ${mark.values.length > 1
+        // A row the review holds at cost, or values as a total, says so in the
+        // tab's own words (Stage 10dh): no statement marks it at all.
+        notes.push(`CMP — ${allAtCost ? AT_COST_MARK
+          : mark.values.length > 1
           ? `the statements reporting this holding mark it at ${mark.values.map((v) => fmtCurrency(v, "INR")).join(" and ")}; `
             + `no one price covers every unit, and a weighted mean of them is a figure no statement printed`
+          : ps.every((x) => x.review) ? REVIEW_NO_MARK
           : "marked at a total value, not a per-unit price"}`);
       }
-      if (!costNA) {
+      if (!costNA && !allAtCost) {
         if (!ret.shown) {
           // A cost is reported, but it covers too little of the row to strike a
           // return over — `fifoTotals`' coverage test. A return over part of a
@@ -372,6 +409,7 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
         sources,
         costNone: cost === null,
         uncostedValue: cost === null ? 0 : cf.uncosted.value,
+        atCostValue: cf.atCost.value,
         // `cmp` is the per-unit mark and is genuinely absent for a holding whose
         // provider prints none (360 ONE marks its AIF at a Net Asset Value with no
         // NAV per unit). Kept null here and rendered as an em dash by the caller,
@@ -561,8 +599,9 @@ const qtyFormat = (v: unknown) =>
  * thing a reader must be told before they compare it with a statement.
  */
 function holdingsAsOfLine(rows: HoldingRow[]): string {
-  let statement = 0, nav = 0, live = 0, mixed = 0;
+  let statement = 0, nav = 0, live = 0, review = 0, mixed = 0;
   const statementDates: string[] = [];
+  const reviewDates = new Set<string>();
   const navDates = new Set<string>();
   const liveDates = new Set<string>();
   for (const r of rows) {
@@ -570,10 +609,12 @@ function holdingsAsOfLine(rows: HoldingRow[]): string {
     if (kinds.size > 1) mixed++;
     else if (kinds.has("live")) live++;
     else if (kinds.has("nav")) nav++;
+    else if (kinds.has("review")) review++;
     else statement++;
     for (const b of r.bases) {
       if (!b.date) continue;
       if (b.basis === "statement") statementDates.push(b.date);
+      else if (b.basis === "review") reviewDates.add(b.date);
       else if (b.basis === "nav") navDates.add(b.date);
       else liveDates.add(b.date);
     }
@@ -586,6 +627,11 @@ function holdingsAsOfLine(rows: HoldingRow[]): string {
     parts.push(`${plural(statement, "")} at statement marks dated ${lo === hi ? lo : `${lo} → ${hi}`}`);
   }
   if (nav) parts.push(`${plural(nav, "")} at AMFI's published NAV for ${[...navDates].sort().join(", ")}`);
+  if (review) {
+    const d = [...reviewDates].sort();
+    parts.push(`${plural(review, "")} from the family's consolidated review (MOPWM), the source for private-market holdings,`
+      + ` dated ${d.length ? (d.length === 1 ? d[0] : `${d[0]} → ${d[d.length - 1]}`) : "undated"}`);
+  }
   parts.push(live ? `${plural(live, "")} at live quotes of ${[...liveDates].sort().join(", ")}` : "no row at a live quote");
   if (mixed) parts.push(`${plural(mixed, "")} mixing these bases`);
   return `Values as struck, not on one date: ${parts.join("; ")}. Every total below blends these dates — `
@@ -701,7 +747,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     // formula silently treats as zero. A row no manager runs has no mandate.
     writeRow(ws, cols, r, {
       security: displaySecurity(h.security),
-      qty: h.qty,
+      qty: h.qty ?? DASH,
       avgCost: h.avgCost ?? DASH,
       cmp: h.cmp ?? DASH,
       marketValue: h.marketValue,
@@ -731,8 +777,18 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   // not regenerate with the book.
   const priced = rows.filter((h) => h.pnl !== null);
   const totPnL = sumOrNull(rows.map((h) => h.pnl));
-  const unpricedRows = rows.length - priced.length;
-  const unpricedMV = rows.reduce((s, h) => s + (h.pnl === null ? h.marketValue : 0), 0);
+  /**
+   * HELD AT COST IS NOT "NO COST" (Stage 10dh). A row the review holds at cost
+   * carries what was paid and no valuation, so it is outside the P&L for a
+   * different reason than a depository row whose statement reports no cost,
+   * and the note names the two apart — sending a reader after a cost the
+   * review already gives would be the wrong errand.
+   */
+  const atCostRows = rows.filter((h) => h.pnl === null && !h.costNone && h.atCostValue > 0);
+  const atCostMV = atCostRows.reduce((s, h) => s + h.marketValue, 0);
+  const isAtCost = new Set(atCostRows);
+  const unpricedRows = rows.length - priced.length - atCostRows.length;
+  const unpricedMV = rows.reduce((s, h) => s + (h.pnl === null && !isAtCost.has(h) ? h.marketValue : 0), 0);
   // …and the uncosted lines INSIDE rows that do carry a P&L, which that P&L
   // is not struck over either.
   const partRows = rows.filter((h) => h.pnl !== null && h.uncostedValue > 0);
@@ -747,11 +803,11 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
    * measured fact about every row the sentence covers.
    */
   const bySource = new Map<string, number>();
-  for (const h of rows) if (h.pnl === null) bySource.set(h.sources, (bySource.get(h.sources) ?? 0) + 1);
+  for (const h of rows) if (h.pnl === null && !isAtCost.has(h)) bySource.set(h.sources, (bySource.get(h.sources) ?? 0) + 1);
   // A cost of zero beside a positive market value is skipped for a different
   // reason than a cost nobody reported, so it is counted apart and the clause
   // naming it writes itself on the drop where one lands.
-  const zeroCostRows = rows.filter((h) => h.pnl === null && !h.costNone).length;
+  const zeroCostRows = rows.filter((h) => h.pnl === null && !h.costNone && !isAtCost.has(h)).length;
   const sourceList = [...bySource.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([name, n]) => `${name} ${n} row${n === 1 ? "" : "s"}`)
@@ -783,9 +839,16 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   // adding the column up. A P&L total struck over two thirds of the rows reads
   // exactly like one struck over all of them.
   r++;
+  const atCostClause = atCostRows.length > 0
+    ? ` ${atCostRows.length} row${atCostRows.length === 1 ? " is" : "s are"} held at cost (${fmtCr(atCostMV, 2)}): the family's`
+      + ` consolidated review records what was paid and no valuation, so ${atCostRows.length === 1 ? "its" : "their"} value is`
+      + ` ${atCostRows.length === 1 ? "its" : "their"} cost and ${atCostRows.length === 1 ? "it carries" : "they carry"} no gain — left out of`
+      + ` the P&L rather than counted as a gain of zero.`
+    : ``;
   noteRow(ws, cols, r, unpricedRows === 0
-    ? `Unrealised P&L covers all ${rows.length} rows. Market value covers all ${rows.length}.`
-    : `Unrealised P&L covers ${priced.length} of ${rows.length} rows. The other ${unpricedRows}`
+    ? `Unrealised P&L covers ${priced.length === rows.length ? `all ${rows.length}` : `${priced.length} of ${rows.length}`} rows.`
+      + atCostClause + ` Market value covers all ${rows.length}.`
+    : `Unrealised P&L covers ${priced.length} of ${rows.length} rows.` + atCostClause + ` The other ${unpricedRows}`
       + ` (${fmtCr(unpricedMV, 2)} of market value) have no cost basis this total can stand on, so they are`
       + ` left out of it rather than counted as zero`
       + (zeroCostRows > 0

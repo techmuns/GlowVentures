@@ -15,10 +15,11 @@ import {
   isCompanyShare, isFundVehicle, isCashEquivalent, isDirectEquity, isMandateHeld, excludedClasses, assetClassLabel,
   holdingBucket, bucketLabel, holdingRoute, mandateLabel, ROUTE_LABEL, ROUTE_NOTE,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
-  DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
+  DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, AT_COST_BUCKET,
+  strikesGain, isValuedAtCost, AT_COST_RETURN, AT_COST_PNL,
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf, unvaluedStatementLinesOf } from "@/lib/accounts";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_UNVALUED_HOLDINGS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { depositoryBalancesOf } from "@/lib/fundNavs";
 import { shareCandidates } from "@/lib/depositoryShares";
 import { fifoTotals } from "@/lib/fifo";
@@ -49,7 +50,7 @@ const FE_HOLDING_COLS = ["security", "heldVia", "sector", "value", "return"] as 
  * how many of its accounts are on that tab instead (FS-12).
  */
 const CAPITAL_RECORD_ACCOUNTS = new Set(
-  capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS).map((m) => m.accountId));
+  capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS).map((m) => m.accountId));
 /**
  * WHAT KINDS OF ACCOUNT A "NOT VALUED" CARD LISTS (FS-16) — read off each
  * account's own reason, which the book generates from what its statement is.
@@ -88,7 +89,7 @@ function unvaluedKinds(reasons: readonly (string | null | undefined)[]): string 
  * in that state; spelling it `"Equity"` here would make the entry dead and sort
  * the section below Cash the first time one arrived.
  */
-const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", "Cash"];
+const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", AT_COST_BUCKET, "Cash"];
 const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
 
 /**
@@ -358,15 +359,40 @@ export function FamilyEntities() {
    * EACH ENTITY'S RETURN IS FIFO, AND A WHOLE MANDATE IS STRUCK ON ITS CAPITAL.
    * `byEntity` rolls up every holding with no account registry, so it cannot
    * see that an entity holds the whole of a PMS mandate — and an entity's
-   * mandates carry most of its realised gains. Over the holdings that report a
-   * cost, which is the set this column has always been struck on.
+   * mandates carry most of its realised gains.
+   *
+   * ── STRUCK OVER `strikesGain`, AND THE REST NAMED (Stage 10dh) ────────────
+   *
+   * The set was "every holding that reports a cost", which is two kinds of
+   * holding now: one the family's consolidated review VALUES, and one it
+   * records at cost with no valuation. A line held at cost has a cost and no
+   * gain, so passing it in refused every entity's return outright —
+   * `fifoTotals` counts it against coverage, and on this book the at-cost
+   * money is 16% of Ajay's holdings and 51% of Bharat's, far over the half a
+   * percent `costCoversSet` allows. Six of seven rows read a dash where the
+   * valued half of each entity has a real return.
+   *
+   * So the set is the holdings a gain CAN be struck on — `strikesGain`, the
+   * one test Morning CIO's own gain tile and whole-book return use — and what
+   * it leaves out is NAMED: the count in each popover, the money in the hover,
+   * and an entity that is ALL at cost gets the at-cost reason rather than the
+   * no-cost one, which would send a reader looking for a statement that is
+   * already in hand.
    */
   const entities = byEntity(p, portfolio.accounts).map((e) => {
-    const fifo = fifoTotals(
-      p.filter((x) => ownerOf(accIdx, x) === e.key && x.costBasis != null && !x.costUnavailable),
-      { accounts: accIdx, universe: p },
-    );
-    return { ...e, returnPct: fifo.returnPct, fifo };
+    const own = p.filter((x) => ownerOf(accIdx, x) === e.key);
+    const struckSet = own.filter(strikesGain);
+    const fifo = fifoTotals(struckSet, { accounts: accIdx, universe: p });
+    const atCostRows = own.filter(isValuedAtCost);
+    return {
+      ...e,
+      returnPct: fifo.returnPct,
+      fifo,
+      /** How many of the entity's rows a gain is struck on, and what the rest are. */
+      struck: struckSet.length,
+      atCostCount: atCostRows.length,
+      atCostMV: sum(atCostRows.map((x) => x.marketValue)),
+    };
   });
   /**
    * THE ENTITY ROWS' OWN TOTAL, AND WHAT SEPARATES IT FROM THE BOOK.
@@ -894,15 +920,34 @@ export function FamilyEntities() {
    * tile), and it is what the footer prints now. Every figure in that sentence
    * is derived here, so it follows the book rather than this note.
    */
+  /**
+   * AND IT IS STRUCK OVER `strikesGain`, IN TWO KINDS (Stage 10dh). The set was
+   * "every row that reports a cost", which since the family's consolidated
+   * review became the source for their private-market lines is two kinds of row:
+   * one the review VALUES, and one it records at cost with no valuation. An
+   * at-cost row has a cost and no gain, so leaving it in put its money into
+   * `visCost` — the cost the note says the return is struck on — while the
+   * return itself refused it, and on an entity that is half at cost the two
+   * figures in one sentence described different sets.
+   *
+   * `visStruck` is the rows a gain CAN be struck on, `visFifo` is that set's own
+   * value and own cost held, and what is left out is counted in BOTH kinds, so
+   * the note's own numbers add to the row count beside them.
+   */
   const visMV = sum(holdings.map((h) => h.marketValue));
-  const visCost = sumOrNull(holdings.map((h) => h.costBasis));
-  const visPnL = sumOrNull(holdings.map((h) => h.unrealizedPnL));
-  const visRet = visCost !== null && visPnL !== null && visCost > 0
-    ? fifoTotals(holdings.filter((h) => h.costBasis != null && !h.costUnavailable), { accounts: accIdx, universe: p }).returnPct
-    : null;
-  const visNoCostRows = holdings.filter((h) => h.costBasis === null || h.costBasis === undefined);
-  const visNoCost = visNoCostRows.length;
-  const visNoCostMV = sum(visNoCostRows.map((h) => h.marketValue));
+  const visStruck = holdings.filter(strikesGain);
+  const visFifo = fifoTotals(visStruck, { accounts: accIdx, universe: p });
+  const visCost = visStruck.length > 0 ? visFifo.costHeld : null;
+  const visRet = visStruck.length > 0 ? visFifo.returnPct : null;
+  const visNoCostRows = holdings.filter((h) => !isValuedAtCost(h) && (!!h.costUnavailable || h.costBasis === null || h.costBasis === undefined));
+  const visAtCostRows = holdings.filter(isValuedAtCost);
+  const visNoCost = visNoCostRows.length + visAtCostRows.length;
+  const visNoCostMV = sum(visNoCostRows.map((h) => h.marketValue)) + sum(visAtCostRows.map((h) => h.marketValue));
+  /** The two kinds, named apart, for the footer's note and its dash. */
+  const visLeftOut = [
+    visNoCostRows.length > 0 ? `${visNoCostRows.length} ${visNoCostRows.length === 1 ? "reports" : "report"} a value and no cost basis` : "",
+    visAtCostRows.length > 0 ? `${visAtCostRows.length} ${visAtCostRows.length === 1 ? "is" : "are"} held at cost, with no valuation of ${visAtCostRows.length === 1 ? "its" : "their"} own` : "",
+  ].filter(Boolean).join(" and ");
   const filtered = holdings.length !== selRows.length;
   const holdingRow = (h: Position) => {
     const acc = accIdx.get(h.accountId);
@@ -919,6 +964,15 @@ export function FamilyEntities() {
      * own `visNoCost` counts, so the row and the total now name the same set.
      */
     const noCost = !!h.costUnavailable || h.costBasis === null || h.costBasis === undefined;
+    /**
+     * AND A LINE HELD AT COST IS NOT A COSTED ROW (Stage 10dh). The family's
+     * consolidated review records what was paid for it and no valuation, so its
+     * `costBasis` is real money and its `returnPct` is null — which passed every
+     * test above and fell through to `fmtPct(null)`: a BARE em dash styled as a
+     * return, over a popover reading `(A − B) ÷ B` with A and B the same figure.
+     * `AT_COST_RETURN` is the one wording every other surface gives it.
+     */
+    const atCost = isValuedAtCost(h);
     const noSector = sectorAbsentWhy(h);
     return (
       <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40"
@@ -957,7 +1011,9 @@ export function FamilyEntities() {
           {noSector ? <AbsentCell reason={noSector} /> : sectorOf(h)}
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(h.marketValue, { compact: true })}</td>
-        <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
+        <td className={`px-4 py-2.5 text-right mono ${noCost || atCost ? "text-slate-500" : changeColor(h.returnPct)}`} data-fe-return-atcost={atCost ? "1" : ""}>{atCost
+          ? <AbsentCell reason={AT_COST_RETURN} />
+          : noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
       </Tr>
     );
   };
@@ -1121,18 +1177,56 @@ export function FamilyEntities() {
                     // `check:pages` reads the arithmetic a reader is shown rather
                     // than a second computation of it.
                     const wf = weightFormula(e.mv, perStatementMV, e.weight * 100, money, entityWeightOf);
+                    /**
+                     * THE POPOVER'S COST IS `e.fifo.costHeld`, NOT `e.cost`
+                     * (Stage 10dh). `bucketBy`'s cost is every rupee the
+                     * entity's statements report, lines held at cost included;
+                     * the figure beside it is struck over the holdings a gain
+                     * CAN be struck on, so the two do not divide. `e.fifo` is
+                     * that set's own value and its own cost held, which is what
+                     * the printed gain and the printed return are made of.
+                     *
+                     * AND WHAT IT LEAVES OUT IS COUNTED ONCE, in both kinds: a
+                     * statement that reports no cost, and a review line held at
+                     * cost. `unstruck` is both, so the sentence's own two
+                     * numbers add to the entity's row count.
+                     */
+                    const unstruck = e.count - e.struck;
+                    const leftOut = [
+                      e.withoutCost > 0 ? `${e.withoutCost} report no cost` : "",
+                      e.atCostCount > 0 ? `${e.atCostCount} are held at cost — what the family's consolidated review records as paid, with no valuation (${money(e.atCostMV)})` : "",
+                    ].filter(Boolean).join(" and ");
                     const pf = e.pnl == null ? null : {
-                      ...pnlFormula(e.fifo.marketValue, e.cost, e.pnl, money),
-                      ...(e.withoutCost > 0 ? { plain: `What the ${e.count - e.withoutCost} of ${e.count} holdings whose statement reports a cost are worth today (${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}), minus what they cost. The other ${e.withoutCost} report no cost and are in NAV only — never counted at zero.` } : {}),
+                      ...pnlFormula(e.fifo.marketValue, e.fifo.costHeld, e.pnl, money),
+                      ...(unstruck > 0 ? { plain: `What the ${e.struck} of ${e.count} holdings a gain can be struck on are worth today (${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}), minus what they cost. The other ${leftOut} — never counted at zero.` } : {}),
                     };
-                    const rfBase = returnFormula(e.fifo.marketValue, e.cost, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed });
+                    const rfBase = returnFormula(e.fifo.marketValue, e.fifo.costHeld, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed });
                     // THE RETURN SAYS WHICH HOLDINGS IT IS STRUCK OVER, as the P&L
                     // beside it already does: over the costed holdings alone,
                     // which on four of these rows are a fifth to a half short of
                     // the NAV printed two cells to the left.
                     const rf = e.returnPct == null ? null : {
                       ...rfBase,
-                      ...(e.withoutCost > 0 ? { plain: `${rfBase.plain} Struck over the ${e.count - e.withoutCost} of ${e.count} holdings whose statement reports a cost — ${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}; the other ${e.withoutCost} report no cost and are in NAV only, never counted at zero.` } : {}),
+                      ...(unstruck > 0 ? { plain: `${rfBase.plain} Struck over the ${e.struck} of ${e.count} holdings a gain can be struck on — ${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}; the other ${leftOut}, never counted at zero.` } : {}),
+                    };
+                    /**
+                     * AN ENTITY NO GAIN CAN BE STRUCK ON SAYS WHICH KIND OF
+                     * HOLDING IT IS (Stage 10dh), and the no-cost wording would
+                     * be FALSE of an at-cost one: every one of its lines reports
+                     * a cost and none reports a valuation, so a reader told the
+                     * statements report no cost goes looking for a document that
+                     * is already in hand.
+                     *
+                     * `noGainWhy` takes the tail each cell needs — the one
+                     * wording `AT_COST_PNL` / `AT_COST_RETURN` carry on every
+                     * other surface — and `null` where a gain IS struck, which is
+                     * every row but the all-at-cost one on this book.
+                     */
+                    const noGainWhy = (atCost: string, noCost: string): string => {
+                      if (e.atCostCount > 0 && e.withoutCost > 0)
+                        return `none of this entity's ${e.count} holdings can carry one: ${e.atCostCount} are held at cost — the family's consolidated review records what was paid and no valuation — and ${e.withoutCost} report no cost at all`;
+                      if (e.atCostCount > 0) return `every one of this entity's ${e.atCostCount} holdings is ${atCost}`;
+                      return noCost;
                     };
                     return (
                       <Tr view={entityView} key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}
@@ -1159,15 +1253,15 @@ export function FamilyEntities() {
                         <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${e.pnl == null ? "text-slate-500" : changeColor(e.pnl)}`} data-entity-pnl-costed-value={e.fifo.marketValue}
                           data-pnl-worked={pf?.worked}>
                           {pf == null
-                            ? <AbsentCell reason="no statement behind this entity's holdings reports a cost, so there is no gain to strike — a depository records what is held and never what it was bought for" />
+                            ? <AbsentCell reason={noGainWhy(AT_COST_PNL, "no statement behind this entity's holdings reports a cost, so there is no gain to strike — a depository records what is held and never what it was bought for")} />
                             : <Auditable formula={pf}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable>}
                         </td>
                         <td className={`px-4 py-2.5 text-right mono ${e.returnPct == null ? "text-slate-500" : changeColor(e.returnPct)}`}
                           data-return-worked={rf?.worked} data-return-plain={rf?.plain}>
                           {rf == null
-                            ? <AbsentCell reason={e.cost == null
+                            ? <AbsentCell reason={noGainWhy(AT_COST_RETURN, e.cost == null
                                 ? "no statement behind this entity's holdings reports a cost, so there is no return to strike"
-                                : "the capital behind this entity's costed holdings is not positive, so a return on it has nothing to divide"} />
+                                : "the capital behind this entity's costed holdings is not positive, so a return on it has nothing to divide")} />
                             : <Auditable formula={rf}>{fmtPct(e.returnPct, { sign: true })}</Auditable>}
                         </td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}
@@ -1496,8 +1590,8 @@ export function FamilyEntities() {
                             filtered ? "" : droppedNote((x) => ownerOf(accIdx, x) === scope),
                             visNoCost > 0
                               ? visCost === null
-                                ? `Every one of these ${visNoCost} ${visNoCost === 1 ? "row reports" : "rows report"} a value and no cost basis, carrying ${money(visNoCostMV)} with nothing to measure a return against.`
-                                : `The return covers ${money(visMV - visNoCostMV)} of the ${money(visMV)} beside it, struck on ${money(visCost)} of cost — the other ${visNoCost} ${visNoCost === 1 ? "row" : "rows"}, carrying ${money(visNoCostMV)}, ${visNoCost === 1 ? "reports" : "report"} no cost basis and ${visNoCost === 1 ? "is" : "are"} skipped rather than counted as zero.`
+                                ? `No row on screen can carry a return: of these ${visNoCost}, ${visLeftOut} — ${money(visNoCostMV)} with nothing to measure one against.`
+                                : `The return covers ${money(visMV - visNoCostMV)} of the ${money(visMV)} beside it, struck on ${money(visCost)} of cost held — the other ${visNoCost} ${visNoCost === 1 ? "row" : "rows"}, carrying ${money(visNoCostMV)}, ${visNoCost === 1 ? "is" : "are"} skipped rather than counted as zero: ${visLeftOut}.`
                               : "",
                           ].filter(Boolean).join(" ") || undefined}>
                           {filtered
@@ -1511,8 +1605,8 @@ export function FamilyEntities() {
                           <td key="return" className={`px-4 py-2.5 text-right mono ${visRet == null ? "text-slate-500" : changeColor(visRet)}`}>
                             {visRet == null
                               ? <AbsentCell reason={visCost === null
-                                  ? "no row on screen reports a cost basis, so there is nothing to strike a return on — a 0.00% here would read as a book that broke even"
-                                  : "the rows on screen that do report a cost basis leave no positive cost to divide by, so no return can be struck — a 0.00% here would read as a book that broke even"} />
+                                  ? `no row on screen can carry a return — ${visLeftOut} — so there is nothing to strike one on; a 0.00% here would read as a book that broke even`
+                                  : "the rows on screen a gain can be struck on leave no positive cost to divide by, so no return can be struck — a 0.00% here would read as a book that broke even"} />
                               : fmtPct(visRet, { sign: true })}
                           </td>
                         ),

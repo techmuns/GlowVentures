@@ -9,7 +9,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare } from "@/lib/analytics";
+import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare, NO_UNIT_COUNT } from "@/lib/analytics";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
@@ -20,7 +20,7 @@ import { loadTransactions, type Txn } from "@/lib/ledger";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN } from "@/lib/txnRollup";
 import { capitalRollup, capitalMovesWithCalls, capitalReturn } from "@/lib/tranches";
 import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
-import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
+import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 /** How many accounts publish a dated capital record — COUNTED, never typed (it read "Eleven" for a book carrying more). */
 const DATED_ACCOUNTS = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId)).size;
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
@@ -212,7 +212,7 @@ const CAPITAL_COLS = ["date", "type", "in", "out", "units", "security"] as const
  * same list the Transactions table reads, so a fund's page and that table
  * cannot disagree about what was paid in and when. See `capitalMovesWithCalls`.
  */
-const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
+const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_REVIEW_FLOWS);
 const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"] as const;
 
 export function MandateHoldings() {
@@ -836,7 +836,7 @@ export function MandateHoldings() {
                             : "A cash-equivalent fund, not a share in a company — no sector applies."}>—</span>
                         : <span data-mandate-sector={sectorOf(r)} data-mandate-sector-key={r.securityKey}>{sectorOf(r)}</span>}
                     </td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-300">{r.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(r.quantity)}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">
                       {price(r.avgCost) ?? <AbsentCell reason="this statement prints no per-unit cost for the holding" />}
                     </td>

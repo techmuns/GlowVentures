@@ -164,7 +164,7 @@ ok("every skipped holding carries a reason", m.skipped.every((s) => !!s.reason &
       const sc = schemes.get(p.securityKey)!.schemecode;
       const row = m.rows.find((r) => r.schemecode === sc);
       if (!row) { ok(`${p.security} has a row`, false); continue; }
-      const byUnits = p.quantity * (schemes.get(p.securityKey)!.nav!.value ?? 0);
+      const byUnits = p.quantity! * (schemes.get(p.securityKey)!.nav!.value ?? 0);
       ok(`${p.security}: the row carries the book's value, not units × NAV`,
         row.value >= p.marketValue - 1 && Math.abs(row.value - byUnits) > 1,
         `row ${cr(row.value)} · book ${cr(p.marketValue)} · units×NAV ${cr(byUnits)}`);
@@ -294,7 +294,7 @@ const amfiFile = (() => {
   const indep = m.rows.filter((r) => {
     const ps = rows.filter((p) => (r.source === "amfi" ? amfiFile.get(p.securityKey)?.schemecode : schemes.get(p.securityKey)?.schemecode) === r.schemecode
       && (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p))));
-    const q = ps.reduce((a, p) => a + p.quantity, 0), v = ps.reduce((a, p) => a + p.marketValue, 0);
+    const q = ps.reduce((a, p) => a + (p.quantity ?? 0), 0), v = ps.reduce((a, p) => a + p.marketValue, 0);
     const ratio = q > 0 && r.nav > 0 ? v / q / r.nav : null;
     return ratio != null && (ratio > 2 || ratio < 0.5);
   });
@@ -320,7 +320,7 @@ const amfiFile = (() => {
   // THE UNIT TRAP ON THE SAME ROW: its rupee figure is the book's value, never
   // units × NAV, which is a tenth of it here — the error that once put ₹20 Cr of
   // gold at ₹2 Cr.
-  const byUnits = top && tenfold[0] ? top.quantity * tenfold[0].nav : NaN;
+  const byUnits = top && tenfold[0] ? top.quantity! * tenfold[0].nav : NaN;
   ok("constructed: that row carries the book's value, never units × NAV",
     !!top && tenfold.length === 1 && Math.abs(tenfold[0].value - top.marketValue * 10) <= 1 && Math.abs(tenfold[0].value - byUnits) > 1,
     top ? `row ${cr(tenfold[0]?.value ?? NaN)} · book ${cr(top.marketValue * 10)} · units×NAV ${cr(byUnits)}` : "no holding in scope");

@@ -32,6 +32,17 @@
 // `vacuous` names that case, and a caller renders an absence with its reason.
 import type { Position } from "./types";
 
+// ── AND A LINE HELD AT COST HAS A COST AND NO GAIN (Stage 10dh) ─────────────
+//
+// The family's consolidated review is the source for private-market holdings,
+// and most of its private investments are recorded as an amount PAID with no
+// valuation — so their value IS their cost. That cost is real capital in, and
+// it is in `cost`; a gain struck on it would be a 0% nobody measured, so it is
+// in no `unrealised`. A row whose costed lines are ALL held at cost has no
+// gain at all — null, never ₹0. The review also records many of them with no
+// unit count: such a line adds to no unit total, and a row holding one has no
+// unit count of its own (`unitsKnown`), so no average cost is struck over it.
+
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
 /** A line whose statement reports what it cost — the one test, used everywhere. */
@@ -44,14 +55,22 @@ export type CostedFigures = {
   /** The units and the value THAT cost covers — never the whole row's. */
   costedUnits: number;
   costedValue: number;
-  /** Σ (value − cost) over those same lines; null exactly where `cost` is. */
+  /**
+   * Σ (value − cost) over the costed lines a gain is struck on; null where
+   * `cost` is, and where every costed line is HELD AT COST (Stage 10dh).
+   */
   unrealised: number | null;
-  /** cost ÷ costed units; null where there is no cost or no unit count behind it. */
+  /** cost ÷ costed units; null where there is no cost, or a costed line carries no unit count. */
   avgCost: number | null;
   /** The part no statement reports a cost for. */
   uncosted: { lines: number; units: number; value: number };
+  /** The review's lines HELD AT COST: in `cost` and `costedValue`, in no gain (Stage 10dh). */
+  atCost: { lines: number; value: number };
   lines: number;
+  /** Σ units over the lines that carry a count; the row's own count only where `unitsKnown`. */
   units: number;
+  /** Every line carries a unit count — a review line held at cost may record none. */
+  unitsKnown: boolean;
   value: number;
   /** Every line with any value reports a cost — the cost describes the whole row. */
   complete: boolean;
@@ -69,18 +88,24 @@ export type CostedFigures = {
  * consolidated (`dedupedPositions`), and left raw where it is per account.
  */
 export function costedFigures(
-  set: readonly Pick<Position, "costBasis" | "costUnavailable" | "marketValue" | "quantity">[],
+  set: readonly (Pick<Position, "costBasis" | "costUnavailable" | "marketValue" | "quantity"> & { valuedAtCost?: boolean })[],
 ): CostedFigures {
-  let cost: number | null = null, costedUnits = 0, costedValue = 0;
-  let uLines = 0, uUnits = 0, uValue = 0, units = 0, value = 0;
+  let cost: number | null = null, costedUnits = 0, costedValue = 0, struck = 0, gain = 0;
+  let uLines = 0, uUnits = 0, uValue = 0, units = 0, value = 0, aLines = 0, aValue = 0;
+  let unitsKnown = true, costedUnitsKnown = true;
   for (const p of set) {
-    const q = isNum(p.quantity) ? p.quantity : 0;
+    const known = isNum(p.quantity);
+    const q = known ? (p.quantity as number) : 0;
+    if (!known) unitsKnown = false;
     units += q;
     value += p.marketValue;
     if (reportsCost(p)) {
       cost = (cost ?? 0) + (p.costBasis as number);
       costedUnits += q;
       costedValue += p.marketValue;
+      if (!known) costedUnitsKnown = false;
+      if (p.valuedAtCost === true) { aLines += 1; aValue += p.marketValue; }
+      else { struck += 1; gain += p.marketValue - (p.costBasis as number); }
     } else {
       uLines += 1; uUnits += q; uValue += p.marketValue;
     }
@@ -91,11 +116,13 @@ export function costedFigures(
     cost: c,
     costedUnits,
     costedValue,
-    unrealised: c === null ? null : costedValue - c,
-    avgCost: c !== null && costedUnits > 0 ? c / costedUnits : null,
+    unrealised: c === null || struck === 0 ? null : gain,
+    avgCost: c !== null && costedUnitsKnown && costedUnits > 0 ? c / costedUnits : null,
     uncosted: { lines: uLines, units: uUnits, value: uValue },
+    atCost: { lines: aLines, value: aValue },
     lines: set.length,
     units,
+    unitsKnown,
     value,
     complete: uLines === 0 || uValue === 0,
     vacuous,
@@ -107,9 +134,17 @@ export function costedFigures(
  * row the figure covers. Empty where the cost covers the whole row.
  */
 export function costCoverNote(f: CostedFigures, money: (n: number) => string, unitsFmt: (n: number) => string): string {
-  if (f.complete || f.cost === null) return "";
-  return `Over the ${unitsFmt(f.costedUnits)} of ${unitsFmt(f.units)} units whose statement reports a cost (${money(f.costedValue)} of ${money(f.value)}); `
-    + `${f.uncosted.lines} line${f.uncosted.lines === 1 ? "" : "s"} worth ${money(f.uncosted.value)} ${f.uncosted.lines === 1 ? "reports" : "report"} none — a depository holds shares and does not record what they cost — and ${f.uncosted.lines === 1 ? "is" : "are"} left out of the cost, the average and the gain alike, never counted at zero.`;
+  const atCost = f.atCost.lines > 0
+    ? `${f.atCost.lines === 1 ? "1 line" : `${f.atCost.lines} lines`} worth ${money(f.atCost.value)} ${f.atCost.lines === 1 ? "is" : "are"} held at cost — the family's consolidated review records what was paid and no valuation — so ${f.atCost.lines === 1 ? "it is" : "they are"} in the cost and in no gain.`
+    : "";
+  if (f.complete || f.cost === null) return atCost;
+  // Where a line carries no unit count, the cover is stated in value alone.
+  const over = f.unitsKnown
+    ? `Over the ${unitsFmt(f.costedUnits)} of ${unitsFmt(f.units)} units whose statement reports a cost (${money(f.costedValue)} of ${money(f.value)}); `
+    : `Over the ${money(f.costedValue)} of ${money(f.value)} whose statement reports a cost; `;
+  return over
+    + `${f.uncosted.lines} line${f.uncosted.lines === 1 ? "" : "s"} worth ${money(f.uncosted.value)} ${f.uncosted.lines === 1 ? "reports" : "report"} none — a depository holds shares and does not record what they cost — and ${f.uncosted.lines === 1 ? "is" : "are"} left out of the cost, the average and the gain alike, never counted at zero.`
+    + (atCost ? ` ${atCost}` : "");
 }
 
 /** Why a vacuous cost is absent. */

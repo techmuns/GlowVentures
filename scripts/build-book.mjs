@@ -55,6 +55,9 @@ const DEPOSITORY_PROVIDERS = new Set([CDSL_DEMAT_PROVIDER, NSDL_DEMAT_PROVIDER])
  */
 const CUSTODY_PROVIDERS = new Set([...DEPOSITORY_PROVIDERS, HDFC_NSDL_PROVIDER]);
 
+import { reviewBookLayer } from "./lib/reviewBook.mjs";
+import { NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME } from "../shared/reviewHolders.mjs";
+import { REVIEW_AS_OF } from "./lib/reviewPrivateRead.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
 const OUT = process.env.GLOW_BOOK_OUT ?? path.join(ROOT, "src", "data", "glowData.ts");
@@ -94,6 +97,16 @@ const r4 = (n) => (n === null || n === undefined ? null : Math.round(n * 10000) 
  * `check:pages` asserts the absence on nine routes and is what catches it.
  */
 const RINGFENCED_SECURITY_KEYS = new Set(["polycab-india"]);
+
+/**
+ * THE FAMILY'S CONSOLIDATED REVIEW (MOPWM) IS THE SOURCE FOR PRIVATE-MARKET
+ * HOLDINGS — Stage 10dh, at the family's instruction. Every private-market line
+ * of the review becomes a position here, and the statement rows it replaces go
+ * (named in `BOOK_REVIEW_SUPERSEDED`). `scripts/lib/reviewBook.mjs` builds the
+ * rows and refuses anything it cannot tie to the review's own totals. Setting
+ * this false puts the statements back, in one line, like the ring-fence above.
+ */
+const PRIVATE_MARKET_FROM_REVIEW = true;
 
 const isNum = (v) => typeof v === "number" && Number.isFinite(v);
 const sum = (xs) => xs.reduce((a, b) => a + b, 0);
@@ -3922,6 +3935,37 @@ function build(archived) {
     if (RINGFENCED_SECURITY_KEYS.has(positions[i].securityKey)) positions.splice(i, 1);
   }
 
+  // THE REVIEW'S PRIVATE-MARKET ROWS, IN PLACE OF THE STATEMENT ROWS THEY REPLACE.
+  const review = PRIVATE_MARKET_FROM_REVIEW ? reviewBookLayer({ root: ROOT, positions, unvalued: unvaluedHoldings }) : null;
+  const supersededUnvaluedBy = new Map();
+  if (review) {
+    const id = (x) => `${x.accountId}|${x.securityKey}`;
+    for (let i = positions.length - 1; i >= 0; i--) if (review.removePositions.has(id(positions[i]))) positions.splice(i, 1);
+    for (let i = unvaluedHoldings.length - 1; i >= 0; i--) {
+      const u = unvaluedHoldings[i];
+      if (!review.removeUnvalued.has(id(u))) continue;
+      supersededUnvaluedBy.set(u.accountId, (supersededUnvaluedBy.get(u.accountId) ?? 0) + 1);
+      unvaluedHoldings.splice(i, 1);
+    }
+    positions.push(...review.positions);
+    positions.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey));
+    notes.push(...review.notes);
+    // AN ACCOUNT THE REVIEW DATES MUST HOLD ONLY THE REVIEW'S LINES. Its dated
+    // record replaces the statement's calls and capital moves on the
+    // Transactions card (`capitalMovesWithCalls`), so a statement holding with
+    // money left beside it would be valued against purchases that never bought
+    // it. Refused here rather than discovered on a page (Stage 10dh).
+    const dated = new Set(review.flows.map((f) => f.accountId));
+    const mixed = positions.filter((p) => dated.has(p.accountId) && !p.review
+      && ((isNum(p.marketValue) && p.marketValue !== 0) || (isNum(p.costBasis) && p.costBasis !== 0)));
+    if (mixed.length) {
+      throw new Error(`build-book: ${mixed.length} statement holding(s) carry money on an account the review dates — `
+        + mixed.map((p) => `${p.security} (${p.accountId})`).join("; ")
+        + ". The review's dated rows would stand in for a record that bought something else.");
+    }
+    notes.push(`review: ${dated.size} account(s) carry the review's dated rows, and every holding with money on them is the review's own`);
+  }
+
   /**
    * THE UNVALUED ROWS: FENCED, CROSS-REFERENCED, ORDERED.
    *
@@ -4025,12 +4069,28 @@ function build(archived) {
       + "build-book.mjs to fold it back into the book.");
   }
 
+  if (review) {
+    accounts.push(...review.accounts);
+    const reviewHeld = new Set(review.positions.map((p) => p.accountId));
+    for (const a of accounts) {
+      if (reviewHeld.has(a.accountId)) { a.noPositionsReason = null; continue; }
+      const n = supersededUnvaluedBy.get(a.accountId);
+      if (!n) continue;
+      const left = unvaluedHoldings.some((u) => u.accountId === a.accountId) || positions.some((p) => p.accountId === a.accountId);
+      a.noPositionsReason = left && a.noPositionsReason
+        ? `${a.noPositionsReason}. ${n} of these are private-market holdings, counted under the family's consolidated review (MOPWM, 30 Jun 2026) instead`
+        : left ? a.noPositionsReason
+        : `the private-market holding this statement records is counted under the family's consolidated review (MOPWM, 30 Jun 2026), the source for private-market holdings; the statement's units stay in the archive`;
+    }
+  }
+
   accounts.sort((a, b) => a.accountId.localeCompare(b.accountId));
   capitalGains.sort((a, b) => a.accountId.localeCompare(b.accountId));
 
   const owners = OWNERS
     .filter((o) => accounts.some((a) => a.ownerId === o.ownerId))
     .map((o) => ({ ownerId: o.ownerId, displayName: o.displayName }));
+  if (accounts.some((a) => a.ownerId === NOT_ATTRIBUTED)) owners.push({ ownerId: NOT_ATTRIBUTED, displayName: NOT_ATTRIBUTED_NAME });
 
   /**
    * CARRY BOTH, COUNT ONCE.
@@ -4252,6 +4312,17 @@ function build(archived) {
   const { navHistory, accountNavHistory, coverage: navCoverage, snapshotsByAccount, undatedCapital } = navHistoryFrom(
     byAccount, new Set(accounts.map((a) => a.accountId)), dedupeByAcctSec, accountCashFlows, positions, notes,
   );
+  if (review) {
+    // An account valued by the review alone has one dated value — the review's.
+    const valueOf = (aid) => r2(positions.filter((p) => p.accountId === aid).reduce((t, p) => t + p.marketValue, 0));
+    const dateOf = (aid) => positions.filter((p) => p.accountId === aid).map((p) => p.priceAsOf).sort().at(-1) ?? REVIEW_AS_OF;
+    for (let i = navCoverage.unvalued.length - 1; i >= 0; i--) {
+      const u = navCoverage.unvalued[i];
+      if (u.bookValue > 0) { navCoverage.unvalued.splice(i, 1); navCoverage.single.push({ accountId: u.accountId, provider: u.provider, accountNo: u.accountNo, date: dateOf(u.accountId), bookValue: u.bookValue }); }
+    }
+    for (const a of review.accounts) navCoverage.single.push({ accountId: a.accountId, provider: a.provider, accountNo: a.accountNo, date: dateOf(a.accountId), bookValue: valueOf(a.accountId) });
+    navCoverage.single.sort((x, y) => x.accountId.localeCompare(y.accountId));
+  }
   // Struck on the SAME snapshots the series is, so the bridge's opening and
   // closing values are the same figures the chart plots. Deriving them again
   // from the archive would be a second selection of "which statement is the
@@ -4344,6 +4415,33 @@ function build(archived) {
     }
   }
   const shareMovements = shareMovementsFrom(docs, [...positions, ...polycab], accounts, notes, unvaluedHoldings);
+  for (const r of review?.removeWindows ?? []) {
+    // A WINDOW GOES WITH THE LINE IT IS THE QUANTITY ACCOUNT OF. Named by its key,
+    // or — where the key is only the depository's own spelling — by the ISIN its
+    // tape prints, on the one account named. Anything but exactly one window
+    // refuses the build: a supersede that took the wrong window, or none, would
+    // leave a line counted twice or a movement nobody can find.
+    const keys = r.isin
+      ? Object.keys(shareMovements).filter((k) => shareMovements[k].accountId === r.accountId
+        && (shareMovements[k].isin ?? "").trim().toUpperCase() === r.isin.toUpperCase())
+      : [`${r.accountId}|${r.securityKey}`].filter((k) => k in shareMovements);
+    if (keys.length !== 1) {
+      throw new Error(`build-book: the review supersedes the movement window ${r.accountId}|${r.securityKey ?? `isin ${r.isin}`}, `
+        + `which is in the book ${keys.length} times, not once`);
+    }
+    // What the depository printed stays named: its own spelling, and the units it
+    // closed the window at (null where the tape printed no closing).
+    const w = shareMovements[keys[0]];
+    r.entry.securityKey = w.securityKey;
+    r.entry.security = w.security ?? r.entry.reviewLine;
+    r.entry.quantity = w.closing ?? null;
+    // AND THE WINDOW ITSELF RIDES ON THE ENTRY. The statement still reports the
+    // holding — what it no longer does is decide the book's figure for it — so
+    // the review cross-check (section H) reads its dated balance from here
+    // rather than calling a line the depository prints "on no statement".
+    r.entry.window = { ...w };
+    delete shareMovements[keys[0]];
+  }
 
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
@@ -4351,6 +4449,7 @@ function build(archived) {
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
     excludedAccounts, unvaluedHoldings, separateInvestments,
+    reviewSuperseded: review?.superseded ?? [], reviewWrittenOff: review?.writtenOff ?? [], reviewFlows: review?.flows ?? [],
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
     // depend on map iteration, and the book must regenerate byte-identically.
@@ -4427,7 +4526,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
+  L.push("  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -4452,6 +4551,20 @@ function emit(book) {
   L.push(" * names the same owner's fund account whose own statement reports the identical units.");
   L.push(" */");
   L.push(`export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = ${j(book.unvaluedHoldings)};`);
+  L.push("");
+  L.push("/** Statement rows the family's consolidated review replaces (Stage 10dh): each names the review line now counted. */");
+  L.push(`export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = ${j(book.reviewSuperseded)};`);
+  L.push("");
+  L.push("/** The review's written-off private investments: a measured ₹0, in no total (Stage 10dh). */");
+  L.push(`export const BOOK_REVIEW_WRITTEN_OFF: ReviewWrittenOff[] = ${j(book.reviewWrittenOff)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * THE REVIEW'S DATED ROWS behind each holding it values (Stage 10dh): every purchase,");
+  L.push(" * sale and income payout on its Transactions tab, each on its own date. What a private");
+  L.push(" * fund's money-weighted return is struck on — the value it closes on is the review's,");
+  L.push(" * so its flows are the same document's. `amount` is positive; `kind` gives the direction.");
+  L.push(" */");
+  L.push(`export const BOOK_REVIEW_FLOWS: ReviewFlow[] = ${j(book.reviewFlows)};`);
   L.push("");
   L.push("/**");
   L.push(" * RING-FENCED PROMOTER STOCK — Polycab India, the family's own promoter");
@@ -4670,6 +4783,36 @@ function report(book) {
     L.push(`| ${a.accountNo} | ${a.provider} | ${a.owner ?? "—"} | ${a.strategy ?? "—"} | ${a.asOf ?? "—"} | ${ps.length} | ${r2(mv).toLocaleString("en-IN")} |`);
   }
   L.push("");
+  if (book.reviewSuperseded.length) {
+    L.push("## Private market — from the family's consolidated review");
+    L.push("");
+    L.push("Stage 10dh: the review (MOPWM, 30 Jun 2026) is the source for private-market holdings. These statement rows are replaced, each by the review line named:");
+    L.push("");
+    L.push("| Account | Statement row | Kind | Units | Review line |");
+    L.push("| --- | --- | --- | ---: | --- |");
+    for (const s of book.reviewSuperseded) L.push(`| ${s.accountId} | ${s.security ?? s.securityKey} | ${s.kind} | ${s.quantity ?? "—"} | ${s.reviewLine} |`);
+    L.push("");
+    const fresher = book.positions.filter((p) => p.review && /A statement says otherwise/.test(p.reviewNote));
+    L.push(`Where a statement disagrees, the review is followed and the statement named (${fresher.length} rows):`);
+    L.push("");
+    for (const p of fresher) L.push(`- ${p.accountId} · ${p.security}: ${p.reviewNote.split("A statement says otherwise: ")[1]}`);
+    L.push("");
+    L.push(`Written off on the review, a measured ₹0 in no total: ${book.reviewWrittenOff.map((w) => w.security).join(", ")}.`);
+    L.push("");
+    const fh = new Map();
+    for (const f of book.reviewFlows) {
+      const k = `${f.accountId} · ${f.security}`;
+      const c = fh.get(k) ?? { purchase: 0, sale: 0, income: 0 };
+      c[f.kind] += 1;
+      fh.set(k, c);
+    }
+    L.push(`The review's dated rows behind the holdings it values (${book.reviewFlows.length} rows, \`BOOK_REVIEW_FLOWS\`) — what each fund's return is struck on:`);
+    L.push("");
+    L.push("| Holding | Purchases | Sales | Income rows |");
+    L.push("| --- | ---: | ---: | ---: |");
+    for (const [k, c] of fh) L.push(`| ${k} | ${c.purchase} | ${c.sale} | ${c.income} |`);
+    L.push("");
+  }
   L.push("## Per owner");
   L.push("");
   L.push("| Owner | Accounts | Positions | Market value |");

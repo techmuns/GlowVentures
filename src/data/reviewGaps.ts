@@ -6,8 +6,9 @@
 // one of these names is told why it is absent and which document would close
 // it, rather than being shown an empty result they cannot tell from a defect.
 //
-// NOT A SOURCE, AND NOT ONE FIGURE OF ONE. The consolidated review is held
-// out of the book by decision; what travels here is a NAME, a custodian and
+// NOT ONE FIGURE OF THE REVIEW TRAVELS HERE. Since Stage 10dh the book carries
+// the review's private-market lines through scripts/lib/reviewBook.mjs; every
+// other review line is a cross-check. What travels here is a NAME, a custodian and
 // two sentences — an absence and a document to ask for. There is deliberately
 // no value and no quantity on this type, and the generator throws rather than
 // emit one. Nothing here reaches `glowData.ts`, any total, or any allocation.
@@ -29,13 +30,6 @@ export interface ReviewGap {
 export const REVIEW_AS_OF = "30 June 2026";
 
 export const REVIEW_GAPS: ReviewGap[] = [
-  {
-    "name": "15% K M Global - Credit Private Limited",
-    "aliases": [],
-    "custodian": "Debt tab",
-    "why": "a fund line on the Debt tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price",
-    "ask": "AMC folio statements or a CAS for the mutual-fund and liquid holdings on the Debt / Cash / Alternate tabs"
-  },
   {
     "name": "Aditya Birla SL Balanced Advantage Fund(G)",
     "aliases": [],
@@ -327,13 +321,6 @@ export const REVIEW_GAPS: ReviewGap[] = [
   },
   {
     "name": "Zaggle Prepaid Ocean Services Ltd.",
-    "aliases": [],
-    "custodian": "MOPWM",
-    "why": "held at Motilal Oswal; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat",
-    "ask": "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
-  },
-  {
-    "name": "Zepto",
     "aliases": [],
     "custodian": "MOPWM",
     "why": "held at Motilal Oswal; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat",

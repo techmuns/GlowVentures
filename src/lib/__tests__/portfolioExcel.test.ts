@@ -45,6 +45,7 @@ import path from "node:path";
 import {
   BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY,
   BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
+  BOOK_REVIEW_FLOWS,
 } from "@/data/glowData";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { buildPortfolioWorkbook } from "@/lib/exportPortfolioExcel";
@@ -97,8 +98,8 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
 const isPms = (p: Position) => ACC.get(p.accountId)?.engagement === "PMS";
 /** The NAV the page overlays: a usable published NAV times the units held. */
 const NAV = new Map(BOOK_FUND_NAVS.filter((e) => e.usableForValue && e.nav > 0).map((e) => [e.securityKey, e]));
-const navOf = (p: Position) => (!p.live && p.quantity > 0 ? NAV.get(p.securityKey) ?? null : null);
-const navMV = (p: Position) => { const e = navOf(p); return e ? p.quantity * e.nav : p.marketValue; };
+const navOf = (p: Position) => (!p.live && (p.quantity ?? 0) > 0 ? NAV.get(p.securityKey) ?? null : null);
+const navMV = (p: Position) => { const e = navOf(p); return e ? p.quantity! * e.nav : p.marketValue; };
 /**
  * AMFI's date for a line the page prices at a NAV: the overlay's, or — for a
  * depository's own closing units, which have no statement mark at all — the
@@ -168,6 +169,7 @@ const INDEX = buildDatedCapital({
   moves: BOOK_CAPITAL_MOVES, commitments: BOOK_COMMITMENTS,
   accounts: labelledAccounts(BOOK_ACCOUNTS), positions: labelledPositions(BOOK_POSITIONS),
   tranches: BOOK_POSITION_TRANCHES, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
+  reviewFlows: BOOK_REVIEW_FLOWS,
 });
 /** The current holdings as the page holds them — what "every holding of an account" is measured against. */
 const UNIVERSE: Position[] = PAGE.filter((_, i) => NAV_SET.held.includes(RAW[i]));
@@ -188,13 +190,23 @@ const capitalOf = (key: string) => {
   return ps ? INDEX.behind(firstOfGroup(ps), UNIVERSE) : null;
 };
 /**
- * THE POOLED RATE, SOLVED HERE: every account's dated flows, each closing on
+ * WHICH DATED RECORD A LINE IS PART OF. An account's, for a statement account;
+ * for a review holder bucket (Stage 10dh) the LINE's own — the bucket groups a
+ * member's private investments as the review lists them, and each is a
+ * separate investment with its own dated purchases. Re-expressed here from the
+ * account registry's own flag, never read back through the index.
+ */
+const REVIEW_HOLDERS = new Set(BOOK_ACCOUNTS.filter((a) => a.reviewHolder).map((a) => a.accountId));
+const recordKeysOf = (ps: readonly Position[]) =>
+  [...new Set(ps.map((p) => (REVIEW_HOLDERS.has(p.accountId) ? `${p.accountId}|${p.securityKey}` : p.accountId)))].sort();
+/**
+ * THE POOLED RATE, SOLVED HERE: every record's dated flows, each closing on
  * its own value and date (a folio redeemed to nothing on its last flow), and
  * Σ amount ÷ (1 + r)^(days / 365) = 0 found by bisection — never `xirrPct`.
  */
-function solveXirr(accountIds: readonly string[]): number | null {
+function solveXirr(recordKeys: readonly string[]): number | null {
   const flows: { t: number; amount: number }[] = [];
-  for (const a of accountIds) {
+  for (const a of recordKeys) {
     const g = INDEX.of(a);
     if (!g || !g.flows?.length || g.value == null) return null;
     for (const f of g.flows) flows.push({ t: Date.parse(f.date), amount: f.amount });
@@ -482,7 +494,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     const set = firstOfGroup(ps);
     const hpr = fifoRow(set);
     const want = cap.days < 365 ? { tag: "HPR", pct: hpr as number | null, note: `The money has been in for ${cap.days} days` }
-      : cap.flows > 1 ? { tag: "XIRR", pct: solveXirr(cap.accountIds), note: `Money-weighted over ${cap.flows} dated payments` }
+      : cap.flows > 1 ? { tag: "XIRR", pct: solveXirr(recordKeysOf(set)), note: `Money-weighted over ${cap.flows} dated payments` }
       : 1 + hpr / 100 > 0 ? { tag: "CAGR", pct: (Math.pow(1 + hpr / 100, 365 / cap.days) - 1) * 100, note: `One payment on ${cap.since}` }
       : { tag: "HPR", pct: hpr, note: "A total loss has no compound rate" };
     subjects++;
@@ -603,22 +615,31 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   const asOfLine = String(holdings.getRow(headerRowOf(holdings) - 1).getCell(1).value ?? "");
   const lines = firstOfGroup(NAV_SET.held);
   // Each statement line's own value date — the day its statement PRICES (VD-17).
-  const stmtDates = lines.filter((p) => !navDateOf(p)).map((p) => valueDateOfLine(p) ?? "").filter(Boolean).sort();
+  // A line the family's consolidated review values is NOT a statement mark
+  // (Stage 10dh): it is dated on its own clause, by the review's own date.
+  const stmtDates = lines.filter((p) => !navDateOf(p) && !p.review).map((p) => valueDateOfLine(p) ?? "").filter(Boolean).sort();
+  const reviewDates = lines.filter((p) => !navDateOf(p) && p.review).map((p) => valueDateOfLine(p) ?? "").filter(Boolean).sort();
   const navDates = [...new Set(lines.map((p) => navDateOf(p)).filter((d): d is string => !!d))].sort();
   ok("the line under the title dates the figures: the statement range, the NAV date, and no live quote",
      stmtDates.length > 0 && navDates.length > 0
        && asOfLine.includes(`${stmtDates[0]} → ${stmtDates[stmtDates.length - 1]}`)
        && navDates.every((d) => asOfLine.includes(d)) && /no row at a live quote/.test(asOfLine),
      asOfLine.slice(0, 160));
+  ok("...and dates the review's private-market lines on a clause of their own, by the review's own dates",
+     reviewDates.length > 0
+       && new RegExp(`\\d+ rows? from the family's consolidated review \\(MOPWM\\)[^;]*dated ${reviewDates[0]} → ${reviewDates[reviewDates.length - 1]}`).test(asOfLine),
+     `${reviewDates.length} review lines, ${reviewDates[0]} → ${reviewDates[reviewDates.length - 1]} · ${asOfLine.slice(0, 400)}`);
   const count = (re: RegExp) => Number(asOfLine.match(re)?.[1] ?? 0);
   const bases = count(/(\d+) rows? at statement marks/) + count(/(\d+) rows? at AMFI/)
+    + count(/(\d+) rows? from the family's consolidated review/)
     + count(/(\d+) rows? at live quotes/) + count(/(\d+) rows? mixing/);
   eq("...and the rows it counts per basis are every row", bases, nRows);
 
   // EACH ROW'S OWN BASIS AND DATE, checked on the rows that carry one security.
   const priced = columnUnder(holdings, "Priced as of", dataLast).map(String);
   ok("every row says how and when it is priced",
-     priced.every((v) => /^(Statement|AMFI NAV|Live quote) (\d{4}-\d\d-\d\d|undated)( \+ (Statement|AMFI NAV|Live quote) (\d{4}-\d\d-\d\d|undated))*$/.test(v)));
+     priced.every((v) => /^(Statement|AMFI NAV|Live quote|Review \(MOPWM\)) (\d{4}-\d\d-\d\d|undated)( \+ (Statement|AMFI NAV|Live quote|Review \(MOPWM\)) (\d{4}-\d\d-\d\d|undated))*$/.test(v)),
+     priced.filter((v) => !/^(Statement|AMFI NAV|Live quote|Review \(MOPWM\)) /.test(v)).slice(0, 3).join("; "));
   const navKeys = new Set(lines.filter((p) => navDateOf(p)).map((p) => p.securityKey));
   eq("a row is on AMFI's NAV exactly where the page priced its scheme at one",
      priced.filter((v) => v.startsWith("AMFI NAV")).length, navKeys.size);
@@ -633,7 +654,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     const ps = byName.get(String(r["Security"]));
     if (!ps || ps.length !== 1 || ROWS.filter((x) => x["Security"] === r["Security"]).length !== 1) continue;
     const p = ps[0];
-    const want = `${navDateOf(p) ? "AMFI NAV" : "Statement"} ${valueDateOfLine(p)}`;
+    const want = `${navDateOf(p) ? "AMFI NAV" : p.review ? "Review (MOPWM)" : "Statement"} ${valueDateOfLine(p)}`;
     checked++;
     if (r["Priced as of"] !== want) offDate.push(`${r["Security"]}: ${r["Priced as of"]} vs ${want}`);
   }
@@ -676,7 +697,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   const qtyByKey = new Map<string, { name: string; qty: number }>();
   for (const p of PAGE) {
     const e = qtyByKey.get(p.securityKey) ?? { name: nameOf(p), qty: 0 };
-    e.qty += p.quantity;
+    e.qty += p.quantity ?? 0;
     qtyByKey.set(p.securityKey, e);
   }
   const keyOfRow = (r: Record<string, unknown>): string | null => {
@@ -704,7 +725,21 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
        || `${depoRows.length} rows over ${DEPO.length} depository lines · kinds ${[...kindsSeen].sort().join(", ")}`);
   // A cost nobody reported names WHOSE statement it is, never one cause for all.
   const providers = [...new Set(BOOK_ACCOUNTS.map((a) => a.provider))];
-  const costless = ROWS.filter((r) => r["Avg Cost (₹)"] === DASH && r["Unreal. P&L (₹)"] === DASH);
+  // HELD AT COST IS NOT "NO COST" (Stage 10dh): a row every line of which the
+  // review holds at cost reports what was paid — it is a cost — and has no gain
+  // because its value IS that cost. Which rows those are is read off the BOOK.
+  const atCostName = (n: string) => { const ps = byName.get(n) ?? []; return ps.length > 0 && ps.every((p) => p.valuedAtCost === true); };
+  const atCostRows = ROWS.filter((r) => atCostName(String(r["Security"])));
+  const atCostWrong = atCostRows.filter((r) => {
+    const n = String(r["Notes"]);
+    return r["Unreal. P&L (₹)"] !== DASH || r["Return"] !== DASH || r["CMP (₹)"] !== DASH
+      || !/consolidated review \(MOPWM\)/.test(n) || !/held at cost/.test(n)
+      || /no statement behind this holding reports what it cost/.test(n);
+  });
+  ok("a row the review holds at cost says so — the review, at cost, no gain, no mark — and never that no cost is reported",
+     atCostRows.length > 0 && atCostWrong.length === 0,
+     atCostWrong.slice(0, 3).map((r) => `${r["Security"]}: ${String(r["Notes"]).slice(0, 140)}`).join("; ") || `${atCostRows.length} rows`);
+  const costless = ROWS.filter((r) => r["Avg Cost (₹)"] === DASH && r["Unreal. P&L (₹)"] === DASH && !atCostName(String(r["Security"])));
   const unnamed = costless.filter((r) => !/reported by/.test(String(r["Notes"])) || !providers.some((pv) => String(r["Notes"]).includes(pv)));
   ok("a cost-less row names the statement it came from", costless.length > 0 && unnamed.length === 0,
      unnamed.slice(0, 3).map((r) => String(r["Security"])).join("; ") || `${costless.length} rows`);
