@@ -81,7 +81,10 @@ import { liveWithheldReason } from "@/lib/corporateActions";
 
 type Row = DailyMover;
 
-const TOP_N = 6;
+// EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10dn). The headings count
+// every name that moved each way — "15 gainers", "23 losers" — and a list cut to
+// six under that count read as a card that had lost the rest. The family asked
+// for the whole list; the ranking still decides the ORDER, never the length.
 
 /**
  * ── WHAT "TODAY'S MOVERS" COVERS ────────────────────────────────────────────
@@ -289,8 +292,8 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       rows, session, omitted, observedFrom, observedTo, impactNames: impactRows.length, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols, qtyDates,
       priceOnlyNames: priceOnly.map((r) => r.security), priceOnlyReasons,
       pricedNames: rows.length, distinct, unpriceable: cov.withoutSymbol,
-      gainers: [...gainers].sort(cmp).slice(0, TOP_N),
-      losers: [...losers].sort(cmp).slice(0, TOP_N),
+      gainers: [...gainers].sort(cmp),
+      losers: [...losers].sort(cmp),
       gainCount: gainers.length, lossCount: losers.length, flat,
       gainSum: gainers.length && gainers.every((r) => r.dayChange !== null) ? gainers.reduce((a, r) => a + r.dayChange!, 0) : null,
       lossSum: losers.length && losers.every((r) => r.dayChange !== null) ? losers.reduce((a, r) => a + r.dayChange!, 0) : null,

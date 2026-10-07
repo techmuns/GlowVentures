@@ -62,7 +62,9 @@ import { splitFundClass } from "../../shared/securityKey.mjs";
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Row = InsideMoverRow;
-const TOP_N = 6;
+// EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10dn), as on the Direct
+// Equity branch: the headings count every company that moved each way, and the
+// ranking decides the ORDER, never the length.
 const SCOPE_LABEL = "AIF & PMS";
 
 /** A fund without its unit class — the class is the family's holding, not the fund. */
@@ -142,8 +144,8 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       withheldReasons: [...new Set(withheld.map((r) => inside.omitted.get(r.securityKey))
         .filter((x): x is string => !!x))],
       fundOnlyNames: fundOnly.map((r) => r.security),
-      gainers: [...gainers].sort(cmp).slice(0, TOP_N),
-      losers: [...losers].sort(cmp).slice(0, TOP_N),
+      gainers: [...gainers].sort(cmp),
+      losers: [...losers].sort(cmp),
       gainCount: gainers.length, lossCount: losers.length,
       /**
        * A TOTAL ONLY WHERE IT COVERS ITS OWN LIST. Ranked by % move the list

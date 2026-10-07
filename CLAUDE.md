@@ -27360,6 +27360,94 @@ against a painted height.
 `ONLY=family,family-entity` **4 combinations clean**, the `family` scroll
 failure gone. A layout cap moves no figure in the book.
 
+### Stage 10dn — EVERY MOVER, A CHART THE READER PICKS, ONE ROW PER HOLDING, AND STRIPED ROWS
+
+*"Open PR and do not merge to main until i tell you to … show the complete list
+of daily movers … give a view selector … bar graph or a pie chart or any other
+suitable view … Green Lantern Capital LP as 2 separate line items, but they need
+to be one … show that in drop down … one row needs to be of one colour and then
+the next row will be of a different shade … implement this on the whole
+dashboard."*
+
+No figure in the book moves: `glowData.ts` and `docs/BOOK-REPORT.md` regenerate
+byte-identically.
+
+- **Today's movers lists every mover**, on the Direct Equity branch and on
+  #120's AIF & PMS branch. Both cut each list to six names under a heading that
+  counted all of them. The ranking decides the order, never the length.
+  `cio-live` and `INSIDE_FULL_LIST` (`cio-movers-inside-live`) require each list
+  to draw as many rows as its heading counts.
+- **The allocation card has a Pie / Bars / Treemap picker on every axis**
+  (`AllocationViews.tsx`). All three draw the table's own rows, with the same
+  value, weight and drill-down. The pick is `?chart=`, then this browser's
+  (`glow:allocChart:v1`), then the pie. A section at or below zero draws no bar
+  or tile. The treemap is a tint with a full-colour stripe, because solid fills
+  failed the contrast check. Routes: `cio-alloc-bars`, `cio-alloc-treemap`.
+- **Holdings: one row per PMS strategy, across members.** A strategy run for
+  several accounts (GLC Growth, Aristos, Velocity, Small & Mid-Cap) is one row
+  that opens onto one line per account, and each line onto that account's own
+  shares. Nothing is deduped: two members' accounts are two investments. A
+  share's % of mandate is over its own account. A several-account row links no
+  single account page; its lines do. Its review columns look each account up
+  apart (`ReviewScope.accountIds`) and show a figure only where they agree.
+- **Transactions: one row per holding, across accounts** (`clubDatedRows` in
+  `txnLedger.ts`). Both Sanshi Class E folios, both Transition Venture trusts:
+  one row of their sums, opening onto each account's row. Capital and trading
+  money are still never added together (Stage 10bo).
+- **Every table stripes, in one pair of shades.** One rule,
+  `:where(table > tbody > tr:nth-child(even)) { background-color: var(--row-alt); }`,
+  with `--row-alt` `#f7f4ec` light and `#1a1740` dark. `:where()` has no
+  specificity, so a row that colours itself (a band, a total, a tree line, an
+  alert tint) keeps its colour. A sticky first column follows the stripe.
+
+**Checks.** A `zebra` probe in `check:pages` on every route, in both themes: even
+rows striped, odd rows not, no two neighbouring plain rows alike, and the stripe
+unlike the surface under it. The All alerts probe sets `--row-alt` aside, so a
+striped row is not read as a fired alert. `scripts/dev/zebra-bug.sh` puts five
+bugs back after a clean control, and every one is caught. `check:family` asserts
+one mandate link per single-account row, and a linked line per account on a
+several-account row.
+
+**Merged with main.** #118, #122–#126 and #120 landed while this was open.
+#126 took `10dk` and #120 took `10dl`; the #120 merge raised no marker, and only
+the headings check found the shared letter. This branch's 39 references moved,
+main's 10 stayed. `index.css` keeps #125's grid borders beside the stripe;
+`MorningCIO.tsx` takes #124's review accessors; `PortfolioMonitor.tsx` carries
+#124's review scope onto every line. The probe literal is 126 keys, none lost.
+
+**Merged again, on the family's go-ahead.** #129, #127 and #130 landed while
+this waited. #130 took `10dm`, so this is `10dn`: git marked that conflict,
+main's section comes first, and every `10dm` in this branch's code moved. #127
+(a Sector Composition tab on Morning CIO) wrote no stage section and merged
+without a marker; its tab and this branch's allocation picker sit side by side.
+#130 fixes the `family` scroll finding the earlier sweep named as main's.
+
+On that tree (main `e083467`): `build`, `tsc`, `test:ingest` (golden 140
+passed, 2 not checked, 0 blocked), `test:family` (0 failed), `check:family`
+**136/0**, `build-book` byte-identical, and the probe literal is the same 126
+keys on both sides. `check:pages` on the routes this touches and #127's
+`cio-sectors`, `family` and `family-entity`: 26 combinations, two findings,
+**both main's**, measured on a worktree of main alone with the same two failing:
+*the quote request names the card's own scope as priority* on `cio-live`, and
+*a statement value priced on another day … names both dates (VD-17)* on
+`monitor`. They are main's, and are named here rather than fixed.
+
+**Verification**, on the tree merged with #120 (main `0643a24`):
+
+- `build` and `tsc` pass.
+- `test:ingest` passes every suite (golden 140 passed, 0 failed, 2 not checked,
+  0 blocked).
+- `test:family`: 4,926 checks, 0 failed.
+- `check:family` **136/0**.
+- `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+  byte-identically.
+- `check:pages` walked **410 combinations**: Stage 10dl's 406, plus
+  `cio-alloc-bars` and `cio-alloc-treemap` in both themes. **One has a
+  finding**: *the page does not scroll* on `family`, which main's own build
+  also fails (Stage 10dl). 55 invariants were not checked. Two are on the new
+  routes: the money-weighted tile, which every Morning CIO route skips because
+  the default strip does not show it.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

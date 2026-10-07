@@ -4755,9 +4755,11 @@ const rowUnits = (B, c) => {
   const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
   if (!keys.size) return undefined;
   if (c.mandate) {
-    return c.capitalAccounts.length === 1
-      && B.wholeOf(B.current.filter((p) => p.accountId === c.capitalAccounts[0]))
-      ? c.capitalAccounts : null;
+    // A mandate row is every account its strategy is run in (Stage 10dn): the
+    // holdings of those accounts under the row's own keys, whole or not.
+    const ids = c.mandateAccounts?.length ? c.mandateAccounts : c.capitalAccounts;
+    if (!ids.length) return null;
+    return B.wholeOf(B.current.filter((p) => ids.includes(p.accountId) && keys.has(p.securityKey)));
   }
   return B.wholeOf(B.consolidated(keys));
 };
@@ -7590,6 +7592,11 @@ const ROUTES = [
   // with no allocation table on it at all.
   ["cio-alloc-basket", "/cio?tab=allocation&alloc=basket"],
   ["cio-alloc-class", "/cio?tab=allocation&alloc=assetClass"],
+  // THE OTHER TWO DRAWINGS OF THE SAME ROWS (Stage 10dn). Each is walked by its
+  // own address, so the bar lengths and the treemap areas are held to the table
+  // under them exactly as the pie is on `cio-allocation`.
+  ["cio-alloc-bars", "/cio?tab=allocation&chart=bar"],
+  ["cio-alloc-treemap", "/cio?tab=allocation&chart=treemap"],
   /**
    * ── THE CATEGORY VIEW HAS AN ADDRESS OF ITS OWN NOW ──────────────────────
    *
@@ -11452,7 +11459,7 @@ const WITHHELD_CHECKS = (mode) => {
     ["no row whose quotes the check did not hold back says it did", (t, ctx) => {
       const r = ready(ctx, true); if (!r.B) return out(r);
       const clean = r.rows.filter((x) => x.mandate
-        ? !!x.mandateAccount && r.B.heldIn(x.mandateAccount) === 0
+        ? (x.mandateAccounts?.length ?? 0) > 0 && x.mandateAccounts.reduce((n, a) => n + r.B.heldIn(a), 0) === 0
         : !!x.securityKey && !r.B.heldAny.has(x.securityKey));
       if (!clean.length) return false;
       return clean.every((x) => !x.withheld && ![COL.cmp, COL.day, COL.mv].some((i) => /corporate-action check/.test(x.cellTitles?.[i] ?? "")));
@@ -11469,10 +11476,13 @@ const WITHHELD_CHECKS = (mode) => {
     }],
     ["a mandate some of whose shares were held back says how many, of how many, and why", (t, ctx) => {
       const r = ready(ctx); if (!r.B) return out(r);
-      const ms = r.rows.filter((x) => x.mandate && x.mandateAccount && r.B.heldIn(x.mandateAccount) > 0);
+      // A row is a STRATEGY now (Stage 10dn), so its held count is summed over
+      // every account it stands for.
+      const heldOf = (x) => (x.mandateAccounts ?? []).reduce((n, a) => n + r.B.heldIn(a), 0);
+      const ms = r.rows.filter((x) => x.mandate && heldOf(x) > 0);
       if (!ms.length) return mode === "loading" ? false : { notChecked: "under this fixture no mandate's shares are held back" };
       return ms.every((x) => {
-        const n = r.B.heldIn(x.mandateAccount);
+        const n = heldOf(x);
         const day = /held back the quotes that arrived for (\d+) of its (\d+) shares/.exec(x.cellTitles?.[COL.day] ?? "");
         if (day) return Number(day[1]) === n && Number(day[2]) === x.holdings;
         // Part of the mandate is live, so its Day cell is a figure: the hold is
@@ -11534,9 +11544,9 @@ const WITHHELD_PILL = [
  * of gainers the card must show on the `cio-live` walk.
  *
  * *"we will only show direct equity as default."* The claim that the card
- * covers THAT SET cannot be checked on the ROWS: the lists show six, and on any
- * day the mandate names happen not to move a rows-only assertion passes over a
- * card that had quietly widened.
+ * covers THAT SET cannot be checked on the ROWS alone: since Stage 10dn the lists
+ * show every name, but on any day the mandate names happen not to move a
+ * rows-only assertion still passes over a card that had quietly widened.
  *
  * It can be checked on the COUNT. Every fixture price is the mark × 1.10, so
  * every priceable name rises and the gainer count is exactly the size of the
@@ -11551,6 +11561,61 @@ const WITHHELD_PILL = [
  * is the independent check, and a check that imports the helper it is checking
  * agrees with itself by construction.
  */
+/**
+ * EVERY MOVER IS LISTED, NOT THE FIRST SIX (Stage 10dn).
+ *
+ * *"IT is showing 18 top gainers and losers so we need to show the complete
+ * list and not just the top 6."* Each list's heading counts every name that
+ * moved that way, and the rows drawn under it must be exactly that many — read
+ * off the list's own heading and its own `data-mover-row`s, so a cap put back
+ * at any length fails rather than a cap at six alone. And the gainers must be
+ * the whole priced Direct Equity scope, derived from the book: a list and a
+ * heading both cut to the same wrong number would agree with each other.
+ */
+const MOVERS_FULL_LIST = [
+  ["every gainer and every loser is listed — each list draws as many rows as its heading counts", (t, ctx) => {
+    const totals = ctx?.cioLayout?.moverTotals;
+    const rows = ctx?.cioLayout?.moverRows;
+    if (!totals || !rows) return false;
+    for (const [k, id] of [["gain", "movers-gain"], ["loss", "movers-loss"]]) {
+      const head = totals[k]?.heading;
+      if (head == null) return false;
+      const m = /^(\d+)\s+(?:gainer|loser)s?$/i.exec(head);
+      if (!m) return false;
+      if (rows.filter((r) => r.list === id).length !== Number(m[1])) return false;
+    }
+    if (PRICED_DIRECT_EQUITY == null) return { notChecked: "the book could not be read, so the priced scope could not be derived" };
+    return rows.filter((r) => r.list === "movers-gain").length === PRICED_DIRECT_EQUITY.ranked
+      && PRICED_DIRECT_EQUITY.ranked > 6;
+  }],
+];
+
+/**
+ * …AND ON THE AIF & PMS BRANCH TOO (Stage 10dn). #120 added that branch with
+ * its own six-row cap, under a heading that counts every company inside the
+ * funds and mandates that moved. The same claim, struck the same way: each list
+ * draws as many rows as its heading counts. A cap only shows where a list is
+ * longer than it, so a list of six or fewer is named rather than passed.
+ */
+const INSIDE_FULL_LIST = [
+  ["every company inside the AIFs and mandates that moved is listed — each list draws as many rows as its heading counts", (t, ctx) => {
+    const totals = ctx?.cioLayout?.moverTotals;
+    const rows = ctx?.cioLayout?.moverRows;
+    if (!totals || !rows) return false;
+    let longest = 0;
+    for (const [k, id] of [["gain", "movers-gain"], ["loss", "movers-loss"]]) {
+      const head = totals[k]?.heading;
+      if (head == null) return false;
+      const m = /^(\d+)\s+(?:gainer|loser)s?$/i.exec(head);
+      if (!m) return false;
+      const drawn = rows.filter((r) => r.list === id).length;
+      if (drawn !== Number(m[1])) return false;
+      longest = Math.max(longest, drawn);
+    }
+    return longest > 6 ? true : { notChecked: `neither list is longer than six (${longest}), so a cap at six could not show here` };
+  }],
+];
+
 const PRICED_DIRECT_EQUITY = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -12512,6 +12577,7 @@ const FIFO_BOOK = (() => {
     const current = positions.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
       && !small.has(p.securityKey));
     const byAccountNo = new Map();
+    const byAccountId = new Map();
     // What each mandate's capital record says the family PAID IN — read off the
     // account, never off `fifoTotals`, so a page printing a whole mandate's
     // Invested at its capital is checked against the book rather than a copy.
@@ -12527,11 +12593,40 @@ const FIFO_BOOK = (() => {
       const costed = held.filter((p) => typeof p.costBasis === "number" && !p.costUnavailable);
       const cost = costed.reduce((x, p) => x + p.costBasis, 0);
       const survivors = cost > 0 ? (costed.reduce((x, p) => x + p.marketValue - p.costBasis, 0) / cost) * 100 : null;
-      const row = { accountId: a.accountId, accountNo: a.accountNo, capitalRet, survivors, contributed: a.capital.contributed, costHeld: cost };
+      const row = { accountId: a.accountId, accountNo: a.accountNo, capitalRet, survivors, contributed: a.capital.contributed, costHeld: cost, mv, withdrawn: a.capital.withdrawn };
       byAccountNo.set(String(a.accountNo), row);
+      byAccountId.set(a.accountId, row);
       if (survivors !== null && (!worst || Math.abs(capitalRet - survivors) > Math.abs(worst.capitalRet - worst.survivors))) worst = row;
     }
-    return { byAccountNo, worst, contributedOf };
+    return { byAccountNo, byAccountId, worst, contributedOf };
+  } catch { return null; }
+})();
+
+/**
+ * ── ONE ROW PER STRATEGY: WHICH ACCOUNTS EACH PMS ROW SHOULD STAND FOR ──────
+ *
+ * *"we are showing Green Lantern Capital LP as 2 separate lines… they need to
+ * be one."* (Stage 10dn.) Re-expressed off `glowData.ts`: every PMS account
+ * that holds a current position, grouped on its provider and the strategy its
+ * statement prints (the provider where it prints none), compared case-blind —
+ * never through the page's own `mandateLabel`, which is the code under test.
+ */
+const PMS_STRATEGY_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const small = smallKeysOf(positions);
+    const isCurrent = (p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+      && !small.has(p.securityKey);
+    const groups = new Map();
+    for (const a of accounts) {
+      if (a.engagement !== "PMS") continue;
+      if (!positions.some((p) => p.accountId === a.accountId && isCurrent(p))) continue;
+      const k = `${a.provider ?? ""}|${String(a.strategy || a.provider || "").trim().toLowerCase()}`;
+      (groups.get(k) ?? groups.set(k, []).get(k)).push(a.accountId);
+    }
+    return { groups: [...groups.values()] };
   } catch { return null; }
 })();
 
@@ -13184,17 +13279,26 @@ const DERIVED_ONLY_C = [
       && !r.titles.some((x) => borrowed.test(x ?? "")));
   }],
 ];
-/** Opened, a mandate's shares and a holding's accounts each carry their own realised (DL-8). */
+/**
+ * Opened, a strategy's accounts and a holding's accounts each carry their own
+ * realised (DL-8). A strategy row opens onto one line per ACCOUNT since Stage
+ * 10dn — its shares are on that account's own page — and an account line's
+ * realised is everything that account has booked since it opened, which is what
+ * its hover says; a holding's line keeps its own FIFO sentence. Both kinds must
+ * be present, so a build that stopped drawing either cannot pass on the other.
+ */
 const CHILD_REALISED_C = [
   ["[C] every opened line carries its own realised, or a dash that says why — never a blank (DL-8)", (t, ctx) => {
     const ch = ctx?.monitorC?.childRealised;
     if (!ch) return false;
     if (!ch.length) return false;
     const figures = ch.filter((c) => c.value !== null);
+    const sentence = (c) => c.kind === "mandate-account"
+      ? /has booked since it opened/i.test(c.title ?? "")
+      : /Realised on units already sold, matched first-in, first-out/i.test(c.title ?? "");
     return figures.length > 0
-      && ch.every((c) => c.text !== "" && (c.value !== null
-        ? /Realised on units already sold, matched first-in, first-out/i.test(c.title ?? "")
-        : c.text === "—" && !!c.title));
+      && figures.some((c) => c.kind === "mandate-account") && figures.some((c) => c.kind === "venue")
+      && ch.every((c) => c.text !== "" && (c.value !== null ? sentence(c) : c.text === "—" && !!c.title));
   }],
 ];
 
@@ -18161,6 +18265,81 @@ const ALLOC_DERIVED = [
   }],
 ];
 
+/**
+ * ── THE ALLOCATION CHART: PIE, BARS OR TREEMAP, EACH OPENING WHAT ITS ROW DOES ─
+ *
+ * *"instead of removing the bar graphs just give a view selector for the user
+ * then he can simply select whether he wants to see all the view as a bar graph
+ * or a pie chart or any other suitable view."* (Stage 10dn.) Three claims, none
+ * implying another, and each struck on the drawing THIS address names — the pie
+ * by default, `?chart=bar` and `?chart=treemap` on their own routes:
+ *
+ * 1. The picker offers Pie, Bars and Treemap in that order, exactly one is lit,
+ *    and the page draws that one and no other — a card drawing two renders
+ *    every figure correctly, so only the handles can see it.
+ * 2. Every slice, bar or tile opens its row's drill-down, null against null for
+ *    a fund-of-funds line that is not a link (Stage 10ac's pairing).
+ * 3. Each drawing is its section's share: a wedge's angle and a tile's area of
+ *    the positive total, a bar's length of the largest — and a section worth
+ *    nothing, or a payable, draws no wedge, no bar and no tile area.
+ */
+const chartWanted = (ctx) => /[?&]chart=(bar|treemap)\b/.exec(ctx?.path ?? "")?.[1] ?? "pie";
+const ALLOC_CHART_CHECKS = [
+  ["the allocation chart offers Pie, Bars and Treemap, and draws the one this address names", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not found on this run" };
+    const want = chartWanted(ctx);
+    const keys = (a.chartPicker ?? []).map((b) => b.key).join(" ");
+    const lit = (a.chartPicker ?? []).filter((b) => b.active && b.selected);
+    const drawn = { pie: (a.wedges ?? []).length > 0, bar: (a.bars ?? []).length > 0, treemap: (a.tiles ?? []).length > 0 };
+    return keys === "pie bar treemap" && lit.length === 1 && lit[0].key === want
+      && a.chartView === want
+      && drawn[want] && Object.entries(drawn).every(([k, on]) => k === want || !on);
+  }],
+  ["every slice, bar or tile opens the same drill-down as its row", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not found on this run" };
+    const want = chartWanted(ctx);
+    const rowKeys = Object.keys(a.rowHrefs ?? {});
+    const has = (k) => Object.prototype.hasOwnProperty.call(a.rowHrefs, k);
+    const paired = (xs) => xs.length === rowKeys.length && xs.every((x) => has(x.key) && (x.href ?? null) === a.rowHrefs[x.key]);
+    if (want === "bar") return paired(a.bars ?? []);
+    if (want === "treemap") return paired(a.tiles ?? []);
+    if (!a.slices || !a.slices.length || !a.wedges) return false;
+    if (!paired(a.slices)) return false;
+    return a.wedges.every((w) => has(w.key) && (w.href ?? null) === a.rowHrefs[w.key]);
+  }],
+  ["each drawing is its section's share, and a section worth nothing draws none", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not found on this run" };
+    const want = chartWanted(ctx);
+    if (want === "bar") {
+      const bs = a.bars ?? [];
+      if (!bs.length) return false;
+      const max = Math.max(0, ...bs.map((b) => b.value));
+      return bs.every((b) => Number.isFinite(b.width)
+        && Math.abs(b.width - (max > 0 && b.value > 0 ? (b.value / max) * 100 : 0)) < 1e-6);
+    }
+    if (want === "treemap") {
+      const ts = a.tiles ?? [];
+      if (!ts.length) return false;
+      const pos = ts.filter((x) => x.value > 0);
+      const total = pos.reduce((s, x) => s + x.value, 0);
+      const area = ts.reduce((s, x) => s + x.area, 0);
+      return total > 0 && Math.abs(area - 10000) < 1e-3
+        && ts.every((x) => x.value > 0 ? Math.abs(x.area / 10000 - x.value / total) < 1e-6 : x.area === 0);
+    }
+    if (!a.slices?.length || !a.wedges) return false;
+    const positive = a.slices.filter((s) => Number.isFinite(s.value) && s.value > 0);
+    const total = positive.reduce((x, s) => x + s.value, 0);
+    if (total <= 0) return a.wedges.length === 0;
+    if (a.wedges.length !== positive.length) return false;
+    const byKey = new Map(positive.map((s) => [s.key, s.value]));
+    const sum = a.wedges.reduce((x, w) => x + w.share, 0);
+    return Math.abs(sum - 1) < 1e-4
+      && a.wedges.every((w) => byKey.has(w.key) && Math.abs(w.share - byKey.get(w.key) / total) < 1e-5);
+  }],
+];
 const CIO_ALLOC = [
   /**
    * ── NEVER ₹0 OVER NOTHING (A-14) ──────────────────────────────────────────
@@ -18331,30 +18510,7 @@ const CIO_ALLOC = [
     if (!ctx?.allocTable) return { notChecked: "the allocation table was not found on this run" };
     return ctx.allocTable.links >= 2;
   }],
-  /**
-   * ── THE BAR CHART OPENS WHAT ITS ROW OPENS ────────────────────────────────
-   *
-   * *"the bar graphs should also be clickable just like the rows in the table
-   * and should show the same drill down pages as the table ones do."* So the
-   * claim is a PAIRING, not a count: one bar per section, and each bar's href is
-   * its row's href — both null where the row is a non-clickable fund-of-funds
-   * line. Struck on `data-alloc-bar` against `data-alloc-row`, so a bar that
-   * quietly pointed elsewhere (or stopped being a link) is a failure rather than
-   * a page that still renders every figure correctly. Verified by reintroducing
-   * both bugs — a bar with a wrong href, and a bar that is not a link.
-   */
-  ["every allocation bar opens the same drill-down as its row", (t, ctx) => {
-    const a = ctx?.allocTable;
-    if (!a) return { notChecked: "the allocation table was not found on this run" };
-    if (!a.bars || !a.bars.length) return false;   // the chart must be there
-    const rowKeys = Object.keys(a.rowHrefs);
-    // one bar per row (keys are unique per section, so equal counts plus every
-    // bar key being a row key means the two sets coincide), and each bar's
-    // destination is its row's — null against null for a non-clickable line.
-    if (a.bars.length !== rowKeys.length) return false;
-    return a.bars.every((b) => Object.prototype.hasOwnProperty.call(a.rowHrefs, b.key)
-      && b.href === a.rowHrefs[b.key]);
-  }],
+  ...ALLOC_CHART_CHECKS,
   /**
    * ── THE ROADMAP PLACEHOLDER IS GONE, AND THE OLDER CLAIM STILL HOLDS ───────
    *
@@ -22330,9 +22486,51 @@ const INVARIANTS = {
        * is correctly ordered as chaotic, which is what the family complained
        * about in the first place and would have been the check inventing it.
        */
+      /**
+       * …AND ON WHAT THE READER RANKS. Since Stage 10dn a holding two or more
+       * accounts carry is ONE line, ranked on its own newest movement, with its
+       * accounts drawn under it — so they are ordered INSIDE the line, newest
+       * first, and never against the rows around it.
+       */
+      const units = (ctx.datedTable?.units ?? []).filter((u) => u.last);
+      const ranked = units.length ? units : rows;
       const bySection = new Map();
-      for (const r of rows) (bySection.get(r.section) ?? bySection.set(r.section, []).get(r.section)).push(r);
-      return [...bySection.values()].every((rs) => rs.every((r, i) => i === 0 || rs[i - 1].last >= r.last));
+      for (const r of ranked) (bySection.get(r.section) ?? bySection.set(r.section, []).get(r.section)).push(r);
+      const inClubs = (ctx.datedTable?.clubs ?? []).every((c) => {
+        const ms = c.rows.filter((m) => m.last);
+        return ms.every((m, i) => i === 0 || ms[i - 1].last >= m.last);
+      });
+      return inClubs && [...bySection.values()].every((rs) => rs.every((r, i) => i === 0 || rs[i - 1].last >= r.last));
+    }],
+    /**
+     * ── ONE HOLDING, ONE LINE (Stage 10dn) ───────────────────────────────────
+     *
+     *   *"If there are 2 separate transactions of the same holding then we need
+     *    to show that in drop down and label them as a single line item and
+     *    club total of both the transactions even if they are held by 2
+     *    separate entities."*
+     *
+     * Four claims, none implying another, struck on handles because the line
+     * renders the same words whether its figures are its accounts' sum or not:
+     * a line stands for two or more accounts in one section; the walk opened
+     * every one (a line that will not open hides its accounts); it draws
+     * exactly the accounts it says it carries; and each figure it prints is the
+     * sum of the same figure on the accounts under it — never a figure of its
+     * own. A line printing an account's figure, or skipping one, fails here.
+     */
+    ["a holding carried by two or more accounts is one line, and its figures are its accounts' sum", (t, ctx) => {
+      const clubs = ctx.datedTable?.clubs;
+      if (!clubs) return false;
+      if (!clubs.length) return { notChecked: "no holding on this view is carried by more than one account" };
+      const sum = (xs) => (xs.some((x) => x != null) ? xs.reduce((a, x) => a + (x ?? 0), 0) : null);
+      const same = (a, b) => (a == null && b == null) || (a != null && b != null && Math.abs(a - b) <= Math.max(1, Math.abs(b) * 1e-9));
+      return clubs.every((c) => c.members >= 2 && c.open && c.expanded
+        && c.rows.length === c.members
+        && c.rows.every((m) => m.section === c.section && m.kind === "account")
+        && same(c.paid, sum(c.rows.map((m) => m.paid)))
+        && same(c.value, sum(c.rows.map((m) => m.value)))
+        && same(c.bought, sum(c.rows.map((m) => m.bought)))
+        && c.last === c.rows.map((m) => m.last).filter(Boolean).sort().at(-1));
     }],
     ["the order is a control, and it opens on recent first", (t, ctx) => {
       const s = ctx.txnSort;
@@ -29896,6 +30094,7 @@ const INVARIANTS = {
         return g.text === "—" && g.absent === priceOnly
           && new RegExp(`^No total: ${priceOnly} of these ${ranked} names? ha(?:s|ve) an unverified share count`).test(g.title ?? "");
       }],
+    ...MOVERS_FULL_LIST,
     /**
      * EVERY DRAWN ROW'S MONEY CELL IS THE BOOK'S ANSWER FOR THAT NAME (Stage
      * 10dc), held row by row against the names the book says are withheld. A
@@ -30034,9 +30233,11 @@ const INVARIANTS = {
    * derived half's own absences, and the rows themselves.
    */
   "cio-movers-inside": [...INSIDE_SCOPE],
-  "cio-movers-inside-live": [...INSIDE_SCOPE, ...INSIDE_CARD],
+  "cio-movers-inside-live": [...INSIDE_SCOPE, ...INSIDE_CARD, ...INSIDE_FULL_LIST],
   "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("basket"), ...ALLOC_HELD_PILL],
   "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("assetClass"), ...ALLOC_HELD_PILL, ...ALLOC_DERIVED],
+  "cio-alloc-bars": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...ALLOC_CHART_CHECKS],
+  "cio-alloc-treemap": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...ALLOC_CHART_CHECKS],
 
   monitor: [
     // VD-16 / VD-18: a pre-tax mark and a cash line whose every unit is pledged
@@ -30138,22 +30339,36 @@ const INVARIANTS = {
      */
     ["every mandate row's Return is FIFO's, struck on the mandate's own capital since inception — or the XIRR where the methodology names it", (t, ctx) => {
       if (!FIFO_BOOK) return false;
-      const rows = (ctx.mandateRows ?? []).filter((r) => FIFO_BOOK.byAccountNo.has(String(r.accountNo)));
+      /*
+       * ONE ROW PER STRATEGY (Stage 10dn): a row stands for every account its
+       * strategy is run in, so its FIFO return is POOLED over them — Σ value +
+       * Σ withdrawn − Σ paid in, over Σ paid in — and its XIRR is solved over
+       * all their dated flows together. Every account with a capital record
+       * must be under exactly one row.
+       */
+      const rows = (ctx.mandateRows ?? []).filter((r) => r.mandateAccounts.some((id) => FIFO_BOOK.byAccountId.has(id)));
       if (!rows.length) return false;
+      const covered = rows.flatMap((r) => r.mandateAccounts.filter((id) => FIFO_BOOK.byAccountId.has(id)));
+      if (covered.length !== FIFO_BOOK.byAccountId.size || new Set(covered).size !== covered.length) return false;
       let onFifo = 0;
-      const ok = rows.length === FIFO_BOOK.byAccountNo.size && rows.every((r) => {
-        const book = FIFO_BOOK.byAccountNo.get(String(r.accountNo));
+      const ok = rows.every((r) => {
+        const book = r.mandateAccounts.map((id) => FIFO_BOOK.byAccountId.get(id));
+        if (book.some((b) => !b)) return false;
         const cell = r.cells?.[COL.ret] ?? "";
         const got = pctIn(cell);
         if (got === null) return false;
         const B = DATED_CAPITAL_BOOK;
-        const dated = B?.rated.get(book.accountId);
-        const sol = dated ? B.solve([book.accountId]) : null;
-        if (sol && sol.days >= 365 && dated.flows.length > 1 && sol.annual !== null) {
+        const ids = r.mandateAccounts;
+        const dated = ids.map((id) => B?.rated.get(id));
+        const sol = dated.every(Boolean) ? B.solve([...ids].sort()) : null;
+        const flows = dated.every(Boolean) ? dated.reduce((n, d) => n + d.flows.length, 0) : 0;
+        if (sol && sol.days >= 365 && flows > 1 && sol.annual !== null) {
           return /\bXIRR\b/.test(cell) && Math.abs(got.v - sol.annual) <= got.tie + 0.001;
         }
         onFifo++;
-        return !/\bXIRR\b/.test(cell) && Math.abs(got.v - book.capitalRet) <= got.tie;
+        const contributed = book.reduce((n, b) => n + b.contributed, 0);
+        const pooled = ((book.reduce((n, b) => n + b.mv + b.withdrawn, 0) - contributed) / contributed) * 100;
+        return !/\bXIRR\b/.test(cell) && Math.abs(got.v - pooled) <= got.tie;
       });
       return ok && onFifo > 0;
     }],
@@ -30169,13 +30384,17 @@ const INVARIANTS = {
      */
     ["every mandate row's Invested is the capital paid into it, which its Return divides by", (t, ctx) => {
       if (!FIFO_BOOK) return false;
-      const rows = (ctx.mandateRows ?? []).filter((r) => FIFO_BOOK.byAccountNo.has(String(r.accountNo)));
-      if (!rows.length || rows.length !== FIFO_BOOK.byAccountNo.size) return false;
-      const book = rows.map((r) => FIFO_BOOK.byAccountNo.get(String(r.accountNo)));
+      // One row per strategy (Stage 10dn): its Invested is what was paid into
+      // EVERY account it stands for, summed.
+      const rows = (ctx.mandateRows ?? []).filter((r) => r.mandateAccounts.some((id) => FIFO_BOOK.byAccountId.has(id)));
+      const covered = rows.flatMap((r) => r.mandateAccounts.filter((id) => FIFO_BOOK.byAccountId.has(id)));
+      if (!rows.length || covered.length !== FIFO_BOOK.byAccountId.size) return false;
+      const book = rows.map((r) => r.mandateAccounts.map((id) => FIFO_BOOK.byAccountId.get(id)));
       return rows.every((r, i) => {
         const got = moneyCell(r.cells?.[COL.invested]);
-        return Number.isFinite(got) && Math.abs(got - book[i].contributed / 1e7) <= 0.051;
-      }) && book.some((b) => Math.abs(b.costHeld - b.contributed) > 1e6);
+        const want = book[i].reduce((n, b) => n + (b?.contributed ?? NaN), 0);
+        return Number.isFinite(got) && Math.abs(got - want / 1e7) <= 0.051;
+      }) && book.flat().some((b) => Math.abs(b.costHeld - b.contributed) > 1e6);
     }],
     /**
      * ── AN INVESTED FIGURE CARRIED THROUGH A CLASS SWITCH SAYS SO ────────────
@@ -30503,12 +30722,43 @@ const INVARIANTS = {
     }],
     // ...and each of those rows is a way IN. A mandate a reader cannot open is
     // a section that hides 271 positions instead of filing them.
+    /**
+     * ONE ROW PER STRATEGY (Stage 10dn): a strategy run in ONE account links
+     * from its name; one run in several opens onto a line per account, each a
+     * link (asserted with every row open, on `monitor-open-all`). So the closed
+     * page carries exactly one mandate link per single-account row, and a
+     * several-account row names every account it stands for and links to none.
+     */
     ["every mandate row links to its own drill-down", (t, ctx) => {
       const gate = needRows(ctx?.tableRows);
       if (gate) return gate;
       const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      if (!rows.length) return false;
+      const single = rows.filter((r) => r.mandateAccounts.length === 1);
+      const multi = rows.filter((r) => r.mandateAccounts.length > 1);
       const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
-      return rows.length > 0 && links.size === rows.length;
+      return single.every((r) => r.nameHref === `/mandate/${encodeURIComponent(r.mandateAccounts[0])}`)
+        && multi.every((r) => r.nameHref === null && r.mandateLines === r.mandateAccounts.length)
+        && links.size === single.length;
+    }],
+    /**
+     * ── THE SAME STRATEGY IS ONE ROW, WHOEVER HOLDS IT ───────────────────────
+     *
+     * *"we are showing Green Lantern Capital LP as 2 separate lines… they need
+     * to be one."* Restated off the BOOK: every PMS account the section holds,
+     * grouped on its manager and the strategy name its statement prints, must be
+     * exactly the accounts one row names — so a build that split a strategy back
+     * into one row per account, or merged two strategies, fails by name.
+     */
+    ["one strategy is one row, however many accounts it is run in", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      if (!PMS_STRATEGY_BOOK) return false;
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      const got = rows.map((r) => [...r.mandateAccounts].sort().join(" ")).sort();
+      const want = PMS_STRATEGY_BOOK.groups.map((g) => [...g].sort().join(" ")).sort();
+      return got.length === want.length && got.every((g, i) => g === want[i])
+        && PMS_STRATEGY_BOOK.groups.some((g) => g.length > 1);
     }],
     // AND THE SECTIONS MUST ADD UP TO THE FOOTER. A reader who sums the four
     // headings and lands somewhere other than the Total row has found the
@@ -32337,10 +32587,34 @@ const INVARIANTS = {
       if (!AXIS_VENUE_BOOK) return { notChecked: "the book could not be read" };
       return tr.venues === AXIS_VENUE_BOOK.pairs;
     }],
-    ["every mandate opens onto exactly the shares its own row counts", (t, ctx) => {
+    /**
+     * ONE ROW PER STRATEGY, ITS ACCOUNTS AND THEIR SHARES ONE CLICK IN (Stage
+     * 10dn). A strategy run in several accounts opens onto exactly one line per
+     * account — each linking to that account's own page — and under each line
+     * the shares IN THAT ACCOUNT, as its own page lists them. A strategy run in
+     * one account opens straight onto its shares, and its name is the link.
+     * *"And also show the holdings in the dropdown as well."*
+     */
+    ["every mandate opens onto its shares, through one line per account where it is run in several", (t, ctx) => {
       const tr = ctx?.treeState;
       if (!tr?.mandates.length) return false;
-      return tr.mandates.every((m) => m.open === "open" && m.holdings > 0 && m.constituents === m.holdings);
+      const multi = tr.mandates.filter((m) => m.accounts.length > 1);
+      const single = tr.mandates.filter((m) => m.accounts.length === 1);
+      const sharesOk = (m) => m.holdings > 0 && m.open === "open"
+        && m.constituents === m.holdings && m.shares.length === m.holdings
+        && m.shares.every((x) => m.accounts.includes(x.account) && /^\/stock\/./.test(x.href ?? ""));
+      if (!tr.mandates.every(sharesOk)) return false;
+      if (!single.every((m) => m.lines.length === 0 && m.shares.every((x) => x.under === null)
+        && m.nameHref === `/mandate/${encodeURIComponent(m.accounts[0])}`)) return false;
+      if (!multi.length) return { notChecked: "no strategy in this book is run in more than one account" };
+      return multi.every((m) => m.lines.length === m.accounts.length
+        && m.lines.map((l) => l.account).sort().join(" ") === [...m.accounts].sort().join(" ")
+        && m.lines.every((l) => l.href === `/mandate/${encodeURIComponent(l.account)}`)
+        && m.lines.reduce((n, l) => n + l.holdings, 0) === m.holdings
+        // each share sits under the line of the account that holds it, and
+        // each line carries exactly its own holdings
+        && m.shares.every((x) => x.under === x.account)
+        && m.lines.every((l) => m.shares.filter((x) => x.under === l.account).length === l.holdings));
     }],
     /**
      * A DEPOSITORY LINE SAYS WHAT IT IS, ON THE ONE LINE IT IS (Stage 10ce).
@@ -36896,6 +37170,22 @@ for (const theme of THEMES) {
          */
         await page.waitForSelector("[data-dated-table] tr[data-dated-total]", { timeout: 45000 }).catch(() => {});
         /**
+         * EVERY CLUB OPEN, AND OPENED AGAIN AFTER EVERY FILTER (Stage 10dn).
+         * A holding two or more accounts carry is ONE line now, and its
+         * accounts are drawn only once it is opened — so every claim below that
+         * reads the table's rows would read fewer accounts than the footer sums
+         * and fail a page that is right. Opening them is what a reader does to
+         * see the accounts; a filter that re-clubs the table can close a line
+         * the walk had opened, so it is opened again after each one.
+         */
+        const openClubs = async () => {
+          await page.evaluate(() => {
+            for (const tr of [...document.querySelectorAll("[data-dated-table] tr[data-dated-club]:not([data-open])")]) tr.click();
+          });
+          await page.waitForTimeout(400);
+        };
+        await openClubs();
+        /**
          * THERE IS NO RECORD TOGGLE TO CLICK ANY MORE, AND THAT IS THE CHANGE.
          *
          *   *"just remove the toggle button and show everything within the same
@@ -36939,10 +37229,12 @@ for (const theme of THEMES) {
           // display name and may be reworded, the key is what the filter tests.
           const tab = page.locator('[data-section-filter] [data-section-tab="Direct Equity"]').first();
           if (await tab.count()) { await tab.click(); await page.waitForTimeout(900); }
+          await openClubs();
         }
         if (name === "monitor-txn-window" && LEDGER_BOOK?.window) {
           const sel = page.locator(`select:has(option[value="${LEDGER_BOOK.window.preset}"])`).first();
           if (await sel.count()) { await sel.selectOption(LEDGER_BOOK.window.preset); await page.waitForTimeout(900); }
+          await openClubs();
         }
         // THE TWO WINDOWS MT-16 NAMES, each chosen off the book (`TXN_T_BOOK`)
         // and selected by the preset's own value, never by its label.
@@ -36951,6 +37243,7 @@ for (const theme of THEMES) {
         if (tWin) {
           const sel = page.locator(`select:has(option[value="${tWin}"])`).first();
           if (await sel.count()) { await sel.selectOption(tWin); await page.waitForTimeout(900); }
+          await openClubs();
         }
         // ...and on the late one, the rows that moved money out and none in are
         // opened, because the claim about their panel's own label is there.
@@ -36979,6 +37272,7 @@ for (const theme of THEMES) {
           const b = page.locator(`[data-side-option="${want}"]`).first();
           await b.waitFor({ timeout: 10000 }).catch(() => {});
           if (await b.count()) { await b.click(); await page.waitForTimeout(900); }
+          await openClubs();
         }
         // ...AND THE TAKEN-OUT SIDE OPENS ITS ROWS. The statement's own word for
         // a movement ("Full Units Redemption") rides in the row EXPANSION; the
@@ -37297,6 +37591,76 @@ for (const theme of THEMES) {
        * declared `data-table-static` is exempt from the cell bound: its cells
        * are the source's own text.
        */
+      /**
+       * ── EVERY TABLE STRIPES ITS ROWS, IN ONE PAIR OF SHADES ───────────────
+       *
+       *   *"one row needs to be of one colour and then the next row will be of
+       *    a different shade of that color … implement this on the whole
+       *    dashboard … make sure that the shade of the alternate rows are
+       *    same."*
+       *
+       * Read per tbody, off COMPUTED colour — a stripe is invisible to every
+       * text check. A row whose class gives it a colour of its own (a band, a
+       * child row, a total, a tinted alert) is left out, as is a hovered row:
+       * those are the rows the stripe deliberately yields to. Of the rest, a
+       * row at an EVEN place must carry `--row-alt` and one at an odd place
+       * must carry nothing, and two PLAIN rows drawn next to each other must
+       * not share a shade — the last is the claim a reader sees, and the one a
+       * hidden row between them would break while the first two still pass.
+       */
+      const zebra = FAST ? null : await page.evaluate(() => {
+        const probe = document.createElement("div");
+        probe.style.backgroundColor = "var(--row-alt)";
+        document.body.appendChild(probe);
+        const stripe = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+        const STATE = new Set(["hover", "focus", "focus-within", "focus-visible", "active", "group-hover", "peer-hover", "disabled", "group-focus"]);
+        const ownBg = (tr) => {
+          if (tr.style && (tr.style.backgroundColor || tr.style.background)) return true;
+          const cls = typeof tr.className === "string" ? tr.className : "";
+          return cls.split(/\s+/).some((tok) => {
+            const parts = tok.split(":");
+            const last = parts.pop();
+            return /^bg-/.test(last) && !parts.some((v) => STATE.has(v));
+          });
+        };
+        const clear = (c) => c === "transparent" || /^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$/.test(c);
+        const opaqueUnder = (el) => {
+          for (let a = el.parentElement; a; a = a.parentElement) {
+            const c = getComputedStyle(a).backgroundColor;
+            if (!clear(c)) return c;
+          }
+          return null;
+        };
+        const out = { stripe, tables: [] };
+        for (const t of document.querySelectorAll("main table")) {
+          if (!vis(t)) continue;
+          const card = t.closest(".card");
+          const id = t.closest("[data-table-view]")?.getAttribute("data-table-view")
+            || (card?.querySelector(".h-section, h2, h3")?.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 60)
+            || "a table";
+          for (const tb of t.tBodies) {
+            const rows = [...tb.children].filter((r) => r.tagName === "TR");
+            const rec = { id, plain: 0, wrongEven: 0, wrongOdd: 0, sameAdjacent: 0, example: "", under: opaqueUnder(t) };
+            let prev = null;
+            rows.forEach((tr, i) => {
+              if (!vis(tr)) return;
+              const own = ownBg(tr) || tr.matches(":hover");
+              if (own) { prev = null; return; }
+              const bg = getComputedStyle(tr).backgroundColor;
+              rec.plain++;
+              const even = (i + 1) % 2 === 0;
+              if (even && bg !== stripe) { rec.wrongEven++; rec.example ||= `row ${i + 1} is ${bg}`; }
+              if (!even && !clear(bg)) { rec.wrongOdd++; rec.example ||= `row ${i + 1} is ${bg}`; }
+              if (prev !== null && prev === bg) { rec.sameAdjacent++; rec.example ||= `rows ${i} and ${i + 1} are both ${bg}`; }
+              prev = bg;
+            });
+            if (rec.plain) out.tables.push(rec);
+          }
+        }
+        return out;
+      });
       const tableNotes = FAST ? null : await page.evaluate(() => {
         const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
         const BLOCK = new Set(["P", "DIV", "LI", "SUMMARY", "UL", "SECTION", "DETAILS", "TABLE"]);
@@ -38477,15 +38841,41 @@ for (const theme of THEMES) {
            */
           buttons: [...t.querySelectorAll("tbody button, tfoot button")].length,
           links: t.querySelectorAll("a[href]").length,
-          // THE BAR CHART ABOVE THE TABLE, paired with the rows below it. Each
-          // bar carries `data-alloc-bar` (its section key) and IS the same
-          // `<Link>` its row is, so a bar and its row must open the same
-          // drill-down — and a fund-of-funds row that is not a link has a bar
-          // that is not one either. `rowHrefs` is the row's own destination per
-          // key; the invariant holds `bars` to it.
+          // THE PIE ABOVE THE TABLE, paired with the rows below it (Stage 10dn).
+          // Each legend entry carries `data-alloc-slice` (its section key) and
+          // IS the same `<Link>` its row is; each wedge carries
+          // `data-alloc-wedge`, the same destination as `data-href`, and its
+          // share of the pie as `data-alloc-share`. `rowHrefs` is the row's own
+          // destination per key; the invariants hold both to it.
+          slices: [...document.querySelectorAll("main [data-alloc-pie] [data-alloc-slice]")].map((el) => ({
+            key: el.getAttribute("data-alloc-slice"),
+            href: el.matches("a[href]") ? el.getAttribute("href") : null,
+            value: Number(el.getAttribute("data-alloc-value")),
+          })),
+          wedges: [...document.querySelectorAll("main [data-alloc-pie] svg [data-alloc-wedge]")].map((el) => ({
+            key: el.getAttribute("data-alloc-wedge"),
+            href: el.getAttribute("data-href"),
+            share: Number(el.getAttribute("data-alloc-share")),
+            tag: el.tagName.toLowerCase(),
+          })),
+          // THE VIEW PICKER and the drawing it chose (Stage 10dn): pie, bars or
+          // a treemap — three drawings of the same rows, each paired below.
+          chartView: document.querySelector("main [data-alloc-chart]")?.getAttribute("data-alloc-chart") ?? null,
+          chartPicker: [...document.querySelectorAll("main [data-alloc-chart-picker] [data-alloc-chart-view]")].map((b) => ({
+            key: b.getAttribute("data-alloc-chart-view"), active: b.hasAttribute("data-active"),
+            selected: b.getAttribute("aria-selected") === "true",
+          })),
           bars: [...document.querySelectorAll("main [data-alloc-bars] [data-alloc-bar]")].map((el) => ({
             key: el.getAttribute("data-alloc-bar"),
             href: el.matches("a[href]") ? el.getAttribute("href") : null,
+            value: Number(el.getAttribute("data-alloc-value")),
+            width: Number(el.querySelector("[data-alloc-bar-width]")?.getAttribute("data-alloc-bar-width")),
+          })),
+          tiles: [...document.querySelectorAll("main [data-alloc-treemap] [data-alloc-tile]")].map((el) => ({
+            key: el.getAttribute("data-alloc-tile"),
+            href: el.matches("a[href]") ? el.getAttribute("href") : null,
+            value: Number(el.getAttribute("data-alloc-value")),
+            area: Number(el.getAttribute("data-alloc-tile-area")),
           })),
           rowHrefs: Object.fromEntries([...t.querySelectorAll("tbody tr[data-alloc-row]")].map((r) => {
             const a = r.querySelector("a[href]");
@@ -38683,6 +39073,9 @@ for (const theme of THEMES) {
             const pill = root.firstElementChild?.lastElementChild;
             const absent = root.querySelector("[data-mover-total-absent]");
             return [k, {
+              /* The list's own heading — "15 gainers" — which is the count its
+                 rows must reach since Stage 10dn lists every mover. */
+              heading: (root.firstElementChild?.firstElementChild?.textContent ?? "").trim(),
               text: (pill?.textContent ?? "").trim(),
               absent: absent ? Number(absent.getAttribute("data-mover-total-absent")) : null,
               title: absent?.getAttribute("title") ?? null,
@@ -38740,9 +39133,21 @@ for (const theme of THEMES) {
               reached: num(s, "data-reached"), watching: num(s, "data-watching"), checking: num(s, "data-checking"),
               unchecked: num(s, "data-unchecked"), total: num(s, "data-total"), text: (s.textContent ?? "").trim(),
             } : null,
-            rows: [...sec.querySelectorAll("tr[data-alert-row]")].map((tr) => {
+            rows: [...sec.querySelectorAll("tr[data-alert-row]")].map((tr, _i, all) => {
               const st = tr.querySelector("[data-alert-status-cell]");
               const bg = getComputedStyle(tr).backgroundColor;
+              // The STRIPE is not a tint (Stage 10dn): every table paints its
+              // even plain rows in `--row-alt`, so a watched row at an even place
+              // carries that shade and nothing else. Resolved off the table's own
+              // computed colour, never typed, so a theme change cannot desync it.
+              const stripe = (() => {
+                const probe = document.createElement("tr");
+                probe.style.backgroundColor = "var(--row-alt)";
+                all[0].parentElement.appendChild(probe);
+                const c = getComputedStyle(probe).backgroundColor;
+                probe.remove();
+                return c;
+              })();
               return {
                 id: tr.getAttribute("data-alert-row"),
                 kind: tr.getAttribute("data-alert-kind"),
@@ -38758,8 +39163,9 @@ for (const theme of THEMES) {
                 titles: [...tr.querySelectorAll("[title]")].map((el) => el.getAttribute("title") ?? ""),
                 edit: tr.querySelector("[data-alert-edit]")?.getAttribute("href") ?? null,
                 // A fired row is TINTED and a watched one is not. Transparent is
-                // `rgba(0, 0, 0, 0)`; anything with a non-zero alpha is a tint.
-                tinted: !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$|^transparent$/.test(bg),
+                // `rgba(0, 0, 0, 0)`, and the row stripe is the table's own; any
+                // other colour is a tint.
+                tinted: !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$|^transparent$/.test(bg) && bg !== stripe,
               };
             }),
           } : null,
@@ -38946,7 +39352,22 @@ for (const theme of THEMES) {
            * on that account's lines.
            */
           withheld: !!tr.querySelector("[data-cmp-withheld]"),
-          mandateAccount: tr.getAttribute("data-mandate-account"),
+          /**
+           * ONE ROW PER STRATEGY, NOT PER ACCOUNT (Stage 10dn): a mandate the
+           * family runs in several accounts is one row now, so the row names
+           * every account it stands for. `mandateAccount` is that account only
+           * where there is exactly one — a claim struck on one account's lines
+           * must not be struck on a row that spans several.
+           */
+          mandateAccounts: (tr.getAttribute("data-mandate-accounts") || "").split(" ").filter(Boolean),
+          accountNos: (tr.getAttribute("data-account") || "").split(" ").filter(Boolean),
+          mandateLines: tr.hasAttribute("data-mandate-lines") ? Number(tr.getAttribute("data-mandate-lines")) : null,
+          lineCounts: (tr.getAttribute("data-mandate-line-counts") || "").split(" ").filter(Boolean).map(Number),
+          mandateAccount: (() => {
+            const a = (tr.getAttribute("data-mandate-accounts") || "").split(" ").filter(Boolean);
+            return a.length === 1 ? a[0] : null;
+          })(),
+          nameHref: tr.cells[0]?.querySelector("a[href^='/mandate/']")?.getAttribute("href") ?? null,
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
@@ -38957,10 +39378,12 @@ for (const theme of THEMES) {
        * whose fixture quotes the book, where there is something to hold back.
        */
       const quoteHold = (FAST || !/^(monitor-withheld|performance-live)/.test(name)) ? null : await page.evaluate((cmpAt) => ({
-        lines: [...document.querySelectorAll('tbody tr[data-tree-child="venue"], tbody tr[data-tree-child="constituent"]')].map((tr) => ({
+        // A strategy's shares are on its accounts' own pages since Stage 10dn,
+        // so the lines a row opens into that carry a quote are a holding's.
+        lines: [...document.querySelectorAll('tbody tr[data-tree-child="venue"]')].map((tr) => ({
           kind: tr.getAttribute("data-tree-child"),
-          key: tr.getAttribute("data-venue-key") ?? tr.getAttribute("data-constituent"),
-          account: tr.getAttribute("data-venue-account") ?? tr.getAttribute("data-constituent-account"),
+          key: tr.getAttribute("data-venue-key"),
+          account: tr.getAttribute("data-venue-account"),
           withheld: !!tr.querySelector("[data-cmp-withheld]"),
           cmpTip: tr.cells[cmpAt]?.querySelector("[title]")?.getAttribute("title") ?? "",
         })),
@@ -39060,7 +39483,7 @@ for (const theme of THEMES) {
             return td && td.getAttribute("data-realised") !== null && td.getAttribute("data-realised") !== ""
               ? { key: tr.getAttribute("data-security-key"), value: Number(td.getAttribute("data-realised")), title: titleIn(td) } : null;
           }).filter(Boolean),
-          childRealised: [...document.querySelectorAll("tr[data-tree-child=constituent] td[data-child-cell=realised], tr[data-tree-child=venue] td[data-child-cell=realised]")]
+          childRealised: [...document.querySelectorAll("tr[data-tree-child=mandate-account] td[data-child-cell=realised], tr[data-tree-child=venue] td[data-child-cell=realised]")]
             .map((td) => ({ kind: td.closest("tr").getAttribute("data-tree-child"), text: txt(td),
               value: td.querySelector("[data-child-realised]")?.getAttribute("data-child-realised") ?? null, title: titleIn(td) })),
         };
@@ -39623,9 +40046,51 @@ for (const theme of THEMES) {
             accountId: tr.getAttribute("data-mine-row"),
             trades: tr.hasAttribute("data-trades"),
             windowed: tr.hasAttribute("data-mine-windowed"),
+            // The ONE LINE this row is drawn under, where two or more accounts
+            // carry the same holding (Stage 10dn); null on a row of its own.
+            club: tr.getAttribute("data-dated-club-member"),
             titles: [...tr.querySelectorAll("[title]")].map((e) => e.getAttribute("title") ?? ""),
             cells: cells(tr),
           })),
+          /**
+           * WHAT THE READER RANKS — a row of its own, or a holding's one line —
+           * in the order drawn. A club's accounts are drawn under it, so they
+           * are ordered inside it and not against the rows around it.
+           */
+          units: [...table.querySelectorAll("tr[data-dated-row]:not([data-dated-club-member]), tr[data-dated-club]")].map((tr) => ({
+            club: tr.hasAttribute("data-dated-club"),
+            section: tr.getAttribute("data-dated-section"),
+            last: tr.getAttribute("data-dated-last") ?? "",
+          })),
+          /** Each holding's one line, its own figures, and the accounts under it. */
+          clubs: (() => {
+            const num = (el, a) => (el.hasAttribute(a) ? Number(el.getAttribute(a)) : null);
+            const members = [...table.querySelectorAll("tr[data-dated-club-member]")];
+            return [...table.querySelectorAll("tr[data-dated-club]")].map((tr) => {
+              const key = tr.getAttribute("data-dated-club");
+              return {
+                key,
+                section: tr.getAttribute("data-dated-section"),
+                label: tr.getAttribute("data-dated-label"),
+                last: tr.getAttribute("data-dated-last") ?? "",
+                members: Number(tr.getAttribute("data-dated-club-members")),
+                open: tr.hasAttribute("data-open"),
+                expanded: tr.getAttribute("aria-expanded") === "true",
+                paid: num(tr, "data-club-paid"),
+                value: num(tr, "data-club-value"),
+                bought: num(tr, "data-club-bought"),
+                rows: members.filter((m) => m.getAttribute("data-dated-club-member") === key).map((m) => ({
+                  section: m.getAttribute("data-dated-section"),
+                  label: m.getAttribute("data-dated-label"),
+                  kind: m.getAttribute("data-dated-kind"),
+                  last: m.getAttribute("data-dated-last") ?? "",
+                  paid: num(m, "data-dated-paid"),
+                  value: num(m, "data-dated-value"),
+                  bought: num(m, "data-dated-bought"),
+                })),
+              };
+            });
+          })(),
           foot: foot ? cells(foot) : null,
           /**
            * THE FOOTER BY COLUMN, with each cell repeated over the columns it
@@ -40041,11 +40506,40 @@ for (const theme of THEMES) {
           nested: [...table.querySelectorAll("tbody tr")]
             .filter((tr) => kindOf(tr) !== "lookthrough")
             .reduce((n, tr) => n + tr.querySelectorAll("table").length, 0),
-          mandates: [...table.querySelectorAll("tbody tr[data-mandate]")].map((tr) => ({
-            open: tr.getAttribute("data-tree-parent"),
-            holdings: Number(tr.getAttribute("data-holdings")),
-            constituents: under(tr).filter((x) => kindOf(x) === "constituent").length,
-          })),
+          /*
+           * ONE ROW PER STRATEGY (Stage 10dn): a mandate run in several accounts
+           * opens onto one line per account, each linking to that account's own
+           * page, where its shares are. A mandate run in one account opens
+           * nothing — its name IS the link — and the shares a row used to open
+           * onto are on that page instead.
+           */
+          mandates: [...table.querySelectorAll("tbody tr[data-mandate]")].map((tr) => {
+            const lines = under(tr).filter((x) => kindOf(x) === "mandate-account");
+            return {
+              open: tr.getAttribute("data-tree-parent"),
+              holdings: Number(tr.getAttribute("data-holdings")),
+              accounts: (tr.getAttribute("data-mandate-accounts") || "").split(" ").filter(Boolean),
+              constituents: under(tr).filter((x) => kindOf(x) === "constituent").length,
+              // Each share, the account it says it is in, and the account LINE
+              // it is drawn under (null where it hangs straight from the row).
+              shares: (() => {
+                let cur = null;
+                return under(tr).flatMap((x) => {
+                  if (kindOf(x) === "mandate-account") { cur = x.getAttribute("data-mandate-line"); return []; }
+                  if (kindOf(x) !== "constituent") return [];
+                  return [{ account: x.getAttribute("data-constituent-account"), under: cur,
+                    href: x.querySelector("a[href^='/stock/']")?.getAttribute("href") ?? null }];
+                });
+              })(),
+              lines: lines.map((x) => ({
+                account: x.getAttribute("data-mandate-line"),
+                accountNo: x.getAttribute("data-mandate-line-account"),
+                holdings: Number(x.getAttribute("data-mandate-line-holdings")),
+                href: x.querySelector("a[href^='/mandate/']")?.getAttribute("href") ?? null,
+              })),
+              nameHref: tr.cells[0]?.querySelector("a[href^='/mandate/']")?.getAttribute("href") ?? null,
+            };
+          }),
         };
       });
       const categoryTotals = FAST ? null : await page.evaluate(() => {
@@ -42044,6 +42538,10 @@ for (const theme of THEMES) {
             rowKeys: (td.getAttribute("data-row-keys") || "").split(" ").filter(Boolean),
             rowKey: td.closest("tr")?.getAttribute("data-security-key") ?? null,
             mandate: !!td.closest("tr")?.hasAttribute("data-mandate"),
+            // The accounts a mandate row STANDS FOR — every account its strategy
+            // is run in (Stage 10dn), read off the row rather than off the
+            // return cell, so the units are restated from the row.
+            mandateAccounts: (td.closest("tr")?.getAttribute("data-mandate-accounts") || "").split(" ").filter(Boolean),
             clubbed: !!td.closest("tr")?.querySelector("[data-fund-classes]"),
             bucket: td.closest("tr")?.getAttribute("data-bucket") ?? null,
           })));
@@ -42090,7 +42588,12 @@ for (const theme of THEMES) {
       // checked against it — and the address of the drill-down itself.
       if (name === "monitor") {
         MANDATE_PATH = hrefs.find((h) => /^\/mandate\/./.test(h)) ?? MANDATE_PATH;
-        for (const m of mandateRows ?? []) MANDATE_ROWS.set(m.accountNo, m);
+        // One entry per ACCOUNT, because a row is a strategy now (Stage 10dn)
+        // and the drill-down is one account's page: each account carries the
+        // holding count of its own line on the row.
+        for (const m of mandateRows ?? []) {
+          m.accountNos.forEach((no, i) => MANDATE_ROWS.set(no, { ...m, accountNo: no, holdings: m.lineCounts[i] }));
+        }
       }
       /**
        * WHAT MORNING CIO DREW, so the drill-downs below can be checked against
@@ -43028,6 +43531,21 @@ for (const theme of THEMES) {
             || tv.movable !== tv.headCells - 1;
           if (bad) {
             invariants.push(`every table sorts on its headings and moves every column but the first — "${tv.id}" has ${tv.headCells} heading cells, ${tv.withCol} declared, ${tv.sortable} sortable, ${tv.movable} movable, firstFixed=${tv.firstFixed}`);
+          }
+        }
+      }
+      // The stripe is checked in BOTH themes, unlike the structural claims
+      // above: it is a colour, and each theme draws it from its own variable.
+      if (!FAST && width === WIDTHS[0] && zebra) {
+        for (const z of zebra.tables) {
+          if (z.wrongEven || z.wrongOdd) {
+            invariants.push(`every table stripes its rows in one pair of shades — "${z.id}" (${theme}): ${z.wrongEven} even row(s) off the ${zebra.stripe} stripe, ${z.wrongOdd} odd row(s) striped — ${z.example}`);
+          }
+          if (z.sameAdjacent) {
+            invariants.push(`neighbouring rows alternate shade — "${z.id}" (${theme}) draws ${z.sameAdjacent} pair(s) of plain rows side by side in one shade — ${z.example}`);
+          }
+          if (z.plain > 1 && z.under === zebra.stripe) {
+            invariants.push(`the second shade differs from what the table sits on — "${z.id}" (${theme}) is drawn on ${z.under}, the stripe's own colour`);
           }
         }
       }

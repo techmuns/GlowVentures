@@ -13,6 +13,8 @@ export type ReviewColumnData = {
 export type ReviewKind = "holding" | "category" | "entity" | "sector";
 export type ReviewScope = {
   positions?: readonly Position[]; securityKey?: string; accountId?: string; isMandate?: boolean;
+  /** Several accounts on one row — a strategy run for more than one member. Each is looked up apart. */
+  accountIds?: readonly string[];
   product?: string; category?: string; basket?: string; entity?: string; sector?: string;
   familySubset?: boolean;
 };
@@ -79,7 +81,9 @@ export function reviewField(scope: ReviewScope | undefined, field: string): Revi
   ];
   for (const [name, records] of groups) if (name) return records[norm(name)]?.[field] ?? missing;
   const positions = scope.positions;
-  const records = positions?.length ? positions.map((p) => productRecord(scope, p)) : [productRecord(scope)];
+  const records = positions?.length ? positions.map((p) => productRecord(scope, p))
+    : scope.accountIds?.length ? scope.accountIds.map((accountId) => productRecord({ ...scope, accountId }))
+    : [productRecord(scope)];
   const values = records.map((r) => r?.[field]);
   if (values.some((v) => !v)) return missing;
   const first = values[0];

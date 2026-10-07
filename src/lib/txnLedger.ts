@@ -341,3 +341,91 @@ export function datedSectionRollup(
     return { key, rows: rs, totals: datedTotals(rs) };
   });
 }
+
+/**
+ * ── ONE HOLDING, ONE LINE: THE ROWS OF ONE SECTION, CLUBBED ─────────────────
+ *
+ *   *"If there are 2 separate transactions of the same holding then we need to
+ *    show that in drop down and label them as a single line item and club total
+ *    of both the transactions even if they are held by 2 separate entities."*
+ *
+ * An ACCOUNT row is one account's record, so a strategy two members each hold —
+ * Aristos for Ajay and for Ankita, Green Lantern's GLC Growth Fund, Sanshi's
+ * five folios — drew one row per account. They are clubbed here into one line
+ * whose figures are the members' own totals (`datedTotals`, so each is summed
+ * the way the footer sums it, a withheld figure skipped and counted), and the
+ * accounts open underneath.
+ *
+ * THE JOIN IS THE ROW'S OWN LABEL — the strategy or fund name the statement
+ * prints, with a unit class taken off (`splitFundClass`) — and nothing looser.
+ * A SECURITY row is already one per security in its section, so it never clubs.
+ * Nothing is added to or removed from the rows: every member is drawn when its
+ * line opens, and the footer still sums the rows themselves.
+ */
+export type DatedUnit =
+  | { kind: "row"; row: DatedRow }
+  | {
+      kind: "club";
+      key: string;
+      section: string;
+      label: string;
+      members: DatedRow[];
+      first: string;
+      last: string;
+      totals: ReturnType<typeof datedTotals>;
+    };
+
+/** The name a club joins on: the label with any unit class taken off, folded. */
+export function clubBase(label: string, splitClass: (s: string) => { fund: string } | null): string {
+  const base = splitClass(label)?.fund ?? label;
+  return base.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+export function clubDatedRows(
+  rows: DatedRow[],
+  sort: TxnSort,
+  splitClass: (s: string) => { fund: string } | null,
+): DatedUnit[] {
+  const by = new Map<string, DatedRow[]>();
+  for (const r of rows) {
+    if (r.kind !== "account") continue;
+    const k = `${r.section}|${clubBase(r.label, splitClass)}`;
+    (by.get(k) ?? by.set(k, []).get(k)!).push(r);
+  }
+  const units: (DatedUnit & { sortLast: string; size: number | null })[] = [];
+  const seen = new Set<string>();
+  const sizeOf = (paid: number | null, bought: number | null, sold: number | null) => {
+    const dealt = bought == null && sold == null ? null : (bought ?? 0) + (sold ?? 0);
+    return paid == null && dealt == null ? null : Math.max(paid ?? -Infinity, dealt ?? -Infinity);
+  };
+  for (const r of rows) {
+    const k = r.kind === "account" ? `${r.section}|${clubBase(r.label, splitClass)}` : null;
+    const members = k ? by.get(k)! : null;
+    if (!k || !members || members.length < 2) {
+      const paid = r.capital && r.capital.contributions > 0 ? r.capital.paidIn : null;
+      units.push({ kind: "row", row: r, sortLast: r.last, size: sizeOf(paid, r.trades?.bought ?? null, r.trades?.sold ?? null) });
+      continue;
+    }
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const totals = datedTotals(members);
+    const firsts = members.map((m) => m.first).filter(Boolean).sort();
+    const lasts = members.map((m) => m.last).filter(Boolean).sort();
+    units.push({
+      kind: "club",
+      key: `club:${k}`,
+      section: r.section,
+      label: splitClass(r.label)?.fund ?? r.label,
+      members,
+      first: firsts[0] ?? "",
+      last: lasts[lasts.length - 1] ?? "",
+      totals,
+      sortLast: lasts[lasts.length - 1] ?? "",
+      size: sizeOf(totals.contributions > 0 ? totals.paidIn : null, totals.bought, totals.sold),
+    });
+  }
+  // A club is ranked on ITS OWN figures — its newest movement, its summed size —
+  // never on whichever member happened to rank first.
+  return sortRows(units.map((u) => ({ ...u, last: u.sortLast })), sort, (u) => u.size)
+    .map(({ sortLast: _l, size: _s, ...u }) => (u.kind === "row" ? { kind: "row" as const, row: u.row } : (u as DatedUnit)));
+}
