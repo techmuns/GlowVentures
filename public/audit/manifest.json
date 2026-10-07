@@ -1658,8 +1658,8 @@
    "transactions",
    "pages"
   ],
-  "status": "partial",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-08-13-transaction-statement",
   "label": "V.E.C Assago Capital Management LLP · 128005 · transaction-statement",
   "fy": "2026-08-13",
@@ -1668,7 +1668,7 @@
    {
     "key": "transactions",
     "name": "transactions",
-    "rows": 34,
+    "rows": 32,
     "cols": 10
    },
    {
@@ -2095,8 +2095,8 @@
    "transactions",
    "pages"
   ],
-  "status": "partial",
-  "warnings": 1,
+  "status": "ok",
+  "warnings": 0,
   "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-08-13-transaction-statement",
   "label": "V.E.C Assago Capital Management LLP · 128004 · transaction-statement",
   "fy": "2026-08-13",
@@ -2105,7 +2105,7 @@
    {
     "key": "transactions",
     "name": "transactions",
-    "rows": 15,
+    "rows": 14,
     "cols": 10
    },
    {
@@ -9541,6 +9541,80 @@
     "key": "pages",
     "name": "Raw page text",
     "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-09-22-capital-register",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-09-22",
+  "reportType": "capital-register",
+  "sourcePath": "source/october-2026/CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
+  "pages": 3,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-09-22-capital-register",
+  "label": "Green Lantern Capital LLP · 510861 · capital-register",
+  "fy": "2026-09-22",
+  "source": "source/october-2026/CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 91,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-09-22-transaction-statement",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-09-22",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/october-2026/TRANSACTION STATEMENT GREEN LANTERN - AJAY.pdf",
+  "pages": 18,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-09-22-transaction-statement",
+  "label": "Green Lantern Capital LLP · 510861 · transaction-statement",
+  "fy": "2026-09-22",
+  "source": "source/october-2026/TRANSACTION STATEMENT GREEN LANTERN - AJAY.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 523,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 18,
     "cols": 2
    }
   ]

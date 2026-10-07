@@ -75,10 +75,12 @@
 // mismatch and nothing else, so they are counted as NOT CHECKED and named,
 // rather than compared against the wrong date or quietly dropped. Same rule as
 // `golden.mjs`: a case with no valid input is never reported as a pass.
+import fs from "node:fs";
+import path from "node:path";
 import { xirr } from "@/lib/xirr";
 import { moneyWeightedReturn, MIN_ANNUALISE_DAYS } from "@/lib/bucketXirr";
 import { measuredAccountsReturn } from "@/lib/returns";
-import { BOOK_ACCOUNTS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURNS, BOOK_POSITIONS, BOOK_AS_OF } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURNS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_CAPITAL_MOVES } from "@/data/glowData";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -358,6 +360,60 @@ console.log("\n── the window ends where the pool closes ──");
   ok("a portfolio priced away from its statements gives a DIFFERENT rate — so callers must pass the statement one",
     liftedR.annPct != null && got.annPct != null && Math.abs(liftedR.annPct - got.annPct) > 5,
     `${liftedR.annPct?.toFixed(1)}% vs ${got.annPct?.toFixed(1)}%`);
+}
+
+// ── A CAPITAL REGISTER LONGER THAN THE WINDOW IS CUT TO THE WINDOW ──────────
+// Green Lantern's since-inception capital register (delivered 7 Oct 2026) runs
+// 16 Jan 2025 → 22 Sep 2026: wider than the money-weighted window on BOTH
+// sides. Its ₹10 Cr Corpus Deposit of January 2025 is already inside the
+// 1 April 2026 opening value the series starts from, and its TDS rows after
+// 27 July are not yet inside the value it closes on. Taken whole, the first
+// counts the same ₹10 Cr twice and the second subtracts money the closing
+// value still holds. So every flow lies between the series' own opening date
+// and its account's report date, and no dated capital move lies after it.
+{
+  const acc = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
+  const outside: string[] = [];
+  const unknown: string[] = [];
+  for (const [id, flows] of Object.entries(BOOK_ACCOUNT_CASH_FLOWS)) {
+    const asOf = acc.get(id)?.asOf;
+    if (!asOf) unknown.push(id);
+    const opens = flows[0]?.date;
+    for (const f of flows) {
+      if (asOf && f.date > asOf) outside.push(`${id} ${f.date} after its ${asOf} value`);
+      if (opens && f.date < opens) outside.push(`${id} ${f.date} before its ${opens} opening`);
+    }
+  }
+  // A series whose account cannot be found has no report date to be held to,
+  // and would pass the check below by checking nothing.
+  ok("every money-weighted series names an account with a report date",
+    Object.keys(BOOK_ACCOUNT_CASH_FLOWS).length > 0 && unknown.length === 0, unknown.join(", "));
+  ok("every money-weighted flow lies between its series' opening and its account's report date",
+    outside.length === 0, outside.slice(0, 4).join("; "));
+  const strays = BOOK_CAPITAL_MOVES.filter((m) => !acc.get(m.accountId));
+  ok("every dated capital move names an account in the book", strays.length === 0,
+    strays.slice(0, 4).map((m) => m.accountId).join(", "));
+  const late = BOOK_CAPITAL_MOVES.filter((m) => { const a = acc.get(m.accountId); return a && m.date > a.asOf; });
+  ok("no dated capital move lies after its account's report date — it is not yet in that value",
+    late.length === 0, late.slice(0, 4).map((m) => `${m.accountId} ${m.date} ${m.amount}`).join("; "));
+
+  // LOAD-BEARING: the register in the archive really is wider than the window
+  // on both sides, or the two checks above pass over nothing.
+  const GL = "green-lantern-capital-llp-510861";
+  const doc = path.join(process.cwd(), "public", "audit", `${GL}-2026-09-22-capital-register`, "document.json");
+  if (fs.existsSync(doc)) {
+    const reg = (JSON.parse(fs.readFileSync(doc, "utf8")).cashFlows ?? []) as Array<{ date: string; amount: number | null }>;
+    const flows = BOOK_ACCOUNT_CASH_FLOWS[GL] ?? [];
+    const asOf = acc.get(GL)?.asOf ?? "";
+    const opens = flows[0]?.date ?? "";
+    const before = reg.filter((c) => c.date < opens && c.amount);
+    const after = reg.filter((c) => c.date > asOf && c.amount);
+    ok("Green Lantern 510861: the since-inception register carries rows before the window and after it",
+      before.length > 0 && after.length > 0, `${before.length} before ${opens}, ${after.length} after ${asOf}`);
+    ok("…and its January 2025 Corpus Deposit is not a flow of the window, which opens on a value already holding it",
+      !flows.some((f) => f.date < "2026-01-01") && flows[0]?.amount < 0 && /opening/i.test(flows[0]?.description ?? ""),
+      JSON.stringify(flows.slice(0, 2)));
+  } else ok("Green Lantern 510861's since-inception capital register is in the archive", false, doc);
 }
 
 process.exit(fails ? 1 : 0);

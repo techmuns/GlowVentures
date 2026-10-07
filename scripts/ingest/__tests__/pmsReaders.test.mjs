@@ -16,6 +16,7 @@ import { parseNumInfo } from "../lib/parseNum.mjs";
 import { extract as extractPms } from "../providers/pmsStatements.mjs";
 import { extract as extractInvestorReport } from "../providers/pmsInvestorReport.mjs";
 import { extract as extractSanshi } from "../providers/sanshiFund.mjs";
+import { findTable } from "../lib/table.mjs";
 import { makeGridPdf } from "./fixtures/makePdf.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -131,6 +132,109 @@ const allotments = [
     JSON.stringify(t.map((x) => [x.quantity, x.unitPrice])));
   ok("no quantity label: …and no row is published with its count missing either", t.length === 0,
     `got ${t.length} row(s): ${JSON.stringify(t.map((x) => [x.quantity, x.unitPrice]))}`);
+}
+
+// ── 1c2. A LABEL LINE ABOVE THE HEADER (Green Lantern, 7 Oct 2026) ──────────
+// The since-inception transaction statement prints its Settlement Date label as
+// "Settlement" ABOVE the main header line and "Date" below it. A header that
+// starts at the anchor sees only "Date", and the column binds to nothing — so
+// every trade's settlement date was null and the reader said so. The geometry
+// below is the real statement's (`TRANSACTION STATEMENT GREEN LANTERN - AJAY`):
+// "Settlement" 4pt above the header line at x=200, "Date" 5pt below at x=210.
+// The settlement dates differ from the trade dates here on purpose, so a date
+// read from the wrong column cannot pass.
+const GL = { docKey: "t-gl", fileName: "TRANSACTION STATEMENT GREEN LANTERN - AJAY.pdf", provider: "Green Lantern Capital LLP", reportType: "transaction-statement", accountNo: "510861" };
+const glTop = [
+  [35, 560, "TRANSACTION STATEMENT"],
+  [35, 545, "Account : 510861 AJAY T JAISINGHANI - GLC0780"],
+  [35, 530, "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND"],
+  [35, 515, "From 16/01/2025 to 22/09/2026"],
+];
+const glHeader = (settleAbove) => [
+  ...(settleAbove ? [[X.settle, 501, "Settlement"]] : []),
+  [X.desc, 497, "Transaction Description"], [X.tran, 497, "Tran Date"],
+  [X.sec, 497, "Security"], [X.exchg, 497, "Exchg"], [569, 497, "Quantity"], [617, 497, "Unit Price"],
+  [X.brkg, 497, "Brkg."], [722, 497, "STT"], [745, 497, "Settlement Amount"],
+  [210, 492, "Date"],
+];
+const glTrades = [
+  [X.desc, 475, "Current Period Transactions"],
+  [X.desc, 460, "Shares - Listed"],
+  [X.desc, 446, "Buy"], [146, 446, "20/01/2025"], [196, 446, "21/01/2025"], [X.sec, 446, "Alivus Life Sciences Ltd"],
+  [X.exchg, 446, "NSE"], [570, 446, "910.000"], [612, 446, "1,102.9627"], [681, 446, "1.103"], [708, 446, "1,003.50"], [766, 446, "1,005,703.29"],
+  [X.desc, 433, "Sell"], [146, 433, "23/01/2025"], [196, 433, "24/01/2025"], [X.sec, 433, "Vedanta Ltd"],
+  [X.exchg, 433, "NSE"], [564, 433, "8,730.000"], [618, 433, "461.5719"], [681, 433, "0.4615"], [708, 433, "4,029.29"], [766, 433, "4,037,580.88"],
+];
+{
+  const doc = await read([...glTop, ...glHeader(true), ...glTrades], GL);
+  const t = doc.transactions ?? [];
+  ok("label above: both trades read", t.length === 2, `got ${t.length}`);
+  ok("label above: each trade's settlement date is its own column, not the trade date",
+    t[0]?.settlementDate === "2025-01-21" && t[1]?.settlementDate === "2025-01-24",
+    JSON.stringify(t.map((x) => [x.date, x.settlementDate])));
+  ok("label above: the trade date is still the trade date", t[0]?.date === "2025-01-20" && t[1]?.date === "2025-01-23",
+    JSON.stringify(t.map((x) => x.date)));
+  ok("label above: quantity and price stay in their own columns",
+    t[0]?.quantity === 910 && t[0]?.unitPrice === 1102.9627 && t[1]?.quantity === 8730 && t[1]?.unitPrice === 461.5719,
+    JSON.stringify(t.map((x) => [x.quantity, x.unitPrice])));
+  ok("label above: no column went unmatched", !(doc.warnings ?? []).some((w) => w.code === "columns-not-matched"),
+    JSON.stringify(doc.warnings));
+}
+// …and with no label above at all, the settlement column binds to nothing and
+// the statement SAYS so — it never borrows the trade date for it.
+{
+  const doc = await read([...glTop, ...glHeader(false), ...glTrades], { ...GL, docKey: "t-gl-nolabel" });
+  const t = doc.transactions ?? [];
+  ok("no label above: the trades are still read", t.length === 2, `got ${t.length}`);
+  ok("no label above: no settlement date is invented", t.every((x) => x.settlementDate === null),
+    JSON.stringify(t.map((x) => x.settlementDate)));
+  ok("no label above: the unmatched column is named, and it is the settlement date",
+    (doc.warnings ?? []).some((w) => w.code === "columns-not-matched" && /settleDate/.test(w.detail)),
+    JSON.stringify(doc.warnings));
+}
+// The line above is OPT-IN, and it is never a line that names a column itself.
+// Struck on `findTable` directly, so the reader's own wiring is not what passes.
+{
+  const ALIASES = {
+    description: [/^(transaction\s*description|description)/], tranDate: [/^(tran\s*date|date)/],
+    settleDate: [/^settlement\s*date/], security: [/^security/], quantity: [/^quantity/], amount: [/^settlement\s*amount/],
+  };
+  const grid = async (spans) => {
+    const { pages, error } = await extractLayout(makeGridPdf(spans, { mediaBox: [0, 0, 842, 595], fontSize: 6.5 }));
+    if (error) throw new Error(error);
+    return pages[0];
+  };
+  const page = await grid([...glTop, ...glHeader(true), ...glTrades]);
+  const on = findTable(page, ALIASES, { minFields: 4, labelLineAbove: true });
+  const off = findTable(page, ALIASES, { minFields: 4 });
+  ok("findTable: with the opt-in, the label line above completes Settlement Date", on && "settleDate" in on.columns,
+    JSON.stringify(on?.missing));
+  ok("findTable: without it, the same page leaves Settlement Date unmatched", off && !("settleDate" in off.columns),
+    JSON.stringify(off?.missing));
+  ok("findTable: the opt-in does not move the body — the first trade is still the first row read",
+    on && off && on.endIndex === off.endIndex, `${on?.endIndex} vs ${off?.endIndex}`);
+  // A header that already maps every column must not take a line above it,
+  // whatever that line says: here a fund name sits where "Settlement" was.
+  const full = await grid([
+    ...glTop, [X.settle, 501, "GLC GROWTH FUND"],
+    [X.desc, 497, "Transaction Description"], [X.tran, 497, "Tran Date"], [X.settle, 497, "Settlement"],
+    [X.sec, 497, "Security"], [569, 497, "Quantity"], [745, 497, "Settlement Amount"], [210, 492, "Date"],
+    ...glTrades,
+  ]);
+  const a = findTable(full, ALIASES, { minFields: 4, labelLineAbove: true });
+  const b = findTable(full, ALIASES, { minFields: 4 });
+  ok("findTable: a header that already reads is unchanged by a line above it",
+    a && b && a.headerIndex === b.headerIndex && a.headerText === b.headerText && !/GLC GROWTH FUND/.test(a.headerText),
+    `${a?.headerText} vs ${b?.headerText}`);
+  // …and a line above that names a column of its own is not a donor: it is the
+  // ANCHOR, under the rule that was already here, so the opt-in changes nothing.
+  const labelled = await grid([...glTop, [X.sec, 501, "Security"], ...glHeader(false), ...glTrades]);
+  const c = findTable(labelled, ALIASES, { minFields: 4, labelLineAbove: true });
+  const d = findTable(labelled, ALIASES, { minFields: 4 });
+  ok("findTable: a labelled line above reads the same with or without the opt-in",
+    c && d && c.headerIndex === d.headerIndex && c.headerText === d.headerText
+      && JSON.stringify(Object.keys(c.columns).sort()) === JSON.stringify(Object.keys(d.columns).sort()),
+    `${c?.headerIndex} ${c?.headerText} vs ${d?.headerIndex} ${d?.headerText}`);
 }
 
 // ── 1d. THE COMMITTED ARCHIVE, HELD TO THE SAME RULE ─────────────────────────
