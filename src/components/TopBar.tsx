@@ -134,9 +134,9 @@ function QuoteStatus() {
     <span className="text-slate-400" data-testid="topbar-live" data-quote-coverage
       title={[
         `${livePriced} securit${livePriced === 1 ? "y" : "ies"} priced live${quoteFeeds.length ? ` via ${quoteFeeds.join(" and ")}` : ""}.`,
-        notLive ? `${notLive} ha${notLive === 1 ? "s" : "ve"} an NSE symbol and no quote this round, so ${notLive === 1 ? "it stays" : "they stay"} on ${notLive === 1 ? "its" : "their"} statement mark.` : null,
+        notLive ? `${notLive} ha${notLive === 1 ? "s" : "ve"} an exchange instrument and no quote this round, so ${notLive === 1 ? "it stays" : "they stay"} on ${notLive === 1 ? "its" : "their"} statement mark.` : null,
         liveWithheld ? `${liveWithheld} had a quote the corporate-action check held back, because the statement's share count may not match it, so ${liveWithheld === 1 ? "it stays" : "they stay"} on ${liveWithheld === 1 ? "its" : "their"} statement mark.` : null,
-        unpriceable ? `${unpriceable} resolve${unpriceable === 1 ? "s" : ""} no NSE symbol and can never be priced live — ${unpriceable === 1 ? "it stays" : "they stay"} on ${unpriceable === 1 ? "its" : "their"} statement mark, or AMFI's published NAV for a mutual fund.` : null,
+        unpriceable ? `${unpriceable} resolve${unpriceable === 1 ? "s" : ""} no exchange instrument in the quote map — ${unpriceable === 1 ? "it stays" : "they stay"} on ${unpriceable === 1 ? "its" : "their"} statement mark, or AMFI's published NAV for a mutual fund.` : null,
         blendNote(vd, money),
       ].filter(Boolean).join(" ")}>
       Live{clock ? ` ${clock}` : ""}

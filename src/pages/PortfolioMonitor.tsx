@@ -12,7 +12,7 @@ import { StockLink } from "@/components/StockLink";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { companySectorIndex, type FundExposureRow } from "@/lib/lookthrough";
 import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
-import { symbolFor, symbolForKey } from "@/lib/quotes";
+import { symbolFor, symbolForKey, quoteSymbolFor } from "@/lib/quotes";
 import { liveWithheldReason } from "@/lib/corporateActions";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
@@ -730,7 +730,7 @@ const DERIVED_ONLY_WHY = "no statement in this book reports this company as a ho
 const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund holds and this is your units' share of it, across every asset class the filing carries — shares, bonds, NCDs and commercial paper alike. It is no part of the book's NAV — the fund's own value already stands for it there — so this column is never summed into a book total.";
 
 export function PortfolioMonitor() {
-  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns, scope: memberScope } = usePortfolio();
+  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns, quoteFeed, quotesStatus, requestSymbols, scope: memberScope } = usePortfolio();
   /**
    * WHY THE LIVE QUOTE ON THESE LINES WAS HELD BACK, OR NULL (DL-9).
    *
@@ -940,6 +940,13 @@ export function PortfolioMonitor() {
    * ask what a fund holds, so they must not pay for 21 fetches.
    */
   const exposure = useStockExposure(consolidated, bySecurity);
+  // A fund-only company has a market price even though the family owns no
+  // directly recorded shares. Register the whole company scope, including BSE.
+  useEffect(() => {
+    if (exposure.status !== "ok") return;
+    requestSymbols([...exposure.byKey.values()].map((e) => quoteSymbolFor({ securityKey: e.key, isin: e.isin }))
+      .filter((s): s is string => !!s));
+  }, [exposure, requestSymbols]);
   /**
    * ── ONE ANSWER TO "WHAT SECTOR IS THIS COMPANY IN" (MH-07, MSX-6) ─────────
    *
@@ -1899,6 +1906,15 @@ export function PortfolioMonitor() {
      * the route the sweep and a shared link both use. Clicking either money
      * header still sorts on that header's own figure.
      */
+    // CMP is the company's exchange price. Keep it on the row model too, so
+    // sorting agrees with the visible cell even for fund-only companies
+    // or a holding whose quantity projection is awaiting corporate-action data.
+    out = out.map((r) => {
+      if (r.mandate || r.fundClasses.length || !(r.measuredNA || r.assetClass === "Equity" || r.assetClass === "ETF")) return r;
+      const symbol = quoteSymbolFor({ securityKey: r.securityKey, isin: r.isin });
+      const quote = symbol ? quoteFeed?.quotes[symbol] : null;
+      return quote ? { ...r, currentPrice: quote.price } : r;
+    });
     const effSort = bySecurity ? "totalExposure" as const : "marketValue" as const;
     out.sort((a, b) => (b[effSort] ?? 0) - (a[effSort] ?? 0));
     // Footer totals are CONSOLIDATED in every view (each dedupeGroup once), so the
@@ -2086,7 +2102,7 @@ export function PortfolioMonitor() {
       heldCount: db.length,
       weightBase, weightCount, bucketTotals, smallDropped,
     };
-  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap, sectorOfPos, companySectors, memberScope.accountIds]);
+  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, quoteFeed, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap, sectorOfPos, companySectors, memberScope.accountIds]);
   /**
    * Rows grouped by BUCKET, not by asset class — the fix the family asked for
    * three times. Direct Equity is what they bought themselves; PMS mandates is
@@ -4131,6 +4147,14 @@ export function PortfolioMonitor() {
                    * `AbsentCell` with the reason rather than a 0 or a blend.
                    */
                   const m = r.mandate;
+                  const cmpSymbol = !m && !r.fundClasses.length && (r.measuredNA || r.assetClass === "Equity" || r.assetClass === "ETF")
+                    ? quoteSymbolFor({ securityKey: r.securityKey, isin: r.isin }) : null;
+                  const cmpQuote = cmpSymbol ? quoteFeed?.quotes[cmpSymbol] : null;
+                  const cmpWhy = !cmpSymbol
+                    ? "No listed exchange instrument is available for this holding."
+                    : quotesStatus === "loading" || quoteFeed?.pending.includes(cmpSymbol)
+                    ? "Fetching the exchange quote for this company."
+                    : "The quote service has not returned a current price for this company.";
                   /**
                    * IS THIS ROW THE WHOLE MANDATE, OR WHAT THE FILTERS LEFT OF IT?
                    *
@@ -4435,17 +4459,19 @@ export function PortfolioMonitor() {
                         {/* A live price comes from the quote feed, not the workbook, so it
                             carries no audit link back to the ledger. Only a workbook mark
                             does — and it's flagged so it can't pass as current. */}
-                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
+                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap" data-cmp-symbol={cmpSymbol ?? undefined}>
                           {m
                             ? <AbsentCell reason="a mandate has no price per unit — it is an account, not a security" />
+                            : cmpQuote
+                            ? <span data-cmp-source={cmpQuote.source} title={`${cmpQuote.source === "upstox" ? "Upstox" : "muns"} exchange price (${cmpSymbol}), last traded ${cmpQuote.tradedAt ? fmtDate(cmpQuote.tradedAt) : "at the feed observation"}.${r.measuredNA ? " The fund exposure remains based on its published portfolio; this CMP does not revalue it." : rowWithheld ? ` Holding valuation remains on the statement basis: ${rowWithheld.reason}.` : ""}`}>{fmtFromBase(cmpQuote.price)}</span>
                             : r.measuredNA
-                            ? <AbsentCell reason={DERIVED_ONLY_WHY} />
+                            ? <AbsentCell reason={cmpWhy} />
                             : r.fundClasses.length
                             ? <AbsentCell reason={`${statementNoteForSet(r.trancheSet)?.note ? `${statementNoteForSet(r.trancheSet)!.note} ` : ""}Each unit class of this fund is marked at its OWN NAV — ${r.fundClasses.join(", ")} — so there is no one price for the row. Open it for each class's own mark.`} />
                             : r.splitMarks && r.splitMarks.length > 1
                             ? <span data-cmp-split={r.splitMarks.length}><AbsentCell reason={splitMarkReason(r.splitMarks.map((v) => fmtFromBase(v)))} /></span>
                             : r.currentPrice === null
-                            ? <AbsentCell reason={totalValueNote(r.valuedAt, r.trancheSet, accIdx)} />
+                            ? <AbsentCell reason={cmpSymbol ? cmpWhy : totalValueNote(r.valuedAt, r.trancheSet, accIdx)} />
                             : r.live
                             ? fmtFromBase(r.currentPrice)
                             : <>{fmtFromBase(r.currentPrice)}

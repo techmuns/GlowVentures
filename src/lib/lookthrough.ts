@@ -41,6 +41,7 @@ import { isArbitrageFund } from "./fundNavs";
 import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 import nseSymbols from "@/data/nseSymbols.json";
 import screenerSectors from "@/data/screenerSectors.json";
+import { quoteSymbolFor } from "./quotes";
 
 const KEY_TO_SYMBOL = nseSymbols as Record<string, string>;
 const VENDOR_SECTORS = screenerSectors as Record<
@@ -430,9 +431,9 @@ export function bookIsinBridge(positions: readonly Pick<Position, "securityKey" 
   for (const p of positions) {
     if (!isCompanyShare(p) || seen.has(p.securityKey)) continue;
     seen.add(p.securityKey);
-    const sym = KEY_TO_SYMBOL[p.securityKey];
+    const sym = quoteSymbolFor(p);
     const inst = sym ? UPSTOX_INSTRUMENTS[sym] : undefined;
-    const isin = inst && /^NSE_EQ\|/.test(inst.key) ? inst.key.slice(7).trim().toUpperCase() : "";
+    const isin = inst && /^(NSE|BSE)_EQ\|/.test(inst.key) ? inst.key.slice(7).trim().toUpperCase() : "";
     if (!/^IN[EF][A-Z0-9]{9}$/.test(isin)) continue;
     const owner = index.get(isin);
     if (owner === p.securityKey) continue;
