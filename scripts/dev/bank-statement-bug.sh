@@ -882,6 +882,68 @@ run_case 54 report "the excluded-accounts intro claims one reason for every row"
     void others;
 PATCH
 
+# ── 55 ── a balance behind its account's newest statement is called the newest
+#
+# THE DEFECT THE FIXTURE GREW TWO STATEMENTS TO REACH. The selection ran over the
+# PUBLISHED issues alone, so a newer REFUSED one was dropped before the
+# comparison ever saw it, and the balance that survived was described as the
+# account's newest — two lines under a table printing the later refused issue.
+# …0003 is that account: a published Q1 and a refused Q3.
+#
+# IT IS THE SAME FIGURE EITHER WAY, which is why no value check sees it. What
+# moves is the claim, and what is lost is the one thing a reader could act on:
+# the balance is the last this book can WITNESS, and whatever moved in the
+# refused period is unknown rather than nothing. This case takes the comparison
+# away and puts the unqualified wording back.
+run_case 55 report "a balance behind its account's newest statement is called the newest" \
+  subStdin $BOOKBUILD <<'PATCH'
+      held.push({ ...at, issues: issues.length });
+      const newest = byNewest[0];
+      if (newest !== at && String(newest.periodTo ?? "") > String(at.periodTo ?? "")) {
+        behind.push({ at, refused: newest });
+      }
+--->
+      held.push({ ...at, issues: issues.length });
+PATCH
+
+# ── 56 ── …and the heading that carries it
+run_case 56 report "the total calls each balance the account's newest" \
+  subStdin $BOOKBUILD <<'PATCH'
+      L.push(`Their latest reconciled closing balances come to **${money(sum(held.map((b) => b.closingBalance)))}** `
+--->
+      L.push(`Their closing balances come to **${money(sum(held.map((b) => b.closingBalance)))}** `
+PATCH
+
+# ── 57 ── a global statement count rendered as a per-account claim
+#
+# `each taken from the newest of its N statement(s)` read N off the whole
+# published set, so three accounts holding 2, 2 and 1 statements read "each … of
+# its 5" — a count none of them has, in a sentence whose "its" asserts it of
+# every one. The honest form states the two counts apart: one balance per
+# account, over however many statements those accounts sent between them.
+run_case 57 report "the statement count is a global one worn as a per-account claim" \
+  subStdin $BOOKBUILD <<'PATCH'
+        + (issues > held.length ? ` — one balance each, from the ${issues} statement(s) those accounts sent` : "")
+--->
+        + (issues > held.length ? `, each taken from the newest of its ${issues} statement(s)` : "")
+PATCH
+
+# ── 58 ── an account whose every statement was refused is left unnamed
+#
+# THE COVERAGE HALF of "a figure that exists for SOME accounts is shown for those
+# and the rest are NAMED — including in the total's own caption". An account all
+# of whose issues the tie-out refused contributes nothing to the total, and
+# dropping it silently leaves a reader counting the accounts in the table above
+# and finding one more than the sentence claims.
+run_case 58 report "an account with no reconciled balance is dropped in silence" \
+  subStdin $BOOKBUILD <<'PATCH'
+      const at = byNewest.find((b) => b.rows > 0 && isNum(b.closingBalance));
+      if (!at) { unreconciled.push(byNewest[0]); continue; }
+--->
+      const at = byNewest.find((b) => b.rows > 0 && isNum(b.closingBalance));
+      if (!at) { continue; }
+PATCH
+
 # ── NO SUBJECT ON THIS TREE, AND SAID SO RATHER THAN SHIPPED AS A CLEAN CASE ──
 #
 # Three more bugs are available and NOTHING IN THIS REPOSITORY WOULD FIRE ON

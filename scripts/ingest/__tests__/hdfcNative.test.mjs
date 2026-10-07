@@ -433,10 +433,20 @@ const SYMBOLS = [
   // Demerged out of Sterlite Technologies and listed on both exchanges on
   // 31 Mar 2025; it trades as STLNETWORK and operates as Invenia.
   ["INE1VXE01018", "stl-networks", "STLNETWORK"],
-  // UNLISTED, so no symbol can exist. Sterlite Electric (formerly Sterlite
-  // Power Transmission) has filed a DRHP and has not listed; Sterlite Grid 5 is
-  // the transmission platform SPTL's infrastructure business was transferred
-  // into. Both trade only on the unlisted market.
+  // NO SYMBOL IN EITHER MAP, AND THAT IS WHAT IS CHECKED — never "unlisted",
+  // which this repository holds no evidence for. HEG is the standing
+  // counterexample: it IS listed and resolves no symbol here, because NSE
+  // renamed the listing (HEGAM) and the book prints no ISIN to join on. So "no
+  // symbol resolves" and "not listed" are different facts, and only the first
+  // is measurable from the tree.
+  //
+  // What the DOCUMENTS here say is narrower and is the whole of what the two
+  // checks below assert: this statement prices both at exactly a face value, so
+  // the reader refuses the rate, and neither `nseSymbols.json` nor Upstox's
+  // instrument list carries either ISIN. Sterlite Electric (formerly Sterlite
+  // Power Transmission) and Sterlite Grid 5 are understood to trade on the
+  // unlisted market — read off their filings and not off any file in this
+  // repository, which is why no check is struck on it.
   ["INE110V01015", "sterlite-electric", null],
   ["INE03QT01027", "sterlite-grid-5", null],
 ];
@@ -453,15 +463,16 @@ const SYMBOLS = [
     `statement ${read.join(",")}\n       table     ${listed.join(",")}`);
 }
 
-// AND THE STATEMENT ITSELF SAYS WHICH TWO ARE UNLISTED. The reader refuses a
-// rate that is exactly a face value, and the two holdings it refuses are the
-// two NSE does not list — two independent documents agreeing, which is what
-// earns `null` its place over "a symbol we failed to find".
+// AND THE TWO READINGS AGREE, WHICH IS WHAT EARNS `null` ITS PLACE over "a
+// symbol we failed to find": the reader refuses a rate that is exactly a face
+// value, and the two holdings it refuses are the two this table carries no
+// symbol for. Two documents, one answer — stated as the agreement it is rather
+// than as a conclusion about where either company trades.
 for (const [isin, , symbol] of SYMBOLS) {
   const h = holding(base, isin);
   if (!h) continue;
   const priced = h.marketPrice != null;
-  ok(`${isin} is priced by the statement if and only if NSE lists it`,
+  ok(`${isin} is priced by the statement if and only if this table carries a symbol`,
     priced === (symbol !== null),
     `rate ${h.marketPrice} · symbol ${symbol ?? "none"}`);
 }
@@ -487,7 +498,7 @@ for (const [isin, , symbol] of SYMBOLS) {
       const under = Object.entries(UPSTOX_INSTRUMENTS)
         .filter(([, inst]) => inst?.key === `NSE_EQ|${isin}`)
         .map(([t]) => t);
-      ok(`${key} is in neither symbol map, because it is not listed`,
+      ok(`${key} is in neither symbol map — which is a fact about the maps`,
         !(key in resolved) && under.length === 0,
         under.length ? `Upstox carries ${isin} under ${under.join(", ")}` : `resolved[${key}] is set`);
       continue;

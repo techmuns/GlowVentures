@@ -5104,30 +5104,82 @@ function report(book) {
         + `${money(b.debits)} | ${money(b.credits)} | ${money(b.closingBalance)} | ${rows} | ${checks} |`);
     }
     /**
-     * ONE CLOSING BALANCE PER ACCOUNT, THE LATEST — not one per statement.
+     * ONE BALANCE PER ACCOUNT, THE LATEST RECONCILED — and where a NEWER issue
+     * was refused, that is not the newest and the sentence must not say it is.
      *
      * `bankAccounts` is one entry per DOCUMENT, because each statement has its
      * own period and its own tie-out, and that is what the table should show.
      * Summing its closing column adds the SAME account's money once per
      * statement: a quarterly set for one HDFC account reads as three accounts
      * holding three times the balance, and the sentence under it said "across 3
-     * account(s)" about one. So the total takes each account's NEWEST closing
-     * and says how many statements stood behind it.
+     * account(s)" about one.
+     *
+     * THE NEWEST ISSUE IS CHOSEN OVER EVERY ISSUE, AND ONLY THEN IS ITS BALANCE
+     * TAKEN. Choosing over `published` alone drops a newer REFUSED issue before
+     * the comparison, so an account with a published Q2 and a refused Q3 had its
+     * Q2 closing described as "the newest" while the table two lines above showed
+     * the later refused one. What is published is the latest RECONCILED balance;
+     * whatever moved in the refused period is not in it, and that gap is NAMED
+     * rather than left to be found by reading the table — the figure is in no
+     * total on this site, so the gap is the only thing a reader could act on.
+     *
+     * AND THE COUNT IS NOT A PER-ACCOUNT CLAIM. `each taken from the newest of
+     * its N statement(s)` read N off the whole published set, so two accounts
+     * holding two statements and one read "each … of its 3" — a count neither
+     * has, in a sentence whose "its" asserts it of both.
      */
-    const latest = new Map();
-    for (const b of published) {
-      if (!isNum(b.closingBalance)) continue;
+    const issuesByAccount = new Map();
+    for (const b of book.bankAccounts) {
       const key = `${b.provider}|${b.accountNo ?? "—"}`;
-      const prev = latest.get(key);
-      if (!prev || String(b.periodTo ?? "") > String(prev.periodTo ?? "")) latest.set(key, b);
+      if (!issuesByAccount.has(key)) issuesByAccount.set(key, []);
+      issuesByAccount.get(key).push(b);
     }
-    const held = [...latest.values()];
+    const held = [];
+    const behind = [];
+    const unreconciled = [];
+    for (const issues of issuesByAccount.values()) {
+      const byNewest = [...issues]
+        .sort((a, b) => String(b.periodTo ?? "").localeCompare(String(a.periodTo ?? "")));
+      const at = byNewest.find((b) => b.rows > 0 && isNum(b.closingBalance));
+      if (!at) { unreconciled.push(byNewest[0]); continue; }
+      held.push({ ...at, issues: issues.length });
+      const newest = byNewest[0];
+      if (newest !== at && String(newest.periodTo ?? "") > String(at.periodTo ?? "")) {
+        behind.push({ at, refused: newest });
+      }
+    }
     if (held.length) {
-      const over = published.filter((b) => isNum(b.closingBalance)).length;
+      const issues = sum(held.map((b) => b.issues));
       L.push("");
-      L.push(`Their closing balances come to **${money(sum(held.map((b) => b.closingBalance)))}** `
-        + `across ${held.length} account(s)${over > held.length ? `, each taken from the newest of its ${over} statement(s)` : ""}, `
-        + "and that figure is in nothing above.");
+      L.push(`Their latest reconciled closing balances come to **${money(sum(held.map((b) => b.closingBalance)))}** `
+        + `across ${held.length} account(s)`
+        + (issues > held.length ? ` — one balance each, from the ${issues} statement(s) those accounts sent` : "")
+        + ", and that figure is in nothing above.");
+      if (behind.length) {
+        L.push("");
+        L.push("**And for some of them it is not the newest.** Each of these accounts sent a LATER");
+        L.push("statement whose tie-out failed, so the balance above is the last one this book can");
+        L.push("witness and whatever moved after it is not in it:");
+        L.push("");
+        for (const x of behind) {
+          L.push(`- **${x.at.provider} ${x.at.accountNo ?? "—"}** — reconciled to ${x.at.periodTo ?? "—"}; `
+            + `its ${x.refused.periodTo ?? "—"} statement was refused.`);
+        }
+      }
+      if (unreconciled.length) {
+        /**
+         * AND THE BOLD IS CLOSED, which the first draft of this line did not
+         * do — found by RENDERING it, like every other defect in this section.
+         * An unterminated `**` leaves every paragraph after it bold in any
+         * reader, so the one claim a reader must not miss would have taken the
+         * not-applicable list and the refusals with it.
+         */
+        const one = unreconciled.length === 1;
+        L.push("");
+        L.push(`**${unreconciled.length} further account${one ? "" : "s"} in the table above `
+          + `contribute${one ? "s" : ""} no balance at all.** Every statement ${one ? "it" : "they"} sent`);
+        L.push(`was refused: ${unreconciled.map((b) => `${b.provider} ${b.accountNo ?? "—"}`).join(", ")}.`);
+      }
     }
     /**
      * WHAT THE STATEMENT ITSELF COULD NOT SUPPLY, per account, in the reader's

@@ -100,12 +100,19 @@ try {
   fs.rmSync(TMP, { recursive: true, force: true });
 }
 
-ok("the four fixtures read through the real reader, each to the status it declares",
+ok("every fixture reads through the real reader, each to the status it declares",
   installed !== null && installed.length === BANK_FIXTURE.length,
   installed === null ? "installBankFixture threw" : `${installed.length} of ${BANK_FIXTURE.length}`);
-ok("…and exactly one of them is refused by its own tie-out",
-  installed !== null && installed.filter((w) => w.status === "partial").length === 1
-    && installed.filter((w) => w.status === "partial")[0].failed === 1,
+/**
+ * TWO ARE REFUSED, AND EACH FOR ONE CHECK. …0002 is the whole account's only
+ * issue; …0003's is NEWER than the published one beside it, which is the pair
+ * the closing-balance total's "newest" claim is struck on. A gate that fired
+ * only where a statement is broken in several ways would not prove it is
+ * all-or-nothing, so each fixture breaks exactly one check.
+ */
+ok("…and the two refused ones are each refused for exactly one check",
+  installed !== null && installed.filter((w) => w.status === "partial").length === 2
+    && installed.filter((w) => w.status === "partial").every((w) => w.failed === 1),
   installed === null ? "" : installed.map((w) => `${w.docKey}: ${w.status}/${w.failed} failed`).join(" | "));
 ok("build-book renders the book over the scratch archive",
   built !== null && built.status === 0 && rendered !== null,
@@ -117,8 +124,9 @@ ok("…and it wrote neither committed artefact",
   + `report ${sha(COMMITTED_REPORT) === reportBefore ? "unchanged" : "CHANGED"}`);
 
 const sec = rendered === null ? null : section(rendered);
-ok("the rendered report has a bank section with the four statements in it",
-  sec !== null && /^\| 50100000000001 \|/m.test(sec) && /^\| 032001510000 \|/m.test(sec),
+ok("the rendered report has a bank section with every statement in it",
+  sec !== null && /^\| 50100000000001 \|/m.test(sec) && /^\| 032001510000 \|/m.test(sec)
+    && /^\| 50100000000003 \|/m.test(sec),
   sec === null ? "no section" : `${sec.split("\n").length} lines`);
 
 if (sec) {
@@ -134,7 +142,7 @@ if (sec) {
   // paragraphs above its own counterexample: a refused statement is PARSED
   // completely and publishes nothing, which is a different claim.
   ok("the lead counts the statements and how many published a tape",
-    /\*\*4 statement\(s\), 3 of which published a tape\*\*/.test(sec),
+    /\*\*6 statement\(s\), 4 of which published a tape\*\*/.test(sec),
     sec.split("\n").slice(1, 4).join(" / "));
   ok("…and never claims every one of them was read completely",
     !/read completely/.test(sec));
@@ -190,16 +198,92 @@ if (sec) {
     cell("50100000000002", "2026-06-30", 8) === "—",
     String(cell("50100000000002", "2026-06-30", 8)));
 
-  // ── ONE CLOSING BALANCE PER ACCOUNT, THE LATEST ───────────────────────────
+  // ── ONE CLOSING BALANCE PER ACCOUNT, AND THE LATEST THAT RECONCILED ───────
+  //
+  // Three defects lived in this one sentence, and the fixture reaches all three.
   //
   // `bankAccounts` is one entry per DOCUMENT, so summing its closing column
   // adds the same account once per statement: two HDFC quarters of one account
   // read as two accounts holding both balances.
-  ok("the closing-balance total takes each account's newest statement",
-    /come to \*\*2,65,500\.50\*\* across 2 account\(s\), each taken from the newest of its 3 statement\(s\)/.test(sec),
-    (sec.match(/^Their closing balances.*$/m) ?? ["(no total line)"])[0]);
+  //
+  // THE SELECTION THEN RAN OVER THE PUBLISHED ISSUES ALONE, so an account whose
+  // NEWER statement was refused had its older balance described as its newest,
+  // two lines under a table showing the later one. …0003 is that account.
+  //
+  // AND THE COUNT WAS GLOBAL, RENDERED AS A PER-ACCOUNT CLAIM: "each taken from
+  // the newest of its 3 statement(s)" over two accounts holding 2 and 1.
+  //
+  // The total is RE-DERIVED from the table rather than compared with a literal —
+  // one path through the renderer, one through the rows it printed.
+  const periodTo = (p) => (String(p).match(/\d{4}-\d{2}-\d{2}/g) ?? []).slice(-1)[0] ?? "";
+  const byAccount = new Map();
+  for (const r of rows) {
+    const c = r.split("|").map((x) => x.trim());
+    if (!byAccount.has(c[1])) byAccount.set(c[1], []);
+    byAccount.get(c[1]).push({ bank: c[2], to: periodTo(c[4]), closing: c[8], rows: c[9] });
+  }
+  const paise = (v) => Math.round(Number(String(v).replace(/,/g, "")) * 100);
+  const latest = [];
+  const stale = [];
+  const none = [];
+  for (const [acct, issues] of byAccount) {
+    const newest = [...issues].sort((a, b) => b.to.localeCompare(a.to));
+    const at = newest.find((i) => i.rows !== "none published" && i.closing !== "—");
+    if (!at) { none.push([acct, newest[0]]); continue; }
+    latest.push([acct, at, issues.length]);
+    if (newest[0] !== at) stale.push([acct, at, newest[0]]);
+  }
+  const total = latest.reduce((a, [, i]) => a + paise(i.closing), 0);
+  const printed = (sec.match(/^Their latest reconciled closing balances come to \*\*([\d,.]+)\*\*/m) ?? [])[1];
+  ok("the total is one balance per account, summed from the table's own rows",
+    printed !== undefined && paise(printed) === total && latest.length > 1,
+    `printed ${printed ?? "(no total line)"} against ${(total / 100).toFixed(2)} over ${latest.length} account(s)`);
+  ok("…and it says how many accounts it covers, and over how many statements they sent",
+    new RegExp(`across ${latest.length} account\\(s\\) — one balance each, `
+      + `from the ${latest.reduce((a, [, , n]) => a + n, 0)} statement\\(s\\) those accounts sent`).test(sec),
+    (sec.match(/^Their latest reconciled.*$/m) ?? ["(no total line)"])[0]);
+  ok("…never a global count dressed as a per-account one",
+    !/its \d+ statement\(s\)/.test(sec),
+    (sec.match(/its \d+ statement\(s\)[^\n]*/) ?? [])[0] ?? "");
   ok("…and says that figure is in nothing above",
     /that figure is in nothing above/.test(sec));
+
+  // AN ACCOUNT WHOSE NEWEST STATEMENT WAS REFUSED IS NAMED, WITH BOTH DATES —
+  // the balance above it is the last one this book can witness, and what moved
+  // after it is unknown rather than zero.
+  ok("an account reconciled to older than its newest statement is named, with both dates",
+    stale.length > 0 && stale.every(([acct, at, refused]) =>
+      new RegExp(`^- \\*\\*[^*]*${acct}\\*\\* — reconciled to ${at.to}; `
+        + `its ${refused.to} statement was refused\\.$`, "m").test(sec)),
+    stale.length === 0 ? "no account in the fixture is reconciled behind its newest statement"
+      : stale.map(([a, at, r]) => `${a} ${at.to}/${r.to}`).join(" | "));
+  ok("…under a heading saying the balance is not the newest",
+    stale.length === 0 || /\*\*And for some of them it is not the newest\.\*\*/.test(sec));
+
+  // AND AN ACCOUNT WHOSE EVERY STATEMENT WAS REFUSED CONTRIBUTES NOTHING AND IS
+  // NAMED FOR IT — the coverage half of "a figure that exists for SOME accounts
+  // is shown for those and the rest are named".
+  ok("an account whose every statement was refused is named as contributing no balance",
+    none.length > 0
+      && new RegExp(`\\*\\*${none.length} further account${none.length === 1 ? "" : "s"} `
+        + `in the table above contribute${none.length === 1 ? "s" : ""} no balance at all\\.\\*\\*`).test(sec)
+      && none.every(([acct]) => new RegExp(`was refused: [^\\n]*${acct}`).test(sec)),
+    none.length === 0 ? "every account in the fixture published at least one statement"
+      : none.map(([a]) => a).join(", "));
+
+  // EVERY BOLD IS CLOSED, AND RENDERING IS WHAT FOUND THAT IT WAS NOT. The
+  // refused-account sentence opened a `**` it never closed, which leaves every
+  // paragraph after it bold in any reader — invisible to a test that matches
+  // text and to anyone reading the source.
+  //
+  // STRUCK ON THE PARAGRAPH, NEVER THE LINE: this file hard-wraps its prose, so
+  // a bold phrase legitimately spans two lines ("**Whether these balances should
+  // be / counted is the family's to answer**") and a per-line count fails on it.
+  // What cannot be legitimate is a blank-line-separated block whose markers do
+  // not pair, which is exactly what the defect produced.
+  const unclosed = sec.split(/\n\s*\n/).filter((p) => (p.match(/\*\*/g) ?? []).length % 2 === 1);
+  ok("…and no paragraph in the section leaves a bold marker open",
+    unclosed.length === 0, unclosed.map((p) => p.split("\n")[0]).join(" / "));
 
   // ── WHAT THE STATEMENT COULD NOT SUPPLY ───────────────────────────────────
   const naLine = (acct) => (sec.match(new RegExp(`^- \\*\\*[^*]*${acct}\\*\\*[^\\n]*$`, "m")) ?? [""])[0];

@@ -34,6 +34,10 @@
 //   4. HDFC, account …0002       FAILS its own gate (the printed closing is not
 //                                the last row's balance), so the reader publishes
 //                                NOTHING — the refused branch
+//   5. HDFC, account …0003, Q1   published, and
+//   6. HDFC, account …0003, Q2   REFUSED and NEWER than it, so the account's latest
+//                                RECONCILED balance is not its newest statement —
+//                                which the closing-balance total must not claim
 import fs from "node:fs";
 import path from "node:path";
 
@@ -166,6 +170,50 @@ export const BANK_FIXTURE = Object.freeze([
       ],
       summary: { opening: "100,000.00", drCount: "1", crCount: "1",
         debits: "25,000.00", credits: "10,500.50", closing: "90,000.00" },
+    }),
+  },
+  {
+    // PUBLISHED, AND ITS SIBLING BELOW IS NEWER AND REFUSED. So this account's
+    // latest RECONCILED balance is its 30 Jun one while its newest statement is
+    // the 30 Sep one the gate threw out — the pair that makes the closing-balance
+    // total's "newest" claim falsifiable. Without it the total iterated the
+    // published issues alone and nothing could see that the newer issue had been
+    // dropped before the comparison.
+    name: "HDFC …0003 Q1 — published, with a NEWER refused sibling",
+    docKey: "hdfc-bank-savings-50100000000003-2026-06-30-bank-statement",
+    accountNo: "50100000000003", asOf: "2026-06-30",
+    sourcePath: "source/synthetic/hdfc-0003-q1.pdf", status: "ok",
+    grid: hdfc({
+      account: "50100000000003", holder: "TEST HOLDER THREE", period: "01/04/2026 To : 30/06/2026",
+      rows: [
+        { date: "01/04/26", narration: "NEFT DR-TESTBANK0007-PAY", reference: "N007000007",
+          valueDate: "01/04/26", withdrawal: "10,000.00", balance: "40,000.00" },
+        { date: "15/04/26", narration: "NEFT CR-TESTBANK0008-RECEIPT", reference: "N008000008",
+          valueDate: "15/04/26", deposit: "2,000.75", balance: "42,000.75" },
+      ],
+      summary: { opening: "50,000.00", drCount: "1", crCount: "1",
+        debits: "10,000.00", credits: "2,000.75", closing: "42,000.75" },
+    }),
+  },
+  {
+    // THE SAME ACCOUNT, A LATER PERIOD, AND REFUSED — the printed debits total
+    // is not the rows'. One check fails, so nothing is published, exactly as
+    // …0002 does; what is new is that this account already HAS a reconciled
+    // balance from an earlier issue.
+    name: "HDFC …0003 Q2 — newer than Q1 and refused",
+    docKey: "hdfc-bank-savings-50100000000003-2026-09-30-bank-statement",
+    accountNo: "50100000000003", asOf: "2026-09-30",
+    sourcePath: "source/synthetic/hdfc-0003-q2.pdf", status: "partial",
+    grid: hdfc({
+      account: "50100000000003", holder: "TEST HOLDER THREE", period: "01/07/2026 To : 30/09/2026",
+      rows: [
+        { date: "05/07/26", narration: "NEFT DR-TESTBANK0009-PAY", reference: "N009000009",
+          valueDate: "05/07/26", withdrawal: "1,000.00", balance: "41,000.75" },
+        { date: "20/08/26", narration: "NEFT CR-TESTBANK0010-RECEIPT", reference: "N010000010",
+          valueDate: "20/08/26", deposit: "500.00", balance: "41,500.75" },
+      ],
+      summary: { opening: "42,000.75", drCount: "1", crCount: "1",
+        debits: "9,999.00", credits: "500.00", closing: "41,500.75" },
     }),
   },
 ]);
