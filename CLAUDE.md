@@ -26519,9 +26519,11 @@ in the archive is one, and **READING A BRANCH IS NOT CHECKING IT**: it was
 written, reviewed and read twice before anything rendered it, and the first
 rendering found seven wrong claims in it. So it is rendered on every
 `test:ingest` run now, by `scripts/ingest/__tests__/bankReport.test.mjs` over
-`bankReportFixture.mjs` — four synthetic statements of two synthetic accounts,
-three published and one refused — and every claim it makes is named there rather
-than counted.
+`bankReportFixture.mjs` — **six synthetic statements of four synthetic accounts,
+four published and two refused** — and every claim it makes is named there rather
+than counted. It grew from four statements of two accounts at the G2 round below,
+because the defect that round found needs a pair the four could not make: an
+account that published a statement AND was refused on a NEWER one.
 
 **IT WRITES NOTHING COMMITTED, AND PROVES IT.** `GLOW_AUDIT_DIR`,
 `GLOW_BOOK_OUT` and `GLOW_BOOK_REPORT` point the whole build into a temporary
@@ -26558,6 +26560,8 @@ What the first rendering found, each one a defect the suite now holds:
   quarterly set for one account as several accounts holding several balances,
   under a sentence saying *across 3 account(s)* about one. It takes each
   account's NEWEST closing and says how many statements stood behind it.
+  ***THE SECOND HALF OF THAT SENTENCE WAS WRONG IN THREE MORE WAYS, AND THE
+  FIXTURE COULD NOT REACH ANY OF THEM — see the G2 round below.***
 - **A camelCase FIELD NAME IN A SENTENCE.** `gate.notApplicable` is rendered
   verbatim, so `printed.drCount`'s key reached the prose as *"drCount: the
   statement prints none"*, beside *"debits total"* written out. The label is the
@@ -26750,7 +26754,7 @@ FACTS each document retained, the sections already in the manifest, and refuses 
 run where any document publishes fewer.
 
 `build` · `tsc` · `test:ingest` (every suite passes — `bankStatement 182`,
-**`bankReport 36`**, `hdfcNative 177`, `sheetWitness 311`, `septemberAudit
+**`bankReport 42`**, `hdfcNative 177`, `sheetWitness 311`, `septemberAudit
 103632`, golden 140 passed, 2 not checked, 0 blocked) · `test:family` 0 failed ·
 `check:family`
 **127/0** · `check:pages` **382 combinations clean, 0 invariant failures** —
@@ -26764,13 +26768,13 @@ emitted to it, so a report-prose change moves no figure · `coverage:source` exi
 0 with **Unread 0** · `replay:owners -- --check` a no-op, and `replay:calls`,
 `replay:flows`, `replay:movements`, `replay:dedupe` and `rekey:archive` with it.
 
-**`scripts/dev/bank-statement-bug.sh` puts 54 bugs back one at a time**, after a
-control that came back clean on BOTH suites — 182 reader checks and 36 rendering
+**`scripts/dev/bank-statement-bug.sh` puts 58 bugs back one at a time**, after a
+control that came back clean on BOTH suites — 182 reader checks and 42 rendering
 ones, nothing failing — and every one of them is caught. Its subject is the
 INGEST rather than the sweep, for the reason above: with the delivery out of the
 tree no route could see one of these bugs. Cases 1–40 break
 the reader or the pipeline and are watched by `bankStatement.test.mjs`, and
-**cases 41–54 break a claim in the report's bank section and are watched by
+**cases 41–58 break a claim in the report's bank section and are watched by
 `bankReport.test.mjs`** — the reader's own suite runs on every one of those too,
 deliberately, so a patch to the REPORT is shown to move nothing the reader does.
 Three more are available and have **no subject in this tree** — they need the
@@ -26810,6 +26814,90 @@ both ASK Absolute Return Fund folios and `buoyantSnap` on both Buoyant ones, two
 checks each — so it is judged on the whole ingest run and reported as caught
 there.
 
+#### G2: three claims in one sentence, and a fixture that could not reach any of them
+
+The total under the table read *"Their closing balances come to **X** across N
+account(s), each taken from the newest of its M statement(s)"*, and every clause
+of it was wrong in its own way. **A fifth review pass raised it, and tracing it
+against the renderer found three defects rather than one:**
+
+- **THE SELECTION RAN OVER THE PUBLISHED ISSUES ALONE.** An account that
+  published a statement and was REFUSED on a newer one had its older balance
+  described as the newest. The selection runs over EVERY issue now and takes the
+  newest that published.
+- **THE STATEMENT COUNT WAS GLOBAL, WORN AS A PER-ACCOUNT CLAIM.** *"each taken
+  from the newest of its M statement(s)"* printed one M over accounts holding
+  two, two and one — a figure that is true of no account, in the form of a
+  figure true of each.
+- **AND AN ACCOUNT WHOSE EVERY STATEMENT WAS REFUSED CONTRIBUTED NO BALANCE AND
+  WAS NOT NAMED.** That is §"a figure that exists for SOME accounts is shown for
+  those and the rest are named — including in the total's own caption", failing
+  in the one caption that rule names.
+
+**THE REVIEW OFFERED TWO REMEDIES AND THE SECOND IS TAKEN: "label it the latest
+*reconciled* balance with its date" rather than "omit the balance".** Omitting a
+reconciled figure because a LATER statement could not be read withholds a
+measurement the bank printed and this reader tied to the paisa; what is unknown
+is only what moved AFTER it, and that is nameable. So the total reads *"Their
+latest reconciled closing balances come to **X** across N account(s), from the M
+statement(s) they sent"*, an account reconciled to older than its newest
+statement is NAMED WITH BOTH DATES under a heading saying the balance is not the
+newest, and an account whose every statement was refused is named as
+contributing none.
+
+Rendered on the enlarged fixture: **₹3,07,501.25 across 3 accounts from 5
+statements**, HDFC …0003 named as reconciled to 2026-06-30 with its 2026-09-30
+statement refused, and HDFC …0002 named as contributing nothing.
+
+**THE FIXTURE HAD TO GROW, BECAUSE NONE OF THE THREE IS REACHABLE WITHOUT THE
+PAIR.** Four statements of two accounts cannot make an account that published AND
+was refused on a newer one, so every one of these defects rendered correctly on
+it — which is the shape this file already records of a branch nobody rendered.
+It is six statements of four accounts now, and the pair is HDFC …0003: Q1 ties,
+and Q2 is refused on a printed debits total of 9,999.00 against rows summing to
+1,000.00.
+
+**AND THE SUITE DERIVES EVERY CLAIM FROM THE TABLE'S OWN ROWS**, never from a
+literal: the total is summed from the rows the section printed, the account count
+and the statement count are grouped off them, and an account reconciled to an
+older date is found by comparing each account's issues rather than by naming one.
+A literal would have to be re-typed every time the fixture moves, which is how a
+check comes to assert a figure nobody measured.
+
+**AND RENDERING IT FOUND AN UNTERMINATED BOLD PHRASE** — an odd `**` left open,
+so every following paragraph rendered bold. **THE CHECK WRITTEN FOR IT THEN
+FAILED A CORRECT PAGE**: struck per LINE it fired on a bold phrase this file
+legitimately hard-wraps across two of them (*"**Whether these balances should
+be / counted is the family's to answer**"*). It is struck per blank-line-separated
+PARAGRAPH, with that reason beside it — the same mistake as a boundary a page is
+free to print, arriving in a markdown counter.
+
+**FOUR HARNESS CASES, AND THE FIRST FIRED FOR THE WRONG REASON.** Case 55 was
+first aimed at the selection filter, which made `byNewest` empty for a
+refused-only account, so the renderer THREW and the three failures named the
+render rather than the claim — and re-reading the pre-fix code showed the patch
+was not the faithful reintroduction anyway, because the old `at` was already the
+newest PUBLISHED issue. What it lacked is the `behind` comparison and the
+wording, which is where case 55 is aimed now. All four fire exactly their own
+checks: 55 the two naming-the-older-date ones, 56 the total's own, 57 the two
+counting ones, 58 the refused-only account's.
+
+**AND G4's REAL DEFECT WAS IN A TEST, NOT IN THE CLASSIFIER.** The review asked
+for an unlisted preference share's asset class to change; that is declined, and
+for a reason the code already carries — `assetClassOf`'s own doc comment decides
+this case the other way and names NSE India Ltd, the same function grades the
+ICICI statement's 24 par rows, and the claimed failure path does not exist (a
+face-valued row is filtered out of positions before `marketSideOf` sees it, and
+the live layer needs a symbol resolved from identifiers, which an unlisted
+company cannot supply). **What WAS wrong is `hdfcNative.test.mjs` asserting a
+conclusion about LISTING STATUS from a fact about the symbol maps** — *"UNLISTED,
+so no symbol can exist"* over a check that reads two committed files. **HEG is the
+standing counterexample: it IS listed and resolves no symbol here**, because NSE
+renamed the listing and the book prints no ISIN to join on. The comment, the
+section header and three labels say what is measurable from the tree — that
+neither map carries the ISIN — and name the filings as the source of the
+unlisted reading, which no file here holds.
+
 #### Merged with main, which took this letter
 
 This was written as `10dh`. **#116 — the review as the source of the private
@@ -26832,6 +26920,30 @@ union the brief asks for is a no-op, stated as one rather than invented.
 MERGE.** `build-book` over the merged builder reproduces `glowData.ts` and
 `docs/BOOK-REPORT.md` byte for byte against what git produced, which is the only
 thing that could have said so.
+
+#### …and a second time, for #119, with no letter to move
+
+**#119 — the accounts table regenerated, and its own rule made enforceable —
+landed while the G2 round was being verified, and added NO stage heading**, so
+`10di` stands and nothing had to be classified. The letters were compared as
+HEADINGS against main's tip anyway: the merged file differs from main's by `10di`
+alone and main's ten historical duplicates are unchanged.
+
+**NOTHING CONFLICTED, WHICH IS WHEN THIS FILE SAYS TO READ IT.** CLAUDE.md
+auto-merged, and the merge is the exact union measured in both directions:
+against main's copy it differs in two places, the `readBiff` pointer in the
+ingest list and the whole of this section, and against this branch's own
+pre-merge copy only in #119's regions — the accounts table and its Build entry.
+`package.json` took #119's new script and `scripts/dev/accounts-table.mjs` is
+main's byte for byte; no code file overlaps, because this branch changes the
+readers, `build-book` and the suites, and #119 changes none of them.
+
+**AND #119's OWN CONTROL RUN IS WHAT SAYS THE MERGE LEFT ITS TABLE ALONE.**
+`npm run accounts-table -- --write` reports 64 accounts, a printed column of
+₹8,33,79,57,613.76 against `BOOK_SUMMARY.totalValue` of the same, **delta 0**,
+and *"CLAUDE.md already carries this table (66 lines), unchanged"* — which is the
+only thing that could establish it, since a table merged into the wrong shape
+still reads as a table.
 
 ### Stage 10k — News & Announcements: REMOVED
 
