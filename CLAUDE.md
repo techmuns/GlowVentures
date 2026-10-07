@@ -25945,6 +25945,22 @@ not-attributed one below.
   Investorwise summary. A written-off row carrying any figure fails. Two rows
   for one (account, security) fail. A row whose text names Polycab or the
   register's sentinel fails.
+- **AND THE NAME A READER READS IS GATED THE SAME WAY, because the review's own
+  text reads as another holding on two lines.** A display name on
+  `PRIVATE_INVESTMENT_HOLDERS` DEFAULTS to the review's own product text, so an
+  entry's `name` is an exception that has to earn its place — and three things
+  are checked against the BOOK the layer leaves behind (every key a statement
+  still carries, plus the review's own): a name that normalises onto ANOTHER
+  holding in the book fails; an override whose review text collides with nothing
+  fails as STALE; and a name read as an instrument — a coupon, a maturity, a
+  filer's mark — fails, because a row is its issuer. `Borosil Renewables`
+  normalises onto the equity two PMS mandates hold, so that row is named by the
+  warrant its key names (Stage 10ak: a warrant is not the equity), and the
+  credit line is named by its issuer, `K M Global - Credit Private Limited`.
+  **`VALUED_HOLDERS` is deliberately outside the staleness half**: there a `name`
+  is REQUIRED (the review clips `India SME`), so there is nothing for it to
+  measure — a gate that fired on it reported a stale override on a required
+  field, which is how it was found.
 - **`marketSideOf` answers `private` FIRST for a review row** (`position.review`),
   before any SEBI category or the family's own fund placing: a line the review
   carries as private capital is private, whatever a statement would have said.
@@ -26075,6 +26091,24 @@ distinction is read:
   Without it the parts below that table stopped adding to the book by ₹194 Cr,
   and Sector Composition's "not on this page" card names the same set by the
   same rule.
+- **THE AIF DRILL-DOWN HAD NO CATEGORY I HEADING AND NO NOTE, which is the one
+  way this change could mislead.** That table is the ALLOCATION bucket's, and
+  `holdingBucket` answers the at-cost bucket before the asset class — so a
+  review line held at cost is not on it. Every Category I AIF this family owns
+  is Sky Capital's angel fund, the review records all four folios at cost, and
+  they carry a POSITION now, which also emptied the fold that used to name them
+  as valued by no statement. A page clubbed by category that is simply silent
+  about a category tells a reader they hold none (Stage 10bp). So a second
+  closed fold names every at-cost AIF fund with its section, its cost and a
+  link to the at-cost row — **8 funds, ₹11.72 Cr, Category I ×1 and Category not
+  stated ×7**, of 14 rows the bucket moved. Two checks hold it: the naming, and
+  the LOAD-BEARING half asserting that a section the drawn table no longer
+  carries is still named — struck on the book's two sets rather than on the
+  words "Category I", so a book whose at-cost funds all share a section with a
+  drawn one abstains with the evidence instead of asserting nothing. Its summary
+  is a LINE and not a sentence: the first draft carried twelve lower-case words
+  past 60 characters and the prose guard caught it (Stage 10cp), and the check
+  now holds the words it draws to that bound too.
 - **Family & Entities strikes its returns over `strikesGain`**, shows
   `AT_COST_RETURN` on an at-cost row, reads `e.fifo.costHeld` in its popovers,
   and says why an entity holding only at-cost lines shows no gain.
@@ -26103,6 +26137,15 @@ distinction is read:
   a review line's return is struck over.
 - **The dated-capital model works in UNITS**, and a review line is rated on the
   review's own rows.
+- **`AIF_BOOK` IS SCOPED TO THE BUCKET, NOT TO THE ASSET CLASS**, and it failed
+  three invariants against a page that was right until it was. The drill-down is
+  `?of=bucket&key=AIF`; the derivation filtered on `assetClass === "AIF"`, so it
+  expected the 35 rows and 19 funds the class holds where the bucket draws 21
+  and 11 — the other **14 rows, 8 funds and ₹11.72 Cr** being at cost. The
+  derivation itself was proved identical on both sides to the paisa before
+  anything moved; the defect was the SET. Re-expressed on the book's own
+  `valuedAtCost`, never through `holdingBucket`, on the standing terms: a check
+  that imports the helper it is checking agrees with it by construction.
 - **`CAPITAL_GROUPS`** is the checker's model of the Transactions card, keyed per
   PAGE ROW — `<accountId>|<securityKey>` inside a holder bucket, the account
   everywhere else — carrying `value`, `paid`, `out`, `close` and `withheld`
