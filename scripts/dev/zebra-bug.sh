@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # VERIFY THE ROW-STRIPE CHECK BY PUTTING EACH BUG BACK IT EXISTS FOR.
 #
-# Stage 10dk. Every table stripes its plain rows from one variable per theme,
+# Stage 10dl. Every table stripes its plain rows from one variable per theme,
 # `--row-alt`, through one zero-specificity rule in `src/index.css`; the check in
 # `check-pages.mjs` reads computed colour on every route in BOTH themes. Each
 # bug below is applied on its own, rebuilt, swept, and restored: the check must

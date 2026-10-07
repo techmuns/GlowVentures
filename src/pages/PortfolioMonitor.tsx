@@ -192,7 +192,7 @@ type MandateHolding = {
   realisedLotsAfter: number | null;
 };
 /**
- * ONE ACCOUNT OF A MANDATE ROW (Stage 10dk).
+ * ONE ACCOUNT OF A MANDATE ROW (Stage 10dl).
  *
  *   "In holdings we are showing Green Lantern Capital LP as 2 separate line
  *    items, but they need to be one … even if they are held by 2 separate
@@ -1363,7 +1363,7 @@ export function PortfolioMonitor() {
       else rest.push(p);
     }
     /**
-     * ONE ROW PER STRATEGY, NOT PER ACCOUNT (Stage 10dk). Two members' accounts
+     * ONE ROW PER STRATEGY, NOT PER ACCOUNT (Stage 10dl). Two members' accounts
      * of one strategy — Goldstandard's Aristos for Ajay and Ankita, Green
      * Lantern's GLC Growth, SVAN's Velocity, V.E.C's Small and Mid-Cap — were
      * two rows with one name, told apart only by the Entities column. They are
@@ -1458,7 +1458,7 @@ export function PortfolioMonitor() {
         key: "mandate:" + [...accountIds].sort().join("+"),
         /**
          * THE MANDATE'S NAME ALONE — the owners ride in the Entities column, and
-         * since Stage 10dk a strategy two members hold is one row, so its name
+         * since Stage 10dl a strategy two members hold is one row, so its name
          * is no longer ambiguous at all. `mandateLabelWithOwner` stays for
          * callers that render a mandate OUTSIDE this table.
          */
@@ -2914,7 +2914,7 @@ export function PortfolioMonitor() {
   };
   /** Can this row open at all? A chevron that opens nothing is worse than none. */
   // A MANDATE ROW OPENS ONTO ITS SHARES — through one line per account where it
-  // is run for more than one (Stage 10dk).
+  // is run for more than one (Stage 10dl).
   const canExpand = (r: Row) => r.kind === "mandate" ? (r.mandate?.holdings.length ?? 0) > 0
     : r.venues ? (r.venues.length > 0 || fundLinesOf(r).length > 0)
     : !!trancheInfo.get(r.key);
@@ -2981,7 +2981,7 @@ export function PortfolioMonitor() {
     const out: ReactNode[] = [];
     const m = r.mandate;
     /**
-     * A MANDATE → ITS ACCOUNTS → THE SHARES ITS MANAGER CHOSE (Stage 10dk).
+     * A MANDATE → ITS ACCOUNTS → THE SHARES ITS MANAGER CHOSE (Stage 10dl).
      *
      *   "In holdings we are showing Green Lantern Capital LP as 2 separate line
      *    items, but they need to be one … we can show that in drop down. And
@@ -3737,7 +3737,7 @@ export function PortfolioMonitor() {
                                 them as "names" — the two counts the `/holdings`
                                 drill-down prints for the same section (MH-06). */}
                             {grp.key === MANDATE_BUCKET ? (() => {
-                              // A strategy two members hold is ONE row (Stage 10dk),
+                              // A strategy two members hold is ONE row (Stage 10dl),
                               // so the count of rows and of accounts can differ —
                               // and where they do, both are said.
                               const accts = grp.rows.reduce((n, r) => n + (r.mandate?.accounts.length ?? 0), 0);
@@ -4273,7 +4273,7 @@ export function PortfolioMonitor() {
                             <>
                               {/* ONE ACCOUNT, ONE PAGE: the name opens it. SEVERAL
                                   ACCOUNTS RUN ONE STRATEGY — Aristos for Ajay and for
-                                  Ankita — and are one row (Stage 10dk); there the name
+                                  Ankita — and are one row (Stage 10dl); there the name
                                   is not a link, because it would have to pick one
                                   member's account, and each account's own line under it
                                   opens that account's page, where its shares are. */}

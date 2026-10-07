@@ -269,7 +269,7 @@ const valueOf = (id: string) => (id === "gl" ? 114_000_000 : 0);
   ok("...and one beside a valued account adds nothing rather than ₹0", both.value === 0, `${both.value}`);
 }
 
-// ── ONE HOLDING, ONE LINE: the same fund in two accounts is one club (Stage 10dk)
+// ── ONE HOLDING, ONE LINE: the same fund in two accounts is one club (Stage 10dl)
 //
 //   *"If there are 2 separate transactions of the same holding then we need to
 //    show that in drop down and label them as a single line item and club total
