@@ -478,8 +478,18 @@ for (const [isin, , symbol] of SYMBOLS) {
   const awaiting = [];
   for (const [isin, key, symbol] of SYMBOLS) {
     if (symbol === null) {
+      // THE ISIN IS WHAT UPSTOX KEYS ON, SO THE ISIN IS WHAT IS SEARCHED.
+      // `symbol` is null here, so `symbol in UPSTOX_INSTRUMENTS` asked whether
+      // that map has a property literally named "null" — always false, so the
+      // clause held whether or not the supposedly unlisted ISIN was present
+      // under a real ticker, which is the one thing it exists to catch. The
+      // VALUES carry `NSE_EQ|<isin>`, so they are what is walked.
+      const under = Object.entries(UPSTOX_INSTRUMENTS)
+        .filter(([, inst]) => inst?.key === `NSE_EQ|${isin}`)
+        .map(([t]) => t);
       ok(`${key} is in neither symbol map, because it is not listed`,
-        !(key in resolved) && !(symbol in UPSTOX_INSTRUMENTS));
+        !(key in resolved) && under.length === 0,
+        under.length ? `Upstox carries ${isin} under ${under.join(", ")}` : `resolved[${key}] is set`);
       continue;
     }
     if (key in resolved) {

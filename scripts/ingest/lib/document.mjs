@@ -893,6 +893,19 @@ export function makeDocument(input) {
      * holding is shared rather than implying sole ownership.
      */
     jointHolders: input.jointHolders ?? [],
+    /**
+     * WHICH OF A READER'S OWN ALL-OR-NOTHING CHECKS THIS DOCUMENT COULD ANSWER:
+     * `{ passed, notApplicable, failed }`, each a list of the reader's own
+     * wording. Provenance about the GATE rather than about a figure, which is
+     * why it is here beside `stitches` and `securityNameSource`.
+     *
+     * A check with no printed figure behind it is NOT APPLICABLE, never a pass
+     * (`golden.mjs`'s rule), and the two banks supply different sets — ICICI
+     * prints no opening balance, no debit or credit total and no Dr/Cr count.
+     * So prose naming a fixed list of reconciliations is false of half a drop,
+     * and `build-book`'s report reads this instead of asserting one.
+     */
+    checks: input.checks ?? null,
     /** Raw tables, for the audit archive: { sectionName: { name, rows } }. */
     sections: input.sections ?? {},
     /** Every stitch the layout engine applied, for provenance. */

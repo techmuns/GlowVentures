@@ -252,6 +252,75 @@ export function leadX(chunks) {
  */
 const AMOUNT_FIELDS = ["withdrawal", "deposit", "balance"];
 
+/**
+ * A TOKEN OF A DATE'S SHAPE, parsed or not. Used to decide a row carries a date
+ * and then to take those tokens OUT before the amounts on it are counted: see
+ * `movementsOn`, where counting `30.06.2026` as a figure refused a statement
+ * over its own closing sentence. Global, so `.replace` removes every one.
+ */
+const DATE_SHAPED = /\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b/g;
+
+/**
+ * A PAGE THE READER SKIPPED, AND WHETHER A MOVEMENT WAS ON IT.
+ *
+ * `findTable` yields nothing for a page whose columns cannot be measured, and
+ * the read loops skip one — right for the trailing notes page a bank prints,
+ * and wrong in the one shape nothing downstream can catch: an ICICI page of
+ * real rows whose repeated header did not resolve. ICICI prints no opening, no
+ * closing and no debit or credit total, so its opening is DERIVED from the
+ * first row the reader kept and its closing COPIED from the last — both move
+ * with the truncation — and where the lost page is the last one the retained
+ * serials still run 1..K. Every enabled check then passes over a tape missing
+ * a page, which is the gate's own §0 failure arriving one level up: a document
+ * that reconciles with itself and is short.
+ *
+ * So a skipped page is EXAMINED rather than trusted, and the test is a row
+ * carrying a date AND TWO OR MORE two-decimal figures. That is a movement's
+ * shape and almost nothing else's — a movement prints its balance beside its
+ * withdrawal or its deposit, where a notes page prints prose and a page number.
+ * Two is deliberately not one: a single amount beside a date is what a charges
+ * line or a closing sentence looks like, and refusing on that would refuse a
+ * statement over its own boilerplate.
+ *
+ * It is counted in the WHOLE row's text rather than per cell, because the
+ * premise is that this page's columns did not resolve: two figures a working
+ * grid would have put in two cells may well be in one here.
+ *
+ * Such a page goes to the gate, which refuses the whole document and prints
+ * the row — the treatment a dateless row with money in it already gets. The
+ * reader does not decide what to do about it, and nothing is published while
+ * it is unexplained.
+ *
+ * IT IS SCOPED TO ICICI, AND THAT IS THE REASON RATHER THAN THE CONVENIENCE.
+ * HDFC prints its own opening, closing, debit total, credit total and both
+ * transaction counts, so a page lost from an HDFC tape breaks the gate on the
+ * statement's own printed figures and there is nothing here to add. ICICI
+ * prints none of them, which is the whole reason a truncation can pass.
+ */
+function movementsOn(page) {
+  const out = [];
+  for (const row of page?.rows ?? []) {
+    const cells = rowText(row);
+    const joined = cells.join(" ");
+    const dated = (joined.match(DATE_SHAPED) ?? []).some((t) => toIso(t) !== null);
+    if (!dated) continue;
+    // A DOTTED DATE IS NOT A FIGURE, AND ICICI PRINTS ONE ON EVERY ROW. The
+    // money pattern matches the first two components of `30.06.2026` exactly —
+    // `30.06`, with `.2026` following, so the `(?!\d)` guard does not stop it —
+    // so a line carrying a date and ONE amount counted as TWO figures and
+    // refused the whole document. That shape is every closing sentence and
+    // charges line a bank prints at the foot of a page, which is precisely what
+    // the threshold of two exists to let through: counting the date made the
+    // threshold one on this bank's own layout. Found by a fixture, not reasoned
+    // about — a first draft of that fixture carried prose and a page number, so
+    // it had no amount on it at all and could see neither this nor the
+    // threshold.
+    const bare = joined.replace(DATE_SHAPED, " ");
+    if ((bare.match(/\d[\d,]*\.\d{2}(?!\d)/g) ?? []).length >= 2) out.push(cells);
+  }
+  return out;
+}
+
 // ── The gate ─────────────────────────────────────────────────────────────────
 
 /**
@@ -271,7 +340,7 @@ export function tieOut(rows, printed, opts = {}) {
   const failures = [];
   const notApplicable = [];
   const passed = [];
-  const { openingDerived = false, serials = false, orphans = [] } = opts;
+  const { openingDerived = false, serials = false, orphans = [], skipped = null } = opts;
   const note = (name, ok, detail) => (ok ? passed.push(name) : failures.push(`${name}: ${detail}`));
 
   // 0. EVERY ROW CARRYING AN AMOUNT CARRIES A DATE.
@@ -289,6 +358,29 @@ export function tieOut(rows, printed, opts = {}) {
       + "and no readable date — "
       + orphans.map((o) => `[${(o.carried ?? []).join(", ")}] in [${(o.cells ?? []).join(" | ")}]`).join("; "));
   } else passed.push("every row with an amount carries a date");
+
+  // 0b. EVERY PAGE CARRYING A MOVEMENT WAS READ.
+  //
+  // The same all-or-nothing refusal as §0, one level up: a page whose table did
+  // not resolve, carrying a row with a date and two amounts on it. On ICICI —
+  // which prints no opening, no closing and no totals — such a page costs every
+  // row on it while the derived opening, the copied closing and the retained
+  // serials all move with the loss, so no check below can see it. See
+  // `movementsOn` for why the test is what it is and why it is ICICI's.
+  //
+  // A CALLER THAT DID NOT SCAN GETS NOT-APPLICABLE, NEVER A PASS. `skipped` is
+  // `null` where no page was examined and `[]` where every one was and none
+  // carried a movement, and only the second is this check being made — the
+  // gate's own third-outcome rule, which this check broke on its first draft by
+  // defaulting to `[]` and naming HDFC as having passed it.
+  if (skipped === null) {
+    notApplicable.push("every page carrying a movement was read: this layout prints its own "
+      + "opening, closing, totals and counts, so a page lost from it fails those");
+  } else if (skipped.length) {
+    failures.push(`every page carrying a movement was read: ${skipped.length} row(s) on `
+      + `${new Set(skipped.map((k) => k.page)).size} page(s) the table did not resolve — `
+      + skipped.map((k) => `page ${k.page} [${(k.cells ?? []).join(" | ")}]`).join("; "));
+  } else passed.push("every page carrying a movement was read");
 
   if (!rows.length) {
     failures.push("rows: the table located no dated row");
@@ -331,6 +423,31 @@ export function tieOut(rows, printed, opts = {}) {
       }
     }
     note(openingDerived ? "running balance (opening derived)" : "running balance", !broke, broke ?? "");
+    /**
+     * AND A DERIVED OPENING CANNOT WITNESS THE ROW IT WAS DERIVED FROM.
+     *
+     * ICICI prints no opening balance, so the reader derives one from the first
+     * row: `opening = b1 + d1 - c1`. The chain above then takes the first step
+     * back out of it — `opening - d1 + c1 = b1` — so ROW 1 PASSES WHATEVER ITS
+     * OWN AMOUNT IS, and the check only begins to carry evidence at row 2,
+     * where it is chaining off a balance the statement PRINTED. A misread
+     * amount on row 1 therefore does not propagate and is not caught.
+     *
+     * Nothing else in the document can witness it: ICICI prints no debit total,
+     * no credit total and no Dr/Cr count, so checks 3 and 4 are not applicable
+     * on exactly the statements this applies to. There is no witness to invent,
+     * and refusing every ICICI tape over one unwitnessed amount would throw away
+     * every row that IS witnessed. So the gate says what it could not check,
+     * rather than counting a tautology among its passes.
+     */
+    if (openingDerived) {
+      const r1 = rows[0];
+      const amt = r1.debit !== null && r1.debit !== 0 ? `${inr(r1.debit)} out`
+        : r1.credit !== null && r1.credit !== 0 ? `${inr(r1.credit)} in`
+        : "no amount";
+      notApplicable.push("the first row's own amount: the opening balance is derived from it, so the "
+        + `running balance witnesses rows 2..${rows.length} and not row 1 (${r1.date ?? "no date"}, ${amt})`);
+    }
   }
 
   // 3. The debit and credit totals, where the statement prints them.
@@ -343,13 +460,20 @@ export function tieOut(rows, printed, opts = {}) {
 
   // 4. The transaction counts, where the statement prints them. Counted over the
   //    rows that MOVED money, which is what a bank's Dr/Cr count counts.
-  for (const [side, label] of [["debit", "drCount"], ["credit", "crCount"]]) {
-    if (printed[label] === null || printed[label] === undefined) {
-      notApplicable.push(`${label}: the statement prints no count`);
+  //
+  //    THE NAME A READER SEES IS NOT THE FIELD NAME. `printed.drCount` is the
+  //    reader's own key and `gate.notApplicable` is rendered verbatim in
+  //    `docs/BOOK-REPORT.md` and in each document's `summary` sheet, so a
+  //    statement that prints no count listed "drCount: the statement prints no
+  //    count" — camelCase in a sentence, beside "debits total" and "credits
+  //    total" written out. Found by rendering the section.
+  for (const [side, key, label] of [["debit", "drCount", "debit count"], ["credit", "crCount", "credit count"]]) {
+    if (printed[key] === null || printed[key] === undefined) {
+      notApplicable.push(`${label}: the statement prints none`);
       continue;
     }
     const got = sided.filter((s) => s === side).length;
-    note(label, got === printed[label], `${got} rows against a printed ${printed[label]}`);
+    note(label, got === printed[key], `${got} rows against a printed ${printed[key]}`);
   }
 
   // 5. The closing balance — the last row's own printed balance.
@@ -643,14 +767,26 @@ function readHdfc(pages, warnings) {
 function readIcici(pages, warnings) {
   const rows = [];
   const orphans = [];
+  // Pages whose table did not resolve AND that carry a movement — see
+  // `movementsOn`. Handed to the gate, which refuses the document.
+  const skipped = [];
   // Whether the LAYOUT matched a serial column on any page — see check 6.
   let serialSeen = false;
   let missing = null;
 
   for (const page of pages) {
     const table = findTable(page, ICICI_COLUMNS, { minFields: 5, ...LAYOUT });
-    if (!table) continue;
-    if (!["date", "narration", "withdrawal", "deposit", "balance"].every((f) => f in table.columns)) continue;
+    const unread = !table
+      || !["date", "narration", "withdrawal", "deposit", "balance"].every((f) => f in table.columns);
+    if (unread) {
+      // A page that does not separate the two money columns cannot be read
+      // either: a withdrawal read as a deposit moves the running balance by
+      // twice itself. Both skips are examined for the same reason.
+      for (const cells of movementsOn(page)) {
+        skipped.push({ page: page.number ?? pages.indexOf(page) + 1, cells, table: !table });
+      }
+      continue;
+    }
     missing ??= table.missing;
     serialSeen ||= "serial" in table.columns;
 
@@ -728,6 +864,7 @@ function readIcici(pages, warnings) {
   return {
     rows,
     orphans,
+    skipped,
     printed: {
       opening,
       debits: null,
@@ -822,16 +959,47 @@ export function extract({ grid, meta = {} }) {
   if (!layout) {
     return refusal(meta, ["the page's own header labels name neither bank's layout"], warnings);
   }
-  // TWO INDEPENDENT READINGS OF WHICH BANK THIS IS, AND THEY MUST AGREE.
-  if (meta.provider && PROVIDER.includes(meta.provider) && meta.provider !== layout) {
+  /**
+   * TWO INDEPENDENT READINGS OF WHICH BANK THIS IS, AND THEY MUST AGREE.
+   *
+   * `layout` is always one of the two this reader reads, so an UNSUPPORTED
+   * provider fails this comparison too — and is refused rather than relabelled,
+   * which is the half that matters. The condition read
+   * `PROVIDER.includes(meta.provider) && …`, so a third bank whose statement
+   * reached here with its own name on it (the `byText` backstop types a
+   * `bank-statement` whose columns `bankStatementProvider` does not know, and
+   * `genericProvider` then names the issuer) skipped the comparison entirely
+   * and was archived under whichever of the two its column labels resembled.
+   * An account named for an institution that did not print it is the one thing
+   * a bank tape must never be filed as.
+   *
+   * WHAT THIS DOES NOT CLOSE, AND IT IS NAMED RATHER THAN GUESSED AT. Where a
+   * third bank prints a column set `bankStatementProvider` DOES know, the
+   * classifier names it for that bank and both readings agree, so nothing here
+   * can tell them apart. Both predicates are deliberately struck on columns and
+   * never on a bank's name (§"a phrase in a footnote is not what a document
+   * is"), and the phrases are each issuer's own — ICICI's `Transaction Remarks`,
+   * HDFC's `Value Dt` with `Closing Bal` — which is what makes the collision
+   * unlikely rather than impossible. Closing it needs a POSITIVE reading of the
+   * bank's name off the page, and the two statements this reader was written
+   * against are out of this repository at the family's request, so a
+   * requirement that they name their own bank in a place this reader tests for
+   * cannot be verified here. It would refuse a statement that works today on an
+   * unmeasured premise, which is the one mistake this file's own record keeps
+   * naming.
+   */
+  if (meta.provider && meta.provider !== layout) {
     return refusal(meta, [
-      `the letterhead was classified ${meta.provider} and the table's own header labels are ${layout}'s`,
+      PROVIDER.includes(meta.provider)
+        ? `the letterhead was classified ${meta.provider} and the table's own header labels are ${layout}'s`
+        : `the letterhead was classified ${meta.provider}, which is neither bank this reader reads`,
     ], warnings);
   }
 
   const read = layout === HDFC ? readHdfc(pages, warnings) : readIcici(pages, warnings);
   const gate = tieOut(read.rows, read.printed,
-    { openingDerived: read.openingDerived, serials: read.serials, orphans: read.orphans });
+    { openingDerived: read.openingDerived, serials: read.serials, orphans: read.orphans,
+      skipped: read.skipped ?? null });
 
   const accountNo = read.accountNo ?? meta.accountNo ?? null;
   if (!read.accountNo) warn(warnings, "account-number-from-classifier",
@@ -871,6 +1039,7 @@ export function extract({ grid, meta = {} }) {
       totals: null,
       cashFlows: [],
       excludedFromBook: EXCLUDED_REASON,
+      checks: { passed: gate.passed, notApplicable: gate.notApplicable, failed: gate.failures },
       sections: { summary: summarySheet },
       warnings: [...warnings, ...gate.failures.map((f) => ({ code: "tie-out-failed", detail: f }))],
       status: "partial",
@@ -929,6 +1098,18 @@ export function extract({ grid, meta = {} }) {
     cashFlows,
     flows,
     excludedFromBook: EXCLUDED_REASON,
+    /**
+     * WHICH CHECKS THIS STATEMENT ACTUALLY SUPPLIED A FIGURE FOR.
+     *
+     * The summary sheet carries the same three lists for a reader browsing the
+     * archive; this is the machine-readable half, so `build-book`'s report can
+     * DERIVE what was reconciled rather than assert it. The two banks supply
+     * different sets — ICICI prints no opening balance, no debit or credit
+     * total and no Dr/Cr count — so prose naming "both printed totals and the
+     * Dr/Cr counts" is false of half the drop, which is the
+     * caption-does-not-describe-its-figure failure arriving in a report.
+     */
+    checks: { passed: gate.passed, notApplicable: gate.notApplicable, failed: gate.failures },
     sections: { [REPORT_TYPE]: tapeSheet, summary: summarySheet },
     warnings,
     status: "ok",

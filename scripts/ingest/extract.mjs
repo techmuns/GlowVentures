@@ -866,10 +866,20 @@ function ensureUniqueDocKeys(docs) {
  * guard: a stray invocation with default paths removed 24 files from
  * `public/audit/` before anyone noticed, and only `git checkout` got them back.
  *
- * So the run compares what it READ against what the archive already has. Fewer
- * successfully-read documents is refused; the message names the likely cause
- * because it almost always is one. `GLOW_ALLOW_ARCHIVE_SHRINK=1` overrides it,
- * for the legitimate case of deliberately removing a delivery.
+ * So the run compares what it READ against what the archive already has, on TWO
+ * measures, because the first does not imply the second:
+ *
+ *   - FEWER READABLE DOCUMENTS, which is what a missing password looks like; and
+ *   - A DOCUMENT THAT PUBLISHES FEWER SECTIONS THAN ITS ARCHIVED COPY, which is
+ *     what a reader refusing its own output looks like. `partial` counts as
+ *     readable, correctly — a document read completely that published no facts
+ *     is not a document that failed to open — so an emptied document leaves the
+ *     readable count untouched and the first measure blind to several hundred
+ *     lost rows.
+ *
+ * The message names the likely cause because it almost always is one.
+ * `GLOW_ALLOW_ARCHIVE_SHRINK=1` overrides both, for the legitimate case of
+ * deliberately removing a delivery.
  */
 function guardAgainstShrinkingTheArchive(docs) {
   if (process.env.GLOW_ALLOW_ARCHIVE_SHRINK === "1") return;
@@ -880,15 +890,69 @@ function guardAgainstShrinkingTheArchive(docs) {
   const readable = (d) => d.status === "ok" || d.status === "partial";
   const before = existing.filter(readable).length;
   const after = docs.filter(readable).length;
-  if (after >= before) return;
   const encrypted = docs.filter((d) => (d.warnings ?? []).some((w) => /password|encrypt/i.test(w.code + " " + (w.detail ?? "")))).length;
-  console.error("");
-  console.error(`REFUSING TO WRITE: this run read ${after} document(s) against ${before} already in ${AUDIT_DIR}.`);
-  console.error("Replacing the archive would DELETE the difference, and the extracted rows go with it.");
-  if (encrypted) console.error(`  ${encrypted} document(s) reported a password problem — set GLOW_PDF_PASSWORDS and run again.`);
-  else console.error("  The usual cause is a missing GLOW_PDF_PASSWORDS: eight PDFs here are encrypted.");
-  console.error("  If the shrink is intended, re-run with GLOW_ALLOW_ARCHIVE_SHRINK=1.");
-  process.exit(1);
+  const refuse = (lines) => {
+    console.error("");
+    for (const l of lines) console.error(l);
+    if (encrypted) console.error(`  ${encrypted} document(s) reported a password problem — set GLOW_PDF_PASSWORDS and run again.`);
+    else console.error("  The usual cause is a missing GLOW_PDF_PASSWORDS: eight PDFs here are encrypted.");
+    console.error("  If the shrink is intended, re-run with GLOW_ALLOW_ARCHIVE_SHRINK=1.");
+    process.exit(1);
+  };
+
+  if (after < before) {
+    refuse([
+      `REFUSING TO WRITE: this run read ${after} document(s) against ${before} already in ${AUDIT_DIR}.`,
+      "Replacing the archive would DELETE the difference, and the extracted rows go with it.",
+    ]);
+  }
+
+  /**
+   * AND A COUNT OF READABLE DOCUMENTS DOES NOT PROTECT THEIR CONTENTS.
+   *
+   * `readable` counts `partial` with `ok`, deliberately — a document read
+   * completely that published no facts is still a document, and reporting it as
+   * `failed` would say the reader could not open it, which sends the next
+   * person to fix a regex rather than a figure. But the two statuses carry very
+   * different amounts, and a reader that starts refusing its own output keeps
+   * the SAME readable count while publishing nothing: a bank tape whose tie-out
+   * stops reconciling goes from a published tape to an empty document, both
+   * `partial`, and the guard above sees no shrink at all. The archive then
+   * loses several hundred rows on a run that reports clean.
+   *
+   * So the second half of the guard is struck on the FACTS each document
+   * retained — the sections already in the manifest, which is the only record
+   * of them this function can read without parsing the whole archive. A
+   * document that published N sections and now publishes fewer has lost
+   * something, whatever its status says, and the refusal names which and by how
+   * many. `pages` is a section every document has, so this measures what the
+   * READER produced rather than the page text beside it.
+   */
+  const sectionsOf = (d) => {
+    const list = Array.isArray(d.sections) ? d.sections : Object.keys(d.sections ?? {});
+    return list.filter((k) => k !== "pages");
+  };
+  const was = new Map(existing.filter(readable).map((d) => [d.docKey, sectionsOf(d)]));
+  const lost = [];
+  for (const d of docs.filter(readable)) {
+    const prev = was.get(d.docKey);
+    if (!prev) continue;                    // a new document loses nothing
+    const now = sectionsOf(d);
+    if (now.length < prev.length) {
+      lost.push(`${d.docKey}: ${prev.length} → ${now.length} section(s)`
+        + ` (lost ${prev.filter((k) => !now.includes(k)).join(", ") || "unnamed"})`);
+    }
+  }
+  if (lost.length) {
+    refuse([
+      `REFUSING TO WRITE: ${lost.length} document(s) in this run publish FEWER facts than the copy in ${AUDIT_DIR}.`,
+      "The readable count is unchanged, so the count check above cannot see this: a reader that",
+      "refuses its own output leaves a document readable and empty, and replacing the archive",
+      "would delete every row it used to carry.",
+      ...lost.slice(0, 12).map((l) => `  ${l}`),
+      ...(lost.length > 12 ? [`  …and ${lost.length - 12} more`] : []),
+    ]);
+  }
 }
 
 /**

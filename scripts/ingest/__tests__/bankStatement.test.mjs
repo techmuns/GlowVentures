@@ -286,6 +286,19 @@ function icici() {
     detail(crossed, "refused"));
   ok("…while a letterhead that agrees reads",
     run(hdfc(), { docKey: "test-doc", provider: HDFC }).status === "ok");
+
+  // A LETTERHEAD NAMING A BANK THIS READER DOES NOT READ IS THE SAME
+  // DISAGREEMENT, and the first draft of that condition skipped it: it compared
+  // only where the classifier's answer was one of this reader's two, so a
+  // document the `byText` backstop typed `bank-statement` and `genericProvider`
+  // then named for a third bank was archived under whichever layout its columns
+  // resembled — a statement filed under a bank that did not issue it.
+  const third = run(hdfc(), { docKey: "test-doc", provider: "Kotak Mahindra Bank" });
+  ok("a letterhead naming a third bank refuses the document",
+    third.status === "partial" && !third.cashFlows?.length, `${third.status}`);
+  ok("…and says that bank is neither this reader reads",
+    /classified Kotak Mahindra Bank, which is neither bank this reader reads/
+      .test(detail(third, "refused")), detail(third, "refused"));
 }
 
 // ── 4. THE HDFC STATEMENT READS, AND EVERY FIGURE IS THE ONE IT PRINTS ──────
@@ -480,7 +493,7 @@ const i = run(icici());
   const notApplicable = String((i.sections?.summary?.rows ?? []).find((r) => r[0] === "Checks not applicable")?.[1]);
   ok("the checks the statement cannot support are named, not passed",
     /debits total/.test(notApplicable) && /credits total/.test(notApplicable)
-    && /drCount/.test(notApplicable) && /crCount/.test(notApplicable), notApplicable);
+    && /debit count/.test(notApplicable) && /credit count/.test(notApplicable), notApplicable);
   ok("…and the running balance is still checked, on the derived opening",
     /running balance \(opening derived\)/.test(
       String((i.sections?.summary?.rows ?? []).find((r) => r[0] === "Checks passed")?.[1])),
@@ -521,6 +534,63 @@ const i = run(icici());
   ok("…and the row never reaches the narration above it",
     !/LATE PAYER/.test(JSON.stringify(dl.cashFlows ?? [])),
     JSON.stringify((dl.cashFlows ?? []).map((f) => f.description)));
+
+  // A PAGE WHOSE TABLE DID NOT RESOLVE, AT THE READER'S END. The gate's own
+  // case in section 7 hands `tieOut` a constructed `skipped`; this drives the
+  // half that FINDS one — `movementsOn` and the push in `readIcici` — which is
+  // what a statement running to more than one page actually meets. The second
+  // page below reprints its header in a spelling `ICICI_COLUMNS` does not know,
+  // so the table does not resolve, and it carries two real movements under it.
+  //
+  // Nothing else can see it, which is the whole reason §0b exists: ICICI prints
+  // no opening, no closing and no totals, so the opening is DERIVED from the
+  // first row the reader kept and the closing COPIED from the last, both of
+  // which move with the truncation — and with the lost page LAST, the retained
+  // serials still run 1..3. Every enabled check passes over a tape missing a
+  // page.
+  const lost2 = icici();
+  lost2.pages.push({ rows: [
+    row(676.0,
+      it(30.0, 30.0, "Sr"), it(61.4, 70.0, "Txn Dt"), it(142.9, 46.0, "Chq"),
+      it(192.0, 110.0, "Particulars"), it(410.0, 60.0, "Debit"),
+      it(480.0, 46.0, "Credit"), it(525.9, 46.0, "Bal")),
+    iciciRow(656.0, { serial: 4, date: "25.06.2026", remarks: "NEFT-TESTREF0004-TEST PAYEE FOUR",
+      withdrawal: "30,000.00", balance: "170,000.00" }),
+    iciciRow(640.0, { serial: 5, date: "28.06.2026", remarks: "UPI/TESTREF0005/TEST PAYER FIVE",
+      deposit: "10,000.00", balance: "180,000.00" }),
+  ] });
+  const dp = run(lost2);
+  ok("a page whose table did not resolve, carrying movements, refuses ICICI's tape",
+    dp.status !== "ok" && /every page carrying a movement was read/.test(failed(dp)),
+    `${dp.status} · ${failed(dp)}`);
+  ok("…naming the page and both rows it could not read",
+    /2 row\(s\) on 1 page\(s\)/.test(failed(dp))
+      && /TEST PAYEE FOUR/.test(failed(dp)) && /TEST PAYER FIVE/.test(failed(dp)), failed(dp));
+  ok("…and it is LOAD-BEARING: the tape it refuses reconciles with itself",
+    !/running balance|serial numbers|closing balance/.test(failed(dp)), failed(dp));
+  ok("…and nothing of that page is published",
+    !(dp.cashFlows ?? []).length, String((dp.cashFlows ?? []).length));
+
+  // AND A PAGE THAT CARRIES NO MOVEMENT IS NOT A TRUNCATION. A notes page, a
+  // page of prose, a closing sentence at the foot — the reader skips its table
+  // and the document publishes, because there was nothing on it to lose.
+  // Refusing on that would refuse a statement over its own boilerplate.
+  //
+  // THE TEST IS TWO FIGURES AND NOT ONE, AND THIS IS WHAT MAKES THE DIFFERENCE
+  // VISIBLE. The page below carries a DATE AND ONE AMOUNT — which is the shape
+  // of every closing sentence and charges line a bank prints — where a movement
+  // prints its balance beside its withdrawal or its deposit. A first draft of
+  // this case carried prose and a page number, so it had no amount on it at all
+  // and the threshold had nothing in the suite to fire on: loosening it to one
+  // figure left the whole suite green.
+  const notes = icici();
+  notes.pages.push({ rows: [
+    row(700.0, it(36.0, 300.0, "Closing balance as on 30.06.2026 : 200,000.00")),
+    row(680.0, it(36.0, 260.0, "Please examine the entries and report any discrepancy.")),
+  ] });
+  const dn = run(notes);
+  ok("a page carrying a date and one amount is not read as a truncation",
+    dn.status === "ok" && dn.cashFlows?.length === 3, `${dn.status} · ${failed(dn)}`);
 }
 
 // ── 7. THE GATE, BROKEN ONE FIGURE AT A TIME ────────────────────────────────
@@ -539,7 +609,7 @@ const GATE = [
     const r = rowWith(g, "NEFT DR-TESTBANK0001-PAY");
     const amt = r.items.find((x) => x.text === "25,000.00");
     const w = amt.width; amt.x = RIGHT.deposit - w;
-  }, /running balance|credits total|drCount|crCount/],
+  }, /running balance|credits total|debit count|credit count/],
   ["a row carrying both a withdrawal and a deposit", (g) => {
     const r = rowWith(g, "NEFT DR-TESTBANK0001-PAY");
     r.items.push({ ...atRight(RIGHT.deposit, "25,000.00"), y: r.y });
@@ -564,7 +634,7 @@ for (const [label, break_, expect] of GATE) {
   summaryItem(g, "2").text = "3";   // the Dr count — the first "2" on the summary row
   const d = run(g);
   ok("a Dr count disagreeing with the rows publishes no tape", d.status === "partial", d.status);
-  ok("…and names the count", /drCount/.test(failed(d)), failed(d));
+  ok("…and names the count", /debit count/.test(failed(d)), failed(d));
 }
 
 // ── 9. A LABEL WITH NO VALUE IS NOT PRINTED, NEVER A NEIGHBOUR'S FIGURE ──
@@ -622,17 +692,21 @@ for (const [label, break_, expect] of GATE) {
   const printed = { opening: 10000000, debits: 2500000, credits: 1050050, closing: 8550050, drCount: 1, crCount: 1 };
   const g = tieOut(rows, printed);
   ok("a reconciling tape passes every check", g.ok && g.failures.length === 0, g.failures.join(" | "));
-  // ONE CHECK IS NOT-APPLICABLE ON A TAPE THAT RECONCILES, and it is the serial
-  // one: a layout printing no serial column prints nothing to run 1..N. Named
-  // here rather than counted as a pass, which is this gate's whole third
-  // outcome — see check 6.
-  ok("…and the one check it cannot make is the serial one",
-    g.notApplicable.length === 1 && /serial/.test(g.notApplicable[0]), g.notApplicable.join(" | "));
+  // TWO CHECKS ARE NOT-APPLICABLE ON A TAPE THAT RECONCILES, and neither is
+  // counted as a pass — this gate's whole third outcome, see check 6. The
+  // serial one, because a layout printing no serial column prints nothing to
+  // run 1..N; and the page scan, because a caller that passes no `skipped`
+  // examined no page, and naming it as passed is what that check did on its
+  // first draft.
+  ok("…and the two checks it cannot make are the serial one and the page scan",
+    g.notApplicable.length === 2 && g.notApplicable.some((n) => /serial/.test(n))
+      && g.notApplicable.some((n) => /^every page carrying a movement was read/.test(n)),
+    g.notApplicable.join(" | "));
   ok("…and it names the eight it passed", g.passed.length === 8, g.passed.join(" · "));
   ok("…which are the eight the statement's own figures support",
     g.passed.join(" · ") === "every row with an amount carries a date · one amount side per row"
       + " · running balance · debits total · credits total"
-      + " · drCount · crCount · closing balance", g.passed.join(" · "));
+      + " · debit count · credit count · closing balance", g.passed.join(" · "));
 
   // NO ROWS IS A FAILURE, NEVER A PASS. A gate that passed over an empty table
   // would publish an empty tape as a complete one — `golden.mjs`'s rule.
@@ -646,7 +720,7 @@ for (const [label, break_, expect] of GATE) {
   ok("a statement printing no figures passes only the two checks its rows support",
     bare.ok && bare.passed.join(" · ") === "every row with an amount carries a date · one amount side per row",
     bare.passed.join(" · "));
-  ok("…and names the seven it could not make", bare.notApplicable.length === 7, bare.notApplicable.join(" | "));
+  ok("…and names the eight it could not make", bare.notApplicable.length === 8, bare.notApplicable.join(" | "));
 
   // THE SERIAL CHECK: a dropped row is a hole in a sequence rather than a silent
   // absence, which is the only thing that makes ICICI's layout checkable in a
@@ -690,6 +764,29 @@ for (const [label, break_, expect] of GATE) {
       && /NEFT CR HDFC/.test(orphaned.failures.join(" ")), orphaned.failures.join(" | "));
   ok("…and it is load-bearing: every other check passes on the same tape",
     orphaned.failures.length === 1, orphaned.failures.join(" | "));
+
+  // CHECK 0b: A PAGE WHOSE TABLE DID NOT RESOLVE, CARRYING A MOVEMENT, REFUSES
+  // THE WHOLE DOCUMENT — §0 one level up, and for the same reason: on ICICI
+  // every row on that page is lost while the derived opening, the copied
+  // closing and the retained serials all move with the loss, so no check below
+  // can see it. `[]` is "every page was examined and none carried one", which
+  // is this check being MADE; `null` is a caller that examined none, named
+  // not-applicable above.
+  const lost = tieOut(rows, printed, {
+    skipped: [{ page: 3, cells: ["12", "05/05/2026", "NEFT DR ICICI", "2,50,000.00", "", "60,50,050.00"] }],
+  });
+  ok("a page the table did not resolve, carrying a movement, refuses the document",
+    !lost.ok && /every page carrying a movement was read/.test(lost.failures.join(" ")),
+    lost.failures.join(" | "));
+  ok("…and the failure prints the page and the row's own cells",
+    /page 3/.test(lost.failures.join(" ")) && /NEFT DR ICICI/.test(lost.failures.join(" ")),
+    lost.failures.join(" | "));
+  ok("…and it is load-bearing: every other check passes on the same tape",
+    lost.failures.length === 1, lost.failures.join(" | "));
+  const scanned = tieOut(rows, printed, { skipped: [] });
+  ok("…while a run that examined every page and found none passes it",
+    scanned.ok && scanned.passed.includes("every page carrying a movement was read"),
+    scanned.passed.join(" · "));
 
   // A ROW THAT MOVED NOTHING is carried and counted as neither a debit nor a
   // credit — the running balance is what proves it.

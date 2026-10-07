@@ -312,6 +312,28 @@ function committedExports() {
   return out;
 }
 
+/**
+ * A DELIVERY THE FAMILY HAS ASKED TO KEEP OUT OF THE REPOSITORY.
+ *
+ * An ALLOWLIST, and not a bare `existsSync`. The re-read below is the only
+ * check that needs the file's own bytes, so a withheld delivery has to be able
+ * to skip it — and a skip keyed on "the file is not there" skips for a file
+ * somebody DELETED just as quietly, which is the one event this suite exists to
+ * catch. `committedExports()` walks `source/` too, so a deleted export also
+ * leaves nothing to expect: both halves would go silent together.
+ *
+ * So a missing source outside these prefixes FAILS, and a prefix listed here
+ * that covers nothing in the tree is said out loud rather than left as cover
+ * for the next deletion.
+ */
+const WITHHELD_SOURCE_PREFIXES = Object.freeze([
+  // The three HDFC and two ICICI savings statements and their exports, and
+  // Ajay's own HDFC NSDL statement — Stage 10di. Read, archived, and not
+  // committed at the family's request.
+  "source/october-2026/",
+]);
+const isWithheld = (p) => WITHHELD_SOURCE_PREFIXES.some((q) => String(p).startsWith(q));
+
 {
   const expected = committedExports();
   const archived = new Set(witnessEntries.map((m) => m.sourcePath));
@@ -324,6 +346,14 @@ function committedExports() {
   console.log(`  ${witnessEntries.length} witness(es) in the archive; `
     + `${witnessEntries.length - uncommitted.length} with committed bytes`
     + `${uncommitted.length ? `, ${uncommitted.length} without` : ""}`);
+  // A PREFIX THAT COVERS NOTHING IS COVER FOR THE NEXT DELETION, so it is named
+  // rather than left standing silently. On this tree every one of them is in
+  // that state, because the delivery it was written for is not committed.
+  const idle = WITHHELD_SOURCE_PREFIXES.filter((q) => !witnessEntries.some((m) => String(m.sourcePath).startsWith(q)));
+  if (idle.length) {
+    console.log(`  (WITHHELD_SOURCE_PREFIXES covers nothing in this archive: ${idle.join(", ")} — `
+      + "so the skip it allows has no subject here, and a missing source fails)");
+  }
 }
 
 const stem = (p) => path.basename(String(p)).replace(/\.[^.]+$/, "");
@@ -342,16 +372,22 @@ const IDENTITY = new Set(["docKey", "provider", "accountNo", "ownerSource", "acc
 function bytesOf(sourcePath) {
   if (!sourcePath.startsWith("source/_extracted/")) {
     const f = path.join(ROOT, sourcePath);
-    // A DELIVERY THE FAMILY HAS ASKED TO KEEP OUT OF THE REPOSITORY. Its rows
-    // are archived and every other check below still runs on them, against the
-    // PDF's own archived text; only the re-read from bytes has nothing to read.
-    // Returning null says that, where throwing would read as a dropped file.
-    return fs.existsSync(f) ? fs.readFileSync(f) : null;
+    if (fs.existsSync(f)) return fs.readFileSync(f);
+    if (isWithheld(sourcePath)) return null;
+    throw new Error(`${sourcePath} is archived as a witness and is not in the committed tree, `
+      + "and it is not under a delivery this suite knows is withheld. Either the file was "
+      + "deleted — in which case its rows should go with it — or WITHHELD_SOURCE_PREFIXES "
+      + "needs the delivery adding to it.");
   }
   const parts = sourcePath.replace(/^source\/_extracted\//, "").split("/");
   const zipPath = path.join(ROOT, "source", parts[0], `${parts[1]}.zip`);
   const entryName = parts.slice(2).join("/");
-  if (!fs.existsSync(zipPath)) return null;
+  if (!fs.existsSync(zipPath)) {
+    if (isWithheld(sourcePath) || isWithheld(`source/${parts[0]}/`)) return null;
+    throw new Error(`${path.relative(ROOT, zipPath)} carries ${entryName}, which is archived as a `
+      + "witness, and the zip is not in the committed tree — and it is not under a delivery this "
+      + "suite knows is withheld. See WITHHELD_SOURCE_PREFIXES.");
+  }
   const buf = fs.readFileSync(zipPath);
   const entry = listEntries(buf).find((e) => !isMacMetadata(e.name) && e.name === entryName);
   if (!entry) throw new Error(`no entry ${entryName} in ${path.relative(ROOT, zipPath)}`);
