@@ -26062,11 +26062,14 @@ distinction is read:
   **₹1,42,867**; its own XIRR on the review's rows is −6.01%. And Ankita's demat
   records **252.5 units** against the 202.5 the fund's statement and the review
   both carry.
-- **Sky Capital** is **held at cost** — 4 folios, **9 calls**, the review's
+- **Sky Capital** is **held at cost** — 4 folios, **8 calls**, the review's
   ₹4,71,50,000 against SKY003's statement of 31 Jul 2026 printing ₹1,72,85,000
   drawn where the review carries ₹1,71,50,000: **its 22 Apr 2026 call of
-  ₹1,35,000 is on no row of the review**, so ₹4.72 Cr drawn stands against
-  ₹4.72 Cr at cost and the ₹1,35,000 is named rather than reconciled.
+  ₹1,35,000 is on no row of the review**, so ₹4,72,85,000 drawn stands against
+  ₹4,71,50,000 at cost and the ₹1,35,000 is named rather than reconciled. Both
+  figures are stated to the rupee: in crore they round to ₹4.73 Cr against
+  ₹4.72 Cr, and the earlier draft of this line printed ₹4.72 Cr for both,
+  which hides the one difference the sentence exists to name.
 - **360 ONE**: CRN37702's statement of 31 Jul 2026 values the same units at
   ₹1,46,68,362.66, and **3,769.026 of its units are on no dated row** — the
   review's Transactions rows walk to a different count from its own closing, and
