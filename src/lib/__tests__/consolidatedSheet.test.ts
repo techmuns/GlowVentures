@@ -49,8 +49,10 @@ assert.equal(value("Entities", Number(/A(\d+)$/.exec(entityTarget)![1]) - 6, "na
 assert.ok(!JSON.stringify(book).match(/#REF!|#DIV\/0!|NaN|Infinity/));
 for (const t of book.tabs) for (const r of t.rows) for (const link of Object.values(r.links ?? {})) {
   if (link.sheet) assert.ok(sheet(link.sheet), `missing linked subtab ${link.sheet}`);
+  if (link.sheet === "Securities" && link.where?.id) assert.ok(sheet("Securities").rows.some(r => r.values[0] === link.where!.id), `missing security master ${link.where.id}`);
   if (link.file) assert.ok(manifest.some((m: { docKey: string }) => m.docKey === link.file), `missing source ${link.file}`);
 }
+assert.ok(!sheet("Securities").rows.some(r => r.values[0] === "equity-dividend-income"), "a printed account income bucket is not a financial security");
 
 // Future ingestion: a new valued holding changes the same summaries and masters,
 // and duplicate reporting does not increase the family total a second time.
