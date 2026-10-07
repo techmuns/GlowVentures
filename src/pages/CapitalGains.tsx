@@ -14,6 +14,7 @@ import { Auditable } from "@/components/Auditable";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { sumFormula } from "@/lib/auditFormulas";
 import { BOOK_REALISED_BY_CLASS } from "@/data/glowData";
+import { inScopeAccount } from "@/lib/memberScope";
 import { estimateRealisedTax, financialYearStart, STCG_RATE, LTCG_RATE } from "@/lib/taxEstimate";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { TreeSectionCell, TREE_ROW } from "@/components/TreeTable";
@@ -74,7 +75,7 @@ export function CapitalGains() {
   // book would drift its unrealised figures with the market while the realised
   // ones stayed printed, so two halves of the same table would be on two
   // different measurements with nothing on screen to say which.
-  const { statementPortfolio: portfolio, portfolio: livePortfolio, fmtFromBase } = usePortfolio();
+  const { statementPortfolio: portfolio, portfolio: livePortfolio, fmtFromBase, scope } = usePortfolio();
   const [harvestQ, setHarvestQ] = useState("");
   // The "no capital gain statement" band opens here; above the early return,
   // as every hook must be.
@@ -311,7 +312,8 @@ export function CapitalGains() {
       noClassLots: number; noClassSecurities: Set<string>;
     };
     const m = new Map<string, Row>();
-    for (const r of BOOK_REALISED_BY_CLASS) {
+    // The chosen members' accounts only (Stage 10di): each row names its account.
+    for (const r of BOOK_REALISED_BY_CLASS.filter((x) => inScopeAccount(scope.accountIds, x.accountId))) {
       // `engagementOf`'s own lookup, kept as the ACCOUNT itself: an accountId
       // that resolves to nothing has to be CAUGHT here rather than read as an
       // empty engagement, which would label an unroutable row as confidently as
@@ -799,7 +801,7 @@ export function CapitalGains() {
                       </Tr>
                     ))}
                     {harvestRows.length === 0 && (
-                      <tr><td colSpan={6} className="py-10 text-center text-sm text-slate-500">
+                      <tr><td colSpan={harvestView.order.length} className="py-10 text-center text-sm text-slate-500">
                         No security matches "{harvestQ}".
                       </td></tr>
                     )}

@@ -466,6 +466,14 @@ cash holding's genuinely-zero return both match, and both are correct.
   breadcrumb, so the two cannot file a page under different groups.
   `src/components/PageNav.tsx` renders the back / forward / home controls and
   that crumb on every route. See Stage 10bh.
+- `src/lib/memberScope.ts` + `src/components/MemberScopeSelect.tsx` — WHOSE
+  BOOK THE DASHBOARD SHOWS. The top bar's selector (Whole family by default,
+  any members or trusts ticked together) writes `?members=`, and
+  `PortfolioContext` narrows `portfolio` and `statementPortfolio` to those
+  members' accounts at ONE seam (`scopePortfolio`), so every page follows with
+  no edit of its own. `useMemberScope()` reads it, `<WholeFamily>` /
+  `useWholePortfolio()` undo it for Family & Entities, and `OutOfScope` is what
+  a page about another member's holding draws. See Stage 10di.
 - `src/lib/fundNavs.ts` — THE PUBLISHED NAV'S READ SIDE. `applyFundNavs` is
   applied at ONE seam (`PortfolioContext`, beside `applyQuotes`), which is what
   makes a current fund value reach every page rather than needing a per-page
@@ -491,9 +499,15 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SelectableTiles`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
 - `scripts/ingest/*` — the statement intake pipeline. `lib/bundle.mjs` splits a
-  multi-report PDF; `lib/sheet.mjs` reads the spreadsheets (an `.xls` in this drop
-  is an HTML table, not BIFF — the format is sniffed from the bytes, never the
-  extension); `providers/*` is one reader per document family.
+  multi-report PDF; `lib/sheet.mjs` reads the spreadsheets — the format is
+  sniffed from the BYTES and never the extension, because a broker names an HTML
+  table `.xls` and a bank names a genuine legacy BIFF workbook the same thing,
+  and BIFF is read for its STORED values rather than its displayed text (see
+  `readBiff` and Stage 10dj); `providers/*` is one reader per document family,
+  and `providers/bankStatement.mjs` is the one that reads a document about
+  nobody's INVESTMENTS — the family's own savings accounts at two banks,
+  published only where the tape ties to every figure the statement prints, and
+  carried in no total on this site.
 - `src/data/glowData.ts` also exports `BOOK_COMMITMENTS` — what the family has
   promised a drawdown fund, what it has CALLED, what has been PAID, what is
   called and still unpaid, and the fund's own DATED calls. Not a holding, and
@@ -567,18 +581,19 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** EIGHT DELIVERIES, and every one stays:
+**What is actually in `source/` today.** NINE DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder,
-`august-2026-b/` to `august-2026-f/` — statements that arrived after it — and
-`september-2026/`, the client's `Jaisinghani_Reports.zip` (Stage 10da). **ALL EIGHT
+`august-2026-b/` to `august-2026-f/` — statements that arrived after it —
+`september-2026/`, the client's `Jaisinghani_Reports.zip` (Stage 10da), and
+`october-2026/`, Green Lantern 510861 since inception (Stage 10dk). **ALL NINE
 have been through `npm run extract`**: `august-2026-f/`'s two outlined-text
 statements are read by rendering their glyphs (see its own section) and its third
 file is a register held out of the book by decision. 38 provider names in the
 archive — ASK's PMS, the ASK Absolute Return Fund and Marathon are the newest —
 **64 accounts** in the book, seven holders (three of them family trusts, Stage 10db)
-and one `Not attributed to a member` bucket (Stage 10dh), and **361 leaf
-files** — of which **307 documents** are in the archive (18 of them spreadsheet
-exports read as WITNESSES of the PDF beside each), 238 read fully, 66 partially and
+and one `Not attributed to a member` bucket (Stage 10dh), and **363 leaf
+files** — of which **309 documents** are in the archive (18 of them spreadsheet
+exports read as WITNESSES of the PDF beside each), 242 read fully, 64 partially and
 **exactly ONE not at all**:
 
 - Bharat's HDFC NSDL holding statement from `august-2026-e/`, which is a SCAN —
@@ -602,7 +617,8 @@ Measured on the September 2026 delivery (Stage 10da): 277 read, 4 read via a
 byte-identical twin, 18 read as witnesses of the PDF beside them, 2 held out by
 decision, 58 macOS `__MACOSX/._*` resource forks (checked per file for a `%PDF`
 header, never assumed from the path), 2 password notes excluded by policy, and
-**0 unread** — 361 leaf files. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
+**0 unread** — 361 leaf files. On the October 2026 delivery (Stage 10dk) it is 363
+leaf files, 279 read, and still **0 unread**. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
 paragraph come from it and from `docs/BOOK-REPORT.md`, and should be re-read from
 them rather than edited to taste.
 
@@ -26360,6 +26376,660 @@ assumed.
     strip does not show by default), 10 on the Portfolio Monitor's, 5 on Private
     Market's, and 3 others — a partial realised figure on a mandate's trades,
     the not-found drill-down's crumb, and the ledger's own window.
+
+### Stage 10di — A MEMBER SELECTOR AT THE TOP OF THE DASHBOARD
+
+*"There should be option to select each family member or family entity so that
+the whole dashboard is then only showing information regarding that particular
+family member … they should be able to multi select … The families and entities
+page will remain the same."*
+
+- **One selector in the top bar**, Whole family by default. Any members or
+  trusts can be ticked together; the button reads the name, "Ajay + Ankita", or
+  "3 members". The choice is `?members=` and survives a sidebar link.
+- **One seam.** `scopePortfolio` keeps the chosen members' accounts and
+  everything keyed on them — positions, the three sides, capital gains,
+  commitments, dated flows. Every page reads the scoped book with no edit of its
+  own. The suite holds each owner's book to the family's, to the paisa.
+- **Family & Entities always shows every member** (`<WholeFamily>`).
+- **What only the whole family has says so.** The NAV series is struck over the
+  family's accounts together, so NAV vs Nifty 500, NAV & Performance's chart and
+  Upload History's series say they are whole-family only rather than drawing a
+  line under one member's name. Capital Gains, Ledger Insights, the Monitor's
+  trades and export, and the search follow the scope.
+- **A page about another member's holding says whose it is** (`OutOfScope`),
+  never "no such account" or "fully exited", and offers to add them or show the
+  whole family.
+- **A scope with nothing in it is named, not drawn as ₹0.** The page says the
+  members' accounts hold nothing a statement values, or that the address names
+  nobody this book carries, and the top bar prints no total.
+
+**Checks:** `memberScope.test.ts`; eight `check:pages` routes
+(`cio-scope`, `family-scoped`, `cio-nav-scoped`, `history-scoped`,
+`ledger-scoped`, `mandate-out-of-scope`, `polycab-out-of-scope`,
+`cio-scope-unknown`), every expectation derived from `glowData.ts`; and a
+`check:family` walk that clicks the selector, ticks two, follows a sidebar link
+and goes back to the whole family.
+
+### Stage 10dj — A BANK STATEMENT IS PUBLISHED ONLY WHERE ITS OWN RUNNING BALANCE TIES, AND ITS BALANCE IS IN NO TOTAL
+
+*"Every single file in this zip needs to be integrated in the dashboard. Make
+sure there are no logical or calculation errors."* — the client's
+`Re__Ajay_sir_Statements.zip`: **11 files, 6 PDFs and 5 legacy `.xls` exports** —
+three HDFC Bank savings accounts (one of them joint), two ICICI Bank savings
+accounts, and the HDFC Bank NSDL depository statement for Ajay's own DP account.
+
+**THE READERS ARE HERE AND THE STATEMENTS ARE NOT.** The family asked for
+`source/october-2026/` to stay out of this repository, so nothing in
+`public/audit/` carries a bank row and `BOOK_SUMMARY` does not move by a rupee.
+What that costs is stated rather than glossed: no page renders one of these
+documents, so `check:pages` can see none of this change (it walks main's own 378
+combinations and this adds no route); the real-PDF halves of the ingest suites
+have no subject and say so; and **three of the bug harness's cases have no
+subject, named in its own footer** rather than left to read as a clean run. The
+readers are exercised against grids built in the tests, from invented accounts
+and narrations — a synthetic fixture never copies the family's own.
+
+#### The decisions, each a wrong answer this document makes easy
+
+- **THE ROW KIND IS `bank-statement`, NOT `bank-book`.** `bank-book` already
+  means the cash leg INSIDE a PMS mandate — a manager moving a client's money
+  between a trade and a dividend, with `Buy/Sell`, `Income`, `Expenses` and
+  `Dep/With` columns — and `precedence.mjs` names it for `cashFlows` on six
+  accounts. A savings account prints Withdrawal, Deposit and Closing Balance,
+  and the money in it is the family's own. One type for both would let a savings
+  statement supersede a bank book on an account that has one.
+- **THE KIND IS DELIBERATELY NOT IN `CAPITAL_KINDS`.** A rupee leaving a savings
+  account is not a contribution to anything. Some of these rows ARE the family
+  funding a mandate, and which ones is a judgement the narration alone does not
+  settle — §4c's rule: carry it, name it, and let the family answer.
+- **THE CLOSING BALANCE IS IN NO TOTAL ON THIS SITE.** A bank balance is real
+  money and it is not a holding: this book's `Cash` is the sleeve a manager or a
+  depository reports inside an investment account, and summing a household
+  current account into it would move every allocation weight and every return
+  denominator on a decision nobody made. The document carries
+  `excludedFromBook` with the reason, and **the question is open with the
+  family.**
+- **MATCHED ON ITS COLUMNS, NEVER ON ITS BANK.** "HDFC Bank" is the letterhead
+  of a mutual-fund folio statement, an NSDL depository statement and a savings
+  statement in this corpus, and "ICICI Bank" of a payment advice, an NSDL
+  statement and a savings one — §"a phrase in a footnote is not what a document
+  is", arriving at a sixth issuer. What a savings statement IS, and no other
+  document here is, is a dated record printing a withdrawal column, a deposit
+  column and a running balance beside them. Neither predicate reads a bank name,
+  a customer id or an email; the statements print all three and the classifier
+  never looks at any of them.
+- **AND A NARRATION NAMES A MANAGER.** An RTGS to or from a PMS house prints
+  that house's name, and one of these statements is claimed by V.E.C's own rule
+  on exactly that. Three things stop it, in order: `classify()` resolves a
+  savings statement on its COLUMNS before either house matcher is reached, each
+  matcher refuses one anyway, and `genericProvider` — where the V.E.C answer was
+  measured — names the bank first too. **So the two matchers' guards count their
+  own refusals and the run prints the counts, where ZERO IS THE CORRECT ANSWER:
+  a non-zero one means that order has changed and those guards are the only
+  thing left between a narration and a misfile.** Printed even at zero, the rule
+  `build-book`'s identity guards already follow — one that only speaks when it
+  fires is indistinguishable, on a clean run, from one that was quietly deleted
+  — and the suite holds the run to printing it unconditionally, because on every
+  run while the order holds the honest count IS zero.
+
+#### The tie-out is the licence, and it is struck in paise
+
+A bank tape is the only document in this corpus whose whole content is dated
+rows — no holding to cross-check, no mark, no second report of the same facts —
+and it is also the richest self-checking one: it prints its own opening balance,
+its own balance after every row, its own debit and credit totals, its own
+transaction counts and its own closing balance. `tieOut` holds the rows to every
+one of those the statement prints, **in paise integers**, and any failure
+publishes NOTHING and says which check failed on which row. That is
+`hdfcNsdl.mjs`'s own licence and `threePFlows`'s, applied to a tape.
+
+- **PAISE INTEGERS, AND NO TOLERANCE.** Floating-point addition over several
+  hundred rows drifts, and an allowance wide enough to absorb the drift is wide
+  enough to absorb a misread paisa. The allowance that exists elsewhere covers
+  a settlement derived from a four-decimal rate; nothing here is derived.
+- **A CHECK WITH NO PRINTED FIGURE IS NOT APPLICABLE, NEVER A PASS.** ICICI
+  prints no debit or credit total, so those two checks have nothing to compare
+  against and say so.
+- **A DERIVED OPENING IS LABELLED DERIVED.** ICICI prints none, so it is taken
+  from the first row — and the running-balance check then covers rows 2..N and
+  must not claim to cover 1..N. `flows.openingBalance` is null there, and
+  `reconcile.mjs` skips row 1 for exactly that reason: checking it against a
+  figure derived from it is a figure compared with its own copy.
+- **THE NARRATION IS GATED DIFFERENTLY, because it is a description and not a
+  figure.** HDFC hard-wraps it into fixed-width chunks that split mid-word, so
+  rebuilding it is a question about spacing. A difference there is at most a
+  warning; the gate is on the amounts.
+
+**AND THE RECONCILER IS A SECOND PATH, NOT A SECOND CHANCE.** The reader
+publishes nothing where it does not tie, so the running-balance step beside the
+bank-book check is struck on the ARCHIVE the book actually reads: a merge, a
+replay or a hand-edit that moved a row after extraction is a break the reader
+cannot see. A row whose own balance could not be read **breaks the chain** rather
+than being carried forward, which would make the next row's step look right over
+two rows' movement.
+
+#### A second layout on the HDFC depository, read natively
+
+`Demat Holding Query Stmt` for Ajay's own DP account is the same bank's holding
+statement from a different export: **a real text layer**, a different column set
+and its own title, `HDFC Bank Depository Holding Details`. It has its own reader
+(`readNative`), chosen on that title AND on the text being native — an OCR'd
+page is never sent down it, whatever it seems to say.
+
+- **THE OCR WARNING IS NOW CONDITIONAL ON THE GRID.** It fired on every document
+  this provider read, and on a native page *"the words were recovered by
+  rendering the page at 600 dpi"* is a false statement about how it was read.
+  It is emitted only where `grid.textSource === "ocr"`.
+- **THE HEADER IS FOUND BY ITS WORDS.** All eight labels on one line, or nothing
+  is read — a changed export is reported as a header that did not match rather
+  than as columns read at a guessed x.
+- **A FIGURE BELONGS TO THE COLUMN WHOSE RIGHT EDGE IT SHARES**, and text to the
+  column its LEFT edge starts at: the company names begin left of their own
+  centred heading, so a boundary halfway between two headings would file the
+  first word of every name under the ISIN column.
+- **A WRAPPED NAME CONTINUES ON THE LINES BELOW ITS ISIN**, and every
+  continuation belongs to the record ABOVE it. Nearest-by-y hands a company's
+  last line to the next record whenever the gap below is smaller.
+- **THE PRINTED TOTAL IS THE WITNESS**, and every row's balance × rate must be
+  its own printed value. It values eight of ten rows; the two at exactly their
+  face value are carried as quantities, by the same three tiers
+  `faceValueBasis` already applies.
+
+#### A `.xls` that is genuinely BIFF, and the value it stores
+
+`lib/sheet.mjs` has sniffed the bytes rather than the extension since it was
+written, because a broker's `.xls` here is an HTML table. **These five are
+genuinely BIFF** — an OLE compound file, the two banks' own "download as Excel"
+— and they are read as **WITNESSES** of the PDF beside them, carrying rows and
+no facts, by the SheetJS the AMFI harvester already uses. `readBiff` is new;
+nothing else in the pipeline could open one.
+
+**A NUMBER IS ITS STORED VALUE, NEVER ITS DISPLAYED TEXT.** SheetJS hands back
+both. A bank writes its amounts under the General format, which shows about ten
+significant digits — measured on this delivery's own HDFC export, the displayed
+text reads 208039138.56 as "208039138.6" and 3583688673.57 as "3583688674". Read
+as text, **every large amount in a bank export loses its paise and the export
+stops agreeing with the PDF it witnesses, by an amount that looks like
+rounding.** `String(v)` is the shortest exact rendering of the stored double,
+which is also what an `.xlsx` stores. A date stays the serial `readXlsx` leaves
+it as; the same header opens a Word `.doc`, which comes back with `error` set
+rather than as an empty grid reading as "the sheet is blank".
+
+#### Seven defects in a branch no archived document reaches, and the suite that renders it
+
+**THE BANK SECTION OF `build-book`'s REPORT HAD NEVER RUN**, because no statement
+in the archive is one, and **READING A BRANCH IS NOT CHECKING IT**: it was
+written, reviewed and read twice before anything rendered it, and the first
+rendering found seven wrong claims in it. So it is rendered on every
+`test:ingest` run now, by `scripts/ingest/__tests__/bankReport.test.mjs` over
+`bankReportFixture.mjs` — **six synthetic statements of four synthetic accounts,
+four published and two refused** — and every claim it makes is named there rather
+than counted. It grew from four statements of two accounts at the G2 round below,
+because the defect that round found needs a pair the four could not make: an
+account that published a statement AND was refused on a NEWER one.
+
+**IT WRITES NOTHING COMMITTED, AND PROVES IT.** `GLOW_AUDIT_DIR`,
+`GLOW_BOOK_OUT` and `GLOW_BOOK_REPORT` point the whole build into a temporary
+directory, and the suite takes a sha256 of `src/data/glowData.ts` AND
+`docs/BOOK-REPORT.md` before and after and requires both unchanged — because a
+test that rewrote the report as a side effect would land a synthetic bank section
+in a tracked file, four invented accounts with balances on them. Pointing it at
+the real path is a harness case, which is how that guard is watched firing.
+
+What the first rendering found, each one a defect the suite now holds:
+
+- **A FIGURE SHORT OF ITS PAISE.** `toLocaleString` with no fraction options
+  printed `18,500.5` for a closing balance the bank prints as `18,500.50`, and
+  `1,00,000` for an opening of `1,00,000.00` — in a section whose own sentence
+  says every figure in it is one the statement PRINTS, and whose gate is struck
+  on the paisa. One two-decimal formatter for the table and the total now. A
+  portfolio market value elsewhere in that report is a derived figure to the
+  rupee and loses nothing that way; a bank balance is not.
+- **A LEAD ASSERTED OF EVERY ROW AT ONCE.** *"N statement(s) read completely"*,
+  four paragraphs above its own counterexample — a statement the tie-out refused
+  was parsed completely and published nothing, which is a different claim. The
+  lead counts what published a tape.
+- **A CLAIM NAMING FOUR RECONCILIATIONS AN ICICI STATEMENT CANNOT STRIKE.** It
+  listed the running balance, both printed totals, the Dr/Cr counts and the
+  closing balance; ICICI prints none of the last four, so four of the five were
+  checks it could not supply a figure for — and the `Checks` column beside it was
+  already counting them as n/a. It claims *every check the statement itself
+  supplies a figure for*, which is the only form that is true of both banks.
+- **A REFUSED ROW'S `Checks` CELL SILENT ABOUT THE REFUSAL.** It read `7 tied, 2
+  n/a` beside a `Rows` cell reading *none published*, inviting a reader to wonder
+  why nothing was published when every check tied. It leads with the failure.
+- **A TOTAL THAT ADDED ONE ACCOUNT'S MONEY ONCE PER STATEMENT.**
+  `bankAccounts` is one entry per DOCUMENT, so summing its closing column read a
+  quarterly set for one account as several accounts holding several balances,
+  under a sentence saying *across 3 account(s)* about one. It takes each
+  account's NEWEST closing and says how many statements stood behind it.
+  ***THE SECOND HALF OF THAT SENTENCE WAS WRONG IN THREE MORE WAYS, AND THE
+  FIXTURE COULD NOT REACH ANY OF THEM — see the G2 round below.***
+- **A camelCase FIELD NAME IN A SENTENCE.** `gate.notApplicable` is rendered
+  verbatim, so `printed.drCount`'s key reached the prose as *"drCount: the
+  statement prints none"*, beside *"debits total"* written out. The label is the
+  written-out name now and the suite bans the four field names outright.
+- **AND A SECTION THAT REPORTED A QUARTER OF WHAT IT HAD PUBLISHED.** It read
+  `newestPerReportType`'s superseded set, which is right about a snapshot and
+  wrong about a tape — `DATED_COLLECTIONS` already unions `cashFlows` across
+  every issue for that reason. An account that sent four quarterly statements
+  published four quarters of rows and reported one quarter's balances and one
+  quarter's tie-out. It reads `allIssues`.
+
+Three more came out of the same pass rather than being asked for: the n/a
+checks are NAMED and not only counted, the refused statement names the check that
+failed rather than pointing at `docs/EXTRACTION-REPORT.md`, and a derived opening
+names the one row it cannot witness with that row's own amount.
+
+**AND A SAVINGS STATEMENT IN THE ARCHIVE CHANGES NOT ONE BYTE OF
+`glowData.ts`** — `BOOK_SUMMARY` and `accountsCount` included. Neither
+`bankAccounts` nor `excludedAccounts` is emitted; both live only in the
+in-memory book the report reads. That is the whole safety argument for landing
+the delivery, so it is a measurement in the suite rather than a claim here.
+
+**`makeCashFlow`'S TWO NEW FIELDS ARE CONDITIONAL SPREADS** (`valueDate`,
+`reference`), and that is load-bearing rather than tidy: `JSON.stringify(…, null,
+1)` writes a key whose value is `undefined` as nothing, but the archive's other
+documents must come back byte-identical, and a harness case proves an
+unconditional spread moves them.
+
+**AND DATA AUDIT WILL NOT OPEN ON ONE BY DEFAULT.** Its tape is the family's own
+banking, one narration per row naming a counterparty, so the page opens on the
+first document that is NOT a bank statement and falls back only if that is all
+there is. Measured on the committed tree: all 307 manifest entries carry
+`reportType` and the default is unchanged.
+
+#### What is open, and what is blocked
+
+- **THE CASH QUESTION IS WITH THE FAMILY.** The closing balances are carried,
+  named and in no total. Counting them is one line and is theirs to ask for.
+- **THE DELIVERY ITSELF IS NOT LANDED.** `source/october-2026/` is out of the
+  tree at the family's request, so the archive carries no bank document and the
+  cross-check of each archived `cashFlows` row against its witness `.xls` — the
+  one check that can only be struck on the real statements — is named rather
+  than run.
+- **AND THE WITNESS COUNT IS DERIVED, NOT TYPED.** `sheetWitness.test.mjs`
+  counts the witnesses the manifest carries rather than asserting a figure: 11
+  files are 6 PDFs and 5 exports, so the delivery would add 5 and not 6, and a
+  typed total is a figure copied into prose that the next delivery makes false.
+
+#### Five review findings, and the one that could have put a wrong figure through the gate
+
+A review bot read the reader and raised five. **Each was traced to a concrete
+input before it was acted on** — a P2 finding is a claim to verify, not an order
+— and all five hold. Fixed in one commit:
+
+- **An indented HDFC continuation lost its space.** `joinNarration` decided a
+  space on the narration COLUMN's left edge, so a wrap indented past it was
+  glued to the word above: `…PAYMENT` + `  REF 0012` came back as
+  `PAYMENTREF 0012`. It compares against the CHUNK's own left edge now, which is
+  what HDFC wraps on. **ICICI is deliberately left on its own rule** — it wraps
+  on PIXEL width, so its join is a plain space except after a trailing `-` — and
+  that is why the two continuation blocks are now textually distinct.
+- **TWO SUMMARY LABELS COULD TAKE ONE PRINTED FIGURE, AND THAT IS THE ONE OF THE
+  FIVE THAT MOVED A FIGURE.** The labels sit nowhere near their own columns, so
+  each binds to the value whose centre is nearest — and decided per label,
+  independently, a missing debits total hands `Debits` (centre 360) the Cr
+  COUNT's `2` at 269, 91pt away against the credit total's 96. **A count of
+  transactions reached the archive as a printed rupee primitive, and the debits
+  check then failed against it.** The assignment is greedy over the (label,
+  value) pairs and CONSUMES each value, so a label left over reads as not
+  printed — which is what it is — and its check is NOT APPLICABLE rather than
+  failed.
+- **ICICI's serial gate said more than it meant.** `serials` was set wherever the
+  LAYOUT had a serial column, whether or not any cell in it parsed, so a column
+  the reader could not read made the gate assert 1..N over an empty list — a
+  check that cannot fail dressed as one that held. It is
+  `serialSeen && rows.length > 0` now.
+- **A dateless ICICI row carrying money was absorbed into the row above.** The
+  orphan test read the NARRATION alone, so a wrap carrying a withdrawal, deposit
+  or balance reached no check — the one shape where a silent absorption moves
+  money. `AMOUNT_FIELDS` decides it; a wrap carrying a cheque number, an IFSC or
+  a UTR is still a wrap, because none of those is a figure the gate checks.
+- **The excluded-accounts report asserted of every row what is true of one
+  kind.** "No owner entry would ever bring it in" is right about the family's
+  own bank accounts and false of a third party's folios, which an owner entry is
+  exactly what would bring in. Each `excludedAccounts.push` site carries a
+  `kind`, the intro states only what is true of every row, and each kind has its
+  own paragraph. Rendered against a synthetic bank document in a scratch
+  archive, which also caught the plural: one account read "Whether **their**
+  closing balances…".
+
+**AND THE CASE WRITTEN FOR THE SECOND ONE COULD NOT FAIL, which is the finding
+inside the finding.** Harness case 34 reverts the greedy block, and its
+strongest assertion — "no label takes a neighbour's figure" — passed with the
+defect in, because **every other label still reads correctly under the
+independent assignment**. It names the EMPTY cell as well now
+(`val("Debits") === "—"`), because under the bug that cell prints `2.00`, the Cr
+count read as rupees. Re-run, the case fires 5.
+
+**AND THREE HARNESS CASES REPORTED NOT A RESULT ON THAT PASS, because these five
+fixes moved their anchors** — 7, 12 and 13; the harness's own run below found
+three more, for the same reason. All three re-anchored, and case 12
+RENAMED: its patch drops the continuation's narration append, and the row is
+still skipped by the gate's own check 0, so what it loses is the continuation's
+TEXT rather than a row becoming a movement. A case whose name describes a
+different defect is a case nobody can read.
+
+**AND THE TRAP COMMENT STATED A FALSE PREMISE.** It claimed a 50-minute
+`timeout` had fired mid-case and left a file patched. What actually happened in
+this file's own session is the hazard from the OTHER side: a
+`git checkout -- scripts/ingest/extract.mjs` run against a tree a live case had
+patched, which is why that case's reported figure was thrown away rather than
+recorded. The comment says so, and the hardening it justifies
+(`trap restore EXIT INT TERM`) is kept — **Bash does not run an EXIT trap on
+SIGTERM unless a SIGTERM trap exists.**
+
+#### Four more findings, and the two that could never have failed
+
+A second and a third review pass raised nine more. **Five had already been
+fixed by the report work above** — the lead, the five-reconciliation claim, the
+per-statement total, the camelCase label and the refused row's `Checks` cell,
+each with its own harness case. The other four are recorded here because two of
+them are the same shape: **a check written against a value that could not be
+compared, so it held whatever the tree did.**
+
+- **A VANISHED WITNESS SOURCE ONLY LOGGED A SKIP.** `bytesOf` fell back to a
+  bare `existsSync`, which is how a WITHHELD delivery had to be able to skip the
+  one check that needs a file's own bytes — and a skip keyed on "the file is not
+  there" skips just as quietly for a file somebody DELETED, which is the one
+  event this suite exists to catch. `committedExports()` walks `source/` too, so
+  a deleted export also leaves nothing to expect: **both halves would have gone
+  silent together.** `WITHHELD_SOURCE_PREFIXES` is an allowlist now, so a missing
+  source outside it THROWS with the two things it could be, and a prefix covering
+  nothing in the tree is said out loud rather than left as cover for the next
+  deletion. On this tree it covers nothing, and the suite prints that: *"18
+  witness(es) in the archive; 18 with committed bytes"* and *"the skip it allows
+  has no subject here, and a missing source fails"*. Measured by hiding one of
+  the eighteen — `askimpms_10032723_BankBook178CT.xlsx` — which fails the suite
+  by name (`is archived as a witness and is not in the committed tree, and it is
+  not under a delivery this suite knows is withheld`) where it used to be skipped
+  in silence.
+- **`UPSTOX_INSTRUMENTS[null]` ASKED FOR A PROPERTY NAMED "null".** The symbol
+  table's two unlisted rows assert they are in neither map, and `symbol` is
+  `null` on exactly those rows — so `symbol in UPSTOX_INSTRUMENTS` tested a key
+  literally spelled `"null"`, always absent, and **the clause held whether or not
+  the supposedly unlisted ISIN was in that map under a real ticker**, which is
+  the one thing it exists to catch. The map's VALUES carry `NSE_EQ|<isin>`, so
+  they are what is walked, and a hit names the ticker it was found under. It has
+  a real subject: Sterlite Electric `INE110V01015` and Sterlite Grid 5
+  `INE03QT01027`, neither of them among the map's 160 entries.
+- **A THIRD BANK'S LETTERHEAD SKIPPED THE IDENTITY CHECK.** The two readings of
+  which bank a statement is — the letterhead the classifier named, and the
+  column labels the table's own header prints — were compared only where the
+  classifier's answer was one of the two this reader reads
+  (`PROVIDER.includes(meta.provider) && …`), so a third bank that reached here
+  with its own name on it was archived under whichever of the two its columns
+  resembled. **An account named for an institution that did not print it is the
+  one thing a bank tape must never be filed as.** The comparison is
+  unconditional now and the refusal says which of the two cases it is. What it
+  does NOT close is named rather than guessed at, in the code: where a third bank
+  prints a column set `bankStatementProvider` already knows, both readings agree
+  and nothing here can tell them apart — closing that needs a POSITIVE reading of
+  the bank's name off the page, and the statements this reader was written
+  against are out of this repository, so a requirement that they name their own
+  bank somewhere this reader tests for cannot be verified here.
+- **AND AN UNREADABLE TRAILING ICICI PAGE WAS SKIPPED IN SILENCE.** A page whose
+  table does not resolve is skipped, which is right — but ICICI prints no
+  transaction counts and no printed totals, so on that layout nothing downstream
+  notices a lost page, and a TRUNCATED tape reconciles perfectly against its own
+  first and last rows. HDFC's does not have that hole: a lost page there breaks
+  the gate on the statement's own printed counts. So a skipped page is now
+  EXAMINED rather than trusted — `movementsOn` reads it for a dated row carrying
+  two figures — and a page carrying a movement refuses the whole document,
+  naming the page and the row. A caller that did not scan at all gets NOT
+  APPLICABLE and never a pass. Cases 36 to 40 are that work, two of them the
+  threshold itself: a dotted date matches the money pattern on its first two
+  components, so counting it made a threshold of two into a threshold of one on
+  this bank's own layout and every closing sentence refused the tape.
+
+**THE OTHER TWO P1s NEEDED NO CODE, AND BOTH ARE ANSWERED IN THE READER RATHER
+THAN HERE.** The first ICICI row's own amount has no witness — `opening = b1 + d1
+− c1`, so the chain takes that step straight back out and row 1 passes whatever
+its amount is, and ICICI prints no debit total, no credit total and no Dr/Cr
+count, so **there is nothing to invent a witness from**. Refusing every ICICI tape
+over one unwitnessed amount would throw away every row that IS witnessed, so the
+gate says what it could not check, naming that row and its own movement, and
+counts it apart from its passes. And a reader that starts refusing its own output
+keeps its `partial` status, so `guardAgainstShrinkingTheArchive` cannot see it on
+a count of readable documents — which is why its second half is struck on the
+FACTS each document retained, the sections already in the manifest, and refuses a
+run where any document publishes fewer.
+
+`build` · `tsc` · `test:ingest` (every suite passes — `bankStatement 182`,
+**`bankReport 42`**, `hdfcNative 177`, `sheetWitness 311`, `septemberAudit
+103632`, golden 140 passed, 2 not checked, 0 blocked) · `test:family` 0 failed ·
+`check:family`
+**127/0** · `check:pages` **382 combinations clean, 0 invariant failures** —
+`main`'s own count to the combination, because this change adds no route and
+`scripts/check-pages.mjs` is **`main`'s byte for byte**, so each of its 53 NOT
+CHECKED lines is an existing claim with nothing on this book to check and not one
+is this change's (read out of `report.json` by route) · `npm run build-book` twice,
+byte-identical — and `src/data/glowData.ts` is **`main`'s byte for byte**, which
+is the whole safety argument: neither `bankAccounts` nor `excludedAccounts` is
+emitted to it, so a report-prose change moves no figure · `coverage:source` exit
+0 with **Unread 0** · `replay:owners -- --check` a no-op, and `replay:calls`,
+`replay:flows`, `replay:movements`, `replay:dedupe` and `rekey:archive` with it.
+
+**`scripts/dev/bank-statement-bug.sh` puts 59 bugs back one at a time**, after a
+control that came back clean on BOTH suites — 182 reader checks and 42 rendering
+ones, nothing failing — and every one of them is caught. Its subject is the
+INGEST rather than the sweep, for the reason above: with the delivery out of the
+tree no route could see one of these bugs. **The count is 59 and not 58, which is
+why it is measured rather than carried in prose**: case 9 has a `9b` beside it, a
+three-decimal figure rounded into shape where 9 is the same tie-out struck in
+floating-point rupees. Cases 1–40 and 9b break
+the reader or the pipeline and are watched by `bankStatement.test.mjs`, and
+**cases 41–58 break a claim in the report's bank section and are watched by
+`bankReport.test.mjs`** — the reader's own suite runs on every one of those too,
+deliberately, so a patch to the REPORT is shown to move nothing the reader does.
+Three more are available and have **no subject in this tree** — they need the
+archive to carry a bank tape — and are NAMED in the harness rather than shipped
+as clean cases, because a clean case proves nothing.
+
+**AND THE CONTROL HAS TO RUN THE RENDERING SUITE, because a case from 41 on is
+read as "these checks fire and the others do not"** — which says nothing at all
+if the unpatched tree already fails some of them. That is the finding this file
+already records from Stage 10dh's own pass, where a worktree's stale read models
+made every `monitor-txns` invariant fail under the control and two cases were
+read as results.
+
+**AND THREE MORE CASES REPORTED NOT A RESULT RATHER THAN A CLEAN SWEEP, every
+one of them for the same reason as the three above: its anchor went stale in a
+fix made since it was written.** Case 4 patches the Dr/Cr comparison, and the camelCase fix (case 48's
+own subject) renamed its index from the written-out `label` to the field `key`.
+Case 16 patches the letterhead-against-labels condition, and case 35's fix moved
+the `PROVIDER.includes` term out of that condition into the refusal's own
+wording. Case 31 drops `orphans` from the call into the gate, and the
+page-scan work behind cases 36–38 added `skipped` to the same call and wrapped it
+onto a second line. All three re-anchored and all three fire — 5 checks, 4 and 4.
+**A patch that no longer applies proves nothing however clean the run looks**,
+which is the whole reason the harness reports it as not a result, and it is the
+only thing that found any of the three.
+
+So the pass ran twice, and what it establishes is split between the two runs
+rather than claimed of one: the whole-harness run carried the clean control and
+53 of the 54 cases firing (4 and 16 among them, already re-anchored), and case 31
+was NOT A RESULT there and fires on its own re-run, with the trap-backed restore
+putting `orphans: read.orphans` back on the gate's own call — verified in the
+reader rather than assumed. **Case 25 is the one case the bank suite is right to
+sweep clean**: it adds `valueDate` and `reference` unconditionally to every cash
+flow in the book, which moves nothing a bank statement does and breaks the
+archive byte-identity on four documents this change never touches — `askArf` on
+both ASK Absolute Return Fund folios and `buoyantSnap` on both Buoyant ones, two
+checks each — so it is judged on the whole ingest run and reported as caught
+there.
+
+#### G2: three claims in one sentence, and a fixture that could not reach any of them
+
+The total under the table read *"Their closing balances come to **X** across N
+account(s), each taken from the newest of its M statement(s)"*, and every clause
+of it was wrong in its own way. **A fifth review pass raised it, and tracing it
+against the renderer found three defects rather than one:**
+
+- **THE SELECTION RAN OVER THE PUBLISHED ISSUES ALONE.** An account that
+  published a statement and was REFUSED on a newer one had its older balance
+  described as the newest. The selection runs over EVERY issue now and takes the
+  newest that published.
+- **THE STATEMENT COUNT WAS GLOBAL, WORN AS A PER-ACCOUNT CLAIM.** *"each taken
+  from the newest of its M statement(s)"* printed one M over accounts holding
+  two, two and one — a figure that is true of no account, in the form of a
+  figure true of each.
+- **AND AN ACCOUNT WHOSE EVERY STATEMENT WAS REFUSED CONTRIBUTED NO BALANCE AND
+  WAS NOT NAMED.** That is §"a figure that exists for SOME accounts is shown for
+  those and the rest are named — including in the total's own caption", failing
+  in the one caption that rule names.
+
+**THE REVIEW OFFERED TWO REMEDIES AND THE SECOND IS TAKEN: "label it the latest
+*reconciled* balance with its date" rather than "omit the balance".** Omitting a
+reconciled figure because a LATER statement could not be read withholds a
+measurement the bank printed and this reader tied to the paisa; what is unknown
+is only what moved AFTER it, and that is nameable. So the total reads *"Their
+latest reconciled closing balances come to **X** across N account(s), from the M
+statement(s) they sent"*, an account reconciled to older than its newest
+statement is NAMED WITH BOTH DATES under a heading saying the balance is not the
+newest, and an account whose every statement was refused is named as
+contributing none.
+
+Rendered on the enlarged fixture: **₹3,07,501.25 across 3 accounts from 5
+statements**, HDFC …0003 named as reconciled to 2026-06-30 with its 2026-09-30
+statement refused, and HDFC …0002 named as contributing nothing.
+
+**THE FIXTURE HAD TO GROW, BECAUSE NONE OF THE THREE IS REACHABLE WITHOUT THE
+PAIR.** Four statements of two accounts cannot make an account that published AND
+was refused on a newer one, so every one of these defects rendered correctly on
+it — which is the shape this file already records of a branch nobody rendered.
+It is six statements of four accounts now, and the pair is HDFC …0003: Q1 ties,
+and Q2 is refused on a printed debits total of 9,999.00 against rows summing to
+1,000.00.
+
+**AND THE SUITE DERIVES EVERY CLAIM FROM THE TABLE'S OWN ROWS**, never from a
+literal: the total is summed from the rows the section printed, the account count
+and the statement count are grouped off them, and an account reconciled to an
+older date is found by comparing each account's issues rather than by naming one.
+A literal would have to be re-typed every time the fixture moves, which is how a
+check comes to assert a figure nobody measured.
+
+**AND RENDERING IT FOUND AN UNTERMINATED BOLD PHRASE** — an odd `**` left open,
+so every following paragraph rendered bold. **THE CHECK WRITTEN FOR IT THEN
+FAILED A CORRECT PAGE**: struck per LINE it fired on a bold phrase this file
+legitimately hard-wraps across two of them (*"**Whether these balances should
+be / counted is the family's to answer**"*). It is struck per blank-line-separated
+PARAGRAPH, with that reason beside it — the same mistake as a boundary a page is
+free to print, arriving in a markdown counter.
+
+**FOUR HARNESS CASES, AND THE FIRST FIRED FOR THE WRONG REASON.** Case 55 was
+first aimed at the selection filter, which made `byNewest` empty for a
+refused-only account, so the renderer THREW and the three failures named the
+render rather than the claim — and re-reading the pre-fix code showed the patch
+was not the faithful reintroduction anyway, because the old `at` was already the
+newest PUBLISHED issue. What it lacked is the `behind` comparison and the
+wording, which is where case 55 is aimed now. All four fire exactly their own
+checks: 55 the two naming-the-older-date ones, 56 the total's own, 57 the two
+counting ones, 58 the refused-only account's.
+
+**AND G4's REAL DEFECT WAS IN A TEST, NOT IN THE CLASSIFIER.** The review asked
+for an unlisted preference share's asset class to change; that is declined, and
+for a reason the code already carries — `assetClassOf`'s own doc comment decides
+this case the other way and names NSE India Ltd, the same function grades the
+ICICI statement's 24 par rows, and the claimed failure path does not exist (a
+face-valued row is filtered out of positions before `marketSideOf` sees it, and
+the live layer needs a symbol resolved from identifiers, which an unlisted
+company cannot supply). **What WAS wrong is `hdfcNative.test.mjs` asserting a
+conclusion about LISTING STATUS from a fact about the symbol maps** — *"UNLISTED,
+so no symbol can exist"* over a check that reads two committed files. **HEG is the
+standing counterexample: it IS listed and resolves no symbol here**, because NSE
+renamed the listing and the book prints no ISIN to join on. The comment, the
+section header and three labels say what is measurable from the tree — that
+neither map carries the ISIN — and name the filings as the source of the
+unlisted reading, which no file here holds.
+
+#### Merged with main, which took this letter
+
+This was written as `10dh`. **#116 — the review as the source of the private
+book — merged first and keeps it**, so this section is `10di`; the letters were
+compared as HEADINGS against main's tip at merge time, and the merged file
+differs from main's by `10di` alone, with main's ten historical duplicates
+unchanged. Every line naming `10dh` was placed by which side's own copy carries
+it before any moved: **ours are two** — this heading and the `readBiff` pointer
+in the ingest list — and **main's twelve stayed**.
+
+Two files conflicted, and both were resolved as a UNION rather than by taking a
+side: `build-book`'s returned book keeps `bankAccounts` beside main's three
+`review*` fields, and this file places main's section first. Six more merged
+without a marker, which is when this file says to read them: every one is main's
+byte for byte, and `check-pages.mjs`'s probe literal needed no union at all —
+**this change adds no route and touches no page-check code**, so the ctx-key
+union the brief asks for is a no-op, stated as one rather than invented.
+
+**AND THE GENERATED BOOK WAS REGENERATED RATHER THAN TRUSTED TO THE TEXT
+MERGE.** `build-book` over the merged builder reproduces `glowData.ts` and
+`docs/BOOK-REPORT.md` byte for byte against what git produced, which is the only
+thing that could have said so.
+
+#### …and a second time, for #119, with no letter to move
+
+**#119 — the accounts table regenerated, and its own rule made enforceable —
+landed while the G2 round was being verified, and added NO stage heading**, so
+`10di` stands and nothing had to be classified. The letters were compared as
+HEADINGS against main's tip anyway: the merged file differs from main's by `10di`
+alone and main's ten historical duplicates are unchanged.
+
+**NOTHING CONFLICTED, WHICH IS WHEN THIS FILE SAYS TO READ IT.** CLAUDE.md
+auto-merged, and the merge is the exact union measured in both directions:
+against main's copy it differs in two places, the `readBiff` pointer in the
+ingest list and the whole of this section, and against this branch's own
+pre-merge copy only in #119's regions — the accounts table and its Build entry.
+`package.json` took #119's new script and `scripts/dev/accounts-table.mjs` is
+main's byte for byte; no code file overlaps, because this branch changes the
+readers, `build-book` and the suites, and #119 changes none of them.
+
+**AND #119's OWN CONTROL RUN IS WHAT SAYS THE MERGE LEFT ITS TABLE ALONE.**
+`npm run accounts-table -- --write` reports 64 accounts, a printed column of
+₹8,33,79,57,613.76 against `BOOK_SUMMARY.totalValue` of the same, **delta 0**,
+and *"CLAUDE.md already carries this table (66 lines), unchanged"* — which is the
+only thing that could establish it, since a table merged into the wrong shape
+still reads as a table.
+
+(Written as `10di`. #122 — the member selector — took that letter while this waited,
+so this section is `10dj`; the headings were compared against main's tip.)
+### Stage 10dk — GREEN LANTERN 510861 SINCE INCEPTION, AND A REGISTER LONGER THAN ITS WINDOW
+
+*"integrate this new data from the client into the dashboard data without any
+logical/calculation errors"* — `source/october-2026/`: Green Lantern 510861's
+capital register and transaction statement, both since inception (16 Jan 2025 →
+22 Sep 2026). 516 trades and 48 register rows reach the archive (309 documents).
+**`BOOK_SUMMARY` does not move, and `glowData.ts` is byte-identical to main.**
+
+- **A header label printed ABOVE the header line.** The transaction statement
+  prints "Settlement" above its header and "Date" below it. `findTable` takes
+  that line as a donor only with `labelLineAbove` (the PMS transaction reader
+  opts in), only if nothing else on it reads as a label or a figure, and only
+  where it maps strictly more columns. Re-reading all 21 archived PDF
+  transaction statements gives the same trades; V.E.C's two now fill their
+  settlement dates.
+- **A register from inception prints no opening-balance row.** Its first
+  balance is its own amount, so it opens from nil, and its walk is witnessed.
+- **The money-weighted window is cut to [opening value date, account as-of].**
+  Read whole, the register put the ₹10 Cr Corpus Deposit in twice (as itself
+  and inside the 1 Apr 2026 opening value) and eleven TDS rows (₹30,846.80)
+  after 27 Jul into a value that does not hold them yet. Measured with the cut
+  removed: the tile reads 24.1% over 574 days instead of 26.5% over 134.
+- **A dated capital move after its account's value date is named, not listed.**
+- **The register ties to the manager's own Net Capital In/Out** (FY and since
+  inception) once the two TDS rows dated 10 Aug, the statement's own day, are
+  left out — named in `docs/BOOK-REPORT.md`.
+
+**Checks:** `pmsReaders.test.mjs` (the donor line, both ways, and a header that
+already reads is unchanged), `accountXirr.test.ts` (every flow inside its
+window, no move after its account's value date) and
+`capitalRecordArchive.test.ts` (register days after the value date are ABSENT,
+load-bearing on this register). Six bugs put back, each caught: donor off,
+donor removed, donor winning ties, and the opening, closing and value-date cuts.
+
+**THE LETTER.** Written as `10dj`; #118 (bank statements) merged under `10dj` first, so this is `10dk`. Main's lines naming `10dj` stay; this section's three pointers moved.
+
 
 ### Stage 10k — News & Announcements: REMOVED
 

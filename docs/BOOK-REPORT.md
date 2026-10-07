@@ -204,11 +204,15 @@ twice looks. The family has said each is a separate investment, so every figure 
 
 ## Read, and deliberately NOT in the book
 
-These statements were read COMPLETELY. They are absent from every total above
-because they belong to somebody else, and that is a different thing from a
+These statements were read COMPLETELY, and that is a different thing from a
 document the pipeline could not open — the coverage table in
-`docs/EXTRACTION-REPORT.md` has those. Each one becomes part of the book with a
-single entry in `shared/owners.mjs`, if the family says it should be.
+`docs/EXTRACTION-REPORT.md` has those. Each is absent from every total above for
+the reason its own row states.
+
+**4 of them belong to somebody else** — another taxpayer's folio, or an
+account no statement in the drop resolves to a canonical owner. Each becomes part
+of the book with a single entry in `shared/owners.mjs`, if the family says it
+should be.
 
 | Account | Provider | Holder | Value on its own statement | Why it is out |
 | --- | --- | --- | ---: | --- |
@@ -218,6 +222,10 @@ single entry in `shared/owners.mjs`, if the family says it should be.
 | 70413280453 | Mirae Asset Mutual Fund | HOPE INDIA TRUST | 9,41,106.71 | holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 
 Together they carry **32,86,904.6** across 4 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
+
+## The family's own bank accounts
+
+_None — no savings-account statement is in this drop._
 
 ## Ring-fenced: the promoter holding, on its own page
 
@@ -401,16 +409,23 @@ never guessed into the nearest plausible bucket.
 - account Green Lantern Capital LLP::510861: performance-summary 2026-04-01 superseded for SNAPSHOT facts by 2026-04-01 — `green-lantern-capital-llp-510861-2026-04-01-performance-summary-2`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: appraisal 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-appraisal`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: capital-gain 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-capital-gain`; its dated rows are still counted
-- account Green Lantern Capital LLP::510861: capital-register 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-capital-register`; its dated rows are still counted
+- account Green Lantern Capital LLP::510861: capital-register 2026-06-25 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510861-2026-06-25-capital-register`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: dividend-statement 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-dividend-statement`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: fact-sheet 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-fact-sheet`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: holdings 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-holdings`; its dated rows are still counted
-- account Green Lantern Capital LLP::510861: transaction-statement 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-transaction-statement`; its dated rows are still counted
+- account Green Lantern Capital LLP::510861: transaction-statement 2026-06-25 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510861-2026-06-25-transaction-statement`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: capital-gain 2026-06-30 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-30-capital-gain`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: performance-history 2026-07-09 superseded for SNAPSHOT facts by 2026-08-10 — `green-lantern-capital-llp-510861-2026-07-09-performance-history`; its dated rows are still counted
+- account Green Lantern Capital LLP::510861: capital-register 2026-07-27 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510861-2026-07-27-capital-register`; its dated rows are still counted
+- account Green Lantern Capital LLP::510861: transaction-statement 2026-07-27 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510861-2026-07-27-transaction-statement`; its dated rows are still counted
+- account Green Lantern Capital LLP::510861: 1 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 510861: capital-gain lots printed as `axis-liquid-fund-direct-plan-growth` settle this account's sales of `axis-liquid-fund-direct-plan-growth-option` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
+- account 510861: the 2026-09-22 capital register's 11 movement(s) after 2026-07-27, the date the account's value is struck (0 in, 30846.8 out), are not listed as dated capital: they are not yet in that value
 - account 510861: its dated capital record runs to 2026-07-27 — the capital register whose balances tie reaches that date, past the 2026-06-30 its typed rows reach on their own
 - account 510861: 2 movement(s) from its capital register (0 in, 6350 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
+- account 510861: its capital-register runs 2025-01-16 → 2026-09-22, so 29 row(s) before the 2026-04-01 opening value (already inside it) and 11 row(s) after the 2026-07-27 value the series closes on (not yet inside it) are not flows of its money-weighted window
+- account 510861: its capital-register reproduces the performance-summary's Net Capital In/Out of -39023 over 2026-04-01 → 2026-08-10 once the 2 row(s) dated 2026-08-10 itself (-3504) are left out — the statement was struck before that day's movements posted
+- account 510861: its capital-register reproduces the performance-history's Net Capital In/Out of 99885169 over 2025-01-16 → 2026-08-10 once the 2 row(s) dated 2026-08-10 itself (-3504) are left out — the statement was struck before that day's movements posted
 - account 67786137 (HDFC Bank (NSDL demat)) contributes no market value on the statement basis: its statement of 2026-08-29 carries 1 holding(s) as quantities — 1 at the face value they were allotted at. None of those is a valuation of the balance, so the units are in the archive and out of every statement-basis total.
 - account 67786137: no time-weighted return series in any statement
 - account 67786137: no flow block in any statement, so no value bridge

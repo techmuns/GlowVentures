@@ -5,7 +5,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
 const root = process.cwd();
-const compiled = await build({ stdin: { contents: 'export * from "./src/lib/ledgerModel"; export { BOOK_POSITIONS } from "./src/data/glowData";', resolveDir: root }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': path.join(root, 'src') }, logLevel: 'error' });
+const compiled = await build({ stdin: { contents: 'export * from "./src/lib/ledgerModel"; export { buildConsolidatedSheet } from "./src/lib/consolidatedSheet"; export { BOOK_POSITIONS } from "./src/data/glowData";', resolveDir: root }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': path.join(root, 'src') }, logLevel: 'error' });
 const model = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`);
 const read = async (p) => JSON.parse(await fs.readFile(path.join(root, 'public', p), 'utf8'));
 const manifest = await read('audit/manifest.json');
@@ -16,6 +16,7 @@ put('ledger/transactions.json', model.deriveTransactions(docs));
 put('ledger/lots.json', model.deriveRealisedLots(docs));
 put('ledger/income.json', model.deriveIncome(docs));
 put('ledger/sales.json', model.deriveSales(docs));
+put('consolidated/book.json', model.buildConsolidatedSheet(docs));
 const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings','income'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
 const stockKeys = [...keys].filter(Boolean).sort();
 for (const key of stockKeys) {

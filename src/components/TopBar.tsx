@@ -4,6 +4,7 @@ import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from
 import { lastQuoteFailure } from "@/lib/quotes";
 import { outageShort } from "@/lib/upstreamStatus";
 import { SmartSearch } from "@/components/SmartSearch";
+import { MemberScopeSelect } from "@/components/MemberScopeSelect";
 import { valuationDates, dateSpan, valuationNote as blendNote, type ValuationDates } from "@/components/BasisPill";
 
 const THEME_KEY = "glow:theme";
@@ -144,7 +145,7 @@ function QuoteStatus() {
 }
 
 export function TopBar() {
-  const { portfolio, fmtFromBase, clearPortfolio, refreshQuotes, quotesStatus } = usePortfolio();
+  const { portfolio, fmtFromBase, clearPortfolio, refreshQuotes, quotesStatus, scope } = usePortfolio();
   const [isDark, setIsDark] = useState<boolean>(readInitialTheme);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -187,15 +188,21 @@ export function TopBar() {
           every choice, and comes back by rendering `<MunsChat />` beside
           `<SmartSearch />` here. `check:pages`' `chat` route asserts the
           button stays gone until then. */}
+      {/* WHOSE BOOK, FIRST (Stage 10di): the whole family by default, or the
+          members and trusts picked — every page below follows it except
+          Family & Entities, which always shows everyone. */}
+      <MemberScopeSelect />
       <div className="flex min-w-0 max-w-3xl flex-1 items-center gap-2">
         <SmartSearch />
       </div>
       <div className="ml-auto flex items-center gap-3">
-        <div className="hidden items-center gap-2 text-xs md:flex"><QuoteStatus /></div>
+        <div className="hidden items-center gap-2 text-xs lg:flex"><QuoteStatus /></div>
         <CurrencySwitch />
-        {portfolio && (
+        {/* A scope with no holding draws no total: ₹0 would read as a measured
+            nothing, and the page below already says why it is empty. */}
+        {portfolio && (!scope.owners || portfolio.positions.length > 0) && (
           <span className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 px-3 py-1.5 text-xs text-slate-200"
-            title="Current Value of Holdings">
+            title={scope.selected ? `Current Value of Holdings · ${scope.label}` : "Current Value of Holdings"} data-topbar-total>
             <TrendingUp className="h-3.5 w-3.5 text-champagne-400" /> {fmtFromBase(portfolio.totalValue, { compact: true })}
           </span>
         )}

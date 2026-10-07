@@ -9,6 +9,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
+import { OutOfScope } from "@/components/MemberScopeSelect";
 import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare, NO_UNIT_COUNT } from "@/lib/analytics";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
@@ -27,6 +28,7 @@ import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format"
 import type { Account, Position } from "@/lib/types";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 
 /**
  * ONE DISCRETIONARY MANDATE, AND EVERY SHARE THE MANAGER HOLDS INSIDE IT.
@@ -217,7 +219,7 @@ const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"
 
 export function MandateHoldings() {
   const { accountId = "" } = useParams();
-  const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus } = usePortfolio();
+  const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, scope } = usePortfolio();
   const [q, setQ] = useState("");
 
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
@@ -239,7 +241,7 @@ export function MandateHoldings() {
   // ABOVE THE EARLY RETURNS — this page has three (no account, not a mandate,
   // no rows), and a hook that runs on some of them and not others is a
   // hooks-order error rather than a conditional table.
-  const holdingsView = useTableView("mandate-holdings", MANDATE_COLS);
+  const holdingsView = useTableView("mandate-holdings", MANDATE_COLS, { reviewKind: "holding" });
   /**
    * ONE SECTOR PER COMPANY, THE ONE SECTOR COMPOSITION GIVES IT (DSM-C9).
    *
@@ -326,6 +328,23 @@ export function MandateHoldings() {
     (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : null);
 
   if (!portfolio) return null;
+
+  // ── The account is in the book, and the member scope leaves it out ──────────
+  // "No account in this book" would be false: the book carries it. What is true
+  // is that the members chosen at the top of the page do not include its owner.
+  const outOfScope = !account && scope.selected ? BOOK_ACCOUNTS.find((a) => a.accountId === accountId) : undefined;
+  if (outOfScope) {
+    const name = outOfScope.strategy || `${outOfScope.provider} ${outOfScope.accountNo}`;
+    return (
+      <div>
+        <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: name }]} />
+        <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-slate-100">{name}</h1>
+        <Card>
+          <OutOfScope what={`${outOfScope.provider} ${outOfScope.accountNo}`} ownerIds={outOfScope.ownerId ? [outOfScope.ownerId] : []} />
+        </Card>
+      </div>
+    );
+  }
 
   // ── The address does not name an account in this book ──────────────────────
   if (!account) {
@@ -627,7 +646,7 @@ export function MandateHoldings() {
   // THE DEFAULT IS LARGEST FIRST, and a reader's own ranking replaces it. An
   // absent cost or price sorts LAST either way rather than as a zero, which
   // would rank a holding whose statement prints no cost among the cheapest.
-  const sorted = sortRows([...shown].sort((a, b) => b.marketValue - a.marketValue), holdingsView.sort, {
+  const sorted = sortRows([...shown].sort((a, b) => b.marketValue - a.marketValue), holdingsView.sort, withReviewAccessors<typeof shown[number]>({
     security: (r) => r.security,
     sector: (r) => (readerClassOf(r) === "Cash" ? null : sectorOf(r)),
     qty: (r) => r.quantity,
@@ -637,7 +656,7 @@ export function MandateHoldings() {
     mv: (r) => r.marketValue,
     weight: (r) => (mv > 0 ? r.marketValue : null),
     pnl: (r) => r.unrealizedPnL,
-  });
+  }, (r) => ({ positions: [r] }), scope.owners !== null));
   const hidden = rows.length - shown.length;
   /**
    * A MANDATE WITH NO HOLDING STATEMENT IS NOT A MANDATE HOLDING NOTHING
@@ -815,7 +834,7 @@ export function MandateHoldings() {
                 // the same thing: the fund carries units, a NAV and a gain.
                 const isBalance = r.assetClass === "Cash";
                 return (
-                  <Tr view={holdingsView} key={`${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
+                  <Tr view={holdingsView} reviewScope={{ positions: [r] }} key={`${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2.5">
                       <Link to={stockHref(r.securityKey)} className="font-medium text-slate-100 hover:text-champagne-400">
                         {r.security}
@@ -1336,4 +1355,3 @@ function ManagerTrades({ account }: { account: Account }) {
     </Card>
   );
 }
-

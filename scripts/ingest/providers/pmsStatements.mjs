@@ -996,6 +996,9 @@ const NON_TRADE_ROWS = [
 function readTransactions(pages, source, warnings) {
   const t = readAcrossPages(pages, TRANSACTION_COLUMNS, {
     minFields: 6, require: ["security", "quantity"], overlapOnly: TRANSACTION_OVERLAP_ONLY,
+    // The since-inception issue prints "Settlement" ABOVE the main header line
+    // and "Date" below it; see `labelLineAbove` in lib/table.mjs.
+    labelLineAbove: true,
   });
   if (!t) return null;
   if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));

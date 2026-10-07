@@ -46,6 +46,16 @@ export const REPORT_TYPES = [
   // book can decide what it is authoritative for rather than letting a newer
   // issue silently supersede the account statement it is not.
   "portfolio-snap",
+  // A PERSONAL BANK ACCOUNT STATEMENT — the family's own savings accounts, with
+  // a running balance beside a withdrawal and a deposit column.
+  //
+  // Deliberately NOT "bank-book", which is the PMS reporting system's record of
+  // the cash leg INSIDE a mandate: that one is the manager moving a client's
+  // money between a trade and a dividend, and `precedence.mjs` already names it
+  // for `cashFlows` on six accounts. A savings account is not a mandate, its
+  // movements are not a manager's, and one report type for both would let a
+  // bank statement supersede a bank book on an account that has one.
+  "bank-statement",
   "unknown",
 ];
 
@@ -153,6 +163,13 @@ function fieldAfter(text, label, pattern = String.raw`([^:|]{2,80}?)`) {
  * Holdings are AIF/PMS units — no ISIN, no ticker.
  */
 function match360One(text, name) {
+  // AND SO DOES A BANK NARRATION — an RTGS to or from a manager prints the
+  // manager's name. This matcher reads the LETTERHEAD rather than the whole
+  // text, so no bank statement in this drop trips it, and the guard is here
+  // because that is a fact about today's narrations rather than a property of
+  // the matcher. COUNTED, and the run prints the count even at zero — see
+  // `bankGuardHits`.
+  if (isBankStatement(text)) { bankGuardHits.match360One += 1; return null; }
   // A NON-STATEMENT NAMES 360 ONE TOO — as a manager the family pays and, in the
   // review, as a holding. Same reasoning as the depository guard in
   // `matchGoldstandard`: stop it here so it reaches ISSUER_PROVIDER_RULES and is
@@ -316,7 +333,160 @@ export const NON_STATEMENT_PROVIDERS = new Set([
   "Family investment register (not a statement)",
 ]);
 
+/**
+ * A PERSONAL BANK ACCOUNT STATEMENT, MATCHED ON ITS COLUMNS AND NOT ITS BANK.
+ *
+ * "HDFC Bank" is on the letterhead of a mutual-fund folio statement, a NSDL
+ * depository statement and a savings statement in this corpus, and "ICICI Bank"
+ * on a payment advice, an NSDL statement and a savings one. The bank's name
+ * says who printed the page and not what the page IS — the same rule as
+ * `match360One`'s letterhead note and §"a phrase in a footnote is not what a
+ * document is", arriving at a sixth issuer.
+ *
+ * What a savings statement IS, and what no other document here is, is a dated
+ * record printing a WITHDRAWAL column, a DEPOSIT column and a RUNNING BALANCE
+ * beside them. The PMS reporting system's BANK BOOK prints one `Dep With`
+ * column and no running withdrawal/deposit pair, so the two cannot collide —
+ * which matters, because `bank-book` is a live report type with a reader and a
+ * precedence entry of its own.
+ *
+ * Neither predicate reads the bank's name, a customer id or an email. The
+ * statements print all three; this file never looks at any of them.
+ */
+const HDFC_SAVINGS = (text) =>
+  /\bNarration\b/i.test(text)
+  && /\bValue\s*Dt\b/i.test(text)
+  && /\bWithdrawal\s*(?:Amt|Amount)/i.test(text)
+  && /\bDeposit\s*(?:Amt|Amount)/i.test(text)
+  && /\bClosing\s*Bal/i.test(text);
+
+const ICICI_SAVINGS = (text) =>
+  /\bTransaction\s+Remarks\b/i.test(text)
+  && /\bWithdrawal\s*(?:Amt|Amount)/i.test(text)
+  && /\bDeposit\s*(?:Amt|Amount)/i.test(text)
+  && /\bBalance\b/i.test(text);
+
+/** Which bank printed this savings statement, or null if it is not one. */
+export function bankStatementProvider(text) {
+  if (HDFC_SAVINGS(text)) return "HDFC Bank (savings account)";
+  if (ICICI_SAVINGS(text)) return "ICICI Bank (savings account)";
+  return null;
+}
+
+/** True for a personal bank account statement, by its own columns. */
+export const isBankStatement = (text) => bankStatementProvider(text) !== null;
+
+/**
+ * HOW OFTEN EACH HOUSE MATCHER'S BANK GUARD REFUSED A SAVINGS STATEMENT.
+ *
+ * ZERO ON A CORRECT RUN, AND PRINTED ANYWAY. `classify()` resolves a savings
+ * statement through `matchBankStatement` BEFORE either house matcher is
+ * reached, so neither guard fires on the live path however many bank statements
+ * a drop carries. A NON-ZERO count therefore means the order in `classify()`
+ * has changed and these two guards are now the only thing between a narration
+ * and a misfile — which is a finding, and one nothing else in the run reports.
+ *
+ * Printed even at zero, because a guard that only speaks when it fires is
+ * indistinguishable, on a clean run, from one that was quietly deleted — the
+ * rule `build-book`'s identity guards already follow. The count is also the
+ * only honest form the claim can take: the two guards are NOT alike, and which
+ * of them is load-bearing is a fact about a delivery's narrations rather than
+ * about the matchers. On the October 2026 statements `matchGoldstandard`'s is
+ * the one whose refusal would change the answer — HDFC 0394's own narration
+ * carries a PMS house's name — where `match360One` reads a letterhead no bank
+ * statement prints, so its guard would have nothing to stop even if reached.
+ */
+const bankGuardHits = { match360One: 0, matchGoldstandard: 0 };
+
+/** The counts above, as a copy. `extract.mjs` prints them at the end of a run. */
+export const bankGuardCounts = () => ({ ...bankGuardHits });
+
+/**
+ * Zero them. Module state outlives one `classify()` call, so a suite asserting
+ * that a bank statement never REACHED a house matcher has to start from a known
+ * count rather than from whatever an earlier case left behind.
+ */
+export const resetBankGuardCounts = () => {
+  bankGuardHits.match360One = 0;
+  bankGuardHits.matchGoldstandard = 0;
+};
+
+/**
+ * THE PERIOD THE STATEMENT COVERS — `From` and `To`, in whichever of the three
+ * forms the two banks print (dd/mm/yy, dd/mm/yyyy, dd-mm-yyyy). The as-of is
+ * the TO date: a statement is as of the last day it accounts for, and its
+ * closing balance is struck on that day.
+ */
+function bankPeriod(text) {
+  const d = "(\\d{2}[./-]\\d{2}[./-]\\d{2,4})";
+  const m = text.match(new RegExp(`(?:Statement\\s*)?From\\s*:?\\s*${d}[\\s\\S]{0,120}?\\bTo\\s*:?\\s*${d}`, "i"));
+  if (!m) return { from: null, to: null };
+  const iso = (s) => {
+    const p = s.split(/[./-]/);
+    if (p.length !== 3) return null;
+    const [dd, mm] = [p[0], p[1]];
+    const yyyy = p[2].length === 2 ? `20${p[2]}` : p[2];
+    const D = Number(dd), M = Number(mm);
+    if (!(D >= 1 && D <= 31 && M >= 1 && M <= 12)) return null;
+    return `${yyyy}-${mm}-${dd}`;
+  };
+  return { from: iso(m[1]), to: iso(m[2]) };
+}
+
+/**
+ * THE ACCOUNT NUMBER THE PAGE PRINTS, under its own label.
+ *
+ * Both banks print several labelled numbers in the same block, and only one of
+ * them is the account: an HDFC statement prints a customer id, an IFSC, a MICR,
+ * a branch code and a product code beside it. The label is the whole of the
+ * read — never a bare run of digits, and never the file name, which this book
+ * has recorded naming the wrong holder four times.
+ *
+ * A masked account is kept exactly as printed. The reader is authoritative and
+ * `rekey()` re-derives the docKey from what it returns; this is what the
+ * manifest is keyed on until then.
+ */
+function bankAccountNo(text) {
+  const m = text.match(/\b(?:Account|A\s*\/?\s*c)\s*(?:No|Number)\b\s*[.:#-]*\s*([0-9Xx*]{8,24})/);
+  return m ? m[1].trim() : null;
+}
+
+function matchBankStatement(text, name) {
+  const provider = bankStatementProvider(text);
+  if (!provider) return null;
+  const { to } = bankPeriod(text);
+  const accountNo = bankAccountNo(text);
+  return {
+    provider,
+    // The holder prints in an UNLABELLED address block on both layouts, so
+    // there is nothing here to read it from. `bankStatement.mjs` says the same
+    // and warns `holder-not-labelled` rather than taking the first line of an
+    // address — these accounts are `excludedFromBook`, so nothing attributes
+    // money to a guess either way.
+    ownerName: null,
+    accountNo,
+    asOfDate: to || dateFromName(name),
+    reportType: "bank-statement",
+    sections: ["bank-statement"],
+    familyGroup: null,
+    strategy: null,
+    confidence: accountNo && to ? "high" : "medium",
+    matchedBy: "savings-statement columns",
+  };
+}
+
 function matchGoldstandard(text, name) {
+  // A PERSONAL BANK STATEMENT IS NEVER A PMS HOUSE REPORT, and its NARRATIONS
+  // name whichever manager the family paid: HDFC 0394's own narration carries
+  // "VEC ASSAGO", which the `byText` gate below matched, so that statement was
+  // claimed by this matcher and filed under V.E.C Assago Capital Management.
+  // Same shape as the depository and register guards beside it — a document is
+  // not what it MENTIONS. COUNTED, and the run prints the count even at zero —
+  // see `bankGuardHits`, which is also where a zero's meaning is written down:
+  // `classify()` stops a savings statement before this matcher is reached, so
+  // this guard is what would hold if that order ever changed, and on these
+  // narrations it is the one of the two whose refusal changes the answer.
+  if (isBankStatement(text)) { bankGuardHits.matchGoldstandard += 1; return null; }
   // A DEPOSITORY STATEMENT IS NEVER A PMS HOUSE REPORT, and it lists every fund
   // the family owns as a transaction row — Buoyant's among them, which the
   // `byText` gate below would otherwise claim. `genericProvider` matches these
@@ -505,6 +675,14 @@ const GENERIC_TYPE_RULES = [
   // STATEMENT and is not a trade record at all, the depository statement is a
   // holding statement, and the P&L is a capital gain statement that says neither.
   [/DEPOSITORY\s+HOLDING\s+STATEMENT/i, "holdings"],
+  // ── A PERSONAL BANK STATEMENT, above the two rules below it because both
+  // would claim one: a savings statement is titled "Statement of account" and
+  // its rows are transactions. `matchBankStatement` resolves one in full
+  // before this list is reached; this is the backstop for a layout whose
+  // columns it does not know, so such a document reaches no reader at all
+  // rather than reaching the demat or trade reader, which would read its
+  // narrations as securities.
+  [/\bTransaction\s+Remarks\b|\bValue\s*Dt\b[\s\S]{0,400}?\bClosing\s*Bal/i, "bank-statement"],
   [/STATEMENT\s+OF\s+ACCOUNT\s+FOR\s+THE\s+PERIOD/i, "demat-statement"],
   [/Annual\s*P\s*&?(?:amp;)?\s*L/i, "capital-gain"],
   [/Global\s+Details\s+Report/i, "transaction-statement"],
@@ -622,6 +800,16 @@ const ISSUER_PROVIDER_RULES = [
    * rule can fire at all.
    */
   [/DP\s*ID\s*IN301549[\s\S]{0,4000}?HDFC\s+Bank\s+Limited/i, "HDFC Bank (NSDL demat)"],
+  /**
+   * …AND THE SAME BANK'S NATIVE EXPORT, which prints neither `IN301549` nor
+   * `HDFC Bank Limited` on its first page. Its title names the bank AND the
+   * document — `HDFC Bank Depository Holding Details` — so the title is the
+   * signature, never the bank's name alone: every rule above records how many
+   * documents here merely MENTION HDFC. It sits ABOVE the house rule
+   * `HDFC (Securities|Bank|…)`, which would otherwise file Ajay's DP account
+   * 10295743 under a provider no reader knows.
+   */
+  [/HDFC\s+Bank\s+Depository\s+Holding\s+Details/i, "HDFC Bank (NSDL demat)"],
   /**
    * THE FUND'S OWN NAME BEATS THE STATIONERY IT ARRIVES ON.
    *
@@ -774,6 +962,19 @@ const HOUSE_PROVIDER_RULES = [
 const LETTERHEAD_CHARS = 700;
 
 function genericProvider(text) {
+  /**
+   * A SAVINGS STATEMENT IS NAMED BY ITS BANK, NOT BY WHOEVER IT PAID.
+   *
+   * `ISSUER_PROVIDER_RULES` run over the WHOLE text, and a narration names the
+   * manager on the other side of the transfer: measured on HDFC 0394's own
+   * text, this function returned "V.E.C Assago Capital Management LLP" for a
+   * bank statement. `classify()` resolves one through `matchBankStatement`
+   * before reaching here, so that was never on the live path — and this is
+   * where the decision would be made if it ever were, which is the same reason
+   * `isNonStatement` guards both house matchers rather than one caller.
+   */
+  const bank = bankStatementProvider(text);
+  if (bank) return bank;
   for (const [re, name] of ISSUER_PROVIDER_RULES) if (re.test(text)) return name;
   const head = text.slice(0, LETTERHEAD_CHARS);
   for (const [re, name] of HOUSE_PROVIDER_RULES) if (re.test(head)) return name;
@@ -814,6 +1015,13 @@ function dateFromName(name) {
 export function classify({ fileName, text }) {
   const name = fileName || "";
   const t = text || "";
+
+  // A PERSONAL BANK STATEMENT IS RESOLVED FIRST, because both seeded matchers
+  // below read a manager's name out of a document that merely prints one in a
+  // narration, and the house rules further down would file it under the BANK —
+  // "HDFC", which is also an AMC and a depository participant here.
+  const bank = matchBankStatement(t, name);
+  if (bank) return bank;
 
   const seeded = match360One(t, name) || matchGoldstandard(t, name);
   if (seeded) return seeded;

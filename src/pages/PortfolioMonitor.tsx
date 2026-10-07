@@ -30,6 +30,7 @@ import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/ac
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, type Txn, type TxnData } from "@/lib/ledger";
+import { inScopeAccount, inScopeOwner, scopeTxnData } from "@/lib/memberScope";
 import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, realisedWindowNote, atCostNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
 import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
@@ -92,6 +93,8 @@ import {
   TREE_ROW_DENSE, TREE_CELL_DENSE, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
 } from "@/components/TreeTable";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
+import { withReviewAccessors, type ReviewScope } from "@/lib/reviewColumns";
+import { EditColumns } from "@/components/EditColumns";
 
 /**
  * ── THROUGH WHAT MEANS A NAME IS HELD — one entry per ACCOUNT ───────────────
@@ -535,6 +538,11 @@ type Row = {
    */
   measuredNA?: boolean;
 };
+const monitorReviewScope = (r: Row): ReviewScope => r.kind === "mandate"
+  // A strategy run for several members is ONE row (Stage 10dl): each account is
+  // looked up on its own, and the row shows a figure only where they agree.
+  ? { accountIds: r.mandate?.accounts.map((a) => a.accountId), isMandate: true }
+  : r.measuredNA ? {} : { positions: r.trancheSet, securityKey: r.securityKey };
 /**
  * ── WHICH ROWS A FUND LOOK-THROUGH CAN SPEAK FOR ────────────────────────────
  *
@@ -722,7 +730,7 @@ const DERIVED_ONLY_WHY = "no statement in this book reports this company as a ho
 const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund holds and this is your units' share of it, across every asset class the filing carries — shares, bonds, NCDs and commercial paper alike. It is no part of the book's NAV — the fund's own value already stands for it there — so this column is never summed into a book total.";
 
 export function PortfolioMonitor() {
-  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns } = usePortfolio();
+  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns, scope: memberScope } = usePortfolio();
   /**
    * WHY THE LIVE QUOTE ON THESE LINES WAS HELD BACK, OR NULL (DL-9).
    *
@@ -986,7 +994,7 @@ export function PortfolioMonitor() {
   const holdCols = useMemo(
     () => withReturnCols(bySecurity ? MONITOR_STOCK_COLS : MONITOR_COLS, returnMeasures),
     [bySecurity, returnMeasures]);
-  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS });
+  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true });
   /**
    * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
    * figure it prints rather than on `returnPct` for all of them.
@@ -995,8 +1003,8 @@ export function PortfolioMonitor() {
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
     // after one; these accessors are only ever called from `sortRows` under it,
     // so the fallback is unreachable rather than a default date standing in.
-    () => ({ ...MONITOR_ACCESSORS, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(r, m, portfolio?.asOf ?? "")) }),
-    [returnMeasures, portfolio?.asOf]);
+    () => withReviewAccessors<Row>({ ...MONITOR_ACCESSORS, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(r, m, portfolio?.asOf ?? "")) }, monitorReviewScope, memberScope.owners !== null),
+    [returnMeasures, portfolio?.asOf, memberScope.owners]);
   // ORDER-INDEPENDENT BY CONSTRUCTION: a span struck on the view's own column
   // count cannot drift from the header when a reader moves a column, where the
   // literal it replaced had to be kept in step by hand.
@@ -2012,7 +2020,10 @@ export function PortfolioMonitor() {
       && typeof p.realizedPnL === "number" && p.realizedPnL !== 0));
     const gone = withRealised(offTable.closed);
     const specks = withRealised(offTable.negligible);
+    // The statements' own realised, over the chosen members' accounts alone
+    // (Stage 10di): a footer under one member's rows must not name the family's.
     const stmts = BOOK_CAPITAL_GAINS.filter((c) => (c.realisedST !== null || c.realisedLT !== null)
+      && inScopeAccount(memberScope.accountIds, c.accountId)
       && (entity === "All" || (!!c.accountId && ownerOf(accIdx, { accountId: c.accountId } as Position) === entity)));
     const dates = (xs: (string | null | undefined)[]) => xs.filter((d): d is string => !!d).sort();
     /**
@@ -2075,7 +2086,7 @@ export function PortfolioMonitor() {
       heldCount: db.length,
       weightBase, weightCount, bucketTotals, smallDropped,
     };
-  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap, sectorOfPos, companySectors]);
+  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap, sectorOfPos, companySectors, memberScope.accountIds]);
   /**
    * Rows grouped by BUCKET, not by asset class — the fix the family asked for
    * three times. Direct Equity is what they bought themselves; PMS mandates is
@@ -2591,7 +2602,7 @@ export function PortfolioMonitor() {
   // "nobody measured it".
   type ChildCells = Partial<Record<"qty" | "avgCost" | "invested" | "investedOn" | "cmp" | "day" | "mv"
     | "viaFunds" | "totalExposure" | "weight" | "pnl" | "realised" | "sector" | "entity", ReactNode>>
-    & { ret?: (measure: ReturnMeasure) => ReactNode };
+    & { ret?: (measure: ReturnMeasure) => ReactNode; reviewScope?: ReviewScope };
   const CHILD_NUM = `${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-400`;
   /** A child's cells, in the table's DECLARED column order — which is what `<Tr>` permutes from. */
   const childTds = (c: ChildCells) => [
@@ -2699,7 +2710,7 @@ export function PortfolioMonitor() {
     /** A line that opens rows of its own — a fund line into its instruments. */
     toggle?: { open: boolean; label: string };
   }, cells: ChildCells, data: Record<string, string | number | undefined> = {}, adjust = false) => (
-    <Tr view={holdView} key={key}
+    <Tr view={holdView} reviewScope={cells.reviewScope} key={key}
       className={`${adjust ? TREE_ROW_DENSE.adjust : TREE_ROW_DENSE.child}${name.toggle ? " cursor-pointer" : ""}`}
       {...(name.toggle ? rowToggle(() => toggleRow(key)) : {})}
       data-tree-child={kind} {...data}>
@@ -3010,6 +3021,7 @@ export function PortfolioMonitor() {
           sub: accountMV > 0 ? `${((h.marketValue / accountMV) * 100).toFixed(1)}% of the mandate` : undefined,
           last, ancestorLast,
         }, {
+          reviewScope: { securityKey: h.securityKey, accountId: h.accountId },
           qty: h.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(h.quantity),
           avgCost: h.costNA ? <AbsentCell reason={NO_COST_LINE} />
             : h.avgCost === null ? <AbsentCell reason={h.quantity === null ? NO_UNIT_COUNT : h.quantity === 0 ? "this line holds no units to divide its cost by" : "this provider prints no per-unit cost for the holding"} />
@@ -3034,6 +3046,9 @@ export function PortfolioMonitor() {
           mv: fmtFromBase(h.marketValue, { compact: true }),
           weight: pctOfBook(h.marketValue),
           pnl: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(h.unrealizedPnL),
+          // ITS OWN REALISED, NOT A BLANK (DL-8). The line's Return includes its
+          // lot gain — ABCAPITAL's +129.93% carries ₹1.16 Cr realised — so a blank
+          // here made the row impossible to reconcile from its own columns.
           realised: h.realised === null
             ? <AbsentCell reason={realisedReason({ realizedPnL: null, realizedLotsAfter: h.realisedLotsAfter ?? undefined })} />
             : <span className={changeColor(h.realised)} title={realisedWindowOf([{ accountId: h.accountId, realizedPnL: h.realised }])}
@@ -3068,6 +3083,7 @@ export function PortfolioMonitor() {
           ),
           last: i === m.accounts.length - 1,
         }, {
+          reviewScope: { accountId: l.accountId, isMandate: true },
           qty: <AbsentCell reason={MANDATE_NOT_A_SECURITY} />,
           avgCost: <AbsentCell reason="an average cost per unit needs one security; this account holds many, each with a cost of its own" />,
           invested: l.costNA ? <AbsentCell reason={costWhy} />
@@ -3176,6 +3192,7 @@ export function PortfolioMonitor() {
           ? <> · {(v.share * 100).toFixed(1)}% of the {asClass ? "fund" : "holding"}</> : null}</>,
         last: lastLine,
       }, {
+        reviewScope: { positions: v.positions },
         qty: v.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(v.quantity),
         avgCost: v.costNA ? <AbsentCell reason={NO_COST_LINE} />
           : v.avgCost === null ? <AbsentCell reason={v.quantity === null ? NO_UNIT_COUNT : "this line holds no units to divide its cost by"} />
@@ -3333,7 +3350,13 @@ export function PortfolioMonitor() {
         import("@/lib/exportPortfolioExcel"),
         loadTransactions(),
       ]);
-      await exportPortfolioExcel(positions, portfolio.accounts, data);
+      // The sheet is the chosen members' too (Stage 10di): their holdings
+      // come scoped from the context, and their dealing is narrowed here, on
+      // the canonical owner each row carries. The lots no trade settles are a
+      // whole-tape figure, so a scoped sheet does not carry them.
+      const owners = memberScope.owners;
+      const scoped = data && owners ? scopeTxnData(data, owners, portfolio.accounts) : data;
+      await exportPortfolioExcel(positions, portfolio.accounts, scoped);
     } catch (e) {
       console.error("Excel export failed", e);
     } finally {
@@ -3479,6 +3502,7 @@ export function PortfolioMonitor() {
           the account's real dated purchases and redemptions here.
         */}
         <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} source={returnSource} />
+        {view === "holdings" && <EditColumns view={holdView} />}
         {/* EXPAND ALL — the standard's one control for every row the table can
             open. Beside the return picker, with the other controls that arrange
             the table rather than narrow it; absent on the security axis, where
@@ -3947,7 +3971,7 @@ export function PortfolioMonitor() {
                            one, not the footer's three — so it permutes like an
                            ordinary row and stays cell-for-cell under the
                            headings above it. */
-                        <Tr view={holdView} className={`${TREE_ROW_DENSE.total} font-semibold`}
+                        <Tr view={holdView} reviewScope={activeAxis === "basket" ? { basket: grp.key } : activeAxis === "assetClass" ? { category: grp.key } : undefined} className={`${TREE_ROW_DENSE.total} font-semibold`}
                           data-category-total={grp.key}
                           // ── WHAT A LINE HELD AT COST TAKES OUT OF THE COVERAGE
                           //    (Stage 10dh) ─────────────────────────────────────
@@ -4222,7 +4246,7 @@ export function PortfolioMonitor() {
                           popover inside it, which keep their own meaning: the
                           name still opens the holding's page, a formula still
                           opens its arithmetic. */}
-                      <Tr view={holdView} className={expandable ? TREE_ROW_DENSE.parent : "hover:bg-ink-700/40"}
+                      <Tr view={holdView} reviewScope={monitorReviewScope(r)} className={expandable ? TREE_ROW_DENSE.parent : "hover:bg-ink-700/40"}
                         {...(expandable ? rowToggle(() => toggleRow(r.key)) : {})}
                         data-tree-parent={expandable ? (isOpen ? "open" : "closed") : undefined}
                         {...(contributions > 0 ? { "data-tranche-rows": String(contributions) } : {})}
@@ -5744,9 +5768,20 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   // the rollup joins a trade to its mandate on provider + account number. No
   // figure on this tape comes from the portfolio, and none may: a dated trade is
   // a statement fact and a live price is not evidence about it.
-  const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
+  const { fmtFromBase, statementPortfolio: portfolio, scope: memberScope } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [txns, setTxns] = useState<Txn[] | null>(null);
+  const [allTxns, setTxns] = useState<Txn[] | null>(null);
+  /**
+   * THE CHOSEN MEMBERS' DATED RECORDS AND NOTHING ELSE (Stage 10di). Both
+   * records name their account (the capital record) or its canonical owner (the
+   * tape), so a scope is a filter on those and never on a printed name.
+   */
+  const txns = useMemo(
+    () => (allTxns && memberScope.owners ? allTxns.filter((t) => inScopeOwner(memberScope.owners, t.ownerId)) : allTxns),
+    [allTxns, memberScope.owners]);
+  const capitalRecord = useMemo(
+    () => (memberScope.accountIds ? CAPITAL_RECORD.filter((m) => inScopeAccount(memberScope.accountIds, m.accountId)) : CAPITAL_RECORD),
+    [memberScope.accountIds]);
   /**
    * THE WINDOW THE TRANSACTION STATEMENTS COVER — not the holding period. A date
    * filter lying wholly outside it has no statement to count trades in, so its
@@ -5803,14 +5838,14 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   // presets. Both, because a range offered over the tape alone would silently
   // cut the capital record's older contributions out of every preset.
   const fyYears = useMemo(() => {
-    const dates = [...(txns ?? []).map((t) => t.date), ...CAPITAL_RECORD.map((m) => m.date)].filter(Boolean);
+    const dates = [...(txns ?? []).map((t) => t.date), ...capitalRecord.map((m) => m.date)].filter(Boolean);
     let mn = Infinity, mx = -Infinity;
     for (const d of dates) { const y = fyStartOf(d); if (y < mn) mn = y; if (y > mx) mx = y; }
     if (!isFinite(mn)) return [] as number[];
     const out: number[] = [];
     for (let y = mx; y >= mn; y--) out.push(y);
     return out;
-  }, [txns]);
+  }, [txns, capitalRecord]);
   const applyPreset = (key: string) => {
     setPreset(key);
     if (key === "all") { setFrom(""); setTo(""); return; }
@@ -5865,7 +5900,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * applied to this count: the counter above the table states both sides, so a
    * reader can see what the filter would do before they click it.
    */
-  const mineMoves = useMemo(() => CAPITAL_RECORD.filter((m) => {
+  const mineMoves = useMemo(() => capitalRecord.filter((m) => {
     if (from && m.date < from) return false;
     if (to && m.date > to) return false;
     if (entity !== "All") {
@@ -5873,7 +5908,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
       if (!a || ownerDisplayName(a.ownerId) !== entity) return false;
     }
     return true;
-  }), [from, to, entity, accIdx]);
+  }), [capitalRecord, from, to, entity, accIdx]);
   const mineCount = useMemo(() => ({
     in: mineMoves.filter((m) => m.direction === "in").length,
     out: mineMoves.filter((m) => m.direction === "out").length,
@@ -5981,7 +6016,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   }, [rows, positionsReg]);
   const accByPA = useMemo(() => new Map(accountsReg.map((a) => [acctKey(a.provider, a.accountNo), a])), [accountsReg]);
   /** Accounts the WHOLE record funds — the book fact a narrowed count must not be read as. */
-  const fundedInBook = useMemo(() => new Set(CAPITAL_RECORD.map((m) => m.accountId)).size, []);
+  const fundedInBook = useMemo(() => new Set(capitalRecord.map((m) => m.accountId)).size, [capitalRecord]);
   /**
    * An account whose positions are all fund units redeemed to nil, at a NAV the
    * fund still publishes — the one case "₹0, measured" is true of on its own terms.
@@ -6046,7 +6081,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * section, a sector or a picked holding the footer covers part of the tape,
    * and the statements' whole total would be a figure about something else.
    */
-  const wholeTape = !windowed && side !== "in" && entity === "All" && section === "All" && sector === "All" && selected.size === 0;
+  const wholeTape = !windowed && side !== "in" && entity === "All" && section === "All" && sector === "All" && selected.size === 0
+    && !memberScope.owners;
   const noTrade = wholeTape && lotsNoTrade && lotsNoTrade.lots > 0 && lotsNoTrade.realised != null && totals.realized != null
     ? { ...lotsNoTrade, realised: lotsNoTrade.realised, statements: totals.realized + lotsNoTrade.realised }
     : null;

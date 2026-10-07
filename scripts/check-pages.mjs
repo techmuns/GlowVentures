@@ -7236,6 +7236,68 @@ const MANY_MANDATES = (() => {
   } catch { return null; }
 })();
 
+/**
+ * ── WHOSE BOOK THE PAGE SHOWS: THE MEMBER SCOPE (Stage 10di) ─────────────────
+ *
+ * *"the whole dashboard is then only showing information regarding that
+ * particular family member or family entity … The families and entities page
+ * will remain the same."* The scope is a filter on ACCOUNTS, so every
+ * expectation here is the book's own rows narrowed to the owners an address
+ * names — re-expressed off `glowData.ts`, never through `memberScope.ts`, which
+ * is the code under test. `bookArray` is the LIVE model the top bar renders.
+ *
+ * Owners are named by what they hold, never typed: the PAIR is the two members
+ * with the most value, the MANDATE is the largest PMS account of the second of
+ * them (opened while only the first is chosen), and the Polycab owners are read
+ * off `BOOK_POLYCAB`.
+ */
+const SCOPE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const owners = bookArray(src, "BOOK_OWNERS");
+    const live = bookArray(src, "BOOK_POSITIONS");
+    const polycab = bookArray(src, "BOOK_POLYCAB") ?? [];
+    if (!Array.isArray(accounts) || !Array.isArray(owners) || !Array.isArray(live)) return null;
+    const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId]));
+    const valueOf = new Map();
+    for (const p of live) {
+      const o = ownerOf.get(p.accountId);
+      if (o) valueOf.set(o, (valueOf.get(o) ?? 0) + (p.marketValue ?? 0));
+    }
+    const ranked = [...valueOf.entries()].sort((x, y) => y[1] - x[1]).map(([o]) => o);
+    const name = (id) => owners.find((o) => o.ownerId === id)?.displayName ?? id;
+    const total = (ids) => live.filter((p) => ids.includes(ownerOf.get(p.accountId))).reduce((s, p) => s + (p.marketValue ?? 0), 0);
+    const [a, b] = ranked;
+    const acctValue = (id) => live.filter((p) => p.accountId === id).reduce((s, p) => s + (p.marketValue ?? 0), 0);
+    const mandate = accounts.filter((x) => x.ownerId === b && x.engagement === "PMS")
+      .sort((x, y) => acctValue(y.accountId) - acctValue(x.accountId))[0]?.accountId ?? null;
+    const polycabOwners = [...new Set(polycab.map((p) => ownerOf.get(p.accountId)).filter(Boolean))];
+    const outsidePolycab = ranked.find((o) => !polycabOwners.includes(o)) ?? null;
+    return {
+      pair: [a, b],
+      // The pair as the BOOK orders them, which is how the address writes them.
+      pairParam: owners.map((o) => o.ownerId).filter((id) => id === a || id === b).join(","),
+      pairLabel: `${name(a).split(" ")[0]} + ${name(b).split(" ")[0]}`,
+      pairTotal: total([a, b]) / 1e7,
+      wholeTotal: live.reduce((s, p) => s + (p.marketValue ?? 0), 0) / 1e7,
+      single: b,
+      singleName: name(b),
+      first: a,
+      // Every owner the Family & Entities page names: one with a valued row.
+      valued: ranked.map(name),
+      mandate,
+      polycabOwners,
+      outsidePolycab,
+    };
+  } catch { return null; }
+})();
+/** The figure in a compact money string — `₹713.6 Cr`, `₹42.1 L` — in crore, or NaN. */
+const crOfMoney = (s) => {
+  const m = /₹\s?([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(String(s ?? ""));
+  return m ? crU(m[1], m[2]) : NaN;
+};
+
 const ROUTES = [
   // THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE. Polycab is carried in
   // `BOOK_POLYCAB` and in NO book total, so two things have to be true at once and
@@ -8357,6 +8419,18 @@ const ROUTES = [
   ["audit-short-rows", () => (XA_BOOK?.auditShort ? `/audit?file=${encodeURIComponent(XA_BOOK.auditShort.fileKey)}&sheet=${encodeURIComponent(XA_BOOK.auditShort.sheet)}` : "/audit?file=no-short-row-in-the-archive")],
   ["history", "/history"],
   ["upload", "/upload"],
+  // THE MEMBER SCOPE (Stage 10di). Each address names its members with
+  // `?members=`, which is the selector's own source of truth, so a scoped page
+  // is walked by URL rather than by clicking the control it is also checking.
+  // The members are DERIVED (`SCOPE_BOOK`), never typed.
+  ["cio-scope", () => `/cio?members=${SCOPE_BOOK?.pairParam ?? "none-resolved"}`],
+  ["family-scoped", () => `/family?members=${SCOPE_BOOK?.single ?? "none-resolved"}`],
+  ["cio-nav-scoped", () => `/cio?tab=nav&members=${SCOPE_BOOK?.single ?? "none-resolved"}`],
+  ["history-scoped", () => `/history?members=${SCOPE_BOOK?.single ?? "none-resolved"}`],
+  ["ledger-scoped", () => `/ledger?members=${SCOPE_BOOK?.first ?? "none-resolved"}`],
+  ["mandate-out-of-scope", () => (SCOPE_BOOK?.mandate ? `/mandate/${encodeURIComponent(SCOPE_BOOK.mandate)}?members=${SCOPE_BOOK.first}` : "/mandate/none-resolved-from-the-book")],
+  ["polycab-out-of-scope", () => `/polycab?members=${SCOPE_BOOK?.outsidePolycab ?? "none-resolved"}`],
+  ["cio-scope-unknown", "/cio?members=nobody-in-this-book"],
 ];
 
 // Requests that fail because this harness runs offline against a static preview:
@@ -20802,6 +20876,75 @@ function pricedPairOf(title) {
 }
 
 const INVARIANTS = {
+  /**
+   * ── THE MEMBER SCOPE (Stage 10di) ──────────────────────────────────────────
+   *
+   * Every claim reads `memberScopeDom` — the selector's own attribute, the top
+   * bar's figure and each page's out-of-scope handle — and every expectation is
+   * `SCOPE_BOOK`'s, derived from the book. A missing probe or an underived book
+   * is a FAILURE: these routes exist only to assert the scope.
+   */
+  "cio-scope": [
+    ["the selector names the two members the address asks for", (t, ctx) => {
+      const d = ctx?.memberScopeDom;
+      return !!SCOPE_BOOK && !!d && d.scope === SCOPE_BOOK.pairParam && d.label === SCOPE_BOOK.pairLabel;
+    }],
+    ["the top bar's total is those members' holdings, not the family's", (t, ctx) => {
+      const d = ctx?.memberScopeDom;
+      if (!SCOPE_BOOK || !d) return false;
+      const shown = crOfMoney(d.total);
+      // Compact to one decimal of a crore, so half of 0.1 Cr either way is the
+      // page's own printing precision; and the pair must be measurably less
+      // than the whole family, or this check could not tell the two apart.
+      return Number.isFinite(shown) && Math.abs(shown - SCOPE_BOOK.pairTotal) <= 0.06
+        && SCOPE_BOOK.wholeTotal - SCOPE_BOOK.pairTotal > 1
+        && /Ajay|Ankita|Bharat|\+/.test(d.totalTitle ?? "");
+    }],
+    ["the Portfolio value tile is the same scoped figure", (t, ctx) => {
+      const v = ctx?.kpiTiles?.find((x) => x.slot === "value");
+      if (!SCOPE_BOOK || !v) return false;
+      const shown = crOfMoney(v.value);
+      return Number.isFinite(shown) && Math.abs(shown - SCOPE_BOOK.pairTotal) <= 0.06;
+    }],
+  ],
+  "family-scoped": [
+    ["the selector shows the one member the address asks for", (t, ctx) =>
+      !!SCOPE_BOOK && ctx?.memberScopeDom?.scope === SCOPE_BOOK.single && ctx.memberScopeDom.label === SCOPE_BOOK.singleName],
+    ["Family & Entities still lists every member with a valued holding", (t, ctx) => {
+      const rows = ctx?.memberScopeDom?.familyRows ?? [];
+      return !!SCOPE_BOOK && SCOPE_BOOK.valued.length > 1 && SCOPE_BOOK.valued.every((n) => rows.some((r) => r.startsWith(n)));
+    }],
+  ],
+  "cio-nav-scoped": [
+    ["the NAV series says it is whole-family only, rather than drawing one member's line", (t, ctx) =>
+      (ctx?.memberScopeDom?.navAbsent ?? 0) >= 1 && !(ctx?.navChart?.lines > 0)],
+  ],
+  "history-scoped": [
+    ["the NAV history says it is whole-family only", (t, ctx) => (ctx?.memberScopeDom?.navAbsent ?? 0) >= 1],
+  ],
+  "ledger-scoped": [
+    ["the dated sales record says it is whole-family only", (t, ctx) => (ctx?.memberScopeDom?.ledgerAbsent ?? 0) >= 1],
+  ],
+  "mandate-out-of-scope": [
+    ["a mandate outside the chosen members says whose it is, and offers both ways back", (t, ctx) => {
+      const d = ctx?.memberScopeDom;
+      return !!SCOPE_BOOK?.mandate && !!d && d.outOfScope.length === 1 && d.outOfScope[0] === SCOPE_BOOK.single
+        && d.outAdd === 1 && d.outReset === 1 && !/no account in this book|not in this book/i.test(ctx.main ?? "");
+    }],
+  ],
+  "polycab-out-of-scope": [
+    ["the Polycab page outside its owner's scope names the owner, not an absence", (t, ctx) => {
+      const d = ctx?.memberScopeDom;
+      return !!SCOPE_BOOK?.outsidePolycab && !!d && d.outOfScope.length === 1
+        && SCOPE_BOOK.polycabOwners.length > 0 && d.outOfScope[0].split(",").every((o) => SCOPE_BOOK.polycabOwners.includes(o));
+    }],
+  ],
+  "cio-scope-unknown": [
+    ["an address naming nobody this book carries says so, and shows no ₹0 total", (t, ctx) => {
+      const d = ctx?.memberScopeDom;
+      return !!d && d.emptyScope != null && d.total == null && d.label === "No member";
+    }],
+  ],
   /**
    * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
    * absence asserted on every other route in the sweep.
@@ -35268,6 +35411,13 @@ const INVARIANTS = {
    * archive's own manifest, read here rather than off the page.
    */
   audit: [
+    ["the consolidated sheet is primary and original documents are a collapsed source footnote", (t, ctx) => {
+      return xaEl(ctx, "consolidated-sheet")?.attrs.tabs === "17"
+        && xaEl(ctx, "audit-sources")?.attrs.open === "false"
+        && !(ctx?.xa ?? []).some(x => x.xa === "audit-chip");
+    }],
+  ],
+  "audit-short-rows": [
     ["every document chip names its account, its report type and its date, and no two read alike", (t, ctx) => {
       const want = XA_BOOK?.auditChips;
       if (!want?.length) return { notChecked: "the audit manifest could not be read" };
@@ -35281,9 +35431,7 @@ const INVARIANTS = {
         return (!account || g.text.includes(account)) && (!type || g.text.includes(type)) && (!w.fy || g.text.includes(w.fy));
       });
     }],
-  ],
-
-  /**
+    /**
    * ── A SHORT ROW IS NOT PLACED BY POSITION (XA-20) ────────────────────────
    *
    * The extracted tables keep a row's cells in printed order and drop the
@@ -35292,7 +35440,6 @@ const INVARIANTS = {
    * under "expenses". Walked on the table with the most such rows, derived
    * from the archive.
    */
-  "audit-short-rows": [
     ["a row with fewer cells than its headings is shown unaligned, never placed by position", (t, ctx) => {
       const a = XA_BOOK?.auditShort;
       if (!a) return { notChecked: "no extracted table in the archive has a row shorter than its headings" };
@@ -41426,6 +41573,29 @@ for (const theme of THEMES) {
        * so it counts tiles without naming any of the four that went — a tile a
        * redesign reintroduces would not be one this file could have listed.
        */
+      /**
+       * THE MEMBER SCOPE (Stage 10di), read off its own handles on every route:
+       * what the selector says it shows, the top bar's total beside it, and
+       * each way a page says the chosen members leave something out. Counted
+       * and read by attribute, never by wording.
+       */
+      const memberScopeDom = FAST ? null : await page.evaluate(() => {
+        const root = document.querySelector("[data-member-scope]");
+        const total = document.querySelector("[data-topbar-total]");
+        return {
+          scope: root?.getAttribute("data-member-scope") ?? null,
+          label: (root?.querySelector("[data-member-scope-label]")?.textContent ?? "").trim() || null,
+          total: total ? (total.textContent ?? "").replace(/\s+/g, " ").trim() : null,
+          totalTitle: total?.getAttribute("title") ?? null,
+          navAbsent: document.querySelectorAll("[data-nav-scope-absent]").length,
+          ledgerAbsent: document.querySelectorAll("[data-ledger-sales-scope-absent]").length,
+          outOfScope: [...document.querySelectorAll("[data-member-out-of-scope]")].map((e) => e.getAttribute("data-member-out-of-scope") ?? ""),
+          outAdd: document.querySelectorAll("[data-member-scope-add]").length,
+          outReset: document.querySelectorAll("[data-member-scope-reset]").length,
+          emptyScope: document.querySelector("[data-empty-scope]")?.getAttribute("data-empty-scope") ?? null,
+          familyRows: [...document.querySelectorAll("[data-family-table] tbody tr")].map((r) => (r.cells[0]?.textContent ?? "").replace(/\s+/g, " ").trim()),
+        };
+      });
       const familyLayout = FAST ? null : await page.evaluate(() => {
         const main = document.querySelector("main");
         if (!main) return null;
@@ -42820,7 +42990,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

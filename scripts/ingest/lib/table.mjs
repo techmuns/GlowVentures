@@ -379,21 +379,41 @@ export function findTable(pageGrid, fieldAliases, opts = {}) {
     // and a lone "Accrued Income" beneath). Evaluate each span fully and keep
     // whichever maps the MOST columns, rather than taking the first that clears
     // the bar — a shorter header often "works" while silently losing a column.
+    // A LABEL LINE ABOVE THE ANCHOR, opt-in per reader (`labelLineAbove`).
+    //
+    // The anchor rule above stays: the first line that names a column starts
+    // the header. But a label can wrap UPWARDS as well as down. Green Lantern's
+    // since-inception transaction statement (delivered 7 Oct 2026) prints its
+    // Settlement Date label as "Settlement" on the line ABOVE the main header
+    // and "Date" on the line below it, so a header that starts at the anchor
+    // sees only "Date" and the column binds to nothing. The line above is
+    // offered as one more header line — never instead of the anchor, so it
+    // cannot push a real sub-header down into the body — and only where it
+    // carries no label of its own and no figure. It wins only where it maps
+    // STRICTLY more columns than every span without it, so a title or an
+    // address line above a table never changes a header that already reads.
+    const above = opts.labelLineAbove && i > 0 ? pageGrid.rows[i - 1] : null;
+    const donor = above && (above.items ?? []).length > 0 && !isFiguresRow(above)
+      && headerScore(above, fieldAliases).size === 0 ? above : null;
+    const candidates = [];
+    for (const headerRows of [1, 2, 3]) candidates.push({ start: i, headerRows });
+    if (donor) for (const headerRows of [2, 3, 4]) candidates.push({ start: i - 1, headerRows });
+
     let best = null;
-    for (const headerRows of [1, 2, 3]) {
-      if (i + headerRows >= pageGrid.rows.length) continue;
-      const headerSlice = pageGrid.rows.slice(i, i + headerRows);
+    for (const { start, headerRows } of candidates) {
+      if (start + headerRows >= pageGrid.rows.length) continue;
+      const headerSlice = pageGrid.rows.slice(start, start + headerRows);
       const combinedItems = headerSlice.flatMap((r) => r.items ?? []);
       if (headerScore({ items: combinedItems }, fieldAliases).size < minFields) continue;
 
       // Bound the table before measuring its columns.
       let end = pageGrid.rows.length;
-      for (let j = i + headerRows; j < pageGrid.rows.length; j++) {
+      for (let j = start + headerRows; j < pageGrid.rows.length; j++) {
         const joined = rowText(pageGrid.rows[j]).join(" ");
         if (stopRe && stopRe.test(joined)) { end = j; break; }
       }
-      let slice = pageGrid.rows.slice(i, end);
-      let body = pageGrid.rows.slice(i + headerRows, end);
+      let slice = pageGrid.rows.slice(start, end);
+      let body = pageGrid.rows.slice(start + headerRows, end);
 
       // Optional: confine the table to the horizontal band its own header
       // occupies, for pages that carry two unrelated tables side by side.
@@ -439,7 +459,7 @@ export function findTable(pageGrid, fieldAliases, opts = {}) {
       if (!best || mapped > best.mapped) {
         best = {
           mapped,
-          headerIndex: i,
+          headerIndex: start,
           headerRows,
           // WHERE THE BODY STARTS, WHICH IS NOT ALWAYS AFTER THE HEADER SPAN.
           //

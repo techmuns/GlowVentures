@@ -17,13 +17,8 @@
  "reportType": "transaction-statement",
  "sourcePath": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_TransactionStatement_India94OT.pdf",
  "pages": 2,
- "status": "partial",
- "warnings": [
-  {
-   "code": "columns-not-matched",
-   "detail": "settleDate"
-  }
- ],
+ "status": "ok",
+ "warnings": [],
  "holdings": [],
  "totals": null,
  "returns": [],
@@ -32,7 +27,7 @@
  "transactions": [
   {
    "date": "2026-05-20",
-   "settlementDate": null,
+   "settlementDate": "2026-05-21",
    "side": "sell",
    "security": "Sterlite Technologies Ltd",
    "securityKey": "sterlite-technologies",
@@ -57,7 +52,7 @@
   },
   {
    "date": "2026-05-25",
-   "settlementDate": null,
+   "settlementDate": "2026-05-25",
    "side": "buy",
    "security": "Amrutanjan Health Care Ltd",
    "securityKey": "amrutanjan-health-care",
@@ -82,7 +77,7 @@
   },
   {
    "date": "2026-05-25",
-   "settlementDate": null,
+   "settlementDate": "2026-05-25",
    "side": "buy",
    "security": "GREAVES COTTON LTD.",
    "securityKey": "greaves-cotton",
@@ -107,7 +102,7 @@
   },
   {
    "date": "2026-05-25",
-   "settlementDate": null,
+   "settlementDate": "2026-05-25",
    "side": "buy",
    "security": "Shoppers Stop Ltd",
    "securityKey": "shoppers-stop",
@@ -132,7 +127,7 @@
   },
   {
    "date": "2026-06-02",
-   "settlementDate": null,
+   "settlementDate": "2026-06-03",
    "side": "sell",
    "security": "Sterlite Technologies Ltd",
    "securityKey": "sterlite-technologies",
@@ -157,7 +152,7 @@
   },
   {
    "date": "2026-06-15",
-   "settlementDate": null,
+   "settlementDate": "2026-06-15",
    "side": "buy",
    "security": "Eureka Forbes Ltd",
    "securityKey": "eureka-forbes",
@@ -182,7 +177,7 @@
   },
   {
    "date": "2026-07-13",
-   "settlementDate": null,
+   "settlementDate": "2026-07-14",
    "side": "sell",
    "security": "Sterlite Technologies Ltd",
    "securityKey": "sterlite-technologies",
@@ -207,7 +202,7 @@
   },
   {
    "date": "2026-07-15",
-   "settlementDate": null,
+   "settlementDate": "2026-07-15",
    "side": "buy",
    "security": "Eureka Forbes Ltd",
    "securityKey": "eureka-forbes",
@@ -232,7 +227,7 @@
   },
   {
    "date": "2026-07-15",
-   "settlementDate": null,
+   "settlementDate": "2026-07-15",
    "side": "buy",
    "security": "Navneet Education Ltd",
    "securityKey": "navneet-education",
