@@ -9,7 +9,7 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 
 | Outcome | Files | What it means |
 | --- | ---: | --- |
-| Read | 277 | one or more documents in `public/audit/` |
+| Read | 279 | one or more documents in `public/audit/` |
 | Read via a byte-identical twin | 4 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
 | Read by `build-book` | 1 | the family's consolidated review — the book's source for every private-market line |
@@ -17,9 +17,9 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 | Not a document | 58 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
 | **Unread** | **0** | **must be zero** |
-| **Total leaf files** | **361** | |
+| **Total leaf files** | **363** | |
 
-Those files produce **307 documents** in the archive.
+Those files produce **309 documents** in the archive.
 
 ## Read by `build-book`
 

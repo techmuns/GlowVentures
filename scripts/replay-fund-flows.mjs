@@ -148,7 +148,7 @@ for (const entry of manifest) {
 //
 // The snap prints the account's own time-weighted return (Stage 10df) and, on
 // page 3, the FUND's `Current Holdings` — the one AIF portfolio disclosure in
-// this archive, carried as `schemeHoldings` since Stage 10dk. The same three
+// this archive, carried as `schemeHoldings` since Stage 10dl. The same three
 // rules for both: each only ADDS where the archive holds none (an archived
 // value must come back identical); the replayed holdings must reproduce the
 // stored ones; and `--check` writes nothing.

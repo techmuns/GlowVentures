@@ -579,7 +579,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   card can rank both halves. Deliberately NOT routed through `companyExposure`:
   `src/lib/fundDisclosures.ts` reads `deriveFundDisclosures`' own read model —
   the AIFs' own snaps, a name and a weight, never `lookthrough.json`, on which
-  every stock-axis figure rests. See Stage 10dk.
+  every stock-axis figure rests. See Stage 10dl.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -591,18 +591,19 @@ cash holding's genuinely-zero return both match, and both are correct.
 This book comes from PDF statements across several wealth platforms, not from one
 spreadsheet. Four things follow, and they are load-bearing:
 
-**What is actually in `source/` today.** EIGHT DELIVERIES, and every one stays:
+**What is actually in `source/` today.** NINE DELIVERIES, and every one stays:
 the original set at the top of `source/`, the client's `august-2026/` folder,
-`august-2026-b/` to `august-2026-f/` — statements that arrived after it — and
-`september-2026/`, the client's `Jaisinghani_Reports.zip` (Stage 10da). **ALL EIGHT
+`august-2026-b/` to `august-2026-f/` — statements that arrived after it —
+`september-2026/`, the client's `Jaisinghani_Reports.zip` (Stage 10da), and
+`october-2026/`, Green Lantern 510861 since inception (Stage 10dk). **ALL NINE
 have been through `npm run extract`**: `august-2026-f/`'s two outlined-text
 statements are read by rendering their glyphs (see its own section) and its third
 file is a register held out of the book by decision. 38 provider names in the
 archive — ASK's PMS, the ASK Absolute Return Fund and Marathon are the newest —
 **64 accounts** in the book, seven holders (three of them family trusts, Stage 10db)
-and one `Not attributed to a member` bucket (Stage 10dh), and **361 leaf
-files** — of which **307 documents** are in the archive (18 of them spreadsheet
-exports read as WITNESSES of the PDF beside each), 238 read fully, 66 partially and
+and one `Not attributed to a member` bucket (Stage 10dh), and **363 leaf
+files** — of which **309 documents** are in the archive (18 of them spreadsheet
+exports read as WITNESSES of the PDF beside each), 242 read fully, 64 partially and
 **exactly ONE not at all**:
 
 - Bharat's HDFC NSDL holding statement from `august-2026-e/`, which is a SCAN —
@@ -626,7 +627,8 @@ Measured on the September 2026 delivery (Stage 10da): 277 read, 4 read via a
 byte-identical twin, 18 read as witnesses of the PDF beside them, 2 held out by
 decision, 58 macOS `__MACOSX/._*` resource forks (checked per file for a `%PDF`
 header, never assumed from the path), 2 password notes excluded by policy, and
-**0 unread** — 361 leaf files. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
+**0 unread** — 361 leaf files. On the October 2026 delivery (Stage 10dk) it is 363
+leaf files, 279 read, and still **0 unread**. `docs/SOURCE-COVERAGE.md` is its output; the counts in this
 paragraph come from it and from `docs/BOOK-REPORT.md`, and should be re-read from
 them rather than edited to taste.
 
@@ -27002,8 +27004,44 @@ still reads as a table.
 
 (Written as `10di`. #122 — the member selector — took that letter while this waited,
 so this section is `10dj`; the headings were compared against main's tip.)
+### Stage 10dk — GREEN LANTERN 510861 SINCE INCEPTION, AND A REGISTER LONGER THAN ITS WINDOW
 
-### Stage 10dk — THE MOVERS' THIRD BRANCH: THE COMPANIES INSIDE THE AIFs AND THE MANDATES
+*"integrate this new data from the client into the dashboard data without any
+logical/calculation errors"* — `source/october-2026/`: Green Lantern 510861's
+capital register and transaction statement, both since inception (16 Jan 2025 →
+22 Sep 2026). 516 trades and 48 register rows reach the archive (309 documents).
+**`BOOK_SUMMARY` does not move, and `glowData.ts` is byte-identical to main.**
+
+- **A header label printed ABOVE the header line.** The transaction statement
+  prints "Settlement" above its header and "Date" below it. `findTable` takes
+  that line as a donor only with `labelLineAbove` (the PMS transaction reader
+  opts in), only if nothing else on it reads as a label or a figure, and only
+  where it maps strictly more columns. Re-reading all 21 archived PDF
+  transaction statements gives the same trades; V.E.C's two now fill their
+  settlement dates.
+- **A register from inception prints no opening-balance row.** Its first
+  balance is its own amount, so it opens from nil, and its walk is witnessed.
+- **The money-weighted window is cut to [opening value date, account as-of].**
+  Read whole, the register put the ₹10 Cr Corpus Deposit in twice (as itself
+  and inside the 1 Apr 2026 opening value) and eleven TDS rows (₹30,846.80)
+  after 27 Jul into a value that does not hold them yet. Measured with the cut
+  removed: the tile reads 24.1% over 574 days instead of 26.5% over 134.
+- **A dated capital move after its account's value date is named, not listed.**
+- **The register ties to the manager's own Net Capital In/Out** (FY and since
+  inception) once the two TDS rows dated 10 Aug, the statement's own day, are
+  left out — named in `docs/BOOK-REPORT.md`.
+
+**Checks:** `pmsReaders.test.mjs` (the donor line, both ways, and a header that
+already reads is unchanged), `accountXirr.test.ts` (every flow inside its
+window, no move after its account's value date) and
+`capitalRecordArchive.test.ts` (register days after the value date are ABSENT,
+load-bearing on this register). Six bugs put back, each caught: donor off,
+donor removed, donor winning ties, and the opening, closing and value-date cuts.
+
+**THE LETTER.** Written as `10dj`; #118 (bank statements) merged under `10dj` first, so this is `10dk`. Main's lines naming `10dj` stay; this section's three pointers moved.
+
+
+### Stage 10dl — THE MOVERS' THIRD BRANCH: THE COMPANIES INSIDE THE AIFs AND THE MANDATES
 
 *"In the daily movers section we have 2 scopes as of now, Direct equity and ETF
 and mutual funds. We need to add another section that would be AIF and PMS …
@@ -27267,6 +27305,24 @@ the card's mandate tile (or its no-feed state) before it reads anything.
 **AND A CLAIM THAT NO NAMED LINE IS A POSITION IN THE BOOK WOULD BE FALSE**, so
 it is not made: `ICICI BANK LTD` normalises onto `icici-bank`, which the family
 does hold directly. The disclosure's own lines are not a set apart from the book.
+
+#### Merged with main, and the letter moved twice
+
+Written as `10dj`. #118 (bank statements) took `10dj` and #126 (Green Lantern
+510861) took `10dk` while this waited, so this is **`10dl`**. The #126 merge
+raised no conflict marker: two sections sat under one letter and only the
+headings check found it. This section's pointers (the `fundDisclosures.ts`
+Layout bullet and the `build-symbols` entry) and its code comments moved; main's
+lines naming `10dj` and `10dk` stayed. `build-read-models.mjs` conflicted with
+#123 and is a union: `buildConsolidatedSheet` beside `BOOK_POLYCAB`.
+
+On the tree merged with #118, #123, #124 and #125: `build`, `tsc`,
+`test:ingest` (golden 140 passed, 2 not checked, 0 blocked), `test:family`
+exit 0, `build-book` byte-identical, CI green. `check:pages` walked 406
+combinations with one finding, *the page does not scroll* on `family`, and
+**main's own build fails the same check**, measured on a worktree of main
+before #126. It is main's, from a change after #122's sweep, and is named here,
+not fixed.
 
 ### Stage 10k — News & Announcements: REMOVED
 
@@ -28330,7 +28386,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   the rendered figures back, so a correct helper wired into nothing fails. Needs
   a `vite preview` on :4173, same as `check:pages`.
 - `npm run build-symbols` re-resolves securityKey → NSE symbol, from NSE's own
-  three masters. Since Stage 10dk it reads a fund's own PORTFOLIO DISCLOSURE as a
+  three masters. Since Stage 10dl it reads a fund's own PORTFOLIO DISCLOSURE as a
   FILL-ONLY second pass — a key pass 1 did not produce, never one it did — gated
   on the document carrying a family holding, which is the difference between 31
   keys and the 183 every scheme filing in the archive mentions. A disclosed-only

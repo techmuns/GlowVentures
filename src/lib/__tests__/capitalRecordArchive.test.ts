@@ -287,13 +287,29 @@ ok("every dated call the archive prints is exactly one capital row, on its own d
   callsChecked > 0 && callProblems.length === 0, callProblems.slice(0, 6).join("; ") || `${callsChecked} call(s)`);
 
 // ── EVERY REGISTER DAY IS ONE ROW, AND A SWITCH LEG IS NONE ────────────────
+// A register can run past the date its account's value is struck on — Green
+// Lantern 510861's since-inception register (7 Oct 2026) runs to 22 Sep against
+// holdings of 27 Jul. A movement after that date is not yet in the value, so it
+// is no row of the record (`datedCapitalElsewhere`'s value-date cut); the check
+// below holds those days ABSENT rather than skipping them, so a record that
+// listed them would fail.
+const ACC_ASOF = new Map(BOOK_ACCOUNTS.map((x) => [x.accountId, x.asOf]));
 let regChecked = 0;
+let regLate = 0;
 const regProblems: string[] = [];
+const lateProblems: string[] = [];
 const legProblems: string[] = [];
 for (const [accountId, a] of archive) {
   if (!listed.has(accountId)) continue;
+  const valueDate = ACC_ASOF.get(accountId) ?? null;
   const byDay = new Map<string, { date: string; direction: "in" | "out"; amount: number }>();
   for (const c of a.register) {
+    if (valueDate && c.date > valueDate) {
+      regLate++;
+      const direction = c.amount > 0 ? "in" : "out";
+      if (movesOf(accountId, c.date, direction).length) lateProblems.push(`${accountId} ${c.date} ${direction}, after its ${valueDate} value`);
+      continue;
+    }
     if (isSwitchLeg(a, c)) {
       const leg = RECORD.find((m) => m.accountId === accountId && m.date === c.date && num(m.amount) && within(m.amount, Math.abs(c.amount)));
       if (leg) legProblems.push(`${accountId} ${c.date} ${c.description}`);
@@ -316,6 +332,10 @@ for (const [accountId, a] of archive) {
 }
 ok("every register day on a listed account is exactly one capital row", regChecked > 0 && regProblems.length === 0,
   regProblems.slice(0, 6).join("; ") || `${regChecked} register day(s)`);
+ok("no register day after its account's value date is a capital row — it is not yet in that value",
+  lateProblems.length === 0, lateProblems.slice(0, 6).join("; ") || `${regLate} register movement(s) after a value date, none listed`);
+// LOAD-BEARING: the archive carries such movements, or the check above holds over nothing.
+ok("…and the archive carries register movements after their account's value date", regLate > 0, `${regLate}`);
 ok("no leg of a class switch is listed as money moving", legProblems.length === 0, legProblems.join("; ") || "none");
 
 // ── EVERY WITNESSED BANK-BOOK DAY IS ONE ROW, PER DIRECTION ────────────────
