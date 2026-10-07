@@ -26768,11 +26768,14 @@ emitted to it, so a report-prose change moves no figure · `coverage:source` exi
 0 with **Unread 0** · `replay:owners -- --check` a no-op, and `replay:calls`,
 `replay:flows`, `replay:movements`, `replay:dedupe` and `rekey:archive` with it.
 
-**`scripts/dev/bank-statement-bug.sh` puts 58 bugs back one at a time**, after a
+**`scripts/dev/bank-statement-bug.sh` puts 59 bugs back one at a time**, after a
 control that came back clean on BOTH suites — 182 reader checks and 42 rendering
 ones, nothing failing — and every one of them is caught. Its subject is the
 INGEST rather than the sweep, for the reason above: with the delivery out of the
-tree no route could see one of these bugs. Cases 1–40 break
+tree no route could see one of these bugs. **The count is 59 and not 58, which is
+why it is measured rather than carried in prose**: case 9 has a `9b` beside it, a
+three-decimal figure rounded into shape where 9 is the same tie-out struck in
+floating-point rupees. Cases 1–40 and 9b break
 the reader or the pipeline and are watched by `bankStatement.test.mjs`, and
 **cases 41–58 break a claim in the report's bank section and are watched by
 `bankReport.test.mjs`** — the reader's own suite runs on every one of those too,

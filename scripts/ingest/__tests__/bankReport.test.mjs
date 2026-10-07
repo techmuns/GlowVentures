@@ -211,7 +211,12 @@ if (sec) {
   // two lines under a table showing the later one. …0003 is that account.
   //
   // AND THE COUNT WAS GLOBAL, RENDERED AS A PER-ACCOUNT CLAIM: "each taken from
-  // the newest of its 3 statement(s)" over two accounts holding 2 and 1.
+  // the newest of its 3 statement(s)" over two accounts holding 2 and 1 — the
+  // figures the defect printed against the fixture AS IT THEN STOOD. The fixture
+  // has grown since, so they are a record and not a description of it: six
+  // statements of four accounts now, of which three reach a reconciled balance
+  // over five statements and …0002 reaches none. Every figure below is DERIVED
+  // from the rendered table for exactly that reason.
   //
   // The total is RE-DERIVED from the table rather than compared with a literal —
   // one path through the renderer, one through the rows it printed.

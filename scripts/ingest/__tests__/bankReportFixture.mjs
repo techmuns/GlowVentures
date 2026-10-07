@@ -108,7 +108,7 @@ const icici = () => ({ pages: [{ rows: [
     withdrawal: "25,000.25", balance: "200,000.00" }),
 ] }] });
 
-/** The four statements, each with the status its own gate must reach. */
+/** The six statements, each with the status its own gate must reach. */
 export const BANK_FIXTURE = Object.freeze([
   {
     name: "HDFC …0001 Q1",
