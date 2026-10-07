@@ -30,6 +30,7 @@ import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/ac
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, type Txn, type TxnData } from "@/lib/ledger";
+import { inScopeAccount, inScopeOwner, labelInScope } from "@/lib/memberScope";
 import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, realisedWindowNote, atCostNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
 import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
@@ -694,7 +695,7 @@ const DERIVED_ONLY_WHY = "no statement in this book reports this company as a ho
 const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund holds and this is your units' share of it, across every asset class the filing carries — shares, bonds, NCDs and commercial paper alike. It is no part of the book's NAV — the fund's own value already stands for it there — so this column is never summed into a book total.";
 
 export function PortfolioMonitor() {
-  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns } = usePortfolio();
+  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns, scope: memberScope } = usePortfolio();
   /**
    * WHY THE LIVE QUOTE ON THESE LINES WAS HELD BACK, OR NULL (DL-9).
    *
@@ -1941,7 +1942,10 @@ export function PortfolioMonitor() {
       && typeof p.realizedPnL === "number" && p.realizedPnL !== 0));
     const gone = withRealised(offTable.closed);
     const specks = withRealised(offTable.negligible);
+    // The statements' own realised, over the chosen members' accounts alone
+    // (Stage 10di): a footer under one member's rows must not name the family's.
     const stmts = BOOK_CAPITAL_GAINS.filter((c) => (c.realisedST !== null || c.realisedLT !== null)
+      && inScopeAccount(memberScope.accountIds, c.accountId)
       && (entity === "All" || (!!c.accountId && ownerOf(accIdx, { accountId: c.accountId } as Position) === entity)));
     const dates = (xs: (string | null | undefined)[]) => xs.filter((d): d is string => !!d).sort();
     /**
@@ -2004,7 +2008,7 @@ export function PortfolioMonitor() {
       heldCount: db.length,
       weightBase, weightCount, bucketTotals, smallDropped,
     };
-  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap, sectorOfPos, companySectors]);
+  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap, sectorOfPos, companySectors, memberScope.accountIds]);
   /**
    * Rows grouped by BUCKET, not by asset class — the fix the family asked for
    * three times. Direct Equity is what they bought themselves; PMS mandates is
@@ -3181,7 +3185,24 @@ export function PortfolioMonitor() {
         import("@/lib/exportPortfolioExcel"),
         loadTransactions(),
       ]);
-      await exportPortfolioExcel(positions, portfolio.accounts, data);
+      // The sheet is the chosen members' too (Stage 10di): their holdings
+      // come scoped from the context, and their dealing is narrowed here, on
+      // the canonical owner each row carries. The lots no trade settles are a
+      // whole-tape figure, so a scoped sheet does not carry them.
+      const owners = memberScope.owners;
+      const scoped = data && owners
+        ? { ...data,
+            txns: data.txns.filter((t) => inScopeOwner(owners, t.ownerId)),
+            ownAllotments: data.ownAllotments.filter((t) => inScopeOwner(owners, t.ownerId)),
+            lotsNoTrade: { lots: 0, realised: null, securities: [], allNil: false } }
+        : data;
+      if (scoped && owners) {
+        scoped.buys = scoped.txns.filter((t) => t.side === "Buy").length;
+        scoped.sells = scoped.txns.filter((t) => t.side === "Sell").length;
+        scoped.accounts = scoped.accounts.filter((l) => labelInScope(portfolio.accounts, l));
+        scoped.accountsWithout = scoped.accountsWithout.filter((l) => labelInScope(portfolio.accounts, l));
+      }
+      await exportPortfolioExcel(positions, portfolio.accounts, scoped);
     } catch (e) {
       console.error("Excel export failed", e);
     } finally {
@@ -5568,9 +5589,20 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   // the rollup joins a trade to its mandate on provider + account number. No
   // figure on this tape comes from the portfolio, and none may: a dated trade is
   // a statement fact and a live price is not evidence about it.
-  const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
+  const { fmtFromBase, statementPortfolio: portfolio, scope: memberScope } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [txns, setTxns] = useState<Txn[] | null>(null);
+  const [allTxns, setTxns] = useState<Txn[] | null>(null);
+  /**
+   * THE CHOSEN MEMBERS' DATED RECORDS AND NOTHING ELSE (Stage 10di). Both
+   * records name their account (the capital record) or its canonical owner (the
+   * tape), so a scope is a filter on those and never on a printed name.
+   */
+  const txns = useMemo(
+    () => (allTxns && memberScope.owners ? allTxns.filter((t) => inScopeOwner(memberScope.owners, t.ownerId)) : allTxns),
+    [allTxns, memberScope.owners]);
+  const capitalRecord = useMemo(
+    () => (memberScope.accountIds ? CAPITAL_RECORD.filter((m) => inScopeAccount(memberScope.accountIds, m.accountId)) : CAPITAL_RECORD),
+    [memberScope.accountIds]);
   /**
    * THE WINDOW THE TRANSACTION STATEMENTS COVER — not the holding period. A date
    * filter lying wholly outside it has no statement to count trades in, so its
@@ -5626,14 +5658,14 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   // presets. Both, because a range offered over the tape alone would silently
   // cut the capital record's older contributions out of every preset.
   const fyYears = useMemo(() => {
-    const dates = [...(txns ?? []).map((t) => t.date), ...CAPITAL_RECORD.map((m) => m.date)].filter(Boolean);
+    const dates = [...(txns ?? []).map((t) => t.date), ...capitalRecord.map((m) => m.date)].filter(Boolean);
     let mn = Infinity, mx = -Infinity;
     for (const d of dates) { const y = fyStartOf(d); if (y < mn) mn = y; if (y > mx) mx = y; }
     if (!isFinite(mn)) return [] as number[];
     const out: number[] = [];
     for (let y = mx; y >= mn; y--) out.push(y);
     return out;
-  }, [txns]);
+  }, [txns, capitalRecord]);
   const applyPreset = (key: string) => {
     setPreset(key);
     if (key === "all") { setFrom(""); setTo(""); return; }
@@ -5688,7 +5720,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * applied to this count: the counter above the table states both sides, so a
    * reader can see what the filter would do before they click it.
    */
-  const mineMoves = useMemo(() => CAPITAL_RECORD.filter((m) => {
+  const mineMoves = useMemo(() => capitalRecord.filter((m) => {
     if (from && m.date < from) return false;
     if (to && m.date > to) return false;
     if (entity !== "All") {
@@ -5696,7 +5728,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
       if (!a || ownerDisplayName(a.ownerId) !== entity) return false;
     }
     return true;
-  }), [from, to, entity, accIdx]);
+  }), [capitalRecord, from, to, entity, accIdx]);
   const mineCount = useMemo(() => ({
     in: mineMoves.filter((m) => m.direction === "in").length,
     out: mineMoves.filter((m) => m.direction === "out").length,
@@ -5804,7 +5836,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   }, [rows, positionsReg]);
   const accByPA = useMemo(() => new Map(accountsReg.map((a) => [acctKey(a.provider, a.accountNo), a])), [accountsReg]);
   /** Accounts the WHOLE record funds — the book fact a narrowed count must not be read as. */
-  const fundedInBook = useMemo(() => new Set(CAPITAL_RECORD.map((m) => m.accountId)).size, []);
+  const fundedInBook = useMemo(() => new Set(capitalRecord.map((m) => m.accountId)).size, [capitalRecord]);
   /**
    * An account whose positions are all fund units redeemed to nil, at a NAV the
    * fund still publishes — the one case "₹0, measured" is true of on its own terms.
@@ -5869,7 +5901,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * section, a sector or a picked holding the footer covers part of the tape,
    * and the statements' whole total would be a figure about something else.
    */
-  const wholeTape = !windowed && side !== "in" && entity === "All" && section === "All" && sector === "All" && selected.size === 0;
+  const wholeTape = !windowed && side !== "in" && entity === "All" && section === "All" && sector === "All" && selected.size === 0
+    && !memberScope.owners;
   const noTrade = wholeTape && lotsNoTrade && lotsNoTrade.lots > 0 && lotsNoTrade.realised != null && totals.realized != null
     ? { ...lotsNoTrade, realised: lotsNoTrade.realised, statements: totals.realized + lotsNoTrade.realised }
     : null;

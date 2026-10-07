@@ -159,3 +159,23 @@ export function scopePortfolio(p: Portfolio, owners: ReadonlySet<string>): Portf
 export function wholeFamilyOnly(what: string, label: string): string {
   return `${what} is struck over the whole family's accounts and is not split by member, so it is not shown for ${label}. Choose Whole family at the top to see it.`;
 }
+
+/** True where a row's account is in the scope — always, for the whole family. */
+export const inScopeAccount = (ids: ReadonlySet<string> | null, accountId: string | null | undefined): boolean =>
+  !ids || (!!accountId && ids.has(accountId));
+
+/** True where a row's canonical owner is in the scope — always, for the whole family. */
+export const inScopeOwner = (owners: ReadonlySet<string> | null, ownerId: string | null | undefined): boolean =>
+  !owners || (!!ownerId && owners.has(ownerId));
+
+/**
+ * The dated record's ACCOUNT LABEL (`<owner> · <provider> <accountNo>`, as the
+ * ledger's read models print it) belongs to the scope. Matched on the account
+ * NUMBER the label ends with, against the scope's own accounts — never on the
+ * owner's spelling, which three statements print three ways (§6).
+ */
+export function labelInScope(accounts: readonly Pick<Account, "accountNo">[] | null, label: string): boolean {
+  if (!accounts) return true;
+  const no = label.slice(label.lastIndexOf(" ") + 1);
+  return accounts.some((a) => a.accountNo === no);
+}
