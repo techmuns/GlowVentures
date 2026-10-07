@@ -28,6 +28,7 @@ import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format"
 import type { Account, Position } from "@/lib/types";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 
 /**
  * ONE DISCRETIONARY MANDATE, AND EVERY SHARE THE MANAGER HOLDS INSIDE IT.
@@ -240,7 +241,7 @@ export function MandateHoldings() {
   // ABOVE THE EARLY RETURNS — this page has three (no account, not a mandate,
   // no rows), and a hook that runs on some of them and not others is a
   // hooks-order error rather than a conditional table.
-  const holdingsView = useTableView("mandate-holdings", MANDATE_COLS);
+  const holdingsView = useTableView("mandate-holdings", MANDATE_COLS, { reviewKind: "holding" });
   /**
    * ONE SECTOR PER COMPANY, THE ONE SECTOR COMPOSITION GIVES IT (DSM-C9).
    *
@@ -645,7 +646,7 @@ export function MandateHoldings() {
   // THE DEFAULT IS LARGEST FIRST, and a reader's own ranking replaces it. An
   // absent cost or price sorts LAST either way rather than as a zero, which
   // would rank a holding whose statement prints no cost among the cheapest.
-  const sorted = sortRows([...shown].sort((a, b) => b.marketValue - a.marketValue), holdingsView.sort, {
+  const sorted = sortRows([...shown].sort((a, b) => b.marketValue - a.marketValue), holdingsView.sort, withReviewAccessors<typeof shown[number]>({
     security: (r) => r.security,
     sector: (r) => (readerClassOf(r) === "Cash" ? null : sectorOf(r)),
     qty: (r) => r.quantity,
@@ -655,7 +656,7 @@ export function MandateHoldings() {
     mv: (r) => r.marketValue,
     weight: (r) => (mv > 0 ? r.marketValue : null),
     pnl: (r) => r.unrealizedPnL,
-  });
+  }, (r) => ({ positions: [r] }), scope.owners !== null));
   const hidden = rows.length - shown.length;
   /**
    * A MANDATE WITH NO HOLDING STATEMENT IS NOT A MANDATE HOLDING NOTHING
@@ -833,7 +834,7 @@ export function MandateHoldings() {
                 // the same thing: the fund carries units, a NAV and a gain.
                 const isBalance = r.assetClass === "Cash";
                 return (
-                  <Tr view={holdingsView} key={`${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
+                  <Tr view={holdingsView} reviewScope={{ positions: [r] }} key={`${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2.5">
                       <Link to={stockHref(r.securityKey)} className="font-medium text-slate-100 hover:text-champagne-400">
                         {r.security}
@@ -1354,4 +1355,3 @@ function ManagerTrades({ account }: { account: Account }) {
     </Card>
   );
 }
-

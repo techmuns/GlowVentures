@@ -20,6 +20,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
+  ["consolidated sheet", "src/lib/__tests__/consolidatedSheet.test.ts"],
   ["research background cache", "src/lib/__tests__/researchCache.test.ts"],
   ["prepared ledger views", "src/lib/__tests__/readModels.test.ts"],
   ["server stock exposure", "src/lib/__tests__/stockExposureFunction.test.ts"],
@@ -42,6 +43,7 @@ const SUITES = [
   ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["private market table", "src/lib/__tests__/privateBook.test.ts"],
   ["review as private-market source", "src/lib/__tests__/reviewBook.test.ts"],
+  ["review optional columns", "src/lib/__tests__/reviewColumns.test.ts"],
   ["separate investments", "src/lib/__tests__/separateInvestments.test.ts"],
   ["keep unvalued", "src/lib/__tests__/keptUnvalued.test.ts"],
   ["capital calls", "src/lib/__tests__/capitalCalls.test.ts"],

@@ -85,7 +85,19 @@
 // the same thing, so swapping the mapping moves no figure on any screen.** What
 // the join establishes is that these are the TRUSTS' accounts and not Ajay's,
 // and that does not depend on the filename at all.
-import { makeHolding } from "../lib/document.mjs";
+//
+// ── AND A SECOND LAYOUT WITH A TEXT LAYER: AJAY'S OWN ACCOUNT ───────────────
+//
+// `source/october-2026/Demat Holding Query Stmt_…PDF` is the same depository's
+// holding statement for Ajay's own DP account 10295743 (DP ID IN300476), from a
+// different export: it carries a REAL text layer, a different column set and a
+// different title — `HDFC Bank Depository Holding Details`. It is read by
+// `readNative` below, natively, and nothing about the OCR path changes: that
+// branch still runs for the two outlined-text statements, and the
+// `text-recovered-by-rendering` warning is now emitted only where the grid says
+// its text WAS recovered by rendering (`grid.textSource === "ocr"`) — on a
+// native page that warning would be a false statement about how it was read.
+import { makeHolding, makeTotals } from "../lib/document.mjs";
 import { parseNum } from "../lib/parseNum.mjs";
 import { faceValueBasis, assetClassOf } from "./nsdlDemat.mjs";
 
@@ -99,7 +111,14 @@ export const PROVIDER = "HDFC Bank (NSDL demat)";
  * an HDFC IFSC code).
  */
 export const LETTERHEAD = /DP\s*ID\s*IN301549/i;
-export const matches = (text) => LETTERHEAD.test(text ?? "") && /HDFC\s+Bank\s+Limited/i.test(text ?? "");
+/**
+ * The title of the native export (Ajay's DP account 10295743). It names the bank
+ * and the kind of document in one line, which is what the classifier keys on —
+ * this export does not print `IN301549`, so `LETTERHEAD` never fires for it.
+ */
+export const NATIVE_TITLE = /HDFC\s+Bank\s+Depository\s+Holding\s+Details/i;
+export const matches = (text) =>
+  (LETTERHEAD.test(text ?? "") && /HDFC\s+Bank\s+Limited/i.test(text ?? "")) || NATIVE_TITLE.test(text ?? "");
 
 /**
  * DP ACCOUNT NUMBER → THE OWNER THE REGISTER RECORDS, where the holder line the
@@ -178,6 +197,15 @@ export function extract({ grid, meta = {} }) {
       "no `DP Account No :` was found on the page, and this reader will not fall back to the file name — "
       + "both files in this delivery are named for a holder the statement itself does not print.");
     return { accountNo: null, owner: null, asOf: null, holdings: [], status: "failed", warnings };
+  }
+
+  /**
+   * THE NATIVE EXPORT HAS ITS OWN COLUMNS, SO IT HAS ITS OWN READER. Chosen on
+   * the title the page prints AND on the text being native: an OCR'd page is
+   * never sent down the native path, whatever it seems to say.
+   */
+  if (grid?.textSource !== "ocr" && NATIVE_TITLE.test(text)) {
+    return readNative({ grid, text, meta, accountNo, owner, asOf, warnings });
   }
 
   // ── the holding rows ──────────────────────────────────────────────────────
@@ -259,11 +287,17 @@ export function extract({ grid, meta = {} }) {
     return { accountNo, owner, asOf, holdings: [], status: "failed", warnings };
   }
 
-  warn(warnings, "text-recovered-by-rendering",
-    `this statement carries no text layer — its glyphs are vector outlines — so the words were recovered by `
-    + `rendering the page at 600 dpi and reading it (lib/ocr.mjs). The ${holdings.length} row(s) read reproduce the `
-    + `statement's own printed Total Valuation of ${printedTotal.toFixed(2)} to the paisa, which is the check that `
-    + "licenses publishing them. Ask HDFC for a re-export with fonts embedded to remove the need for it.");
+  /**
+   * ONLY WHERE IT IS TRUE. The grid says how its text was obtained; a page read
+   * from a real text layer must never carry a warning that it was rendered.
+   */
+  if (grid?.textSource === "ocr") {
+    warn(warnings, "text-recovered-by-rendering",
+      `this statement carries no text layer — its glyphs are vector outlines — so the words were recovered by `
+      + `rendering the page at 600 dpi and reading it (lib/ocr.mjs). The ${holdings.length} row(s) read reproduce the `
+      + `statement's own printed Total Valuation of ${printedTotal.toFixed(2)} to the paisa, which is the check that `
+      + "licenses publishing them. Ask HDFC for a re-export with fonts embedded to remove the need for it.");
+  }
 
   if (unpriced.length) {
     warn(warnings, "value-is-face-value-par",
@@ -303,6 +337,393 @@ export function extract({ grid, meta = {} }) {
     providerEngagement: `NSDL depository account at ${dpId ?? "DP not read"} — ${acType || "type not read"}`,
     holdings,
     status: holdings.length ? "ok" : "partial",
+    warnings,
+  };
+}
+
+// ── THE NATIVE EXPORT ──────────────────────────────────────────────────────
+//
+// `HDFC Bank Depository Holding Details`, read from its own text layer. Eight
+// columns, each with a printed header:
+//
+//   Account Type | ISIN | Company Name | Scrip Type | Balance | Rate (Rs.) |
+//   Value (Rs.) | Status
+//
+// Every rule below is a wrong answer this layout makes easy:
+//
+//   • THE HEADER IS FOUND BY ITS WORDS, never by an index. All eight labels must
+//     be on one line, or nothing is read — a changed export is reported as a
+//     header that did not match rather than as columns read at a guessed x.
+//   • A FIGURE BELONGS TO THE COLUMN WHOSE RIGHT EDGE IT SHARES. The three money
+//     columns are right-aligned under their headings (Balance 533.2, Rate 608.0,
+//     Value 692.4 on this statement), so a figure is placed by its right edge,
+//     and one under no heading is refused rather than guessed at.
+//   • A WRAPPED NAME CONTINUES ON THE LINES BELOW ITS ISIN. `DEEPAK FERTILISERS
+//     AND` / `PETROCHEMICALS CORPORATION` / `LTD` is one company on three lines,
+//     and every continuation line belongs to the record ABOVE it — the record's
+//     ISIN line is always its first. Nearest-by-y would hand `(INDIA) LIMITED`
+//     under KINGFA to the next record whenever the gap below is smaller.
+//   • TEXT IS PLACED BY ITS LEFT EDGE, which is where a left-aligned column
+//     starts. The company names start at x201.6 — LEFT of their own centred
+//     heading (x245.9) — so a boundary halfway between two headings would file
+//     the first word of every name under the ISIN column.
+//   • THE DOCUMENT'S OWN TOTAL IS THE WITNESS. `Total Valuation` is struck over
+//     every row the statement printed, the face-valued ones included, and the
+//     rows read must reproduce it to the paisa or nothing is emitted. Every row's
+//     own balance × rate must also be its printed value, which is the second
+//     check: a figure read from the wrong row would still pass a sum.
+
+/** The eight column headings, matched on the whole text of one item each. */
+const NATIVE_HEADER = {
+  accountType: /^Account\s*Type$/i,
+  isin: /^ISIN$/i,
+  company: /^Company\s*Name$/i,
+  scrip: /^Scrip\s*Type$/i,
+  balance: /^Balance$/i,
+  rate: /^Rate\s*\(Rs\.?\)$/i,
+  value: /^Value\s*\(Rs\.?\)$/i,
+  status: /^Status$/i,
+};
+/** The furniture below the table — the first line carrying any of these ends it. */
+const NATIVE_STOP = /Market\s+Rate\s+Date|Total\s+Valuation|Nomination\s+Details|Registered\s*:|Page\s+Number|Authorised\s+Signatory/i;
+/**
+ * An ISIN, and only an ISIN. Twelve characters ending in the check DIGIT — the
+ * trailing digit is what keeps a word like `INTELLIGENCE` out.
+ */
+const ISIN_ITEM = /^IN[0-9A-Z]{9}[0-9]$/;
+/** A printed figure: grouped digits with decimals, nothing else in the item. */
+const FIGURE_ITEM = /^[\d,]+\.\d+$/;
+/**
+ * How far a right-aligned figure's right edge may sit from its heading's. The
+ * statement's own figures sit within 0.1pt; the slack is wide enough for a
+ * renderer's rounding and far narrower than the 75pt between two columns.
+ */
+const RIGHT_EDGE_SLACK = 6;
+
+const itemsOfRow = (row) =>
+  (row.items ?? [])
+    .map((c) => ({ x: c.x ?? 0, width: c.width ?? 0, text: String(c.text ?? "").trim() }))
+    .filter((c) => c.text)
+    .sort((a, b) => a.x - b.x);
+
+/** The header row on one page: each label's left and right edge, or null. */
+function nativeHeaderOf(page) {
+  for (const [index, row] of (page.rows ?? []).entries()) {
+    const items = itemsOfRow(row);
+    const found = {};
+    for (const [key, re] of Object.entries(NATIVE_HEADER)) {
+      const it = items.find((c) => re.test(c.text));
+      if (!it) break;
+      found[key] = { left: it.x, right: it.x + it.width };
+    }
+    if (Object.keys(found).length === Object.keys(NATIVE_HEADER).length) return { index, cols: found };
+  }
+  return null;
+}
+
+/** Which text column an item belongs to, by its left edge. */
+function textColumnOf(item, cols) {
+  if (item.x < cols.isin.left) return "accountType";
+  if (item.x < (cols.company.right + cols.scrip.left) / 2) return "company";
+  if (item.x < cols.balance.left) return "scrip";
+  if (item.x >= (cols.value.right + cols.status.left) / 2) return "status";
+  return null;   // inside the money columns, and not a figure
+}
+
+/** Which figure column an item belongs to, by its right edge. */
+function figureColumnOf(item, cols) {
+  const right = item.x + item.width;
+  for (const key of ["balance", "rate", "value"]) {
+    if (Math.abs(right - cols[key].right) <= RIGHT_EDGE_SLACK) return key;
+  }
+  return null;
+}
+
+const join = (parts) => parts.join(" ").replace(/\s+/g, " ").trim();
+const isoOf = (d, m, y) => `${y}-${m}-${d}`;
+
+/**
+ * Is a printed Scrip Type the ordinary share of the company it names?
+ *
+ * `EQ`, `EQ NEW FV RS 2/-`, `EQ NEW.RS. 5/-`, `EQ NEW F.V. RS.2''/-` — the
+ * depository's own description of WHICH LINE in its books this is, after a
+ * split or a change of face value. None of it is identity (Stage 10ak), and the
+ * odd quote marks would carry straight into a key no strip rule reaches. So the
+ * holding is named for the COMPANY, and an instrument that is NOT ordinary
+ * equity — a preference share, a warrant, a partly paid share — keeps its scrip
+ * type in its name, because that is a different holding.
+ */
+const isOrdinaryEquity = (scrip) => /^EQ\b/i.test(scrip) && !/\b(?:PREF|WARRANT|PP|PARTLY)\b/i.test(scrip);
+
+function readNative({ grid, text, meta, accountNo, owner, asOf, warnings }) {
+  const source = meta.docKey ?? null;
+  const fail = (code, detail) => {
+    warn(warnings, code, detail);
+    return { accountNo, owner, asOf, holdings: [], status: "failed", warnings };
+  };
+
+  const pages = grid?.pages ?? [];
+  const headers = pages.map(nativeHeaderOf);
+  if (!headers.some(Boolean)) {
+    return fail("header-not-matched",
+      "the `Account Type | ISIN | Company Name | Scrip Type | Balance | Rate (Rs.) | Value (Rs.) | Status` header "
+      + "was not found on one line, so no column could be placed from the document. Nothing is read rather than "
+      + "reading columns at a guessed x.");
+  }
+
+  /**
+   * THE RECORDS. One per ISIN line; every line below it that carries no ISIN,
+   * up to the next one, continues it. Carried across a page break, because a
+   * name can wrap onto the next page under a reprinted header.
+   */
+  const records = [];
+  let current = null;
+  let accountType = null;
+  for (const [pi, page] of pages.entries()) {
+    const header = headers[pi];
+    if (!header) continue;
+    const rows = page.rows ?? [];
+    for (let ri = header.index + 1; ri < rows.length; ri++) {
+      const items = itemsOfRow(rows[ri]);
+      if (items.some((c) => NATIVE_STOP.test(c.text))) break;
+      const isinItems = items.filter((c) => ISIN_ITEM.test(c.text));
+      if (isinItems.length > 1) {
+        return fail("two-isins-on-one-line",
+          `page ${pi + 1} prints ${isinItems.map((c) => c.text).join(" and ")} on one line, so the figures on it `
+          + "cannot be told apart. Nothing is read.");
+      }
+      if (isinItems.length === 1) {
+        current = {
+          isin: isinItems[0].text, page: pi + 1,
+          accountType: [], company: [], scrip: [], status: [], figures: {},
+        };
+        records.push(current);
+      }
+      for (const item of items) {
+        if (ISIN_ITEM.test(item.text)) continue;
+        if (FIGURE_ITEM.test(item.text)) {
+          const col = figureColumnOf(item, header.cols);
+          if (!col) {
+            return fail("figure-not-under-a-column",
+              `page ${pi + 1} prints ${item.text} at x${item.x.toFixed(1)}, whose right edge sits under none of the `
+              + "Balance, Rate and Value headings. Nothing is read rather than placing a figure by guesswork.");
+          }
+          if (!isinItems.length) {
+            return fail("figure-without-isin",
+              `page ${pi + 1} prints ${item.text} in the ${col} column on a line carrying no ISIN, so it cannot `
+              + "be tied to a holding. Nothing is read.");
+          }
+          if (current.figures[col] != null) {
+            return fail("two-figures-in-one-column",
+              `${current.isin} prints two figures in the ${col} column. Nothing is read.`);
+          }
+          current.figures[col] = item.text;
+          continue;
+        }
+        const col = textColumnOf(item, header.cols);
+        if (!col) {
+          return fail("text-in-a-figure-column",
+            `page ${pi + 1} prints "${item.text}" inside the money columns, where only figures belong. `
+            + "Nothing is read rather than dropping or misfiling it.");
+        }
+        if (!current) {
+          if (col === "accountType") { accountType = join([accountType ?? "", item.text]); continue; }
+          return fail("text-before-first-holding",
+            `page ${pi + 1} prints "${item.text}" below the header and above the first ISIN, so it belongs to no `
+            + "holding. Nothing is read rather than guessing which one.");
+        }
+        if (col === "accountType") {
+          /**
+           * THE ACCOUNT TYPE IS PRINTED ONCE PER GROUP. `Free Balance` stands on
+           * the first row and governs every row below it until another type is
+           * printed — so it starts a new group on an ISIN line, and continues the
+           * current label on a line without one (a label too wide for its column).
+           */
+          accountType = isinItems.length ? item.text : join([accountType ?? "", item.text]);
+          continue;
+        }
+        current[col].push(item.text);
+      }
+      if (isinItems.length) current.accountType = accountType;
+    }
+  }
+
+  /**
+   * EVERY ISIN THE DOCUMENT PRINTS MUST BE A RECORD. A table that runs onto a
+   * page whose header did not match, or an ISIN printed below the table's end,
+   * would otherwise drop a holding without a word — and the printed total check
+   * below can only see that where the dropped row carried a value.
+   */
+  const isinsPrinted = pages.flatMap((p) => (p.rows ?? []).flatMap((r) => itemsOfRow(r)))
+    .filter((c) => ISIN_ITEM.test(c.text)).length;
+  if (isinsPrinted !== records.length) {
+    return fail("isin-outside-the-table",
+      `the statement prints ${isinsPrinted} ISIN(s) and ${records.length} were read as holdings, so at least one `
+      + "sits outside the table this reader found. Nothing is read rather than dropping a holding.");
+  }
+  if (!records.length) {
+    return fail("no-holding-rows",
+      "the header was found and no line under it carried an ISIN. Nothing is read.");
+  }
+
+  /** One record per ISIN, the balance types summed — see the warning below. */
+  const byIsin = new Map();
+  const notFree = [];
+  for (const r of records) {
+    const company = join(r.company);
+    const scrip = join(r.scrip);
+    const status = join(r.status);
+    const qty = n(r.figures.balance);
+    const rate = n(r.figures.rate);
+    const value = n(r.figures.value);
+    if (!company || qty == null || rate == null || value == null) {
+      return fail("row-incomplete",
+        `${r.isin} on page ${r.page} does not print all of a company name, a balance, a rate and a value `
+        + `(read: "${company}", ${r.figures.balance ?? "—"}, ${r.figures.rate ?? "—"}, ${r.figures.value ?? "—"}). `
+        + "Nothing is read.");
+    }
+    /**
+     * THE ROW'S OWN ARITHMETIC. The statement prints the balance to three
+     * decimals and the rate and value to two, so the product may differ from the
+     * printed value by half a paisa on the rate times the balance, and no more.
+     */
+    if (Math.abs(qty * rate - value) > 0.005 * qty + 0.01) {
+      return fail("row-value-is-not-balance-times-rate",
+        `${company} (${r.isin}) prints a balance of ${r.figures.balance} at ${r.figures.rate} and a value of `
+        + `${r.figures.value}, which is not their product. A figure read from the wrong line would pass a column `
+        + "sum and fail here, so nothing is read.");
+    }
+    if (!/^Free\b/i.test(status) || (r.accountType && !/^Free\b/i.test(r.accountType))) {
+      notFree.push(`${company} (${r.accountType ?? "type not printed"}; status ${status || "not printed"})`);
+    }
+    const prior = byIsin.get(r.isin);
+    if (prior) {
+      if (prior.rate !== rate || prior.company !== company || prior.scrip !== scrip) {
+        return fail("one-isin-two-descriptions",
+          `${r.isin} is printed twice with a different name, scrip type or rate. Nothing is read.`);
+      }
+      prior.qty += qty;
+      prior.value += value;
+      prior.types.push(r.accountType ?? "type not printed");
+      continue;
+    }
+    byIsin.set(r.isin, { isin: r.isin, company, scrip, rate, qty, value, types: [r.accountType ?? "type not printed"] });
+  }
+
+  /**
+   * THE PRINTED TOTAL, struck over every row the statement printed. Read before
+   * the face-value decision below drops a value, so the check is against what
+   * the document said rather than against what this reader chose to carry.
+   */
+  const printedTotal = n((/Total\s+Valuation\s*(?:\(Rs\.?\))?\s*:?\s*([\d,]+\.\d{2})/i.exec(text) ?? [])[1]);
+  const rowSum = [...byIsin.values()].reduce((t, r) => t + r.value, 0);
+  if (printedTotal == null) {
+    return fail("no-printed-total",
+      "the statement's own `Total Valuation` was not found, so the rows read cannot be checked against anything "
+      + "the document printed. Nothing is emitted.");
+  }
+  if (Math.abs(rowSum - printedTotal) > 0.01) {
+    return fail("rows-do-not-sum-to-printed-total",
+      `the ${byIsin.size} row(s) read sum to ${rowSum.toFixed(2)} against the statement's own printed Total `
+      + `Valuation of ${printedTotal.toFixed(2)}. Nothing is emitted: a row read twice, missed or misread is exactly `
+      + "what this check exists to stop.");
+  }
+
+  /**
+   * THE RATES ARE STRUCK ON A DIFFERENT DAY FROM THE BALANCES, and the statement
+   * says so. The balances are `as on` 05/10/2026; the `Market Rate Date/Time`
+   * is 06/10/2026 11:13 — a moment inside the trading session, so the rate is
+   * not a settled close. Every value is dated by the rate's own date, which is
+   * what `priceAsOn` is for, and never by the balance date.
+   */
+  const rateAt = /Market\s+Rate\s+Date\s*\/\s*Time\s*:?\s*(\d{2})\/(\d{2})\/(\d{4})(?:\s*\/\s*(\d{1,2}:\d{2}(?::\d{2})?))?/i.exec(text);
+  const priceAsOn = rateAt ? isoOf(rateAt[1], rateAt[2], rateAt[3]) : null;
+  if (!priceAsOn) {
+    warn(warnings, "no-price-date",
+      "the statement prints no `Market Rate Date/Time`, so the rates carry no date of their own. They are not "
+      + "dated by the balance date, which is a claim about the units rather than about the prices.");
+  } else if (asOf && priceAsOn !== asOf) {
+    warn(warnings, priceAsOn > asOf ? "price-date-follows-holding-date" : "price-date-precedes-holding-date",
+      `the balances are stated as on ${asOf} and the rates as at ${priceAsOn}${rateAt[4] ? ` ${rateAt[4]}` : ""}, `
+      + "both in the statement's own words. A rate taken during a trading session is not a settled close; the "
+      + "values are dated by the rates' own date and the account by its balances.");
+  }
+
+  const holdings = [];
+  const unpriced = { declared: [], scheme: [], par: [] };
+  const summed = [];
+  for (const r of byIsin.values()) {
+    const described = join([r.company, r.scrip]);
+    const name = isOrdinaryEquity(r.scrip) || !r.scrip ? r.company : `${r.company} - ${r.scrip}`;
+    const face = faceValueBasis({ isin: r.isin, name: described, quantity: r.qty, value: r.value });
+    if (face) unpriced[face.tier].push(`${name} (${r.qty} at ${face.price.toFixed(4)})`);
+    if (r.types.length > 1) summed.push(`${name}: ${r.types.join(" + ")}`);
+    holdings.push(makeHolding({
+      security: name,
+      isin: r.isin,
+      assetClass: assetClassOf(r.isin, described),
+      quantity: r.qty,
+      /**
+       * THIS EXPORT PRINTS A RATE, and the rate is the primitive: value is
+       * derived from it and the printed value is kept as the check. Where the
+       * rate is a face value the depository records for want of a price, the
+       * row carries its units and NO value — `faceValueBasis` decides, with the
+       * same three tiers as ICICI's NSDL statement.
+       */
+      marketPrice: face ? null : r.rate,
+      marketValue: face ? null : r.value,
+      faceValue: face ? face.price : null,
+      priceAsOn,
+      source,
+    }));
+  }
+
+  if (summed.length) {
+    warn(warnings, "balance-types-summed",
+      `${summed.length} security(ies) are printed on more than one line, one per balance type, and are carried as `
+      + `one holding of the summed units — the same shares held under two depository balances are one position. `
+      + `Rows: ${summed.join("; ")}.`);
+  }
+  if (notFree.length) {
+    warn(warnings, "balance-not-free",
+      `${notFree.length} holding(s) are not printed as a free balance: ${notFree.join("; ")}. They are still the `
+      + "account's holdings and are carried; whether they can be sold today is what this line records.");
+  }
+  for (const [tier, rows] of Object.entries(unpriced)) {
+    if (!rows.length) continue;
+    const why = {
+      declared: "the SCRIP TYPE declares this face value and the printed rate is exactly it",
+      scheme: "the identifier is an `INF` fund or AIF scheme and the rate is exactly a unit's issue price, never a NAV",
+      par: "the rate is exactly a face-value denomination with no paise, on a scrip type that declares none",
+    }[tier];
+    warn(warnings, `value-is-face-value-${tier}`,
+      `${rows.length} holding(s) carry units and NO market value, because ${why}. A depository records the value `
+      + "a security was allotted at where it has no price for it, and multiplying by that produces a valuation "
+      + `nobody struck. Rows: ${rows.join("; ")}.`);
+  }
+
+  const dpId = (/DP\s*ID\s*:?\s*(IN\d{6})/i.exec(text) ?? [])[1] ?? null;
+  const types = [...new Set([...byIsin.values()].flatMap((r) => r.types))];
+  const priced = holdings.filter((h) => h.printed?.marketValue != null);
+  return {
+    accountNo,
+    owner,
+    asOf,
+    engagement: "Direct",
+    providerEngagement: `NSDL depository account at ${dpId ?? "DP not read"} — ${types.join(", ")}`,
+    holdings,
+    /**
+     * THE TOTAL OF WHAT IS CARRIED, so the reconciler's row-sum check compares
+     * like with like. The statement's own Total Valuation includes the
+     * face-valued rows this book does not value; it is the witness above, and
+     * the difference between the two is exactly those rows.
+     */
+    totals: makeTotals({
+      totalMarketValue: priced.length ? priced.reduce((t, h) => t + h.printed.marketValue, 0) : null,
+      positionCount: holdings.length,
+      source,
+    }),
+    status: "ok",
     warnings,
   };
 }
