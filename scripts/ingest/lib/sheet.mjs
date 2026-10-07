@@ -28,10 +28,21 @@
 //          it whose first line carries a comma, after the ZIP, OLE and HTML
 //          signatures have all been ruled out.
 //
+//   .xls   AND SOMETIMES IT IS NOT A LIE. The October 2026 delivery brought
+//          GENUINE legacy BIFF workbooks — an OLE compound file, `D0 CF 11 E0` —
+//          beside the bank statements they export: HDFC Bank's and ICICI Bank's
+//          own "download as Excel". They are read through SheetJS (`xlsx`, the
+//          library the AMFI harvester already uses for the same format), and
+//          read for their stored VALUES. See `readBiff` for why that matters.
+//          HOW MANY is deliberately not written here: that delivery is not in
+//          this repository, so a count would be a figure the next reader cannot
+//          check against anything. `npm run coverage:source` counts them.
+//
 // Everything returns the same shape — a grid of trimmed strings — so a provider
 // reads a sheet the way it reads a PDF page: by locating a header row and
 // matching column labels, never by column index.
 import { inflateRawSync } from "node:zlib";
+import * as XLSX from "xlsx";
 import { listEntries, readEntry } from "./unzip.mjs";
 import { parseNum } from "./parseNum.mjs";
 
@@ -60,8 +71,9 @@ const clean = (s) => unescapeHtml(String(s ?? "").replace(/<[^>]+>/g, " ")).repl
  * What kind of file this actually is, from its first bytes.
  *
  * `PK\x03\x04` is a ZIP, so an Office Open XML workbook. `\xD0\xCF\x11\xE0` is
- * an OLE compound file, so a genuine legacy BIFF `.xls` — which this module does
- * NOT read, and says so rather than returning an empty grid that reads as "the
+ * an OLE compound file, so a genuine legacy BIFF `.xls` (see `readBiff`). The
+ * same header opens a Word `.doc` or an Outlook `.msg`; those reach `readBiff`
+ * too and come back with `error` set, never as an empty grid that reads as "the
  * file had nothing in it".
  */
 export function sniffFormat(buf) {
@@ -302,6 +314,83 @@ export function readXlsx(buf) {
   return sheets;
 }
 
+// ── Legacy BIFF .xls ─────────────────────────────────────────────────────────
+
+/**
+ * One BIFF cell as the text `readXlsx` would have given the same cell.
+ *
+ * A NUMBER IS ITS STORED VALUE, NEVER ITS DISPLAYED TEXT. SheetJS hands back
+ * both: `v`, the double the file stores, and `w`, that number run through the
+ * cell's display format. A bank writes its amounts under the General format,
+ * which shows about ten significant digits — so `w` reads 208039138.56 as
+ * "208039138.6" and 3583688673.57 as "3583688674". Measured on the October 2026
+ * delivery's own HDFC export. Read as text, every large amount in a bank export
+ * loses its paise and the export stops agreeing with the PDF it witnesses, by an
+ * amount that looks like rounding. `String(v)` is JavaScript's shortest exact
+ * rendering of the stored double, which is also what an `.xlsx` stores in `<v>`.
+ *
+ * A DATE STAYS A SERIAL: workbooks are opened with `cellDates: false`, exactly as
+ * `readXlsx` leaves a date as the `<v>` serial it is stored as. A reader that
+ * wants a date reads the serial; nothing here guesses a calendar for it. The
+ * two banks in this drop write their dates as TEXT anyway.
+ *
+ * A boolean is "1"/"0" and an error is its own `#N/A` text — what the same cell
+ * carries in an `.xlsx`. Strings are whitespace-collapsed and trimmed, like
+ * every other format here.
+ */
+function biffCellText(cell) {
+  if (!cell || cell.v == null) return "";
+  switch (cell.t) {
+    case "n": return Number.isFinite(cell.v) ? String(cell.v) : "";
+    case "b": return cell.v ? "1" : "0";
+    case "e": return String(cell.w ?? "").trim();
+    case "d": return cell.v instanceof Date ? cell.v.toISOString().slice(0, 10) : String(cell.v).trim();
+    default: return String(cell.v).replace(/\s+/g, " ").trim();
+  }
+}
+
+/**
+ * A genuine legacy BIFF `.xls`, as a grid of strings in the SAME shape `readXlsx`
+ * returns: every sheet, every row from the first, cells kept at their own column
+ * — a value in C9 is the third cell of the ninth row whatever lies to its left or
+ * above it — trailing empties dropped, and blank rows kept as `[]` so a caller
+ * counting rows sees the sheet's real shape.
+ *
+ * A MERGED range is left as BIFF stores it: the value in its top-left cell and
+ * the rest empty, which is also how an `.xlsx` stores one. Nothing is spread
+ * across the range, because a spread value would be read twice by any caller
+ * that sums a column.
+ *
+ * Throws on a file SheetJS cannot open; `readSpreadsheet` turns that into an
+ * `error`, never an empty grid.
+ */
+export function readBiff(buf) {
+  let wb;
+  try {
+    wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellFormula: false, cellHTML: false, cellStyles: false });
+  } catch (e) {
+    // SheetJS's own message names a parser state ("Cannot set properties of
+    // undefined") rather than the file, so it is kept but said in this file's
+    // terms: what was attempted, and that it failed.
+    throw new Error(`an OLE compound file that does not read as a BIFF workbook (${e?.message ?? e})`);
+  }
+  if (!wb?.SheetNames?.length) throw new Error("the OLE compound file holds no worksheet — not a BIFF workbook");
+  return wb.SheetNames.map((name) => {
+    const ws = wb.Sheets[name];
+    const ref = ws?.["!ref"];
+    if (!ref) return makeSheet(name, []);
+    const range = XLSX.utils.decode_range(ref);
+    const rows = [];
+    for (let r = 0; r <= range.e.r; r++) {
+      const cells = [];
+      for (let c = 0; c <= range.e.c; c++) cells.push(biffCellText(ws[XLSX.utils.encode_cell({ r, c })]));
+      while (cells.length && cells[cells.length - 1] === "") cells.pop();
+      rows.push(cells);
+    }
+    return makeSheet(name, rows);
+  });
+}
+
 /** Number formats are needed to distinguish an actual day from an Excel month cell. */
 export function readXlsxFormats(buf) {
   const entries = listEntries(buf);
@@ -340,12 +429,7 @@ export function readSpreadsheet(input) {
     if (format === "xlsx") return { sheets: readXlsx(buf), format, error: null };
     if (format === "html-table") return { sheets: readHtmlTables(buf.toString("utf8")), format, error: null };
     if (format === "csv") return { sheets: readCsv(buf), format, error: null };
-    if (format === "biff") {
-      return {
-        sheets: [], format,
-        error: "legacy BIFF .xls (OLE compound file) — this pipeline reads Office Open XML and HTML-table .xls only",
-      };
-    }
+    if (format === "biff") return { sheets: readBiff(buf), format, error: null };
     return { sheets: [], format, error: "unrecognised spreadsheet format" };
   } catch (e) {
     // The SNIFFED format, not "unknown". A reader that says it could not tell

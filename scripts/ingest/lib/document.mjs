@@ -442,6 +442,30 @@ export function makeFlows(input = {}) {
     ...optionalFlow(input, "changeInAccruals"),
     ...optionalFlow(input, "otherExpenses"),
     ...optionalFlow(input, "gainPriorToTakeover"),
+    /**
+     * A BANK ACCOUNT'S OWN FOUR PRINTED FIGURES, on the same terms as the four
+     * above: only `bankStatement.mjs` reads them, so every other document is
+     * byte-identical to what it was.
+     *
+     *   openingBalance   the balance the statement prints for the day before
+     *                    its window opens. NULL where it prints none and the
+     *                    reader DERIVED one from the first row (ICICI), so a
+     *                    figure the bank never printed can never read as one
+     *                    it did — the derived figure is in the summary sheet,
+     *                    labelled as derived, and nowhere else.
+     *   closingBalance   the balance it prints for the last day of the window.
+     *   debits/credits   the two printed totals, which is what makes the
+     *                    reader's own sum a CHECK rather than the source.
+     *
+     * They are deliberately NOT `openingCorpus`/`corpus` (a savings balance is
+     * not a portfolio corpus, and nothing that reads a corpus should see one)
+     * and NOT `contribution`/`withdrawal` (those are the family putting money
+     * into a mandate, which this is not — see `CAPITAL_KINDS`).
+     */
+    ...optionalFlow(input, "openingBalance"),
+    ...optionalFlow(input, "closingBalance"),
+    ...optionalFlow(input, "debits"),
+    ...optionalFlow(input, "credits"),
     profit: num(input.profit),
     /** Portfolio value at the END of the window. */
     corpus: num(input.corpus),
@@ -520,6 +544,22 @@ export function makeCashFlow(input) {
      * carries no key, so the rest of the archive is what the extractor writes.
      */
     ...(input.seriesIssued ? { seriesIssued: input.seriesIssued } : {}),
+    /**
+     * THE TWO COLUMNS A BANK STATEMENT PRINTS AND NOTHING ELSE DOES.
+     *
+     *   valueDate   HDFC's "Value Dt" — the day the bank VALUES the movement,
+     *               which is not always the day it posts it. Carried as its
+     *               own field rather than overwriting `date`, because the
+     *               running balance the reader ties to runs in POSTING order.
+     *               ICICI's statement prints no value date, so its rows carry
+     *               none: absent is this statement does not print one.
+     *   reference   the cheque or reference number the row prints, verbatim.
+     *
+     * Conditional for the reason `seriesIssued` is: only one reader sets
+     * either, so every document from every other reader is unchanged.
+     */
+    ...(input.valueDate ? { valueDate: input.valueDate } : {}),
+    ...(input.reference ? { reference: String(input.reference) } : {}),
   };
 }
 
@@ -853,6 +893,19 @@ export function makeDocument(input) {
      * holding is shared rather than implying sole ownership.
      */
     jointHolders: input.jointHolders ?? [],
+    /**
+     * WHICH OF A READER'S OWN ALL-OR-NOTHING CHECKS THIS DOCUMENT COULD ANSWER:
+     * `{ passed, notApplicable, failed }`, each a list of the reader's own
+     * wording. Provenance about the GATE rather than about a figure, which is
+     * why it is here beside `stitches` and `securityNameSource`.
+     *
+     * A check with no printed figure behind it is NOT APPLICABLE, never a pass
+     * (`golden.mjs`'s rule), and the two banks supply different sets — ICICI
+     * prints no opening balance, no debit or credit total and no Dr/Cr count.
+     * So prose naming a fixed list of reconciliations is false of half a drop,
+     * and `build-book`'s report reads this instead of asserting one.
+     */
+    checks: input.checks ?? null,
     /** Raw tables, for the audit archive: { sectionName: { name, rows } }. */
     sections: input.sections ?? {},
     /** Every stitch the layout engine applied, for provenance. */

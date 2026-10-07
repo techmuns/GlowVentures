@@ -468,13 +468,20 @@ PRECEDENCE["ICICI Bank (NSDL demat)"] = {
 };
 
 /**
- * HDFC BANK'S NSDL DEPOSITORY — one report type, and it values nothing.
+ * HDFC BANK'S NSDL DEPOSITORY — one report type, two layouts.
  *
- * Two statements, one holding each: 347 units of an unlisted company's
- * preference share at a Market Rate of exactly 100.000, which `faceValueBasis`
- * grades as `par`. So the account carries its QUANTITY and no market value, and
- * these documents move no total in the book — which is the honest outcome, not a
- * shortfall. Reading 100.000 as a mark would invent ₹34,700 twice.
+ * THE TWO TRUSTS' STATEMENTS value nothing: 347 units each of an unlisted
+ * company's preference share at a Market Rate of exactly 100.000, which
+ * `faceValueBasis` grades as `par`. So those accounts carry their QUANTITY and
+ * no market value — the honest outcome, not a shortfall. Reading 100.000 as a
+ * mark would invent ₹34,700 twice.
+ *
+ * AJAY'S OWN ACCOUNT (DP account 10295743, the native `HDFC Bank Depository
+ * Holding Details` export) values eight of its ten rows: its `Rate (Rs.)` is a
+ * market rate struck at the time the statement prints, and the two Sterlite
+ * rows at exactly their ₹2 face value are carried as quantities, by the same
+ * three tiers. Every row's balance × rate must be its printed value, and the
+ * rows must reproduce the printed `Total Valuation`, or nothing is read.
  *
  * A PROVIDER THE PIPELINE CAN READ MUST BE IN THIS FILE. `authoritative()`
  * returns null for a provider with no block, and eight accounts once landed
@@ -482,9 +489,9 @@ PRECEDENCE["ICICI Bank (NSDL demat)"] = {
  * of exactly that. Nothing failed and nothing said so.
  */
 PRECEDENCE["HDFC Bank (NSDL demat)"] = {
-  holdings: { reportType: "holdings", note: "`Holding Statement` — the only source in this corpus for these two DP accounts." },
+  holdings: { reportType: "holdings", note: "`Holding Statement` / `Depository Holding Details` — the only source in this corpus for these three DP accounts." },
   quantity: { reportType: "holdings", note: "the `Balance` column." },
-  marketValue: { reportType: "holdings", note: "the `Market Value` column, REFUSED here because the implied price is exactly the face value the preference share was allotted at. The rows read reproduce the statement's own printed `Total Valuation (Rs.)` to the paisa, which is what licenses reading a document whose text was recovered by rendering." },
+  marketValue: { reportType: "holdings", note: "balance × the `Rate (Rs.)` column where the export prints a market rate, with the printed `Value (Rs.)` kept as the check; REFUSED where the rate is exactly the face value a security was allotted at. The rows read reproduce the statement's own printed `Total Valuation` to the paisa, which is what licenses reading it — and, on the trusts' two statements, a document whose text was recovered by rendering." },
 };
 
 /**

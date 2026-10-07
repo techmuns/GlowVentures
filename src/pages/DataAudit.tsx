@@ -12,7 +12,7 @@ import { Pill } from "@/components/Pill";
 // password gate (functions/_middleware.js); if a fetch fails we show a fallback notice.
 type SheetMeta = { key: string; name: string; rows: number; cols: number };
 type FileMeta = {
-  fileKey: string; label: string; fy: string; source: string;
+  fileKey: string; label: string; fy: string; source: string; reportType: string;
   status: "ok" | "partial" | "failed" | "encrypted"; sheets: SheetMeta[];
 };
 type Cell = string | number | null;
@@ -40,6 +40,35 @@ function chipLabels(manifest: readonly { fileKey: string; label: string; fy: str
     out.set(f.fileKey, n === 1 ? base : `${base} · #${n}`);
   }
   return out;
+}
+
+/**
+ * THE DOCUMENT THIS PAGE OPENS ON IS CHOSEN, NOT WHICHEVER PATH SORTS FIRST.
+ *
+ * It was the first manifest entry carrying sheets, and the manifest is ordered
+ * by SOURCE PATH — so a delivery whose folder sorts earlier silently moves
+ * which statement a reader lands on. Two things turn on that, and neither is
+ * served by leaving it to a directory name:
+ *
+ *   - this page exists so a figure on the dashboard can be checked against the
+ *     statement that struck it, and a savings-account statement struck none. It
+ *     is in no total on this site at all (`bankStatement.mjs`'s own
+ *     `EXCLUDED_REASON`), so nobody opens the archive wanting one first;
+ *   - its tape is the family's own banking, one narration per row naming
+ *     whoever that row paid. That is theirs to open deliberately rather than
+ *     the first thing the page shows, and one of those narrations names the
+ *     ring-fenced company, which `check:pages` asserts no route but /polycab
+ *     does.
+ *
+ * It stays a PREFERENCE and not a filter: a drop carrying nothing else would
+ * otherwise open on an empty page, which says less than the statement does. A
+ * reader reaches any document in one click from the chips either way.
+ */
+const NOT_A_DEFAULT_DOCUMENT = new Set(["bank-statement"]);
+function defaultDocument(m: readonly FileMeta[]): FileMeta | null {
+  return m.find((f) => f.sheets.length && !NOT_A_DEFAULT_DOCUMENT.has(f.reportType))
+    ?? m.find((f) => f.sheets.length)
+    ?? null;
 }
 
 const BASE = import.meta.env.BASE_URL;
@@ -98,7 +127,7 @@ export function DataAudit() {
         if (!alive) return;
         setManifest(m);
         if (!searchParams.get("file")) {
-          const first = m.find((f) => f.sheets.length);
+          const first = defaultDocument(m);
           if (first) { setFileKey(first.fileKey); setSheetKey(first.sheets[0].key); }
         }
         setStatus("ready");

@@ -61,7 +61,13 @@ import { REVIEW_AS_OF } from "./lib/reviewPrivateRead.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
 const OUT = process.env.GLOW_BOOK_OUT ?? path.join(ROOT, "src", "data", "glowData.ts");
-const REPORT = path.join(ROOT, "docs", "BOOK-REPORT.md");
+// AND THE REPORT TAKES ONE TOO, beside `GLOW_BOOK_OUT`. A branch of this
+// report that no archived document reaches — the bank section, until the
+// delivery lands — can only be checked by RENDERING it against a synthetic
+// archive, and a suite that did that wrote over the committed book on every
+// run. `extract.mjs` has carried `GLOW_SOURCE_DIR`/`GLOW_AUDIT_DIR`/
+// `GLOW_DOCS_DIR` for the same reason since it was written.
+const REPORT = process.env.GLOW_BOOK_REPORT ?? path.join(ROOT, "docs", "BOOK-REPORT.md");
 
 const r2 = (n) => (n === null || n === undefined ? null : Math.round(n * 100) / 100);
 // UNITS, not rupees — the depository statements print quantities to three
@@ -2409,6 +2415,29 @@ function build(archived) {
   const unclassified = new Map();
   /** Accounts read in full and deliberately left OUT — see excludedFromBook. */
   const excludedAccounts = [];
+  /**
+   * THE FAMILY'S OWN BANK ACCOUNTS — read in full, in no total, and reported
+   * with the four figures their statements print.
+   *
+   * They are in `excludedAccounts` too, which is what keeps them out of the
+   * book; this carries what that table cannot. Its value column is headed
+   * "Value on its own statement" and is summed into one figure across every
+   * excluded account, which for a portfolio is a market value. A bank balance
+   * is not one, and adding the two under that heading would be a total over two
+   * different kinds of thing — §"a total must tie to its own columns". So the
+   * balance is reported here, under its own heading, beside the debits and
+   * credits that produced it.
+   *
+   * IT REACHES THE REPORT AND NOT THE BOOK, and that was measured rather than
+   * reasoned: neither this nor `excludedAccounts` is emitted to `glowData.ts`,
+   * so a savings statement in the archive changes NOT ONE BYTE of it. Run with
+   * one synthetic HDFC statement added to a scratch copy of the archive, every
+   * export of the emitted book — `BOOK_SUMMARY` included, `accountsCount` with
+   * it — is byte-identical to the committed one. That is the whole safety
+   * argument for landing this delivery, so it is a measurement here rather than
+   * a claim in a stage note.
+   */
+  const bankAccounts = [];
   /** Positions whose lot register does not account for the units held — no split. */
   const splitUnreconciled = [];
   /** Positions whose statement cost FIFO over the fund's own unit record restates — named in the report. */
@@ -2520,10 +2549,74 @@ function build(archived) {
        * it is kept for the next one a drop cannot attribute.
        */
       const heldRows = group.flatMap((d) => d.holdings ?? []);
-      const valueWhy = value === null && heldRows.some((h) => isNum(h.lastMovementRate) && h.lastMovementRate > 0)
-        ? `its statement prints ${heldRows.length} holding(s) as quantities, with the price of each one's last depository movement rather than a valuation, so it states no value`
-        : null;
-      excludedAccounts.push({ accountId, provider, accountNo, owner: group.map((d) => d.owner).find(Boolean) ?? null, value, valueWhy, reason: excluded });
+      /**
+       * A BANK ACCOUNT STATES A BALANCE AND NOT A VALUE, and the two must not
+       * share a column. `value` stays null — it is the market value of what an
+       * account HOLDS, and a savings account holds nothing — and the balance is
+       * reported in `bankAccounts` below. Without this the excluded table would
+       * read "—" for an account whose statement prints its balance four times,
+       * which is a dash standing where a figure exists.
+       */
+      /**
+       * AND EVERY ISSUE IS REPORTED, NOT ONLY THE NEWEST — because a bank tape
+       * is nothing BUT dated rows.
+       *
+       * `group` is `newestPerReportType`'s set, which is right about a snapshot
+       * and wrong here, and `DATED_COLLECTIONS` already unions `cashFlows` across
+       * every issue for exactly that reason. Read off `group`, an account that
+       * sent four quarterly statements PUBLISHED four quarters of rows and
+       * REPORTED one quarter's balances and one quarter's tie-out — so the
+       * section claimed "every check reconciles" while showing the evidence for
+       * a quarter of what it had published. Each statement is its own row, which
+       * the Period column already implies, and the closing-balance total takes
+       * the NEWEST per account below, because an account holds one balance.
+       */
+      const bankDocs = allIssues.filter((d) => d.reportType === "bank-statement")
+        .sort((a, b) => String(a.docKey).localeCompare(String(b.docKey)));
+      for (const d of bankDocs) {
+        bankAccounts.push({
+          accountId, provider, accountNo,
+          owner: d.owner ?? null,
+          /**
+           * `asOf` IS THE LAST RESORT, because a REFUSED statement publishes no
+           * `flows` at all — and the refused list below names each one by its
+           * period, which would be a dash on every one of them, so two refused
+           * statements of one account could not be told apart. The reader's own
+           * figure still wins wherever it published one.
+           */
+          periodFrom: d.flows?.periodFrom ?? d.periodFrom ?? null,
+          periodTo: d.flows?.periodTo ?? d.periodTo ?? d.asOf ?? null,
+          openingBalance: isNum(d.flows?.openingBalance) ? d.flows.openingBalance : null,
+          closingBalance: isNum(d.flows?.closingBalance) ? d.flows.closingBalance : null,
+          debits: isNum(d.flows?.debits) ? d.flows.debits : null,
+          credits: isNum(d.flows?.credits) ? d.flows.credits : null,
+          rows: (d.cashFlows ?? []).filter((c) => c.kind === "bank-statement").length,
+          /**
+           * WHICH CHECKS THIS STATEMENT ITSELF SUPPLIED A FIGURE FOR. The two
+           * banks supply different sets, so the report names them per account
+           * rather than asserting a list that is false of half the drop.
+           */
+          checks: d.checks ?? null,
+          status: d.status ?? null,
+        });
+      }
+      const valueWhy = value === null && bankDocs.length
+        ? "it is a bank account rather than a holding, so its statement states no market value; its balance is in the bank-account section below"
+        : value === null && heldRows.some((h) => isNum(h.lastMovementRate) && h.lastMovementRate > 0)
+          ? `its statement prints ${heldRows.length} holding(s) as quantities, with the price of each one's last depository movement rather than a valuation, so it states no value`
+          : null;
+      /**
+       * WHICH KIND OF EXCLUSION THIS IS, because the report's own prose cannot
+       * be true of both. An account held by another taxpayer belongs to somebody
+       * else and ENTERS THE BOOK with one entry in `shared/owners.mjs`; the
+       * family's own savings account belongs to them, is excluded for what it IS
+       * rather than for whose it is, and no owner entry would ever bring it in —
+       * that is their decision about what Cash means, taken against the balance
+       * in the bank-account section below. Said of every row at once, each
+       * sentence is false of half the table.
+       */
+      const kind = bankDocs.length ? "own-bank-account" : "other-holder";
+      excludedAccounts.push({ accountId, provider, accountNo, owner: group.map((d) => d.owner).find(Boolean) ?? null, value, valueWhy, reason: excluded, kind });
       notes.push(`account ${accountNo} (${provider}) is NOT in the book: ${excluded}`
         + (value !== null ? ` Value on its own statement: ${value.toLocaleString("en-IN")}.` : "")
         + (valueWhy ? ` Value: none stated — ${valueWhy}.` : ""));
@@ -2564,6 +2657,7 @@ function build(archived) {
         owner: group.map((d) => d.owner).find(Boolean) ?? null,
         value: group.map((d) => d.totals?.totalMarketValue).find(isNum) ?? null,
         reason,
+        kind: "unresolved-holder",
       });
       notes.push(`account ${accountNo} (${provider}) is NOT in the book: ${reason}. `
         + "It is excluded rather than carried with an empty owner, because an account attributed to nobody is a worse figure than a named absence.");
@@ -4448,7 +4542,7 @@ function build(archived) {
     capitalMoves, positionTranches, shareMovements,
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
-    excludedAccounts, unvaluedHoldings, separateInvestments,
+    excludedAccounts, bankAccounts, unvaluedHoldings, separateInvestments,
     reviewSuperseded: review?.superseded ?? [], reviewWrittenOff: review?.writtenOff ?? [], reviewFlows: review?.flows ?? [],
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
@@ -4848,11 +4942,41 @@ function report(book) {
   if (!book.excludedAccounts?.length) {
     L.push("_None — every account this pipeline could read belongs to a canonical owner._");
   } else {
-    L.push("These statements were read COMPLETELY. They are absent from every total above");
-    L.push("because they belong to somebody else, and that is a different thing from a");
+    /**
+     * THE INTRO SAYS ONLY WHAT IS TRUE OF EVERY ROW, and the rest is said per
+     * kind. It read "they belong to somebody else" and "each one becomes part of
+     * the book with a single entry in `shared/owners.mjs`" — both true of a
+     * folio held by another taxpayer and both FALSE of the family's own savings
+     * account, which is in this table for what it IS rather than for whose it
+     * is. A sentence that is false of half the rows it covers is the caption
+     * failure this book keeps paying for, arriving in a report.
+     */
+    const kindsOf = (k) => book.excludedAccounts.filter((a) => (a.kind ?? "other-holder") === k);
+    const others = [...kindsOf("other-holder"), ...kindsOf("unresolved-holder")];
+    const ownBank = kindsOf("own-bank-account");
+    L.push("These statements were read COMPLETELY, and that is a different thing from a");
     L.push("document the pipeline could not open — the coverage table in");
-    L.push("`docs/EXTRACTION-REPORT.md` has those. Each one becomes part of the book with a");
-    L.push("single entry in `shared/owners.mjs`, if the family says it should be.");
+    L.push("`docs/EXTRACTION-REPORT.md` has those. Each is absent from every total above for");
+    L.push("the reason its own row states.");
+    if (others.length) {
+      const one = others.length === 1;
+      L.push("");
+      L.push(`**${others.length} of them ${one ? "belongs" : "belong"} to somebody else** — another taxpayer's folio, or an`);
+      L.push("account no statement in the drop resolves to a canonical owner. Each becomes part");
+      L.push("of the book with a single entry in `shared/owners.mjs`, if the family says it");
+      L.push("should be.");
+    }
+    if (ownBank.length) {
+      const one = ownBank.length === 1;
+      L.push("");
+      L.push(`**${ownBank.length} of them ${one ? "is the family's OWN bank account" : "are the family's OWN bank accounts"}**, `
+        + `excluded for what ${one ? "it is" : "they are"}`);
+      L.push(`rather than for whose ${one ? "it is" : "they are"}: a savings account holds no investment, so it has no`);
+      L.push(`market value to sum, and no owner entry would ever bring one in. Whether ${one ? "its" : "their"}`);
+      L.push(`${one ? "closing balance" : "closing balances"} should count as Cash is the family's decision and is open — see`);
+      L.push("the bank-account section below, which carries the four figures each statement");
+      L.push("prints.");
+    }
     L.push("");
     L.push("| Account | Provider | Holder | Value on its own statement | Why it is out |");
     L.push("| --- | --- | --- | ---: | --- |");
@@ -4870,6 +4994,228 @@ function report(book) {
     if (unstated.length) {
       L.push("");
       L.push(`${unstated.length} more account(s) state no value on their own statement, and are named in the table with why.`);
+    }
+  }
+  L.push("");
+  /**
+   * THE FAMILY'S OWN BANK ACCOUNTS — READ IN FULL, AND IN NO TOTAL ABOVE.
+   *
+   * It is its own section rather than a column of the table above it, because
+   * that table's value column is headed "Value on its own statement" and is
+   * SUMMED into one figure: a market value. A bank balance is not one, and
+   * adding it there would print a total that does not tie to its own columns.
+   *
+   * It carries the four figures each statement prints and NOT ONE NARRATION.
+   * A row's description names whoever was paid, and this file is read by
+   * anybody who opens the repository.
+   */
+  L.push("## The family's own bank accounts");
+  L.push("");
+  if (!book.bankAccounts?.length) {
+    L.push("_None — no savings-account statement is in this drop._");
+  } else {
+    /**
+     * "READ COMPLETELY" IS TRUE OF A STATEMENT THAT PUBLISHED A TAPE, AND THE
+     * BRANCH AT THE FOOT OF THIS SECTION REPORTS ONES THAT DID NOT.
+     *
+     * Asserted of every row at once, it sat four paragraphs above its own
+     * counterexample: a statement the tie-out refused was PARSED completely and
+     * published nothing, which is a different claim. So the lead sentence is
+     * about the TOTALS — true of every row here, whatever the gate said — and
+     * what was published is counted rather than claimed.
+     */
+    const published = book.bankAccounts.filter((b) => b.rows > 0);
+    const refused = book.bankAccounts.filter((b) => b.rows === 0);
+    const n = book.bankAccounts.length;
+    L.push(`**${n} statement(s)${refused.length ? `, ${published.length} of which published a tape` : ""}** — `
+      + "and not one rupee of any of them is in a total above: not in the consolidated value, not in");
+    L.push("Cash, and not as capital. This book's Cash is the cash sleeve a manager or a");
+    L.push("depository reports INSIDE an investment account; a household account is a different");
+    L.push("kind of money, and summing one into Cash would move every allocation weight and every");
+    L.push("return denominator on a decision nobody has made. **Whether these balances should be");
+    L.push("counted is the family's to answer**, and this section is here so the figures are");
+    L.push("stated rather than silently dropped.");
+    L.push("");
+    /**
+     * AND THE CHECKS ARE NAMED PER ACCOUNT, NOT LISTED IN PROSE.
+     *
+     * This read "the running balance, both printed totals, the Dr/Cr counts and
+     * the closing balance all reconcile" — four of which an ICICI statement
+     * structurally cannot strike, because it prints no debit total, no credit
+     * total and no Dr/Cr count. A sentence claiming a reconciliation the
+     * document could not supply a figure for is the same failure as a caption
+     * that does not describe its own figure, and this file's own Stage 10dj
+     * record already says the two banks differ. So the claim is now what the
+     * gate actually guarantees — every check the statement ANSWERS — and the
+     * `Checks` column and the list under the table carry the rest, read off
+     * each document's own `checks` rather than written here.
+     */
+    L.push("Every figure below is one the statement PRINTS, and a tape is published only where");
+    L.push("**every check the statement itself supplies a figure for reconciles to the paisa**.");
+    L.push("Which checks those are is the statement's own doing, so they are counted per account");
+    L.push("below: a bank that prints no debit total, no credit total and no Dr/Cr count supplies");
+    L.push("four fewer, and a check with no printed figure behind it is NOT APPLICABLE and never a");
+    L.push("pass. A statement that fails a check it CAN strike publishes no rows at all and says");
+    L.push("which. Where a bank prints no opening balance the cell says so — the figure the reader");
+    L.push("chained from is in that document's own `summary` sheet, labelled as derived from the");
+    L.push("first row.");
+    L.push("");
+    L.push("| Account | Bank | Holder | Period | Opening | Debits | Credits | Closing | Rows | Checks |");
+    L.push("| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |");
+    /**
+     * TWO DECIMALS, ALWAYS, which the rest of this report does not do — and the
+     * paragraph above is why: it says every figure here is one the statement
+     * PRINTS, and `toLocaleString` drops a trailing zero, so a closing balance
+     * the bank prints as 85,500.50 rendered 85,500.5 and an opening of
+     * 1,00,000.00 rendered 1,00,000. A portfolio market value elsewhere in this
+     * file is a derived figure to the rupee and loses nothing that way; a bank
+     * balance is quoted to the paisa, and the tie-out that published it is
+     * struck on the paisa, so the paise belong on screen.
+     *
+     * Found by RENDERING this section against a synthetic statement: the
+     * committed archive carries none, so the branch had never run. One
+     * formatter for the table and the total under it, rather than one each.
+     */
+    const money = (v) => (isNum(v)
+      ? r2(v).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : "—");
+    for (const b of book.bankAccounts) {
+      const period = b.periodFrom && b.periodTo ? `${b.periodFrom} → ${b.periodTo}` : (b.periodTo ?? b.periodFrom ?? "—");
+      const opening = isNum(b.openingBalance) ? money(b.openingBalance) : "not printed";
+      const rows = b.rows === 0 ? "none published" : b.rows.toLocaleString("en-IN");
+      /**
+       * A FAILURE LEADS THE CELL, because it is the one thing in it a reader
+       * acts on.
+       *
+       * This read `${passed} tied${n/a}` whatever the gate said, so a refused
+       * statement's cell printed "8 tied, 1 n/a" beside a Rows cell reading
+       * "none published" — a cell silent about the only reason the row exists,
+       * inviting the reader to wonder why nothing was published when every
+       * check tied. The counts are the same; what changed is that the failures
+       * are named at all, and first.
+       */
+      const nApp = (b.checks?.notApplicable ?? []).length;
+      const nBad = (b.checks?.failed ?? []).length;
+      const checks = b.checks
+        ? [nBad ? `**${nBad} FAILED**` : null, `${(b.checks.passed ?? []).length} tied`, nApp ? `${nApp} n/a` : null]
+          .filter(Boolean).join(", ")
+        : "—";
+      L.push(`| ${b.accountNo ?? "—"} | ${b.provider} | ${b.owner ?? "—"} | ${period} | ${opening} | `
+        + `${money(b.debits)} | ${money(b.credits)} | ${money(b.closingBalance)} | ${rows} | ${checks} |`);
+    }
+    /**
+     * ONE BALANCE PER ACCOUNT, THE LATEST RECONCILED — and where a NEWER issue
+     * was refused, that is not the newest and the sentence must not say it is.
+     *
+     * `bankAccounts` is one entry per DOCUMENT, because each statement has its
+     * own period and its own tie-out, and that is what the table should show.
+     * Summing its closing column adds the SAME account's money once per
+     * statement: a quarterly set for one HDFC account reads as three accounts
+     * holding three times the balance, and the sentence under it said "across 3
+     * account(s)" about one.
+     *
+     * THE NEWEST ISSUE IS CHOSEN OVER EVERY ISSUE, AND ONLY THEN IS ITS BALANCE
+     * TAKEN. Choosing over `published` alone drops a newer REFUSED issue before
+     * the comparison, so an account with a published Q2 and a refused Q3 had its
+     * Q2 closing described as "the newest" while the table two lines above showed
+     * the later refused one. What is published is the latest RECONCILED balance;
+     * whatever moved in the refused period is not in it, and that gap is NAMED
+     * rather than left to be found by reading the table — the figure is in no
+     * total on this site, so the gap is the only thing a reader could act on.
+     *
+     * AND THE COUNT IS NOT A PER-ACCOUNT CLAIM. `each taken from the newest of
+     * its N statement(s)` read N off the whole published set, so two accounts
+     * holding two statements and one read "each … of its 3" — a count neither
+     * has, in a sentence whose "its" asserts it of both.
+     */
+    const issuesByAccount = new Map();
+    for (const b of book.bankAccounts) {
+      const key = `${b.provider}|${b.accountNo ?? "—"}`;
+      if (!issuesByAccount.has(key)) issuesByAccount.set(key, []);
+      issuesByAccount.get(key).push(b);
+    }
+    const held = [];
+    const behind = [];
+    const unreconciled = [];
+    for (const issues of issuesByAccount.values()) {
+      const byNewest = [...issues]
+        .sort((a, b) => String(b.periodTo ?? "").localeCompare(String(a.periodTo ?? "")));
+      const at = byNewest.find((b) => b.rows > 0 && isNum(b.closingBalance));
+      if (!at) { unreconciled.push(byNewest[0]); continue; }
+      held.push({ ...at, issues: issues.length });
+      const newest = byNewest[0];
+      if (newest !== at && String(newest.periodTo ?? "") > String(at.periodTo ?? "")) {
+        behind.push({ at, refused: newest });
+      }
+    }
+    if (held.length) {
+      const issues = sum(held.map((b) => b.issues));
+      L.push("");
+      L.push(`Their latest reconciled closing balances come to **${money(sum(held.map((b) => b.closingBalance)))}** `
+        + `across ${held.length} account(s)`
+        + (issues > held.length ? ` — one balance each, from the ${issues} statement(s) those accounts sent` : "")
+        + ", and that figure is in nothing above.");
+      if (behind.length) {
+        L.push("");
+        L.push("**And for some of them it is not the newest.** Each of these accounts sent a LATER");
+        L.push("statement whose tie-out failed, so the balance above is the last one this book can");
+        L.push("witness and whatever moved after it is not in it:");
+        L.push("");
+        for (const x of behind) {
+          L.push(`- **${x.at.provider} ${x.at.accountNo ?? "—"}** — reconciled to ${x.at.periodTo ?? "—"}; `
+            + `its ${x.refused.periodTo ?? "—"} statement was refused.`);
+        }
+      }
+      if (unreconciled.length) {
+        /**
+         * AND THE BOLD IS CLOSED, which the first draft of this line did not
+         * do — found by RENDERING it, like every other defect in this section.
+         * An unterminated `**` leaves every paragraph after it bold in any
+         * reader, so the one claim a reader must not miss would have taken the
+         * not-applicable list and the refusals with it.
+         */
+        const one = unreconciled.length === 1;
+        L.push("");
+        L.push(`**${unreconciled.length} further account${one ? "" : "s"} in the table above `
+          + `contribute${one ? "s" : ""} no balance at all.** Every statement ${one ? "it" : "they"} sent`);
+        L.push(`was refused: ${unreconciled.map((b) => `${b.provider} ${b.accountNo ?? "—"}`).join(", ")}.`);
+      }
+    }
+    /**
+     * WHAT THE STATEMENT ITSELF COULD NOT SUPPLY, per account, in the reader's
+     * own wording. The counterpart to the `Checks` column: a reader who sees
+     * "5 tied, 4 n/a" has to be able to find out which four.
+     */
+    const skipped = book.bankAccounts.filter((b) => (b.checks?.notApplicable ?? []).length);
+    if (skipped.length) {
+      L.push("");
+      L.push("**What the statements themselves could not supply.** Each of these is a check with no");
+      L.push("printed figure behind it, so it is NOT APPLICABLE rather than a pass:");
+      L.push("");
+      for (const b of skipped) {
+        L.push(`- **${b.provider} ${b.accountNo ?? "—"}** (${b.periodTo ?? "—"}): `
+          + b.checks.notApplicable.join("; "));
+      }
+    }
+    /**
+     * AND THE CHECK THAT FAILED IS NAMED HERE, not pointed at.
+     *
+     * This said each one "names the check that failed in
+     * `docs/EXTRACTION-REPORT.md`" — true, and the figure is in hand: the
+     * reader returns `checks.failed` on the refusal path as well as the
+     * published one, for exactly this. A pointer to another document is the
+     * weaker answer when the sentence could carry the reason itself, and it is
+     * the same shape as the not-applicable list directly above.
+     */
+    if (refused.length) {
+      L.push("");
+      L.push(`**${refused.length} statement(s) published no rows.** The tie-out did not reconcile, so the`);
+      L.push("reader published nothing rather than a partial tape, which would read as a complete one:");
+      L.push("");
+      for (const b of refused) {
+        const why = (b.checks?.failed ?? []).join("; ") || "the reason is in `docs/EXTRACTION-REPORT.md`";
+        L.push(`- **${b.provider} ${b.accountNo ?? "—"}** (${b.periodTo ?? "—"}): ${why}`);
+      }
     }
   }
   L.push("");

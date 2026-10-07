@@ -204,11 +204,15 @@ twice looks. The family has said each is a separate investment, so every figure 
 
 ## Read, and deliberately NOT in the book
 
-These statements were read COMPLETELY. They are absent from every total above
-because they belong to somebody else, and that is a different thing from a
+These statements were read COMPLETELY, and that is a different thing from a
 document the pipeline could not open — the coverage table in
-`docs/EXTRACTION-REPORT.md` has those. Each one becomes part of the book with a
-single entry in `shared/owners.mjs`, if the family says it should be.
+`docs/EXTRACTION-REPORT.md` has those. Each is absent from every total above for
+the reason its own row states.
+
+**4 of them belong to somebody else** — another taxpayer's folio, or an
+account no statement in the drop resolves to a canonical owner. Each becomes part
+of the book with a single entry in `shared/owners.mjs`, if the family says it
+should be.
 
 | Account | Provider | Holder | Value on its own statement | Why it is out |
 | --- | --- | --- | ---: | --- |
@@ -218,6 +222,10 @@ single entry in `shared/owners.mjs`, if the family says it should be.
 | 70413280453 | Mirae Asset Mutual Fund | HOPE INDIA TRUST | 9,41,106.71 | holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 
 Together they carry **32,86,904.6** across 4 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
+
+## The family's own bank accounts
+
+_None — no savings-account statement is in this drop._
 
 ## Ring-fenced: the promoter holding, on its own page
 
