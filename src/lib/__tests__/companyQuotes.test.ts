@@ -39,4 +39,9 @@ assert.equal(updated.marketValue, yash.quantity! * 900);
 assert.equal(updated.quantity, yash.quantity);
 assert.equal(updated.costBasis, yash.costBasis);
 assert.equal(updated.symbol, yash.symbol); // A BSE identifier must not enter NSE vendor calls.
+const bond = { ...yash, assetClass: "Bond" as const, isin: "INE00GK07021", currentPrice: 100, marketValue: 1000 };
+const unchangedBond = applyQuotes([bond], feed)[0];
+assert.equal(unchangedBond.live, false);
+assert.equal(unchangedBond.currentPrice, bond.currentPrice);
+assert.equal(unchangedBond.marketValue, bond.marketValue);
 console.log("Company CMP: exact NSE/BSE identities, fund-only companies, conflicts and valuation overlay passed");

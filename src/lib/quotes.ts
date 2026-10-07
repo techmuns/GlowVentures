@@ -224,7 +224,9 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
     // are unlisted shares, preference shares and fund units no exchange quotes;
     // a quote that happened to resolve would move a value the review struck. And
     // a line recorded with no unit count has no per-unit price to apply at all.
-    if (p.review || p.quantity === null) return { ...p, live: false };
+    // Fund disclosures also map debt issuers to their listed equity for CMP.
+    // That issuer quote must never revalue a bond or a fund unit in the book.
+    if (p.review || p.quantity === null || !["Equity", "ETF"].includes(p.assetClass)) return { ...p, live: false };
     const sym = quoteSymbolFor(p);
     const q = sym ? feed.quotes[sym] : undefined;
     if (!q || !(q.price > 0)) return { ...p, live: false };

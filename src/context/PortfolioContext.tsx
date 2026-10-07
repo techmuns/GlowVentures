@@ -316,7 +316,7 @@ function liveCounts(positions: readonly Position[], returns: Map<string, ActionR
   for (const p of positions) {
     const e = bySecurity.get(p.securityKey) ?? { live: false, hasSymbol: false, withheld: false };
     e.live = e.live || !!p.live;
-    e.hasSymbol = e.hasSymbol || !!quoteSymbolFor(p);
+    e.hasSymbol = e.hasSymbol || (["Equity", "ETF"].includes(p.assetClass) && !!quoteSymbolFor(p));
     e.withheld = e.withheld || !!liveWithheldReason(p, returns);
     bySecurity.set(p.securityKey, e);
   }
