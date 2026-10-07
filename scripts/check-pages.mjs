@@ -4735,9 +4735,11 @@ const rowUnits = (B, c) => {
   const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
   if (!keys.size) return undefined;
   if (c.mandate) {
-    return c.capitalAccounts.length === 1
-      && B.wholeOf(B.current.filter((p) => p.accountId === c.capitalAccounts[0]))
-      ? c.capitalAccounts : null;
+    // A mandate row is every account its strategy is run in (Stage 10di): the
+    // holdings of those accounts under the row's own keys, whole or not.
+    const ids = c.mandateAccounts?.length ? c.mandateAccounts : c.capitalAccounts;
+    if (!ids.length) return null;
+    return B.wholeOf(B.current.filter((p) => ids.includes(p.accountId) && keys.has(p.securityKey)));
   }
   return B.wholeOf(B.consolidated(keys));
 };
@@ -11237,7 +11239,7 @@ const WITHHELD_CHECKS = (mode) => {
     ["no row whose quotes the check did not hold back says it did", (t, ctx) => {
       const r = ready(ctx, true); if (!r.B) return out(r);
       const clean = r.rows.filter((x) => x.mandate
-        ? !!x.mandateAccount && r.B.heldIn(x.mandateAccount) === 0
+        ? (x.mandateAccounts?.length ?? 0) > 0 && x.mandateAccounts.reduce((n, a) => n + r.B.heldIn(a), 0) === 0
         : !!x.securityKey && !r.B.heldAny.has(x.securityKey));
       if (!clean.length) return false;
       return clean.every((x) => !x.withheld && ![COL.cmp, COL.day, COL.mv].some((i) => /corporate-action check/.test(x.cellTitles?.[i] ?? "")));
@@ -11254,10 +11256,13 @@ const WITHHELD_CHECKS = (mode) => {
     }],
     ["a mandate some of whose shares were held back says how many, of how many, and why", (t, ctx) => {
       const r = ready(ctx); if (!r.B) return out(r);
-      const ms = r.rows.filter((x) => x.mandate && x.mandateAccount && r.B.heldIn(x.mandateAccount) > 0);
+      // A row is a STRATEGY now (Stage 10di), so its held count is summed over
+      // every account it stands for.
+      const heldOf = (x) => (x.mandateAccounts ?? []).reduce((n, a) => n + r.B.heldIn(a), 0);
+      const ms = r.rows.filter((x) => x.mandate && heldOf(x) > 0);
       if (!ms.length) return mode === "loading" ? false : { notChecked: "under this fixture no mandate's shares are held back" };
       return ms.every((x) => {
-        const n = r.B.heldIn(x.mandateAccount);
+        const n = heldOf(x);
         const day = /held back the quotes that arrived for (\d+) of its (\d+) shares/.exec(x.cellTitles?.[COL.day] ?? "");
         if (day) return Number(day[1]) === n && Number(day[2]) === x.holdings;
         // Part of the mandate is live, so its Day cell is a figure: the hold is
@@ -12174,6 +12179,7 @@ const FIFO_BOOK = (() => {
     const current = positions.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
       && !small.has(p.securityKey));
     const byAccountNo = new Map();
+    const byAccountId = new Map();
     // What each mandate's capital record says the family PAID IN — read off the
     // account, never off `fifoTotals`, so a page printing a whole mandate's
     // Invested at its capital is checked against the book rather than a copy.
@@ -12189,11 +12195,40 @@ const FIFO_BOOK = (() => {
       const costed = held.filter((p) => typeof p.costBasis === "number" && !p.costUnavailable);
       const cost = costed.reduce((x, p) => x + p.costBasis, 0);
       const survivors = cost > 0 ? (costed.reduce((x, p) => x + p.marketValue - p.costBasis, 0) / cost) * 100 : null;
-      const row = { accountId: a.accountId, accountNo: a.accountNo, capitalRet, survivors, contributed: a.capital.contributed, costHeld: cost };
+      const row = { accountId: a.accountId, accountNo: a.accountNo, capitalRet, survivors, contributed: a.capital.contributed, costHeld: cost, mv, withdrawn: a.capital.withdrawn };
       byAccountNo.set(String(a.accountNo), row);
+      byAccountId.set(a.accountId, row);
       if (survivors !== null && (!worst || Math.abs(capitalRet - survivors) > Math.abs(worst.capitalRet - worst.survivors))) worst = row;
     }
-    return { byAccountNo, worst, contributedOf };
+    return { byAccountNo, byAccountId, worst, contributedOf };
+  } catch { return null; }
+})();
+
+/**
+ * ── ONE ROW PER STRATEGY: WHICH ACCOUNTS EACH PMS ROW SHOULD STAND FOR ──────
+ *
+ * *"we are showing Green Lantern Capital LP as 2 separate lines… they need to
+ * be one."* (Stage 10di.) Re-expressed off `glowData.ts`: every PMS account
+ * that holds a current position, grouped on its provider and the strategy its
+ * statement prints (the provider where it prints none), compared case-blind —
+ * never through the page's own `mandateLabel`, which is the code under test.
+ */
+const PMS_STRATEGY_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const small = smallKeysOf(positions);
+    const isCurrent = (p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+      && !small.has(p.securityKey);
+    const groups = new Map();
+    for (const a of accounts) {
+      if (a.engagement !== "PMS") continue;
+      if (!positions.some((p) => p.accountId === a.accountId && isCurrent(p))) continue;
+      const k = `${a.provider ?? ""}|${String(a.strategy || a.provider || "").trim().toLowerCase()}`;
+      (groups.get(k) ?? groups.set(k, []).get(k)).push(a.accountId);
+    }
+    return { groups: [...groups.values()] };
   } catch { return null; }
 })();
 
@@ -12846,17 +12881,26 @@ const DERIVED_ONLY_C = [
       && !r.titles.some((x) => borrowed.test(x ?? "")));
   }],
 ];
-/** Opened, a mandate's shares and a holding's accounts each carry their own realised (DL-8). */
+/**
+ * Opened, a strategy's accounts and a holding's accounts each carry their own
+ * realised (DL-8). A strategy row opens onto one line per ACCOUNT since Stage
+ * 10di — its shares are on that account's own page — and an account line's
+ * realised is everything that account has booked since it opened, which is what
+ * its hover says; a holding's line keeps its own FIFO sentence. Both kinds must
+ * be present, so a build that stopped drawing either cannot pass on the other.
+ */
 const CHILD_REALISED_C = [
   ["[C] every opened line carries its own realised, or a dash that says why — never a blank (DL-8)", (t, ctx) => {
     const ch = ctx?.monitorC?.childRealised;
     if (!ch) return false;
     if (!ch.length) return false;
     const figures = ch.filter((c) => c.value !== null);
+    const sentence = (c) => c.kind === "mandate-account"
+      ? /has booked since it opened/i.test(c.title ?? "")
+      : /Realised on units already sold, matched first-in, first-out/i.test(c.title ?? "");
     return figures.length > 0
-      && ch.every((c) => c.text !== "" && (c.value !== null
-        ? /Realised on units already sold, matched first-in, first-out/i.test(c.title ?? "")
-        : c.text === "—" && !!c.title));
+      && figures.some((c) => c.kind === "mandate-account") && figures.some((c) => c.kind === "venue")
+      && ch.every((c) => c.text !== "" && (c.value !== null ? sentence(c) : c.text === "—" && !!c.title));
   }],
 ];
 
@@ -29494,22 +29538,36 @@ const INVARIANTS = {
      */
     ["every mandate row's Return is FIFO's, struck on the mandate's own capital since inception — or the XIRR where the methodology names it", (t, ctx) => {
       if (!FIFO_BOOK) return false;
-      const rows = (ctx.mandateRows ?? []).filter((r) => FIFO_BOOK.byAccountNo.has(String(r.accountNo)));
+      /*
+       * ONE ROW PER STRATEGY (Stage 10di): a row stands for every account its
+       * strategy is run in, so its FIFO return is POOLED over them — Σ value +
+       * Σ withdrawn − Σ paid in, over Σ paid in — and its XIRR is solved over
+       * all their dated flows together. Every account with a capital record
+       * must be under exactly one row.
+       */
+      const rows = (ctx.mandateRows ?? []).filter((r) => r.mandateAccounts.some((id) => FIFO_BOOK.byAccountId.has(id)));
       if (!rows.length) return false;
+      const covered = rows.flatMap((r) => r.mandateAccounts.filter((id) => FIFO_BOOK.byAccountId.has(id)));
+      if (covered.length !== FIFO_BOOK.byAccountId.size || new Set(covered).size !== covered.length) return false;
       let onFifo = 0;
-      const ok = rows.length === FIFO_BOOK.byAccountNo.size && rows.every((r) => {
-        const book = FIFO_BOOK.byAccountNo.get(String(r.accountNo));
+      const ok = rows.every((r) => {
+        const book = r.mandateAccounts.map((id) => FIFO_BOOK.byAccountId.get(id));
+        if (book.some((b) => !b)) return false;
         const cell = r.cells?.[COL.ret] ?? "";
         const got = pctIn(cell);
         if (got === null) return false;
         const B = DATED_CAPITAL_BOOK;
-        const dated = B?.rated.get(book.accountId);
-        const sol = dated ? B.solve([book.accountId]) : null;
-        if (sol && sol.days >= 365 && dated.flows.length > 1 && sol.annual !== null) {
+        const ids = r.mandateAccounts;
+        const dated = ids.map((id) => B?.rated.get(id));
+        const sol = dated.every(Boolean) ? B.solve([...ids].sort()) : null;
+        const flows = dated.every(Boolean) ? dated.reduce((n, d) => n + d.flows.length, 0) : 0;
+        if (sol && sol.days >= 365 && flows > 1 && sol.annual !== null) {
           return /\bXIRR\b/.test(cell) && Math.abs(got.v - sol.annual) <= got.tie + 0.001;
         }
         onFifo++;
-        return !/\bXIRR\b/.test(cell) && Math.abs(got.v - book.capitalRet) <= got.tie;
+        const contributed = book.reduce((n, b) => n + b.contributed, 0);
+        const pooled = ((book.reduce((n, b) => n + b.mv + b.withdrawn, 0) - contributed) / contributed) * 100;
+        return !/\bXIRR\b/.test(cell) && Math.abs(got.v - pooled) <= got.tie;
       });
       return ok && onFifo > 0;
     }],
@@ -29525,13 +29583,17 @@ const INVARIANTS = {
      */
     ["every mandate row's Invested is the capital paid into it, which its Return divides by", (t, ctx) => {
       if (!FIFO_BOOK) return false;
-      const rows = (ctx.mandateRows ?? []).filter((r) => FIFO_BOOK.byAccountNo.has(String(r.accountNo)));
-      if (!rows.length || rows.length !== FIFO_BOOK.byAccountNo.size) return false;
-      const book = rows.map((r) => FIFO_BOOK.byAccountNo.get(String(r.accountNo)));
+      // One row per strategy (Stage 10di): its Invested is what was paid into
+      // EVERY account it stands for, summed.
+      const rows = (ctx.mandateRows ?? []).filter((r) => r.mandateAccounts.some((id) => FIFO_BOOK.byAccountId.has(id)));
+      const covered = rows.flatMap((r) => r.mandateAccounts.filter((id) => FIFO_BOOK.byAccountId.has(id)));
+      if (!rows.length || covered.length !== FIFO_BOOK.byAccountId.size) return false;
+      const book = rows.map((r) => r.mandateAccounts.map((id) => FIFO_BOOK.byAccountId.get(id)));
       return rows.every((r, i) => {
         const got = moneyCell(r.cells?.[COL.invested]);
-        return Number.isFinite(got) && Math.abs(got - book[i].contributed / 1e7) <= 0.051;
-      }) && book.some((b) => Math.abs(b.costHeld - b.contributed) > 1e6);
+        const want = book[i].reduce((n, b) => n + (b?.contributed ?? NaN), 0);
+        return Number.isFinite(got) && Math.abs(got - want / 1e7) <= 0.051;
+      }) && book.flat().some((b) => Math.abs(b.costHeld - b.contributed) > 1e6);
     }],
     /**
      * ── AN INVESTED FIGURE CARRIED THROUGH A CLASS SWITCH SAYS SO ────────────
@@ -29859,12 +29921,43 @@ const INVARIANTS = {
     }],
     // ...and each of those rows is a way IN. A mandate a reader cannot open is
     // a section that hides 271 positions instead of filing them.
+    /**
+     * ONE ROW PER STRATEGY (Stage 10di): a strategy run in ONE account links
+     * from its name; one run in several opens onto a line per account, each a
+     * link (asserted with every row open, on `monitor-open-all`). So the closed
+     * page carries exactly one mandate link per single-account row, and a
+     * several-account row names every account it stands for and links to none.
+     */
     ["every mandate row links to its own drill-down", (t, ctx) => {
       const gate = needRows(ctx?.tableRows);
       if (gate) return gate;
       const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      if (!rows.length) return false;
+      const single = rows.filter((r) => r.mandateAccounts.length === 1);
+      const multi = rows.filter((r) => r.mandateAccounts.length > 1);
       const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
-      return rows.length > 0 && links.size === rows.length;
+      return single.every((r) => r.nameHref === `/mandate/${encodeURIComponent(r.mandateAccounts[0])}`)
+        && multi.every((r) => r.nameHref === null && r.mandateLines === r.mandateAccounts.length)
+        && links.size === single.length;
+    }],
+    /**
+     * ── THE SAME STRATEGY IS ONE ROW, WHOEVER HOLDS IT ───────────────────────
+     *
+     * *"we are showing Green Lantern Capital LP as 2 separate lines… they need
+     * to be one."* Restated off the BOOK: every PMS account the section holds,
+     * grouped on its manager and the strategy name its statement prints, must be
+     * exactly the accounts one row names — so a build that split a strategy back
+     * into one row per account, or merged two strategies, fails by name.
+     */
+    ["one strategy is one row, however many accounts it is run in", (t, ctx) => {
+      const gate = needRows(ctx?.tableRows);
+      if (gate) return gate;
+      if (!PMS_STRATEGY_BOOK) return false;
+      const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
+      const got = rows.map((r) => [...r.mandateAccounts].sort().join(" ")).sort();
+      const want = PMS_STRATEGY_BOOK.groups.map((g) => [...g].sort().join(" ")).sort();
+      return got.length === want.length && got.every((g, i) => g === want[i])
+        && PMS_STRATEGY_BOOK.groups.some((g) => g.length > 1);
     }],
     // AND THE SECTIONS MUST ADD UP TO THE FOOTER. A reader who sums the four
     // headings and lands somewhere other than the Total row has found the
@@ -31693,10 +31786,27 @@ const INVARIANTS = {
       if (!AXIS_VENUE_BOOK) return { notChecked: "the book could not be read" };
       return tr.venues === AXIS_VENUE_BOOK.pairs;
     }],
-    ["every mandate opens onto exactly the shares its own row counts", (t, ctx) => {
+    /**
+     * ONE ROW PER STRATEGY, ITS ACCOUNTS ONE CLICK IN (Stage 10di). A strategy
+     * run in several accounts opens onto exactly one line per account — each
+     * linking to that account's own page, where its shares are listed — and the
+     * lines' holdings add to the row's. A strategy run in one account opens
+     * nothing, and its name is the link. Its shares are not drawn here at all:
+     * a share opened out of a row is the second copy of the account's own page.
+     */
+    ["every mandate run in several accounts opens onto one line per account, each linking to its own page", (t, ctx) => {
       const tr = ctx?.treeState;
       if (!tr?.mandates.length) return false;
-      return tr.mandates.every((m) => m.open === "open" && m.holdings > 0 && m.constituents === m.holdings);
+      const multi = tr.mandates.filter((m) => m.accounts.length > 1);
+      if (!multi.length) return { notChecked: "no strategy in this book is run in more than one account" };
+      return tr.mandates.every((m) => m.constituents === 0 && m.holdings > 0)
+        && multi.every((m) => m.open === "open"
+          && m.lines.length === m.accounts.length
+          && m.lines.map((l) => l.account).sort().join(" ") === [...m.accounts].sort().join(" ")
+          && m.lines.every((l) => l.href === `/mandate/${encodeURIComponent(l.account)}`)
+          && m.lines.reduce((n, l) => n + l.holdings, 0) === m.holdings)
+        && tr.mandates.filter((m) => m.accounts.length === 1).every((m) => m.open === null
+          && m.nameHref === `/mandate/${encodeURIComponent(m.accounts[0])}`);
     }],
     /**
      * A DEPOSITORY LINE SAYS WHAT IT IS, ON THE ONE LINE IT IS (Stage 10ce).
@@ -38218,7 +38328,22 @@ for (const theme of THEMES) {
            * on that account's lines.
            */
           withheld: !!tr.querySelector("[data-cmp-withheld]"),
-          mandateAccount: tr.getAttribute("data-mandate-account"),
+          /**
+           * ONE ROW PER STRATEGY, NOT PER ACCOUNT (Stage 10di): a mandate the
+           * family runs in several accounts is one row now, so the row names
+           * every account it stands for. `mandateAccount` is that account only
+           * where there is exactly one — a claim struck on one account's lines
+           * must not be struck on a row that spans several.
+           */
+          mandateAccounts: (tr.getAttribute("data-mandate-accounts") || "").split(" ").filter(Boolean),
+          accountNos: (tr.getAttribute("data-account") || "").split(" ").filter(Boolean),
+          mandateLines: tr.hasAttribute("data-mandate-lines") ? Number(tr.getAttribute("data-mandate-lines")) : null,
+          lineCounts: (tr.getAttribute("data-mandate-line-counts") || "").split(" ").filter(Boolean).map(Number),
+          mandateAccount: (() => {
+            const a = (tr.getAttribute("data-mandate-accounts") || "").split(" ").filter(Boolean);
+            return a.length === 1 ? a[0] : null;
+          })(),
+          nameHref: tr.cells[0]?.querySelector("a[href^='/mandate/']")?.getAttribute("href") ?? null,
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
@@ -38229,10 +38354,12 @@ for (const theme of THEMES) {
        * whose fixture quotes the book, where there is something to hold back.
        */
       const quoteHold = (FAST || !/^(monitor-withheld|performance-live)/.test(name)) ? null : await page.evaluate((cmpAt) => ({
-        lines: [...document.querySelectorAll('tbody tr[data-tree-child="venue"], tbody tr[data-tree-child="constituent"]')].map((tr) => ({
+        // A strategy's shares are on its accounts' own pages since Stage 10di,
+        // so the lines a row opens into that carry a quote are a holding's.
+        lines: [...document.querySelectorAll('tbody tr[data-tree-child="venue"]')].map((tr) => ({
           kind: tr.getAttribute("data-tree-child"),
-          key: tr.getAttribute("data-venue-key") ?? tr.getAttribute("data-constituent"),
-          account: tr.getAttribute("data-venue-account") ?? tr.getAttribute("data-constituent-account"),
+          key: tr.getAttribute("data-venue-key"),
+          account: tr.getAttribute("data-venue-account"),
           withheld: !!tr.querySelector("[data-cmp-withheld]"),
           cmpTip: tr.cells[cmpAt]?.querySelector("[title]")?.getAttribute("title") ?? "",
         })),
@@ -38332,7 +38459,7 @@ for (const theme of THEMES) {
             return td && td.getAttribute("data-realised") !== null && td.getAttribute("data-realised") !== ""
               ? { key: tr.getAttribute("data-security-key"), value: Number(td.getAttribute("data-realised")), title: titleIn(td) } : null;
           }).filter(Boolean),
-          childRealised: [...document.querySelectorAll("tr[data-tree-child=constituent] td[data-child-cell=realised], tr[data-tree-child=venue] td[data-child-cell=realised]")]
+          childRealised: [...document.querySelectorAll("tr[data-tree-child=mandate-account] td[data-child-cell=realised], tr[data-tree-child=venue] td[data-child-cell=realised]")]
             .map((td) => ({ kind: td.closest("tr").getAttribute("data-tree-child"), text: txt(td),
               value: td.querySelector("[data-child-realised]")?.getAttribute("data-child-realised") ?? null, title: titleIn(td) })),
         };
@@ -39313,11 +39440,29 @@ for (const theme of THEMES) {
           nested: [...table.querySelectorAll("tbody tr")]
             .filter((tr) => kindOf(tr) !== "lookthrough")
             .reduce((n, tr) => n + tr.querySelectorAll("table").length, 0),
-          mandates: [...table.querySelectorAll("tbody tr[data-mandate]")].map((tr) => ({
-            open: tr.getAttribute("data-tree-parent"),
-            holdings: Number(tr.getAttribute("data-holdings")),
-            constituents: under(tr).filter((x) => kindOf(x) === "constituent").length,
-          })),
+          /*
+           * ONE ROW PER STRATEGY (Stage 10di): a mandate run in several accounts
+           * opens onto one line per account, each linking to that account's own
+           * page, where its shares are. A mandate run in one account opens
+           * nothing — its name IS the link — and the shares a row used to open
+           * onto are on that page instead.
+           */
+          mandates: [...table.querySelectorAll("tbody tr[data-mandate]")].map((tr) => {
+            const lines = under(tr).filter((x) => kindOf(x) === "mandate-account");
+            return {
+              open: tr.getAttribute("data-tree-parent"),
+              holdings: Number(tr.getAttribute("data-holdings")),
+              accounts: (tr.getAttribute("data-mandate-accounts") || "").split(" ").filter(Boolean),
+              constituents: under(tr).filter((x) => kindOf(x) === "constituent").length,
+              lines: lines.map((x) => ({
+                account: x.getAttribute("data-mandate-line"),
+                accountNo: x.getAttribute("data-mandate-line-account"),
+                holdings: Number(x.getAttribute("data-mandate-line-holdings")),
+                href: x.querySelector("a[href^='/mandate/']")?.getAttribute("href") ?? null,
+              })),
+              nameHref: tr.cells[0]?.querySelector("a[href^='/mandate/']")?.getAttribute("href") ?? null,
+            };
+          }),
         };
       });
       const categoryTotals = FAST ? null : await page.evaluate(() => {
@@ -41293,6 +41438,10 @@ for (const theme of THEMES) {
             rowKeys: (td.getAttribute("data-row-keys") || "").split(" ").filter(Boolean),
             rowKey: td.closest("tr")?.getAttribute("data-security-key") ?? null,
             mandate: !!td.closest("tr")?.hasAttribute("data-mandate"),
+            // The accounts a mandate row STANDS FOR — every account its strategy
+            // is run in (Stage 10di), read off the row rather than off the
+            // return cell, so the units are restated from the row.
+            mandateAccounts: (td.closest("tr")?.getAttribute("data-mandate-accounts") || "").split(" ").filter(Boolean),
             clubbed: !!td.closest("tr")?.querySelector("[data-fund-classes]"),
             bucket: td.closest("tr")?.getAttribute("data-bucket") ?? null,
           })));
@@ -41339,7 +41488,12 @@ for (const theme of THEMES) {
       // checked against it — and the address of the drill-down itself.
       if (name === "monitor") {
         MANDATE_PATH = hrefs.find((h) => /^\/mandate\/./.test(h)) ?? MANDATE_PATH;
-        for (const m of mandateRows ?? []) MANDATE_ROWS.set(m.accountNo, m);
+        // One entry per ACCOUNT, because a row is a strategy now (Stage 10di)
+        // and the drill-down is one account's page: each account carries the
+        // holding count of its own line on the row.
+        for (const m of mandateRows ?? []) {
+          m.accountNos.forEach((no, i) => MANDATE_ROWS.set(no, { ...m, accountNo: no, holdings: m.lineCounts[i] }));
+        }
       }
       /**
        * WHAT MORNING CIO DREW, so the drill-downs below can be checked against
