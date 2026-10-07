@@ -30,7 +30,7 @@ import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/ac
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, type Txn, type TxnData } from "@/lib/ledger";
-import { inScopeAccount, inScopeOwner, labelInScope } from "@/lib/memberScope";
+import { inScopeAccount, inScopeOwner, scopeTxnData } from "@/lib/memberScope";
 import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, realisedWindowNote, atCostNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
 import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
@@ -3190,18 +3190,7 @@ export function PortfolioMonitor() {
       // the canonical owner each row carries. The lots no trade settles are a
       // whole-tape figure, so a scoped sheet does not carry them.
       const owners = memberScope.owners;
-      const scoped = data && owners
-        ? { ...data,
-            txns: data.txns.filter((t) => inScopeOwner(owners, t.ownerId)),
-            ownAllotments: data.ownAllotments.filter((t) => inScopeOwner(owners, t.ownerId)),
-            lotsNoTrade: { lots: 0, realised: null, securities: [], allNil: false } }
-        : data;
-      if (scoped && owners) {
-        scoped.buys = scoped.txns.filter((t) => t.side === "Buy").length;
-        scoped.sells = scoped.txns.filter((t) => t.side === "Sell").length;
-        scoped.accounts = scoped.accounts.filter((l) => labelInScope(portfolio.accounts, l));
-        scoped.accountsWithout = scoped.accountsWithout.filter((l) => labelInScope(portfolio.accounts, l));
-      }
+      const scoped = data && owners ? scopeTxnData(data, owners, portfolio.accounts) : data;
       await exportPortfolioExcel(positions, portfolio.accounts, scoped);
     } catch (e) {
       console.error("Excel export failed", e);

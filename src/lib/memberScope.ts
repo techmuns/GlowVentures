@@ -18,6 +18,7 @@
 // per-page edit; the few pages that read a generated table directly filter on
 // the `accountIds` it hands out (see `useMemberScope`).
 import type { Account, Portfolio } from "@/lib/types";
+import type { TxnData, LotData, IncomeData } from "@/lib/ledgerModel";
 import { publicPrivateSplit } from "@/lib/analytics";
 
 /** The address parameter that carries a scope: `?members=ajay-jaisinghani,…`. */
@@ -178,4 +179,78 @@ export function labelInScope(accounts: readonly Pick<Account, "accountNo">[] | n
   if (!accounts) return true;
   const no = label.slice(label.lastIndexOf(" ") + 1);
   return accounts.some((a) => a.accountNo === no);
+}
+
+// ── THE DATED RECORD, NARROWED THE SAME WAY ──────────────────────────────────
+//
+// The ledger's read models are built over the whole archive. A trade carries its
+// canonical owner; a lot and an income row carry only their account label, which
+// ends in the account NUMBER the statement prints (`labelInScope`). Every total
+// is re-struck over the kept rows, never carried from the whole family's.
+
+const sumOf = (xs: readonly (number | null)[]): number | null => {
+  const known = xs.filter((x): x is number => x != null);
+  return known.length ? known.reduce((s, x) => s + x, 0) : null;
+};
+
+/**
+ * The chosen members' trades. The lots no trade settles are a whole-tape figure
+ * (they are the gap between the tape's realised and the statements'), so a
+ * scoped tape carries none of them rather than another member's.
+ */
+export function scopeTxnData(
+  data: TxnData, owners: ReadonlySet<string>, accounts: readonly Pick<Account, "accountNo">[],
+): TxnData {
+  const txns = data.txns.filter((t) => inScopeOwner(owners, t.ownerId));
+  return {
+    ...data,
+    txns,
+    ownAllotments: data.ownAllotments.filter((t) => inScopeOwner(owners, t.ownerId)),
+    buys: txns.filter((t) => t.side === "Buy").length,
+    sells: txns.filter((t) => t.side === "Sell").length,
+    accounts: data.accounts.filter((l) => labelInScope(accounts, l)),
+    accountsWithout: data.accountsWithout.filter((l) => labelInScope(accounts, l)),
+    lotsNoTrade: { lots: 0, realised: null, securities: [], allNil: false },
+  };
+}
+
+/** The chosen members' capital-gain lots, with the term totals and the class split re-struck over them. */
+export function scopeLotData(data: LotData, accounts: readonly Pick<Account, "accountNo">[]): LotData {
+  const lots = data.lots.filter((l) => labelInScope(accounts, l.account));
+  const classes = new Map<string | null, { lots: number; short: number; long: number; securities: Set<string> }>();
+  for (const l of lots) {
+    const e = classes.get(l.assetClass) ?? { lots: 0, short: 0, long: 0, securities: new Set<string>() };
+    e.lots++; e.short += l.shortTerm ?? 0; e.long += l.longTerm ?? 0; e.securities.add(l.security);
+    classes.set(l.assetClass, e);
+  }
+  // The whole family's class ORDER is kept, so a scope reads in the same order.
+  const order = new Map(data.byClass.map((c, i) => [c.assetClass, i]));
+  return {
+    ...data,
+    lots,
+    totalShort: sumOf(lots.map((l) => l.shortTerm)),
+    totalLong: sumOf(lots.map((l) => l.longTerm)),
+    accounts: data.accounts.filter((l) => labelInScope(accounts, l)),
+    accountsWithout: data.accountsWithout.filter((l) => labelInScope(accounts, l)),
+    byClass: [...classes.entries()]
+      .map(([assetClass, v]) => ({
+        assetClass, lots: v.lots, short: v.short, long: v.long, total: v.short + v.long,
+        securities: [...v.securities].sort(),
+      }))
+      .sort((a, b) => (order.get(a.assetClass) ?? 1e9) - (order.get(b.assetClass) ?? 1e9)),
+  };
+}
+
+/** The chosen members' dividends and corporate actions, with the cash totals re-struck over them. */
+export function scopeIncomeData(data: IncomeData, accounts: readonly Pick<Account, "accountNo">[]): IncomeData {
+  const cash = data.cash.filter((r) => labelInScope(accounts, r.account));
+  return {
+    ...data,
+    cash,
+    corporate: data.corporate.filter((r) => labelInScope(accounts, r.account)),
+    totalCash: sumOf(cash.map((r) => r.net)),
+    totalTds: sumOf(cash.map((r) => r.tds)),
+    accounts: data.accounts.filter((l) => labelInScope(accounts, l)),
+    accountsWithout: data.accountsWithout.filter((l) => labelInScope(accounts, l)),
+  };
 }

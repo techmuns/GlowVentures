@@ -1,5 +1,5 @@
 import { PagedTableBody } from "@/components/PagedTableBody";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TrendingUp, Coins, ShieldAlert, ArrowLeftRight, Scissors, LogOut, Receipt, Gift } from "lucide-react";
 import { BasisPill } from "@/components/BasisPill";
 import { PageHeader } from "@/components/PageHeader";
@@ -18,6 +18,7 @@ import {
   type TxnData, type LotData, type Lot, type IncomeData, type SalesData,
 } from "@/lib/ledger";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { scopeIncomeData, scopeLotData, scopeTxnData, wholeFamilyOnly } from "@/lib/memberScope";
 import { useTableView, sortRows } from "@/lib/tableView";
 
 // Ledger Insights — the DATED record behind the book, straight from the archive.
@@ -60,6 +61,7 @@ export function LedgerInsights() {
   const [lots, setLots] = useState<LotData | null>(null);
   const [income, setIncome] = useState<IncomeData | null>(null);
   const [sales, setSales] = useState<SalesData | null>(null);
+  const { portfolio, scope } = usePortfolio();
 
   useEffect(() => {
     let alive = true;
@@ -74,10 +76,26 @@ export function LedgerInsights() {
 
   useEffect(() => {
     let alive = true;
-    if (tab === "gains") loadRealisedLots().then((x) => alive && setLots(x));
+    // Under a member scope the Transactions tab's realised figure is the scope's
+    // own capital-gain lots, so they are read there too (Stage 10di).
+    if (tab === "gains" || (tab === "transactions" && scope.owners)) loadRealisedLots().then((x) => alive && setLots(x));
     if (tab === "income") loadIncome().then((x) => alive && setIncome(x));
     return () => { alive = false; };
-  }, [tab]);
+  }, [tab, scope.owners]);
+
+  // THE CHOSEN MEMBERS' DATED RECORD (Stage 10di). A trade is kept on its
+  // canonical owner, a lot and an income row on the account number its label
+  // ends in; every total is re-struck over what is kept. The sales roll-up is
+  // per security across every account, and a security's "still held" is the
+  // whole family's, so it is not narrowed — the page says so instead.
+  const scopeAccounts = scope.owners ? portfolio?.accounts ?? [] : null;
+  const viewTxn = useMemo(
+    () => (txn && scope.owners && scopeAccounts ? scopeTxnData(txn, scope.owners, scopeAccounts) : txn),
+    [txn, scope.owners, scopeAccounts]);
+  const viewLots = useMemo(
+    () => (lots && scopeAccounts ? scopeLotData(lots, scopeAccounts) : lots), [lots, scopeAccounts]);
+  const viewIncome = useMemo(
+    () => (income && scopeAccounts ? scopeIncomeData(income, scopeAccounts) : income), [income, scopeAccounts]);
 
   if (status === "unreachable") {
     return (
@@ -140,9 +158,12 @@ export function LedgerInsights() {
 
       <div className="min-h-0 flex-1 overflow-auto">
         {status === "loading" && <div className="grid h-40 place-items-center text-sm text-slate-500">Reading the archive…</div>}
-        {tab === "transactions" && txn && <TransactionsView data={txn} sales={sales} />}
-        {tab === "gains" && <GainsView data={lots} />}
-        {tab === "income" && <IncomeView data={income} />}
+        {tab === "transactions" && viewTxn && (
+          <TransactionsView data={viewTxn} sales={scope.owners ? null : sales}
+            scoped={scope.owners ? { label: scope.label, lots: viewLots } : null} />
+        )}
+        {tab === "gains" && <GainsView data={viewLots} />}
+        {tab === "income" && <IncomeView data={viewIncome} />}
       </div>
     </div>
   );
@@ -161,7 +182,11 @@ const LOT_COLS = ["security", "account", "bought", "sold", "days", "qty", "proce
 const CASH_COLS = ["security", "account", "date", "qty", "rate", "tds", "net"] as const;
 const CORP_COLS = ["security", "account", "action", "date", "held", "entitlement"] as const;
 
-function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | null }) {
+function TransactionsView({ data, sales, scoped }: {
+  data: TxnData; sales: SalesData | null;
+  /** Set under a member scope: whose record this is, and their own lots. */
+  scoped: { label: string; lots: LotData | null } | null;
+}) {
   const txnView = useTableView("ledger-txns", TXN_COLS);
   const saleView = useTableView("ledger-sales", SALE_COLS);
   // THE DEFAULT ORDER IS THE LEDGER'S OWN and stays untouched until a reader
@@ -202,8 +227,21 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
   const soldOf = sells.filter((t) => t.amount != null).length;
   const coverage = (n: number, of: number) => (n === of ? "" : ` · ${n} of ${of} rows report one`);
 
+  // The scope's own capital-gain statements' total — the same primitive the
+  // whole family's tile prints, struck over the chosen members' lots.
+  const scopedStatement = scoped?.lots
+    ? (() => {
+        const lt = scoped.lots.lots;
+        const known = lt.filter((l) => l.shortTerm != null || l.longTerm != null);
+        return { realised: known.length ? known.reduce((s, l) => s + l.gain, 0) : null, lots: lt.length };
+      })()
+    : null;
+
   if (!data.txns.length) {
-    return (
+    return scoped ? (
+      <AbsentSection what={`No dated transactions for ${scoped.label}`}
+        needs={`No transaction statement in this drop belongs to an account ${scoped.label} holds. Choose Whole family at the top to see every account's.`} />
+    ) : (
       <AbsentSection what="No dated transactions in this book"
         needs="Transactions come from each manager's transaction statement. No account in this drop issued one." />
     );
@@ -223,7 +261,22 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
             what the managers determined and what Capital Gains shows. The
             roll-up we derive from the tape is a cross-check and sits below,
             never in a tile where it could be mistaken for the answer. */}
-        {sales?.statementRealized == null ? (
+        {scoped ? (
+          scopedStatement?.realised != null ? (
+            <StatTile label="Realised (as the statements report it)"
+              value={<span className={changeColor(scopedStatement.realised)}>{fmtFromBase(scopedStatement.realised, { compact: true, sign: true })}</span>}
+              sub={`${scopedStatement.lots} lots · ${scoped.label}`}
+              hint={`The capital gain statements' own total over the lots in ${scoped.label}'s accounts.`}
+              icon={<Receipt className="h-4 w-4" />} />
+          ) : (
+            <StatTile label="Realised (as the statements report it)"
+              {...absentTile(scoped.lots ? "no capital gain statement covers these accounts" : "reading the lots…",
+                scoped.lots
+                  ? `No capital gain statement in this drop belongs to an account ${scoped.label} holds.`
+                  : "The capital gain lots are still being read from the archive.")}
+              icon={<Receipt className="h-4 w-4" />} />
+          )
+        ) : sales?.statementRealized == null ? (
           <StatTile label="Realised (as the statements report it)"
             {...absentTile("no capital gain statement covers these sells",
               "Realised gain is a tax determination the manager makes on its own statement. Where none was issued, the sells are real but what they realised was never reported.")}
@@ -301,6 +354,13 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
           </table>
         </div>
       </Card>
+
+      {scoped && (
+        <div data-ledger-sales-scope-absent>
+          <AbsentSection what={`Sales & exits · whole family only · not shown for ${scoped.label}`}
+            needs={wholeFamilyOnly("The sales and exits roll-up, which adds each security's sells across every account and reads whether the family still holds it,", scoped.label)} />
+        </div>
+      )}
 
       {sales && sales.rows.length > 0 && (
         <Card title="Sales &amp; exits" subtitle="Per security, over the same window — and whether the name is still held" pad={false}
