@@ -7,7 +7,7 @@ import { TopBar } from "@/components/TopBar";
 import { IndexStrip } from "@/components/IndexStrip";
 import { ResearchLevelSync } from "@/lib/useResearchSync";
 import { EmptyState } from "@/components/EmptyState";
-import { usePortfolio } from "@/context/PortfolioContext";
+import { usePortfolio, WholeFamily } from "@/context/PortfolioContext";
 const MorningCIO = lazy(() => import("@/pages/MorningCIO").then((m) => ({ default: m.MorningCIO })));
 const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.Polycab })));
 const PortfolioMonitor = lazy(() => import("@/pages/PortfolioMonitor").then((m) => ({ default: m.PortfolioMonitor })));
@@ -30,10 +30,39 @@ const HoldingsBehind = lazy(() => import("@/pages/HoldingsBehind").then((m) => (
 // reaches every analytics page as zeros, and a zero that came from "we have no
 // statement" is indistinguishable on screen from a zero that was measured — so
 // the empty book is stopped here instead.
+//
+// AND A SCOPE WITH NOTHING IN IT IS NAMED, NOT DRAWN AS ZEROS (Stage 10di). The
+// top bar's member selector narrows every page to some members' accounts; where
+// those hold no valued position — or the address named nobody this book carries
+// — the page says so and offers the whole family, rather than a row of ₹0.
 function Gate({ children }: { children: React.ReactNode }) {
-  const { portfolio, bookIsEmpty } = usePortfolio();
+  const { portfolio, bookIsEmpty, scope } = usePortfolio();
   if (!portfolio || bookIsEmpty) return <EmptyState />;
+  if (scope.owners && !portfolio.positions.length) return <EmptyScope />;
   return <>{children}</>;
+}
+
+function EmptyScope() {
+  const { scope } = usePortfolio();
+  const named = scope.selected?.length ? scope.label : null;
+  return (
+    <div className="grid place-items-center py-24 text-center" data-empty-scope={scope.selected?.join(",") ?? ""}>
+      <div className="max-w-md">
+        <h2 className="text-lg font-semibold text-slate-100">
+          {named ? `No valued holding for ${named}` : "No member in this address"}
+        </h2>
+        <p className="mt-2 text-sm text-slate-400" data-prose-ok="the reason a scoped page is empty"
+          title={named
+            ? "Their accounts carry no position any statement values — a quantity alone, or nothing held."
+            : `The address names ${scope.unknown.join(", ") || "nobody"}, which this book does not carry.`}>
+          {named ? "Their accounts hold nothing a statement values." : "This book carries no such member."}
+        </p>
+        <button type="button" className="btn-primary mt-5" data-empty-scope-reset onClick={() => scope.setSelected(null)}>
+          Show whole family
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function RootRedirect() {
@@ -147,7 +176,10 @@ export default function App() {
                 screen they were reached from. `src/lib/drilldown.ts` owns the
                 subsets and is called by BOTH sides. */}
             <Route path="/holdings" element={<Gate><HoldingsBehind /></Gate>} />
-            <Route path="/family" element={<Gate><FamilyEntities /></Gate>} />
+            {/* ALWAYS THE WHOLE FAMILY, whatever the top bar's member selector
+                holds — *"the families and entities page will remain the same for
+                all the members"* (Stage 10di). */}
+            <Route path="/family" element={<WholeFamily><Gate><FamilyEntities /></Gate></WholeFamily>} />
             <Route path="/sectors" element={<Gate><SectorComposition /></Gate>} />
             {/* COMPARE COMPANIES was REMOVED at the family's request — the page,
                 its nav entry and with them the whole RESEARCH nav group, which
