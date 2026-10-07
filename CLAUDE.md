@@ -25991,8 +25991,10 @@ other account is one row, exactly as before.
 
 #### Valued, or held at cost — and an at-cost line has no gain
 
-The review values 14 of its lines (₹93.92 Cr) and carries **76 at cost
-(₹140.68 Cr)**. `isValuedAtCost` and `AT_COST_BUCKET` are the one place that
+The private book is 90 positions and splits in two: **14 valued, ₹93.92 Cr**
+— 13 review rows over 7 of its lines, plus Neo Infra on its own statement —
+and **76 held at cost, ₹140.68 Cr**, every one of them the review's, over 61 of
+its lines. `isValuedAtCost` and `AT_COST_BUCKET` are the one place that
 distinction is read:
 
 - **an at-cost row's `unrealizedPnL` and `returnPct` are `null`**, with
@@ -26100,7 +26102,7 @@ distinction is read:
   as valued by no statement. A page clubbed by category that is simply silent
   about a category tells a reader they hold none (Stage 10bp). So a second
   closed fold names every at-cost AIF fund with its section, its cost and a
-  link to the at-cost row — **8 funds, ₹11.72 Cr, Category I ×1 and Category not
+  link to the at-cost row — **8 funds, ₹11.73 Cr, Category I ×1 and Category not
   stated ×7**, of 14 rows the bucket moved. Two checks hold it: the naming, and
   the LOAD-BEARING half asserting that a section the drawn table no longer
   carries is still named — struck on the book's two sets rather than on the
@@ -26141,7 +26143,7 @@ distinction is read:
   three invariants against a page that was right until it was. The drill-down is
   `?of=bucket&key=AIF`; the derivation filtered on `assetClass === "AIF"`, so it
   expected the 35 rows and 19 funds the class holds where the bucket draws 21
-  and 11 — the other **14 rows, 8 funds and ₹11.72 Cr** being at cost. The
+  and 11 — the other **14 rows, 8 funds and ₹11.73 Cr** being at cost. The
   derivation itself was proved identical on both sides to the paisa before
   anything moved; the defect was the SET. Re-expressed on the book's own
   `valuedAtCost`, never through `holdingBucket`, on the standing terms: a check
@@ -26189,6 +26191,101 @@ distinction is read:
   Baring 252.5, Blue Ashva Varenya 856.736, India SME 27,000 and TOCF-I
   12,899.355 — each the quantity account of a line the review values elsewhere.
 - **360 ONE's 3,769.026 units** sit on no dated row of the review.
+
+#### The bug pass, and two findings in the harness itself
+
+`scripts/dev/at-cost-fold-bug.py` puts ten defects back one at a time, after a
+control that must come back clean. It snapshots by copy, restores with a byte
+comparison, rebuilds on the way out, and reports a patch that does not apply or
+a build that fails as NOT A RESULT. Three kinds: a route sweep, a case that
+fires if `build-book` REFUSES, and a case that fires if the BOOK MOVES.
+**Every one of the ten fires its own checks:**
+
+| # | Defect put back | Fires |
+| --- | --- | --- |
+| 1 | the at-cost fold is not drawn — the Category I claim leaves the page | 2 on `holdings-aif` |
+| 2 | the fold names the funds and not their categories | 2 |
+| 3 | the fold drops the fence — its cost is in no total here | 1 |
+| 4 | the summary reads as a sentence again, as its first draft did | 2 — Stage 10cp's page-wide prose guard **and** the at-cost check, which holds the same bound where it asserts the words |
+| 5 | `AIF_BOOK` is scoped to the asset class again, not to the bucket | 3 pre-existing AIF checks |
+| 6 | the footer's row count is read off the capital rows, not the table's | 1 |
+| 7 | the page counts its capital rows as accounts again | 3 |
+| 8 | a review name is put back to text that reads as another holding | `build-book` REFUSES: *Borosil Renewables normalises to borosil-renewables, another holding in this book* |
+| 9 | …and the gate that refuses it is removed with it | `build-book` rc=0 and the BOOK MOVES — by exactly one field, measured below |
+| 10 | an override whose review text collides with nothing is left standing | `build-book` REFUSES: *the review's own `Borosil Renewables` collides with nothing, so the override says nothing* |
+
+**AND CASE 9's BOOK MOVES BY ONE FIELD, WHICH IS THE WHOLE REASON THE GATE IS
+NOT A COUNT.** Measured rather than described: the only line of `glowData.ts`
+that moves is the review warrant line's `security`, from `Borosil Renewables -
+Warrants 13AG26` to the plain `Borosil Renewables` — which is the name the
+book's OWN `borosil-renewables` key carries, SVAN's 11,495 shares across two
+mandates. The keys stay apart, so nothing merges; what happens is that a
+₹3.75 Cr warrant line and ₹63.9 L of shares read as one company on every
+screen and in the search box, which is Stage 10cc's one-company-two-keys
+failure running backwards. **Its row counts do not move at all** — 89 rows, 50
+superseded, 22 written off, before and after — so the build's own notes say
+nothing, and only the field diff can see it.
+
+**AND THE FIRST RUN OF CASES 6 AND 7 WAS NOT A RESULT, WHICH THE CONTROL SAID
+AND NOBODY READ.** Each reported 27 failures over two combinations — nearly every
+`monitor-txns` invariant — and so did the unpatched control. The cause is that
+**the prepared read models are part of the build and a worktree's are its own**:
+`public/views/` and `src/data/readModels.json` are gitignored and content-hashed
+off the book, so a fresh worktree carries whichever revision it was last built
+at, and the worktree's was the pre-review one. Left stale, the Transactions tab
+loads another book's ledger and every one of its invariants fails. The harness
+builds the views with the bundle now, and **exits NOT A RESULT on a control that
+is not clean** — a case is read as *these checks fire and the others do not*,
+which says nothing at all if the unpatched tree already fails them. Re-run, the
+control is clean on both routes and cases 6 and 7 fire 1 and 3 checks.
+
+**AND A PREVIEW THAT HAS OUTLIVED A BOOK CHANGE SERVES ANOTHER REVISION'S READ
+MODELS.** `vite.config.ts` mounts `readModelApi()`, which bundles
+`functions/api/stock-exposure.ts` ONCE and memoises it, so a long-running
+`vite preview` answers **409 `revision_changed`** for the revision the current
+bundle asks about — and the app then presents its reload prompt rather than a
+page. `check:family` timed out waiting for `<main>` on `/returns`, twice, which
+is what ruled out the load transient CLAUDE.md records for the transactions
+walks: the same failure both times. The PAGE is right. Restarted, the endpoint
+answers 200 and `/returns` renders 10,279 characters. **Restart the preview after
+a book change.** Both suites reach that handler — measured: `check:pages` routes
+`/api/stock-exposure` on exactly ONE walk, the loading state, where it holds the
+request open on purpose, and every other route lets it through. A stale preview
+would therefore take `<main>` off every page that looks through a fund, not one.
+
+#### Merged with main, and verified on the merged tree
+
+Main moved two commits while the PR waited — a fund-NAV refresh from AMFI's
+published file and a 93-series harvest, 96 files. **No stage heading, no code and
+no checker**, so the `ctx` literal had nothing to conflict on and the merge raised
+no marker. Checked by hand rather than trusted: `src/data/fundNavs.ts` and
+`public/series/` are byte-identical to main's own, the headings were compared
+against main's tip with their titles (main added none, and the branch's only new
+one is `10dh`), and `build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` byte-identically. `fundNavs.ts` drives the LIVE book
+through `withPublishedNavs`, so the live routes were re-walked rather than
+assumed.
+
+- `npx tsc -b` and `npx vite build` pass.
+- `npm run test:ingest` passes every suite: motilalOwner 104, nsdlPriceDate 17,
+  neoFlows 8, mfPurchase 20, pmsReaders 44, categoryWords 51, separate 56,
+  profitLoss 91, askArf 87, buoyantSnap 133, sheetWitness 291, septemberAudit
+  103,632, and golden **140 passed, 0 failed, 2 not checked, 0 blocked**.
+- `npm run test:family` — **4,730 checks, 0 failed**, 18 not checked. **Four of
+  those are new here and each is evidenced by the book**, with its constructed
+  case still holding: the review dates the only statement-dated fund with dated
+  payouts and no capital record; the review values every capital account a
+  statement left unvalued; no unvalued account carries its own calls; and the
+  unvalued list leaves no AIF folio unvalued.
+- `npm run check:family` — **127 passed, 0 failed**.
+- `npm run build-book` twice, byte-identical. `replay:calls` (28 documents, 0
+  would change, 0 refused), `replay:flows` (38, 0, 0), `replay:flow-lines` (4, 0,
+  0, 36 printed lines carried), `replay:owners` (12, 0, 0), `replay:movements`
+  (362 → 362 rows, 90 opening-to-closing splits), `replay:dedupe` (307
+  documents, 0 would change, 2 family decisions applied), `rekey:archive` (506
+  distinct security names, 0 carrying more than one stored key) and
+  `node scripts/review-reconcile.mjs --check` (42 lines no name reaches) are each
+  a no-op, and the tree is clean after all eight.
 
 ### Stage 10k — News & Announcements: REMOVED
 
