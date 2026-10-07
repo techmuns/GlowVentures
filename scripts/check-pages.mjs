@@ -7537,6 +7537,16 @@ const ROUTES = [
     const six = [...CIO_TILE_OPTIONS].sort((a, b) => b.label.length - a.label.length).slice(0, 6).map((o) => o.id);
     return six.length === 6 ? `/cio?tiles=${six.join(",")}` : "/cio?tiles=no-catalogue-captured-from-the-picker";
   }],
+  /**
+   * ── THE SECTOR COMPOSITION PANEL ─────────────────────────────────────────
+   * The `/sectors` page embedded as Morning CIO's second tab. It is walked on
+   * its own address because its set toggle must offer Consolidated and Direct
+   * Equity ALONE — the family asked for Compare sectors to stay off the tab —
+   * and that is a claim a check on the standalone `/sectors` (which keeps all
+   * three) cannot make. The sector figures themselves are verified on the
+   * `/sectors` routes; this walk asserts the embed's own two facts.
+   */
+  ["cio-sectors", "/cio?tab=sectors"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -19405,11 +19415,14 @@ const CIO_TAB_CONTROL = [
    * default is still the movers panel — which is why the order is asserted
    * rather than the membership alone.
    */
-  ["Morning CIO offers exactly the four panels, the three the family arranged and then All alerts", (t, ctx) => {
+  ["Morning CIO offers exactly the five panels — Daily Movers, Sector Composition, the two the family arranged and then All alerts", (t, ctx) => {
     const tabs = ctx?.cioTabs;
     if (tabs == null) return notChecked("the tab probe did not run on this pass");
-    return tabs.length === 4
-      && tabs.map((x) => x.key).join(",") === "movers,allocation,nav,alerts"
+    // SECTOR COMPOSITION SITS SECOND, right after Daily Movers, as asked — so
+    // the order is asserted, not just the membership. The three panels the
+    // family arranged (allocation, nav) and All alerts keep their places after it.
+    return tabs.length === 5
+      && tabs.map((x) => x.key).join(",") === "movers,sectors,allocation,nav,alerts"
       // EXACTLY ONE ACTIVE. Two would mean two panels are drawn at once, which
       // is the state this split exists to end; none would mean the route landed
       // somewhere the control does not describe.
@@ -19518,6 +19531,47 @@ const CIO_TAB_CONTROL = [
     const g = ctx?.cioLayout;
     if (!g || !g.strip || !g.panelBox) return notChecked("the layout probe did not run on this pass");
     return g.strip.bottom <= g.viewportH + 1 && g.panelBox.top >= g.strip.bottom - 1;
+  }],
+];
+
+/**
+ * ── THE SECTOR COMPOSITION PANEL, ON `/cio?tab=sectors` ──────────────────────
+ *
+ *   *"next to daily movers add a new tab sector composition … give option to
+ *    select either consolidated view or direct equity. Do not add the compare
+ *    sectors tab."*
+ *
+ * The panel IS the `/sectors` page (`<SectorComposition embedded />`), so its
+ * figures, donut and table are the ones the `/sectors` routes already verify —
+ * nothing here re-checks a sector's value. What this walk asserts is the two
+ * things the embed changes and the standalone page cannot show: the set toggle
+ * offers Consolidated and Direct Equity ALONE, with Compare left off, and the
+ * sector page really is drawn (a donut and a sector table), so a reader who
+ * opens the tab gets the page rather than an empty shell.
+ *
+ * A MISSING LAYOUT IS A FINDING, NOT AN ABSTENTION: this route asks for the
+ * sectors panel outright, so a null `sectorLayout` means the panel did not
+ * render it — only the probe failing to run abstains.
+ */
+const CIO_SECTORS = [
+  ["the Sector Composition panel offers Consolidated and Direct Equity alone — Compare sectors is left off the tab", (t, ctx) => {
+    const L = ctx?.sectorLayout;
+    if (L === undefined) return notChecked("the sector probe did not run on this pass");
+    if (!L) return false;   // the panel did not draw the sector page
+    return L.views.map((v) => v.key).join(",") === "consolidated,direct"
+      && !L.views.some((v) => v.key === "compare" || /compare/i.test(v.label))
+      // Exactly one set is active, and the default is Consolidated — the widest
+      // set, and the one `/sectors` opens on, so the tab opens on it too.
+      && L.views.filter((v) => v.active).length === 1
+      && L.views.find((v) => v.active)?.key === "consolidated";
+  }],
+  ["...and it is the sector page itself — the donut is drawn and the sector table beside it", (t, ctx) => {
+    const L = ctx?.sectorLayout;
+    if (L === undefined) return notChecked("the sector probe did not run on this pass");
+    if (!L) return false;
+    // The two-column layout, with no Compare picker and no legend creeping back
+    // into the left half (every row of it is a row of the table beside it).
+    return L.cards.length === 2 && L.table && L.wedges > 0 && !L.hasPicker && L.leftLists === 0;
   }],
 ];
 
@@ -25475,6 +25529,7 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC.filter(([description]) => !CIO_OPTIONAL_CAPITAL_CHECKS.has(description)), ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
+  "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-return-metrics": [...CIO_MWR, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],

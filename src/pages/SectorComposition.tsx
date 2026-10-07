@@ -247,7 +247,37 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
     .sort((a, b) => b.mv - a.mv);
 }
 
-export function SectorComposition() {
+/**
+ * ── THE SAME PAGE, EMBEDDED AS A MORNING CIO PANEL ───────────────────────────
+ *
+ *   *"next to daily movers add a new tab sector composition … in the tab give
+ *    option to select either consolidated view or direct equity. Do not add the
+ *    compare sectors tab."*
+ *
+ * The Morning CIO "Sector Composition" panel is THIS component, not a second
+ * copy of it — the donut, the figures, the source line and the sector table are
+ * one implementation, so the tab and `/sectors` can never disagree about what a
+ * sector is worth. Two things differ, and both are props rather than forks:
+ *
+ *   · `embedded` drops the PageHeader (the panel already sits under Morning
+ *     CIO's own headline and KPI strip) and renders the view toggle inline, at
+ *     the top of the panel, which is where the family asked for it.
+ *   · `views` is `EMBED_SECTOR_VIEWS` there — Consolidated and Direct Equity
+ *     only. Compare sectors is a reading of BOTH sets side by side and the
+ *     family explicitly asked for it to stay off the tab; with it out of the
+ *     list `useViewParam` falls an old `?view=compare` link back to
+ *     Consolidated rather than to a tab that is not offered.
+ *
+ * MEMBER SCOPE NEEDS NO WIRING. Every figure is read from `consolidated` /
+ * `portfolio`, which `PortfolioContext` has already scoped to the members the
+ * TopBar selector holds (`?members=`). So selecting one family member, or
+ * several, narrows this panel exactly as it narrows the standalone page — the
+ * whole of what the family asked for, for free.
+ */
+const EMBED_SECTOR_VIEWS = SECTOR_VIEWS.filter((v) => v.key !== "compare");
+
+export function SectorComposition({ embedded = false }: { embedded?: boolean } = {}) {
+  const views = embedded ? EMBED_SECTOR_VIEWS : SECTOR_VIEWS;
   const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const sectorView = useTableView("sectors", SECTOR_COLS, { reviewKind: "sector" });
@@ -366,7 +396,7 @@ export function SectorComposition() {
     return `Excluded rather than folded in — ${said}, so none has a sector of its own.`;
   })();
 
-  const [view, setView] = useViewParam<SectorView>(SECTOR_VIEWS);
+  const [view, setView] = useViewParam<SectorView>(views);
   /** The donut, the source line and the sector table read Consolidated on the Compare tab too. */
   const consolidatedView = view !== "direct";
   /**
@@ -807,23 +837,39 @@ export function SectorComposition() {
     </>
   );
 
+  /**
+   * THE SET TOGGLE, SHARED BY BOTH HOSTS. On `/sectors` it rides beside the
+   * page title (the Portfolio Monitor's placement); embedded in Morning CIO it
+   * sits inline at the top of the panel. `views.map`, not `SECTOR_VIEWS.map`,
+   * so the embedded panel offers Consolidated and Direct Equity alone.
+   */
+  const viewToggle = (
+    <div className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5"
+      role="tablist" aria-label="Which set of sectors to show" data-sector-views>
+      {views.map((v) => (
+        <button key={v.key} type="button" role="tab" aria-selected={view === v.key} title={v.title}
+          data-sector-view={v.key} onClick={() => setView(v.key)}
+          className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${view === v.key
+            ? "bg-champagne-500 text-ink-950 shadow-glow"
+            : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+          {v.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="flex h-full flex-col">
+      {embedded ? (
+        /* Embedded in Morning CIO: no PageHeader — the panel already sits under
+           that page's own headline, crumb and KPI strip — just the set toggle,
+           inline at the top of the panel where the family asked for it. */
+        <div className="mb-3 flex flex-wrap items-center gap-2" data-cio-sector-head>
+          {viewToggle}
+        </div>
+      ) : (
       <PageHeader eyebrow="Allocation" title="Sector Composition"
-        beside={
-          <div className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5"
-            role="tablist" aria-label="Which set of sectors to show" data-sector-views>
-            {SECTOR_VIEWS.map((v) => (
-              <button key={v.key} type="button" role="tab" aria-selected={view === v.key} title={v.title}
-                data-sector-view={v.key} onClick={() => setView(v.key)}
-                className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${view === v.key
-                  ? "bg-champagne-500 text-ink-950 shadow-glow"
-                  : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
-                {v.label}
-              </button>
-            ))}
-          </div>
-        }
+        beside={viewToggle}
         /* ── NO PILLS ON THIS HEADER ────────────────────────────────────────
            *"remove the highlighted texts from the dashboard UI"* — pointed at
            the basis pill, its "N accounts behind" companion and the "N sectors"
@@ -841,6 +887,7 @@ export function SectorComposition() {
                What did NOT move is the source: this page reads the same
                context it always has. */
         />
+      )}
 
       {/* ── TWO HALVES: THE CHART AND ITS FIGURES LEFT, THE TABLE RIGHT ────────
           *"why not give this whole table of Sector breakdown next to this pie
