@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Users, ChevronDown, Check } from "lucide-react";
 import { useMemberScope } from "@/context/PortfolioContext";
 import type { MemberKind } from "@/lib/memberScope";
+import { AbsentSection } from "@/components/Absent";
 
 // ── WHOSE BOOK THE WHOLE DASHBOARD SHOWS (Stage 10di) ─────────────────────────
 //
@@ -89,6 +90,41 @@ export function MemberScopeSelect() {
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * A page whose subject belongs only to members outside the chosen scope.
+ *
+ * A mandate page for Ankita's account, opened while the scope is Ajay alone,
+ * must not say "no account in this book" or "fully exited": both are claims
+ * about the BOOK, and the book carries it. What is true is that the scope at the
+ * top of the page leaves it out, so this says that, names whose it is, and
+ * offers the two ways back — add that member, or show the whole family.
+ */
+export function OutOfScope({ what, ownerIds }: { what: string; ownerIds: readonly string[] }) {
+  const { selected, options, label, setSelected } = useMemberScope();
+  const owners = options.filter((o) => ownerIds.includes(o.ownerId));
+  const whose = owners.map((o) => o.label).join(", ") || "another member";
+  const add = () => setSelected([...(selected ?? []), ...owners.map((o) => o.ownerId).filter((id) => !(selected ?? []).includes(id))]);
+  return (
+    <div data-member-out-of-scope={ownerIds.join(",")}>
+      <AbsentSection what={`${what} · ${whose} · not in ${label}`}
+        needs={`This belongs to ${whose}, who ${owners.length > 1 ? "are" : "is"} not among the members chosen at the top of the page. Add ${owners.length > 1 ? "them" : "that member"}, or show the whole family, to see it.`}>
+        <div className="mt-1 flex flex-wrap justify-center gap-2">
+          {owners.length > 0 && (
+            <button type="button" onClick={add} data-member-scope-add
+              className="rounded-md border border-champagne-500/60 bg-champagne-500/10 px-3 py-1.5 text-xs font-medium text-champagne-400 ring-focus hover:bg-champagne-500/20">
+              Add {whose}
+            </button>
+          )}
+          <button type="button" onClick={() => setSelected(null)} data-member-scope-reset
+            className="rounded-md border border-ink-600 bg-ink-800/60 px-3 py-1.5 text-xs font-medium text-slate-200 ring-focus hover:bg-ink-700/60">
+            Show whole family
+          </button>
+        </div>
+      </AbsentSection>
     </div>
   );
 }

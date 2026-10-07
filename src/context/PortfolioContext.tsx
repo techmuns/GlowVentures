@@ -739,6 +739,15 @@ export function WholeFamily({ children }: { children: React.ReactNode }) {
   return <PortfolioContext.Provider value={whole}>{children}</PortfolioContext.Provider>;
 }
 
+/**
+ * The whole family's book, whatever the selector holds. Only for saying WHOSE
+ * something is when the scope leaves it out — "another member holds this" is
+ * true where "nobody holds this" would be false. Never for a figure.
+ */
+export function useWholePortfolio(): Portfolio | null {
+  return useContext(WholeFamilyContext)?.portfolio ?? null;
+}
+
 /** The scope the current view is on — see `MemberScope`. */
 export function useMemberScope(): MemberScope {
   return usePortfolio().scope;
