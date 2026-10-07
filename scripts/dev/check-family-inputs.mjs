@@ -791,12 +791,40 @@ if (await catTab.count()) {
    * carries `data-mandate` / `data-holdings` for exactly this.
    */
   const mandateRows = await page.$$eval("tbody tr[data-mandate]", (trs) =>
-    trs.map((tr) => ({ accountNo: tr.getAttribute("data-account"), holdings: Number(tr.getAttribute("data-holdings")) })));
+    trs.map((tr) => ({
+      accountNo: tr.getAttribute("data-account"),
+      holdings: Number(tr.getAttribute("data-holdings")),
+      lines: Number(tr.getAttribute("data-mandate-lines") ?? 1),
+    })));
   const rowsPill = Number(/(\d+)\s+rows/.exec(text)?.[1] ?? NaN);
   const links = await page.locator('a[href^="/mandate/"]').count();
+  // ONE ROW PER STRATEGY since Stage 10dl. A strategy run for one account links
+  // its name to that account's page; one run for several (Aristos for Ajay and
+  // for Ankita) is not a link — it would have to pick one member — and each of
+  // its account lines links instead. So the collapsed table carries exactly one
+  // link per single-account row.
+  const singles = mandateRows.filter((m) => m.lines === 1).length;
   check("filtering to PMS mandates lists mandates, one row each",
-    mandateRows.length >= 2 && rowsPill === mandateRows.length && links === mandateRows.length,
-    `${mandateRows.length} mandate rows · pill says ${rowsPill} rows · ${links} drill-down links`);
+    mandateRows.length >= 2 && rowsPill === mandateRows.length && links === singles,
+    `${mandateRows.length} mandate rows · pill says ${rowsPill} rows · ${links} drill-down links · ${singles} single-account rows`);
+  // ...and a strategy run for several accounts opens onto one linked line per account.
+  const multiRow = mandateRows.findIndex((m) => m.lines > 1);
+  if (multiRow >= 0) {
+    const row = page.locator("tbody tr[data-mandate]").nth(multiRow);
+    const want = Number(await row.getAttribute("data-mandate-lines"));
+    const ids = (await row.getAttribute("data-mandate-accounts") ?? "").split(" ").filter(Boolean);
+    // The chevron, not the row's middle: a cell there may carry a popover.
+    await row.locator("button[aria-expanded]").first().click();
+    await page.waitForTimeout(600);
+    const lineLinks = await page.$$eval('a[href^="/mandate/"]', (as) => as.map((a) => decodeURIComponent(a.getAttribute("href").slice("/mandate/".length))));
+    check("…and a strategy run for several accounts opens onto one linked line per account",
+      want >= 2 && ids.length === want && ids.every((id) => lineLinks.includes(id)),
+      `${want} accounts · links now ${lineLinks.length}`);
+    await row.locator("button[aria-expanded]").first().click();
+    await page.waitForTimeout(400);
+  } else {
+    check("…and a strategy run for several accounts opens onto one linked line per account", false, "no strategy row runs for more than one account");
+  }
   // ...and each stands for more shares than it draws, which is what a roll-up is.
   const constituents = mandateRows.reduce((n, m) => n + m.holdings, 0);
   check("each mandate row stands for the shares inside it",
