@@ -2485,7 +2485,7 @@ export function PortfolioMonitor() {
   // valuation — never a depository row, and never a line held at cost.
   const returnSetLine = (footCover.uncosted.lines === 0 || footCover.uncosted.value === 0) && footCover.atCost.lines === 0
     ? `every one of the ${footCover.lines} ${footCover.lines === 1 ? "holding reports" : "holdings reports"} a cost`
-    : `on the ${money(footStruckValue)} of ${money(footCover.value)} with a cost and a valuation · ${footStruckLines} of ${footCover.lines} holdings`;
+    : `on the ${money(footStruckValue)} of ${money(footCover.value)} valued against a cost · ${footStruckLines} of ${footCover.lines} holdings`;
   // ── WHAT A ROW OPENS INTO: ROWS OF THIS TABLE, IN ITS COLUMNS ─────────────
   //
   //   *"i hope the ui design upgrades you are doing and making it much amazing
@@ -3790,7 +3790,20 @@ export function PortfolioMonitor() {
                            ordinary row and stays cell-for-cell under the
                            headings above it. */
                         <Tr view={holdView} className={`${TREE_ROW_DENSE.total} font-semibold`}
-                          data-category-total={grp.key}>
+                          data-category-total={grp.key}
+                          // ── WHAT A LINE HELD AT COST TAKES OUT OF THE COVERAGE
+                          //    (Stage 10dh) ─────────────────────────────────────
+                          // `covered` counts an at-cost line AGAINST the cost
+                          // side, because the review records what was paid and no
+                          // valuation, and a gain has nothing to divide. The sweep
+                          // re-derives the coverage from this row's own printed
+                          // cells — `mv − (invested + P&L)` — and an at-cost line
+                          // is invisible to that: it HAS a cost and its P&L is
+                          // nil, so the subtraction reads as full coverage and the
+                          // check demanded a return this row correctly refuses.
+                          // The value rides here so the checker can add it back.
+                          data-cat-atcost={tot.atCostMV || undefined}
+                          data-cat-atcost-n={tot.atCostCount || undefined}>
                           <td className="py-1.5 pl-[2.1rem] pr-2 text-slate-200">
                             {label} <span className="font-normal text-slate-500">· total</span>
                           </td>
@@ -4545,6 +4558,11 @@ export function PortfolioMonitor() {
                   */}
                 <TrFoot view={holdView} className="px-2 py-1.5 text-slate-200"
                   data-footer-total=""
+                  // The same two handles the category rows carry, for the same
+                  // reason (Stage 10dh): the footer's own return is refused where
+                  // the at-cost lines are the whole of its cost side.
+                  data-cat-atcost={footCover.atCost.value || undefined}
+                  data-cat-atcost-n={footCover.atCost.lines || undefined}
                   labelTitle={(smallDropped.count > 0
                         ? `Total · ${rows.length} rows. ${smallDropped.count} holding${smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} ${smallDropped.count === 1 ? "is" : "are"} dropped automatically at the family's instruction — ${fmtFromBase(smallDropped.value)} in total${bySecurity
                           ? `. On this view that is what the weight base and the Total exposure partition leave out; the company-share totals on this row leave out ${smallDropped.shareCount
@@ -6110,6 +6128,23 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           data-dated-accounts={trd ? [...new Set(trd.instruments.flatMap((i) => i.tranches.map((t) => acctKey(t.provider, t.accountNo))))].join(";") : undefined}
                           data-dated-first={r.first} data-dated-last={r.last}
                           data-mine-row={cap ? r.accountId : undefined}
+                          /*
+                            ...AND THE ROW'S OWN KEY BESIDE IT (Stage 10dh).
+
+                            `data-mine-row` is the ACCOUNT, which is what every
+                            claim about an account's record is struck on. It
+                            stopped being one row per account the moment a
+                            member's review holder bucket drew one row per LINE
+                            (`capitalRollup`'s key, `<accountId>|<securityKey>`),
+                            so several rows of this table now share one of them —
+                            and a check keyed on the account alone then compares
+                            the wrong row, or counts rows against accounts. The
+                            GROUP key is what a row is, uniquely, so it rides
+                            here and the row-level checks read it.
+                          */
+                          data-mine-key={cap ? cap.key : undefined}
+                          data-mine-security={cap?.securityKey ?? undefined}
+                          data-mine-source={cap ? cap.source : undefined}
                           data-mine-windowed={cap?.windowed ? "" : undefined}
                           data-mine-contributions={cap ? cap.contributions : undefined}
                           data-mine-withdrawals={cap ? cap.withdrawals : undefined}
@@ -6224,6 +6259,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                               names why it is withheld — the four cases and the
                               one refusal are `capitalRollup`'s. */}
                           <td className={`px-3 py-2.5 text-right mono whitespace-nowrap ${cap?.realised == null ? "" : changeColor(cap.realised)}`}
+                            data-mine-cell="realisedGain"
                             data-realised-gain={cap?.realised ?? undefined}
                             title={cap?.realised != null ? cap.realisedNote ?? undefined : undefined}>
                             {!cap ? <AbsentCell reason={noCapitalWhy(r)} />
@@ -6234,6 +6270,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                                 : fmtFromBase(cap.realised, { compact: true, sign: true })}
                           </td>
                           <td className={`px-3 py-2.5 text-right mono whitespace-nowrap ${cap?.unrealised == null ? "" : changeColor(cap.unrealised)}`}
+                            data-mine-cell="unrealisedGain"
                             data-unrealised-gain={cap?.unrealised ?? undefined}
                             title={cap?.unrealised != null ? cap.unrealisedNote ?? undefined : undefined}>
                             {!cap ? <AbsentCell reason={noCapitalWhy(r)} />

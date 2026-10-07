@@ -266,6 +266,14 @@ export type BookFigures = {
    * figure the row does not print, so the page names this beside the return.
    */
   deployed: number | null;
+  /**
+   * THE PART OF `deployed` THE COST COLUMN SHOWS — the cost of the units still
+   * held, over the SAME struck set, so the hover beside the return can name its
+   * two parts. It is NOT `cost`: `cost` spans every holding under the row, a
+   * line held at cost included, and subtracting that from `deployed` on a row
+   * that holds both reads the at-cost capital as a redemption (Stage 10dh).
+   */
+  deployedHeld: number | null;
   asOf: string[];
   /** Every capital account's committed − called = still to call. Null where none can be struck. */
   ties: boolean | null;
@@ -752,8 +760,8 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
         ? fifoTotals(struck.map((f) => f.position!)) : null;
       const counts = { atCostHoldings: atCost.length, atCostValue: sum(atCost.map((f) => f.value ?? 0)) };
       return fifo?.returnPct != null
-        ? { returnPct: fifo.returnPct, deployed: fifo.deployed, ...counts }
-        : { returnPct: null, deployed: null, ...counts };
+        ? { returnPct: fifo.returnPct, deployed: fifo.deployed, deployedHeld: fifo.costHeld, ...counts }
+        : { returnPct: null, deployed: null, deployedHeld: null, ...counts };
     })(),
     // Only the folios that carry a figure here — never an income-only VIEW,
     // and on a consolidated row never the second statement of a holding

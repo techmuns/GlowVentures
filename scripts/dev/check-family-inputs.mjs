@@ -17,6 +17,11 @@
 import { chromium } from "playwright-core";
 import { readFileSync } from "node:fs";
 import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
+// Which side of the book a fund is on, for an account with no position to read
+// one off — the rule `accountFundSide` applies on the page, read from the one
+// shared module rather than re-expressed, because it decides nothing here: it
+// only says whether a claim has a subject on this book.
+import { fundMarketSideOf } from "../../shared/aifCategory.mjs";
 
 /**
  * One generated array out of `glowData.ts`, without importing the module — a
@@ -494,13 +499,67 @@ check("its private market value is a real measured figure, not the removed page'
 // …AND WHAT IT PAID IS THE BAND'S HOVER, the band's face keeping its name,
 // its "missing data" marker and its counts — the sentence under it went at the
 // family's request, and must no longer be in the page's text.
+/**
+ * ── AND WHETHER THERE IS ANY SUCH CAPITAL IS THE BOOK'S ANSWER, NOT THE
+ *    PAGE'S (Stage 10dh) ────────────────────────────────────────────────────
+ *
+ * The family's consolidated review records what was PAID into every private
+ * investment a statement left unvalued, so Sky Capital's four folios — this
+ * book's whole "Not valued" section — are positions held at cost now, and the
+ * band has no rows to draw. Its claim has lost its subject.
+ *
+ * READING THE PAGE TO DECIDE THAT WOULD LET A DROPPED BAND EXCUSE ITSELF, so
+ * the premise is derived here: an AIF account with no position, on the PRIVATE
+ * side (`fundMarketSideOf` — the same rule the page's own `accountFundSide`
+ * applies, since an account with nothing in it has no position to read a side
+ * off), with capital stated against it. That last term is what the claim is
+ * ABOUT: a band with no paid-in figure has nothing to state. Measured on this
+ * book: three AIF accounts hold nothing — both 360 ONE Alternates income-only
+ * folios, which fold into the valued row their units are already counted on,
+ * and Motilal Oswal's Hedged Equity strategy, which is not a private-market
+ * fund — and not one of them has a drawn figure.
+ *
+ * SO BOTH BRANCHES HAVE A SUBJECT. Where the book carries such capital the
+ * original claim is asserted; where it does not, the band must be ABSENT and
+ * the fact that replaced it is asserted on the "Held at cost" band — which is
+ * where a reader now learns that this money is a cost rather than a valuation.
+ * Neither implies the other, and a build that dropped both bands fails the
+ * second.
+ */
 const unvaluedBandHover = await page.$eval('tr[data-pm-section="unvalued"] td[title]', (el) => el.getAttribute("title") ?? "")
   .catch(() => "");
-check("the capital the family paid into funds that publish no NAV is stated on its own",
-  /Not valued/i.test(text) && /missing data/i.test(text)
-  && /₹[\d,.]+\s*(?:Cr|L) paid in here is in no value total/i.test(unvaluedBandHover)
-  && !/paid in (?:here )?is in no value total/i.test(text),
-  unvaluedBandHover.slice(0, 120));
+{
+  const src = readFileSync(new URL("../../src/data/glowData.ts", import.meta.url), "utf8");
+  const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+  const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+  const commitments = bookArray(src, "BOOK_COMMITMENTS") ?? [];
+  const held = new Set(positions.map((p) => p.accountId));
+  const drawnOf = new Map(commitments.map((c) => [c.accountId, c.drawn ?? null]));
+  const unvaluedPrivate = accounts.filter((a) => a.engagement === "AIF" && !held.has(a.accountId)
+    && fundMarketSideOf(a.strategy ?? a.provider, a) === "private"
+    && drawnOf.get(a.accountId) != null);
+  if (unvaluedPrivate.length) {
+    check(`the capital the family paid into ${unvaluedPrivate.length} fund(s) that publish no NAV is stated on its own`,
+      /Not valued/i.test(text) && /missing data/i.test(text)
+      && /₹[\d,.]+\s*(?:Cr|L) paid in here is in no value total/i.test(unvaluedBandHover)
+      && !/paid in (?:here )?is in no value total/i.test(text),
+      unvaluedBandHover.slice(0, 120));
+  } else {
+    check("no private account in this book publishes no NAV, so the missing-data band is correctly gone",
+      unvaluedBandHover === ""
+      && (await page.locator('tr[data-pm-section="unvalued"]').count()) === 0
+      && !/paid in (?:here )?is in no value total/i.test(text),
+      `${accounts.filter((a) => a.engagement === "AIF" && !held.has(a.accountId)).length} AIF account(s) hold nothing, none of them private with capital stated`);
+    const atCostHover = await page.$eval('tr[data-pm-section="atCost"] td[title]', (el) => el.getAttribute("title") ?? "")
+      .catch(() => "");
+    check("...and what replaced it is on the Held at cost band — the review's own cost, in the value and in no gain",
+      /consolidated review/i.test(atCostHover) && /no valuation/i.test(atCostHover)
+      && /₹[\d,.]+\s*(?:Cr|L) here is their cost/i.test(atCostHover)
+      && /in no gain or return/i.test(atCostHover)
+      && !/consolidated review records what was paid/i.test(text),
+      atCostHover.slice(0, 120));
+  }
+}
 
 await page.goto(`${BASE}/private-market?tiles=unvalued`, { waitUntil: "networkidle" });
 await page.waitForTimeout(700);
