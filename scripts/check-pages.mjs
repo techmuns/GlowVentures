@@ -35020,6 +35020,13 @@ const INVARIANTS = {
    * archive's own manifest, read here rather than off the page.
    */
   audit: [
+    ["the consolidated sheet is primary and original documents are a collapsed source footnote", (t, ctx) => {
+      return xaEl(ctx, "consolidated-sheet")?.attrs.tabs === "17"
+        && xaEl(ctx, "audit-sources")?.attrs.open === "false"
+        && !(ctx?.xa ?? []).some(x => x.xa === "audit-chip");
+    }],
+  ],
+  "audit-short-rows": [
     ["every document chip names its account, its report type and its date, and no two read alike", (t, ctx) => {
       const want = XA_BOOK?.auditChips;
       if (!want?.length) return { notChecked: "the audit manifest could not be read" };
@@ -35033,9 +35040,7 @@ const INVARIANTS = {
         return (!account || g.text.includes(account)) && (!type || g.text.includes(type)) && (!w.fy || g.text.includes(w.fy));
       });
     }],
-  ],
-
-  /**
+    /**
    * ── A SHORT ROW IS NOT PLACED BY POSITION (XA-20) ────────────────────────
    *
    * The extracted tables keep a row's cells in printed order and drop the
@@ -35044,7 +35049,6 @@ const INVARIANTS = {
    * under "expenses". Walked on the table with the most such rows, derived
    * from the archive.
    */
-  "audit-short-rows": [
     ["a row with fewer cells than its headings is shown unaligned, never placed by position", (t, ctx) => {
       const a = XA_BOOK?.auditShort;
       if (!a) return { notChecked: "no extracted table in the archive has a row shorter than its headings" };

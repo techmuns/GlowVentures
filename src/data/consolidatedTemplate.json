@@ -1,0 +1,916 @@
+{
+  "Entities": [
+    {
+      "key": "id",
+      "label": "Entity ID",
+      "format": "@",
+      "width": 10
+    },
+    {
+      "key": "name",
+      "label": "Entity name (legal)",
+      "format": "",
+      "width": 30
+    },
+    {
+      "key": "short",
+      "label": "Short name (column headers)",
+      "format": "",
+      "width": 14
+    },
+    {
+      "key": "type",
+      "label": "Entity type",
+      "format": "",
+      "width": 13
+    },
+    {
+      "key": "rel",
+      "label": "Relationship / role",
+      "format": "",
+      "width": 16
+    },
+    {
+      "key": "pan",
+      "label": "PAN (masked)",
+      "format": "",
+      "width": 13
+    },
+    {
+      "key": "res",
+      "label": "Residential status",
+      "format": "",
+      "width": 13
+    },
+    {
+      "key": "notes",
+      "label": "Notes",
+      "format": "",
+      "width": 40
+    },
+    {
+      "key": "check",
+      "label": "Row check",
+      "format": "",
+      "width": 16
+    }
+  ],
+  "Accounts": [
+    {
+      "key": "id",
+      "label": "Account ID",
+      "format": "@",
+      "width": 10
+    },
+    {
+      "key": "ent",
+      "label": "Entity ID",
+      "format": "",
+      "width": 10
+    },
+    {
+      "key": "entname",
+      "label": "Entity",
+      "format": "",
+      "width": 24
+    },
+    {
+      "key": "type",
+      "label": "Account type",
+      "format": "",
+      "width": 18
+    },
+    {
+      "key": "provider",
+      "label": "Provider / custodian",
+      "format": "",
+      "width": 26
+    },
+    {
+      "key": "adv",
+      "label": "Advisor / manager",
+      "format": "",
+      "width": 24
+    },
+    {
+      "key": "strategy",
+      "label": "Strategy / scheme / purpose",
+      "format": "",
+      "width": 28
+    },
+    {
+      "key": "acno",
+      "label": "Account / folio no. (masked)",
+      "format": "",
+      "width": 16
+    },
+    {
+      "key": "asof",
+      "label": "Statement as-of date",
+      "format": "dd-mmm-yyyy",
+      "width": 13
+    },
+    {
+      "key": "ccy",
+      "label": "Currency",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "notes",
+      "label": "Notes",
+      "format": "",
+      "width": 30
+    },
+    {
+      "key": "check",
+      "label": "Row check",
+      "format": "",
+      "width": 16
+    }
+  ],
+  "Securities": [
+    {
+      "key": "id",
+      "label": "Security ID",
+      "format": "@",
+      "width": 10
+    },
+    {
+      "key": "name",
+      "label": "Security / scheme name",
+      "format": "",
+      "width": 38
+    },
+    {
+      "key": "isin",
+      "label": "ISIN",
+      "format": "",
+      "width": 14
+    },
+    {
+      "key": "code",
+      "label": "NSE symbol / scheme code",
+      "format": "",
+      "width": 13
+    },
+    {
+      "key": "cat",
+      "label": "Category",
+      "format": "",
+      "width": 28
+    },
+    {
+      "key": "ac",
+      "label": "Asset class",
+      "format": "",
+      "width": 11
+    },
+    {
+      "key": "bov",
+      "label": "Basket override (optional)",
+      "format": "",
+      "width": 11
+    },
+    {
+      "key": "basket",
+      "label": "Basket",
+      "format": "",
+      "width": 8
+    },
+    {
+      "key": "sector",
+      "label": "Sector",
+      "format": "",
+      "width": 17
+    },
+    {
+      "key": "mcap",
+      "label": "Market cap",
+      "format": "",
+      "width": 11
+    },
+    {
+      "key": "benov",
+      "label": "Benchmark override (optional)",
+      "format": "",
+      "width": 20
+    },
+    {
+      "key": "bench",
+      "label": "Benchmark",
+      "format": "",
+      "width": 26
+    },
+    {
+      "key": "listed",
+      "label": "Listed? (Y/N)",
+      "format": "",
+      "width": 8
+    },
+    {
+      "key": "basis",
+      "label": "Valuation basis",
+      "format": "",
+      "width": 14
+    },
+    {
+      "key": "price",
+      "label": "Price at valuation date (\u20b9 per unit)",
+      "format": "#,##0.0000;[Red](#,##0.0000);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "pdate",
+      "label": "Price date",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "gf",
+      "label": "FMV on 31-Jan-2018 (\u20b9 per unit, grandfathering)",
+      "format": "#,##0.0000;[Red](#,##0.0000);\"-\"",
+      "width": 15
+    },
+    {
+      "key": "notes",
+      "label": "Notes",
+      "format": "",
+      "width": 30
+    },
+    {
+      "key": "check",
+      "label": "Row check",
+      "format": "",
+      "width": 16
+    }
+  ],
+  "Holdings": [
+    {
+      "key": "hid",
+      "label": "Holding ID",
+      "format": "@",
+      "width": 9
+    },
+    {
+      "key": "acct",
+      "label": "Account ID",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "sec",
+      "label": "Security ID",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "ent",
+      "label": "Entity",
+      "format": "",
+      "width": 18
+    },
+    {
+      "key": "adv",
+      "label": "Advisor / manager",
+      "format": "",
+      "width": 18
+    },
+    {
+      "key": "name",
+      "label": "Security / product",
+      "format": "",
+      "width": 30
+    },
+    {
+      "key": "ac",
+      "label": "Asset class",
+      "format": "",
+      "width": 10
+    },
+    {
+      "key": "cat",
+      "label": "Category",
+      "format": "",
+      "width": 24
+    },
+    {
+      "key": "basket",
+      "label": "Basket",
+      "format": "",
+      "width": 7
+    },
+    {
+      "key": "first",
+      "label": "First investment date",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "last",
+      "label": "Last investment date",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "qty",
+      "label": "Quantity / units",
+      "format": "#,##0.000;[Red](#,##0.000);\"-\"",
+      "width": 13
+    },
+    {
+      "key": "cost",
+      "label": "Invested cost (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 15
+    },
+    {
+      "key": "avg",
+      "label": "Average cost (\u20b9 per unit)",
+      "format": "#,##0.00;[Red](#,##0.00);\"-\"",
+      "width": 12
+    },
+    {
+      "key": "price",
+      "label": "Price (\u20b9 per unit)",
+      "format": "#,##0.0000;[Red](#,##0.0000);\"-\"",
+      "width": 12
+    },
+    {
+      "key": "basis",
+      "label": "Valuation basis",
+      "format": "",
+      "width": 13
+    },
+    {
+      "key": "mvov",
+      "label": "Market value override (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 15
+    },
+    {
+      "key": "mv",
+      "label": "Market value (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 15
+    },
+    {
+      "key": "ugain",
+      "label": "Unrealised gain (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "absret",
+      "label": "Absolute return (%)",
+      "format": "0.0%;[Red]-0.0%;\"-\"",
+      "width": 10
+    },
+    {
+      "key": "income",
+      "label": "Dividend / interest received (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 13
+    },
+    {
+      "key": "rgain",
+      "label": "Realised gain on exits (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 13
+    },
+    {
+      "key": "xirr",
+      "label": "Scheme XIRR (%)",
+      "format": "0.0%;[Red]-0.0%;\"-\"",
+      "width": 9
+    },
+    {
+      "key": "bench",
+      "label": "Benchmark",
+      "format": "",
+      "width": 22
+    },
+    {
+      "key": "babs",
+      "label": "Benchmark absolute (%)",
+      "format": "0.0%;[Red]-0.0%;\"-\"",
+      "width": 10
+    },
+    {
+      "key": "bxirr",
+      "label": "Benchmark XIRR (%)",
+      "format": "0.0%;[Red]-0.0%;\"-\"",
+      "width": 10
+    },
+    {
+      "key": "alpha",
+      "label": "Alpha (XIRR, % pts)",
+      "format": "0.0%;[Red]-0.0%;\"-\"",
+      "width": 9
+    },
+    {
+      "key": "shown",
+      "label": "Return shown",
+      "format": "",
+      "width": 10
+    },
+    {
+      "key": "alloc",
+      "label": "Allocation (% of portfolio)",
+      "format": "0.0%;[Red]-0.0%;\"-\"",
+      "width": 10
+    },
+    {
+      "key": "prevmv",
+      "label": "Market value at previous date (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 15
+    },
+    {
+      "key": "stmt",
+      "label": "Statement date",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "src",
+      "label": "Source document / notes",
+      "format": "",
+      "width": 30
+    },
+    {
+      "key": "lotqty",
+      "label": "Tax lots: closing quantity",
+      "format": "#,##0.000;[Red](#,##0.000);\"-\"",
+      "width": 13
+    },
+    {
+      "key": "check",
+      "label": "Row check",
+      "format": "",
+      "width": 18
+    }
+  ],
+  "Tax Lots": [
+    {
+      "key": "lid",
+      "label": "Lot ID",
+      "format": "@",
+      "width": 8
+    },
+    {
+      "key": "acct",
+      "label": "Account ID",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "sec",
+      "label": "Security ID",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "ent",
+      "label": "Entity (taxpayer)",
+      "format": "",
+      "width": 18
+    },
+    {
+      "key": "name",
+      "label": "Security",
+      "format": "",
+      "width": 30
+    },
+    {
+      "key": "isin",
+      "label": "ISIN",
+      "format": "",
+      "width": 13
+    },
+    {
+      "key": "cat",
+      "label": "Category",
+      "format": "",
+      "width": 20
+    },
+    {
+      "key": "pdate",
+      "label": "Purchase date",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "pqty",
+      "label": "Purchase quantity",
+      "format": "#,##0.000;[Red](#,##0.000);\"-\"",
+      "width": 12
+    },
+    {
+      "key": "prate",
+      "label": "Purchase rate (\u20b9)",
+      "format": "#,##0.00;[Red](#,##0.00);\"-\"",
+      "width": 11
+    },
+    {
+      "key": "pamt",
+      "label": "Purchase amount (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "sdate",
+      "label": "Sale date",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "sqty",
+      "label": "Sale quantity",
+      "format": "#,##0.000;[Red](#,##0.000);\"-\"",
+      "width": 12
+    },
+    {
+      "key": "srate",
+      "label": "Sale rate (\u20b9)",
+      "format": "#,##0.00;[Red](#,##0.00);\"-\"",
+      "width": 11
+    },
+    {
+      "key": "samt",
+      "label": "Sale amount (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "cqty",
+      "label": "Closing quantity",
+      "format": "#,##0.000;[Red](#,##0.000);\"-\"",
+      "width": 12
+    },
+    {
+      "key": "ccost",
+      "label": "Closing cost (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "mrate",
+      "label": "Market rate (\u20b9)",
+      "format": "#,##0.00;[Red](#,##0.00);\"-\"",
+      "width": 11
+    },
+    {
+      "key": "mval",
+      "label": "Market value (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "rdays",
+      "label": "Days held (realised)",
+      "format": "#,##0;[Red]-#,##0;\"-\"",
+      "width": 9
+    },
+    {
+      "key": "rterm",
+      "label": "Term (realised)",
+      "format": "",
+      "width": 10
+    },
+    {
+      "key": "udays",
+      "label": "Days held (unrealised)",
+      "format": "#,##0;[Red]-#,##0;\"-\"",
+      "width": 9
+    },
+    {
+      "key": "uterm",
+      "label": "Term (unrealised)",
+      "format": "",
+      "width": 10
+    },
+    {
+      "key": "ltdays",
+      "label": "Long-term after (days)",
+      "format": "#,##0;[Red]-#,##0;\"-\"",
+      "width": 9
+    },
+    {
+      "key": "gf",
+      "label": "FMV on 31-Jan-2018 (\u20b9)",
+      "format": "#,##0.00;[Red](#,##0.00);\"-\"",
+      "width": 11
+    },
+    {
+      "key": "elig",
+      "label": "Grandfathering eligible",
+      "format": "",
+      "width": 10
+    },
+    {
+      "key": "rbook",
+      "label": "Realised book profit (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "ubook",
+      "label": "Unrealised book profit (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "rtcost",
+      "label": "Tax cost per unit \u2014 realised (\u20b9)",
+      "format": "#,##0.00;[Red](#,##0.00);\"-\"",
+      "width": 12
+    },
+    {
+      "key": "rtax",
+      "label": "Taxable gain \u2014 realised (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "utcost",
+      "label": "Tax cost per unit \u2014 unrealised (\u20b9)",
+      "format": "#,##0.00;[Red](#,##0.00);\"-\"",
+      "width": 12
+    },
+    {
+      "key": "utax",
+      "label": "Taxable gain \u2014 unrealised (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "left",
+      "label": "Days left to become long-term",
+      "format": "#,##0;[Red]-#,##0;\"-\"",
+      "width": 10
+    },
+    {
+      "key": "ltdate",
+      "label": "Becomes long-term on",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "dps",
+      "label": "Dividend per share, current FY (\u20b9)",
+      "format": "#,##0.00;[Red](#,##0.00);\"-\"",
+      "width": 11
+    },
+    {
+      "key": "div",
+      "label": "Dividend (\u20b9) = DPS x closing qty",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 13
+    },
+    {
+      "key": "fy",
+      "label": "FY of sale",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "notes",
+      "label": "Notes",
+      "format": "",
+      "width": 26
+    },
+    {
+      "key": "check",
+      "label": "Row check",
+      "format": "",
+      "width": 18
+    }
+  ],
+  "Transactions": [
+    {
+      "key": "tid",
+      "label": "Txn ID",
+      "format": "@",
+      "width": 8
+    },
+    {
+      "key": "date",
+      "label": "Date",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "acct",
+      "label": "Account ID",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "sec",
+      "label": "Security ID",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "ent",
+      "label": "Entity",
+      "format": "",
+      "width": 18
+    },
+    {
+      "key": "name",
+      "label": "Security",
+      "format": "",
+      "width": 30
+    },
+    {
+      "key": "cat",
+      "label": "Category",
+      "format": "",
+      "width": 22
+    },
+    {
+      "key": "ac",
+      "label": "Asset class",
+      "format": "",
+      "width": 10
+    },
+    {
+      "key": "type",
+      "label": "Type",
+      "format": "",
+      "width": 13
+    },
+    {
+      "key": "qty",
+      "label": "Quantity / units",
+      "format": "#,##0.000;[Red](#,##0.000);\"-\"",
+      "width": 12
+    },
+    {
+      "key": "price",
+      "label": "Price (\u20b9 per unit)",
+      "format": "#,##0.0000;[Red](#,##0.0000);\"-\"",
+      "width": 11
+    },
+    {
+      "key": "gross",
+      "label": "Gross amount (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "chg",
+      "label": "Charges / TDS (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 11
+    },
+    {
+      "key": "net",
+      "label": "Net cash flow to family (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 15
+    },
+    {
+      "key": "counts",
+      "label": "Counts as",
+      "format": "",
+      "width": 11
+    },
+    {
+      "key": "notes",
+      "label": "Notes",
+      "format": "",
+      "width": 30
+    },
+    {
+      "key": "check",
+      "label": "Row check",
+      "format": "",
+      "width": 18
+    }
+  ],
+  "Commitments": [
+    {
+      "key": "cid",
+      "label": "Commitment ID",
+      "format": "@",
+      "width": 11
+    },
+    {
+      "key": "acct",
+      "label": "Account ID",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "sec",
+      "label": "Security ID",
+      "format": "",
+      "width": 9
+    },
+    {
+      "key": "ent",
+      "label": "Entity",
+      "format": "",
+      "width": 18
+    },
+    {
+      "key": "fund",
+      "label": "Fund",
+      "format": "",
+      "width": 36
+    },
+    {
+      "key": "cdate",
+      "label": "Commitment date",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "comm",
+      "label": "Committed (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "called",
+      "label": "Called to date (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "paid",
+      "label": "Paid to date (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "dist",
+      "label": "Distributions received (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "uncalled",
+      "label": "Uncalled \u2014 still to be asked (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "unpaid",
+      "label": "Called, not yet paid (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 13
+    },
+    {
+      "key": "pct",
+      "label": "% of commitment called",
+      "format": "0.0%;[Red]-0.0%;\"-\"",
+      "width": 10
+    },
+    {
+      "key": "value",
+      "label": "Current value (\u20b9, from Holdings)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 14
+    },
+    {
+      "key": "tvpi",
+      "label": "TVPI (x)",
+      "format": "0.00\"x\";[Red]-0.00\"x\";\"-\"",
+      "width": 8
+    },
+    {
+      "key": "dpi",
+      "label": "DPI (x)",
+      "format": "0.00\"x\";[Red]-0.00\"x\";\"-\"",
+      "width": 8
+    },
+    {
+      "key": "ncdate",
+      "label": "Next call date",
+      "format": "dd-mmm-yyyy",
+      "width": 12
+    },
+    {
+      "key": "ncamt",
+      "label": "Next call amount (\u20b9)",
+      "format": "#,##0;[Red](#,##0);\"-\"",
+      "width": 13
+    },
+    {
+      "key": "notes",
+      "label": "Notes",
+      "format": "",
+      "width": 30
+    },
+    {
+      "key": "check",
+      "label": "Row check",
+      "format": "",
+      "width": 18
+    }
+  ]
+}
