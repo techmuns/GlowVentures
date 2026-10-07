@@ -1103,7 +1103,17 @@ export function FamilyEntities() {
                 RENAMES ITSELF to "Custody" when this book has no in-house
                 bucket, so even the title is not a constant. That card is found
                 by the pie inside it, for the same reason. */}
-            <div className="overflow-x-auto" data-family-table>
+            {/* THE TABLE CARD SCROLLS INTERNALLY WHERE IT OUTGROWS THE VIEWPORT,
+                the same cap the entity-view holdings card uses below. Stage 10bl
+                laid this card beside the custody pie on `items-start` assuming the
+                pie's ~17-row legend was the taller card; #124's Edit-columns
+                toolbar and four entity NAMES that wrap to two lines ("…Family
+                Trust 2/3", "Not attributed to a member") made the table taller,
+                so the page scrolled — the one thing the family asked this layout
+                never to do. The cap matches the pie's own height, so the two
+                cards read as the pair they were meant to be and the page itself
+                stays still. */}
+            <div className="max-h-[600px] overflow-auto" data-family-table>
               <table className="min-w-full text-sm">
                 <thead className="border-b border-ink-700">
                   <Tr view={entityView}>
