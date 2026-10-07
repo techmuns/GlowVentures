@@ -11,7 +11,7 @@ import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
-import { fetchQuotes, symbolsFor, quoteSymbolsFor, quoteSymbolFor, applyQuotes, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
+import { fetchQuotes, symbolsFor, quoteSymbolsFor, quoteSymbolFor, holdingQuoteSymbolFor, applyQuotes, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
 import { applyFundNavs, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
 import { depositoryShareHoldings, depositoryShareIsins, depositoryShareSymbols, shareCandidates } from "@/lib/depositoryShares";
 import { applyCorporateActionQuotes, fetchCorporateActions, liveWithheldReason, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
@@ -316,7 +316,7 @@ function liveCounts(positions: readonly Position[], returns: Map<string, ActionR
   for (const p of positions) {
     const e = bySecurity.get(p.securityKey) ?? { live: false, hasSymbol: false, withheld: false };
     e.live = e.live || !!p.live;
-    e.hasSymbol = e.hasSymbol || (["Equity", "ETF"].includes(p.assetClass) && !!quoteSymbolFor(p));
+    e.hasSymbol = e.hasSymbol || !!holdingQuoteSymbolFor(p);
     e.withheld = e.withheld || !!liveWithheldReason(p, returns);
     bySecurity.set(p.securityKey, e);
   }

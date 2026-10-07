@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { cashInstruments, instrumentIndex, resolveInstrument, type Listing } from "../../../shared/upstoxInstrumentLookup.mjs";
 import { UPSTOX_INSTRUMENTS, UPSTOX_ISIN_SYMBOLS } from "../../../shared/upstoxInstruments.mjs";
 import { BOOK_POSITIONS } from "../../data/glowData";
-import { applyQuotes, quoteSymbolFor, symbolFor, type QuoteFeed } from "../quotes";
+import { applyQuotes, holdingQuoteSymbolFor, quoteSymbolFor, symbolFor, type QuoteFeed } from "../quotes";
+import { applyFundNavs } from "../fundNavs";
 
 const listing = (segment: string, isin: string, symbol: string, name = "Example Limited", series = "EQ"): Listing => ({
   segment, instrument_key: `${segment}|${isin}`, trading_symbol: symbol, name, instrument_type: series,
@@ -44,4 +45,14 @@ const unchangedBond = applyQuotes([bond], feed)[0];
 assert.equal(unchangedBond.live, false);
 assert.equal(unchangedBond.currentPrice, bond.currentPrice);
 assert.equal(unchangedBond.marketValue, bond.marketValue);
+assert.equal(holdingQuoteSymbolFor(bond), null);
+const liquid = BOOK_POSITIONS.find((p) => p.assetClass === "Mutual Fund" && p.symbol === "LIQUIDBEES")!;
+assert.ok(liquid, "the committed book includes a fund-classified listed ETF");
+assert.equal(holdingQuoteSymbolFor(liquid), "LIQUIDBEES");
+const liquidFeed: QuoteFeed = { ...feed, quotes: { LIQUIDBEES: { ...feed.quotes["BSE:YASHHV"], price: 1000 } } };
+const liquidLive = applyQuotes([liquid], liquidFeed)[0];
+assert.equal(liquidLive.live, true);
+assert.equal(liquidLive.currentPrice, 1000);
+assert.equal(applyFundNavs([liquidLive])[0].currentPrice, 1000, "intraday ETF quote wins over the NAV overlay");
+assert.equal(holdingQuoteSymbolFor({ ...liquid, isin: null }), null, "fund pricing requires its exact listed-unit identity");
 console.log("Company CMP: exact NSE/BSE identities, fund-only companies, conflicts and valuation overlay passed");

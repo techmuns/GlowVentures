@@ -39,12 +39,21 @@ export function quoteSymbolsFor(positions: readonly { securityKey: string; symbo
   return [...new Set(positions.map(quoteSymbolFor).filter((s): s is string => !!s))];
 }
 
+/** A holding may use its own listing quote, never its debt issuer's share price. */
+export function holdingQuoteSymbolFor(p: Pick<Position, "assetClass" | "securityKey" | "symbol" | "isin">): string | null {
+  if (p.assetClass === "Equity" || p.assetClass === "ETF") return quoteSymbolFor(p);
+  // Some listed ETFs are classified as Mutual Fund by the statement provider.
+  // Accept their exact listed-unit ISIN, without falling back to an issuer name.
+  return p.assetClass === "Mutual Fund" && p.isin
+    ? UPSTOX_ISIN_SYMBOLS[p.isin.trim().toUpperCase()] ?? null : null;
+}
+
 /** How much of a book the live layer can even ask about, before any fetch. */
 export function symbolCoverage(positions: Position[]): { withSymbol: number; withoutSymbol: number; names: string[] } {
   const seen = new Map<string, boolean>();
-  for (const p of positions) if (!seen.has(p.securityKey)) seen.set(p.securityKey, !!quoteSymbolFor(p));
+  for (const p of positions) if (!seen.has(p.securityKey)) seen.set(p.securityKey, !!holdingQuoteSymbolFor(p));
   const names = positions
-    .filter((p) => !quoteSymbolFor(p))
+    .filter((p) => !holdingQuoteSymbolFor(p))
     .map((p) => p.security);
   return {
     withSymbol: [...seen.values()].filter(Boolean).length,
@@ -224,10 +233,8 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
     // are unlisted shares, preference shares and fund units no exchange quotes;
     // a quote that happened to resolve would move a value the review struck. And
     // a line recorded with no unit count has no per-unit price to apply at all.
-    // Fund disclosures also map debt issuers to their listed equity for CMP.
-    // That issuer quote must never revalue a bond or a fund unit in the book.
-    if (p.review || p.quantity === null || !["Equity", "ETF"].includes(p.assetClass)) return { ...p, live: false };
-    const sym = quoteSymbolFor(p);
+    if (p.review || p.quantity === null) return { ...p, live: false };
+    const sym = holdingQuoteSymbolFor(p);
     const q = sym ? feed.quotes[sym] : undefined;
     if (!q || !(q.price > 0)) return { ...p, live: false };
     if (!priceLooksLikeSameSecurity(q.price, p.currentPrice)) {
