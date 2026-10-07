@@ -97,6 +97,7 @@ const SUITES = [
   ["extras & admin figures", "src/lib/__tests__/extrasFigures.test.ts"],
   ["price alerts", "src/lib/__tests__/priceAlerts.test.ts"],
   ["price levels sent to Glow Central Research", "src/lib/__tests__/researchLevels.test.ts"],
+  ["movers inside the AIFs and PMS mandates", "src/lib/__tests__/insideMovers.test.ts"],
 ];
 
 let failed = 0;

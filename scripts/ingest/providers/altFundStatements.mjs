@@ -1636,6 +1636,48 @@ function buoyantSnapSections(text) {
   return out;
 }
 
+/**
+ * THE FUND'S OWN PORTFOLIO, AS THE NORMALIZED LOOK-THROUGH FIELD.
+ *
+ * Page 3's `Current Holdings` table is the ONLY AIF portfolio disclosure in this
+ * archive — ten of the book's eleven AIF funds publish nothing any reader can
+ * join (Stage 10aj), which is why an AIF stays one row everywhere else. It was
+ * archived AS PRINTED and reached nothing, so a company held inside an AIF was
+ * on no screen. `schemeHoldings` is the field that already exists for exactly
+ * this — "a fund's own holdings, for look-through. Never summed into the book."
+ * — and `providers/schemePortfolio.mjs` is its one other producer, so a
+ * disclosure cannot be described two ways.
+ *
+ * Published only where the snap restates its own page 1 AND the holdings table
+ * reads whole (`buoyantSnapHoldingsFails`) — the same gate the archived section
+ * passes, so a table withheld there is withheld here. Three things it refuses
+ * rather than guesses:
+ *
+ *   1. `Others` IS NOT A COMPANY. It is the lump the fund declines to name, so
+ *      it is not a holding row: a 7.13% security called Others would be the
+ *      fabricated classification this book refuses. It stays in the archived
+ *      section as printed, and what the named lines cover is their OWN sum —
+ *      never 100 less the residual, which is a second figure for one thing.
+ *   2. The snap prints a NAME and a WEIGHT and nothing else, so the ISIN, the
+ *      industry, the quantity and the value are `null` — never zero, which
+ *      would state a holding of nothing.
+ *   3. The name is carried AS PRINTED. The extraction renders `&` as `and` on
+ *      most lines and as `n` on one (`LnT TECHNOLOGY SERVICES LTD`), and
+ *      repairing a name here would be this reader inventing one; the company
+ *      that cannot then be joined is NAMED on screen instead.
+ */
+export function buoyantSnapSchemeHoldings(text) {
+  const p = buoyantSnapParse(text);
+  const held = /CLASS\s+([A-Z]\d?)/i.exec(text)?.[1]?.toUpperCase() ?? null;
+  if (buoyantSnapFails(p, held).length || !buoyantSnapHoldingsTie(p)) return [];
+  return p.fundHoldings
+    .filter((h) => !/^others?$/i.test(h.security.trim()))
+    .map((h) => ({
+      security: h.security, isin: null, industry: null,
+      quantity: null, marketValue: null, pctNetAssets: h.pct,
+    }));
+}
+
 const LAYOUTS = [
   {
     key: "buoyant",
@@ -1677,7 +1719,8 @@ const LAYOUTS = [
      * headings) and the same row is read, checked against that page.
      */
     variants: {
-      "portfolio-snap": { verify: buoyantSnapCheck, sectionsFrom: buoyantSnapSections, returnsFrom: buoyantSnapReturns, okWhenClean: true },
+      "portfolio-snap": { verify: buoyantSnapCheck, sectionsFrom: buoyantSnapSections, returnsFrom: buoyantSnapReturns,
+        schemeHoldingsFrom: buoyantSnapSchemeHoldings, okWhenClean: true },
     },
   },
   {
@@ -2967,6 +3010,10 @@ export function extract({ grid, meta = {} }) {
     cashFlows,
     // A time-weighted return the statement prints, where the layout reads one.
     ...(variant?.returnsFrom ? { returns: variant.returnsFrom(text, meta) } : {}),
+    // A FUND'S OWN PORTFOLIO, where the layout reads one. Never summed into the
+    // book — `document.mjs` says so at the field — and never a holding of this
+    // family's: it is what the SCHEME holds, for look-through.
+    ...(variant?.schemeHoldingsFrom ? { schemeHoldings: variant.schemeHoldingsFrom(text) } : {}),
     // BROWSABLE PROVENANCE, so a reader who sees a redemption on the dashboard
     // can open the rows it was read from. A dated table archived only inside
     // `document.json` is provenance the Data Audit page cannot show.

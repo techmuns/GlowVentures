@@ -29,6 +29,7 @@
 //     Two of the five accounts have none, so their sells carry no realised
 //     figure — absent, not zero.
 import { securityLabel } from "./securityLabel";
+import { securityKeyOf } from "./securityKey";
 import {
   daySaleKey, lotGroupsOf, daySalesOf, settleSales as settleSalesShared, settledSecurityOf,
   type LotGroup, type DaySale,
@@ -113,6 +114,19 @@ type ArchiveIncome = {
   receivable: number | null; received: number | null; tds: number | null;
   netAmount: number | null; entitlement: string | null;
 };
+/**
+ * A LINE OF A FUND'S OWN PORTFOLIO — never a holding of this family's.
+ *
+ * `document.mjs` says it at the field: "a fund's own holdings, for look-through.
+ * Never summed into the book." Every figure here is the FUND's, and the family's
+ * share of it is derived from the units they hold of the fund. Each field is
+ * `null` where the disclosure prints none, which is most of them on the one AIF
+ * that discloses: it prints a name and a weight and nothing else.
+ */
+type ArchiveSchemeHolding = {
+  security: string; isin: string | null; industry: string | null;
+  quantity: number | null; marketValue: number | null; pctNetAssets: number | null;
+};
 type ArchiveHolding = {
   security: string; securityKey: string; assetClass: string;
   quantity: number | null; costBasis: number | null; marketValue: number | null;
@@ -121,6 +135,8 @@ export type ArchiveDoc = ManifestEntry & {
   periodFrom: string | null; periodTo: string | null;
   transactions?: ArchiveTxn[]; capitalGains?: ArchiveLot[];
   income?: ArchiveIncome[]; holdings?: ArchiveHolding[];
+  /** What the FUND holds, where the statement discloses it. Not this family's. */
+  schemeHoldings?: ArchiveSchemeHolding[];
 };
 
 /**
@@ -940,4 +956,152 @@ export function deriveStockLedger(docs: ArchiveDoc[], securityKey: string): Stoc
     if (l.purchaseDate) lotDates.push(l.purchaseDate);
   }
   return { securityKey, name, txns, realizedProfit: realized, periodFrom, periodTo, lotDates: lotDates.sort() };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WHAT A FUND ITSELF HOLDS, FROM THE STATEMENTS — the only AIF portfolio
+// disclosure in this archive.
+//
+// Ten of the book's eleven AIF funds publish nothing any reader can join
+// (Stage 10aj), which is why an AIF is one row everywhere else in this app.
+// Buoyant's Portfolio Snap Report is the exception: page 3 prints its
+// `Current Holdings` as a name and a weight per line. That table reached
+// `document.json` as `schemeHoldings` and reached no read model, so a company
+// held inside an AIF was on no screen at all.
+//
+// THREE THINGS THIS IS NOT, each of which would be a figure no document
+// supports:
+//
+//   1. It is NOT the look-through store. `public/lookthrough/` is the AMCs' own
+//      monthly filings for MUTUAL FUNDS and ETFs, with an ISIN and a value on
+//      every line, and `companyExposure` is the one definition of this family's
+//      exposure to a company built on it. Folding an AIF's weights into that
+//      would change the partition every stock-axis figure rests on — which is
+//      a change of its own (Stage 10df), and not this one. This is a separate
+//      model, read by one card.
+//   2. It is NOT keyed on the ACCOUNT. Buoyant's two folios print the identical
+//      disclosure, because it is a fact about the FUND and not about either
+//      folio. `newestOf` dedupes per account and would therefore keep both.
+//   3. It is NOT a holding of this family's, so nothing here is summed into any
+//      book total. The family's share of a line is `familyValue`'s arithmetic —
+//      their units' value times the fund's own disclosed weight — and is marked
+//      DERIVED wherever it is drawn.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type FundDisclosureLine = {
+  /** The company, AS THE FUND PRINTED IT. */
+  security: string;
+  /** This book's own key for that name, so a line can meet a statement row. */
+  securityKey: string;
+  /** The fund's own weight. Null where the line prints none — never 0. */
+  pctNetAssets: number | null;
+};
+
+export type FundDisclosure = {
+  /**
+   * The holding keys this disclosure describes — the document's OWN unit
+   * classes, never a fund identity this file invented. Buoyant's snap carries
+   * one; a statement printing several classes of one fund would carry each, and
+   * the family's exposure is then every one of them.
+   */
+  fundKeys: string[];
+  /** The fund, as this book names it. The CARD decides whether to show a class. */
+  fund: string;
+  /** The disclosure's own date. A monthly filing and a quote are dated apart. */
+  asOf: string;
+  /** The document, so any line can be opened against the statement that printed it. */
+  source: string;
+  lines: FundDisclosureLine[];
+  /**
+   * What the named lines cover, as THEIR OWN SUM.
+   *
+   * Never 100 less the residual. Buoyant prints `Others 7.13%` and its named
+   * lines add to 92.88%, so the two differ by a hundredth — two figures for one
+   * thing, which is the contradiction a reader finds by subtracting. The
+   * residual is the fund's own unnamed lump and stays in the archived section as
+   * printed; `Others` is not a company, so it is not a line here.
+   *
+   * A RING-FENCED line is out of this figure too, by the same decision that puts
+   * it out of the lines — naming it in a coverage figure would be naming it. On
+   * this book no line is fenced, so nothing moves either way.
+   */
+  pctCovered: number;
+};
+
+export type FundDisclosureData = { funds: FundDisclosure[] };
+
+/**
+ * Every fund that discloses its own portfolio, ONCE EACH.
+ *
+ * A disclosure describes the fund the document reports, so its identity is that
+ * document's own holdings. A document carrying a disclosure and NO holding of
+ * this family's describes no position here and is skipped — which is how
+ * WhiteOak's scheme-portfolio filing (176 lines, no folio, no holder, archived
+ * for look-through) stays out without being named as an exclusion: it is not a
+ * fund this family holds.
+ *
+ * Per fund the newest `asOf` wins, and a tie is broken on the document key so
+ * the build is deterministic. Both Buoyant folios print the same disclosure on
+ * the same date, so which one is `source` is arbitrary and the figures are not.
+ */
+export function deriveFundDisclosures(
+  docs: ArchiveDoc[],
+  /**
+   * THE RING-FENCE REACHES A DISCLOSED LINE TOO, AND IS APPLIED HERE.
+   *
+   *   "Polycab must not be included in any data set information and any
+   *    calculation in any other part of the dashboard."
+   *
+   * That decision is applied at the BOOK layer, which splices the promoter block
+   * out of `BOOK_POSITIONS` — and it would not have held here, because the fence
+   * is about a SECURITY and a fund the family holds could disclose that same
+   * company. It is the position `loadStockExposure` is already in: a disclosed
+   * line naming it would draw a row on a page the fence says must not name it at
+   * all, and `check:pages`'s absence check on `/cio` would fire.
+   *
+   * SO THE BUILD SERVER APPLIES THE CANONICAL FENCE BEFORE THE BROWSER SEES A
+   * ROW, exactly as `functions/api/stock-exposure.ts` does for the look-through
+   * — which is why this file takes the set rather than importing the book: this
+   * module is about the ARCHIVE, and the fence is a decision about the book.
+   *
+   * KEYED ON THE KEY ALONE, because a disclosure prints a NAME and a WEIGHT and
+   * no identifier at all — there is nothing else to fence on. Measured, the key
+   * bridges every spelling: `POLYCAB INDIA LTD`, `Polycab India Ltd.` and the
+   * depository's `POLYCAB INDIA LIMITED - EQ` all normalise onto the fenced
+   * `polycab-india`. The residual is a spelling that normalises apart, which the
+   * look-through closes with the ISIN and this cannot; it is named rather than
+   * papered over.
+   *
+   * IT IS DROPPED SILENTLY AND NOT NAMED — the one place this departs from "an
+   * absence is stated", and for `lookthrough.ts`'s own reason: naming it would
+   * put the word on a page the family asked to be rid of it on.
+   */
+  ringFenced: ReadonlySet<string> = new Set(),
+): FundDisclosureData {
+  const byFund = new Map<string, FundDisclosure>();
+  for (const d of docs) {
+    const lines = (d.schemeHoldings ?? []).map((h) => ({
+      security: h.security,
+      securityKey: securityKeyOf(h.security),
+      pctNetAssets: Number.isFinite(h.pctNetAssets) ? h.pctNetAssets : null,
+    })).filter((l) => l.security.trim() && l.securityKey !== "unknown" && !ringFenced.has(l.securityKey));
+    if (!lines.length) continue;
+    const fundKeys = [...new Set((d.holdings ?? []).map((h) => h.securityKey).filter(Boolean))].sort();
+    if (!fundKeys.length) continue;
+    const held = (d.holdings ?? [])[0];
+    const next: FundDisclosure = {
+      fundKeys, fund: securityLabel(held.securityKey, held.security),
+      asOf: d.asOf, source: d.docKey, lines,
+      // Summed from the lines themselves. A line with no weight contributes
+      // nothing rather than a zero, which is the same figure here and not the
+      // same claim.
+      pctCovered: lines.reduce((a, l) => a + (l.pctNetAssets ?? 0), 0),
+    };
+    const k = fundKeys.join("\u0000");
+    const prev = byFund.get(k);
+    if (!prev || next.asOf > prev.asOf || (next.asOf === prev.asOf && next.source < prev.source)) {
+      byFund.set(k, next);
+    }
+  }
+  return { funds: [...byFund.values()].sort((a, b) => a.fund.localeCompare(b.fund)) };
 }

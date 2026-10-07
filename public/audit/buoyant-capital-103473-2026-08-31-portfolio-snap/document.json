@@ -277,7 +277,328 @@
  "dematBalances": [],
  "securityNameSource": null,
  "excludedFromBook": null,
- "schemeHoldings": [],
+ "schemeHoldings": [
+  {
+   "security": "ICICI BANK LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 8.33
+  },
+  {
+   "security": "AXIS BANK LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 6.73
+  },
+  {
+   "security": "SHRIRAM FINANCE LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 3.83
+  },
+  {
+   "security": "BAJAJ FINANCE LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 3.75
+  },
+  {
+   "security": "STATE BANK OF INDIA",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 3.74
+  },
+  {
+   "security": "BHARTI AIRTEL LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 3.32
+  },
+  {
+   "security": "ONE 97 COMMUNICATIONS LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 3.25
+  },
+  {
+   "security": "TRENT LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 3.08
+  },
+  {
+   "security": "ETERNAL LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 3.02
+  },
+  {
+   "security": "GLENMARK PHARMACEUTICALS LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.91
+  },
+  {
+   "security": "GENUS POWER INFRASTRUCTURES LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.88
+  },
+  {
+   "security": "VEDANTA ALUMINIUM METAL LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.84
+  },
+  {
+   "security": "INTERGLOBE AVIATION LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.82
+  },
+  {
+   "security": "GRANULES INDIA LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.71
+  },
+  {
+   "security": "MAX FINANCIAL SERVICES LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.67
+  },
+  {
+   "security": "HINDUSTAN UNILEVER LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.61
+  },
+  {
+   "security": "RAMKRISHNA FORGINGS LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.58
+  },
+  {
+   "security": "ICICI LOMBARD GENERAL INSURANCE COMPANY LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.46
+  },
+  {
+   "security": "IDFC FIRST BANK LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.3
+  },
+  {
+   "security": "AUROBINDO PHARMA LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.21
+  },
+  {
+   "security": "MARATHON NEXTGEN REALTY LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 2.14
+  },
+  {
+   "security": "SUPREME INDUSTRIES LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.96
+  },
+  {
+   "security": "LARSEN and TOUBRO LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.92
+  },
+  {
+   "security": "LASER POWER and INFRA LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.89
+  },
+  {
+   "security": "LnT TECHNOLOGY SERVICES LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.76
+  },
+  {
+   "security": "ULTRATECH CEMENT LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.75
+  },
+  {
+   "security": "PVR INOX LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.68
+  },
+  {
+   "security": "AVENUE SUPERMARTS LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.52
+  },
+  {
+   "security": "KAYNES TECHNOLOGY INDIA LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.48
+  },
+  {
+   "security": "INDEGENE LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.45
+  },
+  {
+   "security": "SMARTWORKS COWORKING SPACES LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.34
+  },
+  {
+   "security": "CAMPUS ACTIVEWEAR LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1.12
+  },
+  {
+   "security": "VARUN BEVERAGES LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 1
+  },
+  {
+   "security": "HDFC BANK LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 0.82
+  },
+  {
+   "security": "LIFE INSURANCE CORPORATION OF INDIA",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 0.8
+  },
+  {
+   "security": "MANGALAM CEMENT LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 0.79
+  },
+  {
+   "security": "MANAPPURAM FINANCE LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 0.65
+  },
+  {
+   "security": "GODAVARI BIOREFINERIES LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 0.39
+  },
+  {
+   "security": "UNITED BREWERIES LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 0.38
+  },
+  {
+   "security": "INDUS TOWERS LTD",
+   "isin": null,
+   "industry": null,
+   "quantity": null,
+   "marketValue": null,
+   "pctNetAssets": 0
+  }
+ ],
  "aifEarnings": null,
  "jointHolders": [],
  "stitches": [],

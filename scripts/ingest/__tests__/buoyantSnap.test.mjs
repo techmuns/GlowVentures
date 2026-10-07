@@ -24,7 +24,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  buoyantSnapParse, buoyantSnapFails, buoyantSnapHoldingsFails, extract,
+  buoyantSnapParse, buoyantSnapFails, buoyantSnapHoldingsFails,
+  buoyantSnapSchemeHoldings, extract,
 } from "../providers/altFundStatements.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -412,6 +413,120 @@ for (const K of [K_ANKITA, K_AJAY]) {
     ok("unread: holdings within the printed precision of 100 are archived, with no warning",
       ex?.status === "ok" && codesOf(ex).length === 0 && "fund-holdings" in (ex?.sections ?? {}),
       JSON.stringify([ex?.status, codesOf(ex)]));
+  }
+}
+
+// ── 5. The fund's holdings as the LOOK-THROUGH field ────────────────────────
+// Page 3's `Current Holdings` is the only AIF portfolio disclosure in this
+// archive, and `schemeHoldings` is what carries it to a screen — so a company
+// held inside this fund is ranked on Morning CIO off exactly these rows. Four
+// things the reader must refuse rather than guess, each asserted here, and the
+// gate asserted as LOAD-BEARING: a table that does not read whole yields NO
+// holding, and one inside the printed precision still yields all of them.
+for (const docKey of [K_ANKITA, K_AJAY]) {
+  const T = textOf(docKey);
+  const P = PRINTED[docKey];
+  const h = buoyantSnapSchemeHoldings(T);
+  const p = buoyantSnapParse(T);
+  const printed = p.fundHoldings;
+  const others = printed.filter((x) => /^others?$/i.test(x.security.trim()));
+
+  // The one path a FIGURE on screen takes: the variant's own
+  // `schemeHoldingsFrom`, through `extract()`, into the archive. Asserted both
+  // ways so a second producer wired onto this variant would fail here rather
+  // than quietly change what the card ranks.
+  const ex = extract({ grid: { pages: pagesOf(docKey) }, meta: { reportType: "portfolio-snap", docKey } });
+  ok(`look-through: ${P.accountNo}'s disclosure is what the archive carries, and what the extractor emits`,
+    JSON.stringify(h) === JSON.stringify(docOf(docKey).schemeHoldings)
+      && JSON.stringify(h) === JSON.stringify(ex?.schemeHoldings),
+    JSON.stringify([h.length, docOf(docKey).schemeHoldings?.length, ex?.schemeHoldings?.length]));
+
+  // `Others` IS NOT A COMPANY — it is the lump the fund declines to name, so a
+  // 7.13% security called Others would be the fabricated classification this
+  // book refuses. It stays in the archived section AS PRINTED, and the counts
+  // are derived from the printed table rather than typed.
+  ok(`look-through: ${P.accountNo} is every printed line but the unnamed residual`,
+    others.length === 1 && h.length === printed.length - 1
+      && h.every((x) => !/^others?$/i.test(x.security.trim())),
+    JSON.stringify([printed.length, others.length, h.length]));
+  {
+    const section = sectionOf(docKey, "fund-holdings");
+    ok(`look-through: ${P.accountNo}'s archived section still prints the residual the holdings leave out`,
+      (section?.rows ?? []).length === printed.length + 1
+        && (section?.rows ?? []).some((r) => /^others?$/i.test(String(r[1]).trim())),
+      JSON.stringify([(section?.rows ?? []).length, printed.length + 1]));
+  }
+
+  // WHAT THE NAMED LINES COVER IS THEIR OWN SUM, NEVER 100 LESS THE RESIDUAL.
+  // Both are derived here, and on this disclosure they DIFFER — the printed
+  // weights add to 100.01, each rounded to two decimals — so a reader that took
+  // the complement would publish a coverage figure the fund never printed.
+  {
+    const own = Math.round(h.reduce((a, x) => a + x.pctNetAssets, 0) * 100) / 100;
+    const complement = Math.round((100 - others[0].pct) * 100) / 100;
+    ok(`look-through: ${P.accountNo}'s named lines add to their own sum, which is not 100 less the residual`,
+      own === 92.88 && complement === 92.87 && own !== complement,
+      JSON.stringify([own, complement]));
+  }
+
+  // The snap prints a NAME and a WEIGHT and nothing else, so everything else is
+  // `null` — never zero, which would state a holding of nothing. A weight the
+  // fund PRINTED as 0.00% is the opposite case and keeps its measured zero.
+  ok(`look-through: ${P.accountNo} carries no figure the snap does not print, and zero for none of them`,
+    h.every((x) => x.isin === null && x.industry === null && x.quantity === null && x.marketValue === null
+      && typeof x.pctNetAssets === "number" && Number.isFinite(x.pctNetAssets)),
+    JSON.stringify(h.find((x) => x.isin !== null || x.quantity !== null || x.marketValue !== null
+      || typeof x.pctNetAssets !== "number")));
+  {
+    const zero = printed.filter((x) => x.pct === 0);
+    ok(`look-through: ${P.accountNo}'s 0.00% line is a MEASURED zero and is still a holding`,
+      zero.length === 1 && h.filter((x) => x.pctNetAssets === 0).length === 1
+        && h.some((x) => x.security === zero[0].security && x.pctNetAssets === 0),
+      JSON.stringify([zero.length, h.filter((x) => x.pctNetAssets === 0).length]));
+  }
+
+  // THE NAME IS CARRIED AS PRINTED. The extraction renders `&` as `and` on most
+  // lines and as `n` on one, and repairing it here would be this reader
+  // inventing a name — the company that cannot then be joined is NAMED on
+  // screen instead (Stage 10cy's rule for a name no identifier bridges).
+  ok(`look-through: ${P.accountNo}'s names are the printed ones, the misrendered & included`,
+    h.every((x, i) => x.security === printed[i].security)
+      && T.includes("LnT TECHNOLOGY SERVICES LTD")
+      && h.some((x) => x.security === "LnT TECHNOLOGY SERVICES LTD"),
+    JSON.stringify(h.map((x) => x.security).filter((s) => /TECHNOLOGY SERVICES/i.test(s))));
+}
+
+// THE GATE IS LOAD-BEARING IN BOTH DIRECTIONS. Each mutation is the committed
+// snap with ONE figure or ONE line changed, and the holdings must come back
+// EMPTY — never a half-read table, which on a ranking card is a company drawn
+// at a weight the fund did not publish. The last case is the inverse: a
+// difference inside the printed precision must still publish all forty, or a
+// gate that simply refused everything would pass every case above it.
+{
+  const T = textOf(K_ANKITA);
+  const n = buoyantSnapParse(T).fundHoldings.length;
+  const refuses = (label, text) => {
+    const ex = read(text);
+    ok(`look-through: ${label}`,
+      buoyantSnapSchemeHoldings(text).length === 0
+        && Array.isArray(ex?.schemeHoldings) && ex.schemeHoldings.length === 0,
+      JSON.stringify([buoyantSnapSchemeHoldings(text).length, ex?.schemeHoldings?.length, ex?.thrown]));
+  };
+  refuses("a snap whose page 3 does not restate page 1 discloses nothing",
+    mutate(T, "147.3008", "147.3018"));
+  refuses("holdings whose serial numbers skip disclose nothing",
+    mutate(T, "9 ETERNAL LTD 3.02%", "19 ETERNAL LTD 3.02%"));
+  refuses("holdings that add to more than 100 beyond the printed precision disclose nothing",
+    mutate(T, "41 Others 7.13%", "41 Others 7.53%"));
+  refuses("holdings with no Total 100% row disclose nothing",
+    mutate(T, "Total 100%\n", ""));
+  {
+    const within = mutate(T, "41 Others 7.13%", "41 Others 7.23%");
+    const ex = read(within);
+    ok("look-through: holdings within the printed precision of 100 are disclosed in full",
+      buoyantSnapSchemeHoldings(within).length === n - 1
+        && ex?.schemeHoldings?.length === n - 1 && ex?.status === "ok",
+      JSON.stringify([buoyantSnapSchemeHoldings(within).length, ex?.schemeHoldings?.length, ex?.status]));
   }
 }
 
