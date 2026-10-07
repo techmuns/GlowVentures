@@ -1,8 +1,9 @@
 import { useViewParam } from "@/components/ViewToggle";
 import { TodaysMovers } from "@/components/TodaysMovers";
 import { NavMovers } from "@/components/NavMovers";
+import { InsideMovers } from "@/components/InsideMovers";
 
-// ── DAILY MOVERS — ONE CARD, TWO MEASUREMENTS, AND A TOGGLE BETWEEN THEM ─────
+// ── DAILY MOVERS — ONE CARD, THREE MEASUREMENTS, AND A TOGGLE BETWEEN THEM ───
 //
 // *"give a toggle button in the direct equity daily movers for 'direct
 // equity/ETF & Mutual Funds', and remove the separate daily movers for ETF and
@@ -20,6 +21,10 @@ import { NavMovers } from "@/components/NavMovers";
 //                   struck on the scheme's own business days — on this book,
 //                   dates a week behind the quote feed and not even shared
 //                   between rows.
+//   AIF & PMS       the LIVE INTRADAY price of a company held INSIDE a mandate
+//                   or a fund — measured where a PMS statement reports the share
+//                   itself, DERIVED where an AIF discloses a weight against a
+//                   folio this family holds. Never the wrapper's own move.
 //
 // They are never added, never averaged and never dated alike. A single model
 // with a `scope` field would make summing them a one-line edit and would put
@@ -48,10 +53,30 @@ import { NavMovers } from "@/components/NavMovers";
 // The second branch is what `NavMovers` was on its own until now — the separate
 // card the family asked to remove. Nothing it measured was lost; it moved behind
 // this toggle.
+//
+// ── AND THE THIRD IS A THIRD SET, NOT A THIRD SLICE OF EITHER ────────────────
+//
+// *"We need to add another section that would be AIF and PMS … we will not show
+// that particular AIF or the PMS that is having the highest gain or lose but we
+// will show the holding INSIDE all of the AIF and PMS which are having the
+// highest daily gain or lose."*
+//
+// So the row is never the wrapper. `InsideMovers` ranks the companies a mandate
+// reports and the companies a fund disclosed, and the first scope's own card
+// cannot answer it: `TodaysMovers` is scoped to `DIRECT_EQUITY_BUCKET`, which is
+// what the family bought in their own demat and deliberately not what a manager
+// picked (Stage 10L, settled after the same complaint arrived three times).
+//
+// The same rule as the other two applies to the one card: a mandate's share and
+// a fund's disclosed line are two different measurements — one is a price on a
+// quantity the family's own statement reports, the other is a price on a weight
+// a fund published a month ago against units the family holds — so that card
+// keeps them in two tiles that are never added. See `src/lib/insideMovers.ts`.
 
 const SCOPES = [
   { key: "direct", label: "Direct Equity", title: "Live intraday prices against the previous session's close." },
   { key: "funds", label: "ETFs & mutual funds", title: "Each scheme's own published NAV against the one before it — a different measurement, on its own dates." },
+  { key: "inside", label: "AIF & PMS", title: "The companies held inside the PMS mandates and the AIF folios — never the wrapper's own move." },
 ] as const;
 
 export function DailyMovers() {
@@ -91,7 +116,7 @@ export function DailyMovers() {
     </div>
   );
 
-  return scope === "funds"
-    ? <NavMovers scopeToggle={toggle} />
-    : <TodaysMovers scopeToggle={toggle} />;
+  if (scope === "funds") return <NavMovers scopeToggle={toggle} />;
+  if (scope === "inside") return <InsideMovers scopeToggle={toggle} />;
+  return <TodaysMovers scopeToggle={toggle} />;
 }

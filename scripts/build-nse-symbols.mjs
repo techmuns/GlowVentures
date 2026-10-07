@@ -119,6 +119,16 @@ export const OVERRIDES = {
   // Renamed listings — the statement still uses the former name.
   "zydus-lifesciences": "ZYDUSLIFE",           // formerly Cadila Healthcare
   "alivus-life-sciences": "ALIVUS",            // formerly Glenmark Life Sciences
+  // HEG Limited renamed itself HEG Advanced Materials. NSE's own equity master
+  // carries ONE such row — HEGAM, "HEG Advanced Materials Limited", series EQ,
+  // ISIN INE545A01024, listed 10-MAY-1995 — which is HEG Limited's own listing
+  // record under its new name. SVAN's appraisal still prints "HEG Ltd" and no
+  // ISIN, so neither name tier reaches it and there is nothing to compare an
+  // identifier against; the listing date and the ISIN on NSE's side are the
+  // corroboration. Added on the run that first regenerated this map after the
+  // rename (Stage 10dl), which is where the symbol would otherwise have been
+  // lost for a holding that had one the day before.
+  "heg": "HEGAM",                              // renamed HEG Advanced Materials
   // Listings NSE symbolises as a contraction of the printed name.
   "life-insurance-corp-of-india": "LICI",
   "indian-energy-exchange": "IEX",
@@ -223,32 +233,101 @@ function rowsOf(text) {
 }
 
 /**
- * Every distinct security in the audit archive, with the identifiers it carries.
+ * Every distinct security the archive carries, with the identifiers it carries.
  *
- * The ISIN is collected per securityKey and kept ONLY where every statement that
- * prints one agrees. Two different ISINs under one key means the key has merged
- * two instruments — a real defect in `securityKeyOf`, not something to resolve a
- * symbol from — so the conflict is recorded and the ISIN dropped for that key
- * rather than one issuer's winning by iteration order.
+ * TWO PASSES, AND THE FAMILY'S OWN STATEMENT IS THE STRONGER TIER.
+ *
+ * Pass 1 is every holding on every statement issued to this family. Pass 2 is
+ * what a fund DISCLOSED it holds — Buoyant's Portfolio Snap prints 40 companies
+ * and a weight each — and it is FILL-ONLY: it adds a key pass 1 did not produce
+ * and never touches one it did. That is `shared/sectors.mjs`' own rule (a lower
+ * tier only ever FILLS AN EMPTY value and can never overrule a statement)
+ * applied to a NAME, and why it matters is measured rather than feared: 9 of
+ * those 40 companies are already in this book under the family's own spelling —
+ * the fund prints `ICICI BANK LTD` where a depository prints `ICICI BANK EQ` and
+ * a PMS appraisal `ICICI Bank Ltd.` — so letting the fund's spelling win would
+ * re-name the security behind an existing resolution for no gain. Pass 1
+ * therefore runs over EVERY document before pass 2 starts, so a fund's spelling
+ * can never beat a holding that happens to sit in a later-sorted docKey.
+ *
+ * PASS 2 IS GATED ON THE DOCUMENT ALSO REPORTING A HOLDING OF THIS FAMILY'S,
+ * which is `deriveFundDisclosures`' rule in `src/lib/ledgerModel.ts` — where it
+ * is written down, and where the screen reads the same disclosures. It is what
+ * keeps WhiteOak's scheme-portfolio filing out: 176 disclosed lines, no folio,
+ * no holder, archived for look-through (§"a fund's own SEBI portfolio
+ * disclosure — archived for look-through, worth nothing to the book"). A
+ * disclosure about a fund this family does not hold is no exposure here, so
+ * resolving symbols for it would put 150-odd companies — NCDs, REITs and InvITs
+ * among them — into a map whose whole claim is that it is THIS book's
+ * securities. Measured: ungated the pass adds 183 keys, gated it adds 31.
+ *
+ * A DISCLOSED-ONLY ROW IS MARKED, because what a reader can do about it is
+ * different. No statement of the family's reports it, so "ask the issuer for an
+ * ISIN" is advice that cannot work: the only document is the fund's own
+ * disclosure, which prints a NAME and a WEIGHT and no identifier at all.
+ * `docs/SECURITY-IDENTIFIERS.md` names them apart for that reason.
+ *
+ * The ISIN rule is pass 1's and is unchanged: collected per securityKey and
+ * kept ONLY where every statement that prints one agrees. Two different ISINs
+ * under one key means the key has merged two instruments — a real defect in
+ * `securityKeyOf`, not something to resolve a symbol from — so the conflict is
+ * recorded and the ISIN dropped for that key rather than one issuer's winning
+ * by iteration order. A disclosed line carries no ISIN on this corpus; the same
+ * rule is applied to it anyway, because a reader of the next drop should not
+ * have to find out which pass the rule lived in.
+ *
+ * THE RING-FENCE IS NOT THIS BUILDER'S CONCERN, and that was checked rather
+ * than assumed: `polycab-india` has resolved `POLYCAB` in `nseSymbols.json`
+ * since the first pass existed, because the fence is a decision about which
+ * figures a DASHBOARD sums and is applied at the book layer
+ * (`RINGFENCED_SECURITY_KEYS`) and on every screen. Filtering it out of pass 2
+ * alone would be inconsistent with pass 1 and a change nobody asked for.
  */
 function securitiesFromArchive() {
-  const out = new Map();          // securityKey -> { name, isin, isinConflict }
+  const out = new Map();          // securityKey -> { name, isin, isinConflict, disclosedBy }
   if (!fs.existsSync(AUDIT_DIR)) return out;
+
+  const docs = [];
   for (const dir of fs.readdirSync(AUDIT_DIR).sort()) {
     const f = path.join(AUDIT_DIR, dir, "document.json");
     if (!fs.existsSync(f)) continue;
-    let doc;
-    try { doc = JSON.parse(fs.readFileSync(f, "utf8")); } catch { continue; }
+    try { docs.push([dir, JSON.parse(fs.readFileSync(f, "utf8"))]); } catch { /* unreadable */ }
+  }
+
+  /** One ISIN rule for both passes — see the note above. */
+  const withIsin = (e, raw) => {
+    const isin = typeof raw === "string" ? raw.trim().toUpperCase() : "";
+    if (!/^IN[EF][0-9A-Z]{9}$/.test(isin)) return e;
+    if (e.isin && e.isin !== isin) e.isinConflict = [e.isin, isin].sort().join(" vs ");
+    else e.isin = isin;
+    return e;
+  };
+
+  // PASS 1 — what the family's own statements report.
+  for (const [, doc] of docs) {
     for (const h of doc.holdings ?? []) {
       if (!h.security || !h.securityKey) continue;
       if (h.assetClass === "Cash") continue;
-      const e = out.get(h.securityKey) ?? { name: h.security, isin: null, isinConflict: null };
-      const isin = typeof h.isin === "string" ? h.isin.trim().toUpperCase() : "";
-      if (/^IN[EF][0-9A-Z]{9}$/.test(isin)) {
-        if (e.isin && e.isin !== isin) e.isinConflict = [e.isin, isin].sort().join(" vs ");
-        else e.isin = isin;
-      }
-      out.set(h.securityKey, e);
+      const e = out.get(h.securityKey)
+        ?? { name: h.security, isin: null, isinConflict: null, disclosedBy: null };
+      out.set(h.securityKey, withIsin(e, h.isin));
+    }
+  }
+
+  // PASS 2 — what a fund the family HOLDS disclosed it holds. Fill-only.
+  for (const [docKey, doc] of docs) {
+    if (!(doc.schemeHoldings ?? []).length) continue;
+    if (!(doc.holdings ?? []).some((h) => h.securityKey)) continue;   // the gate
+    for (const h of doc.schemeHoldings) {
+      if (typeof h.security !== "string" || !h.security.trim()) continue;
+      const key = securityKeyOf(h.security);
+      if (!key || key === "unknown") continue;
+      const have = out.get(key);
+      if (have && !have.disclosedBy) continue;      // a statement's own — untouched
+      out.set(key, withIsin(
+        have ?? { name: h.security, isin: null, isinConflict: null, disclosedBy: docKey },
+        h.isin,
+      ));
     }
   }
   return out;
@@ -389,21 +468,33 @@ async function main() {
   L.push(`(cash and receivables) — ${live.length} + ${dark.length} + ${notSec.length} = ${rows.length}, every distinct`);
   L.push("security the archive carries.");
   L.push("");
+  // WHERE A ROW COMES FROM IS NOT CHROME: it decides what a reader can do about
+  // one that did not resolve. A disclosed-only company is on no statement of
+  // this family's — the only document is the fund's own Portfolio Snap, which
+  // prints a NAME and a WEIGHT and no identifier — so there is no issuer to ask
+  // for an ISIN. It is carried so the AIF & PMS movers can price the companies
+  // INSIDE a fund rather than the wrapper's own move.
+  const disclosed = rows.filter(([, r]) => r.disclosedBy);
+  const from = (r) => (r.disclosedBy ? "fund disclosure" : "statement");
+  L.push(`Of those, **${disclosed.length} are companies no statement of this family's reports** —`);
+  L.push("lines a fund they hold DISCLOSED, carried so the AIF & PMS movers can price");
+  L.push("what is inside a mandate or a folio. No quantity, cost or mark here is theirs.");
+  L.push("");
   L.push("## Reachable — a symbol resolved");
   L.push("");
-  L.push("| Security | NSE symbol | ISIN on the statement | Resolved by |");
-  L.push("| --- | --- | --- | --- |");
+  L.push("| Security | NSE symbol | ISIN printed | Resolved by | From |");
+  L.push("| --- | --- | --- | --- | --- |");
   for (const [k, r] of live) {
     const how = OVERRIDES[k] ? "override"
       : r.isin && byIsin.get(r.isin)?.symbol === symbolFor.get(k) ? `ISIN (${byIsin.get(r.isin).board})`
       : "name";
-    L.push(`| ${stripDepositoryTail(r.name)} | \`${symbolFor.get(k)}\` | ${r.isin ? `\`${r.isin}\`` : "—"} | ${how} |`);
+    L.push(`| ${stripDepositoryTail(r.name)} | \`${symbolFor.get(k)}\` | ${r.isin ? `\`${r.isin}\`` : "—"} | ${how} | ${from(r)} |`);
   }
   L.push("");
   L.push("## Not reachable — no symbol, so no API can answer for it");
   L.push("");
-  L.push("| Security | ISIN on the statement | Why not, and what would fix it |");
-  L.push("| --- | --- | --- |");
+  L.push("| Security | ISIN printed | From | Why not, and what would fix it |");
+  L.push("| --- | --- | --- | --- |");
   // A FUND IS NOT A COMPANY, and telling a reader to "get its ISIN" is advice
   // that cannot work: an AIF/PMS folio is one purchase of a manager's portfolio,
   // and NSE lists no equity symbol for it however it is identified. Naming that
@@ -414,10 +505,16 @@ async function main() {
     const isFund = /^INF/.test(r.isin ?? "") || FUNDY.test(r.name);
     const why = isFund
       ? "**A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio."
+      // A DISCLOSED-ONLY ROW HAS NO ISSUER TO ASK, so the statement advice below
+      // would send a reader after a document that does not exist. The fund's
+      // disclosure is a name and a weight; the only fixes are NSE's own spelling
+      // matching, or a hand-checked override. There is still no fuzzy tier.
+      : r.disclosedBy
+        ? "**Disclosed by a fund, and the name does not match an NSE listing.** No statement of this family's reports it, so there is no issuer to ask for an ISIN — the disclosure prints a name and a weight and nothing else. Fix: a hand-checked `OVERRIDES` entry, or a re-export from the manager whose spelling matches the exchange's."
       : !r.isin
         ? "**No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry."
         : `**ISIN \`${r.isin}\` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists.`;
-    L.push(`| ${stripDepositoryTail(r.name)} | ${r.isin ? `\`${r.isin}\`` : "—"} | ${why} |`);
+    L.push(`| ${stripDepositoryTail(r.name)} | ${r.isin ? `\`${r.isin}\`` : "—"} | ${from(r)} | ${why} |`);
   }
   L.push("");
   fs.mkdirSync(path.dirname(REPORT), { recursive: true });
@@ -427,6 +524,18 @@ async function main() {
   for (const l of loaded) console.log(`  master ${l}`);
   console.log(`NSE symbols: ${Object.keys(map).length} of ${total} listed securities resolved.`);
   console.log(`  ISIN ${by.isin} · exact ${by.exact} · security-key ${by["security-key"]} · override ${by.override}`);
+  // PRINTED EVEN AT ZERO, for the reason the contradiction count below is: a
+  // pass that silently stopped contributing reads exactly like one that never
+  // ran, and this one is the whole reason a company only a fund discloses can
+  // reach a quote at all.
+  const disclosedOnly = [...securities].filter(([, r]) => r.disclosedBy);
+  const disclosedResolved = disclosedOnly.filter(([k]) => map[k]).length;
+  console.log(`  ${disclosedOnly.length} disclosed-only compan${disclosedOnly.length === 1 ? "y" : "ies"} `
+    + `(no statement of this family's reports them) — ${disclosedResolved} resolved, `
+    + `${disclosedOnly.length - disclosedResolved} named in the report.`);
+  for (const [k, r] of disclosedOnly) {
+    if (!map[k]) console.log(`    unresolved: ${r.name}  (${k}) — disclosed by ${r.disclosedBy}`);
+  }
   // THE CROSS-CHECK IS PRINTED EVEN WHEN IT IS ZERO. A safety check that only
   // speaks up when it fires is indistinguishable, on a clean run, from one that
   // was quietly removed — and this one is the whole argument for trusting the

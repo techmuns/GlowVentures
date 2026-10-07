@@ -144,12 +144,14 @@ for (const entry of manifest) {
   }
 }
 
-// ── a Portfolio Snap Report's return row (Stage 10df) ─────────────────────
+// ── a Portfolio Snap Report's return row and the fund's own portfolio ─────
 //
-// The snap prints the account's own time-weighted return, and the reader now
-// carries it as a return series. The same three rules: it only ADDS a series
-// where the archive holds none (an archived one must come back identical); the
-// replayed holdings must reproduce the stored ones; and `--check` writes nothing.
+// The snap prints the account's own time-weighted return (Stage 10df) and, on
+// page 3, the FUND's `Current Holdings` — the one AIF portfolio disclosure in
+// this archive, carried as `schemeHoldings` since Stage 10dl. The same three
+// rules for both: each only ADDS where the archive holds none (an archived
+// value must come back identical); the replayed holdings must reproduce the
+// stored ones; and `--check` writes nothing.
 for (const entry of manifest) {
   if (!funds.has(entry.provider) || entry.reportType !== "portfolio-snap") continue;
   const file = path.join(AUDIT, entry.docKey, "document.json");
@@ -165,9 +167,11 @@ for (const entry of manifest) {
   }
   if (!out) continue;
   checked += 1;
-  const returns = out.returns ?? [];
-  const archived = doc.returns ?? [];
-  if (eq(returns, archived)) continue;
+  const fields = [
+    ["returns", out.returns ?? [], doc.returns ?? [], "return series"],
+    ["schemeHoldings", out.schemeHoldings ?? [], doc.schemeHoldings ?? [], "disclosed fund holdings"],
+  ].filter(([, now, was]) => !eq(now, was));
+  if (!fields.length) continue;
   const was = doc.holdings ?? [];
   const same = out.holdings.length === was.length
     && out.holdings.every((h, i) => eq(identity(h), identity(was[i])));
@@ -176,14 +180,17 @@ for (const entry of manifest) {
     refused += 1;
     continue;
   }
-  if (archived.length) {
-    console.error(`REFUSED ${entry.docKey}: a return series is already archived and the replay would change it`);
+  const already = fields.filter(([, , archived]) => archived.length);
+  if (already.length) {
+    console.error(`REFUSED ${entry.docKey}: ${already.map(([, , , what]) => what).join(" and ")} `
+      + "already archived, and the replay would change what is there; this replay only adds where the archive holds none");
     refused += 1;
     continue;
   }
   changed += 1;
-  console.log(`${CHECK ? "would update" : "updated"} ${entry.docKey.padEnd(52)} return series 0 → ${returns.length}`);
-  if (!CHECK) write(file, { ...doc, returns });
+  console.log(`${CHECK ? "would update" : "updated"} ${entry.docKey.padEnd(52)} `
+    + fields.map(([, now, , what]) => `${what} 0 → ${now.length}`).join(" · "));
+  if (!CHECK) write(file, { ...doc, ...Object.fromEntries(fields.map(([k, now]) => [k, now])) });
 }
 
 if (manifestChanged && !CHECK) write(manifestFile, manifest);

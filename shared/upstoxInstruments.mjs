@@ -254,6 +254,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "symbol"
  },
+ "ESDS": {
+  "key": "NSE_EQ|INE0DRI01029",
+  "tradingSymbol": "ESDS",
+  "series": "EQ",
+  "joinedBy": "symbol+isin"
+ },
  "ESTER": {
   "key": "NSE_EQ|INE778B01029",
   "tradingSymbol": "ESTER",
@@ -305,7 +311,7 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "GCHOTELS": {
   "key": "NSE_EQ|INE12E301017",
   "tradingSymbol": "GCHOTELS",
-  "series": "ST",
+  "series": "SM",
   "joinedBy": "symbol+isin"
  },
  "GESHIP": {
@@ -368,6 +374,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "symbol"
  },
+ "HEGAM": {
+  "key": "NSE_EQ|INE545A01024",
+  "tradingSymbol": "HEGAM",
+  "series": "EQ",
+  "joinedBy": "symbol"
+ },
  "ICICIBANK": {
   "key": "NSE_EQ|INE090A01021",
   "tradingSymbol": "ICICIBANK",
@@ -425,7 +437,7 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "INFINIUM": {
   "key": "NSE_EQ|INE0MRE01011",
   "tradingSymbol": "INFINIUM",
-  "series": "SM",
+  "series": "ST",
   "joinedBy": "symbol+isin"
  },
  "INGERRAND": {
@@ -971,4 +983,4 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
 });
 
 /** How many NSE symbols the dashboard can ask about, and how many are mapped above. */
-export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":161,"mapped":160,"unmapped":["HEG"]});
+export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":162,"mapped":162,"unmapped":[]});

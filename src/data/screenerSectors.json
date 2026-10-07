@@ -327,6 +327,14 @@
     "screenerIndustry": "Civil Construction",
     "joinedBy": "nse-symbol"
   },
+  "ESDS": {
+    "gics": "Information Technology",
+    "screenerSector": "Information Technology",
+    "screenerSectorCode": "IN08/IN0801",
+    "screenerBroadSector": "Information Technology",
+    "screenerIndustry": "IT Enabled Services",
+    "joinedBy": "nse-symbol"
+  },
   "ESTER": {
     "gics": "Industrials",
     "screenerSector": "Capital Goods",
@@ -479,7 +487,7 @@
     "screenerIndustry": "Asset Management Company",
     "joinedBy": "nse-symbol"
   },
-  "HEG": {
+  "HEGAM": {
     "gics": "Industrials",
     "screenerSector": "Capital Goods",
     "screenerSectorCode": "IN07/IN0702",

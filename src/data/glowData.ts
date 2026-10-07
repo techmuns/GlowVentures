@@ -10657,7 +10657,7 @@ export const BOOK_POSITIONS: Position[] = [
   {
     "securityKey": "heg",
     "security": "HEG Ltd",
-    "symbol": "HEG",
+    "symbol": "HEGAM",
     "accountId": "svan-investment-managers-llp-8710067",
     "memberId": null,
     "sector": "Unclassified",
@@ -11899,7 +11899,7 @@ export const BOOK_POSITIONS: Position[] = [
   {
     "securityKey": "heg",
     "security": "HEG Ltd",
-    "symbol": "HEG",
+    "symbol": "HEGAM",
     "accountId": "svan-investment-managers-llp-8710090",
     "memberId": null,
     "sector": "Unclassified",

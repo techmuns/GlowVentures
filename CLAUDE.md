@@ -570,6 +570,16 @@ cash holding's genuinely-zero return both match, and both are correct.
   sends it and remembers what arrived (`glow:research-levels/v1`, never inside
   the store); the third is the one mount, in the app shell. A fund or an AIF has
   no NSE symbol, so its levels stay here and its card says so. See Stage 10cq.
+- `src/lib/insideMovers.ts` + `src/components/InsideMovers.tsx` — THE COMPANIES
+  INSIDE THE AIFs AND THE MANDATES, ranked by the day's move — the movers
+  toggle's third branch. A wrapper is NEVER a row: the mandate half is MEASURED
+  (a PMS reports every share, so a rupee impact too) and the fund half DERIVED
+  from what a fund discloses, and the two money figures are never added. The
+  percentage is the exchange's own figure, the same either way, which is why one
+  card can rank both halves. Deliberately NOT routed through `companyExposure`:
+  `src/lib/fundDisclosures.ts` reads `deriveFundDisclosures`' own read model —
+  the AIFs' own snaps, a name and a weight, never `lookthrough.json`, on which
+  every stock-axis figure rests. See Stage 10dl.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -27031,6 +27041,289 @@ donor removed, donor winning ties, and the opening, closing and value-date cuts.
 **THE LETTER.** Written as `10dj`; #118 (bank statements) merged under `10dj` first, so this is `10dk`. Main's lines naming `10dj` stay; this section's three pointers moved.
 
 
+### Stage 10dl — THE MOVERS' THIRD BRANCH: THE COMPANIES INSIDE THE AIFs AND THE MANDATES
+
+*"In the daily movers section we have 2 scopes as of now, Direct equity and ETF
+and mutual funds. We need to add another section that would be AIF and PMS …
+I hope you understand that we will not show that particular AIF or the PMS that
+is having the highest gain or lose but we will show the holding inside all of
+the AIF and PMS which are having the highest daily gain or lose."*
+
+**THE WRAPPER IS NEVER A ROW, AND THE FAMILY RULED IT OUT IN THE SAME SENTENCE
+AS THE ASK.** A card headed AIF & PMS that ranked the folios would answer the
+opposite question: a Category III fund strikes one NAV a month, and a mandate's
+own day move is thirty shares blended into a figure nobody picked. So
+`src/lib/insideMovers.ts` ranks **COMPANIES — 161 on this book** — and
+`InsideMovers.tsx` names the vehicle each is held through under it. The toggle's
+third branch, at `?movers=inside`, beside Direct Equity and ETFs & mutual funds.
+
+**`TodaysMovers` COULD NOT HAVE BEEN WIDENED TO IT.** It is scoped to
+`DIRECT_EQUITY_BUCKET` — who CHOSE a holding, the axis Stage 10L settled after
+the family reported the same thing three times — and a share a manager picked is
+the one thing that bucket exists to exclude.
+
+#### 1. Two halves, one percentage, and two money figures that are never added
+
+The branch covers the two allocation rows the family named, and each reaches a
+company by a different route:
+
+| | How it reaches a company | The day move | The rupee impact |
+| --- | --- | --- | --- |
+| **PMS mandates** · ₹138.70 Cr | the statement itself — a PMS reports every share | the exchange's | **MEASURED** · 131 of 141 names priced |
+| **AIF** · ₹371.87 Cr | the fund's own portfolio disclosure, on 1 of 11 folios | the exchange's | **DERIVED** — `familyValue`, the units times a month-old weight — and **no rupee impact at all** |
+
+**THE PERCENTAGE IS THE EXCHANGE'S OWN FIGURE, THE SAME NUMBER EITHER HALF WOULD
+USE.** A company moved what it moved, however the family reached it — which is
+the whole reason one card can rank both halves against each other, and why 30 of
+the 161 companies are ranked on a disclosure alone. What differs is the MONEY,
+and the two are never added: a measured rupee change and a figure derived from a
+weight struck a month ago are not one measurement. Two tiles, each naming its
+own coverage — **131 of 141 names over the mandate bucket's own value, and 1 of
+11 funds over the AIF row's ₹371.87 Cr** — and the AIF half says **derived · in
+no total** on its face, in words rather than a tooltip.
+
+**THE DERIVED FIGURE IS A CHIP UNDER THE NAME, NOT A FOURTH MONEY COLUMN.** Two
+money figures in adjacent columns under one heading is the caption failure this
+file has paid for twice; under the name it reads as what it is, a figure about
+how this family reaches the company rather than a second measurement of the day.
+
+**AND THERE IS NO INDEX STRIP, WHICH IS A DECISION.** Today's movers sets the
+priced direct-equity book against the Nifty 500 because both are a day's move on
+one basis. Neither half here is: a mandate's shares are a manager's picks and a
+disclosed line is a month-old weight, so a gap against an index would read as
+performance the card cannot measure.
+
+**ONE WORDING FOR THE ONE REFUSAL BOTH HALVES SHARE.** `ACTION_BASIS` is the
+sentence a share whose count the corporate-action capture has not verified
+carries (#104's gate, Stage 10cr), written once so the measured and the derived
+half cannot word it apart.
+
+**AND THE CARD REGISTERS WHAT IT NEEDS RATHER THAN WAITING ON WHAT NOBODY ASKED
+FOR.** `PortfolioContext` grew a `requestSymbols` seam — an `extraSymbols` ref
+and an `extraTick` counter, so a GROWING ask re-runs the poll — because
+`pendingAmong` counts a symbol nobody requested as PENDING, and the card hung on
+the loading state for ever: 163 symbols in its own scope, **135 of them already
+in the book's ask and 28 registered by the card**. `scopeSymbols` is every
+symbol it waits on, both halves and nothing wider, so the two measurements
+settle together and the card never ranks half a scope.
+
+#### 2. Buoyant's snap page 3 — the one AIF portfolio in the archive
+
+Stage 10df named it and left it: *"Buoyant's fund holdings (42 lines, % of
+assets) are archived and drawn nowhere … they could join the look-through, which
+changes the partition every stock-axis figure rests on. That is a change of its
+own."* This is that change, and the partition is untouched — **because the
+disclosure is its own model and not the look-through's.**
+
+- **`public/lookthrough/` IS THE AMCs' MONTHLY FILINGS, and it is load-bearing
+  elsewhere.** Every line there carries an ISIN and a value, and
+  `companyExposure` — the Monitor's stock axis, Sector Composition's
+  Consolidated view, every figure the five buckets partition — rests on it. A
+  snap prints a NAME and a WEIGHT. One model over two sources would have moved
+  that partition to show a card.
+- **`deriveFundDisclosures` in `src/lib/ledgerModel.ts`** builds
+  `fund-disclosures.json` instead, read by `src/lib/fundDisclosures.ts` and by
+  nothing else. It is keyed on the document's **own holding keys**, never on the
+  account, because both Buoyant folios print the identical disclosure and the
+  family holds the same fund in each; a document with a disclosure and no family
+  holding is skipped, which is how WhiteOak's 176-line scheme filing stays out
+  of it exactly as it stays out of the book. The newest `asOf` wins, with the
+  docKey as the tie-break.
+- **`pctCovered` IS SUMMED FROM THE LINES, NEVER 100 LESS A RESIDUAL.** The snap
+  prints `Others 7.13%` and its named lines add to **92.88%**; deriving the
+  coverage from the residual would be a second figure for one thing, free to
+  disagree with the rows under it.
+
+**THE READER PUBLISHES THE TABLE ONLY WHERE THE SNAP RESTATES ITSELF.**
+`buoyantSnapSchemeHoldings` in `altFundStatements.mjs` rides on the
+`portfolio-snap` variant's own gate — page 3 must restate page 1 and the
+holdings table must tie — which is the licence Stage 10da established for that
+document. Three refusals, each a wrong row avoided:
+
+- **`Others` IS NOT A COMPANY.** It is the residual, and filed as a row it would
+  be the largest single "holding" in the fund.
+- **A NAME AND A WEIGHT IS ALL IT PRINTS**, so `isin`, `industry`, `quantity`
+  and `marketValue` are `null` and never zero — a ₹0 market value on a line the
+  fund holds is the fabrication this book exists to prevent.
+- **THE NAME IS CARRIED AS PRINTED.** The extraction renders `&` as `and` on
+  most lines and as `n` on `LnT TECHNOLOGY SERVICES LTD`; repairing it here
+  would be a presentation layer repairing identity, which §1 forbids — the join
+  is `securityKeyOf`'s to make and the archive keeps what the document said.
+
+**`npm run replay:flows` LANDS IT WITHOUT THE PASSWORDS**, which is the sixth
+faithful partial replay's own contract (Stage 10bv): it now carries `returns`
+AND `schemeHoldings` through a `fields` array, each only ADDED where the archive
+holds none, a refusal naming which field it would have moved, and `--check`
+writing nothing.
+
+**AND THE RING-FENCE IS APPLIED ON THE BUILD SERVER**, exactly as
+`functions/api/stock-exposure.ts` applies it to the look-through:
+`build-read-models.mjs` passes `new Set(BOOK_POLYCAB.map(p => p.securityKey))`
+into `deriveFundDisclosures`. `ledgerModel` is about the ARCHIVE and the fence
+is a decision about the BOOK, so the decision cannot live in the derivation.
+Keyed on the key alone — a disclosure prints no identifier — and dropped
+SILENTLY, because naming it would put the word on a page the fence says must not
+carry it (Stage 10aj).
+
+#### 3. The symbol map's fill-only second pass
+
+A disclosed company reaches no price without an NSE symbol, and
+`build-nse-symbols` read statement holdings alone. `securitiesFromArchive` is
+two passes now, on `shared/sectors.mjs`' own tier rule applied to a NAME: **pass
+2 adds a key pass 1 did not produce and never touches one it did.**
+
+**AND IT IS GATED ON THE DOCUMENT CARRYING A FAMILY HOLDING.** Ungated, pass 2
+adds **183 keys** — every company every scheme filing in the archive mentions,
+including the 176 of WhiteOak's disclosure the family does not hold through it.
+Gated, **31**, and the map goes **174 → 201 keys**: 30 added, **not one of them
+named anywhere in `glowData.ts`**, which is what says the pass filled a gap
+rather than overruling a statement. Nine of Buoyant's 40 disclosed companies
+were already in the book under the family's own spelling and keep it.
+
+Three more things the pass forced:
+
+- **THREE ALIAS KEYS RETIRED** — `crompton-greaves-consumer-elec`, `sbi` and
+  `the-karur-vys`, each with 0 occurrences left in the book since Stage 10cc
+  merged them.
+- **`heg` → `HEGAM`, committed as an override with its corroboration.** NSE
+  renamed the listing (HEG Advanced Material), and Stage 10br left it unresolved
+  because the book prints no ISIN for it and *"a name is all there is to join
+  on"*. NSE's own master row carries ISIN INE545A01024 listed 10-MAY-1995 — an
+  identifier nobody in this join controls — so the override is cited rather than
+  guessed. **SVAN's statement prints no symbol at all** — `Position.symbol` is
+  `build-book`'s output from this map — so the override reaches the position
+  only once the book is regenerated. The first push of this change did not
+  regenerate it, and CI's `build-book` diff failed on exactly two lines: SVAN's
+  two HEG positions, `HEG` against `HEGAM`. Regenerated, the card, the book's
+  ask and the quote feed all ask `HEGAM`, and two maps keyed on the old symbol
+  followed it: `npm run build-upstox-instruments` now maps **162 of 162**
+  symbols (HEGAM by its exact symbol; ESDS was missing from main's own map too,
+  measured on a worktree of main), and `npm run build-sectors` re-keys
+  screener.in's sector under `HEGAM`, so SVAN's HEG keeps its Industrials
+  placement. The same rebuild places ESDS (Information Technology), which
+  main's sector map lacked as well. `docs/SCREENER-SECTORS.md` reads **161
+  placed, of 162 company shares carrying a symbol** — two keys resolve to
+  CLEANMAX, so 161 is every distinct symbol — and the cross-check is still 80
+  of 84.
+- **A DISCLOSED-ONLY ROW IS MARKED, AND ITS COUNT PRINTS AT ZERO.**
+  `docs/SECURITY-IDENTIFIERS.md` gains a `From` column on both tables, a
+  disclosed-only row's unresolved reason reads *no issuer to ask for an ISIN*
+  (there is no statement to request), and the disclosed-only count is printed
+  **even when it is zero** with every unresolved name listed — a count that only
+  speaks when it fires is indistinguishable, on a clean run, from one that was
+  deleted. Measured: **201 reachable · 92 not reachable · 8 not securities at
+  all**.
+- **AND IT GAVE COMPANIES HELD ONLY INSIDE FUNDS A SYMBOL, WHICH MOVED TWO
+  CHECKS OFF THEIR SUBJECT.** Stage 10ck's page for such a company says its
+  price history and research are absent because no symbol was looked up. Of the
+  book's 475 fund-only companies, **33 resolve a symbol now: 13 already did on
+  main** (a depository's recorded line), **and the pass added 20** — HDFC Bank,
+  the largest, among them. With a symbol the page draws the price card and the
+  research card (`researchAbsent = fundOnly && !sym`), which is right, and
+  `stock-funds-only-market` and `-research`, which walked HDFC Bank, failed on a
+  correct page. `HELD_BOOK` now derives two subjects off the committed symbol
+  map: the largest fund-only company with no symbol (`fundsOnlyNoSym`, which the
+  two routes walk now) and the largest with one (`fundsOnlySym`). Two new routes,
+  `stock-funds-only-sym-market` and `-research`, assert the absence is NOT drawn
+  there. Main walked only the largest, which had no symbol, so the symbol branch
+  had been checked by nothing.
+
+#### 4. The fixture's own gate, and the defect its first draft had
+
+`cio-movers-inside-live` serves the live layer from fixtures built out of the
+book (`installLiveMocks`), and a disclosed-only company has no statement mark to
+price × 1.10 — so `DISCLOSED_MARK_BY_SYMBOL` gives each a synthetic
+`DISCLOSED_BASE` of ₹1,000. **ITS FIRST GATE ASKED A KEY-LEVEL QUESTION ABOUT A
+SYMBOL-KEYED ROUTE, AND THAT IS THE ROOT OF IT:** `/api/quotes` is keyed on the
+SYMBOL, so pricing a symbol prices every holding that resolves it. Measured, the
+key-level gate produced **51 symbols where its own comment claimed 30** — and
+among them POLYCAB, CLEANMAX, and the symbols of **15 of the 23
+`DEPOSITORY_SHARE_BOOK` rows**, which the page then drew as direct-equity rows:
+16 + 15 = the 31 names that walk was ranking.
+
+So the gate is struck on SYMBOL-LEVEL REACH — every symbol any book position,
+any depository share row or any named key already reaches is excluded — and it
+yields **28**. `DISCLOSED_MARK_BY_SYMBOL` is declared AFTER
+`PRICED_DEPOSITORY_ROWS` for exactly that reason: the gate has to be able to read
+`DEPOSITORY_SHARE_BOOK`.
+
+**AND THE CARD'S OWN MEASUREMENT CORROBORATES IT BY A SECOND PATH.** Its scope is
+**163 symbols**, of which **135 are already in the book's ask and 28 are
+registered** — the same 28, reached through the card's `p.symbol`-first
+precedence rather than through the raw map. A first measurement of that read
+`HEGAM` as a symbol the book does not ask for. It was measured against a
+`glowData.ts` that had not been regenerated after the override, so the book
+still asked `HEG`; on the regenerated book every half asks `HEGAM`, and the
+counts are as stated.
+
+#### 5. Eight checks, and the two corrections they needed
+
+`INSIDE_BOOK` re-expresses the card's book off `src/data/*` and `public/audit/*`
+— never by importing `insideMovers.ts`, which is the code under test, and never
+from `public/views/`, which is gitignored, derived and hash-named. Measured:
+**141 mandate companies, 11 AIF folios, 40 disclosed companies across 11 funds
+of which 1 discloses, 161 ranked, 131 priced in the mandate half, 36 in the
+disclosed half, 30 reached only inside a fund, 0 ranked by % move alone**, over
+₹371.87 Cr of AIF and ₹138.70 Cr of mandates. Where the book cannot be derived
+the block is one check that returns `false`, so an unreadable book fails the
+route loudly rather than leaving every claim unable to run.
+
+`INSIDE_SCOPE` (1) asserts the toggle shows this branch and **neither of the
+other two**, so two cards drawn at once cannot pass. `INSIDE_CARD` (7) asserts:
+no row is a folio or a mandate itself and every row is one of the ranked
+companies — **the only claim struck on KEYS, because a row reading `ICICI Bank
++10.00%` is identical whether it is the company or the wrapper**; the two
+coverage figures are never one figure; the derived half is fenced on its face in
+words; a row drawn off a disclosure alone names its fund, and the fund-only line
+counts the 30; a share the capture has not verified is ranked by % alone, and
+where there are none **the line must be ABSENT rather than drawn at zero**; and
+the ranking spans both halves — **161 gainers on the fixture, not the 131 of the
+mandates alone or the 36 of the disclosures alone**.
+
+**TWO OF THEM WERE WRONG BEFORE THEY WERE RIGHT, AND BOTH ARE TRAPS THIS FILE
+ALREADY RECORDS:**
+
+- **A LIVE FIGURE CANNOT BE COMPARED AGAINST A STATEMENT ONE.** The coverage
+  check first set the mandate half's rendered value against the book's own,
+  which is the statement basis — and that half is LIVE. It is a BOUND now
+  (`>= book − 0.06 && <= book × 1.10 + 0.06`, the fixture's own factor and the
+  page's printing precision reproduced) plus the EXACT names count, where the AIF
+  half stays exact to ±0.06 Cr because no AIF folio resolves a symbol and nothing
+  there can move.
+- **`label-xs` IS `uppercase` AND `innerText` RETURNS THE TRANSFORMED TEXT**, so
+  `/(\d+) gainers/` matched nothing against a card rendering `161 GAINERS`. The
+  third time that trap has bitten here, after Stage 10p's "Listed NAV" and Stage
+  10at's left-out card; fixed with `/i`.
+
+**AND THE WALK WAITS FOR THE CARD, BECAUSE IT ASKS FOR ITS PRICES TWICE.** The
+first price request is the book's own ask (162 symbols); the card then registers
+its 28 more and a second request follows (190). `networkidle` can settle between
+the two, and under the full sweep's load it did: `cio-movers-inside-live` failed
+seven checks on a card still loading, and passed alone. The walk now waits for
+the card's mandate tile (or its no-feed state) before it reads anything.
+
+**AND A CLAIM THAT NO NAMED LINE IS A POSITION IN THE BOOK WOULD BE FALSE**, so
+it is not made: `ICICI BANK LTD` normalises onto `icici-bank`, which the family
+does hold directly. The disclosure's own lines are not a set apart from the book.
+
+#### Merged with main, and the letter moved twice
+
+Written as `10dj`. #118 (bank statements) took `10dj` and #126 (Green Lantern
+510861) took `10dk` while this waited, so this is **`10dl`**. The #126 merge
+raised no conflict marker: two sections sat under one letter and only the
+headings check found it. This section's pointers (the `fundDisclosures.ts`
+Layout bullet and the `build-symbols` entry) and its code comments moved; main's
+lines naming `10dj` and `10dk` stayed. `build-read-models.mjs` conflicted with
+#123 and is a union: `buildConsolidatedSheet` beside `BOOK_POLYCAB`.
+
+On the tree merged with #118, #123, #124 and #125: `build`, `tsc`,
+`test:ingest` (golden 140 passed, 2 not checked, 0 blocked), `test:family`
+exit 0, `build-book` byte-identical, CI green. `check:pages` walked 406
+combinations with one finding, *the page does not scroll* on `family`, and
+**main's own build fails the same check**, measured on a worktree of main
+before #126. It is main's, from a change after #122's sweep, and is named here,
+not fixed.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -28092,7 +28385,13 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 - `npm run check:family` seeds a family register into a real browser and reads
   the rendered figures back, so a correct helper wired into nothing fails. Needs
   a `vite preview` on :4173, same as `check:pages`.
-- `npm run build-symbols` re-resolves securityKey → NSE symbol.
+- `npm run build-symbols` re-resolves securityKey → NSE symbol, from NSE's own
+  three masters. Since Stage 10dl it reads a fund's own PORTFOLIO DISCLOSURE as a
+  FILL-ONLY second pass — a key pass 1 did not produce, never one it did — gated
+  on the document carrying a family holding, which is the difference between 31
+  keys and the 183 every scheme filing in the archive mentions. A disclosed-only
+  row is MARKED in `docs/SECURITY-IDENTIFIERS.md` (`From`), its unresolved reason
+  says there is no issuer to ask for an ISIN, and its count prints even at zero.
 - `npm run build-sectors` refreshes `src/data/screenerSectors.json` and
   `docs/SCREENER-SECTORS.md` — the THIRD and weakest sector tier, fetched from
   screener.in per NSE symbol. It is a LOOKUP and never a judgement: each page

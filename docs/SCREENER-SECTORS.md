@@ -8,9 +8,9 @@ third tier that places them: the classification screener.in publishes for the
 NSE symbol `build-symbols` resolved, joined on that identifier and verified by
 requiring the page to print `NSE: <symbol>` back.
 
-- **160 placed**, of 163 company shares carrying a symbol.
+- **161 placed**, of 162 company shares carrying a symbol.
 - **Cross-checked against the family's own statements: 80 of 84 agree** (95.2%).
-- 0 refused by the guard or unanswered; 10 carry no NSE symbol at all.
+- 0 refused by the guard or unanswered; 12 carry no NSE symbol at all.
 
 ## Where the book and screener disagree
 
@@ -38,9 +38,11 @@ nothing would corroborate it. Listed here for a human to commit.
 | KRISHCA STRAPPING SOLUTIONS | ₹0.20 Cr |
 | MANALI PETROCHEMICAL LTD. | ₹0.06 Cr |
 | SASKEN COMMUNICATION TECHNOLOGIES | ₹0.02 Cr |
-| BOROSIL RENEWABLES LIMITED - WARRANTS 13AG26 | ₹0.01 Cr |
-| EVEREST FLEET-EQ1/ | ₹0.00 Cr |
-| EFPL PREF 18042043 | ₹0.00 Cr |
+| IFB INDUSTRIES LIMITED EQUITY SHARES | ₹0.00 Cr |
+| MPS LIMITED-EQUITY SHARES | ₹0.00 Cr |
+| NLC INDIA LIMITED # EQTY SHARES | ₹0.00 Cr |
+| NUVAMA WEALTH MANAGEMENT LIMITED#NEW EQUITY SHARES WITH FACE VALUE RS.2/- AFTER SUB-DIVISION | ₹0.00 Cr |
+| VEDANTA ALUMINIUM METAL LIMITED # EQUITY SHARES | ₹0.00 Cr |
 
 ## Refused or unanswered
 

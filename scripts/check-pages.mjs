@@ -1327,14 +1327,34 @@ const HELD_BOOK = (() => {
         fundLines: linesOf(key),
       };
     };
-    let only = null;
+    /**
+     * A COMPANY HELD ONLY INSIDE FUNDS COMES IN TWO KINDS SINCE Stage 10dl, and
+     * the Price & returns and Research tabs treat them differently on purpose.
+     * `build-symbols`' fill-only second pass reads a fund's own disclosure, so
+     * 33 of the 475 such companies resolve an NSE symbol (13 already did on
+     * main, through a depository's recorded line) — HDFC Bank, the largest,
+     * among the 20 the pass added — and the page looks their price history and
+     * research up by it. The rest still have none, and those tabs say once why.
+     * Main walked only the largest, which had no symbol, so its symbol branch
+     * was checked by nothing. One subject per kind,
+     * each the largest of its kind, read off the committed symbol map rather
+     * than off the page; `fundsOnly` itself stays the largest of either, because
+     * the Position, Transactions and My targets tabs do not depend on a symbol.
+     */
+    let symbols = {};
+    try { symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8")); } catch { /* none */ }
+    let only = null, onlyNoSym = null, onlySym = null;
     for (const e of SECURITY_AXIS_BOOK.derivedByKey.values()) {
       if (byKey.has(e.key)) continue;
       if (!only || e.value > only.value) only = e;
+      if (symbols[e.key]) { if (!onlySym || e.value > onlySym.value) onlySym = e; }
+      else if (!onlyNoSym || e.value > onlyNoSym.value) onlyNoSym = e;
     }
     return {
       both: both ? company(both.key) : null,
       fundsOnly: only ? company(only.key) : null,
+      fundsOnlyNoSym: onlyNoSym ? company(onlyNoSym.key) : null,
+      fundsOnlySym: onlySym ? { ...company(onlySym.key), symbol: symbols[onlySym.key] } : null,
       fundHolding: Object.fromEntries(fundHolding),
       aifCount: SECURITY_AXIS_BOOK.aifCount,
     };
@@ -7450,6 +7470,32 @@ const ROUTES = [
    */
   ["cio-movers-funds", "/cio?movers=funds"],
   /**
+   * ...AND THE THIRD BRANCH — THE COMPANIES INSIDE THE AIFs AND THE MANDATES.
+   *
+   * *"We need to add another section that would be AIF and PMS… we will not show
+   * that particular AIF or the PMS that is having the highest gain or lose but we
+   * will show the holding INSIDE all of the AIF and PMS which are having the
+   * highest daily gain or lose."* — the family, 7 Oct 2026.
+   *
+   * TWO ROUTES, BECAUSE THE CARD HAS TWO SUBJECTS AND ONLY ONE OF THEM NEEDS A
+   * FEED. The plain walk is the card with no quotes at all: it must still offer
+   * the toggle on its third tab (a reader who switched to a branch whose feed is
+   * down must be able to switch back), and its absent state must name the FEED
+   * rather than say anything about what the mandates and the funds hold. The
+   * live walk is everything else — the two tiles, the fence, the two coverage
+   * lines, the derived half's own absences and the rows themselves.
+   *
+   * THE CLAIM A READER CANNOT CHECK FOR THEMSELVES IS STRUCK ON THE KEYS. Not
+   * one word of this card says "these are the holdings inside, not the wrapper":
+   * a card that ranked the eleven AIF folios and the ten mandates would print a
+   * perfectly well-formed list, with real figures, under a correct heading, and
+   * there is nothing on screen a reader could catch it by. So `INSIDE_BOOK`
+   * carries the wrapper keys and the rankable company keys apart, and the
+   * invariant is struck on `data-mover-row`.
+   */
+  ["cio-movers-inside", "/cio?movers=inside"],
+  ["cio-movers-inside-live", "/cio?movers=inside"],
+  /**
    * ...AND THE OTHER TWO PANELS. *"Divide the Morning CIO into three separate
    * sections and tabs."*
    *
@@ -8383,8 +8429,14 @@ const ROUTES = [
   // family's own to split, and Price & returns and Research each say once why a
   // company no statement names has no symbol looked up.
   ["stock-funds-only-activity", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=activity` : "/stock/no-company-held-only-inside-funds?tab=activity")],
-  ["stock-funds-only-market", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=market` : "/stock/no-company-held-only-inside-funds?tab=market")],
-  ["stock-funds-only-research", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=research` : "/stock/no-company-held-only-inside-funds?tab=research")],
+  // Those two walk the largest such company WITH NO NSE SYMBOL (Stage 10dl):
+  // a disclosure now resolves a symbol for 30 of them, and the page looks a
+  // symbol's price history and research up — so the largest of all, HDFC Bank,
+  // would walk the other branch. The `-sym` pair walks that branch.
+  ["stock-funds-only-market", () => (HELD_BOOK?.fundsOnlyNoSym ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnlyNoSym.key)}?tab=market` : "/stock/no-company-held-only-inside-funds?tab=market")],
+  ["stock-funds-only-research", () => (HELD_BOOK?.fundsOnlyNoSym ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnlyNoSym.key)}?tab=research` : "/stock/no-company-held-only-inside-funds?tab=research")],
+  ["stock-funds-only-sym-market", () => (HELD_BOOK?.fundsOnlySym ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnlySym.key)}?tab=market` : "/stock/no-fund-only-company-with-a-symbol?tab=market")],
+  ["stock-funds-only-sym-research", () => (HELD_BOOK?.fundsOnlySym ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnlySym.key)}?tab=research` : "/stock/no-fund-only-company-with-a-symbol?tab=research")],
   // ...and its My targets tab, where the price alerts card is (Stage 10cq).
   ["stock-funds-only-targets", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=targets` : "/stock/no-company-held-only-inside-funds?tab=targets")],
   // ...and an AIF's My targets tab WITH A LEVEL SAVED on it (Stage 10cq): the
@@ -11183,6 +11235,85 @@ const PRICED_DEPOSITORY_ROWS = DEPOSITORY_SHARE_BOOK
   : null;
 
 /**
+ * ── AND A COMPANY ONLY A FUND DISCLOSED HAS NO STATEMENT MARK TO PRICE ──────
+ *
+ * `MARK_BY_SYMBOL` is built from `BOOK_POSITIONS`, each at its own
+ * `currentPrice`, which is what makes the live fixture a closed form: price =
+ * mark × 1.10, so every move is exactly +10.00%. A company the family reach
+ * only INSIDE a fund is not a position of theirs and never carries a mark — so
+ * without a base of its own the quote route would answer `missing` for every
+ * one of them and the AIF & PMS card's derived half would be entirely
+ * unpriced, on the one route that exists to measure it.
+ *
+ * ── THE GATE IS ON THE SYMBOL, BECAUSE THE QUOTE ROUTE IS ───────────────────
+ *
+ * The first draft of this asked only whether a `nseSymbols.json` KEY is a
+ * position's key, and that is the wrong question: `/api/quotes` is keyed on the
+ * SYMBOL, so a base given to a disclosed spelling's key prices that symbol for
+ * every holding that resolves it, whatever key the holding itself carries.
+ *
+ * MEASURED, THAT GATE ADMITTED 51 SYMBOLS WHERE ITS OWN COMMENT CLAIMED 30 —
+ * among them POLYCAB, the ring-fenced security, CLEANMAX, the row the family
+ * decided to keep unvalued (Stage 10cx's FQ-3), and KAYNES, whose disclosed
+ * spelling keys `kaynes-technology-india` while the family's own demat line
+ * keys `kaynes-technology` and resolves the same symbol. So the sentence this
+ * comment used to carry — that giving the first a base "leaves the recorded one
+ * exactly as it was" — was false of the one case it named.
+ *
+ * AND IT COST FOUR INVARIANTS ON `cio-live`, which is how it was found rather
+ * than reasoned about: 15 of the 23 `DEPOSITORY_SHARE_BOOK` rows were priced by
+ * this map ALONE, so the page ranked 16 + 15 = 31 direct-equity names where
+ * `PRICED_DIRECT_EQUITY` — which gates on `MARK_BY_SYMBOL` alone, exactly as
+ * the app does — expects 16. Every figure on the card was right for the feed it
+ * was given; the feed was wrong.
+ *
+ * SO THE SET IS WHAT NOTHING ELSE CAN REACH, measured rather than listed: a
+ * symbol is disclosed-only where its key appears nowhere in `glowData.ts` AND
+ * no live position, no depository-share row and no other `nseSymbols.json` key
+ * the book DOES name resolves it. On this book that is 28 symbols, and the 23
+ * it drops are exactly the ones another live figure is struck over — which is
+ * why the depository term is load-bearing rather than belt-and-braces:
+ * `ONESOURCE` is reached by a depository row whose own key is not in the book.
+ *
+ * AND TWO INDEPENDENT DERIVATIONS LAND ON THE SAME 28. This one asks what
+ * `nseSymbols.json` carries that nothing in the book reaches. The card asks the
+ * opposite question — of the 163 symbols its own scope needs, the committed ask
+ * (`symbolsFor(BOOK_POSITIONS)` + the live-only funds + the depository shares)
+ * already carries 135, so `requestSymbols` registers 28. The two sets are equal
+ * symbol for symbol, which is what says this fixture prices exactly the names
+ * the page has to go and ask for and not one more.
+ *
+ * ONE BASE FOR ALL OF THEM, AT THE SAME RATIO. The number itself is arbitrary —
+ * no document states a price for these companies and the fixture is not
+ * pretending one does — so what matters is that `price / prevClose` is
+ * `QUOTE_FACTOR` here as everywhere else: one ratio across the whole card keeps
+ * the day's move a closed form (+10.00%) on both halves, and a derived-only
+ * name carries no rupee impact anyway (its fund's units are not marked at the
+ * prices of what it holds), so a per-name base would buy nothing.
+ */
+const DISCLOSED_BASE = 1000;
+const DISCLOSED_MARK_BY_SYMBOL = (() => {
+  const m = new Map();
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const named = (key) => src.includes(`"${key}"`);
+    /** Every symbol something OTHER than a fund's disclosure already reaches. */
+    const reach = new Set();
+    for (const [key, sym] of Object.entries(symbols)) if (named(key)) reach.add(sym);
+    for (const p of bookArray(src, "BOOK_POSITIONS") ?? []) {
+      const sym = p.symbol || symbols[p.securityKey];
+      if (sym) reach.add(sym);
+    }
+    for (const d of DEPOSITORY_SHARE_BOOK ?? []) if (d.symbol) reach.add(d.symbol);
+    for (const [key, sym] of Object.entries(symbols)) {
+      if (!named(key) && !reach.has(sym) && !MARK_BY_SYMBOL.has(sym)) m.set(sym, DISCLOSED_BASE);
+    }
+  } catch { /* an unreadable book fails the route's own checks, loudly */ }
+  return m;
+})();
+
+/**
  * ── WHICH LINES THE CORPORATE-ACTION CHECK HOLDS BACK UNDER THE LIVE FIXTURE ──
  *
  * DL-9: a quote that ARRIVED and was held back is a different fact from one
@@ -11399,9 +11530,9 @@ const WITHHELD_PILL = [
  *
  * It can be checked on the COUNT. Every fixture price is the mark × 1.10, so
  * every priceable name rises and the gainer count is exactly the size of the
- * priced scope. Measured on this book: 33 for Direct Equity. Fold the PMS
- * mandates back in and it is 160-odd; add the ETFs back and it is 36 — neither
- * can pass, which is what makes this the check that the narrowing really
+ * priced scope. Measured on this book: 16 for Direct Equity. Fold the PMS
+ * mandates back in and it is 139; add the ETFs back and it is 17 — neither can
+ * pass, which is what makes this the check that the narrowing really
  * happened. Derived from the book on every run rather than typed, so the next
  * drop brings its own expectation.
  *
@@ -11464,6 +11595,158 @@ const PRICED_DIRECT_EQUITY = (() => {
     };
     if (!DEPOSITORY_SHARE_BOOK) return null;
     return count([DIRECT_EQUITY_BUCKET]);
+  } catch { return null; }
+})();
+
+/**
+ * THE TWO SETS THE AIF & PMS CARD RANKS, AND NEITHER IS A WRAPPER.
+ *
+ * *"we will not show that particular AIF or the PMS that is having the highest
+ * gain or lose but we will show the holding INSIDE all of the AIF and PMS which
+ * are having the highest daily gain or lose."* — the family, 7 Oct 2026.
+ *
+ * NOT ONE WORD OF THE CARD SAYS SO, which is the whole reason this derivation
+ * exists. A row reading `ICICI Bank  +10.00%` is identical whether it came from
+ * a mandate's own statement line or from a wrapper's NAV, so a card that had
+ * quietly ranked the eleven AIF folios and the ten mandates would print a
+ * perfectly well-formed list, with real figures, under a correct heading. The
+ * claim is therefore struck on the KEYS — every drawn row must be a company
+ * inside one of the two, and no drawn row may be a wrapper the book holds.
+ *
+ * ── THREE SETS, RE-EXPRESSED OFF COMMITTED DATA ──────────────────────────────
+ *
+ *   `mandateKeys`   the companies a PMS statement reports: `holdingBucket` =
+ *                   `MANDATE_BUCKET`, over CURRENT holdings.
+ *   `fundKeys`      the AIF folios themselves — `holdingBucket` = `AIF` — which
+ *                   is the set that must NEVER be a row, and the denominator the
+ *                   card's own coverage line is a share of.
+ *   `disclosedKeys` the companies one of those folios disclosed: the archive's
+ *                   own `schemeHoldings`, keyed through `securityKeyOf`.
+ *
+ * `holdingBucket` is re-derived here from `assetClass` + the ACCOUNT's
+ * engagement + the cash map + `valuedAtCost`, in that order, rather than
+ * imported — the standing terms (`AIF_BOOK`, `PRICED_DIRECT_EQUITY`): a check
+ * that calls the helper it is checking agrees with it by construction.
+ *
+ * ── THE DISCLOSED HALF'S GATE IS `deriveFundDisclosures`', WRITTEN AGAIN ─────
+ *
+ * Four clauses, each of which drops something on this book:
+ *
+ *   • a line needs a non-empty name, a key that is not `"unknown"`, and not the
+ *     RING-FENCED key — the fence is applied on the build server for exactly
+ *     this reason, and a derivation that skipped it here would expect a row the
+ *     page is right not to draw;
+ *   • a document needs `holdings` of its own, or its `fundKeys` are empty and it
+ *     describes no position in this book. **That is what keeps WhiteOak's
+ *     176-line scheme-portfolio filing out** — no folio, no holder, archived for
+ *     look-through — and an ungated pass measured 183 extra companies against
+ *     this gate's 31;
+ *   • the newest `asOf` per fund wins, with the docKey as the tie-break, because
+ *     both Buoyant folios print the same disclosure on the same date;
+ *   • AND `insideMovers` NARROWS IT ONCE MORE: a disclosure counts only where
+ *     the family hold that fund as a current AIF row. A folio redeemed to nil
+ *     still carries a filing in the archive and discloses nothing the family
+ *     owns today.
+ *
+ * ── AND `priceable` IS WHAT THE FIXTURE CAN ANSWER, NOT WHAT THE BOOK HOLDS ──
+ *
+ * The same distinction `PRICED_DIRECT_EQUITY` draws one derivation up: a company
+ * resolving a symbol is still asked for and still waited on, and only a company
+ * the fixture has a mark for can be drawn. A disclosed-only company has no
+ * position and therefore no statement mark, so it is priced off
+ * `DISCLOSED_MARK_BY_SYMBOL` — see that map for the two measurements behind it.
+ */
+const INSIDE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    if (!Array.isArray(positions) || !Array.isArray(accounts) || !CASH_EQ_KEYS) return null;
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    // `currentHoldings`, re-derived: a fund vehicle redeemed to nil whose fund
+    // still publishes a NAV is CLOSED, and a security worth under ₹1,000 across
+    // the book is a speck. `smallKeysOf` is this file's one copy of the floor.
+    const small = smallKeysOf(positions);
+    const closed = (p) => ["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)
+      && Number(p.quantity) === 0 && p.currentPrice != null;
+    const held = positions.filter((p) => !closed(p) && !small.has(p.securityKey));
+    // `holdingBucket`, re-derived, in its own order.
+    const bucket = (p) => {
+      if (engagement.get(p.accountId) === "PMS") return MANDATE_BUCKET;
+      if (CASH_EQ_KEYS.has(p.securityKey)) return "Cash";
+      if (p.valuedAtCost === true) return "Private investments at cost";
+      return p.assetClass;
+    };
+    const mandate = held.filter((p) => bucket(p) === MANDATE_BUCKET);
+    const aifRows = held.filter((p) => bucket(p) === "AIF");
+    const aifKeys = new Set(aifRows.map((p) => p.securityKey));
+    const mandateKeys = new Set(mandate.map((p) => p.securityKey));
+    // ONE SYMBOL PER COMPANY, the card's own rule: a mandate row's own `symbol`
+    // is the stronger evidence, and a disclosed-only key falls through to the
+    // committed map. Struck the other way round, the two halves of a row could
+    // be measured on two quotes.
+    const symbolByKey = new Map();
+    for (const p of mandate) if (p.symbol && !symbolByKey.has(p.securityKey)) symbolByKey.set(p.securityKey, p.symbol);
+    const symbolOf = (key) => symbolByKey.get(key) ?? symbols[key] ?? null;
+
+    // ── The disclosed half, off the archive itself ────────────────────────────
+    const manifest = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+    const byFund = new Map();
+    for (const e of manifest) {
+      let doc;
+      try { doc = JSON.parse(readFileSync(new URL(`../public/audit/${e.docKey}/document.json`, import.meta.url), "utf8")); }
+      catch { continue; }
+      const lines = (doc.schemeHoldings ?? []).map((h) => ({
+        securityKey: securityKeyOf(h.security),
+        pctNetAssets: Number.isFinite(h.pctNetAssets) ? h.pctNetAssets : null,
+      })).filter((l) => l.securityKey !== "unknown" && l.securityKey !== RINGFENCED_KEY);
+      if (!lines.length) continue;
+      const fundKeys = [...new Set((doc.holdings ?? []).map((h) => h.securityKey).filter(Boolean))].sort();
+      if (!fundKeys.length) continue;
+      const k = fundKeys.join("\u0000");
+      const prev = byFund.get(k);
+      const next = { fundKeys, asOf: doc.asOf, source: doc.docKey ?? e.docKey, lines };
+      if (!prev || next.asOf > prev.asOf || (next.asOf === prev.asOf && next.source < prev.source)) byFund.set(k, next);
+    }
+    // ...and the card's own further narrowing: the family must hold the fund.
+    const disclosed = [...byFund.values()].filter((f) => f.fundKeys.some((k) => aifKeys.has(k)));
+    const disclosedKeys = new Set(disclosed.flatMap((f) => f.lines.map((l) => l.securityKey)));
+
+    const priceable = (keys) => new Set([...keys].filter((k) => {
+      const s = symbolOf(k);
+      return !!s && (MARK_BY_SYMBOL.has(s) || DISCLOSED_MARK_BY_SYMBOL.has(s));
+    }));
+    const pricedMandate = priceable(mandateKeys);
+    const pricedDisclosed = priceable(disclosedKeys);
+    /**
+     * A NAME WITH A SALE AFTER ITS STORED BALANCE IS RANKED AND NOT TOTALLED
+     * (#104, Stage 10dc) — the same two sets `PRICED_DIRECT_EQUITY` draws, and
+     * the reason the card's own rupee tile covers fewer names than its rows.
+     */
+    const withheld = new Set();
+    for (const p of mandate) if ((p.realizedLotsAfter ?? 0) > 0 && pricedMandate.has(p.securityKey)) withheld.add(p.securityKey);
+    const ranked = new Set([...pricedMandate, ...pricedDisclosed]);
+    return {
+      mandateKeys: [...mandateKeys].sort(),
+      aifKeys: [...aifKeys].sort(),
+      disclosedKeys: [...disclosedKeys].sort(),
+      funds: aifKeys.size,
+      disclosing: disclosed.length,
+      ranked: ranked.size,
+      rankedKeys: [...ranked].sort(),
+      pricedMandate: pricedMandate.size,
+      pricedMandateKeys: [...pricedMandate].sort(),
+      pricedDisclosed: pricedDisclosed.size,
+      /** Drawn with a % move and no rupee impact — one of the card's two absences. */
+      priceOnly: withheld.size,
+      /** Drawn off a disclosure alone, so the mandate half has no figure for it. */
+      fundOnly: [...pricedDisclosed].filter((k) => !pricedMandate.has(k)).length,
+      fundOnlyKeys: [...pricedDisclosed].filter((k) => !pricedMandate.has(k)).sort(),
+      /** The denominator the fund tile's coverage line states. */
+      aifValue: aifRows.reduce((a, p) => a + p.marketValue, 0),
+      mandateValue: mandate.reduce((a, p) => a + p.marketValue, 0),
+    };
   } catch { return null; }
 })();
 
@@ -13476,7 +13759,10 @@ async function installLiveMocks(page, opts = {}) {
     const quotes = {}, missing = [];
     const now = new Date().toISOString(); // see FIXTURE_DAY
     for (const s of want) {
-      const mark = MARK_BY_SYMBOL.get(s);
+      // A company only a fund DISCLOSED has no statement mark, so it falls back
+      // to its synthetic base — at the same `QUOTE_FACTOR`, so the card's two
+      // halves are struck on one ratio. See `DISCLOSED_MARK_BY_SYMBOL`.
+      const mark = MARK_BY_SYMBOL.get(s) ?? DISCLOSED_MARK_BY_SYMBOL.get(s);
       if (!mark) { missing.push(s); continue; }
       quotes[s] = {
         price: Math.round(mark * QUOTE_FACTOR * 10000) / 10000, prevClose: mark,
@@ -17700,13 +17986,14 @@ const CIO_MOVERS = [
    * A MISSING TOGGLE IS A FINDING, NOT AN ABSTENTION — only the probe failing
    * to run abstains, which is `golden.mjs`'s rule arriving through a control.
    */
-  ["the movers toggle offers Direct Equity and ETFs & mutual funds, and opens on Direct Equity", (t, ctx) => {
+  ["the movers toggle offers Direct Equity, ETFs & mutual funds and AIF & PMS, and opens on Direct Equity", (t, ctx) => {
     const tabs = ctx?.moverScopes;
     if (tabs == null) return { notChecked: "the toggle probe did not run on this pass" };
-    return tabs.length === 2
-      && tabs[0].key === "direct" && tabs[1].key === "funds"
-      && tabs[0].active && !tabs[1].active
-      && /ETFs?\s*&\s*mutual funds/i.test(tabs[1].label);
+    return tabs.length === 3
+      && tabs[0].key === "direct" && tabs[1].key === "funds" && tabs[2].key === "inside"
+      && tabs[0].active && !tabs[1].active && !tabs[2].active
+      && /ETFs?\s*&\s*mutual funds/i.test(tabs[1].label)
+      && /AIF\s*&\s*PMS/i.test(tabs[2].label);
   }],
   /**
    * ── THE MOVERS RANKING OPENS ON THE PERCENTAGE MOVE ───────────────────────
@@ -20744,6 +21031,202 @@ function pricedPairOf(title) {
   const a = iso(m[1], m[2], m[3]), b = iso(m[4], m[5], m[6]);
   return a && b ? `${a}|${b}` : null;
 }
+
+/**
+ * ── THE MOVERS TOGGLE'S THIRD BRANCH — THE COMPANIES INSIDE (Stage 10dl) ─────
+ *
+ * *"we will not show that particular AIF or the PMS that is having the highest
+ * gain or lose but we will show the holding INSIDE all of the AIF and PMS which
+ * are having the highest daily gain or lose."*
+ *
+ * SPREAD INTO BOTH OF THIS CARD'S ROUTES, because the toggle renders in every
+ * branch of it — a reader who switched to a card whose feed is down must be
+ * able to switch back, which is why `DailyMovers` passes the control into the
+ * loading and absent branches too.
+ *
+ * EVERY TEST HERE RETURNS A BOOLEAN OR `notChecked`, NEVER A DESCRIPTION. The
+ * harness reads any truthy return as a PASS (`else if (!r) invariants.push(desc)`),
+ * so a returned sentence naming the defect is how a check comes to be unable to
+ * fail — measured in this file already, on eleven invariants at a time
+ * (Stage 10an). What a failure needs to be diagnosable is in the DESCRIPTION,
+ * which is why these carry the book's own figures.
+ */
+const INSIDE_SCOPE = [
+  ["the toggle shows the AIF & PMS branch and neither of the other two", (t, ctx) => {
+    const tabs = ctx?.moverScopes;
+    if (tabs == null) return notChecked("the toggle probe did not run on this pass");
+    if (!tabs.length) return false;
+    return tabs.find((x) => x.active)?.key === "inside"
+      // Neither sibling card's own title, each of which nothing else prints:
+      // the direct-equity one in any of #104's three forms (Stage 10dc), and
+      // the published-NAV one. A toggle that drew two cards at once would
+      // satisfy every figure check on this route, and only this can see it.
+      && !MOVERS_HEADING.test(t)
+      && !/Daily NAV movers/.test(t);
+  }],
+];
+
+/**
+ * ── AND THE CARD ITSELF, ON THE LIVE WALK ───────────────────────────────────
+ *
+ * Every claim here is struck on `INSIDE_BOOK`, which re-expresses the model off
+ * `glowData.ts` and `public/audit/` by a second path — the standing terms: a
+ * check that imports `insideMovers.ts` agrees with it by construction, and this
+ * card's whole subject is a rule no figure on it states.
+ */
+const INSIDE_CARD = INSIDE_BOOK ? [
+  /**
+   * THE CLAIM A READER CANNOT CHECK, AND THE ONLY ONE STRUCK ON KEYS.
+   *
+   * A row reading "ICICI Bank +10.00%" is identical whether it came from a
+   * mandate's own statement line or from the wrapper's NAV, so a card that
+   * ranked the eleven AIF folios and the ten mandate rows would print a
+   * well-formed list with real figures under a correct heading. The keys are
+   * the only thing that can tell them apart: `aifKeys` is the wrappers,
+   * `rankedKeys` the companies inside them and inside the mandates.
+   */
+  [`no row is one of the ${INSIDE_BOOK.funds} AIF folios or a mandate itself — every row is one of the ${INSIDE_BOOK.ranked} companies held inside`,
+    (_t, ctx) => {
+      const ins = ctx?.inside;
+      if (ins == null) return notChecked("the inside probe did not run on this pass");
+      if (!ins.card || !ins.rows.length) return false;
+      const wrappers = new Set(INSIDE_BOOK.aifKeys);
+      const rankable = new Set(INSIDE_BOOK.rankedKeys);
+      return ins.rows.every((r) => !wrappers.has(r.key) && rankable.has(r.key));
+    }],
+  /**
+   * THE TWO HALVES ARE TWO TILES WITH THEIR OWN DENOMINATORS, AND NEITHER
+   * FIGURE IS IN THE OTHER. One is a MEASURED day move on shares a family
+   * statement reports; the other is a DERIVED value of what a fund disclosed.
+   * Each coverage line states its own set, which is what a card that had
+   * blended them could not do: the mandate half counts names out of every
+   * company a mandate reports, the fund half funds out of the folios the
+   * family hold, and the two values are an order of magnitude apart.
+   *
+   * ── THE TWO DENOMINATORS ARE ON TWO BASES, AND ONLY ONE OF THEM IS EXACT ──
+   *
+   * The AIF half is struck to the paisa: no AIF folio resolves an NSE symbol,
+   * so the quote fixture cannot touch those rows and their live value IS the
+   * statement one — ₹371.9 Cr either way, the allocation row's own figure.
+   *
+   * The MANDATE half is a LIVE figure and this checker cannot reproduce it
+   * exactly, which is said rather than fitted around: the fixture prices each
+   * mandate share at its own mark × 1.10 (so a priced row's value is exactly
+   * ×1.10), AND the published-NAV overlay moves a liquid sleeve inside the same
+   * bucket, which nothing here re-expresses. So the claim is a BOUND derived
+   * from the fixture — between the statement value and the whole bucket priced
+   * up — and the SET SIZES carry the weight: 141 names with 131 priced is what
+   * a card that had blended the halves could not print, and the bound excludes
+   * the fund half's own ₹371.9 Cr and the two added by an order of magnitude.
+   *
+   * The exact terms are bounded at ±0.06 Cr, which is the one decimal in crore
+   * the page prints reproduced — never a tolerance widened until they fit.
+   */
+  [`the mandate half states ${INSIDE_BOOK.pricedMandate} of ${INSIDE_BOOK.mandateKeys.length} names over the mandate bucket's own ₹${(INSIDE_BOOK.mandateValue / 1e7).toFixed(1)} Cr priced up, and the fund half ${INSIDE_BOOK.disclosing} of ${INSIDE_BOOK.funds} funds over ₹${(INSIDE_BOOK.aifValue / 1e7).toFixed(1)} Cr, so the two are never one figure`,
+    (_t, ctx) => {
+      const ins = ctx?.inside;
+      if (ins == null) return notChecked("the inside probe did not run on this pass");
+      if (!ins.card) return false;
+      const mandate = /(\d+) of (\d+) names/.exec(ins.mandateCoverage ?? "");
+      const fund = /(\d+) of (\d+) funds disclose/.exec(ins.fundCoverage ?? "");
+      if (!mandate || !fund) return false;
+      const held = (s) => { const m = /of ₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*held/.exec(s ?? ""); return m ? crU(m[1], m[2]) : NaN; };
+      const mandateCr = held(ins.mandateCoverage);
+      const book = INSIDE_BOOK.mandateValue / 1e7;
+      return Number(mandate[1]) === INSIDE_BOOK.pricedMandate
+        && Number(mandate[2]) === INSIDE_BOOK.mandateKeys.length
+        && Number(fund[2]) === INSIDE_BOOK.funds
+        && Number(fund[1]) === INSIDE_BOOK.disclosing
+        && mandateCr >= book - 0.06 && mandateCr <= book * 1.10 + 0.06
+        && Math.abs(held(ins.fundCoverage) - INSIDE_BOOK.aifValue / 1e7) <= 0.06;
+    }],
+  /**
+   * AND THE DERIVED HALF SAYS SO ON ITS FACE, NOT IN A HOVER. This book's own
+   * rule, and the one thing on this card a reader could be harmed by losing:
+   * the fund tile's figure is the family's units times a weight a fund
+   * published a month ago, and it is in no total above it and in no book total
+   * anywhere.
+   */
+  ["the derived half is fenced on its face, in words", (_t, ctx) => {
+    const ins = ctx?.inside;
+    if (ins == null) return notChecked("the inside probe did not run on this pass");
+    if (!ins.card) return false;
+    const fence = (ins.fence ?? "").toLowerCase();
+    return /derived/.test(fence) && /in no total/.test(fence);
+  }],
+  /**
+   * A ROW REACHED ONLY THROUGH A FUND NAMES THE FUND. The direction asserted is
+   * the dangerous one: a drawn row with no `data-mover-via` must be one a
+   * MANDATE reports, so a derived figure can never sit on this card with no
+   * provenance. The converse is asserted too but is weaker — a row in BOTH
+   * halves legitimately carries one, which six companies on this book are, and
+   * that is exactly the case the two tiles exist for.
+   */
+  [`a row drawn off a disclosure alone names the fund — ${INSIDE_BOOK.fundOnly} of the ${INSIDE_BOOK.ranked} ranked companies are reached only inside one`,
+    (_t, ctx) => {
+      const ins = ctx?.inside;
+      if (ins == null) return notChecked("the inside probe did not run on this pass");
+      if (!ins.card || !ins.rows.length) return false;
+      const measured = new Set(INSIDE_BOOK.pricedMandateKeys);
+      const disclosed = new Set(INSIDE_BOOK.disclosedKeys);
+      return ins.rows.every((r) => (r.via ? disclosed.has(r.key) : measured.has(r.key)));
+    }],
+  /**
+   * THE TWO ABSENCES ARE COUNTED APART, AND EACH IS THE BOOK'S OWN FIGURE.
+   *
+   * `fund-only` is a company with no share count to verify and never will be —
+   * the family hold the FUND, and a fund's units are not marked at the prices
+   * of what it holds. `price-only` is a share a mandate DOES hold whose money
+   * impact the corporate-action gate held back (Stage 10dc). Told the first
+   * reason, a reader would go looking for a verification that does not apply,
+   * which is why they are two lines rather than one.
+   */
+  [`the fund-only line counts the ${INSIDE_BOOK.fundOnly} companies reached only inside a fund`, (_t, ctx) => {
+    const ins = ctx?.inside;
+    if (ins == null) return notChecked("the inside probe did not run on this pass");
+    if (!ins.card) return false;
+    if (!INSIDE_BOOK.fundOnly) return notChecked("no company in this book is reached only inside a fund");
+    return ins.fundOnly === INSIDE_BOOK.fundOnly;
+  }],
+  /**
+   * ON THIS BOOK `price-only` IS ZERO, so that line is correctly ABSENT and
+   * this claim ABSTAINS with that evidence rather than passing over nothing —
+   * and it requires the ABSENCE rather than a drawn zero, which is the
+   * absent-vs-zero rule arriving on a count.
+   */
+  ["a share whose count the capture has not verified is ranked by % move alone, and no such line is drawn where there are none",
+    (_t, ctx) => {
+      const ins = ctx?.inside;
+      if (ins == null) return notChecked("the inside probe did not run on this pass");
+      if (!ins.card) return false;
+      if (!INSIDE_BOOK.priceOnly) {
+        return ins.priceOnly == null
+          ? notChecked("no share a mandate holds has an unverified count on this book")
+          : false;
+      }
+      return ins.priceOnly === INSIDE_BOOK.priceOnly;
+    }],
+  /**
+   * AND THE RANKING SPANS BOTH HALVES. The fixture prices every symbol at its
+   * own mark × 1.10 (Stage 10p), so every rankable company rises and the gainer
+   * count IS the size of the ranked scope — the one figure that would move if
+   * the card had quietly dropped one half of it. A card ranking the mandate
+   * half alone would read the measured count; the disclosed half alone, the
+   * disclosed one.
+   */
+  [`the ranking spans both halves — ${INSIDE_BOOK.ranked} gainers on the fixture, not ${INSIDE_BOOK.pricedMandate} (the mandates alone) or ${INSIDE_BOOK.pricedDisclosed} (the disclosures alone)`,
+    (t, ctx) => {
+      const ins = ctx?.inside;
+      if (ins == null) return notChecked("the inside probe did not run on this pass");
+      if (!ins.card) return false;
+      // CASE-INSENSITIVE, because the heading is `label-xs` and `innerText`
+      // returns the TRANSFORMED text — the page draws `163 GAINERS`. This file
+      // has recorded that trap twice already (Stage 10p's "Listed NAV", Stage
+      // 10at's left-out card) and it cost this check its first run.
+      const m = /(\d+)\s+gainers?\b/i.exec(t);
+      return !!m && Number(m[1]) === INSIDE_BOOK.ranked;
+    }],
+] : [["the AIF & PMS card's own book derived, so every claim on it can fail", () => false]];
 
 const INVARIANTS = {
   /**
@@ -29299,12 +29782,14 @@ const INVARIANTS = {
      * Asserted on both walks and not just one: the toggle is a CONTROL and
      * renders whether or not a quote has landed, so a build that drew it on
      * only one branch has to fail somewhere. The four-tab group of Stage 10ad
-     * must equally not come back, which `tabs.length === 2` is what rules out.
+     * must equally not come back, which `tabs.length === 3` is what rules out —
+     * three is the AIF & PMS branch (Stage 10dl) and not one of those four.
      */
-    ["the movers toggle offers exactly two branches with a feed too", (t, ctx) => {
+    ["the movers toggle offers exactly three branches with a feed too", (t, ctx) => {
       const tabs = ctx?.moverScopes;
       if (tabs == null) return { notChecked: "the toggle probe did not run on this pass" };
-      return tabs.length === 2 && tabs[0].key === "direct" && tabs[1].key === "funds";
+      return tabs.length === 3
+        && tabs[0].key === "direct" && tabs[1].key === "funds" && tabs[2].key === "inside";
     }],
     /**
      * ...AND THE FOOTER PARAGRAPH THE FAMILY ASKED TO REMOVE STAYS REMOVED.
@@ -29483,6 +29968,18 @@ const INVARIANTS = {
         && !MOVERS_HEADING.test(t);
     }],
   ],
+  /**
+   * ── AND THE THIRD — THE COMPANIES INSIDE THE AIFs AND THE MANDATES ────────
+   *
+   * TWO ROUTES ON ONE ADDRESS, because the card has two subjects and only one
+   * of them needs a feed. The plain walk is the card with no quotes at all: it
+   * must still OFFER the toggle on its third tab, which is what lets a reader
+   * who switched to a branch whose feed is down switch back. The live walk is
+   * everything else — the two tiles, the fence, the two coverage lines, the
+   * derived half's own absences, and the rows themselves.
+   */
+  "cio-movers-inside": [...INSIDE_SCOPE],
+  "cio-movers-inside-live": [...INSIDE_SCOPE, ...INSIDE_CARD],
   "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("basket"), ...ALLOC_HELD_PILL],
   "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("assetClass"), ...ALLOC_HELD_PILL, ...ALLOC_DERIVED],
 
@@ -34061,6 +34558,29 @@ const INVARIANTS = {
         && (ctx.stockPage?.research ?? []).length === 0],
   ],
   /**
+   * …AND A COMPANY HELD ONLY INSIDE FUNDS THAT DOES RESOLVE A SYMBOL (Stage
+   * 10dl) IS LOOKED UP BY IT. `build-symbols` reads a fund's own disclosure as a
+   * fill-only second pass, so the largest such company — HDFC Bank on this book —
+   * now has an NSE symbol, and telling a reader "no symbol has been looked up for
+   * it" would be false. So these tabs draw the price card and the research card,
+   * and the funds-only absence must NOT be on them. The route is the largest such
+   * company off the committed symbol map; a book with none fails rather than
+   * walking a page that proves nothing.
+   */
+  "stock-funds-only-sym-market": [
+    ...stockTabChecks("market", { fundsOnly: true }),
+    ["a company held only inside funds that resolves an NSE symbol draws its price card, not the funds-only absence",
+      (t, ctx) => !!HELD_BOOK?.fundsOnlySym && ctx.heldTable?.research == null
+        && /Price history & returns/i.test(t) && !/No price history — held only inside your funds/i.test(t)
+        && /The price service (?:did not answer|timed out)/.test(t)],
+  ],
+  "stock-funds-only-sym-research": [
+    ...stockTabChecks("research", { fundsOnly: true }),
+    ["a company held only inside funds that resolves an NSE symbol draws its research card, not the funds-only absence",
+      (t, ctx) => !!HELD_BOOK?.fundsOnlySym && ctx.heldTable?.research == null
+        && (ctx.stockPage?.research ?? []).length > 0 && !/No research — held only inside your funds/i.test(t)],
+  ],
+  /**
    * ── THE ALERT CARD MUST NOT CONTRADICT THE BADGE ABOVE IT (Stage 10cq) ───
    *
    * The page says "Held only inside your funds", and the card's reason for
@@ -35694,6 +36214,12 @@ for (const theme of THEMES) {
       if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       if (name === "sectors-direct-live") await installLiveMocks(page);
+      // THE INSIDE CARD'S LIVE WALK. The fixture prices every symbol in
+      // `nseSymbols.json` — the disclosed-only ones off `DISCLOSED_MARK_BY_SYMBOL`,
+      // which exists for exactly this route — so both halves of the card have
+      // figures. The plain `cio-movers-inside` walk deliberately gets none,
+      // because its absent state is its own invariant.
+      if (name === "cio-movers-inside-live") await installLiveMocks(page);
       // THE ALERTS WALKS. The store is seeded before the app boots, and the live
       // fixture is installed on the two that assert a quoted price; the no-feed
       // walk deliberately gets none, because that is its whole subject.
@@ -35747,6 +36273,22 @@ for (const theme of THEMES) {
           const s = document.querySelector("[data-research-summary]");
           return !!s && (s.getAttribute("data-waiting") === "0" || !!s.getAttribute("data-code"));
         }, null, { timeout: 15000 }).catch(() => {});
+      }
+      /**
+       * THE AIF & PMS CARD ASKS FOR ITS PRICES IN A SECOND ROUND (Stage 10dl).
+       *
+       * It registers the 28 symbols only a fund's disclosure reaches after the
+       * book's own ask has answered, so `networkidle` can resolve in the quiet
+       * between the two rounds — measured, the second ask goes ~100 ms after the
+       * first answers, which a loaded machine stretches past the 500 ms idle
+       * window. Read then, the card is still loading and every claim about it
+       * fails against a page that is fine. So the walk waits for the card to
+       * leave its loading state; a card that never does still fails by name,
+       * because the wait gives up and the claims read the loading card.
+       */
+      if (name === "cio-movers-inside-live") {
+        await page.waitForFunction(() => !!document.querySelector('[data-testid="inside-mandate-tile"]')
+          || !!document.querySelector('[data-testid="movers-unavailable"]'), null, { timeout: 20000 }).catch(() => {});
       }
       if (name === "cio-cached") {
         /**
@@ -37953,6 +38495,53 @@ for (const theme of THEMES) {
           ranks: [...document.querySelectorAll('[data-mover-rank]')].map((b) => ({
             key: b.getAttribute("data-mover-rank"),
             active: b.getAttribute("aria-pressed") === "true",
+          })),
+        };
+      });
+      /**
+       * ── THE AIF & PMS CARD, AND WHICH HALF EACH ROW IS FROM (Stage 10dl) ──
+       *
+       * *"we will not show that particular AIF or the PMS that is having the
+       * highest gain or lose but we will show the holding inside."* That is a
+       * claim about WHAT A ROW IS, and not one word of the card says it: a row
+       * reading "ICICI Bank +10.00%" is identical whether it came from a
+       * mandate's own statement line or from a wrapper's NAV, and a card that
+       * ranked the wrappers would print a perfectly well-formed list. So every
+       * row carries its own `data-mover-row` key and, where it is reached only
+       * through a fund, a `data-mover-via` naming the fund — and the claim is
+       * struck on the KEYS against the book's own two sets.
+       *
+       * The two tiles are read APART and never added: `mandate` is a MEASURED
+       * day move on shares the family's own statements report, `fund` is a
+       * DERIVED value of what a fund disclosed. `fence` is the words on the
+       * fund tile's face, which must say so without a hover.
+       *
+       * `priceOnly` / `fundOnly` are the two absences, each its own line: a
+       * share count the corporate-action gate has not verified, and a company
+       * the family reach only inside a fund (which has no share count to
+       * verify at all). Counted off the attributes rather than the sentences.
+       */
+      const inside = FAST ? null : await page.evaluate(() => {
+        const q = (sel) => document.querySelector(sel);
+        const n = (el, attr) => (el ? Number(el.getAttribute(attr)) : null);
+        const mandate = q('[data-testid="inside-mandate-tile"]');
+        const fund = q('[data-testid="inside-fund-tile"]');
+        if (!mandate && !fund) return { card: false };
+        const text = (el) => (el ? (el.innerText ?? "").trim() : null);
+        return {
+          card: true,
+          mandate: text(mandate),
+          mandateCoverage: text(q('[data-testid="inside-mandate-coverage"]')),
+          fund: text(fund),
+          fence: text(q('[data-testid="inside-fund-fence"]')),
+          fundCoverage: text(q('[data-testid="inside-fund-coverage"]')),
+          priceOnly: n(q('[data-testid="movers-price-only"]'), "data-price-only"),
+          fundOnly: n(q('[data-testid="movers-fund-only"]'), "data-fund-only"),
+          rows: [...document.querySelectorAll('[data-mover-row]')].map((tr) => ({
+            key: tr.getAttribute("data-mover-row"),
+            via: tr.querySelector('[data-mover-via]')?.textContent?.trim() ?? null,
+            pct: tr.querySelector('[data-mover-cell="pct"]')?.textContent?.trim() ?? null,
+            impact: tr.querySelector('[data-mover-cell="impact"]')?.textContent?.trim() ?? null,
           })),
         };
       });
@@ -42511,7 +43100,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
