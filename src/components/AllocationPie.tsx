@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 /**
- * ── THE ALLOCATION PIE (Stage 10di) ─────────────────────────────────────────
+ * ── THE ALLOCATION PIE (Stage 10dk) ─────────────────────────────────────────
  *
  * *"In the allocation by asset class and mandate in all the tabs replace bar
  * graph with pie chart."* One pie per axis — Category, Asset class, Basket —

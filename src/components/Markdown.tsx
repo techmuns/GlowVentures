@@ -46,7 +46,7 @@ function Table({ b }: { b: Extract<Block, { kind: "table" }> }) {
             <tr key={ri} className="group hover:bg-ink-700/40">
               {r.map((c, ci) => (
                 <td key={ci}
-                  className={`whitespace-nowrap px-3 py-1.5 ${b.numeric[ci] ? "mono text-right text-slate-300" : "text-left text-slate-400"} ${ci === 0 ? "sticky left-0 z-10 bg-ink-800 font-medium text-slate-200 group-hover:bg-ink-700" : ""}`}>
+                  className={`whitespace-nowrap px-3 py-1.5 ${b.numeric[ci] ? "mono text-right text-slate-300" : "text-left text-slate-400"} ${ci === 0 ? "sticky left-0 z-10 bg-ink-800 font-medium text-slate-200 group-even:bg-[var(--row-alt)] group-hover:bg-ink-700" : ""}`}>
                   {c || "—"}
                 </td>
               ))}

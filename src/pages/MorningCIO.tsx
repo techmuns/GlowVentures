@@ -1544,7 +1544,7 @@ export function MorningCIO() {
                 </Pill>
               </div>
             }>
-            {/* THE ALLOCATION PIE, above the table (Stage 10di) — *"in all the
+            {/* THE ALLOCATION PIE, above the table (Stage 10dk) — *"in all the
                 tabs replace bar graph with pie chart."* It replaced a bar chart,
                 which had replaced a donut; the pie is drawn on every axis, and
                 the legend beside it is the bar list's figures.

@@ -192,7 +192,7 @@ type MandateHolding = {
   realisedLotsAfter: number | null;
 };
 /**
- * ONE ACCOUNT OF A MANDATE ROW (Stage 10di).
+ * ONE ACCOUNT OF A MANDATE ROW (Stage 10dk).
  *
  *   "In holdings we are showing Green Lantern Capital LP as 2 separate line
  *    items, but they need to be one … even if they are held by 2 separate
@@ -1363,7 +1363,7 @@ export function PortfolioMonitor() {
       else rest.push(p);
     }
     /**
-     * ONE ROW PER STRATEGY, NOT PER ACCOUNT (Stage 10di). Two members' accounts
+     * ONE ROW PER STRATEGY, NOT PER ACCOUNT (Stage 10dk). Two members' accounts
      * of one strategy — Goldstandard's Aristos for Ajay and Ankita, Green
      * Lantern's GLC Growth, SVAN's Velocity, V.E.C's Small and Mid-Cap — were
      * two rows with one name, told apart only by the Entities column. They are
@@ -1458,7 +1458,7 @@ export function PortfolioMonitor() {
         key: "mandate:" + [...accountIds].sort().join("+"),
         /**
          * THE MANDATE'S NAME ALONE — the owners ride in the Entities column, and
-         * since Stage 10di a strategy two members hold is one row, so its name
+         * since Stage 10dk a strategy two members hold is one row, so its name
          * is no longer ambiguous at all. `mandateLabelWithOwner` stays for
          * callers that render a mandate OUTSIDE this table.
          */
@@ -2913,10 +2913,9 @@ export function PortfolioMonitor() {
     return rows;
   };
   /** Can this row open at all? A chevron that opens nothing is worse than none. */
-  // A MANDATE ROW OPENS ONTO ITS ACCOUNTS, and only where it has more than one
-  // (Stage 10di): a strategy run for one member is that account, and its shares
-  // are on its own drill-down page, which the row's name links to.
-  const canExpand = (r: Row) => r.kind === "mandate" ? (r.mandate?.accounts.length ?? 0) > 1
+  // A MANDATE ROW OPENS ONTO ITS SHARES — through one line per account where it
+  // is run for more than one (Stage 10dk).
+  const canExpand = (r: Row) => r.kind === "mandate" ? (r.mandate?.holdings.length ?? 0) > 0
     : r.venues ? (r.venues.length > 0 || fundLinesOf(r).length > 0)
     : !!trancheInfo.get(r.key);
   /**
@@ -2954,8 +2953,10 @@ export function PortfolioMonitor() {
   const toggleLabelFor = (r: Row, open: boolean) => {
     if (r.mandate) {
       const n = r.mandate.accounts.length;
-      return open ? "Hide the accounts"
-        : `Run for ${n} accounts — show each one's own figures; its shares are on that account's own page`;
+      const hn = r.mandate.holdings.length;
+      if (n === 1) return open ? "Hide the shares" : `List the ${hn} share${hn === 1 ? "" : "s"} inside this mandate`;
+      return open ? "Hide the accounts and their shares"
+        : `Run for ${n} accounts — show each one's own figures and the shares inside it`;
     }
     const n = trancheInfo.get(r.key)?.count ?? 0;
     if (!r.venues) return open ? "Hide the contributions" : `Bought over ${n} dated contribution${n === 1 ? "" : "s"} — show each one's own units, entry NAV and return`;
@@ -2980,20 +2981,72 @@ export function PortfolioMonitor() {
     const out: ReactNode[] = [];
     const m = r.mandate;
     /**
-     * A MANDATE → THE ACCOUNTS IT IS RUN IN (Stage 10di).
+     * A MANDATE → ITS ACCOUNTS → THE SHARES ITS MANAGER CHOSE (Stage 10dk).
      *
      *   "In holdings we are showing Green Lantern Capital LP as 2 separate line
      *    items, but they need to be one … we can show that in drop down. And
-     *    the holdings we can show inside the drill down page of any specific
-     *    PMS or AIF."
+     *    also show the holdings in the dropdown as well as we can show inside
+     *    the whole drill down page of any specific PMS or AIF."
      *
-     * Each line is ONE MEMBER'S ACCOUNT, struck over its own positions exactly
-     * as its row used to be — so the lines add to the row, and nothing is
-     * deduped, because two members' accounts are two investments. The shares
-     * the manager chose are no longer listed here: each account's name links
-     * to its own drill-down page, which lists every one of them.
+     * A strategy run for ONE account opens straight onto its shares, as it
+     * always did. A strategy run for SEVERAL opens onto one line per member's
+     * account — its own figures, struck over its own positions, so the lines
+     * add to the row and nothing is deduped (two members' accounts are two
+     * investments) — and each account line carries ITS shares under it, the
+     * same rows its own drill-down page lists. A share's "% of the mandate" is
+     * over THAT ACCOUNT's own pre-filter total, never the row's sum: one
+     * company in two members' accounts is two lines, each a share of its own
+     * account.
      */
     if (m) {
+      /** One share the manager chose, in the account that holds it. */
+      const shareRow = (h: MandateHolding, key: string, depth: 1 | 2, last: boolean, ancestorLast: boolean, accountMV: number) =>
+        childRow(key, "constituent", depth, {
+          title: <StockLink securityKey={h.securityKey} name={h.security} />,
+          // DIVIDED BY THE ACCOUNT — its own pre-filter total — never by the
+          // row's roll-up of whatever survived the filters. Filtered to one
+          // company that read 100.0% for a ₹4.39 Cr holding of a ₹39.53 Cr
+          // mandate.
+          sub: accountMV > 0 ? `${((h.marketValue / accountMV) * 100).toFixed(1)}% of the mandate` : undefined,
+          last, ancestorLast,
+        }, {
+          qty: h.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(h.quantity),
+          avgCost: h.costNA ? <AbsentCell reason={NO_COST_LINE} />
+            : h.avgCost === null ? <AbsentCell reason={h.quantity === null ? NO_UNIT_COUNT : h.quantity === 0 ? "this line holds no units to divide its cost by" : "this provider prints no per-unit cost for the holding"} />
+            : fmtFromBase(h.avgCost),
+          invested: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : fmtFromBase(h.costBasis, { compact: true }),
+          investedOn: dateCell(h.investedOn, h.costNA
+            ? "no statement reports what this share cost, so there is no payment to date"
+            : "the manager's statement reports what this share cost but not the date it was bought"),
+          // A SHARE'S PRICE SAYS WHETHER IT IS LIVE, as every other price on
+          // this table does, and a quote the corporate-action check held back
+          // is named as that (DL-9).
+          cmp: h.currentPrice === null ? <AbsentCell reason="marked at a total value, not a per-unit price" />
+            : h.live ? fmtFromBase(h.currentPrice)
+            : (() => {
+              const wh = withheldOf([{ accountId: h.accountId, securityKey: h.securityKey }]);
+              return <>{fmtFromBase(h.currentPrice)}
+                <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
+                  title={`${wh ? `A live quote arrived and the corporate-action check held it back — ${wh.reason}. The mark` : "No live price — the mark"} from the mandate's statement${h.valuedAt ? ` as of ${fmtDate(h.valuedAt)}` : ""}.`}
+                  data-cmp-withheld={wh ? "1" : undefined}>◦</span></>;
+            })(),
+          day: dayCell(h.live, h.dayChangePct),
+          mv: fmtFromBase(h.marketValue, { compact: true }),
+          weight: pctOfBook(h.marketValue),
+          pnl: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(h.unrealizedPnL),
+          realised: h.realised === null
+            ? <AbsentCell reason={realisedReason({ realizedPnL: null, realizedLotsAfter: h.realisedLotsAfter ?? undefined })} />
+            : <span className={changeColor(h.realised)} title={realisedWindowOf([{ accountId: h.accountId, realizedPnL: h.realised }])}
+                data-child-realised={h.realised}>{fmtFromBase(h.realised, { compact: true, sign: true })}</span>,
+          ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA, costBasis: h.costBasis, marketValue: h.marketValue }, measure),
+          sector: isFundVehicle(h) ? <AbsentCell reason={fundSectorWhy(h.assetClass)} /> : sectorCell(h.sector, h.securityKey, [], true),
+        }, { "data-constituent": h.securityKey || h.security, "data-constituent-account": h.accountId, "data-constituent-mv": h.marketValue });
+      // ONE ACCOUNT: the row IS that account, so its shares hang straight from it.
+      if (m.accounts.length === 1) {
+        const a = m.accounts[0];
+        m.holdings.forEach((h, i) => out.push(shareRow(h, `${r.key}>${h.securityKey || h.security}`, 1, i === m.holdings.length - 1, false, a.accountMV)));
+        return out;
+      }
       const MANDATE_NOT_A_SECURITY = "a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing.";
       m.accounts.forEach((l, i) => {
         const costWhy = `an unrealised gain is market value less cost, and no statement for account ${l.accountNo} reports a cost for these holdings`;
@@ -3045,6 +3098,10 @@ export function PortfolioMonitor() {
           "data-mandate-line-return": l.returnPct ?? undefined,
           "data-mandate-line-day": l.live && l.dayChangePct != null ? l.dayChangePct : undefined,
         }));
+        // …AND THE SHARES IN THAT ACCOUNT, under it, as its own page lists them.
+        const hs = m.holdings.filter((h) => h.accountId === l.accountId);
+        const lastLine = i === m.accounts.length - 1;
+        hs.forEach((h, j) => out.push(shareRow(h, `${r.key}>${l.accountId}>${h.securityKey || h.security}`, 2, j === hs.length - 1, lastLine, l.accountMV)));
       });
       return out;
     }
@@ -3680,7 +3737,7 @@ export function PortfolioMonitor() {
                                 them as "names" — the two counts the `/holdings`
                                 drill-down prints for the same section (MH-06). */}
                             {grp.key === MANDATE_BUCKET ? (() => {
-                              // A strategy two members hold is ONE row (Stage 10di),
+                              // A strategy two members hold is ONE row (Stage 10dk),
                               // so the count of rows and of accounts can differ —
                               // and where they do, both are said.
                               const accts = grp.rows.reduce((n, r) => n + (r.mandate?.accounts.length ?? 0), 0);
@@ -4216,7 +4273,7 @@ export function PortfolioMonitor() {
                             <>
                               {/* ONE ACCOUNT, ONE PAGE: the name opens it. SEVERAL
                                   ACCOUNTS RUN ONE STRATEGY — Aristos for Ajay and for
-                                  Ankita — and are one row (Stage 10di); there the name
+                                  Ankita — and are one row (Stage 10dk); there the name
                                   is not a link, because it would have to pick one
                                   member's account, and each account's own line under it
                                   opens that account's page, where its shares are. */}
@@ -6086,6 +6143,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
           data-dated-section={sec.key} data-dated-label={u.label} data-dated-first={u.first} data-dated-last={u.last}
           data-club-paid={t.contributions > 0 ? t.paidIn : undefined} data-club-value={t.value ?? undefined}
           data-club-bought={t.buys > 0 ? t.bought : undefined}
+          data-open={isOpen ? "" : undefined} aria-expanded={isOpen}
           className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenClub, u.key)}>
           <td className="px-3 py-2.5">
             <div className="flex items-center gap-1.5">
@@ -6368,6 +6426,12 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           data-dated-accounts={trd ? [...new Set(trd.instruments.flatMap((i) => i.tranches.map((t) => acctKey(t.provider, t.accountNo))))].join(";") : undefined}
                           data-dated-first={r.first} data-dated-last={r.last}
                           data-dated-club-member={clubOf}
+                          // THE FIGURES A CLUB LINE SUMS, as numbers — so the
+                          // sweep ties a club's own cells to its accounts' without
+                          // parsing a compact "₹1.2 Cr" back into rupees.
+                          data-dated-paid={cap && cap.contributions > 0 ? cap.paidIn : undefined}
+                          data-dated-value={r.value ?? undefined}
+                          data-dated-bought={trd && trd.buys > 0 && trd.bought != null ? trd.bought : undefined}
                           data-mine-row={cap ? r.accountId : undefined}
                           /*
                             ...AND THE ROW'S OWN KEY BESIDE IT (Stage 10dh).

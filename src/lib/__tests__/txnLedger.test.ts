@@ -25,7 +25,7 @@
 // `capitalRollup`'s own account value and the merge's `valueOfAccount` agree —
 // two paths to one number, so a second drifting definition of "what this account
 // holds" fails here rather than on screen.
-import { mergeDatedRecords, datedTotals, datedSectionRollup } from "@/lib/txnLedger";
+import { mergeDatedRecords, datedTotals, datedSectionRollup, clubDatedRows } from "@/lib/txnLedger";
 import { rollup, acctKey } from "@/lib/txnRollup";
 import { capitalRollup, capitalTotals } from "@/lib/tranches";
 import type { Txn } from "@/lib/ledger";
@@ -267,6 +267,62 @@ const valueOf = (id: string) => (id === "gl" ? 114_000_000 : 0);
   ok("a set of unvalued accounts has no value total, never ₹0", t.value === null, `${t.value}`);
   const both = capitalTotals([...cap, ...zero]);
   ok("...and one beside a valued account adds nothing rather than ₹0", both.value === 0, `${both.value}`);
+}
+
+// ── ONE HOLDING, ONE LINE: the same fund in two accounts is one club (Stage 10dk)
+//
+//   *"If there are 2 separate transactions of the same holding then we need to
+//    show that in drop down and label them as a single line item and club total
+//    of both the transactions even if they are held by 2 separate entities."*
+//
+// A club is a DRAWING of rows that already exist: its totals are `datedTotals`
+// over its members, so it can never disagree with the footer, which still sums
+// the rows themselves. What must hold is WHICH rows club — only account rows,
+// only the same holding, only inside one section — and that the totals are the
+// members' and nobody else's.
+{
+  const a1 = acct({});
+  const a2 = acct({ accountId: "gl2", accountNo: "510854", owner: "Ankita Jaisinghani", ownerId: "ankita" });
+  const a3 = acct({ accountId: "sv", provider: "SVAN", accountNo: "8710067", strategy: "Velocity" });
+  const values: Record<string, number> = { gl: 114_000_000, gl2: 60_000_000, sv: 30_000_000 };
+  const cap = capitalRollup(
+    [move({}), move({ accountId: "gl2", amount: 50_000_000, date: "2025-03-01" }), move({ accountId: "sv", amount: 25_000_000 })],
+    [a1, a2, a3],
+    [pos({}), pos({ accountId: "gl2", marketValue: 60_000_000 }), pos({ accountId: "sv", marketValue: 30_000_000 })],
+    {}, "all", "recent");
+  const trd = rollup([txn({ amount: 17_500_000 }), txn({ securityKey: "beta", security: "Beta Ltd", provider: "Own", accountNo: "x", amount: 5_000 })],
+    [a1, a2, a3, acct({ accountId: "own", provider: "Own", accountNo: "x", engagement: "Direct", strategy: null })], "auto", "recent", () => SECTION);
+  const rows = mergeDatedRecords(cap, trd, sectionOf, (id) => values[id] ?? null);
+  const noSplit = () => null;
+  const units = clubDatedRows(rows, "recent", noSplit);
+  const clubs = units.filter((u) => u.kind === "club");
+  ok("the same strategy in two accounts is ONE club line", clubs.length === 1,
+    `${clubs.length} clubs over ${rows.length} rows`);
+  const c = clubs[0];
+  ok("...opening into exactly those two accounts",
+    c?.kind === "club" && c.members.length === 2 && c.members.every((m) => m.accountId === "gl" || m.accountId === "gl2"),
+    c?.kind === "club" ? c.members.map((m) => m.accountId).join(",") : "");
+  if (c?.kind === "club") {
+    near("...its Purchase is the two accounts' together", c.totals.paidIn, 150_000_000);
+    near("...its value too", c.totals.value, 174_000_000);
+    near("...and its totals ARE datedTotals over its members", c.totals.paidIn, datedTotals(c.members).paidIn);
+    ok("...its newest movement is its members' newest", c.last === [c.members[0].last, c.members[1].last].sort()[1], `${c.last}`);
+  }
+  ok("an account with no twin is not clubbed", units.some((u) => u.kind === "row" && u.row.accountId === "sv"));
+  ok("a SECURITY row is never clubbed — it is an instrument, not an account",
+    units.some((u) => u.kind === "row" && u.row.kind !== "account"));
+  ok("every row appears once — as itself or inside one club",
+    units.reduce((n, u) => n + (u.kind === "row" ? 1 : u.members.length), 0) === rows.length,
+    `${units.length} units over ${rows.length} rows`);
+  // TWO SECTIONS ARE TWO TABLES: the same label under two headings must not club.
+  const split = mergeDatedRecords(cap, [], (id) => (id === "gl2" ? "AIF" : SECTION), (id) => values[id] ?? null);
+  ok("the same label under two section headings is NOT clubbed",
+    clubDatedRows(split, "recent", noSplit).every((u) => u.kind === "row"));
+  // UNIT CLASSES OF ONE FUND ARE ONE HOLDING: clubbed on the fund's base name.
+  const cls = mergeDatedRecords(cap.map((g) => g.accountId === "gl2" ? { ...g, label: `${g.label} - Class A1` } : g), [], sectionOf, (id) => values[id] ?? null);
+  const byClass = (s: string) => { const m = / - Class \w+$/.exec(s); return m ? { fund: s.slice(0, m.index) } : null; };
+  ok("two unit classes of one fund club on the fund's own name",
+    clubDatedRows(cls, "recent", byClass).filter((u) => u.kind === "club").length === 1);
 }
 
 // ── ANCHORED ON THE GENERATED BOOK: one definition of what an account holds ──

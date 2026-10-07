@@ -55,7 +55,7 @@ export function AllocChartPicker({ active, onChange }: { active: AllocChartView;
         <button key={v.key} type="button" role="tab" aria-selected={active === v.key} title={v.title}
           data-alloc-chart-view={v.key} data-active={active === v.key ? "" : undefined}
           onClick={() => onChange(v.key)}
-          className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${active === v.key ? "bg-champagne-400 text-ink-950" : "text-slate-400 hover:text-slate-100"}`}>
+          className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${active === v.key ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
           {v.label}
         </button>
       ))}
@@ -73,18 +73,21 @@ function SliceLink({ s, className, children, attr, style }: { s: PieSlice; class
 /** The bar chart this card drew before the pie — each bar scaled to the largest. */
 export function AllocationBars({ slices }: { slices: PieSlice[] }) {
   const max = Math.max(0, ...slices.map((s) => s.value));
+  // A bar is a length, so a section worth nothing — or a payable, below zero —
+  // draws none rather than a negative width; its figure is beside it.
+  const barWidth = (v: number) => (max > 0 && v > 0 ? (v / max) * 100 : 0);
   return (
     <div className="mb-5 flex flex-col gap-2" data-alloc-bars>
       {slices.map((s) => (
-        <SliceLink key={s.key} s={s} attr={{ "data-alloc-bar": s.key }}
+        <SliceLink key={s.key} s={s} attr={{ "data-alloc-bar": s.key, "data-alloc-value": String(s.value) }}
           className="flex items-center gap-3 rounded px-1 py-1 transition-colors hover:bg-ink-700/40 hover:text-champagne-400">
-          <span className="flex min-w-[8.5rem] max-w-[8.5rem] items-center gap-2 text-sm font-medium text-slate-100">
+          <span className="flex min-w-[11rem] max-w-[11rem] items-center gap-2 text-sm font-medium text-slate-100">
             <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: s.color }} />
             <span className="truncate">{s.label}</span>
           </span>
           <span className="relative h-3 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(148,163,184,0.16)" }}>
-            <span className="absolute inset-y-0 left-0 rounded-full" data-alloc-bar-width={max > 0 ? (s.value / max) * 100 : 0}
-              style={{ width: `${max > 0 ? (s.value / max) * 100 : 0}%`, background: s.color }} />
+            <span className="absolute inset-y-0 left-0 rounded-full" data-alloc-bar-width={barWidth(s.value)}
+              style={{ width: `${barWidth(s.value)}%`, background: s.color }} />
           </span>
           <span className="mono w-24 shrink-0 text-right text-sm text-slate-200 whitespace-nowrap">{s.valueText}</span>
           <span className="w-14 shrink-0 text-right text-xs text-slate-400">{s.weightText}</span>
@@ -147,12 +150,17 @@ export function AllocationTreemap({ slices }: { slices: PieSlice[] }) {
         {drawn.map((s, i) => {
           const r = rects[i];
           return (
-            <SliceLink key={s.key} s={s} attr={{ "data-alloc-tile": s.key, "data-alloc-tile-area": String(r.w * r.h) }}
+            <SliceLink key={s.key} s={s} attr={{ "data-alloc-tile": s.key, "data-alloc-tile-area": String(r.w * r.h), "data-alloc-value": String(s.value) }}
               style={{ left: `${r.x}%`, top: `${r.y}%`, width: `${r.w}%`, height: `${r.h}%` }}
-              className="absolute overflow-hidden border border-ink-900/60 p-1.5 text-[11px] leading-tight transition-opacity hover:opacity-90">
-              <span className="absolute inset-0" style={{ background: s.color, opacity: 0.85 }} />
-              <span className="relative block font-semibold text-ink-950">{s.label}</span>
-              <span className="relative block text-ink-950/80 mono">{s.weightText} · {s.valueText}</span>
+              className="absolute overflow-hidden border border-ink-700 p-1.5 pl-2.5 text-[11px] leading-tight transition-opacity hover:opacity-90">
+              {/* A TINT, NOT A SOLID FILL, so the label stays the page's own
+                  ink in either theme — solid palette colours put dark type on a
+                  dark page or pale type on a light one. The full colour is the
+                  stripe on the left, which is what matches the table's swatch. */}
+              <span className="absolute inset-0" style={{ background: s.color, opacity: 0.3 }} />
+              <span className="absolute inset-y-0 left-0 w-1" style={{ background: s.color }} />
+              <span className="relative block font-semibold text-slate-100">{s.label}</span>
+              <span className="relative block text-slate-300 mono">{s.weightText} · {s.valueText}</span>
             </SliceLink>
           );
         })}
@@ -160,7 +168,7 @@ export function AllocationTreemap({ slices }: { slices: PieSlice[] }) {
       {zero.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400">
           {zero.map((s) => (
-            <SliceLink key={s.key} s={s} attr={{ "data-alloc-tile": s.key, "data-alloc-tile-area": "0" }}
+            <SliceLink key={s.key} s={s} attr={{ "data-alloc-tile": s.key, "data-alloc-tile-area": "0", "data-alloc-value": String(s.value) }}
               className="inline-flex items-center gap-1.5 rounded border border-ink-700 px-1.5 py-0.5">
               <span className="h-2 w-2 rounded-sm" style={{ background: s.color }} />{s.label} · {s.valueText}
             </SliceLink>

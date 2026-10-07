@@ -30,6 +30,8 @@
   --chart-index: #4f46e5;
   --chart-nav: #7b8598;
   --chart-band: rgba(138, 106, 28, 0.07);
+  /* The second shade of a striped table row — see `tbody > tr:nth-child(even)`. */
+  --row-alt: #f7f4ec;
 }
 
 html.dark {
@@ -45,6 +47,7 @@ html.dark {
   --chart-index: #818cf8;
   --chart-nav: #64748b;
   --chart-band: rgba(217, 196, 143, 0.07);
+  --row-alt: #1a1740;
 }
 
 html, body, #root { height: 100%; }
@@ -545,6 +548,25 @@ html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; backgro
    carries the specificity of a bare `th` — any class on a heading cell (the
    drag-over highlight, a sticky column's own surface) still wins. */
 :where(html:not(.dark) thead) th { background-color: #faf8f1; }
+
+/*
+ * EVERY TABLE STRIPES ITS ROWS, IN ONE PAIR OF SHADES.
+ *
+ *   *"Make sure that you add alternate [shades] on every separate row … one row
+ *    needs to be of one colour and then the next row will be of a different
+ *    shade of that color … implement this on the whole dashboard … make sure
+ *    that the shade of the alternate rows are same."*
+ *
+ * One rule for every table, so no table can stripe in a shade of its own: an
+ * odd row shows the card it sits on and an even row `--row-alt`, one variable
+ * per theme. OPAQUE, so the second shade is the same colour wherever the table
+ * is drawn rather than a tint that changes with what is under it.
+ *
+ * Written with `:where()` so it carries no specificity at all: a row that
+ * already says something with its colour — a section band, a child row, a total,
+ * a fired alert, a hovered row — keeps its own, because any class beats it.
+ */
+:where(table > tbody > tr:nth-child(even)) { background-color: var(--row-alt); }
 
 /* EXPORT EXCEL IS GREEN, AS GCR'S IS — as a tint with deep-green type, for the
    reason at the top of this block. #045f45 on #e8f3ee is 6.8:1. */

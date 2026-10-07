@@ -389,7 +389,7 @@ export function clubDatedRows(
   const by = new Map<string, DatedRow[]>();
   for (const r of rows) {
     if (r.kind !== "account") continue;
-    const k = `${r.section}\u0000${clubBase(r.label, splitClass)}`;
+    const k = `${r.section}|${clubBase(r.label, splitClass)}`;
     (by.get(k) ?? by.set(k, []).get(k)!).push(r);
   }
   const units: (DatedUnit & { sortLast: string; size: number | null })[] = [];
@@ -399,7 +399,7 @@ export function clubDatedRows(
     return paid == null && dealt == null ? null : Math.max(paid ?? -Infinity, dealt ?? -Infinity);
   };
   for (const r of rows) {
-    const k = r.kind === "account" ? `${r.section}\u0000${clubBase(r.label, splitClass)}` : null;
+    const k = r.kind === "account" ? `${r.section}|${clubBase(r.label, splitClass)}` : null;
     const members = k ? by.get(k)! : null;
     if (!k || !members || members.length < 2) {
       const paid = r.capital && r.capital.contributions > 0 ? r.capital.paidIn : null;
