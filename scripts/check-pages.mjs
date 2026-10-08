@@ -12948,10 +12948,15 @@ const MONITOR_BASIS_BOOK = (() => {
  * footer that lost a handle is the regression, not a reason to stand down.
  */
 const footBasisChecks = (setKey) => [
-  [`the footer's whole-book return names, on its face, the holdings it is struck over — the ones valued against a cost (${setKey})`, (t, ctx) => {
+  [`the footer's whole-book return names the holdings it is struck over — in its hover, only the figure on its face (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const f = ctx?.monitorFoot;
     if (!b || !f?.returnSet) return false;
+    // ONLY THE FIGURE ON THE FACE (Stage 10dn). The cell renders the
+    // percentage and nothing else; the set sentence rides the attribute and
+    // the hover. A set line leaking back onto the face is the regression.
+    if (!/^[+\-−]?[\d,.]+%$/.test(f.returnSet.face)) return false;
+    if (!f.returnSet.title.includes(f.returnSet.text)) return false;
     const [c, n] = String(f.returnSet.counts ?? "").split("/").map(Number);
     if (c !== b.struckCount || n !== b.holdings) return false;
     if (c === n) return /^every one of the [\d,]+ holdings? reports? a cost$/i.test(f.returnSet.text);
@@ -12969,15 +12974,20 @@ const footBasisChecks = (setKey) => [
     const pct = signedPctOf(f.returnText);
     return Number.isFinite(pct) && Math.abs(pct - b.ret) <= 0.006;
   }],
-  [`the footer's realised is FIFO's over the same holdings — a whole mandate since inception, every other holding its own record (${setKey})`, (t, ctx) => {
+  [`the footer's realised is FIFO's over the same holdings — a whole mandate since inception, every other holding its own record, only the figure on its face (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const f = ctx?.monitorFoot;
     if (!b || !f) return false;
+    // ONLY THE FIGURE ON THE FACE (Stage 10dn). The realised cell renders the
+    // money figure (or an em dash where no account reports one) and nothing
+    // else; the basis tag rides `data-realised-face` and the hover. A face tag
+    // leaking back onto the cell is the regression.
+    if (f.realisedCellText !== null && !/^(—|[+\-−]?₹[\d,.]+\s*(Cr|L|K)?)$/.test(f.realisedCellText)) return false;
     const v = f.realised === null ? null : Number(f.realised);
     if (b.realised === null) return v === null;
     return v !== null && Number.isFinite(v) && Math.abs(v - b.realised) <= 1;
   }],
-  [`…and it says its basis on its face, with the capital gain statements' own total, accounts and window in its hover (${setKey})`, (t, ctx) => {
+  [`…and it names its basis in its hover, with the capital gain statements' own total, accounts and window (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const st = MONITOR_BASIS_BOOK?.statements;
     const f = ctx?.monitorFoot;
@@ -39409,23 +39419,33 @@ for (const theme of THEMES) {
       });
       /**
        * WHAT THE FOOTER SAYS IT IS STRUCK OVER (MH-04, MH-05), off its own
-       * handles: the return cell's set line (`data-footer-return-set` carries
-       * "costed/holdings"), and the realised cell's short face and the hover
-       * under it. `null` where no footer is drawn, which the checks treat as a
-       * finding wherever the table has rows.
+       * handles. The family asked for only figures on the face (Stage 10dn), so
+       * the set line and the realised face tag no longer RENDER: they ride the
+       * return cell's `data-footer-return-set-text` attribute and its hover, and
+       * the realised span's `data-realised-face` attribute and its hover. The
+       * checks read them from there AND assert the visible cell text is the
+       * figure alone — the re-homing is verified, not just the removal.
+       * `null` where no footer is drawn, which the checks treat as a finding
+       * wherever the table has rows.
        */
       const monitorFoot = FAST ? null : await page.evaluate(() => {
         const f = document.querySelector("tfoot tr[data-footer-total]");
         if (!f) return null;
-        const set = f.querySelector("[data-footer-return-set]");
-        const retCell = set?.closest("td") ?? null;
+        const retCell = f.querySelector("td[data-footer-return-set]");
         const basis = f.querySelector("[data-realised-basis]");
+        const realisedCell = basis?.closest("td") ?? null;
         return {
-          returnSet: set ? { counts: set.getAttribute("data-footer-return-set"), text: (set.innerText ?? "").replace(/\s+/g, " ").trim() } : null,
+          returnSet: retCell ? {
+            counts: retCell.getAttribute("data-footer-return-set"),
+            text: (retCell.getAttribute("data-footer-return-set-text") ?? "").replace(/\s+/g, " ").trim(),
+            title: (retCell.getAttribute("title") ?? "").replace(/\s+/g, " ").trim(),
+            face: (retCell.innerText ?? "").replace(/\s+/g, " ").trim(),
+          } : null,
           returnText: retCell ? (retCell.innerText ?? "").replace(/\s+/g, " ").trim() : null,
           realised: f.querySelector("td[data-realised]")?.getAttribute("data-realised") ?? null,
-          realisedFace: (f.querySelector("[data-realised-face]")?.innerText ?? "").replace(/\s+/g, " ").trim() || null,
+          realisedFace: basis?.getAttribute("data-realised-face") ?? null,
           realisedNote: basis?.getAttribute("title") ?? null,
+          realisedCellText: realisedCell ? (realisedCell.innerText ?? "").replace(/\s+/g, " ").trim() : null,
           rows: document.querySelectorAll("tbody tr[data-bucket]").length,
         };
       });
