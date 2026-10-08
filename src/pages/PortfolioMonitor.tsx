@@ -4984,17 +4984,16 @@ export function PortfolioMonitor() {
                     <td key="realised" className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={totFifo.realised ?? undefined}>{
                       totFifo.realised === null
                         ? <AbsentCell reason="no holding in this table is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported" />
-                        : <>
-                          <span className={changeColor(totFifo.realised)} title={realisedBasis.note} data-realised-basis>
+                        /* ONLY THE FIGURE ON THE FACE (the family: "Only
+                            figures must be there"). Which of the two realised
+                            figures this book prints, what it counts and leaves
+                            out, and the statements' own total are in the hover;
+                            the short basis tag rides the hover and the
+                            `data-realised-face` attribute so the check still
+                            reads it. */
+                        : <span className={changeColor(totFifo.realised)} title={`${realisedBasis.face}. ${realisedBasis.note}`} data-realised-basis data-realised-face={realisedBasis.face}>
                             {fmtFromBase(totFifo.realised, { compact: true, sign: true })}
                           </span>
-                          {/* THE BASIS ON THE FACE (MH-05): which of the two
-                              realised figures this book prints this is, in a
-                              few words; what it counts and leaves out, and the
-                              statements' own total, are in the hover. */}
-                          <span className="mt-0.5 ml-auto block max-w-[11rem] whitespace-normal text-right text-[10px] font-normal leading-tight text-slate-500"
-                            title={realisedBasis.note} data-realised-face>{realisedBasis.face}</span>
-                        </>
                     }</td>
                     ),
                     /* THE FOOTER RETURN IS THE WHOLE BOOK ON COST — cumulative, on
@@ -5015,18 +5014,26 @@ export function PortfolioMonitor() {
                     ...Object.fromEntries(returnMeasures.map((measure) => {
                       const onCost = measure === "auto" || measure === "absolute";
                       return [`ret:${measure}`, (
+                        /* ONLY THE FIGURE ON THE FACE. Which holdings the book
+                            return is struck over — the set line — rides the td
+                            hover (beside the live-recalc note when the feed is
+                            on) and the `data-footer-return-set-text` attribute,
+                            so the check reads it without a visible sentence. */
                         <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${onCost ? changeColor(totalRet) : "text-slate-500"}`}
-                          title={onCost && feedLive ? LIVE_CELL : undefined}>
+                          title={onCost && totalRet !== null
+                            ? [returnSetLine, feedLive ? LIVE_CELL : ""].filter(Boolean).join(" ")
+                            : onCost && feedLive ? LIVE_CELL : undefined}
+                          {...(onCost && totalRet !== null
+                            ? { "data-footer-return-set": `${footStruckLines}/${footCover.lines}`, "data-footer-return-set-text": returnSetLine }
+                            : {})}>
                           {!onCost
                             ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
                             : totalRet === null
                             ? <AbsentCell reason={footStruckLines === 0 && footCover.atCost.lines > 0
                                 ? `every holding in this table that reports a cost is ${AT_COST_RETURN}`
                                 : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row"} />
-                            : <>{feedLive ? fmtPct(totalRet, { sign: true })
+                            : feedLive ? fmtPct(totalRet, { sign: true })
                             : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
-                              <span className="mt-0.5 ml-auto block max-w-[12rem] whitespace-normal text-right text-[10px] font-normal leading-tight text-slate-500"
-                                data-footer-return-set={`${footStruckLines}/${footCover.lines}`}>{returnSetLine}</span></>}
                         </td>
                       )];
                     })),

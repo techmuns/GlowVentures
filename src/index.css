@@ -32,6 +32,11 @@
   --chart-band: rgba(138, 106, 28, 0.07);
   /* The second shade of a striped table row — see `tbody > tr:nth-child(even)`. */
   --row-alt: #f7f4ec;
+  /* The highlight a data row takes under the pointer — see the override below the
+     zebra rule. OPAQUE and distinctly warmer/darker than both the card (#f4f2ec,
+     odd rows) and `--row-alt` (even rows), so a hovered row never reads as a zebra
+     shade of its neighbours. */
+  --row-hover: #ece4ce;
   --table-grid: #9690a3;
 }
 
@@ -49,6 +54,9 @@ html.dark {
   --chart-nav: #64748b;
   --chart-band: rgba(217, 196, 143, 0.07);
   --row-alt: #1a1740;
+  /* Brighter than both the card and `--row-alt` (#1a1740), so a hover lifts the
+     row rather than darkening into its even-row neighbour. */
+  --row-hover: #2d2862;
   --table-grid: #716b91;
 }
 
@@ -569,6 +577,29 @@ html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; backgro
  * a fired alert, a hovered row — keeps its own, because any class beats it.
  */
 :where(table > tbody > tr:nth-child(even)) { background-color: var(--row-alt); }
+/*
+ * THE HOVERED ROW IS OPAQUE, AND ONLY A ROW. *"When I'm hovering over a lighter
+ * shaded row, it is converting into a darker shaded row, which is mixing it with
+ * the other adjacent rows. However, when I'm hovering over the darker shaded row,
+ * it is not being highlighted."* — the family.
+ *
+ * The hover utilities (`hover:bg-ink-700/40` on a parent row, `/30` on a child)
+ * are TRANSLUCENT: the light-mode remap composites the tint against whatever is
+ * behind the row. On an odd (card) row that landed on roughly the even-row shade,
+ * so a hovered row read as its own zebra neighbour; on an even row in the dark
+ * theme the base tint barely moved off `--row-alt`, so it did not read at all.
+ *
+ * So a data row — a `tr` directly in a `tbody`, carrying one of those hover
+ * classes — takes an OPAQUE `--row-hover` instead, distinct from both zebra
+ * shades in each theme. Scoped through `#root` so the ID beats both the
+ * translucent remap and the `:where` zebra, and scoped to `table > tbody > tr`
+ * so every other caller of these hover classes — tabs, sidebar links, the tile
+ * and allocation buttons, legends — keeps the shared translucent remap untouched.
+ */
+#root table > tbody > tr.hover\:bg-ink-700\/40:hover,
+#root table > tbody > tr.hover\:bg-ink-700\/30:hover {
+  background-color: var(--row-hover);
+}
 /* One grid for every dashboard table, including nested and expanded tables.
    Separate borders stay attached to sticky headers, totals and pinned columns
    while scrolling. Each cell draws only its right/bottom edge to avoid doubling
