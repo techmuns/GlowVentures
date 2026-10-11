@@ -6,8 +6,8 @@ unit and the retrieval time. Nothing here is estimated, interpolated or
 carried forward: a day the source did not publish is a day the series does
 not have.
 
-- **Harvested:** 71 series, 336,537 points
-- **Failed:** 12
+- **Harvested:** 73 series, 337,550 points
+- **Failed:** 10
 - **Declared absent:** 8 (the spec asks for them; no source we have serves them)
 
 ## Harvested
@@ -19,7 +19,7 @@ not have.
 | Natural Gas | Energy | 6,558 | 2000-08-30 | 2026-10-09 | USD/MMBtu | Yahoo Finance `NG=F` | official-api |
 | LNG (Japan) | Energy | 597 | 1977-01-01 | 2026-09-01 | USD/MMBtu | World Bank Pink Sheet `Liquefied natural gas, Japan` | official-file |
 | Thermal Coal (Australian) | Energy | 681 | 1970-01-01 | 2026-09-01 | USD/t | World Bank Pink Sheet `Coal, Australian` | official-file |
-| Electricity (IEX day-ahead) | Energy | 62 | 2026-08-10 | 2026-10-10 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
+| Electricity (IEX day-ahead) | Energy | 63 | 2026-08-10 | 2026-10-11 | INR/MWh | Indian Energy Exchange `DAM MCP` | scraped-official |
 | Gold | Precious Metals | 6,553 | 2000-08-30 | 2026-10-09 | USD/oz | Yahoo Finance `GC=F` | official-api |
 | Silver | Precious Metals | 6,554 | 2000-08-30 | 2026-10-09 | USD/oz | Yahoo Finance `SI=F` | official-api |
 | Platinum | Precious Metals | 6,581 | 1997-10-29 | 2026-10-09 | USD/oz | Yahoo Finance `PL=F` | official-api |
@@ -38,7 +38,7 @@ not have.
 | Soybean | Agriculture | 6,556 | 2000-09-15 | 2026-10-09 | USc/bu | Yahoo Finance `ZS=F` | official-api |
 | Cotton | Agriculture | 6,713 | 2000-01-03 | 2026-10-08 | USc/lb | Yahoo Finance `CT=F` | official-api |
 | Sugar | Agriculture | 6,675 | 2000-03-01 | 2026-10-09 | USc/lb | Yahoo Finance `SB=F` | official-api |
-| Coffee | Agriculture | 6,711 | 2000-01-03 | 2026-10-08 | USc/lb | Yahoo Finance `KC=F` | official-api |
+| Coffee | Agriculture | 6,712 | 2000-01-03 | 2026-10-09 | USc/lb | Yahoo Finance `KC=F` | official-api |
 | Palm Oil | Agriculture | 801 | 1960-01-01 | 2026-09-01 | USD/t | World Bank Pink Sheet `Palm oil` | official-file |
 | Rubber (TSR20) | Agriculture | 333 | 1999-01-01 | 2026-09-01 | USD/kg | World Bank Pink Sheet `Rubber, TSR20` | official-file |
 | Urea | Fertilisers | 801 | 1960-01-01 | 2026-09-01 | USD/t | World Bank Pink Sheet `Urea` | official-file |
@@ -67,13 +67,15 @@ not have.
 | US 13 Week T-Bill | Government Bonds | 14,213 | 1970-01-02 | 2026-10-09 | % | Yahoo Finance `^IRX` | official-api |
 | US 5 Year Treasury | Government Bonds | 14,213 | 1970-01-02 | 2026-10-09 | % | Yahoo Finance `^FVX` | official-api |
 | US 30 Year Treasury | Government Bonds | 12,439 | 1977-02-15 | 2026-10-09 | % | Yahoo Finance `^TYX` | official-api |
-| RBI Repo Rate | Policy Rates | 62 | 2026-08-10 | 2026-10-10 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
-| Standing Deposit Facility | Policy Rates | 62 | 2026-08-10 | 2026-10-10 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
-| Marginal Standing Facility | Policy Rates | 62 | 2026-08-10 | 2026-10-10 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
-| RBI Bank Rate | Policy Rates | 62 | 2026-08-10 | 2026-10-10 | % | Reserve Bank of India `Bank Rate` | scraped-official |
-| Fixed Reverse Repo Rate | Policy Rates | 62 | 2026-08-10 | 2026-10-10 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
-| Cash Reserve Ratio (CRR) | Policy Rates | 62 | 2026-08-10 | 2026-10-10 | % | Reserve Bank of India `CRR` | scraped-official |
-| Statutory Liquidity Ratio (SLR) | Policy Rates | 62 | 2026-08-10 | 2026-10-10 | % | Reserve Bank of India `SLR` | scraped-official |
+| India 10 Year G-Sec | Government Bonds | 176 | 2011-12-01 | 2026-07-01 | % | FRED (Federal Reserve Bank of St. Louis) `INDIRLTLT01STM` | official-api |
+| US Corporate Credit Spread (ICE BofA OAS) | Credit Markets | 828 | 2023-08-11 | 2026-10-08 | % | FRED (Federal Reserve Bank of St. Louis) `BAMLC0A0CM` | official-api |
+| RBI Repo Rate | Policy Rates | 63 | 2026-08-10 | 2026-10-11 | % | Reserve Bank of India `Policy Repo Rate` | scraped-official |
+| Standing Deposit Facility | Policy Rates | 63 | 2026-08-10 | 2026-10-11 | % | Reserve Bank of India `Standing Deposit Facility Rate` | scraped-official |
+| Marginal Standing Facility | Policy Rates | 63 | 2026-08-10 | 2026-10-11 | % | Reserve Bank of India `Marginal Standing Facility Rate` | scraped-official |
+| RBI Bank Rate | Policy Rates | 63 | 2026-08-10 | 2026-10-11 | % | Reserve Bank of India `Bank Rate` | scraped-official |
+| Fixed Reverse Repo Rate | Policy Rates | 63 | 2026-08-10 | 2026-10-11 | % | Reserve Bank of India `Fixed Reverse Repo Rate` | scraped-official |
+| Cash Reserve Ratio (CRR) | Policy Rates | 63 | 2026-08-10 | 2026-10-11 | % | Reserve Bank of India `CRR` | scraped-official |
+| Statutory Liquidity Ratio (SLR) | Policy Rates | 63 | 2026-08-10 | 2026-10-11 | % | Reserve Bank of India `SLR` | scraped-official |
 | Mutual Fund AUM | Capital markets | 89 | 2019-04-30 | 2026-08-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/aum` | official-file |
 | Mutual Fund Net Flows | Capital markets | 89 | 2019-04-30 | 2026-08-31 | INR Cr | AMFI (Association of Mutual Funds in India) `grand-total/net` | official-file |
 | Equity MF Net Flows | Capital markets | 89 | 2019-04-30 | 2026-08-31 | INR Cr | AMFI (Association of Mutual Funds in India) `equity/net` | official-file |
@@ -105,9 +107,15 @@ but a one-day return spanning a roll is measuring the roll.
 | LNG (Japan) | warn | large-move | 2 consecutive move(s) over 25%; largest 54.5% on 1980-01-01 (3.69 → 5.7) |
 | Thermal Coal (Australian) | warn | large-move | 10 consecutive move(s) over 25%; largest 58.6% on 1975-01-01 (16.9 → 26.8) |
 | Silver | warn | large-move | 1 consecutive move(s) over 25%; largest 31.3% on 2026-01-30 (114.03700256347656 → 78.29000091552734) |
+| Silver | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-10-09 |
 | Platinum | warn | large-move | 3 consecutive move(s) over 25%; largest 43.5% on 2000-04-26 (775 → 438.1000061035156) |
+| Platinum | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-10-09 |
 | Palladium | warn | large-move | 2 consecutive move(s) over 25%; largest 60.3% on 2008-02-28 (365.04998779296875 → 585.25) |
+| Palladium | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-10-09 |
+| Copper | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-10-09 |
+| Aluminium | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-10-09 |
 | Steel (HRC) | warn | large-move | 1 consecutive move(s) over 25%; largest 36.8% on 2022-03-30 (1122 → 1535) |
+| Steel (HRC) | warn | revised-history | 1 stored point(s) restated by the source; most recent 2026-10-09 |
 | Zinc | warn | large-move | 3 consecutive move(s) over 25%; largest 39.7% on 1973-11-01 (1163 → 1625) |
 | Nickel | warn | large-move | 7 consecutive move(s) over 25%; largest 78.8% on 1988-03-01 (8667 → 15497) |
 | Lead | warn | large-move | 4 consecutive move(s) over 25%; largest 36.2% on 1990-03-01 (780 → 1062) |
@@ -140,8 +148,6 @@ These kept whatever was already stored — no partial write, no empty overwrite.
 | Series | Error | Points kept |
 | --- | --- | ---: |
 | Bloomberg Commodity Index | HTTP 404 | 8923 |
-| India 10 Year G-Sec | fetch failed | 176 |
-| US Corporate Credit Spread (ICE BofA OAS) | fetch failed | 826 |
 | India Wholesale Price Index | fetch failed | 139 |
 | India Index of Industrial Production | fetch failed | 131 |
 | India installed power capacity | CEA: no installed-capacity .xlsx link on the landing page — the page layout changed | 3 |
