@@ -13,23 +13,23 @@ ISIN** and never on a name. 14,372 scheme rows read.
 | …by the look-through's resolved ISIN | 1 |
 | Resolved but **not usable to value a holding** | 1 |
 | Named below and not resolved | 3 |
-| Newest published date | 2026-10-10 |
+| Newest published date | 2026-10-11 |
 
 ## Priced
 
 | Security | ISIN | via | SEBI category | NAV | Date | Day |
 | --- | --- | --- | --- | ---: | --- | ---: |
 | ABSL BAL ADV-GROWTH | `INF084M01AB8` | statement | Dynamic Asset Allocation or Balanced Advantage | 109.93 | 2026-10-09 | +0.86% |
-| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 461.2718 | 2026-10-09 | +0.03% |
+| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 461.4222 | 2026-10-11 | +0.03% |
 | BNDH L&MCF DP GR | `INF194K01V89` | statement | Large & Mid Cap Fund | 159.064 | 2026-10-09 | +1.04% |
 | HDFC BAF D-GROW | `INF179K01WA6` | statement | Dynamic Asset Allocation or Balanced Advantage | 546.088 | 2026-10-09 | +0.78% |
 | HDFC BAF R-GROW | `INF179K01830` | statement | Dynamic Asset Allocation or Balanced Advantage | 501.742 | 2026-10-09 | +0.78% |
-| HDFC Liquid Fund-Direct Plan-Growth Option | `INF179KB1HP9` | statement | Liquid Fund | 5604.8268 | 2026-10-10 | +0.04% |
+| HDFC Liquid Fund-Direct Plan-Growth Option | `INF179KB1HP9` | statement | Liquid Fund | 5605.687 | 2026-10-11 | +0.02% |
 | HDFC Small Cap Fund - Direct Growth Plan | `INF179KA1RW5` | statement | Small Cap Fund | 154.445 | 2026-10-09 | +0.47% |
 | HELIOS FCF D-GROW | `INF0R8701046` | statement | Flexi Cap Fund | 15.45 | 2026-10-09 | +1.25% |
 | Helios Flexi Cap Fund - Direct Growth | `INF0R8701046` | statement | Flexi Cap Fund | 15.45 | 2026-10-09 | +1.25% |
 | ICICI IOPPF D-GRW | `INF109KC1RH9` | statement | Sectoral/ Thematic | 37.89 | 2026-10-09 | +1.20% |
-| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 422.2953 | 2026-10-09 | +0.03% |
+| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 422.4256 | 2026-10-11 | +0.03% |
 | ICICI NFT NT 50 DP G | `INF109K01Y80` | statement | Index Funds | 63.4232 | 2026-10-09 | +0.82% |
 | ICICI NFT NX 50 R GR | `INF109K01IF1` | statement | Index Funds | 59.9039 | 2026-10-09 | +0.81% |
 | ICICI NIFT50IND DP G | `INF109K012M7` | statement | Index Funds | 238.3619 | 2026-10-09 | +1.30% |
@@ -39,7 +39,7 @@ ISIN** and never on a name. 14,372 scheme rows read.
 | KOTAK ARBFD DP GROW | `INF174K01LC6` | statement | Arbitrage Fund | 43.4252 | 2026-10-09 | -0.01% |
 | KOTAK MTCF D-GROW | `INF174KA1HV3` | statement | Multi Cap Fund | 20.839 | 2026-10-09 | +1.31% |
 | Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | `INF247L01EP5` | look-through | Sectoral/ Thematic | 14.6271 | 2026-10-09 | +0.98% |
-| NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | Other ETFs | 1000 | 2026-10-09 | +0.00% |
+| NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | Other ETFs | 1000 | 2026-10-11 | +0.00% |
 | WOC MAAF D-GROW | `INF03VN01761` | statement | Multi Asset Allocation Fund | 16.487 | 2026-10-09 | +0.49% |
 
 ## Priced from a depository's own units
