@@ -16185,10 +16185,10 @@ export const BOOK_POLYCAB: Position[] = [
  */
 export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
-    "period": "2026-05-31",
-    "date": "2026-05-31",
-    "nav": 272925903.53,
-    "accountsOnDate": 4,
+    "period": "2026-03-31",
+    "date": "2026-03-31",
+    "nav": 788267717.39,
+    "accountsOnDate": 7,
     "accountsCarried": 0,
     "flowIn": 0,
     "unreportedFlowValue": 0,
@@ -16198,55 +16198,81 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "panelComplete": false
   },
   {
-    "period": "2026-06-25",
-    "date": "2026-06-25",
-    "nav": 449191236.18,
+    "period": "2026-04-30",
+    "date": "2026-04-30",
+    "nav": 1025828638.74,
     "accountsOnDate": 2,
-    "accountsCarried": 4,
+    "accountsCarried": 7,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 272925903.53,
-    "linkClose": 272925903.53,
-    "linkAccounts": 4,
+    "linkOpen": 788267717.39,
+    "linkClose": 788267717.39,
+    "linkAccounts": 7,
+    "panelComplete": false
+  },
+  {
+    "period": "2026-05-31",
+    "date": "2026-05-31",
+    "nav": 1061193620.92,
+    "accountsOnDate": 4,
+    "accountsCarried": 7,
+    "flowIn": 0,
+    "unreportedFlowValue": 0,
+    "linkOpen": 1025828638.74,
+    "linkClose": 1032376673.1,
+    "linkAccounts": 9,
+    "panelComplete": false
+  },
+  {
+    "period": "2026-06-25",
+    "date": "2026-06-25",
+    "nav": 1088896834.7,
+    "accountsOnDate": 2,
+    "accountsCarried": 9,
+    "flowIn": -40738,
+    "unreportedFlowValue": 0,
+    "linkOpen": 1061193620.92,
+    "linkClose": 1088896834.7,
+    "linkAccounts": 11,
     "panelComplete": false
   },
   {
     "period": "2026-06-30",
     "date": "2026-06-30",
-    "nav": 480313523.33,
+    "nav": 1120019121.85,
     "accountsOnDate": 5,
-    "accountsCarried": 2,
+    "accountsCarried": 7,
     "flowIn": -986,
     "unreportedFlowValue": 0,
-    "linkOpen": 449191236.18,
-    "linkClose": 469065274.67,
-    "linkAccounts": 6,
+    "linkOpen": 1088896834.7,
+    "linkClose": 1108770873.19,
+    "linkAccounts": 11,
     "panelComplete": false
   },
   {
     "period": "2026-07-01",
     "date": "2026-07-01",
-    "nav": 480313523.33,
+    "nav": 1120019121.85,
     "accountsOnDate": 1,
-    "accountsCarried": 7,
+    "accountsCarried": 12,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 480313523.33,
-    "linkClose": 480313523.33,
-    "linkAccounts": 7,
+    "linkOpen": 1120019121.85,
+    "linkClose": 1120019121.85,
+    "linkAccounts": 12,
     "panelComplete": false
   },
   {
     "period": "2026-07-06",
     "date": "2026-07-06",
-    "nav": 638279232.16,
+    "nav": 1173153578.9,
     "accountsOnDate": 2,
-    "accountsCarried": 8,
-    "flowIn": 0,
+    "accountsCarried": 11,
+    "flowIn": -7494,
     "unreportedFlowValue": 0,
-    "linkOpen": 480313523.33,
-    "linkClose": 480313523.33,
-    "linkAccounts": 8,
+    "linkOpen": 1120019121.85,
+    "linkClose": 1173153578.9,
+    "linkAccounts": 13,
     "panelComplete": false
   },
   {
@@ -16255,11 +16281,11 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "nav": 1297077490.29,
     "accountsOnDate": 3,
     "accountsCarried": 10,
-    "flowIn": 0,
+    "flowIn": -142601,
     "unreportedFlowValue": 0,
-    "linkOpen": 638279232.16,
-    "linkClose": 638279232.16,
-    "linkAccounts": 10,
+    "linkOpen": 1173153578.9,
+    "linkClose": 1297077490.29,
+    "linkAccounts": 13,
     "panelComplete": false
   },
   {
@@ -16415,6 +16441,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
   ],
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
     {
+      "period": "2026-03-31",
+      "date": "2026-03-31",
+      "nav": 312627059.69
+    },
+    {
       "period": "2026-07-10",
       "date": "2026-07-10",
       "nav": 400106027.94
@@ -16426,6 +16457,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
     }
   ],
   "goldstandard-wealth-private-limited-100022": [
+    {
+      "period": "2026-03-31",
+      "date": "2026-03-31",
+      "nav": 66656491.25
+    },
     {
       "period": "2026-07-10",
       "date": "2026-07-10",
@@ -16439,6 +16475,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
   ],
   "goldstandard-wealth-private-limited-100023": [
     {
+      "period": "2026-03-31",
+      "date": "2026-03-31",
+      "nav": 155590795.8
+    },
+    {
       "period": "2026-07-10",
       "date": "2026-07-10",
       "nav": 181154076.83
@@ -16451,6 +16492,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
   ],
   "green-lantern-capital-llp-510854": [
     {
+      "period": "2026-03-31",
+      "date": "2026-03-31",
+      "nav": 49947276.19
+    },
+    {
       "period": "2026-06-25",
       "date": "2026-06-25",
       "nav": 59248501.89
@@ -16462,6 +16508,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
     }
   ],
   "green-lantern-capital-llp-510861": [
+    {
+      "period": "2026-03-31",
+      "date": "2026-03-31",
+      "nav": 98614842.68
+    },
     {
       "period": "2026-06-25",
       "date": "2026-06-25",
@@ -16499,6 +16550,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
   ],
   "svan-investment-managers-llp-8710067": [
     {
+      "period": "2026-04-30",
+      "date": "2026-04-30",
+      "nav": 144037736.05
+    },
+    {
       "period": "2026-05-31",
       "date": "2026-05-31",
       "nav": 147999299.63
@@ -16515,6 +16571,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
     }
   ],
   "svan-investment-managers-llp-8710090": [
+    {
+      "period": "2026-04-30",
+      "date": "2026-04-30",
+      "nav": 93523185.3
+    },
     {
       "period": "2026-05-31",
       "date": "2026-05-31",
@@ -16533,6 +16594,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
   ],
   "v-e-c-assago-capital-management-llp-128004": [
     {
+      "period": "2026-03-31",
+      "date": "2026-03-31",
+      "nav": 43032608.36
+    },
+    {
       "period": "2026-07-06",
       "date": "2026-07-06",
       "nav": 65522325.41
@@ -16544,6 +16610,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
     }
   ],
   "v-e-c-assago-capital-management-llp-128005": [
+    {
+      "period": "2026-03-31",
+      "date": "2026-03-31",
+      "nav": 61798643.42
+    },
     {
       "period": "2026-07-06",
       "date": "2026-07-06",
@@ -16610,8 +16681,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
-      "points": 2,
-      "first": "2026-07-10",
+      "points": 3,
+      "first": "2026-03-31",
       "last": "2026-08-10",
       "latestValue": 395337616.86,
       "bookValue": 395337616.86,
@@ -16619,8 +16690,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "goldstandard-wealth-private-limited-100022",
-      "points": 2,
-      "first": "2026-07-10",
+      "points": 3,
+      "first": "2026-03-31",
       "last": "2026-08-11",
       "latestValue": 80195236.76,
       "bookValue": 80195236.76,
@@ -16628,8 +16699,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "goldstandard-wealth-private-limited-100023",
-      "points": 2,
-      "first": "2026-07-10",
+      "points": 3,
+      "first": "2026-03-31",
       "last": "2026-08-11",
       "latestValue": 187995881.19,
       "bookValue": 187995881.19,
@@ -16637,8 +16708,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "green-lantern-capital-llp-510854",
-      "points": 2,
-      "first": "2026-06-25",
+      "points": 3,
+      "first": "2026-03-31",
       "last": "2026-07-27",
       "latestValue": 57966679.22,
       "bookValue": 57966679.22,
@@ -16646,8 +16717,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "green-lantern-capital-llp-510861",
-      "points": 2,
-      "first": "2026-06-25",
+      "points": 3,
+      "first": "2026-03-31",
       "last": "2026-07-27",
       "latestValue": 114484083.55,
       "bookValue": 114484083.55,
@@ -16673,8 +16744,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "svan-investment-managers-llp-8710067",
-      "points": 3,
-      "first": "2026-05-31",
+      "points": 4,
+      "first": "2026-04-30",
       "last": "2026-07-31",
       "latestValue": 164540939.64,
       "bookValue": 164540939.64,
@@ -16682,8 +16753,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "svan-investment-managers-llp-8710090",
-      "points": 3,
-      "first": "2026-05-31",
+      "points": 4,
+      "first": "2026-04-30",
       "last": "2026-07-31",
       "latestValue": 107025588.35,
       "bookValue": 107025588.35,
@@ -16691,8 +16762,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "v-e-c-assago-capital-management-llp-128004",
-      "points": 2,
-      "first": "2026-07-06",
+      "points": 3,
+      "first": "2026-03-31",
       "last": "2026-08-13",
       "latestValue": 65010579.28,
       "bookValue": 65010579.28,
@@ -16700,8 +16771,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "v-e-c-assago-capital-management-llp-128005",
-      "points": 2,
-      "first": "2026-07-06",
+      "points": 3,
+      "first": "2026-03-31",
       "last": "2026-08-13",
       "latestValue": 202879639.73,
       "bookValue": 202879639.73,
@@ -17041,7 +17112,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 0
     }
   ],
-  "from": "2026-05-31",
+  "from": "2026-03-31",
   "to": "2026-08-31",
   "panelCompleteFrom": "2026-07-31"
 };

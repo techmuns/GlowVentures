@@ -27534,6 +27534,35 @@ of the type of return selected should also be shown."*
   no p.a. under a year, the figure set and coverage); the tab-order check counts
   six tabs. No figure in the book moves; `build-book` byte-identical.
 
+### Stage 10dr — THE NAV SERIES STARTS AT THE STATEMENTS' PRINTED OPENING VALUE
+
+*"we need to fill the entire historic portfolio nav, the current portfolio nav is
+only for a very short window right now. If this is doable from the data we
+already have from the client then do it."*
+
+- **What it uses.** Nine mandates' performance summaries and investor reports
+  print the portfolio's value at the start of their window (`flows.openingCorpus`).
+  That is a valuation the manager struck, dated the day before `periodFrom`, so
+  `navHistoryFrom` takes it as a dated point of the account's series. Carnelian,
+  both Goldstandards, both Green Lanterns and both V.E.Cs open on 31 Mar 2026;
+  both SVANs on 30 Apr.
+- **What moved.** The series is 15 points over **2026-03-31 → 2026-08-31**
+  (153 days), where it was 13 from 31 May. `panelCompleteFrom` is still
+  31 Jul. Each new link is proven as before: by the printed totals, or by Green
+  Lantern's dated record.
+- **What it does not use.** A fund's allotment mark (Neo's face value, Buoyant's
+  class switch) is a purchase price, not a valuation, and is not a point.
+- **Where both exist, the holdings statement wins.** On four dates an account
+  prints both; the largest gap is 0.074%, the accrued-income basis. Issues that
+  disagree on one date by more than ₹1 are skipped and named.
+- **Attribution is unchanged.** An opening value carries no rows with a price and
+  a quantity, so `attributionFrom` sees holdings snapshots only.
+- `BOOK_SUMMARY` does not move; `build-book` twice is byte-identical.
+
+`build` · `test:family` · `test:ingest` (golden 140, 2 not checked, 0 blocked) ·
+`check:pages` on the eight NAV, Performance and History routes, 16 combinations
+clean.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

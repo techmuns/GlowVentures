@@ -411,6 +411,8 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
   const single = [];
   const unvalued = [];
 
+  const openingsUsed = [];
+  const openingOverlaps = [];
   for (const [key, allIssues] of [...byAccount.entries()].sort()) {
     const sample = allIssues.find((d) => d.reportType === "appraisal") ?? allIssues[0];
     const provider = sample.provider;
@@ -481,9 +483,63 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
       }
     }
 
+    // THE MANAGER'S OWN PRINTED OPENING VALUE IS A DATED VALUATION TOO (Stage
+    // 10dr). A performance summary or a SEBI investor report prints the
+    // portfolio's value at the START of its window — "Opening Corpus" — and that
+    // is a market value the statement states on the day before `periodFrom`. It
+    // is read only where no holdings statement already values the account on
+    // that day, and where every issue printing an opening for that day agrees to
+    // the rupee. It carries no rows a unit can be read off, so no
+    // units-unchanged proof can fire on a link it opens and no attribution is
+    // struck across it: its links are proven by the window's own printed capital
+    // total or by the dated record, or left unproven and named.
+    const openings = new Map();
+    for (const d of allIssues) {
+      const f = d.flows;
+      if (!f?.periodFrom || !isNum(f.openingCorpus)) continue;
+      const on = new Date(Date.parse(`${f.periodFrom}T00:00:00Z`) - 86400000).toISOString().slice(0, 10);
+      const cur = openings.get(on);
+      if (!cur) openings.set(on, { value: f.openingCorpus, d, clash: false });
+      else if (Math.abs(cur.value - f.openingCorpus) > 1) cur.clash = true;
+      else if (d.docKey < cur.d.docKey) openings.set(on, { ...cur, d });
+    }
+    const valuedOn = new Set(snaps.map((s) => s.date));
+    for (const [on, { value, d, clash }] of [...openings.entries()].sort()) {
+      if (clash) {
+        notes.push(`navHistory: ${accountId} — two statements print different opening values for ${on}; neither is used.`);
+        continue;
+      }
+      if (valuedOn.has(on)) {
+        const held = snaps.find((s) => s.date === on);
+        openingOverlaps.push({ accountId, on, printed: value, holdings: held.marketValue });
+        continue;
+      }
+      openingsUsed.push({ accountId, on });
+      snaps.push({
+        date: on,
+        docKey: d.docKey,
+        reportType: d.reportType,
+        printedOpening: true,
+        marketValue: value,
+        rows: [{
+          securityKey: "__opening-value__",
+          security: "Opening portfolio value (printed)",
+          quantity: null, marketPrice: null, marketValue: value, assetClass: null, dedupeGroup: null,
+        }],
+      });
+    }
+    snaps.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
     if (snaps.length >= 2) snapshotsByAccount.set(accountId, { provider, accountNo: sample.accountNo, snaps, anchors });
     else if (snaps.length === 1) single.push({ accountId, provider, accountNo: sample.accountNo, date: snaps[0].date });
     else unvalued.push({ accountId, provider, accountNo: sample.accountNo });
+  }
+
+  if (openingsUsed.length) {
+    const worst = openingOverlaps.reduce((m, o) => Math.max(m, Math.abs(o.printed - o.holdings) / o.holdings), 0);
+    notes.push(`navHistory: ${openingsUsed.length} dated point(s) are a manager's own PRINTED OPENING VALUE (a performance summary's or investor report's opening corpus, dated the day before its window) rather than a holdings statement — `
+      + [...new Set(openingsUsed.map((o) => o.accountId))].map((id) => `${id} ${openingsUsed.filter((o) => o.accountId === id).map((o) => o.on).join(", ")}`).join("; ")
+      + `. Where an opening and a holdings statement value one account on the same day (${openingOverlaps.length} case(s)), the holdings statement is used and the two differ by at most ${(worst * 100).toFixed(3)}% — the opening corpus can include accrued income the holdings basis carries apart. No attribution is struck across an opening value, because it carries no holding a price or a unit can be read off.`);
   }
 
   /** Per-account series, emitted whole — a page can chart one account alone. */
@@ -4499,7 +4555,14 @@ function build(archived) {
   // closing values are the same figures the chart plots. Deriving them again
   // from the archive would be a second selection of "which statement is the
   // mark at this date", which is the failure this repo names most often.
-  const attribution = attributionFrom(snapshotsByAccount, positions, notes);
+  // A printed opening value carries no rows a price or a unit can be read off,
+  // so the bridge is struck over the holdings statements alone (Stage 10dr).
+  const holdingSnapshots = new Map();
+  for (const [id, v] of snapshotsByAccount) {
+    const snaps = v.snaps.filter((s) => !s.printedOpening);
+    if (snaps.length) holdingSnapshots.set(id, { ...v, snaps });
+  }
+  const attribution = attributionFrom(holdingSnapshots, positions, notes);
   // The short/long split is produced wherever a lot register exists and left
   // NULL everywhere else — counted rather than asserted, so this note cannot go
   // stale the way its predecessor did (it claimed the split was impossible on
