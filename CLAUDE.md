@@ -27448,6 +27448,28 @@ keys on both sides. `check:pages` on the routes this touches and #127's
   routes: the money-weighted tile, which every Morning CIO route skips because
   the default strip does not show it.
 
+### Stage 10do — THE GAINERS AND LOSERS SCROLL, NOT THE MOVERS CARD
+
+*"Instead of making this whole daily movers section scrollable, only add the
+scrolls to the individual scroll list of losers and gainers, not the whole daily
+movers section."*
+
+Stage 10dn listed every mover, so a long list made Morning CIO's movers panel
+scroll as a whole, carrying the tiles and the index strip away with it. On a
+wide screen (`lg:`) the movers card now fills the panel's height, and each list
+(gainers, losers, and the funds table on the ETFs & mutual funds branch)
+scrolls inside its own box (`data-mover-scroll`). The heading, the toggle and
+the tiles stay put. Each list keeps a 160px floor, so on a very short window the
+panel's own scroll is still the fallback. Below `lg:` each list caps at 420px
+and the page flows.
+
+No figure moves and no row is dropped: every list still draws every mover, and
+`check:pages` still counts the rows against the heading.
+
+Verified: `build` · `check:pages` on the Morning CIO movers routes. The one
+finding is the priority-request check on `cio-live`, which fails on main's own
+build too (Stage 10dn).
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
