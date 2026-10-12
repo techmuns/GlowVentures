@@ -27448,6 +27448,66 @@ keys on both sides. `check:pages` on the routes this touches and #127's
   routes: the money-weighted tile, which every Morning CIO route skips because
   the default strip does not show it.
 
+### Stage 10do — THE GAINERS AND LOSERS SCROLL, NOT THE MOVERS CARD
+
+*"Instead of making this whole daily movers section scrollable, only add the
+scrolls to the individual scroll list of losers and gainers, not the whole daily
+movers section."*
+
+Stage 10dn listed every mover, so a long list made Morning CIO's movers panel
+scroll as a whole, carrying the tiles and the index strip away with it. On a
+wide screen (`lg:`) the movers card now fills the panel's height, and each list
+(gainers, losers, and the funds table on the ETFs & mutual funds branch)
+scrolls inside its own box (`data-mover-scroll`). The heading, the toggle and
+the tiles stay put. Each list keeps a 160px floor, so on a very short window the
+panel's own scroll is still the fallback. Below `lg:` each list caps at 420px
+and the page flows.
+
+No figure moves and no row is dropped: every list still draws every mover, and
+`check:pages` still counts the rows against the heading.
+
+Verified: `build` · `check:pages` on the Morning CIO movers routes. The one
+finding is the priority-request check on `cio-live`, which fails on main's own
+build too (Stage 10dn).
+
+### Stage 10dp — AIF & PMS MOVERS BY MANDATE AND FUND, AND THE HOLDINGS ONE CLICK DOWN
+
+*"Show each mandate or fund as a visible line item in Morning CIO, with movement
+at mandate level and drill-down into underlying holdings. Distinguish this from
+merely showing underlying securities in a consolidated movers view."*
+
+Stage 10dl's AIF & PMS branch ranks COMPANIES and never a wrapper. That ranking
+stays, at `?inside=holdings`. The branch now OPENS on the vehicles
+(`?movers=inside`, param-free): one row per PMS mandate account and one per AIF
+fund, each opening into the holdings behind it (`TreeTable`'s rows, not a table
+in a cell). A small `Mandates & funds · Holdings` toggle sits in the card's header.
+
+- **A MANDATE'S MOVE IS MEASURED**: the priced shares' rupee change over their
+  previous close (`change ÷ (pricedValue − change)`), with the share of the
+  mandate that carries a quote named in its own cell. Its children are its
+  shares, each with its own move and impact.
+- **A DISCLOSING FUND'S MOVE IS DERIVED** — its disclosed lines' moves weighted by
+  their own disclosed weights — and carries **no rupee impact**, the same fence
+  Stage 10dl puts on the AIF half. Its children are the disclosed companies.
+- **A FUND THAT DISCLOSES NOTHING IS STILL A ROW**, its move a dash whose hover
+  says an AIF publishes no daily NAV and this one discloses no portfolio this
+  book can join. Dropping it would read as a book without those funds.
+- The two tiles above stay on both views; measured and derived money are still
+  never added. The vehicle table scrolls inside its own box on a wide screen,
+  Stage 10do's rule.
+
+`src/lib/insideMovers.ts` builds `vehicles` beside the company ranking from the
+same inputs, so the two views cannot describe different books.
+
+**Checks.** `cio-movers-vehicles` (no feed: the default is the vehicle view, and
+no table is claimed without prices) and `cio-movers-vehicles-live` (one row per
+mandate account and per AIF fund in the book, `INSIDE_BOOK` re-derived; each
+mandate's move re-derived from its priced shares, +10.00% on the fixture; a
+derived fund carries no impact; a silent fund a dash with its reason; every
+openable row opens onto its holdings). `cio-movers-inside(-live)` walk
+`?inside=holdings` and keep Stage 10dl's claims. No figure in the book moves;
+`build-book` is byte-identical.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

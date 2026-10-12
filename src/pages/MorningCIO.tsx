@@ -1472,7 +1472,7 @@ export function MorningCIO() {
             title, its own as-of and its own coverage line; they are never summed
             and never dated alike. See `DailyMovers.tsx`. */}
         {tab === "movers" && (
-          <div className="grid gap-5 lg:grid-cols-3" data-cio-section="movers">
+          <div className="grid gap-5 lg:h-full lg:grid-cols-3 lg:grid-rows-[minmax(0,1fr)]" data-cio-section="movers">
           <DailyMovers />
           </div>
         )}

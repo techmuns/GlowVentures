@@ -194,7 +194,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
   ].join("\n\n");
 
   return (
-    <Card className="lg:col-span-3" title={title}
+    <Card className="lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col" title={title}
       right={
         /* TWO CONTROLS: the SCOPE toggle (owned by `DailyMovers`) switches which
            MEASUREMENT the card shows, and the RANKING reorders these rows. */
@@ -293,7 +293,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
         </p>
       </div>
 
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4 overflow-auto lg:min-h-[160px] lg:flex-1" data-mover-scroll="nav">
         <table className="w-full text-[12px]">
           <thead>
             <Tr view={view} className="border-b border-ink-700">
@@ -312,7 +312,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
                 <td className="py-1.5 pr-2">
                   <Link to={`/stock/${encodeURIComponent(r.securityKey)}`}
                     className="text-slate-300 transition-colors hover:text-champagne-400"
-                    title={r.entities.length ? `Held by ${r.entities.join(", ")}` : undefined}>
+                    title={schemeNameTitle(r)}>
                     {r.scheme}
                   </Link>
                   <SchemeNote row={r} newest={model.newestNavDate} />
@@ -371,6 +371,16 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
   );
 }
 
+/** The name link's hover: who holds it, its plan and what stands behind the row. */
+function schemeNameTitle(row: NavMover): string | undefined {
+  const bits: string[] = [];
+  if (row.entities.length) bits.push(`Held by ${row.entities.join(", ")}`);
+  if (row.plan) bits.push(`${row.plan} plan`);
+  if (row.keys > 1) bits.push(`${row.keys} holdings in this book resolve to this one scheme, so they are one row`);
+  else if (row.positions > 1) bits.push(`${row.positions} statements`);
+  return bits.length ? bits.join(" · ") : undefined;
+}
+
 /**
  * The second line under a scheme's name, and every part of it is conditional —
  * a note that renders on every row is chrome, and one that renders on the rows
@@ -381,11 +391,10 @@ function SchemeNote({ row, newest }: { row: NavMover; newest: string | null }) {
   // line, and the DSP Gold row carried four clauses running to 228 characters.
   const bits: string[] = [];
   const why: string[] = [];
-  // Only where the book holds BOTH plans of one fund, which is what makes two
-  // rows of one scheme name legitimate rather than a duplicate.
-  if (row.plan) bits.push(`${row.plan} plan`);
-  if (row.keys > 1) { bits.push(`${row.keys} holdings clubbed`); why.push(`${row.keys} holdings in this book resolve to this one scheme, so they are one row.`); }
-  else if (row.positions > 1) bits.push(`${row.positions} statements`);
+  // The plan and the statement count are NOT on the face, at the family's
+  // request: the scheme's name already carries its plan ("· Direct"), and how
+  // many statements stand behind a row is a count nobody reads on this card.
+  // Both are the name link's hover instead (`schemeNameTitle`).
   // A ROW OLDER THAN THE NEWEST SAYS SO. Without it a reader takes the card's
   // heading date for every row on it.
   if (newest && row.navDate !== newest) {

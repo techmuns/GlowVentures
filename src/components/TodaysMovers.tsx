@@ -361,7 +361,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
        reporting exactly that kind of heading. So the scope moves into the
        heading, where it cannot be removed as chrome, and the quote timestamp
        moves to the tile that is actually as-of it. */
-    <Card className="lg:col-span-3" title={`${model.session === istDate() ? "Today’s movers" : model.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE.label}`}
+    <Card className="lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col" title={`${model.session === istDate() ? "Today’s movers" : model.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE.label}`}
       right={
         /* TWO CONTROLS, AND THEY ANSWER DIFFERENT QUESTIONS. The SCOPE toggle
            (owned by `DailyMovers`) switches which MEASUREMENT this card shows —
@@ -564,7 +564,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           </div>
 
           {/* ── Gainers and losers ────────────────────────────────────────── */}
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="mt-4 grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]" data-movers-lists="">
             {/* A COUNT AND ITS NOUN AGREE. "1 GAINERS" was on the family's own
                 screenshot of this card, and a scope tab makes a one-name list an
                 ordinary outcome rather than a rarity. */}
@@ -608,7 +608,7 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
   noun: string;
 }) {
   return (
-    <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4" data-testid={`movers-${tone}`}>
+    <div className="flex min-h-0 flex-col rounded-xl border border-ink-700 bg-ink-900/60 p-4" data-testid={`movers-${tone}`}>
       <div className="flex items-baseline justify-between gap-3">
         <div className="label-xs">{title}</div>
         {/* AN EMPTY LIST HAS NO TOTAL, AND `₹0` IS NOT ONE. Summing an empty
@@ -635,7 +635,8 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
           No priced {noun} holding moved this way today
         </p>
       ) : (
-        <table className="mt-3 w-full text-[12px]">
+        <div className="mt-3 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone}>
+        <table className="w-full text-[12px]">
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => (
               /* `data-mover-row` is the handle the sweep counts a RANKING by. A
@@ -662,6 +663,7 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

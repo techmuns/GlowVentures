@@ -233,7 +233,7 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
   const disclosedValue = d.reduce((a, f) => a + f.value, 0);
 
   return (
-    <Card className="lg:col-span-3"
+    <Card className="lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col"
       title={`${inside.session === istDate() ? "Today’s movers" : inside.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE_LABEL}`}
       right={
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -369,10 +369,12 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           </div>
 
           {view === "vehicles" ? (
-            <VehicleTable vehicles={inside.vehicles} exp={exp} fmt={fmtFromBase} />
+            <div className="mt-4 max-h-[520px] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1" data-vehicle-scroll="">
+              <VehicleTable vehicles={inside.vehicles} exp={exp} fmt={fmtFromBase} />
+            </div>
           ) : (
           /* ── Gainers and losers ────────────────────────────────────────── */
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="mt-4 grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]" data-movers-lists="">
             <InsideList title={`${model.gainCount} gainer${model.gainCount === 1 ? "" : "s"}`} tone="gain" rows={model.gainers}
               total={model.gainSum} count={model.gainCount} unknown={model.gainUnknown} fmt={fmtFromBase} rank={rank} />
             <InsideList title={`${model.lossCount} loser${model.lossCount === 1 ? "" : "s"}`} tone="loss" rows={model.losers}
@@ -392,7 +394,7 @@ function InsideList({ title, tone, rows, total, count, unknown, fmt, rank }: {
   rank: "impact" | "pct";
 }) {
   return (
-    <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4" data-testid={`movers-${tone}`}>
+    <div className="flex min-h-0 flex-col rounded-xl border border-ink-700 bg-ink-900/60 p-4" data-testid={`movers-${tone}`}>
       <div className="flex items-baseline justify-between gap-3">
         <div className="label-xs">{title}</div>
         {/* AN EMPTY LIST HAS NO TOTAL, AND A LIST HOLDING A NAME WITH NO MONEY
@@ -411,7 +413,8 @@ function InsideList({ title, tone, rows, total, count, unknown, fmt, rank }: {
           No AIF or PMS holding moved this way today
         </p>
       ) : (
-        <table className="mt-3 w-full text-[12px]">
+        <div className="mt-3 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone}>
+        <table className="w-full text-[12px]">
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => {
               const funds = [...new Set(r.via.map((v) => fundLabel(v.fund)))];
@@ -456,6 +459,7 @@ function InsideList({ title, tone, rows, total, count, unknown, fmt, rank }: {
             })}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
@@ -486,10 +490,10 @@ function VehicleTable({ vehicles, exp, fmt }: {
   const openable = vehicles.filter((v) => v.children.length > 0).map((v) => v.key);
   const allOpen = openable.length > 0 && openable.every((k) => exp.isOpen(k));
   if (!vehicles.length) {
-    return <p className="mt-4 text-[12px] text-slate-500" title="No PMS mandate or AIF folio is held in this book's current holdings.">No AIF or PMS holding</p>;
+    return <p className="text-[12px] text-slate-500" title="No PMS mandate or AIF folio is held in this book's current holdings.">No AIF or PMS holding</p>;
   }
   return (
-    <div className="mt-4">
+    <div>
       {openable.length > 0 && (
         <div className="mb-2 flex justify-end">
           <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable, !allOpen)} />
