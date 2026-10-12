@@ -1166,7 +1166,7 @@ const YEAR = 365;
 const dayDiff = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
 
 /** The first purchase to the date the value is struck — or to the last flow, for an account that holds nothing. */
-function capitalWindow(g: CapitalGroup): { from: string; to: string; days: number } | null {
+export function capitalWindow(g: CapitalGroup): { from: string; to: string; days: number } | null {
   const ins = g.moves.filter((m) => m.direction === "in").map((m) => m.date).sort();
   const from = ins[0];
   if (!from) return null;

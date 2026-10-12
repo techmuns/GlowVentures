@@ -49,6 +49,7 @@ import { NavVsIndex } from "@/components/NavVsIndex";
 import { valuationDates, valuationNote, dateSpan } from "@/components/BasisPill";
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import { DailyMovers } from "@/components/DailyMovers";
+import PortfolioReturns from "@/components/PortfolioReturns";
 import { SectorComposition } from "@/pages/SectorComposition";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { INVESTOR_DEFAULT_TILES, investorPeriodReturn, investorAnnualReturn } from "@/lib/investorSummary";
@@ -191,6 +192,7 @@ const CIO_TABS = [
   // business day, a fortnight old on this book, and the direct-equity branch is
   // the last session the quote feed priced. Each card dates its own figure.
   { key: "movers", label: "Daily Movers", title: "The latest move — the family's own direct equity on its last priced session, and their funds' last published NAV, each dated on its own card" },
+  { key: "returns", label: "Returns", title: "Portfolio returns over a period you pick — the measured window, the type of return and its formula" },
   /**
    * ...AND SECTOR COMPOSITION, NEXT TO DAILY MOVERS. *"next to daily movers add
    * a new tab sector composition … give option to select either consolidated
@@ -1483,6 +1485,12 @@ export function MorningCIO() {
             the panel's height and the page itself still does not scroll. It
             reads the same scoped book the rest of this page does, so the member
             selector narrows it with nothing special-cased here. */}
+        {tab === "returns" && (
+          <div className="h-full" data-cio-section="returns">
+            <PortfolioReturns />
+          </div>
+        )}
+
         {tab === "sectors" && (
           <div className="h-full" data-cio-section="sectors">
             <SectorComposition embedded />

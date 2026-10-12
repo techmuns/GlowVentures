@@ -27508,6 +27508,32 @@ openable row opens onto its holdings). `cio-movers-inside(-live)` walk
 `?inside=holdings` and keep Stage 10dl's claims. No figure in the book moves;
 `build-book` is byte-identical.
 
+### Stage 10dq — A RETURNS TAB ON MORNING CIO: A PERIOD, A TYPE, AND THE FORMULA
+
+*"add a new tab after daily movers, "Returns" … MTD, YTD, financial-year-to-date,
+trailing 1Y/2Y/3Y, since-investment and custom start/end periods … use the
+portfolio/holding market value at the opening date rather than original
+investment cost … select the kind of return … XIRR, CAGR, Absolute … the formula
+of the type of return selected should also be shown."*
+
+- **`?tab=returns`, second after Daily Movers.** `src/components/PortfolioReturns.tsx`
+  over `src/lib/periodReturns.ts`. Period `?rp=` (FYTD default · MTD · YTD · 1Y ·
+  2Y · 3Y · since investment · custom with `?rfrom=`/`?rto=` date pickers); type
+  `?rtype=` (XIRR default · Absolute/Modified Dietz · Simple · CAGR). The formula of
+  the selected type is drawn beside the figure, with its worked line.
+- **A window opens on market value, never cost.** Each account opens on its latest
+  statement value on or before the opening date and closes on its latest on or
+  before the closing date, with every dated capital move inside the window as a
+  flow. So the MEASURED window is shown, and can begin earlier than the one asked
+  for. Since investment is struck on capital paid in (`capitalWindow`, now
+  exported from `tranches.ts`).
+- **Nothing under 365 days is annualised** (Stage 10g(ii)); CAGR refuses with the
+  reason. The figures name how many accounts the window covers ("N of M").
+- **Checks:** `cio-returns` and `cio-returns-custom` (`CIO_RETURNS`: the selectors,
+  the formula matching the type, the measured window on or before the request,
+  no p.a. under a year, the figure set and coverage); the tab-order check counts
+  six tabs. No figure in the book moves; `build-book` byte-identical.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
