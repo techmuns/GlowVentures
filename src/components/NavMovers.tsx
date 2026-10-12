@@ -194,7 +194,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
   ].join("\n\n");
 
   return (
-    <Card className="lg:col-span-3" title={title}
+    <Card className="lg:col-span-3 lg:flex lg:h-full lg:min-h-0 lg:flex-col" title={title}
       right={
         /* TWO CONTROLS: the SCOPE toggle (owned by `DailyMovers`) switches which
            MEASUREMENT the card shows, and the RANKING reorders these rows. */
@@ -293,7 +293,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
         </p>
       </div>
 
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4 overflow-auto lg:min-h-[160px] lg:flex-1" data-mover-scroll="nav">
         <table className="w-full text-[12px]">
           <thead>
             <Tr view={view} className="border-b border-ink-700">
