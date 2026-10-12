@@ -33,7 +33,7 @@
  * nothing either way.
  */
 import type { Account, Position } from "./types";
-import { MANDATE_BUCKET, currentHoldings, holdingBucket } from "./analytics";
+import { MANDATE_BUCKET, currentHoldings, holdingBucket, mandateLabel } from "./analytics";
 import { accountIndex, engagementOf } from "./accounts";
 import { dailyMovers, latestQuoteSession, quoteSession, symbolMove } from "./dailyMovers";
 import { priceLooksLikeSameSecurity, symbolFor, symbolForKey, type QuoteFeed } from "./quotes";
@@ -64,8 +64,64 @@ export type InsideMoverRow = {
   via: InsideVia[];
 };
 
+/**
+ * ONE LINE INSIDE A VEHICLE — a share a mandate reports, or a company a fund
+ * disclosed. A mandate line carries a MEASURED rupee value and move; a fund line
+ * carries the fund's own WEIGHT and the exchange's percentage, and no rupees.
+ */
+export type InsideVehicleLine = {
+  securityKey: string;
+  security: string;
+  /** MEASURED — the statement row's live value. Null on a fund line. */
+  value: number | null;
+  /** A fund line's weight in the fund, as the fund printed it. */
+  weightPct: number | null;
+  dayChangePct: number | null;
+  /** MEASURED rupee move. Null on a fund line, and where it is withheld. */
+  dayChange: number | null;
+  /** Why the move, or its rupee half, is not shown. Null where both are. */
+  why: string | null;
+};
+
+/**
+ * A MANDATE OR A FUND, AS A ROW OF ITS OWN (Stage 10do). The family asked to see
+ * each vehicle's own day — *"movement at mandate level and drill-down into
+ * underlying holdings"* — beside the company ranking, never instead of it.
+ *
+ *  - A mandate's move is MEASURED: the rupee change of the shares the feed
+ *    priced, over their value at the previous close. It covers those shares and
+ *    nothing else, and says how much of the mandate that is.
+ *  - A disclosing fund's move is DERIVED: the fund's own weights times each
+ *    company's exchange move, over the weight priced. A fund's NAV is struck once
+ *    a day after the close, so this is what its disclosed book did — never what
+ *    its NAV did, and never a rupee figure.
+ *  - A fund that discloses nothing has no move at all, and says so.
+ */
+export type InsideVehicle = {
+  key: string;
+  kind: "mandate" | "fund";
+  basis: "measured" | "derived" | "none";
+  name: string;
+  sub: string;
+  value: number;
+  dayChangePct: number | null;
+  /** MEASURED only. Never on a fund row. */
+  dayChange: number | null;
+  /** Mandate: value of the priced lines. Fund: weight of NAV priced, in %. */
+  covered: number;
+  /** Mandate: the mandate's value. Fund: weight of NAV the fund named, in %. */
+  coverageOf: number;
+  pricedLines: number;
+  lines: number;
+  asOf: string | null;
+  why: string | null;
+  children: InsideVehicleLine[];
+};
+
 export type InsideMovers = {
   rows: InsideMoverRow[];
+  /** One row per mandate account and per AIF fund — see `InsideVehicle`. */
+  vehicles: InsideVehicle[];
   session: string | null;
   observedFrom: string | null;
   observedTo: string | null;
@@ -314,8 +370,93 @@ export function insideMovers(args: {
     silent.set(name, (silent.get(name) ?? 0) + p.marketValue);
   }
 
+  // ── THE VEHICLES ─────────────────────────────────────────────────────────
+  const vehicles: InsideVehicle[] = [];
+  const byAccount = new Map<string, Position[]>();
+  for (const p of mandate) {
+    const list = byAccount.get(p.accountId) ?? [];
+    list.push(p);
+    byAccount.set(p.accountId, list);
+  }
+  for (const [accountId, ps] of byAccount) {
+    const account = idx.get(accountId);
+    const children: InsideVehicleLine[] = ps.map((p) => {
+      const row = rows.get(p.securityKey);
+      const security = securityLabel(p.securityKey, p.security);
+      if (!row) {
+        return { securityKey: p.securityKey, security, value: p.marketValue, weightPct: null,
+          dayChangePct: null, dayChange: null,
+          why: omitted.get(p.securityKey) ?? (symbolFor(p) ? "Awaiting a quote" : "No NSE listing, so no live quote") };
+      }
+      const impact = p.live && Number.isFinite(p.dayChange) && Number.isFinite(p.dayChangePct) ? p.dayChange! : null;
+      return { securityKey: p.securityKey, security, value: p.marketValue, weightPct: null,
+        dayChangePct: row.dayChangePct, dayChange: impact,
+        why: impact === null ? "Share count unverified, so the rupee move is withheld" : null };
+    });
+    const priced = children.filter((c) => c.dayChange !== null);
+    const change = priced.reduce((a, c) => a + c.dayChange!, 0);
+    const pricedValue = priced.reduce((a, c) => a + (c.value ?? 0), 0);
+    const prev = pricedValue - change;
+    const value = ps.reduce((a, p) => a + p.marketValue, 0);
+    vehicles.push({
+      key: `mandate:${accountId}`, kind: "mandate", basis: priced.length ? "measured" : "none",
+      name: mandateLabel(account), sub: account?.owner ?? "",
+      value,
+      dayChangePct: priced.length && prev > 0 ? (change / prev) * 100 : null,
+      dayChange: priced.length ? change : null,
+      covered: pricedValue, coverageOf: value,
+      pricedLines: priced.length, lines: children.length, asOf: null,
+      why: priced.length ? null : "No share in this mandate carries a live day move",
+      children: children.sort((a, b) => (b.dayChangePct ?? -Infinity) - (a.dayChangePct ?? -Infinity)),
+    });
+  }
+  for (const f of disclosed) {
+    const owners = new Set(held.filter((p) => f.fundKeys.includes(p.securityKey))
+      .map((p) => idx.get(p.accountId)?.owner).filter(Boolean) as string[]);
+    const children: InsideVehicleLine[] = f.lines.map((l) => {
+      const pct = pctByKey.get(l.securityKey);
+      const security = securityLabel(l.securityKey, identity.names.get(l.securityKey) ?? l.security);
+      return { securityKey: l.securityKey, security, value: null, weightPct: l.pctNetAssets,
+        dayChangePct: pct ?? null, dayChange: null,
+        why: pct === undefined ? (omitted.get(l.securityKey) ?? "Awaiting a quote") : null };
+    });
+    const weighed = children.filter((c) => c.dayChangePct !== null && c.weightPct != null && c.weightPct > 0);
+    const w = weighed.reduce((a, c) => a + c.weightPct!, 0);
+    vehicles.push({
+      key: `fund:${f.fund}`, kind: "fund", basis: w > 0 ? "derived" : "none",
+      name: f.fund, sub: [...owners].join(", "),
+      value: f.unitsValue,
+      dayChangePct: w > 0 ? weighed.reduce((a, c) => a + c.weightPct! * c.dayChangePct!, 0) / w : null,
+      dayChange: null,
+      covered: w, coverageOf: f.pctCovered,
+      pricedLines: weighed.length, lines: children.length, asOf: f.asOf,
+      why: w > 0 ? null : "No company this fund disclosed carries a live day move",
+      children: children.sort((a, b) => (b.weightPct ?? -Infinity) - (a.weightPct ?? -Infinity)),
+    });
+  }
+  const silentByKey = new Map<string, Position[]>();
+  for (const p of aifRows) {
+    if (disclosingKeys.has(p.securityKey)) continue;
+    const list = silentByKey.get(p.securityKey) ?? [];
+    list.push(p);
+    silentByKey.set(p.securityKey, list);
+  }
+  for (const [key, ps] of silentByKey) {
+    vehicles.push({
+      key: `fund:${key}`, kind: "fund", basis: "none",
+      name: securityLabel(key, ps[0].security),
+      sub: [...new Set(ps.map((p) => idx.get(p.accountId)?.owner).filter(Boolean) as string[])].join(", "),
+      value: ps.reduce((a, p) => a + p.marketValue, 0),
+      dayChangePct: null, dayChange: null, covered: 0, coverageOf: 0,
+      pricedLines: 0, lines: 0, asOf: null,
+      why: "An AIF publishes no daily NAV, and this one discloses no portfolio this book can join",
+      children: [],
+    });
+  }
+
   return {
     rows: [...rows.values()],
+    vehicles,
     session: mv.session !== null || !mv.rows.length ? session : mv.session,
     observedFrom: observations.length ? new Date(observations[0]).toISOString() : null,
     observedTo: observations.length ? new Date(observations[observations.length - 1]).toISOString() : null,

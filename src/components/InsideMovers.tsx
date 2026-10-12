@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/Card";
@@ -6,7 +6,9 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { istDate } from "@/components/IndexStrip";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
-import { insideMovers, type InsideMoverRow } from "@/lib/insideMovers";
+import { insideMovers, type InsideMoverRow, type InsideVehicle } from "@/lib/insideMovers";
+import { useViewParam, type ViewDef } from "@/components/ViewToggle";
+import { TREE_ROW_DENSE, TREE_CELL_DENSE, useExpanded, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton } from "@/components/TreeTable";
 import { loadFundDisclosures } from "@/lib/fundDisclosures";
 import type { FundDisclosureData } from "@/lib/ledgerModel";
 import { splitFundClass } from "../../shared/securityKey.mjs";
@@ -67,6 +69,19 @@ type Row = InsideMoverRow;
 // ranking decides the ORDER, never the length.
 const SCOPE_LABEL = "AIF & PMS";
 
+/**
+ * TWO VIEWS OF ONE MODEL (Stage 10do). *"Show each mandate or fund as a visible
+ * line item … with movement at mandate level and drill-down into underlying
+ * holdings."* The vehicle view is the default and the company ranking is the
+ * second — both read the same `insideMovers` result, so a mandate's row and the
+ * shares under it cannot be struck on two rounds of quotes.
+ */
+type InsideView = "vehicles" | "holdings";
+const INSIDE_VIEWS: readonly ViewDef<InsideView>[] = [
+  { key: "vehicles", label: "By mandate / fund", title: "Each PMS mandate and each AIF as a row of its own, opening into what it holds" },
+  { key: "holdings", label: "By holding", title: "Every company inside the mandates and the funds, ranked by its own move" },
+];
+
 /** A fund without its unit class — the class is the family's holding, not the fund. */
 const fundLabel = (f: string) => splitFundClass(f)?.fund ?? f;
 
@@ -74,6 +89,8 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
   const { portfolio, consolidated, quoteFeed, quotesStatus, pendingFor, requestSymbols, refreshQuotes,
     corporateActions, corporateActionReturns, fmtFromBase } = usePortfolio();
   const [rank, setRank] = useState<"pct" | "impact">("pct");
+  const [view, setView] = useViewParam(INSIDE_VIEWS, {}, "inside");
+  const exp = useExpanded();
 
   /**
    * THREE STATES, NOT TWO (`NavMovers`' own rule). `undefined` is the store
@@ -166,6 +183,22 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
     if (model && model.impactNames === 0) setRank("pct");
   }, [model?.impactNames]);
 
+  /**
+   * THE DISCLOSED COMPANIES HAVE TO BE ASKED FOR, OR THIS CARD WAITS FOR EVER.
+   *
+   * The quote request is built from the BOOK — its positions, the live-only
+   * funds and the depository's own balances — and a company reached only
+   * inside a fund is in none of those: it arrives in the disclosure store,
+   * which loads after the first round has already gone out. A symbol nobody
+   * asked about is pending for ever (`pendingAmong`), so the scope below could
+   * never settle and the card held on its loading branch with 135 of 163 names
+   * landed. Registering the scope is a UNION into the next round; the mandate
+   * symbols in it are already asked for and cost nothing twice. (A hook, so it
+   * runs before the early return below.)
+   */
+  const scope = model?.inside.scopeSymbols;
+  useEffect(() => { if (scope) requestSymbols(scope); }, [requestSymbols, scope]);
+
   if (!portfolio || !model) return null;
   const { inside } = model;
 
@@ -183,19 +216,6 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
    * answer stops it too, and the AIF tile says so rather than reporting that no
    * fund discloses anything.
    */
-  /**
-   * THE DISCLOSED COMPANIES HAVE TO BE ASKED FOR, OR THIS CARD WAITS FOR EVER.
-   *
-   * The quote request is built from the BOOK — its positions, the live-only
-   * funds and the depository's own balances — and a company reached only
-   * inside a fund is in none of those: it arrives in the disclosure store,
-   * which loads after the first round has already gone out. A symbol nobody
-   * asked about is pending for ever (`pendingAmong`), so the scope below could
-   * never settle and the card held on its loading branch with 135 of 163 names
-   * landed. Registering the scope is a UNION into the next round; the mandate
-   * symbols in it are already asked for and cost nothing twice.
-   */
-  useEffect(() => { requestSymbols(inside.scopeSymbols); }, [requestSymbols, inside.scopeSymbols]);
 
   const scopePending = quotesStatus === "unavailable" ? [] : pendingFor(inside.scopeSymbols);
   const settling = scopePending.length > 0 || disclosures === undefined;
@@ -218,7 +238,17 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       right={
         <div className="flex flex-wrap items-center justify-end gap-2">
           {scopeToggle}
-          <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Rank movers by">
+          <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Show movers by"
+            data-inside-views>
+            {INSIDE_VIEWS.map((v) => (
+              <button key={v.key} onClick={() => setView(v.key)} aria-pressed={view === v.key} data-inside-view={v.key} title={v.title}
+                className={["rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  view === v.key ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
+                {v.label}
+              </button>
+            ))}
+          </div>
+          {view === "holdings" && <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Rank movers by">
             {/* `data-mover-rank` is the handle, not the label — the same contract
                 the Direct Equity card's ranking carries. */}
             {(["pct", "impact"] as const).map((k) => (
@@ -229,7 +259,7 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                 {k === "impact" ? "By ₹ impact" : "By % move"}
               </button>
             ))}
-          </div>
+          </div>}
         </div>
       }>
 
@@ -270,7 +300,7 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       ) : (
         <>
           {/* A STATUS ON THE FACE, THE SENTENCE IN THE HOVER (Stage 10cp). */}
-          {model.withheldNames.length > 0 && (
+          {view === "holdings" && model.withheldNames.length > 0 && (
             <p className="mb-3 text-xs text-amber-500/90" data-testid="movers-price-only"
               data-price-only={model.withheldNames.length}
               title={`Share counts await verification for ${model.withheldNames.length} name${model.withheldNames.length === 1 ? "" : "s"} a mandate holds — ${model.withheldNames.join(", ")}. Their exchange % moves are shown; their money impact is withheld and is in no rupee figure on this card.${rank === "impact" ? " This ranking includes only names with verified money impact." : ""}${model.withheldReasons.length ? ` Why: ${model.withheldReasons.map((x) => x.replace(/\.$/, "")).join(". ")}.` : ""}`}>
@@ -280,7 +310,7 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           {/* A DERIVED-ONLY NAME IS A DIFFERENT ABSENCE, so it is its own line.
               There is no share count to verify: the family hold the FUND, and a
               fund's units are not marked daily at what it holds. */}
-          {model.fundOnlyNames.length > 0 && (
+          {view === "holdings" && model.fundOnlyNames.length > 0 && (
             <p className="mb-3 text-xs text-slate-500" data-testid="movers-fund-only"
               data-fund-only={model.fundOnlyNames.length}
               title={`${model.fundOnlyNames.length} compan${model.fundOnlyNames.length === 1 ? "y" : "ies"} the family reach only inside a fund — ${model.fundOnlyNames.join(", ")}. The exchange's own % move is shown; there is no rupee day impact, because the fund's units are not marked daily at the prices of what it holds and its disclosed weight is a month old.${rank === "impact" ? " This ranking leaves them out." : ""}`}>
@@ -338,13 +368,17 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
             </div>
           </div>
 
-          {/* ── Gainers and losers ────────────────────────────────────────── */}
+          {view === "vehicles" ? (
+            <VehicleTable vehicles={inside.vehicles} exp={exp} fmt={fmtFromBase} />
+          ) : (
+          /* ── Gainers and losers ────────────────────────────────────────── */
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <InsideList title={`${model.gainCount} gainer${model.gainCount === 1 ? "" : "s"}`} tone="gain" rows={model.gainers}
               total={model.gainSum} count={model.gainCount} unknown={model.gainUnknown} fmt={fmtFromBase} rank={rank} />
             <InsideList title={`${model.lossCount} loser${model.lossCount === 1 ? "" : "s"}`} tone="loss" rows={model.losers}
               total={model.lossSum} count={model.lossCount} unknown={model.lossUnknown} fmt={fmtFromBase} rank={rank} />
           </div>
+          )}
         </>
       )}
     </Card>
@@ -424,5 +458,135 @@ function InsideList({ title, tone, rows, total, count, unknown, fmt, rank }: {
         </table>
       )}
     </div>
+  );
+}
+
+/* ── By mandate / fund ─────────────────────────────────────────────────────
+   One row per PMS mandate and per AIF fund — the vehicle itself, at its own
+   day move — opening into the holdings underneath. A mandate's move is
+   MEASURED (its statement reports every share); a disclosing fund's is
+   DERIVED from a month-old weight and carries no rupee figure; a fund that
+   discloses nothing has no move and says why. The two kinds are banded apart
+   and never added. */
+function VehicleTable({ vehicles, exp, fmt }: {
+  vehicles: InsideVehicle[];
+  exp: ReturnType<typeof useExpanded>;
+  fmt: (n: number | null | undefined, o?: { compact?: boolean; sign?: boolean }) => string;
+}) {
+  const byMove = (a: InsideVehicle, b: InsideVehicle) =>
+    (b.dayChangePct ?? -Infinity) - (a.dayChangePct ?? -Infinity) || b.value - a.value;
+  const sections = [
+    { id: "mandate", title: "PMS mandates", marker: "measured",
+      hint: "Each mandate's day move is struck on the shares its own statement reports, at the live quote — a measured rupee change over the priced part of the mandate.",
+      rows: vehicles.filter((v) => v.kind === "mandate").sort(byMove) },
+    { id: "fund", title: "AIFs", marker: "derived",
+      hint: "An AIF strikes no daily NAV. Where a fund discloses its portfolio, its move is the weighted move of what it discloses — derived, carrying no rupee figure and in no total. A fund that discloses nothing has no move.",
+      rows: vehicles.filter((v) => v.kind === "fund").sort(byMove) },
+  ].filter((s) => s.rows.length > 0);
+  const openable = vehicles.filter((v) => v.children.length > 0).map((v) => v.key);
+  const allOpen = openable.length > 0 && openable.every((k) => exp.isOpen(k));
+  if (!vehicles.length) {
+    return <p className="mt-4 text-[12px] text-slate-500" title="No PMS mandate or AIF folio is held in this book's current holdings.">No AIF or PMS holding</p>;
+  }
+  return (
+    <div className="mt-4">
+      {openable.length > 0 && (
+        <div className="mb-2 flex justify-end">
+          <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable, !allOpen)} />
+        </div>
+      )}
+      <div className="overflow-x-auto">
+        <table className="w-full text-[12px]" data-inside-vehicles="" data-table-static="a ranked tree of mandates and funds, banded by how each move is measured">
+          <thead>
+            <tr className="label-xs text-left">
+              <th className="px-2 py-1.5">Mandate / fund</th>
+              <th className="px-2 py-1.5 text-right">Day %</th>
+              <th className="px-2 py-1.5 text-right">Day ₹</th>
+              <th className="px-2 py-1.5 text-right" title="A mandate's line: its value on the statement. A fund's line: the weight its own filing puts in that company.">Value / weight</th>
+              <th className="px-2 py-1.5 text-right" title="How much of the vehicle the move is struck over: a mandate's priced value, or the share of a fund's own net assets its priced disclosed lines carry.">Covered</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sections.map((s) => (
+              <VehicleSection key={s.id} section={s} exp={exp} fmt={fmt} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function VehicleSection({ section, exp, fmt }: {
+  section: { id: string; title: string; marker: string; hint: string; rows: InsideVehicle[] };
+  exp: ReturnType<typeof useExpanded>;
+  fmt: (n: number | null | undefined, o?: { compact?: boolean; sign?: boolean }) => string;
+}) {
+  return (
+    <>
+      <tr className={TREE_ROW_DENSE.section} data-vehicle-section={section.id}>
+        <TreeSectionCell density="dense" colSpan={5} title={section.title} hint={section.hint}
+          marker={<span className="text-[10.5px] text-champagne-400/80">{section.marker}</span>}
+          sub={`${section.rows.length} ${section.id === "mandate" ? `mandate${section.rows.length === 1 ? "" : "s"}` : `fund${section.rows.length === 1 ? "" : "s"}`}`} />
+      </tr>
+      {section.rows.map((v) => {
+        const open = exp.isOpen(v.key);
+        const canOpen = v.children.length > 0;
+        const coveredTitle = v.basis === "measured"
+          ? `The move is struck on ${fmt(v.covered, { compact: true })} of this mandate's ${fmt(v.coverageOf, { compact: true })}, over ${v.pricedLines} of ${v.lines} lines with a live quote and a verified share count.`
+          : v.basis === "derived"
+            ? `The disclosed lines a quote reaches carry ${fmtNum(v.covered, 2)}% of the fund's net assets, of the ${fmtNum(v.coverageOf, 2)}% its filing${v.asOf ? ` of ${v.asOf}` : ""} names.`
+            : v.why ?? undefined;
+        return (
+          <Fragment key={v.key}>
+            <tr className={TREE_ROW_DENSE.parent} {...(canOpen ? rowToggle(() => exp.toggle(v.key)) : {})}
+              data-vehicle-row={v.key} data-vehicle-kind={v.kind} data-vehicle-basis={v.basis}
+              data-vehicle-pct={v.dayChangePct ?? ""} data-vehicle-impact={v.dayChange ?? ""}
+              data-vehicle-lines={v.children.length} data-vehicle-open={open ? "1" : "0"}>
+              <TreeNameCell depth={0} density="dense" title={v.name} sub={v.sub || undefined}
+                open={canOpen ? open : undefined} onToggle={canOpen ? () => exp.toggle(v.key) : undefined}
+                toggleLabel={open ? "Hide its holdings" : "Show its holdings"}
+                toggleData={{ "data-vehicle-toggle": v.key }} />
+              <td data-vehicle-cell="pct" className={`${TREE_CELL_DENSE.parent} text-right tabular font-semibold ${changeColor(v.dayChangePct)}`}
+                title={v.dayChangePct == null ? (v.why ?? "No priced holding to strike a move on") : undefined}>
+                {v.dayChangePct == null ? DASH : fmtPct(v.dayChangePct, { sign: true })}
+              </td>
+              <td data-vehicle-cell="impact" className={`${TREE_CELL_DENSE.parent} text-right tabular ${changeColor(v.dayChange)}`}
+                title={v.dayChange != null ? undefined
+                  : v.basis === "derived" ? "Derived from a disclosed weight: the fund's units are not marked daily at the prices of what it holds, so there is no rupee day move."
+                    : (v.why ?? "No priced holding to strike a rupee move on")}>
+                {v.dayChange == null ? DASH : fmt(v.dayChange, { compact: true, sign: true })}
+              </td>
+              <td className={`${TREE_CELL_DENSE.parent} text-right tabular text-slate-300`}>{fmt(v.value, { compact: true })}</td>
+              <td data-vehicle-cell="covered" className={`${TREE_CELL_DENSE.parent} text-right tabular text-slate-400`} title={coveredTitle}>
+                {v.basis === "measured" ? fmt(v.covered, { compact: true })
+                  : v.basis === "derived" ? `${fmtNum(v.covered, 1)}%` : DASH}
+              </td>
+            </tr>
+            {open && v.children.map((c, i) => (
+              <tr key={`${v.key}|${c.securityKey}`} className={TREE_ROW_DENSE.child} data-vehicle-child={v.key} data-child-key={c.securityKey}>
+                <TreeNameCell depth={1} density="dense" last={i === v.children.length - 1}
+                  title={<Link to={`/stock/${encodeURIComponent(c.securityKey)}`} className="text-slate-300 transition-colors hover:text-champagne-400">{c.security}</Link>} />
+                <td className={`${TREE_CELL_DENSE.child} text-right tabular ${changeColor(c.dayChangePct)}`}
+                  title={c.dayChangePct == null ? (c.why ?? "No live quote") : undefined}>
+                  {c.dayChangePct == null ? DASH : fmtPct(c.dayChangePct, { sign: true })}
+                </td>
+                <td className={`${TREE_CELL_DENSE.child} text-right tabular ${changeColor(c.dayChange)}`}
+                  title={c.dayChange != null ? undefined
+                    : v.basis === "derived" ? "Inside a fund: no rupee day move — the fund's units are not marked at the prices of what it holds."
+                      : (c.why ?? "No live quote or verified share count")}>
+                  {c.dayChange == null ? DASH : fmt(c.dayChange, { compact: true, sign: true })}
+                </td>
+                <td className={`${TREE_CELL_DENSE.child} text-right tabular text-slate-400`}
+                  title={c.value == null && c.weightPct == null ? "The filing states no weight for this line" : undefined}>
+                  {c.value != null ? fmt(c.value, { compact: true }) : c.weightPct != null ? `${fmtNum(c.weightPct, 2)}%` : DASH}
+                </td>
+                <td className={TREE_CELL_DENSE.child} />
+              </tr>
+            ))}
+          </Fragment>
+        );
+      })}
+    </>
   );
 }

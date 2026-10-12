@@ -7495,8 +7495,10 @@ const ROUTES = [
    * carries the wrapper keys and the rankable company keys apart, and the
    * invariant is struck on `data-mover-row`.
    */
-  ["cio-movers-inside", "/cio?movers=inside"],
-  ["cio-movers-inside-live", "/cio?movers=inside"],
+  ["cio-movers-inside", "/cio?movers=inside&inside=holdings"],
+  ["cio-movers-inside-live", "/cio?movers=inside&inside=holdings"],
+  ["cio-movers-vehicles", "/cio?movers=inside"],
+  ["cio-movers-vehicles-live", "/cio?movers=inside"],
   /**
    * ...AND THE OTHER TWO PANELS. *"Divide the Morning CIO into three separate
    * sections and tabs."*
@@ -11821,6 +11823,10 @@ const INSIDE_BOOK = (() => {
       /** The denominator the fund tile's coverage line states. */
       aifValue: aifRows.reduce((a, p) => a + p.marketValue, 0),
       mandateValue: mandate.reduce((a, p) => a + p.marketValue, 0),
+      /** Stage 10do: one vehicle row per mandate ACCOUNT, and per AIF fund. */
+      mandateAccounts: [...new Set(mandate.map((p) => p.accountId))].sort(),
+      disclosingFunds: disclosed.length,
+      silentFunds: [...aifKeys].filter((k) => !disclosed.some((f) => f.fundKeys.includes(k))).length,
     };
   } catch { return null; }
 })();
@@ -21287,6 +21293,69 @@ const INSIDE_SCOPE = [
 ];
 
 /**
+ * ── STAGE 10do: THE VEHICLES THEMSELVES, AS LINE ITEMS ─────────────────────
+ *
+ * The family asked to SEE each mandate and fund as a row with its own day move,
+ * opening into what it holds — distinct from the company ranking, which stays
+ * at `?inside=holdings`. Every claim is struck on handles and on `INSIDE_BOOK`.
+ */
+const INSIDE_VEHICLES_DEFAULT = [
+  ["the AIF & PMS branch opens on the mandate / fund view, and draws no company ranking", (t, ctx) => {
+    const ins = ctx?.inside;
+    if (ins == null) return notChecked("the card probe did not run on this pass");
+    // With no quote feed (this route serves none) the card draws its absent
+    // state rather than a table; the vehicle table itself is asserted on the
+    // live route. What holds on both: the default is the vehicle view, and no
+    // company ranking is drawn.
+    return ins.view === "vehicles" && (ins.rows ?? []).length === 0;
+  }],
+];
+const INSIDE_HOLDINGS_VIEW = [
+  ["?inside=holdings draws the company ranking and no vehicle table", (t, ctx) => {
+    const ins = ctx?.inside;
+    if (ins == null) return notChecked("the card probe did not run on this pass");
+    return ins.card === true && ins.view === "holdings" && ins.vehicleTable === false && ins.rows.length > 0;
+  }],
+];
+const INSIDE_VEHICLES = INSIDE_BOOK ? [
+  [`one row per PMS mandate account (${INSIDE_BOOK.mandateAccounts.length}) and per AIF fund (${INSIDE_BOOK.disclosingFunds} disclosing + ${INSIDE_BOOK.silentFunds} silent), in two bands`, (t, ctx) => {
+    const ins = ctx?.inside;
+    if (ins == null) return notChecked("the card probe did not run on this pass");
+    const v = ins.vehicles ?? [];
+    const m = v.filter((x) => x.kind === "mandate").map((x) => x.key.replace(/^mandate:/, "")).sort();
+    const f = v.filter((x) => x.kind === "fund");
+    return JSON.stringify(m) === JSON.stringify(INSIDE_BOOK.mandateAccounts)
+      && f.length === INSIDE_BOOK.disclosingFunds + INSIDE_BOOK.silentFunds
+      && ins.sections.includes("mandate") && ins.sections.includes("fund");
+  }],
+  ["each priced mandate's day move is its shares' measured move — +10.00% on the fixture — with a rupee impact", (t, ctx) => {
+    const v = (ctx?.inside?.vehicles ?? []).filter((x) => x.kind === "mandate" && x.basis === "measured");
+    if (!v.length) return false;
+    return v.every((x) => Math.abs(Number(x.pct) - 10) < 0.01 && x.impact !== "" && Number(x.impact) > 0 && x.pctText === "+10.00%");
+  }],
+  ["a fund's move is DERIVED from disclosed weights and carries no rupee impact — a dash naming why, never ₹0", (t, ctx) => {
+    const f = (ctx?.inside?.vehicles ?? []).filter((x) => x.kind === "fund");
+    if (!f.length) return false;
+    const derived = f.filter((x) => x.basis === "derived");
+    if (derived.length !== INSIDE_BOOK.disclosingFunds) return false;
+    return f.every((x) => x.impact === "" && x.impactText === "—" && !!x.impactTitle && !/₹\s*0\b/.test(x.impactText ?? ""))
+      && derived.every((x) => /Derived/.test(x.impactTitle ?? ""));
+  }],
+  ["an AIF that discloses nothing carries no move at all, and says why", (t, ctx) => {
+    const s = (ctx?.inside?.vehicles ?? []).filter((x) => x.kind === "fund" && x.basis === "none");
+    if (INSIDE_BOOK.silentFunds === 0) return notChecked("every AIF this book holds discloses a portfolio");
+    return s.length === INSIDE_BOOK.silentFunds
+      && s.every((x) => x.pct === "" && x.pctText === "—" && /no daily NAV/.test(x.impactTitle ?? ""));
+  }],
+  ["an opened mandate and an opened fund each draw exactly the holdings they carry", (t, ctx) => {
+    const v = ctx?.inside?.vehicles ?? [];
+    const open = v.filter((x) => x.open);
+    if (!open.some((x) => x.kind === "mandate") || !open.some((x) => x.kind === "fund")) return false;
+    return v.every((x) => x.open ? x.children === x.lines && x.lines > 0 : x.children === 0);
+  }],
+] : [["the vehicle book could be derived", () => false]];
+
+/**
  * ── AND THE CARD ITSELF, ON THE LIVE WALK ───────────────────────────────────
  *
  * Every claim here is struck on `INSIDE_BOOK`, which re-expresses the model off
@@ -30243,7 +30312,9 @@ const INVARIANTS = {
    * derived half's own absences, and the rows themselves.
    */
   "cio-movers-inside": [...INSIDE_SCOPE],
-  "cio-movers-inside-live": [...INSIDE_SCOPE, ...INSIDE_CARD, ...INSIDE_FULL_LIST],
+  "cio-movers-inside-live": [...INSIDE_SCOPE, ...INSIDE_CARD, ...INSIDE_FULL_LIST, ...INSIDE_HOLDINGS_VIEW],
+  "cio-movers-vehicles": [...INSIDE_SCOPE, ...INSIDE_VEHICLES_DEFAULT],
+  "cio-movers-vehicles-live": [...INSIDE_SCOPE, ...INSIDE_VEHICLES_DEFAULT, ...INSIDE_VEHICLES],
   "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("basket"), ...ALLOC_HELD_PILL],
   "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("assetClass"), ...ALLOC_HELD_PILL, ...ALLOC_DERIVED],
   "cio-alloc-bars": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...ALLOC_CHART_CHECKS],
@@ -36558,7 +36629,7 @@ for (const theme of THEMES) {
       // which exists for exactly this route — so both halves of the card have
       // figures. The plain `cio-movers-inside` walk deliberately gets none,
       // because its absent state is its own invariant.
-      if (name === "cio-movers-inside-live") await installLiveMocks(page);
+      if (name === "cio-movers-inside-live" || name === "cio-movers-vehicles-live") await installLiveMocks(page);
       // THE ALERTS WALKS. The store is seeded before the app boots, and the live
       // fixture is installed on the two that assert a quoted price; the no-feed
       // walk deliberately gets none, because that is its whole subject.
@@ -36625,9 +36696,21 @@ for (const theme of THEMES) {
        * leave its loading state; a card that never does still fails by name,
        * because the wait gives up and the claims read the loading card.
        */
-      if (name === "cio-movers-inside-live") {
+      if (name === "cio-movers-inside-live" || name === "cio-movers-vehicles-live") {
         await page.waitForFunction(() => !!document.querySelector('[data-testid="inside-mandate-tile"]')
           || !!document.querySelector('[data-testid="movers-unavailable"]'), null, { timeout: 20000 }).catch(() => {});
+      }
+      if (name === "cio-movers-vehicles-live") {
+        // Open the first mandate that has lines and the first fund that has lines,
+        // so the drill-down is a claim about rows actually drawn.
+        for (const kind of ["mandate", "fund"]) {
+          const key = await page.evaluate((k) => [...document.querySelectorAll(`[data-vehicle-row][data-vehicle-kind="${k}"]`)]
+            .find((tr) => Number(tr.getAttribute("data-vehicle-lines")) > 0)?.getAttribute("data-vehicle-row") ?? null, kind);
+          if (key) {
+            await page.locator(`[data-vehicle-toggle="${key}"]`).first().click().catch(() => {});
+            await page.waitForTimeout(300);
+          }
+        }
       }
       if (name === "cio-cached") {
         /**
@@ -38981,7 +39064,8 @@ for (const theme of THEMES) {
         const n = (el, attr) => (el ? Number(el.getAttribute(attr)) : null);
         const mandate = q('[data-testid="inside-mandate-tile"]');
         const fund = q('[data-testid="inside-fund-tile"]');
-        if (!mandate && !fund) return { card: false };
+        const viewNow = document.querySelector('[data-inside-view][aria-pressed="true"]')?.getAttribute("data-inside-view") ?? null;
+        if (!mandate && !fund) return { card: false, view: viewNow, vehicleTable: !!q('[data-inside-vehicles]'), rows: [] };
         const text = (el) => (el ? (el.innerText ?? "").trim() : null);
         return {
           card: true,
@@ -38992,6 +39076,22 @@ for (const theme of THEMES) {
           fundCoverage: text(q('[data-testid="inside-fund-coverage"]')),
           priceOnly: n(q('[data-testid="movers-price-only"]'), "data-price-only"),
           fundOnly: n(q('[data-testid="movers-fund-only"]'), "data-fund-only"),
+          view: document.querySelector('[data-inside-view][aria-pressed="true"]')?.getAttribute("data-inside-view") ?? null,
+          vehicleTable: !!q('[data-inside-vehicles]'),
+          sections: [...document.querySelectorAll('[data-vehicle-section]')].map((tr) => tr.getAttribute("data-vehicle-section")),
+          vehicles: [...document.querySelectorAll('[data-vehicle-row]')].map((tr) => ({
+            key: tr.getAttribute("data-vehicle-row"),
+            kind: tr.getAttribute("data-vehicle-kind"),
+            basis: tr.getAttribute("data-vehicle-basis"),
+            pct: tr.getAttribute("data-vehicle-pct"),
+            impact: tr.getAttribute("data-vehicle-impact"),
+            lines: Number(tr.getAttribute("data-vehicle-lines")),
+            open: tr.getAttribute("data-vehicle-open") === "1",
+            pctText: tr.querySelector('[data-vehicle-cell="pct"]')?.textContent?.trim() ?? null,
+            impactText: tr.querySelector('[data-vehicle-cell="impact"]')?.textContent?.trim() ?? null,
+            impactTitle: tr.querySelector('[data-vehicle-cell="impact"]')?.getAttribute("title") ?? null,
+            children: document.querySelectorAll(`[data-vehicle-child="${CSS.escape(tr.getAttribute("data-vehicle-row"))}"]`).length,
+          })),
           rows: [...document.querySelectorAll('[data-mover-row]')].map((tr) => ({
             key: tr.getAttribute("data-mover-row"),
             via: tr.querySelector('[data-mover-via]')?.textContent?.trim() ?? null,
