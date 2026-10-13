@@ -11872,63 +11872,6 @@ const DIRECT_EQUITY_SYMBOLS = (() => {
   } catch { return null; }
 })();
 
-/**
- * WHAT THE MOVERS CARD LEAVES OUT AND MUST NAME — derived, never spelled.
- *
- * The card's footer lists every bucket that moved today and is not in its
- * Direct-Equity scope. That check used to require an "ETF" line by name, which
- * was never a claim about the page: it was a fact about which of this book's
- * buckets the FIXTURE happened to be able to price. The one priced ETF row was
- * Liquid BeES, and when the family's cash mapping sent it to Cash the ETF line
- * correctly disappeared — and a correct page failed. A check shaped by its own
- * fixture, which is the thing this sweep exists to catch rather than commit.
- *
- * SO IT IS ANCHORED ON THE BOOK, AND ON THE ONE QUESTION THE CASH RULE CANNOT
- * MOVE. `bucket()` above answers "is this Direct Equity?" without needing to
- * know about cash equivalents at all — every one of them is a Mutual Fund, an
- * ETF or Cash and never `Equity`, so it falls outside that bucket both before
- * and after. What the footer owes the reader is therefore checkable without
- * re-listing the mapping here: the entries it draws must account for every
- * priced holding the scope excludes, and for its whole value.
- */
-const MOVERS_EXCLUDED = (() => {
-  try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
-    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
-    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
-    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
-    const isDirectEquity = (p) => {
-      const e = engagement.get(p.accountId);
-      if (e === "PMS" || p.assetClass !== "Equity") return false;
-      return e === "Direct" || e === "Execution";
-    };
-    // DEDUPED, because the card reads `consolidated`. A holding two members both
-    // report is one mover and one line here; counting both rows would overstate
-    // this expectation by exactly the double count the book already collapses.
-    const names = new Set();
-    // THE MANDATES AND THE NAMES INSIDE THEM, COUNTED APART (MNT-17): the
-    // footer read "131 PMS mandates" for 131 holdings in ten.
-    const pmsNames = new Set(), pmsAccounts = new Set();
-    const seen = new Set();
-    let mv = 0;
-    for (const p of positions) {
-      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
-      if (isDirectEquity(p)) continue;
-      const sym = p.symbol || symbols[p.securityKey];
-      if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
-      names.add(p.securityKey);
-      if (engagement.get(p.accountId) === "PMS") { pmsNames.add(p.securityKey); pmsAccounts.add(p.accountId); }
-      // LIVE MARKET VALUE, NOT THE STATEMENT'S. The card is reading the overlaid
-      // portfolio on this walk, and the fixture prices every symbol it can at
-      // the mark x QUOTE_FACTOR — so a value summed off `glowData.ts` alone runs
-      // exactly that factor light. Measured, it was ₹126.06 Cr against a
-      // correctly-rendered ₹138.8 Cr, which is 1.10 to the second decimal.
-      mv += p.marketValue * QUOTE_FACTOR;
-    }
-    return names.size ? { names: names.size, cr: mv / 1e7, pmsNames: pmsNames.size, pmsAccounts: pmsAccounts.size } : null;
-  } catch { return null; }
-})();
 
 /**
  * THE DIRECT-EQUITY NAMES THE MOVERS CARD COUNTS, OVER THE CURRENT HOLDINGS
@@ -19630,7 +19573,7 @@ const CIO_RETURNS = [
 
 
 /**
- * Stage 10ds — *"the client wants to see the returns of the total portfolio and
+ * Stage 10dt — *"the client wants to see the returns of the total portfolio and
  * not the underlying holdings … combine [window and formula] into one single
  * section and provide benchmark returns in the other section."* Struck on the
  * handles: the per-holding table is gone, the window and the formula sit inside
@@ -30120,52 +30063,14 @@ const INVARIANTS = {
     ["the gainers are exactly the priced DIRECT EQUITY names, not the whole book",
       (t, ctx) => moversGainersAreDirectEquity(ctx?.cioLayout?.text)],
     /**
-     * ...AND WHAT THE SCOPE LEAVES OUT IS NAMED, not silently dropped. The PMS
-     * mandates are the bulk of the book's priceable value and the ETFs have just
-     * left this card; a card that stopped covering them without saying so is a
-     * scope change a reader cannot see. Both are required, because the ETFs are
-     * the bucket this round removed and a footer that quietly dropped them from
-     * its own list would hide exactly what changed.
+     * ...AND THE "NOT COUNTED" LINE STAYS REMOVED (Stage 10ds). It named the
+     * buckets this card leaves out, and the family asked for it to go; the
+     * scope is the card's own title. Asserted on its face AND its hover, so a
+     * rewording that brought it back fails.
      */
-    ["the card names the buckets it does not cover, with their value", (t, ctx) => {
-      // "Not counted: N <label> ₹X · …" on its face, and whose scope it is —
-      // "Direct equity only" — in its hover (Stage 10cp). The old sentence is
-      // asserted gone, so a rewording that brought it back fails.
-      if (!/Not counted:/.test(t) || /Also moved today and not counted here/.test(t)) return false;
-      if (!(ctx?.titles ?? []).some((x) => /^Direct equity only — these also moved today and are in none of the figures above/.test(x))) return false;
-      if (!MOVERS_EXCLUDED) return { notChecked: "the book could not be read" };
-      // Each entry is "N <label> ₹X" — a count AND a value, never a bare label.
-      const line = /Not counted:([^\n]*)/.exec(t)?.[1] ?? "";
-      const parts = [...line.matchAll(/(\d+)\s+(.+?)\s+₹([\d,.]+)\s*(Cr|L|K)?/g)];
-      if (!parts.length) return false;
-      // THE SCOPE ITSELF IS NEVER ONE OF THEM — a card listing Direct Equity
-      // among what it leaves out has stopped covering it.
-      if (parts.some((m) => /direct equity/i.test(m[2]))) return false;
-      const names = parts.reduce((a, m) => a + Number(m[1]), 0);
-      const cr = parts.reduce((a, m) => a + crU(m[3], m[4]), 0);
-      // …and between them they account for every priced holding outside the
-      // scope, which is what stops a bucket being dropped from the list.
-      return names === MOVERS_EXCLUDED.names
-        && Math.abs(cr - MOVERS_EXCLUDED.cr) <= Math.max(0.15, parts.length * 0.05);
-    }],
-    /**
-     * ...AND A MANDATE ENTRY COUNTS ITS HOLDINGS AND ITS MANDATES APART (MNT-17).
-     * "131 PMS mandates ₹137.5 Cr" read as 131 mandates where there are ten.
-     * Both numbers are the book's own: the distinct priced names held inside a
-     * PMS account, and how many PMS accounts hold them.
-     */
-    ["a mandate entry counts its holdings and its mandates apart (MNT-17)", (t) => {
-      // A BOOK THE CHECK CANNOT READ IS A FAILURE, never an abstention.
-      if (!MOVERS_EXCLUDED) return false;
-      // "Not counted:" since Stage 10cp, which moved the lead-in sentence into
-      // the line's hover and kept the figures on its face.
-      const line = /Not counted:([^\n]*)/.exec(t)?.[1] ?? "";
-      if (!line) return false;
-      const bare = /(?:^|·)\s*\d+\s+PMS mandates?\s+₹/.test(line);
-      if (!MOVERS_EXCLUDED.pmsAccounts) return !bare;
-      const m = /(\d+)\s+holdings?\s+in\s+(\d+)\s+PMS mandates?\s+₹/.exec(line);
-      return !bare && !!m && Number(m[1]) === MOVERS_EXCLUDED.pmsNames && Number(m[2]) === MOVERS_EXCLUDED.pmsAccounts;
-    }],
+    ["the Not counted line stays removed (Stage 10ds)", (t, ctx) =>
+      !/Not counted:/.test(t) && !/Also moved today and not counted here/.test(t)
+      && !(ctx?.titles ?? []).some((x) => /^Direct equity only — these also moved today/.test(x))],
     /**
      * ...AND THE TILE COUNTS THE NAMES THE DRILL-DOWN LISTS (MNT-6): its
      * denominator is the Direct Equity names among the CURRENT holdings — the
