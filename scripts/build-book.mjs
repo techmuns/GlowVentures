@@ -3010,6 +3010,12 @@ function build(archived) {
         lotsAfterSnapshot += 1;
         const e = realisedByKey.get(k) ?? { gain: 0, cost: 0, lots: 0, after: 0 };
         e.after += 1;
+        // Kept apart, for the roll-forward below: what the later sales realised,
+        // what their units cost, and how many units they settle.
+        const ga = lotGain(l);
+        e.afterGain = (e.afterGain ?? 0) + (ga ? ga.gain : NaN);
+        e.afterCost = (e.afterCost ?? 0) + (ga ? ga.cost : NaN);
+        e.afterQty = (e.afterQty ?? 0) + (isNum(l.quantity) ? l.quantity : NaN);
         realisedByKey.set(k, e);
         continue;
       }
@@ -3045,6 +3051,69 @@ function build(archived) {
         + "statement and is not added to any position's return — doing so would count the same units once as value and once as profit.");
     }
     if (lotsUnreadable) notes.push(`account ${accountNo}: ${lotsUnreadable} capital-gain lot(s) print neither proceeds and cost nor a gain, and carry no realised figure`);
+
+    /**
+     * A HOLDING STATEMENT IS A SNAPSHOT, AND THIS ACCOUNT'S OWN TAPE RUNS PAST IT
+     * (Stage 10ds).
+     *
+     * LKP's holdings are dated 31 Mar 2026 and its own contract tape and capital
+     * gain statements run to August: Capri, Electronics Mart, Jyothy and Varun
+     * were sold to nil, Belrise down to 6,500, and Pricol bought up and sold out.
+     * The statement-basis book keeps the 31 Mar snapshot — a reader checks it
+     * against that PDF — but the LIVE layer used to withhold every one of these
+     * names ("share counts unverified") while the account's own dated record
+     * said exactly what is held. So each holding with tape rows after its own
+     * date carries `rolledForward`: the statement's quantity plus every buy less
+     * every sell after it, published ONLY where every witness the account prints
+     * agrees — the depository's own closing balance on its own date (a trade on
+     * that date has not settled into it), and the capital gain statement's units
+     * for every sale inside its window. Cost and realised roll with it only where
+     * every sale is settled by a lot; a sale past that window leaves both null.
+     * A failed witness publishes nothing and is named, so the name stays withheld.
+     */
+    const tapeTo = allIssues
+      .filter((d) => d.reportType === "transaction-statement" && (d.transactions ?? []).length)
+      .map((d) => d.periodTo ?? d.asOf).filter(Boolean).sort().at(-1) ?? null;
+    const cgTo = allIssues.filter((d) => (d.capitalGains ?? []).length)
+      .map((d) => d.periodTo ?? d.asOf).filter(Boolean).sort().at(-1) ?? null;
+    const dematClosings = allIssues.flatMap((d) => d.dematBalances ?? []).filter((b) => b.kind === "closing" && b.isin && b.date);
+    const rollForwardOf = (h, base) => {
+      if (!asOf || !tapeTo || tapeTo <= asOf || !isNum(h.quantity) || !h.securityKey) return null;
+      const rows = dated.transactions
+        .filter((t) => t.securityKey === h.securityKey && t.date && t.date > asOf && (t.side === "buy" || t.side === "sell"))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      if (!rows.length) return null;
+      const fail = (why) => { notes.push(`account ${accountNo}: ${h.securityKey} is not rolled forward past ${asOf} — ${why}; the statement's own quantity stands on the live basis`); return null; };
+      if (rows.some((t) => !isNum(t.quantity) || t.quantity <= 0)) return fail("a tape row carries no unit count");
+      const signed = (t) => (t.side === "buy" ? t.quantity : -t.quantity);
+      const qtyBefore = (date) => h.quantity + rows.filter((t) => t.date < date).reduce((a, t) => a + signed(t), 0);
+      const quantity = Math.round((h.quantity + rows.reduce((a, t) => a + signed(t), 0)) * 1e6) / 1e6;
+      if (quantity < -1e-6) return fail(`the tape sells ${-quantity} more units than the statement and its buys hold`);
+      const witnesses = [];
+      for (const b of dematClosings.filter((x) => h.isin && x.isin === h.isin && x.date > asOf && x.date <= tapeTo)) {
+        const q = qtyBefore(b.date);
+        if (Math.abs(q - b.quantity) > 1e-6) return fail(`the depository holds ${b.quantity} on ${b.date} where the tape gives ${q}`);
+        witnesses.push(`depository ${b.date}`);
+      }
+      const rz = realisedByKey.get(h.securityKey);
+      const sellsInCg = rows.filter((t) => t.side === "sell" && cgTo && t.date <= cgTo).reduce((a, t) => a + t.quantity, 0);
+      const lotQty = rz?.afterQty ?? 0;
+      if (cgTo && Math.abs(sellsInCg - lotQty) > 1e-6) return fail(`the tape sells ${sellsInCg} by ${cgTo} where the capital gain lots settle ${lotQty}`);
+      if (cgTo && sellsInCg > 0) witnesses.push(`capital gain lots to ${cgTo}`);
+      if (!witnesses.length) return fail("no depository balance or capital gain lot witnesses the tape");
+      const lateSale = rows.some((t) => t.side === "sell" && (!cgTo || t.date > cgTo));
+      const lotsReadable = Number.isFinite(rz?.afterGain ?? 0) && Number.isFinite(rz?.afterCost ?? 0);
+      const buyNet = rows.filter((t) => t.side === "buy").reduce((a, t) => a + (isNum(t.net) ? t.net : NaN), 0);
+      const settled = !lateSale && lotsReadable && Number.isFinite(buyNet);
+      let costBasis = null;
+      if (quantity === 0) costBasis = 0;
+      else if (settled && isNum(base.costBasis)) costBasis = r2(base.costBasis - (rz?.afterCost ?? 0) + buyNet);
+      const realizedPnL = settled && cgReachesHolding ? r2((base.realizedPnL ?? 0) + (rz?.afterGain ?? 0)) : null;
+      const costOfUnitsSold = settled && cgReachesHolding ? r2((base.costOfUnitsSold ?? 0) + (rz?.afterCost ?? 0)) : null;
+      notes.push(`account ${accountNo}: ${h.securityKey} rolled forward on the account's own tape from ${h.quantity} on ${asOf} to ${quantity} on ${tapeTo}`
+        + ` (${rows.length} trade(s); witnessed by ${witnesses.join(" and ")})${lateSale ? "; a sale after the capital gain statement leaves cost and realised unknown" : ""}`);
+      return { through: tapeTo, quantity, costBasis, realizedPnL, costOfUnitsSold, trades: rows.length };
+    };
 
     /** FIFO over the fund's own unit record, where anything was sold or switched. */
     const fundFifo = fifoFromCashFlows(dated.cashFlows);
@@ -3500,6 +3569,8 @@ function build(archived) {
         realizedPnL,
         costOfUnitsSold,
         realizedLotsAfter: realizedLotsAfter || undefined,
+        /** The account's own tape past this statement, witnessed — see `rollForwardOf`. Read by the LIVE layer only. */
+        rolledForward: rollForwardOf(h, { costBasis, realizedPnL, costOfUnitsSold }) ?? undefined,
         /**
          * THE ONE RETURN FORMULA (`shared/fifo.mjs`): everything the holding
          * produced — unrealised on what is held, realised on what was sold —

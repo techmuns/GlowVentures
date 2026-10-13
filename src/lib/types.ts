@@ -265,6 +265,22 @@ export type Position = {
   /** Capital-gain lots sold AFTER this holding's statement date — named, never added. */
   realizedLotsAfter?: number;
   /**
+   * The account's own tape past this statement (Stage 10ds): the quantity every
+   * later buy and sell carries the holding to, through `through`, published by
+   * `build-book` only where the depository's closing balance or the capital gain
+   * lots witness it. Cost, realised and the cost of units sold are null where a
+   * sale is not yet settled by a lot. Read by the LIVE layer only; the statement
+   * basis keeps the snapshot.
+   */
+  rolledForward?: {
+    through: string;
+    quantity: number;
+    costBasis: number | null;
+    realizedPnL: number | null;
+    costOfUnitsSold: number | null;
+    trades: number;
+  };
+  /**
    * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
    * percent — FIFO's one return, `fifoReturnPct`. Where nothing was sold it is
    * unrealised ÷ cost.
