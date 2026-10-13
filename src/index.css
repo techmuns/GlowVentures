@@ -639,7 +639,7 @@ html #root table tfoot > tr:first-child > :is(th, td) {
 html #root table:has(> tfoot) > tbody:last-of-type > tr:last-child > :is(th, td) {
   border-bottom-width: 0;
 }
-/* THE MOVERS LISTS KEEP THEIR GRID, THINNED (Stage 10dt). The family asked
+/* THE MOVERS LISTS KEEP THEIR GRID, THINNED (Stage 10du). The family asked
    for the borders on Today's movers to be thin rather than gone: a 1px hairline
    in a lighter tone, set through the grid's own variables so every edge rule
    above (first column, first row, sections) follows it. */

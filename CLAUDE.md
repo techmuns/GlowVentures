@@ -27608,7 +27608,7 @@ returns in the other section."*
   the portfolio less the index). No figure in the book moves; `build-book`
   byte-identical.
 
-### Stage 10dt — THE MOVERS LISTS KEEP A THIN GRID
+### Stage 10du — THE MOVERS LISTS KEEP A THIN GRID
 
 *"i meant just thin the borders not make them completely disappear."* Stage
 10ds ran the gainers and losers to the card's edge, and #125's 2px table grid
