@@ -38,6 +38,7 @@
      shade of its neighbours. */
   --row-hover: #ece4ce;
   --table-grid: #9690a3;
+  --table-grid-thin: #ddd7ca;
 }
 
 html.dark {
@@ -58,6 +59,7 @@ html.dark {
      row rather than darkening into its even-row neighbour. */
   --row-hover: #2d2862;
   --table-grid: #716b91;
+  --table-grid-thin: #3a3463;
 }
 
 html, body, #root { height: 100%; }
@@ -637,6 +639,14 @@ html #root table tfoot > tr:first-child > :is(th, td) {
 html #root table:has(> tfoot) > tbody:last-of-type > tr:last-child > :is(th, td) {
   border-bottom-width: 0;
 }
+/* THE MOVERS LISTS KEEP THEIR GRID, THINNED (Stage 10du). The family asked
+   for the borders on Today's movers to be thin rather than gone: a 1px hairline
+   in a lighter tone, set through the grid's own variables so every edge rule
+   above (first column, first row, sections) follows it. */
+#root [data-movers-lists] table {
+  --table-grid-width: calc(1px / var(--app-zoom));
+  --table-grid: var(--table-grid-thin);
+}
 
 /* EXPORT EXCEL IS GREEN, AS GCR'S IS — as a tint with deep-green type, for the
    reason at the top of this block. #045f45 on #e8f3ee is 6.8:1. */
@@ -700,7 +710,7 @@ html:not(.dark) .preview-hatch {
    click on paper, and the scroll containers that would otherwise clip a wide
    table to whatever happened to be in view. */
 @media print {
-  html:root { --table-grid: #9690a3; }
+  html:root { --table-grid: #9690a3; --table-grid-thin: #ddd7ca; }
   @page { size: A4 landscape; margin: 12mm; }
 
   html, body {

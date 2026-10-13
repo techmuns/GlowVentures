@@ -27608,6 +27608,18 @@ returns in the other section."*
   the portfolio less the index). No figure in the book moves; `build-book`
   byte-identical.
 
+### Stage 10du — THE MOVERS LISTS KEEP A THIN GRID
+
+*"i meant just thin the borders not make them completely disappear."* Stage
+10ds ran the gainers and losers to the card's edge, and #125's 2px table grid
+then read as heavy across the full width. The grid stays, thinned, only inside
+`[data-movers-lists]`: a 1px hairline (`calc(1px / var(--app-zoom))`) in a lighter
+`--table-grid-thin` (`#ddd7ca` light and in print, `#3a3463` dark). It is set
+through the grid's own variables, so the first-column and first-row edge rules
+follow it. Every other table keeps the 2px grid. `check:pages` on the movers
+routes: the only finding is the priority-request check on `cio-live`, which
+fails on main too (Stage 10dn).
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
