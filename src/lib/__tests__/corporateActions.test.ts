@@ -157,7 +157,7 @@ assert.equal(liveOn(dayAfter(through, SHARE_EVENT_LEAD_DAYS + 1)), 0, "…and no
 const funds = BOOK_POSITIONS.filter((p) => p.assetClass !== "Equity");
 assert.deepEqual(applyCorporateActionQuotes(funds, BOOK_ACCOUNTS, null, saved).positions, funds.map((p) => ({ ...p, live: false })), "fund NAVs and distributions are not equity corporate actions");
 
-// ROLLED FORWARD (Stage 10ds): a share the account's own tape carried past its
+// ROLLED FORWARD (Stage 10dw): a share the account's own tape carried past its
 // statement is LIVE at the rolled quantity; one rolled to nil is not a row;
 // and the statement basis — the input — is untouched.
 const rolled = BOOK_POSITIONS.filter((x) => x.assetClass === "Equity" && x.rolledForward && symbolFor(x));

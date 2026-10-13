@@ -241,7 +241,7 @@ function bookArray(src, name) {
 }
 
 /**
- * THE ACCOUNT'S OWN TAPE, PAST ITS STATEMENT (Stage 10ds), re-expressed here
+ * THE ACCOUNT'S OWN TAPE, PAST ITS STATEMENT (Stage 10dw), re-expressed here
  * rather than imported from `corporateActions.ts`, which is the code under
  * test. Where `build-book` rolled a holding forward the live book carries the
  * rolled quantity, its cost and its realised half; a holding the tape sold to
@@ -7182,7 +7182,7 @@ const M2_BOOK = (() => {
         && ps.some((p) => (Number(p.realizedLotsAfter) || 0) > 0) && ps.some((p) => !!symOf(p)))
       .map(([key]) => ({ key, mv: mvOf(key), ...realisedOf(key) }))
       .sort((a, b) => b.mv - a.mv)[0] ?? null;
-    // A COMPANY SHARE THE TAPE ROLLED FORWARD (Stage 10ds): the sales after its
+    // A COMPANY SHARE THE TAPE ROLLED FORWARD (Stage 10dw): the sales after its
     // statement are dated on the broker's tape and witnessed by the
     // depository's closing, so the live book carries the rolled quantity and
     // the quote is NOT held back. The largest one still held, with a symbol.
@@ -7202,7 +7202,7 @@ const M2_BOOK = (() => {
     // /corporate-actions (DL-15): the company shares the STATEMENTS carry now —
     // each dedupeGroup once, no speck under the floor.
     // The page reads `statementPortfolio`, which the tape's roll-forward never
-    // touches (Stage 10ds) — so its company shares are the STATEMENT's rows, a
+    // touches (Stage 10dw) — so its company shares are the STATEMENT's rows, a
     // holding the tape sold to nil included.
     const corpBase = statementBookPositions(src) ?? positions;
     const corpRows = onceEach(corpBase).filter((p) => p.assetClass === "Equity" && !small.has(p.securityKey));
@@ -8375,7 +8375,7 @@ const ROUTES = [
    * unit record strikes its realised — a gain no capital gain statement carries.
    */
   // A company share sold after the statement that still holds it — or, since
-  // Stage 10ds, one its account's own tape ROLLED FORWARD past that statement,
+  // Stage 10dw, one its account's own tape ROLLED FORWARD past that statement,
   // which is the case this route was written for, now resolved.
   ["stock-sold-after", () => {
     const key = M2_BOOK?.soldAfter?.key ?? M2_BOOK?.rolled?.key;
@@ -11421,7 +11421,7 @@ const WITHHELD_BOOK = (() => {
     const reasonOf = (p, loading) => {
       if (p.assetClass !== "Equity" || !quoted(p)) return null;
       if (loading) return "Waiting for corporate-action evidence before marking shares live";
-      // A holding its account's own tape rolled forward (Stage 10ds) starts on
+      // A holding its account's own tape rolled forward (Stage 10dw) starts on
       // the tape's last day, and every sale after the statement is inside it.
       const rf = p.rolledForward;
       const start = rf?.through ?? (asOf.get(p.accountId) || "");
@@ -25816,7 +25816,7 @@ const INVARIANTS = {
     ["the book carries a company share sold after its statement, held back or rolled forward on its own tape", () =>
       (!!M2_BOOK?.soldAfter && M2_BOOK.soldAfter.lotsAfter > 0) || !!M2_BOOK?.rolled],
     /**
-     * ROLLED FORWARD ON ITS OWN TAPE IS LIVE (Stage 10ds). Where every sale
+     * ROLLED FORWARD ON ITS OWN TAPE IS LIVE (Stage 10dw). Where every sale
      * after the statement is on the account's own tape, witnessed by the
      * depository's closing balance or the capital-gain lots, the share count is
      * known — so the quote is NOT held back, and the quantity shown is the

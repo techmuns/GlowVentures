@@ -3054,7 +3054,7 @@ function build(archived) {
 
     /**
      * A HOLDING STATEMENT IS A SNAPSHOT, AND THIS ACCOUNT'S OWN TAPE RUNS PAST IT
-     * (Stage 10ds).
+     * (Stage 10dw).
      *
      * LKP's holdings are dated 31 Mar 2026 and its own contract tape and capital
      * gain statements run to August: Capri, Electronics Mart, Jyothy and Varun

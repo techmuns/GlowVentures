@@ -176,7 +176,7 @@ export function applyCorporateActionQuotes(
   const dates = new Map(accounts.map((a) => [a.accountId, a.asOf]));
   const returns = new Map<string, ActionReturn>();
   const output = positions.flatMap((stated) => {
-    // THE ACCOUNT'S OWN TAPE, PAST ITS STATEMENT (Stage 10ds). Where `build-book`
+    // THE ACCOUNT'S OWN TAPE, PAST ITS STATEMENT (Stage 10dw). Where `build-book`
     // could roll a holding forward — every sale after the statement date on the
     // account's own tape, witnessed by the depository's closing balance or the
     // capital gain lots — the live layer marks THAT quantity rather than

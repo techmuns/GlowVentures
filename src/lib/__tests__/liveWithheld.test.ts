@@ -134,7 +134,7 @@ ok("a fund is never gated, so nothing is ever withheld for one", () => {
   assert.equal(liveWithheldReason(p, returns), null);
 });
 
-ok("THE BOOK: a share sold after its statement that the tape did NOT roll forward is withheld, by that reason — and one it did roll is not (Stage 10ds)", () => {
+ok("THE BOOK: a share sold after its statement that the tape did NOT roll forward is withheld, by that reason — and one it did roll is not (Stage 10dw)", () => {
   const all = BOOK_POSITIONS.filter((x) => x.assetClass === "Equity" && (x.realizedLotsAfter ?? 0) > 0);
   assert.ok(all.length > 0, "the book carries holdings sold after their statement");
   const after = all.filter((x) => !x.rolledForward);
