@@ -27580,6 +27580,33 @@ complete edge on the screen."*
 
 `build` · `check:pages` on six Morning CIO movers routes: the one finding is the
 priority-request check on `cio-live`, which fails on main too (Stage 10dn).
+### Stage 10dt — THE RETURNS TAB IS THE WHOLE PORTFOLIO, BESIDE SEVEN BENCHMARKS
+
+*"in the returns page the client wants to see the retuns of the total portfolio
+and not the underlying holdings. Also make the window and formula sections
+cleaner, you can combine them into one single section and provide benchmark
+returns in the other section."*
+
+- **The per-account table is gone.** The tab draws the portfolio's return
+  alone; how many accounts it covers stays on screen ("Covers N of M
+  accounts").
+- **One section, left:** the return, the requested and measured windows, the
+  opening / capital in / capital out / closing / gain figures, and the formula
+  with its worked line (`data-returns-portfolio`).
+- **Benchmarks, right:** the portfolio as the first row, then the seven indices
+  of `benchmarks.ts` over the MEASURED window, close to close, each checked by
+  the name the price service reports (`benchmarkIdentity`), and the gap in
+  points. A benchmark is annualised only where the portfolio's figure is
+  (CAGR or XIRR over a year); otherwise both are not annualised. A price index
+  excludes dividends, and the hover says so. A missing close or a wrong
+  instrument is an `AbsentCell` with its reason.
+- **Checks:** `CIO_RETURNS_LAYOUT` on `cio-returns` and `cio-returns-custom`
+  (no account rows; the window and formula inside the portfolio card; all seven
+  benchmarks a figure or a reasoned absence), and a new `cio-returns-live`
+  route with live mocks (`CIO_RETURNS_LIVE`: every benchmark symbol requested,
+  each return equal to the fixture's closed form over its own window, each gap
+  the portfolio less the index). No figure in the book moves; `build-book`
+  byte-identical.
 
 ### Stage 10du — SECTOR RETURNS ARE FIFO OVER THE HOLDINGS THAT REPORT A COST
 

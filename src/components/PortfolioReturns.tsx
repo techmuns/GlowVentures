@@ -16,12 +16,14 @@
  * No line on the face reads as a sentence (Stage 10cp): every explanation is a
  * hover on the figure or control it explains.
  */
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { AbsentCell } from "@/components/Absent";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason } from "@/lib/benchmarks";
+import { fetchPriceHistory, priceErrorReason, type PriceHistory, type PriceResult } from "@/lib/prices";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtDate, DASH, changeColor } from "@/lib/format";
 import { mandateLabel } from "@/lib/analytics";
@@ -48,13 +50,13 @@ function splitFormula(f: string): { face: string; hover: string } {
   return i < 0 ? { face: f, hover: "" } : { face: f.slice(0, i), hover: f.slice(i + 3) };
 }
 
-const RET_COLS = ["account", "owner", "open", "close", "in", "out", "gain", "ret"] as const;
+const BENCH_COLS = ["bench", "ret", "gap"] as const;
 
 export default function PortfolioReturns() {
   const { statementPortfolio, fmtFromBase, scope } = usePortfolio();
   const [params, setParams] = useSearchParams();
   const money = (n: number) => fmtFromBase(n, { compact: true });
-  const view = useTableView("cio-returns", RET_COLS);
+  const benchView = useTableView("cio-returns-bench", BENCH_COLS);
 
   const period = (PERIODS.find((p) => p.key === params.get("rp"))?.key ?? "fytd") as PeriodKey;
   const rtype = (RETURN_TYPES.find((r) => r.key === params.get("rtype"))?.key ?? "xirr") as ReturnType;
@@ -157,28 +159,9 @@ export default function PortfolioReturns() {
     : win ? measureWindow(win.included, rtype, money) : null;
   const formula = splitFormula(period === "inception" ? INCEPTION_FORMULAS[rtype] : FORMULAS[rtype]);
 
-  // ── Rows ───────────────────────────────────────────────────────────────
-  type Row = { id: string; label: string; owner: string; open: number | null; openDate: string; close: number; closeDate: string; cin: number; cout: number; gain: number; m: Measured };
-  const rows: Row[] = useMemo(() => {
-    if (period === "inception") {
-      return inception.rows.map((r) => ({
-        id: r.accountId, label: r.label, owner: r.owner, open: null, openDate: r.first,
-        close: r.value, closeDate: r.valueAsOf, cin: r.paidIn, cout: r.takenOut,
-        gain: r.value + r.takenOut - r.paidIn, m: measureInception([r], rtype, money),
-      }));
-    }
-    return (win?.included ?? []).map((w) => ({
-      id: w.accountId, label: w.label, owner: w.owner, open: w.openValue, openDate: w.openDate,
-      close: w.closeValue, closeDate: w.closeDate, cin: w.capitalIn, cout: w.capitalOut, gain: w.gain,
-      m: measureWindow([w], rtype, money),
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, inception, win, rtype]);
-  const sorted = sortRows(rows, view.sort, {
-    account: (r) => r.label, owner: (r) => r.owner, open: (r) => r.open, close: (r) => r.close,
-    in: (r) => r.cin, out: (r) => r.cout, gain: (r) => r.gain, ret: (r) => (r.m.shown ? r.m.pct ?? null : null),
-  });
+  // ── The whole portfolio: one window, one set of figures ──────────────────
   const excluded = period === "inception" ? inception.skipped : (win?.excluded ?? []).map((e) => ({ label: e.label, reason: e.reason }));
+  const coveredCount = period === "inception" ? inception.rows.length : (win?.included.length ?? 0);
 
   const total = period === "inception"
     ? { open: null as number | null, cin: inception.rows.reduce((s, r) => s + r.paidIn, 0), cout: inception.rows.reduce((s, r) => s + r.takenOut, 0), close: inception.rows.reduce((s, r) => s + r.value, 0) }
@@ -188,8 +171,47 @@ export default function PortfolioReturns() {
   const measuredTo = period === "inception" ? inception.rows.map((r) => r.valueAsOf).sort().at(-1) ?? null : win?.measuredTo ?? null;
   const days = measuredFrom && measuredTo ? daysBetween(measuredFrom, measuredTo) : null;
   const accountsTotal = period === "inception" ? inception.rows.length + inception.skipped.length : inputs.length;
+  const typeLabel = RETURN_TYPES.find((r) => r.key === rtype)!.label;
+  const excludedHover = excluded.length
+    ? `Not measured: ${excluded.map((e) => `${e.label} — ${e.reason}`).join("; ")}. None is counted as zero.`
+    : "Every account is measured over this window.";
+
+  // ── Benchmarks over the same measured window ─────────────────────────────
+  const [hist, setHist] = useState<Record<string, PriceResult | undefined>>({});
+  useEffect(() => {
+    let live = true;
+    for (const b of BENCHMARKS) {
+      fetchPriceHistory(b.symbol).then((r) => { if (live) setHist((h) => ({ ...h, [b.key]: r })); });
+    }
+    return () => { live = false; };
+  }, []);
+
+  const benchFrom = measuredFrom ?? start;
+  const benchTo = measuredTo ?? end;
+  const annualise = !!(measured?.shown && measured.basis === "annual");
+  const portfolioPct = measured?.shown && measured.pct != null ? measured.pct : null;
+  const benchRows: BenchRow[] = BENCHMARKS.map((b) => {
+    const h = hist[b.key];
+    const base = { key: b.key, label: b.label, title: b.title };
+    if (!h) return { ...base, pct: null, reason: `Fetching the ${b.label} closes`, span: null };
+    if (!h.ok) return { ...base, pct: null, reason: priceErrorReason(h, true), span: null };
+    const id = benchmarkIdentity(h, b);
+    if (!id.ok) return { ...base, pct: null, reason: benchmarkMismatchReason(b, id.reportedName), span: null };
+    if (!benchFrom || !benchTo || benchFrom >= benchTo) return { ...base, pct: null, reason: "No window is measured, so no benchmark return is struck", span: null };
+    const c0 = closeOnOrBefore(h, benchFrom);
+    const c1 = closeOnOrBefore(h, benchTo);
+    if (!c0) return { ...base, pct: null, reason: `${b.name}'s published history starts on ${h.first}, after the window opens on ${benchFrom}`, span: null };
+    if (!c1 || c1.date <= c0.date) return { ...base, pct: null, reason: `No ${b.label} close inside the window`, span: null };
+    const r = c1.value / c0.value - 1;
+    const d = daysBetween(c0.date, c1.date);
+    const pct = (annualise && d >= 365 ? Math.pow(1 + r, 365 / d) - 1 : r) * 100;
+    return { ...base, pct, reason: null, span: { from: c0.date, to: c1.date, v0: c0.value, v1: c1.value, days: d } };
+  });
+  const gapOf = (r: BenchRow) => (portfolioPct != null && r.pct != null ? portfolioPct - r.pct : null);
+  const benchSorted = sortRows(benchRows, benchView.sort, { bench: (r) => r.label, ret: (r) => r.pct, gap: (r) => gapOf(r) });
 
   const btn = (on: boolean) => `rounded-md px-2.5 py-1 text-[12px] font-semibold transition ${on ? "bg-champagne-400 text-ink-900" : "text-slate-400 hover:text-slate-200 hover:bg-ink-700/50"}`;
+  const basisTag = annualise ? "a year" : "not annualised";
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4" data-portfolio-returns>
@@ -225,20 +247,34 @@ export default function PortfolioReturns() {
         </div>
       </div>
 
-      {/* ── Window, figures, formula ── */}
-      <div className="grid gap-3 lg:grid-cols-[1fr_1.1fr]">
-        <Card title="Window" subtitle="The window asked for, and the one the accounts' own statement dates actually span">
-          <div className="space-y-1 text-[12.5px]" data-returns-window>
-            <div className="text-slate-400">Requested <span className="mono text-slate-200" data-returns-requested>
-              {period === "inception" ? "since each account's first purchase" : start && end ? `${fmtDate(start)} → ${fmtDate(end)}` : DASH}
-            </span></div>
-            <div className="text-slate-400" title="Each account opens on its latest statement value on or before the opening date asked for, and closes on its latest on or before the closing date — so the measured window can start earlier than the one asked for, and is shown here as measured">Measured <span className="mono text-slate-100" data-returns-measured
-              data-measured-from={measuredFrom ?? ""} data-measured-to={measuredTo ?? ""} data-measured-days={days ?? ""}>
-              {measuredFrom && measuredTo ? `${fmtDate(measuredFrom)} → ${fmtDate(measuredTo)} · ${days} days` : DASH}
-            </span></div>
-            <div className="text-slate-400" title="Accounts left out are named below, each with its reason">Covers <span className="mono text-slate-200" data-returns-coverage>{rows.length} of {accountsTotal} accounts</span></div>
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[1fr_1fr]">
+        {/* ── The portfolio: window, figures and formula in one card ── */}
+        <div className="flex min-h-0 flex-col" data-returns-portfolio>
+        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}. ${RETURN_TYPES.find((r) => r.key === rtype)!.title}`}
+          className="min-h-0 flex-1 overflow-auto">
+          <div className="flex flex-wrap items-baseline justify-between gap-3" data-returns-figure="Return" title={measured?.reason ?? measured?.worked ?? ""}>
+            <div>
+              <div className="label-xs">Return · {typeLabel}</div>
+              {portfolioPct != null && measured ? (
+                <div className={`mono font-display text-[28px] font-semibold ${changeColor(portfolioPct)}`} data-returns-pct={portfolioPct.toFixed(4)} data-returns-basis={measured.basis}>
+                  {pctText(portfolioPct)} <span className="text-[12px] font-normal text-slate-500">{basisWord(measured)}</span>
+                </div>
+              ) : (
+                <div className="text-[20px]" data-returns-pct=""><AbsentCell reason={measured?.reason ?? "pick a window whose opening date is before its closing date"} /></div>
+              )}
+            </div>
+            <div className="space-y-0.5 text-right text-[12px] text-slate-400" data-returns-window>
+              <div title="The window asked for">Requested <span className="mono text-slate-200" data-returns-requested>
+                {period === "inception" ? "since first purchase" : start && end ? `${fmtDate(start)} → ${fmtDate(end)}` : DASH}
+              </span></div>
+              <div title="Each account opens on its latest statement value on or before the opening date asked for, and closes on its latest on or before the closing date — so the measured window can start earlier than the one asked for">Measured <span className="mono text-slate-100" data-returns-measured
+                data-measured-from={measuredFrom ?? ""} data-measured-to={measuredTo ?? ""} data-measured-days={days ?? ""}>
+                {measuredFrom && measuredTo ? `${fmtDate(measuredFrom)} → ${fmtDate(measuredTo)} · ${days} days` : DASH}
+              </span></div>
+              <div title={excludedHover}>Covers <span className="mono text-slate-200" data-returns-coverage data-returns-excluded={excluded.length}>{coveredCount} of {accountsTotal} accounts</span></div>
+            </div>
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-[12px]">
+          <div className="mt-4 grid grid-cols-5 gap-2 border-t border-ink-700 pt-3 text-[12px]">
             {[
               ["Opening", total?.open ?? null, period === "inception" ? "Since investment is struck on the capital paid in, not on an opening value" : "Market value at the opening date — never the original cost"],
               ["Capital in", total?.cin ?? null, "Money put in during the window, on its dates"],
@@ -253,78 +289,79 @@ export default function PortfolioReturns() {
                 </div>
               </div>
             ))}
-            <div title={measured?.reason ?? measured?.worked ?? ""} data-returns-figure="Return">
-              <div className="label-xs">Return · {RETURN_TYPES.find((r) => r.key === rtype)!.label}</div>
-              {measured?.shown && measured.pct != null ? (
-                <div className={`mono font-semibold ${changeColor(measured.pct)}`} data-returns-pct={measured.pct.toFixed(4)} data-returns-basis={measured.basis}>
-                  {pctText(measured.pct)} <span className="text-[11px] font-normal text-slate-500">{basisWord(measured)}</span>
-                </div>
-              ) : (
-                <div data-returns-pct=""><AbsentCell reason={measured?.reason ?? "pick a window whose opening date is before its closing date"} /></div>
-              )}
+          </div>
+          <div className="mt-4 border-t border-ink-700 pt-3">
+            <div className="label-xs">Formula</div>
+            <div className="mono mt-1 text-[13px] text-slate-100" data-returns-formula={rtype} title={formula.hover || undefined}>{formula.face}</div>
+            <div className="mt-1 text-[12px] text-slate-400" title={measured?.worked ?? measured?.reason ?? ""} data-returns-worked>
+              {portfolioPct != null && measured ? `= ${pctText(portfolioPct)} · ${basisWord(measured)}` : "Not measured on this window"}
             </div>
           </div>
         </Card>
-        <Card title="Formula" subtitle={RETURN_TYPES.find((r) => r.key === rtype)!.title}>
-          <div className="mono text-[13px] text-slate-100" data-returns-formula={rtype} title={formula.hover || undefined}>{formula.face}</div>
-          <div className="mt-2 text-[12px] text-slate-400" title={measured?.worked ?? measured?.reason ?? ""} data-returns-worked>
-            {measured?.shown && measured.pct != null ? `= ${pctText(measured.pct)} · ${basisWord(measured)}` : "Not measured on this window"}
+        </div>
+
+        {/* ── Benchmarks over the same window ── */}
+        <div className="flex min-h-0 flex-col" data-returns-benchmarks>
+        <Card pad={false} className="flex min-h-0 flex-1 flex-col" title="Benchmarks"
+          subtitle={`Each index's close-to-close return over the portfolio's measured window, ${annualise ? "annualised because the portfolio's return is" : "not annualised, as the portfolio's is not"}. Price indices: dividends are not in them. The portfolio's return is money-weighted; an index return is point to point.`}
+>
+          <div className="min-h-0 flex-1 overflow-auto">
+            <table className="min-w-full whitespace-nowrap text-[12.5px]" data-returns-bench-table>
+              <thead className="sticky top-0 z-10 border-b border-ink-700 bg-ink-800">
+                <Tr view={benchView}>
+                  <SortHeader col="bench" view={benchView} align="left" pad="px-4 py-2">Index</SortHeader>
+                  <SortHeader col="ret" view={benchView} pad="px-3 py-2">Return · {basisTag}</SortHeader>
+                  <SortHeader col="gap" view={benchView} pad="px-4 py-2">Portfolio vs index</SortHeader>
+                </Tr>
+              </thead>
+              <tbody className="divide-y divide-ink-700/60">
+                <Tr view={benchView} className="bg-ink-700/30" data-returns-bench-portfolio>
+                  <td className="px-4 py-2 font-semibold text-slate-100">Portfolio · {typeLabel}</td>
+                  <td className="px-3 py-2 text-right mono">
+                    {portfolioPct != null ? <span className={changeColor(portfolioPct)}>{pctText(portfolioPct)}</span> : <AbsentCell reason={measured?.reason ?? "not measured on this window"} />}
+                  </td>
+                  <td className="px-4 py-2 text-right text-slate-500">{DASH}</td>
+                </Tr>
+                {benchSorted.map((r) => {
+                  const gap = gapOf(r);
+                  return (
+                    <Tr view={benchView} key={r.key} data-returns-bench={r.key} data-bench-pct={r.pct != null ? r.pct.toFixed(4) : ""}
+                      data-bench-gap={gap != null ? gap.toFixed(4) : ""} data-bench-from={r.span?.from ?? ""} data-bench-to={r.span?.to ?? ""}>
+                      <td className="px-4 py-2 text-slate-200" title={r.title}>{r.label}</td>
+                      <td className="px-3 py-2 text-right mono">
+                        {r.pct != null && r.span
+                          ? <span className={changeColor(r.pct)} title={`${fmtDate(r.span.from)} close ${r.span.v0.toFixed(2)} → ${fmtDate(r.span.to)} close ${r.span.v1.toFixed(2)} · ${r.span.days} days`}>{pctText(r.pct)}</span>
+                          : <AbsentCell reason={r.reason ?? "not measured"} />}
+                      </td>
+                      <td className="px-4 py-2 text-right mono">
+                        {gap != null
+                          ? <span className={changeColor(gap)} title="The portfolio's return less the index's, in percentage points">{gap >= 0 ? "+" : ""}{gap.toFixed(2)} pp</span>
+                          : <AbsentCell reason={portfolioPct == null ? "The portfolio's return is not measured on this window" : (r.reason ?? "no index return")} />}
+                      </td>
+                    </Tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </Card>
-      </div>
-
-      {/* ── Per account ── */}
-      <Card pad={false} className="flex min-h-0 flex-1 flex-col" title="By account" subtitle="Each account on its own dates; the return beside it is the measure picked above">
-        <div className="min-h-0 flex-1 overflow-auto">
-          <table className="min-w-full whitespace-nowrap text-[12.5px]" data-returns-table>
-            <thead className="sticky top-0 z-10 bg-ink-800 border-b border-ink-700">
-              <Tr view={view}>
-                <SortHeader col="account" view={view} align="left" pad="px-4 py-2">Account</SortHeader>
-                <SortHeader col="owner" view={view} align="left" pad="px-3 py-2">Owner</SortHeader>
-                <SortHeader col="open" view={view} pad="px-3 py-2">{period === "inception" ? "First purchase" : "Opening"}</SortHeader>
-                <SortHeader col="close" view={view} pad="px-3 py-2">Closing</SortHeader>
-                <SortHeader col="in" view={view} pad="px-3 py-2">Capital in</SortHeader>
-                <SortHeader col="out" view={view} pad="px-3 py-2">Capital out</SortHeader>
-                <SortHeader col="gain" view={view} pad="px-3 py-2">Gain</SortHeader>
-                <SortHeader col="ret" view={view} pad="px-3 py-2">Return</SortHeader>
-              </Tr>
-            </thead>
-            <tbody className="divide-y divide-ink-700/60">
-              {sorted.map((r) => (
-                <Tr view={view} key={r.id} data-returns-account={r.id}>
-                  <td className="px-4 py-2 text-slate-200">{r.label}</td>
-                  <td className="px-3 py-2 text-slate-400">{r.owner}</td>
-                  <td className="px-3 py-2 text-right mono text-slate-300">
-                    {r.open == null ? fmtDate(r.openDate) : <span title={`Statement value on ${r.openDate}`}>{money(r.open)}</span>}
-                  </td>
-                  <td className="px-3 py-2 text-right mono text-slate-300" title={`Statement value on ${r.closeDate}`}>{money(r.close)}</td>
-                  <td className="px-3 py-2 text-right mono text-slate-400">{money(r.cin)}</td>
-                  <td className="px-3 py-2 text-right mono text-slate-400">{money(r.cout)}</td>
-                  <td className={`px-3 py-2 text-right mono ${changeColor(r.gain)}`}>{money(r.gain)}</td>
-                  <td className="px-3 py-2 text-right mono" data-returns-row-pct={r.m.shown && r.m.pct != null ? r.m.pct.toFixed(4) : ""}>
-                    {r.m.shown && r.m.pct != null
-                      ? <span className={changeColor(r.m.pct)} title={r.m.worked}>{pctText(r.m.pct)} <span className="text-[10.5px] text-slate-500">{r.m.basis === "annual" ? "p.a." : "abs"}</span></span>
-                      : <AbsentCell reason={r.m.reason ?? "not measured"} />}
-                  </td>
-                </Tr>
-              ))}
-            </tbody>
-          </table>
-          {rows.length === 0 && <p className="px-4 py-3 text-[12.5px] text-slate-500" data-returns-empty>No account can be measured over this window</p>}
-          {excluded.length > 0 && (
-            <details className="border-t border-ink-700 px-4 py-2 text-[12px]" data-returns-excluded={excluded.length}>
-              <summary className="cursor-pointer text-slate-400" title="Each is named with the reason it cannot be measured; none is counted as zero">
-                Not measured · {excluded.length} accounts
-              </summary>
-              <ul className="mt-1 space-y-0.5">
-                {excluded.map((e) => (
-                  <li key={e.label} className="text-slate-400" title={e.reason} data-returns-excluded-row>{e.label} · {DASH}</li>
-                ))}
-              </ul>
-            </details>
-          )}
         </div>
-      </Card>
+      </div>
     </div>
   );
+}
+
+type BenchRow = {
+  key: string; label: string; title: string; pct: number | null; reason: string | null;
+  span: { from: string; to: string; v0: number; v1: number; days: number } | null;
+};
+
+/** The latest settled close on or before a date — never a later one. */
+function closeOnOrBefore(h: PriceHistory, date: string): { date: string; value: number } | null {
+  let lo = 0, hi = h.t.length - 1, at = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (h.t[mid] <= date) { at = mid; lo = mid + 1; } else hi = mid - 1;
+  }
+  return at < 0 ? null : { date: h.t[at], value: h.v[at] };
 }
