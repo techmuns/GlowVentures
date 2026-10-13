@@ -6135,6 +6135,14 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": null,
     "costOfUnitsSold": null,
     "realizedLotsAfter": 1,
+    "rolledForward": {
+      "through": "2026-08-04",
+      "quantity": 6500,
+      "costBasis": 922285,
+      "realizedPnL": 657636,
+      "costOfUnitsSold": 851340,
+      "trades": 1
+    },
     "returnPct": 31.09,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6165,6 +6173,14 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": null,
     "costOfUnitsSold": null,
     "realizedLotsAfter": 2,
+    "rolledForward": {
+      "through": "2026-08-04",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": 302916.87,
+      "costOfUnitsSold": 1243601.1,
+      "trades": 2
+    },
     "returnPct": -6.65,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6224,6 +6240,14 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": null,
     "costOfUnitsSold": null,
     "realizedLotsAfter": 3,
+    "rolledForward": {
+      "through": "2026-08-04",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": 309800.94,
+      "costOfUnitsSold": 1056112,
+      "trades": 3
+    },
     "returnPct": -16.53,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6254,6 +6278,14 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": null,
     "costOfUnitsSold": null,
     "realizedLotsAfter": 2,
+    "rolledForward": {
+      "through": "2026-08-04",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": -627099.27,
+      "costOfUnitsSold": 1408214.6,
+      "trades": 1
+    },
     "returnPct": -44.01,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6341,6 +6373,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -44923.13,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-08-04",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 2
+    },
     "returnPct": -11.86,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6400,6 +6440,14 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": null,
     "costOfUnitsSold": null,
     "realizedLotsAfter": 1,
+    "rolledForward": {
+      "through": "2026-08-04",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": 57947.4,
+      "costOfUnitsSold": 1247182.11,
+      "trades": 1
+    },
     "returnPct": -16.86,
     "stCostBasis": null,
     "ltCostBasis": null,

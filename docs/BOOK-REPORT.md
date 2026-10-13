@@ -434,6 +434,15 @@ never guessed into the nearest plausible bucket.
 - account Green Lantern Capital LLP::510861: performance-history 2026-08-10 superseded for SNAPSHOT facts by 2026-10-06 — `green-lantern-capital-llp-510861-2026-08-10-performance-history`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: 1 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 510861: capital-gain lots printed as `axis-liquid-fund-direct-plan-growth` settle this account's sales of `axis-liquid-fund-direct-plan-growth-option` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
+- account 510861: aurobindo-pharma is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510861: alivus-life-sciences is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510861: bajaj-auto is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510861: graphite-india is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510861: gujarat-ambuja-exports is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510861: jamna-auto-ind is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510861: gmm-pfaudler is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510861: ratnamani-metals-and-tubes is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510861: axis-liquid-fund-direct-plan-growth-option is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
 - account 510861: the 2026-09-22 capital register's 11 movement(s) after 2026-07-27, the date the account's value is struck (0 in, 30846.8 out), are not listed as dated capital: they are not yet in that value
 - account 510861: its dated capital record runs to 2026-07-27 — the capital register whose balances tie reaches that date, past the 2026-06-30 its typed rows reach on their own
 - account 510861: 2 movement(s) from its capital register (0 in, 6350 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
@@ -483,6 +492,12 @@ never guessed into the nearest plausible bucket.
 - account LKP Securities::98245: 6 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 98245: capital-gain lots of `nippon-india-etf-liquid-bees` belong to its holding `nip-etnf1d-rtliqbees` — the same ISIN (INF732E01037) on the same account, where the depository clips the name the lot and the sale print in full
 - account 98245: 10 capital-gain lot(s) were sold after this account's holding statement of 2026-03-31, so the units they sold are still IN that statement's positions at its own mark. Their gain is on the capital gain statement and is not added to any position's return — doing so would count the same units once as value and once as profit.
+- account 98245: belrise-industries rolled forward on the account's own tape from 12500 on 2026-03-31 to 6500 on 2026-08-04 (1 trade(s); witnessed by depository 2026-07-02 and capital gain lots to 2026-07-31)
+- account 98245: capri-global-capital rolled forward on the account's own tape from 7000 on 2026-03-31 to 0 on 2026-08-04 (2 trade(s); witnessed by depository 2026-07-02 and capital gain lots to 2026-07-31)
+- account 98245: electronics-mart-india rolled forward on the account's own tape from 10000 on 2026-03-31 to 0 on 2026-08-04 (3 trade(s); witnessed by capital gain lots to 2026-07-31)
+- account 98245: jyothy-labs rolled forward on the account's own tape from 4000 on 2026-03-31 to 0 on 2026-08-04 (1 trade(s); witnessed by capital gain lots to 2026-07-31)
+- account 98245: pricol rolled forward on the account's own tape from 650 on 2026-03-31 to 0 on 2026-08-04 (2 trade(s); witnessed by depository 2026-07-02); a sale after the capital gain statement leaves cost and realised unknown
+- account 98245: varun-beverages rolled forward on the account's own tape from 2700 on 2026-03-31 to 0 on 2026-08-04 (1 trade(s); witnessed by depository 2026-07-02 and capital gain lots to 2026-07-31)
 - account 98245: no time-weighted return series in any statement
 - account 98245: no flow block in any statement, so no value bridge
 - account 98245: no external capital movements found, so no money-weighted return series
