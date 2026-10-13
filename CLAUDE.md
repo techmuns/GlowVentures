@@ -27646,6 +27646,63 @@ costed; the costed and uncosted value never exceed the sector's; and,
 load-bearing, every row with a costed holding shows a figure. No figure in the
 book moves; `build-book` is byte-identical.
 
+### Stage 10dw — A HOLDING SOLD AFTER ITS STATEMENT IS ROLLED FORWARD ON ITS OWN WITNESSES
+
+*"verify why only few names are being ranked by % move and not all... also why
+showing no. of shares unverified... find the root cause and fix."* — a
+screenshot of Today's movers reading *"6 names ranked by % move only · share
+counts unverified"*.
+
+**ROOT CAUSE.** The corporate-action gate (#104) withholds a holding's money
+impact wherever a sale is recorded after its holding statement
+(`realizedLotsAfter > 0`): *"Sales are recorded after this statement; a newer
+holding balance is required."* LKP 98245's holding statement is dated 31 Mar and
+its capital-gain lots run past it, so six direct-equity shares were ranked by %
+alone and counted in no rupee figure. The gate was right that the statement's
+quantity was stale, and wrong to stop there: the newer balance was already in
+the archive.
+
+**THE FIX: `rollForwardOf` IN `build-book`.** It emits
+`Position.rolledForward = { through, quantity, costBasis, realizedPnL,
+costOfUnitsSold, trades }`, rolling a holding forward on the account's own dated
+trades — and ONLY where something independent witnesses the result: the
+depository's closing balance, the capital-gain lots, or both. Cost and realised
+are carried only where the lots settle them; otherwise they are `null`, never
+guessed. Every roll, and every holding left unrolled with the reason, is named
+in `docs/BOOK-REPORT.md`.
+
+| Holding | Was | Now |
+| --- | --- | --- |
+| Belrise Industries | 12,500 on 31 Mar | 6,500 on 4 Aug — witnessed by the depository (2 Jul) and the lots (31 Jul) |
+| Capri Global, Electronics Mart, Jyothy Labs, Varun Beverages | held | rolled to 0 — not a row on the live basis |
+| Pricol | held | rolled; its cost and realised are `null`, because the lots do not settle them |
+| Liquid BeES | — | not rolled: a mutual fund, and the gate does not apply |
+| Green Lantern 510861's nine holdings | — | not rolled: nothing witnesses them, and each is named |
+
+**§6 GAINS ONE NAMED EXCEPTION.** On a rolled holding the LIVE layer
+(`applyCorporateActionQuotes`) marks the rolled quantity, drops a row rolled to
+0, takes the rolled cost and realised, and starts the corporate-action window at
+`through`. The statement basis is untouched — `statementPortfolio`,
+`BOOK_SUMMARY` and every page that reconciles to a PDF read the statement's own
+quantity — so this is a fact the newer documents establish, applied where live
+figures are drawn, not a mark moving a quantity.
+
+**Checks.** `corporateActions.test.ts` and `liveWithheld.test.ts` cover the roll
+and the dropped row. `check:pages` re-expresses the roll off `glowData.ts`
+(`withRolledForward` in `bookArray`), reads the corporate-actions table off the
+statement book, and `stock-sold-after` walks a rolled holding. *"A share sold
+after its statement…"* now abstains with the evidence: no share records a sale
+after its statement that is not rolled.
+
+**Verification.** `build` · `test:family` 0 failed · `test:ingest` (golden 140,
+2 not checked, 0 blocked) · `check:family` **136/0** · `build-book`
+byte-identical on a second run. `check:pages` over the ten routes this touches:
+4 of 20 combinations have a finding, **all main's**: the priority-request check
+on `cio-live`, VD-17 on `monitor`, and the no-NSE-symbol check on
+`corporate-actions` and `corporate-actions-live` (SVAN's Cosmo Films and
+CreditAccess Grameen rows) — the last measured failing identically on main's own
+build at `62a0ec6`.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

@@ -134,9 +134,19 @@ ok("a fund is never gated, so nothing is ever withheld for one", () => {
   assert.equal(liveWithheldReason(p, returns), null);
 });
 
-ok("THE BOOK: every LKP holding sold after its statement is withheld from a quote that arrives, by that reason", () => {
-  const after = BOOK_POSITIONS.filter((x) => x.assetClass === "Equity" && (x.realizedLotsAfter ?? 0) > 0);
-  assert.ok(after.length > 0, "the book carries holdings sold after their statement");
+ok("THE BOOK: a share sold after its statement that the tape did NOT roll forward is withheld, by that reason — and one it did roll is not (Stage 10dw)", () => {
+  const all = BOOK_POSITIONS.filter((x) => x.assetClass === "Equity" && (x.realizedLotsAfter ?? 0) > 0);
+  assert.ok(all.length > 0, "the book carries holdings sold after their statement");
+  const after = all.filter((x) => !x.rolledForward);
+  const rolledOn = all.filter((x) => x.rolledForward && x.rolledForward.quantity > 0 && symbolFor(x));
+  assert.ok(rolledOn.length > 0, "and at least one the tape rolled forward and still holds");
+  const rq: QuoteFeed = { asOf: "2026-09-23T10:00:00Z", missing: [], pending: [], fresh: rolledOn.length, stale: 0, quotes: {} };
+  for (const x of rolledOn) rq.quotes[symbolFor(x)!] = { ...quotes().quotes.GATE, price: (x.currentPrice ?? 1) * 1.1 };
+  const rOut = applyCorporateActionQuotes(rolledOn, BOOK_ACCOUNTS as Account[], rq, clean);
+  for (const x of rolledOn) {
+    assert.ok(!/Sales are recorded after this statement/.test(liveWithheldReason(x, rOut.returns) ?? ""), `${x.securityKey} is rolled, never held back for its sales`);
+  }
+  if (after.length === 0) return;
   const q: QuoteFeed = { asOf: "2026-09-23T10:00:00Z", missing: [], pending: [], fresh: after.length, stale: 0, quotes: {} };
   for (const x of after) {
     const s = symbolFor(x);
@@ -145,7 +155,6 @@ ok("THE BOOK: every LKP holding sold after its statement is withheld from a quot
   }
   const out = applyCorporateActionQuotes(after, BOOK_ACCOUNTS as Account[], q, clean);
   const quoted = after.filter((x) => symbolFor(x));
-  assert.ok(quoted.length > 0, "at least one of them resolves a symbol");
   for (const x of quoted) {
     assert.ok(/Sales are recorded after this statement/.test(liveWithheldReason(x, out.returns) ?? ""), x.securityKey);
   }

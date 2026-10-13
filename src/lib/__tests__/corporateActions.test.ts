@@ -156,4 +156,30 @@ assert.equal(liveOn(dayAfter(through, SHARE_EVENT_LEAD_DAYS + 1)), 0, "…and no
 
 const funds = BOOK_POSITIONS.filter((p) => p.assetClass !== "Equity");
 assert.deepEqual(applyCorporateActionQuotes(funds, BOOK_ACCOUNTS, null, saved).positions, funds.map((p) => ({ ...p, live: false })), "fund NAVs and distributions are not equity corporate actions");
+
+// ROLLED FORWARD (Stage 10dw): a share the account's own tape carried past its
+// statement is LIVE at the rolled quantity; one rolled to nil is not a row;
+// and the statement basis — the input — is untouched.
+const rolled = BOOK_POSITIONS.filter((x) => x.assetClass === "Equity" && x.rolledForward && symbolFor(x));
+assert.ok(rolled.length >= 3, `the book rolls company shares forward: ${rolled.length}`);
+assert.ok(rolled.some((x) => x.rolledForward!.quantity === 0) && rolled.some((x) => x.rolledForward!.quantity > 0), "both a holding sold to nil and one still held");
+const rolledSnapshot = JSON.stringify(rolled);
+const rDay = rolled.map((x) => x.rolledForward!.through).sort().at(-1)!;
+const rFeed: QuoteFeed = { asOf: `${rDay}T06:00:00Z`, missing: [], pending: [], fresh: 1, stale: 0, quotes: {} };
+for (const x of rolled) {
+  const px = x.currentPrice ?? 100;
+  rFeed.quotes[symbolFor(x)!] = { price: px * 1.01, prevClose: px, tradedAt: `${rDay}T06:00:00Z`, open: px, dayLow: px, dayHigh: px,
+    low52: null, high52: null, marketCap: null, volume: 1, yearChangePct: null, ageS: 0, source: "upstox" };
+}
+const rOut = applyCorporateActionQuotes(rolled, BOOK_ACCOUNTS, rFeed, { ...saved, verifiedThrough: rDay }).positions;
+const held = rolled.filter((x) => x.rolledForward!.quantity > 0);
+assert.equal(rOut.length, held.length, "a holding the tape sold to nil is not a live row");
+for (const x of held) {
+  const o = rOut.find((y) => y.accountId === x.accountId && y.securityKey === x.securityKey)!;
+  assert.ok(o, `${x.security} is still a row`);
+  assert.equal(o.quantity, x.rolledForward!.quantity, `${x.security} carries the tape's quantity`);
+  assert.equal(o.realizedLotsAfter, 0, `${x.security}: every later sale is inside the roll`);
+  assert.equal(o.live, true, `${x.security}: the quote is not held back for sales the roll accounts for`);
+}
+assert.equal(JSON.stringify(rolled), rolledSnapshot, "the statement rows are not mutated");
 console.log("PASS corporate-action identity, split/bonus invariance, dividend timing, coverage, replay and source-fixture checks");

@@ -236,8 +236,34 @@ function bookArray(src, name) {
   // to them — a transaction-only demat's closing balances, and a holding
   // statement's shares with no usable price — for the walks that serve a feed.
   return name === "BOOK_POSITIONS"
-    ? withPublishedNavs([...out, ...withDepositoryFunds(src, out), ...withUnpricedStatementUnits(src, out)])
+    ? withPublishedNavs([...withRolledForward(out), ...withDepositoryFunds(src, out), ...withUnpricedStatementUnits(src, out)])
     : out;
+}
+
+/**
+ * THE ACCOUNT'S OWN TAPE, PAST ITS STATEMENT (Stage 10dw), re-expressed here
+ * rather than imported from `corporateActions.ts`, which is the code under
+ * test. Where `build-book` rolled a holding forward the live book carries the
+ * rolled quantity, its cost and its realised half; a holding the tape sold to
+ * nil is not a live row. Every other row is untouched.
+ */
+function withRolledForward(rows) {
+  return rows.flatMap((p) => {
+    const rf = p.rolledForward;
+    if (!rf) return [p];
+    if (rf.quantity === 0) return [];
+    const mv = p.currentPrice === null || p.currentPrice === undefined ? p.marketValue : rf.quantity * p.currentPrice;
+    const cost = rf.costBasis;
+    const unreal = cost === null ? null : mv - cost;
+    const denom = cost === null ? null : cost + (rf.costOfUnitsSold ?? 0);
+    return [{
+      ...p, statedQuantity: p.quantity, quantity: rf.quantity, marketValue: mv, costBasis: cost,
+      avgCost: cost === null || !(rf.quantity > 0) ? null : cost / rf.quantity,
+      unrealizedPnL: unreal, realizedPnL: rf.realizedPnL, costOfUnitsSold: rf.costOfUnitsSold,
+      realizedLotsAfter: 0,
+      returnPct: cost === null || !(cost > 0) || !(denom > 0) ? null : ((unreal + (rf.realizedPnL ?? 0)) / denom) * 100,
+    }];
+  });
 }
 
 /**
@@ -7156,6 +7182,16 @@ const M2_BOOK = (() => {
         && ps.some((p) => (Number(p.realizedLotsAfter) || 0) > 0) && ps.some((p) => !!symOf(p)))
       .map(([key]) => ({ key, mv: mvOf(key), ...realisedOf(key) }))
       .sort((a, b) => b.mv - a.mv)[0] ?? null;
+    // A COMPANY SHARE THE TAPE ROLLED FORWARD (Stage 10dw): the sales after its
+    // statement are dated on the broker's tape and witnessed by the
+    // depository's closing, so the live book carries the rolled quantity and
+    // the quote is NOT held back. The largest one still held, with a symbol.
+    const rolled = [...byKey.entries()]
+      .filter(([k, ps]) => !small.has(k) && ps.every((p) => p.assetClass === "Equity")
+        && ps.some((p) => p.rolledForward && p.rolledForward.quantity > 0) && ps.some((p) => !!symOf(p)))
+      .map(([key, ps]) => ({ key, mv: mvOf(key), quantity: ps.reduce((a, p) => a + (Number(p.statedQuantity ?? p.quantity) || 0), 0),
+        rolledQty: ps.reduce((a, p) => a + (Number(p.quantity) || 0), 0), ...realisedOf(key) }))
+      .sort((a, b) => b.mv - a.mv)[0] ?? null;
     // The fund whose own dated unit record strikes the largest realised figure
     // (3P's redemption) — a gain no capital gain statement carries.
     const realisedFund = [...byKey.entries()]
@@ -7165,13 +7201,17 @@ const M2_BOOK = (() => {
       .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))[0] ?? null;
     // /corporate-actions (DL-15): the company shares the STATEMENTS carry now —
     // each dedupeGroup once, no speck under the floor.
-    const corpRows = onceEach(positions).filter((p) => p.assetClass === "Equity" && !small.has(p.securityKey));
+    // The page reads `statementPortfolio`, which the tape's roll-forward never
+    // touches (Stage 10dw) — so its company shares are the STATEMENT's rows, a
+    // holding the tape sold to nil included.
+    const corpBase = statementBookPositions(src) ?? positions;
+    const corpRows = onceEach(corpBase).filter((p) => p.assetClass === "Equity" && !small.has(p.securityKey));
     const keyOfRow = (p) => `${p.accountId}|${p.securityKey}`;
     const corporate = {
       rows: corpRows.length,
       noSymbol: corpRows.filter((p) => !symOf(p)).map(keyOfRow),
-      specks: onceEach(positions).filter((p) => p.assetClass === "Equity" && small.has(p.securityKey)).map(keyOfRow),
-      soldAfter: corpRows.filter((p) => (Number(p.realizedLotsAfter) || 0) > 0 && !!symOf(p)).map(keyOfRow),
+      specks: onceEach(corpBase).filter((p) => p.assetClass === "Equity" && small.has(p.securityKey)).map(keyOfRow),
+      soldAfter: corpRows.filter((p) => !p.rolledForward && (Number(p.realizedLotsAfter) || 0) > 0 && !!symOf(p)).map(keyOfRow),
     };
     // AMFI's own published record for a key — the last one wins, as the page's index keeps it.
     const navStore = fundNavStore() ?? [];
@@ -7219,7 +7259,7 @@ const M2_BOOK = (() => {
         bookIsin: (byKey.get(k) ?? []).some((p) => !!p.isin) }))
       .filter((x) => !x.bookIsin)
       .sort((a, b) => b.mv - a.mv)[0] ?? null;
-    return { entitiesOf, entities, unitBreak, schemeOf, cagrScheme, realisedOf, soldAfter, realisedFund, corporate, navOf,
+    return { entitiesOf, entities, unitBreak, schemeOf, cagrScheme, realisedOf, soldAfter, rolled, realisedFund, corporate, navOf,
       newest, accountOf, mandateOf, valuedOf, nameMatched };
   } catch { return null; }
 })();
@@ -8334,7 +8374,13 @@ const ROUTES = [
    * quote to hold back and the page must say so (DL-9); and the fund whose own
    * unit record strikes its realised — a gain no capital gain statement carries.
    */
-  ["stock-sold-after", () => (M2_BOOK?.soldAfter ? `/stock/${encodeURIComponent(M2_BOOK.soldAfter.key)}` : "/stock/no-company-sold-after-its-statement")],
+  // A company share sold after the statement that still holds it — or, since
+  // Stage 10dw, one its account's own tape ROLLED FORWARD past that statement,
+  // which is the case this route was written for, now resolved.
+  ["stock-sold-after", () => {
+    const key = M2_BOOK?.soldAfter?.key ?? M2_BOOK?.rolled?.key;
+    return key ? `/stock/${encodeURIComponent(key)}` : "/stock/no-company-sold-after-its-statement";
+  }],
   ["stock-realised-fund", () => (M2_BOOK?.realisedFund ? `/stock/${encodeURIComponent(M2_BOOK.realisedFund.key)}` : "/stock/no-fund-with-a-realised-figure")],
   // ...AND A SCHEME MATCHED ON ITS NAME, whose rows carry no ISIN: the card must
   // not claim the holding's ISIN, and the header must not say the provider
@@ -11375,14 +11421,18 @@ const WITHHELD_BOOK = (() => {
     const reasonOf = (p, loading) => {
       if (p.assetClass !== "Equity" || !quoted(p)) return null;
       if (loading) return "Waiting for corporate-action evidence before marking shares live";
-      const start = asOf.get(p.accountId) || "";
-      if ((Number(p.realizedLotsAfter) || 0) > 0) return "Sales are recorded after this statement";
+      // A holding its account's own tape rolled forward (Stage 10dw) starts on
+      // the tape's last day, and every sale after the statement is inside it.
+      const rf = p.rolledForward;
+      const start = rf?.through ?? (asOf.get(p.accountId) || "");
+      if (!rf && (Number(p.realizedLotsAfter) || 0) > 0) return "Sales are recorded after this statement";
       if (!start || QUOTE_DAY < start) return "Quote predates the holding statement";
       return null;
     };
     const build = (loading) => {
       const lines = new Map(), byKey = new Map();
       for (const p of positions) {
+        if (p.rolledForward?.quantity === 0) continue; // sold to nil on its own tape: no live row
         const why = reasonOf(p, loading);
         const e = byKey.get(p.securityKey) ?? { held: 0, live: 0 };
         if (why) e.held++; else if (quoted(p)) e.live++;
@@ -25762,9 +25812,27 @@ const INVARIANTS = {
    */
   "stock-sold-after": [
     ...stockLayoutChecks(),
-    ...realisedTileChecks(() => M2_BOOK?.soldAfter?.key),
-    ["the book carries a company share sold after the statement that still holds it",
-      () => !!M2_BOOK?.soldAfter && M2_BOOK.soldAfter.lotsAfter > 0],
+    ...realisedTileChecks(() => M2_BOOK?.soldAfter?.key ?? M2_BOOK?.rolled?.key),
+    ["the book carries a company share sold after its statement, held back or rolled forward on its own tape", () =>
+      (!!M2_BOOK?.soldAfter && M2_BOOK.soldAfter.lotsAfter > 0) || !!M2_BOOK?.rolled],
+    /**
+     * ROLLED FORWARD ON ITS OWN TAPE IS LIVE (Stage 10dw). Where every sale
+     * after the statement is on the account's own tape, witnessed by the
+     * depository's closing balance or the capital-gain lots, the share count is
+     * known — so the quote is NOT held back, and the quantity shown is the
+     * rolled one, never the statement's.
+     */
+    ["a holding rolled forward on its own tape is priced live — no 'held back', no statement mark", (t, ctx) => {
+      if (M2_BOOK?.soldAfter || !M2_BOOK?.rolled) return { notChecked: "this book's subject is a held-back holding, not a rolled one" };
+      const c = ctx?.stockMark?.caption ?? "";
+      return !!ctx?.stockMark && !/held back|statement mark/i.test(c);
+    }],
+    ["...and its quantity is the tape's, not the statement's", (t, ctx) => {
+      const r = M2_BOOK?.rolled;
+      if (M2_BOOK?.soldAfter || !r) return { notChecked: "this book's subject is a held-back holding, not a rolled one" };
+      const q = Number(ctx?.stockMark?.qty);
+      return Number.isFinite(q) && Math.abs(q - r.rolledQty) < 1e-6 && Math.abs(q - r.quantity) > 1e-6;
+    }],
     /**
      * A QUOTE THAT ARRIVED AND WAS HELD BACK IS NOT "NO QUOTE" (DL-9). The live
      * fixture prices this company, and the corporate-action gate withholds it
@@ -25773,10 +25841,12 @@ const INVARIANTS = {
      * for a feed that already answered.
      */
     ["the price line says the live quote is held back — never 'no quote'", (t, ctx) => {
+      if (!M2_BOOK?.soldAfter) return { notChecked: "no company share in this book is held back for sales after its statement (rolled forward instead)" };
       const c = ctx?.stockMark?.caption ?? "";
       return /live quote held back/.test(c) && !/no live quote|returned no quote|did not respond|price feed down/.test(c);
     }],
-    ["...and its hover is the corporate-action gate's own reason", (t, ctx) =>
+    ["...and its hover is the corporate-action gate's own reason", (t, ctx) => !M2_BOOK?.soldAfter
+      ? { notChecked: "no company share in this book is held back for sales after its statement" } :
       /held back/.test(ctx?.stockM2?.markTip ?? "") && /Sales are recorded after this statement/.test(ctx?.stockM2?.markTip ?? "")],
   ],
   "stock-realised-fund": [
@@ -41965,6 +42035,7 @@ for (const theme of THEMES) {
           value: el.innerText.replace(/\s+/g, " ").trim(),
           caption: document.querySelector("[data-stock-mark-note]")?.innerText.replace(/\s+/g, " ").trim() ?? null,
           tip: document.querySelector("[data-stock-mark-note]")?.getAttribute("title") ?? null,
+          qty: document.querySelector("[data-stock-qty]")?.getAttribute("data-stock-qty") ?? null,
         };
       });
       /**

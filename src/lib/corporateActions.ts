@@ -2,6 +2,7 @@ import type { Account, Position } from "./types";
 import { applyQuotes, symbolFor, quoteSymbolFor, type QuoteFeed } from "./quotes";
 import { requestDeadline } from "./requestDeadline";
 import { isCounted } from "./analytics";
+import { fifoReturnPct } from "../../shared/fifo.mjs";
 import { validActionFeed, type ActionFeed, type ResearchAction } from "../../shared/corporateActions.mjs";
 export type { ActionFeed, ResearchAction } from "../../shared/corporateActions.mjs";
 
@@ -174,14 +175,24 @@ export function applyCorporateActionQuotes(
 ): { positions: Position[]; returns: Map<string, ActionReturn> } {
   const dates = new Map(accounts.map((a) => [a.accountId, a.asOf]));
   const returns = new Map<string, ActionReturn>();
-  const output = positions.map((p) => {
+  const output = positions.flatMap((stated) => {
+    // THE ACCOUNT'S OWN TAPE, PAST ITS STATEMENT (Stage 10dw). Where `build-book`
+    // could roll a holding forward — every sale after the statement date on the
+    // account's own tape, witnessed by the depository's closing balance or the
+    // capital gain lots — the live layer marks THAT quantity rather than
+    // withholding the price for want of "a newer holding balance": the newer
+    // balance is the account's own record. A holding the tape sold to nil is not
+    // held, so it is not a live row. The statement basis is never touched.
+    const rf = stated.rolledForward;
+    if (rf && rf.quantity === 0) return [];
+    const p: Position = rf ? rolledPosition(stated, rf) : stated;
     // A share event multiplies a unit count; a line recorded with none (the
     // review's private investments, Stage 10dh) has nothing to adjust and is
     // never priced live, so it takes the plain overlay, which leaves it alone.
     if (p.assetClass !== "Equity" || !isCounted(p)) return applyQuotes([p], quotes)[0];
     const sym = quoteSymbolFor(p);
     const q = quotes?.quotes[sym || ""];
-    const start = dates.get(p.accountId) || "";
+    const start = rf?.through ?? (dates.get(p.accountId) || "");
     const end = q ? marketDay(q.tradedAt || quotes!.asOf) : start;
     const plan = projectActions(p, start, end, feed);
     // A quote without a trade timestamp cannot prove it is post-action on
@@ -235,9 +246,34 @@ export function applyCorporateActionQuotes(
       }
     }
     returns.set(positionActionKey(p), plan);
-    return priced;
+    return [priced];
   });
   return { positions: output, returns };
+}
+
+/**
+ * The statement's holding at the quantity its account's own tape carries it
+ * to — cost, realised and the cost of the units sold as `build-book` rolled
+ * them (null where a sale is not yet settled by a capital-gain lot), valued at
+ * the statement's mark until a quote moves it. `realizedLotsAfter` is spent:
+ * every one of those sales is inside the roll.
+ */
+function rolledPosition(p: Position, rf: NonNullable<Position["rolledForward"]>): Position {
+  const quantity = rf.quantity;
+  const marketValue = p.currentPrice === null ? p.marketValue : quantity * p.currentPrice;
+  const cost = rf.costBasis;
+  const unrealizedPnL = cost === null ? null : marketValue - cost;
+  return {
+    ...p, quantity, marketValue,
+    costBasis: cost,
+    avgCost: cost === null || !(quantity > 0) ? null : cost / quantity,
+    unrealizedPnL,
+    realizedPnL: rf.realizedPnL,
+    costOfUnitsSold: rf.costOfUnitsSold,
+    realizedLotsAfter: 0,
+    returnPct: cost === null || unrealizedPnL === null || !(cost > 0) ? null
+      : fifoReturnPct(marketValue, cost, rf.realizedPnL, rf.costOfUnitsSold),
+  };
 }
 
 /**
