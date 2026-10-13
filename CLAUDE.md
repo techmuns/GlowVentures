@@ -27581,6 +27581,32 @@ complete edge on the screen."*
 `build` · `check:pages` on six Morning CIO movers routes: the one finding is the
 priority-request check on `cio-live`, which fails on main too (Stage 10dn).
 
+### Stage 10du — SECTOR RETURNS ARE FIFO OVER THE HOLDINGS THAT REPORT A COST
+
+*"The returns column of the entire sector composition is empty, find the root
+cause and fix it so that we can see returns based on sector allocation."*
+
+**ROOT CAUSE: TWO REFUSALS, ONE ON EACH VIEW.** Consolidated refused every
+return by construction (its value is part derived, Stage 10aq). Direct Equity
+struck one only where `costCoversSet` passed, and almost no sector does: its
+depository rows print no cost. So nearly every row showed "—".
+
+**NOW BOTH VIEWS STRIKE FIFO OVER THE HOLDINGS THAT REPORT A COST** —
+`fifoTotals` over the rows whose `costBasis` is a number — which is the B-07
+rule the whole-book tile and the Monitor footer already follow. The cell names
+its set: an "N of M" chip wherever some holdings report no cost, and a hover
+giving the costed value against the sector's, the depository value with no
+cost, and on Consolidated the derived fund share, which carries none. Only a
+sector where no holding reports a cost is a dash, with its reason. The Compare
+tab's Return on cost row takes the same figure and chip.
+
+**Checks:** `sectorReturnChecks(view)` in `check:pages`, on `sectors` and
+`sectors-direct`: every row is a signed FIFO figure naming its set (the chip
+exactly where costed < holdings), or a dash with its reason where none is
+costed; the costed and uncosted value never exceed the sector's; and,
+load-bearing, every row with a costed holding shows a figure. No figure in the
+book moves; `build-book` is byte-identical.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

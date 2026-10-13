@@ -7,7 +7,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import {
   sum, sumOrNull, consolidatedMarketValue, isCompanyShare, excludedClasses, assetClassLabel, currentHoldings,
-  holdingRoute, ROUTE_LABEL, ROUTE_NOTE, DIRECT_EQUITY_BUCKET, costCoversSet,
+  holdingRoute, ROUTE_LABEL, ROUTE_NOTE, DIRECT_EQUITY_BUCKET,
   holdingBucket, bucketLabel, MANDATE_BUCKET, droppedHoldings, isFundVehicle, CASH_EQUIVALENT_KEYS,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
@@ -98,7 +98,6 @@ function issuerMix(list: readonly CompanyExposure[]): IssuerMix {
 const DEBT_PAPER = "bonds, CDs, commercial paper, bills";
 
 /** Why Consolidated strikes no return: its value is part measured, part derived. */
-const CONSOLIDATED_RETURN_WHY = "This view's value is the shares the statements report plus a DERIVED share of what the funds disclose, and no document reports a cost for the second. A return struck over it would divide a part-measured gain by a cost covering part of its own numerator. Direct Equity is measured end to end and carries one where its holdings report a cost.";
 
 /**
  * ── THREE TABS, AND THE THIRD IS NOT A THIRD SET ─────────────────────────────
@@ -151,17 +150,19 @@ type SectorRow = {
   cost: number | null; pnl: number | null; returnPct: number | null;
   /**
    * FIFO's other half: what the units already sold realised, and the capital
-   * behind the return (cost held + cost of units sold). Null on Consolidated.
+   * behind the return (cost held + cost of units sold), over the costed holdings.
    */
   realised: number | null; deployed: number | null;
   /** Holdings behind the sector that report a cost, and how many there are. */
   costed: number; holdings: number;
   /**
-   * The part of the sector's value whose holdings report NO cost — what
-   * `costCoversSet` weighs. Null on Consolidated, where no cost is struck at all
-   * and a zero here would read as "fully costed".
+   * The part of the sector's MEASURED value whose holdings report NO cost. On
+   * Consolidated the derived fund half carries no cost either and is
+   * `mv − costedMV − uncostedMV`; the return's hover names both.
    */
-  uncostedMV: number | null;
+  uncostedMV: number;
+  /** The value of the holdings that report a cost — the set the return covers. */
+  costedMV: number;
   /** Why no return is struck, where none is — never a bare dash. */
   returnWhy: string | null;
   /** The largest company (Consolidated) or holding (Direct Equity). */
@@ -180,20 +181,11 @@ type SectorRow = {
 /**
  * ── ONE ROLLUP, TWO SETS ─────────────────────────────────────────────────────
  *
- * Consolidated rolls up COMPANIES, and its cost, P&L and return are NULL by
- * construction rather than by absence in the data: its value column is the
- * measured half plus a derived one, and no statement reports a cost for a share
- * the family owns inside somebody else's portfolio.
- *
- * Direct Equity rolls up the SAME kind of entry over the family's own shares,
- * and there a cost IS a measurement — for the holdings whose statement prints
- * one. A return is struck only where those holdings account for essentially the
- * whole sector (`costCoversSet`, the one definition Morning CIO and the
- * Portfolio Monitor already share), because a return over the costed few
- * printed beside the value of all of them describes neither. This page used to
- * print `fmtPct(null)` there — a bare dash inside a formula popover whose
- * worked line read "— ÷ — × 100" — which is the absent-without-a-reason failure
- * `Absent.tsx` exists to prevent.
+ * Consolidated rolls up COMPANIES (the measured half plus a derived one);
+ * Direct Equity rolls up the family's own shares. On both, the return is FIFO
+ * over the holdings whose statement reports a cost, and the cell names that set
+ * ("N of M") — Stage 10dt. The derived fund half and a depository's costless
+ * rows carry no cost, so they are named in the hover and never blended in.
  */
 function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) => number, withCost: boolean): SectorRow[] {
   const m = new Map<string, { entries: CompanyExposure[]; mv: number }>();
@@ -210,41 +202,57 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
       const measured = v.entries.reduce((a, e) => a + (e.positions.length ? e.measured : 0), 0);
       const derived = v.entries.reduce((a, e) => a + e.derived, 0);
       const byValue = [...v.entries].sort((a, b) => valueOf(b) - valueOf(a));
-      if (!withCost) {
-        return {
-          key, mv: v.mv, count: v.entries.length, weight: tot > 0 ? v.mv / tot : 0,
-          measured, derived, cost: null, pnl: null, returnPct: null, realised: null, deployed: null,
-          costed: 0, holdings: positions.length, uncostedMV: null, returnWhy: CONSOLIDATED_RETURN_WHY,
-          top: byValue[0]?.name ?? null,
-          topKey: byValue[0]?.key ?? null,
-          topDerivedOnly: !!byValue[0] && byValue[0].positions.length === 0,
-        };
-      }
+      /*
+       * THE RETURN IS FIFO OVER THE HOLDINGS THAT REPORT A COST, ON BOTH VIEWS,
+       * AND IT SAYS WHICH. Every cell of this column used to be a dash: on
+       * Consolidated because its value is part derived, and on Direct Equity
+       * wherever the costed holdings did not cover the whole sector — which on
+       * this book is every sector but one. A column of dashes answers nothing
+       * about how a sector has done. The figure is now struck over the costed
+       * holdings alone (`fifoTotals` over exactly those rows, so it covers them
+       * fully), the B-07 rule the whole-book return on cost already follows:
+       * the cell names its set ("N of M"), and its hover names the value it
+       * covers and what the rest is — holdings no statement prices at cost,
+       * and on Consolidated the derived fund half, which carries no cost at all.
+       * A dash remains only where NO holding in the sector reports a cost.
+       */
       const costedRows = positions.filter((x) => typeof x.costBasis === "number" && !x.costUnavailable);
       const cost = sumOrNull(costedRows.map((x) => x.costBasis));
       const pnl = sumOrNull(costedRows.map((x) => x.unrealizedPnL));
+      const costedMV = sum(costedRows.map((x) => x.marketValue));
       const uncostedMV = sum(positions.filter((x) => !costedRows.includes(x)).map((x) => x.marketValue));
-      const covered = costCoversSet(v.mv, uncostedMV);
       // FIFO: the unrealised gain on what is held AND the realised gain on units
       // already sold, over every rupee that bought a unit — never the survivors
       // alone. `fifoTotals` is the one place a set becomes a return.
-      const fifo = fifoTotals(positions);
-      const returnPct = covered && fifo.returnPct !== null ? fifo.returnPct : null;
+      const fifo = fifoTotals(costedRows);
+      const returnPct = costedRows.length > 0 && fifo.returnPct !== null ? fifo.returnPct : null;
       const topPos = [...positions].sort((a, b) => b.marketValue - a.marketValue)[0] ?? null;
-      return {
-        key, mv: v.mv, count: positions.length, weight: tot > 0 ? v.mv / tot : 0,
-        measured, derived, cost, pnl, returnPct, realised: fifo.realised, deployed: fifo.deployed,
-        costed: costedRows.length, holdings: positions.length, uncostedMV,
-        returnWhy: returnPct !== null ? null
+      const returnWhy = returnPct !== null ? null
+        : positions.length === 0
+          ? "The family reaches this sector only through their funds, and a fund's disclosure carries no cost — there is nothing to strike a return against."
           : costedRows.length === 0
             ? "No holding in this sector reports a cost — a depository statement carries a value and no basis, so there is nothing to strike a return against."
-            : `A cost is reported for ${costedRows.length} of the ${positions.length} holdings in this sector, and a return over those few printed beside the value of all of them would describe neither.`,
-        top: topPos?.security ?? null,
-        topKey: topPos?.securityKey ?? null,
-        topDerivedOnly: false,
+            : "The holdings that report a cost carry no capital deployed to strike a return against.";
+      return {
+        key, mv: v.mv, count: withCost ? positions.length : v.entries.length, weight: tot > 0 ? v.mv / tot : 0,
+        measured, derived, cost, pnl, returnPct, realised: fifo.realised, deployed: fifo.deployed,
+        costed: costedRows.length, holdings: positions.length, uncostedMV, costedMV,
+        returnWhy,
+        top: withCost ? topPos?.security ?? null : byValue[0]?.name ?? null,
+        topKey: withCost ? topPos?.securityKey ?? null : byValue[0]?.key ?? null,
+        topDerivedOnly: !withCost && !!byValue[0] && byValue[0].positions.length === 0,
       };
     })
     .sort((a, b) => b.mv - a.mv);
+}
+
+/** Which holdings a sector's return covers, in words — the cell's hover. */
+function returnCoverage(s: SectorRow, consolidated: boolean, fmt: (v: number) => string): string {
+  const derived = Math.max(0, s.mv - s.costedMV - s.uncostedMV);
+  const parts = [`FIFO over the ${s.costed} of ${s.holdings} holding${s.holdings === 1 ? "" : "s"} that report a cost — ${fmt(s.costedMV)} of the sector's ${fmt(s.mv)}`];
+  if (s.uncostedMV >= 1) parts.push(`${fmt(s.uncostedMV)} is held where the statement reports no cost (a depository)`);
+  if (consolidated && derived >= 1) parts.push(`${fmt(derived)} is the family's derived share inside their funds, which carries no cost`);
+  return parts.join("; ");
 }
 
 /**
@@ -1037,7 +1045,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                       if (!s) return <AbsentCell reason="no own-account holding in this sector" />;
                       return s.returnPct === null
                         ? <AbsentCell reason={s.returnWhy ?? "no return can be struck"} />
-                        : <span className={changeColor(s.returnPct)}>{fmtPct(s.returnPct, { sign: true })}</span>;
+                        : <span className={changeColor(s.returnPct)} title={returnCoverage(s, false, (v) => fmtFromBase(v, { compact: true }))}>{fmtPct(s.returnPct, { sign: true })}{s.costed < s.holdings && <span className="ml-1 text-[10.5px] text-slate-500">{s.costed} of {s.holdings}</span>}</span>;
                     }} />
                     <CompareRow label="Largest holding" keys={compare} plain render={(k) => directByKey.get(k)?.top ?? <AbsentCell reason="no own-account holding in this sector" />} />
                   </tbody>
@@ -1115,25 +1123,21 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                     : "the family's own company shares on this page")}>{`${(s.weight * 100).toFixed(1)}%`}</Auditable>}
                           </td>
                           <td className="px-3 py-2 text-right mono text-slate-400" data-cell="count">{s.count}</td>
-                          {/* A RETURN ONLY WHERE ITS OWN COLUMNS CAN CARRY ONE. Refused
-                              throughout Consolidated (its value is part derived), and on
-                              Direct Equity wherever the holdings that report a cost do not
-                              account for the whole sector — each refusal with its reason. */}
-                          <td className={`px-3 py-2 text-right mono ${changeColor(s.returnPct)}`} title={liveBySector[s.key] && s.returnPct !== null ? LIVE_CELL : undefined}
+                          {/* FIFO OVER THE COSTED HOLDINGS, NAMING ITS SET (Stage 10dt). A
+                              dash only where no holding in the sector reports a cost. */}
+                          <td className={`px-3 py-2 text-right mono whitespace-nowrap ${changeColor(s.returnPct)}`} title={s.returnPct === null ? undefined : `${returnCoverage(s, consolidatedView, (v) => fmtFromBase(v, { compact: true }))}${liveBySector[s.key] ? ` · ${LIVE_CELL}` : ""}`}
                             data-cell="return"
-                            /* THE COVERAGE A RETURN IS GATED ON, carried on the cell
-                               it gates, so `check:pages` can hold a printed return
-                               to `costCoversSet` without re-implementing the three
-                               sector tiers to learn which holdings a sector holds.
-                               Direct Equity only: Consolidated strikes no cost. */
-                            {...(consolidatedView ? {} : {
-                              "data-costed": s.costed, "data-holdings": s.holdings,
-                              "data-uncosted-mv": Math.round(s.uncostedMV ?? 0), "data-mv": Math.round(s.mv),
-                            })}>
+                            /* THE SET A RETURN IS STRUCK OVER, carried on the cell, so
+                               `check:pages` can hold the figure to its coverage. */
+                            data-costed={s.costed} data-holdings={s.holdings}
+                            data-costed-mv={Math.round(s.costedMV)} data-uncosted-mv={Math.round(s.uncostedMV)} data-mv={Math.round(s.mv)}>
                             {s.returnPct === null
-                              ? <AbsentCell reason={s.returnWhy ?? CONSOLIDATED_RETURN_WHY} />
-                              : liveBySector[s.key] ? fmtPct(s.returnPct, { sign: true })
-                              : <Auditable formula={{ title: "Sector return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ (cost held + cost of units sold) × 100", plain: "Every holding in this sector reports a cost. This is everything they have produced — the unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out — over every rupee that bought a unit of them.", worked: `= (${money(s.pnl)} + ${money(s.realised ?? 0)}) ÷ ${money(s.deployed)} × 100 = ${fmtPct(s.returnPct, { sign: true })}` }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}
+                              ? <AbsentCell reason={s.returnWhy ?? "no return can be struck"} />
+                              : <>
+                                  <span data-return-figure>{liveBySector[s.key] ? fmtPct(s.returnPct, { sign: true })
+                                    : <Auditable formula={{ title: "Sector return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ (cost held + cost of units sold) × 100, over the holdings that report a cost", plain: `${returnCoverage(s, consolidatedView, (v) => fmtFromBase(v, { compact: true }))}. The unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out, over every rupee that bought a unit of them.`, worked: `= (${money(s.pnl)} + ${money(s.realised ?? 0)}) ÷ ${money(s.deployed)} × 100 = ${fmtPct(s.returnPct, { sign: true })}` }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}</span>
+                                  {s.costed < s.holdings && <span className="ml-1 text-[10.5px] text-slate-500" data-return-coverage>{s.costed} of {s.holdings}</span>}
+                                </>}
                           </td>
                           <td className="px-3 py-2 text-left text-[12px] text-slate-400" data-cell="top"
                             data-top-key={s.topKey ?? ""} data-top-derived={s.topDerivedOnly ? "true" : "false"}>

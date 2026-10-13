@@ -21508,6 +21508,46 @@ const INSIDE_CARD = INSIDE_BOOK ? [
     }],
 ] : [["the AIF & PMS card's own book derived, so every claim on it can fail", () => false]];
 
+
+/**
+ * ── A SECTOR'S RETURN IS FIFO OVER THE HOLDINGS THAT REPORT A COST (Stage 10dt) ─
+ *
+ * The column read "—" on every Consolidated row (refused by construction) and on
+ * almost every Direct Equity row (`costCoversSet`). On both views it is now FIFO
+ * over the costed holdings, the B-07 rule the whole-book tile already follows,
+ * and the cell NAMES its set: a chip "N of M" wherever some holdings report no
+ * cost, and a hover giving the costed value against the sector's. Only a sector
+ * where NO holding reports a cost is a dash, with its reason. Re-expressed here,
+ * never imported.
+ */
+const SIGNED_PCT = /^[+\-\u2212]\d+\.\d+%$/;
+const sectorReturnChecks = (view) => [
+  [`${view}: every sector's return is FIFO over the holdings that report a cost, and names that set`, (_t, ctx) => {
+    const rs = ctx?.sectorLayout?.returns;
+    if (!rs || !rs.length) return false;
+    return rs.every((r) => {
+      const { costed, holdings, uncosted, mv, costedMv, count } = r;
+      if (![costed, holdings, uncosted, mv, costedMv].every(Number.isFinite)) return false;
+      if (costed > holdings || uncosted < 0 || costedMv < 0 || costedMv + uncosted > mv + 1) return false;
+      if (view === "direct" && holdings !== count) return false;
+      if (costed === 0) return r.text === "—" && r.figure === null
+        && /reports? a cost|only through their funds/i.test(r.title ?? "");
+      if (!SIGNED_PCT.test(r.figure ?? "")) return false;
+      if (!(r.title ?? "").includes(`FIFO over the ${costed} of ${holdings} holding`)) return false;
+      return costed < holdings ? r.coverage === `${costed} of ${holdings}` : r.coverage === null;
+    });
+  }],
+  // LOAD-BEARING: the complaint was a column of dashes. A build that refused
+  // every row again passes the rule above on a book where nothing is costed.
+  [`${view}: the Return column carries a figure, not a column of dashes`, (_t, ctx) => {
+    const rs = ctx?.sectorLayout?.returns;
+    if (!rs || !rs.length) return false;
+    const costedRows = rs.filter((r) => r.costed > 0);
+    if (!costedRows.length) return { notChecked: "no sector on this view holds a costed holding" };
+    return costedRows.every((r) => SIGNED_PCT.test(r.figure ?? ""));
+  }],
+];
+
 const INVARIANTS = {
   /**
    * ── THE MEMBER SCOPE (Stage 10di) ──────────────────────────────────────────
@@ -29241,26 +29281,7 @@ const INVARIANTS = {
       if (![measured, derived, rest].every(Number.isFinite)) return false;
       return Math.abs(measured + derived + rest - SECURITY_AXIS_BOOK.navCr) <= 0.5;
     }],
-    /**
-     * A RETURN IS REFUSED THROUGHOUT, WITH ITS REASON. This view's value column
-     * is part measured and part derived, and no document reports a cost for the
-     * derived half — so a percentage anywhere in the sector table would divide a
-     * part-measured gain by a cost covering part of its own numerator. Struck on
-     * the REASON as well as on the absence, because a bare dash teaches nothing.
-     */
-    ["no sector return is struck, and every refusal names its cause", (t, ctx) => {
-      /*
-       * STRUCK ON EACH ROW'S OWN RETURN CELL, read by its column id. It used to
-       * slice the page between "Sector breakdown" and the footer's opening
-       * words — and the footer went at Stage 10ap, so `sliceBetween` had been
-       * returning the whole rest of the page ever since: a boundary the page no
-       * longer prints is not a boundary. The cells are what the claim is about.
-       */
-      const rs = ctx?.sectorLayout?.returns;
-      if (!rs || !rs.length) return false;
-      return rs.every((r) => r.text === "—"
-        && /divide a part-measured gain by a cost covering part/i.test(r.title ?? ""));
-    }],
+    ...sectorReturnChecks("consolidated"),
     ["the derived half says it is no part of the book's NAV, in words", (t) =>
       /DERIVED, not a position/i.test(t) && /no part of the book[\u2019']?s NAV/i.test(t)],
     // The failure this page was rebuilt for: a fund standing at the head of a
@@ -29316,51 +29337,7 @@ const INVARIANTS = {
   "sectors-direct": [
     ...sectorLayoutChecks("direct"),
     ...SECTOR_TABLE_TAB,
-    /**
-     * A RETURN WHERE THE SECTOR'S OWN COLUMNS CAN CARRY ONE, AND A REASON
-     * WHERE THEY CANNOT. This view's Return column printed a bare dash on every
-     * row — a formula popover over "— ÷ — × 100" — which is the
-     * absent-without-a-reason failure `Absent.tsx` exists to prevent. Every cell
-     * is now one of exactly two things: a signed return, or a dash whose reason
-     * names the COST — none reported, or reported for only some holdings,
-     * because a return over the costed few beside the value of all of them
-     * describes neither (`costCoversSet`, the test Morning CIO and the Monitor
-     * share).
-     */
-    ["every sector's return is a signed figure, or a dash that says which costs are missing", (_t, ctx) => {
-      const rs = ctx?.sectorLayout?.returns;
-      if (!rs || !rs.length) return false;
-      return rs.every((r) => /^[+\-\u2212]\d+\.\d+%$/.test(r.text)
-        || (r.text === "—" && /reports? a cost|a cost is reported for/i.test(r.title ?? "")));
-    }],
-    /**
-     * …AND A RETURN APPEARS ONLY WHERE THE SECTOR'S COSTED HOLDINGS ACCOUNT FOR
-     * ITS WHOLE VALUE. The check above accepts any signed figure, so a page that
-     * dropped the coverage gate — striking a return over a sector's costed FEW
-     * and printing it beside the value of all of them — passed it, and on this
-     * book it would have printed one on every partially costed sector. The gate
-     * is `costCoversSet` (0.5% of the sector's value may be uncosted), RE-EXPRESSED
-     * here rather than imported, over the coverage the cell carries — and the
-     * attributes are tied to the row's own printed Positions count, so a cell
-     * cannot carry one set's coverage beside another set's row.
-     *
-     * AND A DASH'S REASON STATES THE COUNTS THE ROW CARRIES. "A cost is reported
-     * for 4 of the 7 holdings" is a claim a reader acts on — it says which
-     * documents to go and find — so it must be the row's own four and seven.
-     */
-    ["a return is struck only where the sector's costed holdings account for its whole value", (_t, ctx) => {
-      const rs = ctx?.sectorLayout?.returns;
-      if (!rs || !rs.length) return false;
-      return rs.every((r) => {
-        const { costed, holdings, uncosted, mv, count } = r;
-        if (![costed, holdings, uncosted, mv, count].every(Number.isFinite)) return false;
-        if (holdings !== count || costed > holdings || uncosted < 0 || uncosted > mv + 1) return false;
-        const covered = mv > 0 && uncosted <= mv * 0.005;
-        if (/^[+\-\u2212]\d+\.\d+%$/.test(r.text)) return covered && costed > 0;
-        if (costed === 0) return /No holding in this sector reports a cost/i.test(r.title ?? "");
-        return new RegExp(String.raw`A cost is reported for ${costed} of the ${holdings} holdings`).test(r.title ?? "");
-      });
-    }],
+    ...sectorReturnChecks("direct"),
     ["it is the book's own Direct Equity bucket, to the rupee", (t) => {
       if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
       const m = /DIRECT EQUITY\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i.exec(t);
@@ -42280,6 +42257,9 @@ for (const theme of THEMES) {
             return {
               key: r.getAttribute("data-sector-row"), text: (c?.innerText ?? "").trim(), title: tip(c),
               costed: n("data-costed"), holdings: n("data-holdings"), uncosted: n("data-uncosted-mv"), mv: n("data-mv"),
+              costedMv: n("data-costed-mv"),
+              figure: (c?.querySelector("[data-return-figure]")?.innerText ?? "").trim() || null,
+              coverage: (c?.querySelector("[data-return-coverage]")?.innerText ?? "").trim() || null,
               count: Number((r.querySelector('[data-cell="count"]')?.innerText ?? "").trim()),
             };
           }),
