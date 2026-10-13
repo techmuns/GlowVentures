@@ -7553,6 +7553,7 @@ const ROUTES = [
   ["cio-sectors", "/cio?tab=sectors"],
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
+  ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -19570,6 +19571,63 @@ const CIO_RETURNS = [
   }],
 ];
 
+
+/**
+ * Stage 10dt — *"the client wants to see the returns of the total portfolio and
+ * not the underlying holdings … combine [window and formula] into one single
+ * section and provide benchmark returns in the other section."* Struck on the
+ * handles: the per-holding table is gone, the window and the formula sit inside
+ * the portfolio card, and the benchmark card draws every benchmark — a figure,
+ * or an absence whose hover says why, never a bare blank.
+ */
+const CIO_RETURNS_LAYOUT = [
+  ["...the Returns tab shows the whole portfolio, never a table of its accounts or holdings", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    return r.rows === 0 && r.portfolioCard;
+  }],
+  ["...the window and the formula are one section, the portfolio's own card", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    return r.formulaInPortfolio && r.windowInPortfolio;
+  }],
+  ["...a second section sets every benchmark against the portfolio, in the benchmark control's order, each a figure or an absence that names why", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    if (!r.benchCard || !r.benchPortfolioRow) return false;
+    const keys = r.bench.map((b) => b.key);
+    if (keys.slice().sort().join() !== BENCH_FIXTURE.map((b) => b[0]).sort().join()) return false;
+    return r.bench.every((b) => b.pct !== "" ? /[+−-]?\d+\.\d+%/.test(b.text) : b.titles.trim().length > 0);
+  }],
+];
+
+/**
+ * The live walk: every benchmark fetched through `/api/prices`, its return the
+ * fixture's own closed form over the dates the row says it was struck on, never
+ * annualised under a year, and the gap the portfolio's figure less the index's.
+ */
+const CIO_RETURNS_LIVE = [
+  ["...every benchmark was asked of the price service by its own symbol", (t, ctx) => {
+    const req = ctx?.priceRequests ?? [];
+    return BENCH_FIXTURE.every((b) => req.includes(b[2]));
+  }],
+  ["...each benchmark's return is its index's close-to-close move over the dates it names, and the gap is the portfolio's figure less it", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    if (r.pct == null || r.pct === "") return notChecked("the portfolio's return is not measured on this window, so no gap is struck");
+    const priced = r.bench.filter((b) => b.pct !== "");
+    if (priced.length !== BENCH_FIXTURE.length) return false;
+    return priced.every((b) => {
+      const fx = BENCH_FIXTURE.find((x) => x[0] === b.key);
+      const raw = benchFixtureReturn(fx[2], b.from, b.to);
+      const d = (Date.parse(b.to) - Date.parse(b.from)) / 86400000;
+      const want = r.basis === "annual" && d >= 365 ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
+      return b.from <= b.to && Math.abs(Number(b.pct) - want) < 0.02
+        && Math.abs(Number(b.gap) - (Number(r.pct) - Number(b.pct))) < 0.001;
+    });
+  }],
+];
+
 const CIO_TAB_CONTROL = [
   /**
    * FOUR SINCE Stage 10cq: *"in morning CIO can you make an ALL alerts tab."* It
@@ -25798,8 +25856,9 @@ const INVARIANTS = {
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC.filter(([description]) => !CIO_OPTIONAL_CAPITAL_CHECKS.has(description)), ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
-  "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS],
-  "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS],
+  "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-return-metrics": [...CIO_MWR, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
@@ -36579,6 +36638,7 @@ for (const theme of THEMES) {
       if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       if (name === "sectors-direct-live") await installLiveMocks(page);
+      if (name === "cio-returns-live") await installLiveMocks(page);
       // THE INSIDE CARD'S LIVE WALK. The fixture prices every symbol in
       // `nseSymbols.json` — the disclosed-only ones off `DISCLOSED_MARK_BY_SYMBOL`,
       // which exists for exactly this route — so both halves of the card have
@@ -39090,6 +39150,21 @@ for (const theme of THEMES) {
           pct: pct?.getAttribute("data-returns-pct") ?? null, pctText: pct?.textContent ?? "",
           figures: [...root.querySelectorAll("[data-returns-figure]")].map((x) => x.getAttribute("data-returns-figure")),
           rows: root.querySelectorAll("[data-returns-account]").length,
+          portfolioCard: !!root.querySelector("[data-returns-portfolio]"),
+          benchCard: !!root.querySelector("[data-returns-benchmarks]"),
+          formulaInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-formula]"),
+          windowInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-window]"),
+          benchPortfolioRow: !!root.querySelector("[data-returns-bench-portfolio]"),
+          bench: [...root.querySelectorAll("[data-returns-bench]")].map((tr) => ({
+            key: tr.getAttribute("data-returns-bench"),
+            pct: tr.getAttribute("data-bench-pct") ?? "",
+            gap: tr.getAttribute("data-bench-gap") ?? "",
+            from: tr.getAttribute("data-bench-from") ?? "",
+            to: tr.getAttribute("data-bench-to") ?? "",
+            text: (tr.textContent ?? "").trim(),
+            titles: [...tr.querySelectorAll("[title]")].map((x) => x.getAttribute("title") ?? "").join(" | "),
+          })),
+          basis: pct?.getAttribute("data-returns-basis") ?? null,
           coverage: root.querySelector("[data-returns-coverage]")?.textContent ?? "",
         };
       });
