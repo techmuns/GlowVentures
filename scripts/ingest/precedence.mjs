@@ -377,7 +377,7 @@ export const PRECEDENCE = {
    */
   ...Object.fromEntries([
     "Aditya Birla Sun Life Mutual Fund", "Kotak Mahindra Mutual Fund",
-    "Mirae Asset Mutual Fund", "HDFC Mutual Fund", "Mutual fund folio",
+    "Mirae Asset Mutual Fund", "HDFC Mutual Fund", "ICICI Prudential Mutual Fund", "Mutual fund folio",
   ].map((name) => [name, {
     holdings:      { reportType: "holdings", note: "the folio statement's own scheme blocks." },
     quantity:      { reportType: "holdings", note: "closing unit balance." },

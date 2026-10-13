@@ -1,0 +1,23 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "INF109KC1P81",
+   "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
+   327918.76,
+   17.1686,
+   "2026-10-01",
+   6000000,
+   5629906.02
+  ]
+ ]
+}

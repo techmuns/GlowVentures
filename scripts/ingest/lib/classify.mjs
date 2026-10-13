@@ -692,6 +692,11 @@ const GENERIC_TYPE_RULES = [
   [/corporate\s+action/i, "corporate-action"],
   [/transaction\s+(?:statement|summary|report)|statement\s+of\s+transactions/i, "transaction-statement"],
   [/fact\s*sheet/i, "fact-sheet"],
+  // A PERFORMANCE APPRAISAL is a returns block (Green Lantern's one-page
+  // summary of 6 Oct 2026), not the holdings appraisal — above that rule,
+  // because "Portfolio Performance Appraisal" contains neither of its phrases
+  // but a bare "Performance Appraisal" reaching no rule went to no reader.
+  [/performance\s+appraisal/i, "performance-history"],
   [/portfolio\s+appraisal|appraisal\s+report/i, "appraisal"],
   [/performance\s+history|historical\s+performance/i, "performance-history"],
   [/performance\s+summary|returns?\s+summary/i, "performance-summary"],
@@ -923,6 +928,9 @@ const ISSUER_PROVIDER_RULES = [
   [/Aditya\s+Birla\s+Sun\s+Life\s+(?:Mutual\s+Fund|AMC)/i, "Aditya Birla Sun Life Mutual Fund"],
   [/Kotak\s+Mahindra\s+Mutual\s+Fund|Kotak\s+Mutual\s+Fund/i, "Kotak Mahindra Mutual Fund"],
   [/Mirae\s+Asset\s+(?:Mutual\s+Fund|Investment|Asset\s+Management|MF)/i, "Mirae Asset Mutual Fund"],
+  // Before HDFC: an ICICI Prudential statement names "HDFC Bank Ltd" in its
+  // bank details, so the HDFC rule would claim it on a name it merely mentions.
+  [/ICICI\s+Prudential\s+(?:Mutual\s+Fund|Asset\s+Management)|icicipruamc\.com/i, "ICICI Prudential Mutual Fund"],
   [/HDFC\s+Mutual\s+Fund|HDFC\s+Asset\s+Management/i, "HDFC Mutual Fund"],
   [/WhiteOak\s+Capital|White\s*Oak\s+Capital/i, "Scheme portfolio disclosure"],
   [/\bMotilal\s+Oswal/i, "Motilal Oswal"],
@@ -1057,6 +1065,26 @@ export function classify({ fileName, text }) {
       reportType: "holdings", sections: ["holdings"], familyGroup: null, strategy: null,
       confidence: folio && asOfDate ? "high" : "medium",
       matchedBy: "ASK Absolute Return Fund statement of account",
+    };
+  }
+  /**
+   * ICICI PRUDENTIAL's statement of account prints the holder as the first word
+   * run on the line that carries `Bank Account Number`, and the investor's
+   * ADDRESS on the lines below it — so the generic name rule found nothing and
+   * the fallback read a fragment of the street ("E MARGNEAR SIDDHIVINAYAK…").
+   * The folio is `Folio No. : 36379637 / 57`; the part after the slash is a
+   * check digit, not a second account. It is a folio's ACCOUNT SUMMARY — units,
+   * NAV and value per scheme — so it is typed `holdings` like every other folio.
+   */
+  if (provider === "ICICI Prudential Mutual Fund") {
+    const folio = (t.match(/Folio\s+No\.?\s*:\s*(\d{6,})/i) || [])[1] || null;
+    const holder = (t.match(/\n\s*([A-Z][A-Za-z .'-]{4,60}?)\s+Bank\s+Account\s+Number\b/) || [])[1] || null;
+    const asOfDate = genericAsOf(t) || dateFromName(name);
+    return {
+      provider, ownerName: trimPersonName(holder), accountNo: folio, asOfDate,
+      reportType: "holdings", sections: ["holdings"], familyGroup: null, strategy: null,
+      confidence: folio && asOfDate ? "high" : "medium",
+      matchedBy: "ICICI Prudential Mutual Fund statement of account",
     };
   }
   const reportType = genericReportType(t) || genericReportType(name.replace(/[_-]/g, " "));

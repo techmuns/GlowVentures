@@ -2852,6 +2852,21 @@ function build(archived) {
     const sectorDoc = authoritative(group, provider, "providerSector");
     const incomeDoc = authoritative(group, provider, "accruedIncome");
     const sectorByKey = new Map((sectorDoc?.holdings ?? []).map((h) => [h.securityKey, h.providerSector]));
+    // A SECTOR IS A FACT ABOUT THE COMPANY, NOT ABOUT ONE ISSUE. A fact sheet
+    // NEWER than the appraisal lists only what is held on ITS date, so a share
+    // the manager sold in between would lose the sector the earlier issue of the
+    // same report printed. Older issues of the authoritative report type fill a
+    // key the newest does not carry — fill only, never overrule.
+    if (sectorDoc) {
+      const older = allIssues
+        .filter((d) => d.reportType === sectorDoc.reportType && d.docKey !== sectorDoc.docKey)
+        .sort((a, b) => ((b.asOf ?? "") < (a.asOf ?? "") ? -1 : (b.asOf ?? "") > (a.asOf ?? "") ? 1 : (a.docKey < b.docKey ? -1 : 1)));
+      for (const d of older) {
+        for (const h of d.holdings ?? []) {
+          if (h.providerSector && !sectorByKey.get(h.securityKey)) sectorByKey.set(h.securityKey, h.providerSector);
+        }
+      }
+    }
     const incomeByKey = new Map((incomeDoc?.holdings ?? []).map((h) => [h.securityKey, h]));
 
     /**
@@ -3566,13 +3581,13 @@ function build(archived) {
     // inception. Both are carried, each labelled with its own window; nothing is
     // added across them.
     const bridges = [];
-    for (const d of group) {
+    const bridgeOf = (d) => {
       const f = d.flows;
-      if (!f || !f.periodFrom || !f.periodTo) continue;
+      if (!f || !f.periodFrom || !f.periodTo) return null;
       const has = ["openingCorpus", "contribution", "withdrawal", "netCapitalInOut",
         "realized", "unrealized", "income", "fees", "expenses", "corpus"]
         .filter((k) => isNum(f[k]));
-      if (!has.length) continue;
+      if (!has.length) return null;
       const bridge = {
         reportType: d.reportType,
         source: d.docKey,
@@ -3614,7 +3629,11 @@ function build(archived) {
               + `${r2(bridge.closing).toLocaleString("en-IN")}, ${Math.abs(tie.residual).toLocaleString("en-IN")} apart. `
               + tie.withheldReason));
       }
-      bridges.push(bridge);
+      return bridge;
+    };
+    for (const d of group) {
+      const bridge = bridgeOf(d);
+      if (bridge) bridges.push(bridge);
     }
     if (bridges.length) {
       // Widest window first, so the since-inception view leads.
@@ -3687,6 +3706,8 @@ function build(archived) {
             + "The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
           : unvaluedHere.length
           ? `this fund publishes no NAV: its statement of ${holdingsDoc.asOf} carries ${unvaluedHere.length} holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth`
+          : holdingsDoc && (holdingsDoc.warnings ?? []).some((w) => w?.code === "portfolio-reported-nil")
+          ? `this account's ${holdingsDoc.reportType} statement of ${holdingsDoc.asOf} prints a nil portfolio — no holding rows and a total of nil. That is a measurement, not a missing statement`
           : holdingsDoc
           ? `every holding on this account's ${holdingsDoc.reportType} statement of ${holdingsDoc.asOf} has been redeemed — the balance is nil, and that is a measurement`
           /**
@@ -3953,8 +3974,28 @@ function build(archived) {
      * it starts at the account's printed inception.
      */
     if (acctForPositions.engagement === "PMS") {
-      const si = bridges.filter((b) => b.basis === "since-inception" && b.periodTo === asOf
-        && isNum(b.contribution));
+      // The statement stating capital AS AT THE HOLDINGS' DATE may be an older
+      // issue than the newest of its report type — a fact sheet dated after the
+      // appraisal supersedes the one dated with it — so every issue is searched.
+      // An older issue's window is carried into the account's bridges when it is
+      // the one cited, so the capital always names a bridge a page can show.
+      const isSi = (b) => b.basis === "since-inception" && b.periodTo === asOf && isNum(b.contribution);
+      let si = bridges.filter(isSi);
+      if (!si.length) {
+        const older = allIssues
+          .filter((d) => !group.includes(d) && d.flows?.periodTo === asOf)
+          .sort((a, b) => (a.docKey < b.docKey ? -1 : 1));
+        for (const d of older) {
+          const b = bridgeOf(d);
+          if (b && isSi(b)) {
+            bridges.push(b);
+            bridges.sort((x, y) => x.periodFrom.localeCompare(y.periodFrom));
+            accountBridges[accountId] = bridges;
+            si = [b];
+            break;
+          }
+        }
+      }
       const mine = capitalMoves.filter((m) => m.accountId === accountId);
       const ins = mine.filter((m) => m.direction === "in" && isNum(m.amount));
       const firstIn = ins.map((m) => m.date).sort()[0] ?? null;

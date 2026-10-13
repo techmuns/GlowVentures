@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-04T12:53:59.732Z",
+  "generatedAt": "2026-10-13T06:40:50.188Z",
   "sourceDir": "source",
   "counts": {
-    "files": 303,
-    "pdfs": 293,
+    "files": 317,
+    "pdfs": 307,
     "nonPdf": 10,
-    "classified": 275,
-    "unclassified": 28,
-    "encrypted": 16,
-    "fromArchives": 245,
-    "archivesExpanded": 24,
-    "pages": 1464
+    "classified": 276,
+    "unclassified": 41,
+    "encrypted": 19,
+    "fromArchives": 257,
+    "archivesExpanded": 29,
+    "pages": 1538
   },
   "reportTypes": [
     "holdings",
@@ -37,6 +37,7 @@
     "profit-and-loss",
     "income-expense",
     "portfolio-snap",
+    "bank-statement",
     "unknown"
   ],
   "archives": [
@@ -174,6 +175,20 @@
       "failed": 0
     },
     {
+      "archive": "source/october-2026-b/360 ONE WEALTH.zip",
+      "extractedTo": "source/_extracted/october-2026-b/360 ONE WEALTH",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/october-2026-b/GREEN LANTERN ICICI.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI",
+      "files": 6,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
       "archive": "source/SANSHI FUND.zip",
       "extractedTo": "source/_extracted/SANSHI FUND",
       "files": 5,
@@ -205,6 +220,27 @@
       "archive": "source/VEC - ANKITA JAISINGHANI .zip",
       "extractedTo": "source/_extracted/VEC - ANKITA JAISINGHANI ",
       "files": 11,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
+      "files": 1,
       "skipped": 0,
       "failed": 0
     }
@@ -3391,19 +3427,17 @@
       "pages": 5,
       "fromArchive": true,
       "encrypted": true,
-      "readError": null,
-      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "1019265797",
-      "asOfDate": "2026-07-31",
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "generic keywords"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/_extracted/august-2026/LKP 1/ABSL1-Acctstmt_B_1038104611.pdf",
@@ -3413,19 +3447,17 @@
       "pages": 3,
       "fromArchive": true,
       "encrypted": true,
-      "readError": null,
-      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "1038104611",
-      "asOfDate": "2026-07-31",
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "generic keywords"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/_extracted/august-2026/LKP 1/HDFC Acctstmt_H_16180583.pdf",
@@ -3457,19 +3489,17 @@
       "pages": 3,
       "fromArchive": true,
       "encrypted": true,
-      "readError": null,
-      "provider": "Kotak Mahindra Mutual Fund",
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "4295974",
-      "asOfDate": "2026-07-31",
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "generic keywords"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/_extracted/august-2026/LKP 1/Mirae 70413280453.pdf",
@@ -4287,19 +4317,17 @@
       "pages": 2,
       "fromArchive": true,
       "encrypted": true,
-      "readError": null,
-      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "1038104611",
-      "asOfDate": "2026-06-30",
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "generic keywords"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
@@ -4309,19 +4337,17 @@
       "pages": 4,
       "fromArchive": true,
       "encrypted": true,
-      "readError": null,
-      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "1019265797",
-      "asOfDate": "2026-06-30",
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "generic keywords"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
@@ -4353,19 +4379,17 @@
       "pages": 4,
       "fromArchive": true,
       "encrypted": true,
-      "readError": null,
-      "provider": "Kotak Mahindra Mutual Fund",
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "4295974",
-      "asOfDate": "2026-06-30",
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "generic keywords"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/_extracted/LKP /MIRAE SOA (70413280453).pdf",
@@ -4472,6 +4496,258 @@
       "sections": [
         "transaction-statement"
       ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN37702_07Oct2026_1552871.pdf",
+      "fileName": "CRN37702_07Oct2026_1552871.pdf",
+      "bytes": 300578,
+      "size": "293.5 KB",
+      "pages": 12,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "360 ONE Private Wealth",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "corporate-action",
+      "sections": [
+        "corporate-action"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf",
+      "fileName": "CRN60066_07Oct2026_1552871.pdf",
+      "bytes": 299281,
+      "size": "292.3 KB",
+      "pages": 11,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "360 ONE Private Wealth",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "corporate-action",
+      "sections": [
+        "corporate-action"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60117_07Oct2026_1552871.pdf",
+      "fileName": "CRN60117_07Oct2026_1552871.pdf",
+      "bytes": 298133,
+      "size": "291.1 KB",
+      "pages": 12,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "360 ONE Private Wealth",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "corporate-action",
+      "sections": [
+        "corporate-action"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf",
+      "fileName": "Ajay T Jaisinghani - Green Lantern - Factsheet.pdf",
+      "bytes": 148259,
+      "size": "144.8 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-09-22",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "fact-sheet content (Portfolio Holdings + Sector Allocation)"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+      "fileName": "Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+      "bytes": 131693,
+      "size": "128.6 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": "2026-10-06",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf",
+      "fileName": "Ajay T Jaisinghani - ICICI - SOA.pdf",
+      "bytes": 365541,
+      "size": "357.0 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": null,
+      "provider": "HDFC",
+      "ownerName": "Ajay T",
+      "accountNo": "36378950",
+      "asOfDate": "2026-10-05",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf",
+      "fileName": "Ajay T Jaisinghani - Green Lantern - Factsheet.pdf",
+      "bytes": 148259,
+      "size": "144.8 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-09-22",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "fact-sheet content (Portfolio Holdings + Sector Allocation)"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+      "fileName": "Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+      "bytes": 131693,
+      "size": "128.6 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": "2026-10-06",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf",
+      "fileName": "Ajay T Jaisinghani - ICICI - SOA.pdf",
+      "bytes": 365541,
+      "size": "357.0 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": null,
+      "provider": "HDFC",
+      "ownerName": "Ajay T",
+      "accountNo": "36378950",
+      "asOfDate": "2026-10-05",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf",
+      "fileName": "Ankita Jaisinghani - Green Lantern - Factsheet.pdf",
+      "bytes": 148283,
+      "size": "144.8 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-09-22",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "fact-sheet content (Portfolio Holdings + Sector Allocation)"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+      "fileName": "Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+      "bytes": 132005,
+      "size": "128.9 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "ANKITA JAISINGHANI",
+      "accountNo": "510854",
+      "asOfDate": "2026-10-06",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard signature"
+    },
+    {
+      "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf",
+      "fileName": "Bharat Jaisinghani - ICICI - SOA.pdf",
+      "bytes": 363210,
+      "size": "354.7 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": null,
+      "provider": "HDFC",
+      "ownerName": "Bharat",
+      "accountNo": "36379637",
+      "asOfDate": "2026-10-05",
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
       "confidence": "high",
@@ -5419,19 +5695,17 @@
       "pages": 3,
       "fromArchive": false,
       "encrypted": true,
-      "readError": null,
-      "provider": "360 ONE Alternates Asset Management",
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "1000633",
+      "accountNo": null,
       "asOfDate": null,
-      "reportType": "distribution-notice",
-      "sections": [
-        "distribution-notice"
-      ],
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "generic keywords"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/360 ONE WEALTH - INCOME DISTRIBUTION LETTER  - AJAY.pdf",
@@ -5463,8 +5737,8 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": null,
-      "provider": "360 ONE Alternates Asset Management",
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
@@ -5474,7 +5748,7 @@
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "medium",
+      "confidence": "low",
       "matchedBy": "generic keywords"
     },
     {
@@ -5616,17 +5890,17 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "HDFC Bank (NSDL demat)",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "67786547",
-      "asOfDate": "2026-08-29",
+      "accountNo": null,
+      "asOfDate": null,
       "reportType": "holdings",
       "sections": [
         "holdings"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
+      "confidence": "low",
       "matchedBy": "generic keywords"
     },
     {
@@ -5638,17 +5912,17 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "HDFC Bank (NSDL demat)",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "67786137",
-      "asOfDate": "2026-08-29",
+      "accountNo": null,
+      "asOfDate": null,
       "reportType": "holdings",
       "sections": [
         "holdings"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
+      "confidence": "low",
       "matchedBy": "generic keywords"
     },
     {
@@ -5818,6 +6092,50 @@
       "matchedBy": "Goldstandard signature + content keywords"
     },
     {
+      "path": "source/october-2026/CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
+      "fileName": "CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
+      "bytes": 128398,
+      "size": "125.4 KB",
+      "pages": 3,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": null,
+      "reportType": "capital-register",
+      "sections": [
+        "capital-register"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/october-2026/TRANSACTION STATEMENT GREEN LANTERN - AJAY.pdf",
+      "fileName": "TRANSACTION STATEMENT GREEN LANTERN - AJAY.pdf",
+      "bytes": 270383,
+      "size": "264.0 KB",
+      "pages": 18,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Green Lantern Capital LLP",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "510861",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": "GLC Growth Fund",
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
       "path": "source/september-2026/Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
       "fileName": "Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
       "bytes": 589180,
@@ -5825,19 +6143,17 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": null,
-      "provider": "ASK Absolute Return Fund",
-      "ownerName": "AJAY T JAISINGHANI",
-      "accountNo": "9039917111",
-      "asOfDate": "2026-03-31",
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-04-07",
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "ASK Absolute Return Fund statement of account"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/september-2026/Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
@@ -5847,19 +6163,17 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": null,
-      "provider": "ASK Absolute Return Fund",
-      "ownerName": "ANKITA JAISINGHANI",
-      "accountNo": "9039917144",
-      "asOfDate": "2026-03-31",
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-04-07",
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "ASK Absolute Return Fund statement of account"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/september-2026/askimpms_10032723_BankBook178CT.pdf",
@@ -6353,19 +6667,17 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": null,
-      "provider": "ASK Absolute Return Fund",
-      "ownerName": "AJAY T JAISINGHANI",
-      "accountNo": "9039917111",
-      "asOfDate": "2026-03-31",
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-04-07",
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
-      "matchedBy": "ASK Absolute Return Fund statement of account"
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/september-2026/Portfolio Snap Report_BOUYA387.pdf",
@@ -9220,9 +9532,23 @@
                 ]
               },
               "fileCount": 1
+            },
+            "2026-10-06": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+                    "pages": 1,
+                    "size": "128.9 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
-          "fileCount": 18
+          "fileCount": 19
         },
         "510861": {
           "owner": "AJAY T JAISINGHANI",
@@ -9264,6 +9590,15 @@
                     "path": "source/_extracted/GREEN LANTERN - AJAY /GLC0780_40994_CapitalRegister1173OT (2).pdf",
                     "pages": 1,
                     "size": "68.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "capital-register"
+                    ]
+                  },
+                  {
+                    "path": "source/october-2026/CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
+                    "pages": 3,
+                    "size": "125.4 KB",
                     "confidence": "medium",
                     "sections": [
                       "capital-register"
@@ -9319,6 +9654,15 @@
                     "sections": [
                       "transaction-statement"
                     ]
+                  },
+                  {
+                    "path": "source/october-2026/TRANSACTION STATEMENT GREEN LANTERN - AJAY.pdf",
+                    "pages": 18,
+                    "size": "264.0 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
                   }
                 ],
                 "bank-book": [
@@ -9333,7 +9677,7 @@
                   }
                 ]
               },
-              "fileCount": 10
+              "fileCount": 12
             },
             "2026-07-27": {
               "reportTypes": {
@@ -9446,6 +9790,27 @@
               },
               "fileCount": 1
             },
+            "2026-10-06": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+                    "pages": 1,
+                    "size": "128.6 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+                    "pages": 1,
+                    "size": "128.6 KB",
+                    "confidence": "medium",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 2
+            },
             "2026-06-30": {
               "reportTypes": {
                 "investor-report": [
@@ -9463,7 +9828,7 @@
               "fileCount": 1
             }
           },
-          "fileCount": 19
+          "fileCount": 23
         },
         "(unidentified)": {
           "owner": null,
@@ -9518,95 +9883,46 @@
                 ]
               },
               "fileCount": 2
+            },
+            "2026-09-22": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf",
+                    "pages": 1,
+                    "size": "144.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf",
+                    "pages": 1,
+                    "size": "144.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf",
+                    "pages": 1,
+                    "size": "144.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 3
             }
           },
-          "fileCount": 4
+          "fileCount": 7
         }
       },
-      "fileCount": 41
-    },
-    "Aditya Birla Sun Life Mutual Fund": {
-      "accounts": {
-        "1019265797": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-07-31": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/_extracted/august-2026/LKP 1/ABSL 2-Acctstmt_B_1019265797.pdf",
-                    "pages": 5,
-                    "size": "445.0 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            },
-            "2026-06-30": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
-                    "pages": 4,
-                    "size": "439.0 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 2
-        },
-        "1038104611": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-07-31": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/_extracted/august-2026/LKP 1/ABSL1-Acctstmt_B_1038104611.pdf",
-                    "pages": 3,
-                    "size": "432.1 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            },
-            "2026-06-30": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
-                    "pages": 2,
-                    "size": "429.4 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 2
-        }
-      },
-      "fileCount": 4
+      "fileCount": 49
     },
     "HDFC Mutual Fund": {
       "accounts": {
@@ -9637,50 +9953,6 @@
                     "path": "source/_extracted/LKP /HDFC Acctstmt_H_16180583 (11).pdf",
                     "pages": 3,
                     "size": "143.9 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 2
-        }
-      },
-      "fileCount": 2
-    },
-    "Kotak Mahindra Mutual Fund": {
-      "accounts": {
-        "4295974": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-07-31": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/_extracted/august-2026/LKP 1/KOTAK Partial_Listing_Stmt_K_INA000009861.pdf",
-                    "pages": 3,
-                    "size": "769.5 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            },
-            "2026-06-30": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
-                    "pages": 4,
-                    "size": "826.0 KB",
                     "confidence": "high",
                     "sections": [
                       "holdings"
@@ -9857,6 +10129,33 @@
                     ]
                   },
                   {
+                    "path": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN37702_07Oct2026_1552871.pdf",
+                    "pages": 12,
+                    "size": "293.5 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "corporate-action"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf",
+                    "pages": 11,
+                    "size": "292.3 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "corporate-action"
+                    ]
+                  },
+                  {
+                    "path": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60117_07Oct2026_1552871.pdf",
+                    "pages": 12,
+                    "size": "291.1 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "corporate-action"
+                    ]
+                  },
+                  {
                     "path": "source/360 - AJAY.pdf",
                     "pages": 11,
                     "size": "289.4 KB",
@@ -9894,13 +10193,13 @@
                   }
                 ]
               },
-              "fileCount": 5
+              "fileCount": 8
             }
           },
-          "fileCount": 5
+          "fileCount": 8
         }
       },
-      "fileCount": 5
+      "fileCount": 8
     },
     "3P Investment Managers": {
       "accounts": {
@@ -10042,6 +10341,60 @@
         }
       },
       "fileCount": 6
+    },
+    "HDFC": {
+      "accounts": {
+        "36378950": {
+          "owner": "Ajay T",
+          "strategy": null,
+          "asOfDates": {
+            "2026-10-05": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf",
+                    "pages": 4,
+                    "size": "357.0 KB",
+                    "confidence": "high",
+                    "sections": []
+                  },
+                  {
+                    "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf",
+                    "pages": 4,
+                    "size": "357.0 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 2
+        },
+        "36379637": {
+          "owner": "Bharat",
+          "strategy": null,
+          "asOfDates": {
+            "2026-10-05": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf",
+                    "pages": 4,
+                    "size": "354.7 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 3
     },
     "Sanshi Fund": {
       "accounts": {
@@ -10281,29 +10634,6 @@
           },
           "fileCount": 1
         },
-        "1000633": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "(unidentified)": {
-              "reportTypes": {
-                "distribution-notice": [
-                  {
-                    "path": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
-                    "pages": 3,
-                    "size": "689.3 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "distribution-notice"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        },
         "(unidentified)": {
           "owner": null,
           "strategy": null,
@@ -10311,15 +10641,6 @@
             "(unidentified)": {
               "reportTypes": {
                 "statement-of-earnings": [
-                  {
-                    "path": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
-                    "pages": 2,
-                    "size": "875.2 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "statement-of-earnings"
-                    ]
-                  },
                   {
                     "path": "source/360 ONE WEALTH STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27 - AJAY.pdf",
                     "pages": 2,
@@ -10331,13 +10652,13 @@
                   }
                 ]
               },
-              "fileCount": 2
+              "fileCount": 1
             }
           },
-          "fileCount": 2
+          "fileCount": 1
         }
       },
-      "fileCount": 4
+      "fileCount": 2
     },
     "Molecule Ventures LLP": {
       "accounts": {
@@ -10436,57 +10757,6 @@
         }
       },
       "fileCount": 1
-    },
-    "HDFC Bank (NSDL demat)": {
-      "accounts": {
-        "67786137": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-08-29": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
-                    "pages": 1,
-                    "size": "104.9 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        },
-        "67786547": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-08-29": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
-                    "pages": 1,
-                    "size": "106.0 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        }
-      },
-      "fileCount": 2
     },
     "Family investment register (not a statement)": {
       "accounts": {
@@ -10625,66 +10895,6 @@
                     "size": "46.6 KB",
                     "confidence": "high",
                     "sections": []
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        }
-      },
-      "fileCount": 3
-    },
-    "ASK Absolute Return Fund": {
-      "accounts": {
-        "9039917111": {
-          "owner": "AJAY T JAISINGHANI",
-          "strategy": null,
-          "asOfDates": {
-            "2026-03-31": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/september-2026/Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
-                    "pages": 2,
-                    "size": "575.4 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  },
-                  {
-                    "path": "source/september-2026/ATJ - ASK AIF - 9039917111_07042026142531008678.pdf",
-                    "pages": 2,
-                    "size": "581.5 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 2
-            }
-          },
-          "fileCount": 2
-        },
-        "9039917144": {
-          "owner": "ANKITA JAISINGHANI",
-          "strategy": null,
-          "asOfDates": {
-            "2026-03-31": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/september-2026/Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
-                    "pages": 2,
-                    "size": "575.6 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
                   }
                 ]
               },
@@ -11084,6 +11294,26 @@
     },
     {
       "provider": "Green Lantern Capital LLP",
+      "account": "510861",
+      "asOf": "(unidentified)",
+      "fileCount": 12,
+      "reportTypes": [
+        "capital-gain",
+        "capital-register",
+        "dividend-statement",
+        "performance-benchmark",
+        "transaction-statement",
+        "bank-book"
+      ],
+      "duplicateTypes": [
+        "capital-gain",
+        "capital-register",
+        "dividend-statement",
+        "transaction-statement"
+      ]
+    },
+    {
+      "provider": "Green Lantern Capital LLP",
       "account": "510854",
       "asOf": "(unidentified)",
       "fileCount": 11,
@@ -11166,26 +11396,6 @@
       ]
     },
     {
-      "provider": "Green Lantern Capital LLP",
-      "account": "510861",
-      "asOf": "(unidentified)",
-      "fileCount": 10,
-      "reportTypes": [
-        "capital-gain",
-        "capital-register",
-        "dividend-statement",
-        "performance-benchmark",
-        "transaction-statement",
-        "bank-book"
-      ],
-      "duplicateTypes": [
-        "capital-gain",
-        "capital-register",
-        "dividend-statement",
-        "transaction-statement"
-      ]
-    },
-    {
       "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
       "account": "3517383",
       "asOf": "(unidentified)",
@@ -11204,6 +11414,18 @@
       ]
     },
     {
+      "provider": "360 ONE Private Wealth",
+      "account": "(unidentified)",
+      "asOf": "(unidentified)",
+      "fileCount": 8,
+      "reportTypes": [
+        "corporate-action"
+      ],
+      "duplicateTypes": [
+        "corporate-action"
+      ]
+    },
+    {
       "provider": "Goldstandard Wealth Private Limited",
       "account": "100023",
       "asOf": "2026-08-11",
@@ -11217,18 +11439,6 @@
       "duplicateTypes": [
         "appraisal",
         "fact-sheet"
-      ]
-    },
-    {
-      "provider": "360 ONE Private Wealth",
-      "account": "(unidentified)",
-      "asOf": "(unidentified)",
-      "fileCount": 5,
-      "reportTypes": [
-        "corporate-action"
-      ],
-      "duplicateTypes": [
-        "corporate-action"
       ]
     },
     {
@@ -11355,6 +11565,18 @@
         "holdings"
       ],
       "duplicateTypes": []
+    },
+    {
+      "provider": "Green Lantern Capital LLP",
+      "account": "(unidentified)",
+      "asOf": "2026-09-22",
+      "fileCount": 3,
+      "reportTypes": [
+        "fact-sheet"
+      ],
+      "duplicateTypes": [
+        "fact-sheet"
+      ]
     },
     {
       "provider": "Goldstandard Wealth Private Limited",
@@ -11613,6 +11835,18 @@
     },
     {
       "provider": "Green Lantern Capital LLP",
+      "account": "510861",
+      "asOf": "2026-10-06",
+      "fileCount": 2,
+      "reportTypes": [
+        "unknown"
+      ],
+      "duplicateTypes": [
+        "unknown"
+      ]
+    },
+    {
+      "provider": "Green Lantern Capital LLP",
       "account": "(unidentified)",
       "asOf": "2026-07-27",
       "fileCount": 2,
@@ -11658,6 +11892,18 @@
       "duplicateTypes": []
     },
     {
+      "provider": "HDFC",
+      "account": "36378950",
+      "asOf": "2026-10-05",
+      "fileCount": 2,
+      "reportTypes": [
+        "unknown"
+      ],
+      "duplicateTypes": [
+        "unknown"
+      ]
+    },
+    {
       "provider": "Sanshi Fund",
       "account": "00841000060394",
       "asOf": "2026-07-08",
@@ -11667,30 +11913,6 @@
       ],
       "duplicateTypes": [
         "unknown"
-      ]
-    },
-    {
-      "provider": "360 ONE Alternates Asset Management",
-      "account": "(unidentified)",
-      "asOf": "(unidentified)",
-      "fileCount": 2,
-      "reportTypes": [
-        "statement-of-earnings"
-      ],
-      "duplicateTypes": [
-        "statement-of-earnings"
-      ]
-    },
-    {
-      "provider": "ASK Absolute Return Fund",
-      "account": "9039917111",
-      "asOf": "2026-03-31",
-      "fileCount": 2,
-      "reportTypes": [
-        "holdings"
-      ],
-      "duplicateTypes": [
-        "holdings"
       ]
     },
     {
@@ -12028,6 +12250,126 @@
       "matchedBy": "generic keywords"
     },
     {
+      "path": "source/_extracted/august-2026/LKP 1/ABSL 2-Acctstmt_B_1019265797.pdf",
+      "fileName": "ABSL 2-Acctstmt_B_1019265797.pdf",
+      "bytes": 455673,
+      "size": "445.0 KB",
+      "pages": 5,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/_extracted/august-2026/LKP 1/ABSL1-Acctstmt_B_1038104611.pdf",
+      "fileName": "ABSL1-Acctstmt_B_1038104611.pdf",
+      "bytes": 442498,
+      "size": "432.1 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/_extracted/august-2026/LKP 1/KOTAK Partial_Listing_Stmt_K_INA000009861.pdf",
+      "fileName": "KOTAK Partial_Listing_Stmt_K_INA000009861.pdf",
+      "bytes": 787971,
+      "size": "769.5 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/_extracted/LKP /ABSL1 Acctstmt_B_1038104611 (1).pdf",
+      "fileName": "ABSL1 Acctstmt_B_1038104611 (1).pdf",
+      "bytes": 439722,
+      "size": "429.4 KB",
+      "pages": 2,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/_extracted/LKP /ABSL2 Acctstmt_B_1019265797.pdf",
+      "fileName": "ABSL2 Acctstmt_B_1019265797.pdf",
+      "bytes": 449521,
+      "size": "439.0 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/_extracted/LKP /KOTAK Acctstmt_K_4295974.pdf",
+      "fileName": "KOTAK Acctstmt_K_4295974.pdf",
+      "bytes": 845863,
+      "size": "826.0 KB",
+      "pages": 4,
+      "fromArchive": true,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
       "path": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
       "fileName": "360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
       "bytes": 111130,
@@ -12042,6 +12384,48 @@
       "asOfDate": null,
       "reportType": "unknown",
       "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
+      "fileName": "360 ONE WEALTH - DISTRIBUTION STATEMENT BHARAT.pdf",
+      "bytes": 705832,
+      "size": "689.3 KB",
+      "pages": 3,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
+      "fileName": "360 ONE WEALTH - STATEMENT OF EARNINGS FOR FINANCIAL YEAR 2026-27  BHARAT.pdf",
+      "bytes": 896154,
+      "size": "875.2 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "statement-of-earnings",
+      "sections": [
+        "statement-of-earnings"
+      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "low",
@@ -12068,6 +12452,110 @@
       "strategy": null,
       "confidence": "low",
       "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+      "fileName": "HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+      "bytes": 108560,
+      "size": "106.0 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+      "fileName": "HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+      "bytes": 107457,
+      "size": "104.9 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/september-2026/Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
+      "fileName": "Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
+      "bytes": 589180,
+      "size": "575.4 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-04-07",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
+      "fileName": "Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
+      "bytes": 589457,
+      "size": "575.6 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-04-07",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/september-2026/ATJ - ASK AIF - 9039917111_07042026142531008678.pdf",
+      "fileName": "ATJ - ASK AIF - 9039917111_07042026142531008678.pdf",
+      "bytes": 595412,
+      "size": "581.5 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-04-07",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/_extracted/august-2026/LKP 1/pASSWORD.docx",

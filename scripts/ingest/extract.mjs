@@ -122,7 +122,7 @@ const EXTRACTORS = Object.fromEntries([
   // its own PAN. One entry in shared/owners.mjs would change that, and it is a
   // decision about the family rather than a parsing rule.
   ...["Aditya Birla Sun Life Mutual Fund", "Kotak Mahindra Mutual Fund",
-    "Mirae Asset Mutual Fund", "HDFC Mutual Fund", mutualFundFolio.PROVIDER]
+    "Mirae Asset Mutual Fund", "HDFC Mutual Fund", "ICICI Prudential Mutual Fund", mutualFundFolio.PROVIDER]
     .map((n) => [n, mutualFundFolio]),
   // A fund's own disclosure. Archived for look-through; contributes nothing,
   // because it reports no position of ours.

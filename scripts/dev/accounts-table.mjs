@@ -103,6 +103,8 @@ const emptyCell = (reason) => {
   // A balance the statement itself reports as nil is a MEASUREMENT, not an absence.
   if (/has been redeemed — the balance is nil/.test(reason))
     return { cell: "₹0 (a MEASURED zero — the statement's balance is nil)" };
+  if (/prints a nil portfolio/.test(reason))
+    return { cell: "₹0 (a MEASURED zero — the statement prints a nil portfolio)" };
   if (/report income and distributions only/.test(reason))
     return { cell: "— (income-only folio; the units are marked elsewhere)" };
   if (/^the private-market holding this statement records is counted under the family's consolidated review/.test(reason))

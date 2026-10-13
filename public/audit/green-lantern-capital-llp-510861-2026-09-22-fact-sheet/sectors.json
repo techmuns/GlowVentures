@@ -1,0 +1,339 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "HEG Graphite Limited",
+   "Equity",
+   "1,217,450",
+   "1.05%"
+  ],
+  [
+   "2",
+   "Punjab National Bank",
+   "Banks",
+   "967,707",
+   "0.83%"
+  ],
+  [
+   "5,023,830",
+   "4.33%"
+  ],
+  [
+   "3",
+   "State Bank Of India",
+   "Banks"
+  ],
+  [
+   "4",
+   "Engineers India Ltd",
+   "Consulting Services",
+   "7,553,463",
+   "6.51%"
+  ],
+  [
+   "Auto Parts &",
+   "6,037,285",
+   "5.20%"
+  ],
+  [
+   "5",
+   "Exide Industries Ltd"
+  ],
+  [
+   "Equipment"
+  ],
+  [
+   "Auto Parts &",
+   "1,819,122",
+   "1.57%"
+  ],
+  [
+   "6",
+   "Jamna Auto Ind Ltd"
+  ],
+  [
+   "Equipment"
+  ],
+  [
+   "ZF Commercial Vehicle Control",
+   "Auto Parts &",
+   "2,437,790",
+   "2.10%"
+  ],
+  [
+   "7"
+  ],
+  [
+   "Systems India Ltd",
+   "Equipment"
+  ],
+  [
+   "Finance (including",
+   "2,880,514",
+   "2.48%"
+  ],
+  [
+   "8",
+   "Power Finance Corporation Ltd"
+  ],
+  [
+   "NBFCs)"
+  ],
+  [
+   "Finance (including",
+   "1,284,599",
+   "1.11%"
+  ],
+  [
+   "9",
+   "Rural Electrification Corporation Ltd"
+  ],
+  [
+   "NBFCs)"
+  ],
+  [
+   "IT Consulting &",
+   "2,404,980",
+   "2.07%"
+  ],
+  [
+   "10",
+   "Tech Mahindra Ltd",
+   "Software"
+  ],
+  [
+   "IT Software",
+   "2,801,519",
+   "2.41%"
+  ],
+  [
+   "11",
+   "Intellect Design Arena Ltd"
+  ],
+  [
+   "Products"
+  ],
+  [
+   "12",
+   "Aarti Drugs Ltd",
+   "Pharmaceuticals",
+   "2,371,428",
+   "2.04%"
+  ],
+  [
+   "13",
+   "Aurobindo Pharma Ltd",
+   "Pharmaceuticals",
+   "4,377,500",
+   "3.77%"
+  ],
+  [
+   "14",
+   "Glenmark Pharmaceuticals Ltd",
+   "Pharmaceuticals",
+   "4,972,028",
+   "4.29%"
+  ],
+  [
+   "Industrial",
+   "1,296,455",
+   "1.12%"
+  ],
+  [
+   "15",
+   "Elgi Equipments Ltd"
+  ],
+  [
+   "Machinery"
+  ],
+  [
+   "16",
+   "Ingersollrand India Ltd",
+   "Industrial",
+   "1,845,282",
+   "1.59%"
+  ],
+  [
+   "Machinery"
+  ],
+  [
+   "Industrial",
+   "4,344,155",
+   "3.74%"
+  ],
+  [
+   "17",
+   "Isgec Heavy Engineering Ltd"
+  ],
+  [
+   "Machinery"
+  ],
+  [
+   "Industrial",
+   "4,567,415",
+   "3.94%"
+  ],
+  [
+   "18",
+   "KSB Ltd",
+   "Machinery"
+  ],
+  [
+   "Other Agricultural",
+   "3,565,671",
+   "3.07%"
+  ],
+  [
+   "19",
+   "Kaveri Seed Company Ltd"
+  ],
+  [
+   "Prod"
+  ],
+  [
+   "20",
+   "Thermax Ltd",
+   "Heavy Electrical",
+   "1,958,321",
+   "1.69%"
+  ],
+  [
+   "Equipmen"
+  ],
+  [
+   "21",
+   "Triveni Turbine Ltd",
+   "Heavy Electrical",
+   "2,381,698",
+   "2.05%"
+  ],
+  [
+   "Equipmen"
+  ],
+  [
+   "22",
+   "Vedanta Aluminium Metal Limited",
+   "Aluminium",
+   "3,644,824",
+   "3.14%"
+  ],
+  [
+   "Heavy Electrical",
+   "6,469,179",
+   "5.58%"
+  ],
+  [
+   "23",
+   "Bharat Heavy Electricals Ltd"
+  ],
+  [
+   "Equip"
+  ],
+  [
+   "Other Industrial",
+   "605,540",
+   "0.52%"
+  ],
+  [
+   "24",
+   "HEG Advanced Materials Limited"
+  ],
+  [
+   "Goods"
+  ],
+  [
+   "Financial",
+   "1,108,791",
+   "0.96%"
+  ],
+  [
+   "25",
+   "Indian Energy Exchange Ltd"
+  ],
+  [
+   "Institutions"
+  ],
+  [
+   "26",
+   "Hindustan Aeronautics Ltd",
+   "Airlines",
+   "4,027,200",
+   "3.47%"
+  ],
+  [
+   "27",
+   "The Anup Engineering Ltd",
+   "Engineering",
+   "2,092,054",
+   "1.80%"
+  ],
+  [
+   "28",
+   "Alivus Life Sciences Ltd",
+   "Pharmaceuticals",
+   "6,486,224",
+   "5.59%"
+  ],
+  [
+   "29",
+   "Mishra Dhatu Nigam Ltd",
+   "Miscellaneous",
+   "3,106,942",
+   "2.68%"
+  ],
+  [
+   "30",
+   "Vedanta Ltd",
+   "Diversified Metals",
+   "2,253,647",
+   "1.94%"
+  ],
+  [
+   "Cash and",
+   "10,114,232",
+   "8.72%"
+  ],
+  [
+   "31",
+   "Cash"
+  ],
+  [
+   "Equivalent"
+  ],
+  [
+   "Axis Liquid Fund - Direct Plan - Growth",
+   "9,902,638",
+   "8.54%"
+  ],
+  [
+   "32",
+   "Mutual Fund"
+  ],
+  [
+   "Option"
+  ],
+  [
+   "33",
+   "Dividend / Interest receivable",
+   "Dividend / Interest",
+   "100,365",
+   "0.09%"
+  ],
+  [
+   "receivable"
+  ],
+  [
+   "Total",
+   "116,019,848",
+   "100%"
+  ]
+ ]
+}

@@ -26,6 +26,7 @@ const SUITES = [
   { name: "nsdlPriceDate", file: "nsdlPriceDate.test.mjs", required: true },
   { name: "neoFlows", file: "neoFlows.test.mjs", required: true },
   { name: "mfPurchase", file: "mfPurchase.test.mjs", required: true },
+  { name: "iciciFolio", file: "iciciFolio.test.mjs", required: true },
   { name: "pmsReaders", file: "pmsReaders.test.mjs", required: true },
   { name: "categoryWords", file: "categoryWords.test.mjs", required: true },
   { name: "separate", file: "separateInvestments.test.mjs", required: true },
