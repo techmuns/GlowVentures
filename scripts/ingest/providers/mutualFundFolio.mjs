@@ -43,7 +43,7 @@
 // changing its column order surfaces as "no scheme block matched" instead of as
 // units read out of the NAV column.
 import { parseNum } from "../lib/parseNum.mjs";
-import { makeHolding, makeTotals } from "../lib/document.mjs";
+import { makeHolding, makeTotals, makeCashFlow } from "../lib/document.mjs";
 import { toIso } from "../lib/classify.mjs";
 import { panHolderType } from "../../../shared/owners.mjs";
 
@@ -57,6 +57,9 @@ const AMCS = [
   [/Aditya\s+Birla\s+Sun\s+Life/i, "Aditya Birla Sun Life Mutual Fund"],
   [/Kotak\s+Mahindra\s+Mutual\s+Fund|Kotak\s+Mutual\s+Fund|kotakmf\.com/i, "Kotak Mahindra Mutual Fund"],
   [/Mirae\s+Asset/i, "Mirae Asset Mutual Fund"],
+  // ICICI Prudential BEFORE HDFC: its statement prints the holder's bank as
+  // "HDFC Bank Ltd", which is not the AMC.
+  [/ICICI\s+Prudential|icicipruamc\.com|iciciprumf\.com/i, "ICICI Prudential Mutual Fund"],
   [/HDFC\s+(?:Mutual\s+Fund|Asset\s+Management)|hdfcfund\.com/i, "HDFC Mutual Fund"],
 ];
 
@@ -214,6 +217,108 @@ function readMiraeLayout(lines, source, warnings) {
   return out;
 }
 
+/**
+ * ICICI Prudential: `<code> / <ISIN> / <scheme>` heads each scheme's ledger, and
+ * the ACCOUNT SUMMARY prints `<NAV> <NAV date> <units> <cost> <IDCW reinvested>
+ * <IDCW paid> <current value>` on one line. The summary row is matched on its
+ * numeric tail; the ISIN and the full name come from the ledger heading whose
+ * scheme code the summary row's wrapped name starts with.
+ */
+const ICICI_HEAD = /^\s*(\d{2,6})\s*\/\s*(IN[EF][0-9A-Z]{9})\s*\/\s*(.+?)\s*$/;
+const ICICI_SUMMARY = /^\s*([\d,]+\.\d{2,})\s+(\d{2}-[A-Za-z]{3}-\d{4})\s+([\d,]+\.\d{3})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/;
+const ICICI_PURCHASE = /^\s*(\d{2}\/\d{2}\/\d{4})\s+(Purchase[^\d]*?)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2,})\s+([\d,]+\.\d{2,})\s+([\d,]+\.\d{3})\s+([\d,]+\.\d{3})\s*$/i;
+
+function readIciciLayout(lines, source) {
+  const out = [];
+  const heads = new Map();
+  for (const l of lines) {
+    const m = ICICI_HEAD.exec(l);
+    if (m && !heads.has(m[1])) heads.set(m[1], { isin: m[2], name: cleanName(m[3]) });
+  }
+  if (!heads.size) return out;
+  for (let i = 0; i < lines.length; i++) {
+    const m = ICICI_SUMMARY.exec(lines[i]);
+    if (!m) continue;
+    // The scheme code opens the wrapped name on the line above.
+    const code = (/^\s*(\d{2,6})\b/.exec(lines[i - 1] ?? "") || [])[1];
+    const head = code ? heads.get(code) : null;
+    if (!head) continue;
+    out.push(makeHolding({
+      security: head.name,
+      isin: head.isin,
+      assetClass: "Mutual Fund",
+      quantity: num(m[3]),
+      marketPrice: num(m[1]),
+      totalCost: num(m[4]),
+      marketValue: num(m[7]),
+      priceAsOn: toIso(m[2]),
+      source,
+    }));
+  }
+  return out;
+}
+
+/**
+ * ICICI Prudential's dated purchases, published only where the statement's own
+ * figures tie: the printed gross less the printed stamp duty is the net amount,
+ * net = units × NAV within the precision the two are printed to, the running
+ * balance walks from the printed opening, and the last balance is the holding's
+ * own units. Any failure publishes nothing and says why.
+ */
+function iciciPurchaseFlows(lines, holdings, warnings) {
+  const flows = [];
+  for (let i = 0; i < lines.length; i++) {
+    const h = ICICI_HEAD.exec(lines[i]);
+    if (!h) continue;
+    const holding = holdings.find((x) => x.isin === h[2]);
+    if (!holding) continue;
+    let bal = null;
+    const rows = [];
+    for (let k = i + 1; k < lines.length; k++) {
+      const l = lines[k];
+      if (ICICI_HEAD.test(l) && ICICI_HEAD.exec(l)[2] !== h[2]) break;
+      const ob = /Opening Balance as on\s*(\d{2}\/\d{2}\/\d{4})\s+([\d,]+\.\d{3})/i.exec(l);
+      if (ob && bal === null) bal = num(ob[2]);
+      const p = ICICI_PURCHASE.exec(l);
+      if (!p) continue;
+      const g = /Gross Amount:\s*Rs\.?\s*([\d,]+(?:\.\d+)?)\/?-?;?\s*Stamp Duty charges Levied\s*~?\s*([\d,]+\.\d{2})/i.exec(lines[k + 1] ?? "");
+      rows.push({ date: toIso(p[1]), type: p[2].trim(), net: num(p[3]), nav: num(p[4]), units: num(p[6]), balance: num(p[7]),
+        gross: g ? num(g[1]) : null, stamp: g ? num(g[2]) : null });
+    }
+    if (!rows.length) continue;
+    const fail = (why) => { warn(warnings, "purchases-not-published", `${h[3].trim()}: ${why}`); return true; };
+    let failed = false;
+    let running = bal ?? 0;
+    for (const r of rows) {
+      if (r.gross == null || r.stamp == null) { failed = fail(`${r.date}: no printed gross or stamp duty`); break; }
+      if (Math.abs(r.gross - r.stamp - r.net) > 0.011) { failed = fail(`${r.date}: gross ${r.gross} less stamp ${r.stamp} is not the printed net ${r.net}`); break; }
+      if (Math.abs(r.units * r.nav - r.net) > r.units * 0.00005 + r.nav * 0.0005 + 0.01) { failed = fail(`${r.date}: ${r.units} units × ${r.nav} is not ${r.net}`); break; }
+      running = Math.round((running + r.units) * 1000) / 1000;
+      if (Math.abs(running - r.balance) > 0.0005) { failed = fail(`${r.date}: running units ${running} do not reach the printed balance ${r.balance}`); break; }
+    }
+    if (failed) continue;
+    if (holding.quantity != null && Math.abs(running - holding.quantity) > 0.0005) {
+      fail(`the ledger ends at ${running} units against the summary's ${holding.quantity}`);
+      continue;
+    }
+    for (const r of rows) {
+      flows.push(makeCashFlow({
+        date: r.date,
+        description: r.type,
+        security: holding.security,
+        kind: "contribution",
+        amount: r.gross,
+        netAmount: r.net,
+        expenses: r.stamp,
+        units: r.units,
+        balance: r.balance,
+        notes: `allotted at NAV ${r.nav}; stamp duty ${r.stamp}`,
+      }));
+    }
+  }
+  return flows;
+}
+
 export function extract({ grid, meta }) {
   const warnings = [];
   const source = meta.docKey;
@@ -252,12 +357,22 @@ export function extract({ grid, meta }) {
   const jointHolders = [...flat.matchAll(/Joint\s*\d?\s*:?\s*([A-Z][A-Za-z .'-]{4,50}?)(?=\s{2,}|\n|$)/g)]
     .map((m) => m[1].trim())
     .filter((n) => n && !/^N\/?A$/i.test(n));
+  // ICICI Prudential prints `2 nd Holder <Name>` rather than `Joint 1 :`.
+  for (const m of flat.matchAll(/\b[23]\s*(?:nd|rd)\s+Holder\s*:?\s*([A-Z][a-z]+(?: [A-Z][a-z]+){1,3})/g)) {
+    if (!jointHolders.includes(m[1])) jointHolders.push(m[1]);
+  }
   /**
    * The holder's name. Each AMC puts it on its own line among the address block,
    * followed by a different label — `Status`, `Mode of Holding`, `Nominee`,
    * `Email Address`. Matched as a capitalised run followed by any of them.
    */
+  // ICICI Prudential prints the holder on the `Bank Account Number` line and
+  // wraps the address onto the `Tax Status` line below it — so on that layout
+  // the `Status` rule matches an ADDRESS FRAGMENT first. Where the ICICI line
+  // is present it is the holder and outranks every other candidate.
+  const iciciHolder = [...flat.matchAll(/\n\s*([A-Z][A-Za-z .'-]{4,60}?)\s+Bank Account Number\b/g)].map((m) => m[1]);
   const ownerCandidates = [
+    ...iciciHolder,
     // ABSL / Mirae / Kotak: the name shares a line with the next label.
     ...[...flat.matchAll(/\n\s*([A-Z][A-Za-z0-9 .&'-]{4,60}?)\s+(?:Status|Mode of Holding|Nominee\s*\d|Email Address|Joint\s*\d)\b/g)].map((m) => m[1]),
     // HDFC: the name is alone on its line above `Mode of Holding`.
@@ -289,8 +404,12 @@ export function extract({ grid, meta }) {
     ...readBlockLayout(lines, source),
     ...readAbslLayout(lines, source),
     ...readMiraeLayout(lines, source, warnings),
+    ...readIciciLayout(lines, source),
   ];
-  if (!holdings.length) warn(warnings, "holdings-not-read", "no scheme block matched in any of the three known folio layouts");
+  if (!holdings.length) warn(warnings, "holdings-not-read", "no scheme block matched in any of the four known folio layouts");
+  // ICICI Prudential prints every purchase dated, with its gross, stamp duty,
+  // net, NAV and running units — published only where all of them tie.
+  const cashFlows = iciciPurchaseFlows(lines, holdings, warnings);
 
   /**
    * WHOSE FOLIO IS THIS?
@@ -334,6 +453,7 @@ export function extract({ grid, meta }) {
       source,
     }),
     returns: [],
+    ...(cashFlows.length ? { cashFlows } : {}),
     excludedFromBook,
     sections: {
       holdings: {

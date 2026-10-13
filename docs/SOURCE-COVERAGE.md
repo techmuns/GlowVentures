@@ -9,17 +9,17 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 
 | Outcome | Files | What it means |
 | --- | ---: | --- |
-| Read | 279 | one or more documents in `public/audit/` |
-| Read via a byte-identical twin | 4 | the pipeline reads each md5 once; the data IS in the archive |
+| Read | 288 | one or more documents in `public/audit/` |
+| Read via a byte-identical twin | 7 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
 | Read by `build-book` | 1 | the family's consolidated review — the book's source for every private-market line |
 | Held out by decision | 1 | read perfectly and deliberately not a source |
 | Not a document | 58 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
 | **Unread** | **0** | **must be zero** |
-| **Total leaf files** | **363** | |
+| **Total leaf files** | **375** | |
 
-Those files produce **309 documents** in the archive.
+Those files produce **318 documents** in the archive.
 
 ## Read by `build-book`
 
@@ -60,6 +60,9 @@ twice. `extract.mjs` reads each md5 once, so these carry no data the archive lac
 | `_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT.pdf` | `_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT (1).pdf` |
 | `_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf` | `_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT (1).pdf` |
 | `_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioAppraisal675OT (6).pdf` | `_extracted/august-2026/GOLD STANDARD - AJAY/G100023_100024_PortfolioAppraisal675OT (5).pdf` |
+| `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` |
+| `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` |
+| `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` |
 
 ## Read as a witness of its PDF
 

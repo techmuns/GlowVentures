@@ -1,0 +1,169 @@
+{
+ "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+ "provider": "360 ONE Private Wealth",
+ "accountNo": "60117",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Mr. Bharat Jaisinghani",
+ "ownerId": "bharat-jaisinghani",
+ "familyGroup": "Ajay Jaisinghani",
+ "strategy": null,
+ "engagement": "Distribution",
+ "providerEngagement": "Advisory / Distribution",
+ "members": [
+  {
+   "memberId": "CRN60117LE53288",
+   "label": "Advisory (CRN60117LE53288)",
+   "engagement": "Advisory",
+   "providerEngagement": "Advisory"
+  },
+  {
+   "memberId": "CRN60117LE51867",
+   "label": "Distribution (CRN60117LE51867)",
+   "engagement": "Distribution",
+   "providerEngagement": "Distribution"
+  }
+ ],
+ "asOf": "2026-09-30",
+ "inceptionDate": null,
+ "reportType": "holdings",
+ "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60117_07Oct2026_1552871.pdf",
+ "pages": 12,
+ "status": "partial",
+ "warnings": [
+  {
+   "code": "columns-not-matched",
+   "detail": "marketPrice, benchmark"
+  },
+  {
+   "code": "section-reported-empty",
+   "detail": "transaction: the report states \"No data available to generate …\""
+  },
+  {
+   "code": "section-reported-empty",
+   "detail": "corporate-action: the report states \"No data available to generate …\""
+  }
+ ],
+ "holdings": [
+  {
+   "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
+   "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+   "isin": null,
+   "symbol": null,
+   "printedSecurity": null,
+   "assetClass": "AIF",
+   "providerSector": null,
+   "manager": "360 ONE ASSET MANAGEMENT LIMITED",
+   "memberId": null,
+   "quantity": 990429.684,
+   "unitCost": null,
+   "totalCost": 9025763,
+   "marketPrice": null,
+   "accruedIncome": null,
+   "distributedIncome": 2826581,
+   "realized": 0,
+   "positionIrrPct": 10.22,
+   "benchmarkIrrPct": 10.68,
+   "absoluteYieldPct": null,
+   "annualizedYieldPct": null,
+   "priceAsOn": "2026-09-30",
+   "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
+   "marketValue": 12528737.43,
+   "gainLoss": 3502974.43,
+   "pctGainLoss": 38.81,
+   "pctAssets": 100,
+   "unrealized": 3502974.43,
+   "printed": {
+    "marketValue": 12528737.43,
+    "gainLoss": null,
+    "pctGainLoss": 38.81,
+    "pctAssets": 100,
+    "unrealized": 3502974.43
+   },
+   "marketValueFromPrinted": true,
+   "dedupeGroup": null,
+   "alsoReportedUnder": [],
+   "source": "360-one-private-wealth-60117-2026-09-30-holdings"
+  }
+ ],
+ "totals": {
+  "equityMarketValue": null,
+  "cashValue": null,
+  "totalMarketValue": 12528737,
+  "equityCost": null,
+  "totalCost": 9025763,
+  "gainLoss": null,
+  "pctGainLoss": null,
+  "positionCount": null,
+  "declaredAum": null,
+  "source": "360-one-private-wealth-60117-2026-09-30-holdings"
+ },
+ "returns": [],
+ "flows": {
+  "contribution": null,
+  "withdrawal": null,
+  "netCapitalInOut": null,
+  "realized": 0,
+  "unrealized": 3502974.43,
+  "income": 2826581,
+  "expenses": 0,
+  "fees": null,
+  "profit": null,
+  "corpus": 6199182,
+  "openingCorpus": null,
+  "periodFrom": null,
+  "periodTo": null,
+  "source": "360-one-private-wealth-60117-2026-09-30-holdings"
+ },
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
+ "checks": null,
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": -717.5,
+   "parts": [
+    "+91 9167661705"
+   ],
+   "joined": "+919167661705",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": -817.5,
+   "parts": [
+    "+91 8655809497"
+   ],
+   "joined": "+918655809497",
+   "page": 1
+  }
+ ],
+ "derivedPortfolioTotal": 12528737.43
+}

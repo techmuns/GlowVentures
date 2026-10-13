@@ -11393,5 +11393,331 @@
     "cols": 2
    }
   ]
+ },
+ {
+  "docKey": "360-one-private-wealth-37702-2026-09-30-holdings",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": "37702",
+  "owner": "Mr. AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": "Ajay Jaisinghani",
+  "strategy": null,
+  "asOf": "2026-09-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN37702_07Oct2026_1552871.pdf",
+  "pages": 12,
+  "sections": [
+   "detailed-holding-statement",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 3,
+  "fileKey": "360-one-private-wealth-37702-2026-09-30-holdings",
+  "label": "360 ONE Private Wealth · 37702 · holdings",
+  "fy": "2026-09-30",
+  "source": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN37702_07Oct2026_1552871.pdf",
+  "sheets": [
+   {
+    "key": "detailed-holding-statement",
+    "name": "detailed-holding-statement",
+    "rows": 2,
+    "cols": 11
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 12,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-60066-2026-09-30-holdings",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": "60066",
+  "owner": "Mr. Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": "Ajay Jaisinghani",
+  "strategy": null,
+  "asOf": "2026-09-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf",
+  "pages": 11,
+  "sections": [
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 3,
+  "fileKey": "360-one-private-wealth-60066-2026-09-30-holdings",
+  "label": "360 ONE Private Wealth · 60066 · holdings",
+  "fy": "2026-09-30",
+  "source": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 11,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+  "provider": "360 ONE Private Wealth",
+  "accountNo": "60117",
+  "owner": "Mr. Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": "Ajay Jaisinghani",
+  "strategy": null,
+  "asOf": "2026-09-30",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60117_07Oct2026_1552871.pdf",
+  "pages": 12,
+  "sections": [
+   "detailed-holding-statement",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 3,
+  "fileKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+  "label": "360 ONE Private Wealth · 60117 · holdings",
+  "fy": "2026-09-30",
+  "source": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60117_07Oct2026_1552871.pdf",
+  "sheets": [
+   {
+    "key": "detailed-holding-statement",
+    "name": "detailed-holding-statement",
+    "rows": 2,
+    "cols": 11
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 12,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-09-22",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+  "label": "Green Lantern Capital LLP · 510861 · fact-sheet",
+  "fy": "2026-09-22",
+  "source": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 70,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510861-2026-10-06-performance-history",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510861",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-10-06",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510861-2026-10-06-performance-history",
+  "label": "Green Lantern Capital LLP · 510861 · performance-history",
+  "fy": "2026-10-06",
+  "source": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 6,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "icici-prudential-mutual-fund-36378950-2026-10-05-holdings",
+  "provider": "ICICI Prudential Mutual Fund",
+  "accountNo": "36378950",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-05",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf",
+  "pages": 4,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "icici-prudential-mutual-fund-36378950-2026-10-05-holdings",
+  "label": "ICICI Prudential Mutual Fund · 36378950 · holdings",
+  "fy": "2026-10-05",
+  "source": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-09-22",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
+  "label": "Green Lantern Capital LLP · 510854 · fact-sheet",
+  "fy": "2026-09-22",
+  "source": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 70,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "green-lantern-capital-llp-510854-2026-10-06-performance-history",
+  "provider": "Green Lantern Capital LLP",
+  "accountNo": "510854",
+  "owner": "ANKITA JAISINGHANI",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND",
+  "asOf": "2026-10-06",
+  "reportType": "performance-history",
+  "sourcePath": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+  "pages": 1,
+  "sections": [
+   "returns",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "green-lantern-capital-llp-510854-2026-10-06-performance-history",
+  "label": "Green Lantern Capital LLP · 510854 · performance-history",
+  "fy": "2026-10-06",
+  "source": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf",
+  "sheets": [
+   {
+    "key": "returns",
+    "name": "returns",
+    "rows": 6,
+    "cols": 3
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "icici-prudential-mutual-fund-36379637-2026-10-05-holdings",
+  "provider": "ICICI Prudential Mutual Fund",
+  "accountNo": "36379637",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-05",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf",
+  "pages": 4,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "icici-prudential-mutual-fund-36379637-2026-10-05-holdings",
+  "label": "ICICI Prudential Mutual Fund · 36379637 · holdings",
+  "fy": "2026-10-05",
+  "source": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 2,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
  }
 ]

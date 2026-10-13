@@ -1,0 +1,115 @@
+{
+ "docKey": "360-one-private-wealth-60066-2026-09-30-holdings",
+ "provider": "360 ONE Private Wealth",
+ "accountNo": "60066",
+ "ownerSource": "printed",
+ "accountNoSource": "printed",
+ "clientCode": null,
+ "owner": "Mr. Ajay T Jaisinghani",
+ "ownerId": "ajay-jaisinghani",
+ "familyGroup": "Ajay Jaisinghani",
+ "strategy": null,
+ "engagement": "unknown",
+ "providerEngagement": "Advisory / Distribution",
+ "members": [
+  {
+   "memberId": "CRN60066LE53283",
+   "label": "Advisory (CRN60066LE53283)",
+   "engagement": "Advisory",
+   "providerEngagement": "Advisory"
+  },
+  {
+   "memberId": "CRN60066LE51816",
+   "label": "Distribution (CRN60066LE51816)",
+   "engagement": "Distribution",
+   "providerEngagement": "Distribution"
+  }
+ ],
+ "asOf": "2026-09-30",
+ "inceptionDate": null,
+ "reportType": "holdings",
+ "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf",
+ "pages": 11,
+ "status": "partial",
+ "warnings": [
+  {
+   "code": "section-reported-empty",
+   "detail": "transaction: the report states \"No data available to generate …\""
+  },
+  {
+   "code": "section-reported-empty",
+   "detail": "corporate-action: the report states \"No data available to generate …\""
+  },
+  {
+   "code": "portfolio-reported-nil",
+   "detail": "the report prints Total Portfolio Value \"-\", no holding rows and a total corpus of 0.00 — a measured nil, not an unread table"
+  }
+ ],
+ "holdings": [],
+ "totals": null,
+ "returns": [],
+ "flows": {
+  "contribution": null,
+  "withdrawal": null,
+  "netCapitalInOut": null,
+  "realized": 0,
+  "unrealized": 0,
+  "income": 0,
+  "expenses": 0,
+  "fees": null,
+  "profit": null,
+  "corpus": 0,
+  "openingCorpus": null,
+  "periodFrom": null,
+  "periodTo": null,
+  "source": "360-one-private-wealth-60066-2026-09-30-holdings"
+ },
+ "cashFlows": [],
+ "transactions": [],
+ "capitalGains": [],
+ "income": [],
+ "expenses": [],
+ "periodFrom": null,
+ "periodTo": null,
+ "pan": null,
+ "sourcePages": null,
+ "accrual": null,
+ "sectionsWithoutRows": [],
+ "clientXirrPct": null,
+ "commitment": null,
+ "capitalAccount": [],
+ "postTaxNav": null,
+ "unitsRedeemed": null,
+ "openLots": [],
+ "positionsAsOf": null,
+ "dematBalances": [],
+ "securityNameSource": null,
+ "excludedFromBook": null,
+ "schemeHoldings": [],
+ "aifEarnings": null,
+ "jointHolders": [],
+ "checks": null,
+ "stitches": [
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": -717.5,
+   "parts": [
+    "+91 9167661705"
+   ],
+   "joined": "+919167661705",
+   "page": 1
+  },
+  {
+   "kind": "same-line",
+   "column": 0,
+   "y": -817.5,
+   "parts": [
+    "+91 8655809497"
+   ],
+   "joined": "+918655809497",
+   "page": 1
+  }
+ ],
+ "derivedPortfolioTotal": null
+}

@@ -8,7 +8,7 @@ family's statement prints (`src/data/fundNavs.ts`; joined by `amfi-isin` below).
 Nothing here is matched on a resemblance, and nothing reaches `glowData.ts`: it is
 the label a reader sees, and `securityKeyOf` is not routed through it.
 
-**25 schemes resolve** — 21 through the look-through store and 4 through AMFI's own file — and 25 of them print differently from the name their own statement carried.
+**26 schemes resolve** — 21 through the look-through store and 5 through AMFI's own file — and 26 of them print differently from the name their own statement carried.
 
 | What the statement printed | What a reader sees | Plan | AMC | ISIN | Joined by |
 | --- | --- | --- | --- | --- | --- |
@@ -29,6 +29,7 @@ the label a reader sees, and `securityKeyOf` is not routed through it.
 | ICICI NFT NX 50 R GR | ICICI Prudential Nifty Next 50 Index Fund | Regular | ICICI Prudential Mutual Fund | INF109K01IF1 | isin |
 | ICICI NIFT50IND DP G | ICICI Prudential Nifty 50 Index Fund | Direct | ICICI Prudential Mutual Fund | INF109K012M7 | isin |
 | ICICI PRU BAF DP GRW | ICICI Prudential Balanced Advantage Fund | Direct | ICICI Prudential Mutual Fund | INF109K012B0 | isin |
+| ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth | ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF | — | — | INF109KC1P81 | amfi-isin |
 | INVES ARBF D-GROW | Invesco India Arbitrage Fund | Direct | — | INF205K01KR8 | amfi-isin |
 | INVES CON R GROWTH | Invesco India Contra Fund | Regular | Invesco Mutual Fund | INF205K01189 | isin |
 | KOTAK ARBFD DP GROW | Kotak Arbitrage Fund | Direct | — | INF174K01LC6 | amfi-isin |

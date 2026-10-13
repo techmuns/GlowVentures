@@ -681,8 +681,8 @@ every ZIP already at the top level.
 | Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | ₹1.88 Cr |
 | Sky Capital Rising Titans Fund | SKY003 | Bharat Jaisinghani | 2026-07-31 | ₹1.72 Cr |
 | Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-07-31 | ₹1.50 Cr |
-| 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-07-31 | ₹1.46 Cr\* |
-| 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-06-30 | ₹1.46 Cr\* |
+| 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-09-30 | ₹1.46 Cr\* |
+| 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-09-30 | ₹1.46 Cr\* |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 2 | 2026-06-30 | ₹1.35 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 3 | 2026-06-30 | ₹1.35 Cr |
 | Molecule Ventures LLP | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
@@ -691,10 +691,13 @@ every ZIP already at the top level.
 | Transition Venture Capital | TVC263 | Bharat Jaisinghani Family Trust 3 | 2026-03-31 | ₹0.97 Cr\* |
 | Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-07-31 | ₹0.75 Cr |
 | Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-07-31 | ₹0.75 Cr |
+| ICICI Prudential Mutual Fund | 36378950 | Ajay Jaisinghani | 2026-10-05 | ₹0.56 Cr |
+| ICICI Prudential Mutual Fund | 36379637 | Bharat Jaisinghani | 2026-10-05 | ₹0.38 Cr |
 | ASK Investment Managers Limited | 10034025 | Ajay Jaisinghani | 2026-09-08 | ₹0.34 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
 | ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | ₹0.01 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
 | 360 ONE Alternates Asset Management | 1000632 | Ajay Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
 | 360 ONE Alternates Asset Management | 1000633 | Bharat Jaisinghani | 2026-05-18 | — (income-only folio; the units are marked elsewhere) |
+| 360 ONE Private Wealth | 60066 | Ajay Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — the statement prints a nil portfolio) |
 | 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — every class redeemed to nil) |
 | ASK Absolute Return Fund | 9039917111 | Ajay Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
 | ASK Absolute Return Fund | 9039917144 | Ankita Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
@@ -27702,6 +27705,63 @@ on `cio-live`, VD-17 on `monitor`, and the no-NSE-symbol check on
 `corporate-actions` and `corporate-actions-live` (SVAN's Cosmo Films and
 CreditAccess Grameen rows) — the last measured failing identically on main's own
 build at `62a0ec6`.
+
+### Stage 10dx — THE OCTOBER 2026 DELIVERY: 360 ONE AT 30 SEP, GREEN LANTERN AT 22 SEP, AND TWO ICICI PRUDENTIAL FOLIOS
+
+*"the client has shared new data that needs to be integrated into the dashboard.
+Make sure nothing from these files and data is missed. Also fill the data audit
+page as well with this data accordingly."* — `source/october-2026-b/`: `360 ONE
+WEALTH.zip` and `GREEN LANTERN ICICI.zip`.
+
+**EVERY FILE IS READ, AND NINE DOCUMENTS JOIN THE ARCHIVE** (manifest 309 → 318,
+so the Data Audit page lists every one of them):
+
+| Document | Account | As of |
+| --- | --- | --- |
+| 360 ONE client report | CRN37702 (Ajay), CRN60117 (Bharat) | 2026-09-30 |
+| 360 ONE client report | **CRN60066 (Ajay) — new account, portfolio printed nil** | 2026-09-30 |
+| Green Lantern fact sheet | 510854 (Ankita), 510861 (Ajay) | 2026-09-22 |
+| Green Lantern performance history | 510854, 510861 | 2026-10-06 |
+| ICICI Prudential folio statement | **36378950 (Ajay), 36379637 (Bharat) — new** | 2026-10-05 |
+
+- **ICICI PRUDENTIAL IS A FOURTH FOLIO LAYOUT** in `mutualFundFolio.mjs`. Its
+  dated purchases are published only where their gross less stamp duty is the
+  net, the net is units × NAV, and the running units reach the printed balance
+  (`iciciPurchaseFlows`); `iciciFolio.test.mjs` (23) breaks each gate once.
+- **A PORTFOLIO PRINTED NIL IS A MEASURED NIL.** CRN60066 states "portfolio
+  reported nil"; the account carries that reason rather than reading as unwired.
+- **build-book fills, it never overrules.** A sector the newest fact sheet did
+  not print is filled from an older issue of the same report type; and a PMS
+  mandate whose newest issue carries no since-inception bridge to its own as-of
+  takes one from an older issue dated to it (Green Lantern's capital now cites
+  its 27 Jul fact sheet in `BOOK_ACCOUNT_BRIDGES`).
+
+**What moved.** 67 accounts (64 + 3), 414 positions, current value of holdings
+₹833.80 Cr → **₹834.73 Cr** — the two ICICI Prudential folios (₹0.56 Cr and
+₹0.38 Cr). The accounts table in the data-model section was regenerated by
+`npm run accounts-table` and ties to `BOOK_SUMMARY` (delta 0).
+
+**Verification**, on the tree merged with main at `62a0ec6`: `build` ·
+`test:ingest` (golden 140 passed, 2 not checked, 0 blocked) · `test:family` all
+passed · `check:family` **136/0** · `npm run build-book` twice, byte-identical.
+`npm run build-fund-navs` and `npm run build-scheme-names` were re-run so the two
+new ICICI Prudential schemes carry AMFI's NAV and published name.
+`check:pages` on `cio`, `audit`, `family`, `stock`, `private-market`,
+`stock-mf-lookthrough`, `cio-movers-funds` and `monitor`: clean except **VD-17
+on `monitor`**. A statement value priced on another day should name both dates.
+That check **fails identically on main's own build at `62a0ec6`**, measured with
+main's own checker in a worktree. It is main's, and is named here, not fixed.
+
+**Merged with #141, which took `10dw`, so this is `10dx`.** Every `10dw` in the
+code is #141's. On the merged tree (main `8d6d473`):
+- `build-book` is byte-identical.
+- The accounts table has delta 0.
+- `build`, `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) and
+  `test:family` pass.
+- `check:pages` was run on 11 routes: those above, plus `cio-live`,
+  `stock-sold-after` and `monitor-withheld`. Two checks fail, and both are main's:
+  VD-17 on `monitor`, and the priority-request check on `cio-live`, which Stage
+  10dn records as failing on main's own build.
 
 ### Stage 10k — News & Announcements: REMOVED
 

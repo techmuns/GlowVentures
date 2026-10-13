@@ -186,6 +186,17 @@
     "printed": "ICICI PRU BAF DP GRW",
     "joinedBy": "isin"
   },
+  "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": {
+    "name": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF",
+    "plan": null,
+    "option": null,
+    "amc": null,
+    "isin": "INF109KC1P81",
+    "schemecode": "148822",
+    "amfiName": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF",
+    "printed": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
+    "joinedBy": "amfi-isin"
+  },
   "inves-arbf-d-grow": {
     "name": "Invesco India Arbitrage Fund",
     "plan": "Direct",

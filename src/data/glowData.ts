@@ -14,18 +14,18 @@ import type {
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
-export const BOOK_AS_OF = "2026-09-09";
+export const BOOK_AS_OF = "2026-10-05";
 
 export const BOOK_SUMMARY: BookSummary = {
-  "asOf": "2026-09-09",
-  "listedValue": 5992013343.4,
+  "asOf": "2026-10-05",
+  "listedValue": 6001396520.11,
   "privateValue": 2345944270.36,
   "unplacedValue": 0,
-  "totalValue": 8337957613.76,
-  "positionsCount": 412,
+  "totalValue": 8347340790.47,
+  "positionsCount": 414,
   "entitiesCount": 8,
   "startupsCount": 0,
-  "accountsCount": 64
+  "accountsCount": 67
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -85,11 +85,40 @@ export const BOOK_ACCOUNTS: Account[] = [
         "providerEngagement": "Executionary"
       }
     ],
-    "asOf": "2026-07-31",
+    "asOf": "2026-09-30",
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "360 ONE Private Wealth",
     "noPositionsReason": null
+  },
+  {
+    "accountId": "360-one-private-wealth-60066",
+    "provider": "360 ONE Private Wealth",
+    "accountNo": "60066",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "unknown",
+    "providerEngagement": "Advisory / Distribution",
+    "members": [
+      {
+        "memberId": "CRN60066LE53283",
+        "label": "Advisory (CRN60066LE53283)",
+        "engagement": "Advisory",
+        "providerEngagement": "Advisory"
+      },
+      {
+        "memberId": "CRN60066LE51816",
+        "label": "Distribution (CRN60066LE51816)",
+        "engagement": "Distribution",
+        "providerEngagement": "Distribution"
+      }
+    ],
+    "asOf": "2026-09-30",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "360 ONE Private Wealth",
+    "noPositionsReason": "this account's holdings statement of 2026-09-30 prints a nil portfolio — no holding rows and a total of nil. That is a measurement, not a missing statement"
   },
   {
     "accountId": "360-one-private-wealth-60117",
@@ -114,7 +143,7 @@ export const BOOK_ACCOUNTS: Account[] = [
         "providerEngagement": "Distribution"
       }
     ],
-    "asOf": "2026-06-30",
+    "asOf": "2026-09-30",
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "360 ONE Private Wealth",
@@ -471,6 +500,38 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "ICICI Bank (NSDL demat)",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "icici-prudential-mutual-fund-36378950",
+    "provider": "ICICI Prudential Mutual Fund",
+    "accountNo": "36378950",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a individual",
+    "members": [],
+    "asOf": "2026-10-05",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-10-05",
+    "custodian": "ICICI Prudential Mutual Fund",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "icici-prudential-mutual-fund-36379637",
+    "provider": "ICICI Prudential Mutual Fund",
+    "accountNo": "36379637",
+    "ownerId": "bharat-jaisinghani",
+    "owner": "Bharat Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a individual",
+    "members": [],
+    "asOf": "2026-10-05",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-10-05",
+    "custodian": "ICICI Prudential Mutual Fund",
     "noPositionsReason": null
   },
   {
@@ -5868,6 +5929,64 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-03-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth",
+    "security": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
+    "symbol": null,
+    "isin": "INF109KC1P81",
+    "accountId": "icici-prudential-mutual-fund-36378950",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 327918.76,
+    "avgCost": null,
+    "currentPrice": 17.1686,
+    "costBasis": 6000000,
+    "marketValue": 5629906.02,
+    "unrealizedPnL": -370093.98,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": -6.17,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-01",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth",
+    "security": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
+    "symbol": null,
+    "isin": "INF109KC1P81",
+    "accountId": "icici-prudential-mutual-fund-36379637",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 218612.507,
+    "avgCost": null,
+    "currentPrice": 17.1686,
+    "costBasis": 4000000,
+    "marketValue": 3753270.69,
+    "unrealizedPnL": -246729.31,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": -6.17,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-01",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15201,7 +15320,7 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
     "reviewLine": "360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II)",
     "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
     "quantity": 990429.684,
-    "marketValue": 14668362.66
+    "marketValue": 12528737.43
   },
   {
     "accountId": "360-one-private-wealth-60117",
@@ -15210,7 +15329,7 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
     "reviewLine": "360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II)",
     "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
     "quantity": 990429.684,
-    "marketValue": 14580412.51
+    "marketValue": 12528737.43
   },
   {
     "accountId": "transition-venture-capital-TVC262",
@@ -16426,6 +16545,19 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkClose": 2202222228.78,
     "linkAccounts": 15,
     "panelComplete": true
+  },
+  {
+    "period": "2026-09-30",
+    "date": "2026-09-30",
+    "nav": 2198030928.47,
+    "accountsOnDate": 2,
+    "accountsCarried": 13,
+    "flowIn": 0,
+    "unreportedFlowValue": 0,
+    "linkOpen": 2202222228.78,
+    "linkClose": 2198030928.47,
+    "linkAccounts": 15,
+    "panelComplete": true
   }
 ];
 
@@ -16449,6 +16581,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-07-31",
       "date": "2026-07-31",
       "nav": 14668362.66
+    },
+    {
+      "period": "2026-09-30",
+      "date": "2026-09-30",
+      "nav": 12528737.43
     }
   ],
   "360-one-private-wealth-60117": [
@@ -16461,6 +16598,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-06-30",
       "date": "2026-06-30",
       "nav": 14580412.51
+    },
+    {
+      "period": "2026-09-30",
+      "date": "2026-09-30",
+      "nav": 12528737.43
     }
   ],
   "buoyant-capital-103472": [
@@ -16693,19 +16835,19 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
   "covered": [
     {
       "accountId": "360-one-private-wealth-37702",
-      "points": 3,
+      "points": 4,
       "first": "2026-05-31",
-      "last": "2026-07-31",
-      "latestValue": 14668362.66,
+      "last": "2026-09-30",
+      "latestValue": 12528737.43,
       "bookValue": 14580413,
       "flowBasis": "units-unchanged"
     },
     {
       "accountId": "360-one-private-wealth-60117",
-      "points": 2,
+      "points": 3,
       "first": "2026-05-31",
-      "last": "2026-06-30",
-      "latestValue": 14580412.51,
+      "last": "2026-09-30",
+      "latestValue": 12528737.43,
       "bookValue": 14580412.51,
       "flowBasis": "units-unchanged"
     },
@@ -16890,6 +17032,20 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "accountNo": "49794950",
       "date": "2026-03-31",
       "bookValue": 637631614.65
+    },
+    {
+      "accountId": "icici-prudential-mutual-fund-36378950",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "36378950",
+      "date": "2026-10-05",
+      "bookValue": 5629906.02
+    },
+    {
+      "accountId": "icici-prudential-mutual-fund-36379637",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "36379637",
+      "date": "2026-10-05",
+      "bookValue": 3753270.69
     },
     {
       "accountId": "india-sme-investments-175962",
@@ -17088,6 +17244,12 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 0
     },
     {
+      "accountId": "360-one-private-wealth-60066",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60066",
+      "bookValue": 0
+    },
+    {
       "accountId": "hdfc-bank-nsdl-demat-67786137",
       "provider": "HDFC Bank (NSDL demat)",
       "accountNo": "67786137",
@@ -17161,7 +17323,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     }
   ],
   "from": "2026-03-31",
-  "to": "2026-08-31",
+  "to": "2026-09-30",
   "panelCompleteFrom": "2026-07-31"
 };
 
@@ -17200,29 +17362,29 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [
  */
 export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
-  "to": "2026-08-31",
+  "to": "2026-09-30",
   "openValue": 2047066969.38,
-  "closeValue": 2202222228.78,
+  "closeValue": 2198030928.47,
   "priceEffect": 41453633.45,
   "tradeEffect": 83708255.64,
   "enteredValue": 107178344.42,
   "exitedValue": 82274047.36,
-  "undecomposedValue": 5089073.23,
-  "bookValue": 8337957613.76,
+  "undecomposedValue": 897772.92,
+  "bookValue": 8347340790.47,
   "coveredBookValue": 2202134279.12,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
       "from": "2026-05-31",
-      "to": "2026-07-31",
-      "days": 61,
+      "to": "2026-09-30",
+      "days": 122,
       "openValue": 14408473.91,
-      "closeValue": 14668362.66,
+      "closeValue": 12528737.43,
       "priceEffect": 0,
       "tradeEffect": 0,
       "enteredValue": 0,
       "exitedValue": 0,
-      "undecomposedValue": 259888.75,
+      "undecomposedValue": -1879736.48,
       "rowsHeld": 0,
       "rowsEntered": 0,
       "rowsExited": 0,
@@ -17231,15 +17393,15 @@ export const BOOK_ATTRIBUTION: Attribution = {
     {
       "accountId": "360-one-private-wealth-60117",
       "from": "2026-05-31",
-      "to": "2026-06-30",
-      "days": 30,
+      "to": "2026-09-30",
+      "days": 122,
       "openValue": 14408473.91,
-      "closeValue": 14580412.51,
+      "closeValue": 12528737.43,
       "priceEffect": 0,
       "tradeEffect": 0,
       "enteredValue": 0,
       "exitedValue": 0,
-      "undecomposedValue": 171938.6,
+      "undecomposedValue": -1879736.48,
       "rowsHeld": 0,
       "rowsEntered": 0,
       "rowsExited": 0,
@@ -22063,9 +22225,9 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
       "accountId": "360-one-private-wealth-37702",
       "from": "2026-05-31",
-      "to": "2026-07-31",
+      "to": "2026-09-30",
       "openValue": 14408473.91,
-      "closeValue": 14668362.66,
+      "closeValue": 12528737.43,
       "openPrice": null,
       "closePrice": null,
       "openQty": 990429.684,
@@ -22080,9 +22242,9 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
       "accountId": "360-one-private-wealth-60117",
       "from": "2026-05-31",
-      "to": "2026-06-30",
+      "to": "2026-09-30",
       "openValue": 14408473.91,
-      "closeValue": 14580412.51,
+      "closeValue": 12528737.43,
       "openPrice": null,
       "closePrice": null,
       "openQty": 990429.684,
@@ -22637,6 +22799,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Ajay Jaisinghani · 360 60066",
+    "accountId": "360-one-private-wealth-60066",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Bharat Jaisinghani · 360 60117",
     "accountId": "360-one-private-wealth-60117",
     "ownerId": "bharat-jaisinghani",
@@ -23001,6 +23177,34 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "entity": "Ajay Jaisinghani · ICICI 49794950",
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ajay Jaisinghani · ICICI 36378950",
+    "accountId": "icici-prudential-mutual-fund-36378950",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Bharat Jaisinghani · ICICI 36379637",
+    "accountId": "icici-prudential-mutual-fund-36379637",
+    "ownerId": "bharat-jaisinghani",
     "realisedST": null,
     "realisedLT": null,
     "unrealisedST": null,
@@ -26912,6 +27116,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "icici-prudential-mutual-fund-36378950",
+    "date": "2024-10-23",
+    "direction": "in",
+    "label": "Purchase - DIRECT",
+    "amount": 6000000,
+    "invested": 5999700.01,
+    "charges": 299.99,
+    "units": 327918.76,
+    "security": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
+    "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth"
+  },
+  {
+    "accountId": "icici-prudential-mutual-fund-36379637",
+    "date": "2024-10-23",
+    "direction": "in",
+    "label": "Purchase - DIRECT",
+    "amount": 4000000,
+    "invested": 3999800.01,
+    "charges": 199.99,
+    "units": 218612.507,
+    "security": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
+    "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10034025",
     "date": "2024-10-28",
     "direction": "out",
@@ -28536,6 +28764,8 @@ export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "ask-absolute-return-fund-9039917144",
   "buoyant-capital-103473",
   "helios-mutual-fund-10355977",
+  "icici-prudential-mutual-fund-36378950",
+  "icici-prudential-mutual-fund-36379637",
   "motilal-oswal-active-momentum-fund-904168868444"
 ];
 
@@ -28801,6 +29031,44 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
       }
     ],
     "units": 19123041.38
+  },
+  "icici-prudential-mutual-fund-36378950|icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": {
+    "accountId": "icici-prudential-mutual-fund-36378950",
+    "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth",
+    "moves": [
+      {
+        "accountId": "icici-prudential-mutual-fund-36378950",
+        "date": "2024-10-23",
+        "direction": "in",
+        "label": "Purchase - DIRECT",
+        "amount": 6000000,
+        "invested": 6000000,
+        "charges": 299.99,
+        "units": 327918.76,
+        "security": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
+        "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth"
+      }
+    ],
+    "units": 327918.76
+  },
+  "icici-prudential-mutual-fund-36379637|icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": {
+    "accountId": "icici-prudential-mutual-fund-36379637",
+    "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth",
+    "moves": [
+      {
+        "accountId": "icici-prudential-mutual-fund-36379637",
+        "date": "2024-10-23",
+        "direction": "in",
+        "label": "Purchase - DIRECT",
+        "amount": 4000000,
+        "invested": 4000000,
+        "charges": 199.99,
+        "units": 218612.507,
+        "security": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
+        "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth"
+      }
+    ],
+    "units": 218612.507
   },
   "motilal-oswal-active-momentum-fund-904168868444|motilal-oswal-active-momentum-fund-direct-plan-growth-option": {
     "accountId": "motilal-oswal-active-momentum-fund-904168868444",
@@ -31563,7 +31831,7 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
   "green-lantern-capital-llp-510854": [
     {
       "reportType": "fact-sheet",
-      "source": "green-lantern-capital-llp-510854-2026-07-27-fact-sheet",
+      "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
       "series": [
         {
           "series": "Portfolio",
@@ -31571,13 +31839,13 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "mtd": null,
           "qtd": null,
           "fytd": null,
-          "m1": -1.78,
-          "m3": -0.21,
+          "m1": -0.03,
+          "m3": -2.8,
           "m6": null,
-          "y1": 9.53,
-          "si": 11.45,
+          "y1": 9.37,
+          "si": 10.09,
           "siAnnualised": true,
-          "feeBasis": "before"
+          "feeBasis": "after"
         },
         {
           "series": "S&P BSE 500 Total",
@@ -31585,13 +31853,13 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "mtd": null,
           "qtd": null,
           "fytd": null,
-          "m1": 0.36,
-          "m3": 1.73,
+          "m1": -3.07,
+          "m3": -1.52,
           "m6": null,
-          "y1": 1.22,
-          "si": 4.79,
+          "y1": -1.93,
+          "si": 5.12,
           "siAnnualised": true,
-          "feeBasis": "before"
+          "feeBasis": "after"
         }
       ]
     },
@@ -31631,7 +31899,7 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
     },
     {
       "reportType": "performance-history",
-      "source": "green-lantern-capital-llp-510854-2026-08-10-performance-history",
+      "source": "green-lantern-capital-llp-510854-2026-10-06-performance-history",
       "series": [
         {
           "series": "Portfolio",
@@ -31639,25 +31907,25 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "mtd": null,
           "qtd": null,
           "fytd": null,
-          "m1": 1.98,
-          "m3": -0.5,
-          "m6": 11.98,
-          "y1": 16.15,
-          "si": 13.15,
+          "m1": -1.23,
+          "m3": -1.25,
+          "m6": 11.89,
+          "y1": 10.93,
+          "si": 9.53,
           "siAnnualised": true,
           "feeBasis": null
         },
         {
-          "series": "S&P BSE 500",
+          "series": "Total Return",
           "isBenchmark": true,
           "mtd": null,
           "qtd": null,
           "fytd": null,
-          "m1": 1.34,
-          "m3": 2.59,
-          "m6": -0.13,
-          "y1": 5.89,
-          "si": 6.05,
+          "m1": -4.55,
+          "m3": -4.96,
+          "m6": 5.16,
+          "y1": -3.66,
+          "si": 3.38,
           "siAnnualised": true,
           "feeBasis": null
         }
@@ -31667,7 +31935,7 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
   "green-lantern-capital-llp-510861": [
     {
       "reportType": "fact-sheet",
-      "source": "green-lantern-capital-llp-510861-2026-07-27-fact-sheet",
+      "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
       "series": [
         {
           "series": "Portfolio",
@@ -31675,13 +31943,13 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "mtd": null,
           "qtd": null,
           "fytd": null,
-          "m1": -1.78,
-          "m3": -0.2,
+          "m1": -0.04,
+          "m3": -2.81,
           "m6": null,
-          "y1": 9.57,
-          "si": 10.6,
+          "y1": 9.43,
+          "si": 9.32,
           "siAnnualised": true,
-          "feeBasis": "before"
+          "feeBasis": "after"
         },
         {
           "series": "S&P BSE 500 Total",
@@ -31689,13 +31957,13 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "mtd": null,
           "qtd": null,
           "fytd": null,
-          "m1": 0.36,
-          "m3": 1.73,
+          "m1": -3.07,
+          "m3": -1.52,
           "m6": null,
-          "y1": 1.22,
-          "si": 5.64,
+          "y1": -1.93,
+          "si": 3.81,
           "siAnnualised": true,
-          "feeBasis": "before"
+          "feeBasis": "after"
         }
       ]
     },
@@ -31783,7 +32051,7 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
     },
     {
       "reportType": "performance-history",
-      "source": "green-lantern-capital-llp-510861-2026-08-10-performance-history",
+      "source": "green-lantern-capital-llp-510861-2026-10-06-performance-history",
       "series": [
         {
           "series": "Portfolio",
@@ -31791,25 +32059,25 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "mtd": null,
           "qtd": null,
           "fytd": null,
-          "m1": 1.98,
-          "m3": -0.51,
-          "m6": 12.02,
-          "y1": 16.19,
-          "si": 12.32,
+          "m1": -1.25,
+          "m3": -1.26,
+          "m6": 11.9,
+          "y1": 10.97,
+          "si": 8.77,
           "siAnnualised": true,
           "feeBasis": null
         },
         {
-          "series": "S&P BSE 500",
+          "series": "Total Return",
           "isBenchmark": true,
           "mtd": null,
           "qtd": null,
           "fytd": null,
-          "m1": 1.34,
-          "m3": 2.59,
-          "m6": -0.13,
-          "y1": 5.89,
-          "si": 6.9,
+          "m1": -4.55,
+          "m3": -4.96,
+          "m6": 5.16,
+          "y1": -3.66,
+          "si": 2.12,
           "siAnnualised": true,
           "feeBasis": null
         }
@@ -32880,6 +33148,70 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   "green-lantern-capital-llp-510854": [
     {
       "reportType": "fact-sheet",
+      "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
+      "periodFrom": "2025-01-13",
+      "periodTo": "2026-09-22",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 50000000,
+      "withdrawal": 64777,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 58749582,
+      "profit": 8814359,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 58749582,
+      "withheldReason": null
+    },
+    {
+      "reportType": "performance-history",
+      "source": "green-lantern-capital-llp-510854-2026-10-06-performance-history",
+      "periodFrom": "2025-01-13",
+      "periodTo": "2026-10-06",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": 49932313.5,
+      "realized": 2553481.03,
+      "unrealized": 6151090.25,
+      "income": 757387.8,
+      "fees": 1009669.89,
+      "expenses": null,
+      "closing": 58447436.44,
+      "profit": null,
+      "accruedIncome": 62833.75,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 58447436.44,
+      "withheldReason": null
+    },
+    {
+      "reportType": "fact-sheet",
       "source": "green-lantern-capital-llp-510854-2026-07-27-fact-sheet",
       "periodFrom": "2025-01-13",
       "periodTo": "2026-07-27",
@@ -32909,37 +33241,6 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "openingNil": true,
       "residual": 0,
       "linesTotal": 58062530,
-      "withheldReason": null
-    },
-    {
-      "reportType": "performance-history",
-      "source": "green-lantern-capital-llp-510854-2026-08-10-performance-history",
-      "periodFrom": "2025-01-13",
-      "periodTo": "2026-08-10",
-      "basis": "since-inception",
-      "opening": null,
-      "contribution": null,
-      "withdrawal": null,
-      "netCapitalInOut": 49945312,
-      "realized": 1287664.32,
-      "unrealized": 8628181.57,
-      "income": 593592.75,
-      "fees": 855409.96,
-      "expenses": null,
-      "closing": 59711149.87,
-      "profit": null,
-      "accruedIncome": 111809.2,
-      "changeInAccruals": null,
-      "otherExpenses": null,
-      "gainPriorToTakeover": 0,
-      "unread": [
-        "changeInAccruals",
-        "otherExpenses"
-      ],
-      "ties": true,
-      "openingNil": true,
-      "residual": -0.01,
-      "linesTotal": 59711149.88,
       "withheldReason": null
     },
     {
@@ -32977,6 +33278,70 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   "green-lantern-capital-llp-510861": [
     {
       "reportType": "fact-sheet",
+      "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+      "periodFrom": "2025-01-16",
+      "periodTo": "2026-09-22",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": 100000000,
+      "withdrawal": 140098,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 116019848,
+      "profit": 16159945,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 1,
+      "linesTotal": 116019847,
+      "withheldReason": null
+    },
+    {
+      "reportType": "performance-history",
+      "source": "green-lantern-capital-llp-510861-2026-10-06-performance-history",
+      "periodFrom": "2025-01-16",
+      "periodTo": "2026-10-06",
+      "basis": "since-inception",
+      "opening": null,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": 99855962.83,
+      "realized": 4641551.06,
+      "unrealized": 11285726.33,
+      "income": 1497612,
+      "fees": 1987245.46,
+      "expenses": null,
+      "closing": 115417697.01,
+      "profit": null,
+      "accruedIncome": 124090.25,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 115417697.01,
+      "withheldReason": null
+    },
+    {
+      "reportType": "fact-sheet",
       "source": "green-lantern-capital-llp-510861-2026-07-27-fact-sheet",
       "periodFrom": "2025-01-16",
       "periodTo": "2026-07-27",
@@ -33006,37 +33371,6 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "openingNil": true,
       "residual": 0,
       "linesTotal": 114674895,
-      "withheldReason": null
-    },
-    {
-      "reportType": "performance-history",
-      "source": "green-lantern-capital-llp-510861-2026-08-10-performance-history",
-      "periodFrom": "2025-01-16",
-      "periodTo": "2026-08-10",
-      "basis": "since-inception",
-      "opening": null,
-      "contribution": null,
-      "withdrawal": null,
-      "netCapitalInOut": 99885169,
-      "realized": 2150055.3,
-      "unrealized": 16185259.73,
-      "income": 1173702.6,
-      "fees": 1682623.64,
-      "expenses": null,
-      "closing": 117932700.44,
-      "profit": null,
-      "accruedIncome": 221137.45,
-      "changeInAccruals": null,
-      "otherExpenses": null,
-      "gainPriorToTakeover": 0,
-      "unread": [
-        "changeInAccruals",
-        "otherExpenses"
-      ],
-      "ties": true,
-      "openingNil": true,
-      "residual": 0,
-      "linesTotal": 117932700.44,
       "withheldReason": null
     },
     {

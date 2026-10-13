@@ -618,6 +618,24 @@ export function extract({ grid, meta }) {
   if (!id.client) warn(warnings, "client-name-not-read", "no `<name> (CRN…)` on any page header");
   if (!id.asOf) warn(warnings, "as-of-not-read", "no `… as on <date>` heading found");
 
+  // A CRN THAT HOLDS NOTHING. 360 ONE issues the full report for a client code
+  // with no money in it: "Total Portfolio Value -" over no holding rows, a
+  // Corpus, Income & Expense block of 0.00 throughout, and "No data available"
+  // under every dated section. Read as an ordinary report it produced three
+  // parser-failure warnings (no holdings table, no executive summary, engagement
+  // unknown) about a document that was read perfectly and says, in its own
+  // figures, that the portfolio is nil. That is a MEASURED nil, so the three are
+  // replaced by one note that says so; any holding row or non-zero corpus keeps
+  // the ordinary path and its warnings.
+  const nilPortfolio = holdings.length === 0 && corpus?.corpus === 0
+    && /Total\s+Portfolio\s+Value\s+Loans\s+-\s+0\.00/i.test(flat);
+  if (nilPortfolio) {
+    const drop = new Set(["holdings-table-not-found", "executive-summary-not-read", "engagement-unknown"]);
+    for (let i = warnings.length - 1; i >= 0; i--) if (drop.has(warnings[i].code)) warnings.splice(i, 1);
+    warn(warnings, "portfolio-reported-nil",
+      "the report prints Total Portfolio Value \"-\", no holding rows and a total corpus of 0.00 — a measured nil, not an unread table");
+  }
+
   const gotSomething = holdings.length || exec.totals || corpus || cashFlows.length;
   return {
     provider: PROVIDER,

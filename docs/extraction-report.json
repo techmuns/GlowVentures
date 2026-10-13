@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-07T13:24:27.968Z",
+  "generatedAt": "2026-10-13T06:51:50.902Z",
   "summary": {
-    "documents": 309,
-    "parsed": 242,
-    "partial": 64,
+    "documents": 318,
+    "parsed": 248,
+    "partial": 67,
     "failed": 3,
-    "rowSumChecks": 262,
-    "totalMismatches": 99,
+    "rowSumChecks": 274,
+    "totalMismatches": 101,
     "totalsMaterial": 0,
     "totalsExplained": 40,
-    "totalsRounding": 109,
+    "totalsRounding": 115,
     "derivedVsPrintedDeltas": 641,
     "derivedMaterial": 0,
     "derivedExplained": 321,
@@ -21,11 +21,11 @@
     "crossReportDeltas": 18,
     "suspectedDuplicates": 0,
     "quantityOnlyMatches": 3,
-    "confirmedSeparateByFamily": 3,
+    "confirmedSeparateByFamily": 4,
     "suspectedDuplicateEarnings": 1,
-    "securitiesWithoutSymbol": 27,
+    "securitiesWithoutSymbol": 30,
     "ownerNamesUnmatched": 2,
-    "stitchesApplied": 127
+    "stitchesApplied": 133
   },
   "coverage": {
     "pdfsFound": 297,
@@ -51,8 +51,8 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 242,
-    "partial": 64,
+    "parsed": 248,
+    "partial": 67,
     "failed": 3,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
@@ -358,7 +358,7 @@
           "failed": 0
         },
         "fact-sheet": {
-          "ok": 4,
+          "ok": 6,
           "partial": 0,
           "failed": 0
         },
@@ -368,7 +368,7 @@
           "failed": 0
         },
         "performance-history": {
-          "ok": 4,
+          "ok": 6,
           "partial": 0,
           "failed": 0
         },
@@ -461,7 +461,7 @@
       "360 ONE Private Wealth": {
         "holdings": {
           "ok": 0,
-          "partial": 5,
+          "partial": 8,
           "failed": 0
         }
       },
@@ -662,6 +662,13 @@
       "Scheme portfolio disclosure": {
         "scheme-portfolio": {
           "ok": 1,
+          "partial": 0,
+          "failed": 0
+        }
+      },
+      "ICICI Prudential Mutual Fund": {
+        "holdings": {
+          "ok": 2,
           "partial": 0,
           "failed": 0
         }
@@ -1181,12 +1188,39 @@
         "reasons": [
           "tds-transfers-are-not-trades: 232 TDS transfer row(s) (116 × \"Trf to TDS A/c\", 116 × \"TDS Trf to Capital A/c\") — the tax deducted at source on a dividend moving into the account's TDS ledger and on to capital. Cash, not shares: none is a trade, and the bank book carries each one."
         ]
+      },
+      {
+        "docKey": "360-one-private-wealth-37702-2026-09-30-holdings",
+        "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN37702_07Oct2026_1552871.pdf",
+        "reasons": [
+          "columns-not-matched: marketPrice, benchmark",
+          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
+          "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-60066-2026-09-30-holdings",
+        "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf",
+        "reasons": [
+          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
+          "section-reported-empty: corporate-action: the report states \"No data available to generate …\"",
+          "portfolio-reported-nil: the report prints Total Portfolio Value \"-\", no holding rows and a total corpus of 0.00 — a measured nil, not an unread table"
+        ]
+      },
+      {
+        "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+        "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60117_07Oct2026_1552871.pdf",
+        "reasons": [
+          "columns-not-matched: marketPrice, benchmark",
+          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
+          "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
+        ]
       }
     ]
   },
   "consolidated": {
-    "naive": 134127127029.73,
-    "deduped": 134127127029.73,
+    "naive": 134161567681.3,
+    "deduped": 134161567681.3,
     "doubleCounted": 0
   },
   "rowSumChecks": [
@@ -5834,6 +5868,218 @@
       "accountNo": "TVC262",
       "asOf": "2026-03-31",
       "reportType": "unknown",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-09-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "37702",
+      "asOf": "2026-09-30",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 12528737.43,
+      "printedTotal": 12528737,
+      "delta": 0.43,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-09-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "37702",
+      "asOf": "2026-09-30",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 9025763,
+      "printedTotal": 9025763,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-09-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "37702",
+      "asOf": "2026-09-30",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60117",
+      "asOf": "2026-09-30",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 12528737.43,
+      "printedTotal": 12528737,
+      "delta": 0.43,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60117",
+      "asOf": "2026-09-30",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 9025763,
+      "printedTotal": 9025763,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+      "provider": "360 ONE Private Wealth",
+      "accountNo": "60117",
+      "asOf": "2026-09-30",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "icici-prudential-mutual-fund-36378950-2026-10-05-holdings",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "36378950",
+      "asOf": "2026-10-05",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 5629906.02,
+      "printedTotal": 5629906.02,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "icici-prudential-mutual-fund-36378950-2026-10-05-holdings",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "36378950",
+      "asOf": "2026-10-05",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 6000000,
+      "printedTotal": 6000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "icici-prudential-mutual-fund-36378950-2026-10-05-holdings",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "36378950",
+      "asOf": "2026-10-05",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "icici-prudential-mutual-fund-36379637-2026-10-05-holdings",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "36379637",
+      "asOf": "2026-10-05",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 3753270.69,
+      "printedTotal": 3753270.69,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "icici-prudential-mutual-fund-36379637-2026-10-05-holdings",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "36379637",
+      "asOf": "2026-10-05",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 4000000,
+      "printedTotal": 4000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "icici-prudential-mutual-fund-36379637-2026-10-05-holdings",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "36379637",
+      "asOf": "2026-10-05",
+      "reportType": "holdings",
       "check": "% of assets sums to 100",
       "rowSum": 100,
       "printedTotal": 100,
@@ -194933,6 +195179,37 @@
       "resolution": "NOT a dedupe group. The family confirmed on 2026-09-28 that these are separate investments, one per account, so each is counted in full in every figure. The figures coincide because the holders bought the same thing on the same terms (SEPARATE_INVESTMENTS in shared/separateInvestments.mjs)."
     },
     {
+      "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
+      "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+      "quantity": 990429.684,
+      "totalCost": 9025763,
+      "marketValue": 12528737.43,
+      "owners": [
+        "ajay-jaisinghani",
+        "bharat-jaisinghani"
+      ],
+      "confirmed": "2026-09-28",
+      "occurrences": [
+        {
+          "docKey": "360-one-private-wealth-37702-2026-09-30-holdings",
+          "owner": "Mr. AJAY T JAISINGHANI",
+          "ownerId": "ajay-jaisinghani",
+          "accountNo": "37702",
+          "asOf": "2026-09-30",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+          "owner": "Mr. Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "60117",
+          "asOf": "2026-09-30",
+          "reportType": "holdings"
+        }
+      ],
+      "resolution": "NOT a dedupe group. The family confirmed on 2026-09-28 that these are separate investments, one per account, so each is counted in full in every figure. The figures coincide because the holders bought the same thing on the same terms (SEPARATE_INVESTMENTS in shared/separateInvestments.mjs)."
+    },
+    {
       "security": "Transition Venture Capital Fund I — Class A1",
       "securityKey": "transition-venture-capital-fund-i-class-a1",
       "quantity": 7500,
@@ -195015,7 +195292,9 @@
           "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet",
           "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
           "green-lantern-capital-llp-510854-2026-06-25-fact-sheet",
-          "molecule-ventures-llp-7810404-2026-07-31-fact-sheet"
+          "molecule-ventures-llp-7810404-2026-07-31-fact-sheet",
+          "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
         ]
       },
       {
@@ -195065,7 +195344,9 @@
           "green-lantern-capital-llp-510861-2026-06-25-fact-sheet",
           "green-lantern-capital-llp-510861-2026-06-25-holdings",
           "green-lantern-capital-llp-510854-2026-06-25-fact-sheet",
-          "green-lantern-capital-llp-510854-2026-06-25-holdings"
+          "green-lantern-capital-llp-510854-2026-06-25-holdings",
+          "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
         ]
       },
       {
@@ -195233,6 +195514,30 @@
         "docs": [
           "ask-investment-managers-limited-10034025-2026-09-08-fact-sheet"
         ]
+      },
+      {
+        "security": "HEG Graphite Limited",
+        "securityKey": "heg-graphite",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+        ]
+      },
+      {
+        "security": "Elgi Equipments Ltd",
+        "securityKey": "elgi-equipments",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+        ]
+      },
+      {
+        "security": "HEG Advanced Materials Limited",
+        "securityKey": "heg-advanced-materials",
+        "docs": [
+          "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+          "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+        ]
       }
     ],
     "ownerNamesUnmatched": [
@@ -195303,6 +195608,7 @@
       "Kotak Mahindra Mutual Fund",
       "Mirae Asset Mutual Fund",
       "HDFC Mutual Fund",
+      "ICICI Prudential Mutual Fund",
       "Mutual fund folio",
       "360 ONE Alternates Asset Management",
       "360 ONE Private Wealth",
@@ -196721,6 +197027,72 @@
       "kind": "same-line",
       "column": 0,
       "y": -799.5,
+      "parts": [
+        "+91 8655809497"
+      ],
+      "joined": "+918655809497",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-09-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -717.5,
+      "parts": [
+        "+91 9167661705"
+      ],
+      "joined": "+919167661705",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-37702-2026-09-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -817.5,
+      "parts": [
+        "+91 8655809497"
+      ],
+      "joined": "+918655809497",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-60066-2026-09-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -717.5,
+      "parts": [
+        "+91 9167661705"
+      ],
+      "joined": "+919167661705",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-60066-2026-09-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -817.5,
+      "parts": [
+        "+91 8655809497"
+      ],
+      "joined": "+918655809497",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -717.5,
+      "parts": [
+        "+91 9167661705"
+      ],
+      "joined": "+919167661705",
+      "page": 1
+    },
+    {
+      "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
+      "kind": "same-line",
+      "column": 0,
+      "y": -817.5,
       "parts": [
         "+91 8655809497"
       ],
