@@ -7553,6 +7553,7 @@ const ROUTES = [
   ["cio-sectors", "/cio?tab=sectors"],
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
+  ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -11871,63 +11872,6 @@ const DIRECT_EQUITY_SYMBOLS = (() => {
   } catch { return null; }
 })();
 
-/**
- * WHAT THE MOVERS CARD LEAVES OUT AND MUST NAME — derived, never spelled.
- *
- * The card's footer lists every bucket that moved today and is not in its
- * Direct-Equity scope. That check used to require an "ETF" line by name, which
- * was never a claim about the page: it was a fact about which of this book's
- * buckets the FIXTURE happened to be able to price. The one priced ETF row was
- * Liquid BeES, and when the family's cash mapping sent it to Cash the ETF line
- * correctly disappeared — and a correct page failed. A check shaped by its own
- * fixture, which is the thing this sweep exists to catch rather than commit.
- *
- * SO IT IS ANCHORED ON THE BOOK, AND ON THE ONE QUESTION THE CASH RULE CANNOT
- * MOVE. `bucket()` above answers "is this Direct Equity?" without needing to
- * know about cash equivalents at all — every one of them is a Mutual Fund, an
- * ETF or Cash and never `Equity`, so it falls outside that bucket both before
- * and after. What the footer owes the reader is therefore checkable without
- * re-listing the mapping here: the entries it draws must account for every
- * priced holding the scope excludes, and for its whole value.
- */
-const MOVERS_EXCLUDED = (() => {
-  try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
-    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
-    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
-    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
-    const isDirectEquity = (p) => {
-      const e = engagement.get(p.accountId);
-      if (e === "PMS" || p.assetClass !== "Equity") return false;
-      return e === "Direct" || e === "Execution";
-    };
-    // DEDUPED, because the card reads `consolidated`. A holding two members both
-    // report is one mover and one line here; counting both rows would overstate
-    // this expectation by exactly the double count the book already collapses.
-    const names = new Set();
-    // THE MANDATES AND THE NAMES INSIDE THEM, COUNTED APART (MNT-17): the
-    // footer read "131 PMS mandates" for 131 holdings in ten.
-    const pmsNames = new Set(), pmsAccounts = new Set();
-    const seen = new Set();
-    let mv = 0;
-    for (const p of positions) {
-      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
-      if (isDirectEquity(p)) continue;
-      const sym = p.symbol || symbols[p.securityKey];
-      if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
-      names.add(p.securityKey);
-      if (engagement.get(p.accountId) === "PMS") { pmsNames.add(p.securityKey); pmsAccounts.add(p.accountId); }
-      // LIVE MARKET VALUE, NOT THE STATEMENT'S. The card is reading the overlaid
-      // portfolio on this walk, and the fixture prices every symbol it can at
-      // the mark x QUOTE_FACTOR — so a value summed off `glowData.ts` alone runs
-      // exactly that factor light. Measured, it was ₹126.06 Cr against a
-      // correctly-rendered ₹138.8 Cr, which is 1.10 to the second decimal.
-      mv += p.marketValue * QUOTE_FACTOR;
-    }
-    return names.size ? { names: names.size, cr: mv / 1e7, pmsNames: pmsNames.size, pmsAccounts: pmsAccounts.size } : null;
-  } catch { return null; }
-})();
 
 /**
  * THE DIRECT-EQUITY NAMES THE MOVERS CARD COUNTS, OVER THE CURRENT HOLDINGS
@@ -19627,6 +19571,63 @@ const CIO_RETURNS = [
   }],
 ];
 
+
+/**
+ * Stage 10dt — *"the client wants to see the returns of the total portfolio and
+ * not the underlying holdings … combine [window and formula] into one single
+ * section and provide benchmark returns in the other section."* Struck on the
+ * handles: the per-holding table is gone, the window and the formula sit inside
+ * the portfolio card, and the benchmark card draws every benchmark — a figure,
+ * or an absence whose hover says why, never a bare blank.
+ */
+const CIO_RETURNS_LAYOUT = [
+  ["...the Returns tab shows the whole portfolio, never a table of its accounts or holdings", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    return r.rows === 0 && r.portfolioCard;
+  }],
+  ["...the window and the formula are one section, the portfolio's own card", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    return r.formulaInPortfolio && r.windowInPortfolio;
+  }],
+  ["...a second section sets every benchmark against the portfolio, in the benchmark control's order, each a figure or an absence that names why", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    if (!r.benchCard || !r.benchPortfolioRow) return false;
+    const keys = r.bench.map((b) => b.key);
+    if (keys.slice().sort().join() !== BENCH_FIXTURE.map((b) => b[0]).sort().join()) return false;
+    return r.bench.every((b) => b.pct !== "" ? /[+−-]?\d+\.\d+%/.test(b.text) : b.titles.trim().length > 0);
+  }],
+];
+
+/**
+ * The live walk: every benchmark fetched through `/api/prices`, its return the
+ * fixture's own closed form over the dates the row says it was struck on, never
+ * annualised under a year, and the gap the portfolio's figure less the index's.
+ */
+const CIO_RETURNS_LIVE = [
+  ["...every benchmark was asked of the price service by its own symbol", (t, ctx) => {
+    const req = ctx?.priceRequests ?? [];
+    return BENCH_FIXTURE.every((b) => req.includes(b[2]));
+  }],
+  ["...each benchmark's return is its index's close-to-close move over the dates it names, and the gap is the portfolio's figure less it", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    if (r.pct == null || r.pct === "") return notChecked("the portfolio's return is not measured on this window, so no gap is struck");
+    const priced = r.bench.filter((b) => b.pct !== "");
+    if (priced.length !== BENCH_FIXTURE.length) return false;
+    return priced.every((b) => {
+      const fx = BENCH_FIXTURE.find((x) => x[0] === b.key);
+      const raw = benchFixtureReturn(fx[2], b.from, b.to);
+      const d = (Date.parse(b.to) - Date.parse(b.from)) / 86400000;
+      const want = r.basis === "annual" && d >= 365 ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
+      return b.from <= b.to && Math.abs(Number(b.pct) - want) < 0.02
+        && Math.abs(Number(b.gap) - (Number(r.pct) - Number(b.pct))) < 0.001;
+    });
+  }],
+];
+
 const CIO_TAB_CONTROL = [
   /**
    * FOUR SINCE Stage 10cq: *"in morning CIO can you make an ALL alerts tab."* It
@@ -21564,6 +21565,46 @@ const INSIDE_CARD = INSIDE_BOOK ? [
       return !!m && Number(m[1]) === INSIDE_BOOK.ranked;
     }],
 ] : [["the AIF & PMS card's own book derived, so every claim on it can fail", () => false]];
+
+
+/**
+ * ── A SECTOR'S RETURN IS FIFO OVER THE HOLDINGS THAT REPORT A COST (Stage 10dt) ─
+ *
+ * The column read "—" on every Consolidated row (refused by construction) and on
+ * almost every Direct Equity row (`costCoversSet`). On both views it is now FIFO
+ * over the costed holdings, the B-07 rule the whole-book tile already follows,
+ * and the cell NAMES its set: a chip "N of M" wherever some holdings report no
+ * cost, and a hover giving the costed value against the sector's. Only a sector
+ * where NO holding reports a cost is a dash, with its reason. Re-expressed here,
+ * never imported.
+ */
+const SIGNED_PCT = /^[+\-\u2212]\d+\.\d+%$/;
+const sectorReturnChecks = (view) => [
+  [`${view}: every sector's return is FIFO over the holdings that report a cost, and names that set`, (_t, ctx) => {
+    const rs = ctx?.sectorLayout?.returns;
+    if (!rs || !rs.length) return false;
+    return rs.every((r) => {
+      const { costed, holdings, uncosted, mv, costedMv, count } = r;
+      if (![costed, holdings, uncosted, mv, costedMv].every(Number.isFinite)) return false;
+      if (costed > holdings || uncosted < 0 || costedMv < 0 || costedMv + uncosted > mv + 1) return false;
+      if (view === "direct" && holdings !== count) return false;
+      if (costed === 0) return r.text === "—" && r.figure === null
+        && /reports? a cost|only through their funds/i.test(r.title ?? "");
+      if (!SIGNED_PCT.test(r.figure ?? "")) return false;
+      if (!(r.title ?? "").includes(`FIFO over the ${costed} of ${holdings} holding`)) return false;
+      return costed < holdings ? r.coverage === `${costed} of ${holdings}` : r.coverage === null;
+    });
+  }],
+  // LOAD-BEARING: the complaint was a column of dashes. A build that refused
+  // every row again passes the rule above on a book where nothing is costed.
+  [`${view}: the Return column carries a figure, not a column of dashes`, (_t, ctx) => {
+    const rs = ctx?.sectorLayout?.returns;
+    if (!rs || !rs.length) return false;
+    const costedRows = rs.filter((r) => r.costed > 0);
+    if (!costedRows.length) return { notChecked: "no sector on this view holds a costed holding" };
+    return costedRows.every((r) => SIGNED_PCT.test(r.figure ?? ""));
+  }],
+];
 
 const INVARIANTS = {
   /**
@@ -25855,8 +25896,9 @@ const INVARIANTS = {
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC.filter(([description]) => !CIO_OPTIONAL_CAPITAL_CHECKS.has(description)), ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
-  "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS],
-  "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS],
+  "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-return-metrics": [...CIO_MWR, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
@@ -29298,26 +29340,7 @@ const INVARIANTS = {
       if (![measured, derived, rest].every(Number.isFinite)) return false;
       return Math.abs(measured + derived + rest - SECURITY_AXIS_BOOK.navCr) <= 0.5;
     }],
-    /**
-     * A RETURN IS REFUSED THROUGHOUT, WITH ITS REASON. This view's value column
-     * is part measured and part derived, and no document reports a cost for the
-     * derived half — so a percentage anywhere in the sector table would divide a
-     * part-measured gain by a cost covering part of its own numerator. Struck on
-     * the REASON as well as on the absence, because a bare dash teaches nothing.
-     */
-    ["no sector return is struck, and every refusal names its cause", (t, ctx) => {
-      /*
-       * STRUCK ON EACH ROW'S OWN RETURN CELL, read by its column id. It used to
-       * slice the page between "Sector breakdown" and the footer's opening
-       * words — and the footer went at Stage 10ap, so `sliceBetween` had been
-       * returning the whole rest of the page ever since: a boundary the page no
-       * longer prints is not a boundary. The cells are what the claim is about.
-       */
-      const rs = ctx?.sectorLayout?.returns;
-      if (!rs || !rs.length) return false;
-      return rs.every((r) => r.text === "—"
-        && /divide a part-measured gain by a cost covering part/i.test(r.title ?? ""));
-    }],
+    ...sectorReturnChecks("consolidated"),
     ["the derived half says it is no part of the book's NAV, in words", (t) =>
       /DERIVED, not a position/i.test(t) && /no part of the book[\u2019']?s NAV/i.test(t)],
     // The failure this page was rebuilt for: a fund standing at the head of a
@@ -29373,51 +29396,7 @@ const INVARIANTS = {
   "sectors-direct": [
     ...sectorLayoutChecks("direct"),
     ...SECTOR_TABLE_TAB,
-    /**
-     * A RETURN WHERE THE SECTOR'S OWN COLUMNS CAN CARRY ONE, AND A REASON
-     * WHERE THEY CANNOT. This view's Return column printed a bare dash on every
-     * row — a formula popover over "— ÷ — × 100" — which is the
-     * absent-without-a-reason failure `Absent.tsx` exists to prevent. Every cell
-     * is now one of exactly two things: a signed return, or a dash whose reason
-     * names the COST — none reported, or reported for only some holdings,
-     * because a return over the costed few beside the value of all of them
-     * describes neither (`costCoversSet`, the test Morning CIO and the Monitor
-     * share).
-     */
-    ["every sector's return is a signed figure, or a dash that says which costs are missing", (_t, ctx) => {
-      const rs = ctx?.sectorLayout?.returns;
-      if (!rs || !rs.length) return false;
-      return rs.every((r) => /^[+\-\u2212]\d+\.\d+%$/.test(r.text)
-        || (r.text === "—" && /reports? a cost|a cost is reported for/i.test(r.title ?? "")));
-    }],
-    /**
-     * …AND A RETURN APPEARS ONLY WHERE THE SECTOR'S COSTED HOLDINGS ACCOUNT FOR
-     * ITS WHOLE VALUE. The check above accepts any signed figure, so a page that
-     * dropped the coverage gate — striking a return over a sector's costed FEW
-     * and printing it beside the value of all of them — passed it, and on this
-     * book it would have printed one on every partially costed sector. The gate
-     * is `costCoversSet` (0.5% of the sector's value may be uncosted), RE-EXPRESSED
-     * here rather than imported, over the coverage the cell carries — and the
-     * attributes are tied to the row's own printed Positions count, so a cell
-     * cannot carry one set's coverage beside another set's row.
-     *
-     * AND A DASH'S REASON STATES THE COUNTS THE ROW CARRIES. "A cost is reported
-     * for 4 of the 7 holdings" is a claim a reader acts on — it says which
-     * documents to go and find — so it must be the row's own four and seven.
-     */
-    ["a return is struck only where the sector's costed holdings account for its whole value", (_t, ctx) => {
-      const rs = ctx?.sectorLayout?.returns;
-      if (!rs || !rs.length) return false;
-      return rs.every((r) => {
-        const { costed, holdings, uncosted, mv, count } = r;
-        if (![costed, holdings, uncosted, mv, count].every(Number.isFinite)) return false;
-        if (holdings !== count || costed > holdings || uncosted < 0 || uncosted > mv + 1) return false;
-        const covered = mv > 0 && uncosted <= mv * 0.005;
-        if (/^[+\-\u2212]\d+\.\d+%$/.test(r.text)) return covered && costed > 0;
-        if (costed === 0) return /No holding in this sector reports a cost/i.test(r.title ?? "");
-        return new RegExp(String.raw`A cost is reported for ${costed} of the ${holdings} holdings`).test(r.title ?? "");
-      });
-    }],
+    ...sectorReturnChecks("direct"),
     ["it is the book's own Direct Equity bucket, to the rupee", (t) => {
       if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
       const m = /DIRECT EQUITY\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i.exec(t);
@@ -30061,52 +30040,14 @@ const INVARIANTS = {
     ["the gainers are exactly the priced DIRECT EQUITY names, not the whole book",
       (t, ctx) => moversGainersAreDirectEquity(ctx?.cioLayout?.text)],
     /**
-     * ...AND WHAT THE SCOPE LEAVES OUT IS NAMED, not silently dropped. The PMS
-     * mandates are the bulk of the book's priceable value and the ETFs have just
-     * left this card; a card that stopped covering them without saying so is a
-     * scope change a reader cannot see. Both are required, because the ETFs are
-     * the bucket this round removed and a footer that quietly dropped them from
-     * its own list would hide exactly what changed.
+     * ...AND THE "NOT COUNTED" LINE STAYS REMOVED (Stage 10ds). It named the
+     * buckets this card leaves out, and the family asked for it to go; the
+     * scope is the card's own title. Asserted on its face AND its hover, so a
+     * rewording that brought it back fails.
      */
-    ["the card names the buckets it does not cover, with their value", (t, ctx) => {
-      // "Not counted: N <label> ₹X · …" on its face, and whose scope it is —
-      // "Direct equity only" — in its hover (Stage 10cp). The old sentence is
-      // asserted gone, so a rewording that brought it back fails.
-      if (!/Not counted:/.test(t) || /Also moved today and not counted here/.test(t)) return false;
-      if (!(ctx?.titles ?? []).some((x) => /^Direct equity only — these also moved today and are in none of the figures above/.test(x))) return false;
-      if (!MOVERS_EXCLUDED) return { notChecked: "the book could not be read" };
-      // Each entry is "N <label> ₹X" — a count AND a value, never a bare label.
-      const line = /Not counted:([^\n]*)/.exec(t)?.[1] ?? "";
-      const parts = [...line.matchAll(/(\d+)\s+(.+?)\s+₹([\d,.]+)\s*(Cr|L|K)?/g)];
-      if (!parts.length) return false;
-      // THE SCOPE ITSELF IS NEVER ONE OF THEM — a card listing Direct Equity
-      // among what it leaves out has stopped covering it.
-      if (parts.some((m) => /direct equity/i.test(m[2]))) return false;
-      const names = parts.reduce((a, m) => a + Number(m[1]), 0);
-      const cr = parts.reduce((a, m) => a + crU(m[3], m[4]), 0);
-      // …and between them they account for every priced holding outside the
-      // scope, which is what stops a bucket being dropped from the list.
-      return names === MOVERS_EXCLUDED.names
-        && Math.abs(cr - MOVERS_EXCLUDED.cr) <= Math.max(0.15, parts.length * 0.05);
-    }],
-    /**
-     * ...AND A MANDATE ENTRY COUNTS ITS HOLDINGS AND ITS MANDATES APART (MNT-17).
-     * "131 PMS mandates ₹137.5 Cr" read as 131 mandates where there are ten.
-     * Both numbers are the book's own: the distinct priced names held inside a
-     * PMS account, and how many PMS accounts hold them.
-     */
-    ["a mandate entry counts its holdings and its mandates apart (MNT-17)", (t) => {
-      // A BOOK THE CHECK CANNOT READ IS A FAILURE, never an abstention.
-      if (!MOVERS_EXCLUDED) return false;
-      // "Not counted:" since Stage 10cp, which moved the lead-in sentence into
-      // the line's hover and kept the figures on its face.
-      const line = /Not counted:([^\n]*)/.exec(t)?.[1] ?? "";
-      if (!line) return false;
-      const bare = /(?:^|·)\s*\d+\s+PMS mandates?\s+₹/.test(line);
-      if (!MOVERS_EXCLUDED.pmsAccounts) return !bare;
-      const m = /(\d+)\s+holdings?\s+in\s+(\d+)\s+PMS mandates?\s+₹/.exec(line);
-      return !bare && !!m && Number(m[1]) === MOVERS_EXCLUDED.pmsNames && Number(m[2]) === MOVERS_EXCLUDED.pmsAccounts;
-    }],
+    ["the Not counted line stays removed (Stage 10ds)", (t, ctx) =>
+      !/Not counted:/.test(t) && !/Also moved today and not counted here/.test(t)
+      && !(ctx?.titles ?? []).some((x) => /^Direct equity only — these also moved today/.test(x))],
     /**
      * ...AND THE TILE COUNTS THE NAMES THE DRILL-DOWN LISTS (MNT-6): its
      * denominator is the Direct Equity names among the CURRENT holdings — the
@@ -36674,6 +36615,7 @@ for (const theme of THEMES) {
       if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       if (name === "sectors-direct-live") await installLiveMocks(page);
+      if (name === "cio-returns-live") await installLiveMocks(page);
       // THE INSIDE CARD'S LIVE WALK. The fixture prices every symbol in
       // `nseSymbols.json` — the disclosed-only ones off `DISCLOSED_MARK_BY_SYMBOL`,
       // which exists for exactly this route — so both halves of the card have
@@ -39185,6 +39127,21 @@ for (const theme of THEMES) {
           pct: pct?.getAttribute("data-returns-pct") ?? null, pctText: pct?.textContent ?? "",
           figures: [...root.querySelectorAll("[data-returns-figure]")].map((x) => x.getAttribute("data-returns-figure")),
           rows: root.querySelectorAll("[data-returns-account]").length,
+          portfolioCard: !!root.querySelector("[data-returns-portfolio]"),
+          benchCard: !!root.querySelector("[data-returns-benchmarks]"),
+          formulaInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-formula]"),
+          windowInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-window]"),
+          benchPortfolioRow: !!root.querySelector("[data-returns-bench-portfolio]"),
+          bench: [...root.querySelectorAll("[data-returns-bench]")].map((tr) => ({
+            key: tr.getAttribute("data-returns-bench"),
+            pct: tr.getAttribute("data-bench-pct") ?? "",
+            gap: tr.getAttribute("data-bench-gap") ?? "",
+            from: tr.getAttribute("data-bench-from") ?? "",
+            to: tr.getAttribute("data-bench-to") ?? "",
+            text: (tr.textContent ?? "").trim(),
+            titles: [...tr.querySelectorAll("[title]")].map((x) => x.getAttribute("title") ?? "").join(" | "),
+          })),
+          basis: pct?.getAttribute("data-returns-basis") ?? null,
           coverage: root.querySelector("[data-returns-coverage]")?.textContent ?? "",
         };
       });
@@ -42375,6 +42332,9 @@ for (const theme of THEMES) {
             return {
               key: r.getAttribute("data-sector-row"), text: (c?.innerText ?? "").trim(), title: tip(c),
               costed: n("data-costed"), holdings: n("data-holdings"), uncosted: n("data-uncosted-mv"), mv: n("data-mv"),
+              costedMv: n("data-costed-mv"),
+              figure: (c?.querySelector("[data-return-figure]")?.innerText ?? "").trim() || null,
+              coverage: (c?.querySelector("[data-return-coverage]")?.innerText ?? "").trim() || null,
               count: Number((r.querySelector('[data-cell="count"]')?.innerText ?? "").trim()),
             };
           }),

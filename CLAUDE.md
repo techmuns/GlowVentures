@@ -27566,6 +27566,89 @@ already have from the client then do it."*
 `check:pages` on the eight NAV, Performance and History routes, 16 combinations
 clean.
 
+### Stage 10ds — THE MOVERS CARD LOSES ITS "NOT COUNTED" LINE, AND ITS LISTS RUN TO THE EDGE
+
+*"remove the highlighted text from the dashboard UI and expand the tables to the
+complete edge on the screen."*
+
+- **The "Not counted: … PMS mandates … Cash" line under Today's movers is
+  gone.** The card's title still names its scope (Direct Equity), and those
+  holdings are on the AIF & PMS branch and the Portfolio Monitor. Its two checks
+  and `MOVERS_EXCLUDED` are replaced by one asserting the line, its old wording
+  and its hover stay gone.
+- **The gainers and losers run to the card's edge.** `-mx-5` undoes the card's
+  padding, the two inset boxes are one rule between the lists, and the first and
+  last cells pad instead. Handles (`data-mover-scroll`, `data-mover-row`,
+  `data-mover-cell`) are unchanged.
+
+`build` · `check:pages` on six Morning CIO movers routes: the one finding is the
+priority-request check on `cio-live`, which fails on main too (Stage 10dn).
+### Stage 10dt — THE RETURNS TAB IS THE WHOLE PORTFOLIO, BESIDE SEVEN BENCHMARKS
+
+*"in the returns page the client wants to see the retuns of the total portfolio
+and not the underlying holdings. Also make the window and formula sections
+cleaner, you can combine them into one single section and provide benchmark
+returns in the other section."*
+
+- **The per-account table is gone.** The tab draws the portfolio's return
+  alone; how many accounts it covers stays on screen ("Covers N of M
+  accounts").
+- **One section, left:** the return, the requested and measured windows, the
+  opening / capital in / capital out / closing / gain figures, and the formula
+  with its worked line (`data-returns-portfolio`).
+- **Benchmarks, right:** the portfolio as the first row, then the seven indices
+  of `benchmarks.ts` over the MEASURED window, close to close, each checked by
+  the name the price service reports (`benchmarkIdentity`), and the gap in
+  points. A benchmark is annualised only where the portfolio's figure is
+  (CAGR or XIRR over a year); otherwise both are not annualised. A price index
+  excludes dividends, and the hover says so. A missing close or a wrong
+  instrument is an `AbsentCell` with its reason.
+- **Checks:** `CIO_RETURNS_LAYOUT` on `cio-returns` and `cio-returns-custom`
+  (no account rows; the window and formula inside the portfolio card; all seven
+  benchmarks a figure or a reasoned absence), and a new `cio-returns-live`
+  route with live mocks (`CIO_RETURNS_LIVE`: every benchmark symbol requested,
+  each return equal to the fixture's closed form over its own window, each gap
+  the portfolio less the index). No figure in the book moves; `build-book`
+  byte-identical.
+
+### Stage 10du — THE MOVERS LISTS KEEP A THIN GRID
+
+*"i meant just thin the borders not make them completely disappear."* Stage
+10ds ran the gainers and losers to the card's edge, and #125's 2px table grid
+then read as heavy across the full width. The grid stays, thinned, only inside
+`[data-movers-lists]`: a 1px hairline (`calc(1px / var(--app-zoom))`) in a lighter
+`--table-grid-thin` (`#ddd7ca` light and in print, `#3a3463` dark). It is set
+through the grid's own variables, so the first-column and first-row edge rules
+follow it. Every other table keeps the 2px grid. `check:pages` on the movers
+routes: the only finding is the priority-request check on `cio-live`, which
+fails on main too (Stage 10dn).
+
+### Stage 10dv — SECTOR RETURNS ARE FIFO OVER THE HOLDINGS THAT REPORT A COST
+
+*"The returns column of the entire sector composition is empty, find the root
+cause and fix it so that we can see returns based on sector allocation."*
+
+**ROOT CAUSE: TWO REFUSALS, ONE ON EACH VIEW.** Consolidated refused every
+return by construction (its value is part derived, Stage 10aq). Direct Equity
+struck one only where `costCoversSet` passed, and almost no sector does: its
+depository rows print no cost. So nearly every row showed "—".
+
+**NOW BOTH VIEWS STRIKE FIFO OVER THE HOLDINGS THAT REPORT A COST** —
+`fifoTotals` over the rows whose `costBasis` is a number — which is the B-07
+rule the whole-book tile and the Monitor footer already follow. The cell names
+its set: an "N of M" chip wherever some holdings report no cost, and a hover
+giving the costed value against the sector's, the depository value with no
+cost, and on Consolidated the derived fund share, which carries none. Only a
+sector where no holding reports a cost is a dash, with its reason. The Compare
+tab's Return on cost row takes the same figure and chip.
+
+**Checks:** `sectorReturnChecks(view)` in `check:pages`, on `sectors` and
+`sectors-direct`: every row is a signed FIFO figure naming its set (the chip
+exactly where costed < holdings), or a dash with its reason where none is
+costed; the costed and uncosted value never exceed the sector's; and,
+load-bearing, every row with a costed holding shows a figure. No figure in the
+book moves; `build-book` is byte-identical.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
