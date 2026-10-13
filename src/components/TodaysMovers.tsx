@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex, engagementOf } from "@/lib/accounts";
-import { holdingBucket, bucketLabel, currentHoldings, DIRECT_EQUITY_BUCKET, MANDATE_BUCKET } from "@/lib/analytics";
+import { holdingBucket, currentHoldings, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
 import { indexSession, istDate } from "@/components/IndexStrip";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
@@ -191,40 +191,6 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
      */
     const held = currentHoldings(consolidated);
     const scope = held.filter(inScope);
-    /**
-     * WHAT THE NARROWING LEAVES OUT, NAMED RATHER THAN DROPPED.
-     *
-     * Counted over the holdings that could otherwise have appeared here — the
-     * ones carrying a live day change — because that is the list the reader is
-     * looking at. A bucket with no priceable name in it never showed on this
-     * card and does not need excusing.
-     */
-    const excluded = new Map<string, { mv: number; names: Set<string>; accounts: Set<string>; mandate: boolean }>();
-    for (const p of held) {
-      if (inScope(p)) continue;
-      if (typeof p.dayChange !== "number" || !Number.isFinite(p.dayChange)) continue;
-      const bucket = holdingBucket(p, engagementOf(accts, p));
-      const key = bucketLabel(bucket);
-      const e = excluded.get(key) ?? { mv: 0, names: new Set<string>(), accounts: new Set<string>(), mandate: bucket === MANDATE_BUCKET };
-      e.mv += p.marketValue; e.names.add(p.securityKey); e.accounts.add(p.accountId);
-      excluded.set(key, e);
-    }
-    /**
-     * A COUNT AND ITS NOUN AGREE (MNT-17). The count is distinct SECURITIES, and
-     * with the bucket label as its noun "131 PMS mandates" read as 131 mandates
-     * where there are ten. Each entry is now "N holdings in K PMS mandates" or
-     * "N ETF holdings" — the count first, the label inside the phrase it
-     * qualifies.
-     */
-    const excludedRows = [...excluded.entries()]
-      .map(([label, v]) => ({
-        label, mv: v.mv, names: v.names.size, accounts: v.accounts.size,
-        phrase: v.mandate
-          ? `${v.names.size} holding${v.names.size === 1 ? "" : "s"} in ${v.accounts.size} ${label.replace(/s$/, "")}${v.accounts.size === 1 ? "" : "s"}`
-          : `${v.names.size} ${label} holding${v.names.size === 1 ? "" : "s"}`,
-      }))
-      .sort((a, b) => b.mv - a.mv);
-
     const { rows, session, omitted, observedFrom, observedTo } = dailyMovers(scope, quoteFeed, corporateActionReturns, accts);
     const impactRows = rows.filter((r) => r.dayChange !== null && r.marketValue !== null);
     /**
@@ -289,7 +255,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       ? (a: Row, b: Row) => Math.abs(b.dayChange!) - Math.abs(a.dayChange!)
       : (a: Row, b: Row) => Math.abs(b.dayChangePct) - Math.abs(a.dayChangePct);
     return {
-      rows, session, omitted, observedFrom, observedTo, impactNames: impactRows.length, dayChange, dayPct, movedValue, prevValue, scopeValue, excludedRows, scopeSymbols, qtyDates,
+      rows, session, omitted, observedFrom, observedTo, impactNames: impactRows.length, dayChange, dayPct, movedValue, prevValue, scopeValue, scopeSymbols, qtyDates,
       priceOnlyNames: priceOnly.map((r) => r.security), priceOnlyReasons,
       pricedNames: rows.length, distinct, unpriceable: cov.withoutSymbol,
       gainers: [...gainers].sort(cmp),
@@ -564,7 +530,11 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           </div>
 
           {/* ── Gainers and losers ────────────────────────────────────────── */}
-          <div className="mt-4 grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]" data-movers-lists="">
+          {/* THE LISTS RUN TO THE CARD'S EDGE (Stage 10ds). `-mx-5` undoes the
+              card's own padding, the two lists are split by one rule rather
+              than drawn as two inset boxes, and each row pads its first and last
+              cell instead — so every column has the card's full width. */}
+          <div className="-mx-5 mt-4 grid divide-y divide-ink-700 border-t border-ink-700 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)] lg:divide-x lg:divide-y-0" data-movers-lists="">
             {/* A COUNT AND ITS NOUN AGREE. "1 GAINERS" was on the family's own
                 screenshot of this card, and a scope tab makes a one-name list an
                 ordinary outcome rather than a rarity. */}
@@ -573,25 +543,11 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
             <MoverList title={`${model.lossCount} loser${model.lossCount === 1 ? "" : "s"}`} tone="loss" rows={model.losers}
               total={model.lossSum} count={model.lossCount} unknown={model.lossUnknown} fmt={fmtFromBase} rank={rank} noun={SCOPE.noun} />
           </div>
-          {/* THE EXPLANATORY FOOTER IS GONE AT THE FAMILY'S REQUEST — the ranking
-              rationale, the unchanged-name count and the multi-account rule all
-              described HOW the card works to a reader who can see it working.
-              What survives is the one thing a figure depends on and a reader
-              cannot see: this card no longer covers the whole book, and the
-              value it stops at has to be named or the narrowing is silent.
-              Rendered from the book, so a drop with no PMS-held quotes prints
-              nothing here rather than a sentence about an empty set. */}
-          {model.excludedRows.length > 0 && (
-            <p className="mt-3 text-[11px] text-slate-500" data-testid="movers-excluded"
-              title={`${SCOPE.subject} only — these also moved today and are in none of the figures above.`}>
-              Not counted:{" "}
-              {model.excludedRows.map((e, i) => (
-                <span key={e.label}>
-                  {i > 0 ? " · " : ""}{e.phrase} {fmtFromBase(e.mv, { compact: true })}
-                </span>
-              ))}.
-            </p>
-          )}
+          {/* THE "NOT COUNTED" LINE IS GONE AT THE FAMILY'S REQUEST (Stage 10ds).
+              It named the buckets this Direct Equity card leaves out — the PMS
+              mandates and Cash — and their value. The scope is still the card's
+              title, and those holdings are on the AIF & PMS branch and on the
+              Portfolio Monitor. */}
         </>
       )}
     </Card>
@@ -608,8 +564,8 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
   noun: string;
 }) {
   return (
-    <div className="flex min-h-0 flex-col rounded-xl border border-ink-700 bg-ink-900/60 p-4" data-testid={`movers-${tone}`}>
-      <div className="flex items-baseline justify-between gap-3">
+    <div className="flex min-h-0 flex-col pt-3" data-testid={`movers-${tone}`}>
+      <div className="flex items-baseline justify-between gap-3 px-5">
         <div className="label-xs">{title}</div>
         {/* AN EMPTY LIST HAS NO TOTAL, AND `₹0` IS NOT ONE. Summing an empty
             collection through a money formatter is the exact case §2 names — a
@@ -630,12 +586,12 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
             : <Pill tone={tone}>{fmt(total, { compact: true, sign: true })}</Pill>}
       </div>
       {rows.length === 0 ? (
-        <p className="mt-3 text-[11.5px] text-slate-500"
+        <p className="mt-3 px-5 pb-3 text-[11.5px] text-slate-500"
           title="A measurement over the names the feed prices, not a statement about the whole book.">
           No priced {noun} holding moved this way today
         </p>
       ) : (
-        <div className="mt-3 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone}>
+        <div className="mt-2 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone}>
         <table className="w-full text-[12px]">
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => (
@@ -643,7 +599,7 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
                  partial list is well-formed prose, so "the card is not ranking
                  yet" can only be struck on structure. */
               <tr key={r.securityKey} data-mover-row={r.securityKey}>
-                <td className="py-1.5 pr-2">
+                <td className="py-1.5 pl-5 pr-2">
                   <Link to={`/stock/${encodeURIComponent(r.securityKey)}`}
                     className="text-slate-300 transition-colors hover:text-champagne-400"
                     title={r.entities.length ? `Held by ${r.entities.join(", ")}` : undefined}>
@@ -656,7 +612,7 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
                 <td data-mover-cell="pct" className={`py-1.5 pr-3 text-right tabular ${rank === "pct" ? "font-semibold" : ""} ${changeColor(r.dayChangePct)}`}>
                   {fmtPct(r.dayChangePct, { sign: true })}
                 </td>
-                <td data-mover-cell="impact" title={r.dayChange === null ? "Share count needs verification; the percentage is the exchange price move." : undefined} className={`py-1.5 text-right tabular ${rank === "impact" ? "font-semibold" : ""} ${changeColor(r.dayChange)}`}>
+                <td data-mover-cell="impact" title={r.dayChange === null ? "Share count needs verification; the percentage is the exchange price move." : undefined} className={`py-1.5 pr-5 text-right tabular ${rank === "impact" ? "font-semibold" : ""} ${changeColor(r.dayChange)}`}>
                   {fmt(r.dayChange, { compact: true, sign: true })}
                 </td>
               </tr>

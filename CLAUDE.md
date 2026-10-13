@@ -27563,6 +27563,24 @@ already have from the client then do it."*
 `check:pages` on the eight NAV, Performance and History routes, 16 combinations
 clean.
 
+### Stage 10ds — THE MOVERS CARD LOSES ITS "NOT COUNTED" LINE, AND ITS LISTS RUN TO THE EDGE
+
+*"remove the highlighted text from the dashboard UI and expand the tables to the
+complete edge on the screen."*
+
+- **The "Not counted: … PMS mandates … Cash" line under Today's movers is
+  gone.** The card's title still names its scope (Direct Equity), and those
+  holdings are on the AIF & PMS branch and the Portfolio Monitor. Its two checks
+  and `MOVERS_EXCLUDED` are replaced by one asserting the line, its old wording
+  and its hover stay gone.
+- **The gainers and losers run to the card's edge.** `-mx-5` undoes the card's
+  padding, the two inset boxes are one rule between the lists, and the first and
+  last cells pad instead. Handles (`data-mover-scroll`, `data-mover-row`,
+  `data-mover-cell`) are unchanged.
+
+`build` · `check:pages` on six Morning CIO movers routes: the one finding is the
+priority-request check on `cio-live`, which fails on main too (Stage 10dn).
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
