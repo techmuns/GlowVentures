@@ -7593,6 +7593,7 @@ const ROUTES = [
   ["cio-sectors", "/cio?tab=sectors"],
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
+  ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -11921,63 +11922,6 @@ const DIRECT_EQUITY_SYMBOLS = (() => {
   } catch { return null; }
 })();
 
-/**
- * WHAT THE MOVERS CARD LEAVES OUT AND MUST NAME — derived, never spelled.
- *
- * The card's footer lists every bucket that moved today and is not in its
- * Direct-Equity scope. That check used to require an "ETF" line by name, which
- * was never a claim about the page: it was a fact about which of this book's
- * buckets the FIXTURE happened to be able to price. The one priced ETF row was
- * Liquid BeES, and when the family's cash mapping sent it to Cash the ETF line
- * correctly disappeared — and a correct page failed. A check shaped by its own
- * fixture, which is the thing this sweep exists to catch rather than commit.
- *
- * SO IT IS ANCHORED ON THE BOOK, AND ON THE ONE QUESTION THE CASH RULE CANNOT
- * MOVE. `bucket()` above answers "is this Direct Equity?" without needing to
- * know about cash equivalents at all — every one of them is a Mutual Fund, an
- * ETF or Cash and never `Equity`, so it falls outside that bucket both before
- * and after. What the footer owes the reader is therefore checkable without
- * re-listing the mapping here: the entries it draws must account for every
- * priced holding the scope excludes, and for its whole value.
- */
-const MOVERS_EXCLUDED = (() => {
-  try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
-    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
-    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
-    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
-    const isDirectEquity = (p) => {
-      const e = engagement.get(p.accountId);
-      if (e === "PMS" || p.assetClass !== "Equity") return false;
-      return e === "Direct" || e === "Execution";
-    };
-    // DEDUPED, because the card reads `consolidated`. A holding two members both
-    // report is one mover and one line here; counting both rows would overstate
-    // this expectation by exactly the double count the book already collapses.
-    const names = new Set();
-    // THE MANDATES AND THE NAMES INSIDE THEM, COUNTED APART (MNT-17): the
-    // footer read "131 PMS mandates" for 131 holdings in ten.
-    const pmsNames = new Set(), pmsAccounts = new Set();
-    const seen = new Set();
-    let mv = 0;
-    for (const p of positions) {
-      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
-      if (isDirectEquity(p)) continue;
-      const sym = p.symbol || symbols[p.securityKey];
-      if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
-      names.add(p.securityKey);
-      if (engagement.get(p.accountId) === "PMS") { pmsNames.add(p.securityKey); pmsAccounts.add(p.accountId); }
-      // LIVE MARKET VALUE, NOT THE STATEMENT'S. The card is reading the overlaid
-      // portfolio on this walk, and the fixture prices every symbol it can at
-      // the mark x QUOTE_FACTOR — so a value summed off `glowData.ts` alone runs
-      // exactly that factor light. Measured, it was ₹126.06 Cr against a
-      // correctly-rendered ₹138.8 Cr, which is 1.10 to the second decimal.
-      mv += p.marketValue * QUOTE_FACTOR;
-    }
-    return names.size ? { names: names.size, cr: mv / 1e7, pmsNames: pmsNames.size, pmsAccounts: pmsAccounts.size } : null;
-  } catch { return null; }
-})();
 
 /**
  * THE DIRECT-EQUITY NAMES THE MOVERS CARD COUNTS, OVER THE CURRENT HOLDINGS
@@ -19677,6 +19621,63 @@ const CIO_RETURNS = [
   }],
 ];
 
+
+/**
+ * Stage 10dt — *"the client wants to see the returns of the total portfolio and
+ * not the underlying holdings … combine [window and formula] into one single
+ * section and provide benchmark returns in the other section."* Struck on the
+ * handles: the per-holding table is gone, the window and the formula sit inside
+ * the portfolio card, and the benchmark card draws every benchmark — a figure,
+ * or an absence whose hover says why, never a bare blank.
+ */
+const CIO_RETURNS_LAYOUT = [
+  ["...the Returns tab shows the whole portfolio, never a table of its accounts or holdings", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    return r.rows === 0 && r.portfolioCard;
+  }],
+  ["...the window and the formula are one section, the portfolio's own card", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    return r.formulaInPortfolio && r.windowInPortfolio;
+  }],
+  ["...a second section sets every benchmark against the portfolio, in the benchmark control's order, each a figure or an absence that names why", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    if (!r.benchCard || !r.benchPortfolioRow) return false;
+    const keys = r.bench.map((b) => b.key);
+    if (keys.slice().sort().join() !== BENCH_FIXTURE.map((b) => b[0]).sort().join()) return false;
+    return r.bench.every((b) => b.pct !== "" ? /[+−-]?\d+\.\d+%/.test(b.text) : b.titles.trim().length > 0);
+  }],
+];
+
+/**
+ * The live walk: every benchmark fetched through `/api/prices`, its return the
+ * fixture's own closed form over the dates the row says it was struck on, never
+ * annualised under a year, and the gap the portfolio's figure less the index's.
+ */
+const CIO_RETURNS_LIVE = [
+  ["...every benchmark was asked of the price service by its own symbol", (t, ctx) => {
+    const req = ctx?.priceRequests ?? [];
+    return BENCH_FIXTURE.every((b) => req.includes(b[2]));
+  }],
+  ["...each benchmark's return is its index's close-to-close move over the dates it names, and the gap is the portfolio's figure less it", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    if (r.pct == null || r.pct === "") return notChecked("the portfolio's return is not measured on this window, so no gap is struck");
+    const priced = r.bench.filter((b) => b.pct !== "");
+    if (priced.length !== BENCH_FIXTURE.length) return false;
+    return priced.every((b) => {
+      const fx = BENCH_FIXTURE.find((x) => x[0] === b.key);
+      const raw = benchFixtureReturn(fx[2], b.from, b.to);
+      const d = (Date.parse(b.to) - Date.parse(b.from)) / 86400000;
+      const want = r.basis === "annual" && d >= 365 ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
+      return b.from <= b.to && Math.abs(Number(b.pct) - want) < 0.02
+        && Math.abs(Number(b.gap) - (Number(r.pct) - Number(b.pct))) < 0.001;
+    });
+  }],
+];
+
 const CIO_TAB_CONTROL = [
   /**
    * FOUR SINCE Stage 10cq: *"in morning CIO can you make an ALL alerts tab."* It
@@ -25925,8 +25926,9 @@ const INVARIANTS = {
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC.filter(([description]) => !CIO_OPTIONAL_CAPITAL_CHECKS.has(description)), ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
-  "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS],
-  "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS],
+  "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-return-metrics": [...CIO_MWR, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
@@ -30131,52 +30133,14 @@ const INVARIANTS = {
     ["the gainers are exactly the priced DIRECT EQUITY names, not the whole book",
       (t, ctx) => moversGainersAreDirectEquity(ctx?.cioLayout?.text)],
     /**
-     * ...AND WHAT THE SCOPE LEAVES OUT IS NAMED, not silently dropped. The PMS
-     * mandates are the bulk of the book's priceable value and the ETFs have just
-     * left this card; a card that stopped covering them without saying so is a
-     * scope change a reader cannot see. Both are required, because the ETFs are
-     * the bucket this round removed and a footer that quietly dropped them from
-     * its own list would hide exactly what changed.
+     * ...AND THE "NOT COUNTED" LINE STAYS REMOVED (Stage 10ds). It named the
+     * buckets this card leaves out, and the family asked for it to go; the
+     * scope is the card's own title. Asserted on its face AND its hover, so a
+     * rewording that brought it back fails.
      */
-    ["the card names the buckets it does not cover, with their value", (t, ctx) => {
-      // "Not counted: N <label> ₹X · …" on its face, and whose scope it is —
-      // "Direct equity only" — in its hover (Stage 10cp). The old sentence is
-      // asserted gone, so a rewording that brought it back fails.
-      if (!/Not counted:/.test(t) || /Also moved today and not counted here/.test(t)) return false;
-      if (!(ctx?.titles ?? []).some((x) => /^Direct equity only — these also moved today and are in none of the figures above/.test(x))) return false;
-      if (!MOVERS_EXCLUDED) return { notChecked: "the book could not be read" };
-      // Each entry is "N <label> ₹X" — a count AND a value, never a bare label.
-      const line = /Not counted:([^\n]*)/.exec(t)?.[1] ?? "";
-      const parts = [...line.matchAll(/(\d+)\s+(.+?)\s+₹([\d,.]+)\s*(Cr|L|K)?/g)];
-      if (!parts.length) return false;
-      // THE SCOPE ITSELF IS NEVER ONE OF THEM — a card listing Direct Equity
-      // among what it leaves out has stopped covering it.
-      if (parts.some((m) => /direct equity/i.test(m[2]))) return false;
-      const names = parts.reduce((a, m) => a + Number(m[1]), 0);
-      const cr = parts.reduce((a, m) => a + crU(m[3], m[4]), 0);
-      // …and between them they account for every priced holding outside the
-      // scope, which is what stops a bucket being dropped from the list.
-      return names === MOVERS_EXCLUDED.names
-        && Math.abs(cr - MOVERS_EXCLUDED.cr) <= Math.max(0.15, parts.length * 0.05);
-    }],
-    /**
-     * ...AND A MANDATE ENTRY COUNTS ITS HOLDINGS AND ITS MANDATES APART (MNT-17).
-     * "131 PMS mandates ₹137.5 Cr" read as 131 mandates where there are ten.
-     * Both numbers are the book's own: the distinct priced names held inside a
-     * PMS account, and how many PMS accounts hold them.
-     */
-    ["a mandate entry counts its holdings and its mandates apart (MNT-17)", (t) => {
-      // A BOOK THE CHECK CANNOT READ IS A FAILURE, never an abstention.
-      if (!MOVERS_EXCLUDED) return false;
-      // "Not counted:" since Stage 10cp, which moved the lead-in sentence into
-      // the line's hover and kept the figures on its face.
-      const line = /Not counted:([^\n]*)/.exec(t)?.[1] ?? "";
-      if (!line) return false;
-      const bare = /(?:^|·)\s*\d+\s+PMS mandates?\s+₹/.test(line);
-      if (!MOVERS_EXCLUDED.pmsAccounts) return !bare;
-      const m = /(\d+)\s+holdings?\s+in\s+(\d+)\s+PMS mandates?\s+₹/.exec(line);
-      return !bare && !!m && Number(m[1]) === MOVERS_EXCLUDED.pmsNames && Number(m[2]) === MOVERS_EXCLUDED.pmsAccounts;
-    }],
+    ["the Not counted line stays removed (Stage 10ds)", (t, ctx) =>
+      !/Not counted:/.test(t) && !/Also moved today and not counted here/.test(t)
+      && !(ctx?.titles ?? []).some((x) => /^Direct equity only — these also moved today/.test(x))],
     /**
      * ...AND THE TILE COUNTS THE NAMES THE DRILL-DOWN LISTS (MNT-6): its
      * denominator is the Direct Equity names among the CURRENT holdings — the
@@ -36744,6 +36708,7 @@ for (const theme of THEMES) {
       if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       if (name === "sectors-direct-live") await installLiveMocks(page);
+      if (name === "cio-returns-live") await installLiveMocks(page);
       // THE INSIDE CARD'S LIVE WALK. The fixture prices every symbol in
       // `nseSymbols.json` — the disclosed-only ones off `DISCLOSED_MARK_BY_SYMBOL`,
       // which exists for exactly this route — so both halves of the card have
@@ -39255,6 +39220,21 @@ for (const theme of THEMES) {
           pct: pct?.getAttribute("data-returns-pct") ?? null, pctText: pct?.textContent ?? "",
           figures: [...root.querySelectorAll("[data-returns-figure]")].map((x) => x.getAttribute("data-returns-figure")),
           rows: root.querySelectorAll("[data-returns-account]").length,
+          portfolioCard: !!root.querySelector("[data-returns-portfolio]"),
+          benchCard: !!root.querySelector("[data-returns-benchmarks]"),
+          formulaInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-formula]"),
+          windowInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-window]"),
+          benchPortfolioRow: !!root.querySelector("[data-returns-bench-portfolio]"),
+          bench: [...root.querySelectorAll("[data-returns-bench]")].map((tr) => ({
+            key: tr.getAttribute("data-returns-bench"),
+            pct: tr.getAttribute("data-bench-pct") ?? "",
+            gap: tr.getAttribute("data-bench-gap") ?? "",
+            from: tr.getAttribute("data-bench-from") ?? "",
+            to: tr.getAttribute("data-bench-to") ?? "",
+            text: (tr.textContent ?? "").trim(),
+            titles: [...tr.querySelectorAll("[title]")].map((x) => x.getAttribute("title") ?? "").join(" | "),
+          })),
+          basis: pct?.getAttribute("data-returns-basis") ?? null,
           coverage: root.querySelector("[data-returns-coverage]")?.textContent ?? "",
         };
       });
