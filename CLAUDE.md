@@ -27811,6 +27811,37 @@ asserts the withdrawn decision appears nowhere and the statement basis still
 values nothing. `family-answers-bug.mjs`'s FQ-3 cases have no subject since this
 stage.
 
+### Stage 10ea — NATIONAL STOCK EXCHANGE IS LISTED: A COMPANY SHARE ON THE LISTED SIDE
+
+*"National Stock Exchange of India has listed."* — the family, 14 Oct 2026. Its
+2,00,000 shares (Ajay 1,25,000, Ankita 75,000) are a review line (Stage 10dh),
+so the decision lives where the review's lines are placed.
+
+- **`listed` on the NSE entry in `shared/reviewHolders.mjs`**, dated and sourced
+  to the family. `reviewBookLayer` files both rows as `Equity`, `marketSide:
+  "listed"`, and keeps the review's own figures: cost ₹12.085 Cr, value
+  ₹41.5 Cr. **No symbol, price or exchange is invented**: the rows carry the
+  review's mark until a statement or a quote prices them.
+- **Its sector is AMFI's industry, `Capital Markets`, through `resolveSector`**
+  (Financials). `sectorOfListed` fails the build if the label resolves to no GICS
+  sector, so the decision cannot place a company in Unclassified silently.
+- **What moved.** `BOOK_SUMMARY.totalValue` does not. Listed ₹600.14 Cr →
+  ₹641.64 Cr, private ₹234.59 Cr → ₹193.09 Cr; the sector table's Unclassified
+  87.55% → 82.58% and Financials 3.10% → 8.07%.
+- **Two checks counted holdings where they meant companies.** Sector
+  Composition's Direct Equity partition is struck on the companies the four
+  sources place (`data-donut-companies`), and the KPI-strip triple-digit check on
+  `cio-sectors` reads the tiles (`ctx.kpiTiles`) rather than a slice that reached
+  the sector table, where NSE's +243% HPR is a real figure.
+
+**Checks.** `reviewBook.test.ts`, `marketSide.test.ts` and
+`privateMarket.test.ts` hold the move; `REVIEW_DECLARED_LISTED` in
+`check:pages` keeps NSE out of the private-side expectations. `check:pages` on
+the twelve Sector, Morning CIO, Family, Private Market, holdings and Monitor
+routes it touches: 26 combinations, the one finding VD-17 on `monitor`, main's
+own (Stage 10dn). `test:family` exit 0; `build-book` byte-identical after
+merging main.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
