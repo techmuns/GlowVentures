@@ -17,8 +17,8 @@
  "note": null,
  "accumulating": false,
  "first": "2003-12-01",
- "last": "2026-10-08",
- "count": 5931,
- "retrievedAt": "2026-10-10T08:08:22.172Z",
- "staleSince": "2026-10-08"
+ "last": "2026-10-12",
+ "count": 5933,
+ "retrievedAt": "2026-10-14T07:12:08.545Z",
+ "staleSince": null
 }

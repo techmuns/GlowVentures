@@ -34,29 +34,20 @@
 // `keptUnvalued.test.ts` finds in that document's committed pages.json, so an
 // entry that stops being true of its statement fails the suite.
 //
-// Removing an entry does not value the holding: the row goes back to the
-// statement's own reason. Valuing it would need a mark this book does not
-// borrow.
+// Removing an entry does not value the holding ON THE STATEMENT BASIS: the row
+// goes back to the statement's own reason, because the statement prints no
+// rate. On the LIVE basis it becomes a candidate again for
+// `unpricedStatementShareCandidates` (src/lib/depositoryShares.ts), which values
+// a listed share a holding statement prints no usable price for at the live
+// quote, and only while the feed prices it — never at a borrowed mark.
+//
+// THE CLEAN MAX ENTRY WAS WITHDRAWN BY THE FAMILY ON 14 OCT 2026 — *"include
+// this in the dashboard data as well"* — so the table is empty. Ankita's 94,967
+// shares are a quantity on the statement basis (no rate is printed) and valued
+// at the live CLEANMAX quote on every live page, exactly as Stage 10cy built
+// them. The mechanism stays, so the next decision of this kind is one entry.
 
-export const KEPT_UNVALUED = [
-  {
-    provider: "Motilal Oswal Financial Services (demat)",
-    accountNo: "1201090012838316",
-    isin: "INE647U01026",
-    decided: "2026-09-28",
-    words: "keep them unvalued for now",
-    why: "holds every one of these shares in its lock-in + freeze balance, none of them free, and prints no rate for them",
-    cite: {
-      docKey: "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
-      text: [
-        "FREE BAL.",
-        "LOCKIN +",
-        "FREEZE BAL",
-        "INE647U01026 CLEAN MAX ENV-EQ 1/- 0.000 0.000 0.000 0.000 0.000 94967.000 0.000 0.00 0.000 0.000 94967.000",
-      ],
-    },
-  },
-];
+export const KEPT_UNVALUED = [];
 
 /**
  * The family's decision for one statement row, or null. `provider` and

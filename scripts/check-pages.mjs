@@ -7614,6 +7614,7 @@ const ROUTES = [
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
   ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
+  ["cio-returns-net", "/cio?tab=returns&rp=inception&rtype=net"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -12428,16 +12429,14 @@ const UNPRICED_BOOK = (() => {
 })();
 
 /**
- * THE ROW THE FAMILY DECIDED TO KEEP UNVALUED (FQ-3, 28 Sep 2026) — Ankita's
- * 94,967 Clean Max shares, which Ankita's Motilal Oswal demat statement holds in its
- * lock-in + freeze balance with no rate.
- *
- * Found by the ACCOUNT the table names (provider and account number, as
- * printed) and the ISIN, in `glowData.ts`'s own accounts and unvalued rows —
- * never by a name. The route walks that account's owner, whose Family &
- * Entities card lists the row under the account; `null` for every field is a
- * failure on that route, never an abstention, because the table always names
- * a row.
+ * THE ROW THE FAMILY FIRST KEPT UNVALUED (FQ-3, 28 Sep 2026) AND THEN ASKED TO
+ * INCLUDE (14 Oct 2026, "include this in the dashboard data as well") —
+ * Ankita's 94,967 Clean Max shares on Motilal Oswal demat 1201090012838316,
+ * ISIN INE647U01026. `shared/keptUnvalued.mjs` is empty again; this names the
+ * row by its account number and ISIN so the route can hold the REVERSAL: the
+ * statement still prints no rate, so it is a quantity on the statement basis,
+ * and no line on the card may carry the withdrawn decision. Read off
+ * `glowData.ts`, never through the helper; `null` is a failure on that route.
  */
 const KEPT_UNVALUED_BOOK = (() => {
   try {
@@ -12445,20 +12444,16 @@ const KEPT_UNVALUED_BOOK = (() => {
     const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
     const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS") ?? [];
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
-    return KEPT_UNVALUED.map((d) => {
-      const acc = accounts.filter((a) => a.provider === d.provider && String(a.accountNo) === String(d.accountNo));
-      const a = acc.length === 1 ? acc[0] : null;
-      const rows = a ? unvalued.filter((u) => u.accountId === a.accountId && u.isin === d.isin) : [];
-      const row = rows.length === 1 ? rows[0] : null;
-      return {
-        decided: d.decided, words: d.words,
-        accountId: a?.accountId ?? null, ownerId: a?.ownerId ?? null, owner: a?.owner ?? null,
-        securityKey: row?.securityKey ?? null, quantity: row?.quantity ?? null,
-        // THE CONVERSE: the LIVE book must value no row of that account and ISIN,
-        // the depository overlays included — the decision is not to borrow a mark.
-        valuedLive: a ? positions.filter((p) => p.accountId === a.accountId && p.isin === d.isin).length : null,
-      };
-    });
+    const acc = accounts.filter((a) => String(a.accountNo) === "1201090012838316");
+    const a = acc.length === 1 ? acc[0] : null;
+    const rows = a ? unvalued.filter((u) => u.accountId === a.accountId && u.isin === "INE647U01026") : [];
+    const row = rows.length === 1 ? rows[0] : null;
+    return [{
+      withdrawn: "keep them unvalued", tableEntries: KEPT_UNVALUED.length,
+      accountId: a?.accountId ?? null, ownerId: a?.ownerId ?? null, owner: a?.owner ?? null,
+      securityKey: row?.securityKey ?? null, quantity: row?.quantity ?? null, reason: row?.reason ?? null,
+      valuedStatement: a ? positions.filter((p) => p.accountId === a.accountId && p.isin === "INE647U01026").length : null,
+    }];
   } catch { return null; }
 })();
 
@@ -19615,7 +19610,7 @@ const CIO_RETURNS = [
     const want = /[?&]rp=([a-z0-9]+)/.exec(ctx.path ?? "")?.[1] ?? "fytd";
     const wantT = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr";
     return r.periods.map((x) => x.key).join(",") === "fytd,mtd,ytd,y1,y2,y3,inception,custom"
-      && r.types.map((x) => x.key).join(",") === "xirr,absolute,simple,cagr"
+      && r.types.map((x) => x.key).join(",") === "xirr,mwr,absolute,dietzpa,simple,simplepa,net,ptp,cagr"
       && r.periods.filter((x) => x.active).map((x) => x.key).join() === want
       && r.types.filter((x) => x.active).map((x) => x.key).join() === wantT
       && r.from && r.to;
@@ -19658,6 +19653,18 @@ const CIO_RETURNS = [
  * or an absence whose hover says why, never a bare blank.
  */
 const CIO_RETURNS_LAYOUT = [
+  // Stage 10dy — the return type is a dropdown, never a row of toggle buttons,
+  // and the portfolio section sits ABOVE the benchmarks, struck on geometry.
+  ["the return type is a dropdown, not toggle buttons", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    return r.typeSelect === true && r.typeButtons === 0;
+  }],
+  ["the portfolio section is above the benchmark section", (t, ctx) => {
+    const o = ctx?.returnsDom?.stackOrder;
+    if (!o) return false;
+    return o.portBottom <= o.benchTop + 1;
+  }],
   ["...the Returns tab shows the whole portfolio, never a table of its accounts or holdings", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
@@ -25995,6 +26002,7 @@ const INVARIANTS = {
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
   "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-net": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
@@ -35439,27 +35447,18 @@ const INVARIANTS = {
       const qty = Number(K.quantity).toLocaleString("en-IN", { maximumFractionDigits: 3 });
       return !!l && l.text.includes(`${qty} units`);
     }],
-    ["...its hover says the statement holds them locked in, none free, with no rate, and that the family decided to keep them unvalued, on its date and in their words", (t, ctx) => {
+    ["...the family's withdrawn decision is in no table entry, no book reason and no line's hover (reversed 14 Oct 2026)", (t, ctx) => {
       const d = ctx?.cashDom;
       if (!d) return { notChecked: "the probe did not run" };
       const K = KEPT_UNVALUED_BOOK?.[0];
-      if (!K?.accountId || !K.securityKey) return false;
-      const l = (d.unvaluedLines ?? []).find((x) => x.account === K.accountId)?.lines.find((x) => x.key === K.securityKey);
-      const why = l?.why ?? "";
-      return /lock-?in/i.test(why) && /freeze/i.test(why) && /none of them free|nil free|free balance (?:of )?nil/i.test(why)
-        && /no rate/i.test(why)
-        && why.includes(K.decided) && why.includes(K.words)
-        && /quantity and no value/i.test(why) && !/₹|\bRs\.?\s?\d/.test(why);
+      if (!K?.accountId || !K.reason) return false;
+      const carrying = (d.unvaluedLines ?? []).flatMap((g) => g.lines).filter((l) => (l.why ?? "").includes(K.withdrawn));
+      return K.tableEntries === 0 && !K.reason.includes(K.withdrawn) && carrying.length === 0;
     }],
-    ["...the decision reaches that one line and no other, and nothing in the live book values that account's row", (t, ctx) => {
-      const d = ctx?.cashDom;
-      if (!d) return { notChecked: "the probe did not run" };
+    ["...and on the statement basis it is still a quantity with no value — the rate printed is 0.000", (t, ctx) => {
       const K = KEPT_UNVALUED_BOOK?.[0];
       if (!K?.accountId) return false;
-      const carrying = (d.unvaluedLines ?? []).flatMap((g) => g.lines.map((l) => ({ ...l, account: g.account })))
-        .filter((l) => l.why.includes(K.words));
-      return carrying.length === 1 && carrying[0].account === K.accountId && carrying[0].key === K.securityKey
-        && K.valuedLive === 0;
+      return K.valuedStatement === 0 && /no rate/i.test(K.reason ?? "");
     }],
   ],
   "family-partial": [
@@ -39226,6 +39225,9 @@ for (const theme of THEMES) {
           rows: root.querySelectorAll("[data-returns-account]").length,
           portfolioCard: !!root.querySelector("[data-returns-portfolio]"),
           benchCard: !!root.querySelector("[data-returns-benchmarks]"),
+          typeSelect: !!root.querySelector("select[data-returns-type-select]"),
+          typeButtons: root.querySelectorAll("button[data-returns-type]").length,
+          stackOrder: (() => { const pc = root.querySelector("[data-returns-portfolio]")?.getBoundingClientRect(); const bc = root.querySelector("[data-returns-benchmarks]")?.getBoundingClientRect(); return pc && bc ? { portBottom: pc.bottom, benchTop: bc.top } : null; })(),
           formulaInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-formula]"),
           windowInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-window]"),
           benchPortfolioRow: !!root.querySelector("[data-returns-bench-portfolio]"),
