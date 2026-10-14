@@ -450,8 +450,8 @@ console.log("\n9. The review tab is gone — the review feeds the book instead")
   ok("nothing in the app reaches for them", importers.length === 0, importers.join(", "));
   const pm = readFileSync("src/pages/PrivateMarket.tsx", "utf8");
   const views = pm.slice(pm.indexOf("const BOOK_VIEWS"), pm.indexOf("];", pm.indexOf("const BOOK_VIEWS")));
-  ok("Private Market's tabs are funds, owners and transactions — no review tab",
-    /key: "funds"/.test(views) && /key: "owners"/.test(views) && /key: "transactions"/.test(views) && !/key: "review"/.test(views));
+  ok("Private Market's tabs are funds, brands and transactions — no review tab, no legal-entity tab",
+    /key: "funds"/.test(views) && /key: "brands"/.test(views) && /key: "transactions"/.test(views) && !/key: "review"/.test(views) && !/key: "owners"/.test(views));
   ok("build-book reads the review — it is the book's private-market source now",
     /reviewBookLayer/.test(readFileSync("scripts/build-book.mjs", "utf8")) && REV.length > 0);
 }

@@ -434,7 +434,7 @@ for (const [from, to] of [
 // old one printed a "₹0 invested → ₹0 today" private book and a 100%-undrawn
 // deployment bar off six empty arrays. If those ever come back, the giveaway is
 // a private market value of zero on a book whose statements report ₹352 Cr.
-await page.goto(`${BASE}/private-market`, { waitUntil: "networkidle" });
+await page.goto(`${BASE}/private-market?show=both`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
 text = await page.locator("body").innerText();
 // THE HEADER PILL THIS USED TO READ IS GONE, at the family's request, along
