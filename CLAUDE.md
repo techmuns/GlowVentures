@@ -27763,6 +27763,27 @@ code is #141's. On the merged tree (main `8d6d473`):
   VD-17 on `monitor`, and the priority-request check on `cio-live`, which Stage
   10dn records as failing on main's own build.
 
+### Stage 10dy — THE RETURNS TAB: PORTFOLIO ON TOP, BENCHMARKS BELOW, AND A DROPDOWN OF NINE RETURN TYPES
+
+*"show the first portfolio section at top and below that show the benchmark
+returns … add a dropdown selector to select the type of return … give the option
+to select every type of return the client might want to select not just these 4."*
+
+- **One column, two cards.** The portfolio return (figure, windows, the five
+  amounts and the formula) is on top; the benchmark table is below it, full width.
+  The stack scrolls inside Morning CIO's panel; the page does not.
+- **The return type is a `<select>`** (`data-returns-type-select`), at `?rtype=`
+  as before, XIRR param-free. Nine types in `periodReturns.ts`: XIRR, money-weighted
+  cumulative, Modified Dietz, Modified Dietz annualised, simple, simple annualised,
+  return on net capital, point-to-point and CAGR. Each annualised type refuses a
+  window under 365 days (Stage 10g(ii)); point-to-point and CAGR refuse a window
+  where capital moved. Time-weighted is not offered: it needs a valuation on every
+  flow date, which no statement here prints.
+- **Checks.** `CIO_RETURNS` lists the nine keys; `CIO_RETURNS_LAYOUT` asserts a
+  dropdown and no type buttons, and that the portfolio card sits above the
+  benchmarks (geometry). New route `cio-returns-net`. No figure in the book moves;
+  `build-book` is byte-identical.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
