@@ -24775,6 +24775,9 @@ in its statement's own `pages.json`):
 
 #### FQ-3 — Ankita's Clean Max shares stay a quantity
 
+*(Reversed at Stage 10dz: the family asked on 14 Oct 2026 for the shares to be
+valued, and the live layer values them at the quote again.)*
+
 `shared/keptUnvalued.mjs` names the row by its account and ISIN: 94,967 shares
 on Motilal Oswal demat 1201090012838316, which the statement holds in its
 lock-in + freeze balance with no rate. The row's reason says both what the
@@ -27783,6 +27786,30 @@ to select every type of return the client might want to select not just these 4.
   dropdown and no type buttons, and that the portfolio card sits above the
   benchmarks (geometry). New route `cio-returns-net`. No figure in the book moves;
   `build-book` is byte-identical.
+### Stage 10dz — ANKITA'S CLEAN MAX IS VALUED AGAIN: FQ-3 REVERSED
+
+*"include this in the dashboard data as well"* — the family, 14 Oct 2026, about
+Ankita's 94,967 Clean Max Enviro Energy Solutions shares on Motilal Oswal demat
+1201090012838316, which they had asked on 28 Sep to keep unvalued (Stage 10cx,
+FQ-3).
+
+- **`KEPT_UNVALUED` is empty again**, with the reversal recorded beside it. The
+  helpers and gate 6 in `depositoryShares.ts` stay, so a future decision is one
+  line.
+- **The LIVE layer values the shares at the CLEANMAX quote** (Stage 10cy's
+  `kind: "no-price"`), because the statement prints rate 0.000. **The statement
+  basis is unchanged**: the row is still a quantity with no value, and its reason
+  is the statement's own again. `BOOK_SUMMARY` does not move; the only line of
+  `glowData.ts` that changes is that reason.
+- Ajay's ICICI NSDL Clean Max (94,967 at the 30 Mar mark) is a separate holding
+  and untouched.
+
+**Checks.** `keptUnvalued.test.ts` holds the reversal (no table entry, no
+decision in the book's reason, still a quantity on the statement basis);
+`fundNavs.test.ts` asserts the row IS a live candidate; `family-kept-unvalued`
+asserts the withdrawn decision appears nowhere and the statement basis still
+values nothing. `family-answers-bug.mjs`'s FQ-3 cases have no subject since this
+stage.
 
 ### Stage 10k — News & Announcements: REMOVED
 

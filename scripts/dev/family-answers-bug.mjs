@@ -125,6 +125,9 @@ const CASES = [
     pages: "stock-pretax,stock-posttax",
   },
   // ── 3. "keep them unvalued for now" ────────────────────────────────────
+  // NO SUBJECT ON THIS BOOK SINCE Stage 10dz: the family reversed FQ-3 on
+  // 14 Oct 2026 and KEPT_UNVALUED is empty, so these cases report NOT A RESULT
+  // or sweep clean. They stay for the next decision the table records.
   {
     name: "the row's reason stops naming the family's decision",
     edits: [["shared/keptUnvalued.mjs",
