@@ -27926,6 +27926,24 @@ band counted them as "61 funds".
 
 No figure moves.
 
+### Stage 10ef — PRIVATE MARKET: NO LEGAL-ENTITY TAB, AND A FUNDS / COMPANIES / BOTH SELECTOR
+
+*"Remove the "by legal entity" tab from the private market page. give a dropdown
+selector to select fund or companies or both, keep companies as the default
+view."*
+
+- **The By legal entity tab is gone.** The master table's tabs are By fund · By
+  brand · Transactions; `?view=owners` falls back to By fund, and
+  `pmViewChecks` asserts exactly three tabs.
+- **A dropdown at `?show=`** (`data-pm-show`): **Companies** (param-free
+  default) draws the Private Companies (held at cost) section; **Funds** draws
+  Private funds and the unvalued band; **Both** draws all three and the total
+  row.
+- **Checks:** the existing Private Market routes walk `show=both`; two new
+  routes, `private-market-default` and `private-market-show-funds`, hold each
+  selection to the sections it draws. `check-columns` and `check:family` open
+  `show=both`. No figure moves; `build-book` is byte-identical.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
