@@ -21,7 +21,7 @@ import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
 import {
   sum, sumOrNull, consolidatedMarketValue, returnMeasureDef, isPrivateClass, dedupedPositions,
-  isValuedAtCost, AT_COST_RETURN,
+  isValuedAtCost, AT_COST_RETURN, AT_COST_BUCKET,
   type MeasuredReturn, type ReturnMeasure,
 } from "@/lib/analytics";
 import { BOOK_CORPORATE_ACTIONS, BOOK_CAPITAL_MOVES, BOOK_SHARE_MOVEMENTS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
@@ -1790,7 +1790,11 @@ export function PrivateMarket() {
     const shown = sortRows(
       s.groups.filter(groupMatches).map((g) => ({ ...g, ret: groupRet(g) })),
       bookView.sort, withReviewAccessors(nameAcc as Record<string, Accessor<BookGroup & { ret: (m: ReturnMeasure) => MeasuredReturn }>>, groupReviewScope, memberScope.owners !== null));
-    const noun = grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds")
+    // A held-at-cost row is an INVESTMENT — mostly a company — not a fund, and
+    // "61 funds" over it is why the family did not recognise these as the
+    // Portfolio Monitor's "Private investments at cost" (Stage 10ee).
+    const noun = id === "atCost" && grouping !== "owner" ? (s.groups.length === 1 ? "investment" : "investments")
+      : grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds")
       : grouping === "brand" ? (s.groups.length === 1 ? "brand" : "brands")
       : (s.groups.length === 1 ? "entity" : "entities");
     // COUNTS ON THE FACE, THE BASIS IN THE HOVER. *"its obvious from the table
@@ -1807,7 +1811,7 @@ export function PrivateMarket() {
         // what was paid into these and no valuation, so each is in the value at
         // its cost and in no gain — a return struck on a cost standing in for a
         // value would be a measured 0% nobody measured.
-        ? `The family's consolidated review records what was paid into these private investments and no valuation, so the ${money(s.value)} here is their cost: it is in the value and in Invested, and in no gain or return.`
+        ? `The family's consolidated review records what was paid into these private investments and no valuation, so the ${money(s.value)} here is their cost: it is in the value and in Invested, and in no gain or return. These are the investments the Portfolio Monitor lists under ${AT_COST_BUCKET}.`
         : `The statements carry no value, so the ${money(s.paid)} paid in here is in no value total on this page — missing data, never a zero.`;
     return (
       <Fragment key={id}>
