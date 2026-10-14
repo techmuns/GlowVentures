@@ -237,6 +237,23 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       title={`${inside.session === istDate() ? "Today’s movers" : inside.session ? "Latest session movers" : "Latest price movers"} · ${SCOPE_LABEL}`}
       right={
         <div className="flex flex-wrap items-center justify-end gap-2">
+          {/* The total is on screen in every state, and a small spinner beside
+              it is the only sign live prices are still arriving — the same
+              chip the Direct Equity card carries. */}
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 bg-ink-800/60 px-2 py-0.5 text-[11px] font-medium text-slate-300"
+            data-movers-total={inside.companies} title={`${inside.companies} companies inside the PMS mandates and the funds that disclose a portfolio`}>
+            <span className="mono">{inside.companies}</span> stocks
+            {(settling || quotesStatus === "loading") && (
+              <span className="inline-flex" data-movers-spinner role="status"
+                {...(!settling && inside.rows.length > 0 ? { "data-movers-refreshing": "" } : {})}
+                aria-label={settling ? `Live prices loading · ${landed} of ${inside.scopeSymbols.length}` : "Live prices refreshing"}
+                title={settling
+                  ? (disclosures === undefined ? "Reading what the funds disclosed" : `Live prices loading · ${landed} of ${inside.scopeSymbols.length} names have landed`)
+                  : "Live prices refreshing · the figures shown are the last complete round"}>
+                <Loader2 className="h-3 w-3 animate-spin text-slate-500" aria-hidden />
+              </span>
+            )}
+          </span>
           {scopeToggle}
           <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Show movers by"
             data-inside-views>
@@ -263,10 +280,6 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
         </div>
       }>
 
-      {quotesStatus === "loading" && !settling && inside.rows.length > 0 && (
-        <p className="mb-4 text-[11.5px] text-slate-500" data-movers-refreshing
-          title="The figures below are the last complete round of prices; a newer round is in flight and replaces them when it settles.">Refreshing prices</p>
-      )}
       {quotesStatus === "unavailable" && inside.rows.length > 0 && (
         <p className="mb-4 text-[11.5px] text-amber-500/80" data-testid="movers-cached">
           The quote feed did not answer this round — showing saved prices{clock ? ` observed ${clock}` : ""}.
@@ -274,19 +287,13 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
       )}
 
       {settling || (inside.rows.length === 0 && quotesStatus === "loading") ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-ink-600/70 px-6 py-10 text-center"
+        <div className="flex items-center justify-center py-8"
              data-testid="movers-loading" data-movers-landed={landed} data-movers-needed={inside.scopeSymbols.length}>
-          <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
-          <div className="text-sm font-medium text-slate-300">
-            {disclosures === undefined ? "Reading what the funds disclosed…" : "Fetching prices…"}
-          </div>
-          {/* ONE LINE, THE COUNT — why the card waits is its hover. */}
-          {disclosures !== undefined && inside.scopeSymbols.length > 0 && (
-            <p className="text-xs text-slate-500" data-movers-progress
-              title="The day’s move needs a live price and the previous close behind it, and the ranking spans the shares the mandates report and the companies the funds disclosed. Every figure here is struck over the whole scope, so it is shown once the scope has landed in full rather than redrawn as each name arrives.">
-              {landed} of {inside.scopeSymbols.length} names have landed so far
-            </p>
-          )}
+          <span className="inline-flex" role="status" data-movers-spinner
+            aria-label={disclosures === undefined ? "Reading what the funds disclosed" : `Live prices loading · ${landed} of ${inside.scopeSymbols.length} names have landed`}
+            title={disclosures === undefined ? "Reading what the funds disclosed" : `Live prices loading · ${landed} of ${inside.scopeSymbols.length} names have landed. Every figure here is struck over the whole scope, so it is shown once the scope has landed in full.`}>
+            <Loader2 className="h-4 w-4 animate-spin text-slate-500" aria-hidden />
+          </span>
         </div>
       ) : inside.rows.length === 0 ? (
         <div className="rounded-lg border border-dashed border-ink-600/70 px-6 py-8 text-center" data-testid="movers-unavailable" role="status">

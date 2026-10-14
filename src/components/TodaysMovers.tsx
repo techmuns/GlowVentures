@@ -336,6 +336,25 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
            The set itself is named in the heading above, so neither control has
            to carry it. */
         <div className="flex flex-wrap items-center justify-end gap-2">
+        {/* THE TOTAL IS ON SCREEN IN EVERY STATE — loading, ranked or feed
+            down — because it is a count of the SCOPE, not of prices, and is
+            known before a single quote lands. The small spinner beside it is
+            the only sign that live prices are still arriving; how far along
+            they are is its hover. */}
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 bg-ink-800/60 px-2 py-0.5 text-[11px] font-medium text-slate-300"
+          data-movers-total={model.distinct} title={`${model.distinct} direct-equity stocks in this scope`}>
+          <span className="mono">{model.distinct}</span> stocks
+          {(settling || quotesStatus === "loading") && (
+            <span className="inline-flex" data-movers-spinner role="status"
+              {...(!settling && model.rows.length > 0 ? { "data-movers-refreshing": "" } : {})}
+              aria-label={settling ? `Live prices loading · ${landed} of ${model.scopeSymbols.length}` : "Live prices refreshing"}
+              title={settling
+                ? `Live prices loading · ${landed} of ${model.scopeSymbols.length} names have landed`
+                : "Live prices refreshing · the figures shown are the last complete round"}>
+              <Loader2 className="h-3 w-3 animate-spin text-slate-500" aria-hidden />
+            </span>
+          )}
+        </span>
         {scopeToggle}
         <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Rank movers by">
           {/* `data-mover-rank` is the handle the sweep reads the OFFER and the
@@ -354,14 +373,6 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
         </div>
       }>
 
-      {/* Every name in scope carries a price and the feed is refreshing them.
-          The figures below are complete and dated; this says only that a newer
-          round is in flight. When the SCOPE ITSELF is incomplete the card draws
-          no figures at all — see `settling` above. */}
-      {quotesStatus === "loading" && !settling && model.rows.length > 0 && (
-        <p className="mb-4 text-[11.5px] text-slate-500" data-movers-refreshing
-          title="The figures below are the last complete round of prices; a newer round is in flight and replaces them when it settles.">Refreshing prices</p>
-      )}
       {/* A FAILED ROUND OVER A CACHED SNAPSHOT (MNT-18). The session's last
           snapshot stays applied when a fetch fails, so these figures are real
           and dated — and a reader must be told they are not this minute's. */}
@@ -390,19 +401,13 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
         renders the previous figures immediately and never passes through here.
       */}
       {settling || (model.rows.length === 0 && quotesStatus === "loading") ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-ink-600/70 px-6 py-10 text-center"
+        <div className="flex items-center justify-center py-8"
              data-testid="movers-loading" data-movers-landed={landed} data-movers-needed={model.scopeSymbols.length}>
-          <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
-          <div className="text-sm font-medium text-slate-300">Fetching prices…</div>
-          {/* ONE LINE, THE COUNT — the reason the card waits is its hover. *"its
-              obvious from the table what it is"*: a spinner that says how far
-              along it is needs no paragraph under it. */}
-          {model.scopeSymbols.length > 0 && (
-            <p className="text-xs text-slate-500" data-movers-progress
-              title="The day’s move needs a live price and the previous close behind it. Every figure on this card — the move, the ranking, the comparison against the index — is struck over the whole scope, so it is shown once the scope has landed in full rather than redrawn as each name arrives.">
-              {landed} of {model.scopeSymbols.length} names have landed so far
-            </p>
-          )}
+          <span className="inline-flex" role="status" data-movers-spinner
+            aria-label={`Live prices loading · ${landed} of ${model.scopeSymbols.length} names have landed`}
+            title={`Live prices loading · ${landed} of ${model.scopeSymbols.length} names have landed. Every figure on this card is struck over the whole scope, so it is shown once the scope has landed in full.`}>
+            <Loader2 className="h-4 w-4 animate-spin text-slate-500" aria-hidden />
+          </span>
         </div>
       ) : model.rows.length === 0 ? (
         <div className="rounded-lg border border-dashed border-ink-600/70 px-6 py-8 text-center" data-testid="movers-unavailable" role="status">

@@ -27842,6 +27842,48 @@ routes it touches: 26 combinations, the one finding VD-17 on `monitor`, main's
 own (Stage 10dn). `test:family` exit 0; `build-book` byte-identical after
 merging main.
 
+### Stage 10eb — FOUR STANDARD RETURN TYPES, EACH EXPLAINED
+
+*"also explain what the type of return is.... point to point is a very vague
+term, we just need to show industry standard return nothing too complex or out
+of the ordinary returns that everyone investing money looks at."*
+
+- **The Returns tab's dropdown offers four types**, down from Stage 10dy's nine:
+  **XIRR** (default), **Absolute return**, **Time-weighted return** and
+  **CAGR**. Money-weighted cumulative, Modified Dietz annualised, simple, simple
+  annualised, return on net capital and point-to-point are gone; an old
+  `?rtype=` falls back to XIRR.
+- **Time-weighted return is Modified Dietz**, the standard approximation when
+  no valuation exists on each flow date, which no statement here prints. Since
+  investment it weights each rupee by the share of the period it was invested.
+  **CAGR** compounds it to a year, and refuses a window under 365 days, pointing
+  to the time-weighted return instead (Stage 10g(ii)).
+- **Each type is explained in one short line beside the dropdown**
+  (`data-returns-type-desc`), and its full plain-English explanation is that
+  control's hover and the card's subtitle hover.
+- **Checks:** `CIO_RETURNS` expects the four keys and asserts the short line
+  and its hover; `cio-returns-net` is replaced by `cio-returns-twr`. No figure
+  in the book moves.
+
+### Stage 10ec — THE MOVERS CARDS SHOW HOW MANY STOCKS, AND A SPINNER WHILE PRICES LOAD
+
+*"just show the total no. of stocks at all times on the page, and show that live
+pries are still loading as a small loading icon."*
+
+- **A count of stocks is in the header of Today's movers and the AIF & PMS card
+  in every state**: loading, ranked, refreshing (`data-movers-total`). The Direct
+  Equity card counts its distinct names (`model.distinct`); the AIF & PMS card
+  counts the companies across both halves (`InsideMovers.companies`, the union of
+  the mandate and disclosed keys).
+- **"Fetching prices…", the progress line and "Refreshing prices" are gone**; a
+  small spinner beside the count (`data-movers-spinner`) says it, with the landed
+  count or "the figures shown are the last complete round" in its hover. The
+  card still holds on its own scope (Stage 10an): nothing is ranked until it lands.
+- **Checks** read the handles: `cio-loading` requires the spinner and the count,
+  `cio-cached` the refreshing spinner's hover, `cio-live` the count once ranked.
+  `check:pages` on the 13 Morning CIO movers routes: the one finding is the
+  priority-request check on `cio-live`, which fails on main too (Stage 10dn).
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
