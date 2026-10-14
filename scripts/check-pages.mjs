@@ -29108,7 +29108,7 @@ const INVARIANTS = {
     ...PRIVATE_SCOPE_CHECKS,
     PM_BAND_HINTS("brands"),
     /**
-     * BY BRAND IS ONE ROW PER BRAND (Stage 10eb). A brand row carries the
+     * BY BRAND IS ONE ROW PER BRAND (Stage 10ed). A brand row carries the
      * brand's own name — no fund class, no " — " nesting — and opens onto the
      * statements behind it, each named for whose it is. Struck on the row
      * handles, never on prose.

@@ -27884,6 +27884,30 @@ pries are still loading as a small loading icon."*
   `check:pages` on the 13 Morning CIO movers routes: the one finding is the
   priority-request check on `cio-live`, which fails on main too (Stage 10dn).
 
+### Stage 10ed — PRIVATE MARKET: BY BRAND AND BY LEGAL ENTITY
+
+*"Add By Brand and By Legal Entity private-market views … Show one consolidated
+brand row in the brand view, with owner/entity detail available when needed,
+rather than forcing multiple nested naming layers into every row."*
+
+- **Four tabs on the master table**: By fund · **By brand** (`?view=brands`) ·
+  **By legal entity** (`?view=owners`, the By-owner key kept so bookmarks land) ·
+  Transactions.
+- **One row per brand** (`privateBook(folios, "brand")`). The brand is the
+  fund's own name with its class, series and legal suffix taken off
+  (`brandOf`), and only ever removed — except where `BRAND_OVERRIDES` names
+  one: Drink Prime and Blue Ashva are each one brand; LV Angel Fund is Hoopr;
+  Collabmates and Karban stay apart. 62 brand rows on this book.
+- **Consolidated like the fund view**: each holding counted once, the band hint
+  says so. The legal-entity view stays as printed.
+- **A brand row opens into its owners**, each child prefixed with the fund only
+  where the brand spans several funds. A Capital call cell sits on a brand row
+  only where the brand is one fund.
+- **Checks**: `privateBook.test.ts` (brand block); route
+  `private-market-brands` (tabs, table checks, band hints, labels unique and
+  carrying no " — " or class suffix). Two fund-row claims abstain on the brands
+  view. `build-book` byte-identical.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

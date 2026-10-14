@@ -117,7 +117,7 @@ export type BookGrouping = "fund" | "owner" | "brand";
  *
  *   "Show one consolidated brand row in the brand view, with owner/entity
  *    detail available when needed, rather than forcing multiple nested naming
- *    layers into every row." — the family, 14 Oct 2026 (Stage 10eb).
+ *    layers into every row." — the family, 14 Oct 2026 (Stage 10ed).
  *
  * A brand is the name a reader knows the investment by. It is read off the
  * fund name the row already prints — the unit class, a series, a bracketed
