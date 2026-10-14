@@ -18107,7 +18107,7 @@ const CIO_MOVERS = [
       const card = moversCard(ctx?.cioLayout?.text);
       if (!card) return false;
       if (/DIRECT EQUITY · /i.test(card)) return /DIRECT EQUITY · (?:TODAY|SESSION \d{4}-\d{2}-\d{2}|LATEST AVAILABLE PRICES)/i.test(card);
-      // Since Stage 10eb a loading card draws a spinner, not words: struck on
+      // Since Stage 10ec a loading card draws a spinner, not words: struck on
       // its handle, never on prose.
       return /Daily price changes are temporarily unavailable/.test(card) || ctx?.movers?.holding === true;
     }],
@@ -24872,7 +24872,7 @@ const INVARIANTS = {
         && /live prices loading/i.test(ctx.movers.spinnerTitle ?? "")],
     /**
      * *"just show the total no. of stocks at all times on the page"* (Stage
-     * 10eb): the count is on the card while it loads, not only once it ranks.
+     * 10ec): the count is on the card while it loads, not only once it ranks.
      */
     ["...and the total number of stocks is on the card while it loads",
       (t, ctx) => Number.isFinite(ctx?.movers?.total) && ctx.movers.total > 0],
@@ -25341,7 +25341,7 @@ const INVARIANTS = {
       () => {
         if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
         const r = CACHED.refreshing;
-        // A small spinner since Stage 10eb — no words on the face, its hover
+        // A small spinner since Stage 10ec — no words on the face, its hover
         // says the figures are the last complete round.
         return !!r && r.text === "" && /last complete round/i.test(r.title);
       }],
@@ -30047,7 +30047,7 @@ const INVARIANTS = {
   "cio-live": [
     /**
      * THE TOTAL NUMBER OF STOCKS IS ON THE CARD ONCE IT RANKS TOO (Stage
-     * 10eb), and it counts at least every name the card ranks.
+     * 10ec).
      */
     ["the movers card shows the total number of stocks once it ranks too",
       (t, ctx) => Number.isFinite(ctx?.movers?.total) && ctx.movers.total > 0],
