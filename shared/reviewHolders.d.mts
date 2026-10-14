@@ -39,6 +39,14 @@ export type ReviewHolderEntry = {
   atCost?: boolean;
   split: readonly ReviewHolderSplit[];
   why: string;
+  /**
+   * A cited, dated family decision that this review line is now a LISTED
+   * company, so it sits on the listed side of the book though the review
+   * carries it as private capital. The review's value is kept; no exchange
+   * price is published. Reversible by deleting it (→ private again).
+   * See shared/aifCategory.mjs (`marketSideOf`) and scripts/lib/reviewBook.mjs.
+   */
+  listed?: { since: string; source: string; why: string };
 };
 
 export declare const PRIVATE_INVESTMENT_HOLDERS: readonly ReviewHolderEntry[];

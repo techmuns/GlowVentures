@@ -64,13 +64,19 @@
 // *"for private market data, any kind of private market data, we will use the
 // reconciliation sheet as the source"* (5 Oct 2026). The family's consolidated
 // review (MOPWM, 30 Jun 2026) now supplies every private-market line in the
-// book: 89 review rows — 13 valued at the review's closing, 76 held at cost —
-// beside the one statement row the review does not supersede (Neo Infra, on
-// its own statement). So the page holds 90 rows, 69 funds and ₹234.59 Cr, and
-// every figure below is struck as the SUM of those two sources, each anchored
-// to the book, rather than as the six-row literal it was. A line held AT COST
-// counts in cost and in value and in no gain: it carries no P&L and no return,
-// and nothing on this page may print one for it.
+// book: 87 private review rows — 11 valued at the review's closing, 76 held at
+// cost — beside the one statement row the review does not supersede (Neo Infra,
+// on its own statement). So the page holds 88 rows, 68 funds and ₹193.09 Cr,
+// and every figure below is struck as the SUM of those two sources, each
+// anchored to the book, rather than as the six-row literal it was. A line held
+// AT COST counts in cost and in value and in no gain: it carries no P&L and no
+// return, and nothing on this page may print one for it.
+//
+// AND TWO REVIEW LINES HAVE MOVED OFF THIS PAGE (Stage 10dq). The family say
+// National Stock Exchange of India has listed, so its two rows (₹41.5 Cr) are
+// on the listed side now — the review's own ₹41.5 Cr kept exactly, no figure
+// invented — which is why the page falls from 90 rows to 88 and from ₹234.59 Cr
+// to ₹193.09 Cr. The guard below holds the move load-bearing.
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
 import { sum, sumOrNull, isValuedAtCost } from "@/lib/analytics";
@@ -81,6 +87,7 @@ import {
 } from "@/lib/privateMarket";
 import type { Commitment, Position } from "@/lib/types";
 import { SEPARATE_INVESTMENTS, sameAccount } from "../../../shared/separateInvestments.mjs";
+import { VALUED_HOLDERS } from "../../../shared/reviewHolders.mjs";
 import { withPairsTagged } from "./taggedPairs";
 
 let fails = 0;
@@ -104,16 +111,26 @@ const accIdx = accountIndex(BOOK_ACCOUNTS);
 const scope = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
 
 console.log("\n── the private set ──");
-/** The review's rows, and the statement rows the review does not supersede. */
-const reviewRows = BOOK_POSITIONS.filter((p) => p.review);
+// A review line the family declared a LISTED company (National Stock Exchange,
+// since 2026-10-13) sits on the listed side and off this page, though the
+// review carries it as private capital — shared/reviewHolders.mjs (`.listed`).
+// The review's value is kept; it is this page's one exception, so the private
+// relations below are struck on the review's PRIVATE lines.
+const familyListedKeys = new Set(VALUED_HOLDERS.filter((e) => e.listed).map((e) => e.key));
+/** The review's private-market rows, and the statement rows it does not supersede. */
+const reviewRows = BOOK_POSITIONS.filter((p) => p.review && !familyListedKeys.has(p.securityKey));
 const statementPrivate = scope.rows.filter((p) => !p.review);
+const familyListed = BOOK_POSITIONS.filter((p) => p.review && familyListedKeys.has(p.securityKey));
 ok("the book carries the review's private-market lines", reviewRows.length > 0, `${reviewRows.length} rows`);
-ok("every review line is on the private side, and on this page",
+ok("every private review line is on the private side, and on this page",
   reviewRows.every((p) => p.marketSide === "private" && scope.rows.includes(p)));
+ok("a review line the family declared listed is on the listed side, off this page",
+  familyListed.length > 0 && familyListed.every((p) => p.marketSide === "listed" && !scope.rows.includes(p)),
+  familyListed.map((p) => `${p.securityKey}=${p.marketSide}`).join(", ") || "none");
 eq("the statement rows the review does not supersede — Neo Infra alone",
   statementPrivate.map((p) => p.securityKey), ["neo-infra-income-opportunities-fund-i-class-a5"]);
 eq("raw private rows = the review's lines + the statement's", scope.rows.length, reviewRows.length + statementPrivate.length);
-eq("raw private rows", scope.rows.length, 90);
+eq("raw private rows", scope.rows.length, 88);
 eq("…of which the review holds at cost", reviewRows.filter(isValuedAtCost).length, 76);
 // NOTHING IS COUNTED ONCE: both pairs the policy used to tag are separate
 // investments on the family's word, so the deduped set is the raw set.
@@ -153,7 +170,7 @@ const rawMV = sum(scope.rows.map((p) => p.marketValue));
 near("deduped private value === BOOK_SUMMARY.privateValue", dedupedMV, BOOK_SUMMARY.privateValue);
 near("raw private value = the review's lines + the statement's", rawMV,
   sum(reviewRows.map((p) => p.marketValue)) + sum(statementPrivate.map((p) => p.marketValue)));
-near("raw private value", rawMV, 2345944270.36);
+near("raw private value", rawMV, 1930944270.36);
 near("double count = raw − deduped", scope.doubleCounted, rawMV - dedupedMV);
 near("the double count is nil — the family confirmed both pairs separate", scope.doubleCounted, 0);
 ok("…and so is the whole book's: every position is in its consolidated total",
@@ -195,7 +212,7 @@ ok("…and so is the whole book's: every position is in its consolidated total",
 console.log("\n── funds ──");
 const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
 eq("one fund row per distinct holding", funds.length, new Set(scope.dedupedRows.map((p) => p.securityKey)).size);
-eq("distinct funds", funds.length, 69);
+eq("distinct funds", funds.length, 68);
 eq("…of which the review holds wholly at cost", funds.filter((f) => f.atCost).length, 61);
 near("fund rollup value ties to the deduped total", sum(funds.map((f) => f.mv)), dedupedMV);
 const costedFunds = funds.filter((f) => f.cost != null);
@@ -213,13 +230,13 @@ const atCostReview = reviewRows.filter(isValuedAtCost);
 // ₹5 Cr drawn, less the ₹14,16,280 cost of the 14,162.8 units it redeemed.
 near("Neo Infra's cost — its own statement, under FIFO", sumOrNull(statementPrivate.map((p) => p.costBasis)) ?? NaN, 50000000 - 1416280);
 near("cost = what every row reports", sumOrNull(funds.map((f) => f.cost)), sumOrNull(scope.dedupedRows.map((p) => p.costBasis)) ?? NaN);
-near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 470458469.84 + 1406775806.88);
+near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 349608469.84 + 1406775806.88);
 near("…the at-cost lines' cost is their value", sum(atCostReview.map((p) => p.costBasis ?? NaN)), sum(atCostReview.map((p) => p.marketValue)));
 ok("an at-cost line carries no P&L, no return and no per-unit mark",
   atCostReview.every((p) => p.unrealizedPnL == null && p.returnPct == null && p.currentPrice == null));
 near("unrealised P&L = value less cost on the valued rows alone", sumOrNull(funds.map((f) => f.pnl)),
   sum([...statementPrivate, ...valuedReview].map((p) => p.marketValue - (p.costBasis as number))));
-near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), (55498303.25 - 48583720) + 413211690.39);
+near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), (55498303.25 - 48583720) + 119061690.39);
 ok("an at-cost fund shows no P&L and no return", funds.filter((f) => f.atCost).every((f) => f.pnl == null && f.returnPct == null));
 // DERIVED, NOT TYPED. The coverage count is a fact about which holdings are
 // private, and that is exactly what changed — a literal here went stale once
