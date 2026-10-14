@@ -2,8 +2,9 @@
  * ── MORNING CIO → RETURNS (Stage 10dq) ───────────────────────────────────────
  *
  * A period selector (MTD, YTD, FYTD, trailing 1Y/2Y/3Y, since investment and a
- * custom From/To), a return-type DROPDOWN over every type `RETURN_TYPES`
- * carries (Stage 10dy), and the formula of the type selected, with the window
+ * custom From/To), a return-type DROPDOWN over the four standard types
+ * `RETURN_TYPES` carries, each explained in one short line beside it (Stage
+ * 10eb), and the formula of the type selected, with the window
  * actually measured printed beside the one asked for.
  *
  * ONE COLUMN: the portfolio's card first, the benchmarks under it (Stage 10dy,
@@ -251,13 +252,16 @@ export default function PortfolioReturns() {
               </option>
             ))}
           </select>
+          <span className="text-[12px] text-slate-300" data-returns-type-desc={rtype}>
+            {RETURN_TYPES.find((r) => r.key === rtype)!.short}
+          </span>
         </label>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" data-returns-stack>
         {/* ── The portfolio: window, figures and formula in one card ── */}
         <div className="shrink-0" data-returns-portfolio>
-        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}. ${RETURN_TYPES.find((r) => r.key === rtype)!.title}`}>
+        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}: ${RETURN_TYPES.find((r) => r.key === rtype)!.title}`}>
           <div className="flex flex-wrap items-baseline justify-between gap-3" data-returns-figure="Return" title={measured?.reason ?? measured?.worked ?? ""}>
             <div>
               <div className="label-xs">Return · {typeLabel}</div>
