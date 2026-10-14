@@ -134,6 +134,12 @@ export type InsideMovers = {
    * wider: waiting on the whole book would make it wait on names it never draws.
    */
   scopeSymbols: string[];
+  /**
+   * HOW MANY COMPANIES THIS SCOPE COVERS — the mandates' shares and the
+   * companies the funds disclose, each counted once. A count of the SCOPE, not
+   * of prices, so it is known before a single quote lands.
+   */
+  companies: number;
   /** The PMS half's own scope, so no caller re-derives it. */
   mandate: {
     positions: number; names: number; value: number;
@@ -462,6 +468,7 @@ export function insideMovers(args: {
     observedTo: observations.length ? new Date(observations[observations.length - 1]).toISOString() : null,
     omitted,
     scopeSymbols,
+    companies: new Set([...mandateKeys, ...disclosedKeys]).size,
     mandate: {
       positions: mandate.length, names: mandateKeys.size,
       value: mandate.reduce((a, p) => a + p.marketValue, 0),
