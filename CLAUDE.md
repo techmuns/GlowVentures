@@ -27865,6 +27865,25 @@ of the ordinary returns that everyone investing money looks at."*
   and its hover; `cio-returns-net` is replaced by `cio-returns-twr`. No figure
   in the book moves.
 
+### Stage 10ec — THE MOVERS CARDS SHOW HOW MANY STOCKS, AND A SPINNER WHILE PRICES LOAD
+
+*"just show the total no. of stocks at all times on the page, and show that live
+pries are still loading as a small loading icon."*
+
+- **A count of stocks is in the header of Today's movers and the AIF & PMS card
+  in every state**: loading, ranked, refreshing (`data-movers-total`). The Direct
+  Equity card counts its distinct names (`model.distinct`); the AIF & PMS card
+  counts the companies across both halves (`InsideMovers.companies`, the union of
+  the mandate and disclosed keys).
+- **"Fetching prices…", the progress line and "Refreshing prices" are gone**; a
+  small spinner beside the count (`data-movers-spinner`) says it, with the landed
+  count or "the figures shown are the last complete round" in its hover. The
+  card still holds on its own scope (Stage 10an): nothing is ranked until it lands.
+- **Checks** read the handles: `cio-loading` requires the spinner and the count,
+  `cio-cached` the refreshing spinner's hover, `cio-live` the count once ranked.
+  `check:pages` on the 13 Morning CIO movers routes: the one finding is the
+  priority-request check on `cio-live`, which fails on main too (Stage 10dn).
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

@@ -18107,7 +18107,9 @@ const CIO_MOVERS = [
       const card = moversCard(ctx?.cioLayout?.text);
       if (!card) return false;
       if (/DIRECT EQUITY · /i.test(card)) return /DIRECT EQUITY · (?:TODAY|SESSION \d{4}-\d{2}-\d{2}|LATEST AVAILABLE PRICES)/i.test(card);
-      return /Daily price changes are temporarily unavailable|Fetching prices/.test(card);
+      // Since Stage 10ec a loading card draws a spinner, not words: struck on
+      // its handle, never on prose.
+      return /Daily price changes are temporarily unavailable/.test(card) || ctx?.movers?.holding === true;
     }],
   /**
    * ...AND THE MOVERS TOGGLE OFFERS EXACTLY THE TWO BRANCHES THE FAMILY NAMED.
@@ -24865,8 +24867,15 @@ const INVARIANTS = {
    * asserted the security has no live quote. THE CAUSE PICKS THE HEADLINE.
    */
   "cio-loading": [
-    ["the movers card says it is fetching",
-      (t) => /Fetching prices…/.test(t)],
+    ["the movers card says it is fetching — a small spinner whose hover says live prices are loading",
+      (t, ctx) => ctx?.movers?.holding === true && ctx.movers.spinner === true
+        && /live prices loading/i.test(ctx.movers.spinnerTitle ?? "")],
+    /**
+     * *"just show the total no. of stocks at all times on the page"* (Stage
+     * 10ec): the count is on the card while it loads, not only once it ranks.
+     */
+    ["...and the total number of stocks is on the card while it loads",
+      (t, ctx) => Number.isFinite(ctx?.movers?.total) && ctx.movers.total > 0],
 
     /**
      * ...AND MAKES NO CLAIM ABOUT THE BOOK WHILE IT DOES. Both the settled
@@ -25332,7 +25341,9 @@ const INVARIANTS = {
       () => {
         if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
         const r = CACHED.refreshing;
-        return !!r && r.text === "Refreshing prices" && /last complete round of prices/i.test(r.title);
+        // A small spinner since Stage 10ec — no words on the face, its hover
+        // says the figures are the last complete round.
+        return !!r && r.text === "" && /last complete round/i.test(r.title);
       }],
     /**
      * …AND NO RUPEE FIGURE OVER AN EMPTY SET (Stage 10dc). On this reopen the
@@ -30034,6 +30045,12 @@ const INVARIANTS = {
     }],
   ],
   "cio-live": [
+    /**
+     * THE TOTAL NUMBER OF STOCKS IS ON THE CARD ONCE IT RANKS TOO (Stage
+     * 10ec).
+     */
+    ["the movers card shows the total number of stocks once it ranks too",
+      (t, ctx) => Number.isFinite(ctx?.movers?.total) && ctx.movers.total > 0],
     ...CIO_MWR,
     /**
      * THE SCOPE IS NAMED AS `priority`, WHICH IS A CLAIM ABOUT THE REQUEST.
@@ -39113,8 +39130,13 @@ for (const theme of THEMES) {
        */
       const movers = FAST ? null : await page.evaluate(() => {
         const load = document.querySelector('[data-testid="movers-loading"]');
+        const tot = document.querySelector('[data-movers-total]');
+        const spin = document.querySelector('[data-movers-spinner]');
         return {
           holding: !!load,
+          total: tot ? Number(tot.getAttribute("data-movers-total")) : null,
+          spinner: !!spin,
+          spinnerTitle: spin ? spin.getAttribute("title") ?? "" : null,
           landed: load ? Number(load.getAttribute("data-movers-landed")) : null,
           needed: load ? Number(load.getAttribute("data-movers-needed")) : null,
           figures: !!document.querySelector('[data-testid="movers-coverage"]'),
