@@ -91,11 +91,11 @@ function build(positions: Position[]) {
     positions: current, allPositions: positions, accounts: BOOK_ACCOUNTS,
     commitments, accIdx, schemes, distributions: BOOK_CORPORATE_ACTIONS,
   });
-  return { positions, current, folios, byFund: privateBook(folios, "fund"), byOwner: privateBook(folios, "owner") };
+  return { positions, current, folios, byFund: privateBook(folios, "fund"), byOwner: privateBook(folios, "owner"), byBrand: privateBook(folios, "brand") };
 }
 type Build = ReturnType<typeof build>;
 const real = build(BOOK_POSITIONS);
-const { current, folios, byFund, byOwner } = real;
+const { current, folios, byFund, byOwner, byBrand } = real;
 const taggedBook = withPairsTagged(BOOK_POSITIONS, BOOK_ACCOUNTS);
 /** Every check struck on the double count runs on both, and says which run it is. */
 type Run = { label: string; b: Build; overlap: boolean };
@@ -335,6 +335,33 @@ function countedOnce({ label, b, overlap }: Run) {
     byFund.privateTotal.value, sum(scope.rows.map((p) => p.marketValue)) - scope.doubleCounted);
 }
 for (const run of RUNS) countedOnce(run);
+
+console.log("\n── by brand: one row per brand, on the fund grouping's basis ──");
+{
+  const gs = BOOK_SECTIONS.flatMap((s) => byBrand.sections[s].groups);
+  const seen = gs.flatMap((g) => g.folios);
+  ok("every brand row is a brand row", gs.every((g) => g.kind === "brand"));
+  ok("the brand rows partition the folios — each once, none dropped",
+    seen.length === folios.length && new Set(seen).size === folios.length,
+    `${seen.length} of ${folios.length}`);
+  for (const k of ["value", "cost", "committed", "paid", "uncalled"] as const) {
+    near(`by brand closes on the fund grouping's private ${k}`, byBrand.privateTotal[k], byFund.privateTotal[k]);
+    for (const s of BOOK_SECTIONS)
+      near(`…and the ${s} section's ${k}`, byBrand.sections[s][k] ?? 0, byFund.sections[s][k] ?? 0);
+  }
+  const rowsOf = (re: RegExp) => gs.filter((g) => g.folios.some((f) => re.test(f.fundName)));
+  for (const re of [/drink\s*prime|waterwala/i, /blue\s*ashva/i]) {
+    const rows = rowsOf(re);
+    ok(`${re.source}: its lines are one brand row`, rows.length === 1,
+      `${rows.length} rows: ${rows.map((g) => g.label).join(" | ")}`);
+  }
+  const collab = rowsOf(/collabmates/i), karban = rowsOf(/karban/i);
+  ok("Collabmates and Karban stay two brands",
+    collab.length > 0 && karban.length > 0 && !collab.some((g) => karban.includes(g)));
+  ok("there are no more brand rows than fund rows",
+    gs.length <= BOOK_SECTIONS.flatMap((s) => byFund.sections[s].groups).length,
+    `${gs.length} brands`);
+}
 
 console.log("\n── the two sections ──");
 {

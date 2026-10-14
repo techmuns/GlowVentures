@@ -217,9 +217,14 @@ const BOOK_VIEWS = [
     cardTitle: "Private market — every fund",
   },
   {
-    key: "owners", label: "By owner",
-    title: "One row per family member, each statement as printed. Click a row for their folios.",
-    cardTitle: "Private market — by family member",
+    key: "brands", label: "By brand",
+    title: "One row per brand, each holding counted once. Click a row for who holds it and through which fund or entity.",
+    cardTitle: "Private market — by brand",
+  },
+  {
+    key: "owners", label: "By legal entity",
+    title: "One row per legal entity — each family member and trust — each statement as printed. Click a row for their folios.",
+    cardTitle: "Private market — by legal entity",
   },
   {
     key: "transactions", label: "Transactions",
@@ -624,6 +629,7 @@ export function PrivateMarket() {
       })(),
       byFund: privateBook(all, "fund"),
       byOwner: privateBook(all, "owner"),
+      byBrand: privateBook(all, "brand"),
     };
   }, [portfolio, live]);
 
@@ -1053,7 +1059,7 @@ export function PrivateMarket() {
   ];
 
   const active = BOOK_VIEWS.find((v) => v.key === view)!;
-  const book: PrivateBook = view === "owners" ? m.byOwner : m.byFund;
+  const book: PrivateBook = view === "owners" ? m.byOwner : view === "brands" ? m.byBrand : m.byFund;
   const grouping = book.grouping;
   const needle = q.trim().toLowerCase();
   const folioText = (f: BookFolio) => [f.owner, f.fundName, f.provider, f.accountNo].join(" ").toLowerCase();
@@ -1077,8 +1083,20 @@ export function PrivateMarket() {
     key && entered.state.status === "ready" ? headlineCall(entered.state.calls, key, today)?.call.date ?? null : null;
   const nameAcc = bookAccessors((r) => r.label ?? null, callDate, returnMeasures);
   /** A FUND row's call key. A member row is not a fund, so it has none. */
-  const groupCallKey = (g: BookGroup) => (g.kind === "fund" ? callKeyOf(g.key, g.securityKey) : null);
+  const groupCallKey = (g: BookGroup) => {
+    if (g.kind === "fund") return callKeyOf(g.key, g.securityKey);
+    // A brand row is a fund only where every folio under it is one fund.
+    if (g.kind === "brand") {
+      const keys = new Set(g.folios.map((f) => f.fundKey));
+      if (keys.size === 1) return callKeyOf(g.folios[0].fundKey, g.folios[0].securityKey);
+    }
+    return null;
+  };
   const folioCallKey = (f: BookFolio) => callKeyOf(f.fundKey, f.securityKey);
+  /** A folio carries the call cell where its row's level is not a fund: By
+   *  legal entity always, By brand where the brand spans more than one fund. */
+  const folioCallOn = (g: BookGroup, f: BookFolio) =>
+    !f.viewOf && g.kind !== "fund" && groupCallKey(g) == null ? folioCallKey(f) : null;
   /**
    * ── THE CAPITAL CALL CELL, AND THE EDITOR IT OPENS ─────────────────────────
    *
@@ -1169,7 +1187,11 @@ export function PrivateMarket() {
     ({ shown: false, tag: measure === "auto" ? "AUTO" : returnMeasureDef(measure).tag, reason: why });
   const NO_VALUE_RETURN = "no value to strike a return on — nothing here values the holding";
   const groupRet = (g: BookGroup) => {
-    if (g.kind === "fund") {
+    // A BRAND WHOSE LINES ARE ALL ONE FUND IS THAT FUND, and is resolved the
+    // fund's own way; a brand spanning several funds pools them, counted once.
+    const oneFund = g.kind === "brand" && new Set(g.folios.map((f) => f.fundKey)).size === 1 && g.securityKey != null;
+    if (g.kind === "brand" && !oneFund) return aggRet(g.folios, true, "brand");
+    if (g.kind === "fund" || oneFund) {
       return g.value == null ? noValueReturn(NO_VALUE_RETURN)
         : (measure: ReturnMeasure) => fundMeasuredReturn(
           // A fund every line of which is held at cost (Stage 10dh) refuses
@@ -1200,7 +1222,7 @@ export function PrivateMarket() {
    * cannot carry a dated return is NAMED in the cell's hover and left out, never
    * pooled with a gap in it.
    */
-  function aggRet(folios: BookFolio[], consolidated: boolean, scope: "member" | "section" | "total") {
+  function aggRet(folios: BookFolio[], consolidated: boolean, scope: "member" | "brand" | "section" | "total") {
     const fig = figuresOf(folios, consolidated);
     const allHeld = folios.filter((f) => f.position && (!consolidated || f.counted));
     /**
@@ -1228,7 +1250,8 @@ export function PrivateMarket() {
     const pooledOut = recs.filter((r) => !complete(r.d));
     const poolOf = recs.length + atCostFunds;
     const whose = scope === "total" ? "This is the whole private book, not one fund"
-      : scope === "section" ? "This band spans several funds" : "A family member's row spans their funds";
+      : scope === "section" ? "This band spans several funds"
+      : scope === "brand" ? "This brand spans several funds" : "A family member's row spans their funds";
     const unit = (n: number) => (consolidated ? (n === 1 ? "fund" : "funds") : (n === 1 ? "statement" : "statements"));
     return (measure: ReturnMeasure): RowReturn => {
       // A REFUSED cell under the methodology says AUTO, as a refused fund row
@@ -1532,7 +1555,7 @@ export function PrivateMarket() {
   /** The words under a fund's or a member's name: what it is, never a figure another column holds. */
   const groupSub = (g: BookGroup): ReactNode => {
     const bits: ReactNode[] = [];
-    if (g.kind === "fund" && g.category) bits.push(g.category);
+    if (g.kind !== "owner" && g.category) bits.push(g.category);
     const views = g.folios.filter((f) => f.viewOf).length;
     const held = g.folios.length - views;
     bits.push(`${held} ${held === 1 ? "folio" : "folios"}`);
@@ -1544,7 +1567,7 @@ export function PrivateMarket() {
     if (g.status === "no-nav") bits.push(<span key="st" className="text-amber-400">no NAV published</span>);
     if (g.status === "income-only") bits.push("income-only folios");
     if (g.status === "redeemed") bits.push("redeemed to nil");
-    const newer = g.kind === "fund" ? newerUnitsNote(g.securityKey) : null;
+    const newer = g.kind !== "owner" ? newerUnitsNote(g.securityKey) : null;
     if (newer) bits.push(<Fragment key="nu">{newer}</Fragment>);
     return bits.map((b, i) => <Fragment key={i}>{i > 0 && " · "}{b}</Fragment>);
   };
@@ -1570,20 +1593,21 @@ export function PrivateMarket() {
     const inPrivate = g.section !== "unvalued";
     const kids = sortRows(
       g.folios.map((f) => ({
-        f, label: grouping === "fund" ? f.owner : f.fundName,
-        fig: { ...folioFigures(f), callKey: grouping === "owner" ? folioCallKey(f) : null, ret: folioRet(f) },
+        f, label: grouping === "owner" ? f.fundName : f.owner,
+        fig: { ...folioFigures(f), callKey: folioCallOn(g, f), ret: folioRet(f) },
       })),
       bookView.sort,
       withReviewAccessors(Object.fromEntries(Object.entries(nameAcc).map(([c, a]) => [c, (x: { fig: RowFigures; label: string; f: BookFolio }) => a({ ...x.fig, label: x.label })])), (x) => folioReviewScope(x.f), memberScope.owners !== null),
     );
     const scheme = (f: BookFolio) => f.capital;
     const fundCall = groupCallKey(g);
+    const brandSpansFunds = g.kind === "brand" && new Set(g.folios.map((x) => x.fundKey)).size > 1;
     const fundRowId = `fund:${g.key}`;
     return (
       <Fragment key={key}>
         <Tr view={bookView} reviewScope={groupReviewScope(g)} className={TREE_ROW.parent} {...rowToggle(toggle)}
-          data-pm-group={g.key} data-pm-kind={g.kind} data-pm-row-section={g.section}
-          {...(g.kind === "fund" ? { "data-pm-fund": g.key } : { "data-pm-owner": g.key })}
+          data-pm-group={g.key} data-pm-kind={g.kind} data-pm-row-section={g.section} data-pm-label={g.label}
+          {...(g.kind === "fund" ? { "data-pm-fund": g.key } : g.kind === "brand" ? { "data-pm-brand": g.key } : { "data-pm-owner": g.key })}
           data-pm-folios={g.folios.length} data-pm-value={g.value ?? undefined}
           data-pm-cost-absent={g.cost == null ? "" : undefined} data-pm-return-absent={g.returnPct == null ? "" : undefined}
           data-pm-committed={g.committed ?? undefined} data-pm-uncalled={g.uncalled ?? undefined}
@@ -1623,7 +1647,7 @@ export function PrivateMarket() {
           // BY OWNER the folio is the fund level, so the call cell is here — on
           // the folio that holds the units, never on an income-only view of it,
           // which would put a second editor for one fund under one member.
-          const folioCall = grouping === "owner" && !f.viewOf ? folioCallKey(f) : null;
+          const folioCall = folioCallOn(g, f);
           const folioRowId = `owner:${g.key}:${f.key}`;
           const viewOfLine = f.viewOf ? accName(f.viewOf) : null;
           return (
@@ -1640,9 +1664,10 @@ export function PrivateMarket() {
               data-pm-review={f.position?.review && f.position.reviewSource
                 ? `${f.position.reviewSource.sheet}:${f.position.reviewSource.row}` : undefined}
               data-calls={s ? s.calls.length : undefined}>
-              <TreeNameCell depth={1} last={i === kids.length - 1 && !(grouping === "fund" && g.overlap)}
-                title={grouping === "fund" ? f.owner : f.fundName}
+              <TreeNameCell depth={1} last={i === kids.length - 1 && !(grouping !== "owner" && g.overlap)}
+                title={grouping === "owner" ? f.fundName : f.owner}
                 sub={<>
+                  {grouping === "brand" && brandSpansFunds && <>{f.fundName} · </>}
                   {f.provider} {f.accountNo}
                   {/* VALUED ON THE REVIEW (Stage 10dh). The family's consolidated
                       review is the source for private-market lines, and where
@@ -1707,7 +1732,7 @@ export function PrivateMarket() {
             </Fragment>
           );
         })}
-        {open && grouping === "fund" && g.overlap && overlapRow(g.overlap, g.key, g.overlap.statements, inPrivate)}
+        {open && grouping !== "owner" && g.overlap && overlapRow(g.overlap, g.key, g.overlap.statements, inPrivate)}
       </Fragment>
     );
   };
@@ -1735,7 +1760,7 @@ export function PrivateMarket() {
         data-pm-overlap={key} data-printed={Math.round(o.printed)} data-consolidated={Math.round(o.consolidated)} data-overlap={Math.round(o.value)}>
         <TreeNameCell depth={1} last
           title={<span className="text-amber-400">Counted once</span>}
-          hint={grouping === "fund"
+          hint={grouping !== "owner"
             ? `The same holding is reported on ${statements} statements; the row above counts it once${capital ? " — and its capital account once too" : ""}, and this line takes the overlap out so the folios add to the row.`
             : `${statements} statements report the same holdings twice between them; the total counts each once${capital ? " — and each capital account once too" : ""}, and this line takes the overlap out.`} />
         {inOrder({
@@ -1765,15 +1790,17 @@ export function PrivateMarket() {
     const shown = sortRows(
       s.groups.filter(groupMatches).map((g) => ({ ...g, ret: groupRet(g) })),
       bookView.sort, withReviewAccessors(nameAcc as Record<string, Accessor<BookGroup & { ret: (m: ReturnMeasure) => MeasuredReturn }>>, groupReviewScope, memberScope.owners !== null));
-    const noun = grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds") : (s.groups.length === 1 ? "member" : "members");
+    const noun = grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds")
+      : grouping === "brand" ? (s.groups.length === 1 ? "brand" : "brands")
+      : (s.groups.length === 1 ? "entity" : "entities");
     // COUNTS ON THE FACE, THE BASIS IN THE HOVER. *"its obvious from the table
     // what it is"* — the band said which basis it is on and why the missing-data
     // section adds to no value in a line of its own; both ride on the band's
     // hover now, and the band keeps its counts, which are data.
     const sub = `${s.groups.length} ${noun} · ${s.folios} folios`;
     const hint = id === "private"
-      ? (grouping === "fund"
-        ? "Each holding counted once. Where two statements report one holding, the fund row counts it once and its folios show both, with a Counted once line so they add to the row."
+      ? (grouping !== "owner"
+        ? `Each holding counted once. Where two statements report one holding, the ${grouping} row counts it once and its folios show both, with a Counted once line so they add to the row.`
         : "Each statement as printed. A holding two members' statements both report is on both of their rows, and the Counted once line at the foot of this section takes the overlap out.")
       : id === "atCost"
         // HELD AT COST (Stage 10dh): the family's consolidated review records
@@ -1791,7 +1818,7 @@ export function PrivateMarket() {
           <TreeSectionCell title={title} marker={copy.marker && <span data-pm-marker={id}>{copy.marker}</span>} sub={sub} hint={hint}
             open={open} onToggle={() => sections.toggle(id)}
             toggleData={{ "data-pm-section-toggle": id }} />
-          {inOrder(figureCells({ ...s, ret: aggRet(s.groups.flatMap((g) => g.folios), grouping === "fund", "section") }, "section", {
+          {inOrder(figureCells({ ...s, ret: aggRet(s.groups.flatMap((g) => g.folios), grouping !== "owner", "section") }, "section", {
             noCapital: s.capitalAccounts === 0 ? "no capital account in this section" : undefined,
             noValue: id === "unvalued" ? "nothing in this section is valued — missing data, never a zero" : "no value",
             noHolding: id === "unvalued" ? "no valued holding in this section" : undefined,
@@ -1966,7 +1993,7 @@ export function PrivateMarket() {
             {tabs}
             <EditColumns view={view === "transactions" ? callView : bookView} />
             <SearchInput value={q} onChange={setQ}
-              placeholder={view === "transactions" ? "Search calls…" : view === "owners" ? "Search members or funds…" : "Search funds or members…"}
+              placeholder={view === "transactions" ? "Search calls…" : view === "owners" ? "Search entities or funds…" : view === "brands" ? "Search brands, funds or entities…" : "Search funds or members…"}
               className="w-56"
               suggestions={view === "transactions"
                 ? [...new Set(m.history.map((c) => c.fund))]
@@ -1976,19 +2003,19 @@ export function PrivateMarket() {
                 funds make true (`PM_RETURN_HINTS`) — the Monitor's XIRR hint
                 says the statements carry no per-holding cash flows, which is
                 false of a drawdown fund. */}
-            {(view === "funds" || view === "owners") && (
+            {(view === "funds" || view === "owners" || view === "brands") && (
               <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} hints={PM_RETURN_HINTS} source={returnSource} />
             )}
-            {(view === "funds" || view === "owners") && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />}
+            {(view === "funds" || view === "owners" || view === "brands") && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />}
           </div>
         }>
 
-        {(view === "funds" || view === "owners") && (
+        {(view === "funds" || view === "owners" || view === "brands") && (
           <div className="overflow-x-auto">
             <table className="min-w-full text-[13px]" data-pm-table={view}>
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
-                  <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Fund" : "Family member"}</SortHeader>
+                  <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Fund" : grouping === "brand" ? "Brand" : "Legal entity"}</SortHeader>
                   {/* ── THE LABELS ALONE, THE MEANING IN THE HOVER ─────────────────
                       Each heading carried a word under it — "promised", "asked
                       for", "cash sent". The family asked for the lines that say
