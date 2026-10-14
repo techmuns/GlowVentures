@@ -489,20 +489,22 @@ ok("...and counts one fewer holding as not valued",
  * counted twice: it carries 1,89,934 across ICICI Bank and MOPWM, which is the
  * 94,967 on Ajay's ICICI row plus the 94,967 on Ankita's Motilal one.
  *
- * AND THE FAMILY HAVE DECIDED ANKITA'S STAYS UNVALUED (28 Sep 2026, Stage 10cx's
- * FQ-3, `shared/keptUnvalued.mjs`): her statement holds every one of those shares
- * in its lock-in + freeze balance and prints no rate, and *"keep them unvalued for
- * now"* is their answer. So it passes the first five gates and gate 6 stops it —
- * and that is asserted on the row moved to an account the decision does not name,
- * which the first five gates let through, so the sixth is what refuses the real one.
+ * THE FAMILY FIRST KEPT ANKITA'S UNVALUED (28 Sep 2026, Stage 10cx's FQ-3) and
+ * then asked for it to be included (14 Oct 2026, "include this in the dashboard
+ * data as well"). `shared/keptUnvalued.mjs` is empty again, so her row is a
+ * candidate like ESDS: valued on the live basis at the CLEANMAX quote, and a
+ * quantity on the statement basis, where the printed rate is 0.000.
  */
 console.log("── a holding statement's listed shares with no usable price (Stage 10cy) ──");
 const NP = unpricedStatementShareCandidates();
 const npOf = (isin: string) => NP.find((p) => p.isin?.toUpperCase() === isin);
 const cleanMax = npOf("INE647U01026");
 const esds = npOf("INE0DRI01029");
-ok("Clean Max on Ankita's Motilal demat is NOT a candidate — the family decided on 28 Sep 2026 to keep it unvalued",
-  !cleanMax, cleanMax ? `${cleanMax.accountId} ${cleanMax.quantity} ${cleanMax.symbol}` : "");
+ok("Clean Max on Ankita's Motilal demat is a candidate at its 94,967 shares — the family asked on 14 Oct 2026 for it to be included",
+  !!cleanMax && cleanMax.accountId === "motilal-oswal-financial-services-demat-1201090012838316" && cleanMax.quantity === 94967
+    && cleanMax.symbol === "CLEANMAX" && cleanMax.securityKey === "clean-max-enviro-energy-solutions"
+    && cleanMax.depositoryUnits?.kind === "no-price",
+  cleanMax ? `${cleanMax.accountId} ${cleanMax.quantity} ${cleanMax.symbol} ${cleanMax.depositoryUnits?.kind}` : "missing");
 ok("ESDS on Ajay's ICICI NSDL account is a candidate at its 330,898 shares, named without the depository's furniture",
   !!esds && esds.accountId === "icici-bank-nsdl-demat-49794950" && esds.quantity === 330898 && esds.symbol === "ESDS"
     && esds.security === "ESDS Software Solution Limited",
@@ -539,9 +541,9 @@ const cmRow = BOOK_UNVALUED_HOLDINGS.find((u) => u.isin?.toUpperCase() === "INE6
 const movedSameOwner = cmRow ? unpricedStatementShareCandidates([{ ...cmRow, accountId: ajayMain, ownerId: "ajay-jaisinghani" }]) : [];
 ok("the same units under the SAME owner in another account are refused — one holding, not two",
   !!cmRow && movedSameOwner.length === 0, movedSameOwner.map((p) => p.accountId).join("; "));
-// Gate 6 is what refuses the real row: the same row on an account of a
-// DIFFERENT owner that no decision names passes every other gate, at 94,967
-// shares, under the book's own key and the listing's symbol.
+// Gate 6 names no row now, so the same row on an account of a DIFFERENT owner
+// passes exactly as the real one does, at 94,967 shares, under the book's own
+// key and the listing's symbol.
 const aartiDemat = "motilal-oswal-financial-services-demat-1201090012838335";
 const cmElsewhere = cmRow ? unpricedStatementShareCandidates([{ ...cmRow, accountId: aartiDemat, ownerId: "aarti-jaisinghani" }]) : [];
 ok("the same row on another owner's account, which no decision names, IS a candidate — so gates 1–5 let it through",
@@ -549,9 +551,9 @@ ok("the same row on another owner's account, which no decision names, IS a candi
     && cmElsewhere[0].securityKey === "clean-max-enviro-energy-solutions",
   cmElsewhere.map((p) => `${p.accountId} ${p.quantity} ${p.symbol} ${p.securityKey}`).join("; ") || "none");
 const realRow = cmRow ? unpricedStatementShareCandidates([cmRow]) : [];
-ok("...and the real row, on Ankita's account, is refused by the family's decision (gate 6)",
-  !!cmRow && cmRow.accountId === "motilal-oswal-financial-services-demat-1201090012838316" && realRow.length === 0,
-  realRow.map((p) => p.accountId).join("; "));
+ok("...and the real row, on Ankita's account, is a candidate too — no decision refuses it",
+  !!cmRow && cmRow.accountId === "motilal-oswal-financial-services-demat-1201090012838316" && realRow.length === 1,
+  realRow.map((p) => p.accountId).join("; ") || "none");
 const npFeed = (sym: string, price: number): QuoteFeed => ({
   quotes: { [sym]: { price, prevClose: price / 1.01, open: null, dayLow: null, dayHigh: null, low52: null, high52: null,
     marketCap: null, volume: null, yearChangePct: null, ageS: 0, source: "upstox" } },

@@ -14104,7 +14104,7 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "lastMovementSide": null,
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 holds every one of these shares in its lock-in + freeze balance, none of them free, and prints no rate for them — and the family decided on 2026-09-28 to keep them unvalued (\"keep them unvalued for now\") rather than borrow a mark from another statement, so they carry a quantity and no value"
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
