@@ -7719,6 +7719,7 @@ const ROUTES = [
    */
   ["private-market-folios", "/private-market"],
   ["private-market-owners", "/private-market?view=owners"],
+  ["private-market-brands", "/private-market?view=brands"],
   ["private-market-owners-returns", "/private-market?view=owners&ret=absolute,cagr,xirr,ytd,calendar"],
   /**
    * THE THIRD TAB. The capital calls were a card of their own, with a timeline
@@ -16432,7 +16433,7 @@ const PM_BAND_HINTS = (grouping) => ["each band keeps its counts on its face and
   if (!priv) return false;
   const basis = grouping === "owners" ? /each statement as printed/i : /each holding counted once/i;
   if (!basis.test(priv.hint ?? "") || basis.test(priv.text)
-    || !/\d+ (?:funds?|members?) · \d+ folios/i.test(priv.text)) return false;
+    || !/\d+ (?:funds?|members?|brands?|entit(?:y|ies)) · \d+ folios/i.test(priv.text)) return false;
   const unv = pv.sections.find((x) => x.id === "unvalued");
   if (!unv) return UNVALUED_BOOK?.accounts ? false : true;
   const paid = pmMoney(unv.cells?.paid?.text);
@@ -16910,6 +16911,7 @@ const PM_TABLE_CHECKS = [
     if (!fundRows.length) {
       const view = pv.views?.find((v) => v.active)?.key ?? null;
       if (view === "owners") return { notChecked: "this address draws members, not funds" };
+      if (view === "brands") return { notChecked: "this address draws brands, not funds" };
       if (view === "transactions") return { notChecked: "this address draws the call history, not funds" };
       // The fund view stands down only where the BOOK holds no private fund.
       return SIDE_BOOK && !SIDE_BOOK.privateRows ? { notChecked: "this book holds no private fund" } : false;
@@ -16965,6 +16967,7 @@ const PM_TABLE_CHECKS = [
     if (!fundRows.length) {
       const view = pv.views?.find((v) => v.active)?.key ?? null;
       if (view === "owners") return { notChecked: "this address draws members, not funds" };
+      if (view === "brands") return { notChecked: "this address draws brands, not funds" };
       if (view === "transactions") return { notChecked: "this address draws the call history, not funds" };
       // The fund view stands down only where the BOOK holds no private fund.
       return SIDE_BOOK && !SIDE_BOOK.privateRows ? { notChecked: "this book holds no private fund" } : false;
@@ -17194,12 +17197,12 @@ const pmViewChecks = (expected) => [
    * "Transactions" are phrases this page's own prose uses, so a text match
    * cannot tell a rendered button from a sentence about one.
    */
-  [`the private book is one card with three tabs, no review tab, and this address opens on ${expected}`, (t, ctx) => {
+  [`the private book is one card with four tabs (fund, brand, legal entity, transactions), no review tab, and this address opens on ${expected}`, (t, ctx) => {
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     const keys = pv.views.map((v) => v.key);
-    return keys.length === 3
-      && ["funds", "owners", "transactions"].every((k) => keys.includes(k))
+    return keys.length === 4
+      && ["funds", "brands", "owners", "transactions"].every((k) => keys.includes(k))
       && !keys.includes("folios") && !keys.includes("review")
       && pv.views.find((v) => v.active)?.key === expected;
   }],
@@ -29099,6 +29102,25 @@ const INVARIANTS = {
     PM_MEMBER_COVER_CHECK,
     PM_MEMBER_RETURN_CHECK,
   ],
+  "private-market-brands": [
+    ...pmViewChecks("brands"),
+    ...PM_TABLE_CHECKS,
+    ...PRIVATE_SCOPE_CHECKS,
+    PM_BAND_HINTS("brands"),
+    /**
+     * BY BRAND IS ONE ROW PER BRAND (Stage 10ed). A brand row carries the
+     * brand's own name — no fund class, no " — " nesting — and opens onto the
+     * statements behind it, each named for whose it is. Struck on the row
+     * handles, never on prose.
+     */
+    ["by brand, each brand is one row with a plain name, and the rows are the fund grouping's statements", (t, ctx) => {
+      const gs = (ctx?.pmView?.groups ?? []).filter((g) => g.kind === "brand");
+      if (!gs.length) return false;
+      const labels = gs.map((g) => g.label ?? "");
+      return new Set(labels).size === labels.length
+        && labels.every((l) => l && !/ — |class [a-z]\d/i.test(l));
+    }],
+  ],
   "private-market-owners": [
     PM_WEIGHT_OWNERS_CHECK,
     PM_MEMBER_COVER_CHECK,
@@ -37721,7 +37743,7 @@ for (const theme of THEMES) {
        * control: a button wired to nothing leaves the sections closed and the
        * folio checks fail by name.
        */
-      if (name === "private-market-folios" || name === "private-market-owners" || name === "private-market-owners-returns") {
+      if (name === "private-market-folios" || name === "private-market-owners" || name === "private-market-owners-returns" || name === "private-market-brands") {
         const all = page.locator("[data-tree-expand-all]").first();
         if (await all.count()) { await all.click(); await page.waitForTimeout(500); }
       }
@@ -41420,7 +41442,7 @@ for (const theme of THEMES) {
             funds: num(e, "data-pm-section-funds"), folios: num(e, "data-pm-section-folios"),
             marker: txt(e.querySelector("[data-pm-marker]")) || null, text: txt(e), ...cellsOf(e) })),
           groups: rows("tr[data-pm-group]").map((e) => ({
-            key: e.getAttribute("data-pm-group"), kind: e.getAttribute("data-pm-kind"),
+            key: e.getAttribute("data-pm-group"), kind: e.getAttribute("data-pm-kind"), label: e.getAttribute("data-pm-label"),
             // The row's own statement dates, ISO, as its As of cell carries them.
             asOfDates: (e.querySelector("td[data-col-cell='asOf']")?.getAttribute("data-as-of") ?? "").split(" ").filter(Boolean),
             section: e.getAttribute("data-pm-row-section"), folios: num(e, "data-pm-folios"),

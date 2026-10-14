@@ -107,9 +107,77 @@ import {
 } from "./privateMarket";
 import { schemeCalls, type SchemeCall } from "./capitalCalls";
 import { fifoTotals } from "./fifo";
+import { splitFundClass } from "../../shared/securityKey.mjs";
 
 export type BookSectionId = "private" | "atCost" | "unvalued";
-export type BookGrouping = "fund" | "owner";
+export type BookGrouping = "fund" | "owner" | "brand";
+
+/**
+ * ── BY BRAND: ONE ROW PER BRAND, HOWEVER MANY NAMES IT IS HELD UNDER ─────────
+ *
+ *   "Show one consolidated brand row in the brand view, with owner/entity
+ *    detail available when needed, rather than forcing multiple nested naming
+ *    layers into every row." — the family, 14 Oct 2026 (Stage 10ed).
+ *
+ * A brand is the name a reader knows the investment by. It is read off the
+ * fund name the row already prints — the unit class, a series, a bracketed
+ * tag and everything after the first " - " (the review's own way of naming the
+ * holder or the channel) are taken off, then the legal suffix — so
+ * `India SME Investments Fund II — Class A2` and every Drink Prime line land on
+ * one key. DISPLAY ONLY: it never touches `securityKey`, and a brand row is a
+ * grouping of folios that each keep their own key, figures and page.
+ *
+ * Where the first segment names the CHANNEL rather than the company (an
+ * AngelList trust, a LetsVenture pool), or two names of one brand cannot be
+ * reached by that rule, the answer is `BRAND_OVERRIDES` — committed, keyed on
+ * the folio's own fundKey, never a similarity match.
+ */
+const BRAND_OVERRIDES: Record<string, string> = {
+  // The review prints the AngelList trust first and the company after it; the
+  // trust is a channel, and two different companies share it.
+  "al-trust-collabmates-pvt-ltd-angellist-likeminds": "Collabmates",
+  "al-trust-karban-envirotech-ruv-nilesh-angelist": "Karban Envirotech",
+  // LetsVenture's angel fund is the channel; Hoopr is the company.
+  "lv-angel-fund-lets-venture-hoopr-vaibhav-karnavat": "Hoopr",
+  // Waterwala Labs is the company behind the Drink Prime brand; the other three
+  // lines name the brand after the person who sold the shares.
+  "waterwala-labs-private-limited-drink-prime": "Drink Prime",
+  "vineet-sethia-drink-prime": "Drink Prime",
+  "ajay-jain-drink-prime": "Drink Prime",
+  "hanok-reuben-medhari-drink-prime": "Drink Prime",
+  // Two Blue Ashva vehicles, one manager: the review names them as two accounts.
+  "blue-ashva-india-pool-account": "Blue Ashva",
+  "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability": "Blue Ashva",
+};
+
+const LEGAL_SUFFIX = /[\s,]+(?:private\s+limited|pvt\.?\s*ltd\.?|private\s+ltd\.?|pvt\.?\s+limited|limited|ltd\.?|llp)\s*$/i;
+
+/** The brand a folio is held under: its key and the words for it. */
+export function brandOf(f: Pick<BookFolio, "fundKey" | "fundName">): { key: string; label: string } {
+  const override = BRAND_OVERRIDES[f.fundKey.replace(/^account:/, "")] ?? BRAND_OVERRIDES[f.fundKey];
+  let name = override ?? (splitFundClass(f.fundName)?.fund ?? f.fundName);
+  if (!override) {
+    name = name
+      .replace(/\s*\([^)]*\)\s*/g, " ")
+      .replace(/\s*[\u2013\u2014]\s*Series\s+\S+.*$/i, "")
+      .split(/\s+-\s+/)[0]
+      .replace(/\s+/g, " ")
+      .trim();
+    for (let i = 0; i < 2; i++) name = name.replace(LEGAL_SUFFIX, "").trim();
+    if (!/[A-Za-z]{2}/.test(name)) name = f.fundName;
+  }
+  const slug = name.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return { key: `brand:${slug}`, label: name };
+}
+
+/** One brand's label across its folios: a spelling the statement CASED beats one
+ *  printed in capitals, then the shortest — the brand alone, not a variant of it. */
+function brandLabel(fs: BookFolio[]): string {
+  const labels = [...new Set(fs.map((f) => brandOf(f).label))];
+  const cased = labels.filter((l) => l !== l.toUpperCase());
+  const pool = cased.length ? cased : labels;
+  return pool.sort((a, b) => a.length - b.length || a.localeCompare(b))[0];
+}
 /** Why a folio carries (or does not carry) a value. */
 export type FolioStatus = "valued" | UnvaluedKind;
 
@@ -817,10 +885,13 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
   const sections = {} as Record<BookSectionId, BookSection>;
   for (const id of BOOK_SECTIONS) {
     const mine = folios.filter((f) => f.section === id);
-    const keyOf = (f: BookFolio) => (grouping === "fund" ? f.fundKey : `owner:${f.owner}`);
+    const keyOf = (f: BookFolio) =>
+      grouping === "fund" ? f.fundKey : grouping === "brand" ? brandOf(f).key : `owner:${f.owner}`;
     const buckets = new Map<string, BookFolio[]>();
     for (const f of mine) buckets.set(keyOf(f), [...(buckets.get(keyOf(f)) ?? []), f]);
-    const consolidated = grouping === "fund";
+    // A brand row is a fund row widened to every name the brand is held under, so
+    // it is on the fund row's basis: each holding counted once.
+    const consolidated = grouping !== "owner";
     const groups: BookGroup[] = [...buckets.entries()].map(([key, fs]) => {
       const sorted = [...fs].sort((a, b) => byValueThenPaid(
         { value: a.value, paid: a.capital?.paid ?? null, committed: a.capital?.committed ?? null },
@@ -832,15 +903,19 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
         ...figuresOf(sorted, consolidated),
         key,
         kind: grouping,
-        label: grouping === "fund" ? first.fundName : first.owner,
+        label: grouping === "fund" ? first.fundName : grouping === "brand" ? brandLabel(sorted) : first.owner,
         section: id,
-        securityKey: grouping === "fund" ? first.securityKey : null,
-        category: grouping === "fund" ? first.category : null,
+        // A brand row links a page, or names a category, only where every folio
+        // under it is the one holding and agrees — never one of several.
+        securityKey: grouping === "fund" ? first.securityKey
+          : grouping === "brand" && new Set(sorted.map((f) => f.securityKey)).size === 1 ? first.securityKey : null,
+        category: grouping === "fund" ? first.category
+          : grouping === "brand" && new Set(sorted.map((f) => f.category)).size === 1 ? first.category : null,
         // A row with ANY valued folio is a valued row: an income-only view folded
         // under it adds a line, never a doubt about whether the row is valued.
         status: sorted.some((f) => f.status === "valued") ? "valued" : statuses.size === 1 ? first.status : "other",
         folios: sorted,
-        overlap: grouping === "fund" ? overlapOf(sorted) : null,
+        overlap: grouping !== "owner" ? overlapOf(sorted) : null,
         // The row is stale only where EVERY capital account under it is: one
         // current statement beside a stale one is a mixed row, and the folios
         // say which is which.
