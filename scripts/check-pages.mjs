@@ -7594,6 +7594,7 @@ const ROUTES = [
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
   ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
+  ["cio-returns-net", "/cio?tab=returns&rp=inception&rtype=net"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -19588,7 +19589,7 @@ const CIO_RETURNS = [
     const want = /[?&]rp=([a-z0-9]+)/.exec(ctx.path ?? "")?.[1] ?? "fytd";
     const wantT = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr";
     return r.periods.map((x) => x.key).join(",") === "fytd,mtd,ytd,y1,y2,y3,inception,custom"
-      && r.types.map((x) => x.key).join(",") === "xirr,absolute,simple,cagr"
+      && r.types.map((x) => x.key).join(",") === "xirr,mwr,absolute,dietzpa,simple,simplepa,net,ptp,cagr"
       && r.periods.filter((x) => x.active).map((x) => x.key).join() === want
       && r.types.filter((x) => x.active).map((x) => x.key).join() === wantT
       && r.from && r.to;
@@ -19631,6 +19632,18 @@ const CIO_RETURNS = [
  * or an absence whose hover says why, never a bare blank.
  */
 const CIO_RETURNS_LAYOUT = [
+  // Stage 10dy — the return type is a dropdown, never a row of toggle buttons,
+  // and the portfolio section sits ABOVE the benchmarks, struck on geometry.
+  ["the return type is a dropdown, not toggle buttons", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    return r.typeSelect === true && r.typeButtons === 0;
+  }],
+  ["the portfolio section is above the benchmark section", (t, ctx) => {
+    const o = ctx?.returnsDom?.stackOrder;
+    if (!o) return false;
+    return o.portBottom <= o.benchTop + 1;
+  }],
   ["...the Returns tab shows the whole portfolio, never a table of its accounts or holdings", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
@@ -25968,6 +25981,7 @@ const INVARIANTS = {
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
   "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-net": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
@@ -39199,6 +39213,9 @@ for (const theme of THEMES) {
           rows: root.querySelectorAll("[data-returns-account]").length,
           portfolioCard: !!root.querySelector("[data-returns-portfolio]"),
           benchCard: !!root.querySelector("[data-returns-benchmarks]"),
+          typeSelect: !!root.querySelector("select[data-returns-type-select]"),
+          typeButtons: root.querySelectorAll("button[data-returns-type]").length,
+          stackOrder: (() => { const pc = root.querySelector("[data-returns-portfolio]")?.getBoundingClientRect(); const bc = root.querySelector("[data-returns-benchmarks]")?.getBoundingClientRect(); return pc && bc ? { portBottom: pc.bottom, benchTop: bc.top } : null; })(),
           formulaInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-formula]"),
           windowInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-window]"),
           benchPortfolioRow: !!root.querySelector("[data-returns-bench-portfolio]"),
