@@ -189,7 +189,24 @@ export const VALUED_HOLDERS = [
       { owner: AN, cost: 2500000, value: 3285877, qty: 2500 },
     ],
     why: "each trust's own folio, and Ankita's 2,500 units on the review's Transactions" },
-  { tab: "unlisted", line: /^National Stock Exchange$/, name: "National Stock Exchange of India", key: "national-stock-exchange-of-india", assetClass: "Unlisted",
+  // NOW A LISTED COMPANY. The review (MOPWM, 30 Jun 2026) carries NSE under its
+  // `Direct Equity - Unlisted` block, so `tab` and `reviewSource` keep that
+  // citation — a provenance record of where the line came from, true of the
+  // review as it stood and left unchanged. The family said on 13 Oct 2026 that
+  // NSE has since listed, so its asset class is `Equity` (a listed share's) and
+  // its side is `listed` (`listed` below, which `push` reads for `marketSide`).
+  // The review's value is kept to the rupee: no exchange price is published to
+  // this book, and inventing a quote, a symbol or an exchange to mark the new
+  // listing is the fabrication this book exists to prevent. A dated, cited
+  // family decision, the standing of FAMILY_MARKET_SIDE — delete `listed` and
+  // the holding is private again.
+  { tab: "unlisted", line: /^National Stock Exchange$/, name: "National Stock Exchange of India", key: "national-stock-exchange-of-india", assetClass: "Equity",
+    listed: { since: "2026-10-13", source: "family", why: "the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book",
+      // No statement, filing or vendor page in this book places NSE, and the review
+      // prints no sector for it. It is a stock exchange, which AMFI files under the
+      // industry "Capital Markets" (as it does BSE Ltd); the GICS answer is whatever
+      // shared/sectors.mjs resolves that label to, never typed here.
+      providerSector: "Capital Markets", sectorWhy: "a stock exchange — AMFI's industry for an exchange is Capital Markets (as for BSE Ltd); no statement prints a sector for it" },
     split: [
       { owner: AJ, cost: 75531250, value: 259375000, qty: 125000 },
       { owner: AN, cost: 45318750, value: 155625000, qty: 75000 },

@@ -18,8 +18,8 @@ export const BOOK_AS_OF = "2026-10-05";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-10-05",
-  "listedValue": 6001396520.11,
-  "privateValue": 2345944270.36,
+  "listedValue": 6416396520.11,
+  "privateValue": 1930944270.36,
   "unplacedValue": 0,
   "totalValue": 8347340790.47,
   "positionsCount": 414,
@@ -7485,10 +7485,10 @@ export const BOOK_POSITIONS: Position[] = [
     "isin": "INE721I01024",
     "accountId": "review-ajay-jaisinghani",
     "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Unlisted",
-    "marketSide": "private",
+    "sector": "Financials",
+    "providerSector": "Capital Markets",
+    "assetClass": "Equity",
+    "marketSide": "listed",
     "quantity": 125000,
     "avgCost": 604.25,
     "currentPrice": null,
@@ -7517,7 +7517,7 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Direct Equity - Unlisted",
       "row": 69
     },
-    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000."
+    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book (confirmed 2026-10-13)."
   },
   {
     "securityKey": "oilmax-energy",
@@ -8233,10 +8233,10 @@ export const BOOK_POSITIONS: Position[] = [
     "isin": "INE721I01024",
     "accountId": "review-ankita-jaisinghani",
     "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Unlisted",
-    "marketSide": "private",
+    "sector": "Financials",
+    "providerSector": "Capital Markets",
+    "assetClass": "Equity",
+    "marketSide": "listed",
     "quantity": 75000,
     "avgCost": 604.25,
     "currentPrice": null,
@@ -8265,7 +8265,7 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Direct Equity - Unlisted",
       "row": 69
     },
-    "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000."
+    "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book (confirmed 2026-10-13)."
   },
   {
     "securityKey": "pvc-ii-class-a1",

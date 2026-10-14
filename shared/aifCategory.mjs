@@ -443,9 +443,18 @@ export function fundMarketSideBasis(name, account, securityKey) {
  * from it is a private-market line by the review's own tabs — Private
  * Investments, PE funds, Unlisted, the private-credit line — so its side is the
  * review's, whatever wrapper the line is (a fund, a company's shares, a loan).
+ *
+ * EXCEPT WHERE THE FAMILY HAS SINCE CONFIRMED THE LINE LISTED. A review line the
+ * family has named as now listed (National Stock Exchange of India, 13 Oct 2026
+ * — see `VALUED_HOLDERS`' `listed` field) carries `marketSide: "listed"` from the
+ * review layer, and the review's value is kept unchanged; its side is read off
+ * that stored flag rather than defaulted to private. The decision is reversible:
+ * delete the `listed` field and the line is private again. This reads the flag
+ * the review layer set rather than recomputing a side, because a review line has
+ * no statement to classify it and the flag is the family's own answer.
  */
 export function marketSideOf(position, account) {
-  if (position?.review) return "private";
+  if (position?.review) return position.marketSide === "listed" ? "listed" : "private";
   const cls = position?.assetClass;
   if (ALWAYS_PRIVATE.has(cls)) return "private";
   if (cls !== "AIF") return "listed";

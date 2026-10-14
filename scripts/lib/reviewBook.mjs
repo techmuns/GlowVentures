@@ -20,6 +20,7 @@ import {
   FRESHER_STATEMENT, REVIEW_ACCOUNT_PREFIX, NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME,
 } from "../../shared/reviewHolders.mjs";
 import { securityKeyOf } from "../../shared/securityKey.mjs";
+import { resolveSector, UNCLASSIFIED } from "../../shared/sectors.mjs";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 import { ownerById } from "../../shared/owners.mjs";
 
@@ -196,7 +197,13 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   // the valued tabs the entry always names the fund (the review clips `India SME`),
   // so there is nothing there for a staleness gate to measure.
   const reviewText = new Map(), overrides = new Set();
-  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row }) => {
+  const sectorOfListed = (listed, security) => {
+    if (!listed?.providerSector) return UNCLASSIFIED;
+    const r = resolveSector(listed.providerSector).sector;
+    if (r === UNCLASSIFIED) fail(`${security}: listed sector label ${listed.providerSector} resolves to no GICS sector`);
+    return r;
+  };
+  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row, listed }) => {
     if (key !== securityKeyOf(security) && !statementKeys.has(key)) {
       fail(`${security}: key ${key} is neither its name's own (${securityKeyOf(security)}) nor a statement row's`);
     }
@@ -206,7 +213,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     rowOwner.set(out.length, owner);
     out.push({
       securityKey: key, security, symbol: null, isin: isinOf.get(key) ?? undefined, accountId, memberId: null,
-      sector: "Unclassified", providerSector: null, assetClass, marketSide: "private",
+      sector: sectorOfListed(listed, security), providerSector: listed?.providerSector ?? null, assetClass, marketSide: listed ? "listed" : "private",
       quantity: qty ?? null,
       // What one unit cost, wherever the review records units — held at cost or not:
       // a price paid is a cost, not a valuation (Stage 10dh).
@@ -220,7 +227,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       priceAsOf: asOf ?? REVIEW_AS_OF, accruedIncome: null, dividendReceived: null, positionIrrPct: null,
       dedupeGroup: undefined, alsoReportedUnder: undefined,
       review: true, valuedAtCost: atCost ? true : undefined, reviewTaxonomy: taxonomyOf(tab, key), reviewSource: sourceOf(tab, row),
-      reviewNote: `${note}${fresher.length ? ` A statement says otherwise: ${fresher.join("; ")}.` : ""}`,
+      reviewNote: `${note}${listed ? ` Now a listed company: ${listed.why} (confirmed ${listed.since}).` : ""}${fresher.length ? ` A statement says otherwise: ${fresher.join("; ")}.` : ""}`,
     });
   };
 
@@ -301,7 +308,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
           notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s Transactions rows walk to ${walked.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units; the closing holds ${s.qty.toLocaleString("en-IN", { maximumFractionDigits: 3 })}, so ${(walked - s.qty).toLocaleString("en-IN", { maximumFractionDigits: 3 })} units are on no dated row`);
         }
       }
-      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab, row: l.row,
+      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab, row: l.row, listed: e.listed,
         cost: s.cost, value: s.value, atCost: !!e.atCost, asOf: e.atCost ? REVIEW_AS_OF : f.closingDate ?? REVIEW_AS_OF,
         note: `${e.atCost ? "Held at cost" : `Valued at ₹${s.value.toLocaleString("en-IN")}`} on the family's consolidated review (MOPWM, 30 Jun 2026), ${tabName} row ${l.row}${f.closingDate && !e.atCost ? `, its closing of ${dayText(f.closingDate)}` : ""}. ${cap(e.why)}.` });
     }

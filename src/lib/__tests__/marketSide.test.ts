@@ -39,6 +39,16 @@ import { familyAssetClass } from "@/lib/familyTaxonomy";
 import { isMandateHeld } from "@/lib/analytics";
 import { engagementOf } from "@/lib/accounts";
 import { SEPARATE_INVESTMENTS, sameAccount } from "../../../shared/separateInvestments.mjs";
+import { VALUED_HOLDERS } from "../../../shared/reviewHolders.mjs";
+
+// The family's own review lines are the private book (Stage 10dh) — EXCEPT the
+// handful the family have since placed on the listed side with a cited, dated
+// decision (`listed` on a VALUED_HOLDERS entry). NSE listed on 2026-10-13 is
+// the first. Derived from the committed decision table, never a literal, so a
+// drop that places another line picks it up here with no edit.
+const familyListedKeys = new Set(
+  VALUED_HOLDERS.filter((e) => e.listed).map((e) => e.key),
+);
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -137,12 +147,33 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
     deduped.filter((p) => !p.review && ["Equity", "Mutual Fund", "ETF", "Cash"].includes(p.assetClass))
       .every((p) => p.marketSide === "listed"));
   // …AND EVERY REVIEW LINE IS PRIVATE WHATEVER ITS CLASS — the private-credit
-  // line is a `Bond`, which on a statement would be listed.
+  // line is a `Bond`, which on a statement would be listed — EXCEPT a line the
+  // family have placed on the listed side (NSE, listed 2026-10-13). That one is
+  // not an exception to "no fabrication": its value is the review's own and it
+  // keeps it; only its SIDE moved, on a cited, dated decision.
   const reviewRows = deduped.filter((p) => p.review);
   ok("this book carries the review's private-market lines", reviewRows.length > 0, String(reviewRows.length));
-  ok("every review line is on the private side, whatever wrapper it is",
-    reviewRows.every((p) => p.marketSide === "private"),
-    reviewRows.filter((p) => p.marketSide !== "private").map((p) => `${p.security.slice(0, 30)}=${p.marketSide}`).join(", "));
+  ok("every review line is on the private side, except one the family placed on the listed side",
+    reviewRows.filter((p) => !familyListedKeys.has(p.securityKey)).every((p) => p.marketSide === "private"),
+    reviewRows.filter((p) => !familyListedKeys.has(p.securityKey) && p.marketSide !== "private").map((p) => `${p.security.slice(0, 30)}=${p.marketSide}`).join(", "));
+
+  // NSE, the family's own placing on the listed side (Stage 10e / 2026-10-13):
+  // "NSE is still showing in unlisted, albeit it is now listed." The value is
+  // the REVIEW's — 2,00,000 shares, cost ₹12.085 Cr, value ₹41.5 Cr — kept to
+  // the rupee; only the side changed, so the private book never grows a figure.
+  ok("the family's listed placing names NSE", familyListedKeys.has("national-stock-exchange-of-india"), [...familyListedKeys].join(", "));
+  const nse = reviewRows.filter((p) => p.securityKey === "national-stock-exchange-of-india");
+  ok("NSE is a review line in the book", nse.length > 0, String(nse.length));
+  ok("every NSE review row is on the listed side", nse.every((p) => p.marketSide === "listed"),
+    nse.map((p) => `${p.accountId}=${p.marketSide}`).join(", "));
+  ok("every NSE review row is Equity", nse.every((p) => p.assetClass === "Equity"),
+    nse.map((p) => p.assetClass).join(", "));
+  ok("every NSE review row is the review's", nse.every((p) => p.review === true));
+  near("NSE keeps the review's cost, ₹12.085 Cr", sum(nse.map((p) => p.costBasis ?? 0)), 120850000, 1);
+  near("NSE keeps the review's value, ₹41.5 Cr", sum(nse.map((p) => p.marketValue ?? 0)), 415000000, 1);
+  ok("NSE keeps the review's Equity / Stable Growth taxonomy",
+    nse.every((p) => p.reviewTaxonomy?.assetClass === "Equity" && p.reviewTaxonomy?.basket === "Stable Growth"),
+    nse.map((p) => `${p.reviewTaxonomy?.assetClass}/${p.reviewTaxonomy?.basket}`).join(", "));
 }
 
 // ── 3b. THE FAMILY'S OWN PLACING, FUND BY FUND ──────────────────────────────

@@ -27,6 +27,7 @@ import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_REVIEW_FLOWS, BOOK_REVIEW_SUPERSEDED, BOOK_REVIEW_WRITTEN_OFF,
   BOOK_SHARE_MOVEMENTS, BOOK_SUMMARY, BOOK_UNVALUED_HOLDINGS,
 } from "@/data/glowData";
+import { VALUED_HOLDERS } from "../../../shared/reviewHolders.mjs";
 
 let fails = 0;
 const ok = (name: string, cond: boolean, detail = "") => {
@@ -290,14 +291,27 @@ console.log("\n4. Nothing is counted twice, and nothing else is carried");
   // Every other private holding is a statement's, and none of them is a line the
   // review carries — or the same holding would be counted from both.
   const privOthers = NONREV.filter((p) => p.marketSide === "private");
+  // A review line the family has declared listed (NSE — now a listed company,
+  // see shared/reviewHolders.mjs) sits on the LISTED side, not the private one,
+  // so it is no part of the private-side identity below. Only private-side
+  // review rows are, and the declared-listed rows are checked apart.
+  const familyListedKeys = new Set(VALUED_HOLDERS.filter((e) => e.listed).map((e) => e.key));
+  const privRev = REV.filter((p) => p.marketSide === "private");
+  const familyListed = REV.filter((p) => familyListedKeys.has(p.securityKey));
+  const notDeclaredListed = REV.filter((p) => !familyListedKeys.has(p.securityKey));
   const lineStems = new Set([...LINES.values()].map((l) => stem(l.product)).filter(Boolean));
   const doubled = privOthers.filter((p) => lineStems.has(stem(p.security)));
   ok("no statement's private holding is also one of the review's private-market lines", doubled.length === 0,
     doubled.map((p) => p.security).join(", "));
-  ok("the book's private side is the review rows plus those statement holdings, to the rupee",
-    Math.abs(BOOK_SUMMARY.privateValue - sum(REV.map((p) => p.marketValue)) - sum(privOthers.map((p) => p.marketValue))) <= 1,
-    `${BOOK_SUMMARY.privateValue} vs ${sum(REV.map((p) => p.marketValue)) + sum(privOthers.map((p) => p.marketValue))}`);
-  ok("every review row is on the private side", REV.every((p) => p.marketSide === "private"));
+  ok("the book's private side is the review's private-side rows plus those statement holdings, to the rupee",
+    Math.abs(BOOK_SUMMARY.privateValue - sum(privRev.map((p) => p.marketValue)) - sum(privOthers.map((p) => p.marketValue))) <= 1,
+    `${BOOK_SUMMARY.privateValue} vs ${sum(privRev.map((p) => p.marketValue)) + sum(privOthers.map((p) => p.marketValue))}`);
+  ok("every review row the family has not declared listed is on the private side",
+    notDeclaredListed.length > 0 && notDeclaredListed.every((p) => p.marketSide === "private"),
+    notDeclaredListed.filter((p) => p.marketSide !== "private").map((p) => `${p.securityKey}=${p.marketSide}`).join(", ") || "all private");
+  ok("a review line the family declared listed is on the listed side",
+    familyListed.length > 0 && familyListed.every((p) => p.marketSide === "listed"),
+    familyListed.map((p) => `${p.securityKey}=${p.marketSide}`).join(", ") || "none");
   const keys = new Set(REV.map((p) => p.securityKey));
   const sharedPos = NONREV.filter((p) => keys.has(p.securityKey));
   const sharedUnv = BOOK_UNVALUED_HOLDINGS.filter((u) => keys.has(u.securityKey));
