@@ -2,9 +2,12 @@
  * ── MORNING CIO → RETURNS (Stage 10dq) ───────────────────────────────────────
  *
  * A period selector (MTD, YTD, FYTD, trailing 1Y/2Y/3Y, since investment and a
- * custom From/To), a return-type selector (XIRR, Absolute, Simple, CAGR) and
- * the formula of the type selected, with the window actually measured printed
- * beside the one asked for.
+ * custom From/To), a return-type DROPDOWN over every type `RETURN_TYPES`
+ * carries (Stage 10dy), and the formula of the type selected, with the window
+ * actually measured printed beside the one asked for.
+ *
+ * ONE COLUMN: the portfolio's card first, the benchmarks under it (Stage 10dy,
+ * at the family's request). The panel scrolls inside itself; the page does not.
  *
  * A DATED WINDOW OPENS ON A MARKET VALUE, NEVER A COST. Each account opens on
  * its latest statement valuation on or before the opening date and closes on
@@ -237,21 +240,24 @@ export default function PortfolioReturns() {
             value={end ?? ""} max={latest ?? undefined} disabled={period === "inception"}
             onChange={(e) => set({ rto: e.target.value || null })} />
         </label>
-        <div className="ml-auto flex items-center gap-1 rounded-lg border border-ink-700 p-1" data-returns-types>
-          {RETURN_TYPES.map((r) => (
-            <button key={r.key} type="button" title={r.title} className={btn(rtype === r.key)} data-returns-type={r.key} aria-pressed={rtype === r.key}
-              onClick={() => set({ rtype: r.key === "xirr" ? null : r.key })}>
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <label className="ml-auto flex items-center gap-1.5 text-[12px] text-slate-400" data-returns-types
+          title={RETURN_TYPES.find((r) => r.key === rtype)!.title}>
+          Return type
+          <select className="rounded border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
+            value={rtype} onChange={(e) => set({ rtype: e.target.value === "xirr" ? null : e.target.value })}>
+            {RETURN_TYPES.map((r) => (
+              <option key={r.key} value={r.key} title={r.title} data-returns-type={r.key} data-active={rtype === r.key ? "true" : "false"}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[1fr_1fr]">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" data-returns-stack>
         {/* ── The portfolio: window, figures and formula in one card ── */}
-        <div className="flex min-h-0 flex-col" data-returns-portfolio>
-        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}. ${RETURN_TYPES.find((r) => r.key === rtype)!.title}`}
-          className="min-h-0 flex-1 overflow-auto">
+        <div className="shrink-0" data-returns-portfolio>
+        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}. ${RETURN_TYPES.find((r) => r.key === rtype)!.title}`}>
           <div className="flex flex-wrap items-baseline justify-between gap-3" data-returns-figure="Return" title={measured?.reason ?? measured?.worked ?? ""}>
             <div>
               <div className="label-xs">Return · {typeLabel}</div>
@@ -274,7 +280,7 @@ export default function PortfolioReturns() {
               <div title={excludedHover}>Covers <span className="mono text-slate-200" data-returns-coverage data-returns-excluded={excluded.length}>{coveredCount} of {accountsTotal} accounts</span></div>
             </div>
           </div>
-          <div className="mt-4 grid grid-cols-5 gap-2 border-t border-ink-700 pt-3 text-[12px]">
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t sm:grid-cols-5 border-ink-700 pt-3 text-[12px]">
             {[
               ["Opening", total?.open ?? null, period === "inception" ? "Since investment is struck on the capital paid in, not on an opening value" : "Market value at the opening date — never the original cost"],
               ["Capital in", total?.cin ?? null, "Money put in during the window, on its dates"],
@@ -301,13 +307,13 @@ export default function PortfolioReturns() {
         </div>
 
         {/* ── Benchmarks over the same window ── */}
-        <div className="flex min-h-0 flex-col" data-returns-benchmarks>
-        <Card pad={false} className="flex min-h-0 flex-1 flex-col" title="Benchmarks"
+        <div className="shrink-0" data-returns-benchmarks>
+        <Card pad={false} title="Benchmarks"
           subtitle={`Each index's close-to-close return over the portfolio's measured window, ${annualise ? "annualised because the portfolio's return is" : "not annualised, as the portfolio's is not"}. Price indices: dividends are not in them. The portfolio's return is money-weighted; an index return is point to point.`}
 >
-          <div className="min-h-0 flex-1 overflow-auto">
+          <div className="overflow-x-auto">
             <table className="min-w-full whitespace-nowrap text-[12.5px]" data-returns-bench-table>
-              <thead className="sticky top-0 z-10 border-b border-ink-700 bg-ink-800">
+              <thead className="border-b border-ink-700 bg-ink-800">
                 <Tr view={benchView}>
                   <SortHeader col="bench" view={benchView} align="left" pad="px-4 py-2">Index</SortHeader>
                   <SortHeader col="ret" view={benchView} pad="px-3 py-2">Return · {basisTag}</SortHeader>

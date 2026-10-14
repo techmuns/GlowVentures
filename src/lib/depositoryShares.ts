@@ -61,7 +61,7 @@
 // decision, and this layer reads the SAME table, so no quote values the row
 // either — a price from any source, not only the ICICI statement's mark the
 // question was asked about. ESDS, which no decision names, is still valued.
-// REVERSED 14 Oct 2026 (Stage 10dy, "include this in the dashboard data as
+// REVERSED 14 Oct 2026 (Stage 10dz, "include this in the dashboard data as
 // well"): the table is empty, so Ankita's Clean Max is valued again. Gate 6
 // stays for the next decision.
 //
@@ -244,7 +244,7 @@ export function depositoryShareCandidates(
  * statements, two holdings; a transfer between two accounts of ONE owner would
  * be refused. Gate 4 lets Ankita's through, and gate 6 then stops it: the family
  * decided on 28 Sep 2026 to keep those shares unvalued — reversed on 14 Oct
- * 2026 (Stage 10dy), so on this book gate 6 refuses nothing and Ankita's row is
+ * 2026 (Stage 10dz), so on this book gate 6 refuses nothing and Ankita's row is
  * a candidate.
  */
 export function unpricedStatementShareCandidates(

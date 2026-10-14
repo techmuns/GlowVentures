@@ -34,7 +34,7 @@
 import { xirr, type DatedFlow } from "@/lib/xirr";
 
 export type PeriodKey = "mtd" | "ytd" | "fytd" | "y1" | "y2" | "y3" | "inception" | "custom";
-export type ReturnType = "xirr" | "absolute" | "simple" | "cagr";
+export type ReturnType = "xirr" | "mwr" | "absolute" | "dietzpa" | "simple" | "simplepa" | "net" | "ptp" | "cagr";
 
 export const PERIODS: readonly { key: PeriodKey; label: string; title: string }[] = [
   { key: "fytd", label: "FYTD", title: "Financial year to date — from 31 March, the last day of the previous financial year" },
@@ -48,10 +48,15 @@ export const PERIODS: readonly { key: PeriodKey; label: string; title: string }[
 ] as const;
 
 export const RETURN_TYPES: readonly { key: ReturnType; label: string; title: string }[] = [
-  { key: "xirr", label: "XIRR", title: "Money-weighted: the rate that discounts every dated flow to the closing value" },
-  { key: "absolute", label: "Absolute", title: "Modified Dietz: gain over the capital at work, each flow weighted by how long it was in" },
-  { key: "simple", label: "Simple", title: "Gain over the opening value plus everything put in during the window" },
-  { key: "cagr", label: "CAGR", title: "Compound annual growth of the opening value — only where nothing moved in or out" },
+  { key: "xirr", label: "XIRR (annualised IRR)", title: "Money-weighted: the rate that discounts every dated flow to the closing value. Annualised only over a year or more" },
+  { key: "mwr", label: "Money-weighted · cumulative", title: "The same money-weighted rate, compounded over the window rather than stated per year" },
+  { key: "absolute", label: "Absolute (Modified Dietz)", title: "Gain over the capital at work, each flow weighted by how long it was in. Not annualised" },
+  { key: "dietzpa", label: "Modified Dietz · annualised", title: "The Modified Dietz return compounded to a year — only over a year or more" },
+  { key: "simple", label: "Simple return", title: "Gain over the opening value plus everything put in during the window" },
+  { key: "simplepa", label: "Simple · annualised", title: "The simple return compounded to a year — only over a year or more" },
+  { key: "net", label: "Return on net capital", title: "Gain over the opening value plus capital in less capital out" },
+  { key: "ptp", label: "Point-to-point", title: "Closing value over opening value — only where nothing moved in or out" },
+  { key: "cagr", label: "CAGR", title: "Compound annual growth of the opening value — only where nothing moved in or out, over a year or more" },
 ] as const;
 
 /** One account's statement valuation on one date. */
@@ -245,16 +250,27 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
   const formula = FORMULAS[type];
   if (D <= 0) return { shown: false, reason: "the window spans no days", formula };
 
-  if (type === "xirr") {
+  if (type === "xirr" || type === "mwr") {
     const r = xirr(windowFlows(rows));
     if (r == null) return { shown: false, reason: "these dated flows do not yield a money-weighted rate", formula };
+    if (type === "mwr") {
+      const w = (Math.pow(1 + r, D / 365) - 1) * 100;
+      return { shown: true, pct: w, basis: "window", formula,
+        worked: `Money-weighted rate ${pct(r * 100)} a year, compounded over ${D} days: (1 + ${pct(r * 100)})^(${D}/365) − 1 = ${pct(w)} over the window.` };
+    }
     if (D >= 365) return { shown: true, pct: r * 100, basis: "annual", formula,
       worked: `Opening ${money(V0)} on ${from}, ${money(cin)} in and ${money(cout)} out on their dates, closing ${money(V1)} on ${to} → ${pct(r * 100)} a year over ${D} days.` };
     const w = (Math.pow(1 + r, D / 365) - 1) * 100;
     return { shown: true, pct: w, basis: "window", formula,
       worked: `${D} days is under a year, so the rate is not annualised: (1 + ${pct(r * 100)})^(${D}/365) − 1 = ${pct(w)} over the window.` };
   }
-  if (type === "absolute") {
+  const annual = (p: number, label: string): Measured => {
+    if (D < 365) return { shown: false, reason: `the window is ${D} days, and a return under a year is never annualised — ${label} is its measure`, formula };
+    const g = (Math.pow(1 + p / 100, 365 / D) - 1) * 100;
+    return { shown: true, pct: g, basis: "annual", formula,
+      worked: `(1 + ${pct(p)})^(365/${D}) − 1 = ${pct(g)} a year.` };
+  };
+  if (type === "absolute" || type === "dietzpa") {
     // Modified Dietz, every opening and closing treated as a dated flow so
     // accounts that open or close on different days pool honestly.
     const T0 = t(from), T1 = t(to), span = T1 - T0;
@@ -267,29 +283,51 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
     }
     if (!(denom > 0)) return { shown: false, reason: "the capital at work over this window is not positive", formula };
     const p = (gain / denom) * 100;
+    if (type === "dietzpa") return annual(p, "Absolute (Modified Dietz)");
     return { shown: true, pct: p, basis: "window", formula,
       worked: `Gain ${money(V1)} − ${money(V0)} − ${money(C)} = ${money(gain)}, over time-weighted capital ${money(denom)} → ${pct(p)} over ${D} days, not annualised.` };
   }
-  if (type === "simple") {
+  if (type === "simple" || type === "simplepa") {
     const base = V0 + cin;
     if (!(base > 0)) return { shown: false, reason: "nothing was at work at the start or put in during the window", formula };
     const p = (gain / base) * 100;
+    if (type === "simplepa") return annual(p, "Simple return");
     return { shown: true, pct: p, basis: "window", formula,
       worked: `Gain ${money(gain)} over ${money(V0)} + ${money(cin)} = ${money(base)} → ${pct(p)} over ${D} days, not annualised.` };
+  }
+  if (type === "net") {
+    const base = V0 + C;
+    if (!(base > 0)) return { shown: false, reason: "the opening value plus net capital put in is not positive", formula };
+    const p = (gain / base) * 100;
+    return { shown: true, pct: p, basis: "window", formula,
+      worked: `Gain ${money(gain)} over ${money(V0)} + ${money(cin)} − ${money(cout)} = ${money(base)} → ${pct(p)} over ${D} days, not annualised.` };
+  }
+  const aligned = !rows.some((r) => r.openDate !== from || r.closeDate !== to);
+  if (type === "ptp") {
+    if (cin > 0 || cout > 0) return { shown: false, reason: "capital moved in or out during the window, so closing over opening would count it as gain — Absolute (Modified Dietz) is its measure", formula };
+    if (!(V0 > 0)) return { shown: false, reason: "the opening value is not positive", formula };
+    if (!aligned) return { shown: false, reason: "the accounts open or close on different dates, so one closing over one opening would describe none of them — XIRR is its measure", formula };
+    const p = (V1 / V0 - 1) * 100;
+    return { shown: true, pct: p, basis: "window", formula, worked: `${money(V1)} ÷ ${money(V0)} − 1 = ${pct(p)} over ${D} days, not annualised.` };
   }
   // CAGR
   if (D < 365) return { shown: false, reason: `the window is ${D} days, and a rate under a year is never annualised`, formula };
   if (cin > 0 || cout > 0) return { shown: false, reason: "capital moved in or out during the window, which compound growth of the opening value cannot describe — XIRR is its measure", formula };
   if (!(V0 > 0) || !(V1 >= 0)) return { shown: false, reason: "the opening value is not positive", formula };
-  if (rows.some((r) => r.openDate !== from || r.closeDate !== to)) return { shown: false, reason: "the accounts open or close on different dates, so one compound rate would describe none of them — XIRR is its measure", formula };
+  if (!aligned) return { shown: false, reason: "the accounts open or close on different dates, so one compound rate would describe none of them — XIRR is its measure", formula };
   const g = (Math.pow(V1 / V0, 365 / D) - 1) * 100;
   return { shown: true, pct: g, basis: "annual", formula, worked: `(${money(V1)} ÷ ${money(V0)})^(365/${D}) − 1 = ${pct(g)} a year.` };
 }
 
 export const FORMULAS: Record<ReturnType, string> = {
   xirr: "Σ CFₜ ÷ (1 + r)^((t − t₀)/365) = 0 — the opening value as an outflow, every capital move on its date, the closing value as an inflow. Under a year: (1 + r)^(days/365) − 1.",
+  mwr: "(1 + r)^(days/365) − 1 — r solves Σ CFₜ ÷ (1 + r)^((t − t₀)/365) = 0 over the window's dated flows",
   absolute: "(V₁ − V₀ − C) ÷ (V₀ + Σ wᵢ·Cᵢ),  wᵢ = (T − tᵢ) ÷ (T − t₀)",
+  dietzpa: "(1 + Modified Dietz)^(365 ÷ days) − 1 — over a year or more",
   simple: "(V₁ − V₀ − C) ÷ (V₀ + capital put in during the window)",
+  simplepa: "(1 + simple return)^(365 ÷ days) − 1 — over a year or more",
+  net: "(V₁ − V₀ − C) ÷ (V₀ + capital in − capital out)",
+  ptp: "V₁ ÷ V₀ − 1 — no capital moved in or out",
   cagr: "(V₁ ÷ V₀)^(365 ÷ days) − 1",
 };
 
@@ -317,13 +355,26 @@ export function measureInception(rows: InceptionRow[], type: ReturnType, money: 
   const from = rows.map((r) => r.first).sort()[0];
   const to = rows.map((r) => r.valueAsOf).sort().at(-1)!;
   const D = daysBetween(from, to);
-  if (type === "absolute" || type === "simple") {
+  if (type === "ptp") return { shown: false, reason: "since investment there is no opening value to set the closing one against — Absolute is its measure", formula };
+  if (type === "net") {
+    const base = paid - out;
+    if (!(base > 0)) return { shown: false, reason: "more was taken out than paid in, so the net capital is not positive", formula };
+    const p = (gain / base) * 100;
+    return { shown: true, pct: p, basis: "cumulative", formula,
+      worked: `${money(gain)} over ${money(paid)} − ${money(out)} = ${money(base)} net → ${pct(p)} since ${from}, not annualised.` };
+  }
+  if (type === "absolute" || type === "simple" || type === "dietzpa" || type === "simplepa") {
     if (!(paid > 0)) return { shown: false, reason: "nothing was paid in", formula };
     const p = (gain / paid) * 100;
+    if (type === "dietzpa" || type === "simplepa") {
+      if (D < 365) return { shown: false, reason: `the money has been in for ${D} days, and a return under a year is never annualised`, formula };
+      const g = (Math.pow(1 + p / 100, 365 / D) - 1) * 100;
+      return { shown: true, pct: g, basis: "annual", formula, worked: `(1 + ${pct(p)})^(365/${D}) − 1 = ${pct(g)} a year since ${from}.` };
+    }
     return { shown: true, pct: p, basis: "cumulative", formula,
       worked: `${money(val)} + ${money(out)} − ${money(paid)} = ${money(gain)}, over ${money(paid)} paid in → ${pct(p)} since ${from}, not annualised.` };
   }
-  if (type === "xirr") {
+  if (type === "xirr" || type === "mwr") {
     const flows: DatedFlow[] = [];
     for (const r of rows) {
       for (const f of r.flows) flows.push({ date: new Date(t(f.date)), amount: f.amount });
@@ -331,6 +382,10 @@ export function measureInception(rows: InceptionRow[], type: ReturnType, money: 
     }
     const x = xirr(flows);
     if (x == null) return { shown: false, reason: "these dated flows do not yield a money-weighted rate", formula };
+    if (type === "mwr") {
+      const w = (Math.pow(1 + x, D / 365) - 1) * 100;
+      return { shown: true, pct: w, basis: "cumulative", formula, worked: `Money-weighted rate ${pct(x * 100)} a year, compounded over ${D} days since ${from} = ${pct(w)}.` };
+    }
     if (D >= 365) return { shown: true, pct: x * 100, basis: "annual", formula,
       worked: `${money(paid)} in and ${money(out)} out on their own dates since ${from}, each account closing on its own value date (last ${to}), ${money(val)} in all → ${pct(x * 100)} a year.` };
     const w = (Math.pow(1 + x, D / 365) - 1) * 100;
@@ -348,7 +403,12 @@ export function measureInception(rows: InceptionRow[], type: ReturnType, money: 
 
 export const INCEPTION_FORMULAS: Record<ReturnType, string> = {
   xirr: "Σ CFₜ ÷ (1 + r)^((t − t₀)/365) = 0 — every purchase and redemption on its date, each account's value as an inflow on its own value date",
+  mwr: "(1 + r)^(days/365) − 1 — r is the XIRR over every purchase, redemption and value since the first purchase",
   absolute: "(Value today + taken out − paid in) ÷ paid in",
+  dietzpa: "(1 + (value today + taken out − paid in) ÷ paid in)^(365 ÷ days) − 1",
   simple: "(Value today + taken out − paid in) ÷ paid in",
+  simplepa: "(1 + (value today + taken out − paid in) ÷ paid in)^(365 ÷ days) − 1",
+  net: "(Value today + taken out − paid in) ÷ (paid in − taken out)",
+  ptp: "Not defined since investment — there is no opening value",
   cagr: "(Value today ÷ paid in)^(365 ÷ days since the purchase) − 1 — one purchase only",
 };
