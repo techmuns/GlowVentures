@@ -277,8 +277,8 @@ A per-contribution breakdown is published for **14** position(s), of which **5**
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 7,30,82,09,405.75 | 87.55% |
-| Financials | 25,85,86,623.95 | 3.10% |
+| Unclassified | 6,89,32,09,405.75 | 82.58% |
+| Financials | 67,35,86,623.95 | 8.07% |
 | Health Care | 19,08,15,090.8 | 2.29% |
 | Consumer Discretionary | 18,37,36,315.22 | 2.20% |
 | Industrials | 14,49,38,189.09 | 1.74% |

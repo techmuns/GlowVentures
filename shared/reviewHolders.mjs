@@ -201,7 +201,12 @@ export const VALUED_HOLDERS = [
   // family decision, the standing of FAMILY_MARKET_SIDE — delete `listed` and
   // the holding is private again.
   { tab: "unlisted", line: /^National Stock Exchange$/, name: "National Stock Exchange of India", key: "national-stock-exchange-of-india", assetClass: "Equity",
-    listed: { since: "2026-10-13", source: "family", why: "the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book" },
+    listed: { since: "2026-10-13", source: "family", why: "the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book",
+      // No statement, filing or vendor page in this book places NSE, and the review
+      // prints no sector for it. It is a stock exchange, which AMFI files under the
+      // industry "Capital Markets" (as it does BSE Ltd); the GICS answer is whatever
+      // shared/sectors.mjs resolves that label to, never typed here.
+      providerSector: "Capital Markets", sectorWhy: "a stock exchange — AMFI's industry for an exchange is Capital Markets (as for BSE Ltd); no statement prints a sector for it" },
     split: [
       { owner: AJ, cost: 75531250, value: 259375000, qty: 125000 },
       { owner: AN, cost: 45318750, value: 155625000, qty: 75000 },

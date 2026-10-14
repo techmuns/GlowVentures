@@ -1510,8 +1510,14 @@ function sectorSourceChecks(bookCount, view = "consolidated") {
       const src = ctx?.sectorSource, d = ctx?.donut;
       if (!src || !d) return false;
       const parts = [src.book, src.disclosure, src.vendor, src.unplaced];
-      if (!parts.every(Number.isFinite) || !Number.isFinite(d.count)) return false;
-      return parts.reduce((a, b) => a + b, 0) === d.count;
+      // A tier places a COMPANY, and on Direct Equity the hole counts HOLDINGS —
+      // one company held in two accounts (NSE, Stage 10ea) is two holdings and one
+      // placement. So the partition is struck on the companies the page drew,
+      // and the companies can never outnumber the holdings the hole counts.
+      // On Consolidated a row IS a company, so the hole carries no separate count.
+      const companies = d.companies ?? d.count;
+      if (!parts.every(Number.isFinite) || !Number.isFinite(d.count) || !Number.isFinite(companies)) return false;
+      return parts.reduce((a, b) => a + b, 0) === companies && companies <= d.count;
     }],
     /*
      * AND WHAT IS STILL UNPLACED IS NAMED, AT ITS VALUE. A residual a reader
@@ -2318,8 +2324,22 @@ const REVIEW_PRIVATE_BLOCKS = new Set([
   "Private Investments/Private Investments", "Alternate/PE Funds",
   "Equity/Direct Equity - Unlisted", "Debt/Debt",
 ]);
+/* A review line the FAMILY declared listed (`listed: { since … }` on its
+ * VALUED_HOLDERS entry — NSE, 13 Oct 2026) is on the listed side whatever block
+ * the review prints it in. Read as committed TEXT off shared/reviewHolders.mjs,
+ * the DECLARED_CATS precedent, never off `marketSide`. An unreadable file is
+ * null, and a check that leans on it then fails rather than abstaining. */
+const REVIEW_DECLARED_LISTED = (() => {
+  try {
+    const a = readFileSync(new URL("../shared/reviewHolders.mjs", import.meta.url), "utf8");
+    const out = new Set();
+    for (const m of a.matchAll(/key:\s*"([a-z0-9-]+)"[^\n]*\n\s*listed:\s*\{\s*since:\s*"\d{4}-\d{2}-\d{2}"/g)) out.add(m[1]);
+    return out;
+  } catch { return null; }
+})();
 const reviewPrivate = (p) => !!p?.reviewSource
-  && REVIEW_PRIVATE_BLOCKS.has(`${p.reviewSource.sheet}/${p.reviewSource.block}`);
+  && REVIEW_PRIVATE_BLOCKS.has(`${p.reviewSource.sheet}/${p.reviewSource.block}`)
+  && !(REVIEW_DECLARED_LISTED?.has(p.securityKey));
 
 const SIDE_BOOK = (() => {
   try {
@@ -17893,8 +17913,15 @@ const CIO_SHARED = [
      * with no holdings behind it is the empty vehicle-split row this line was
      * originally written against.
      */
-    ["no triple-digit return in the KPI strip", (t) => {
-      const strip = t.slice(0, t.search(/Allocation by asset class/i) + 1 || 2000);
+    ["no triple-digit return in the KPI strip", (t, ctx) => {
+      // Struck on the tiles themselves where the probe read them: a panel below
+      // the strip (Sector Composition's table, where NSE's +214% HPR since 2023
+      // is a measurement) is not the strip, and the old slice ran into it on a
+      // panel that prints no "Allocation by asset class" heading.
+      const tiles = ctx?.kpiTiles;
+      const strip = tiles
+        ? tiles.map((x) => [x.label, x.value, x.second, x.sub].filter(Boolean).join(" ")).join("\n")
+        : t.slice(0, t.search(/Allocation by asset class/i) + 1 || 2000);
       return !/[+-]\s?\d{3,}(\.\d+)?\s*%/.test(strip);
     }],
     /**

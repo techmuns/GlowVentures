@@ -20,6 +20,7 @@ import {
   FRESHER_STATEMENT, REVIEW_ACCOUNT_PREFIX, NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME,
 } from "../../shared/reviewHolders.mjs";
 import { securityKeyOf } from "../../shared/securityKey.mjs";
+import { resolveSector, UNCLASSIFIED } from "../../shared/sectors.mjs";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 import { ownerById } from "../../shared/owners.mjs";
 
@@ -196,6 +197,12 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
   // the valued tabs the entry always names the fund (the review clips `India SME`),
   // so there is nothing there for a staleness gate to measure.
   const reviewText = new Map(), overrides = new Set();
+  const sectorOfListed = (listed, security) => {
+    if (!listed?.providerSector) return UNCLASSIFIED;
+    const r = resolveSector(listed.providerSector).sector;
+    if (r === UNCLASSIFIED) fail(`${security}: listed sector label ${listed.providerSector} resolves to no GICS sector`);
+    return r;
+  };
   const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row, listed }) => {
     if (key !== securityKeyOf(security) && !statementKeys.has(key)) {
       fail(`${security}: key ${key} is neither its name's own (${securityKeyOf(security)}) nor a statement row's`);
@@ -206,7 +213,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     rowOwner.set(out.length, owner);
     out.push({
       securityKey: key, security, symbol: null, isin: isinOf.get(key) ?? undefined, accountId, memberId: null,
-      sector: "Unclassified", providerSector: null, assetClass, marketSide: listed ? "listed" : "private",
+      sector: sectorOfListed(listed, security), providerSector: listed?.providerSector ?? null, assetClass, marketSide: listed ? "listed" : "private",
       quantity: qty ?? null,
       // What one unit cost, wherever the review records units — held at cost or not:
       // a price paid is a cost, not a valuation (Stage 10dh).
