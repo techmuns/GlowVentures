@@ -27908,6 +27908,24 @@ rather than forcing multiple nested naming layers into every row."*
   carrying no " — " or class suffix). Two fund-row claims abstain on the brands
   view. `build-book` byte-identical.
 
+### Stage 10ee — THE AT-COST INVESTMENTS ARE ON PRIVATE MARKET, AND BOTH PAGES SAY SO
+
+*"I cannot see these private investments at cost inside the private markets
+page."* Measured on main and on production: all 61 at-cost investments
+(₹140.7 Cr) were already rows of Private Market's By fund table, in the
+"Private Companies (Held at cost)" section under the private funds, open by
+default. Nothing was missing; the two pages named the set differently, and the
+band counted them as "61 funds".
+
+- **The Portfolio Monitor's "Private investments at cost" band links to Private
+  Market** ("Also on Private Market →", `data-at-cost-pm-link`).
+- **Private Market's at-cost band counts "investments"**, and its hover names
+  the Monitor's own heading for the same set.
+- **Check:** `monitor-category-drill` asserts the link. The existing "no third
+  section" check on Private Market already holds every at-cost key to a row.
+
+No figure moves.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

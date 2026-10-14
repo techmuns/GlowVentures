@@ -32856,6 +32856,16 @@ const INVARIANTS = {
   "monitor-category-drill": [
     [...AXIS_EXPANSION[0]],
     /**
+     * THE AT-COST BAND POINTS AT PRIVATE MARKET (Stage 10ee). The family could
+     * not find these investments on Private Market, where every one of them is
+     * already a row (the "no third section" check there asserts it). So the
+     * band names where they are, by a link a reader can follow.
+     */
+    ["the at-cost band links to Private Market, where the same investments are rows", (t, ctx) => {
+      if (!(SIDE_BOOK?.atCostKeys?.size ?? SIDE_BOOK?.atCostKeys?.length)) return { notChecked: "the book holds nothing at cost" };
+      return (ctx?.links ?? []).some((l) => l.href === "/private-market" && /Also on Private Market/i.test(l.text ?? ""));
+    }],
+    /**
      * THE ROUTE SUBTOTALS ARE THE CHEVRON'S HOVER (Stage 10cg). They were the
      * sentence that led the opened row — *"direct you hold X Cr through direct
      * equity, and another Y crores through these five funds"* — and the family
