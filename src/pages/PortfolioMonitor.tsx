@@ -22,7 +22,7 @@ import {
   measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate,
   type ReturnMeasure, type ReturnInput, type RowCapital,
   costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
-  AT_COST_MARK, REVIEW_NO_MARK,
+  AT_COST_MARK, REVIEW_NO_MARK, AT_COST_BUCKET,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent, assetClassLabel,
 } from "@/lib/analytics";
 import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
@@ -3765,6 +3765,16 @@ export function PortfolioMonitor() {
                         {...rowToggle(() => toggleSection(secKey))}>
                         <TreeSectionCell density="dense" colSpan={COL_COUNT}
                           title={groupLabelFor(groupAxis)(grp.key)}
+                          marker={groupAxis === "category" && grp.key === AT_COST_BUCKET
+                            // THE SAME INVESTMENTS ARE PRIVATE MARKET'S "held at
+                            // cost" section (Stage 10ee): the family looked for
+                            // them there and did not find them, so the band says
+                            // where they are and opens it.
+                            ? <Link to="/private-market" data-at-cost-pm-link
+                                title="These investments are also on the Private Market page, under Private Companies (Held at cost), with their capital and returns"
+                                className="text-[11px] font-medium normal-case tracking-normal text-champagne-400 hover:underline">
+                                Also on Private Market →</Link>
+                            : undefined}
                           open={secOpen} onToggle={() => toggleSection(secKey)}
                           toggleData={{ "data-section-toggle": grp.key }}
                           sub={<>
