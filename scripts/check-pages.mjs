@@ -7614,7 +7614,7 @@ const ROUTES = [
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
   ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
-  ["cio-returns-net", "/cio?tab=returns&rp=inception&rtype=net"],
+  ["cio-returns-twr", "/cio?tab=returns&rp=inception&rtype=twr"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -19612,10 +19612,17 @@ const CIO_RETURNS = [
     const want = /[?&]rp=([a-z0-9]+)/.exec(ctx.path ?? "")?.[1] ?? "fytd";
     const wantT = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr";
     return r.periods.map((x) => x.key).join(",") === "fytd,mtd,ytd,y1,y2,y3,inception,custom"
-      && r.types.map((x) => x.key).join(",") === "xirr,mwr,absolute,dietzpa,simple,simplepa,net,ptp,cagr"
+      && r.types.map((x) => x.key).join(",") === "xirr,absolute,twr,cagr"
       && r.periods.filter((x) => x.active).map((x) => x.key).join() === want
       && r.types.filter((x) => x.active).map((x) => x.key).join() === wantT
       && r.from && r.to;
+  }],
+  ["...the type picked is explained in one short line beside the dropdown, with the full explanation its hover (Stage 10eb)", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    const wantT = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr";
+    const d = r.typeDesc;
+    return !!d && d.key === wantT && d.text.length > 10 && d.text.length <= 60 && d.hover.length > d.text.length;
   }],
   ["...the formula shown is the one for the type picked", (t, ctx) => {
     const r = ctx?.returnsDom;
@@ -26013,7 +26020,7 @@ const INVARIANTS = {
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
   "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
-  "cio-returns-net": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-twr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
@@ -39236,6 +39243,7 @@ for (const theme of THEMES) {
         const pct = root.querySelector("[data-returns-pct]");
         return {
           periods: [...root.querySelectorAll("[data-returns-period]")].map((b) => ({ key: b.getAttribute("data-returns-period"), active: b.getAttribute("aria-pressed") === "true" || b.getAttribute("data-active") === "true" })),
+          typeDesc: (() => { const d = root.querySelector("[data-returns-type-desc]"); return d ? { key: d.getAttribute("data-returns-type-desc"), text: d.textContent.trim(), hover: d.closest("[title]")?.getAttribute("title") ?? "" } : null; })(),
           types: [...root.querySelectorAll("[data-returns-type]")].map((b) => ({ key: b.getAttribute("data-returns-type"), active: b.getAttribute("aria-pressed") === "true" || b.getAttribute("data-active") === "true" })),
           from: !!root.querySelector("[data-returns-from]"), to: !!root.querySelector("[data-returns-to]"),
           measuredFrom: m?.getAttribute("data-measured-from") ?? null, measuredTo: m?.getAttribute("data-measured-to") ?? null,
