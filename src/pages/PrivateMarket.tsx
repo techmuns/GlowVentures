@@ -222,16 +222,29 @@ const BOOK_VIEWS = [
     cardTitle: "Private market — by brand",
   },
   {
-    key: "owners", label: "By legal entity",
-    title: "One row per legal entity — each family member and trust — each statement as printed. Click a row for their folios.",
-    cardTitle: "Private market — by legal entity",
-  },
-  {
     key: "transactions", label: "Transactions",
     title: "Every capital call the funds have made, newest first.",
     cardTitle: "Private market — capital calls",
   },
 ] as const;
+
+/**
+ * WHICH BANDS THE TABLE DRAWS (Stage 10ee): the private companies the family's
+ * review records at cost, the private funds, or both. Companies is first and
+ * so the param-free default, at the family's request; an unknown `?show=`
+ * lands on it. The Private market total is drawn only under Both — over one
+ * band it would be a total of rows the table does not draw.
+ */
+const BOOK_SHOW = [
+  { key: "companies", label: "Companies", title: "The private companies, held at cost" },
+  { key: "funds", label: "Funds", title: "The private funds, and the accounts no statement values" },
+  { key: "both", label: "Both", title: "Funds and companies, with the private market total" },
+] as const;
+const SHOW_SECTIONS: Record<(typeof BOOK_SHOW)[number]["key"], BookSectionId[]> = {
+  companies: ["atCost"],
+  funds: ["private", "unvalued"],
+  both: [...BOOK_SECTIONS],
+};
 
 /** The section bands' own words — what each holds, and the marker a reader sees when it is closed. */
 const SECTION_COPY: Record<BookSectionId, { title: string; marker: ReactNode; defaultOpen: boolean }> = {
@@ -381,6 +394,8 @@ export function PrivateMarket() {
    * guessing at a click. `useViewParam` keeps the default param-free.
    */
   const [view, setView] = useViewParam(BOOK_VIEWS, {}, "view");
+  const [show, setShow] = useViewParam(BOOK_SHOW, {}, "show");
+  const shown = SHOW_SECTIONS[show];
   /** Open fund / member rows, keyed `<grouping>:<key>` so the two tabs keep their own. */
   const rows = useExpanded();
   /** Open sections — the private funds start open, the marked one closed. */
@@ -1059,23 +1074,23 @@ export function PrivateMarket() {
   ];
 
   const active = BOOK_VIEWS.find((v) => v.key === view)!;
-  const book: PrivateBook = view === "owners" ? m.byOwner : view === "brands" ? m.byBrand : m.byFund;
+  const book: PrivateBook = view === "brands" ? m.byBrand : m.byFund;
   const grouping = book.grouping;
   const needle = q.trim().toLowerCase();
   const folioText = (f: BookFolio) => [f.owner, f.fundName, f.provider, f.accountNo].join(" ").toLowerCase();
   const groupMatches = (g: BookGroup) => !needle || g.label.toLowerCase().includes(needle) || g.folios.some((f) => folioText(f).includes(needle));
   const rowKey = (g: BookGroup) => `${grouping}:${g.key}`;
-  const allGroups = BOOK_SECTIONS.flatMap((s) => book.sections[s].groups);
+  const allGroups = shown.flatMap((s) => book.sections[s].groups);
   /** A search opens what it found, so a match inside a closed section is not hidden by the section. */
   const sectionOpen = (s: BookSectionId) => sections.isOpen(s) || (!!needle && book.sections[s].groups.some(groupMatches));
-  const allOpen = BOOK_SECTIONS.every((s) => sections.isOpen(s)) && allGroups.every((g) => rows.isOpen(rowKey(g)));
+  const allOpen = shown.every((s) => sections.isOpen(s)) && allGroups.every((g) => rows.isOpen(rowKey(g)));
   const toggleAll = () => {
     if (allOpen) {
       rows.setMany(allGroups.map(rowKey), false);
-      sections.setMany(BOOK_SECTIONS.filter((s) => !SECTION_COPY[s].defaultOpen), false);
+      sections.setMany(shown.filter((s) => !SECTION_COPY[s].defaultOpen), false);
     } else {
       rows.setMany(allGroups.map(rowKey), true);
-      sections.setMany(BOOK_SECTIONS, true);
+      sections.setMany(shown, true);
     }
   };
   /** The date of the call a fund's cell shows, for the sort — null where none is entered or the store is not read. */
@@ -1137,27 +1152,7 @@ export function PrivateMarket() {
    * the foot of the section takes it back. The arithmetic is right; a column of
    * shares that adds to 129.9% under "Weight" needs its own hover to say so.
    */
-  /*
-   * BOTH PRIVATE BANDS (Stage 10dh). The Weight column spans the private funds
-   * AND the lines the family's consolidated review records at cost, over one
-   * denominator, so what it adds to is both bands' overlap. Read off the
-   * `private` band alone the heading would describe one of the two columns it
-   * is on, and say nothing about an at-cost holding two members both report.
-   */
-  const ownerOverlapValue = grouping === "owner"
-    ? BOOK_SECTIONS.filter((id) => id !== "unvalued")
-        .reduce((a, id) => a + (book.sections[id].overlap?.value ?? 0), 0)
-    : 0;
-  const ownerPrintedValue = grouping === "owner"
-    ? BOOK_SECTIONS.filter((id) => id !== "unvalued")
-        .reduce((a, id) => a + (book.sections[id].overlap?.printed ?? 0), 0)
-    : 0;
-  const ownerSum = ownerOverlapValue > 1 ? pct(ownerPrintedValue) : null;
-  const ownerBack = ownerOverlapValue > 1 ? pct(ownerOverlapValue) : null;
-  const weightHeadTitle = "Of the private book: the row's value as a share of the private market value — the same denominator on every row."
-    + (ownerSum != null && ownerBack != null
-      ? ` By owner every statement is printed, so the members' rows add to ${ownerSum.toFixed(1)}%, and the Counted once line at the foot of the section takes back ${ownerBack.toFixed(1)}% — the holdings two members' statements both report.`
-      : "");
+  const weightHeadTitle = "Of the private book: the row's value as a share of the private market value — the same denominator on every row.";
 
   // ── WHICH RETURN A ROW SHOWS, AND SAYING WHICH ──────────────────────────────
   //
@@ -1993,7 +1988,7 @@ export function PrivateMarket() {
             {tabs}
             <EditColumns view={view === "transactions" ? callView : bookView} />
             <SearchInput value={q} onChange={setQ}
-              placeholder={view === "transactions" ? "Search calls…" : view === "owners" ? "Search entities or funds…" : view === "brands" ? "Search brands, funds or entities…" : "Search funds or members…"}
+              placeholder={view === "transactions" ? "Search calls…" : view === "brands" ? "Search brands, funds or entities…" : "Search funds or members…"}
               className="w-56"
               suggestions={view === "transactions"
                 ? [...new Set(m.history.map((c) => c.fund))]
@@ -2003,14 +1998,22 @@ export function PrivateMarket() {
                 funds make true (`PM_RETURN_HINTS`) — the Monitor's XIRR hint
                 says the statements carry no per-holding cash flows, which is
                 false of a drawdown fund. */}
-            {(view === "funds" || view === "owners" || view === "brands") && (
+            {(view === "funds" || view === "brands") && (
+              <select value={show} onChange={(e) => setShow(e.target.value as typeof show)}
+                data-pm-show={show} aria-label="Show funds, companies or both"
+                title={BOOK_SHOW.find((o) => o.key === show)!.title}
+                className="rounded-md border border-ink-600 bg-ink-800 px-2 py-1 text-xs text-slate-200">
+                {BOOK_SHOW.map((o) => <option key={o.key} value={o.key} data-pm-show-option={o.key}>{o.label}</option>)}
+              </select>
+            )}
+            {(view === "funds" || view === "brands") && (
               <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} hints={PM_RETURN_HINTS} source={returnSource} />
             )}
-            {(view === "funds" || view === "owners" || view === "brands") && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />}
+            {(view === "funds" || view === "brands") && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />}
           </div>
         }>
 
-        {(view === "funds" || view === "owners" || view === "brands") && (
+        {(view === "funds" || view === "brands") && (
           <div className="overflow-x-auto">
             <table className="min-w-full text-[13px]" data-pm-table={view}>
               <thead className="border-b border-ink-700">
@@ -2071,12 +2074,10 @@ export function PrivateMarket() {
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
-                {renderSection("private")}
-                {renderSection("atCost")}
-                {renderSection("unvalued")}
+                {shown.map((id) => <Fragment key={id}>{renderSection(id)}</Fragment>)}
               </tbody>
               <tfoot>
-                {totalRow(book.privateTotal, "Private market total", {
+                {show === "both" && totalRow(book.privateTotal, "Private market total", {
                   // NO LINE UNDER THE LABEL (Stage 10co): what the row counts,
                   // and the capital a pair reported twice leaves out, pending
                   // the family's answer (PM-A2), is the label's hover.

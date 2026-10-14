@@ -43,7 +43,7 @@ async function align(key) {
   for (const row of grid) assert.equal(row.cells, row.header, `${key}: row/total no longer aligns`);
 }
 try {
-  await page.goto(`${BASE}/private-market`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${BASE}/private-market?show=both`, { waitUntil: "domcontentloaded" });
   await table("pm-book").waitFor();
   const original = await order("pm-book");
   const totals = await footerValues("pm-book", original);
@@ -64,12 +64,12 @@ try {
   await page.reload({ waitUntil: "domcontentloaded" });
   await table("pm-book").waitFor();
   assert.deepEqual(await order("pm-book"), moved.filter((id) => id !== "cost"));
-  await page.goto(`${BASE}/private-market?view=owners`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${BASE}/private-market?view=brands&show=both`, { waitUntil: "domcontentloaded" });
   await table("pm-book").waitFor();
   assert.deepEqual(await order("pm-book"), moved.filter((id) => id !== "cost"));
   await pick("pm-book", "cost", true);
   assert.deepEqual(await order("pm-book"), moved);
-  await page.goto(`${BASE}/private-market`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${BASE}/private-market?show=both`, { waitUntil: "domcontentloaded" });
   await table("pm-book").waitFor();
   assert.deepEqual(await footerValues("pm-book", original), totals, "Changing visibility modified existing totals");
   await table("pm-book").locator('[data-col-button="review:investmentRange"]').click();

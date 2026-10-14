@@ -7679,7 +7679,7 @@ const ROUTES = [
    * which walks the bare `/monitor`.
    */
   ["monitor", "/monitor?group=category"],
-  ["private-market", "/private-market"],
+  ["private-market", "/private-market?show=both"],
   /**
    * ...AND THE SAME PAGE WITH EVERY METRIC SELECTED.
    *
@@ -7695,8 +7695,8 @@ const ROUTES = [
    * strip, so nothing would fail.
    */
   ["private-market-tiles", () => (PM_TILE_IDS.length
-    ? `/private-market?tiles=${PM_TILE_IDS.join(",")}`
-    : "/private-market?tiles=no-catalogue-captured-from-the-picker")],
+    ? `/private-market?show=both&tiles=${PM_TILE_IDS.join(",")}`
+    : "/private-market?show=both&tiles=no-catalogue-captured-from-the-picker")],
   /**
    * ── THE PRIVATE BOOK'S OTHER TWO VIEWS ───────────────────────────────────
    *
@@ -7717,17 +7717,22 @@ const ROUTES = [
    * unchanged, so PM-1 keeps the address a reader of this file expects to find
    * it at — what moved is where the table is, not what it claims.
    */
-  ["private-market-folios", "/private-market"],
-  ["private-market-owners", "/private-market?view=owners"],
-  ["private-market-brands", "/private-market?view=brands"],
-  ["private-market-owners-returns", "/private-market?view=owners&ret=absolute,cagr,xirr,ytd,calendar"],
+  ["private-market-folios", "/private-market?show=both"],
+  ["private-market-brands", "/private-market?view=brands&show=both"],
+  /**
+   * ...AND THE BARE ADDRESS — Stage 10ee. *"keep companies as the default
+   * view"*: only the companies band is drawn, the selector reads Companies,
+   * and there is no total row. And the legal-entity tab is gone.
+   */
+  ["private-market-default", "/private-market"],
+  ["private-market-show-funds", "/private-market?show=funds"],
   /**
    * THE THIRD TAB. The capital calls were a card of their own, with a timeline
    * card beside it; they are the Transactions tab of the one table now, and the
    * checks that read them moved here with the rows rather than abstaining on a
    * route that correctly does not draw them.
    */
-  ["private-market-transactions", "/private-market?view=transactions"],
+  ["private-market-transactions", "/private-market?view=transactions&show=both"],
   /**
    * ...AND THE FUND TABLE WITH EVERY CONCRETE RETURN TICKED, one column each.
    *
@@ -7744,7 +7749,7 @@ const ROUTES = [
    * opens on now, so this route is that reader — `RETURN_DEFAULT_ROUTES` —
    * rather than a `?ret=` address asking for it.
    */
-  ["private-market-returns", "/private-market"],
+  ["private-market-returns", "/private-market?show=both"],
   /**
    * ── THE CAPITAL-CALL COLUMN, WITH A STORE BEHIND IT ──────────────────────
    *
@@ -7755,15 +7760,15 @@ const ROUTES = [
    * DREW to the store's own answer. The second route is the store before it is
    * connected — the state production is in until the KV binding exists.
    */
-  ["private-market-calls", "/private-market"],
-  ["private-market-calls-off", "/private-market"],
+  ["private-market-calls", "/private-market?show=both"],
+  ["private-market-calls-off", "/private-market?show=both"],
   /**
    * …AND A READER WHO HAS BEEN SIGNED OUT — Stage 10cl. The editor shows the
    * one-time Cloudflare steps for a store nobody has connected, and ONLY then:
    * a signed-out reader is told to sign in, never handed set-up steps for a
    * store that works. The two routes are the two sides of that one rule.
    */
-  ["private-market-calls-signedout", "/private-market"],
+  ["private-market-calls-signedout", "/private-market?show=both"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
   /**
    * THE TRADES BRANCH HAD AN ADDRESS OF ITS OWN AND DOES NOT ANY MORE.
@@ -17197,13 +17202,13 @@ const pmViewChecks = (expected) => [
    * "Transactions" are phrases this page's own prose uses, so a text match
    * cannot tell a rendered button from a sentence about one.
    */
-  [`the private book is one card with four tabs (fund, brand, legal entity, transactions), no review tab, and this address opens on ${expected}`, (t, ctx) => {
+  [`the private book is one card with three tabs (fund, brand, transactions), no legal-entity or review tab, and this address opens on ${expected}`, (t, ctx) => {
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     const keys = pv.views.map((v) => v.key);
-    return keys.length === 4
-      && ["funds", "brands", "owners", "transactions"].every((k) => keys.includes(k))
-      && !keys.includes("folios") && !keys.includes("review")
+    return keys.length === 3
+      && ["funds", "brands", "transactions"].every((k) => keys.includes(k))
+      && !keys.includes("owners") && !keys.includes("folios") && !keys.includes("review")
       && pv.views.find((v) => v.active)?.key === expected;
   }],
   [`…and it draws the ${expected} table and only that one`, (t, ctx) => {
@@ -29097,10 +29102,36 @@ const INVARIANTS = {
       return rs.active.join(",") === "absolute,cagr,xirr,ytd,calendar";
     }],
   ],
-  "private-market-owners-returns": [
-    ...pmViewChecks("owners"),
-    PM_MEMBER_COVER_CHECK,
-    PM_MEMBER_RETURN_CHECK,
+  /**
+   * ── FUNDS · COMPANIES · BOTH (Stage 10ee) ─────────────────────────────────
+   *
+   *   *"give a dropdown selector to select fund or companies or both, keep
+   *    companies as the default view."*
+   *
+   * The bare address opens on companies — the private companies held at cost —
+   * with no fund section and no total over a set it does not draw. Struck on
+   * the section handles and the selector's own value, never on prose.
+   */
+  "private-market-default": [
+    ...pmViewChecks("funds"),
+    ["the fund / company selector offers companies, funds and both, and opens on companies", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return false;
+      return pv.show === "companies" && pv.showOptions.join(",") === "companies,funds,both";
+    }],
+    ["…and on companies the table draws the companies held at cost and no fund section or total", (t, ctx) => {
+      const ids = (ctx?.pmView?.sections ?? []).map((s) => s.id);
+      return ids.length > 0 && ids.every((id) => id === "atCost") && !ctx.pmView.totalRow;
+    }],
+  ],
+  "private-market-show-funds": [
+    ...pmViewChecks("funds"),
+    ["on funds the table draws the fund sections only, and no total", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return false;
+      const ids = pv.sections.map((s) => s.id);
+      return pv.show === "funds" && ids.includes("private") && !ids.includes("atCost") && !pv.totalRow;
+    }],
   ],
   "private-market-brands": [
     ...pmViewChecks("brands"),
@@ -29119,76 +29150,6 @@ const INVARIANTS = {
       const labels = gs.map((g) => g.label ?? "");
       return new Set(labels).size === labels.length
         && labels.every((l) => l && !/ — |class [a-z]\d/i.test(l));
-    }],
-  ],
-  "private-market-owners": [
-    PM_WEIGHT_OWNERS_CHECK,
-    PM_MEMBER_COVER_CHECK,
-    ...pmViewChecks("owners"),
-    ...PM_TABLE_CHECKS,
-    ...PRIVATE_SCOPE_CHECKS,
-    ...PM_EXPANDED_CHECKS,
-    PM_BAND_HINTS("owners"),
-    PM_OVERLAP_HINT,
-    PM_REVIEW_SOURCE,
-    /**
-     * BY OWNER THE FUND LEVEL IS THE MEMBER'S LINE, SO THAT IS WHERE THE CALL
-     * CELL IS. A member row is not a fund — a call is made by a fund on the
-     * folio that owes it — so it carries none, and neither does a band or a
-     * total. Every row is open here, so every line's cell has its subject.
-     */
-    ["by owner, the Capital call cell is on every member's line in a fund and on no member row", (t, ctx) => {
-      const pv = ctx?.pmView;
-      if (!pv) return { notChecked: "the private-view probe did not run" };
-      // EVERY LINE THAT HOLDS UNITS — never an income-only VIEW of a holding
-      // another line values, which would put a second editor for one fund under
-      // one member (the views are derived off the book in `UNVALUED_BOOK`).
-      const views = new Set(UNVALUED_BOOK?.views ?? []);
-      const kids = pv.children.filter((c) => !views.has(c.account));
-      if (!kids.length || !pv.callHead) return false;
-      return pv.callCells.length === kids.length
-        && pv.callCells.every((c) => c.on === "folio" && !views.has(c.rowAccount))
-        && pv.groups.every((g) => g.kind === "owner" && !g.callCell);
-    }],
-    ["the member rows add to the printed total, and the 'Counted once' line takes it to the consolidated one", (t, ctx) => {
-      const pv = ctx?.pmView;
-      if (!pv) return { notChecked: "the private-view probe did not run" };
-      if (!PM_FOLIO_BOOK) return { notChecked: "the private book could not be read from glowData.ts" };
-      /*
-       * BAND BY BAND (Stage 10dh). The page draws the private book in two
-       * sections — a fund its own statement values, and a line the family's
-       * consolidated review records at cost — and each one totals its OWN rows.
-       * Struck on the whole book's printed figure this held the private band to
-       * ₹234.6 Cr of its ₹93.9 Cr and failed a page that was right.
-       */
-      const bands = [...PRIVATE_BANDS].filter((id) => PM_FOLIO_BOOK.bands[id].rows > 0);
-      if (!bands.length) return false;
-      const perBand = bands.every((id) => {
-        const want = PM_FOLIO_BOOK.bands[id];
-        const owners = pv.groups.filter((g) => g.section === id && g.kind === "owner");
-        const band = pv.sections.find((s) => s.id === id);
-        if (!owners.length || !band) return false;
-        // The members' rows are each statement as printed, so they add to the
-        // band's PRINTED figure — and the band's own cell says the same thing.
-        const printed = owners.reduce((a, g) => a + (Number(g.value) || 0), 0);
-        if (Math.abs(printed - want.printed) > 1) return false;
-        if (!pmClose(pmMoney(band.cells.value?.text), want.printed / 1e7)) return false;
-        // …and the 'Counted once' line under it is the gap to counting once:
-        // drawn exactly where this band has one, and naming all three figures.
-        const ov = pv.overlaps.find((o) => o.key === `section-${id}`);
-        const gap = want.printed - want.consolidated;
-        if (gap <= 1) return !ov;
-        return !!ov
-          && Math.abs(ov.printed - want.printed) <= 1
-          && Math.abs(ov.consolidated - want.consolidated) <= 1
-          && Math.abs(ov.overlap - gap) <= 1 && ov.overlap > 0;
-      });
-      // AND THE TOTAL IS THE WHOLE PRIVATE BOOK, COUNTED ONCE — over both bands,
-      // which is what makes the two claims independent: a page that totalled one
-      // band would satisfy every per-band comparison above and fail here.
-      const total = pv.totals.find((x) => x.key === "private");
-      const bookCons = bands.reduce((a, id) => a + PM_FOLIO_BOOK.bands[id].consolidated, 0);
-      return perBand && !!total && pmClose(pmMoney(total.cells.value?.text), bookCons / 1e7);
     }],
   ],
 
@@ -37743,7 +37704,7 @@ for (const theme of THEMES) {
        * control: a button wired to nothing leaves the sections closed and the
        * folio checks fail by name.
        */
-      if (name === "private-market-folios" || name === "private-market-owners" || name === "private-market-owners-returns" || name === "private-market-brands") {
+      if (name === "private-market-folios" || name === "private-market-brands") {
         const all = page.locator("[data-tree-expand-all]").first();
         if (await all.count()) { await all.click(); await page.waitForTimeout(500); }
       }
@@ -41426,6 +41387,11 @@ for (const theme of THEMES) {
             .map((th) => [th.getAttribute("data-col"), th.getAttribute("title")])) : {},
           views: [...document.querySelectorAll("main [data-pm-view]")]
             .map((e) => ({ key: e.getAttribute("data-pm-view"), active: e.getAttribute("aria-selected") === "true", title: e.getAttribute("title") })),
+          // THE FUNDS / COMPANIES / BOTH SELECTOR (Stage 10ee), and whether
+          // the table's private total row is drawn.
+          show: document.querySelector("main [data-pm-show]")?.getAttribute("data-pm-show") ?? null,
+          showOptions: [...document.querySelectorAll("main [data-pm-show-option]")].map((e) => e.getAttribute("data-pm-show-option")),
+          totalRow: !!document.querySelector("main table[data-pm-table] [data-pm-total]"),
           viewCount: Number(document.querySelector("main [data-pm-view-count]")?.getAttribute("data-pm-view-count") ?? NaN),
           tables: [...document.querySelectorAll("main table[data-pm-table]")].map((e) => e.getAttribute("data-pm-table")),
           // THE OLD CARDS, BY THEIR OWN HANDLES — a scheme table and a folio
