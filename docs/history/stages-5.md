@@ -4528,3 +4528,24 @@ Make sure you dont miss out on any"*
   archive. Route `private-market-brands` asserts every row is mapped and names
   its entity, and that the Assetgro line is the StockGro row. 62 brand rows,
   all mapped. No figure moves.
+
+### Stage 10ei — RETURNS SELECT THE LATEST VERIFIED ACCOUNT RECORD
+
+*"please fix … always make them use the latest data"* — 15 October 2026.
+
+- Account return endpoints are selected independently of security appraisals.
+  Valuations require a reconciled dated capital or bank record, a matching
+  printed capital total and agreement with previously captured cash flows.
+  Historical appraisals remain eligible when later holdings lack capital coverage.
+- Morning CIO, NAV & Performance, Family & Entities and investor period returns
+  share the selection. The card states its latest closing date and account count;
+  the information popup names newer incomplete statements. Holdings retain their
+  own prices, quantities and dates. No missing interval is assumed empty.
+- In the current archive, 510861 advances to 22 September; October 6 remains
+  unverified. Carnelian's dated bank record ends July 10, so its return closes
+  there instead of using an unsupported August value. Seven of 67 accounts
+  contribute, over mixed closing dates, with a 174-day measured window.
+- Verified: reproducible book, build, ingest and family suites; independent
+  browser arithmetic; focused Morning CIO, Performance and Family checks;
+  mobile dialogs in both themes. New tests cover future advances and retaining
+  an older verified endpoint after newer holdings arrive.

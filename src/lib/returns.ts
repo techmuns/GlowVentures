@@ -4,8 +4,7 @@
 //   • XIRR  — needs each account's dated flows AND an opening portfolio value.
 //   • YTD   — needs entityNavHistory (a per-entity opening NAV for the FY).
 import type { Portfolio, Position } from "./types";
-import { xirr } from "./xirr";
-import { pooledXirr, totalReturnFromXirr } from "./bucketXirr";
+import { xirrPct, totalReturnFromXirr } from "./bucketXirr";
 import { fyStartYear } from "./analytics";
 import { ownerDisplayName } from "./owners";
 
@@ -62,6 +61,7 @@ export type MeasuredPart = {
   terminalValue: number;
   /** The account's own statement date — where its terminal value is struck. */
   asOf: Date;
+  source?: string;
 };
 
 export type AccountsReturn = {
@@ -80,7 +80,24 @@ export type AccountsReturn = {
   parts: MeasuredPart[];
   /** Account numbers left out for want of an opening portfolio value. */
   excluded: string[];
+  /** Newer valuations that lack matching verified capital records, by account. */
+  gaps: { accountId: string; accountNo: string; asOf: string; reason: string }[];
 };
+
+/** Use the latest verified return endpoint; holding quantities retain their own statement date. */
+export function accountReturnInputs(statement: Portfolio, account: Portfolio['accounts'][number]) {
+  const coverage = statement.accountReturnRecords?.[account.accountId];
+  const record = coverage?.record;
+  if (record) {
+    return { value: record.value, asOf: record.asOf, flows: record.flows,
+      capitalRecordTo: record.capitalRecordTo, source: record.source, gap: coverage.gap,
+      latestValuationDate: coverage.latestValuationDate };
+  }
+  return { value: statement.positions.filter((p) => p.accountId === account.accountId).reduce((n, p) => n + p.marketValue, 0),
+    asOf: account.asOf, flows: coverage ? [] : statement.accountCashFlows?.[account.accountId] ?? [],
+    capitalRecordTo: account.capitalRecordTo, source: undefined,
+    gap: coverage?.gap ?? null, latestValuationDate: coverage?.latestValuationDate ?? account.asOf };
+}
 
 const isoOf = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -94,15 +111,18 @@ export function measuredAccountsReturn(
 ): AccountsReturn {
   const parts: MeasuredPart[] = [];
   const excluded: string[] = [];
+  const gaps: AccountsReturn['gaps'] = [];
   for (const a of accounts) {
-    const mv = statement.positions.filter((x) => x.accountId === a.accountId).reduce((s, x) => s + x.marketValue, 0);
-    // Nothing to close against, and nothing the rate leaves out — `pooledXirr`
-    // would skip it too; skipping it HERE keeps the window, the measured value
-    // and the excluded list on the same set as the rate.
-    if (!(mv > 0)) continue;
-    const flows = (statement.accountCashFlows?.[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount }));
-    if (!accountHasOpeningValue(statement, a.accountId) || !flows.length) { excluded.push(a.accountNo); continue; }
-    parts.push({ accountId: a.accountId, accountNo: a.accountNo, flows, terminalValue: mv, asOf: new Date(a.asOf) });
+    const input = accountReturnInputs(statement, a);
+    const mv = input.value;
+    if (input.gap) gaps.push({ accountId: a.accountId, accountNo: a.accountNo,
+      asOf: input.latestValuationDate, reason: input.gap });
+    // A sourced closing zero is real (redemption); an unvalued legacy account
+    // is not. Decide the account set here so every surface pools the same flows.
+    if (!Number.isFinite(mv) || mv < 0 || (mv === 0 && !input.source)) continue;
+    const flows = input.flows.map((f) => ({ date: new Date(f.date), amount: f.amount }));
+    if (!input.flows.some((f) => /^opening portfolio value/i.test(f.description ?? '')) || !flows.length) { excluded.push(a.accountNo); continue; }
+    parts.push({ accountId: a.accountId, accountNo: a.accountNo, flows, terminalValue: mv, asOf: new Date(input.asOf), source: input.source });
   }
   let first: number | null = null, lastC: number | null = null, firstC: number | null = null;
   for (const pt of parts) {
@@ -111,7 +131,7 @@ export function measuredAccountsReturn(
     if (lastC == null || c > lastC) lastC = c;
     if (firstC == null || c < firstC) firstC = c;
   }
-  const annPct = parts.length ? pooledXirr(parts) : null;
+  const annPct = parts.length ? xirrPct(parts.flatMap(p => [...p.flows, { date: p.asOf, amount: p.terminalValue }])) : null;
   const windowDays = first != null && lastC != null ? Math.round((lastC - first) / 864e5) : null;
   return {
     annPct,
@@ -123,6 +143,7 @@ export function measuredAccountsReturn(
     measuredMV: parts.reduce((s, x) => s + x.terminalValue, 0),
     parts,
     excluded,
+    gaps,
   };
 }
 

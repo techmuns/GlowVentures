@@ -796,6 +796,19 @@ export type CorporateAction = {
 // (sale / distribution). The terminal market value is appended at compute time.
 export type CashFlow = { date: string; amount: number; description?: string };
 
+export type AccountReturnCoverage = {
+  latestValuationDate: string;
+  record: {
+    asOf: string;
+    value: number;
+    flows: CashFlow[];
+    source: string;
+    flowSources: string[];
+    capitalRecordTo: string;
+  } | null;
+  gap: string | null;
+};
+
 /**
  * ONE DATED INVESTMENT THE FAMILY MADE — not a trade their manager made.
  *
@@ -1162,6 +1175,8 @@ export type Portfolio = {
    * issues none), with the window's opening portfolio value as its first entry.
    */
   accountCashFlows?: Record<string, CashFlow[]>;
+  /** Newest matched valuation/capital record; newer incomplete statements retain a named gap. */
+  accountReturnRecords?: Record<string, AccountReturnCoverage>;
   /**
    * Undrawn capital commitments. Separate from `privateMarkets` because a
    * commitment is not an investment — see the type's own note.

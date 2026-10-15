@@ -32,6 +32,7 @@ import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mj
 import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
 import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
+import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -4792,6 +4793,7 @@ function build(archived) {
 
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
+    accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount }),
     capitalMoves, positionTranches, shareMovements,
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
@@ -4871,7 +4873,7 @@ function emit(book) {
   L.push("// carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the");
   L.push("// list and what document would supply each.");
   L.push("import type {");
-  L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,");
+  L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
   L.push("  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
@@ -5000,6 +5002,9 @@ function emit(book) {
   L.push(" * Sign: amount < 0 = capital in, > 0 = capital out, per `CashFlow` in types.ts.");
   L.push(" */");
   L.push(`export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = ${j(book.accountCashFlows)};`);
+  L.push("");
+  L.push("/** Latest account return endpoints with reconciled dated capital, independent of the holdings appraisal. */");
+  L.push(`export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> = ${j(book.accountReturnRecords)};`);
   L.push("");
   L.push("/**");
   L.push(" * THE FAMILY'S OWN DATED INVESTMENTS — money they put in and took out.");

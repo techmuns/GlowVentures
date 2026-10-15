@@ -1,5 +1,5 @@
 import type { Portfolio } from "./types";
-import { measuredAccountsReturn } from "./returns";
+import { measuredAccountsReturn, accountReturnInputs } from "./returns";
 import { accountEmptiness } from "./searchIndex";
 import { xirrPct, totalReturnFromXirr } from "./bucketXirr";
 
@@ -48,34 +48,36 @@ export function investorPeriodReturn(statement: Portfolio, today: Date, period: 
   const validDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date)
     && Number.isFinite(Date.parse(date)) && new Date(date).toISOString().slice(0, 10) === date;
   const accounts = statement.accounts.filter((a) => {
-    const flows = statement.accountCashFlows?.[a.accountId] ?? [];
+    const input = accountReturnInputs(statement, a);
+    const flows = input.flows;
     const openings = flows.filter((f) => /^opening portfolio value/i.test(f.description ?? ""));
     // An opening value alone does not prove that every later movement is
     // dated. Require an explicit record endpoint through the closing value.
-    const recordCoversClose = a.capitalRecordTo != null
-      && validDate(a.capitalRecordTo) && a.capitalRecordTo >= a.asOf;
+    const recordCoversClose = input.capitalRecordTo != null
+      && validDate(input.capitalRecordTo) && input.capitalRecordTo >= input.asOf;
     return !a.transactionsOnly && !a.partialValuation && recordCoversClose
       && openings.length === 1 && openings[0].date === start && openings[0].amount < 0
-      && validDate(a.asOf) && a.asOf > start && a.asOf <= now
-      && flows.every((f) => validDate(f.date) && f.date >= start && f.date <= a.asOf && Number.isFinite(f.amount));
+      && validDate(input.asOf) && input.asOf > start && input.asOf <= now
+      && flows.every((f) => validDate(f.date) && f.date >= start && f.date <= input.asOf && Number.isFinite(f.amount));
   });
   const parts = accounts.flatMap((a) => {
     const rows = statement.positions.filter((p) => p.accountId === a.accountId);
-    const value = rows.reduce((n, p) => n + p.marketValue, 0);
+    const input = accountReturnInputs(statement, a);
+    const value = input.value;
     // A liquidated account still contributes its opening value and proceeds.
     // No positions without evidence of redemption means unknown, never zero.
     if (!Number.isFinite(value) || value < 0
-      || (value === 0 && accountEmptiness(a, rows)?.kind !== "redeemed")) return [];
-    return [{ account: a, value, flows: statement.accountCashFlows![a.accountId] }];
+      || (value === 0 && !input.source && accountEmptiness(a, rows)?.kind !== "redeemed")) return [];
+    return [{ account: a, asOf: input.asOf, value, flows: input.flows }];
   });
   const covered = parts.length;
   const total = statement.accounts.length;
-  const distinctCloses = new Set(parts.map((p) => p.account.asOf));
+  const distinctCloses = new Set(parts.map((p) => p.asOf));
   const closes = [...distinctCloses].sort();
   const end = closes[closes.length - 1] ?? null;
   const flows = parts.flatMap((p) => [
     ...p.flows.map((f) => ({ date: new Date(f.date), amount: f.amount })),
-    { date: new Date(p.account.asOf), amount: p.value },
+    { date: new Date(p.asOf), amount: p.value },
   ]);
   const days = end ? (Date.parse(end) - Date.parse(start)) / 864e5 : null;
   const annualPct = xirrPct(flows);

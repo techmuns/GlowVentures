@@ -1148,7 +1148,8 @@ export function MorningCIO() {
       calculation: <MoneyWeightedCalculation flows={m.mwb.flows} annualPct={m.bookMW.annualPct}
         days={m.bookMW.windowDays} annualised={m.bookMW.annualised} result={pct1(m.bookMW.pct)} money={calculationMoney} shortMoney={money}
         reason={m.bookMW.pct == null ? "The recorded amounts and dates do not provide a usable return" : null}
-        coverage={<>Uses {m.mwb.accountIds.length} of {m.mwb.bookAccounts} statement accounts with an opening value. Each closes at its own statement value on its own date.
+        coverage={<>Uses the latest verified return records for {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts. Each closes on its own valuation date.
+          {m.mwb.gaps.length > 0 && <span className="mt-2 block">{m.mwb.gaps.map((g) => <span className="block" key={g.accountId}>{g.accountNo}: {g.reason}.</span>)}</span>}
           {m.privateCount > 0 && <> Separately modelled private investments with recorded investment dates are included too.</>}
           {m.bookMW.annualised ? " The card shows a yearly rate." : " The card shows the return for the measured period, not a yearly rate."}</>} />,
       href: drilldownHref("measured"),
@@ -1159,7 +1160,9 @@ export function MorningCIO() {
           : ` THE WINDOW IS ${m.bookMW.windowDays} DAYS${m.mwLastClose ? `, TO ${m.mwLastClose}` : ""}, AND THE RATE IS NOT ANNUALISED: it is what these accounts have actually earned over that window — each account valued on its own statement, on the date that statement strikes it. Compounding it onto a full year would be a projection rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, against the managers' own annualised since-inception figures of about 7% to 31% for these very accounts.`
       }`,
       value: pct1(m.bookMW.pct),
-      sub: m.bookMW.pct == null ? absentWhy("no statement in this book carries an opening portfolio value") : undefined,
+      sub: m.bookMW.pct == null ? absentWhy("no statement in this book carries an opening portfolio value")
+        : <>Latest close {m.mwb.lastClose ? fmtDate(m.mwb.lastClose) : "—"} · {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts
+          {m.mwb.gaps.length > 0 && <><br />Newer statements need matched cash flows</>}</>,
     },
     /**
      * CONSOLIDATED RETURN — return on the capital actually invested, over the
