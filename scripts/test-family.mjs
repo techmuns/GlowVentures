@@ -106,6 +106,7 @@ const SUITES = [
   ["movers inside the AIFs and PMS mandates", "src/lib/__tests__/insideMovers.test.ts"],
   ["member scope", "src/lib/__tests__/memberScope.test.ts"],
   ["statement library", "src/lib/__tests__/statementLibrary.test.ts"],
+  ["statement uploads", "src/lib/__tests__/statementUploads.test.ts"],
 ];
 
 let failed = 0;

@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Folder, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileSpreadsheet } from "lucide-react";
+import { Folder, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileSpreadsheet, UploadCloud, Trash2, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { AbsentSection, DASH } from "@/components/Absent";
-import { fmtDate } from "@/lib/format";
+import { fmtDate, fmtDateTime } from "@/lib/format";
 import { buildLibrary, type ManifestEntry, type ProviderFolder, type LibraryDoc } from "@/lib/statementLibrary";
+import { useStatementUploads, uploadsOf, fmtSize, SWITCH_ON_STEPS, CAUSE_WORD } from "@/lib/statementUploads";
 
 // The library reads the SAME archive index the Data Audit viewer does —
 // public/audit/manifest.json, written by the ingest pipeline and served at
@@ -92,6 +93,148 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
   );
 }
 
+const ACCEPT = ".pdf,.xlsx,.xlsm,.xls,.csv,.zip";
+const ALLOWED_UPLOAD = new Set(["pdf", "xlsx", "xlsm", "xls", "csv", "zip"]);
+const uploadExt = (name: string) => {
+  const base = name.split(/[\\/]/).pop() ?? "";
+  const dot = base.lastIndexOf(".");
+  return dot > 0 ? base.slice(dot + 1).toLowerCase() : "";
+};
+
+/** The drop box behind a folder: upload new statements for this provider, and
+ *  see the ones already staged for the next rebuild. */
+function DropBox({ provider }: { provider: string }) {
+  const { state, upload, remove } = useStatementUploads();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [drag, setDrag] = useState(false);
+  const [busy, setBusy] = useState(0);
+  const [msg, setMsg] = useState<{ tone: "err" | "ok"; text: string } | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+
+  const staged = state.status === "ready" ? uploadsOf(state.uploads, provider) : [];
+
+  const send = async (files: FileList | File[]) => {
+    const list = [...files];
+    if (!list.length) return;
+    const good = list.filter((f) => ALLOWED_UPLOAD.has(uploadExt(f.name)));
+    const bad = list.length - good.length;
+    setMsg(null);
+    let ok = 0; let failure = "";
+    setBusy((n) => n + good.length);
+    for (const f of good) {
+      const r = await upload(provider, f);
+      if (r.ok) ok++; else failure = r.reason;
+      setBusy((n) => Math.max(0, n - 1));
+    }
+    if (failure) setMsg({ tone: "err", text: failure });
+    else if (ok) setMsg({ tone: "ok", text: `${ok} file${ok === 1 ? "" : "s"} staged — ${ok === 1 ? "it" : "they"} will reach the dashboard at the next rebuild.` });
+    else if (bad) setMsg({ tone: "err", text: `Not a statement file — only PDF, Excel (xlsx/xls), CSV or a ZIP of them can be uploaded.` });
+  };
+
+  // The store is not reachable — say which cause, and for a store nobody has
+  // connected give the one-time set-up steps rather than a dead drop zone.
+  if (state.status === "unavailable") {
+    const notConfigured = state.cause === "not-configured";
+    return (
+      <Card className="mb-5" data-upload-box data-upload-state={state.cause}>
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400"><UploadCloud className="h-5 w-5" /></div>
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-slate-200">Uploading statements — {CAUSE_WORD[state.cause]}</div>
+            <p className="mt-1 text-xs text-slate-400" data-prose-ok="why the drop box is not available">{state.reason}</p>
+            {notConfigured && (
+              <ol className="mt-2 list-decimal space-y-1 pl-4 text-[11.5px] text-slate-500" data-prose-ok="the one-time steps to switch the drop box on">
+                {SWITCH_ON_STEPS.map((s, i) => <li key={i}>{s}</li>)}
+              </ol>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  const disabled = busy > 0;
+  return (
+    <Card className="mb-5" data-upload-box data-upload-state="ready">
+      <div className="mb-2 flex items-center gap-2">
+        <UploadCloud className="h-4 w-4 text-champagne-400" />
+        <span className="text-sm font-semibold text-slate-200">Add statements to {provider}</span>
+      </div>
+      {/* HOW A DROPPED FILE REACHES THE BOOK — on the face, because a staged file
+          is NOT a holding until a rebuild reads it (the no-fabrication rule). */}
+      <p className="mb-3 text-[11.5px] text-slate-500" data-prose-ok="what happens to an uploaded statement">
+        A file you add here is held for this provider and read into the dashboard at the next book rebuild — it is not
+        a live figure until then.
+      </p>
+
+      <button type="button"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => { e.preventDefault(); setDrag(false); void send(e.dataTransfer.files); }}
+        className={`flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-4 py-7 text-center transition-colors
+          ${drag ? "border-champagne-500/60 bg-champagne-500/10" : "border-ink-600 hover:border-ink-500 hover:bg-ink-700/30"}`}>
+        {disabled
+          ? <Loader2 className="h-6 w-6 animate-spin text-champagne-400" />
+          : <UploadCloud className="h-6 w-6 text-slate-500" />}
+        <span className="text-sm text-slate-300">{disabled ? "Uploading…" : "Drop statements here, or click to choose"}</span>
+        <span className="text-[11px] text-slate-500">PDF, Excel, CSV or a ZIP · up to 50 MB each</span>
+        <input ref={inputRef} type="file" multiple accept={ACCEPT} className="hidden"
+          onChange={(e) => { void send(e.target.files ?? []); e.target.value = ""; }} />
+      </button>
+
+      {msg && (
+        <p className={`mt-2 text-xs ${msg.tone === "err" ? "text-loss" : "text-gain"}`} role="status"
+          data-prose-ok="the result of an upload">{msg.text}</p>
+      )}
+
+      {staged.length > 0 && (
+        <div className="mt-4">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Waiting for the next rebuild</span>
+            <Pill tone="warn">{staged.length}</Pill>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-ink-700">
+            <table className="min-w-full text-sm" data-table-static="statements staged for this provider, newest first — they are read into the book at the next rebuild">
+              <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-2.5 font-medium">File</th>
+                  <th className="px-4 py-2.5 font-medium">Size</th>
+                  <th className="px-4 py-2.5 font-medium">Uploaded</th>
+                  <th className="px-4 py-2.5 font-medium" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-700/70">
+                {staged.map((u) => (
+                  <tr key={u.key} className="hover:bg-ink-700/40">
+                    <td className="px-4 py-3 text-slate-200">
+                      <span className="inline-flex items-center gap-1.5">
+                        {fileIcon((uploadExt(u.fileName) || "").toUpperCase())}
+                        <span className="break-all">{u.fileName}</span>
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 mono text-slate-400">{fmtSize(u.size)}</td>
+                    <td className="px-4 py-3 text-slate-400">{u.uploadedAt ? fmtDateTime(u.uploadedAt) : DASH}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button type="button" disabled={removing === u.key}
+                        onClick={async () => { setRemoving(u.key); await remove(u.key); setRemoving(null); }}
+                        className="inline-flex items-center gap-1 rounded border border-ink-600 px-2 py-1 text-[11px] text-slate-400 hover:bg-ink-700 hover:text-loss disabled:opacity-50"
+                        title="Remove this staged file">
+                        {removing === u.key ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 /** The opened folder: a header strip naming the provider, then one block per
  *  file format it holds. */
 function OpenFolder({ folder, onBack }: { folder: ProviderFolder; onBack: () => void }) {
@@ -148,6 +291,8 @@ function OpenFolder({ folder, onBack }: { folder: ProviderFolder; onBack: () => 
           </div>
         </div>
       </Card>
+
+      <DropBox provider={folder.provider} />
 
       <div className="space-y-5">
         {byFormat.map(([format, docs]) => <FormatBlock key={format} format={format} docs={docs} />)}
@@ -232,7 +377,7 @@ export function StatementLibrary() {
   return (
     <div className="mx-auto max-w-5xl" data-statement-library>
       <PageHeader eyebrow="Admin" title="Statement Library" trail={trail}
-        subtitle="The source statements that feed this book, in a folder per provider — double-click a folder to open it and see its files grouped by type. New statements from a provider belong in its folder; the book is rebuilt from them offline."
+        subtitle="The source statements that feed this book, in a folder per provider — double-click a folder to open it, see its files grouped by type, and drop new statements into it. An uploaded file is staged under its provider and read into the book at the next rebuild."
         right={status === "ready" && !openProvider ? (
           <div className="flex items-center gap-2">
             <Pill>{library.totalProviders} providers</Pill>
@@ -281,9 +426,9 @@ export function StatementLibrary() {
                 is, a new drop goes through the offline ingest. Tagged so the
                 no-explainer sweep allows this one actionable line. */}
             <p className="mb-4 text-xs text-slate-500" data-prose-ok="how a new statement reaches the dashboard">
-              Each folder is a provider the family receives statements from — double-click to open it. A new statement
-              belongs in its provider's folder and reaches the dashboard when the book is rebuilt from the source
-              archive; direct upload from this page is not wired yet.
+              Each folder is a provider the family receives statements from — double-click to open it. Open a folder to
+              drop new statements straight into it; they are staged under that provider and read into the dashboard at
+              the next book rebuild.
             </p>
 
             <div className="mb-5 flex flex-wrap items-center gap-3">
