@@ -4,8 +4,7 @@
 //   • XIRR  — needs each account's dated flows AND an opening portfolio value.
 //   • YTD   — needs entityNavHistory (a per-entity opening NAV for the FY).
 import type { Portfolio, Position } from "./types";
-import { xirr } from "./xirr";
-import { pooledXirr, totalReturnFromXirr } from "./bucketXirr";
+import { xirrPct, totalReturnFromXirr } from "./bucketXirr";
 import { fyStartYear } from "./analytics";
 import { ownerDisplayName } from "./owners";
 
@@ -118,9 +117,8 @@ export function measuredAccountsReturn(
     const mv = input.value;
     if (input.gap) gaps.push({ accountId: a.accountId, accountNo: a.accountNo,
       asOf: input.latestValuationDate, reason: input.gap });
-    // Nothing to close against, and nothing the rate leaves out — `pooledXirr`
-    // would skip it too; skipping it HERE keeps the window, the measured value
-    // and the excluded list on the same set as the rate.
+    // A sourced closing zero is real (redemption); an unvalued legacy account
+    // is not. Decide the account set here so every surface pools the same flows.
     if (!Number.isFinite(mv) || mv < 0 || (mv === 0 && !input.source)) continue;
     const flows = input.flows.map((f) => ({ date: new Date(f.date), amount: f.amount }));
     if (!input.flows.some((f) => /^opening portfolio value/i.test(f.description ?? '')) || !flows.length) { excluded.push(a.accountNo); continue; }
@@ -133,7 +131,7 @@ export function measuredAccountsReturn(
     if (lastC == null || c > lastC) lastC = c;
     if (firstC == null || c < firstC) firstC = c;
   }
-  const annPct = parts.length ? pooledXirr(parts) : null;
+  const annPct = parts.length ? xirrPct(parts.flatMap(p => [...p.flows, { date: p.asOf, amount: p.terminalValue }])) : null;
   const windowDays = first != null && lastC != null ? Math.round((lastC - first) / 864e5) : null;
   return {
     annPct,

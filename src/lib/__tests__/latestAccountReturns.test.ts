@@ -42,4 +42,14 @@ const missingRecord = { ...one, accountReturnRecords: { [id]: { ...BOOK_ACCOUNT_
 assert.equal(measuredAccountsReturn(missingRecord, missingRecord.accounts).parts.length, 0, 'an explicitly unverified endpoint cannot fall back to incomplete flows');
 const carnelian = current.parts.find(p => p.accountNo === '3517383')!;
 assert.equal(carnelian.asOf.toISOString().slice(0, 10), '2026-07-10', 'a bank book ending in July cannot certify an August closing');
+const redeemed = { ...one, accountReturnRecords: { [id]: { latestValuationDate: '2026-09-22', gap: null, record: {
+  ...BOOK_ACCOUNT_RETURN_RECORDS[id].record!, value: 0, flows: [
+    { date: '2026-04-01', amount: -100, description: 'Opening portfolio value' },
+    { date: '2026-09-22', amount: 110, description: 'Redemption' },
+  ],
+} } } };
+const redeemedReturn = measuredAccountsReturn(redeemed, redeemed.accounts);
+assert.equal(redeemedReturn.parts.length, 1);
+assert(Math.abs(redeemedReturn.toDatePct! - 10) < 1e-7, 'a verified closing zero still includes redemption proceeds');
+assert.equal(bookMoneyWeighted(redeemed, redeemed, new Date('2026-10-15')).result.pct, redeemedReturn.toDatePct);
 console.log(`PASS current corpus returns: ${current.toDatePct?.toFixed(1)}%, through ${current.lastClose}; latest source and named gaps shared across return surfaces`);

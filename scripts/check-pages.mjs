@@ -5476,7 +5476,7 @@ const FAMILY_MWR = (() => {
       const fl = selected?.flows ?? (latest[a.accountId] ? [] : cf[a.accountId] ?? []);
       if (!fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) continue;
       const mv = selected?.value ?? positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
-      if (!(mv > 0)) continue;
+      if (!Number.isFinite(mv) || mv < 0 || (mv === 0 && !selected?.source)) continue;
       const owner = a.ownerId || a.owner || "unattributed";
       const o = byOwner.get(owner) ?? { accounts: [], flows: [], lastClose: "" };
       o.accounts.push(String(a.accountNo));
@@ -9449,11 +9449,12 @@ const PERF_BOOK = (() => {
     const perAccount = new Map(accounts.map((a) => [a.accountId, {
       stmtMV: latestReturns[a.accountId]?.record?.value ?? mvOf(stmt, a.accountId), liveMV: mvOf(live, a.accountId),
       asOf: latestReturns[a.accountId]?.record?.asOf ?? a.asOf,
+      sourced: !!latestReturns[a.accountId]?.record?.source,
       unvalued: a.noPositionsReason ?? null,
       flows: latestReturns[a.accountId]?.record?.flows ?? (latestReturns[a.accountId] ? [] : flowsBy[a.accountId] ?? []),
       symbols: stmt.some((p) => p.accountId === a.accountId && p.symbol),
     }]));
-    const measured = [...perAccount].filter(([, x]) => x.stmtMV > 0 && x.flows.length
+    const measured = [...perAccount].filter(([, x]) => (x.stmtMV > 0 || (x.stmtMV === 0 && x.sourced)) && x.flows.length
       && x.flows.some((f) => /^opening portfolio value/i.test(f.description ?? ""))).map(([id]) => id);
     const solve = (ids, valueOf) => {
       const fl = ids.flatMap((id) => {
@@ -14099,7 +14100,7 @@ const MWR_BOOK = (() => {
       const fl = selected?.flows ?? (latest[a.accountId] ? [] : cf[a.accountId] ?? []);
       if (!fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) continue;
       const mv = selected?.value ?? positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
-      if (!(mv > 0)) continue;
+      if (!Number.isFinite(mv) || mv < 0 || (mv === 0 && !selected?.source)) continue;
       pooled++;
       accountIds.add(a.accountId);
       for (const f of fl) flows.push({ t: Date.parse(`${f.date}T00:00:00Z`), amount: f.amount });

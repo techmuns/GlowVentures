@@ -82,5 +82,7 @@ assert.equal(bankWindow(bank).moves.length, 2);
 const brokenBank = structuredClone(bank); brokenBank.cashFlows[1].expenses = 5;
 assert.equal(bankWindow(brokenBank), null, 'bank trades, income and expenses must reconcile too');
 assert.equal(build([bank, closing]).one.record.asOf, '2026-05-31');
+const futureWindow = { ...closing, flows: { ...closing.flows, periodFrom: '2026-06-01', netCapitalInOut: 0 } };
+assert.equal(build([register, futureWindow]).one.record, null, 'a future capital window cannot witness an earlier valuation');
 
 console.log('PASS latest return records: complete windows, latest selection, missing/invalid sources, overlap, same-day posting and unchanged holdings');

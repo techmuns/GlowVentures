@@ -13,7 +13,7 @@ export function registerWindow(d) {
   const rows = (d.cashFlows ?? []).filter((r) => r.kind === 'capital-register');
   const opening = rows.find((r) => /^opening balance/i.test(r.description ?? '') && number(r.balance));
   const first = rows.find((r) => !/^opening balance/i.test(r.description ?? ''));
-  if (!rows.length || !date(d.asOf) || (!opening && (!first || !number(first.amount)
+  if (!rows.length || !date(d.asOf) || (!opening && (!first || !number(first.amount) || first.amount <= 0
     || !number(first.balance) || Math.abs(first.balance - first.amount) > 1))) return null;
   const start = opening?.date ?? first.date;
   if (!date(start) || start > d.asOf) return null;
@@ -145,7 +145,7 @@ export function buildAccountReturnRecords({ accounts, accountCashFlows, byAccoun
         const f = witness.flows;
         const witnessed = number(f.netCapitalInOut) ? f.netCapitalInOut
           : number(f.contribution) && number(f.withdrawal) ? f.contribution - f.withdrawal : null;
-        if (!date(f.periodFrom) || witnessed === null) continue;
+        if (!date(f.periodFrom) || f.periodFrom > end || witnessed === null) continue;
         const inceptionBalance = f.periodFrom < register.start && register.kind === 'capital'
           && f.periodFrom === (witness.inceptionDate ?? account.inceptionDate);
         if (f.periodFrom < register.start && !inceptionBalance) continue;
