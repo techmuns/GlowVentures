@@ -4584,3 +4584,24 @@ the type of file each folder contains … name the folder Motilal Oswal"*
 - Removed Time-weighted return from the return type, selectors, formulas, help text and NAV & Performance section. Old `rtype=twr` links fall back to XIRR. The other three calculations and info popups remain.
 - The CAGR explanation now names its existing dated-capital calculation directly; shorter-period guidance points to Absolute return or XIRR. Historical statement data is retained in the source model.
 - Checks assert exactly three options, no retired section or popup references, all 24 method/period combinations, and the old-link fallback.
+
+### Stage 10el — STATEMENT LIBRARY: A DESKTOP FOLDER YOU OPEN INTO
+
+*"make the UI as normal desktop folder that we can double click to open and
+inside it would contain all the files of the same format in an organized way"*
+
+- **The library is a folder grid now**, not a stack of expanding cards. Each
+  provider is a desktop-style folder icon — name, file count and formats
+  beneath, an amber dot where a document did not fully read. Double-click (or
+  Enter / Space when focused) opens it; a single click selects.
+- **Which folder is open lives in the address** (`?provider=<name>`), the same
+  "state in the URL" the drill-downs and member scope use: the open folder is
+  linkable, the browser's Back button closes it, and the breadcrumb's "Statement
+  Library" segment reopens the grid. An unknown provider shows an absent state.
+- **Inside a folder, files are grouped by format** — one labelled block per PDF
+  / XLSX / CSV, ordered by how many files it holds, each a striped table of its
+  documents (owner, account, as-of, status, delivery, Data Audit link). The
+  folder header still states every report type the provider sends.
+- Route `statements` walks the grid and `statements-folder` the opened view
+  (the largest provider, derived from the manifest); both clean on the universal
+  checks. No change to the grouping model or its test.
