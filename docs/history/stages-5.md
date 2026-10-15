@@ -4499,3 +4499,26 @@ the harvester never empties a series it could not fetch.
 Adding a source: write `adapters/<name>.mjs` exporting `fetchSeries(spec)`,
 register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 
+
+### Stage 10eg — PRIVATE MARKET: THE BRAND COLUMN SHOWS THE BRAND, AND THE LEGAL ENTITY UNDER IT
+
+*"make the first column the brand name, because right now the column labeled
+brand name is actually the legal name of the entity … search for every entity
+and check what the brand name is. If it's the same, then write the same …
+Make sure you dont miss out on any"*
+
+- **`src/lib/brandNames.ts`** maps every private-market line, by fundKey, to
+  its `brand`, its `legal` entity and a `basis`. `cited` means the brand differs
+  from the entity and a source states the link (e.g. Assetgro Fintech → StockGro).
+  `own-name` means the entity trades under its own name. `as-printed` means no
+  source ties the review's words to one company. Sources are web pages or
+  `statement:<docKey>`, the family's own depository statement naming the issuer.
+  It replaces `BRAND_OVERRIDES` and is display only.
+- **By brand**: each row is labelled with the brand. The legal entity is drawn
+  under it where the two differ, and the brand's hover gives the source.
+  Search matches legal names too.
+- **Nothing is missed**: `privateBook.test.ts` fails on any line with no entry,
+  any cited pair without a web source, and any statement source not in the
+  archive. Route `private-market-brands` asserts every row is mapped and names
+  its entity, and that the Assetgro line is the StockGro row. 62 brand rows,
+  all mapped. No figure moves.

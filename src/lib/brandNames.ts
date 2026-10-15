@@ -88,6 +88,15 @@ export const BRAND_NAMES: Readonly<Record<string, BrandName>> = {
     source: ["statement:baring-private-equity-india-fund-aifm-bpepf6-0584-2026-03-31-holdings"],
   },
 
+  "zepto": {
+    brand: "Zepto", legal: "Zepto Limited (formerly Kiranakart Technologies Private Limited)", basis: "own-name",
+    source: ["https://www.storyboard18.com/brand-marketing/zepto-drops-kiranakart-tag-ahead-of-ipo-renames-to-zepto-private-limited-62476.htm", "https://inc42.com/buzz/zepto-turns-into-a-public-entity-eyes-june-2026-ipo"],
+  },
+  "k-m-global-credit": {
+    brand: "Credit Fair", legal: "K M Global Credit Private Limited", basis: "cited",
+    source: ["https://yourstory.com/companies/credit-fair", "https://gocredit.money/nbfc/k-m-global-credit-private-ltd"],
+  },
+
   // ── Private companies, held at cost ──
   "waterwala-labs-private-limited-drink-prime": DRINKPRIME,
   "vineet-sethia-drink-prime": DRINKPRIME,
@@ -110,8 +119,8 @@ export const BRAND_NAMES: Readonly<Record<string, BrandName>> = {
     source: [ICICI_NSDL, "https://www.bii.co.uk/en/our-impact/direct-header/everest-fleet-private-limited/"],
   },
   "spray-engineering-devices": {
-    brand: "Spray Engineering Devices", legal: "Spray Engineering Devices Limited", basis: "own-name",
-    source: [ICICI_NSDL, "https://www.unlistedzone.com/sedl-powering-sustainable-solutions-for-sugar-ethanol-water-recycling"],
+    brand: "SED", legal: "Spray Engineering Devices Limited", basis: "cited",
+    source: [ICICI_NSDL, "https://chemxplore.com/companies/sed", "https://www.unlistedzone.com/sedl-powering-sustainable-solutions-for-sugar-ethanol-water-recycling"],
   },
   "matrix-gas-and-renewables": {
     brand: "Matrix Gas and Renewables", legal: "Matrix Gas and Renewables Limited", basis: "own-name",
@@ -156,22 +165,141 @@ export const BRAND_NAMES: Readonly<Record<string, BrandName>> = {
   // The review prints the AngelList trust first and the company after it; the
   // trust is a channel, and two different companies share it.
   "al-trust-collabmates-pvt-ltd-angellist-likeminds": {
-    brand: "LikeMinds", legal: "Collabmates Private Limited", basis: "cited",
+    brand: "LikeMinds", legal: "Collabmates Private Limited (through AL Trust)", basis: "cited",
     source: ["https://apps.apple.com/in/developer/collabmates-private-limited/id1481298194"],
   },
   "al-trust-karban-envirotech-ruv-nilesh-angelist": {
-    brand: "Karban", legal: "Karban Envirotech Private Limited", basis: "cited",
+    brand: "Karban", legal: "Karban Envirotech Private Limited (through AL Trust)", basis: "cited",
     source: ["https://karban.in/policies/terms-of-service"],
   },
   // LetsVenture's angel fund is the channel; Hoopr is the company.
   "lv-angel-fund-lets-venture-hoopr-vaibhav-karnavat": {
-    brand: "Hoopr", legal: "GSharp Media Private Limited", basis: "cited",
+    brand: "Hoopr", legal: "GSharp Media Private Limited (through LV Angel Fund)", basis: "cited",
     source: ["https://inc42.com/company/hoopr/"],
   },
   "zippmat-private-ltd-abhijeet-kudva": {
     brand: "Zippmat", legal: "Zippmat Private Limited", basis: "own-name",
     source: ["https://inc42.com/company/zippmat/"],
   },
+  "integris-medtech": {
+    brand: "Integris", legal: "Integris Medtech Limited", basis: "own-name",
+    source: [ICICI_NSDL, "https://everstonecapital.com/integris-health-raises-primary-capital-ahead-of-planned-ipo/"],
+  },
+  "mother-india-forming": {
+    brand: "Mother India Forming", legal: "Mother India Forming Private Limited", basis: "own-name",
+    source: ["https://www.nbmcw.com/interviews/mother-india-forming.html"],
+  },
+  "sky-capital-rising-titans-fund-i": {
+    brand: "Sky Capital Rising Titans Fund I", legal: "Sky Capital Rising Titans Fund I", basis: "own-name",
+    source: ["statement:sky-capital-rising-titans-fund-sky003-2026-07-31-holdings"],
+  },
+  "big-bang-boom-solutions-private-limited-0-001-pref-12sp44": {
+    brand: "Big Bang Boom Solutions", legal: "Big Bang Boom Solutions Private Limited", basis: "own-name",
+    source: [ICICI_NSDL, "https://inc42.com/company/big-bang-boom-solutions/"],
+  },
+  "telawne-power": {
+    brand: "Telawne Power Equipments", legal: "Telawne Power Equipments Private Limited", basis: "own-name",
+    source: ["https://constructionreviewonline.com/telawne-power-equipments-private-limited/"],
+  },
+  "oilmax-energy": {
+    brand: "Oilmax", legal: "Oilmax Energy Private Limited", basis: "own-name",
+    source: [ICICI_NSDL, "https://oilmax.in/"],
+  },
+  // Two Blue Ashva vehicles, one manager: the review names them as two accounts.
+  "blue-ashva-india-pool-account": {
+    brand: "Blue Ashva", legal: "Blue Ashva India Pool Account", basis: "own-name",
+    source: ["https://inc42.com/buzz/sme-startup-focused-investor-blue-ashva-capital-raises-60-mn-for-maiden-fund/"],
+  },
+  "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability": {
+    brand: "Blue Ashva", legal: "Blue Ashva Varenya Fund", basis: "own-name",
+    source: [ICICI_NSDL, "https://esi.in/finance/investments/sebi/alternative-investment-funds/blue-ashva-varenya-fund/"],
+  },
+  "sks-fasteners": {
+    brand: "SKS Fasteners", legal: "SKS Fasteners Limited", basis: "own-name",
+    source: [ICICI_NSDL],
+  },
+  // Head Infotech ran Ace2Three; renamed Head Digital Works, it trades as A23.
+  "head-infotech": {
+    brand: "A23", legal: "Head Infotech India Private Limited (now Head Digital Works)", basis: "cited",
+    source: ["https://www.legallyindia.com/corporate-maa/khaitan-luthra-on-74m-clairvest-buy-in-rummy-website-ace2three-20170503-8486", "https://www.medianews4u.com/page/4564/?id=1304"],
+  },
+  // UrbanWrk's own pages name a different operator, so no brand is claimed.
+  "urb-ventures": {
+    brand: "URB Ventures", legal: "URB Ventures Private Limited", basis: "own-name",
+    source: [ICICI_NSDL],
+  },
+  "rays-power-experts": {
+    brand: "Rays Experts", legal: "Rays Power Experts Private Limited", basis: "cited",
+    source: [ICICI_NSDL, "https://india.entrepreneur.com/news-and-trends/rays-power-experts-secures-inr-200-m-via-equity-funding/477553"],
+  },
+  "sotefin-bharat": {
+    brand: "Sotefin Bharat", legal: "Sotefin Bharat Limited", basis: "own-name",
+    source: [ICICI_NSDL, "https://www.indiainfoline.com/company/sotefin-bharat-ltd/summary"],
+  },
+  "innoviti-payment-solutions-private-ltd-pranav-koranne": {
+    brand: "Innoviti", legal: "Innoviti Technologies Private Limited (formerly Innoviti Payment Solutions)", basis: "cited",
+    source: ["https://innoviti.com/blogs/innoviti-appoints-former-visa-leader-himanshu-sharma-as-svp-issuing-bank-relationship/", "https://inc42.com/company/innoviti/"],
+  },
+  "pvc-ii-class-a1": {
+    brand: "Pivot Ventures", legal: "Pivot Ventures", basis: "own-name",
+    source: ["https://inc42.com/company/pivot-ventures/"],
+  },
+  "tocf-i-class-a2": {
+    brand: "The OAKS Consumer Fund I", legal: "The OAKS Consumer Fund I", basis: "own-name",
+    source: [MOTILAL_CDSL, "https://inc42.com/buzz/oaks-asset-management-launches-fund-with-inr-500-cr-corpus"],
+  },
+  // No company is named "We Voise"; the family's own statement holds WeVOIS Labs.
+  "we-voise": {
+    brand: "WeVOIS", legal: "WeVOIS Labs Private Limited", basis: "cited",
+    source: [ICICI_NSDL, "https://www.instafinancials.com/company/WEVOIS-LABS-PRIVATE-LIMITED/U74999RJ2018PTC063218"],
+  },
+  "zenith-leisure-holidays": {
+    brand: "Zenith Leisure Holidays", legal: "Zenith Leisure Holidays Limited", basis: "own-name",
+    source: [ICICI_NSDL],
+  },
+  "radiant-innovative-manufacturing": {
+    brand: "Radiant Innovative Manufacturing", legal: "Radiant Innovative Manufacturing Limited", basis: "own-name",
+    source: [ICICI_NSDL, "https://www.instafinancials.com/company/radiant-innovative-manufacturing-limited-U74899DL1988PLC032685"],
+  },
+  // The family's statement holds EMA Partners India's shares; the review's line is its preference shares.
+  "ema-preferred-shares": {
+    brand: "EMA Partners", legal: "EMA Partners India Limited", basis: "own-name",
+    source: [ICICI_NSDL, "https://huntscanlon.com/ema-partners-india-debuts-on-nse-emerge-with-strong-investor-demand/"],
+  },
+  "perplexity-investment": {
+    brand: "Perplexity", legal: "Perplexity AI, Inc.", basis: "own-name",
+    source: ["https://en.wikipedia.org/wiki/Perplexity_AI"],
+  },
+  "runable-investment": {
+    brand: "Runable", legal: "Runable", basis: "own-name",
+    source: ["https://inc42.com/buzz/ai-agent-platform-runable-raises-21-mn-to-help-small-businesses-grow/"],
+  },
+  "nopo-nanotechnologies-india-pvt-ltd-gadhadar-reddy": {
+    brand: "NoPo Nanotechnologies", legal: "NoPo Nanotechnologies India Private Limited", basis: "own-name",
+    source: ["https://www.barandbench.com/dealstreet/jsa-advises-inflexor-tech-on-its-investment-in-nopo-nanotechnologies"],
+  },
+  "home-pecked-e-marketplace-services": {
+    brand: "Homepecked", legal: "Homepecked e-Marketplace Services Private Limited", basis: "own-name",
+    source: ["https://yourstory.com/companies/homepecked"],
+  },
+  "aksum-trademart-pvt-ltd-ankit-jain": {
+    brand: "Aksum", legal: "Aksum Trademart Private Limited", basis: "cited",
+    source: ["https://yourstory.com/companies/aksum"],
+  },
+  // Rurash Financials deals in unlisted shares: the line is Reliance Retail's,
+  // bought through it, and the register says the shares are in demat.
+  "rurash-financials-private-ltd-reliance-retail": {
+    brand: "Reliance Retail", legal: "Reliance Retail Ventures Limited (bought through Rurash Financials)", basis: "cited",
+    source: ["https://www.leadstal.com/sb/rurash-financials-private-limited-las-aif-unlisted-equity-and-dematerialisation", "https://sbnri.com/blog/nri-investment/reliance-retail-unlisted-share-price-ipo"],
+  },
+  // Investment vehicles and lines no public source ties to one company: as printed.
+  "transigo-fleet": { brand: "Transigo Fleet", legal: "Transigo Fleet LLP", basis: "as-printed", source: [] },
+  "sky-vision-cure": { brand: "Sky Vision Cure", legal: "Sky Vision Cure LLP", basis: "as-printed", source: [] },
+  "procyon-enterprise-llp-abhishek-murarka": { brand: "Procyon Enterprise", legal: "Procyon Enterprise LLP", basis: "as-printed", source: [] },
+  "sky-enable-tech": { brand: "Sky Enable Tech", legal: "Sky Enable Tech LLP", basis: "as-printed", source: [] },
+  "fh-enable-llp-aakash-sachdev": { brand: "FH Enable", legal: "FH Enable LLP", basis: "as-printed", source: [] },
+  "fh-edutech": { brand: "FH Edutech", legal: "FH Edutech LLP", basis: "as-printed", source: [] },
+  "variance-pt-ventures-llp-romil-kapadia": { brand: "Variance PT Ventures", legal: "Variance PT Ventures LLP", basis: "as-printed", source: [] },
   // The two review lines this dashboard shows under a neutral name — as printed.
   "a-k-enterprises": { brand: "A K Enterprises", legal: "A K Enterprises", basis: "as-printed", source: [] },
   "inflexor-technologies": { brand: "Inflexor Technologies", legal: "Inflexor Technologies", basis: "as-printed", source: [] },

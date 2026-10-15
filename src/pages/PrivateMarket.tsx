@@ -373,7 +373,7 @@ const brandHover = (label: string, b: BrandFacts): string => {
     ? "the family's own depository statement" : u.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]))].join(", ");
   switch (b.basis) {
     case "cited": return `${label} is the brand of ${legal}${where ? ` — ${where}` : ""}.`;
-    case "own-name": return `${legal} trades under its own name${where ? ` — ${where}` : ""}.`;
+    case "own-name": return `${legal} ${b.legal.length > 1 ? "trade under their own names" : "trades under its own name"}${where ? ` — ${where}` : ""}.`;
     case "as-printed": return `No public source ties this name to one company, so the brand and the entity are as the family's review prints them.`;
     default: return "Not yet mapped to a brand: the name is read off the line itself.";
   }

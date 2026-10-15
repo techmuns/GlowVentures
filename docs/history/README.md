@@ -12,7 +12,7 @@ A code comment citing "CLAUDE.md §…" or "Stage 10xx" resolves in these files.
 | [pipeline.md](pipeline.md) | the ingest pipeline and stages 1–8 (inventory, extraction, reconciliation, book, ledger, live layer, the FOOS spec) |
 | [conventions.md](conventions.md) | the conventions in full |
 | [build.md](build.md) | every npm script, described in full |
-| [stages-1.md](stages-1.md) … [stages-5.md](stages-5.md) | Stage 9 to Stage 10ef, in the order they were written |
+| [stages-1.md](stages-1.md) … [stages-5.md](stages-5.md) | Stage 9 to Stage 10eg, in the order they were written |
 
 New stage notes go at the end of the newest `stages-N.md` (start a new file
 when one passes ~350 KB).
@@ -158,6 +158,7 @@ when one passes ~350 KB).
 - [stages-5](stages-5.md) — Stage 10ed — PRIVATE MARKET: BY BRAND AND BY LEGAL ENTITY
 - [stages-5](stages-5.md) — Stage 10ee — THE AT-COST INVESTMENTS ARE ON PRIVATE MARKET, AND BOTH PAGES SAY SO
 - [stages-5](stages-5.md) — Stage 10ef — PRIVATE MARKET: NO LEGAL-ENTITY TAB, AND A FUNDS / COMPANIES / BOTH SELECTOR
+- [stages-5](stages-5.md) — Stage 10eg — PRIVATE MARKET: THE BRAND COLUMN SHOWS THE BRAND, AND THE LEGAL ENTITY UNDER IT
 - [stages-5](stages-5.md) — Stage 10k — News & Announcements: REMOVED
 - [stages-5](stages-5.md) — Stage 10h — Sector Composition is COMPANY SHARES, because nothing else has a sector
 - [stages-5](stages-5.md) — Stage 10i — THE SAME MISTAKE, ON EVERY OTHER COMPANY-LEVEL SCREEN
