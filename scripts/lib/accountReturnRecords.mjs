@@ -110,7 +110,8 @@ export function buildAccountReturnRecords({ accounts, accountCashFlows, byAccoun
     // Historical appraisals remain candidates when newer holdings arrive without their capital record.
     const appraisals = docs.filter((d) => d.reportType === 'appraisal' && date(d.asOf)
       && d.holdings?.length && d.holdings.every((h) => number(h.marketValue)))
-      .map((d) => ({ ...d, flows: { corpus: round(d.holdings.reduce((n, h) => n + h.marketValue, 0)), periodTo: d.asOf } }));
+      .map((d) => ({ ...d, flows: { corpus: round(d.holdings.reduce((n, h) => n + h.marketValue, 0)), periodTo: d.asOf } }))
+      .filter((d) => d.flows.corpus >= 0);
     const valuations = [...summaries, ...appraisals].sort((a, b) => closeDate(b).localeCompare(closeDate(a))
       || Number(b.reportType === 'appraisal') - Number(a.reportType === 'appraisal') || a.docKey.localeCompare(b.docKey));
     const newest = valuations[0];

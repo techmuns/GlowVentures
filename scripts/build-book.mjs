@@ -4793,7 +4793,7 @@ function build(archived) {
 
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
-    accountReturnRecords: buildAccountReturnRecords({ accounts, positions, accountCashFlows, byAccount }),
+    accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount }),
     capitalMoves, positionTranches, shareMovements,
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,

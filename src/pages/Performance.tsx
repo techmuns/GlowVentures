@@ -24,7 +24,7 @@ import { NavVsIndex } from "@/components/NavVsIndex";
 import { bookReturnOnCost, costedSetLabel } from "@/lib/drilldown";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { Account, AccountBridge, ReturnSeries } from "@/lib/types";
-import { measuredAccountsReturn, accountHasOpeningValue } from "@/lib/returns";
+import { measuredAccountsReturn, accountHasOpeningValue, accountReturnInputs } from "@/lib/returns";
 import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_UNDATED_CAPITAL, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { capitalMovesWithCalls } from "@/lib/tranches";
 
@@ -276,18 +276,17 @@ export function Performance() {
    * account's.
    */
   const statement = statementPortfolio ?? portfolio;
-  const statementMvOf = (accountId: string) =>
-    sum(statement.positions.filter((x) => x.accountId === accountId).map((x) => x.marketValue));
   // The statement registry's own account — on this basis an account the
   // statements do not value keeps the reason they give, and the live figure a
   // published NAV puts on part of it is no figure here.
   const statementAccount = new Map(statement.accounts.map((a) => [a.accountId, a]));
   const xirrByAccount = accounts.map((a) => {
     const one = measuredAccountsReturn(statement, [a]);
+    const input = accountReturnInputs(statement, a);
     const chosen = one.parts[0];
-    const flows = chosen?.flows ?? statement.accountCashFlows?.[a.accountId] ?? [];
-    const mv = chosen?.terminalValue ?? statementMvOf(a.accountId);
-    const terminal = chosen?.asOf.toISOString().slice(0, 10) ?? a.asOf;
+    const flows = input.flows;
+    const mv = chosen?.terminalValue ?? input.value;
+    const terminal = input.asOf;
     const part = one.parts.length > 0;
     const recorded = CAPITAL_RECORD_COUNT[a.accountId] ?? 0;
     return {
@@ -295,12 +294,13 @@ export function Performance() {
       unvalued: statementAccount.get(a.accountId)?.noPositionsReason ?? a.noPositionsReason ?? null,
       mv,
       terminal,
+      gap: input.gap,
       flows: flows.length,
       pct: part ? one.annPct : null,
       toDate: part ? one.toDatePct : null,
       windowDays: part ? one.windowDays : null,
       undated: part ? undatedFor(a.accountId, one.windowStart, terminal) : [],
-      reason: !flows.length
+      reason: !part && input.gap ? input.gap : !flows.length
         ? recorded > 0
           ? `no opening-value flow series here · its ${recorded} dated capital movement${recorded === 1 ? " is" : "s are"} on the Transactions card`
           : "no dated capital movements in this account's statements"
@@ -811,7 +811,7 @@ export function Performance() {
                       ? <AbsentCell reason={x.unvalued} />
                       : money(x.mv)}
                   </td>
-                  <td className="px-3 py-2.5 text-right mono text-slate-400">{x.terminal}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-400" title={x.gap ?? undefined}>{x.terminal}</td>
                   <td className="px-3 py-2.5 text-right mono">
                     {x.pct == null
                       ? <span className="text-[11px] text-slate-500" title={x.reasonTitle}>{DASH} {x.reason}</span>

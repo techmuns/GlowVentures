@@ -9395,6 +9395,7 @@ const PERF_BOOK = (() => {
     const stmt = statementBookPositions(src);
     const live = bookArray(src, "BOOK_POSITIONS");
     const flowsBy = bookObject(src, "BOOK_ACCOUNT_CASH_FLOWS");
+    const latestReturns = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS") ?? {};
     const undated = bookArray(src, "BOOK_UNDATED_CAPITAL");
     if (!bridgesBy || !accounts || !stmt || !live || !flowsBy || !undated || !CAPITAL_RECORD_BOOK) return null;
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
@@ -9446,8 +9447,10 @@ const PERF_BOOK = (() => {
     // ── the money-weighted table ──
     const mvOf = (rows, id) => rows.filter((p) => p.accountId === id).reduce((t, p) => t + (Number(p.marketValue) || 0), 0);
     const perAccount = new Map(accounts.map((a) => [a.accountId, {
-      stmtMV: mvOf(stmt, a.accountId), liveMV: mvOf(live, a.accountId), asOf: a.asOf,
-      unvalued: a.noPositionsReason ?? null, flows: (flowsBy[a.accountId] ?? []),
+      stmtMV: latestReturns[a.accountId]?.record?.value ?? mvOf(stmt, a.accountId), liveMV: mvOf(live, a.accountId),
+      asOf: latestReturns[a.accountId]?.record?.asOf ?? a.asOf,
+      unvalued: a.noPositionsReason ?? null,
+      flows: latestReturns[a.accountId]?.record?.flows ?? (latestReturns[a.accountId] ? [] : flowsBy[a.accountId] ?? []),
       symbols: stmt.some((p) => p.accountId === a.accountId && p.symbol),
     }]));
     const measured = [...perAccount].filter(([, x]) => x.stmtMV > 0 && x.flows.length
