@@ -7382,6 +7382,21 @@ const crOfMoney = (s) => {
   return m ? crU(m[1], m[2]) : NaN;
 };
 
+// THE PROVIDER WITH THE MOST DOCUMENTS, off the archive manifest — so the
+// Statement Library's opened-folder view is walked on a real, largest folder and
+// the next drop picks its own worst case rather than a name typed here.
+const STATEMENT_TOP_PROVIDER = (() => {
+  try {
+    const m = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+    const counts = new Map();
+    for (const e of m) {
+      const p = e.provider || "(unidentified)";
+      counts.set(p, (counts.get(p) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  } catch { return null; }
+})();
+
 const ROUTES = [
   // THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE. Polycab is carried in
   // `BOOK_POLYCAB` and in NO book total, so two things have to be true at once and
@@ -8568,6 +8583,10 @@ const ROUTES = [
   // viewer does, so it renders offline against the preview like every other
   // admin page; the universal checks (overflow, contrast, stray zeros) cover it.
   ["statements", "/statements"],
+  // ...AND ONE FOLDER OPENED, which is a different view — the file blocks grouped
+  // by format. Addressed by `?provider=`, derived above so it opens on the
+  // largest real folder.
+  ["statements-folder", () => `/statements?provider=${encodeURIComponent(STATEMENT_TOP_PROVIDER ?? "none-in-the-archive")}`],
   ["upload", "/upload"],
   // THE MEMBER SCOPE (Stage 10di). Each address names its members with
   // `?members=`, which is the selector's own source of truth, so a scoped page
