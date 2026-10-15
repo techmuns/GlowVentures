@@ -2,7 +2,7 @@
  * ── MORNING CIO → RETURNS (Stage 10dq) ───────────────────────────────────────
  *
  * A period selector (MTD, YTD, FYTD, trailing 1Y/2Y/3Y, since investment and a
- * custom From/To), a return-type DROPDOWN over the four standard types
+ * custom From/To), a return-type DROPDOWN over the three selected types
  * `RETURN_TYPES` carries, each explained in one short line beside it (Stage
  * 10eb), and an info popup for the calculation selected, with the window
  * actually measured printed beside the one asked for.

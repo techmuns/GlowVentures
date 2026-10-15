@@ -27,14 +27,14 @@
  *   - an account whose own statements print capital no dated row carries
  *     inside the window (`BOOK_UNDATED_CAPITAL`).
  *
- * A capital move inside the window is a dated flow, so the four measures
+ * A capital move inside the window is a dated flow, so the three measures
  * handle "investments made during the window" each in their own way and say
  * how.
  */
 import { xirr, type DatedFlow } from "@/lib/xirr";
 
 export type PeriodKey = "mtd" | "ytd" | "fytd" | "y1" | "y2" | "y3" | "inception" | "custom";
-export type ReturnType = "xirr" | "absolute" | "twr" | "cagr";
+export type ReturnType = "xirr" | "absolute" | "cagr";
 
 export const PERIODS: readonly { key: PeriodKey; label: string; title: string }[] = [
   { key: "fytd", label: "FYTD", title: "Financial year to date — from 31 March, the last day of the previous financial year" },
@@ -48,7 +48,7 @@ export const PERIODS: readonly { key: PeriodKey; label: string; title: string }[
 ] as const;
 
 /**
- * The four returns every investor reads, and nothing more exotic (the family's
+ * The three returns the family selected, and nothing more exotic (the family's
  * ask, Stage 10eb). `short` is drawn under the selector; `title` is its hover.
  */
 export const RETURN_TYPES: readonly { key: ReturnType; label: string; short: string; title: string }[] = [
@@ -56,10 +56,8 @@ export const RETURN_TYPES: readonly { key: ReturnType; label: string; short: str
     title: "XIRR (money-weighted return): the yearly rate that accounts for when each rupee went in and came out. The standard measure for SIPs, top-ups and redemptions. Over less than a year it is shown for the period, never stretched to a year." },
   { key: "absolute", label: "Absolute return", short: "Total gain ÷ money invested, not per year",
     title: "Absolute return: total gain as a percentage of the money invested — the opening value plus anything added during the period. Since investment, gain over what was paid in. Not annualised." },
-  { key: "twr", label: "Time-weighted return", short: "Gain ÷ money at work, weighted by days held",
-    title: "Time-weighted return (Modified Dietz): gain over the money actually at work, each top-up or withdrawal counted only for the days it was invested. The way fund managers report performance. Not annualised." },
   { key: "cagr", label: "CAGR", short: "Yearly growth rate · needs a year or more",
-    title: "CAGR (compound annual growth rate): the steady yearly rate that would turn the starting money into today's value — the time-weighted return stated per year. Only over a year or more." },
+    title: "CAGR (compound annual growth rate): the steady yearly growth rate over the measured period, accounting for dated capital changes. Only over a year or more." },
 ] as const;
 
 /** One account's statement valuation on one date. */
@@ -298,26 +296,22 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
     return finish({ shown: true, pct: p, basis: "window", formula,
       worked: `Gain ${money(V1)} − ${money(V0)} − ${money(C)} = ${money(gain)}, over ${money(V0)} + ${money(cin)} invested = ${money(base)} → ${pct(p)} over ${D} days, not annualised.` });
   }
-  // Time-weighted (Modified Dietz), every opening and closing treated as a
-  // dated flow so accounts that open or close on different days pool honestly.
+  // CAGR's period growth uses dated capital weights, including each account's
+  // own opening and closing dates, before it is stated per year.
   const denom = weightCapital(working);
   if (!(denom > 0)) return finish({ shown: false, reason: "the money at work over this period is not positive", formula });
   const p = (gain / denom) * 100;
   working.periodPct = p;
-  if (type === "twr") return finish({ shown: true, pct: p, basis: "window", formula,
-    worked: `Gain ${money(gain)}, over money at work weighted by days held ${money(denom)} → ${pct(p)} over ${D} days, not annualised.` });
-  // CAGR: the time-weighted return stated per year.
-  if (D < 365) return finish({ shown: false, reason: `CAGR is a yearly growth rate. This app shows it only for measured periods of at least 365 days. This period has ${D} days. For a shorter period, select Absolute return or Time-weighted return`, formula });
+  if (D < 365) return finish({ shown: false, reason: `CAGR is a yearly growth rate. This app shows it only for measured periods of at least 365 days. This period has ${D} days. For a shorter period, select Absolute return or XIRR`, formula });
   const g = (Math.pow(1 + p / 100, 365 / D) - 1) * 100;
   return finish({ shown: true, pct: g, basis: "annual", formula,
-    worked: `Time-weighted ${pct(p)} over ${D} days: (1 + ${pct(p)})^(365/${D}) − 1 = ${pct(g)} a year.` });
+    worked: `Period gain over dated capital ${pct(p)} across ${D} days: (1 + ${pct(p)})^(365/${D}) − 1 = ${pct(g)} a year.` });
 }
 
 export const FORMULAS: Record<ReturnType, string> = {
   xirr: "Σ CFₜ ÷ (1 + r)^((t − t₀)/365) = 0 — the opening value as money in, every top-up and withdrawal on its date, the closing value as money out. Under a year: (1 + r)^(days/365) − 1.",
   absolute: "(V₁ − V₀ − C) ÷ (V₀ + money added during the period)",
-  twr: "(V₁ − V₀ − C) ÷ (V₀ + Σ wᵢ·Cᵢ),  wᵢ = days Cᵢ was invested ÷ days in the period",
-  cagr: "(1 + time-weighted return)^(365 ÷ days) − 1 — over a year or more",
+  cagr: "((1 + gain ÷ money at work weighted by days held)^(365 ÷ days) − 1) × 100 — over a year or more",
 };
 
 /** Since-investment, on cost: each account's capital, its value and its dated flows. */
@@ -369,23 +363,11 @@ export function measureInception(rows: InceptionRow[], type: ReturnType, money: 
     return finish({ shown: true, pct: w, basis: "window", formula,
       worked: `${D} days is under a year, so the rate is not annualised: ${pct(w)} over the period.` });
   }
-  if (type === "twr") {
-    // Modified Dietz from the first purchase: no opening value, each purchase
-    // and redemption weighted by the days it was invested, each account's
-    // value closing on its own date.
-    if (!(D > 0)) return finish({ shown: false, reason: "the money has been in for no days", formula });
-    const denom = weightCapital(working);
-    if (!(denom > 0)) return finish({ shown: false, reason: "the money at work since the first purchase is not positive", formula });
-    const p = (gain / denom) * 100;
-    working.periodPct = p;
-    return finish({ shown: true, pct: p, basis: "cumulative", formula,
-      worked: `Gain ${money(gain)}, over money at work weighted by days held ${money(denom)} → ${pct(p)} since ${from}, not annualised.` });
-  }
   const buys = rows.flatMap((r) => r.flows.filter((f) => f.amount < 0));
   if (buys.length !== 1 || rows.some((r) => r.flows.some((f) => f.amount > 0))) {
     return finish({ shown: false, reason: "the capital went in over several dated purchases, which one compound rate from a single start cannot describe — XIRR is its measure", formula });
   }
-  if (D < 365) return finish({ shown: false, reason: `CAGR is a yearly growth rate. This app shows it only for measured periods of at least 365 days. This period has ${D} days. For a shorter period, select Absolute return or Time-weighted return`, formula });
+  if (D < 365) return finish({ shown: false, reason: `CAGR is a yearly growth rate. This app shows it only for measured periods of at least 365 days. This period has ${D} days. For a shorter period, select Absolute return or XIRR`, formula });
   working.growthRatio = val / paid;
   const g = (Math.pow(val / paid, 365 / D) - 1) * 100;
   return finish({ shown: true, pct: g, basis: "annual", formula, worked: `(${money(val)} ÷ ${money(paid)})^(365/${D}) − 1 = ${pct(g)} a year.` });
@@ -394,6 +376,5 @@ export function measureInception(rows: InceptionRow[], type: ReturnType, money: 
 export const INCEPTION_FORMULAS: Record<ReturnType, string> = {
   xirr: "Σ CFₜ ÷ (1 + r)^((t − t₀)/365) = 0 — every purchase and redemption on its date, each account's value as money out on its own value date",
   absolute: "(Value today + taken out − paid in) ÷ paid in",
-  twr: "Gain ÷ Σ (paid in × days held ÷ days since first purchase)",
   cagr: "(Value today ÷ paid in)^(365 ÷ days since the purchase) − 1 — one purchase only",
 };

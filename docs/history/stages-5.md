@@ -4578,3 +4578,9 @@ the type of file each folder contains … name the folder Motilal Oswal"*
   and formats are its own documents', the counts sum to the manifest, and the
   grouping is deterministic. Route `statements` is clean on the universal checks
   (no overflow, contrast or stray zeros). 318 documents, 39 providers.
+
+### Stage 10ek — ONLY XIRR, ABSOLUTE RETURN AND CAGR
+
+- Removed Time-weighted return from the return type, selectors, formulas, help text and NAV & Performance section. Old `rtype=twr` links fall back to XIRR. The other three calculations and info popups remain.
+- The CAGR explanation now names its existing dated-capital calculation directly; shorter-period guidance points to Absolute return or XIRR. Historical statement data is retained in the source model.
+- Checks assert exactly three options, no retired section or popup references, all 24 method/period combinations, and the old-link fallback.
