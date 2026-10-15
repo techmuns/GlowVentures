@@ -309,7 +309,8 @@ const amfiFile = (() => {
   ok("exactly the rows off one unit basis are flagged",
     flagged.length === indep.length && flagged.every((r) => indep.includes(r)),
     `flagged ${flagged.map((r) => r.security).join(", ") || "none"} · expected ${indep.map((r) => r.security).join(", ") || "none"}`);
-  const top = [...rows].filter((p) => (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p))))
+  const top = [...rows].filter((p) => p.marketValue > 0 && (p.quantity ?? 0) > 0
+    && schemes.has(p.securityKey!) && (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p))))
     .sort((a, b) => b.marketValue - a.marketValue)[0];
   const at = (f: number) => navMoverModel([{ ...top, marketValue: top.marketValue * f }], accts, schemes).rows;
   const tenfold = top ? at(10) : [], near1 = top ? at(1.5) : [];

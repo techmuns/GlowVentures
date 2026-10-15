@@ -1,0 +1,254 @@
+{
+ "name": "capital-register",
+ "rows": [
+  [
+   "setDate",
+   "description",
+   "tranDate",
+   "notes",
+   "credit",
+   "debit",
+   "balance"
+  ],
+  [
+   "Fund Deposit",
+   "29/07/2025",
+   "29/07/2025",
+   "0",
+   "5,00,00,000.00",
+   "0.00",
+   "5,00,00,000.00",
+   "5,00,00,000.00",
+   "0.00",
+   "5,00,00,000.00"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "13/08/2025",
+   "13/08/2025",
+   "TDS ON Gateway Distriparks Tax Deducted at Source",
+   "0.00",
+   "4,371.00",
+   "4,99,95,629.00",
+   "0.00",
+   "4,371.00",
+   "4,99,95,629.00"
+  ],
+  [
+   "- -4370.999999999999"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "04/09/2025",
+   "04/09/2025",
+   "TDS On Shree Digvijay Cement Company Limited",
+   "0.00",
+   "4,427.00",
+   "4,99,91,202.00",
+   "0.00",
+   "4,427.00",
+   "4,99,91,202.00"
+  ],
+  [
+   "Tax Deducted at Source - -4427"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "16/10/2025",
+   "16/10/2025",
+   "TDS ON Navneet Education Limited Tax Deducted at",
+   "0.00",
+   "2,519.00",
+   "4,99,88,683.00",
+   "0.00",
+   "2,519.00",
+   "4,99,88,683.00"
+  ],
+  [
+   "Source - -2519"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "20/10/2025",
+   "20/10/2025",
+   "TDS ON Nuvama Wealth Management Limited Tax",
+   "0.00",
+   "2,471.00",
+   "4,99,86,212.00",
+   "0.00",
+   "2,471.00",
+   "4,99,86,212.00"
+  ],
+  [
+   "Deducted at Source - -2471"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "27/11/2025",
+   "27/11/2025",
+   "TDS ON Amrutanjan Health Care Limited Tax",
+   "0.00",
+   "1,319.00",
+   "4,99,84,893.00",
+   "0.00",
+   "1,319.00",
+   "4,99,84,893.00"
+  ],
+  [
+   "Deducted at Source - -1319"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "03/12/2025",
+   "03/12/2025",
+   "TDS ON Navneet Education Limited Tax Deducted at",
+   "0.00",
+   "2,519.00",
+   "4,99,82,374.00",
+   "0.00",
+   "2,519.00",
+   "4,99,82,374.00"
+  ],
+  [
+   "Source - -2519"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "18/02/2026",
+   "18/02/2026",
+   "TDS ON Amrutanjan Health Care Limited Tax",
+   "0.00",
+   "367.00",
+   "4,99,82,007.00",
+   "0.00",
+   "367.00",
+   "4,99,82,007.00"
+  ],
+  [
+   "Deducted at Source - -367"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "20/02/2026",
+   "20/02/2026",
+   "TDS ON Gateway Distriparks Limited Tax Deducted",
+   "0.00",
+   "14,566.00",
+   "4,99,67,441.00",
+   "0.00",
+   "14,566.00",
+   "4,99,67,441.00"
+  ],
+  [
+   "at Source - -14566.000000000002"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "27/05/2026",
+   "27/05/2026",
+   "TDS ON Nuvama Wealth Management Limited Tax",
+   "0.00",
+   "2,471.00",
+   "4,99,64,970.00",
+   "0.00",
+   "2,471.00",
+   "4,99,64,970.00"
+  ],
+  [
+   "Deducted at Source - -2471"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "15/06/2026",
+   "15/06/2026",
+   "TDS ON Navneet Education Limited Tax Deducted at",
+   "0.00",
+   "2,519.00",
+   "4,99,62,451.00",
+   "0.00",
+   "2,519.00",
+   "4,99,62,451.00"
+  ],
+  [
+   "Source - -2519"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "17/08/2026",
+   "17/08/2026",
+   "TDS on Greaves Cotton Limited Tax Deducted at",
+   "0.00",
+   "5,056.00",
+   "4,99,57,395.00",
+   "0.00",
+   "5,056.00",
+   "4,99,57,395.00"
+  ],
+  [
+   "Source - -5056"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "24/08/2026",
+   "24/08/2026",
+   "TDS on Gateway Distriparks Limited Tax Deducted at",
+   "0.00",
+   "9,104.00",
+   "4,99,48,291.00",
+   "0.00",
+   "9,104.00",
+   "4,99,48,291.00"
+  ],
+  [
+   "Source - -9104"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "03/10/2026",
+   "03/10/2026",
+   "TDS on Amrutanjan Health Care Limited Tax",
+   "0.00",
+   "1,577.00",
+   "4,99,46,714.00",
+   "0.00",
+   "1,577.00",
+   "4,99,46,714.00"
+  ],
+  [
+   "Deducted at Source - -1577"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "05/10/2026",
+   "05/10/2026",
+   "TDS on Shree Digvijay Cement Company Limited",
+   "0.00",
+   "2,952.00",
+   "4,99,43,762.00",
+   "0.00",
+   "2,952.00",
+   "4,99,43,762.00"
+  ],
+  [
+   "Tax Deducted at Source - -2952"
+  ],
+  [
+   "08/10/2026",
+   "1"
+  ],
+  [
+   "Total",
+   "Closing Balance",
+   "5,00,00,000.00",
+   "56,238.00",
+   "4,99,43,762.00",
+   "5,00,00,000.00",
+   "56,238.00",
+   "4,99,43,762.00"
+  ],
+  [
+   "08/10/2026",
+   "2"
+  ]
+ ]
+}

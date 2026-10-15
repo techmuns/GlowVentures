@@ -98,7 +98,7 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
 const isPms = (p: Position) => ACC.get(p.accountId)?.engagement === "PMS";
 /** The NAV the page overlays: a usable published NAV times the units held. */
 const NAV = new Map(BOOK_FUND_NAVS.filter((e) => e.usableForValue && e.nav > 0).map((e) => [e.securityKey, e]));
-const navOf = (p: Position) => (!p.live && (p.quantity ?? 0) > 0 ? NAV.get(p.securityKey) ?? null : null);
+const navOf = (p: Position) => (!p.live && !p.review && (p.quantity ?? 0) > 0 ? NAV.get(p.securityKey) ?? null : null);
 const navMV = (p: Position) => { const e = navOf(p); return e ? p.quantity! * e.nav : p.marketValue; };
 /**
  * AMFI's date for a line the page prices at a NAV: the overlay's, or — for a
@@ -640,9 +640,9 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   ok("every row says how and when it is priced",
      priced.every((v) => /^(Statement|AMFI NAV|Live quote|Review \(MOPWM\)) (\d{4}-\d\d-\d\d|undated)( \+ (Statement|AMFI NAV|Live quote|Review \(MOPWM\)) (\d{4}-\d\d-\d\d|undated))*$/.test(v)),
      priced.filter((v) => !/^(Statement|AMFI NAV|Live quote|Review \(MOPWM\)) /.test(v)).slice(0, 3).join("; "));
-  const navKeys = new Set(lines.filter((p) => navDateOf(p)).map((p) => p.securityKey));
-  eq("a row is on AMFI's NAV exactly where the page priced its scheme at one",
-     priced.filter((v) => v.startsWith("AMFI NAV")).length, navKeys.size);
+  const navKeys = new Set(lines.filter((p) => p.marketValue > 0 && navDateOf(p)).map((p) => p.securityKey));
+  eq("a row names AMFI's NAV wherever any of its lines use it, including mixed pricing bases",
+     priced.filter((v) => v.includes("AMFI NAV ")).length, navKeys.size);
   const byName = new Map<string, Position[]>();
   for (const p of PAGE) if (NAV_SET.held.includes(RAW[PAGE.indexOf(p)])) {
     const n = displaySecurity(p.security);

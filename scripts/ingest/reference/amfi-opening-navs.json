@@ -1,0 +1,50 @@
+[
+  {
+    "isin": "INF179KB1HT1",
+    "schemeCode": "119110",
+    "scheme": "HDFC Overnight Fund - Growth Option - Direct Plan",
+    "nav": 3992.7821,
+    "date": "2026-03-31",
+    "source": "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
+  },
+  {
+    "isin": "INF179K01830",
+    "schemeCode": "100119",
+    "scheme": "HDFC Balanced Advantage Fund - Growth Plan",
+    "nav": 483.49,
+    "date": "2026-03-31",
+    "source": "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
+  },
+  {
+    "isin": "INF247L01ED1",
+    "schemeCode": "153187",
+    "scheme": "Motilal Oswal Arbitrage Fund-Direct Plan-Growth",
+    "nav": 10.9571,
+    "date": "2026-03-31",
+    "source": "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
+  },
+  {
+    "isin": "INF109KC1P81",
+    "schemeCode": "148822",
+    "scheme": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF - Direct Plan - Growth",
+    "nav": 16.9347,
+    "date": "2026-03-31",
+    "source": "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
+  },
+  {
+    "isin": "INF174K01LF9",
+    "schemeCode": "120158",
+    "scheme": "Kotak Large & Mid Cap Fund - Direct- Growth",
+    "nav": 361.156,
+    "date": "2026-03-31",
+    "source": "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
+  },
+  {
+    "isin": "INF205K01122",
+    "schemeCode": "105603",
+    "scheme": "Invesco India Arbitrage Fund - Regular Plan - Growth Option",
+    "nav": 33.3376,
+    "date": "2026-03-31",
+    "source": "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
+  }
+]

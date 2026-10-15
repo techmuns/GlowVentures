@@ -321,8 +321,8 @@ for (const g of flowGated) {
 // own statement value, its own statement date — and the helper must agree.
 console.log("\n── the window ends where the pool closes ──");
 {
-  const stmt = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS } as never;
-  const got = measuredAccountsReturn(stmt, BOOK_ACCOUNTS);
+  const stmt = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS };
+  const got = measuredAccountsReturn(stmt as never, BOOK_ACCOUNTS);
   const mine = measurable.filter((a) => accountMV(a.accountId) > 0);
   const flows = mine.flatMap((a) => [
     ...(BOOK_ACCOUNT_CASH_FLOWS[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount })),
@@ -344,9 +344,10 @@ console.log("\n── the window ends where the pool closes ──");
   // LOAD-BEARING: the book's newest date must lie after the pool's last close,
   // or ending the window on it would change nothing and this would pass against
   // the defect.
-  ok("the book's newest date lies after the pool's last close, so the rule is doing work",
-    BOOK_AS_OF > lastClose, `${BOOK_AS_OF} vs ${lastClose}`);
-  const wrongDays = Math.round((Date.parse(BOOK_AS_OF) - firstFlow.getTime()) / 864e5);
+  const newerBookDate = new Date(Date.parse(lastClose) + 30 * 86400000).toISOString().slice(0,10);
+  const laterBook = measuredAccountsReturn({ ...stmt, asOf:newerBookDate } as never, BOOK_ACCOUNTS);
+  eq('a later unrelated book date cannot extend the measured closing date',laterBook.lastClose,lastClose);
+  const wrongDays = Math.round((Date.parse(newerBookDate) - firstFlow.getTime()) / 864e5);
   const wrong = moneyWeightedReturn(got.annPct, wrongDays);
   ok("...and ending it there would move the figure by more than a point",
     mw.pct != null && wrong.pct != null && Math.abs(wrong.pct - mw.pct) > 1,

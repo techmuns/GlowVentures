@@ -484,7 +484,7 @@ console.log("── what a row says about its figure is true of the figure (SC-C
   // the depository's units beside it.
   const twinRows = screenIndex.filter((e) => e.kind === "holding" && /rows for ISIN/.test(e.detail));
   const isinKeys = new Map<string, Set<string>>();
-  for (const p of dedupedPositions(screenPositions)) {
+  for (const p of currentHoldings(dedupedPositions(screenPositions))) {
     const isin = (SCHEME_NAMES as Record<string, { isin: string }>)[p.securityKey]?.isin ?? p.isin;
     if (isin && !small.has(p.securityKey)) isinKeys.set(isin, (isinKeys.get(isin) ?? new Set()).add(p.securityKey));
   }
@@ -522,8 +522,12 @@ console.log("── what a row says about its figure is true of the figure (SC-C
   // …and the two books differ here, or the check above passes over one branch.
   const holdsOn = (rows: readonly typeof positions[number][]) => currentHoldings(dedupedPositions([...rows]))
     .some((p) => groupKeyFor("category", idx, p) === "Cash" && /\barbitrage\b/i.test(p.security));
-  ok("…and one book holds an arbitrage fund while the other does not, so both branches are exercised",
-    holdsOn(screenPositions) && !holdsOn(positions));
+  const withoutArbitrage = positions.filter(p => !/\barbitrage\b/i.test(p.security));
+  const noArbIndex = buildSearchIndex({ positions:withoutArbitrage, consolidated:dedupedPositions(withoutArbitrage),
+    accounts, money, recorded:BOOK_UNVALUED_HOLDINGS, capitalMoves:BOOK_CAPITAL_MOVES, fenced:fencedIdentityOf(BOOK_POLYCAB) });
+  ok("constructed: removing arbitrage holdings exercises the branch without arbitrage",
+    holdsOn(screenPositions) && !holdsOn(withoutArbitrage)
+      && !searchEntries(noArbIndex,'arbitrage',10).some(h => cashIdsOf(noArbIndex).includes(h.entry.id)));
   ok("…and 'net worth' is not answered with the Current Value of Holdings", top("net worth")?.id !== "fig:book", top("net worth")?.id);
   ok("…and the Transactions tab no longer promises every redemption", !/every dated/.test(index.find((e) => e.id === "view:transactions")?.detail ?? "every dated"));
 }

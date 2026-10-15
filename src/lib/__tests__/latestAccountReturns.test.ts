@@ -11,12 +11,11 @@ const statement = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS,
   privateMarkets: empty } as unknown as Portfolio;
 const before = measuredAccountsReturn({ ...statement, accountReturnRecords: undefined }, statement.accounts);
 const current = measuredAccountsReturn(statement, statement.accounts);
-assert.equal(before.lastClose, '2026-08-13');
-assert.equal(current.lastClose, '2026-09-22');
-assert.equal(current.parts.length, before.parts.length);
-assert.equal(current.windowDays, 174);
+assert(current.lastClose! >= '2026-10-07');
+assert(current.parts.length > before.parts.length, 'unit-ledger openings add previously excluded accounts');
+assert.equal(current.windowStart, '2026-04-01');
+assert.equal(current.windowDays, Math.round((Date.parse(current.lastClose!) - Date.parse(current.windowStart!)) / 86400000));
 const id = 'green-lantern-capital-llp-510861';
-assert.equal(BOOK_ACCOUNTS.find(a => a.accountId === id)!.asOf, '2026-07-27');
 const part = current.parts.find(p => p.accountId === id)!;
 assert.equal(part.terminalValue, 116019848);
 assert.equal(part.asOf.toISOString().slice(0, 10), '2026-09-22');
@@ -41,7 +40,12 @@ assert.equal(accountReturnInputs(statement, laterHoldings).asOf, '2026-09-22', '
 const missingRecord = { ...one, accountReturnRecords: { [id]: { ...BOOK_ACCOUNT_RETURN_RECORDS[id], record: null } } };
 assert.equal(measuredAccountsReturn(missingRecord, missingRecord.accounts).parts.length, 0, 'an explicitly unverified endpoint cannot fall back to incomplete flows');
 const carnelian = current.parts.find(p => p.accountNo === '3517383')!;
-assert.equal(carnelian.asOf.toISOString().slice(0, 10), '2026-07-10', 'a bank book ending in July cannot certify an August closing');
+assert.equal(carnelian.asOf.toISOString().slice(0, 10), '2026-10-07', 'newly retrieved reconciled capital advances the closing');
+for (const no of ['3000048','10355977','36378950','36379637','3041491145','90414963315','15644806','15725046','16002141','7125255']) {
+  assert(current.parts.some(p => p.accountNo === no), `recovered verified inputs include ${no}`);
+}
+assert.equal(current.parts.find(p => p.accountNo === '3000048')!.terminalValue,0);
+assert.equal(current.parts.find(p => p.accountNo === '36378950')!.asOf.toISOString().slice(0,10),'2026-10-01','NAV date, not statement print date');
 const redeemed = { ...one, accountReturnRecords: { [id]: { latestValuationDate: '2026-09-22', gap: null, record: {
   ...BOOK_ACCOUNT_RETURN_RECORDS[id].record!, value: 0, flows: [
     { date: '2026-04-01', amount: -100, description: 'Opening portfolio value' },

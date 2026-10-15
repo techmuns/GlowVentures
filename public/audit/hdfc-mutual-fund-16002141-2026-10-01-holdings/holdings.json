@@ -1,0 +1,50 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "INF179KB1HT1",
+   "HDFC Overnight Fund - Direct Plan - Growth Option",
+   0,
+   4078.5457,
+   "2026-08-31",
+   null,
+   0
+  ],
+  [
+   "INF179KA1RW5",
+   "HDFC Small Cap Fund - Direct Growth Plan",
+   0,
+   160.949,
+   "2026-08-31",
+   null,
+   0
+  ],
+  [
+   "INF179K01830",
+   "HDFC Balanced Advantage Fund - Regular Plan - Growth",
+   49917.632,
+   525.843,
+   "2026-08-31",
+   null,
+   26248837.36
+  ],
+  [
+   "INF179KB1HV7",
+   "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+   0,
+   1019.82,
+   "2026-08-31",
+   null,
+   0
+  ]
+ ]
+}

@@ -243,7 +243,7 @@ export function Performance() {
     const recorded = CAPITAL_RECORD_COUNT[a.accountId] ?? 0;
     return {
       account: a,
-      unvalued: statementAccount.get(a.accountId)?.noPositionsReason ?? a.noPositionsReason ?? null,
+      unvalued: input.source ? null : statementAccount.get(a.accountId)?.noPositionsReason ?? a.noPositionsReason ?? null,
       mv,
       terminal,
       gap: input.gap,
@@ -256,14 +256,14 @@ export function Performance() {
         ? recorded > 0
           ? `no opening-value flow series here · its ${recorded} dated capital movement${recorded === 1 ? " is" : "s are"} on the Transactions card`
           : "no dated capital movements in this account's statements"
-        : !accountHasOpeningValue(statement, a.accountId) ? "no performance summary for the window, so no opening value to measure against"
+        : !accountHasOpeningValue(statement, a.accountId) ? "no verified opening value for this period"
         : !(mv > 0) ? "nothing is valued on this account's statement, so there is nothing to close its flows against"
         : one.annPct == null ? "its flows and its statement value do not solve for a single rate"
         : null,
       // The long form, on the reason's own hover: the visible line is capped
       // at one short line inside a table (Stage 10cp).
       reasonTitle: !flows.length && recorded > 0
-        ? `This rate is struck on a flow series that starts from an opening portfolio value, which only a performance summary prints, and this account's statements print none. Its ${recorded} dated capital movement${recorded === 1 ? " is" : "s are"} on the Transactions card — the fund's own allotments, the mandate's register or a drawdown fund's dated calls.`
+        ? `${recorded} dated capital movements are recorded, but a verified opening value and complete cash-flow history are still needed.`
         : undefined,
     };
   });

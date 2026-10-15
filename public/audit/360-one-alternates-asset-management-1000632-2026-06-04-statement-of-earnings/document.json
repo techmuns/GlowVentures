@@ -69,6 +69,7 @@
   "class": "A3"
  },
  "jointHolders": [],
+ "checks": null,
  "stitches": [],
  "derivedPortfolioTotal": null
 }

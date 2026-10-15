@@ -1,0 +1,68 @@
+{
+ "name": "capital-register",
+ "rows": [
+  [
+   "setDate",
+   "description",
+   "tranDate",
+   "notes",
+   "credit",
+   "debit",
+   "balance"
+  ],
+  [
+   "Opening Balance",
+   "01/04/2026",
+   "01/04/2026",
+   "0.00",
+   "0.00",
+   "9,988,986.00",
+   "0.00",
+   "0.00",
+   "9,988,986.00"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "26/08/2026",
+   "26/08/2026",
+   "TDS on Dividend on security ARVIND FASHIONS",
+   "0.00",
+   "640.00",
+   "9,988,346.00",
+   "0.00",
+   "640.00",
+   "9,988,346.00"
+  ],
+  [
+   "LIMITED Tax Deducted at Source - -640"
+  ],
+  [
+   "TDS Trf to Capital A/c",
+   "26/08/2026",
+   "26/08/2026",
+   "TDS on Dividend on security INDIAN METALS AND",
+   "0.00",
+   "1,125.00",
+   "9,987,221.00",
+   "0.00",
+   "1,125.00",
+   "9,987,221.00"
+  ],
+  [
+   "FERRO ALLOYS LTD. Tax Deducted at Source - -"
+  ],
+  [
+   "1125"
+  ],
+  [
+   "Total",
+   "Closing Balance",
+   "0.00",
+   "1,765.00",
+   "9,987,221.00",
+   "0.00",
+   "1,765.00",
+   "9,987,221.00"
+  ]
+ ]
+}

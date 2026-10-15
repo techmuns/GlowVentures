@@ -272,7 +272,7 @@ const withEngagement = (pred, engagement) => ARCHIVE.map((d) => pred(d.docKey)
     tv.length === 4, JSON.stringify(tv));
   const fo = engagementEvidence(withEngagement((k) => k.startsWith("motilal-oswal-founders"), "Category II AIF - drawdown, with a commitment and called capital"))
     .filter((r) => r.docKey.startsWith("motilal-oswal-founders") && !r.tier);
-  ok("the old Founders string fails the evidence check on all three documents", fo.length === 3, JSON.stringify(fo));
+  ok("the old Founders string fails the evidence check on every delivered document", fo.length === ARCHIVE.filter(d => d.docKey.startsWith('motilal-oswal-founders')).length, JSON.stringify(fo));
   const sme = engagementEvidence(withEngagement((k) => k.startsWith("india-sme"), "Category II AIF - drawdown, with a commitment and uncalled capital"))
     .filter((r) => r.docKey.startsWith("india-sme") && !r.tier);
   ok("the old India SME string fails the evidence check on all three folios", sme.length === 3, JSON.stringify(sme));

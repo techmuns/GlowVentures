@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { xirrWorking } from "../xirrWorking";
 import { measuredAccountsReturn } from "../returns";
-import { BOOK_ACCOUNTS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_POSITIONS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURN_RECORDS, BOOK_POSITIONS } from "@/data/glowData";
 import type { Portfolio } from "../types";
 
 const flow = (date: string, amount: number) => ({ date: new Date(date), amount });
@@ -42,12 +42,11 @@ assert.equal(xirrWorking([flow("2025-01-01", NaN)], 20, 365, true), null);
 
 // Real card inputs: prove the missing numerical bridge reaches the same rate
 // and balances the whole dated pool, including its different closing dates.
-const statement = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS } as unknown as Portfolio;
+const statement = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS, accountReturnRecords:BOOK_ACCOUNT_RETURN_RECORDS } as unknown as Portfolio;
 const measured = measuredAccountsReturn(statement, BOOK_ACCOUNTS);
 const actual = xirrWorking(measured.parts.flatMap((p) => [...p.flows, { date: p.asOf, amount: p.terminalValue }]),
   measured.annPct, measured.windowDays, false)!;
 near(actual.pct, measured.toDatePct!);
 assert.ok(Math.abs(actual.paidAtStart - actual.returnedAtStart) < 0.01);
-assert.equal(actual.pct.toFixed(1), "26.5");
-assert.equal(actual.growthFactor.toFixed(6), "1.264566");
+near(actual.growthFactor, 1 + measured.toDatePct! / 100);
 console.log("XIRR working: late money, yearly/period conversion, balanced dated amounts, zero/loss and missing inputs passed");

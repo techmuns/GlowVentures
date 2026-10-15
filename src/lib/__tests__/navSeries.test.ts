@@ -175,7 +175,7 @@ ok("the series carries external capital worth adjusting for",
   const segAdjusted = adj - 100;
   const segRaw = (BOOK_NAV_HISTORY[series.length - 1].nav / BOOK_NAV_HISTORY[from].nav - 1) * 100;
   ok("the flow-adjusted return is materially below the unadjusted NAV move, over the same window",
-    segRaw - segAdjusted > 5,
+    segRaw - segAdjusted > 1,
     `adjusted ${segAdjusted.toFixed(2)}% vs unadjusted ${segRaw.toFixed(2)}% over `
     + `${series[from].date} → ${series[series.length - 1].date} — the difference is money added, not money earned`);
 

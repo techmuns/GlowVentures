@@ -1,0 +1,68 @@
+{
+ "name": "corporate-benefits",
+ "rows": [
+  [
+   "type",
+   "security",
+   "exDate",
+   "entitlement",
+   "quantity",
+   "amount"
+  ],
+  [
+   "Dividend",
+   "Nuvama Wealth Management Ltd",
+   "15/05/2026",
+   "Dividend @ 14",
+   "1,765",
+   "24,710.00"
+  ],
+  [
+   "Dividend",
+   "Navneet Education Ltd",
+   "03/06/2026",
+   "Dividend @ 1.5",
+   "16,793",
+   "25,189.50"
+  ],
+  [
+   "Dividend",
+   "GREAVES COTTON LTD.",
+   "28/07/2026",
+   "Dividend @ 2",
+   "25,278",
+   "50,556.00"
+  ],
+  [
+   "Dividend",
+   "Gateway Distriparks Ltd",
+   "11/08/2026",
+   "Dividend @ 1.25",
+   "72,826",
+   "91,032.50"
+  ],
+  [
+   "Dividend",
+   "SHREE DIGVIJAY CEMENT CO.LTD",
+   "09/09/2026",
+   "Dividend @ 1",
+   "29,511",
+   "29,511.00"
+  ],
+  [
+   "Dividend",
+   "Amrutanjan Health Care Ltd",
+   "11/09/2026",
+   "Dividend @ 2.9",
+   "5,436",
+   "15,764.40"
+  ],
+  [
+   "2,36,763.40"
+  ],
+  [
+   "08/10/2026",
+   "1"
+  ]
+ ]
+}

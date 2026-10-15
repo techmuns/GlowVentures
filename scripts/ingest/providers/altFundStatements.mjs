@@ -2958,6 +2958,9 @@ export function extract({ grid, meta = {} }) {
   const cashFlows = layout.flowsFrom
     ? layout.flowsFrom(text, (code, detail) => warn(warnings, code, detail))
     : [];
+  if (/^Account Statement\s+Since Inception\b/im.test(text) && cashFlows.length) {
+    cashFlows[0].notes = [cashFlows[0].notes, 'Ledger scope: since inception'].filter(Boolean).join('\n');
+  }
 
   if (layout.commitmentFrom) {
     const c = layout.commitmentFrom(text);

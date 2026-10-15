@@ -1,0 +1,23 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "INF174K01LF9",
+   "Kotak Large & Mid Cap Fund - Direct Growth",
+   27900.484,
+   388.839,
+   "2026-09-30",
+   null,
+   10848796.3
+  ]
+ ]
+}

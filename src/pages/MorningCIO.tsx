@@ -1162,7 +1162,7 @@ export function MorningCIO() {
       value: pct1(m.bookMW.pct),
       sub: m.bookMW.pct == null ? absentWhy("no statement in this book carries an opening portfolio value")
         : <>Latest close {m.mwb.lastClose ? fmtDate(m.mwb.lastClose) : "—"} · {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts
-          {m.mwb.gaps.length > 0 && <><br />Newer statements need matched cash flows</>}</>,
+          {m.mwb.gaps.length > 0 && <><br />Some accounts still need return inputs</>}</>,
     },
     /**
      * CONSOLIDATED RETURN — return on the capital actually invested, over the

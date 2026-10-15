@@ -1,5 +1,6 @@
 // Return endpoints are account valuations, independent of an older security-by-security appraisal.
 // A newer endpoint is published only with an unbroken, reconciled capital record through that day.
+import { unitLedgerReturnRecord, unitClosingDate } from './unitLedgerReturns.mjs';
 const number = (v) => typeof v === 'number' && Number.isFinite(v);
 const date = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
   && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
@@ -98,8 +99,16 @@ export function coveringRegister(registers, start, end) {
 
 const valuationTypes = new Set(['fact-sheet', 'performance-history', 'performance-summary', 'investor-report']);
 
-export function buildAccountReturnRecords({ accounts, accountCashFlows, byAccount }) {
+export function buildAccountReturnRecords({ accounts, accountCashFlows, byAccount, historicalNavs = [] }) {
   const records = {};
+  const valuationEnds = accounts.flatMap(a => byAccount.get(`${a.provider}::${a.accountNo}`) ?? [])
+    .filter(d => !d.excludedFromBook && d.status === 'ok')
+    .map(d => number(d.flows?.corpus) && d.flows.corpus >= 0 ? closeDate(d)
+      : d.reportType === 'appraisal' && d.holdings?.length && d.holdings.every(h => number(h.marketValue)) ? d.asOf
+      : unitClosingDate(d)).filter(date);
+  const latest = valuationEnds.sort().at(-1) ?? accounts.map(a => a.asOf).filter(date).sort().at(-1);
+  const year = latest ? Number(latest.slice(0,4)) - (latest.slice(5,7) < '04' ? 1 : 0) : null;
+  const periodStart = year ? `${year}-04-01` : null;
   for (const account of accounts) {
     const docs = (byAccount.get(`${account.provider}::${account.accountNo}`) ?? [])
       .filter((d) => !d.excludedFromBook && d.status === 'ok');
@@ -117,7 +126,22 @@ export function buildAccountReturnRecords({ accounts, accountCashFlows, byAccoun
     const newest = valuations[0];
     const original = accountCashFlows[account.accountId] ?? [];
     const openings = original.filter((f) => /^opening portfolio value/i.test(f.description ?? ''));
-    if (!newest || !openings.length) continue;
+    if (!newest || !openings.length) {
+      const unitDocs = (byAccount.get(`${account.provider}::${account.accountNo}`) ?? [])
+        .filter(d => !d.excludedFromBook && ['holdings','portfolio-snap'].includes(d.reportType));
+      const candidates = unitDocs.map(d => unitLedgerReturnRecord(d, periodStart, historicalNavs, true)).filter(Boolean)
+        .sort((a,b) => b.asOf.localeCompare(a.asOf) || a.source.localeCompare(b.source));
+      const record = candidates.find(c => c.flows.some(f => f.amount !== 0)) ?? null;
+      const dormant = candidates.find(c => c.value === 0 && c.flows.every(f => f.amount === 0));
+      const newestUnit = unitDocs.map(unitClosingDate).filter(date).sort().at(-1);
+      const latestValuationDate = [newestUnit, newest ? closeDate(newest) : null, record?.asOf].filter(date).sort().at(-1) ?? account.asOf;
+      const currentDormant = dormant?.asOf === latestValuationDate;
+      records[account.accountId] = { latestValuationDate, record,
+        gap: record ? (record.asOf < latestValuationDate ? `Newer ${latestValuationDate} valuation lacks a complete reconciled cash-flow ledger` : null)
+          : currentDormant ? null : (account.noPositionsReason ? 'No complete valued portfolio for a return' : 'Opening valuation and complete dated cash flows are missing'),
+        ...(currentDormant && !record ? { notApplicable: `Nil throughout the verified period through ${dormant.asOf}; no invested capital to measure` } : {}) };
+      continue;
+    }
     const coverage = { latestValuationDate: closeDate(newest), record: null, gap: null };
     records[account.accountId] = coverage;
     if (openings.length !== 1 || !date(openings[0].date) || !number(openings[0].amount) || openings[0].amount >= 0) {
@@ -125,6 +149,10 @@ export function buildAccountReturnRecords({ accounts, accountCashFlows, byAccoun
       continue;
     }
     const opening = openings[0];
+    if (opening.date !== periodStart) {
+      coverage.gap = `Opening valuation for ${periodStart} is missing; an earlier financial year cannot be pooled into this period`;
+      continue;
+    }
     const registers = docs.filter((d) => d.reportType === 'capital-register' || d.reportType === 'bank-book')
       .map((d) => d.reportType === 'bank-book' ? bankWindow(d) : registerWindow(d)).filter(Boolean);
     const reach = registers.map((r) => r.end).sort().at(-1);

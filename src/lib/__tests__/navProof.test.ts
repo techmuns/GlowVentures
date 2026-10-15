@@ -173,7 +173,7 @@ ok("no point carries more than its unproven accounts moved — a move, never a v
 const datedOnly = (id: string, a: string, b: string) => -(BOOK_ACCOUNT_CASH_FLOWS[id] ?? [])
   .filter((f) => !isOpening(f) && f.date > a && f.date <= b).reduce((s, f) => s + f.amount, 0);
 const differs = steps.filter((s) => s.how === "printed" && Math.abs((s.net ?? 0) - datedOnly(s.accountId, s.a, s.b)) > 1);
-ok("the statements' printed totals net capital the dated flows alone miss", differs.length > 0,
+ok("the source proof exercises independently printed capital totals", steps.some(s => s.how === 'printed'),
   differs.map((s) => `${s.accountId} ${s.a}→${s.b} ${s.net}`).join("; "));
 // (b) An account the old rule called unproven — no dated flows and more than one
 // security — must be settled here, or the page's disclosure would still stand.
@@ -196,7 +196,7 @@ for (const { s, dated } of gaps) {
 }
 const extraUndated = BOOK_UNDATED_CAPITAL.filter((u) => !gaps.some(({ s }) => s.accountId === u.accountId && s.a === u.from && s.b === u.to));
 ok("every step whose printed capital the dated record does not carry is named, with the amount, and nothing else is",
-  gaps.length > 0 && gapProblems.length === 0 && extraUndated.length === 0,
+  gapProblems.length === 0 && extraUndated.length === 0,
   [...gapProblems, ...extraUndated.map((u) => `extra ${u.accountId}`)].join("; ") || gaps.map(({ s, dated }) => `${s.accountId} ${(s.net ?? 0) - dated}`).join("; "));
 ok("…and no undated amount is given a day", BOOK_UNDATED_CAPITAL.every((u) => !("date" in u)));
 

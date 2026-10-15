@@ -48,6 +48,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-06-30",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 936386.82,
    "gainLoss": 300662.01,
    "pctGainLoss": 47.29,
@@ -103,7 +105,11 @@
  "excludedFromBook": "holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book.",
  "schemeHoldings": [],
  "aifEarnings": null,
- "jointHolders": [],
+ "jointHolders": [
+  "Sub Broker",
+  "Sub Broker Code"
+ ],
+ "checks": null,
  "stitches": [],
  "derivedPortfolioTotal": 936386.82
 }

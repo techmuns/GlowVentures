@@ -53,7 +53,7 @@ export const PROVIDERS = {
   carnelian: {
     name: "Carnelian Asset Management and Advisors Pvt Ltd",
     filePrefix: /^CBP/,
-    letterhead: /carnelian\s+asset\s+management/i,
+    letterhead: /carnelian\s+(?:asset\s+management|bespoke\s+portfolio)/i,
     engagement: "PMS",
   },
   // Delivers the whole report set as ONE eight-page PDF rather than one file per
@@ -95,6 +95,12 @@ export const PROVIDERS = {
     name: "V.E.C Assago Capital Management LLP",
     filePrefix: /^VEC/,
     letterhead: /V\.?\s*E\.?\s*C\s+ASSAGO/i,
+    engagement: "PMS",
+  },
+  svan: {
+    name: "SVAN Investment Managers LLP",
+    filePrefix: /^Z128[12]_87100/,
+    letterhead: /SVAN\s+INVESTMENT\s+MANAGERS/i,
     engagement: "PMS",
   },
   /**
@@ -2271,7 +2277,7 @@ export function extract({ grid, meta }) {
     // as-of IS that window's end. Without this the transaction statement, bank
     // book, dividend and capital gain all key as `…-unknown-…`, which files them
     // apart from the appraisal they belong beside.
-    asOf: id.asOf ?? meta.asOfDate ?? window.periodTo,
+    asOf: window.periodTo ?? id.asOf ?? meta.asOfDate,
     inceptionDate: id.inceptionDate,
     holdings, totals, returns, flows,
     transactions, capitalGains, income, expenses, cashFlows,

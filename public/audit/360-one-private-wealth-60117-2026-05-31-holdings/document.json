@@ -65,6 +65,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-05-29",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 14408473.91,
    "gainLoss": 4541826.91,
    "pctGainLoss": 46.03,
@@ -275,6 +277,7 @@
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [],
+ "checks": null,
  "stitches": [
   {
    "kind": "same-line",

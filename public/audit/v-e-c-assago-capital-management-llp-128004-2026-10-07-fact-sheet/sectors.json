@@ -1,0 +1,145 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "Construction",
+   "1,904,935",
+   "3.12%"
+  ],
+  [
+   "1",
+   "SHREE DIGVIJAY CEMENT CO.LTD"
+  ],
+  [
+   "Materials"
+  ],
+  [
+   "2",
+   "Nuvama Wealth Management Ltd",
+   "Financial Services",
+   "3,222,714",
+   "5.27%"
+  ],
+  [
+   "3",
+   "SBFC Finance Ltd",
+   "Financial Services",
+   "3,899,126",
+   "6.38%"
+  ],
+  [
+   "4",
+   "Amrutanjan Health Care Ltd",
+   "Healthcare",
+   "2,835,146",
+   "4.64%"
+  ],
+  [
+   "5",
+   "Panacea Biotec Ltd",
+   "Healthcare",
+   "2,165,626",
+   "3.54%"
+  ],
+  [
+   "6",
+   "Wockhardt Ltd",
+   "Healthcare",
+   "6,935,040",
+   "11.35%"
+  ],
+  [
+   "7",
+   "Tejas Networks Limited",
+   "Telecommunication",
+   "3,416,244",
+   "5.59%"
+  ],
+  [
+   "Automobile and",
+   "4,365,000",
+   "7.14%"
+  ],
+  [
+   "8",
+   "Ather Energy Ltd"
+  ],
+  [
+   "Auto Components"
+  ],
+  [
+   "9",
+   "Eureka Forbes Ltd",
+   "Consumer Durables",
+   "4,584,006",
+   "7.50%"
+  ],
+  [
+   "10",
+   "Jaiprakash Power Ventures Ltd",
+   "Power",
+   "4,536,817",
+   "7.43%"
+  ],
+  [
+   "11",
+   "Shoppers Stop Ltd",
+   "Consumer Services",
+   "5,241,679",
+   "8.58%"
+  ],
+  [
+   "Fast Moving",
+   "3,680,447",
+   "6.02%"
+  ],
+  [
+   "12",
+   "Navneet Education Ltd"
+  ],
+  [
+   "Consumer Goods"
+  ],
+  [
+   "13",
+   "GREAVES COTTON LTD.",
+   "Capital Goods",
+   "5,358,936",
+   "8.77%"
+  ],
+  [
+   "14",
+   "Gateway Distriparks Ltd",
+   "Services",
+   "3,761,463",
+   "6.16%"
+  ],
+  [
+   "Cash and",
+   "5,192,436",
+   "8.50%"
+  ],
+  [
+   "15",
+   "CASH"
+  ],
+  [
+   "Equivalent"
+  ],
+  [
+   "Total",
+   "61,099,614",
+   "100%"
+  ],
+  [
+   "For further queries related to the portfolio please contact: | email:rajendra.khatu@vecassago.com"
+  ]
+ ]
+}

@@ -21,7 +21,7 @@
  "warnings": [
   {
    "code": "pdf-encrypted",
-   "detail": "opened with GLOW_PDF_PASSWORDS entry #2"
+   "detail": "opened with GLOW_PDF_PASSWORDS entry #1"
   },
   {
    "code": "owner-unresolved",
@@ -52,6 +52,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-06-30",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 0,
    "gainLoss": null,
    "pctGainLoss": null,
@@ -92,6 +94,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-06-30",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 0,
    "gainLoss": null,
    "pctGainLoss": null,
@@ -119,7 +123,7 @@
    "providerSector": null,
    "manager": null,
    "memberId": null,
-   "quantity": null,
+   "quantity": 632.65,
    "unitCost": null,
    "totalCost": null,
    "marketPrice": 1222.81,
@@ -132,6 +136,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-06-30",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 773610.75,
    "gainLoss": null,
    "pctGainLoss": null,
@@ -144,7 +150,7 @@
     "pctAssets": null,
     "unrealized": null
    },
-   "marketValueFromPrinted": true,
+   "marketValueFromPrinted": false,
    "dedupeGroup": null,
    "alsoReportedUnder": [],
    "source": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings"
@@ -188,6 +194,7 @@
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [],
+ "checks": null,
  "stitches": [],
  "derivedPortfolioTotal": 773610.75
 }

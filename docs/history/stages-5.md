@@ -4605,3 +4605,13 @@ inside it would contain all the files of the same format in an organized way"*
 - Route `statements` walks the grid and `statements-folder` the opened view
   (the largest provider, derived from the manifest); both clean on the universal
   checks. No change to the grouping model or its test.
+
+### Stage 10em — RECOVERED STATEMENTS AND VERIFIED FY RETURN OPENINGS
+
+- Incorporated the newer September email deliveries without replacing older source history. The source archive now describes 75 accounts. Carnelian's Bespoke reports and SVAN's new PMS layout route to their own managers; friendly Goldstandard exports require matching account/holder witnesses.
+- Reconciled full unit/cash ledgers and exact historical AMFI ISIN references add return inputs for 3P, Helios, ICICI, HDFC, Kotak, Invesco and Motilal folios. HDFC's opening units are never substituted for current units. Statement dates, NAV dates and complete cash windows remain separate.
+- Money-weighted coverage advances from 7 to 17 accounts, through 7 October; sources with missing openings/capital remain excluded. Dormant verified nil accounts are distinguished from missing records. A Carnelian investor report's inconsistent bridge remains partial; the separate reconciled performance summary supplies its return.
+- All return surfaces share the selected records. `RETURN-COVERAGE.md` lists the remaining gaps and `RETURN-RECORDS-REQUEST.md` holds an unsent request. No outreach, production data intervention or paid enrichment was performed.
+- Validation covers cash charges, every unit balance, internal switches, fiscal-year boundaries, genuine nil closes and source-date selection; browser arithmetic independently reproduces 20.6% for 17/75 and checks Performance/Family consistency and mobile themes.
+- The focused CIO, Performance and Family page checks pass in both themes (six combinations). The checker accepts empty generated ledgers and distinguishes a verified pooled account from an individually solvable rate; later-date isolation remains covered by the synthetic financial test. Five page assertions are explicitly not checked where the current dataset does not exercise their condition.
+- A first visible purchase after the FY start only establishes a nil opening when the source period covers the FY or its account-statement header explicitly states “Since Inception”. The Helios source prints that header; later/unknown statement windows are refused even when their first running balance ties.

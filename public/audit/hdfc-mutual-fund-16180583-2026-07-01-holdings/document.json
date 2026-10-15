@@ -43,6 +43,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-06-30",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 0,
    "gainLoss": null,
    "pctGainLoss": null,
@@ -83,6 +85,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-06-30",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 0,
    "gainLoss": null,
    "pctGainLoss": null,
@@ -141,6 +145,7 @@
  "jointHolders": [
   "ANKITA JAISINGHANI"
  ],
+ "checks": null,
  "stitches": [],
  "derivedPortfolioTotal": null
 }

@@ -738,8 +738,10 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
    * holding from these Direct-plan units, which the depository credited on
    * 3 July 2026 with Bandhan's, after the review was drawn.
    */
-  "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth":
+  "motilal-oswal-arbitrage-fund-direct-plan-growth":
     "Motilal Oswal Arbitrage Fund - Direct Growth (INF247L01ED1) — AMFI: Hybrid Scheme - Arbitrage Fund; the review's Debt tab, overruled by the family's instruction",
+  "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth":
+    "Earlier AMFI/depository spelling of INF247L01ED1 — Arbitrage Fund; the family's cash-equivalent rule",
   "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth":
     "Bandhan Arbitrage Fund - Direct Growth (INF194K01Y60) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
   /**
@@ -765,6 +767,13 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
     "Invesco India Arbitrage Fund - Direct Growth (INF205K01KR8) — AMFI: Hybrid Scheme - Arbitrage Fund; the review's Debt tab, overruled by the family's instruction",
   "kotak-arbfd-dp-grow":
     "Kotak Arbitrage Fund - Direct Growth (INF174K01LC6) — Ajay's demat 12539150 and the trust's demat 32387399 — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
+  "hdfc-arbitrage-fund-direct-plan-growth-option": "HDFC folio statements — Arbitrage Fund; the family's cash-equivalent rule",
+  "hdfc-arbitrage-fund-direct-plan-monthly-idcw-payout-option": "HDFC folio statements — Arbitrage Fund; the family's cash-equivalent rule",
+  "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": "HDFC folio statements — Liquid Fund; the family's cash-equivalent rule",
+  "hdfc-overnight-fund-direct-plan-growth-option": "HDFC folio statements — Overnight Fund; the family's cash-equivalent rule",
+  "invesco-india-arbitrage-fund-direct-plan-growth-af-d1": "Invesco September folio statements (INF205K01KR8) — Arbitrage Fund; the family's cash-equivalent rule",
+  "invesco-india-arbitrage-fund-regular-plan-growth-af-gp": "Invesco September folio statement (INF205K01122) — Arbitrage Fund; the family's cash-equivalent rule",
+  "motilal-oswal-liquid-fund-direct-plan-growth": "Motilal folio statement (INF247L01734) — Liquid Fund; the family's cash-equivalent rule",
 };
 
 /**

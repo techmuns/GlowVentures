@@ -43,6 +43,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-08-06",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 309984500.77,
    "gainLoss": -15499.23,
    "pctGainLoss": 0,
@@ -95,7 +97,7 @@
    "depositWithdrawal": null,
    "credit": null,
    "debit": null,
-   "notes": "allotment NAV 16.21",
+   "notes": "allotment NAV 16.21\nLedger scope: since inception",
    "balance": 19123041.38,
    "source": null
   }
@@ -123,6 +125,7 @@
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [],
+ "checks": null,
  "stitches": [],
  "derivedPortfolioTotal": 309984500.77
 }

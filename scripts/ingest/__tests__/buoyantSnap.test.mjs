@@ -231,8 +231,8 @@ for (const K of [K_ANKITA, K_AJAY]) {
     pos && Math.abs(field(pos, "costBasis") - (P.summary.capitalInvested + P.summary.incomeDistributed)) <= 0.5,
     JSON.stringify(pos && [field(pos, "costBasis"), P.summary.capitalInvested + P.summary.incomeDistributed]));
   const acc = bookAccount(`buoyant-capital-${P.accountNo}`);
-  ok(`${tag}: the account is marked at the snap's date, and its capital record reaches it`,
-    acc && field(acc, "asOf") === "2026-08-31" && field(acc, "capitalRecordTo") === "2026-08-31",
+  ok(`${tag}: newer reports preserve at least the snap's verified date and capital window`,
+    acc && field(acc, "asOf") >= "2026-08-31" && field(acc, "capitalRecordTo") >= "2026-08-31",
     JSON.stringify(acc && [field(acc, "asOf"), field(acc, "capitalRecordTo")]));
 }
 

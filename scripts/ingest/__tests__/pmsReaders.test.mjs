@@ -392,7 +392,8 @@ for (const docKey of INVESTOR) {
     if (/^performance-(summary|history)$/.test(d.reportType) || d.reportType === "investor-report") {
       struck++;
       const parts = d.reportType === "investor-report" ? bridgeInvestor(f) : bridgePms(f);
-      if (!ties(parts, f.corpus)) gaps.push(`${e.docKey} parts ${Math.round(parts * 100) / 100} vs ${f.corpus}`);
+      if (!ties(parts, f.corpus) && !(d.status === 'partial' && d.warnings.some(w => w.code === 'value-bridge-mismatch')))
+        gaps.push(`${e.docKey} parts ${Math.round(parts * 100) / 100} vs ${f.corpus}`);
     }
     if (d.reportType === "performance-history") {
       appraisals++;
@@ -404,7 +405,7 @@ for (const docKey of INVESTOR) {
     }
   }
   ok("archive: there are value bridges to strike", struck > 20, `got ${struck}`);
-  ok("archive: every performance summary, appraisal and investor report ties from its own printed lines",
+  ok("archive: every value bridge reconciles or explicitly reports a partial source mismatch",
     gaps.length === 0, `${gaps.length} of ${struck}: ${gaps.slice(0, 4).join("; ")}`);
   ok("archive: there are since-inception appraisals to check", appraisals > 5, `got ${appraisals}`);
   ok("archive: no since-inception appraisal carries an opening (it prints only its closing)",

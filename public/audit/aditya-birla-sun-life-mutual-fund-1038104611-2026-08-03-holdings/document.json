@@ -21,7 +21,7 @@
  "warnings": [
   {
    "code": "pdf-encrypted",
-   "detail": "opened with GLOW_PDF_PASSWORDS entry #2"
+   "detail": "opened with GLOW_PDF_PASSWORDS entry #1"
   },
   {
    "code": "owner-unresolved",
@@ -52,6 +52,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-07-31",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 798563.95,
    "gainLoss": 261417.67,
    "pctGainLoss": 48.67,
@@ -107,7 +109,10 @@
  "excludedFromBook": "holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book.",
  "schemeHoldings": [],
  "aifEarnings": null,
- "jointHolders": [],
+ "jointHolders": [
+  "Not Applicable Not Applicable"
+ ],
+ "checks": null,
  "stitches": [],
  "derivedPortfolioTotal": 798563.95
 }

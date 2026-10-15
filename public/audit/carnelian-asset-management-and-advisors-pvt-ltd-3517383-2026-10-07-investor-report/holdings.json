@@ -1,0 +1,148 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "security",
+   "assetClass",
+   "quantity",
+   "avgCost",
+   "marketRate",
+   "totalCost",
+   "marketValue",
+   "accruedIncome",
+   "pctPortfolio"
+  ],
+  [
+   "Aditya Birla Capital Ltd",
+   "Equity",
+   145457,
+   177.31,
+   378.9,
+   25790704.3,
+   55113657.3,
+   "",
+   14.3
+  ],
+  [
+   "Biocon Ltd",
+   "Equity",
+   125500,
+   382.1,
+   369.1,
+   47954138.71,
+   46322050,
+   "",
+   12.02
+  ],
+  [
+   "Caliber Mining and Logistics Limited",
+   "Equity",
+   38660,
+   495.1,
+   517.2,
+   19140470.32,
+   19994952,
+   "",
+   5.19
+  ],
+  [
+   "Cyient Ltd",
+   "Equity",
+   24842,
+   916.2,
+   1119.4,
+   22760226.36,
+   27808134.8,
+   "",
+   7.21
+  ],
+  [
+   "GLAND PHARMA LIMITED",
+   "Equity",
+   8252,
+   2460.26,
+   3006.1,
+   20302071.08,
+   24806337.2,
+   "",
+   6.44
+  ],
+  [
+   "Jammu Kashmir Bank Ltd",
+   "Equity",
+   282771,
+   119.92,
+   139.5,
+   33908605.69,
+   39446554.5,
+   "",
+   10.23
+  ],
+  [
+   "KALYAN JEWELLERS INDIA LIMITED",
+   "Equity",
+   58400,
+   491.47,
+   548.15,
+   28702132.24,
+   32011960,
+   "",
+   8.3
+  ],
+  [
+   "Kalpataru Projects International Ltd",
+   "Equity",
+   27900,
+   1202.54,
+   1451.5,
+   33550864.97,
+   40496850,
+   "",
+   10.51
+  ],
+  [
+   "PVR Inox Ltd",
+   "Equity",
+   31777,
+   1038.04,
+   1249.4,
+   32985701.75,
+   39702183.8,
+   "",
+   10.3
+  ],
+  [
+   "TATA TECHNOLOGIES LIMITED",
+   "Equity",
+   18902,
+   853.98,
+   703.1,
+   16141918.16,
+   13289996.2,
+   "",
+   3.45
+  ],
+  [
+   "VISHNU CHEMICALS LIMITED",
+   "Equity",
+   9467,
+   598.96,
+   695.55,
+   5670362.91,
+   6584771.85,
+   "",
+   1.71
+  ],
+  [
+   "Cash",
+   "Cash",
+   1154648.54,
+   1,
+   null,
+   1154648.54,
+   1154648.54,
+   "",
+   0.3
+  ]
+ ]
+}

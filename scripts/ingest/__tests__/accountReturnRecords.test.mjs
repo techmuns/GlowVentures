@@ -22,6 +22,8 @@ assert.equal(result.record.flows.at(-1).amount, 10);
 assert.equal(result.gap, null);
 assert.equal(account.asOf, '2026-04-30', 'a return endpoint must not red-date holdings');
 assert.deepEqual(build([register, closing]), build([closing, register]), 'source discovery order cannot change the return');
+assert.equal(build([register, closing], [{...account,asOf:'2025-12-31'}]).one.record.asOf,'2026-05-31',
+  'the current financial year comes from the valuation, independently of stale holdings');
 
 const june = { ...closing, docKey: 'closing-june', asOf: '2026-06-30', flows: { ...closing.flows, periodTo: '2026-06-30', corpus: 200 } };
 result = build([june, register, closing]).one;
@@ -48,8 +50,8 @@ const wrongCapital = structuredClone(closing); wrongCapital.flows.withdrawal = 2
 assert.equal(build([register, wrongCapital]).one.record, null, 'the closing statement independently witnesses capital');
 const oldConflict = structuredClone(flows); oldConflict.one[1].amount = -40;
 assert.equal(build([register, closing], [account], oldConflict).one.record, null, 'older captured flows cannot silently disappear');
-assert.equal(build([register, closing], [account], {}).one, undefined, 'missing opening value is never zero');
-assert.equal(build([register, closing], [{ ...account, accountNo: '2' }]).one, undefined, 'never match across accounts');
+assert.equal(build([register, closing], [account], {}).one.record, null, 'missing opening value is never zero');
+assert.equal(build([register, closing], [{ ...account, accountNo: '2' }]).one.record, null, 'never match across accounts');
 
 const fromNil = { ...register, cashFlows: [row('2026-01-01', 100, 100), row('2026-04-10', 50, 150), row('2026-05-10', -10, 140)] };
 assert.equal(registerWindow(fromNil).opening, 0, 'a witnessed first deposit proves inception from nil');
