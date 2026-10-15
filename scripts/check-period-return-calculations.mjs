@@ -23,6 +23,7 @@ try {
     await page.goto(`${BASE}/cio?tab=returns&rto=2026-10-05`);
     const card = page.locator('[data-returns-portfolio]');
     const select = page.locator('[data-returns-type-select]');
+    await select.waitFor();
     assert.deepEqual(await select.locator('option').evaluateAll(options => options.map(o => o.value)), types);
     assert.doesNotMatch(await page.locator('[data-portfolio-returns]').innerText(), /time.weighted/i);
     for (const period of periods) {
