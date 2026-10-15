@@ -8633,7 +8633,7 @@ const ROUTES = [
 // saved layout. With no Function the strips keep the choice in the browser and
 // say so inside the picker; `private-market-tiles-saved` fulfils it with a store
 // of its own, which is where the saving is actually checked.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat|polycab|capital-calls|tile-sets)|ERR_CONNECTION_RESET|Failed to load resource/;
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat|polycab|capital-calls|tile-sets|statement-uploads)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 

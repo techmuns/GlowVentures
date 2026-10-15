@@ -4615,3 +4615,28 @@ inside it would contain all the files of the same format in an organized way"*
 - Validation covers cash charges, every unit balance, internal switches, fiscal-year boundaries, genuine nil closes and source-date selection; browser arithmetic independently reproduces 20.6% for 17/75 and checks Performance/Family consistency and mobile themes.
 - The focused CIO, Performance and Family page checks pass in both themes (six combinations). The checker accepts empty generated ledgers and distinguishes a verified pooled account from an individually solvable rate; later-date isolation remains covered by the synthetic financial test. Five page assertions are explicitly not checked where the current dataset does not exercise their condition.
 - A first visible purchase after the FY start only establishes a nil opening when the source period covers the FY or its account-statement header explicitly states “Since Inception”. The Helios source prints that header; later/unknown statement windows are refused even when their first running balance ties.
+
+### Stage 10en — STATEMENT LIBRARY: THE DROP BOX, WIRED INTO EACH FOLDER
+
+*"wire up the upload into folders"*
+
+- **Each open folder now has a drop box.** Drag files onto it or click to choose;
+  each is uploaded under that provider. A "Waiting for the next rebuild" table
+  lists what is staged — filename, size, time — with a Remove on each.
+- **It stages, it does not fabricate.** An uploaded file lands in R2
+  (`functions/api/statement-uploads.js`, bound as `STATEMENT_UPLOADS`), raw and
+  unread. It feeds NOTHING on any page until a rebuild reads it — the standing
+  rule a browser cannot write the baked book. The box says so on its face.
+- **R2, not KV.** Statements are PDFs, workbooks and ZIPs up to tens of MB; a KV
+  value caps at 25 MiB. The endpoint sits behind the same edge gate as every
+  `/api/*` route, refuses a cross-site write and anything that is not a
+  statement, and — until the bucket is bound — answers 503 NOT_CONFIGURED while
+  the box shows the one-time set-up steps (`SWITCH_ON_STEPS`), never a dead zone.
+- **The bridge to a rebuild** is `scripts/ingest/pull-uploads.mjs`: it signs in,
+  writes every staged file under `source/uploads-<date>/<provider>/`, and with
+  `--clear` empties the inbox — then the ordinary `inventory → extract →
+  build-book` reads them.
+- `statementUploads.test.ts` drives the Function against an in-memory R2 (round
+  trip, the cross-origin and bad-file guards, the not-configured answer) and the
+  client's cause mapping. Routes `statements` / `statements-folder` stay clean;
+  the drop box degrades to a named notice where no Function runs (local preview).

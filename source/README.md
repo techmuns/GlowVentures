@@ -15,6 +15,15 @@ that every account's current return can be measured.
 the derived, reviewed extracts under `public/audit/` ship, and those sit behind
 the password gate.
 
+**Two ways a statement gets here.** Either drop it in a delivery folder by hand,
+or upload it from the dashboard's **Statement Library** drop box (one per
+provider). An uploaded file is staged in the site's own R2 store, raw and
+unread — it is NOT a book figure until a rebuild reads it. Pull the staged files
+down into their own delivery folder with
+`node scripts/ingest/pull-uploads.mjs` (set `GLOW_BASE_URL` and
+`GLOW_DASHBOARD_PASSWORD`; `--clear` empties the inbox once they are safely on
+disk), then run the pipeline below exactly as for a hand-dropped delivery.
+
 Then run:
 
 ```
