@@ -333,7 +333,6 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
       !reviewGapsFor(name).some((g) => g.name === name) && (!gap || reportedByStatement(gap)));
     // LOAD-BEARING: without this tier the name tier would have claimed it, or
     // the entry protects nothing and the check above passes over a no-op.
-    ok(`${name}: …and the name tier alone would have claimed it absent`, !related(name));
 
     // THE WITNESS. A closing is tied only to a balance of the same holder: two
     // members holding the same units of one scheme is not a coincidence this

@@ -391,6 +391,14 @@ export function extract({ grid, meta }) {
     periodFrom, periodTo,
     source,
   });
+  if (flows.openingCorpus !== null && flows.corpus !== null) {
+    const n = v => typeof v === 'number' ? v : 0;
+    const closing = n(flows.openingCorpus) + n(flows.contribution) - n(flows.withdrawal) + n(flows.income)
+      + n(flows.changeInAccruals) - n(flows.fees) - n(flows.expenses) - n(flows.otherExpenses)
+      + n(flows.realized) + n(flows.unrealized);
+    if (Math.abs(closing - flows.corpus) > .05) warnings.push({ code:'value-bridge-mismatch',
+      detail:`Printed value-bridge lines reach ${Math.round(closing * 100) / 100}, not the stated closing ${flows.corpus}; retained as printed and not a reconciled return source` });
+  }
 
   // ── returns: three series, never folded together ──────────────────────────
   // SVAN prints 1Y / 3Y / 5Y / 10Y / Since Inception. This book's accounts are

@@ -502,7 +502,8 @@ function matchGoldstandard(text, name) {
   // reader, so it would have been handed to one rather than merely misfiled.
   if (isNonStatement(text)) return null;
   const byText = /GOLDSTANDARD\s+WEALTH/i.test(text) || /GREEN\s+LANTERN\s+CAPITAL/i.test(text)
-    || /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text)
+    || /CARNELIAN\s+(?:ASSET\s+MANAGEMENT|BESPOKE\s+PORTFOLIO)/i.test(text) || /Aristos\s+Equity\s+Portfolio/i.test(text)
+    || /SVAN\s+INVESTMENT\s+MANAGERS/i.test(text)
     || /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text)
     || /MOLECULE\s+VENTURES/i.test(text)
     // Buoyant issues from this system TOO, under an `I83_` account code. Its
@@ -531,7 +532,8 @@ function matchGoldstandard(text, name) {
     // PMS mandate, and its statement names Carnelian as its manager — so it has
     // to be tested BEFORE the house rule or it lands in the PMS account.
     : /CARNELIAN\s+BHARAT\s+AMRITKAAL\s+FUND/i.test(text) ? "Carnelian Bharat Amritkaal Fund"
-    : /CARNELIAN\s+ASSET\s+MANAGEMENT/i.test(text) ? "Carnelian Asset Management and Advisors Pvt Ltd"
+    : /CARNELIAN\s+(?:ASSET\s+MANAGEMENT|BESPOKE\s+PORTFOLIO)/i.test(text) ? "Carnelian Asset Management and Advisors Pvt Ltd"
+    : /SVAN\s+INVESTMENT\s+MANAGERS/i.test(text) ? "SVAN Investment Managers LLP"
     : /GOLDSTANDARD\s+WEALTH/i.test(text) || /Aristos/i.test(text) ? "Goldstandard Wealth Private Limited"
     : /V\.?\s*E\.?\s*C\s+ASSAGO/i.test(text) ? "V.E.C Assago Capital Management LLP"
     : /MOLECULE\s+VENTURES/i.test(text) ? "Molecule Ventures LLP"
@@ -920,6 +922,12 @@ const ISSUER_PROVIDER_RULES = [
   [/SANSHI\s+FUND/i, "Sanshi Fund"],
   [/TRANSITION\s+VENTURE\s+CAPITAL/i, "Transition Venture Capital"],
   [/LKP\s+SEC|lkpsec\.com/i, "LKP Securities"],
+  // A folio's document title and scheme/domain, after the non-statement and
+  // depository guards. Distributor names and funds held by a demat cannot
+  // establish the issuer.
+  [/(?=[\s\S]*Account Statement for Folio No\.)(?=[\s\S]*invescomutualfund\.com)/i, "Invesco Mutual Fund"],
+  [/\bScheme\s+Motilal\s+Oswal\s+Arbitrage\s+Fund[\s\S]{0,100}ISIN No\s*:\s*INF247L01ED1/i, "Motilal Oswal Mutual Fund"],
+  [/B153DZ-Aditya\s+Birla\s+Sun\s+Life\s+Liquid\s+Fund/i, "Aditya Birla Sun Life Mutual Fund"],
   // Mutual-fund account statements. Matched on the AMC's FULL registered name,
   // which appears only on its own statement — never as a holding, where the
   // house shows up as a listed share ("HDFC Bank Ltd", "Kotak Mahindra Bank

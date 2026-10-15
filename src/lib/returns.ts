@@ -19,7 +19,7 @@ import { ownerDisplayName } from "./owners";
  * lists a set the tile did not measure.
  */
 export const accountHasOpeningValue = (portfolio: Portfolio, accountId: string): boolean =>
-  (portfolio.accountCashFlows?.[accountId] ?? [])
+  (portfolio.accountReturnRecords?.[accountId]?.record?.flows ?? portfolio.accountCashFlows?.[accountId] ?? [])
     .some((f) => /^opening portfolio value/i.test(f.description ?? ""));
 
 /** Display name an account resolves to, matching `ownerOf` / `byEntity`. */
@@ -91,12 +91,14 @@ export function accountReturnInputs(statement: Portfolio, account: Portfolio['ac
   if (record) {
     return { value: record.value, asOf: record.asOf, flows: record.flows,
       capitalRecordTo: record.capitalRecordTo, source: record.source, gap: coverage.gap,
+      notApplicable: coverage.notApplicable,
       latestValuationDate: coverage.latestValuationDate };
   }
   return { value: statement.positions.filter((p) => p.accountId === account.accountId).reduce((n, p) => n + p.marketValue, 0),
     asOf: account.asOf, flows: coverage ? [] : statement.accountCashFlows?.[account.accountId] ?? [],
     capitalRecordTo: account.capitalRecordTo, source: undefined,
-    gap: coverage?.gap ?? null, latestValuationDate: coverage?.latestValuationDate ?? account.asOf };
+    gap: coverage?.notApplicable ?? coverage?.gap ?? null, notApplicable: coverage?.notApplicable,
+    latestValuationDate: coverage?.latestValuationDate ?? account.asOf };
 }
 
 const isoOf = (d: Date) => d.toISOString().slice(0, 10);
@@ -115,7 +117,7 @@ export function measuredAccountsReturn(
   for (const a of accounts) {
     const input = accountReturnInputs(statement, a);
     const mv = input.value;
-    if (input.gap) gaps.push({ accountId: a.accountId, accountNo: a.accountNo,
+    if (input.gap && !input.notApplicable) gaps.push({ accountId: a.accountId, accountNo: a.accountNo,
       asOf: input.latestValuationDate, reason: input.gap });
     // A sourced closing zero is real (redemption); an unvalued legacy account
     // is not. Decide the account set here so every surface pools the same flows.

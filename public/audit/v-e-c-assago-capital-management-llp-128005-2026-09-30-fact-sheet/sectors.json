@@ -1,0 +1,176 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "Diffusion Engineers Ltd",
+   "Engineering",
+   "7,643,464",
+   "3.86%"
+  ],
+  [
+   "Construction",
+   "4,449,600",
+   "2.24%"
+  ],
+  [
+   "2",
+   "SHREE DIGVIJAY CEMENT CO.LTD"
+  ],
+  [
+   "Materials"
+  ],
+  [
+   "3",
+   "Nuvama Wealth Management Ltd",
+   "Financial Services",
+   "9,997,625",
+   "5.04%"
+  ],
+  [
+   "4",
+   "SBFC Finance Ltd",
+   "Financial Services",
+   "11,100,604",
+   "5.60%"
+  ],
+  [
+   "5",
+   "Amrutanjan Health Care Ltd",
+   "Healthcare",
+   "8,385,792",
+   "4.23%"
+  ],
+  [
+   "6",
+   "Panacea Biotec Ltd",
+   "Healthcare",
+   "11,319,648",
+   "5.71%"
+  ],
+  [
+   "7",
+   "Wockhardt Ltd",
+   "Healthcare",
+   "15,914,576",
+   "8.03%"
+  ],
+  [
+   "8",
+   "Tejas Networks Limited",
+   "Telecommunication",
+   "6,379,430",
+   "3.22%"
+  ],
+  [
+   "Automobile and",
+   "11,970,000",
+   "6.04%"
+  ],
+  [
+   "9",
+   "Ather Energy Ltd"
+  ],
+  [
+   "Auto Components"
+  ],
+  [
+   "10",
+   "Eureka Forbes Ltd",
+   "Consumer Durables",
+   "13,417,648",
+   "6.77%"
+  ],
+  [
+   "11",
+   "VIP Industries Ltd",
+   "Consumer Durables",
+   "14,279,244",
+   "7.20%"
+  ],
+  [
+   "12",
+   "Jaiprakash Power Ventures Ltd",
+   "Power",
+   "3,974,409",
+   "2.00%"
+  ],
+  [
+   "13",
+   "Shoppers Stop Ltd",
+   "Consumer Services",
+   "16,623,240",
+   "8.39%"
+  ],
+  [
+   "Fast Moving",
+   "8,208,472",
+   "4.14%"
+  ],
+  [
+   "14",
+   "Navneet Education Ltd"
+  ],
+  [
+   "Consumer Goods"
+  ],
+  [
+   "15",
+   "GREAVES COTTON LTD.",
+   "Capital Goods",
+   "33,267,170",
+   "16.78%"
+  ],
+  [
+   "16",
+   "Praj Industries Limited",
+   "Capital Goods",
+   "4,603,654",
+   "2.32%"
+  ],
+  [
+   "17",
+   "Gateway Distriparks Ltd",
+   "Services",
+   "12,260,780",
+   "6.18%"
+  ],
+  [
+   "Cash and",
+   "4,324,264",
+   "2.18%"
+  ],
+  [
+   "18",
+   "CASH"
+  ],
+  [
+   "Equivalent"
+  ],
+  [
+   "19",
+   "Dividend / Interest receivable",
+   "Dividend / Interest",
+   "114,744",
+   "0.06%"
+  ],
+  [
+   "receivable"
+  ],
+  [
+   "Total",
+   "198,234,364",
+   "100%"
+  ],
+  [
+   "For further queries related to the portfolio please contact: | email:rajendra.khatu@vecassago.com"
+  ]
+ ]
+}

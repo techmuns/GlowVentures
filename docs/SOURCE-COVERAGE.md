@@ -9,17 +9,17 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 
 | Outcome | Files | What it means |
 | --- | ---: | --- |
-| Read | 288 | one or more documents in `public/audit/` |
-| Read via a byte-identical twin | 7 | the pipeline reads each md5 once; the data IS in the archive |
+| Read | 394 | one or more documents in `public/audit/` |
+| Read via a byte-identical twin | 45 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
 | Read by `build-book` | 1 | the family's consolidated review — the book's source for every private-market line |
 | Held out by decision | 1 | read perfectly and deliberately not a source |
-| Not a document | 58 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
+| Not a document | 156 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
 | **Unread** | **0** | **must be zero** |
-| **Total leaf files** | **375** | |
+| **Total leaf files** | **617** | |
 
-Those files produce **318 documents** in the archive.
+Those files produce **424 documents** in the archive.
 
 ## Read by `build-book`
 
@@ -63,6 +63,44 @@ twice. `extract.mjs` reads each md5 once, so these carry no data the archive lac
 | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` |
 | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` |
 | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` |
+| `_extracted/october-2026-c/ARISTOS GOLD STD - AJAY/CURRENT PORTFOLIO - AJAY.pdf` | `_extracted/october-2026-c/ARISTOS GOLD STD - AJAY/G100023_100024_CurrentPortfolio2086OT (1).pdf` |
+| `_extracted/october-2026-c/ARISTOS GOLD STD - ANKITA/G100023_100023_CapitalRegister1173OT (3).pdf` | `_extracted/october-2026-c/ARISTOS GOLD STD - ANKITA/G100023_100023_CapitalRegister1173OT (2).pdf` |
+| `_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` |
+| `_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` |
+| `_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` |
+| `_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` |
+| `_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` |
+| `_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` |
+| `_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf` |
+| `_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf` |
+| `_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf` |
+| `_extracted/october-2026-c/LKP EQUITY/666125807_06102026125819.xls` | `_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls` |
+| `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports (2)/CRN37702_07Oct2026_1552871.pdf` | `_extracted/october-2026-b/360 ONE WEALTH/CRN37702_07Oct2026_1552871.pdf` |
+| `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports (2)/CRN60066_07Oct2026_1552871.pdf` | `_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf` |
+| `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports (2)/CRN60117_07Oct2026_1552871.pdf` | `_extracted/october-2026-b/360 ONE WEALTH/CRN60117_07Oct2026_1552871.pdf` |
+| `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Factsheet.pdf` |
+| `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - Green Lantern - Performance Appraisal.pdf` |
+| `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani/Ajay T Jaisinghani - ICICI - SOA.pdf` |
+| `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf` |
+| `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf` |
+| `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY003 - Bharat Jaisinghani_SOA Apr 30, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA Apr 30, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY003 - Bharat Jaisinghani_SOA July 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA July 31, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY003 - Bharat Jaisinghani_SOA June 30, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA June 30, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY003 - Bharat Jaisinghani_SOA May 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA May 31, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY022 - Ajay T Jaisinghani_SOA Apr 30, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA Apr 30, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY022 - Ajay T Jaisinghani_SOA July 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA July 31, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY022 - Ajay T Jaisinghani_SOA June 30, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA June 30, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY022 - Ajay T Jaisinghani_SOA May 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA May 31, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY023 - BJ Trust 2_SOA Apr 30, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA Apr 30, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY023 - BJ Trust 2_SOA July 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA July 31, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY023 - BJ Trust 2_SOA June 30, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA June 30, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY023 - BJ Trust 2_SOA May 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA May 31, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY024 - BJ Trust 3_SOA Apr 30, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA Apr 30, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY024 - BJ Trust 3_SOA July 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA July 31, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY024 - BJ Trust 3_SOA June 30, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA June 30, 2026.pdf` |
+| `_extracted/october-2026-c/SKY CAPITAL/SKY024 - BJ Trust 3_SOA May 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA May 31, 2026.pdf` |
+| `october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf` | `_extracted/october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf` |
 
 ## Read as a witness of its PDF
 
@@ -93,7 +131,7 @@ checked against the figures the PDF prints (see each document's `witness-of` war
 
 ## Not a document
 
-58 files under `__MACOSX/`, created by zipping on a Mac. Each is a 212- or
+156 files under `__MACOSX/`, created by zipping on a Mac. Each is a 212- or
 477-byte AppleDouble stub and **none carries a `%PDF` header** — verified per file rather than
 assumed from the path. There is nothing in them to read. They are counted from each ZIP's own
 directory, at the path an unzipper would write them to: the pipeline's own unzipper skips them,

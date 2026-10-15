@@ -33,6 +33,7 @@ import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs"
 import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
 import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
+import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -4793,7 +4794,8 @@ function build(archived) {
 
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
-    accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount }),
+    accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
+      historicalNavs: JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
     capitalMoves, positionTranches, shareMovements,
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
@@ -5587,6 +5589,8 @@ fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, emit(book));
 fs.mkdirSync(path.dirname(REPORT), { recursive: true });
 fs.writeFileSync(REPORT, report(book));
+const returnCoverage = returnCoverageReport(book, docs);
+fs.writeFileSync(path.join(path.dirname(REPORT), 'RETURN-COVERAGE.md'), returnCoverage.markdown);
 
 console.log(`Book: ${book.positions.length} position(s) across ${book.accounts.length} account(s), ${book.owners.length} owner(s).`);
 console.log(`  consolidated market value ${book.summary.totalValue.toLocaleString("en-IN")} as of ${book.summary.asOf}`);

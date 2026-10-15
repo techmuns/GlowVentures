@@ -86,7 +86,7 @@ const cleanName = (s) => String(s ?? "")
  */
 const BLOCK_HEAD = /^\s*[A-Z0-9]{2,8}\s*\/\s*(.+?)\s*-\s*(IN[EF][0-9A-Z]{9})\b/;
 const BLOCK_VALUE = /Market Value of Balance Units at NAV of\s*([\d,]+\.?\d*)\s*on\s*(\d{2}\/\d{2}\/\d{4})\s*\(INR\)\s*:\s*([\d,]+\.?\d*)/i;
-const CLOSING_UNITS = /(?:Closing|Opening) (?:Unit )?Balance(?: as on \d{2}\/\d{2}\/\d{4})?\s*:?\s*([\d,]+\.\d{3})/i;
+const CLOSING_UNITS = /Closing (?:Unit )?Balance(?: as on \d{2}\/\d{2}\/\d{4})?\s*:?\s*([\d,]+\.\d{3})/i;
 
 /**
  * ABSL: one row per scheme under `PORTFOLIO SUMMARY`.
@@ -138,7 +138,12 @@ function readBlockLayout(lines, source) {
     seen.add(head[2]);
     // The LAST balance figure in the block is what the ledger left standing.
     const balances = [...window.matchAll(new RegExp(CLOSING_UNITS.source, "gi"))];
-    const units = balances.length ? num(balances[balances.length - 1][1]) : null;
+    const available = /Available Units to Redeem\s*:\s*([\d,]+\.\d{3})/.exec(window);
+    const lien = /Total Units Under Lien\s*:\s*([\d,]+\.\d{3})/.exec(window);
+    // Opening units are not closing units. Available units only witness the
+    // whole holding when the same closing line explicitly reports no lien.
+    const units = balances.length ? num(balances[balances.length - 1][1])
+      : available && lien && num(lien[1]) === 0 ? num(available[1]) : null;
     out.push(makeHolding({
       security: cleanName(head[1]),
       isin: head[2],
@@ -149,6 +154,48 @@ function readBlockLayout(lines, source) {
       priceAsOn: toIso(v[2]),
       source,
     }));
+  }
+  return out;
+}
+
+// Some new folios have a complete multi-year ledger and no financial movement
+// during this FY. A reconciled prior balance is enough to establish the FY's
+// units; it does not require treating old switches as new external cash.
+function staticBlockOpenings(lines, holdings, from, to) {
+  if (!from || !to) return [];
+  const year = Number(to.slice(0,4)) - (to.slice(5,7) < '04' ? 1 : 0);
+  const start = `${year}-04-01`;
+  if (from > start) return [];
+  const groups = new Map(); let current = null;
+  for (const line of lines) {
+    const head = BLOCK_HEAD.exec(line);
+    if (head) { current = head[2]; if (!groups.has(current)) groups.set(current, []); }
+    else if (current) groups.get(current).push(line);
+  }
+  const out = [];
+  for (const h of holdings) {
+    const rows = groups.get(h.isin);
+    if (!rows || h.quantity == null) return [];
+    let last = null;
+    for (let i=0;i<rows.length;i++) {
+      const dated = /^\s*(\d{2}\/\d{2}\/\d{4})(?:\s+(.+))?\s*$/.exec(rows[i]);
+      if (!dated) continue;
+      const on = toIso(dated[1]);
+      const description = dated[2] ?? '';
+      const administrative = /^(?:\*{3})?(?:Address Updated|KYC\b)/;
+      if (administrative.test(description) || (!description && [rows[i-1],rows[i+1]].some(s => administrative.test(s ?? '')))) continue;
+      if (on >= start) return []; // cash, reinvestment or units need their full reader
+      // NAV, amount, price, signed unit movement and resulting unit balance.
+      const tail = /([\d,]+\.\d+)\s+(\(?[\d,]+\.\d+\)?)\s+([\d,]+\.\d+)\s+(\(?[\d,]+\.\d{3}\)?)\s+([\d,]+\.\d{3})\s*$/.exec(description);
+      if (tail) last = { date:on, balance:num(tail[5]) };
+    }
+    if (!last) {
+      const opening = /Opening (?:Unit )?Balance as on (\d{2}\/\d{2}\/\d{4})\s+([\d,]+\.\d{3})/.exec(rows.join('\n'));
+      if (opening) last = { date:toIso(opening[1]), balance:num(opening[2]) };
+    }
+    if (!last || last.date >= start || Math.abs(last.balance - h.quantity) > .0005) return [];
+    out.push(makeCashFlow({ date:last.date, security:h.security, isin:h.isin, kind:'opening-units',
+      description:'Prior unit balance; complete statement has no FY financial movements', units:last.balance, balance:last.balance }));
   }
   return out;
 }
@@ -276,10 +323,20 @@ function iciciPurchaseFlows(lines, holdings, warnings) {
     const rows = [];
     for (let k = i + 1; k < lines.length; k++) {
       const l = lines[k];
+      if (/^Non Financial Transaction/i.test(l)) break;
       if (ICICI_HEAD.test(l) && ICICI_HEAD.exec(l)[2] !== h[2]) break;
       const ob = /Opening Balance as on\s*(\d{2}\/\d{2}\/\d{4})\s+([\d,]+\.\d{3})/i.exec(l);
       if (ob && bal === null) bal = num(ob[2]);
       const p = ICICI_PURCHASE.exec(l);
+      if (/^\s*\d{2}\/\d{2}\/\d{4}\s+/.test(l) && !p) {
+        const tail = l.replace(/^\s*\d{2}\/\d{2}\/\d{4}\s*/, '');
+        const administrative = /^\*{3}(?:Address Updated|KYC\b)/;
+        if (administrative.test(tail) || (/^(?:Holder\*{3})?$/.test(tail)
+          && [lines[k - 1], lines[k + 1]].some(s => administrative.test(s ?? '')))) continue;
+        warn(warnings, 'unsupported-movement', `${h[3].trim()}: a dated movement is outside the verified purchase layout`);
+        rows.push({ unsupported: true });
+        continue;
+      }
       if (!p) continue;
       const g = /Gross Amount:\s*Rs\.?\s*([\d,]+(?:\.\d+)?)\/?-?;?\s*Stamp Duty charges Levied\s*~?\s*([\d,]+\.\d{2})/i.exec(lines[k + 1] ?? "");
       rows.push({ date: toIso(p[1]), type: p[2].trim(), net: num(p[3]), nav: num(p[4]), units: num(p[6]), balance: num(p[7]),
@@ -290,6 +347,7 @@ function iciciPurchaseFlows(lines, holdings, warnings) {
     let failed = false;
     let running = bal ?? 0;
     for (const r of rows) {
+      if (r.unsupported) { failed = fail('dated ledger contains an unread movement'); break; }
       if (r.gross == null || r.stamp == null) { failed = fail(`${r.date}: no printed gross or stamp duty`); break; }
       if (Math.abs(r.gross - r.stamp - r.net) > 0.011) { failed = fail(`${r.date}: gross ${r.gross} less stamp ${r.stamp} is not the printed net ${r.net}`); break; }
       if (Math.abs(r.units * r.nav - r.net) > r.units * 0.00005 + r.nav * 0.0005 + 0.01) { failed = fail(`${r.date}: ${r.units} units × ${r.nav} is not ${r.net}`); break; }
@@ -410,6 +468,9 @@ export function extract({ grid, meta }) {
   // ICICI Prudential prints every purchase dated, with its gross, stamp duty,
   // net, NAV and running units — published only where all of them tie.
   const cashFlows = iciciPurchaseFlows(lines, holdings, warnings);
+  if (!cashFlows.length && !warnings.some(w => /not-published|unsupported-movement/.test(w.code))) {
+    cashFlows.push(...staticBlockOpenings(lines, holdings, period ? toIso(period[1]) : null, period ? toIso(period[2]) : null));
+  }
 
   /**
    * WHOSE FOLIO IS THIS?

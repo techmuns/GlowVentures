@@ -1,0 +1,14 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ]
+ ]
+}

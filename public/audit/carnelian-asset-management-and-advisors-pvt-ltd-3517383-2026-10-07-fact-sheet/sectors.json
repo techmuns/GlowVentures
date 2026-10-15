@@ -1,0 +1,137 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "1",
+   "Jammu Kashmir Bank Ltd",
+   "Banks",
+   "39,446,554",
+   "10.24%"
+  ],
+  [
+   "IT Consulting &",
+   "27,808,135",
+   "7.22%"
+  ],
+  [
+   "2",
+   "Cyient Ltd"
+  ],
+  [
+   "Software"
+  ],
+  [
+   "3",
+   "VISHNU CHEMICALS LIMITED",
+   "Specialty Chemicals",
+   "6,584,772",
+   "1.71%"
+  ],
+  [
+   "Other Apparels &",
+   "32,011,960",
+   "8.31%"
+  ],
+  [
+   "4",
+   "KALYAN JEWELLERS INDIA LIMITED"
+  ],
+  [
+   "Accessor"
+  ],
+  [
+   "Construction &",
+   "40,496,850",
+   "10.51%"
+  ],
+  [
+   "5",
+   "Kalpataru Projects International Ltd"
+  ],
+  [
+   "Engineer"
+  ],
+  [
+   "6",
+   "Biocon Ltd",
+   "Biotechnology",
+   "46,322,050",
+   "12.03%"
+  ],
+  [
+   "7",
+   "Caliber Mining and Logistics Limited",
+   "Coal",
+   "19,994,952",
+   "5.19%"
+  ],
+  [
+   "8",
+   "Aditya Birla Capital Ltd",
+   "Holding Companies",
+   "55,113,657",
+   "14.31%"
+  ],
+  [
+   "Star Health and Allied Insurance",
+   "38,437,749",
+   "9.98%"
+  ],
+  [
+   "9",
+   "General Insurance"
+  ],
+  [
+   "Company Limited"
+  ],
+  [
+   "10",
+   "GLAND PHARMA LIMITED",
+   "Pharmaceuticals",
+   "24,806,337",
+   "6.44%"
+  ],
+  [
+   "11",
+   "TATA TECHNOLOGIES LIMITED",
+   "IT Enabled Services",
+   "13,289,996",
+   "3.45%"
+  ],
+  [
+   "Film Production,",
+   "39,702,184",
+   "10.31%"
+  ],
+  [
+   "12",
+   "PVR Inox Ltd",
+   "Distribution &"
+  ],
+  [
+   "Exhibition"
+  ],
+  [
+   "Cash and",
+   "1,154,649",
+   "0.30%"
+  ],
+  [
+   "13",
+   "Cash",
+   "Equivalent"
+  ],
+  [
+   "Total",
+   "385,169,846",
+   "100%"
+  ]
+ ]
+}

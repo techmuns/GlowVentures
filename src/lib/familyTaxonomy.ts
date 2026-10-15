@@ -361,7 +361,7 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
   // Stage 10cy — held only on the transaction-only demat, where the depository
   // prints the AMC's full name in front of the scheme's, so these keys are the
   // depository's spelling. Each ties to the review by units (`reviewGaps.ts`).
-  "sec:kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-large-and-midcap-fund-direct-plan-growth-option":
+  "sec:kotak-large-and-mid-cap-fund-direct-growth":
     { assetClass: "Equity", basket: "Stable Growth", reviewProduct: "Kotak Large & Midcap Fund - Direct- Growth" },
   // Hybrid and multi-asset funds: the family's EQUITY by exposure, LIQUIDITY by
   // purpose. Both halves come from the workbook — the fund is listed on the

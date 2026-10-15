@@ -224,10 +224,12 @@ function bookArray(src, name) {
   if (i < 0) return null;
   const start = src.indexOf("= [", i);
   if (start < 0) return null;
-  const end = src.indexOf("\n];", start);
+  // Empty generated arrays are emitted inline. Stop at this declaration's
+  // terminator so an empty ledger cannot consume the following constant.
+  const end = src.indexOf(";\n", start);
   if (end < 0) return null;
   let out;
-  try { out = JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
+  try { out = JSON.parse(src.slice(start + 2, end)); } catch { return null; }
   // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER — the published
   // NAV overlaid, and the depository's fund units that the live book values on
   // an account that sent no holding statement. NOT its listed shares (Stage
@@ -9404,7 +9406,8 @@ const PERF_BOOK = (() => {
       stmtMV: latestReturns[a.accountId]?.record?.value ?? mvOf(stmt, a.accountId), liveMV: mvOf(live, a.accountId),
       asOf: latestReturns[a.accountId]?.record?.asOf ?? a.asOf,
       sourced: !!latestReturns[a.accountId]?.record?.source,
-      unvalued: a.noPositionsReason ?? null,
+      unvalued: latestReturns[a.accountId]?.record?.source ? null : a.noPositionsReason ?? null,
+      gap: latestReturns[a.accountId]?.gap ?? latestReturns[a.accountId]?.notApplicable ?? null,
       flows: latestReturns[a.accountId]?.record?.flows ?? (latestReturns[a.accountId] ? [] : flowsBy[a.accountId] ?? []),
       symbols: stmt.some((p) => p.accountId === a.accountId && p.symbol),
     }]));
@@ -9451,7 +9454,7 @@ const PERF_BOOK = (() => {
     const managersOwn = new Set(Object.entries(returnsBy).filter(([, blocks]) => (blocks ?? []).some((blk) =>
       (blk.series ?? []).some((x) => !x.isBenchmark && x.siAnnualised && num(x.si)))).map(([id]) => id));
     return {
-      managersOwn,
+      managersOwn, solve,
       statementBook: bookObject(src, "BOOK_SUMMARY")?.totalValue ?? null,
       cols, optionalRows,
       tied: cols.filter((c) => c.ties).length, all: cols.length,
@@ -9697,8 +9700,13 @@ const PERF_MW = [
     const B = PERF_BOOK;
     if (!B || B.rateStatement == null || B.statementBook == null) return false;
     const drawn = new Set(d.xirr.filter((r) => r.pct !== "").map((r) => r.id));
+    // A verified account may enter the pool without solving by itself (for
+    // example, first subscription and closing NAV on the same day). Its
+    // capital and close still belong in the consolidated amounts.
+    const individuallySolved = B.measured.filter((id) => B.solve([id], (x) => x.stmtMV) != null);
     const measuredMV = B.measured.reduce((s, id) => s + B.perAccount.get(id).stmtMV, 0);
-    return drawn.size === B.measured.length && B.measured.every((id) => drawn.has(id))
+    return drawn.size === individuallySolved.length && individuallySolved.every((id) => drawn.has(id))
+      && d.cons.text.includes(`${B.measured.length} of ${B.perAccount.size} accounts`)
       && Math.abs(Number(d.cons.pct) - B.rateStatement) < 0.01
       && Math.abs(Number(d.cons.mv) - measuredMV) <= 1
       && Math.abs(Number(d.cons.book) - B.statementBook) <= 1 && /of the statements'/i.test(d.cons.text);
@@ -9715,6 +9723,7 @@ const PERF_MW = [
     return none.every((r) => {
       const x = B.perAccount.get(r.id);
       if (!x) return false;
+      if (x.gap) return r.returnText.includes(x.gap);
       if (x.flows.length === 0) {
         return B.capitalRecord.has(r.id)
           ? /on the transactions card/i.test(r.returnText) && /\d+ dated capital movements? (is|are)/i.test(r.returnText)
@@ -17850,10 +17859,12 @@ const CIO_SHARED = [
       && days === MWR_BOOK.windowDays
       && (tile.hover ?? "").includes(MWR_BOOK.lastClose);
   }],
-  // LOAD-BEARING: the book's newest date must lie after the pool's last close,
-  // or the claim above would pass against the window it replaced.
+  // A newer book date exercises the distinction here. When every selected
+  // close reaches it, the synthetic account-return test still proves that a
+  // later unrelated valuation cannot advance the measured window.
   ["...and the book's newest date lies after that close, so the window rule is doing work", () => {
     if (!MWR_BOOK) return { notChecked: "the book's opening-value accounts could not be read on this run" };
+    if (MWR_BOOK.bookNewest === MWR_BOOK.lastClose) return { notChecked: "the pool's latest verified close equals the book's newest date; later-book-date isolation is tested with a synthetic valuation" };
     return MWR_BOOK.bookNewest > MWR_BOOK.lastClose;
   }],
   /* AND THE CROSS-HELD FIGURE KEEPS THE DISTINCTION ITS DRILL-DOWN'S LEAD USED

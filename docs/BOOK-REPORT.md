@@ -7,11 +7,11 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 8,34,73,40,790.47 |
-| Positions | 414 |
-| Accounts | 67 |
+| Consolidated market value | 8,40,12,76,132.34 |
+| Positions | 441 |
+| Accounts | 75 |
 | Owners | 8 |
-| Newest as-of | 2026-10-05 |
+| Newest as-of | 2026-10-07 |
 
 ## Per account
 
@@ -30,15 +30,18 @@ Generated — **do not edit by hand**.
 | AIFM_BPEPF6_0584 | Baring Private Equity India Fund | Ankita Jaisinghani | — | 2026-03-31 | 1 | 1,88,42,208.74 |
 | 103472 | Buoyant Capital | Ankita Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-08-31 | 1 | 28,26,63,341.57 |
 | 103473 | Buoyant Capital | Ajay Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-08-31 | 1 | 50,32,76,370.81 |
-| 3517383 | Carnelian Asset Management and Advisors Pvt Ltd | Ajay Jaisinghani | CARNELIAN BESPOKE PORTFOLIO | 2026-08-10 | 12 | 39,53,37,616.86 |
+| 3517383 | Carnelian Asset Management and Advisors Pvt Ltd | Ajay Jaisinghani | CARNELIAN BESPOKE PORTFOLIO | 2026-09-30 | 13 | 38,16,29,575.81 |
 | 4551 | Carnelian Bharat Amritkaal Fund | Ankita Jaisinghani | — | 2026-07-31 | 1 | 16,31,15,312.43 |
-| 100022 | Goldstandard Wealth Private Limited | Ankita Jaisinghani | Aristos Equity Portfolio | 2026-08-11 | 32 | 8,01,95,236.76 |
-| 100023 | Goldstandard Wealth Private Limited | Ajay Jaisinghani | Aristos Equity Portfolio | 2026-08-11 | 32 | 18,79,95,881.19 |
+| 100022 | Goldstandard Wealth Private Limited | Ankita Jaisinghani | Aristos Equity Portfolio | 2026-10-06 | 33 | 7,67,18,509.44 |
+| 100023 | Goldstandard Wealth Private Limited | Ajay Jaisinghani | Aristos Equity Portfolio | 2026-10-06 | 33 | 18,03,31,134.41 |
 | 510854 | Green Lantern Capital LLP | Ankita Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 5,79,66,679.22 |
 | 510861 | Green Lantern Capital LLP | Ajay Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 11,44,84,083.55 |
 | 67786137 | HDFC Bank (NSDL demat) | Bharat Jaisinghani Family Trust 3 | — | 2026-08-29 | 0 | 0 |
 | 67786547 | HDFC Bank (NSDL demat) | Bharat Jaisinghani Family Trust 2 | — | 2026-08-29 | 0 | 0 |
-| 16180583 | HDFC Mutual Fund | Bharat Jaisinghani | — | 2026-08-06 | 2 | 0 |
+| 15644806 | HDFC Mutual Fund | Ajay Jaisinghani | — | 2026-10-01 | 5 | 4,36,45,948.65 |
+| 15725046 | HDFC Mutual Fund | Aarti Jaisinghani | — | 2026-10-01 | 5 | 1,97,295.01 |
+| 16002141 | HDFC Mutual Fund | Ankita Jaisinghani | — | 2026-10-01 | 4 | 2,62,48,837.36 |
+| 16180583 | HDFC Mutual Fund | Bharat Jaisinghani | — | 2026-10-05 | 2 | 0 |
 | 10355977 | Helios Mutual Fund | Ajay Jaisinghani | — | 2026-08-07 | 1 | 30,99,84,500.77 |
 | 49794950 | ICICI Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-03-31 | 9 | 63,76,31,614.65 |
 | 36378950 | ICICI Prudential Mutual Fund | Ajay Jaisinghani | — | 2026-10-05 | 1 | 56,29,906.02 |
@@ -46,6 +49,10 @@ Generated — **do not edit by hand**.
 | 175962 | India SME Investments | Ajay Jaisinghani | — | 2026-06-30 | 1 | 9,55,80,000 |
 | 175964 | India SME Investments | Bharat Jaisinghani | — | 2026-06-30 | 1 | 3,18,60,000 |
 | 177302 | India SME Investments | Ankita Jaisinghani | — | 2026-06-30 | 1 | 3,18,60,000 |
+| 3041491081 | Invesco Mutual Fund | Bharat Jaisinghani | — | 2026-09-30 | 1 | 0 |
+| 3041491145 | Invesco Mutual Fund | Ajay Jaisinghani | — | 2026-09-30 | 2 | 0 |
+| 3041794916 | Invesco Mutual Fund | Ankita Jaisinghani | — | 2026-09-30 | 2 | 0 |
+| 7125255 | Kotak Mahindra Mutual Fund | Ajay Jaisinghani | — | 2026-10-05 | 1 | 1,08,48,796.3 |
 | 98245 | LKP Securities | Bharat Jaisinghani | — | 2026-03-31 | 10 | 98,76,174.92 |
 | 5110758 | Marathon Trends Advisory Pvt Ltd | Ankita Jaisinghani | Trend Following - Flexicap Growth | 2026-09-09 | 0 | 0 |
 | 5110837 | Marathon Trends Advisory Pvt Ltd | Ajay Jaisinghani | Trend Following - Flexicap Growth | 2026-09-09 | 0 | 0 |
@@ -59,9 +66,10 @@ Generated — **do not edit by hand**.
 | 1201090032387399 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani Family Trust | — | 2026-07-31 | 0 | 0 |
 | 1201090037359311 | Motilal Oswal Financial Services (demat) | Ajay Jaisinghani | — | 2026-07-31 | 0 | 0 |
 | 1201090037436848 | Motilal Oswal Financial Services (demat) | Bharat Jaisinghani | — | 2026-07-31 | 0 | 0 |
-| 90410016093 | Motilal Oswal Founders Fund | Ankita Jaisinghani | — | 2026-07-31 | 1 | 10,99,00,127.57 |
-| 90410016104 | Motilal Oswal Founders Fund | Ajay Jaisinghani | — | 2026-07-31 | 1 | 21,82,50,873.93 |
+| 90410016093 | Motilal Oswal Founders Fund | Ankita Jaisinghani | — | 2026-09-30 | 1 | 11,11,43,737.78 |
+| 90410016104 | Motilal Oswal Founders Fund | Ajay Jaisinghani | — | 2026-09-30 | 1 | 22,07,20,561.83 |
 | 90410014574 | Motilal Oswal Hedged Equity Multi Factor Strategy | Ajay Jaisinghani | — | 2026-07-31 | 0 | 0 |
+| 90414963315 | Motilal Oswal Mutual Fund | Ajay Jaisinghani | — | 2026-09-30 | 3 | 0 |
 | 9039920536 | Neo Infra Income Opportunities Fund | Ajay Jaisinghani | — | 2026-06-30 | 1 | 5,54,98,303.25 |
 | MOPWM | Consolidated review (MOPWM) | Ajay Jaisinghani | — | 2026-06-30 | 27 | 1,25,39,86,765.57 |
 | MOPWM | Consolidated review (MOPWM) | Ankita Jaisinghani | — | 2026-06-30 | 12 | 29,04,27,491.87 |
@@ -74,15 +82,15 @@ Generated — **do not edit by hand**.
 | 9039671912 | Sanshi Fund | Ajay Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 29,35,23,824.82 |
 | 9069671554 | Sanshi Fund | Ankita Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 29,42,02,601.1 |
 | 9069671634 | Sanshi Fund | Ajay Jaisinghani | Sanshi Fund-I (Open Ended AIF CAT-III) | 2026-06-30 | 1 | 28,45,63,122.95 |
-| SKY003 | Sky Capital Rising Titans Fund | Bharat Jaisinghani | — | 2026-07-31 | 1 | 1,71,50,000 |
-| SKY022 | Sky Capital Rising Titans Fund | Ajay Jaisinghani | — | 2026-07-31 | 1 | 1,50,00,000 |
-| SKY023 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 2 | — | 2026-07-31 | 1 | 75,00,000 |
-| SKY024 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 3 | — | 2026-07-31 | 1 | 75,00,000 |
+| SKY003 | Sky Capital Rising Titans Fund | Bharat Jaisinghani | — | 2026-08-31 | 1 | 1,71,50,000 |
+| SKY022 | Sky Capital Rising Titans Fund | Ajay Jaisinghani | — | 2026-08-31 | 1 | 1,50,00,000 |
+| SKY023 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 2 | — | 2026-08-31 | 1 | 75,00,000 |
+| SKY024 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 3 | — | 2026-08-31 | 1 | 75,00,000 |
 | 8710067 | SVAN Investment Managers LLP | Ajay Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-07-31 | 46 | 16,45,40,939.64 |
-| 8710090 | SVAN Investment Managers LLP | Bharat Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-07-31 | 45 | 10,70,25,588.35 |
+| 8710090 | SVAN Investment Managers LLP | Bharat Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-09-30 | 46 | 10,50,67,235.02 |
 | TVC262 | Transition Venture Capital | Bharat Jaisinghani Family Trust 2 | Transition Venture Capital Fund I | 2026-03-31 | 1 | 96,80,754 |
 | TVC263 | Transition Venture Capital | Bharat Jaisinghani Family Trust 3 | Transition Venture Capital Fund I | 2026-03-31 | 1 | 96,80,754 |
-| 128004 | V.E.C Assago Capital Management LLP | Ankita Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-08-13 | 16 | 6,50,10,579.28 |
+| 128004 | V.E.C Assago Capital Management LLP | Ankita Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-10-07 | 16 | 6,10,99,614.2 |
 | 128005 | V.E.C Assago Capital Management LLP | Ajay Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-08-13 | 19 | 20,28,79,639.73 |
 
 ## Private market — from the family's consolidated review
@@ -183,10 +191,10 @@ The review's dated rows behind the holdings it values (65 rows, `BOOK_REVIEW_FLO
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 28 | 206 | 4,87,56,28,889.08 |
-| Ankita Jaisinghani | 15 | 103 | 1,60,83,72,869.08 |
-| Bharat Jaisinghani | 12 | 93 | 75,25,67,475.6 |
-| Aarti Jaisinghani | 2 | 1 | 97,68,26,519.91 |
+| Ajay Jaisinghani | 32 | 219 | 4,91,12,20,534.1 |
+| Ankita Jaisinghani | 17 | 110 | 1,62,84,77,624.25 |
+| Bharat Jaisinghani | 13 | 95 | 75,06,09,122.27 |
+| Aarti Jaisinghani | 3 | 6 | 97,70,23,814.92 |
 | Bharat Jaisinghani Family Trust 2 | 4 | 3 | 3,06,81,629 |
 | Bharat Jaisinghani Family Trust 3 | 4 | 3 | 3,06,81,629 |
 | Bharat Jaisinghani Family Trust | 1 | 0 | 0 |
@@ -221,10 +229,10 @@ should be.
 | --- | --- | --- | ---: | --- |
 | 1019265797 | Aditya Birla Sun Life Mutual Fund | Hope India Trust | 7,70,028.13 | holder Hope India Trust is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 | 1038104611 | Aditya Birla Sun Life Mutual Fund | HOPE INDIA TRUST | 7,98,563.95 | holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
-| 4295974 | Kotak Mahindra Mutual Fund | Hope India Trust | 7,77,205.81 | holder Hope India Trust is filed by the AMC as Trust, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
-| 70413280453 | Mirae Asset Mutual Fund | HOPE INDIA TRUST | 9,41,106.71 | holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
+| 4295974 | Kotak Mahindra Mutual Fund | Hope India Trust | 7,84,369.03 | holder Hope India Trust is filed by the AMC as Trust, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
+| 70413280453 | Mirae Asset Mutual Fund | HOPE INDIA TRUST | 9,50,812.26 | holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. |
 
-Together they carry **32,86,904.6** across 4 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
+Together they carry **33,03,773.37** across 4 account(s). That figure is stated so nobody has to wonder whether the money was missed or excluded.
 
 ## The family's own bank accounts
 
@@ -244,15 +252,15 @@ page alone. `BOOK_POLYCAB` is its only reader; remove its key from
 | --- | --- | --- | --- | ---: | ---: |
 | POLYCAB INDIA LIMITED - EQ | Ajay Jaisinghani | ICICI Bank (NSDL demat) 49794950 | 2026-03-31 | 1,39,01,229 | 1,23,51,24,19,665 |
 
-Together **1,23,51,24,19,665**, excluded from the 8,34,73,40,790.47 consolidated market value above.
+Together **1,23,51,24,19,665**, excluded from the 8,40,12,76,132.34 consolidated market value above.
 
 ## The family's own dated investments
 
-**8** of those account(s) start every class's record at nil — a printed running unit balance that starts from zero on the class's first allotment, or a first allotment on the day the class's own series name says it was issued — which proves their record reaches inception: 3p-investment-managers-3000048, ask-absolute-return-fund-9039917111, ask-absolute-return-fund-9039917144, buoyant-capital-103473, helios-mutual-fund-10355977, icici-prudential-mutual-fund-36378950, icici-prudential-mutual-fund-36379637, motilal-oswal-active-momentum-fund-904168868444.
+**11** of those account(s) start every class's record at nil — a printed running unit balance that starts from zero on the class's first allotment, or a first allotment on the day the class's own series name says it was issued — which proves their record reaches inception: 3p-investment-managers-3000048, ask-absolute-return-fund-9039917111, ask-absolute-return-fund-9039917144, buoyant-capital-103473, helios-mutual-fund-10355977, icici-prudential-mutual-fund-36378950, icici-prudential-mutual-fund-36379637, invesco-mutual-fund-3041491081, invesco-mutual-fund-3041491145, invesco-mutual-fund-3041794916, motilal-oswal-active-momentum-fund-904168868444.
 
-**67** dated contribution(s) totalling **4,13,91,00,000** and **309** withdrawal(s) totalling **95,08,43,437.09**, across **23 of 67** account(s).
+**75** dated contribution(s) totalling **4,63,40,54,788.29** and **382** withdrawal(s) totalling **1,02,46,57,159.11**, across **30 of 75** account(s).
 
-These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 44 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
+These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 45 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
 
 A per-contribution breakdown is published for **14** position(s), of which **5** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
 
@@ -277,18 +285,18 @@ A per-contribution breakdown is published for **14** position(s), of which **5**
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 6,89,32,09,405.75 | 82.58% |
-| Financials | 67,35,86,623.95 | 8.07% |
-| Health Care | 19,08,15,090.8 | 2.29% |
-| Consumer Discretionary | 18,37,36,315.22 | 2.20% |
-| Industrials | 14,49,38,189.09 | 1.74% |
-| Cash | 11,57,87,077.07 | 1.39% |
-| Information Technology | 7,17,77,377.78 | 0.86% |
-| Materials | 2,39,34,566.25 | 0.29% |
-| Consumer Staples | 2,28,13,806.84 | 0.27% |
-| Communication Services | 1,10,42,228.2 | 0.13% |
-| Utilities | 99,62,509.52 | 0.12% |
-| Real Estate | 57,37,600 | 0.07% |
+| Unclassified | 6,98,55,89,525.03 | 83.15% |
+| Financials | 65,23,65,261.42 | 7.77% |
+| Health Care | 18,25,47,786.1 | 2.17% |
+| Consumer Discretionary | 18,07,07,727.82 | 2.15% |
+| Industrials | 14,54,23,477.65 | 1.73% |
+| Information Technology | 9,33,34,638.88 | 1.11% |
+| Cash | 8,97,68,456.39 | 1.07% |
+| Materials | 2,38,08,046.25 | 0.28% |
+| Consumer Staples | 2,24,78,869.8 | 0.27% |
+| Communication Services | 1,05,04,208.2 | 0.13% |
+| Utilities | 91,44,294.8 | 0.11% |
+| Real Estate | 56,03,840 | 0.07% |
 
 ## Unclassified sectors
 
@@ -298,6 +306,7 @@ never guessed into the nearest plausible bucket.
 - **Alternative Assets** — 2 position(s)
 - **Other Apparels & Accessor** — 1 position(s)
 - **Coal** — 1 position(s)
+- **Specialty Chemicals** — 1 position(s)
 - **Shipping** — 2 position(s)
 - **Oil Equipment & Services** — 2 position(s)
 - **OTHERS** — 2 position(s)
@@ -306,7 +315,7 @@ never guessed into the nearest plausible bucket.
 ## What this corpus does not support
 
 - 18 spreadsheet export(s) are witnesses of the PDF beside each (`twinOf`) and are not documents of this book — ASK Investment Managers Limited 10, Marathon Trends Advisory Pvt Ltd 8. Each carries no facts; every figure in it was checked against its PDF at extraction (docs/EXTRACTION-REPORT.md).
-- identity: 8 ISIN(s) are held under TWO OR MORE securityKeys — one security keyed twice, so its rows never add up. Each is a name one issuer CLIPS and another spells out, which no rule here bridges: the depository strip only ever REMOVES furniture and never supplies a name the statement did not print. Closing them needs a hand-checked alias, not another statement: INF0R8701046 (helios-flexi-cap-fund-direct-growth / helios-fcf-d-grow); INF0VGG22429 (blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability / bavf-series-20-class-c6); INE647U01026 (clean-max-enviro-energy-solutions / clean-max-env); INE0LTR03090 (everest-fleet-private-limited-0-001-series-b-new-pref-18ap43 / efpl-pref-18042043); INF0XAZ22055 (india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability / india-sme-investments-fund-ii-class-a2); INE721I01024 (national-stock-exchange-of-india / national-stock-ex); INF1ISW22079 (sanshi-trust-fd-i-cl-e-restricted-transferability / sanshi-fund-i-class-e); INF1V9N22050 (sky-capital-rising-titans-fund-i-skycrtf-oncarea3-restricted-transferability / sky-capital-rising-titans-fund-oncare-class-a3)
+- identity: 12 ISIN(s) are held under TWO OR MORE securityKeys — one security keyed twice, so its rows never add up. Each is a name one issuer CLIPS and another spells out, which no rule here bridges: the depository strip only ever REMOVES furniture and never supplies a name the statement did not print. Closing them needs a hand-checked alias, not another statement: INF179K01830 (hdfc-balanced-advantage-fund-regular-plan-growth / hdfc-baf-r-grow); INF0R8701046 (helios-flexi-cap-fund-direct-growth / helios-fcf-d-grow); INF0VGG22429 (blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability / bavf-series-20-class-c6); INE647U01026 (clean-max-enviro-energy-solutions / clean-max-env); INE0LTR03090 (everest-fleet-private-limited-0-001-series-b-new-pref-18ap43 / efpl-pref-18042043); INF0XAZ22055 (india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability / india-sme-investments-fund-ii-class-a2); INE721I01024 (national-stock-exchange-of-india / national-stock-ex); INF1ISW22079 (sanshi-trust-fd-i-cl-e-restricted-transferability / sanshi-fund-i-class-e); INF1V9N22050 (sky-capital-rising-titans-fund-i-skycrtf-oncarea3-restricted-transferability / sky-capital-rising-titans-fund-oncare-class-a3); INF205K01KR8 (invesco-india-arbitrage-fund-direct-plan-growth-af-d1 / inves-arbf-d-grow); INF174K01LT0 (kotak-midcap-fund-direct-plan-growth-erstwhile-kotak-emerging-equity-scheme / kotak-mid-cap-fund-direct-growth); INF174K01LS2 (kotak-flexicap-fund-direct-growth-erstwhile-kotak-standard-multicap-fund-dir-gr / kotak-flexi-cap-fund-direct-growth)
 - identity: 0 securityKey(s) carry two different ISINs — no key in this archive names two securities.
 - account 1000632: no time-weighted return series in any statement
 - account 1000632: no flow block in any statement, so no value bridge
@@ -361,64 +370,122 @@ never guessed into the nearest plausible bucket.
 - account AIFM_BPEPF6_0584: no time-weighted return series in any statement
 - account AIFM_BPEPF6_0584: no flow block in any statement, so no value bridge
 - account AIFM_BPEPF6_0584: no external capital movements found, so no money-weighted return series
+- account Buoyant Capital::103472: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103472-2026-07-31-holdings`; its dated rows are still counted
+- account Buoyant Capital::103472: holdings 2026-09-30 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103472-2026-09-30-holdings`; its dated rows are still counted
 - account 103472: no external capital movements found, so no money-weighted return series
-- account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-07-31 — `buoyant-capital-103473-2026-07-31-holdings-2`; its dated rows are still counted
+- account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103473-2026-07-31-holdings`; its dated rows are still counted
+- account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103473-2026-07-31-holdings-2`; its dated rows are still counted
+- account Buoyant Capital::103473: holdings 2026-09-30 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103473-2026-09-30-holdings`; its dated rows are still counted
 - account 103473: 2 capital-register row(s) (Security in, Security out) are the legs of a class switch the fund's own reclassification record prints on the same date for the same rupees — not money moving, so not listed
 - account 103473: 2 cash-flow row(s) are the legs of a class switch the fund's own reclassification record prints on the same date for the same rupees — not money moving, so not a flow
 - account 103473: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
-- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-summary 2026-04-01 superseded for SNAPSHOT facts by 2026-04-01 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-04-01-performance-summary-2`; its dated rows are still counted
-- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal`; its dated rows are still counted
-- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: capital-gain 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain`; its dated rows are still counted
-- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: dividend-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-dividend-statement`; its dated rows are still counted
-- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: fact-sheet 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet`; its dated rows are still counted
-- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: holdings 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings`; its dated rows are still counted
-- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-history 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-performance-history`; its dated rows are still counted
-- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: transaction-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-08-10 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-transaction-statement`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: bank-book 2026-07-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-bank-book`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: capital-gain 2026-07-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-capital-gain`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: dividend-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-dividend-statement`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: fact-sheet 2026-07-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-fact-sheet`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: holdings 2026-07-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-holdings`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-history 2026-07-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-performance-history`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-summary 2026-07-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-performance-summary`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: transaction-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-transaction-statement`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: appraisal 2026-08-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-appraisal`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: capital-gain 2026-08-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-capital-gain`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: dividend-statement 2026-08-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-dividend-statement`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: fact-sheet 2026-08-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-fact-sheet`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: holdings 2026-08-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-holdings`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-benchmark 2026-08-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-performance-benchmark`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-history 2026-08-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-performance-history`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-summary 2026-08-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-performance-summary`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: transaction-statement 2026-08-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-transaction-statement`; its dated rows are still counted
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: 45 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 3517383: capital-gain lots printed as `dsp-mutual-fund-dsp-s-and-p-bse` settle this account's sales of `dsp-mutual-fund-dsp-s-and-p-bse-liquid-rate-etf` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
 - account 4551: no time-weighted return series in any statement
 - account 4551: no flow block in any statement, so no value bridge
 - account 4551: no external capital movements found, so no money-weighted return series
-- account Goldstandard Wealth Private Limited::100022: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-appraisal`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: bank-book 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-bank-book`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: capital-register 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-capital-register`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: dividend-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-dividend-statement`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: fact-sheet 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: holdings 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-holdings`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: performance-benchmark 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-performance-benchmark`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: performance-history 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-performance-history`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: performance-summary 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-performance-summary`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: transaction-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-07-10-transaction-statement`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: fact-sheet 2026-08-11 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-08-11-fact-sheet-2`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: performance-summary 2026-08-11 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100022-2026-08-11-performance-summary-2`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100022: 5 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
-- account 100022: its capital register's only movements are 6 withdrawal(s) (TDS Trf to Capital A/c, 28944 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
-- account Goldstandard Wealth Private Limited::100023: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-appraisal`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: bank-book 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-bank-book`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: capital-register 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-capital-register`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: dividend-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-dividend-statement`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: expense-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: fact-sheet 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: holdings 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-holdings`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: performance-benchmark 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-performance-benchmark`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: performance-history 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-performance-history`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: performance-summary 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-performance-summary`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: transaction-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-08-11 — `goldstandard-wealth-private-limited-100023-2026-07-10-transaction-statement`; its dated rows are still counted
-- account Goldstandard Wealth Private Limited::100023: 7 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
-- account 100023: its capital register's only movements are 7 withdrawal(s) (TDS Trf to Capital A/c, 69610 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
+- account Goldstandard Wealth Private Limited::100022: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-appraisal`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: bank-book 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-bank-book`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: capital-register 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-capital-register`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: dividend-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-dividend-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: fact-sheet 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-fact-sheet`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: holdings 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-holdings`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: performance-benchmark 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-performance-benchmark`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: performance-history 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-performance-history`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: performance-summary 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-performance-summary`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: transaction-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-transaction-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: appraisal 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-appraisal`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: bank-book 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-bank-book`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: capital-register 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-capital-register`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: dividend-statement 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-dividend-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: fact-sheet 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-fact-sheet`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: fact-sheet 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-fact-sheet-2`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: holdings 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-holdings`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: performance-benchmark 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-performance-benchmark`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: performance-history 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-performance-history`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: performance-summary 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-performance-summary`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: performance-summary 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-performance-summary-2`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: transaction-statement 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-08-11-transaction-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: appraisal 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-10-06-appraisal-2`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: capital-register 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-10-06-capital-register-2`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: holdings 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-10-06-holdings-2`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100022: 15 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 100022: its capital register's only movements are 12 withdrawal(s) (TDS Trf to Capital A/c, 47209 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
+- account Goldstandard Wealth Private Limited::100023: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-appraisal`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: bank-book 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-bank-book`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: capital-register 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-capital-register`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: dividend-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-dividend-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: expense-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-expense-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: fact-sheet 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-fact-sheet`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: holdings 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-holdings`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: performance-benchmark 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-performance-benchmark`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: performance-history 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-performance-history`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: performance-summary 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-performance-summary`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: transaction-statement 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-transaction-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: appraisal 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-appraisal`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: bank-book 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-bank-book`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: capital-register 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-capital-register`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: dividend-statement 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-dividend-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: expense-statement 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-expense-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: fact-sheet 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-fact-sheet`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: holdings 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-holdings`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: performance-benchmark 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-performance-benchmark`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: performance-history 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-performance-history`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: performance-summary 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-performance-summary`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: transaction-statement 2026-08-11 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-08-11-transaction-statement`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: appraisal 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-10-06-appraisal-2`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: capital-register 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-10-06-capital-register-2`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: performance-summary 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-10-06-performance-summary-2`; its dated rows are still counted
+- account Goldstandard Wealth Private Limited::100023: 19 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 100023: its capital register's only movements are 15 withdrawal(s) (TDS Trf to Capital A/c, 121350 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
 - account Green Lantern Capital LLP::510854: appraisal 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-appraisal`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: capital-gain 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-capital-gain`; its dated rows are still counted
-- account Green Lantern Capital LLP::510854: capital-register 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-capital-register`; its dated rows are still counted
+- account Green Lantern Capital LLP::510854: capital-register 2026-06-25 superseded for SNAPSHOT facts by 2026-09-23 — `green-lantern-capital-llp-510854-2026-06-25-capital-register`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: dividend-statement 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-dividend-statement`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: fact-sheet 2026-06-25 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510854-2026-06-25-fact-sheet`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: holdings 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-holdings`; its dated rows are still counted
-- account Green Lantern Capital LLP::510854: transaction-statement 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-transaction-statement`; its dated rows are still counted
+- account Green Lantern Capital LLP::510854: transaction-statement 2026-06-25 superseded for SNAPSHOT facts by 2026-09-23 — `green-lantern-capital-llp-510854-2026-06-25-transaction-statement`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: performance-benchmark 2026-07-09 superseded for SNAPSHOT facts by 2026-08-10 — `green-lantern-capital-llp-510854-2026-07-09-performance-benchmark`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: performance-history 2026-07-09 superseded for SNAPSHOT facts by 2026-10-06 — `green-lantern-capital-llp-510854-2026-07-09-performance-history`; its dated rows are still counted
+- account Green Lantern Capital LLP::510854: capital-register 2026-07-27 superseded for SNAPSHOT facts by 2026-09-23 — `green-lantern-capital-llp-510854-2026-07-27-capital-register`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: fact-sheet 2026-07-27 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510854-2026-07-27-fact-sheet`; its dated rows are still counted
+- account Green Lantern Capital LLP::510854: transaction-statement 2026-07-27 superseded for SNAPSHOT facts by 2026-09-23 — `green-lantern-capital-llp-510854-2026-07-27-transaction-statement`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: performance-history 2026-08-10 superseded for SNAPSHOT facts by 2026-10-06 — `green-lantern-capital-llp-510854-2026-08-10-performance-history`; its dated rows are still counted
+- account Green Lantern Capital LLP::510854: 5 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 510854: capital-gain lots printed as `axis-liquid-fund-direct-plan-growth` settle this account's sales of `axis-liquid-fund-direct-plan-growth-option` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
-- account 510854: its capital register's only movements are 7 withdrawal(s) (TDS on Payout, 16854 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
-- account Green Lantern Capital LLP::510861: performance-summary 2026-04-01 superseded for SNAPSHOT facts by 2026-04-01 — `green-lantern-capital-llp-510861-2026-04-01-performance-summary-2`; its dated rows are still counted
+- account 510854: aurobindo-pharma is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: alivus-life-sciences is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: bajaj-auto is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: graphite-india is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: gujarat-ambuja-exports is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: jamna-auto-ind is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: gmm-pfaudler is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: ratnamani-metals-and-tubes is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: axis-liquid-fund-direct-plan-growth-option is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: the 2026-09-23 capital register's 7 movement(s) after 2026-07-27, the date the account's value is struck (0 in, 12869.32 out), are not listed as dated capital: they are not yet in that value
+- account 510854: its bank book prints 1 dated deposit or withdrawal move(s) its dated capital record does not carry (0 in, 1969 out), but no profit-and-loss account states the capital the account received and paid back, so nothing witnesses those rows and none is listed as dated capital
+- account 510854: its dated capital record runs to 2026-07-27 — the capital register whose balances tie reaches that date
+- account 510854: 28 movement(s) from its capital register (50000000 in, 53877 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
+- account 510854: its capital-register runs 2025-01-13 → 2026-09-23, so 22 row(s) before the 2026-04-01 opening value (already inside it) and 7 row(s) after the 2026-07-27 value the series closes on (not yet inside it) are not flows of its money-weighted window
+- account 510854: its capital-register reproduces the performance-summary's Net Capital In/Out of -19634 over 2026-04-01 → 2026-08-10 once the 1 row(s) dated 2026-08-10 itself (-1204) are left out — the statement was struck before that day's movements posted
 - account Green Lantern Capital LLP::510861: appraisal 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-appraisal`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: capital-gain 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-25-capital-gain`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: capital-register 2026-06-25 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510861-2026-06-25-capital-register`; its dated rows are still counted
@@ -428,6 +495,7 @@ never guessed into the nearest plausible bucket.
 - account Green Lantern Capital LLP::510861: transaction-statement 2026-06-25 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510861-2026-06-25-transaction-statement`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: capital-gain 2026-06-30 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510861-2026-06-30-capital-gain`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: performance-history 2026-07-09 superseded for SNAPSHOT facts by 2026-10-06 — `green-lantern-capital-llp-510861-2026-07-09-performance-history`; its dated rows are still counted
+- account Green Lantern Capital LLP::510861: performance-summary 2026-07-09 superseded for SNAPSHOT facts by 2026-08-10 — `green-lantern-capital-llp-510861-2026-07-09-performance-summary`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: capital-register 2026-07-27 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510861-2026-07-27-capital-register`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: fact-sheet 2026-07-27 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510861-2026-07-27-fact-sheet`; its dated rows are still counted
 - account Green Lantern Capital LLP::510861: transaction-statement 2026-07-27 superseded for SNAPSHOT facts by 2026-09-22 — `green-lantern-capital-llp-510861-2026-07-27-transaction-statement`; its dated rows are still counted
@@ -456,7 +524,17 @@ never guessed into the nearest plausible bucket.
 - account 67786547: no time-weighted return series in any statement
 - account 67786547: no flow block in any statement, so no value bridge
 - account 67786547: no external capital movements found, so no money-weighted return series
-- account HDFC Mutual Fund::16180583: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-08-06 — `hdfc-mutual-fund-16180583-2026-07-01-holdings`; its dated rows are still counted
+- account 15644806: no time-weighted return series in any statement
+- account 15644806: no flow block in any statement, so no value bridge
+- account 15644806: no external capital movements found, so no money-weighted return series
+- account 15725046: no time-weighted return series in any statement
+- account 15725046: no flow block in any statement, so no value bridge
+- account 15725046: no external capital movements found, so no money-weighted return series
+- account 16002141: no time-weighted return series in any statement
+- account 16002141: no flow block in any statement, so no value bridge
+- account 16002141: no external capital movements found, so no money-weighted return series
+- account HDFC Mutual Fund::16180583: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-10-05 — `hdfc-mutual-fund-16180583-2026-07-01-holdings`; its dated rows are still counted
+- account HDFC Mutual Fund::16180583: holdings 2026-08-06 superseded for SNAPSHOT facts by 2026-10-05 — `hdfc-mutual-fund-16180583-2026-08-06-holdings`; its dated rows are still counted
 - account 16180583: no time-weighted return series in any statement
 - account 16180583: no flow block in any statement, so no value bridge
 - account 16180583: no external capital movements found, so no money-weighted return series
@@ -485,8 +563,21 @@ never guessed into the nearest plausible bucket.
 - account 177302: no time-weighted return series in any statement
 - account 177302: no flow block in any statement, so no value bridge
 - account 177302: no external capital movements found, so no money-weighted return series
-- account Kotak Mahindra Mutual Fund::4295974: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-08-03 — `kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings`; its dated rows are still counted
-- account 4295974 (Kotak Mahindra Mutual Fund) is NOT in the book: holder Hope India Trust is filed by the AMC as Trust, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,77,205.81.
+- account 3041491081: no time-weighted return series in any statement
+- account 3041491081: no flow block in any statement, so no value bridge
+- account 3041491081: no external capital movements found, so no money-weighted return series
+- account 3041491145: no time-weighted return series in any statement
+- account 3041491145: no flow block in any statement, so no value bridge
+- account 3041491145: no external capital movements found, so no money-weighted return series
+- account 3041794916: no time-weighted return series in any statement
+- account 3041794916: no flow block in any statement, so no value bridge
+- account 3041794916: no external capital movements found, so no money-weighted return series
+- account Kotak Mahindra Mutual Fund::4295974: holdings 2026-07-01 superseded for SNAPSHOT facts by 2026-10-05 — `kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings`; its dated rows are still counted
+- account Kotak Mahindra Mutual Fund::4295974: holdings 2026-08-03 superseded for SNAPSHOT facts by 2026-10-05 — `kotak-mahindra-mutual-fund-4295974-2026-08-03-holdings`; its dated rows are still counted
+- account 4295974 (Kotak Mahindra Mutual Fund) is NOT in the book: holder Hope India Trust is filed by the AMC as Trust, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 7,84,369.03.
+- account 7125255: no time-weighted return series in any statement
+- account 7125255: no flow block in any statement, so no value bridge
+- account 7125255: no external capital movements found, so no money-weighted return series
 - account LKP Securities::98245: capital-gain 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `lkp-securities-98245-2026-06-30-capital-gain`; its dated rows are still counted
 - account LKP Securities::98245: transaction-statement 2026-07-01 superseded for SNAPSHOT facts by 2026-08-04 — `lkp-securities-98245-2026-07-01-transaction-statement`; its dated rows are still counted
 - account LKP Securities::98245: 6 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
@@ -513,12 +604,18 @@ never guessed into the nearest plausible bucket.
 - account 5110837: the income-expense column 2018-04-01 → 2026-09-09 is shown as its printed lines only — The report prints no opening or closing value, so its lines are shown as printed and not added up.
 - account 5110837: no statement states this mandate's capital since inception as at 2026-09-09, so its return is struck holding by holding and carries only the realised gain its capital gain statement's window reports
 - account 5110837: no external capital movements found, so no money-weighted return series
-- account Mirae Asset Mutual Fund::70413280453: holdings 2026-07-02 superseded for SNAPSHOT facts by 2026-08-06 — `mirae-asset-mutual-fund-70413280453-2026-07-02-holdings`; its dated rows are still counted
-- account 70413280453 (Mirae Asset Mutual Fund) is NOT in the book: holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 9,41,106.71.
+- account Mirae Asset Mutual Fund::70413280453: holdings 2026-07-02 superseded for SNAPSHOT facts by 2026-10-06 — `mirae-asset-mutual-fund-70413280453-2026-07-02-holdings`; its dated rows are still counted
+- account Mirae Asset Mutual Fund::70413280453: holdings 2026-08-06 superseded for SNAPSHOT facts by 2026-10-06 — `mirae-asset-mutual-fund-70413280453-2026-08-06-holdings`; its dated rows are still counted
+- account 70413280453 (Mirae Asset Mutual Fund) is NOT in the book: holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book. Value on its own statement: 9,50,812.26.
 - account Molecule Ventures LLP::7810404: expense-statement 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `molecule-ventures-llp-7810404-2026-06-30-expense-statement`; its dated rows are still counted
-- account Molecule Ventures LLP::7810404: fact-sheet 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `molecule-ventures-llp-7810404-2026-06-30-fact-sheet`; its dated rows are still counted
+- account Molecule Ventures LLP::7810404: fact-sheet 2026-06-30 superseded for SNAPSHOT facts by 2026-09-30 — `molecule-ventures-llp-7810404-2026-06-30-fact-sheet`; its dated rows are still counted
 - account Molecule Ventures LLP::7810404: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `molecule-ventures-llp-7810404-2026-06-30-holdings`; its dated rows are still counted
+- account Molecule Ventures LLP::7810404: transaction-statement 2026-06-30 superseded for SNAPSHOT facts by 2026-10-08 — `molecule-ventures-llp-7810404-2026-06-30-transaction-statement`; its dated rows are still counted
+- account Molecule Ventures LLP::7810404: fact-sheet 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `molecule-ventures-llp-7810404-2026-07-31-fact-sheet`; its dated rows are still counted
 - account Molecule Ventures LLP::7810404: 3 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 7810404: sansera-engineering is not rolled forward past 2026-07-31 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 7810404: the 2026-10-08 capital register's 2 movement(s) after 2026-07-31, the date the account's value is struck (0 in, 1765 out), are not listed as dated capital: they are not yet in that value
+- account 7810404: its capital-register runs 2026-04-01 → 2026-10-08, so 2 row(s) after the 2026-07-31 value the series closes on (not yet inside it) are not flows of its money-weighted window
 - account 7810404: no external capital movements found, so no money-weighted return series
 - account 904168868444: no time-weighted return series in any statement
 - account 904168868444: no flow block in any statement, so no value bridge
@@ -552,27 +649,44 @@ never guessed into the nearest plausible bucket.
 - account 1201090037436848: no time-weighted return series in any statement
 - account 1201090037436848: no flow block in any statement, so no value bridge
 - account 1201090037436848: no external capital movements found, so no money-weighted return series
+- account Motilal Oswal Founders Fund::90410016093: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `motilal-oswal-founders-fund-90410016093-2026-07-31-holdings`; its dated rows are still counted
 - account 90410016093: no time-weighted return series in any statement
 - account 90410016093: no flow block in any statement, so no value bridge
 - account 90410016093: no external capital movements found, so no money-weighted return series
-- account Motilal Oswal Founders Fund::90410016104: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-07-31 — `motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2`; its dated rows are still counted
+- account Motilal Oswal Founders Fund::90410016104: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `motilal-oswal-founders-fund-90410016104-2026-07-31-holdings`; its dated rows are still counted
+- account Motilal Oswal Founders Fund::90410016104: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2`; its dated rows are still counted
 - account 90410016104: no time-weighted return series in any statement
 - account 90410016104: no flow block in any statement, so no value bridge
 - account 90410016104: no external capital movements found, so no money-weighted return series
 - account 90410014574: no time-weighted return series in any statement
 - account 90410014574: no flow block in any statement, so no value bridge
 - account 90410014574: no external capital movements found, so no money-weighted return series
+- account 90414963315: no time-weighted return series in any statement
+- account 90414963315: no flow block in any statement, so no value bridge
+- account 90414963315: no external capital movements found, so no money-weighted return series
 - account 9039920536: no time-weighted return series in any statement
 - account 9039920536: no flow block in any statement, so no value bridge
 - account 9039920536: no external capital movements found, so no money-weighted return series
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-05-31-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-06-30-investor-report`; its dated rows are still counted
-- account SVAN Investment Managers LLP::8710067: 14 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
-- account 8710067: no external capital movements found, so no money-weighted return series
-- account SVAN Investment Managers LLP::8710090: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710090-2026-05-31-investor-report`; its dated rows are still counted
-- account SVAN Investment Managers LLP::8710090: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710090-2026-06-30-investor-report`; its dated rows are still counted
-- account SVAN Investment Managers LLP::8710090: 16 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
-- account 8710090: no external capital movements found, so no money-weighted return series
+- account SVAN Investment Managers LLP::8710067: 13 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 8710067: 8 capital-gain lot(s) were sold after this account's holding statement of 2026-07-31, so the units they sold are still IN that statement's positions at its own mark. Their gain is on the capital gain statement and is not added to any position's return — doing so would count the same units once as value and once as profit.
+- account 8710067: credit-access-grameen is not rolled forward past 2026-07-31 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 8710067: ghcl-textiles is not rolled forward past 2026-07-31 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 8710067: nitin-spinners is not rolled forward past 2026-07-31 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 8710067: sg-mart rolled forward on the account's own tape from 4840 on 2026-07-31 to 3125 on 2026-09-30 (1 trade(s); witnessed by capital gain lots to 2026-09-30)
+- account 8710067: shankara-building-products rolled forward on the account's own tape from 2818 on 2026-07-31 to 0 on 2026-09-30 (1 trade(s); witnessed by capital gain lots to 2026-09-30)
+- account 8710067: surya-roshni rolled forward on the account's own tape from 8030 on 2026-07-31 to 0 on 2026-09-30 (1 trade(s); witnessed by capital gain lots to 2026-09-30)
+- account 8710067: varroc-engineering is not rolled forward past 2026-07-31 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 8710067: its bank book prints 12 dated deposit or withdrawal move(s) its dated capital record does not carry (0 in, 37099.8 out), but no profit-and-loss account states the capital the account received and paid back, so nothing witnesses those rows and none is listed as dated capital
+- account 8710067: its bank-book runs 2026-04-01 → 2026-09-30, so 15 row(s) after the 2026-07-31 value the series closes on (not yet inside it) are not flows of its money-weighted window
+- account 8710067: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
+- account SVAN Investment Managers LLP::8710090: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-09-30 — `svan-investment-managers-llp-8710090-2026-05-31-investor-report`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710090: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-09-30 — `svan-investment-managers-llp-8710090-2026-06-30-investor-report`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710090: investor-report 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `svan-investment-managers-llp-8710090-2026-07-31-investor-report`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710090: 18 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 8710090: no flow block in any statement, so no value bridge
+- account 8710090: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
 - account 9039671821: no time-weighted return series in any statement
 - account 9039671821: the unknown value bridge 2025-10-03 → 2026-06-30 is WITHHELD — The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals.
 - account 9039671821: no external capital movements found, so no money-weighted return series
@@ -588,31 +702,35 @@ never guessed into the nearest plausible bucket.
 - account 9069671634: no time-weighted return series in any statement
 - account 9069671634: the unknown value bridge 2025-04-30 → 2026-06-30 is WITHHELD — The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals.
 - account 9069671634: no external capital movements found, so no money-weighted return series
-- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky003-2026-04-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky003-2026-05-31-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky003-2026-06-30-holdings`; its dated rows are still counted
-- account SKY003 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-07-31 carries 2 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky003-2026-04-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky003-2026-05-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky003-2026-06-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY003: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky003-2026-07-31-holdings`; its dated rows are still counted
+- account SKY003 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-08-31 carries 2 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account SKY003: no time-weighted return series in any statement
 - account SKY003: no flow block in any statement, so no value bridge
 - account SKY003: no external capital movements found, so no money-weighted return series
-- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky022-2026-04-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky022-2026-05-31-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky022-2026-06-30-holdings`; its dated rows are still counted
-- account SKY022 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-07-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky022-2026-04-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky022-2026-05-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky022-2026-06-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY022: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky022-2026-07-31-holdings`; its dated rows are still counted
+- account SKY022 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-08-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account SKY022: no time-weighted return series in any statement
 - account SKY022: no flow block in any statement, so no value bridge
 - account SKY022: no external capital movements found, so no money-weighted return series
-- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky023-2026-04-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky023-2026-05-31-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky023-2026-06-30-holdings`; its dated rows are still counted
-- account SKY023 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-07-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky023-2026-04-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky023-2026-05-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky023-2026-06-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY023: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky023-2026-07-31-holdings`; its dated rows are still counted
+- account SKY023 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-08-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account SKY023: no time-weighted return series in any statement
 - account SKY023: no flow block in any statement, so no value bridge
 - account SKY023: no external capital movements found, so no money-weighted return series
-- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky024-2026-04-30-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky024-2026-05-31-holdings`; its dated rows are still counted
-- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `sky-capital-rising-titans-fund-sky024-2026-06-30-holdings`; its dated rows are still counted
-- account SKY024 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-07-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
+- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-04-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky024-2026-04-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-05-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky024-2026-05-31-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-06-30 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky024-2026-06-30-holdings`; its dated rows are still counted
+- account Sky Capital Rising Titans Fund::SKY024: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-08-31 — `sky-capital-rising-titans-fund-sky024-2026-07-31-holdings`; its dated rows are still counted
+- account SKY024 (Sky Capital Rising Titans Fund) contributes no market value: its statement of 2026-08-31 carries 1 holding(s) with units and cost and NO NAV, so there is nothing to value them at. Units and cost are in the archive; the consolidated total does not include them.
 - account SKY024: no time-weighted return series in any statement
 - account SKY024: no flow block in any statement, so no value bridge
 - account SKY024: no external capital movements found, so no money-weighted return series
@@ -622,30 +740,47 @@ never guessed into the nearest plausible bucket.
 - account TVC263: no time-weighted return series in any statement
 - account TVC263: no flow block in any statement, so no value bridge
 - account TVC263: no external capital movements found, so no money-weighted return series
-- account V.E.C Assago Capital Management LLP::128004: performance-summary 2026-04-01 superseded for SNAPSHOT facts by 2026-04-01 — `v-e-c-assago-capital-management-llp-128004-2026-04-01-performance-summary-2`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: appraisal 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: capital-gain 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-capital-gain`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: capital-register 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-capital-register`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: dividend-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-dividend-statement`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: expense-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: fact-sheet 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-fact-sheet`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: performance-benchmark 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-benchmark`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: performance-history 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-history`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: transaction-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: dividend-statement 2026-08-13 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-dividend-statement-2`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: bank-book (no date) superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128004-unknown-bank-book`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128004: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
-- account 128004: its capital register's only movements are 2 withdrawal(s) (TDS Trf to Capital A/c, 4990 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
-- account V.E.C Assago Capital Management LLP::128005: performance-summary 2026-04-01 superseded for SNAPSHOT facts by 2026-04-01 — `v-e-c-assago-capital-management-llp-128005-2026-04-01-performance-summary-2`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: appraisal 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-appraisal`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: capital-gain 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-capital-gain`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: capital-register 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-capital-register`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: dividend-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-dividend-statement`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: expense-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-expense-statement`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: fact-sheet 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-fact-sheet`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: performance-benchmark 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-benchmark`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: performance-history 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-history`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: performance-summary 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-performance-summary`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: transaction-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: appraisal 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-appraisal`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: bank-book 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-bank-book`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: capital-gain 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-capital-gain`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: capital-register 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-capital-register`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: dividend-statement 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-dividend-statement`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: dividend-statement 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-dividend-statement-2`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: expense-statement 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-expense-statement`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: fact-sheet 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-fact-sheet`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: performance-benchmark 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-performance-benchmark`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: performance-history 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-performance-history`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: performance-summary 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-performance-summary`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: transaction-statement 2026-08-13 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-08-13-transaction-statement`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: fact-sheet 2026-09-30 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-09-30-fact-sheet`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: capital-register 2026-10-07 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-10-07-capital-register-2`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: transaction-statement 2026-10-07 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-10-07-transaction-statement-2`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: bank-book (no date) superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-unknown-bank-book`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128004: 47 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 128004: its dated capital record runs to 2026-10-07 — the capital register whose balances tie reaches that date
+- account 128004: 15 movement(s) from its capital register (50000000 in, 56238 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
+- account 128004: its capital-register runs 2025-07-29 → 2026-10-07, so 9 row(s) before the 2026-04-01 opening value (already inside it) are not flows of its money-weighted window
 - account V.E.C Assago Capital Management LLP::128005: appraisal 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: capital-gain 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-capital-gain`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: capital-register 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-capital-register`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: dividend-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-dividend-statement`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: expense-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-expense-statement`; its dated rows are still counted
-- account V.E.C Assago Capital Management LLP::128005: fact-sheet 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-fact-sheet`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128005: fact-sheet 2026-07-06 superseded for SNAPSHOT facts by 2026-09-30 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-fact-sheet`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: performance-benchmark 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-performance-benchmark`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: performance-history 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-performance-history`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128005: performance-summary 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-performance-summary`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: transaction-statement 2026-07-06 superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement`; its dated rows are still counted
+- account V.E.C Assago Capital Management LLP::128005: fact-sheet 2026-08-13 superseded for SNAPSHOT facts by 2026-09-30 — `v-e-c-assago-capital-management-llp-128005-2026-08-13-fact-sheet`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: bank-book (no date) superseded for SNAPSHOT facts by 2026-08-13 — `v-e-c-assago-capital-management-llp-128005-unknown-bank-book`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128005: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 128005: its dated capital record runs to 2026-08-13 — the capital register whose balances tie reaches that date
@@ -662,30 +797,36 @@ never guessed into the nearest plausible bucket.
 - 1 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, 1,23,51,24,19,665 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - separate investments, confirmed by the family on 2026-09-28: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) under Ajay Jaisinghani (37702) and Bharat Jaisinghani (60117) — each counted in full, 2,91,60,825.51 across 2 account(s).
 - separate investments, confirmed by the family on 2026-09-28: Transition Venture Capital Fund I — Class A1 under Bharat Jaisinghani Family Trust 2 (TVC262) and Bharat Jaisinghani Family Trust 3 (TVC263) — each counted in full, 1,93,61,508 across 2 account(s).
-- market side: listed 6,41,63,96,520.11 over 324 holding(s), private 1,93,09,44,270.36 over 88, and 0 over 2 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
+- market side: listed 6,47,03,31,861.98 over 351 holding(s), private 1,93,09,44,270.36 over 88, and 0 over 2 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
 - market side: 23 AIF holding(s) placed by the family's own classification of what the fund invests in; 6 of them, in 3 fund(s), differ from what the printed SEBI category alone would say — India SME Investments Fund II — Class A2 (no category printed → private: private equity in early-growth SMEs); Motilal Oswal Founders Fund Series II — Class G1 (no category printed → listed: listed Indian equities); Motilal Oswal Wealth Delphi Equity Fund (no category printed → listed: Category III equity managers, as a fund of funds). The statement's category is unchanged; only the side is taken from the family.
 - market side: 1 fund(s) print NO SEBI category and the family have not classified them, so they are on neither side and are counted apart rather than defaulted to one: ASK Absolute Return Fund — Class A6 Series 31/01/2025. Putting them private would claim they are private capital and putting them listed would claim the opposite, and no document in this archive makes either claim. One line from the family, or a fund's own SEBI registration, settles each one.
 - market side: 1 holding(s) take a SEBI category the FAMILY declared, because no statement for them prints one — Motilal Oswal Wealth Delphi Equity Fund. A declaration only ever fills a category the statements leave empty and never overrides one they print; which side of the book each sits on is the family's own placing, noted above.
 - navHistory: 9 dated point(s) are a manager's own PRINTED OPENING VALUE (a performance summary's or investor report's opening corpus, dated the day before its window) rather than a holdings statement — carnelian-asset-management-and-advisors-pvt-ltd-3517383 2026-03-31; goldstandard-wealth-private-limited-100022 2026-03-31; goldstandard-wealth-private-limited-100023 2026-03-31; green-lantern-capital-llp-510854 2026-03-31; green-lantern-capital-llp-510861 2026-03-31; svan-investment-managers-llp-8710067 2026-04-30; svan-investment-managers-llp-8710090 2026-04-30; v-e-c-assago-capital-management-llp-128004 2026-03-31; v-e-c-assago-capital-management-llp-128005 2026-03-31. Where an opening and a holdings statement value one account on the same day (4 case(s)), the holdings statement is used and the two differ by at most 0.074% — the opening corpus can include accrued income the holdings basis carries apart. No attribution is struck across an opening value, because it carries no holding a price or a unit can be read off.
-- navHistory: 16 dated point(s) from 2026-03-31 to 2026-09-30 (183 days), over the 15 account(s) that publish MORE THAN ONE dated valuation (₹219.80 Cr at the last point, each dedupeGroup counted once). 24 account(s) publish exactly one dated valuation and 22 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-07-31; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
-- navHistory: the capital moving between each covered account's marks is established by the statements themselves — dated-record: buoyant-capital-103473, green-lantern-capital-llp-510854, green-lantern-capital-llp-510861; printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, hdfc-mutual-fund-16180583; unproven: buoyant-capital-103472. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
+- navHistory: 19 dated point(s) from 2026-03-31 to 2026-10-07 (190 days), over the 17 account(s) that publish MORE THAN ONE dated valuation (₹249.92 Cr at the last point, each dedupeGroup counted once). 30 account(s) publish exactly one dated valuation and 22 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-07-31; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
+- navHistory: the capital moving between each covered account's marks is established by the statements themselves — dated-record: buoyant-capital-103473, carnelian-asset-management-and-advisors-pvt-ltd-3517383, green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, svan-investment-managers-llp-8710090; printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, hdfc-mutual-fund-16180583, motilal-oswal-founders-fund-90410016093, motilal-oswal-founders-fund-90410016104; unproven: buoyant-capital-103472. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
 - navHistory: buoyant-capital-103472 2026-07-31 → 2026-08-31 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
-- account carnelian-asset-management-and-advisors-pvt-ltd-3517383: its printed capital totals (fact-sheet, performance-history, performance-summary) move by -30690 between 2026-07-10 and 2026-08-10 and its dated record carries 0 over the same days — -30690 moved on a day no statement in this drop prints. The NAV series nets it inside that step, which needs no date; the money-weighted return cannot, and names it rather than assuming a day.
-- attribution: 15 account(s) publish a valued holdings statement at two or more dates, so 270 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-09-30 the covered set runs ₹204.71 Cr → ₹219.80 Cr, of which price ₹4.15 Cr, trading ₹8.37 Cr, bought in ₹10.72 Cr, sold out ₹8.23 Cr. Largest detractor Jammu Kashmir Bank Ltd ₹-106.04 L. It covers ₹220.21 Cr of the book's ₹834.73 Cr; every other account publishes one statement, and one statement is a level rather than a change.
-- unrealised short/long-term split is populated on 3 of 414 position(s), across 1 of 67 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- attribution: 17 account(s) publish a valued holdings statement at two or more dates, so 267 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-10-07 the covered set runs ₹237.52 Cr → ₹249.92 Cr, of which price ₹0.96 Cr, trading ₹5.54 Cr, bought in ₹15.31 Cr, sold out ₹9.03 Cr. Largest detractor Jammu Kashmir Bank Ltd ₹-152.70 L. It covers ₹250.33 Cr of the book's ₹840.13 Cr; every other account publishes one statement, and one statement is a level rather than a change.
+- unrealised short/long-term split is populated on 3 of 441 position(s), across 1 of 75 account(s) (lkp-securities-98245): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - realised is NULL, not ₹0, on BELRISE INDUSTRIES LIMITED (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on CAPRI GLOBAL CAPITAL LIMITED (lkp-securities-98245): every one of its 2 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Electronics Mart India Limited (lkp-securities-98245): every one of its 3 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on JYOTHY LABS LIMITED (lkp-securities-98245): every one of its 2 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on NIP ETNF1D RTLIQBEES (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Varun Beverages Limited (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
+- realised is NULL, not ₹0, on Shankara Building Products Ltd (svan-investment-managers-llp-8710067): every one of its 4 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
+- realised is NULL, not ₹0, on Surya Roshni Ltd (svan-investment-managers-llp-8710067): every one of its 3 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - FIFO restates the cost of 3P India Equity Fund 1 - Class B3 (3p-investment-managers-3000048): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 28,50,00,000 of cost was sold for a realised 2,55,82,835.17. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
 - FIFO restates the cost of ASK Absolute Return Fund — Class A6 Series 31/01/2025 (ask-absolute-return-fund-9039917111): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 20,00,00,000 of cost was sold for a realised 80,39,138.56. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
 - FIFO restates the cost of ASK Absolute Return Fund — Class A6 Series 31/01/2025 (ask-absolute-return-fund-9039917144): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 18,80,00,000 of cost was sold for a realised 59,08,505.71. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
+- FIFO restates the cost of Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1) (invesco-mutual-fund-3041491081): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 90,28,360.47 of cost was sold for a realised 2,02,676.93. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
+- FIFO restates the cost of Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1) (invesco-mutual-fund-3041491145): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 1,33,93,902.83 of cost was sold for a realised 1,94,731.91. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
+- FIFO restates the cost of Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP) (invesco-mutual-fund-3041491145): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 2,60,27,460.46 of cost was sold for a realised 14,00,107.39. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
+- FIFO restates the cost of Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1) (invesco-mutual-fund-3041794916): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 74,19,985.97 of cost was sold for a realised 1,71,684.4. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
+- FIFO restates the cost of Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP) (invesco-mutual-fund-3041794916): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 90,85,078.56 of cost was sold for a realised 1,82,412.04. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
 - FIFO restates the cost of Neo Infra Income Opportunities Fund I — Class A5 (neo-infra-income-opportunities-fund-9039920536): the statement prints 5,00,00,000, the fund's own unit record matched first-in, first-out holds 4,85,83,720 of cost in the units still held, and 14,16,280 of cost was sold for a realised 0. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
-- value bridge: 35 of 42 column(s) add up to their closing value within the statement's own rounding; 7 withheld, each named above with the lines it could not make add up
+- value bridge: 36 of 43 column(s) add up to their closing value within the statement's own rounding; 7 withheld, each named above with the lines it could not make add up
 - the 2025-02-01 switch from Buoyant Opportunities Strategy — Category III — Class A1 into Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103472 carries 1 dated contribution(s) through it, at the switch's own ratio of 170498.1912 unit(s) allotted for 155557.405 redeemed — the money keeps the date it was paid and the amount it cost
 - the 2026-03-31 switch from 3P India Equity Fund 1 - Class B1 into 3P India Equity Fund 1 - Class B3 in 3p-investment-managers-3000048 carries 4 dated contribution(s) through it, at the switch's own ratio of 993249.409 unit(s) allotted for 965892.766 redeemed — the money keeps the date it was paid and the amount it cost
 - the 2026-03-31 switch from 3P India Equity Fund 1 - Class B2 into 3P India Equity Fund 1 - Class B3 in 3p-investment-managers-3000048 carries 1 dated contribution(s) through it, at the switch's own ratio of 292748.872 unit(s) allotted for 282737.451 redeemed — the money keeps the date it was paid and the amount it cost
@@ -693,6 +834,9 @@ never guessed into the nearest plausible bucket.
 - no per-contribution breakdown for 3p-india-equity-fund-1-class-b3 in 3p-investment-managers-3000048: the 2053614.026 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
 - no per-contribution breakdown for ask-absolute-return-fund-class-a6-series-31-01-2025 in ask-absolute-return-fund-9039917111: the 199990.001 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
 - no per-contribution breakdown for ask-absolute-return-fund-class-a6-series-31-01-2025 in ask-absolute-return-fund-9039917144: the 187990.6 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
+- no per-contribution breakdown for invesco-india-arbitrage-fund-direct-plan-growth-af-d1 in invesco-mutual-fund-3041491081: the 255981.634 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
+- no per-contribution breakdown for invesco-india-arbitrage-fund-direct-plan-growth-af-d1 in invesco-mutual-fund-3041491145: the 1179622.861 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
+- no per-contribution breakdown for invesco-india-arbitrage-fund-direct-plan-growth-af-d1 in invesco-mutual-fund-3041794916: the 489578.035 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
 - cost carried through the class switch for Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103472: 248500000 was paid for these units, against the 249410446.32 the statement's cost column prints, which restarts cost at the switch-day NAV. The 910446.32 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (910446.38) — and it is part of this holding's unrealised gain, because no money left the fund.
 - cost carried through the class switch for Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103473: 460058861.66 was paid for these units, against the 475353990.9 the statement's cost column prints, which restarts cost at the switch-day NAV. The 15295129.24 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (15295129.24) — and it is part of this holding's unrealised gain, because no money left the fund.
 - cost of Helios Flexi Cap Fund - Direct Growth in helios-mutual-fund-10355977 is what was paid in, 31,00,00,000, as the statement itself prints it: its own cost column counts the 15,499.23 of stamp duty it levied, so nothing is restated
@@ -707,4 +851,4 @@ never guessed into the nearest plausible bucket.
 - FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103472): both hold 24,85,00,000 of cost in the units still held, and the unit record shows none sold.
 - FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103473): both hold 46,00,58,861.66 of cost in the units still held, and the unit record shows none sold.
 - share movements: 90 holding-window(s) from the demat statements, 90 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 join a position this book carries and 23 a holding it carries as a quantity with no value; 39 close at nil, securities the account sold out of during the window; 19 close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; 9 sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.
-- share movements: 11 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (3 close at nil; 8 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 12 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.
+- share movements: 13 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (3 close at nil; 10 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 12 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.

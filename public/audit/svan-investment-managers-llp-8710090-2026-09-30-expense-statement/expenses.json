@@ -1,0 +1,347 @@
+{
+ "name": "expenses",
+ "rows": [
+  [
+   "settleDate",
+   "date",
+   "detail",
+   "notes",
+   "amount"
+  ],
+  [
+   "Expenses - Paid"
+  ],
+  [
+   "10/04/2026",
+   "13/04/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "663.00"
+  ],
+  [
+   "13/04/2026",
+   "15/04/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "718.00"
+  ],
+  [
+   "15/04/2026",
+   "15/04/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "590.00"
+  ],
+  [
+   "15/04/2026",
+   "16/04/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "370.00"
+  ],
+  [
+   "22/04/2026",
+   "22/04/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "116.00"
+  ],
+  [
+   "24/04/2026",
+   "24/04/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "112.00"
+  ],
+  [
+   "30/04/2026",
+   "30/04/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "206.00"
+  ],
+  [
+   "30/04/2026",
+   "13/07/2026",
+   "Custody Charges",
+   "Custody Fees for April 2026",
+   "947.55"
+  ],
+  [
+   "30/04/2026",
+   "13/07/2026",
+   "Fund Accountant Fees",
+   "FA Fees for April 2026",
+   "1,751.69"
+  ],
+  [
+   "04/05/2026",
+   "04/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "891.00"
+  ],
+  [
+   "07/05/2026",
+   "07/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "375.00"
+  ],
+  [
+   "07/05/2026",
+   "08/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "3,099.00"
+  ],
+  [
+   "08/05/2026",
+   "11/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "2,056.00"
+  ],
+  [
+   "11/05/2026",
+   "11/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "1,595.00"
+  ],
+  [
+   "19/05/2026",
+   "20/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "777.00"
+  ],
+  [
+   "20/05/2026",
+   "20/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "1,338.00"
+  ],
+  [
+   "21/05/2026",
+   "22/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "365.00"
+  ],
+  [
+   "29/05/2026",
+   "29/05/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "2,012.00"
+  ],
+  [
+   "29/05/2026",
+   "01/06/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "1,787.00"
+  ],
+  [
+   "31/05/2026",
+   "13/07/2026",
+   "Custody Charges",
+   "Custody Fees for May 2026",
+   "1,040.43"
+  ],
+  [
+   "31/05/2026",
+   "13/07/2026",
+   "Fund Accountant Fees",
+   "FA Fee From 01052026 to 31052026",
+   "1,923.91"
+  ],
+  [
+   "09/06/2026",
+   "09/06/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "1,935.00"
+  ],
+  [
+   "12/06/2026",
+   "15/06/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "1,608.67"
+  ],
+  [
+   "18/06/2026",
+   "19/06/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "405.00"
+  ],
+  [
+   "19/06/2026",
+   "22/06/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "567.00"
+  ],
+  [
+   "25/06/2026",
+   "29/06/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "367.00"
+  ],
+  [
+   "30/06/2026",
+   "13/07/2026",
+   "Custody Charges",
+   "Custody Fees for June 2026",
+   "1,012.46"
+  ],
+  [
+   "30/06/2026",
+   "13/07/2026",
+   "Fund Accountant Fees",
+   "Fund Accounting Fees June 2026",
+   "1,936.23"
+  ],
+  [
+   "23/07/2026",
+   "24/07/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "1,050.00"
+  ],
+  [
+   "30/07/2026",
+   "30/07/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "381.00"
+  ],
+  [
+   "13/08/2026",
+   "13/08/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "705.00"
+  ],
+  [
+   "07/10/2026"
+  ],
+  [
+   "14/08/2026",
+   "14/08/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "1,546.00"
+  ],
+  [
+   "17/08/2026",
+   "17/08/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "114.00"
+  ],
+  [
+   "18/08/2026",
+   "18/08/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "298.00"
+  ],
+  [
+   "20/08/2026",
+   "20/08/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "2,072.00"
+  ],
+  [
+   "31/08/2026",
+   "01/09/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "878.00"
+  ],
+  [
+   "03/09/2026",
+   "04/09/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "298.00"
+  ],
+  [
+   "09/09/2026",
+   "09/09/2026",
+   "Sec. Tran. Tax",
+   "Generated",
+   "1,457.00"
+  ],
+  [
+   "Total Expenses - Paid",
+   "39,363.94"
+  ],
+  [
+   "07/10/2026"
+  ],
+  [
+   "Expenses - Payable"
+  ],
+  [
+   "31/07/2026",
+   "Custody Charges",
+   "Custody Fees for July 2026",
+   "1,083.24"
+  ],
+  [
+   "31/07/2026",
+   "Fund Accountant Fees",
+   "FA FEES FOR JULY 2026",
+   "2,133.03"
+  ],
+  [
+   "31/08/2026",
+   "Custody Charges",
+   "Custody Fees for August 2026",
+   "1,179.49"
+  ],
+  [
+   "31/08/2026",
+   "Fund Accountant Fees",
+   "OMS FEES FOR AUGUST 2026",
+   "1,108.87"
+  ],
+  [
+   "31/08/2026",
+   "Fund Accountant Fees",
+   "FA FEES FOR AUGUST 2026",
+   "2,217.74"
+  ],
+  [
+   "30/09/2026",
+   "Custody Charges",
+   "Custody Fees for September 2026",
+   "1,118.78"
+  ],
+  [
+   "30/09/2026",
+   "Fund Accountant Fees",
+   "FA FEES FOR SEPTEMBER 2026",
+   "2,125.87"
+  ],
+  [
+   "Total Expenses - Payable",
+   "10,967.02"
+  ],
+  [
+   "Total",
+   "50,330.96"
+  ],
+  [
+   "07/10/2026"
+  ]
+ ]
+}

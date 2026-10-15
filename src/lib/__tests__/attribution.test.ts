@@ -185,6 +185,7 @@ ok("every held row carries both prices and both quantities",
     // returns is a different number wherever the two positions differ in size,
     // which is the failure Today's movers already records.
     const mean = rows.reduce((s, r) => s + (r.returnPct ?? 0), 0) / rows.length;
+    if (c.openValue <= 0) { ok(`${c.security}: no percentage on a non-positive opening`,c.returnPct === null); continue; }
     const derived = (c.priceEffect / c.openValue) * 100;
     near(`${c.security}: its return is struck on the combined opening value`, c.returnPct ?? NaN, derived, 1e-6);
     ok(`${c.security}: and that is not simply the mean of its rows, or the rule is untested`,

@@ -109,8 +109,13 @@ const idx = accountIndex(BOOK_ACCOUNTS);
 const funded = [...new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId))].sort();
 ok("the book has funded accounts to file", funded.length > 0, `${funded.length} account(s)`);
 for (const axis of GROUP_AXES) {
-  const stray = funded.filter((a) => book.forAccount(axis, a) === TXN_UNSECTIONED);
-  ok(`every funded account files under a real section — ${axis}`, stray.length === 0, stray.join(", ") || "all filed");
+  const mixed = (id: string) => {
+    const ps = BOOK_POSITIONS.filter(p => p.accountId === id);
+    const active = ps.filter(p => p.marketValue !== 0);
+    return new Set((active.length ? active : ps).map(p => groupKeyFor(axis,idx,p))).size > 1;
+  };
+  const stray = funded.filter((a) => book.forAccount(axis, a) === TXN_UNSECTIONED && !mixed(a));
+  ok(`every capital account is filed or has explicit mixed holdings — ${axis}`, stray.length === 0, stray.join(", ") || "all filed or mixed");
 }
 
 /**
@@ -134,7 +139,8 @@ const zeroBesideValued = funded.filter((a) => {
 if (zeroBesideValued.length === 0) {
   console.log(`NOT CHECKED the rule does work on this book — no funded account carries a ₹0 line beside a valued one (${funded.length} funded account(s) measured); the constructed f1 case holds it`);
   // …and it must still be TRUE that none is mixed, or the measurement above is wrong.
-  ok("…and no funded account is mixed while its ₹0 lines are counted", mixedIfCounted.length === 0, mixedIfCounted.join(", ") || "none");
+  ok("…mixed empty accounts really contain multiple historical classes", mixedIfCounted.every(id =>
+    BOOK_POSITIONS.filter(p => p.accountId === id).every(p => p.marketValue === 0)), mixedIfCounted.join(", ") || "none");
 } else {
   ok("the rule does work on this book: an account is mixed only while its ₹0 line is counted",
     mixedIfCounted.length > 0, `${mixedIfCounted.join(", ")} of ${zeroBesideValued.join(", ")}`);

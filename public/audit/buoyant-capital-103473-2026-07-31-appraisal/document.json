@@ -52,6 +52,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": null,
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 0,
    "gainLoss": 0,
    "pctGainLoss": null,
@@ -92,6 +94,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": null,
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 492981982.05,
    "gainLoss": 17627991.15,
    "pctGainLoss": 3.71,
@@ -148,6 +152,7 @@
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [],
+ "checks": null,
  "stitches": [],
  "derivedPortfolioTotal": 492981982.05
 }

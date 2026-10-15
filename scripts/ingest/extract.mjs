@@ -40,8 +40,10 @@ import * as bankStatement from "./providers/bankStatement.mjs";
 import * as aifDistribution from "./providers/aifDistribution.mjs";
 import * as altFunds from "./providers/altFundStatements.mjs";
 import * as mutualFundFolio from "./providers/mutualFundFolio.mjs";
+import * as folioLedger from "./providers/folioLedger.mjs";
 import * as schemePortfolio from "./providers/schemePortfolio.mjs";
 import { reconcile, writeReports } from "./reconcile.mjs";
+import { pmsSiblingProvider } from "./lib/pmsSiblingProvider.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 // Overridable so a test run can point at a scratch drop without touching the
@@ -66,6 +68,7 @@ function loadSymbolMap() {
  * own because its bundle is a genuinely different document.
  */
 const EXTRACTORS = Object.fromEntries([
+  ...folioLedger.PROVIDERS.map(name => [name, folioLedger]),
   ...Object.values(pms.PROVIDERS).map((p) => [p.name, pms]),
   [threeSixtyOne.PROVIDER, threeSixtyOne],
   // Each of these publishes ONE document containing everything, in a layout
@@ -304,12 +307,12 @@ function gridFromSpreadsheet(buf) {
 }
 
 /** Turn one already-laid-out PDF — or one report inside a bundle — into a document. */
-function extractOne(file, grid, part = null) {
+function extractOne(file, grid, part = null, providerWitness = null) {
   const fileName = path.basename(file);
 
   // Classify from the flat reading-order text — enough for the header fields.
   const flat = grid.pages.map((p) => p.text).join(" ").replace(/\s+/g, " ");
-  const classified = classify({ fileName, text: flat });
+  const classified = { ...classify({ fileName, text: flat }), ...(providerWitness ? { provider: providerWitness } : {}) };
   const meta = part?.reportType
     ? { ...classified, reportType: part.reportType, sections: [part.reportType] }
     : classified;
@@ -350,6 +353,8 @@ function extractOne(file, grid, part = null) {
   const openedWarnings = grid.encrypted
     ? [{ code: "pdf-encrypted", detail: `opened with GLOW_PDF_PASSWORDS entry #${grid.usedPassword}` }]
     : [];
+  if (providerWitness) openedWarnings.push({ code: "provider-from-sibling",
+    detail: "Issuer established by reports in the same delivery folder with the same printed account and resolved holder" });
   // Where a document came out of a bundle, say so on the document itself. The
   // file name will name only one of the reports inside it, and a reader who
   // sees `…-capital-gain` sourced from a file called ContractNote needs to know
@@ -1098,7 +1103,21 @@ async function main() {
   for (const f of files) {
     const h = crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
     const first = byHash.get(h);
-    if (first) { duplicateSources.push({ path: rel(f), sameAs: rel(first), sha256: h }); continue; }
+    if (first) {
+      // The same PDF can arrive as CURRENT PORTFOLIO.pdf and the engine's named
+      // export beside it. Keep the informative alias: the friendly filename has
+      // no issuer, and a security named HDFC Bank must not make it an HDFC folio.
+      const preferred = path.dirname(first) === path.dirname(f)
+        && /^CURRENT\s+PORTFOLIO/i.test(path.basename(first))
+        && /^[A-Z]+\d+_\d+_CurrentPortfolio/i.test(path.basename(f));
+      if (preferred) {
+        byHash.set(h, f);
+        unique[unique.indexOf(first)] = f;
+        for (const d of duplicateSources) if (d.sameAs === rel(first)) d.sameAs = rel(f);
+        duplicateSources.push({ path: rel(first), sameAs: rel(f), sha256: h });
+      } else duplicateSources.push({ path: rel(f), sameAs: rel(first), sha256: h });
+      continue;
+    }
     byHash.set(h, f);
     unique.push(f);
   }
@@ -1163,6 +1182,15 @@ async function main() {
     console.log(produced.length > 1 ? `${produced.length} reports — ${summary}` : summary);
   }
 
+  for (let i = 0; i < docs.length; i++) {
+    const doc = docs[i];
+    if (doc.status !== 'failed') continue;
+    const grid = grids.get(doc);
+    const provider = pmsSiblingProvider(doc, grid.pages.map(p => p.text).join('\n'), docs);
+    if (!provider) continue;
+    const recovered = extractOne(path.join(ROOT, doc.sourcePath), grid, null, provider);
+    grids.delete(doc); grids.set(recovered, grid); docs[i] = recovered;
+  }
   backfillAccountNumbers(docs);
   backfillSoleAccount(docs);
   backfillOwners(docs);

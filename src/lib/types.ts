@@ -77,7 +77,7 @@ export type Member = {
   label: string;
   engagement: Engagement;
   /** The provider's own wording, verbatim — "Executionary", not "Execution". */
-  providerEngagement?: string;
+  providerEngagement?: string | null;
 };
 
 /**
@@ -111,7 +111,7 @@ export type Account = {
   /** DERIVED from `members` — the engagement carrying the most value, never asserted. */
   engagement: Engagement;
   /** The provider's own wording for the engagement, verbatim, before normalisation. */
-  providerEngagement?: string;
+  providerEngagement?: string | null;
   /** Member sub-accounts, each with its own engagement. Empty when the provider reports none. */
   members: Member[];
   asOf: string;             // report date of THIS account's latest statement (ISO)
@@ -798,12 +798,15 @@ export type CashFlow = { date: string; amount: number; description?: string };
 
 export type AccountReturnCoverage = {
   latestValuationDate: string;
+  notApplicable?: string;
   record: {
     asOf: string;
     value: number;
     flows: CashFlow[];
     source: string;
     flowSources: string[];
+    /** Ledger and published historical NAV witnesses for a reconstructed FY opening. */
+    openingSources?: string[];
     capitalRecordTo: string;
   } | null;
   gap: string | null;

@@ -29,7 +29,7 @@
   },
   {
    "code": "pdf-encrypted",
-   "detail": "opened with GLOW_PDF_PASSWORDS entry #5"
+   "detail": "opened with GLOW_PDF_PASSWORDS entry #7"
   }
  ],
  "holdings": [
@@ -56,6 +56,8 @@
    "annualizedYieldPct": null,
    "priceAsOn": "2026-03-31",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 0,
    "gainLoss": null,
    "pctGainLoss": null,
@@ -185,6 +187,7 @@
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [],
+ "checks": null,
  "stitches": [],
  "derivedPortfolioTotal": null
 }

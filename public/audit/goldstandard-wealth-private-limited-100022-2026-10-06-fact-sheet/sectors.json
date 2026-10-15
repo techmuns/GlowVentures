@@ -1,0 +1,349 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "Auto Components",
+   "1,179,600",
+   "1.54%"
+  ],
+  [
+   "1",
+   "Banco Products India Ltd."
+  ],
+  [
+   "& Equipments"
+  ],
+  [
+   "Auto Components",
+   "1,956,742",
+   "2.55%"
+  ],
+  [
+   "2",
+   "Poojaa Precision Engineering Limited",
+   "& Equipments"
+  ],
+  [
+   "Auto Components",
+   "1,148,250",
+   "1.50%"
+  ],
+  [
+   "3",
+   "Sharda Motor Industries Ltd"
+  ],
+  [
+   "& Equipments"
+  ],
+  [
+   "Auto Components",
+   "2,769,000",
+   "3.61%"
+  ],
+  [
+   "4",
+   "Suprajit Engineering Ltd.",
+   "& Equipments"
+  ],
+  [
+   "Auto Components",
+   "2,435,000",
+   "3.17%"
+  ],
+  [
+   "5",
+   "Tenneco Clean Air India Ltd.",
+   "& Equipments"
+  ],
+  [
+   "6",
+   "Blue Jet Healthcare Ltd.",
+   "Pharmaceuticals",
+   "3,189,000",
+   "4.15%"
+  ],
+  [
+   "7",
+   "Caplin Point Laboratories Ltd.",
+   "Pharmaceuticals",
+   "2,343,600",
+   "3.05%"
+  ],
+  [
+   "8",
+   "Lupin Ltd",
+   "Pharmaceuticals",
+   "1,809,900",
+   "2.36%"
+  ],
+  [
+   "9",
+   "Zydus Lifesciences Ltd.",
+   "Pharmaceuticals",
+   "3,189,200",
+   "4.15%"
+  ],
+  [
+   "Residential",
+   "1,751,200",
+   "2.28%"
+  ],
+  [
+   "10",
+   "Oberoi Realty Ltd.",
+   "Commercial"
+  ],
+  [
+   "Projects"
+  ],
+  [
+   "Stockbroking &",
+   "2,274,975",
+   "2.96%"
+  ],
+  [
+   "11",
+   "Motilal Oswal Financial Services Ltd."
+  ],
+  [
+   "Allied"
+  ],
+  [
+   "Computers -",
+   "2,286,000",
+   "2.98%"
+  ],
+  [
+   "12",
+   "Sonata Software Ltd.",
+   "Software &"
+  ],
+  [
+   "Consulting"
+  ],
+  [
+   "13",
+   "EIH Ltd.",
+   "Hotels & Resorts",
+   "2,833,850",
+   "3.69%"
+  ],
+  [
+   "Other Electrical",
+   "1,173,250",
+   "1.53%"
+  ],
+  [
+   "14",
+   "Waaree Energies Ltd."
+  ],
+  [
+   "Equipment"
+  ],
+  [
+   "15",
+   "Indraprastha Medical Corp. Ltd.",
+   "Hospital",
+   "2,588,112",
+   "3.37%"
+  ],
+  [
+   "16",
+   "Kovai Medical Center & Hospital Ltd.",
+   "Hospital",
+   "2,981,500",
+   "3.88%"
+  ],
+  [
+   "17",
+   "Sagility Ltd.",
+   "IT Enabled Services",
+   "1,915,650",
+   "2.50%"
+  ],
+  [
+   "Oil Equipment &",
+   "2,390,560",
+   "3.11%"
+  ],
+  [
+   "18",
+   "Deep Industries Ltd."
+  ],
+  [
+   "Services"
+  ],
+  [
+   "Business Process",
+   "3,014,880",
+   "3.93%"
+  ],
+  [
+   "Outsourcing"
+  ],
+  [
+   "19",
+   "eClerx Services Ltd.",
+   "(BPO)/ Knowledge"
+  ],
+  [
+   "Process"
+  ],
+  [
+   "Outsourcing (KPO)"
+  ],
+  [
+   "Logistics Solution",
+   "3,295,312",
+   "4.29%"
+  ],
+  [
+   "20",
+   "Transport Corp. of India Ltd."
+  ],
+  [
+   "Provider"
+  ],
+  [
+   "Passenger Cars &",
+   "2,286,080",
+   "2.98%"
+  ],
+  [
+   "21",
+   "Mahindra & Mahindra Ltd."
+  ],
+  [
+   "Utility Vehicles"
+  ],
+  [
+   "22",
+   "State Bank of India",
+   "Public Sector Bank",
+   "2,155,500",
+   "2.81%"
+  ],
+  [
+   "Housing Finance",
+   "2,174,100",
+   "2.83%"
+  ],
+  [
+   "23",
+   "Can Fin Homes Ltd."
+  ],
+  [
+   "Company"
+  ],
+  [
+   "24",
+   "Great Eastern Shipping Co. Ltd.",
+   "Shipping",
+   "3,118,600",
+   "4.06%"
+  ],
+  [
+   "25",
+   "ICICI Bank Ltd.",
+   "Private Sector",
+   "2,664,000",
+   "3.47%"
+  ],
+  [
+   "26",
+   "Karur Vysya Bank Ltd.",
+   "Private Sector",
+   "2,759,950",
+   "3.59%"
+  ],
+  [
+   "Asset",
+   "2,580,600",
+   "3.36%"
+  ],
+  [
+   "27",
+   "HDFC Asset Management Co. Ltd.",
+   "Management"
+  ],
+  [
+   "Company"
+  ],
+  [
+   "Tour Travel",
+   "1,294,500",
+   "1.69%"
+  ],
+  [
+   "28",
+   "BLS International Services Ltd"
+  ],
+  [
+   "Related Services"
+  ],
+  [
+   "29",
+   "Jindal Stainless Ltd",
+   "Iron & Steel",
+   "2,411,500",
+   "3.14%"
+  ],
+  [
+   "30",
+   "MPS Ltd",
+   "E-Learning",
+   "3,296,750",
+   "4.29%"
+  ],
+  [
+   "31",
+   "Life Insurance Corp. of India",
+   "Life Insurance",
+   "2,332,200",
+   "3.04%"
+  ],
+  [
+   "Exchange and Data",
+   "1,564,500",
+   "2.04%"
+  ],
+  [
+   "32",
+   "Indian Energy Exchange Ltd."
+  ],
+  [
+   "Platform"
+  ],
+  [
+   "33",
+   "Cash",
+   "Cash",
+   "1,554,647",
+   "2.02%"
+  ],
+  [
+   "Dividend / Interest",
+   "54,600",
+   "0.07%"
+  ],
+  [
+   "34",
+   "Dividend / Interest receivable"
+  ],
+  [
+   "receivable"
+  ],
+  [
+   "Total",
+   "76,773,109",
+   "100%"
+  ]
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "INF179KB1HT1",
+   "HDFC Overnight Fund - Direct Plan - Growth Option",
+   48.183,
+   4094.7017,
+   "2026-09-30",
+   null,
+   197295.01
+  ],
+  [
+   "INF179KA1KT6",
+   "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+   0,
+   21.812,
+   "2026-09-30",
+   null,
+   0
+  ],
+  [
+   "INF179KA1KS8",
+   "HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option",
+   0,
+   11.33,
+   "2026-09-30",
+   null,
+   0
+  ],
+  [
+   "INF179KB1HP9",
+   "HDFC Liquid Fund-Direct Plan-Growth Option",
+   0,
+   5593.1126,
+   "2026-09-30",
+   null,
+   0
+  ],
+  [
+   "INF179KB1HV7",
+   "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+   0,
+   1019.82,
+   "2026-09-30",
+   null,
+   0
+  ]
+ ]
+}

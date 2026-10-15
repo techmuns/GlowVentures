@@ -1,0 +1,37 @@
+{
+ "name": "Source unit and cash ledger",
+ "rows": [
+  [
+   "date",
+   "scheme",
+   "kind",
+   "amount",
+   "units",
+   "balance"
+  ],
+  [
+   "2025-11-04",
+   "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
+   "contribution",
+   9028360.47,
+   255981.634,
+   255981.634
+  ],
+  [
+   "2026-02-23",
+   "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
+   "withdrawal",
+   -2900000,
+   -80520.798,
+   175460.836
+  ],
+  [
+   "2026-03-09",
+   "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
+   "withdrawal",
+   -6331037.4,
+   -175460.836,
+   0
+  ]
+ ]
+}

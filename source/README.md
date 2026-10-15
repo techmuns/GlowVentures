@@ -3,6 +3,13 @@
 Drop the wealth-platform statements here: ZIPs, loose PDFs, PMS/AIF reports, fact
 sheets, capital-call and distribution notices. Nested ZIPs are fine.
 
+`october-2026-c/` preserves the September statements received from Glow on 9–13
+October and forwarded on 14 October. The LKP archive omits its password note;
+statement bytes are preserved. Its separate Excel attachments are mail-server
+removal notices and contain no workbook data. Parser failures and incomplete
+reports remain visible in the extraction report; this delivery is not a claim
+that every account's current return can be measured.
+
 **These files never reach the browser.** `source/` sits at the repo root, outside
 `public/`, so nothing here is copied into the build or served by the site. Only
 the derived, reviewed extracts under `public/audit/` ship, and those sit behind

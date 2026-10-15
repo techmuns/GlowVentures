@@ -43,6 +43,8 @@
    "annualizedYieldPct": 25.73,
    "priceAsOn": "2026-08-31",
    "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
    "marketValue": 503276370.81,
    "gainLoss": 27922379.91,
    "pctGainLoss": 5.87,
@@ -601,6 +603,7 @@
  ],
  "aifEarnings": null,
  "jointHolders": [],
+ "checks": null,
  "stitches": [],
  "derivedPortfolioTotal": 503276370.81
 }
