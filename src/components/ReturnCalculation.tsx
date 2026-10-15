@@ -66,11 +66,22 @@ export function ReturnCalculationInfo({ label, value, children }: {
   </>;
 }
 
-export function CapitalReturnCalculation({ gain, capital, result, money, coverage }: {
+export function CapitalReturnCalculation({ gain, capital, result, money, shortMoney, coverage }: {
   gain: number | null; capital: number | null; result: ReactNode;
-  money: (n: number | null | undefined) => string; coverage: ReactNode;
+  money: (n: number | null | undefined) => string;
+  shortMoney: (n: number | null | undefined) => string; coverage: ReactNode;
 }) {
   return <>
+    <ol data-return-steps className="list-decimal space-y-3 pl-5">
+      <li>Money invested: <strong className="tabular">{shortMoney(capital)}</strong>.</li>
+      <li>Recorded gain / loss: <strong className="tabular">{shortMoney(gain)}</strong>.</li>
+      <li>{gain != null && capital != null && capital > 0
+        ? <>Divide the gain by the money invested to get <strong>{result}</strong>.</>
+        : <>We need a recorded gain and money invested before we can show a return.</>}</li>
+    </ol>
+    <details data-return-more>
+      <summary className="ring-focus cursor-pointer rounded text-slate-300">Show more</summary>
+      <div className="mt-4 space-y-4">
     <p>We add the recorded gain on investments still held to the recorded gain on investments already sold. Then we divide by the money invested.</p>
     <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
       <dt className="text-slate-400">Recorded gain / loss</dt><dd className="text-right tabular">{money(gain)}</dd>
@@ -84,18 +95,34 @@ export function CapitalReturnCalculation({ gain, capital, result, money, coverag
     </div>
     <p>Sales use the oldest purchases first (FIFO). For a whole PMS account, gain = value + money withdrawn − money paid in.</p>
     <p className="text-slate-400">{coverage} This is the total return to date, not a yearly rate. Separate dividends and fund distributions are excluded, except within a whole PMS account.</p>
+      </div>
+    </details>
   </>;
 }
 
-export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, reason, coverage, money, result }: {
+export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, reason, coverage, money, shortMoney, result }: {
   flows: readonly DatedFlow[]; annualPct: number | null; days: number | null; annualised: boolean;
   reason?: string | null; coverage: ReactNode; result: ReactNode;
   money: (n: number | null | undefined) => string;
+  shortMoney: (n: number | null | undefined) => string;
 }) {
   const dated = [...flows].sort((a, b) => a.date.getTime() - b.date.getTime());
   const paid = -flows.reduce((n, f) => n + Math.min(f.amount, 0), 0);
   const returned = flows.reduce((n, f) => n + Math.max(f.amount, 0), 0);
   return <>
+    <ol data-return-steps className="list-decimal space-y-3 pl-5">
+      {reason ? <>
+        <li>{reason}.</li>
+        <li>We can show this return once the required records are complete.</li>
+      </> : <>
+        <li>Opening value + money added: <strong className="tabular">{shortMoney(paid)}</strong>.</li>
+        <li>Money taken out + value left: <strong className="tabular">{shortMoney(returned)}</strong>.</li>
+        <li>Using the dates of these amounts{days != null ? <> over {fmtNum(days)} days</> : null} gives <strong>{result}</strong>{annualised ? " per year" : " for this period"}.</li>
+      </>}
+    </ol>
+    <details data-return-more>
+      <summary className="ring-focus cursor-pointer rounded text-slate-300">Show more</summary>
+      <div className="mt-4 space-y-4">
     <p>We use how much money went in and came out, the closing investment values, and the date of each amount. Money invested for longer has more effect on the return.</p>
     <p className="text-slate-400">{coverage}</p>
     {reason ? <p className="rounded-lg bg-ink-900 p-3">{reason}. This return needs opening values, dated money movements and closing values, with at least a year of history for a yearly rate.</p> : <>
@@ -115,13 +142,15 @@ export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, r
           {!reason && annualPct != null && days != null && <p className="mt-2 break-words tabular">((1 + {fmtNum(annualPct, 6)} ÷ 100) ^ ({days} ÷ 365) − 1) × 100 = {result}</p>}
         </>}
       </div>
-      {!reason && <details>
-        <summary className="ring-focus cursor-pointer rounded text-slate-300">See the amounts and dates used</summary>
+      {!reason && <div>
+        <p className="font-medium text-slate-100">Amounts and dates used</p>
         <p className="my-2 text-xs text-slate-400">Minus means money invested, including opening values. Plus means money taken out or a closing value. Amounts are rounded for display; the calculation uses full precision.</p>
         <table className="w-full text-xs">
           <thead><tr className="text-slate-400"><th className="py-2 text-left font-medium">Date</th><th className="py-2 text-right font-medium">Amount</th></tr></thead>
           <tbody>{dated.map((f, i) => <tr key={i} className="border-t border-ink-700"><td className="py-1.5">{fmtDate(f.date.toISOString().slice(0, 10))}</td><td className="py-1.5 text-right tabular">{f.amount > 0 ? "+" : ""}{money(f.amount)}</td></tr>)}</tbody>
         </table>
-      </details>}
+      </div>}
+      </div>
+    </details>
   </>;
 }

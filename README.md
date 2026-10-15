@@ -288,11 +288,10 @@ as the whole portfolio's. Fully redeemed accounts include their recorded proceed
 Live prices cannot fill cash-flow history gaps. Each return tile opens an
 addressable detail view with the same calculation, dates, and coverage.
 
-A circled **i** on each return tile opens its calculation: the same percentage
-as the card, a plain-English explanation, the formula and the amounts used.
-Money-weighted returns also expose the dated amounts and the conversion from
-the yearly XIRR rate to the measured period. The Gain / loss tile explains its
-return on capital in the same way. Missing history stays absent in the popup.
+A circled **i** on each return tile opens two or three short steps with the
+actual amounts and the same percentage as the card. **Show more** reveals the
+detailed formula, full amounts, dates and coverage. The Gain / loss tile
+explains its return on capital in the same way. Missing history stays absent.
 Run `CHROME=/path/to/chrome node scripts/check-return-calculations.mjs` against
 a local preview to check the popup, matching results, arithmetic and keyboard
 controls at desktop and phone widths in both themes.
