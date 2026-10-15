@@ -101,11 +101,12 @@ export function CapitalReturnCalculation({ gain, capital, result, money, shortMo
   </>;
 }
 
-export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, reason, coverage, money, shortMoney, result }: {
+export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, reason, coverage, money, shortMoney, result, more }: {
   flows: readonly DatedFlow[]; annualPct: number | null; days: number | null; annualised: boolean;
   reason?: string | null; coverage: ReactNode; result: ReactNode;
   money: (n: number | null | undefined) => string;
   shortMoney: (n: number | null | undefined) => string;
+  more?: ReactNode;
 }) {
   const dated = [...flows].sort((a, b) => a.date.getTime() - b.date.getTime());
   const paid = -flows.reduce((n, f) => n + Math.min(f.amount, 0), 0);
@@ -164,6 +165,7 @@ export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, r
           <tbody>{dated.map((f, i) => <tr key={i} className="border-t border-ink-700"><td className="py-1.5">{fmtDate(f.date.toISOString().slice(0, 10))}</td><td className="py-1.5 text-right tabular">{f.amount > 0 ? "+" : ""}{money(f.amount)}</td></tr>)}</tbody>
         </table>
       </div>}
+      {more}
       </div>
     </details>
   </>;

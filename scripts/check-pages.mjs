@@ -17798,7 +17798,7 @@ const CIO_SHARED = [
    * Struck on COMPUTED STYLE and on the element count, because the words are
    * identical either way — every figure check on this page passed throughout.
    */
-  ["no KPI tile underlines its text or hides arithmetic behind it", (t, ctx) => {
+  ["no KPI tile underlines its text or uses an arithmetic trigger other than its info button", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     if (ctx.kpiTiles.length < 4) return false;
     return ctx.kpiTiles.every((tile) => tile.underlined === 0 && tile.buttons === 0);
@@ -19632,11 +19632,10 @@ const CIO_RETURNS = [
     const d = r.typeDesc;
     return !!d && d.key === wantT && d.text.length > 10 && d.text.length <= 60 && d.hover.length > d.text.length;
   }],
-  ["...the formula shown is the one for the type picked", (t, ctx) => {
+  ["...the selected return has an info popup and no formula on the card", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
-    const wantT = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr";
-    return r.formula === wantT && r.formulaText.trim().length > 0;
+    return r.calculationInfo && r.formula == null && r.formulaText === "";
   }],
   ["...the measured window is shown, ends on or before the closing date asked for, opens on or before the opening date asked for, and a return under a year is never annualised", (t, ctx) => {
     const r = ctx?.returnsDom;
@@ -19687,10 +19686,10 @@ const CIO_RETURNS_LAYOUT = [
     if (!r) return false;
     return r.rows === 0 && r.portfolioCard;
   }],
-  ["...the window and the formula are one section, the portfolio's own card", (t, ctx) => {
+  ["...the window and calculation info belong to the portfolio's own card", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
-    return r.formulaInPortfolio && r.windowInPortfolio;
+    return r.infoInPortfolio && r.windowInPortfolio;
   }],
   ["...a second section sets every benchmark against the portfolio, in the benchmark control's order, each a figure or an absence that names why", (t, ctx) => {
     const r = ctx?.returnsDom;
@@ -38873,7 +38872,7 @@ for (const theme of THEMES) {
             && getComputedStyle(e).textDecorationLine.includes("underline")).length,
           // A popover trigger is a <button>; nothing in a tile but its own
           // controls may be one.
-          buttons: c.querySelectorAll("button:not([data-tile-select]):not([data-tile-remove]):not([data-tile-add])").length,
+          buttons: c.querySelectorAll("button:not([data-tile-select]):not([data-tile-remove]):not([data-tile-add]):not([data-return-info])").length,
           /**
            * RAISED = the shadow carries a HARD OFFSET LAYER (a `0 Npx 0` with
            * N ≥ 2) — the tile's own thickness, which a flat card has no
@@ -39251,7 +39250,8 @@ for (const theme of THEMES) {
           typeSelect: !!root.querySelector("select[data-returns-type-select]"),
           typeButtons: root.querySelectorAll("button[data-returns-type]").length,
           stackOrder: (() => { const pc = root.querySelector("[data-returns-portfolio]")?.getBoundingClientRect(); const bc = root.querySelector("[data-returns-benchmarks]")?.getBoundingClientRect(); return pc && bc ? { portBottom: pc.bottom, benchTop: bc.top } : null; })(),
-          formulaInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-formula]"),
+          calculationInfo: root.querySelector("[data-returns-portfolio] [data-return-info]")?.getAttribute("aria-haspopup") === "dialog",
+          infoInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-return-info]"),
           windowInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-window]"),
           benchPortfolioRow: !!root.querySelector("[data-returns-bench-portfolio]"),
           bench: [...root.querySelectorAll("[data-returns-bench]")].map((tr) => ({
