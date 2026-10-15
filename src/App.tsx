@@ -21,6 +21,7 @@ const Performance = lazy(() => import("@/pages/Performance").then((m) => ({ defa
 const ReturnAnalysis = lazy(() => import("@/pages/ReturnAnalysis").then((m) => ({ default: m.ReturnAnalysis })));
 const DataRefresh = lazy(() => import("@/pages/DataRefresh").then((m) => ({ default: m.DataRefresh })));
 const UploadHistory = lazy(() => import("@/pages/UploadHistory").then((m) => ({ default: m.UploadHistory })));
+const StatementLibrary = lazy(() => import("@/pages/StatementLibrary").then((m) => ({ default: m.StatementLibrary })));
 const DataAudit = lazy(() => import("@/pages/DataAudit").then((m) => ({ default: m.DataAudit })));
 const LedgerInsights = lazy(() => import("@/pages/LedgerInsights").then((m) => ({ default: m.LedgerInsights })));
 const StockInfo = lazy(() => import("@/pages/StockInfo").then((m) => ({ default: m.StockInfo })));
@@ -399,6 +400,11 @@ export default function App() {
             <Route path="/news" element={<Navigate to="/monitor" replace />} />
             <Route path="/recommendations" element={<Navigate to="/monitor" replace />} />
             <Route path="/audit" element={<DataAudit />} />
+            {/* THE SOURCE STATEMENTS, ONE FOLDER PER PROVIDER. Reads the audit
+                manifest directly, never the portfolio, so — like Data Audit and
+                Upload History — it renders on an empty book too and needs no
+                Gate. */}
+            <Route path="/statements" element={<StatementLibrary />} />
             <Route path="/history" element={<UploadHistory />} />
             <Route path="*" element={<RootRedirect />} />
           </Routes>

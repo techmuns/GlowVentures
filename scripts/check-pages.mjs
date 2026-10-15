@@ -8562,6 +8562,11 @@ const ROUTES = [
   // DERIVED from the archive so the next drop picks its own worst case.
   ["audit-short-rows", () => (XA_BOOK?.auditShort ? `/audit?file=${encodeURIComponent(XA_BOOK.auditShort.fileKey)}&sheet=${encodeURIComponent(XA_BOOK.auditShort.sheet)}` : "/audit?file=no-short-row-in-the-archive")],
   ["history", "/history"],
+  // THE STATEMENT LIBRARY — the source documents grouped into one folder per
+  // provider. It reads the same `public/audit/manifest.json` the Data Audit
+  // viewer does, so it renders offline against the preview like every other
+  // admin page; the universal checks (overflow, contrast, stray zeros) cover it.
+  ["statements", "/statements"],
   ["upload", "/upload"],
   // THE MEMBER SCOPE (Stage 10di). Each address names its members with
   // `?members=`, which is the selector's own source of truth, so a scoped page

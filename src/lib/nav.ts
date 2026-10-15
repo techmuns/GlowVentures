@@ -1,6 +1,6 @@
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
-  Activity, History, Table2, Calculator, Gauge, Handshake, Cable,
+  Activity, History, Table2, Calculator, Gauge, Handshake, Cable, Library,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -55,6 +55,12 @@ export const NAV: readonly NavEntry[] = [
   // group label standing over nothing is the defect this repo already records
   // twice.
   { to: "/audit", label: "Data Audit", icon: Table2, group: "Admin" },
+  // THE SOURCE STATEMENTS, ONE FOLDER PER PROVIDER. Where Data Audit opens one
+  // document's cells and Upload History charts the dated NAVs, this names every
+  // statement the book is built from and the file type each provider sends — the
+  // family's own request for a place to see, and later drop, each provider's
+  // statements. It reads the same `public/audit/manifest.json` as Data Audit.
+  { to: "/statements", label: "Statement Library", icon: Library, group: "Admin" },
   { to: "/history", label: "Upload History", icon: History, group: "Admin" },
 ];
 
