@@ -4549,3 +4549,32 @@ Make sure you dont miss out on any"*
   browser arithmetic; focused Morning CIO, Performance and Family checks;
   mobile dialogs in both themes. New tests cover future advances and retaining
   an older verified endpoint after newer holdings arrive.
+
+### Stage 10ej — THE STATEMENT LIBRARY: SOURCE DOCUMENTS, ONE FOLDER PER PROVIDER
+
+*"check all the files that have already been uploaded … create folders and
+show all the same files with the same format into each folder … clearly state
+the type of file each folder contains … name the folder Motilal Oswal"*
+
+- **New Admin page `/statements`** (`src/pages/StatementLibrary.tsx`, nav entry
+  between Data Audit and Upload History). One folder per provider, each stating
+  on its face the file types that provider sends and the formats (PDF / XLSX /
+  CSV), expanding into a table of every document it holds — owner, account, as
+  of, format, ingest status and the delivery it arrived in, with a link into
+  Data Audit for any document that carries sheets.
+- **Reads the archive's own index**, `public/audit/manifest.json` — the same
+  file the Data Audit viewer reads — so there is no second generated artifact to
+  drift. `src/lib/statementLibrary.ts` is pure grouping over it: it invents no
+  provider, date or type. The one non-derived map is `REPORT_LABELS` (slug →
+  human words, the icon-map licence), which title-cases an unknown slug rather
+  than dropping it.
+- **The upload is a catalog, not an ingest.** The family chose "catalog only,
+  no upload yet": a browser upload cannot regenerate the offline-baked book
+  (`src/data/glowData.ts`), which is assembled by the ingest pipeline under the
+  no-fabrication guarantee. A line on the page says so plainly; a new statement
+  still reaches the dashboard through `extract` → `build-book`.
+- **Tied to the manifest, document for document.** `statementLibrary.test.ts`
+  asserts every document lands in exactly one folder, each folder's stated types
+  and formats are its own documents', the counts sum to the manifest, and the
+  grouping is deterministic. Route `statements` is clean on the universal checks
+  (no overflow, contrast or stray zeros). 318 documents, 39 providers.
