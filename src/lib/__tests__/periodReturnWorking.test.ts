@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
-import { daysBetween, measureWindow, measureInception, windowReturns, type AccountWindow, type InceptionRow, type ReturnType } from "../periodReturns";
+import { RETURN_TYPES, daysBetween, measureWindow, measureInception, windowReturns, type AccountWindow, type InceptionRow, type ReturnType } from "../periodReturns";
 
 const near = (a: number, b: number, tolerance = 1e-7) => assert.ok(Math.abs(a - b) < tolerance, `${a} != ${b}`);
 const money = (n: number) => String(n);
-const methods: ReturnType[] = ["absolute", "twr", "cagr", "xirr"];
+const methods: ReturnType[] = ["absolute", "cagr", "xirr"];
+assert.deepEqual(RETURN_TYPES.map((r) => r.key), ["xirr", "absolute", "cagr"]);
 const row: AccountWindow = { accountId: "a", label: "Account A", owner: "Owner", openDate: "2025-01-01", openValue: 100,
   openedInWindow: false, closeDate: "2026-01-01", closeValue: 100 * 1.2 + 100 * 1.2 ** (182 / 365),
   flows: [{ date: "2025-07-03", amount: -100 }], capitalIn: 100, capitalOut: 0, gain: 0 };
@@ -15,7 +16,7 @@ for (const type of methods) {
   assert.equal(w.days, 365); assert.equal(w.flows.length, 3);
   if (type === "absolute") near(m.pct!, row.gain / 200 * 100);
   if (type === "xirr") near(w.annualPct!, 20, 1e-5);
-  if (type === "twr" || type === "cagr") {
+  if (type === "cagr") {
     const expected = 100 + 100 * daysBetween("2025-07-03", "2026-01-01") / 365;
     near(w.base!, expected);
     near(w.weighted!.reduce((s, f) => s + f.weighted, 0), expected);
@@ -26,7 +27,7 @@ for (const type of methods) {
 
 // Each account closes on its own date, including the earlier terminal-value adjustment.
 const early = { ...row, accountId: "b", closeDate: "2025-10-01", closeValue: 170, gain: -30 };
-const pooled = measureWindow([row, early], "twr", money);
+const pooled = measureWindow([row, early], "cagr", money);
 const expectedBase = 200 + 200 * daysBetween("2025-07-03", "2026-01-01") / 365 - 170 * daysBetween("2025-10-01", "2026-01-01") / 365;
 near(pooled.working!.base!, expectedBase);
 near(pooled.pct!, (row.gain - 30) / expectedBase * 100);
@@ -44,7 +45,7 @@ for (const type of methods) {
   const m = measureInception([inception], type, money), w = m.working!;
   assert.ok(m.shown);
   near(w.gain, 44); near(w.opening, 0); near(w.capitalIn, 100);
-  if (type === "absolute" || type === "twr") near(m.pct!, 44);
+  if (type === "absolute") near(m.pct!, 44);
   if (type === "cagr") near(m.pct!, (1.44 ** (365 / 731) - 1) * 100);
   if (type === "xirr") near(w.annualPct!, m.pct!);
 }

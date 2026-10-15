@@ -2,7 +2,7 @@
  * ── MORNING CIO → RETURNS (Stage 10dq) ───────────────────────────────────────
  *
  * A period selector (MTD, YTD, FYTD, trailing 1Y/2Y/3Y, since investment and a
- * custom From/To), a return-type DROPDOWN over the four standard types
+ * custom From/To), a return-type DROPDOWN over the three selected types
  * `RETURN_TYPES` carries, each explained in one short line beside it (Stage
  * 10eb), and an info popup for the calculation selected, with the window
  * actually measured printed beside the one asked for.
@@ -283,7 +283,7 @@ export default function PortfolioReturns() {
               ) : (
                 <div className="text-[20px]" data-returns-pct=""><AbsentCell reason={measured?.reason ?? "pick a window whose opening date is before its closing date"} /></div>
               )}
-              {portfolioPct == null && <p data-returns-unavailable className="mt-1 max-w-lg text-xs text-slate-400">{needsYear ? `Needs at least 1 year · ${days} days available` : measured?.reason ?? "Choose an opening date before the closing date."}</p>}
+              {portfolioPct == null && <p data-returns-unavailable data-prose-ok="The actual reason the selected return is unavailable must stay visible" className="mt-1 max-w-lg text-xs text-slate-400">{needsYear ? `Needs at least 1 year · ${days} days available` : measured?.reason ?? "Choose an opening date before the closing date."}</p>}
             </div>
             <div className="space-y-0.5 text-right text-[12px] text-slate-400" data-returns-window>
               <div title="The window asked for">Requested <span className="mono text-slate-200" data-returns-requested>

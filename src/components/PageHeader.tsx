@@ -18,8 +18,8 @@ import { navEntry } from "@/lib/nav";
  * row. `right` keeps its meaning — status and basis, hard against the far edge.
  *
  * THE SUBTITLE IS THE TITLE'S HOVER (Stage 10cp). It was a sentence on its own
- * line under the headline on seven pages — "Time-weighted returns as each
- * manager publishes them…", "Provenance and status of the ingested book…" —
+ * line under the headline on seven pages — "Provenance and status of the
+ * ingested book…", for example —
  * and the family asked for every such line to go. A string, for the same
  * reason `Card`'s is.
  *

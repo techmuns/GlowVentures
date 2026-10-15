@@ -22,8 +22,8 @@ import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
 import { bookReturnOnCost, costedSetLabel } from "@/lib/drilldown";
-import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
-import type { Account, AccountBridge, ReturnSeries } from "@/lib/types";
+import { BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
+import type { Account, AccountBridge } from "@/lib/types";
 import { measuredAccountsReturn, accountHasOpeningValue, accountReturnInputs } from "@/lib/returns";
 import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_UNDATED_CAPITAL, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { capitalMovesWithCalls } from "@/lib/tranches";
@@ -43,28 +43,7 @@ import { capitalMovesWithCalls } from "@/lib/tranches";
 // instead of it: a line drawn through a growing panel of accounts asserts a path
 // nothing measured, which is why each of its links is struck over the accounts
 // valued at both ends and why the raw NAV level only starts where the panel is
-// complete. The three things this page already carried — each manager's own
-// time-weighted returns, the value bridge, and a money-weighted return over the
-// real dated flows — are unchanged.
-//
-// THREE PERIOD VOCABULARIES, KEPT APART. Goldstandard publishes MTD / QTD / YTD
-// against N50TRI; Green Lantern and Carnelian publish trailing 1m / 3m / 1y
-// against S&P BSE 500. A trailing one-month return and a month-to-date return
-// are different measurements over different windows, so each account shows the
-// columns its own manager publishes and a dash for the rest — never a trailing
-// figure under a to-date heading.
-
-/** The to-date and trailing columns, in the order a reader scans them. */
-const PERIODS = [
-  { key: "mtd" as const, label: "MTD", title: "Month to date" },
-  { key: "qtd" as const, label: "QTD", title: "Quarter to date" },
-  { key: "fytd" as const, label: "FYTD", title: "Indian FINANCIAL year to date — 1 April to the report date, not the calendar year" },
-  { key: "m1" as const, label: "1m", title: "Trailing one month — NOT month-to-date" },
-  { key: "m3" as const, label: "3m", title: "Trailing three months" },
-  { key: "m6" as const, label: "6m", title: "Trailing six months" },
-  { key: "y1" as const, label: "1y", title: "Trailing twelve months" },
-  { key: "si" as const, label: "Since inception", title: "Since the account's own inception date" },
-];
+// complete. The value bridge and money-weighted return use the recorded dated flows.
 
 /**
  * The bridge rows, in the order the money moves — EVERY LINE A STATEMENT
@@ -170,33 +149,6 @@ const undatedSentence = (us: readonly { from: string; to: string; undated: numbe
 
 const acctLabel = (a: { owner?: string | null; provider: string; accountNo: string }) =>
   `${a.owner ?? a.accountNo} · ${a.provider.split(" ")[0]} ${a.accountNo}`;
-
-/** The report a return block came from, in words — a report TYPE is a filename token, not a label. */
-const REPORT_LABEL: Record<string, string> = {
-  "fact-sheet": "Fact sheet",
-  "performance-history": "Performance history",
-  "performance-benchmark": "Performance vs benchmark",
-  "investor-report": "SEBI investor report",
-  "performance-summary": "Performance summary",
-  "appraisal": "Appraisal",
-  "portfolio-snap": "Portfolio snap report",
-};
-const reportLabel = (t: string) => REPORT_LABEL[t] ?? t;
-/** The statement date is the `<asOf>` segment of `<provider>-<accountNo>-<asOf>-<reportType>`. */
-const reportDate = (docKey: string): string | null => /-(\d{4}-\d{2}-\d{2})-[a-z-]+$/.exec(docKey)?.[1] ?? null;
-/**
- * A PERIOD A REPORT DOES NOT PRINT, even where the book carries a figure in
- * its field. The performance-vs-benchmark report prints one row per MONTH of
- * the financial year and the cumulative year to date — nothing else — and its
- * reader writes the last month's row into both `mtd` and `qtd` (every such
- * block in this book carries the two equal, against fact sheets of the same
- * account and date whose quarter figure differs). A month's return under a
- * heading that says "quarter to date" is a figure the document never printed,
- * so the cell names that instead of showing it; the reader is the place to fix
- * it, and until it is, this is the one period refused.
- */
-const UNPRINTED: Record<string, readonly string[]> = { "performance-benchmark": ["qtd"] };
-const unprinted = (reportType: string, period: string) => (UNPRINTED[reportType] ?? []).includes(period);
 
 export function Performance() {
   const [params] = useSearchParams();
@@ -370,72 +322,22 @@ export function Performance() {
     : firstClose === lastClose
       ? `over ${windowStart} → ${lastClose} (${daysTo(lastClose)} days)`
       : `over ${windowStart} → ${firstClose}–${lastClose} (${daysTo(firstClose)}–${daysTo(lastClose)} days) — each account closes on its own report date`;
-  /**
-   * AN ANNUALISED RATE OVER LESS THAN A YEAR IS AN EXTRAPOLATION, AND SAYS SO
-   * (Stage 10g(ii), XA-14) — beside the managers' OWN annualised
-   * since-inception returns for the same accounts, which is what exposes a
-   * +200% "p.a." for the projection it is. Read off the book, never typed.
-   */
-  const managersOwn = (ids: readonly string[]) => {
-    const xs = ids.flatMap((id) => (BOOK_ACCOUNT_RETURNS[id] ?? []).flatMap((blk) => (blk.series as ReturnSeries[])
-      .filter((x) => !x.isBenchmark && x.siAnnualised && typeof x.si === "number").map((x) => x.si as number)));
-    return xs.length ? { lo: Math.min(...xs), hi: Math.max(...xs) } : null;
-  };
-  const annualisedNote = (pct: number | null, days: number | null, ids: readonly string[]) => {
+  // A sub-year annualised rate is an extrapolation, rather than a return earned.
+  const annualisedNote = (pct: number | null, days: number | null) => {
     if (pct == null) return undefined;
     const rate = `${fmtPct(pct, { sign: true, decimals: 1 })} p.a.`;
     if (days != null && days >= 365) return `${rate}, annualised over ${days} days.`;
-    const own = managersOwn(ids);
-    return `${rate} only if ${days != null ? `this ${days}-day window` : "this window"} were compounded over a whole year — an extrapolation, not a rate earned`
-      + (own ? `; the managers' own annualised since-inception returns for ${ids.length === 1 ? "this account" : "these accounts"} ${own.lo === own.hi ? `are ${fmtPct(own.lo, { decimals: 2 })}` : `run ${fmtPct(own.lo, { decimals: 2 })} to ${fmtPct(own.hi, { decimals: 2 })}`}` : "")
-      + ".";
+    return `${rate} only if ${days != null ? `this ${days}-day window` : "this window"} were compounded over a whole year — an extrapolation, not a rate earned.`;
   };
   const bridgeTotals = bridgeTotalsOf(accounts);
   // The headline is the money-weighted return actually EARNED to date, not the
   // XIRR annualised — a sub-year window compounded onto a year reads as a yearly
   // rate nobody earned (XA-29: this book's pool annualises to ~89% p.a. over
   // about four months). De-annualised over the window the pool closes on; the
-  // p.a. rate is kept in the hover, named an extrapolation beside the managers'
-  // own since-inception rates. Matches the Morning CIO, so the two pages state
+  // p.a. rate is kept in the hover and named as an extrapolation. Matches the Morning CIO, so the two pages state
   // one number.
   const consWindowDays = daysTo(lastClose);
   const consolidatedTotalReturn = totalReturnFromXirr(consolidatedXirr, consWindowDays);
-
-  /**
-   * ── TIME-WEIGHTED RETURNS: EVERY REPORT THAT PUBLISHES ONE, EACH NAMED ────
-   *
-   * This took ONE block per account — the fact sheet, else the first — and
-   * dashed every period that block lacked with "<provider> does not publish a
-   * <period> figure". That was false wherever another report of the SAME date
-   * prints it: Carnelian's financial year to date (+26.98%) is on its
-   * performance-vs-benchmark report, V.E.C's and Buoyant's one-year figures and
-   * Goldstandard's trailing months on their performance histories, and the 6m
-   * column vanished entirely because no fact sheet prints one. So every block
-   * the book carries is drawn, each under the report it came from, its own date
-   * and its fee basis where the report states one — never merged into another
-   * report's row, because two reports of one account are two documents and a
-   * figure must stay beside the one that printed it. A dash names THAT report.
-   */
-  const twrr = accounts.map((a) => ({
-    account: a,
-    blocks: (BOOK_ACCOUNT_RETURNS[a.accountId] ?? []).map((b) => {
-      const series = b.series as ReturnSeries[];
-      return {
-        block: b,
-        date: reportDate(b.source),
-        // The portfolio's own series first, then each benchmark it is set
-        // against — the order the reader reads a pair in.
-        rows: [...series.filter((x) => !x.isBenchmark), ...series.filter((x) => x.isBenchmark)],
-      };
-    }).filter((b) => b.rows.length > 0),
-  }));
-  // How many MANAGERS publish one — the consolidated row's reason names them,
-  // and a count typed into prose went stale the day a fourth manager's
-  // statements arrived.
-  const twrrManagers = new Set(twrr.filter((t) => t.blocks.length).map((t) => t.account.provider)).size;
-  // A column is worth a heading only if some report prints it.
-  const livePeriods = PERIODS.filter((per) =>
-    twrr.some((t) => t.blocks.some((b) => b.rows.some((x) => x[per.key] !== null && !unprinted(b.block.reportType, per.key)))));
 
   const top10Val = sum(consolidatedWeights.slice(0, 10));
   const top10 = listedMV > 0 ? (top10Val / listedMV) * 100 : 0;
@@ -462,9 +364,9 @@ export function Performance() {
   return (
     <div>
       <PageHeader eyebrow="Analytics" title="NAV &amp; Performance"
-        subtitle="Time-weighted returns as each manager publishes them, the value bridge from opening to closing, and a money-weighted return over the real dated flows."
+        subtitle="The value bridge from opening to closing and a money-weighted return over the recorded dated flows."
         right={<div className="flex items-center gap-2">
-          <BasisPill liveText="Live prices" hint="Current value of holdings and embedded return are rebuilt from live prices where a quote exists; the managers' returns and the bridge are as reported." />
+          <BasisPill liveText="Live prices" hint="Current value of holdings and embedded return are rebuilt from live prices where a quote exists; the dated money-weighted return and value bridge use statement records." />
           {vb.nav.rows > 0 && (
             <Pill tone="info">
               <span data-xa="nav-basis" data-nav-from={vb.nav.from ?? ""} data-nav-to={vb.nav.to ?? ""}
@@ -528,7 +430,7 @@ export function Performance() {
             // the book's newest date, which is no pooled account's.
             title={`${xirrMissing.length
               ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, each closed against the value its own statement strikes on its own date — ${money(measuredMV)} in all, ${closeRange ?? "on no date"}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure.`
-              : `Over all ${measurable.length} accounts' dated flows, each closed against the value its own statement strikes on its own date — ${money(measuredMV)} in all, ${closeRange ?? "on no date"}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}, and it stays off a yearly scale on the tile: the annualised XIRR is ${annualisedNote(consolidatedXirr, consWindowDays, mw.parts.map((x) => x.accountId)) ?? "not struck."}`}
+              : `Over all ${measurable.length} accounts' dated flows, each closed against the value its own statement strikes on its own date — ${money(measuredMV)} in all, ${closeRange ?? "on no date"}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}, and it stays off a yearly scale on the tile: the annualised XIRR is ${annualisedNote(consolidatedXirr, consWindowDays) ?? "not struck."}`}
             icon={<Percent className="h-4 w-4" />} />
         )}
 
@@ -552,102 +454,6 @@ export function Performance() {
       <div className="mt-5">
         <NavVsIndex />
       </div>
-
-      {/* ── TWRR grid ── */}
-      <Card className="mt-5" title="Time-weighted return"
-        // A card's subtitle is its title's hover (Stage 10cp): XA-15's wording
-        // — every report, under its own date — goes there, not under the title.
-        subtitle="As each manager publishes it — every report that prints one is drawn, each under its own date, portfolio against that manager's own benchmark. Since inception is annualised only where the report says so (p.a.); otherwise it is the return over the whole period (abs)."
-        right={<Pill tone="info">{twrr.filter((t) => t.blocks.length).length} of {accounts.length} accounts</Pill>}>
-        <div className="overflow-x-auto">
-          {/* Exempt, declared — the same class as `ReturnsTable`: the columns
-              after Account and Series are the manager's own period sequence
-              (1m → 3m → 6m → 1y → since inception), and a row is a portfolio
-              paired with its own benchmark, so the pair must stay adjacent. */}
-          <table className="w-full text-[12.5px]"
-            data-table-static="the columns after the first are a period sequence the manager publishes in order — moving one would break the sequence a reader reads them as">
-            <thead className="label-xs border-b border-ink-700">
-              <tr>
-                <th className="px-3 py-2 text-left">Account</th>
-                <th className="px-3 py-2 text-left">Report</th>
-                <th className="px-3 py-2 text-left">Series</th>
-                {livePeriods.map((per) => (
-                  <th key={per.key} className="px-3 py-2 text-right" title={per.title}>{per.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {twrr.flatMap((t) => {
-                if (!t.blocks.length) {
-                  return [(
-                    <tr key={t.account.accountId} className="border-t border-ink-700/60">
-                      <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(t.account)}</td>
-                      <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 2}>
-                        {DASH} no time-weighted return series in this account's statements
-                      </td>
-                    </tr>
-                  )];
-                }
-                return t.blocks.flatMap((b, bi) => b.rows.map((s, i) => (
-                  <tr key={`${t.account.accountId}-${b.block.source}-${s.series}-${i}`}
-                    className={i === 0 ? (bi === 0 ? "border-t border-ink-700/60" : "border-t border-dashed border-ink-700/60") : ""}>
-                    <td className="px-3 py-2.5 font-medium text-slate-100">{bi === 0 && i === 0 ? acctLabel(t.account) : ""}</td>
-                    <td className="px-3 py-2.5 text-[11.5px] text-slate-400">
-                      {i === 0 && (
-                        <span data-xa="twrr-block" data-account={t.account.accountId} data-report={b.block.reportType}
-                          data-date={b.date ?? ""} data-series={b.rows.length}>
-                          {reportLabel(b.block.reportType)}
-                          {b.date ? <> · {fmtDate(b.date)}</> : null}
-                          {s.feeBasis === "after" || s.feeBasis === "before" ? <> · {s.feeBasis} fees</> : null}
-                        </span>
-                      )}
-                    </td>
-                    <td className={`px-3 py-2.5 ${s.isBenchmark ? "text-slate-400" : "text-slate-200"}`}>
-                      {s.series}{s.isBenchmark ? " (benchmark)" : ""}
-                    </td>
-                    {livePeriods.map((per) => {
-                      const v = s[per.key];
-                      const shown = v !== null && !unprinted(b.block.reportType, per.key);
-                      // SINCE INCEPTION SAYS WHICH RETURN IT IS. A report annualises
-                      // only past a year, so the same column holds rates (p.a.) and
-                      // holding-period returns (abs) — unmarked, a reader compares
-                      // one account's 19.83% p.a. with another's 7.17% over 228 days.
-                      const siTag = per.key === "si" && shown
-                        ? (s.siAnnualised === true ? " p.a." : s.siAnnualised === false ? " abs" : "")
-                        : "";
-                      // The dash's reason names THE REPORT, never the manager:
-                      // another report of the same account and date may print
-                      // the figure this one does not, and it is drawn above.
-                      const reason = shown ? "" : v !== null
-                        ? `the ${reportLabel(b.block.reportType).toLowerCase()} prints one row per month and the year to date — it prints no quarter-to-date figure, and the month's return is not one`
-                        : `the ${reportLabel(b.block.reportType).toLowerCase()}${b.date ? ` of ${fmtDate(b.date)}` : ""} prints no ${per.label} figure`;
-                      return (
-                        <td key={per.key} className="px-3 py-2.5 text-right mono"
-                          data-xa="twrr-cell" data-account={t.account.accountId} data-report={b.block.reportType}
-                          data-date={b.date ?? ""} data-series={s.series} data-period={per.key}
-                          data-value={shown ? String(v) : ""} data-reason={reason}>
-                          {!shown
-                            ? <AbsentCell reason={reason} />
-                            : <span className={(v as number) >= 0 ? "text-gain" : "text-loss"}>
-                                {fmtPct(v, { sign: true, decimals: 2 })}{siTag && <span className="text-[10.5px] text-slate-500">{siTag}</span>}
-                              </span>}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                )));
-              })}
-              <tr className="border-t-2 border-ink-600">
-                <td className="px-3 py-2.5 font-semibold text-slate-200">Consolidated</td>
-                <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 2}
-                  title={`Time-weighted returns cannot be consolidated across these accounts: the ${twrrManagers} managers publish different periods, against different benchmarks, from different inception dates. The money-weighted return on this page is the consolidated figure this book does support.`}>
-                  {DASH} not consolidated — the managers publish different periods and benchmarks
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </Card>
 
       {/* ── Value bridge ── */}
       {/* A COLUMN IS DRAWN ONLY WHERE ITS PARTS MAKE ITS TOTAL (A-12). Nine
@@ -817,7 +623,7 @@ export function Performance() {
                       ? <span className="text-[11px] text-slate-500" title={x.reasonTitle}>{DASH} {x.reason}</span>
                       : <>
                           <span className={(x.toDate ?? 0) >= 0 ? "text-gain" : "text-loss"}
-                            title={annualisedNote(x.pct, x.windowDays, [x.account.accountId])}>{fmtPct(x.toDate, { sign: true, decimals: 1 })}</span>
+                            title={annualisedNote(x.pct, x.windowDays)}>{fmtPct(x.toDate, { sign: true, decimals: 1 })}</span>
                           {/* NAMED, NEVER DATED (VD-25): capital the account's
                               printed totals carry and no dated row does. */}
                           {x.undated.length > 0 && (
@@ -855,7 +661,7 @@ export function Performance() {
                         : "the pooled flows and their statement values do not solve for a single rate"} />
                     : <span className={consolidatedTotalReturn >= 0 ? "text-gain" : "text-loss"}
                         data-xirr-undated={consUndated.reduce((t, u) => t + u.undated, 0)}
-                        title={[annualisedNote(consolidatedXirr, consWindowDays, mw.parts.map((x) => x.accountId)),
+                        title={[annualisedNote(consolidatedXirr, consWindowDays),
                           ...consUndated.map((u) => undatedSentence([u], money, u.who))].filter(Boolean).join(" ")}>
                         {fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
                 </td>

@@ -7618,7 +7618,8 @@ const ROUTES = [
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
   ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
-  ["cio-returns-twr", "/cio?tab=returns&rp=inception&rtype=twr"],
+  ["cio-returns-cagr", "/cio?tab=returns&rp=inception&rtype=cagr"],
+  ["cio-returns-retired", "/cio?tab=returns&rtype=twr"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -9234,77 +9235,6 @@ const xaNavBasisChecks = () => [
       && /published NAV/i.test(el.title ?? "");
   }],
 ];
-/**
- * THE TIME-WEIGHTED GRID, held to the book (XA-15). The grid drew one block per
- * account — the fact sheet, else the first — and dashed every period that
- * block lacked with "<provider> does not publish a <period> figure", which was
- * false wherever another report of the same account and date prints it.
- */
-const TWRR_PERIODS = ["mtd", "qtd", "fytd", "m1", "m3", "m6", "y1", "si"];
-/** The ONE period a report type prints no figure for, though its reader writes one. */
-const TWRR_REFUSED = { "performance-benchmark": ["qtd"] };
-const twrrChecks = () => [
-  ["every report that publishes a time-weighted return is drawn, under its own report and date", (t, ctx) => {
-    const want = XA_BOOK?.twrr;
-    if (!want) return { notChecked: "the managers' return blocks could not be re-derived from glowData.ts" };
-    const got = (ctx?.xa ?? []).filter((x) => x.xa === "twrr-block");
-    const key = (a, r, d) => `${a}|${r}|${d}`;
-    const wantKeys = want.map((b) => key(b.account, b.report, b.date)).sort();
-    const gotKeys = got.map((x) => key(x.attrs.account, x.attrs.report, x.attrs.date)).sort();
-    return wantKeys.length > 0 && JSON.stringify(wantKeys) === JSON.stringify(gotKeys)
-      && want.every((b) => got.some((x) => x.attrs.account === b.account && x.attrs.report === b.report
-        && x.attrs.date === b.date && Number(x.attrs.series) === b.series.length));
-  }],
-  ["every figure is the report's own, and no dash claims a manager publishes nothing", (t, ctx) => {
-    const want = XA_BOOK?.twrr;
-    if (!want) return { notChecked: "the managers' return blocks could not be re-derived from glowData.ts" };
-    const cells = (ctx?.xa ?? []).filter((x) => x.xa === "twrr-cell");
-    // A dash's reason is a HOVER, so it is read off the titles and off each
-    // cell's own `data-reason` — the page's text cannot see either.
-    if (!cells.length || (ctx?.titles ?? []).some((x) => /does not publish a/i.test(x))) return false;
-    const live = new Set(TWRR_PERIODS.filter((k) => want.some((b) => b.series.some((x) => x[k] !== null
-      && !(TWRR_REFUSED[b.report] ?? []).includes(k)))));
-    return want.every((b) => b.series.every((x) => [...live].every((k) => {
-      const c = cells.find((y) => y.attrs.account === b.account && y.attrs.report === b.report
-        && y.attrs.date === b.date && y.attrs.series === x.series && y.attrs.period === k);
-      if (!c) return false;
-      const shown = x[k] !== null && !(TWRR_REFUSED[b.report] ?? []).includes(k);
-      // A dash names the REPORT it is about, never the manager.
-      return shown ? c.attrs.value !== "" && Number(c.attrs.value) === x[k]
-        : c.attrs.value === "" && /^the (fact sheet|performance history|performance vs benchmark|sebi investor report|performance summary|appraisal|[a-z-]+) /.test(c.attrs.reason ?? "")
-          && !/does not publish/i.test(c.attrs.reason ?? "");
-    })));
-  }],
-  ["since inception says whether it is an annual rate or the return over the whole period", (t, ctx) => {
-    const want = XA_BOOK?.twrr;
-    if (!want) return { notChecked: "the managers' return blocks could not be re-derived from glowData.ts" };
-    const si = want.flatMap((b) => b.series.filter((x) => x.si !== null).map((x) => ({ b, x })));
-    // LOAD-BEARING: the book must carry both kinds, or one tag rule passes alone.
-    if (!(si.some(({ x }) => x.siAnnualised === true) && si.some(({ x }) => x.siAnnualised === false)))
-      return { notChecked: "every since-inception figure in this book is of one kind" };
-    const cells = (ctx?.xa ?? []).filter((y) => y.xa === "twrr-cell" && y.attrs.period === "si");
-    return si.every(({ b, x }) => {
-      const c = cells.find((y) => y.attrs.account === b.account && y.attrs.report === b.report
-        && y.attrs.date === b.date && y.attrs.series === x.series);
-      if (!c) return false;
-      return x.siAnnualised === true ? /p\.a\./.test(c.text) && !/\babs\b/.test(c.text)
-        : x.siAnnualised === false ? /\babs\b/.test(c.text) && !/p\.a\./.test(c.text)
-        : !/p\.a\.|\babs\b/.test(c.text);
-    });
-  }],
-  ["the benchmark report's quarter is refused — its reader writes the month into it", (t, ctx) => {
-    const want = XA_BOOK?.twrr;
-    if (!want) return { notChecked: "the managers' return blocks could not be re-derived from glowData.ts" };
-    const bench = want.filter((b) => b.report === "performance-benchmark");
-    if (!bench.length) return { notChecked: "no performance-vs-benchmark report in this book" };
-    // THE PREMISE, re-measured: on every such block the quarter IS the month.
-    // A block where they differ would make the refusal refuse a real figure.
-    if (!bench.every((b) => b.series.every((x) => x.qtd === null || x.qtd === x.mtd))) return false;
-    const cells = (ctx?.xa ?? []).filter((y) => y.xa === "twrr-cell" && y.attrs.report === "performance-benchmark" && y.attrs.period === "qtd");
-    return cells.length > 0 && cells.every((c) => c.attrs.value === "")
-      && (ctx?.titles ?? []).some((x) => /prints no quarter-to-date figure/.test(x));
-  }],
-];
 /** The count a `data-xa` element carries, as a number (NaN when absent). */
 const xaNum = (ctx, key, attr = "value") => Number(xaEl(ctx, key)?.attrs?.[attr]);
 /** A compact rupee figure as the page prints it (`₹33.1 L`, `−₹4.3 L`, `₹713.3 Cr`), in rupees. NaN when absent. */
@@ -9791,17 +9721,15 @@ const PERF_MW = [
     });
     return rowsOk && Math.abs(Number(d.cons.undated) - total) <= 1 && /dated in none of them/i.test(d.cons.returnTitle ?? "");
   }],
-  ["a rate over less than a year is named an extrapolation beside the managers' own since-inception returns (XA-14, XA-29)", (t, ctx) => {
+  ["a rate over less than a year is named an extrapolation (XA-14, XA-29)", (t, ctx) => {
     const d = ctx?.perfDom;
     if (!d || !d.cons) return FAST ? { notChecked: "the probe did not run" } : false;
     const B = PERF_BOOK;
     if (!B) return false;
     const sub = d.xirr.filter((r) => r.pct !== "" && Number(r.days) < 365);
-    if (!sub.length || !B.measured.some((id) => B.managersOwn.has(id))) return { notChecked: "no pooled account's window is under a year, beside a manager's own annualised rate" };
-    const rowsOk = sub.every((r) => /an extrapolation, not a rate earned/i.test(r.returnTitle ?? "")
-      && (!B.managersOwn.has(r.id) || /managers' own annualised since-inception returns/i.test(r.returnTitle ?? "")));
-    const consOk = Number(d.cons.days) >= 365 || (/an extrapolation, not a rate earned/i.test(d.cons.returnTitle ?? "")
-      && /managers' own annualised since-inception returns/i.test(d.cons.returnTitle ?? ""));
+    if (!sub.length) return { notChecked: "no measured account's window is under a year" };
+    const rowsOk = sub.every((r) => /an extrapolation, not a rate earned/i.test(r.returnTitle ?? ""));
+    const consOk = Number(d.cons.days) >= 365 || /an extrapolation, not a rate earned/i.test(d.cons.returnTitle ?? "");
     const tileOk = !!d.tileTitle && (Number(d.cons.days) >= 365 || /an extrapolation, not a rate earned/i.test(d.tileTitle));
     return rowsOk && consOk && tileOk && !/>\s*100% p\.a\./i.test(t) && !/reads >100%/i.test(`${t} ${d.tileTitle}`);
   }],
@@ -19635,9 +19563,10 @@ const CIO_RETURNS = [
     const r = ctx?.returnsDom;
     if (!r) return false;
     const want = /[?&]rp=([a-z0-9]+)/.exec(ctx.path ?? "")?.[1] ?? "fytd";
-    const wantT = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr";
+    const askedT = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1];
+    const wantT = ["xirr", "absolute", "cagr"].includes(askedT) ? askedT : "xirr";
     return r.periods.map((x) => x.key).join(",") === "fytd,mtd,ytd,y1,y2,y3,inception,custom"
-      && r.types.map((x) => x.key).join(",") === "xirr,absolute,twr,cagr"
+      && r.types.map((x) => x.key).join(",") === "xirr,absolute,cagr"
       && r.periods.filter((x) => x.active).map((x) => x.key).join() === want
       && r.types.filter((x) => x.active).map((x) => x.key).join() === wantT
       && r.from && r.to;
@@ -19645,7 +19574,8 @@ const CIO_RETURNS = [
   ["...the type picked is explained in one short line beside the dropdown, with the full explanation its hover (Stage 10eb)", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
-    const wantT = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr";
+    const askedT = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1];
+    const wantT = ["xirr", "absolute", "cagr"].includes(askedT) ? askedT : "xirr";
     const d = r.typeDesc;
     return !!d && d.key === wantT && d.text.length > 10 && d.text.length <= 60 && d.hover.length > d.text.length;
   }],
@@ -26044,7 +25974,8 @@ const INVARIANTS = {
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
   "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
-  "cio-returns-twr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns-retired": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
@@ -35906,8 +35837,8 @@ const INVARIANTS = {
     // XA-12: the basis pill reads STATEMENT over a Current Value tile that
     // carries AMFI's published NAV on every fund it prices.
     ...xaNavBasisChecks(),
-    // XA-15: every report's own time-weighted figures, each under its report.
-    ...twrrChecks(),
+    ["the retired time-weighted return section is absent", (t, ctx) =>
+      !/time.weighted/i.test(t) && !(ctx?.xa ?? []).some((x) => ["twrr-block", "twrr-cell"].includes(x.xa))],
     /**
      * "NOT ANNUALISED" IS A GUARD, AND IT STAYS ON THE FACE (Stage 10cp). The
      * family asked for every explainer line to go; this is not one. Stage

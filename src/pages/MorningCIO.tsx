@@ -2025,9 +2025,9 @@ export function MorningCIO() {
           elsewhere on this page — the bridge, the contributors and the
           per-account windows are NOWHERE ELSE. The family asked for the section
           and that is their call; what this file owes them is not pretending the
-          figures survived. Only the manager-year table has a home: `/performance`
-          renders `BOOK_ACCOUNT_RETURNS` per account and per window, which is
-          where the card's own footnote already pointed.
+          figures survived. The manager-reported return table was later removed
+          from `/performance` at the family's request; its source records remain
+          in `BOOK_ACCOUNT_RETURNS`.
 
           WHAT DID NOT GO WITH IT. `BOOK_ATTRIBUTION` is GENERATED — `build-book`
           still emits it, and deleting it would rewrite `glowData.ts`, which is a
