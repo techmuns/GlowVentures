@@ -1,8 +1,9 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Info, X } from "lucide-react";
-import { fmtDate, fmtNum } from "@/lib/format";
+import { fmtDate, fmtNum, fmtPct } from "@/lib/format";
 import type { DatedFlow } from "@/lib/xirr";
+import { xirrWorking } from "@/lib/xirrWorking";
 
 /** The result is the tile's own rendered value, never a second calculation. */
 export function ReturnCalculationInfo({ label, value, children }: {
@@ -109,20 +110,33 @@ export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, r
   const dated = [...flows].sort((a, b) => a.date.getTime() - b.date.getTime());
   const paid = -flows.reduce((n, f) => n + Math.min(f.amount, 0), 0);
   const returned = flows.reduce((n, f) => n + Math.max(f.amount, 0), 0);
+  const working = xirrWorking(flows, annualPct, days, annualised);
+  const unavailable = reason ?? (working ? null : "The recorded amounts or dates do not support this calculation");
   return <>
     <ol data-return-steps className="list-decimal space-y-3 pl-5">
-      {reason ? <>
-        <li>{reason}.</li>
-        <li>We can show this return once the required records are complete.</li>
+      {unavailable || !working ? <>
+        <li>{unavailable}.</li>
+        <li>No return can be calculated from these records yet.</li>
       </> : <>
-        <li>Opening value + money added: <strong className="tabular">{shortMoney(paid)}</strong>.</li>
-        <li>Money taken out + value left: <strong className="tabular">{shortMoney(returned)}</strong>.</li>
-        <li>Using the dates of these amounts{days != null ? <> over {fmtNum(days)} days</> : null} gives <strong>{result}</strong>{annualised ? " per year" : " for this period"}.</li>
+        <li>Gain: <strong className="tabular">{shortMoney(returned)} − {shortMoney(paid)} = {shortMoney(working.gain)}</strong>.</li>
+        <li>Try a yearly rate until dated money in and back match. At <strong>{fmtNum(annualPct!, 6)}%</strong>, both equal <strong>{shortMoney(working.paidAtStart)}</strong> on {fmtDate(working.start)}.</li>
+        <li data-return-conversion>
+          <span className="block tabular">Yearly growth: 1 + {fmtNum(annualPct!, 6)} ÷ 100 = {working.yearFactor.toFixed(6)}.</span>
+          {!annualised && <span className="mt-1 block tabular">{fmtNum(days!)}-day growth: {working.yearFactor.toFixed(6)}<sup>({days}/365)</sup> = {working.growthFactor.toFixed(6)}.</span>}
+          <span className="mt-1 block tabular">({working.growthFactor.toFixed(6)} − 1) × 100 = {fmtPct(working.pct, { decimals: 4 })} → <strong>{result}</strong>{annualised ? " per year" : ""}.</span>
+        </li>
       </>}
     </ol>
     <details data-return-more>
       <summary className="ring-focus cursor-pointer rounded text-slate-300">Show more</summary>
       <div className="mt-4 space-y-4">
+    {working && !unavailable && <>
+      <p>The matching yearly rate is the calculation's intermediate step. {annualised ? "The card shows that yearly rate." : `The card converts it to the ${days} days measured.`} It is found by trying rates until money paid in and money returned have the same value on the first date.</p>
+      <dl data-return-date-balance className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <dt>Money in, valued on {fmtDate(working.start)}</dt><dd className="text-right tabular">{money(working.paidAtStart)}</dd>
+        <dt>Money back, valued on {fmtDate(working.start)}</dt><dd className="text-right tabular">{money(working.returnedAtStart)}</dd>
+      </dl>
+    </>}
     <p>We use how much money went in and came out, the closing investment values, and the date of each amount. Money invested for longer has more effect on the return.</p>
     <p className="text-slate-400">{coverage}</p>
     {reason ? <p className="rounded-lg bg-ink-900 p-3">{reason}. This return needs opening values, dated money movements and closing values, with at least a year of history for a yearly rate.</p> : <>

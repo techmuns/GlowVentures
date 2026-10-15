@@ -26,6 +26,7 @@ const SUITES = [
   ["server stock exposure", "src/lib/__tests__/stockExposureFunction.test.ts"],
   ["daily equity movers resilience", "src/lib/__tests__/dailyMovers.test.ts"],
   ["investor period returns", "src/lib/__tests__/investorSummary.test.ts"],
+  ["return calculation working", "src/lib/__tests__/xirrWorking.test.ts"],
   ["corporate actions & dividends", "src/lib/__tests__/corporateActions.test.ts"],
   ["corporate-action feed", "src/lib/__tests__/corporateActionsFunction.test.ts"],
   ["corporate-action live gate", "src/lib/__tests__/liveWithheld.test.ts"],
