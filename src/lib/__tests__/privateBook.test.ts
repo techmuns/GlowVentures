@@ -53,6 +53,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { schemeCalls, callTotals } from "@/lib/capitalCalls";
 import { bookFolios, privateBook, figuresOf, privateBookFolios, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
+import { BRAND_NAMES, brandNameOf } from "@/lib/brandNames";
 import type { SchemeCall } from "@/lib/capitalCalls";
 import type { Position } from "@/lib/types";
 import { withPairsTagged } from "./taggedPairs";
@@ -361,6 +362,35 @@ console.log("\n── by brand: one row per brand, on the fund grouping's basis 
   ok("there are no more brand rows than fund rows",
     gs.length <= BOOK_SECTIONS.flatMap((s) => byFund.sections[s].groups).length,
     `${gs.length} brands`);
+
+  // ── EVERY LINE IS MAPPED TO ITS BRAND (Stage 10eh) ──
+  //   "search for every entity and check what the brand name is. If it's the
+  //    same, then write the same … Make sure you dont miss out on any"
+  const unmapped = [...new Set(folios.filter((f) => !brandNameOf(f.fundKey)).map((f) => `${f.fundKey} (${f.fundName})`))];
+  ok("every private-market line has a BRAND_NAMES entry", unmapped.length === 0, unmapped.join("; "));
+  ok("every brand row is mapped and names its legal entity",
+    gs.every((g) => g.brand?.basis != null && g.brand.legal.length > 0),
+    gs.filter((g) => g.brand?.basis == null || !g.brand.legal.length).map((g) => g.label).join("; "));
+  const entries = Object.entries(BRAND_NAMES);
+  const badSource = entries.filter(([, n]) => n.source.some((u) => {
+    if (u.startsWith("statement:")) return !fs.existsSync(path.join(process.cwd(), "public/audit", u.slice("statement:".length), "document.json"));
+    return !/^https:\/\/[^\s/]+\.[^\s/]+\//.test(u);
+  }));
+  ok("every source is a web page or one of the family's own statements in the archive", badSource.length === 0,
+    badSource.map(([k]) => k).join("; "));
+  ok("a brand that is not the entity's own name cites where the two are tied",
+    entries.every(([, n]) => n.basis !== "cited" || n.source.some((u) => u.startsWith("https://"))),
+    entries.filter(([, n]) => n.basis === "cited" && !n.source.some((u) => u.startsWith("https://"))).map(([k]) => k).join("; "));
+  ok("a brand that is its entity's own name shows a source for the entity",
+    entries.every(([, n]) => n.basis !== "own-name" || n.source.length > 0),
+    entries.filter(([, n]) => n.basis === "own-name" && !n.source.length).map(([k]) => k).join("; "));
+  const labelOf = (re: RegExp) => gs.filter((g) => g.folios.some((f) => re.test(f.fundName))).map((g) => g.label);
+  ok("Assetgro Fintech is the StockGro row (the family's own example)",
+    labelOf(/assetgro/i).join() === "StockGro"
+      && !!gs.find((g) => g.label === "StockGro")?.brand?.legal.some((l) => /^Assetgro Fintech Private Limited/.test(l)),
+    labelOf(/assetgro/i).join());
+  ok("no brand row is labelled with the legal name it maps away from",
+    !gs.some((g) => g.brand?.basis === "cited" && g.brand.legal.includes(g.label)));
 }
 
 console.log("\n── the two sections ──");

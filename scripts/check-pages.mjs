@@ -29150,6 +29150,28 @@ const INVARIANTS = {
       return new Set(labels).size === labels.length
         && labels.every((l) => l && !/ — |class [a-z]\d/i.test(l));
     }],
+    /**
+     * THE BRAND, NOT THE LEGAL NAME (Stage 10eh).
+     *
+     *   *"make the first column the brand name, because right now the column
+     *    labeled brand name is actually the legal name of the entity … Make sure
+     *    you dont miss out on any"*
+     *
+     * Every brand row is mapped — none falls back to the name read off the line
+     * — and names its legal entity; where the two differ, the entity is drawn
+     * under the brand. The witness is the family's own example: the Assetgro
+     * Fintech line is the StockGro row, and no row is labelled Assetgro.
+     */
+    ["by brand, every row is a mapped brand naming its legal entity, and Assetgro Fintech reads StockGro", (t, ctx) => {
+      const gs = (ctx?.pmView?.groups ?? []).filter((g) => g.kind === "brand");
+      if (!gs.length) return false;
+      const bases = new Set(["cited", "own-name", "as-printed"]);
+      const mapped = gs.every((g) => bases.has(g.brandBasis) && (g.legal ?? "").trim().length > 0);
+      const drawn = gs.every((g) => g.legalLine === (g.legal ?? "").split(" | ").some((l) => l !== g.label));
+      const stockgro = gs.find((g) => g.key === "brand:stockgro");
+      return mapped && drawn && !!stockgro && /assetgro fintech/i.test(stockgro.legal ?? "")
+        && !gs.some((g) => /assetgro/i.test(g.label ?? ""));
+    }],
   ],
 
   /**
@@ -41419,6 +41441,9 @@ for (const theme of THEMES) {
             marker: txt(e.querySelector("[data-pm-marker]")) || null, text: txt(e), ...cellsOf(e) })),
           groups: rows("tr[data-pm-group]").map((e) => ({
             key: e.getAttribute("data-pm-group"), kind: e.getAttribute("data-pm-kind"), label: e.getAttribute("data-pm-label"),
+            // BY BRAND: the legal entities behind the brand and how it is known (Stage 10eh).
+            legal: e.getAttribute("data-pm-legal"), brandBasis: e.getAttribute("data-pm-brand-basis"),
+            legalLine: !!e.querySelector("[data-pm-legal-line]"),
             // The row's own statement dates, ISO, as its As of cell carries them.
             asOfDates: (e.querySelector("td[data-col-cell='asOf']")?.getAttribute("data-as-of") ?? "").split(" ").filter(Boolean),
             section: e.getAttribute("data-pm-row-section"), folios: num(e, "data-pm-folios"),
