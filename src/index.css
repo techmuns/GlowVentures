@@ -278,6 +278,8 @@ body {
             border #d8d3c4 / #e4ddcd · text #1a1830 / #3d3a52 / #6b6880 / #9995ad
    ------------------------------------------------------------------------- */
 html:not(.dark) { color-scheme: light; }
+
+.return-calculation::backdrop { background: rgb(15 23 42 / 0.5); }
 html:not(.dark) body { background: #f4f2ec; color: #1a1830; }
 /* A label a reader scans for — a column heading, a tile's name — in the ink
    GCR sets its table headings in, a step darker than the grey that made every

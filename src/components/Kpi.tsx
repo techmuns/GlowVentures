@@ -5,7 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 // Compact KPI tile — like StatTile but a touch smaller and non-wrapping, so several
 // fit across a strip inside the app frame (with the left nav) without the value
 // breaking onto two lines. Used by the CIO cockpit and the Stock Info page.
-export function Kpi({ label, labelText, value, second, sub, delta, icon, href, hrefTitle, action, raise }: {
+export function Kpi({ label, labelText, value, second, sub, delta, icon, info, href, hrefTitle, action, raise }: {
   /**
    * NORMALLY A STRING, and a CONTROL where the tile's metric is the reader's to
    * choose — Morning CIO's strip renders `SelectableTiles`' picker here. A
@@ -29,6 +29,8 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, href, h
    * book does not carry must not show "■ 0.0%", which reads as a measured flat.
    */
   delta?: number | null; icon?: ReactNode;
+  /** Calculation info button, above the tile's navigation target. */
+  info?: ReactNode;
   /**
    * WHERE THE HOLDINGS BEHIND THIS FIGURE ARE — the drill-down the family asked
    * for. Optional, because a tile whose set has no address must not pretend to
@@ -112,7 +114,7 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, href, h
             {label}
           </div>
         )}
-        {icon && <div className="shrink-0 text-slate-500">{icon}</div>}
+        {(info || icon) && <div className="flex shrink-0 items-center gap-1.5">{info}{icon && <div className="text-slate-500">{icon}</div>}</div>}
       </div>
       {/* `pointer-events-none` on every wrapper lets a click anywhere fall
           through to the anchor beneath — there is nothing interactive left in

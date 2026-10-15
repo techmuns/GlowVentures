@@ -5,6 +5,7 @@ import { Card } from "@/components/Card";
 import { AllocationChart } from "@/components/AllocationViews";
 import { Pill } from "@/components/Pill";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
+import { CapitalReturnCalculation, MoneyWeightedCalculation } from "@/components/ReturnCalculation";
 import { StockLink } from "@/components/StockLink";
 import { Link } from "react-router-dom";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -915,7 +916,7 @@ export function MorningCIO() {
       rawLines: currentHoldings(portfolio.positions).length,
       accountCount: portfolio.accounts.length,
       ownerCount: new Set(portfolio.accounts.map((a) => a.owner)).size,
-      totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
+      totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, deployedCapital, gainPct,
       footerPct, costedMV, costCoversBook, costedSet, capCoverage,
       sides,
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
@@ -1046,6 +1047,12 @@ export function MorningCIO() {
    */
   const POSITIONS_WHAT = `Open every holding in the book. ${fmtNum(m.p.length)} is the count of current holdings with each one two statements both report counted once${m.rawLines !== m.p.length ? ` — ${fmtNum(m.rawLines)} statement lines, ${fmtNum(m.rawLines - m.p.length)} of them a second report of a holding already counted` : ""}; the page lists them grouped one row per name and per mandate.`;
   const NAMES_WHAT = `Open every holding in the book. ${fmtNum(m.distinctNames)} is the count of distinct securities across every account; the page lists them grouped one row per name and per mandate, so a mandate's names are one row there.`;
+  const calculationMoney = (n: number | null | undefined) => fmtFromBase(n);
+  const capitalCalculation = <CapitalReturnCalculation gain={m.embeddedGain} capital={m.deployedCapital}
+    result={pct1(m.gainPct)} money={calculationMoney}
+    coverage={<>Covers {fmtNum(m.costedSet.struckCount)} of {fmtNum(m.costedSet.holdings)} holdings with both a cost and a valuation.
+      {m.privateCount > 0 && <> Separately modelled private investments also contribute their recorded gain and invested capital.</>}
+      {m.costedSet.atCost > 0 && <> Investments held at cost have no measured gain and are excluded.</>}</>} />;
   const cioTiles: TileMetric[] = [
     /**
      * CURRENT VALUE OF HOLDINGS — AND WHAT WAS INVESTED IN THEM, ON ONE TILE.
@@ -1097,6 +1104,9 @@ export function MorningCIO() {
       value: m.embeddedGain == null ? <AbsentValue />
         : <span className={changeColor(m.embeddedGain)}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</span>,
       second: m.gainPct == null ? undefined : <>Return on capital {pct1(m.gainPct)}</>,
+      calculation: capitalCalculation,
+      calculationLabel: "Return on capital",
+      calculationValue: pct1(m.gainPct),
       sub: m.embeddedGain == null ? absentWhy("No recorded cost or gain")
         : <>Recorded · {fmtNum(m.costedSet.struckCount)} of {fmtNum(m.costedSet.holdings)} holdings<br />Separate income excluded</>,
     },
@@ -1105,6 +1115,9 @@ export function MorningCIO() {
       href: "/performance?summary=annualised#investor-return",
       hrefTitle: `XIRR over statement accounts only, excluding separately modelled private investments. Covers ${m.annual.covered} of ${m.annual.total} accounts, worth ${money(m.annual.measuredValue)}. ${m.annual.start ? `Recorded window ${m.annual.start} to ${m.annual.end}. ` : ""}${m.annual.reason ?? "Annualised over at least one year."} Open the same return, dates and coverage in NAV & Performance.`,
       value: m.annual.pct != null ? <>{pct1(m.annual.pct)} <span className="text-sm">p.a.</span></> : <AbsentValue />,
+      calculation: <MoneyWeightedCalculation flows={m.annual.flows} annualPct={m.annual.pct}
+        days={m.annual.windowDays} annualised reason={m.annual.reason} result={pct1(m.annual.pct)} money={calculationMoney}
+        coverage={<>Uses {m.annual.covered} of {m.annual.total} statement accounts with an opening value and dated movements. At least one year of history is required. Separately modelled private investments are excluded.</>} />,
       second: <span className="whitespace-normal">XIRR · {m.annual.covered} of {m.annual.total} accounts</span>,
       sub: m.annual.reason ? <>{m.annual.issueLabel}<br />{m.annual.reason}</>
         : <>{m.annual.windowDays} days{m.annual.end ? ` · to ${fmtDate(m.annual.end)}` : ""}</>,
@@ -1115,6 +1128,9 @@ export function MorningCIO() {
       href: `/performance?summary=${r.period}#investor-return`,
       hrefTitle: `${r.period.toUpperCase()}: ${fmtDate(r.start)}${r.end ? ` to the latest eligible statement, ${fmtDate(r.end)}` : " onwards"}. Whole-portfolio money-weighted return, not annualised, adjusted for dated contributions and withdrawals. ${r.covered} of ${r.total} accounts have usable opening values and cash flows for this period. ${r.reason ? `${r.reason}. Supply opening valuations at the start of the period and capital movements through matching closing valuations for every account; live prices cannot fill missing history.` : "Gain includes income retained in the accounts or paid out through their recorded withdrawals."}`,
       value: pct1(r.pct),
+      calculation: <MoneyWeightedCalculation flows={r.flows} annualPct={r.annualPct}
+        days={r.windowDays} annualised={false} reason={r.reason} result={pct1(r.pct)} money={calculationMoney}
+        coverage={<>Starts {fmtDate(r.start)}. {r.covered} of {r.total} accounts have usable history. Every account must have an opening value, a complete dated record and the same closing date. This is the return for the period, not a yearly rate.</>} />,
       second: <span className="whitespace-normal">{r.period.toUpperCase()} · since {fmtDate(r.start)}{r.gain != null ? <> · {money(r.gain, true)}</> : null}</span>,
       sub: r.reason ? <>Insufficient history · {r.covered} of {r.total} accounts<br />{r.reason}</>
         : <>Through {r.end ? fmtDate(r.end) : "—"} · all {r.total} accounts</>,
@@ -1129,6 +1145,12 @@ export function MorningCIO() {
     {
       id: "mwr", label: m.bookMW.annualised ? "XIRR (annualised)" : "Money-weighted return",
       icon: <TrendingUp className="h-4 w-4" />,
+      calculation: <MoneyWeightedCalculation flows={m.mwb.flows} annualPct={m.bookMW.annualPct}
+        days={m.bookMW.windowDays} annualised={m.bookMW.annualised} result={pct1(m.bookMW.pct)} money={calculationMoney}
+        reason={m.bookMW.pct == null ? "The recorded amounts and dates do not provide a usable return" : null}
+        coverage={<>Uses {m.mwb.accountIds.length} of {m.mwb.bookAccounts} statement accounts with an opening value. Each closes at its own statement value on its own date.
+          {m.privateCount > 0 && <> Separately modelled private investments with recorded investment dates are included too.</>}
+          {m.bookMW.annualised ? " The card shows a yearly rate." : " The card shows the return for the measured period, not a yearly rate."}</>} />,
       href: drilldownHref("measured"),
       hrefTitle: `Open the holdings of the accounts this rate covers — those whose statements carry an opening portfolio value — with the accounts it cannot cover a toggle away on the same page. It covers ${m.mwb.accountIds.length} of the book's ${m.mwb.bookAccounts} accounts, worth ${fmtFromBase(m.mwb.measuredValue, { compact: true })} on their own statements${m.totalValue > 0 ? ` — ${((m.mwb.measuredValue / m.totalValue) * 100).toFixed(1)}% of the ${fmtFromBase(m.totalValue, { compact: true })} current value of holdings` : ""}; the rest publish no opening value and are outside this rate, not outside the book.${
         m.bookMW.windowDays == null ? "" :
@@ -1146,6 +1168,7 @@ export function MorningCIO() {
      */
     {
       id: "return", label: "Consolidated return", icon: <Percent className="h-4 w-4" />,
+      calculation: capitalCalculation,
       href: drilldownHref("book", undefined, "costed"),
       hrefTitle: `Open the holdings this return is struck over — the ${fmtNum(m.costedSet.struckCount)} of ${fmtNum(m.costedSet.holdings)} with a cost and a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })} of the ${fmtFromBase(m.costedSet.bookValue, { compact: true })} book — on the Current Value of Holdings page; the ${fmtFromBase(m.costedSet.bookValue - m.costedSet.costedValue, { compact: true })} that reports no cost is outside it${
         m.costedSet.atCost > 0
