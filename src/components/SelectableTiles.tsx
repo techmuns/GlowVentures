@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { ChevronDown, Plus, X } from "lucide-react";
 import { StatTile } from "@/components/StatTile";
 import { Kpi } from "@/components/Kpi";
+import { ReturnCalculationInfo } from "@/components/ReturnCalculation";
 import {
   chooseTileSet, readLocalTileSet, saveTileSet, useTileSets, writeLocalTileSet,
   SAVED_FOR_EVERYONE, type LocalTileSet,
@@ -25,6 +26,11 @@ export type TileMetric = {
   label: string;
   icon?: ReactNode;
   value: ReactNode;
+  /** Plain-English working for a return; the popup repeats the tile's value. */
+  calculation?: ReactNode;
+  /** A return shown as the second figure, such as Gain / loss's return on capital. */
+  calculationValue?: ReactNode;
+  calculationLabel?: string;
   /**
    * A SECOND FIGURE UNDER THE FIRST, for a tile that carries two — Morning
    * CIO's Current Value of Holdings shows what was invested beneath what it is
@@ -301,6 +307,9 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
             onOpenChange={(o) => setOpenSlot((s) => (o ? i : s === i ? null : s))}
             onPick={(next) => choose(i, next)} />
         );
+        const info = m.calculation ? <ReturnCalculationInfo label={m.calculationLabel ?? m.label} value={m.calculationValue ?? m.value}>
+          {m.calculation}
+        </ReturnCalculationInfo> : undefined;
         return (
           <div key={`${id}-${i}`} data-tile-slot={id} className="contents">
             {variant === "kpi" ? (
@@ -312,6 +321,7 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
                 sub={m.sub}
                 delta={m.delta}
                 icon={m.icon}
+                info={info}
                 href={m.href}
                 hrefTitle={m.hrefTitle ?? m.detail}
                 action={controls(i)}
@@ -319,7 +329,7 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
             ) : (
               <StatTile
                 className={`h-full${openSlot === i ? " relative z-30" : ""}`}
-                icon={m.icon}
+                icon={info ? <span className="flex items-center gap-2">{info}{m.icon}</span> : m.icon}
                 value={m.value}
                 sub={m.sub}
                 hint={m.hint}

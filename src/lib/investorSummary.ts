@@ -23,6 +23,7 @@ export function investorAnnualReturn(statement: Portfolio) {
     covered: measured.parts.length, total: statement.accounts.length,
     windowDays: measured.windowDays, measuredValue: measured.measuredMV,
     pct: issue.reason ? null : measured.annPct,
+    flows: measured.parts.flatMap((p) => [...p.flows, { date: p.asOf, amount: p.terminalValue }]),
   };
 }
 
@@ -77,7 +78,8 @@ export function investorPeriodReturn(statement: Portfolio, today: Date, period: 
     { date: new Date(p.account.asOf), amount: p.value },
   ]);
   const days = end ? (Date.parse(end) - Date.parse(start)) / 864e5 : null;
-  const pct = totalReturnFromXirr(xirrPct(flows), days);
+  const annualPct = xirrPct(flows);
+  const pct = totalReturnFromXirr(annualPct, days);
   const groups = statement.positions.map((p) => p.dedupeGroup).filter(Boolean);
   const overlaps = new Set(groups).size !== groups.length;
   const separateFunds = Object.values(statement.privateMarkets).some((rows) => rows.length > 0);
@@ -95,5 +97,6 @@ export function investorPeriodReturn(statement: Portfolio, today: Date, period: 
     start, end, covered, total, reason,
     pct: reason ? null : pct,
     gain: reason ? null : value + movements,
+    flows, annualPct, windowDays: days,
   };
 }

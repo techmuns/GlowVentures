@@ -872,6 +872,8 @@ export function bookReturnOnCost(current: readonly Position[], opts: FifoOptions
  */
 export type BookMoneyWeighted = {
   result: MoneyWeighted;
+  /** The exact dated inputs used by the calculation, including closing values. */
+  flows: { date: Date; amount: number }[];
   /** The accounts the rate covers, and what their statements value them at. */
   accountIds: string[];
   accountNos: string[];
@@ -903,6 +905,7 @@ export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | n
   const windowDays = mw.parts.length ? Math.round((Math.max(...times) - Math.min(...times)) / 864e5) : null;
   return {
     result: moneyWeightedReturn(annual, windowDays),
+    flows,
     accountIds: mw.parts.map((x) => x.accountId),
     accountNos: mw.parts.map((x) => x.accountNo),
     measuredValue: mw.measuredMV,
