@@ -131,7 +131,7 @@ export type BookGrouping = "fund" | "owner" | "brand";
  * Where the first segment names the CHANNEL rather than the company (an
  * AngelList trust, a LetsVenture pool), or the company TRADES under another
  * name (Assetgro Fintech is StockGro), the answer is `BRAND_NAMES` (Stage
- * 10eg) — committed, keyed on the folio's own fundKey, never a similarity
+ * 10eh) — committed, keyed on the folio's own fundKey, never a similarity
  * match, every pair with its source. The rule below is only the fallback for a
  * line no entry names yet, and `privateBook.test.ts` fails on any such line.
  */

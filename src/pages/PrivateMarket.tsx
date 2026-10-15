@@ -1564,7 +1564,7 @@ export function PrivateMarket() {
   /** The words under a fund's or a member's name: what it is, never a figure another column holds. */
   const groupSub = (g: BookGroup): ReactNode => {
     const bits: ReactNode[] = [];
-    // BY BRAND, THE COMPANY BEHIND THE BRAND comes first (Stage 10eg) — the
+    // BY BRAND, THE COMPANY BEHIND THE BRAND comes first (Stage 10eh) — the
     // legal entity the line is a holding in, written once where it is the brand.
     const legal = g.brand?.legal.filter((l) => l !== g.label) ?? [];
     if (legal.length) bits.push(<span key="lg" className="text-slate-300" data-pm-legal-line>{legal.join(", ")}</span>);

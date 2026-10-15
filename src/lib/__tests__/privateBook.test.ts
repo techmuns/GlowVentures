@@ -363,7 +363,7 @@ console.log("\n── by brand: one row per brand, on the fund grouping's basis 
     gs.length <= BOOK_SECTIONS.flatMap((s) => byFund.sections[s].groups).length,
     `${gs.length} brands`);
 
-  // ── EVERY LINE IS MAPPED TO ITS BRAND (Stage 10eg) ──
+  // ── EVERY LINE IS MAPPED TO ITS BRAND (Stage 10eh) ──
   //   "search for every entity and check what the brand name is. If it's the
   //    same, then write the same … Make sure you dont miss out on any"
   const unmapped = [...new Set(folios.filter((f) => !brandNameOf(f.fundKey)).map((f) => `${f.fundKey} (${f.fundName})`))];
