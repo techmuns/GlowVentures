@@ -4499,3 +4499,9 @@ the harvester never empties a series it could not fetch.
 Adding a source: write `adapters/<name>.mjs` exporting `fetchSeries(spec)`,
 register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
 
+
+### Stage 10eg — RETURN CALCULATIONS OPEN FROM THE INFO BUTTON
+
+- Return tiles and every Returns-tab method/period use a circled info button. The popup repeats the displayed return, shows 2–3 numerical steps, and keeps the formula, full dated amounts and working under Show more. The formula is removed from the card.
+- The existing measurement exposes its inputs and intermediate values for the explanation, including the money-weighted yearly-to-period conversion and every Modified Dietz weight. Partial coverage, excluded-account reasons, tiny-return rounding and the 365-day CAGR reporting rule are explicit. Narrow-screen Returns controls remain reachable.
+- Validation: build, full family suite, all 32 method/period combinations in both themes at desktop/mobile widths, custom/unavailable windows, independent money-weighted arithmetic and targeted Returns layout checks. Automated review was unavailable because its quota was exhausted; the diff was reviewed locally.
