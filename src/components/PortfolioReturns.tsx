@@ -4,7 +4,7 @@
  * A period selector (MTD, YTD, FYTD, trailing 1Y/2Y/3Y, since investment and a
  * custom From/To), a return-type DROPDOWN over the four standard types
  * `RETURN_TYPES` carries, each explained in one short line beside it (Stage
- * 10eb), and the formula of the type selected, with the window
+ * 10eb), and an info popup for the calculation selected, with the window
  * actually measured printed beside the one asked for.
  *
  * ONE COLUMN: the portfolio's card first, the benchmarks under it (Stage 10dy,
@@ -24,12 +24,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { AbsentCell } from "@/components/Absent";
+import { ReturnCalculationInfo } from "@/components/ReturnCalculation";
+import { PeriodReturnCalculation } from "@/components/PeriodReturnCalculation";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason } from "@/lib/benchmarks";
 import { fetchPriceHistory, priceErrorReason, type PriceHistory, type PriceResult } from "@/lib/prices";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { fmtDate, DASH, changeColor } from "@/lib/format";
+import { fmtDate, fmtCr, DASH, changeColor } from "@/lib/format";
 import { mandateLabel } from "@/lib/analytics";
 import { inScopeAccount } from "@/lib/memberScope";
 import { capitalMovesWithCalls, capitalRollup, capitalWindow } from "@/lib/tranches";
@@ -38,7 +40,7 @@ import {
   BOOK_COMMITMENTS, BOOK_NAV_COVERAGE, BOOK_POSITION_TRANCHES, BOOK_REVIEW_FLOWS, BOOK_UNDATED_CAPITAL,
 } from "@/data/glowData";
 import {
-  PERIODS, RETURN_TYPES, FORMULAS, INCEPTION_FORMULAS, periodStart, windowReturns, measureWindow,
+  PERIODS, RETURN_TYPES, periodStart, windowReturns, measureWindow,
   measureInception, daysBetween,
   type AccountInput, type InceptionRow, type PeriodKey, type ReturnType, type Measured,
 } from "@/lib/periodReturns";
@@ -48,16 +50,10 @@ const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const pctText = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 const basisWord = (m: Measured) => m.basis === "annual" ? "a year" : "not annualised";
 
-/** The formula's visible part, and the explanation that belongs in its hover. */
-function splitFormula(f: string): { face: string; hover: string } {
-  const i = f.indexOf(" — ");
-  return i < 0 ? { face: f, hover: "" } : { face: f.slice(0, i), hover: f.slice(i + 3) };
-}
-
 const BENCH_COLS = ["bench", "ret", "gap"] as const;
 
 export default function PortfolioReturns() {
-  const { statementPortfolio, fmtFromBase, scope } = usePortfolio();
+  const { statementPortfolio, fmtFromBase, displayCurrency, scope } = usePortfolio();
   const [params, setParams] = useSearchParams();
   const money = (n: number) => fmtFromBase(n, { compact: true });
   const benchView = useTableView("cio-returns-bench", BENCH_COLS);
@@ -161,7 +157,6 @@ export default function PortfolioReturns() {
   const measured: Measured | null = period === "inception"
     ? measureInception(inception.rows, rtype, money)
     : win ? measureWindow(win.included, rtype, money) : null;
-  const formula = splitFormula(period === "inception" ? INCEPTION_FORMULAS[rtype] : FORMULAS[rtype]);
 
   // ── The whole portfolio: one window, one set of figures ──────────────────
   const excluded = period === "inception" ? inception.skipped : (win?.excluded ?? []).map((e) => ({ label: e.label, reason: e.reason }));
@@ -194,6 +189,10 @@ export default function PortfolioReturns() {
   const benchTo = measuredTo ?? end;
   const annualise = !!(measured?.shown && measured.basis === "annual");
   const portfolioPct = measured?.shown && measured.pct != null ? measured.pct : null;
+  const partial = coveredCount > 0 && coveredCount < accountsTotal;
+  const requested = period === "inception" ? "since first purchase" : start && end ? `${fmtDate(start)} → ${fmtDate(end)}` : DASH;
+  const measuredDates = measuredFrom && measuredTo ? `${fmtDate(measuredFrom)} → ${fmtDate(measuredTo)} · ${days} days` : DASH;
+  const needsYear = rtype === "cagr" && !!measured?.reason?.includes("at least 365 days");
   const benchRows: BenchRow[] = BENCHMARKS.map((b) => {
     const h = hist[b.key];
     const base = { key: b.key, label: b.label, title: b.title };
@@ -218,7 +217,7 @@ export default function PortfolioReturns() {
   const basisTag = annualise ? "a year" : "not annualised";
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4" data-portfolio-returns>
+    <div className="flex h-auto min-h-0 flex-col gap-4 lg:h-full" data-portfolio-returns>
       {/* ── Selectors ── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-center gap-1 rounded-lg border border-ink-700 p-1" data-returns-periods>
@@ -259,12 +258,24 @@ export default function PortfolioReturns() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" data-returns-stack>
-        {/* ── The portfolio: window, figures and formula in one card ── */}
+        {/* ── The selected accounts: window, figures and calculation info ── */}
         <div className="shrink-0" data-returns-portfolio>
-        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}: ${RETURN_TYPES.find((r) => r.key === rtype)!.title}`}>
-          <div className="flex flex-wrap items-baseline justify-between gap-3" data-returns-figure="Return" title={measured?.reason ?? measured?.worked ?? ""}>
+        <Card title="Portfolio return" subtitle={`${partial ? `Partial return over ${coveredCount} of ${accountsTotal} accounts` : "Portfolio over one window"}, by ${typeLabel}. Open the info button for the calculation.`}>
+          <div className="flex flex-wrap items-baseline justify-between gap-3" data-returns-figure="Return">
             <div>
-              <div className="label-xs">Return · {typeLabel}</div>
+              <div className="flex items-center gap-2">
+                <div className="label-xs">Return · {typeLabel}</div>
+                <ReturnCalculationInfo key={`${period}:${rtype}:${start}:${end}`} label={typeLabel} value={portfolioPct != null ? pctText(portfolioPct) : DASH}>
+                  <PeriodReturnCalculation measured={measured} type={rtype} inception={period === "inception"}
+                    result={portfolioPct != null ? pctText(portfolioPct) : DASH} money={fmtFromBase} shortMoney={(n) => fmtFromBase(n, { compact: true })}
+                    stepMoney={(n) => typeof n === "number" && displayCurrency === "INR" && portfolioPct != null && Math.abs(portfolioPct) >= 0.005 ? fmtCr(n, 4) : fmtFromBase(n)}
+                    context={<><p>Requested: {requested}</p><p>Measured: {measuredDates}</p><p>{partial ? "Partial return — " : "Covers "}{coveredCount} of {accountsTotal} accounts. {partial && "Not the whole portfolio’s return."}</p></>}
+                    accounts={period === "inception" ? inception.rows.map((r) => ({ label: r.label, from: r.first, to: r.valueAsOf }))
+                      : (win?.included ?? []).map((r) => ({ label: r.label, from: r.openDate, to: r.closeDate, openedInWindow: r.openedInWindow }))}
+                    excluded={excluded} />
+                </ReturnCalculationInfo>
+              </div>
+              {partial && <div data-returns-partial className="mt-1 text-xs text-slate-400">Partial return — {coveredCount} of {accountsTotal} accounts</div>}
               {portfolioPct != null && measured ? (
                 <div className={`mono font-display text-[28px] font-semibold ${changeColor(portfolioPct)}`} data-returns-pct={portfolioPct.toFixed(4)} data-returns-basis={measured.basis}>
                   {pctText(portfolioPct)} <span className="text-[12px] font-normal text-slate-500">{basisWord(measured)}</span>
@@ -272,6 +283,7 @@ export default function PortfolioReturns() {
               ) : (
                 <div className="text-[20px]" data-returns-pct=""><AbsentCell reason={measured?.reason ?? "pick a window whose opening date is before its closing date"} /></div>
               )}
+              {portfolioPct == null && <p data-returns-unavailable className="mt-1 max-w-lg text-xs text-slate-400">{needsYear ? `Needs at least 1 year · ${days} days available` : measured?.reason ?? "Choose an opening date before the closing date."}</p>}
             </div>
             <div className="space-y-0.5 text-right text-[12px] text-slate-400" data-returns-window>
               <div title="The window asked for">Requested <span className="mono text-slate-200" data-returns-requested>
@@ -300,20 +312,13 @@ export default function PortfolioReturns() {
               </div>
             ))}
           </div>
-          <div className="mt-4 border-t border-ink-700 pt-3">
-            <div className="label-xs">Formula</div>
-            <div className="mono mt-1 text-[13px] text-slate-100" data-returns-formula={rtype} title={formula.hover || undefined}>{formula.face}</div>
-            <div className="mt-1 text-[12px] text-slate-400" title={measured?.worked ?? measured?.reason ?? ""} data-returns-worked>
-              {portfolioPct != null && measured ? `= ${pctText(portfolioPct)} · ${basisWord(measured)}` : "Not measured on this window"}
-            </div>
-          </div>
         </Card>
         </div>
 
         {/* ── Benchmarks over the same window ── */}
         <div className="shrink-0" data-returns-benchmarks>
         <Card pad={false} title="Benchmarks"
-          subtitle={`Each index's close-to-close return over the portfolio's measured window, ${annualise ? "annualised because the portfolio's return is" : "not annualised, as the portfolio's is not"}. Price indices: dividends are not in them. The portfolio's return is money-weighted; an index return is point to point.`}
+          subtitle={`Each index's close-to-close return over the measured window, ${annualise ? "annualised because the selected return is" : "not annualised, as the selected return is not"}. Price indices exclude dividends. ${partial ? `The comparison uses only ${coveredCount} of ${accountsTotal} accounts, not the whole portfolio.` : `Selected measure: ${typeLabel}.`}`}
 >
           <div className="overflow-x-auto">
             <table className="min-w-full whitespace-nowrap text-[12.5px]" data-returns-bench-table>
@@ -321,12 +326,12 @@ export default function PortfolioReturns() {
                 <Tr view={benchView}>
                   <SortHeader col="bench" view={benchView} align="left" pad="px-4 py-2">Index</SortHeader>
                   <SortHeader col="ret" view={benchView} pad="px-3 py-2">Return · {basisTag}</SortHeader>
-                  <SortHeader col="gap" view={benchView} pad="px-4 py-2">Portfolio vs index</SortHeader>
+                  <SortHeader col="gap" view={benchView} pad="px-4 py-2">{partial ? "Included accounts vs index" : "Portfolio vs index"}</SortHeader>
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
                 <Tr view={benchView} className="bg-ink-700/30" data-returns-bench-portfolio>
-                  <td className="px-4 py-2 font-semibold text-slate-100">Portfolio · {typeLabel}</td>
+                  <td className="px-4 py-2 font-semibold text-slate-100">{partial ? `Partial portfolio (${coveredCount} of ${accountsTotal})` : "Portfolio"} · {typeLabel}</td>
                   <td className="px-3 py-2 text-right mono">
                     {portfolioPct != null ? <span className={changeColor(portfolioPct)}>{pctText(portfolioPct)}</span> : <AbsentCell reason={measured?.reason ?? "not measured on this window"} />}
                   </td>
@@ -345,7 +350,7 @@ export default function PortfolioReturns() {
                       </td>
                       <td className="px-4 py-2 text-right mono">
                         {gap != null
-                          ? <span className={changeColor(gap)} title="The portfolio's return less the index's, in percentage points">{gap >= 0 ? "+" : ""}{gap.toFixed(2)} pp</span>
+                          ? <span className={changeColor(gap)} title={`${partial ? "The included accounts'" : "The portfolio's"} return less the index's, in percentage points${partial ? "; not whole-portfolio outperformance" : ""}`}>{gap >= 0 ? "+" : ""}{gap.toFixed(2)} pp</span>
                           : <AbsentCell reason={portfolioPct == null ? "The portfolio's return is not measured on this window" : (r.reason ?? "no index return")} />}
                       </td>
                     </Tr>

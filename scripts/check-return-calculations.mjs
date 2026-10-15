@@ -27,7 +27,7 @@ function returnFromDisplayedFlows(rows, annualised) {
     if (balance(low) * balance(middle) <= 0) high = middle; else low = middle;
   }
   const yearly = (low + high) / 2;
-  return annualised ? yearly * 100 : ((1 + yearly) ** ((last - first) / (365 * 864e5)) - 1) * 100;
+  return { pct: annualised ? yearly * 100 : ((1 + yearly) ** ((last - first) / (365 * 864e5)) - 1) * 100, yearly, first };
 }
 
 try {
@@ -74,7 +74,21 @@ try {
         const rows = await dialog.locator('tbody tr').evaluateAll(rows => rows.map(row => [...row.cells].map(cell => cell.textContent)));
         assert.ok(rows.length > 2, 'dated account flows are exposed');
         const annualised = (await dialog.locator('[data-return-formula]').innerText()).includes('Yearly return =');
-        assert.equal(returnFromDisplayedFlows(rows, annualised).toFixed(1), number(shown).toFixed(1), 'visible dated amounts reproduce money-weighted return');
+        const calculated = returnFromDisplayedFlows(rows, annualised);
+        assert.equal(calculated.pct.toFixed(1), number(shown).toFixed(1), 'visible dated amounts reproduce money-weighted return');
+        const balanced = await dialog.locator('[data-return-date-balance] dd').allTextContents();
+        const discountedIn = rows.reduce((n, [date, amount]) => n + Math.max(-number(amount), 0) / (1 + calculated.yearly) ** ((Date.parse(date) - calculated.first) / (365 * 864e5)), 0);
+        assert.ok(Math.abs(number(balanced[0]) - discountedIn) < 0.02, 'timing step uses actual dated cash flows');
+        assert.ok(Math.abs(number(balanced[0]) - number(balanced[1])) < 0.02, 'the trial rate balances both sides');
+        const conversion = await dialog.locator('[data-return-conversion]').innerText();
+        const factors = annualised
+          ? conversion.match(/Yearly growth: 1 \+ ([\d.+-]+) ÷ 100 = (\d+\.\d+)/)
+          : conversion.match(/-day growth: (\d+\.\d+)\((\d+)\/365\) = (\d+\.\d+)/);
+        assert.ok(factors, 'numeric conversion is visible in the short steps');
+        const grown = annualised ? 1 + number(factors[1]) / 100 : Number(factors[1]) ** (Number(factors[2]) / 365);
+        const shownFactor = annualised ? factors[2] : factors[3];
+        assert.equal(grown.toFixed(6), shownFactor, 'shown yearly-to-period calculation is reproducible');
+        assert.equal(((Number(shownFactor) - 1) * 100).toFixed(1), number(shown).toFixed(1), 'shown growth factor leads to the exact card percentage');
       }
       if (shown === '—') assert.match(await dialog.innerText(), /need|missing|history/i);
       await dialog.getByText('Show more', { exact: true }).click();
