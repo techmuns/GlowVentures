@@ -108,6 +108,7 @@ import {
 import { schemeCalls, type SchemeCall } from "./capitalCalls";
 import { fifoTotals } from "./fifo";
 import { splitFundClass } from "../../shared/securityKey.mjs";
+import { brandNameOf, type BrandBasis, type BrandName } from "./brandNames";
 
 export type BookSectionId = "private" | "atCost" | "unvalued";
 export type BookGrouping = "fund" | "owner" | "brand";
@@ -128,35 +129,19 @@ export type BookGrouping = "fund" | "owner" | "brand";
  * grouping of folios that each keep their own key, figures and page.
  *
  * Where the first segment names the CHANNEL rather than the company (an
- * AngelList trust, a LetsVenture pool), or two names of one brand cannot be
- * reached by that rule, the answer is `BRAND_OVERRIDES` — committed, keyed on
- * the folio's own fundKey, never a similarity match.
+ * AngelList trust, a LetsVenture pool), or the company TRADES under another
+ * name (Assetgro Fintech is StockGro), the answer is `BRAND_NAMES` (Stage
+ * 10eg) — committed, keyed on the folio's own fundKey, never a similarity
+ * match, every pair with its source. The rule below is only the fallback for a
+ * line no entry names yet, and `privateBook.test.ts` fails on any such line.
  */
-const BRAND_OVERRIDES: Record<string, string> = {
-  // The review prints the AngelList trust first and the company after it; the
-  // trust is a channel, and two different companies share it.
-  "al-trust-collabmates-pvt-ltd-angellist-likeminds": "Collabmates",
-  "al-trust-karban-envirotech-ruv-nilesh-angelist": "Karban Envirotech",
-  // LetsVenture's angel fund is the channel; Hoopr is the company.
-  "lv-angel-fund-lets-venture-hoopr-vaibhav-karnavat": "Hoopr",
-  // Waterwala Labs is the company behind the Drink Prime brand; the other three
-  // lines name the brand after the person who sold the shares.
-  "waterwala-labs-private-limited-drink-prime": "Drink Prime",
-  "vineet-sethia-drink-prime": "Drink Prime",
-  "ajay-jain-drink-prime": "Drink Prime",
-  "hanok-reuben-medhari-drink-prime": "Drink Prime",
-  // Two Blue Ashva vehicles, one manager: the review names them as two accounts.
-  "blue-ashva-india-pool-account": "Blue Ashva",
-  "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability": "Blue Ashva",
-};
-
 const LEGAL_SUFFIX = /[\s,]+(?:private\s+limited|pvt\.?\s*ltd\.?|private\s+ltd\.?|pvt\.?\s+limited|limited|ltd\.?|llp)\s*$/i;
 
 /** The brand a folio is held under: its key and the words for it. */
 export function brandOf(f: Pick<BookFolio, "fundKey" | "fundName">): { key: string; label: string } {
-  const override = BRAND_OVERRIDES[f.fundKey.replace(/^account:/, "")] ?? BRAND_OVERRIDES[f.fundKey];
-  let name = override ?? (splitFundClass(f.fundName)?.fund ?? f.fundName);
-  if (!override) {
+  const named = brandNameOf(f.fundKey);
+  let name = named?.brand ?? (splitFundClass(f.fundName)?.fund ?? f.fundName);
+  if (!named) {
     name = name
       .replace(/\s*\([^)]*\)\s*/g, " ")
       .replace(/\s*[\u2013\u2014]\s*Series\s+\S+.*$/i, "")
@@ -168,6 +153,21 @@ export function brandOf(f: Pick<BookFolio, "fundKey" | "fundName">): { key: stri
   }
   const slug = name.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return { key: `brand:${slug}`, label: name };
+}
+
+/** What a brand row says about the companies behind it: each legal entity once,
+ *  how the brand is known, and where. `basis` is null where any line under the
+ *  row has no `BRAND_NAMES` entry — the row then says it is unmapped. */
+function brandFacts(fs: BookFolio[]): BrandFacts {
+  const named = fs.map((f) => brandNameOf(f.fundKey));
+  const all = named.filter((n): n is BrandName => n != null);
+  const order: BrandBasis[] = ["as-printed", "own-name", "cited"];
+  return {
+    legal: [...new Set(all.map((n) => n.legal))],
+    basis: all.length < named.length ? null
+      : order.find((b) => all.some((n) => n.basis === b)) ?? null,
+    sources: [...new Set(all.flatMap((n) => n.source))],
+  };
 }
 
 /** One brand's label across its folios: a spelling the statement CASED beats one
@@ -367,6 +367,9 @@ export type BookGroup = BookFigures & {
   category: string | null;
   status: FolioStatus;
   folios: BookFolio[];
+  /** BY BRAND: the legal entities behind the brand and how it is known. Null on
+   *  a fund or member row, whose label is already the entity. */
+  brand: BrandFacts | null;
   /**
    * THE FOLIOS ADD TO MORE THAN THE ROW BY THIS MUCH — two statements reporting
    * one holding. Null where the two agree, which is every row but the ones a
@@ -380,6 +383,13 @@ export type BookGroup = BookFigures & {
    * is a mixed row, which is null here and stated per folio instead.
    */
   staleDays: number | null;
+};
+
+export type BrandFacts = {
+  /** Each legal entity under the brand row once, as `BRAND_NAMES` writes it. */
+  legal: string[];
+  basis: BrandBasis | null;
+  sources: string[];
 };
 
 export type Overlap = {
@@ -915,6 +925,7 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
         // under it adds a line, never a doubt about whether the row is valued.
         status: sorted.some((f) => f.status === "valued") ? "valued" : statuses.size === 1 ? first.status : "other",
         folios: sorted,
+        brand: grouping === "brand" ? brandFacts(sorted) : null,
         overlap: grouping !== "owner" ? overlapOf(sorted) : null,
         // The row is stale only where EVERY capital account under it is: one
         // current statement beside a stale one is a mixed row, and the folios

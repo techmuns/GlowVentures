@@ -38,7 +38,7 @@ import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasu
 import { withReturnCols, returnAccessorsFor, returnColId } from "@/lib/returnColumns";
 import {
   privateBookFolios, distributionLeftOutNote, privateBook, figuresOf, BOOK_SECTIONS,
-  type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type Overlap, type PrivateBook,
+  type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type BrandFacts, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
 import { callTotals, callHistory } from "@/lib/capitalCalls";
 import { useEnteredCalls, headlineCall, todayIso, CAUSE_WORD } from "@/lib/enteredCalls";
@@ -366,6 +366,19 @@ const bookAccessors = (
 });
 
 /** Why a folio or a fund has no value — the book's own reason where it has one. */
+/** The hover on a brand's name: whose brand it is, and where that is stated. */
+const brandHover = (label: string, b: BrandFacts): string => {
+  const legal = b.legal.join(", ");
+  const where = [...new Set(b.sources.map((u) => u.startsWith("statement:")
+    ? "the family's own depository statement" : u.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]))].join(", ");
+  switch (b.basis) {
+    case "cited": return `${label} is the brand of ${legal}${where ? ` — ${where}` : ""}.`;
+    case "own-name": return `${legal} trades under its own name${where ? ` — ${where}` : ""}.`;
+    case "as-printed": return `No public source ties this name to one company, so the brand and the entity are as the family's review prints them.`;
+    default: return "Not yet mapped to a brand: the name is read off the line itself.";
+  }
+};
+
 const valueWhy = (status: BookGroup["status"], reason: string | null): string => {
   if (status === "no-nav") return "the fund publishes no NAV — its statement carries units and the capital paid in, and no valuation. Missing data, not a zero.";
   if (status === "income-only") return "income-only folio — its documents report earnings and distributions and no valuation; the units are valued under another account";
@@ -1078,7 +1091,8 @@ export function PrivateMarket() {
   const grouping = book.grouping;
   const needle = q.trim().toLowerCase();
   const folioText = (f: BookFolio) => [f.owner, f.fundName, f.provider, f.accountNo].join(" ").toLowerCase();
-  const groupMatches = (g: BookGroup) => !needle || g.label.toLowerCase().includes(needle) || g.folios.some((f) => folioText(f).includes(needle));
+  const groupMatches = (g: BookGroup) => !needle || g.label.toLowerCase().includes(needle)
+    || !!g.brand?.legal.some((l) => l.toLowerCase().includes(needle)) || g.folios.some((f) => folioText(f).includes(needle));
   const rowKey = (g: BookGroup) => `${grouping}:${g.key}`;
   const allGroups = shown.flatMap((s) => book.sections[s].groups);
   /** A search opens what it found, so a match inside a closed section is not hidden by the section. */
@@ -1550,6 +1564,10 @@ export function PrivateMarket() {
   /** The words under a fund's or a member's name: what it is, never a figure another column holds. */
   const groupSub = (g: BookGroup): ReactNode => {
     const bits: ReactNode[] = [];
+    // BY BRAND, THE COMPANY BEHIND THE BRAND comes first (Stage 10eg) — the
+    // legal entity the line is a holding in, written once where it is the brand.
+    const legal = g.brand?.legal.filter((l) => l !== g.label) ?? [];
+    if (legal.length) bits.push(<span key="lg" className="text-slate-300" data-pm-legal-line>{legal.join(", ")}</span>);
     if (g.kind !== "owner" && g.category) bits.push(g.category);
     const views = g.folios.filter((f) => f.viewOf).length;
     const held = g.folios.length - views;
@@ -1603,6 +1621,7 @@ export function PrivateMarket() {
         <Tr view={bookView} reviewScope={groupReviewScope(g)} className={TREE_ROW.parent} {...rowToggle(toggle)}
           data-pm-group={g.key} data-pm-kind={g.kind} data-pm-row-section={g.section} data-pm-label={g.label}
           {...(g.kind === "fund" ? { "data-pm-fund": g.key } : g.kind === "brand" ? { "data-pm-brand": g.key } : { "data-pm-owner": g.key })}
+          {...(g.brand ? { "data-pm-legal": g.brand.legal.join(" | "), "data-pm-brand-basis": g.brand.basis ?? "unmapped" } : {})}
           data-pm-folios={g.folios.length} data-pm-value={g.value ?? undefined}
           data-pm-cost-absent={g.cost == null ? "" : undefined} data-pm-return-absent={g.returnPct == null ? "" : undefined}
           data-pm-committed={g.committed ?? undefined} data-pm-uncalled={g.uncalled ?? undefined}
@@ -1611,7 +1630,7 @@ export function PrivateMarket() {
             toggleLabel={open ? "Hide the folios behind this row" : `Show the ${g.folios.length} ${g.folios.length === 1 ? "folio" : "folios"} behind this row`}
             toggleData={{ "data-pm-folio-toggle": g.key, "data-pm-folio-rows": g.folios.length, "data-pm-folio-gap": Math.round(g.overlap?.value ?? 0) }}
             title={<>
-              {g.label}
+              {g.brand ? <span title={brandHover(g.label, g.brand)}>{g.label}</span> : g.label}
               {/* THE FUND'S OWN PAGE, as its own small link — the row itself
                   opens the folios, so the name is not a second click target. */}
               {g.securityKey && (
