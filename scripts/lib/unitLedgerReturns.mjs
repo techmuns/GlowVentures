@@ -51,6 +51,10 @@ export function unitLedgerReturnRecord(doc, start, historicalNavs = [], allowDor
     const explicit = first.kind === 'opening-units';
     if (explicit && (first.date >= start || !date(doc.periodFrom) || doc.periodFrom > start)) return null;
     if (!explicit && (!['contribution','reclassification'].includes(first.kind) || first.units <= 0 || Math.abs(first.units - first.balance) > .001)) return null;
+    // A first visible purchase after the FY start does not establish that
+    // there were no earlier investments and redemptions in that FY.
+    if (!explicit && first.date >= start && !(date(doc.periodFrom) && doc.periodFrom <= start)
+      && !/(^|\n)Ledger scope: since inception(\n|$)/.test(first.notes ?? '')) return null;
     let balance = explicit ? first.balance : 0, prior = balance;
     for (const row of rows) {
       if (row.kind === 'opening-units') {

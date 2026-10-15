@@ -97,7 +97,7 @@
    "depositWithdrawal": null,
    "credit": null,
    "debit": null,
-   "notes": "allotment NAV 16.21",
+   "notes": "allotment NAV 16.21\nLedger scope: since inception",
    "balance": 19123041.38,
    "source": null
   }

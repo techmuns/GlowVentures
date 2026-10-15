@@ -468,6 +468,9 @@ export function extract({ grid, meta }) {
   // ICICI Prudential prints every purchase dated, with its gross, stamp duty,
   // net, NAV and running units — published only where all of them tie.
   const cashFlows = iciciPurchaseFlows(lines, holdings, warnings);
+  if (/^Account Statement\s+Since Inception\b/im.test(flat) && cashFlows.length) {
+    cashFlows[0].notes = [cashFlows[0].notes, 'Ledger scope: since inception'].filter(Boolean).join('\n');
+  }
   if (!cashFlows.length && !warnings.some(w => /not-published|unsupported-movement/.test(w.code))) {
     cashFlows.push(...staticBlockOpenings(lines, holdings, period ? toIso(period[1]) : null, period ? toIso(period[2]) : null));
   }
