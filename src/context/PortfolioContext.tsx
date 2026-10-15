@@ -26,7 +26,7 @@ import {
 } from "@/lib/memberScope";
 import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_OWNERS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
-  BOOK_ACCOUNT_CASH_FLOWS, BOOK_ENTITY_CASH_FLOWS,
+  BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURN_RECORDS, BOOK_ENTITY_CASH_FLOWS,
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
   BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS,
 } from "@/data/glowData";
@@ -109,6 +109,7 @@ function defaultPortfolio(): Portfolio {
     // input. Empty for an account whose statements carry none, which is a real
     // answer and renders as "—" rather than as a return of zero.
     accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS,
+    accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS,
     // Keyed by owner — what the per-entity XIRR reads.
     entityCashFlows: BOOK_ENTITY_CASH_FLOWS,
     // Undrawn capital the family owes a fund on demand. NOT a holding — the

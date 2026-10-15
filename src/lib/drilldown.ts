@@ -882,6 +882,7 @@ export type BookMoneyWeighted = {
   lastClose: string | null;
   /** Accounts in the book, for "N of M accounts". */
   bookAccounts: number;
+  gaps: { accountId: string; accountNo: string; asOf: string; reason: string }[];
 };
 export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | null, today: Date): BookMoneyWeighted {
   const mw = measuredAccountsReturn(statement ?? portfolio, portfolio.accounts);
@@ -911,6 +912,7 @@ export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | n
     measuredValue: mw.measuredMV,
     lastClose: mw.lastClose,
     bookAccounts: portfolio.accounts.length,
+    gaps: mw.gaps,
   };
 }
 

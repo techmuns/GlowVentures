@@ -23,6 +23,14 @@ unless something is pushed … i want things pushed"* — the family, 24 Sep 202
 
 ## The standing rule
 
+**Latest verified data (15 October 2026):** always select the newest usable source record for each
+metric when new documents arrive. Money-weighted returns use the newest account closing valuation
+with matching reconciled dated capital through that valuation date, independently of an older
+security-by-security holdings appraisal. Every return surface reads the same selected record.
+Retain the last verified record when a newer source is incomplete, name that newer source's date
+and gap, and show the actual measured end date and account coverage on the card. Live quotes never
+establish missing cash-flow history or permit advancing a statement's date to today.
+
 **No figure is ever fabricated.** If the source doesn't carry a number, the UI
 renders `—`. Not a zero, not an estimate, not an interpolation, not a plausible
 default. This applies to every layer:

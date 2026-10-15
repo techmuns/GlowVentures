@@ -8,7 +8,7 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,
+  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,
   RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
@@ -24553,6 +24553,385 @@ export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
       "description": "TDS Trf to Capital A/c"
     }
   ]
+};
+
+/** Latest account return endpoints with reconciled dated capital, independent of the holdings appraisal. */
+export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> = {
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383": {
+    "latestValuationDate": "2026-08-10",
+    "record": {
+      "asOf": "2026-07-10",
+      "value": 400106027.94,
+      "flows": [
+        {
+          "date": "2026-04-01",
+          "amount": -312627059.69,
+          "description": "Opening portfolio value 2026-04-01"
+        },
+        {
+          "date": "2026-07-03",
+          "amount": 109782,
+          "description": "TDS on Payout"
+        }
+      ],
+      "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-appraisal",
+      "flowSources": [
+        "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-bank-book"
+      ],
+      "capitalRecordTo": "2026-07-10"
+    },
+    "gap": "Verified cash-flow coverage ends 2026-07-10; closing valuation is 2026-08-10"
+  },
+  "goldstandard-wealth-private-limited-100022": {
+    "latestValuationDate": "2026-08-11",
+    "record": {
+      "asOf": "2026-08-11",
+      "value": 80195236.76,
+      "flows": [
+        {
+          "date": "2026-04-01",
+          "amount": -66656491.25,
+          "description": "Opening portfolio value 2026-04-01"
+        },
+        {
+          "date": "2026-06-05",
+          "amount": 3904,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-06-30",
+          "amount": 5940,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-07-24",
+          "amount": 1680,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-07-30",
+          "amount": 6000,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-08-04",
+          "amount": 2400,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-08-07",
+          "amount": 9020,
+          "description": "TDS Trf to Capital A/c"
+        }
+      ],
+      "source": "goldstandard-wealth-private-limited-100022-2026-08-11-appraisal",
+      "flowSources": [
+        "goldstandard-wealth-private-limited-100022-2026-08-11-capital-register"
+      ],
+      "capitalRecordTo": "2026-08-11"
+    },
+    "gap": null
+  },
+  "goldstandard-wealth-private-limited-100023": {
+    "latestValuationDate": "2026-08-11",
+    "record": {
+      "asOf": "2026-08-11",
+      "value": 187995881.19,
+      "flows": [
+        {
+          "date": "2026-04-01",
+          "amount": -155590795.8,
+          "description": "Opening portfolio value 2026-04-01"
+        },
+        {
+          "date": "2026-06-05",
+          "amount": 8675,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-06-09",
+          "amount": 800,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-06-30",
+          "amount": 13500,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-07-24",
+          "amount": 4020,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-07-30",
+          "amount": 16400,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-08-04",
+          "amount": 5600,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-08-07",
+          "amount": 20615,
+          "description": "TDS Trf to Capital A/c"
+        }
+      ],
+      "source": "goldstandard-wealth-private-limited-100023-2026-08-11-appraisal",
+      "flowSources": [
+        "goldstandard-wealth-private-limited-100023-2026-08-11-capital-register"
+      ],
+      "capitalRecordTo": "2026-08-11"
+    },
+    "gap": null
+  },
+  "green-lantern-capital-llp-510854": {
+    "latestValuationDate": "2026-10-06",
+    "record": {
+      "asOf": "2026-07-27",
+      "value": 57966679.22,
+      "flows": [
+        {
+          "date": "2026-04-01",
+          "amount": -49947276.19,
+          "description": "Opening portfolio value 2026-04-01"
+        },
+        {
+          "date": "2026-04-02",
+          "amount": 695,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-04-02",
+          "amount": 1274,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-04-20",
+          "amount": 4774,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-06-05",
+          "amount": 4477,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-06-09",
+          "amount": 1168,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-06-25",
+          "amount": 1257,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 1424,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-07-27",
+          "amount": 1785,
+          "description": "TDS on Payout"
+        }
+      ],
+      "source": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "flowSources": [
+        "green-lantern-capital-llp-510854-2026-07-27-capital-register"
+      ],
+      "capitalRecordTo": "2026-07-27"
+    },
+    "gap": "Verified cash-flow coverage ends 2026-07-27; closing valuation is 2026-10-06"
+  },
+  "green-lantern-capital-llp-510861": {
+    "latestValuationDate": "2026-10-06",
+    "record": {
+      "asOf": "2026-09-22",
+      "value": 116019848,
+      "flows": [
+        {
+          "date": "2026-04-01",
+          "amount": -98614842.68,
+          "description": "Opening portfolio value 2026-04-01"
+        },
+        {
+          "date": "2026-04-02",
+          "amount": 1339,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-04-02",
+          "amount": 2708,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-04-20",
+          "amount": 9426,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-06-05",
+          "amount": 8832,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-06-09",
+          "amount": 2306,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-06-25",
+          "amount": 2482,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 2810,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-07-27",
+          "amount": 3540,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-07-30",
+          "amount": 5580,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-08-10",
+          "amount": 1128,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-08-10",
+          "amount": 2376,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-08-18",
+          "amount": 3028,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-08-24",
+          "amount": 1777.78,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-08-25",
+          "amount": 6856,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-08-31",
+          "amount": 890,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-09-02",
+          "amount": 1510,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-09-03",
+          "amount": 2127.02,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-09-07",
+          "amount": 3249,
+          "description": "TDS on Payout"
+        },
+        {
+          "date": "2026-09-17",
+          "amount": 2325,
+          "description": "TDS on Payout"
+        }
+      ],
+      "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+      "flowSources": [
+        "green-lantern-capital-llp-510861-2026-09-22-capital-register"
+      ],
+      "capitalRecordTo": "2026-09-22"
+    },
+    "gap": "Verified cash-flow coverage ends 2026-09-22; closing valuation is 2026-10-06"
+  },
+  "v-e-c-assago-capital-management-llp-128004": {
+    "latestValuationDate": "2026-08-13",
+    "record": {
+      "asOf": "2026-08-13",
+      "value": 65010579.28,
+      "flows": [
+        {
+          "date": "2026-04-01",
+          "amount": -43032608.36,
+          "description": "Opening portfolio value 2026-04-01"
+        },
+        {
+          "date": "2026-05-27",
+          "amount": 2471,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-06-15",
+          "amount": 2519,
+          "description": "TDS Trf to Capital A/c"
+        }
+      ],
+      "source": "v-e-c-assago-capital-management-llp-128004-2026-08-13-appraisal",
+      "flowSources": [
+        "v-e-c-assago-capital-management-llp-128004-2026-08-13-capital-register"
+      ],
+      "capitalRecordTo": "2026-08-13"
+    },
+    "gap": null
+  },
+  "v-e-c-assago-capital-management-llp-128005": {
+    "latestValuationDate": "2026-08-13",
+    "record": {
+      "asOf": "2026-08-13",
+      "value": 202879639.73,
+      "flows": [
+        {
+          "date": "2026-04-01",
+          "amount": -61798643.42,
+          "description": "Opening portfolio value 2026-04-01"
+        },
+        {
+          "date": "2026-06-15",
+          "amount": 2504,
+          "description": "TDS Trf to Capital A/c"
+        },
+        {
+          "date": "2026-07-28",
+          "amount": -106500000,
+          "description": "Fund Deposit"
+        },
+        {
+          "date": "2026-07-29",
+          "amount": -5900000,
+          "description": "Fund Deposit"
+        },
+        {
+          "date": "2026-08-10",
+          "amount": 6658,
+          "description": "TDS Trf to Capital A/c"
+        }
+      ],
+      "source": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "flowSources": [
+        "v-e-c-assago-capital-management-llp-128005-2026-08-13-capital-register"
+      ],
+      "capitalRecordTo": "2026-08-13"
+    },
+    "gap": null
+  }
 };
 
 /**

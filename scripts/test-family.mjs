@@ -20,6 +20,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
+  ["latest verified account returns", "src/lib/__tests__/latestAccountReturns.test.ts"],
   ["consolidated sheet", "src/lib/__tests__/consolidatedSheet.test.ts"],
   ["research background cache", "src/lib/__tests__/researchCache.test.ts"],
   ["prepared ledger views", "src/lib/__tests__/readModels.test.ts"],

@@ -5467,19 +5467,23 @@ const FAMILY_MWR = (() => {
     };
     const positions = raw("BOOK_POSITIONS"), accounts = raw("BOOK_ACCOUNTS");
     const cf = bookObject(src, "BOOK_ACCOUNT_CASH_FLOWS") ?? {};
+    const latest = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS") ?? {};
     const DAY_MS = 86400000;
     const byOwner = new Map();
     for (const a of accounts) {
-      const fl = cf[a.accountId] ?? [];
+      const record = latest[a.accountId]?.record;
+      const selected = record ?? null;
+      const fl = selected?.flows ?? (latest[a.accountId] ? [] : cf[a.accountId] ?? []);
       if (!fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) continue;
-      const mv = positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
+      const mv = selected?.value ?? positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
       if (!(mv > 0)) continue;
       const owner = a.ownerId || a.owner || "unattributed";
       const o = byOwner.get(owner) ?? { accounts: [], flows: [], lastClose: "" };
       o.accounts.push(String(a.accountNo));
       for (const x of fl) o.flows.push({ t: Date.parse(`${x.date}T00:00:00Z`), amount: x.amount });
-      o.flows.push({ t: Date.parse(`${a.asOf}T00:00:00Z`), amount: mv });
-      if (a.asOf > o.lastClose) o.lastClose = a.asOf;
+      const terminalDate = selected?.asOf ?? a.asOf;
+      o.flows.push({ t: Date.parse(`${terminalDate}T00:00:00Z`), amount: mv });
+      if (terminalDate > o.lastClose) o.lastClose = terminalDate;
       byOwner.set(owner, o);
     }
     const out = new Map();
@@ -14080,21 +14084,25 @@ const MWR_BOOK = (() => {
     };
     const positions = raw("BOOK_POSITIONS"), accounts = raw("BOOK_ACCOUNTS");
     const cf = bookObject(src, "BOOK_ACCOUNT_CASH_FLOWS") ?? {};
+    const latest = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS") ?? {};
     const DAY_MS = 86400000;
     const flows = [];
     let lastClose = "";
     let pooled = 0;
     const accountIds = new Set();
     for (const a of accounts) {
-      const fl = cf[a.accountId] ?? [];
+      const record = latest[a.accountId]?.record;
+      const selected = record ?? null;
+      const fl = selected?.flows ?? (latest[a.accountId] ? [] : cf[a.accountId] ?? []);
       if (!fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) continue;
-      const mv = positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
+      const mv = selected?.value ?? positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
       if (!(mv > 0)) continue;
       pooled++;
       accountIds.add(a.accountId);
       for (const f of fl) flows.push({ t: Date.parse(`${f.date}T00:00:00Z`), amount: f.amount });
-      flows.push({ t: Date.parse(`${a.asOf}T00:00:00Z`), amount: mv });
-      if (a.asOf > lastClose) lastClose = a.asOf;
+      const terminalDate = selected?.asOf ?? a.asOf;
+      flows.push({ t: Date.parse(`${terminalDate}T00:00:00Z`), amount: mv });
+      if (terminalDate > lastClose) lastClose = terminalDate;
     }
     if (!flows.length) return null;
     const t0 = Math.min(...flows.map((f) => f.t)), t1 = Math.max(...flows.map((f) => f.t));

@@ -283,20 +283,23 @@ export function Performance() {
   // published NAV puts on part of it is no figure here.
   const statementAccount = new Map(statement.accounts.map((a) => [a.accountId, a]));
   const xirrByAccount = accounts.map((a) => {
-    const flows = statement.accountCashFlows?.[a.accountId] ?? [];
-    const mv = statementMvOf(a.accountId);
     const one = measuredAccountsReturn(statement, [a]);
+    const chosen = one.parts[0];
+    const flows = chosen?.flows ?? statement.accountCashFlows?.[a.accountId] ?? [];
+    const mv = chosen?.terminalValue ?? statementMvOf(a.accountId);
+    const terminal = chosen?.asOf.toISOString().slice(0, 10) ?? a.asOf;
     const part = one.parts.length > 0;
     const recorded = CAPITAL_RECORD_COUNT[a.accountId] ?? 0;
     return {
       account: a,
       unvalued: statementAccount.get(a.accountId)?.noPositionsReason ?? a.noPositionsReason ?? null,
       mv,
+      terminal,
       flows: flows.length,
       pct: part ? one.annPct : null,
       toDate: part ? one.toDatePct : null,
       windowDays: part ? one.windowDays : null,
-      undated: part ? undatedFor(a.accountId, one.windowStart, a.asOf) : [],
+      undated: part ? undatedFor(a.accountId, one.windowStart, terminal) : [],
       reason: !flows.length
         ? recorded > 0
           ? `no opening-value flow series here · its ${recorded} dated capital movement${recorded === 1 ? " is" : "s are"} on the Transactions card`
@@ -335,7 +338,7 @@ export function Performance() {
     account: (x) => acctLabel(x.account),
     flows: (x) => x.flows,
     mv: (x) => (x.unvalued ? null : x.mv),
-    terminal: (x) => x.account.asOf ?? null,
+    terminal: (x) => x.terminal ?? null,
     return: (x) => x.toDate,
   }, (x) => reviewScopeForAccount(x.account), memberScope.owners !== null));
   const measurable = xirrByAccount.filter((x) => measuredIds.has(x.account.accountId));
@@ -808,7 +811,7 @@ export function Performance() {
                       ? <AbsentCell reason={x.unvalued} />
                       : money(x.mv)}
                   </td>
-                  <td className="px-3 py-2.5 text-right mono text-slate-400">{x.account.asOf}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-400">{x.terminal}</td>
                   <td className="px-3 py-2.5 text-right mono">
                     {x.pct == null
                       ? <span className="text-[11px] text-slate-500" title={x.reasonTitle}>{DASH} {x.reason}</span>

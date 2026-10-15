@@ -150,6 +150,7 @@ export function scopePortfolio(p: Portfolio, owners: ReadonlySet<string>): Portf
     capitalGains: p.capitalGains.filter((cg) =>
       cg.accountId ? ids.has(cg.accountId) : cg.ownerId ? owners.has(cg.ownerId) : false),
     accountCashFlows: keep(p.accountCashFlows, (k) => ids.has(k)),
+    accountReturnRecords: keep(p.accountReturnRecords, (k) => ids.has(k)),
     entityCashFlows: keep(p.entityCashFlows, (k) => names.has(k)),
     entityNavHistory: keep(p.entityNavHistory, (k) => names.has(k)),
     commitments: p.commitments.filter((c) => ids.has(c.accountId)),

@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const SUITES = [
+  { name: "latestReturns", file: "accountReturnRecords.test.mjs", required: true },
   { name: "parseNum", file: "parseNum.test.mjs", required: true },
   { name: "layout",   file: "layout.test.mjs",   required: true },
   { name: "pipeline", file: "pipeline.test.mjs", required: true },
