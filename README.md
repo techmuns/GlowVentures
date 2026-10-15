@@ -292,6 +292,9 @@ A circled **i** on each return tile opens two or three short steps with the
 actual amounts and the same percentage as the card. **Show more** reveals the
 detailed formula, full amounts, dates and coverage. The Gain / loss tile
 explains its return on capital in the same way. Missing history stays absent.
+Money-weighted returns show the gain, the yearly rate that balances the dated
+amounts, and the numeric conversion to the period's growth factor and percentage.
+The yearly rate is an intermediate calculation; the card keeps its period return.
 Run `CHROME=/path/to/chrome node scripts/check-return-calculations.mjs` against
 a local preview to check the popup, matching results, arithmetic and keyboard
 controls at desktop and phone widths in both themes.
