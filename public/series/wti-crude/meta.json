@@ -17,8 +17,8 @@
  "note": "WTI settled NEGATIVE on 20 April 2020 (−$37.63). The band allows it because it happened; a floor at zero would reject a real print.",
  "accumulating": false,
  "first": "2000-08-23",
- "last": "2026-10-15",
- "count": 6565,
- "retrievedAt": "2026-10-16T06:45:47.866Z",
+ "last": "2026-10-16",
+ "count": 6566,
+ "retrievedAt": "2026-10-17T06:36:16.286Z",
  "staleSince": null
 }
