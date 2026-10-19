@@ -182,7 +182,10 @@ function authoritative(docs, provider, fact) {
   // tie on one date. Every other rule keeps "the first report type present".
   if (rule.newestWins) {
     const rank = (d) => rule.reportTypes.indexOf(d.reportType);
-    const candidates = docs.filter((d) => rank(d) >= 0);
+    // Only a snapshot read WHOLE can supersede. A report whose section prints a
+    // subtotal and no rows, or one carrying a read gap, would put a partial
+    // account in the book under a newer date (Stage 10eu).
+    const candidates = docs.filter((d) => rank(d) >= 0 && d.status === "ok" && !(d.sectionsWithoutRows?.length));
     candidates.sort((a, b) => ((b.asOf ?? "") < (a.asOf ?? "") ? -1 : (b.asOf ?? "") > (a.asOf ?? "") ? 1 : 0)
       || rank(a) - rank(b)
       || (a.docKey < b.docKey ? -1 : a.docKey > b.docKey ? 1 : 0));

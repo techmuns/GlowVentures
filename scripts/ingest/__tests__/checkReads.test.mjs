@@ -24,7 +24,7 @@ console.log("checkReads");
 const PROVIDER = "Carnelian Asset Management and Advisors Pvt Ltd";   // has a precedence block
 const holdingsDoc = (docKey, asOf, extra = {}) => ({
   docKey, provider: PROVIDER, accountNo: "1", asOf, reportType: "appraisal", sourcePath: `source/${docKey}.pdf`,
-  status: "ok", warnings: [], holdings: [{ securityKey: "x" }], ...extra,
+  status: "ok", warnings: [], holdings: [{ securityKey: "x", marketValue: 100 }], ...extra,
 });
 
 /** Write a synthetic archive + book + report, run the gate, return { code, out }. */
@@ -108,6 +108,24 @@ const accepted = [
 {
   const r = run({ docs: [...accepted, holdingsDoc("a", "2026-08-31"), holdingsDoc("b", "2026-09-30")], accounts: account("2026-08-31") });
   ok("a newer statement read and not used fails — the book is stale", r.code === 1 && /\[stale in the book\]/.test(r.out) && /2026-09-30/.test(r.out), r.out);
+}
+// Stage 10eu: the staleness test used to count only the report types the
+// holdings rule names, so these three accounts' newer statements were invisible.
+{
+  const snap = holdingsDoc("b", "2026-10-07", { reportType: "portfolio-snap" });
+  const r = run({ docs: [...accepted, holdingsDoc("a", "2026-09-30"), snap], accounts: account("2026-09-30") });
+  ok("a newer VALUED statement of a type the holdings rule does not name fails, naming the rule",
+    r.code === 1 && /\[stale in the book\]/.test(r.out) && /does not name `portfolio-snap`/.test(r.out), r.out);
+}
+{
+  const factSheet = holdingsDoc("b", "2026-10-07", { reportType: "fact-sheet", holdings: [{ securityKey: "x", marketValue: null }] });
+  const r = run({ docs: [...accepted, holdingsDoc("a", "2026-09-30"), factSheet], accounts: account("2026-09-30") });
+  ok("…but a newer fact sheet that values nothing passes — it is not a snapshot", r.code === 0, r.out);
+}
+{
+  const noRows = holdingsDoc("b", "2026-10-07", { reportType: "investor-report", sectionsWithoutRows: [{ section: "Shares", printedValue: 1 }] });
+  const r = run({ docs: [...accepted, holdingsDoc("a", "2026-09-30"), noRows], accounts: account("2026-09-30") });
+  ok("…nor a newer report whose section prints a subtotal and no rows — it is not whole", r.code === 0, r.out);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

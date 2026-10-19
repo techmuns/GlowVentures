@@ -53,7 +53,7 @@
    "marketValue": 55113657.3,
    "gainLoss": 29322953,
    "pctGainLoss": 113.7,
-   "pctAssets": 15.9,
+   "pctAssets": 14.31,
    "unrealized": 29322953,
    "printed": {
     "marketValue": 55113657.3,
@@ -95,7 +95,7 @@
    "marketValue": 46322050,
    "gainLoss": -1632088.71,
    "pctGainLoss": -3.4,
-   "pctAssets": 13.36,
+   "pctAssets": 12.03,
    "unrealized": -1632088.71,
    "printed": {
     "marketValue": 46322050,
@@ -137,7 +137,7 @@
    "marketValue": 19994952,
    "gainLoss": 854481.68,
    "pctGainLoss": 4.46,
-   "pctAssets": 5.77,
+   "pctAssets": 5.19,
    "unrealized": 854481.68,
    "printed": {
     "marketValue": 19994952,
@@ -179,7 +179,7 @@
    "marketValue": 27808134.8,
    "gainLoss": 5047908.44,
    "pctGainLoss": 22.18,
-   "pctAssets": 8.02,
+   "pctAssets": 7.22,
    "unrealized": 5047908.44,
    "printed": {
     "marketValue": 27808134.8,
@@ -221,7 +221,7 @@
    "marketValue": 24806337.2,
    "gainLoss": 4504266.12,
    "pctGainLoss": 22.19,
-   "pctAssets": 7.15,
+   "pctAssets": 6.44,
    "unrealized": 4504266.12,
    "printed": {
     "marketValue": 24806337.2,
@@ -263,7 +263,7 @@
    "marketValue": 39446554.5,
    "gainLoss": 5537948.81,
    "pctGainLoss": 16.33,
-   "pctAssets": 11.38,
+   "pctAssets": 10.24,
    "unrealized": 5537948.81,
    "printed": {
     "marketValue": 39446554.5,
@@ -305,7 +305,7 @@
    "marketValue": 32011960,
    "gainLoss": 3309827.76,
    "pctGainLoss": 11.53,
-   "pctAssets": 9.23,
+   "pctAssets": 8.31,
    "unrealized": 3309827.76,
    "printed": {
     "marketValue": 32011960,
@@ -347,7 +347,7 @@
    "marketValue": 40496850,
    "gainLoss": 6945985.03,
    "pctGainLoss": 20.7,
-   "pctAssets": 11.68,
+   "pctAssets": 10.51,
    "unrealized": 6945985.03,
    "printed": {
     "marketValue": 40496850,
@@ -389,13 +389,55 @@
    "marketValue": 39702183.8,
    "gainLoss": 6716482.05,
    "pctGainLoss": 20.36,
-   "pctAssets": 11.45,
+   "pctAssets": 10.31,
    "unrealized": 6716482.05,
    "printed": {
     "marketValue": 39702183.8,
     "gainLoss": null,
     "pctGainLoss": null,
     "pctAssets": 10.3,
+    "unrealized": null
+   },
+   "marketValueFromPrinted": false,
+   "dedupeGroup": null,
+   "alsoReportedUnder": [],
+   "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report"
+  },
+  {
+   "security": "Star Health and Allied Insurance Company Limited",
+   "securityKey": "star-health-and-allied-insurance",
+   "isin": null,
+   "symbol": null,
+   "printedSecurity": null,
+   "assetClass": "Equity",
+   "providerSector": null,
+   "manager": null,
+   "memberId": null,
+   "quantity": 69817,
+   "unitCost": 451.55,
+   "totalCost": 31525586.25,
+   "marketPrice": 550.55,
+   "accruedIncome": null,
+   "distributedIncome": null,
+   "realized": null,
+   "positionIrrPct": null,
+   "benchmarkIrrPct": null,
+   "absoluteYieldPct": null,
+   "annualizedYieldPct": null,
+   "priceAsOn": null,
+   "faceValue": null,
+   "lastMovementRate": null,
+   "lastMovementValue": null,
+   "marketValue": 38437749.35,
+   "gainLoss": 6912163.1,
+   "pctGainLoss": 21.93,
+   "pctAssets": 9.98,
+   "unrealized": 6912163.1,
+   "printed": {
+    "marketValue": 38437749.35,
+    "gainLoss": null,
+    "pctGainLoss": null,
+    "pctAssets": 9.97,
     "unrealized": null
    },
    "marketValueFromPrinted": false,
@@ -431,7 +473,7 @@
    "marketValue": 13289996.2,
    "gainLoss": -2851921.96,
    "pctGainLoss": -17.67,
-   "pctAssets": 3.83,
+   "pctAssets": 3.45,
    "unrealized": -2851921.96,
    "printed": {
     "marketValue": 13289996.2,
@@ -473,7 +515,7 @@
    "marketValue": 6584771.85,
    "gainLoss": 914408.94,
    "pctGainLoss": 16.13,
-   "pctAssets": 1.9,
+   "pctAssets": 1.71,
    "unrealized": 914408.94,
    "printed": {
     "marketValue": 6584771.85,
@@ -515,7 +557,7 @@
    "marketValue": 1154648.54,
    "gainLoss": 0,
    "pctGainLoss": 0,
-   "pctAssets": 0.33,
+   "pctAssets": 0.3,
    "unrealized": 0,
    "printed": {
     "marketValue": 1154648.54,
@@ -538,7 +580,7 @@
   "totalCost": 319587431.26,
   "gainLoss": null,
   "pctGainLoss": null,
-  "positionCount": 12,
+  "positionCount": 13,
   "declaredAum": null,
   "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report"
  },
@@ -1990,5 +2032,5 @@
  "jointHolders": [],
  "checks": null,
  "stitches": [],
- "derivedPortfolioTotal": 346732096.19
+ "derivedPortfolioTotal": 385169845.54
 }

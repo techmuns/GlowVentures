@@ -481,8 +481,19 @@ for (const [value, expectWarning] of [["0.00", false], ["5,000.00", true]]) {
   ok("precedence: Buoyant's holdings are the NEWEST of its appraisal, its portfolio snap and its account statement",
     buoyant?.newestWins === true && JSON.stringify(buoyant?.reportTypes) === '["appraisal","portfolio-snap","holdings"]', JSON.stringify(buoyant));
   const newest = Object.keys(PRECEDENCE).flatMap((p) => Object.keys(PRECEDENCE[p]).filter((f) => sourceFor(p, f)?.newestWins).map((f) => `${p}/${f}`));
-  ok("precedence: newestWins is set on Buoyant's holdings and nowhere else", JSON.stringify(newest) === '["Buoyant Capital/holdings"]',
-    JSON.stringify(newest));
+  // Stage 10eu: the PMS reporting system's managers and SVAN take the newer of
+  // their appraisal and investor report. Still holdings only, never another fact.
+  ok("precedence: newestWins is set on these holdings rules and nowhere else", JSON.stringify(newest) === JSON.stringify([
+    "Goldstandard Wealth Private Limited/holdings", "Green Lantern Capital LLP/holdings",
+    "Carnelian Asset Management and Advisors Pvt Ltd/holdings", "V.E.C Assago Capital Management LLP/holdings",
+    "Buoyant Capital/holdings", "SVAN Investment Managers LLP/holdings",
+  ]), JSON.stringify(newest));
+  const pms = sourceFor("Carnelian Asset Management and Advisors Pvt Ltd", "holdings");
+  ok("precedence: a PMS-system manager's holdings are the newer of its appraisal and investor report, appraisal first",
+    JSON.stringify(pms?.reportTypes) === '["appraisal","investor-report"]', JSON.stringify(pms));
+  const svan = sourceFor("SVAN Investment Managers LLP", "holdings");
+  ok("precedence: SVAN's holdings are the newer of its investor report and appraisal, investor report first",
+    JSON.stringify(svan?.reportTypes) === '["investor-report","appraisal"]', JSON.stringify(svan));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
