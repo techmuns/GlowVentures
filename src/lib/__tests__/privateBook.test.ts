@@ -393,6 +393,37 @@ console.log("\n── by brand: one row per brand, on the fund grouping's basis 
     !gs.some((g) => g.brand?.basis === "cited" && g.brand.legal.includes(g.label)));
 }
 
+console.log("\n── by legal name: one row per company or fund (Stage 10es) ──");
+{
+  //   "In the by legal name tab we will show companies by their legal name, in
+  //    by brand tab we will group companies by same brand name."
+  const gs = BOOK_SECTIONS.flatMap((s) => byFund.sections[s].groups);
+  const seen = gs.flatMap((g) => g.folios);
+  ok("the legal-name rows partition the folios — each once, none dropped",
+    seen.length === folios.length && new Set(seen).size === folios.length, `${seen.length} of ${folios.length}`);
+  ok("every row is labelled with the legal entity BRAND_NAMES writes for each of its lines",
+    gs.every((g) => g.folios.every((f) => brandNameOf(f.fundKey)?.legal === g.label)),
+    gs.filter((g) => g.folios.some((f) => brandNameOf(f.fundKey)?.legal !== g.label)).map((g) => g.label).join("; "));
+  for (const s of BOOK_SECTIONS) {
+    const labels = byFund.sections[s].groups.map((g) => g.label);
+    ok(`…and each legal entity is one row in the ${s} section`, new Set(labels).size === labels.length,
+      labels.filter((l, i) => labels.indexOf(l) !== i).join("; "));
+  }
+  const rowsOf = (re: RegExp) => gs.filter((g) => g.folios.some((f) => re.test(f.fundName)));
+  const dp = rowsOf(/drink\s*prime/i);
+  ok("DrinkPrime's sellers are one Waterwala Labs row", dp.length === 1 && dp[0].label === "Waterwala Labs Private Limited"
+    && new Set(dp[0].folios.map((f) => f.fundKey)).size > 1, dp.map((g) => g.label).join(" | "));
+  ok("…which keys on the entity and links no one line's page", !!dp[0] && dp[0].key.startsWith("legal:") && dp[0].securityKey === null);
+  ok("a row holding one line keys on that line, as the fund row always has",
+    gs.filter((g) => new Set(g.folios.map((f) => f.fundKey)).size === 1).every((g) => g.key === g.folios[0].fundKey));
+  ok("Blue Ashva's two vehicles stay two legal entities", rowsOf(/blue\s*ashva/i).length === 2);
+  ok("Assetgro Fintech is its own legal name, with StockGro the brand behind it",
+    rowsOf(/assetgro/i).length === 1 && rowsOf(/assetgro/i)[0].label === "Assetgro Fintech Private Limited"
+      && !!rowsOf(/assetgro/i)[0].brand?.brands.includes("StockGro"));
+  for (const k of ["value", "cost", "committed", "paid", "uncalled"] as const)
+    near(`by legal name closes on by brand's private ${k}`, byFund.privateTotal[k], byBrand.privateTotal[k]);
+}
+
 console.log("\n── the two sections ──");
 {
   const un = unvaluedAccounts(BOOK_ACCOUNTS, BOOK_POSITIONS, commitments).filter((u) => u.side === "private");

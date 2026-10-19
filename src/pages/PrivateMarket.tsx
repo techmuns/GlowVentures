@@ -219,9 +219,11 @@ const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
  */
 const BOOK_VIEWS = [
   {
-    key: "funds", label: "By fund",
-    title: "One row per fund, each holding counted once. Click a row for its folios.",
-    cardTitle: "Private market — every fund",
+    // The key stays `funds` so every saved `?view=` address still opens it; the
+    // row is the legal entity the line is a holding in (Stage 10es).
+    key: "funds", label: "By legal name",
+    title: "One row per company or fund, by its legal name, each holding counted once. Click a row for its folios.",
+    cardTitle: "Private market — by legal name",
   },
   {
     key: "brands", label: "By brand",
@@ -377,7 +379,23 @@ const bookAccessors = (
   call: (r) => callDate(r.callKey),
 });
 
-/** Why a folio or a fund has no value — the book's own reason where it has one. */
+/** Whether a row holds more than one line (fundKey) — a brand of several funds,
+ *  or a company the family bought from several sellers. */
+const spansFunds = (g: BookGroup): boolean => new Set(g.folios.map((f) => f.fundKey)).size > 1;
+
+/** The hover on a legal name: what the entity trades as, and where that is stated. */
+const legalHover = (label: string, b: BrandFacts): string => {
+  const brands = b.brands.filter((x) => x !== label);
+  const where = [...new Set(b.sources.map((u) => u.startsWith("statement:")
+    ? "the family's own depository statement" : u.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]))].join(", ");
+  switch (b.basis) {
+    case "cited": return `${label} operates as ${brands.join(", ") || b.brands.join(", ")}${where ? ` — ${where}` : ""}.`;
+    case "own-name": return `${label} trades under its own name${where ? ` — ${where}` : ""}.`;
+    case "as-printed": return "No public source ties this name to one company, so the entity is as the family's review prints it.";
+    default: return "Not yet mapped to a legal entity: the name is read off the line itself.";
+  }
+};
+
 /** The hover on a brand's name: whose brand it is, and where that is stated. */
 const brandHover = (label: string, b: BrandFacts): string => {
   const legal = b.legal.join(", ");
@@ -391,6 +409,7 @@ const brandHover = (label: string, b: BrandFacts): string => {
   }
 };
 
+/** Why a folio or a fund has no value — the book's own reason where it has one. */
 const valueWhy = (status: BookGroup["status"], reason: string | null): string => {
   if (status === "no-nav") return "the fund publishes no NAV — its statement carries units and the capital paid in, and no valuation. Missing data, not a zero.";
   if (status === "income-only") return "income-only folio — its documents report earnings and distributions and no valuation; the units are valued under another account";
@@ -800,11 +819,14 @@ export function PrivateMarket() {
     const atc = m.byFund.sections.atCost.groups;
     const unv = m.byFund.sections.unvalued.groups;
     const lines = (gs: BookGroup[]) => gs.flatMap((g) => g.folios);
+    // FUNDS ARE THE BOOK'S LINES, whichever tab is drawn: a legal-name row may
+    // hold several (Stage 10es), as a brand row may.
+    const funds = (gs: BookGroup[]) => new Set(lines(gs).map((f) => f.fundKey)).size;
     return {
-      funds: priv.length + atc.length + unv.length,
-      valuedFunds: priv.length,
-      atCostFunds: atc.length,
-      noNavFunds: unv.length,
+      funds: funds(priv) + funds(atc) + funds(unv),
+      valuedFunds: funds(priv),
+      atCostFunds: funds(atc),
+      noNavFunds: funds(unv),
       folios: lines(priv).length + lines(atc).length + lines(unv).length,
       valuedLines: lines(priv).filter((f) => f.position).length,
       atCostLines: lines(atc).length,
@@ -1111,7 +1133,8 @@ export function PrivateMarket() {
    */
   const profileMatch = matchProfiles(investmentIdentities(book.folios));
   const groupMatches = (g: BookGroup) => !needle || g.label.toLowerCase().includes(needle)
-    || !!g.brand?.legal.some((l) => l.toLowerCase().includes(needle)) || g.folios.some((f) => folioText(f).includes(needle));
+    || !!g.brand?.legal.some((l) => l.toLowerCase().includes(needle))
+    || !!g.brand?.brands.some((b) => b.toLowerCase().includes(needle)) || g.folios.some((f) => folioText(f).includes(needle));
   const rowKey = (g: BookGroup) => `${grouping}:${g.key}`;
   const allGroups = shown.flatMap((s) => book.sections[s].groups);
   /** A search opens what it found, so a match inside a closed section is not hidden by the section. */
@@ -1132,19 +1155,15 @@ export function PrivateMarket() {
   const nameAcc = bookAccessors((r) => r.label ?? null, callDate, returnMeasures);
   /** A FUND row's call key. A member row is not a fund, so it has none. */
   const groupCallKey = (g: BookGroup) => {
-    if (g.kind === "fund") return callKeyOf(g.key, g.securityKey);
-    // A brand row is a fund only where every folio under it is one fund.
-    if (g.kind === "brand") {
-      const keys = new Set(g.folios.map((f) => f.fundKey));
-      if (keys.size === 1) return callKeyOf(g.folios[0].fundKey, g.folios[0].securityKey);
-    }
-    return null;
+    // A legal-name or brand row is a fund only where every folio under it is one fund.
+    if (g.kind === "owner" || spansFunds(g)) return null;
+    return g.kind === "fund" ? callKeyOf(g.key, g.securityKey) : callKeyOf(g.folios[0].fundKey, g.folios[0].securityKey);
   };
   const folioCallKey = (f: BookFolio) => callKeyOf(f.fundKey, f.securityKey);
   /** A folio carries the call cell where its row's level is not a fund: By
-   *  legal entity always, By brand where the brand spans more than one fund. */
+   *  owner always, By legal name and By brand where the row spans more than one fund. */
   const folioCallOn = (g: BookGroup, f: BookFolio) =>
-    !f.viewOf && g.kind !== "fund" && groupCallKey(g) == null ? folioCallKey(f) : null;
+    !f.viewOf && groupCallKey(g) == null ? folioCallKey(f) : null;
   /**
    * ── THE CAPITAL CALL CELL, AND THE EDITOR IT OPENS ─────────────────────────
    *
@@ -1215,11 +1234,11 @@ export function PrivateMarket() {
     ({ shown: false, tag: measure === "auto" ? "AUTO" : returnMeasureDef(measure).tag, reason: why });
   const NO_VALUE_RETURN = "no value to strike a return on — nothing here values the holding";
   const groupRet = (g: BookGroup) => {
-    // A BRAND WHOSE LINES ARE ALL ONE FUND IS THAT FUND, and is resolved the
-    // fund's own way; a brand spanning several funds pools them, counted once.
-    const oneFund = g.kind === "brand" && new Set(g.folios.map((f) => f.fundKey)).size === 1 && g.securityKey != null;
-    if (g.kind === "brand" && !oneFund) return aggRet(g.folios, true, "brand");
-    if (g.kind === "fund" || oneFund) {
+    // A BRAND OR LEGAL-NAME ROW WHOSE LINES ARE ALL ONE FUND IS THAT FUND, and is
+    // resolved the fund's own way; one spanning several lines pools them, counted once.
+    const spans = g.kind !== "owner" && spansFunds(g);
+    if (spans) return aggRet(g.folios, true, g.kind === "brand" ? "brand" : "legal");
+    if (g.kind !== "owner" && (g.kind === "fund" || g.securityKey != null)) {
       return g.value == null ? noValueReturn(NO_VALUE_RETURN)
         : (measure: ReturnMeasure) => fundMeasuredReturn(
           // A fund every line of which is held at cost (Stage 10dh) refuses
@@ -1250,7 +1269,7 @@ export function PrivateMarket() {
    * cannot carry a dated return is NAMED in the cell's hover and left out, never
    * pooled with a gap in it.
    */
-  function aggRet(folios: BookFolio[], consolidated: boolean, scope: "member" | "brand" | "section" | "total") {
+  function aggRet(folios: BookFolio[], consolidated: boolean, scope: "member" | "brand" | "legal" | "section" | "total") {
     const fig = figuresOf(folios, consolidated);
     const allHeld = folios.filter((f) => f.position && (!consolidated || f.counted));
     /**
@@ -1279,7 +1298,8 @@ export function PrivateMarket() {
     const poolOf = recs.length + atCostFunds;
     const whose = scope === "total" ? "This is the whole private book, not one fund"
       : scope === "section" ? "This band spans several funds"
-      : scope === "brand" ? "This brand spans several funds" : "A family member's row spans their funds";
+      : scope === "brand" ? "This brand spans several funds"
+      : scope === "legal" ? "This company is held through several lines" : "A family member's row spans their funds";
     const unit = (n: number) => (consolidated ? (n === 1 ? "fund" : "funds") : (n === 1 ? "statement" : "statements"));
     return (measure: ReturnMeasure): RowReturn => {
       // A REFUSED cell under the methodology says AUTO, as a refused fund row
@@ -1600,8 +1620,14 @@ export function PrivateMarket() {
     const bits: ReactNode[] = [];
     // BY BRAND, THE COMPANY BEHIND THE BRAND comes first (Stage 10eh) — the
     // legal entity the line is a holding in, written once where it is the brand.
-    const legal = g.brand?.legal.filter((l) => l !== g.label) ?? [];
-    if (legal.length) bits.push(<span key="lg" className="text-slate-300" data-pm-legal-line>{legal.join(", ")}</span>);
+    // BY LEGAL NAME, THE BRAND IT TRADES AS, where that is not its own name.
+    if (g.kind === "fund") {
+      const brands = g.brand?.brands.filter((b) => b !== g.label && !g.label.toLowerCase().startsWith(b.toLowerCase())) ?? [];
+      if (brands.length) bits.push(<span key="br" className="text-slate-300" data-pm-brand-line>{brands.join(", ")}</span>);
+    } else {
+      const legal = g.brand?.legal.filter((l) => l !== g.label) ?? [];
+      if (legal.length) bits.push(<span key="lg" className="text-slate-300" data-pm-legal-line>{legal.join(", ")}</span>);
+    }
     if (g.kind !== "owner" && g.category) bits.push(g.category);
     const views = g.folios.filter((f) => f.viewOf).length;
     const held = g.folios.length - views;
@@ -1648,7 +1674,7 @@ export function PrivateMarket() {
     );
     const scheme = (f: BookFolio) => f.capital;
     const fundCall = groupCallKey(g);
-    const brandSpansFunds = g.kind === "brand" && new Set(g.folios.map((x) => x.fundKey)).size > 1;
+    const rowSpansFunds = g.kind !== "owner" && spansFunds(g);
     const fundRowId = `fund:${g.key}`;
     return (
       <Fragment key={key}>
@@ -1656,6 +1682,7 @@ export function PrivateMarket() {
           data-pm-group={g.key} data-pm-kind={g.kind} data-pm-row-section={g.section} data-pm-label={g.label}
           {...(g.kind === "fund" ? { "data-pm-fund": g.key } : g.kind === "brand" ? { "data-pm-brand": g.key } : { "data-pm-owner": g.key })}
           {...(g.brand ? { "data-pm-legal": g.brand.legal.join(" | "), "data-pm-brand-basis": g.brand.basis ?? "unmapped" } : {})}
+          {...(g.kind === "fund" ? { "data-pm-fund-keys": [...new Set(g.folios.map((f) => f.fundKey))].join(" "), "data-pm-brands": g.brand?.brands.join(" | ") ?? "" } : {})}
           data-pm-folios={g.folios.length} data-pm-value={g.value ?? undefined}
           data-pm-cost-absent={g.cost == null ? "" : undefined} data-pm-return-absent={g.returnPct == null ? "" : undefined}
           data-pm-committed={g.committed ?? undefined} data-pm-uncalled={g.uncalled ?? undefined}
@@ -1664,7 +1691,7 @@ export function PrivateMarket() {
             toggleLabel={open ? "Hide the folios behind this row" : `Show the ${g.folios.length} ${g.folios.length === 1 ? "folio" : "folios"} behind this row`}
             toggleData={{ "data-pm-folio-toggle": g.key, "data-pm-folio-rows": g.folios.length, "data-pm-folio-gap": Math.round(g.overlap?.value ?? 0) }}
             title={<>
-              {g.brand ? <span title={brandHover(g.label, g.brand)}>{g.label}</span> : g.label}
+              {g.brand ? <span title={g.kind === "fund" ? legalHover(g.label, g.brand) : brandHover(g.label, g.brand)}>{g.label}</span> : g.label}
               {/* THE FUND'S OWN PAGE, as its own small link — the row itself
                   opens the folios, so the name is not a second click target. */}
               {g.securityKey && (
@@ -1701,7 +1728,7 @@ export function PrivateMarket() {
           return (
             <Fragment key={f.key}>
             <Tr view={bookView} reviewScope={folioReviewScope(f)} className={TREE_ROW.child}
-              data-pm-folio-row={g.key} data-pm-row-section={g.section} data-account={f.accountId}
+              data-pm-folio-row={g.key} data-pm-folio-fund={f.fundKey} data-pm-row-section={g.section} data-account={f.accountId}
               data-pm-capital-account={f.capital?.accountId ?? undefined}
               data-pm-capital-counted={f.capital ? (f.capitalCounted ? "true" : "false") : undefined}
               data-pm-capital-counted-as={f.capitalCountedAs ?? undefined}
@@ -1715,7 +1742,7 @@ export function PrivateMarket() {
               <TreeNameCell depth={1} last={i === kids.length - 1 && !(grouping !== "owner" && g.overlap)}
                 title={grouping === "owner" ? f.fundName : f.owner}
                 sub={<>
-                  {grouping === "brand" && brandSpansFunds && <>{f.fundName} · </>}
+                  {rowSpansFunds && <>{f.fundName} · </>}
                   {f.provider} {f.accountNo}
                   {/* VALUED ON THE REVIEW (Stage 10dh). The family's consolidated
                       review is the source for private-market lines, and where
@@ -1841,7 +1868,8 @@ export function PrivateMarket() {
     // A held-at-cost row is an INVESTMENT — mostly a company — not a fund, and
     // "61 funds" over it is why the family did not recognise these as the
     // Portfolio Monitor's "Private investments at cost" (Stage 10ee).
-    const noun = id === "atCost" && grouping !== "owner" ? (s.groups.length === 1 ? "investment" : "investments")
+    const noun = id === "atCost" && grouping === "fund" ? (s.groups.length === 1 ? "company" : "companies")
+      : id === "atCost" && grouping !== "owner" ? (s.groups.length === 1 ? "investment" : "investments")
       : grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds")
       : grouping === "brand" ? (s.groups.length === 1 ? "brand" : "brands")
       : (s.groups.length === 1 ? "entity" : "entities");
@@ -1865,7 +1893,8 @@ export function PrivateMarket() {
       <Fragment key={id}>
         <Tr view={bookView} className={`${TREE_ROW.section} ${id === "private" ? "" : "cursor-pointer"}`}
           {...(id === "private" ? {} : rowToggle(() => sections.toggle(id)))}
-          data-pm-section={id} data-pm-section-funds={s.groups.length} data-pm-section-folios={s.folios}
+          data-pm-section={id} data-pm-section-funds={new Set(s.groups.flatMap((g) => g.folios.map((f) => f.fundKey))).size}
+          data-pm-section-rows={s.groups.length} data-pm-section-folios={s.folios}
           data-pm-section-open={open ? "true" : "false"}>
           <TreeSectionCell title={title} marker={copy.marker && <span data-pm-marker={id}>{copy.marker}</span>} sub={sub} hint={hint}
             open={open} onToggle={() => sections.toggle(id)}
@@ -2045,7 +2074,7 @@ export function PrivateMarket() {
             {tabs}
             <EditColumns view={view === "transactions" ? callView : bookView} />
             <SearchInput value={q} onChange={setQ}
-              placeholder={view === "transactions" ? "Search calls…" : view === "brands" ? "Search brands, funds or entities…" : "Search funds or members…"}
+              placeholder={view === "transactions" ? "Search calls…" : view === "brands" ? "Search brands, funds or entities…" : "Search companies, funds or brands…"}
               className="w-56"
               suggestions={view === "transactions"
                 ? [...new Set(m.history.map((c) => c.fund))]
@@ -2075,7 +2104,7 @@ export function PrivateMarket() {
             <table className="min-w-full text-[13px]" data-pm-table={view}>
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
-                  <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Fund" : grouping === "brand" ? "Brand" : "Legal entity"}</SortHeader>
+                  <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Legal name" : grouping === "brand" ? "Brand" : "Legal entity"}</SortHeader>
                   <SortHeader col="strategy" view={bookView} pad="px-2 py-2" align="left"
                     title={profileSupplyNote("strategy", profileMatch)}>Strategy</SortHeader>
                   <SortHeader col="description" view={bookView} pad="px-2 py-2" align="left"
