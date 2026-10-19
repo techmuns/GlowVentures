@@ -350,6 +350,14 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   statement NOTES (what the document prints or lacks) and read GAPS; a document
   whose every warning is a note is `ok`. A new warning code is a gap until it is
   argued into the note list.
+- **`npm run check:reads` is the gate on every delivery** (Stage 10eq; CI's
+  `statements` job re-extracts `source/` and runs it on every PR). It fails on a
+  `partial` document, a `failed` one not held out by decision or recorded in
+  `scripts/ingest/acceptedUnread.mjs` (reason + the action that fixes it — only
+  for a file that carries nothing to read), a read account the book neither
+  carries nor excludes by name, and a book date older than the newest statement
+  read. Never silence it by widening the note list or the accepted list for a
+  file a reader could read: write the reader.
 
 ## The live layer
 
@@ -446,7 +454,8 @@ And:
   (`-- --reindex` needs no AmfiBeas checkout), `build-polycab`, `harvest`,
   `probe:sources`.
 - Cross-checks (never write to the book): `reconcile:review`,
-  `reconcile:register`, `coverage:source`.
+  `reconcile:register`, `coverage:source`, `check:reads` (exits non-zero on
+  any statement not read in full or not in the book).
 - Tests: `test:ingest`, `test:family`, `check:family`, `check:pages`
   (`ONLY=<routes>`; screenshots in `docs/page-check/`), `check:columns`.
 - `dev:mock-quotes` — the live layer mocked; `set-password -- "<password>"` —

@@ -24,6 +24,23 @@ down into their own delivery folder with
 `GLOW_DASHBOARD_PASSWORD`; `--clear` empties the inbox once they are safely on
 disk), then run the pipeline below exactly as for a hand-dropped delivery.
 
+**Every delivery, start to finish** — no passwords or OCR tools needed (a sealed
+statement keeps the reading a password-holding run archived):
+
+```
+npm run inventory && npm run extract && npm run build-book
+npm run check:reads
+```
+
+`check:reads` fails, naming each file, if anything in the delivery is not read in
+full (a new layout or report type, a column a reader misses) or is read but does
+not reach the dashboard (a new account the book does not carry, a newer statement
+the book did not move to). Fix the reader it names and run the four commands
+again; a file that carries nothing to read (a scan, a mail server's removal
+notice) is recorded with its reason and the fix in
+`scripts/ingest/acceptedUnread.mjs`. CI runs the same check on every PR, so a
+half-read delivery cannot be merged.
+
 Then run:
 
 ```
