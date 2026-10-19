@@ -109,6 +109,7 @@ import { schemeCalls, type SchemeCall } from "./capitalCalls";
 import { fifoTotals } from "./fifo";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { brandNameOf, type BrandBasis, type BrandName } from "./brandNames";
+import { matchProfiles, combineProfiles, type InvestmentIdentity, type InvestmentProfile, type SuppliedProfiles } from "./investmentProfiles";
 
 export type BookSectionId = "private" | "atCost" | "unvalued";
 export type BookGrouping = "fund" | "owner" | "brand";
@@ -252,6 +253,13 @@ export type BookFolio = {
   distributionCountedAs: string | null;
   /** The book's own words for why nothing values this folio. Never re-worded. */
   reason: string | null;
+  /**
+   * THE FUND'S STRATEGY AND THE COMPANY'S DESCRIPTION — supplied by the family,
+   * never printed on a statement, and joined to the investment by its identity
+   * (`investmentProfiles.ts`). A property of the FUND: every folio of one fund
+   * carries the same cells. Text only; no figure reads it.
+   */
+  profile: InvestmentProfile;
 };
 
 /**
@@ -370,6 +378,8 @@ export type BookGroup = BookFigures & {
   /** BY BRAND: the legal entities behind the brand and how it is known. Null on
    *  a fund or member row, whose label is already the entity. */
   brand: BrandFacts | null;
+  /** Its folios' profile — one text where every investment under the row shares it. */
+  profile: InvestmentProfile;
   /**
    * THE FOLIOS ADD TO MORE THAN THE ROW BY THIS MUCH — two statements reporting
    * one holding. Null where the two agree, which is every row but the ones a
@@ -486,6 +496,8 @@ export function bookFolios(args: {
   schemes: SchemeCall[];
   /** The funds' own distribution letters (`BOOK_CORPORATE_ACTIONS`); absent reads as none. */
   distributions?: DistributionRecord[];
+  /** The supplied profile records; absent reads the ones the build read from `source/`. */
+  profiles?: SuppliedProfiles;
 }): BookFolio[] {
   const { positions, allPositions, accounts, commitments, accIdx, schemes } = args;
   const letters = (args.distributions ?? []).filter((d) => d.kind === "distribution" && d.amount != null);
@@ -503,7 +515,7 @@ export function bookFolios(args: {
   const alsoCapital = new Map(capitalCountedOnce(commitments, inScope).alsoReported
     .map((x) => [x.commitment.accountId, x.countedAs]));
 
-  const out: BookFolio[] = [];
+  const out: Omit<BookFolio, "profile">[] = [];
   const attached = new Set<string>();
   const capitalOf = (accountId: string) => {
     const cap = !attached.has(accountId) ? schemeOf.get(accountId) ?? null : null;
@@ -641,11 +653,11 @@ export function bookFolios(args: {
    */
   const viewPos = new Map<string, Position>();
   for (const p of inScope) viewPos.set(p.accountId + "|" + p.securityKey, p);
-  const groupOfView = (f: BookFolio) => {
+  const groupOfView = (f: Omit<BookFolio, "profile">) => {
     const p = f.viewOf ? viewPos.get(f.viewOf + "|" + f.fundKey) : undefined;
     return p ? p.dedupeGroup ?? `${p.accountId}|${p.securityKey}` : null;
   };
-  const views = new Map<string, BookFolio[]>();
+  const views = new Map<string, Omit<BookFolio, "profile">[]>();
   for (const f of out) {
     const g = f.viewOf && f.distributed != null ? groupOfView(f) : null;
     if (g) views.set(g, [...(views.get(g) ?? []), f]);
@@ -660,7 +672,34 @@ export function bookFolios(args: {
       f.distributionCountedAs = f === keptView ? null : keptView.accountId;
     }
   }
-  return out;
+  const { byId } = matchProfiles(investmentIdentities(out), args.profiles);
+  return out.map((f) => ({ ...f, profile: byId.get(f.fundKey)! }));
+}
+
+/**
+ * WHAT THE BOOK KNOWS EACH INVESTMENT AS — one per fund, over all its folios —
+ * for a supplied profile record to be matched against. Every name here is one
+ * the book already prints or cites; none is invented to make a match.
+ */
+export function investmentIdentities(folios: readonly Pick<BookFolio, "fundKey" | "fundName" | "securityKey" | "accountNo" | "position">[]): InvestmentIdentity[] {
+  const byFund = new Map<string, (typeof folios)[number][]>();
+  for (const f of folios) byFund.set(f.fundKey, [...(byFund.get(f.fundKey) ?? []), f]);
+  const present = (xs: (string | null | undefined)[]) => [...new Set(xs.filter((x): x is string => !!x))];
+  return [...byFund.entries()].map(([fundKey, fs]) => {
+    const first = fs[0];
+    const named = brandNameOf(fundKey);
+    const brand = brandOf(first);
+    return {
+      id: fundKey,
+      label: first.fundName,
+      group: brand.key,
+      keys: present([fundKey, ...fs.map((f) => f.securityKey)]),
+      isins: present(fs.map((f) => f.position?.isin)),
+      names: present([first.fundName, splitFundClass(first.fundName)?.fund, named?.legal]),
+      brands: present([brand.label, named?.brand]),
+      folios: present(fs.map((f) => f.accountNo)),
+    };
+  });
 }
 
 /**
@@ -713,7 +752,7 @@ function unvaluedFolio(
   a: Account | undefined, name: string, status: UnvaluedKind, reason: string | null,
   capital: Pick<BookFolio, "capital" | "capitalCounted" | "capitalCountedAs" | "distributed" | "distributedBasis" | "distributionCounted" | "distributionCountedAs">,
   accIdx: AccountIndex, s?: SchemeCall,
-): BookFolio {
+): Omit<BookFolio, "profile"> {
   const accountId = a?.accountId ?? s?.accountId ?? "";
   return {
     key: `${accountId}|account`,
@@ -926,6 +965,7 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
         status: sorted.some((f) => f.status === "valued") ? "valued" : statuses.size === 1 ? first.status : "other",
         folios: sorted,
         brand: grouping === "brand" ? brandFacts(sorted) : null,
+        profile: combineProfiles(sorted.map((f) => f.profile)),
         overlap: grouping !== "owner" ? overlapOf(sorted) : null,
         // The row is stale only where EVERY capital account under it is: one
         // current statement beside a stale one is a mixed row, and the folios

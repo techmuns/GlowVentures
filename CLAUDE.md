@@ -122,7 +122,9 @@ One line per area; the history files explain each in depth.
   accounts), `txnLedger.ts` (capital and trades as one row set — never added),
   `txnAxis.ts`, `txnSort.ts`, `txnRollup.ts`, `ledger.ts` (runtime dated record
   from `public/audit/`), `capitalCalls.ts`, `fundReturns.ts`, `privateBook.ts`
-  (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`).
+  (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`),
+  `investmentProfiles.ts` (supplied strategy/description, matched by identity —
+  security key → ISIN → name → brand → folio; Stage 10eo).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indices.ts`, `periodReturns.ts`
   (Morning CIO Returns tab), `returnMeasures.ts`, `returnColumns.ts`.
@@ -337,7 +339,7 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   supersedes; a dated row does not (dated rows are unioned and deduped).
 - `reconcile.mjs` classifies every delta `rounding` / `explained` / `material`;
   a material delta blocks `__tests__/golden.mjs`.
-- **`extract.mjs` takes no options and runs on any machine** (Stage 10eo): a
+- **`extract.mjs` takes no options and runs on any machine** (Stage 10ep): a
   statement it cannot open for want of a password or the OCR tools is CARRIED
   FORWARD from the archive a run that could open it wrote (a failed one is
   re-read from its archived page text, kept only if it publishes more); with no
@@ -432,7 +434,8 @@ And:
   `GLOW_SOURCE_DIR` / `GLOW_AUDIT_DIR` / `GLOW_DOCS_DIR` for a scratch tree,
   `GLOW_CARRY_DIR` for the archive a scratch run carries sealed files from) ·
   `report:extraction` (extraction report from the archive).
-- `npm run build-book` — the book and its report (then `build-review-columns`).
+- `npm run build-book` — the book and its report (then `build-review-columns`,
+  `build-profiles` → `src/data/privateProfiles.json` from any profile table in `source/`).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,

@@ -397,7 +397,7 @@ for (const docKey of INVESTOR) {
       struck++;
       const parts = d.reportType === "investor-report" ? bridgeInvestor(f) : bridgePms(f);
       // A bridge the ISSUER's own lines do not close is reported by name. Since
-      // Stage 10eo that is a statement note (lib/readStatus.mjs) — the report is
+      // Stage 10ep that is a statement note (lib/readStatus.mjs) — the report is
       // read in full and the inconsistency is Carnelian's — so the WARNING is
       // the claim, not a `partial` status.
       if (!ties(parts, f.corpus) && !d.warnings.some(w => w.code === 'value-bridge-mismatch'))

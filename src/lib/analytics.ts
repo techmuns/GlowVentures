@@ -745,7 +745,7 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
   "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth":
     "Bandhan Arbitrage Fund - Direct Growth (INF194K01Y60) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
   /**
-   * Ankita's ICICI Prudential folio 14320536 (Stage 10eo — first read in the
+   * Ankita's ICICI Prudential folio 14320536 (Stage 10ep — first read in the
    * October delivery): both arbitrage schemes are redeemed to a printed 0.000
    * units, so they hold nothing today; listed so the family's arbitrage-is-cash
    * rule covers them wherever their history is shown.

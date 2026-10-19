@@ -16,6 +16,9 @@
 //                           since Stage 10dh. Still only a cross-check for the rest
 //   held-out-by-decision  — read perfectly and deliberately not a source (the
 //                           family's investment register)
+//   read-as-profile       — a supplementary profile file (a fund's strategy, a
+//                           company's description) read by `build-profiles`
+//                           into `src/data/privateProfiles.json`; text, no figure
 //   not-a-document        — a macOS `__MACOSX/._*` resource fork: a 212- or
 //                           477-byte AppleDouble stub with no `%PDF` header,
 //                           created by zipping on a Mac. There is nothing in it.
@@ -35,6 +38,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { listEntries, readEntry, isMacMetadata } from "./ingest/lib/unzip.mjs";
 import { REVIEW_WORKBOOK } from "./lib/reviewPrivateRead.mjs";
+
+/** Every profile file `build-profiles` read, by md5 — a zip's entry and its expanded copy are one file. */
+const PROFILE_FILES = (() => {
+  try {
+    const data = JSON.parse(readFileSync(new URL("../src/data/privateProfiles.json", import.meta.url), "utf8"));
+    return new Map(data.files.map((x) => [x.md5, x]));
+  } catch { return new Map(); }
+})();
 
 // Run against the committed tree by default, from wherever it is invoked; the
 // three GLOW_* variables `extract.mjs` honours point it at a scratch run
@@ -158,9 +169,15 @@ for (const f of files) {
   byHash.get(h).push(f);
 }
 
-const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "read-by-build-book", "held-out-by-decision", "not-a-document", "excluded-by-policy", "unread"];
+const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "read-by-build-book", "held-out-by-decision", "read-as-profile", "not-a-document", "excluded-by-policy", "unread"];
 const rows = [];
 for (const f of files) {
+  // A PROFILE FILE IS READ BY `build-profiles`, whatever `extract` made of it —
+  // it is no statement, so the archive holds at most a no-extractor entry.
+  let profileHash = null;
+  if (!isResourceFork(f)) { try { profileHash = md5(f); } catch { /* unreadable: falls through */ } }
+  const profile = profileHash ? PROFILE_FILES.get(profileHash) : undefined;
+  if (profile) { rows.push({ f, cls: "read-as-profile", docs: [], note: `${profile.records} profile record(s) → src/data/privateProfiles.json` }); continue; }
   let docs = bySource.get(f) ?? [];
   if (!docs.length) {
     const alt = byAscii.get(asciiKey(f));
@@ -208,6 +225,7 @@ say(`| Read via a byte-identical twin | ${count("read-via-duplicate")} | the pip
 if (count("read-as-witness")) say(`| Read as a witness | ${count("read-as-witness")} | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |`);
 say(`| Read by \`build-book\` | ${count("read-by-build-book")} | the family's consolidated review — the book's source for every private-market line |`);
 say(`| Held out by decision | ${count("held-out-by-decision")} | read perfectly and deliberately not a source |`);
+if (count("read-as-profile")) say(`| Read as a profile | ${count("read-as-profile")} | a fund's strategy or a company's description, supplied by the family — text, never a figure |`);
 say(`| Not a document | ${count("not-a-document")} | macOS \`__MACOSX/._*\` resource forks — checked, not assumed |`);
 say(`| Excluded by policy | ${count("excluded-by-policy")} | the drop's own password notes |`);
 say(`| **Unread** | **${unread.length}** | **must be zero** |`);

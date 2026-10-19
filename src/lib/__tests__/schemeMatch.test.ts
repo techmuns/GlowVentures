@@ -66,7 +66,7 @@ const named = schemes.filter(([, e]) => e.matchedVia !== "isin");
 if (!named.length) ok("the store matches at least one scheme another way than the ISIN", false);
 for (const [key, e] of named) {
   // The store was matched another way when the book carried no ISIN. Since
-  // Stage 10eo a reader may supply the ISIN its statement prints (Motilal Oswal
+  // Stage 10ep a reader may supply the ISIN its statement prints (Motilal Oswal
   // Active Momentum's `ISIN No : INF247L01EP5`); the store's join is as built,
   // but the book must then carry the SAME scheme the store matched, never another.
   const carried = BOOK_POSITIONS.filter((p) => p.securityKey === key && !!p.isin).map((p) => p.isin);

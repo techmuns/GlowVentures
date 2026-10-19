@@ -465,7 +465,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   const sheetCagr = ROWS.filter((r) => r["Measure"] === "CAGR" && r["Mandate"] === DASH).length;
   eq("exactly those direct rows are annualised, and no other", sheetCagr, annualised);
   // INSIDE A MANDATE the same rule binds, and only on the mandate's OWN lot
-  // register: V.E.C 128004's open-lots report (Stage 10eo) dates its lines, and
+  // register: V.E.C 128004's open-lots report (Stage 10ep) dates its lines, and
   // a mandate line with no dated lot behind it must never annualise.
   const pmsDated = new Set(NAV_SET.held.filter((p) => isPms(p) && p.heldSince)
     .map((p) => displaySecurity(PAGE[RAW.indexOf(p)].security)));
