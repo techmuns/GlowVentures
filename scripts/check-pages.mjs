@@ -654,7 +654,7 @@ function smallKeysOf(positions) {
   const seen = new Set();
   const byKey = new Map();
   for (const p of positions) {
-    if (FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null) continue;
+    if (FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)) continue;
     if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
     byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
   }
@@ -688,7 +688,7 @@ const MANDATE_COUNT = (() => {
     if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
     const small = smallKeysOf(positions);
     const held = new Set(positions
-      .filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null))
+      .filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)))
       .filter((p) => !small.has(p.securityKey))
       .map((p) => p.accountId));
     return accounts.filter((a) => a.engagement === "PMS" && held.has(a.accountId)).length || null;
@@ -713,7 +713,7 @@ const SECURITY_AXIS_BOOK = (() => {
       // holdings table that lists one is listing what the family was paid out
       // of. Re-derived here rather than imported from `analytics.ts`, like the
       // rest of this block.
-      if (["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null) continue;
+      if (["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)) continue;
       if (p.dedupeGroup) { if (seenAll.has(p.dedupeGroup)) continue; seenAll.add(p.dedupeGroup); }
       ded.push(p);
     }
@@ -1335,7 +1335,7 @@ const HELD_BOOK = (() => {
     for (const p of positions) {
       if (!["Mutual Fund", "ETF"].includes(p.assetClass)) continue;
       if (small.has(p.securityKey) || !(Number(p.marketValue) > 0)) continue;
-      if (p.quantity === 0 && p.currentPrice != null) continue;
+      if (p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)) continue;
       const k = `${p.securityKey}|${p.accountId}`;
       fundHolding.set(k, (fundHolding.get(k) ?? 0) + Number(p.marketValue));
     }
@@ -2014,7 +2014,7 @@ const AXIS_VENUE_BOOK = (() => {
     // expansion for one and the identity below must not demand one. Re-derived
     // here rather than imported, on the same terms as `isMandateHeld` beside it.
     const FV = new Set(["AIF", "Mutual Fund", "ETF"]);
-    const closed = (p) => FV.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const closed = (p) => FV.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
     // ...AND THE ₹1,000 FLOOR, for the same reason the closed test is here: the
     // Monitor draws current holdings, and a holding it drops has no row to carry
     // an expansion, so the identity below must not demand statements for one.
@@ -3962,7 +3962,7 @@ const PICK_FUND_BOOK = (() => {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const positions = bookArray(src, "BOOK_POSITIONS");
     if (!Array.isArray(positions)) return null;
-    const redeemed = (p) => ["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const redeemed = (p) => ["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
     const top = positions.filter((p) => p.assetClass !== "Equity" && !redeemed(p))
       .sort((a, b) => b.marketValue - a.marketValue)[0];
     const word = top ? String(top.security).split(/[^A-Za-z]+/).find((w) => w.length >= 5) ?? null : null;
@@ -3982,7 +3982,7 @@ const PICK_CLOSED_BOOK = (() => {
   try {
     const positions = bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS");
     if (!Array.isArray(positions)) return null;
-    const redeemed = (p) => ["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const redeemed = (p) => ["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
     const current = new Set(positions.filter((p) => !redeemed(p)).map((p) => String(p.security).split(/\s+/).slice(0, 2).join(" ").toLowerCase()));
     const c = positions.find((p) => redeemed(p) && !current.has(String(p.security).split(/\s+/).slice(0, 2).join(" ").toLowerCase()));
     if (!c) return null;
@@ -4729,7 +4729,7 @@ const DATED_CAPITAL_BOOK = (() => {
     };
     // THE LIVE BOOK'S CURRENT HOLDINGS — what the pages draw rows from.
     const small = smallKeysOf(live);
-    const current = live.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+    const current = live.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0))
       && !small.has(p.securityKey));
     const carries = (p) => p.marketValue !== 0 || (typeof p.costBasis === "number" && p.costBasis !== 0);
     /**
@@ -6507,7 +6507,7 @@ const AIF_FUND_KEYS = (() => {
     const keys = new Set();
     for (const p of positions) {
       if (p.assetClass !== "AIF") continue;
-      if (p.quantity === 0 && p.currentPrice != null) continue;
+      if (p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)) continue;
       const base = RE.exec(String(p.security))?.[1] ?? p.security;
       keys.add(securityKeyOf(base));
     }
@@ -8837,7 +8837,7 @@ const XA_BOOK = (() => {
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
     const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
     const ownerOfAcc = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
-    const closed = (x) => FUND_VEHICLE_CLASSES.has(x.assetClass) && x.quantity === 0 && x.currentPrice != null;
+    const closed = (x) => FUND_VEHICLE_CLASSES.has(x.assetClass) && x.quantity === 0 && (x.currentPrice != null || x.marketValue === 0);
     const small = smallKeysOf(positions);
     const current = (x) => !closed(x) && !small.has(x.securityKey);
     const seenGroup = new Set();
@@ -10630,7 +10630,7 @@ const CLUBBED_BOOK = (() => {
     const seen = new Set();
     const ded = [];
     for (const p of positions) {
-      if (["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null) continue;
+      if (["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)) continue;
       if (small.has(p.securityKey)) continue;
       if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
       ded.push(p);
@@ -11411,7 +11411,7 @@ const WITHHELD_BOOK = (() => {
     const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
     const QUOTE_DAY = FIXTURE_DAY; // installLiveMocks' quotes, traded today (IST)
     const quoted = (p) => { const s = p.symbol || symbols[p.securityKey]; return !!s && MARK_BY_SYMBOL.has(s); };
-    const closed = (x) => FUND_VEHICLE_CLASSES.has(x.assetClass) && x.quantity === 0 && x.currentPrice != null;
+    const closed = (x) => FUND_VEHICLE_CLASSES.has(x.assetClass) && x.quantity === 0 && (x.currentPrice != null || x.marketValue === 0);
     const small = smallKeysOf(bookArray(src, "BOOK_POSITIONS") ?? []);
     const current = (x) => !closed(x) && !small.has(x.securityKey);
     const reasonOf = (p, loading) => {
@@ -12179,7 +12179,9 @@ const CASH_MAPPING_BOOK = (() => {
       // THE ARBITRAGE FUNDS — "nothing but basically cash". They are no position
       // in `glowData.ts`; they reach this list through the depository rows the
       // checker's model carries, exactly as the live page does.
-      "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth",
+      // Since Stage 10eq the Motilal depository window carries the folio's key
+      // for INF247L01ED1 (Stage 10cc), not the depository's own spelling.
+      "motilal-oswal-arbitrage-fund-direct-plan-growth",
       // Stage 10db: Ajay's Kotak line and the trust's share the trust's key,
       // and the trust's Invesco line is the third arbitrage fund on demat.
       "kotak-arbfd-dp-grow", "inves-arbf-d-grow",
@@ -12491,7 +12493,7 @@ const INVESTED_ON_BOOK = (() => {
     // The lines a SECURITY row is built from: current (a closed position and a
     // sub-₹1,000 speck are not rows), each `dedupeGroup` once, and no mandate's.
     const small = smallKeysOf(positions);
-    const closed = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const closed = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
     const seen = new Set();
     const drawn = positions.filter((p) => {
       if (closed(p) || small.has(p.securityKey)) return false;
@@ -12566,7 +12568,7 @@ const FIFO_BOOK = (() => {
     const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
     const small = smallKeysOf(positions);
-    const current = positions.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+    const current = positions.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0))
       && !small.has(p.securityKey));
     const byAccountNo = new Map();
     const byAccountId = new Map();
@@ -12609,7 +12611,7 @@ const PMS_STRATEGY_BOOK = (() => {
     const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
     const small = smallKeysOf(positions);
-    const isCurrent = (p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+    const isCurrent = (p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0))
       && !small.has(p.securityKey);
     const groups = new Map();
     for (const a of accounts) {
@@ -12647,7 +12649,7 @@ const CLOSED_MANDATE_BOOK = (() => {
     const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
     const small = smallKeysOf(positions);
-    const isCurrent = (p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+    const isCurrent = (p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0))
       && !small.has(p.securityKey);
     let closed = null;
     let noStatement = null;
@@ -12768,7 +12770,7 @@ const MONITOR_BASIS_BOOK = (() => {
     const num = (x) => typeof x === "number" && Number.isFinite(x);
     const total = (xs) => xs.reduce((a, p) => a + p.marketValue, 0);
     const small = smallKeysOf(positions);
-    const closed = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const closed = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
     const current = positions.filter((p) => !closed(p) && !small.has(p.securityKey));
     const seen = new Set();
     const ded = current.filter((p) => {
@@ -15306,7 +15308,7 @@ const FUND_CLASS_BOOK = (() => {
     // A FUND VEHICLE at zero units that its own fund still publishes a NAV for:
     // the ₹0 is what the fund MEASURED, not a figure this book is missing.
     const FUND_CLASSES_OF_ASSET = new Set(["AIF", "Mutual Fund", "ETF"]);
-    const nil = (p) => FUND_CLASSES_OF_ASSET.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const nil = (p) => FUND_CLASSES_OF_ASSET.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
     const fundName = (sec) => {
       const m = RE.exec(sec);
       return m && /[A-Za-z]{3}/.test(m[1]) ? { fund: m[1].trim(), cls: m[2].toUpperCase() } : null;
@@ -15414,7 +15416,7 @@ const DROPPED_BOOK = (() => {
         return p.assetClass === "Equity" ? "Equity" : p.assetClass === "Cash" ? "Cash" : UNCLASSIFIED;
       },
     };
-    const nil = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const nil = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
     const seen = new Set();
     const ded = positions.filter((p) => {
       if (!p.dedupeGroup) return true;
@@ -17988,7 +17990,7 @@ const VALUE_WINDOW_BOOK = (() => {
     const mandateAccounts = new Set(accounts.filter((a) => a.engagement === "PMS").map((a) => a.accountId));
     const small = smallKeysOf(positions);
     const onRows = positions.filter((p) => !mandateAccounts.has(p.accountId) && !small.has(p.securityKey)
-      && !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null));
+      && !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)));
     const byKey = new Map();
     for (const p of onRows) {
       // A statement mark is struck on the day it PRICES — `priceAsOf` where the

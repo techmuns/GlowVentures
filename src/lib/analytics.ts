@@ -269,9 +269,19 @@ export const isFundVehicle = (p: { assetClass: string }) => FUND_CLASSES.has(p.a
  * eight positions stand at zero units and three of them are CASH balances
  * (Buoyant's sleeve twice, Molecule's TDS), which are nil and not redeemed. The
  * other five are this: 3P's three classes and HDFC's two schemes.
+ *
+ * OR THE STATEMENT PRINTS THE NIL ITSELF (Stage 10eq). Motilal Oswal's folio
+ * statement 90414963315 prints `Balance Units: 0.000` under each of its three
+ * schemes and no NAV at all: Arbitrage redeemed on 23 Sep 2026, Midcap and
+ * Liquid at nil all period. Zero units and a zero value, both read off the
+ * statement (`parseNum`: a dash or a blank is null, never 0), are the
+ * measurement a NAV would otherwise witness, and the test `tranches.ts` already
+ * uses for a line that holds nothing. Without it the three rows stayed current
+ * at ₹0, and the NAV movers card drew Midcap as a ₹0 row once AMFI had a
+ * previous NAV for it.
  */
-export const isRedeemedToNil = (p: { assetClass: string; quantity: number | null; currentPrice: number | null }) =>
-  isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null;
+export const isRedeemedToNil = (p: { assetClass: string; quantity: number | null; currentPrice: number | null; marketValue?: number | null }) =>
+  isFundVehicle(p) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
 
 /**
  * ── WHAT THE FAMILY STILL HOLDS ─────────────────────────────────────────────
@@ -740,8 +750,6 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
    */
   "motilal-oswal-arbitrage-fund-direct-plan-growth":
     "Motilal Oswal Arbitrage Fund - Direct Growth (INF247L01ED1) — AMFI: Hybrid Scheme - Arbitrage Fund; the review's Debt tab, overruled by the family's instruction",
-  "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth":
-    "Earlier AMFI/depository spelling of INF247L01ED1 — Arbitrage Fund; the family's cash-equivalent rule",
   "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth":
     "Bandhan Arbitrage Fund - Direct Growth (INF194K01Y60) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
   /**

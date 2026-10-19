@@ -50,8 +50,15 @@ ok("every entry carries the ISIN it was joined on",
   BOOK_FUND_NAVS.every((e) => /^IN[EF][0-9A-Z]{9}$/.test(e.isin)));
 ok("...and says which tier supplied it",
   BOOK_FUND_NAVS.every((e) => e.isinFrom === "statement" || e.isinFrom === "look-through"));
+// The look-through is in use where it SUPPLIES an ISIN or where it answers
+// beside the statement and agrees — a disagreement refuses the scheme, so that
+// answer is load-bearing. Since Stage 10ep read Active Momentum's printed ISIN
+// it supplies none; an index that stopped resolving would still fail here.
 ok("both tiers are actually in use, so neither is dead",
-  BOOK_FUND_NAVS.some((e) => e.isinFrom === "statement") && BOOK_FUND_NAVS.some((e) => e.isinFrom === "look-through"));
+  BOOK_FUND_NAVS.some((e) => e.isinFrom === "statement")
+    && BOOK_FUND_NAVS.some((e) => e.isinFrom === "look-through" || e.isinAgreedBy === "look-through"),
+  `${BOOK_FUND_NAVS.filter((e) => e.isinFrom === "look-through").length} supplied, ${
+    BOOK_FUND_NAVS.filter((e) => e.isinAgreedBy === "look-through").length} confirmed by the look-through`);
 ok("every NAV is a positive finite number with its own publication date",
   BOOK_FUND_NAVS.every((e) => Number.isFinite(e.nav) && e.nav > 0 && /^\d{4}-\d{2}-\d{2}$/.test(e.date)));
 
