@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T09:41:51.019Z",
+  "generatedAt": "2026-10-19T12:27:17.143Z",
   "summary": {
     "documents": 424,
     "parsed": 420,
@@ -4451,10 +4451,10 @@
       "accruedIncome": null
     },
     {
-      "docKey": "buoyant-capital-103472-2026-10-12-holdings",
+      "docKey": "buoyant-capital-103472-2026-09-30-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103472",
-      "asOf": "2026-10-12",
+      "asOf": "2026-09-30",
       "reportType": "holdings",
       "check": "total market value (incl. cash)",
       "rowSum": 269970617.52,
@@ -4469,10 +4469,10 @@
       "outstandingDividend": null
     },
     {
-      "docKey": "buoyant-capital-103472-2026-10-12-holdings",
+      "docKey": "buoyant-capital-103472-2026-09-30-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103472",
-      "asOf": "2026-10-12",
+      "asOf": "2026-09-30",
       "reportType": "holdings",
       "check": "total cost (incl. cash)",
       "rowSum": 249410446.32,
@@ -4487,10 +4487,10 @@
       "outstandingDividend": null
     },
     {
-      "docKey": "buoyant-capital-103472-2026-10-12-holdings",
+      "docKey": "buoyant-capital-103472-2026-09-30-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103472",
-      "asOf": "2026-10-12",
+      "asOf": "2026-09-30",
       "reportType": "holdings",
       "check": "% of assets sums to 100",
       "rowSum": 100,
@@ -4504,10 +4504,10 @@
       "accruedIncome": null
     },
     {
-      "docKey": "buoyant-capital-103473-2026-10-12-holdings",
+      "docKey": "buoyant-capital-103473-2026-09-30-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103473",
-      "asOf": "2026-10-12",
+      "asOf": "2026-09-30",
       "reportType": "holdings",
       "check": "total market value (incl. cash)",
       "rowSum": 480677231.99,
@@ -4522,10 +4522,10 @@
       "outstandingDividend": null
     },
     {
-      "docKey": "buoyant-capital-103473-2026-10-12-holdings",
+      "docKey": "buoyant-capital-103473-2026-09-30-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103473",
-      "asOf": "2026-10-12",
+      "asOf": "2026-09-30",
       "reportType": "holdings",
       "check": "total cost (incl. cash)",
       "rowSum": 475353990.9,
@@ -4540,10 +4540,10 @@
       "outstandingDividend": null
     },
     {
-      "docKey": "buoyant-capital-103473-2026-10-12-holdings",
+      "docKey": "buoyant-capital-103473-2026-09-30-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103473",
-      "asOf": "2026-10-12",
+      "asOf": "2026-09-30",
       "reportType": "holdings",
       "check": "% of assets sums to 100",
       "rowSum": 100,
@@ -5248,10 +5248,10 @@
       "accruedIncome": null
     },
     {
-      "docKey": "buoyant-capital-103472-2026-09-30-holdings",
+      "docKey": "buoyant-capital-103472-2026-09-29-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103472",
-      "asOf": "2026-09-30",
+      "asOf": "2026-09-29",
       "reportType": "holdings",
       "check": "total market value (incl. cash)",
       "rowSum": 269915543.56,
@@ -5266,10 +5266,10 @@
       "outstandingDividend": null
     },
     {
-      "docKey": "buoyant-capital-103472-2026-09-30-holdings",
+      "docKey": "buoyant-capital-103472-2026-09-29-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103472",
-      "asOf": "2026-09-30",
+      "asOf": "2026-09-29",
       "reportType": "holdings",
       "check": "total cost (incl. cash)",
       "rowSum": 249410446.32,
@@ -5284,10 +5284,10 @@
       "outstandingDividend": null
     },
     {
-      "docKey": "buoyant-capital-103472-2026-09-30-holdings",
+      "docKey": "buoyant-capital-103472-2026-09-29-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103472",
-      "asOf": "2026-09-30",
+      "asOf": "2026-09-29",
       "reportType": "holdings",
       "check": "% of assets sums to 100",
       "rowSum": 100,
@@ -5301,10 +5301,10 @@
       "accruedIncome": null
     },
     {
-      "docKey": "buoyant-capital-103473-2026-09-30-holdings",
+      "docKey": "buoyant-capital-103473-2026-09-29-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103473",
-      "asOf": "2026-09-30",
+      "asOf": "2026-09-29",
       "reportType": "holdings",
       "check": "total market value (incl. cash)",
       "rowSum": 480579173.92,
@@ -5319,10 +5319,10 @@
       "outstandingDividend": null
     },
     {
-      "docKey": "buoyant-capital-103473-2026-09-30-holdings",
+      "docKey": "buoyant-capital-103473-2026-09-29-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103473",
-      "asOf": "2026-09-30",
+      "asOf": "2026-09-29",
       "reportType": "holdings",
       "check": "total cost (incl. cash)",
       "rowSum": 475353990.9,
@@ -5337,10 +5337,10 @@
       "outstandingDividend": null
     },
     {
-      "docKey": "buoyant-capital-103473-2026-09-30-holdings",
+      "docKey": "buoyant-capital-103473-2026-09-29-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103473",
-      "asOf": "2026-09-30",
+      "asOf": "2026-09-29",
       "reportType": "holdings",
       "check": "% of assets sums to 100",
       "rowSum": 100,
@@ -18278,10 +18278,10 @@
       "fromPrinted": false
     },
     {
-      "docKey": "buoyant-capital-103472-2026-09-30-holdings",
+      "docKey": "buoyant-capital-103472-2026-09-29-holdings",
       "provider": "Buoyant Capital",
       "accountNo": "103472",
-      "asOf": "2026-09-30",
+      "asOf": "2026-09-29",
       "reportType": "holdings",
       "security": "Buoyant Opportunities Strategy — Category III — Class A4",
       "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",

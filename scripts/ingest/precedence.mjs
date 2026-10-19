@@ -159,13 +159,20 @@ export const PRECEDENCE = {
    * over). `newestWins` is honoured by build-book's `authoritative()` and
    * applies to Buoyant's holdings alone; every other provider keeps the first
    * report type its rule names.
+   *
+   * AND THE FUND'S OWN ACCOUNT STATEMENT IS THE SAME FACT AGAIN (Stage 10et).
+   * The snap is that statement with a third page. October's delivery carried
+   * the account statements alone — both folios, valued at the 29 and 30 Sep
+   * NAVs — and with `holdings` missing from this list they were read in full
+   * and never used: the book kept the 31 Aug snap. Both folios now send account
+   * statements, so the note above about 103472 sending none no longer holds.
    */
   "Buoyant Capital": {
     ...PMS_REPORTING_SYSTEM,
     holdings: {
-      reportTypes: ["appraisal", "portfolio-snap"],
+      reportTypes: ["appraisal", "portfolio-snap", "holdings"],
       newestWins: true,
-      note: "the NEWER of the PMS appraisal and the fund's own portfolio snap — two statements of the same units and NAV at different dates; on one date the appraisal wins.",
+      note: "the NEWEST of the PMS appraisal, the fund's portfolio snap and its account statement — three statements of the same units and NAV at different dates; on one date the appraisal wins, then the snap.",
     },
   },
 
