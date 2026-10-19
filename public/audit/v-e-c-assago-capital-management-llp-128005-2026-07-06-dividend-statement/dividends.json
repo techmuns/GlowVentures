@@ -10,7 +10,8 @@
    "receivable",
    "received",
    "netAmount",
-   "balance"
+   "balance",
+   "tds"
   ],
   [
    "Amount"

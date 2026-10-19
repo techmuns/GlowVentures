@@ -69,7 +69,9 @@ export function extract({ grid, meta = {} }) {
     owner: null,
     asOf: date,
     reportType: "payment-advice",
-    bankAdvice: { account, date, amount, direction, description, folioClaimedByFileName: claimedFolio },
+    // Every field of the receipt is in the `advice` section below — the
+    // archive's record of it. A second copy under a key the document contract
+    // does not carry was dropped on every run and warned that it was.
     holdings: [],
     totals: null,
     excludedFromBook:

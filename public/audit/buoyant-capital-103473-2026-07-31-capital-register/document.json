@@ -17,13 +17,8 @@
  "reportType": "capital-register",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_CapitalRegister1173CT.pdf",
  "pages": 1,
- "status": "partial",
- "warnings": [
-  {
-   "code": "columns-not-matched",
-   "detail": "notes"
-  }
- ],
+ "status": "ok",
+ "warnings": [],
  "holdings": [],
  "totals": null,
  "returns": [],
@@ -86,7 +81,7 @@
    "amount": 225353990.9,
    "units": null,
    "netAmount": null,
-   "settlementDate": null,
+   "settlementDate": "2026-06-01",
    "tranAccount": null,
    "buySellAmount": null,
    "income": null,
@@ -94,7 +89,7 @@
    "depositWithdrawal": null,
    "credit": 225353990.9,
    "debit": 0,
-   "notes": null,
+   "notes": "BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 - 1619755.801214",
    "balance": 435353990.9,
    "source": "buoyant-capital-103473-2026-07-31-capital-register"
   },
@@ -132,7 +127,7 @@
    "amount": -225353990.9,
    "units": null,
    "netAmount": null,
-   "settlementDate": null,
+   "settlementDate": "2026-06-01",
    "tranAccount": null,
    "buySellAmount": null,
    "income": null,
@@ -140,7 +135,7 @@
    "depositWithdrawal": null,
    "credit": 0,
    "debit": 225353990.9,
-   "notes": null,
+   "notes": "BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A1 - 1489474.00322",
    "balance": 460000000,
    "source": "buoyant-capital-103473-2026-07-31-capital-register"
   }

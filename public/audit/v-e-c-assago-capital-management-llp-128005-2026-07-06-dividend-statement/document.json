@@ -17,13 +17,8 @@
  "reportType": "dividend-statement",
  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_DividendStatement_India177OT (1).pdf",
  "pages": 2,
- "status": "partial",
- "warnings": [
-  {
-   "code": "columns-not-matched",
-   "detail": "tds"
-  }
- ],
+ "status": "ok",
+ "warnings": [],
  "holdings": [],
  "totals": null,
  "returns": [],
@@ -43,7 +38,7 @@
    "ratePerUnit": 1.5,
    "receivable": 25036.5,
    "received": 25036.5,
-   "tds": null,
+   "tds": 0,
    "netAmount": 25036.5,
    "entitlement": null,
    "source": "v-e-c-assago-capital-management-llp-128005-2026-07-06-dividend-statement"

@@ -745,6 +745,16 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
   "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth":
     "Bandhan Arbitrage Fund - Direct Growth (INF194K01Y60) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
   /**
+   * Ankita's ICICI Prudential folio 14320536 (Stage 10ep — first read in the
+   * October delivery): both arbitrage schemes are redeemed to a printed 0.000
+   * units, so they hold nothing today; listed so the family's arbitrage-is-cash
+   * rule covers them wherever their history is shown.
+   */
+  "icici-prudential-arbitrage-fund-direct-plan-growth":
+    "ICICI Prudential Arbitrage Fund - Direct Plan - Growth — named an Arbitrage Fund on its own statement; the family's instruction of 23 Sep 2026",
+  "icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment":
+    "ICICI Prudential Arbitrage Fund - Direct Plan - IDCW (reinvestment) — named an Arbitrage Fund on its own statement; the family's instruction of 23 Sep 2026",
+  /**
    * THE BHARAT JAISINGHANI FAMILY TRUST'S DEMAT (Stage 10db). Its holding
    * statement spells two of its three funds the depository's clipped way, and
    * the third, ICICI Pru Liquid, shares `icici-liqf-d-growth` with the other

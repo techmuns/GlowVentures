@@ -9,6 +9,33 @@
    "navDate",
    "invested",
    "currentValue"
+  ],
+  [
+   "",
+   "Balanced Advantage Fund Growth",
+   0,
+   76.3,
+   "2026-09-30",
+   0,
+   0
+  ],
+  [
+   "INF109K015O6",
+   "ICICI Prudential Arbitrage Fund - Direct Plan - IDCW # IDCW Reinvestment",
+   0,
+   14.8509,
+   "2020-02-28",
+   null,
+   0
+  ],
+  [
+   "INF109K016O4",
+   "ICICI Prudential Arbitrage Fund - Direct Plan - Growth",
+   0,
+   28.1423,
+   "2021-04-15",
+   null,
+   0
   ]
  ]
 }

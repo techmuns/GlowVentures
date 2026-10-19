@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding1 .pdf",
  "pages": 1,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "account-holds-nothing",

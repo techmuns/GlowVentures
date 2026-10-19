@@ -21,7 +21,7 @@
  "warnings": [
   {
    "code": "pdf-read-failed",
-   "detail": "unrecognised spreadsheet format"
+   "detail": "not a workbook: the file is a mail server's removal notice in its place — \"This attachment was removed because it contains data that could pose a security risk.\" The statement itself never arrived and must be re-sent; there is nothing here to read."
   }
  ],
  "holdings": [],

@@ -1,5 +1,5 @@
 {
- "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-unknown",
+ "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-trial-balance",
  "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
  "accountNo": "3517383",
  "ownerSource": "printed",
@@ -8,22 +8,17 @@
  "owner": "AJAY T JAISINGHANI",
  "ownerId": "ajay-jaisinghani",
  "familyGroup": null,
- "strategy": "CARNELIAN BESPOKE PORTFOLIO",
+ "strategy": null,
  "engagement": "PMS",
  "providerEngagement": "Portfolio Management Service",
  "members": [],
  "asOf": "2026-10-07",
  "inceptionDate": null,
- "reportType": "unknown",
- "sourcePath": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ReportPerformancebySecurityInception6077OT.pdf",
+ "reportType": "trial-balance",
+ "sourcePath": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ReportTrialBalance1733OT.pdf",
  "pages": 2,
- "status": "failed",
- "warnings": [
-  {
-   "code": "no-reader-for-report-type",
-   "detail": "unknown: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark, transaction-statement, capital-gain, dividend-statement, corporate-benefits, bank-book, capital-register, expense-statement, holdings, profit-and-loss, income-expense. Left unread rather than half-read."
-  }
- ],
+ "status": "ok",
+ "warnings": [],
  "holdings": [],
  "totals": null,
  "returns": [],
@@ -33,7 +28,7 @@
  "capitalGains": [],
  "income": [],
  "expenses": [],
- "periodFrom": null,
+ "periodFrom": "2026-04-01",
  "periodTo": "2026-10-07",
  "pan": null,
  "sourcePages": null,
@@ -52,7 +47,17 @@
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [],
- "checks": null,
+ "checks": {
+  "passed": [
+   "every account: opening + movement = closing (18)",
+   "Total on page 1 = its 17 account(s), in all six columns",
+   "Total on page 2 = its 1 account(s), in all six columns",
+   "Net Total on page 2 = debit − credit of the Total above it",
+   "the ledger balances: debits = credits, opening, movement and closing"
+  ],
+  "notApplicable": [],
+  "failed": []
+ },
  "stitches": [],
  "derivedPortfolioTotal": null
 }

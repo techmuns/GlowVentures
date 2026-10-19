@@ -1681,6 +1681,11 @@ export function buoyantSnapSchemeHoldings(text) {
 const LAYOUTS = [
   {
     key: "buoyant",
+    // Verified line by line against the 31 Jul, 30 Sep and 12 Oct account
+    // statements: the Account Summary row, every Cash Deposit, every class's
+    // allotments and redemptions and the Gain Distr. are all on the document, so
+    // a statement read with no warning IS read completely, and says so.
+    okWhenClean: true,
     engagement: "AIF",
     providerEngagement: "Category III AIF - the statement titles the class CATEGORY III",
     provider: PROVIDERS.buoyant,
@@ -1763,6 +1768,9 @@ const LAYOUTS = [
   },
   {
     key: "activeMomentum",
+    // The Portfolio Summary row, the scheme's ISIN and its one Net Purchase are
+    // everything this folio prints; read clean, it is read completely.
+    okWhenClean: true,
     engagement: "Direct",
     providerEngagement: "mutual-fund folio, Direct Plan as the statement states",
     provider: PROVIDERS.activeMomentum,
@@ -1781,6 +1789,9 @@ const LAYOUTS = [
       marketPrice: n(m[4]), printedValue: n(m[5]),
     }),
     security: (_t, r) => r.scheme,
+    // `Scheme Motilal Oswal Active Momentum Fund - Direct Plan Growth- ISIN No :
+    // INF247L01EP5 (Non - Demat)` — printed on the transaction block's heading.
+    isin: (text) => (/ISIN\s+No\s*:\s*(INF[0-9A-Z]{9})/i.exec(text) ?? [])[1] ?? null,
     folio: (text) => FIELD(text, "FOLIO", String.raw`(\d{6,})`),
     asOf: (text) => toIso((/Portfolio Summary as on\s+(\d{2}\/\d{2}\/\d{4})/i.exec(text) ?? [])[1]),
     holder: (text) => FIELD(text, "Name"),
@@ -1805,6 +1816,9 @@ const LAYOUTS = [
   },
   {
     key: "helios",
+    // The Account Summary row, the ISIN and the Net Purchase are everything this
+    // folio prints (the PAN is masked on its face); read clean, it is complete.
+    okWhenClean: true,
     engagement: "Direct",
     providerEngagement: "mutual-fund folio, Direct plan as the statement states",
     provider: PROVIDERS.helios,

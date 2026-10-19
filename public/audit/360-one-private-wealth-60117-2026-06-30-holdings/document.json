@@ -30,12 +30,8 @@
  "reportType": "holdings",
  "sourcePath": "source/360 - BHARAT.pdf",
  "pages": 11,
- "status": "partial",
+ "status": "ok",
  "warnings": [
-  {
-   "code": "columns-not-matched",
-   "detail": "marketPrice, benchmark"
-  },
   {
    "code": "section-reported-empty",
    "detail": "transaction: the report states \"No data available to generate …\""

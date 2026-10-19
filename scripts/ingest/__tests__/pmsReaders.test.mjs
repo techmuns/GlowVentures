@@ -74,8 +74,12 @@ const allotments = [
     `got ${a4?.quantity} @ ${a4?.unitPrice}`);
   ok("Buoyant: the blank Exchange column binds to nothing — no exchange carries a figure",
     t.every((x) => x.exchange === null), JSON.stringify(t.map((x) => x.exchange)));
-  ok("Buoyant: the unmatched column is named, and it is the exchange",
-    (doc.warnings ?? []).some((w) => w.code === "columns-not-matched" && /exchange/.test(w.detail) && !/quantity|unitPrice/.test(w.detail)),
+  // The Exchg label IS printed — over a column the statement leaves blank on
+  // every row. A printed column read as blank is not a column this reader
+  // failed to find, so nothing is reported missing; and the count and price it
+  // must not steal stay bound to their own labels.
+  ok("Buoyant: the printed-but-blank exchange is not reported as a missing column, and nothing else is either",
+    !(doc.warnings ?? []).some((w) => w.code === "columns-not-matched"),
     JSON.stringify(doc.warnings));
   ok("Buoyant: the section names the class — a fund's own units are an AIF", t.every((x) => x.assetClass === "AIF"),
     JSON.stringify(t.map((x) => x.assetClass)));
@@ -392,7 +396,11 @@ for (const docKey of INVESTOR) {
     if (/^performance-(summary|history)$/.test(d.reportType) || d.reportType === "investor-report") {
       struck++;
       const parts = d.reportType === "investor-report" ? bridgeInvestor(f) : bridgePms(f);
-      if (!ties(parts, f.corpus) && !(d.status === 'partial' && d.warnings.some(w => w.code === 'value-bridge-mismatch')))
+      // A bridge the ISSUER's own lines do not close is reported by name. Since
+      // Stage 10ep that is a statement note (lib/readStatus.mjs) — the report is
+      // read in full and the inconsistency is Carnelian's — so the WARNING is
+      // the claim, not a `partial` status.
+      if (!ties(parts, f.corpus) && !d.warnings.some(w => w.code === 'value-bridge-mismatch'))
         gaps.push(`${e.docKey} parts ${Math.round(parts * 100) / 100} vs ${f.corpus}`);
     }
     if (d.reportType === "performance-history") {

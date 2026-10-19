@@ -14,7 +14,8 @@
    "purchaseAmt",
    "effectiveCost",
    "shortTerm",
-   "longTerm"
+   "longTerm",
+   "effectiveLT"
   ],
   [
    "(M)"

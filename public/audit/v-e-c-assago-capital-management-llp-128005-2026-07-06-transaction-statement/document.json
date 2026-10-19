@@ -17,7 +17,7 @@
  "reportType": "transaction-statement",
  "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_TransactionStatement_India94OT.pdf",
  "pages": 2,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "tds-transfers-are-not-trades",

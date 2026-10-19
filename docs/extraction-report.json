@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-15T14:23:19.991Z",
+  "generatedAt": "2026-10-19T09:41:51.019Z",
   "summary": {
     "documents": 424,
-    "parsed": 328,
-    "partial": 85,
-    "failed": 11,
-    "rowSumChecks": 372,
+    "parsed": 420,
+    "partial": 0,
+    "failed": 4,
+    "rowSumChecks": 376,
     "totalMismatches": 138,
     "totalsMaterial": 9,
     "totalsExplained": 52,
-    "totalsRounding": 153,
+    "totalsRounding": 154,
     "derivedVsPrintedDeltas": 982,
     "derivedMaterial": 7,
     "derivedExplained": 438,
@@ -18,7 +18,7 @@
     "datedMaterial": 3,
     "datedExplained": 169,
     "datedRounding": 329,
-    "crossReportDeltas": 25,
+    "crossReportDeltas": 28,
     "suspectedDuplicates": 0,
     "quantityOnlyMatches": 3,
     "confirmedSeparateByFamily": 4,
@@ -249,16 +249,11 @@
         "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT.pdf",
         "sameAs": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_CapitalRegister1173OT (1).pdf",
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
-      },
-      {
-        "path": "source/october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf",
-        "sameAs": "source/_extracted/october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf",
-        "sha256": "606192d2e1d43189a75bd1cf437bc1c12ebdeb0d8b0aa86cf0f1c0eabd62d5af"
       }
     ],
-    "parsed": 328,
-    "partial": 85,
-    "failed": 11,
+    "parsed": 420,
+    "partial": 0,
+    "failed": 4,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -324,8 +319,8 @@
       },
       "Sky Capital Rising Titans Fund": {
         "holdings": {
-          "ok": 0,
-          "partial": 20,
+          "ok": 20,
+          "partial": 0,
           "failed": 0
         }
       },
@@ -346,8 +341,8 @@
           "failed": 0
         },
         "dividend-statement": {
-          "ok": 5,
-          "partial": 1,
+          "ok": 6,
+          "partial": 0,
           "failed": 0
         },
         "expense-statement": {
@@ -381,8 +376,8 @@
           "failed": 0
         },
         "transaction-statement": {
-          "ok": 4,
-          "partial": 2,
+          "ok": 6,
+          "partial": 0,
           "failed": 0
         },
         "corporate-benefits": {
@@ -390,10 +385,10 @@
           "partial": 0,
           "failed": 0
         },
-        "unknown": {
-          "ok": 0,
+        "open-lots": {
+          "ok": 1,
           "partial": 0,
-          "failed": 1
+          "failed": 0
         }
       },
       "ICICI Bank (payment advice)": {
@@ -405,8 +400,8 @@
       },
       "Motilal Oswal Founders Fund": {
         "holdings": {
-          "ok": 0,
-          "partial": 5,
+          "ok": 5,
+          "partial": 0,
           "failed": 0
         }
       },
@@ -419,25 +414,25 @@
       },
       "Baring Private Equity India Fund": {
         "holdings": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         }
       },
       "Buoyant Capital": {
         "holdings": {
-          "ok": 0,
-          "partial": 7,
+          "ok": 7,
+          "partial": 0,
           "failed": 0
         },
         "capital-register": {
-          "ok": 1,
-          "partial": 1,
+          "ok": 2,
+          "partial": 0,
           "failed": 0
         },
         "appraisal": {
-          "ok": 0,
-          "partial": 2,
+          "ok": 2,
+          "partial": 0,
           "failed": 0
         },
         "fact-sheet": {
@@ -451,8 +446,8 @@
           "failed": 0
         },
         "transaction-statement": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         },
         "portfolio-snap": {
@@ -463,41 +458,41 @@
       },
       "Carnelian Bharat Amritkaal Fund": {
         "holdings": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         }
       },
       "Motilal Oswal Delphi Equity Fund": {
         "holdings": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         }
       },
       "Motilal Oswal Financial Services (demat)": {
         "holdings": {
-          "ok": 0,
-          "partial": 6,
+          "ok": 6,
+          "partial": 0,
           "failed": 0
         },
         "demat-transactions": {
-          "ok": 0,
-          "partial": 6,
+          "ok": 6,
+          "partial": 0,
           "failed": 0
         }
       },
       "Neo Infra Income Opportunities Fund": {
         "holdings": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         }
       },
       "Carnelian Asset Management and Advisors Pvt Ltd": {
         "capital-gain": {
-          "ok": 2,
-          "partial": 1,
+          "ok": 3,
+          "partial": 0,
           "failed": 0
         },
         "dividend-statement": {
@@ -561,19 +556,24 @@
           "failed": 0
         },
         "investor-report": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         },
         "profit-and-loss": {
-          "ok": 0,
+          "ok": 1,
           "partial": 0,
-          "failed": 1
+          "failed": 0
         },
-        "unknown": {
-          "ok": 0,
+        "performance-by-security": {
+          "ok": 1,
           "partial": 0,
-          "failed": 2
+          "failed": 0
+        },
+        "trial-balance": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
         }
       },
       "Green Lantern Capital LLP": {
@@ -650,14 +650,9 @@
       },
       "Aditya Birla Sun Life Mutual Fund": {
         "holdings": {
-          "ok": 4,
+          "ok": 5,
           "partial": 0,
           "failed": 0
-        },
-        "unknown": {
-          "ok": 0,
-          "partial": 0,
-          "failed": 1
         }
       },
       "HDFC Mutual Fund": {
@@ -705,22 +700,22 @@
       },
       "360 ONE Private Wealth": {
         "holdings": {
-          "ok": 0,
-          "partial": 8,
+          "ok": 8,
+          "partial": 0,
           "failed": 0
         }
       },
       "3P Investment Managers": {
         "holdings": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         }
       },
       "SVAN Investment Managers LLP": {
         "investor-report": {
-          "ok": 5,
-          "partial": 2,
+          "ok": 7,
+          "partial": 0,
           "failed": 0
         },
         "bank-book": {
@@ -729,8 +724,8 @@
           "failed": 0
         },
         "appraisal": {
-          "ok": 0,
-          "partial": 2,
+          "ok": 2,
+          "partial": 0,
           "failed": 0
         },
         "transaction-statement": {
@@ -739,8 +734,8 @@
           "failed": 0
         },
         "capital-gain": {
-          "ok": 0,
-          "partial": 2,
+          "ok": 2,
+          "partial": 0,
           "failed": 0
         },
         "corporate-benefits": {
@@ -754,16 +749,16 @@
           "failed": 0
         },
         "expense-statement": {
-          "ok": 0,
-          "partial": 2,
+          "ok": 2,
+          "partial": 0,
           "failed": 0
         }
       },
       "ICICI Prudential Mutual Fund": {
         "holdings": {
-          "ok": 2,
+          "ok": 3,
           "partial": 0,
-          "failed": 2
+          "failed": 0
         }
       },
       "(unidentified)": {
@@ -853,15 +848,15 @@
           "failed": 0
         },
         "transaction-statement": {
-          "ok": 2,
-          "partial": 2,
+          "ok": 4,
+          "partial": 0,
           "failed": 0
         }
       },
       "360 ONE Alternates Asset Management": {
         "unknown": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         },
         "distribution-notice": {
@@ -884,8 +879,8 @@
       },
       "ICICI Bank (NSDL demat)": {
         "holdings": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         }
       },
@@ -905,22 +900,22 @@
       },
       "Motilal Oswal Active Momentum Fund": {
         "holdings": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         }
       },
       "Helios Mutual Fund": {
         "holdings": {
-          "ok": 0,
-          "partial": 1,
+          "ok": 1,
+          "partial": 0,
           "failed": 0
         }
       },
       "India SME Investments": {
         "holdings": {
-          "ok": 0,
-          "partial": 3,
+          "ok": 3,
+          "partial": 0,
           "failed": 0
         }
       },
@@ -958,8 +953,8 @@
           "failed": 0
         },
         "transaction-statement": {
-          "ok": 2,
-          "partial": 2,
+          "ok": 4,
+          "partial": 0,
           "failed": 0
         }
       },
@@ -969,74 +964,23 @@
           "partial": 0,
           "failed": 0
         }
+      },
+      "Scheme portfolio disclosure": {
+        "scheme-portfolio": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        }
       }
     },
     "failures": [
-      {
-        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-profit-and-loss",
-        "sourcePath": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ProfitLossAccount1213OT.pdf",
-        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
-        "reportType": "profit-and-loss",
-        "reasons": [
-          "profit-and-loss-line-missing: otherIncome not printed. Nothing is published from a P&L account that cannot be closed."
-        ]
-      },
-      {
-        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-unknown",
-        "sourcePath": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ReportPerformancebySecurityInception6077OT.pdf",
-        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
-        "reportType": "unknown",
-        "reasons": [
-          "no-reader-for-report-type: unknown: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark, transaction-statement, capital-gain, dividend-statement, corporate-benefits, bank-book, capital-register, expense-statement, holdings, profit-and-loss, income-expense. Left unread rather than half-read."
-        ]
-      },
-      {
-        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-unknown-2",
-        "sourcePath": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ReportTrialBalance1733OT.pdf",
-        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
-        "reportType": "unknown",
-        "reasons": [
-          "no-reader-for-report-type: unknown: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark, transaction-statement, capital-gain, dividend-statement, corporate-benefits, bank-book, capital-register, expense-statement, holdings, profit-and-loss, income-expense. Left unread rather than half-read.",
-          "duplicate-doc-key: carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-unknown was already claimed by source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ReportPerformancebySecurityInception6077OT.pdf; filed as carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-unknown-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
       {
         "docKey": "unknown-unknown-2026-10-06-unknown",
         "sourcePath": "source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls",
         "provider": "(unidentified)",
         "reportType": "unknown",
         "reasons": [
-          "pdf-read-failed: unrecognised spreadsheet format"
-        ]
-      },
-      {
-        "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-unknown-unknown",
-        "sourcePath": "source/_extracted/october-2026-c/LKP/ABSL1_Stmt_B_INA000009861.pdf",
-        "provider": "Aditya Birla Sun Life Mutual Fund",
-        "reportType": "unknown",
-        "reasons": [
-          "holder-not-read: no holder name line matched in the address block",
-          "holdings-not-read: no scheme block matched in any of the four known folio layouts",
-          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #8",
-          "owner-unresolved: \"(no name printed)\" / PAN AABTH4894A matches no canonical owner — add the PAN to shared/owners.mjs, which is evidence rather than a spelling"
-        ]
-      },
-      {
-        "docKey": "icici-prudential-mutual-fund-14320536-2026-10-01-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Account Statement for AKQPK9422Q.pdf",
-        "provider": "ICICI Prudential Mutual Fund",
-        "reportType": "holdings",
-        "reasons": [
-          "holdings-not-read: no scheme block matched in any of the four known folio layouts"
-        ]
-      },
-      {
-        "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-unknown",
-        "sourcePath": "source/_extracted/october-2026-c/VEC - ANKITA/G128004_145038_OpenLots_India471OT (1).pdf",
-        "provider": "V.E.C Assago Capital Management LLP",
-        "reportType": "unknown",
-        "reasons": [
-          "no-reader-for-report-type: unknown: this engine reads appraisal, fact-sheet, performance-summary, performance-history, performance-benchmark, transaction-statement, capital-gain, dividend-statement, corporate-benefits, bank-book, capital-register, expense-statement, holdings, profit-and-loss, income-expense. Left unread rather than half-read."
+          "pdf-read-failed: not a workbook: the file is a mail server's removal notice in its place — \"This attachment was removed because it contains data that could pose a security risk.\" The statement itself never arrived and must be re-sent; there is nothing here to read."
         ]
       },
       {
@@ -1065,661 +1009,13 @@
         "reasons": [
           "held-out-by-decision: Family investment register (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
         ]
-      },
-      {
-        "docKey": "icici-prudential-mutual-fund-unknown-unknown-holdings",
-        "sourcePath": "source/White Oak - Ajay.xlsx",
-        "provider": "ICICI Prudential Mutual Fund",
-        "reportType": "holdings",
-        "reasons": [
-          "folio-not-read: no `Folio No.` / `Folio Number` on the statement",
-          "holder-not-read: no holder name line matched in the address block",
-          "holdings-not-read: no scheme block matched in any of the four known folio layouts"
-        ]
       }
     ],
-    "partials": [
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky003-2026-04-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA Apr 30, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky003-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA July 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky003-2026-06-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA June 30, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky003-2026-05-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY003 - Bharat Jaisinghani_SOA May 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky022-2026-04-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA Apr 30, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky022-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA July 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky022-2026-06-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA June 30, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky022-2026-05-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY022 - Ajay T Jaisinghani_SOA May 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky023-2026-04-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA Apr 30, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky023-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA July 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky023-2026-06-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA June 30, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky023-2026-05-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY023 - BJ Trust 2_SOA May 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky024-2026-04-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA Apr 30, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky024-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA July 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky024-2026-06-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA June 30, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky024-2026-05-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA May 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Founders Fund.pdf",
-        "reasons": [
-          "statement-basis: the NAV on this statement is POST-TAX on REALISED gains only; the fund states that tax on unrealised gains is not in it and appears only in the redemption NAV"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-founders-fund-90410016093-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ankita Jaisinghani_Motilal Oswal Founders Fund.pdf",
-        "reasons": [
-          "statement-basis: the NAV on this statement is POST-TAX on REALISED gains only; the fund states that tax on unrealised gains is not in it and appears only in the redemption NAV"
-        ]
-      },
-      {
-        "docKey": "baring-private-equity-india-fund-aifm-bpepf6-0584-2026-03-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/ANKITA_JAISINGHANI_Class_A1_STATEMENT_2026-03-31_AIFM_BPEPF6_0584.pdf",
-        "reasons": [
-          "statement-basis: the family's consolidated review files this fund under Alternate / PE Funds — its EXPOSURE, where `assetClass` records its legal form as a Category II AIF"
-        ]
-      },
-      {
-        "docKey": "buoyant-capital-103472-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_AccountStatement5004CT.pdf",
-        "reasons": []
-      },
-      {
-        "docKey": "buoyant-capital-103472-2026-07-31-appraisal",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_PortfolioAppraisal675CT.pdf",
-        "reasons": [
-          "unparseable-cell: (continuation) · pctAssets = \"(Cost)\"",
-          "equity-subtotal-not-found: no unlabelled subtotal closed the Equity section"
-        ]
-      },
-      {
-        "docKey": "buoyant-capital-103473-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_AccountStatement5004CT (2).pdf",
-        "reasons": []
-      },
-      {
-        "docKey": "buoyant-capital-103473-2026-07-31-capital-register",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_CapitalRegister1173CT.pdf",
-        "reasons": [
-          "columns-not-matched: notes"
-        ]
-      },
-      {
-        "docKey": "buoyant-capital-103473-2026-07-31-appraisal",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_PortfolioAppraisal675CT (1).pdf",
-        "reasons": [
-          "unparseable-cell: (continuation) · pctAssets = \"(Cost)\"",
-          "equity-subtotal-not-found: no unlabelled subtotal closed the Equity section"
-        ]
-      },
-      {
-        "docKey": "buoyant-capital-103473-2026-07-31-transaction-statement",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_TransactionStatement_India94CT.pdf",
-        "reasons": [
-          "columns-not-matched: exchange",
-          "unit-movements-are-not-trades: 2 unit movement row(s) (1 × \"Security in\", 1 × \"Security out\") — units moved in or out with no counterparty and no consideration (a demerger, a class switch or a transfer). None is a trade, so none is emitted as one."
-        ]
-      },
-      {
-        "docKey": "carnelian-bharat-amritkaal-fund-4551-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Carnelian _4551_06082026162230819762.pdf",
-        "reasons": [
-          "statement-basis: the family's consolidated review files this fund under Equity / Thematic-Tactical — its EXPOSURE, where `assetClass` records its legal form as a Category III AIF. Its units stay whole either way; it is never spread across the sectors it invests in"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
-        "reasons": [
-          "statement-basis: the family's consolidated review carries this holding under the name of what it OWNS — `Fund of Funds (VEC + Carnelian + Girik Cap + Insightful)` — and files it under Equity / Multi Cap. Same units (99,995) and same NAV; its closing value differs by ₹100 only because the review rounds the NAV to two decimals. It is a FUND OF FUNDS, so the family holds V.E.C and Carnelian both directly and through this; nothing is looked through and nothing is counted twice"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf",
-        "reasons": [
-          "aif-units-carry-face-value-not-nav: 2 AIF holding(s) are carried with units and NO market value, because the rate this statement prints for them is the FACE VALUE the units were issued at rather than a NAV — 3P India Equity Fund 1 — Class B3 (2053614.026 units at a face value of 100); Buoyant Opportunities Strategy — Class A4 (3416657.416 units at a face value of 100). Where the fund itself issues a statement in this book, that is where the valuation comes from."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf",
-        "reasons": [
-          "depository-movements-are-not-trades: 210 depository movement(s) read across 38 holding(s), 38 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 of the 86 pledge / lock-in row(s) changed a balance, so their exclusion from the in/out totals rests on evidence rather than on the assumption that they are neutral. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding .pdf",
-        "reasons": [
-          "rate-is-last-movement-price: 14 holding(s) print a rate and a value that describe the holding's LAST DEPOSITORY MOVEMENT, not its balance — e.g. ABSL BAL ADV-GROWTH: 183499.511 held, rate 108.65, value 19937221.76, which is 183499.510 units, the quantity of that movement. So these carry their units and no market value; the rate and value are kept as `lastMovementRate` / `lastMovementValue`, a transaction price rather than a valuation. The value column sums to the printed Total Holding Valuation of Rs 273437881.06 to the rupee, so every row was read — and that total is a sum of last-movement values, not what the account is worth."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090037436848-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19189_Bharat Jaisinghani_Holding1 .pdf",
-        "reasons": [
-          "account-holds-nothing: the statement prints `NO HOLDING IS AVAILABLE` — the account is open and empty, and that is a measurement"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191_Ankita Jaisinghani_Transation.pdf",
-        "reasons": [
-          "depository-movements-are-not-trades: 79 depository movement(s) read across 30 holding(s), 30 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 of the 4 pledge / lock-in row(s) changed a balance, so their exclusion from the in/out totals rests on evidence rather than on the assumption that they are neutral. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19191-Ankita Jaisinghani_Holding.pdf",
-        "reasons": [
-          "rate-is-last-movement-price: 23 holding(s) print a rate and a value that describe the holding's LAST DEPOSITORY MOVEMENT, not its balance — e.g. AXIS BANK EQ: 7300 held, rate 1368.25, value 2133101.75, which is 1559.000 units, the quantity of that movement. So these carry their units and no market value; the rate and value are kept as `lastMovementRate` / `lastMovementValue`, a transaction price rather than a valuation. The value column sums to the printed Total Holding Valuation of Rs 357476246.25 to the rupee, so every row was read — and that total is a sum of last-movement values, not what the account is worth.",
-          "aif-units-carry-face-value-not-nav: 13 AIF holding(s) are carried with units and NO market value, because the rate this statement prints for them is the FACE VALUE the units were issued at rather than a NAV — 3P India Equity Fund 1 — Class B3 (1416918.692 units at a face value of 100); BAVF Series 20 — Class C6 (856.736 units at a face value of —); Buoyant Opportunities Strategy — Class A4 (1918953.2 units at a face value of 100); …. Where the fund itself issues a statement in this book, that is where the valuation comes from.",
-          "no-rate-published: the depository prints no rate for 5 holding(s) — ABSL BAL ADV-GROWTH (INF084M01AB8), CHEELIZZA IND-EQ1/- (INE0MSX01027), CLEAN MAX ENV-EQ 1/- (INE647U01026), MIRAE LCF D-GROW (INF769K01AX2), …. A rate of 0.000 is read as NOT PRICED, never as a price of zero, so these carry units and no market value."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Holding.pdf",
-        "reasons": [
-          "owner-from-register: client ID 1201090032387399 is attributed to Bharat Jaisinghani Family Trust, not to the \"AARTI AJAY JAISINGHANI\" the page prints as its first holder: the family's investment register records ₹6.77 Cr paid under \"Bharat Jaisinghani Family Trust\" on 1 Jul 2025 into the ICICI Prudential Liquid and Invesco India Arbitrage direct plans (TRUST INVESTMENT, row 17), and their 30 June review carries both funds under that name with closings of 46,654.378 and 1,092,470.994 units, this account's own balances (Transactions since inception, rows 135–137 and 148–149). The holder lines print the trust's trustees.",
-          "rate-is-last-movement-price: 3 holding(s) print a rate and a value that describe the holding's LAST DEPOSITORY MOVEMENT, not its balance — e.g. ICICI LIQF D-GROWTH: 46654.378 held, rate 394.625, value 11909782.5, which is 30180.000 units, the quantity of that movement. So these carry their units and no market value; the rate and value are kept as `lastMovementRate` / `lastMovementValue`, a transaction price rather than a valuation. The value column sums to the printed Total Holding Valuation of Rs 75769571.51 to the rupee, so every row was read — and that total is a sum of last-movement values, not what the account is worth."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Transaction.pdf",
-        "reasons": [
-          "depository-movements-are-not-trades: 35 depository movement(s) read across 9 holding(s), 9 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 of the 8 pledge / lock-in row(s) changed a balance, so their exclusion from the in/out totals rests on evidence rather than on the assumption that they are neutral. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Holding.pdf",
-        "reasons": [
-          "rate-is-last-movement-price: 6 holding(s) print a rate and a value that describe the holding's LAST DEPOSITORY MOVEMENT, not its balance — e.g. DSP GOLD ETF: 1195000 held, rate 141.24, value 19562022.48, which is 138502.000 units, the quantity of that movement. So these carry their units and no market value; the rate and value are kept as `lastMovementRate` / `lastMovementValue`, a transaction price rather than a valuation. The value column sums to the printed Total Holding Valuation of Rs 68616260.13 to the rupee, so every row was read — and that total is a sum of last-movement values, not what the account is worth.",
-          "no-rate-published: the depository prints no rate for 1 holding(s) — ABSL BAL ADV-GROWTH (INF084M01AB8). A rate of 0.000 is read as NOT PRICED, never as a price of zero, so these carry units and no market value."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transactionpdf.pdf",
-        "reasons": [
-          "depository-movements-are-not-trades: 30 depository movement(s) read across 7 holding(s), 7 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 of the 2 pledge / lock-in row(s) changed a balance, so their exclusion from the in/out totals rests on evidence rather than on the assumption that they are neutral. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-demat-transactions",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation 1.pdf",
-        "reasons": [
-          "depository-movements-are-not-trades: 7 depository movement(s) read across 5 holding(s), 5 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 of the 0 pledge / lock-in row(s) changed a balance, so their exclusion from the in/out totals rests on evidence rather than on the assumption that they are neutral. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-demat-transactions",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation.pdf",
-        "reasons": [
-          "owner-from-register: client ID 1201090032387399 is attributed to Bharat Jaisinghani Family Trust, not to the \"AARTI AJAY JAISINGHANI\" the page prints as its first holder: the family's investment register records ₹6.77 Cr paid under \"Bharat Jaisinghani Family Trust\" on 1 Jul 2025 into the ICICI Prudential Liquid and Invesco India Arbitrage direct plans (TRUST INVESTMENT, row 17), and their 30 June review carries both funds under that name with closings of 46,654.378 and 1,092,470.994 units, this account's own balances (Transactions since inception, rows 135–137 and 148–149). The holder lines print the trust's trustees.",
-          "depository-movements-are-not-trades: 1 depository movement(s) read across 1 holding(s), 1 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 of the 0 pledge / lock-in row(s) changed a balance, so their exclusion from the in/out totals rests on evidence rather than on the assumption that they are neutral. A demat credit or debit carries units and no price, so none of these is a trade and none contributes a settlement, a cost or a realised gain."
-        ]
-      },
-      {
-        "docKey": "neo-infra-income-opportunities-fund-9039920536-2026-06-30-holdings",
-        "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
-        "reasons": [
-          "nav-does-not-reproduce-valuation: 485837 units at the printed NAV of 114.24 derive 55502018.88 against a printed valuation of 55498303.25 (3715.63). The valuation is used; the NAV is not a price this reader can multiply.",
-          "payouts-row-not-in-printed-total: the income rows sum to 3532396 against a printed Income Payout (Gross) of 3531941; the 455 difference is exactly one dated row — 2026-07-09 Distribution on Other Income, gross 455, TDS 46, net 409 — which the statement's own total does not count. It is carried and marked, not dropped",
-          "statement-basis: the fund's own quarterly valuation is the primitive: market value is the printed Valuation (Net), not units x the printed NAV, which does not reproduce it. The family's consolidated review classifies this fund under Debt / High Yield Fund — its EXPOSURE, where `assetClass` records its legal form"
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-37702-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026/reports/360 ONE WEALTH - AJAY.pdf",
-        "reasons": [
-          "columns-not-matched: marketPrice, benchmark",
-          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
-          "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
-        ]
-      },
-      {
-        "docKey": "3p-investment-managers-3000048-2026-07-31-holdings",
-        "sourcePath": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
-        "reasons": [
-          "statement-basis: every class on this statement stands at zero units, and the statement's own Financial Transaction(s) table says why: B1 and B2 were reclassified into B3 on 31-03-2026, and B3 was a Full Units Redemption on 31-07-2026 for 31,05,82,835.17. The zero is measured and the account is closed"
-        ]
-      },
-      {
-        "docKey": "buoyant-capital-103473-2026-07-31-holdings-2",
-        "sourcePath": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
-        "reasons": [
-          "duplicate-doc-key: buoyant-capital-103473-2026-07-31-holdings was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_AccountStatement5004CT (2).pdf; filed as buoyant-capital-103473-2026-07-31-holdings-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2",
-        "sourcePath": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
-        "reasons": [
-          "statement-basis: the NAV on this statement is POST-TAX on REALISED gains only; the fund states that tax on unrealised gains is not in it and appears only in the redemption NAV",
-          "duplicate-doc-key: motilal-oswal-founders-fund-90410016104-2026-07-31-holdings was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Founders Fund.pdf; filed as motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
-        ]
-      },
-      {
-        "docKey": "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
-        "sourcePath": "source/_extracted/august-2026/reports/SVAN - AJAY.pdf",
-        "reasons": [
-          "weights-on-aum-basis: the weight column is of Assets Under Management, which this report totals at 111.54% of the market value printed beside it; AUM is 14,77,15,365.47 against a market value of 16,47,61,718.64. Derived %assets is on the market value and will not match the printed column."
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-37702-2026-09-30-holdings",
-        "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN37702_07Oct2026_1552871.pdf",
-        "reasons": [
-          "columns-not-matched: marketPrice, benchmark",
-          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
-          "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-60066-2026-09-30-holdings",
-        "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf",
-        "reasons": [
-          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
-          "section-reported-empty: corporate-action: the report states \"No data available to generate …\"",
-          "portfolio-reported-nil: the report prints Total Portfolio Value \"-\", no holding rows and a total corpus of 0.00 — a measured nil, not an unread table"
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-60117-2026-09-30-holdings",
-        "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60117_07Oct2026_1552871.pdf",
-        "reasons": [
-          "columns-not-matched: marketPrice, benchmark",
-          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
-          "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
-        ]
-      },
-      {
-        "docKey": "buoyant-capital-103472-2026-10-12-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/BUOYANT AJAY SIR ANKITA MAAM/I83_103472_AccountStatement5004CT.pdf",
-        "reasons": []
-      },
-      {
-        "docKey": "buoyant-capital-103473-2026-10-12-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/BUOYANT AJAY SIR ANKITA MAAM/I83_103473_AccountStatement5004CT (2).pdf",
-        "reasons": []
-      },
-      {
-        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-capital-gain",
-        "sourcePath": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_CapitalGain90OT.pdf",
-        "reasons": [
-          "columns-not-matched: effectiveLT"
-        ]
-      },
-      {
-        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
-        "sourcePath": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_PMSInvestorReport6125OT.pdf",
-        "reasons": [
-          "value-bridge-mismatch: Printed value-bridge lines reach 385169845.54, not the stated closing 385455077.32; retained as printed and not a reconciled return source"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-founders-fund-90410016104-2026-09-30-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./AJAY JAISINGHANI SOA Motilal AIF.pdf",
-        "reasons": [
-          "statement-basis: the NAV on this statement is POST-TAX on REALISED gains only; the fund states that tax on unrealised gains is not in it and appears only in the redemption NAV"
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-founders-fund-90410016093-2026-09-30-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Ankita Jaisinghani  SOA Motilal AIF.pdf",
-        "reasons": [
-          "statement-basis: the NAV on this statement is POST-TAX on REALISED gains only; the fund states that tax on unrealised gains is not in it and appears only in the redemption NAV"
-        ]
-      },
-      {
-        "docKey": "buoyant-capital-103472-2026-09-30-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./I83_103472_AccountStatement5004CT.pdf",
-        "reasons": []
-      },
-      {
-        "docKey": "buoyant-capital-103473-2026-09-30-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./I83_103473_AccountStatement5004CT.pdf",
-        "reasons": []
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky003-2026-08-31-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/SKY CAPITAL/SKY003 - Bharat Jaisinghani_SOA Aug 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky022-2026-08-31-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/SKY CAPITAL/SKY022 - Ajay T Jaisinghani_SOA Aug 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky023-2026-08-31-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/SKY CAPITAL/SKY023 - BJ Trust 2_SOA Aug 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "sky-capital-rising-titans-fund-sky024-2026-08-31-holdings",
-        "sourcePath": "source/_extracted/october-2026-c/SKY CAPITAL/SKY024 - BJ Trust 3_SOA Aug 31, 2026.pdf",
-        "reasons": [
-          "statement-basis: an angel fund holding unlisted startups: this statement prints the commitment, the drawdowns against it, the units they bought and their face value, and NO NAV and NO valuation. Market value is null rather than the capital drawn, which is what was paid and not what it is worth",
-          "no-valuation-published: Sky Capital Rising Titans Fund publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-        "sourcePath": "source/_extracted/october-2026-c/Svan _ Ajay/Z1281_8710067_PortfolioAppraisal675CT (1).pdf",
-        "reasons": [
-          "unparseable-cell: (continuation) · pctAssets = \"07/10/2026\"",
-          "unparseable-cell: (continuation) · pctAssets = \"07/10/2026\""
-        ]
-      },
-      {
-        "docKey": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain",
-        "sourcePath": "source/_extracted/october-2026-c/Svan _ Ajay/Z1282_8710067_CapitalGain90CT.pdf",
-        "reasons": [
-          "columns-not-matched: effectiveLT"
-        ]
-      },
-      {
-        "docKey": "svan-investment-managers-llp-8710067-2026-09-30-expense-statement",
-        "sourcePath": "source/_extracted/october-2026-c/Svan _ Ajay/Z1282_8710067_Expensestmt546CT.pdf",
-        "reasons": [
-          "columns-not-matched: tranRef"
-        ]
-      },
-      {
-        "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-        "sourcePath": "source/_extracted/october-2026-c/Svan - Bharat/Z1281_8710090_PortfolioAppraisal675CT.pdf",
-        "reasons": [
-          "unparseable-cell: (continuation) · pctAssets = \"07/10/2026\"",
-          "unparseable-cell: (continuation) · pctAssets = \"07/10/2026\""
-        ]
-      },
-      {
-        "docKey": "svan-investment-managers-llp-8710090-2026-09-30-capital-gain",
-        "sourcePath": "source/_extracted/october-2026-c/Svan - Bharat/Z1282_8710090_CapitalGain90CT.pdf",
-        "reasons": [
-          "columns-not-matched: effectiveLT"
-        ]
-      },
-      {
-        "docKey": "svan-investment-managers-llp-8710090-2026-09-30-expense-statement",
-        "sourcePath": "source/_extracted/october-2026-c/Svan - Bharat/Z1282_8710090_Expensestmt546CT.pdf",
-        "reasons": [
-          "columns-not-matched: tranRef"
-        ]
-      },
-      {
-        "docKey": "marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-transaction-statement",
-        "sourcePath": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_TransactionStatement_India94CT.pdf",
-        "reasons": [
-          "unit-movements-are-not-trades: 5 unit movement row(s) (3 × \"Security in\", 2 × \"Security out\") — units moved in or out with no counterparty and no consideration (a demerger, a class switch or a transfer). None is a trade, so none is emitted as one."
-        ]
-      },
-      {
-        "docKey": "marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-transaction-statement",
-        "sourcePath": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_TransactionStatement_India94CT.pdf",
-        "reasons": [
-          "unit-movements-are-not-trades: 15 unit movement row(s) (9 × \"Security in\", 6 × \"Security out\") — units moved in or out with no counterparty and no consideration (a demerger, a class switch or a transfer). None is a trade, so none is emitted as one."
-        ]
-      },
-      {
-        "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-dividend-statement",
-        "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_DividendStatement_India177OT (1).pdf",
-        "reasons": [
-          "columns-not-matched: tds"
-        ]
-      },
-      {
-        "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-transaction-statement",
-        "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_TransactionStatement_India94OT.pdf",
-        "reasons": [
-          "tds-transfers-are-not-trades: 2 TDS transfer row(s) (1 × \"Trf to TDS A/c\", 1 × \"TDS Trf to Capital A/c\") — the tax deducted at source on a dividend moving into the account's TDS ledger and on to capital. Cash, not shares: none is a trade, and the bank book carries each one."
-        ]
-      },
-      {
-        "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-transaction-statement",
-        "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_TransactionStatement_India94OT.pdf",
-        "reasons": [
-          "tds-transfers-are-not-trades: 4 TDS transfer row(s) (2 × \"Trf to TDS A/c\", 2 × \"TDS Trf to Capital A/c\") — the tax deducted at source on a dividend moving into the account's TDS ledger and on to capital. Cash, not shares: none is a trade, and the bank book carries each one."
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-37702-2026-06-30-holdings",
-        "sourcePath": "source/360 - AJAY.pdf",
-        "reasons": [
-          "columns-not-matched: marketPrice, benchmark",
-          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
-          "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-60117-2026-06-30-holdings",
-        "sourcePath": "source/360 - BHARAT.pdf",
-        "reasons": [
-          "columns-not-matched: marketPrice, benchmark",
-          "section-reported-empty: transaction: the report states \"No data available to generate …\"",
-          "section-reported-empty: corporate-action: the report states \"No data available to generate …\""
-        ]
-      },
-      {
-        "docKey": "360-one-alternates-asset-management-1000633-unknown-unknown",
-        "sourcePath": "source/360 ONE - Income and Principal Distribution _ 360 ONE Special Opportunities Fund - Series 8 _ Folio 1000633 - Bharat Jaisinghani - Outlook.pdf",
-        "reasons": [
-          "advice-only: this is the distribution ADVICE e-mail: it announces a payout of ~6.90% of capital commitment and carries no figures. The detailed letter it promises is the document with the numbers.",
-          "owner-unresolved: \"Investor\" matches no canonical owner — add an alias in shared/owners.mjs",
-          "owner-from-account-number: this report does not print the client name where it can be read; taken from other statements for 360 ONE Alternates Asset Management account 1000633, which all name Bharat Jaisinghani"
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-37702-2026-05-31-holdings",
-        "sourcePath": "source/360 ONE WEALTH - AJAY.pdf",
-        "reasons": [
-          "columns-not-matched: marketPrice, benchmark",
-          "section-reported-empty: transaction: the report states \"No data available to generate …\""
-        ]
-      },
-      {
-        "docKey": "360-one-private-wealth-60117-2026-05-31-holdings",
-        "sourcePath": "source/360 ONE WEALTH - BHARAT.pdf",
-        "reasons": [
-          "columns-not-matched: marketPrice, benchmark",
-          "section-reported-empty: transaction: the report states \"No data available to generate …\""
-        ]
-      },
-      {
-        "docKey": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
-        "sourcePath": "source/august-2026-b/SVAN - BHARAT.pdf",
-        "reasons": [
-          "weights-on-aum-basis: the weight column is of Assets Under Management, which this report totals at 112.59% of the market value printed beside it; AUM is 9,51,86,955.19 against a market value of 10,71,70,992.85. Derived %assets is on the market value and will not match the printed column."
-        ]
-      },
-      {
-        "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-        "sourcePath": "source/august-2026-e/Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf",
-        "reasons": [
-          "price-date-precedes-holding-date: the holdings are stated as at 2026-03-31 and every mark on them is the close of 2026-03-30. Both dates are the statement's own; the account is dated by its holdings and the price date is recorded here.",
-          "value-stitched-across-lines: 1 value(s) are printed across two lines because the figure is wider than its column, and are joined only because each join parses as one number — POLYCAB INDIA LIMITED - EQ: 123,512,419,665.0 + 0 -> 123,512,419,665.00.",
-          "value-is-face-value-declared: 5 holding(s) carry units and NO market value, because the SCRIP NAME declares this face value and the printed value divided by the balance is exactly it. A depository records the value a security was allotted at where it has no price for it, and multiplying by that produces a valuation nobody struck — National Stock Exchange of India Ltd at Re 1 a share is the plainest case. Rows: ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/- (378788 at 5.0000); EVEREST FLEET PRIVATE LIMITED - EQ NEW FV RS. 1/- (710 at 1.0000); INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/- (177981 at 1.0000); NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/- (125000 at 1.0000); RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/- (71400 at 10.0000).",
-          "value-is-face-value-scheme: 2 holding(s) carry units and NO market value, because the identifier is an `INF` fund or AIF scheme and the implied price is exactly a unit's issue price, never a NAV. A depository records the value a security was allotted at where it has no price for it, and multiplying by that produces a valuation nobody struck — National Stock Exchange of India Ltd at Re 1 a share is the plainest case. Rows: INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability (67500 at 1000.0000); SKY CAPITAL RISING TITANS FUND I - SKYCRTF ONCAREA3 - Restricted Transferability (15000 at 1000.0000).",
-          "value-is-face-value-par: 17 holding(s) carry units and NO market value, because the implied price is exactly a face-value denomination with no paise, on a name that declares none. A depository records the value a security was allotted at where it has no price for it, and multiplying by that produces a valuation nobody struck — National Stock Exchange of India Ltd at Re 1 a share is the plainest case. Rows: ASSETGRO FINTECH PRIVATE LIMITED - 1% SERIES B PREF 25NV44 (636 at 10.0000); BIG BANG BOOM SOLUTIONS PRIVATE LIMITED - 0.001% PREF 12SP44 (48 at 10.0000); ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/- (330898 at 1.0000); EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43 (100 at 1.0000); INFOBAY AI LIMITED - 0.01% PREF 18AG44 (107 at 10.0000); INNOVITI TECHNOLOGIES PRIVATE LIMITED - EQ (32017 at 10.0000); MATRIX GAS AND RENEWABLES LIMITED - EQ (75000 at 10.0000); OILMAX ENERGY PRIVATE LIMITED - EQ (17000 at 10.0000); ONIX RENEWABLE LIMITED - EQ (90000 at 10.0000); RAYS POWER EXPERTS PRIVATE LIMITED - EQ (59000 at 10.0000); SKS FASTENERS LIMITED - EQ (24800 at 10.0000); SOTEFIN BHARAT LIMITED - EQ (171879 at 10.0000); SPRAY ENGINEERING DEVICES LIMITED - EQ (165566 at 10.0000); URB VENTURES PRIVATE LIMITED - 0.001% PREF 07JL42 (4000 at 10.0000); URB VENTURES PRIVATE LIMITED - EQ (148000 at 10.0000); WEVOIS LABS PRIVATE LIMITED - EQ (55 at 10.0000); ZENITH LEISURE HOLIDAYS LIMITED - EQ (32791 at 10.0000).",
-          "field-not-in-document-contract: ICICI Bank (NSDL demat) returned priceAsOf, printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
-        ]
-      },
-      {
-        "docKey": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
-        "sourcePath": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
-        "reasons": []
-      },
-      {
-        "docKey": "helios-mutual-fund-10355977-2026-08-07-holdings",
-        "sourcePath": "source/august-2026/Helios - Ajay.pdf",
-        "reasons": []
-      },
-      {
-        "docKey": "india-sme-investments-175962-2026-06-30-holdings",
-        "sourcePath": "source/august-2026/INDIA SME - AJAY.pdf",
-        "reasons": [
-          "statement-basis: this statement carries NO NAV and NO valuation — only the commitment, the capital drawn against it and the units that bought. Market value is null rather than the contributions, which are what was paid and not what it is worth",
-          "no-valuation-published: India SME Investments publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "india-sme-investments-177302-2026-06-30-holdings",
-        "sourcePath": "source/august-2026/INDIA SME - ANKITA.pdf",
-        "reasons": [
-          "statement-basis: this statement carries NO NAV and NO valuation — only the commitment, the capital drawn against it and the units that bought. Market value is null rather than the contributions, which are what was paid and not what it is worth",
-          "no-valuation-published: India SME Investments publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "india-sme-investments-175964-2026-06-30-holdings",
-        "sourcePath": "source/august-2026/INDIA SME - BHARAT.pdf",
-        "reasons": [
-          "statement-basis: this statement carries NO NAV and NO valuation — only the commitment, the capital drawn against it and the units that bought. Market value is null rather than the contributions, which are what was paid and not what it is worth",
-          "no-valuation-published: India SME Investments publishes no NAV on this statement, so this holding has units and cost and NO market value. It is not counted in the consolidated total."
-        ]
-      },
-      {
-        "docKey": "ask-investment-managers-limited-10032723-2026-09-08-transaction-statement",
-        "sourcePath": "source/september-2026/askimpms_10032723_TransactionStatement_India94CT.pdf",
-        "reasons": [
-          "tds-transfers-are-not-trades: 195 TDS transfer row(s) (97 × \"Trf to TDS A/c\", 98 × \"TDS Trf to Capital A/c\") — the tax deducted at source on a dividend moving into the account's TDS ledger and on to capital. Cash, not shares: none is a trade, and the bank book carries each one."
-        ]
-      },
-      {
-        "docKey": "ask-investment-managers-limited-10034025-2026-09-08-transaction-statement",
-        "sourcePath": "source/september-2026/askimpms_10034025_TransactionStatement_India94CT.pdf",
-        "reasons": [
-          "tds-transfers-are-not-trades: 232 TDS transfer row(s) (116 × \"Trf to TDS A/c\", 116 × \"TDS Trf to Capital A/c\") — the tax deducted at source on a dividend moving into the account's TDS ledger and on to capital. Cash, not shares: none is a trade, and the bank book carries each one."
-        ]
-      }
-    ]
+    "partials": []
   },
   "consolidated": {
-    "naive": 137755244791.51,
-    "deduped": 137755244791.51,
+    "naive": 137756021958.24,
+    "deduped": 137756021958.24,
     "doubleCounted": 0
   },
   "rowSumChecks": [
@@ -5457,6 +4753,59 @@
       "accruedIncome": null
     },
     {
+      "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-10-06-holdings",
+      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "accountNo": "1019265797",
+      "asOf": "2026-10-06",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 777166.73,
+      "printedTotal": 777166.73,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-10-06-holdings",
+      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "accountNo": "1019265797",
+      "asOf": "2026-10-06",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 777961.25,
+      "printedTotal": 777961.25,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-10-06-holdings",
+      "provider": "Aditya Birla Sun Life Mutual Fund",
+      "accountNo": "1019265797",
+      "asOf": "2026-10-06",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
       "docKey": "hdfc-mutual-fund-16180583-2026-10-05-holdings",
       "provider": "HDFC Mutual Fund",
       "accountNo": "16180583",
@@ -5621,6 +4970,24 @@
       "provider": "Motilal Oswal Mutual Fund",
       "accountNo": "90414963315",
       "asOf": "2026-09-30",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 0,
+      "printedTotal": 0,
+      "delta": 0,
+      "rowsSummed": 3,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "icici-prudential-mutual-fund-14320536-2026-10-01-holdings",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "14320536",
+      "asOf": "2026-10-01",
       "reportType": "holdings",
       "check": "total market value (incl. cash)",
       "rowSum": 0,
@@ -6373,95 +5740,6 @@
       "printedTotal": 100,
       "delta": -0.01,
       "rowsSummed": 16,
-      "rowsMissingField": 0,
-      "matches": true,
-      "severity": "rounding",
-      "cause": null,
-      "accruedIncome": null
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "check": "equity market value",
-      "rowSum": 104953648.25,
-      "printedTotal": 107126689.5,
-      "delta": -2173041.25,
-      "rowsSummed": 45,
-      "rowsMissingField": 0,
-      "matches": false,
-      "severity": "material",
-      "cause": null,
-      "accruedIncome": 108216.25,
-      "outstandingDividend": null
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "check": "equity cost",
-      "rowSum": 100342346.31,
-      "printedTotal": 101711924.54,
-      "delta": -1369578.23,
-      "rowsSummed": 45,
-      "rowsMissingField": 0,
-      "matches": false,
-      "severity": "material",
-      "cause": null,
-      "accruedIncome": 108216.25,
-      "outstandingDividend": null
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "check": "total market value (incl. cash)",
-      "rowSum": 105067235.02,
-      "printedTotal": 107240276.27,
-      "delta": -2173041.25,
-      "rowsSummed": 46,
-      "rowsMissingField": 0,
-      "matches": false,
-      "severity": "material",
-      "cause": null,
-      "accruedIncome": 108216.25,
-      "outstandingDividend": null
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "check": "total cost (incl. cash)",
-      "rowSum": 100455933.08,
-      "printedTotal": 101825511.31,
-      "delta": -1369578.23,
-      "rowsSummed": 46,
-      "rowsMissingField": 0,
-      "matches": false,
-      "severity": "material",
-      "cause": null,
-      "accruedIncome": 108216.25,
-      "outstandingDividend": null
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "check": "% of assets sums to 100",
-      "rowSum": 99.99,
-      "printedTotal": 100,
-      "delta": -0.01,
-      "rowsSummed": 46,
       "rowsMissingField": 0,
       "matches": true,
       "severity": "rounding",
@@ -7704,6 +6982,95 @@
       "printedTotal": 100,
       "delta": 0,
       "rowsSummed": 11,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "check": "equity market value",
+      "rowSum": 104953648.25,
+      "printedTotal": 107126689.5,
+      "delta": -2173041.25,
+      "rowsSummed": 45,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "material",
+      "cause": null,
+      "accruedIncome": 108216.25,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "check": "equity cost",
+      "rowSum": 100342346.31,
+      "printedTotal": 101711924.54,
+      "delta": -1369578.23,
+      "rowsSummed": 45,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "material",
+      "cause": null,
+      "accruedIncome": 108216.25,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "check": "total market value (incl. cash)",
+      "rowSum": 105067235.02,
+      "printedTotal": 107240276.27,
+      "delta": -2173041.25,
+      "rowsSummed": 46,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "material",
+      "cause": null,
+      "accruedIncome": 108216.25,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "check": "total cost (incl. cash)",
+      "rowSum": 100455933.08,
+      "printedTotal": 101825511.31,
+      "delta": -1369578.23,
+      "rowsSummed": 46,
+      "rowsMissingField": 0,
+      "matches": false,
+      "severity": "material",
+      "cause": null,
+      "accruedIncome": 108216.25,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "check": "% of assets sums to 100",
+      "rowSum": 99.99,
+      "printedTotal": 100,
+      "delta": -0.01,
+      "rowsSummed": 46,
       "rowsMissingField": 0,
       "matches": true,
       "severity": "rounding",
@@ -20991,806 +20358,6 @@
       "fromPrinted": false
     },
     {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "APOLLO PIPES LIMITED",
-      "securityKey": "apollo-pipes",
-      "field": "pctAssets",
-      "derived": 1.69,
-      "printed": 1.66,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Arvind Fashions Ltd",
-      "securityKey": "arvind-fashions",
-      "field": "pctAssets",
-      "derived": 2.46,
-      "printed": 2.41,
-      "delta": 0.05,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "BOROSIL RENEWABLES LTD",
-      "securityKey": "borosil-renewables",
-      "field": "pctAssets",
-      "derived": 1.98,
-      "printed": 1.94,
-      "delta": 0.04,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Birlasoft Ltd",
-      "securityKey": "birlasoft",
-      "field": "pctAssets",
-      "derived": 1.7,
-      "printed": 1.66,
-      "delta": 0.04,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "CREATIVE NEWTECH LIMITED",
-      "securityKey": "creative-newtech",
-      "field": "marketValue",
-      "derived": 2710911,
-      "printed": 2712163.5,
-      "delta": -1252.5,
-      "severity": "explained",
-      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "CREATIVE NEWTECH LIMITED",
-      "securityKey": "creative-newtech",
-      "field": "pctAssets",
-      "derived": 2.58,
-      "printed": 2.53,
-      "delta": 0.05,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Caplin Point Laboratories Ltd",
-      "securityKey": "caplin-point-laboratories",
-      "field": "marketValue",
-      "derived": 4346240,
-      "printed": 4352640,
-      "delta": -6400,
-      "severity": "explained",
-      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Caplin Point Laboratories Ltd",
-      "securityKey": "caplin-point-laboratories",
-      "field": "pctAssets",
-      "derived": 4.14,
-      "printed": 4.06,
-      "delta": 0.08,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Ceat Ltd",
-      "securityKey": "ceat",
-      "field": "pctAssets",
-      "derived": 3.23,
-      "printed": 3.17,
-      "delta": 0.06,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Cosmo First Limited",
-      "securityKey": "cosmo-first",
-      "field": "pctAssets",
-      "derived": 2.71,
-      "printed": 2.66,
-      "delta": 0.05,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Credit Access Grameen Limited",
-      "securityKey": "credit-access-grameen",
-      "field": "pctAssets",
-      "derived": 3.04,
-      "printed": 2.98,
-      "delta": 0.06,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Dilip Buildcon Ltd",
-      "securityKey": "dilip-buildcon",
-      "field": "pctAssets",
-      "derived": 1.63,
-      "printed": 1.6,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Edelweiss Financial Services Ltd",
-      "securityKey": "edelweiss-financial-services",
-      "field": "marketValue",
-      "derived": 2771102.95,
-      "printed": 2800225.45,
-      "delta": -29122.5,
-      "severity": "explained",
-      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Edelweiss Financial Services Ltd",
-      "securityKey": "edelweiss-financial-services",
-      "field": "pctAssets",
-      "derived": 2.64,
-      "printed": 2.61,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Ester Industries Limited",
-      "securityKey": "ester-industries",
-      "field": "marketValue",
-      "derived": 1992515.7,
-      "printed": 1997436.95,
-      "delta": -4921.25,
-      "severity": "explained",
-      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Ester Industries Limited",
-      "securityKey": "ester-industries",
-      "field": "pctAssets",
-      "derived": 1.9,
-      "printed": 1.86,
-      "delta": 0.04,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Fusion Finance Limited",
-      "securityKey": "fusion-finance",
-      "field": "pctAssets",
-      "derived": 1.34,
-      "printed": 1.31,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "GHCL Ltd",
-      "securityKey": "ghcl",
-      "field": "pctAssets",
-      "derived": 1.53,
-      "printed": 1.5,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "GHCL Textiles Limited",
-      "securityKey": "ghcl-textiles",
-      "field": "pctAssets",
-      "derived": 2.32,
-      "printed": 2.27,
-      "delta": 0.05,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "GLAND PHARMA LIMITED",
-      "securityKey": "gland-pharma",
-      "field": "pctAssets",
-      "derived": 2.33,
-      "printed": 2.28,
-      "delta": 0.05,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Graphite India Ltd",
-      "securityKey": "graphite-india",
-      "field": "pctAssets",
-      "derived": 1.31,
-      "printed": 1.28,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "HEG Advanced Materials Limited",
-      "securityKey": "heg-advanced-materials",
-      "field": "pctAssets",
-      "derived": 1.21,
-      "printed": 1.19,
-      "delta": 0.02,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "HEG Graphite Limited",
-      "securityKey": "heg-graphite",
-      "field": "pctAssets",
-      "derived": 2.39,
-      "printed": 2.34,
-      "delta": 0.05,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "IFB Industries Ltd",
-      "securityKey": "ifb-industries",
-      "field": "pctAssets",
-      "derived": 1.7,
-      "printed": 1.67,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Indo Count Industries Ltd",
-      "securityKey": "indo-count-industries",
-      "field": "pctAssets",
-      "derived": 4.6,
-      "printed": 4.51,
-      "delta": 0.09,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "KRISHCA STRAPPING SOLUTIONS LTD",
-      "securityKey": "krishca-strapping-solutions",
-      "field": "pctAssets",
-      "derived": 1.05,
-      "printed": 1.03,
-      "delta": 0.02,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Laxmi Organic Industries Limited",
-      "securityKey": "laxmi-organic-industries",
-      "field": "pctAssets",
-      "derived": 2.64,
-      "printed": 2.59,
-      "delta": 0.05,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Mastek Ltd",
-      "securityKey": "mastek",
-      "field": "pctAssets",
-      "derived": 1.95,
-      "printed": 1.91,
-      "delta": 0.04,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "NITIN SPINNERS LIMITED",
-      "securityKey": "nitin-spinners",
-      "field": "marketValue",
-      "derived": 3733392,
-      "printed": 3752112,
-      "delta": -18720,
-      "severity": "explained",
-      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "NITIN SPINNERS LIMITED",
-      "securityKey": "nitin-spinners",
-      "field": "pctAssets",
-      "derived": 3.55,
-      "printed": 3.5,
-      "delta": 0.05,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Neuland Laboratories Ltd",
-      "securityKey": "neuland-laboratories",
-      "field": "pctAssets",
-      "derived": 3.96,
-      "printed": 3.88,
-      "delta": 0.08,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "PUNJAB CHEM & CROP PROT L",
-      "securityKey": "punjab-chem-and-crop-prot-l",
-      "field": "pctAssets",
-      "derived": 2.08,
-      "printed": 2.04,
-      "delta": 0.04,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Pokarna Ltd",
-      "securityKey": "pokarna",
-      "field": "pctAssets",
-      "derived": 1.94,
-      "printed": 1.9,
-      "delta": 0.04,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Polyplex Corporation Ltd",
-      "securityKey": "polyplex",
-      "field": "pctAssets",
-      "derived": 1.65,
-      "printed": 1.61,
-      "delta": 0.04,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Puravankara Limited",
-      "securityKey": "puravankara",
-      "field": "pctAssets",
-      "derived": 2.23,
-      "printed": 2.19,
-      "delta": 0.04,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "SG Mart Limited",
-      "securityKey": "sg-mart",
-      "field": "pctAssets",
-      "derived": 1.45,
-      "printed": 1.42,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "SHARDA MOTOR INDUSTRIES LIMITED",
-      "securityKey": "sharda-motor-industries",
-      "field": "marketValue",
-      "derived": 2287110.5,
-      "printed": 2334910.5,
-      "delta": -47800,
-      "severity": "explained",
-      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Shakti Pumps India Ltd",
-      "securityKey": "shakti-pumps-india",
-      "field": "pctAssets",
-      "derived": 0.43,
-      "printed": 0.42,
-      "delta": 0.01,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Shankara Buildpro Ltd",
-      "securityKey": "shankara-buildpro",
-      "field": "pctAssets",
-      "derived": 2.79,
-      "printed": 2.73,
-      "delta": 0.06,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Sharda Cropchem Ltd",
-      "securityKey": "sharda-cropchem",
-      "field": "pctAssets",
-      "derived": 0.86,
-      "printed": 0.84,
-      "delta": 0.02,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Stove Kraft Limited",
-      "securityKey": "stove-kraft",
-      "field": "pctAssets",
-      "derived": 1.94,
-      "printed": 1.91,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Syrma SGS Technology Limited",
-      "securityKey": "syrma-sgs-technology",
-      "field": "pctAssets",
-      "derived": 2.81,
-      "printed": 2.75,
-      "delta": 0.06,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Time Technoplast Ltd",
-      "securityKey": "time-technoplast",
-      "field": "pctAssets",
-      "derived": 1.35,
-      "printed": 1.32,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "V2 Retail Ltd",
-      "securityKey": "v2-retail",
-      "field": "pctAssets",
-      "derived": 4.08,
-      "printed": 4,
-      "delta": 0.08,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Vaibhav Global Ltd",
-      "securityKey": "vaibhav-global",
-      "field": "pctAssets",
-      "derived": 1.17,
-      "printed": 1.14,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Varroc Engineering Limited",
-      "securityKey": "varroc-engineering",
-      "field": "pctAssets",
-      "derived": 3.78,
-      "printed": 3.71,
-      "delta": 0.07,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Viyash Scientific Limited",
-      "securityKey": "viyash-scientific",
-      "field": "pctAssets",
-      "derived": 2.84,
-      "printed": 2.78,
-      "delta": 0.06,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Wockhardt Ltd",
-      "securityKey": "wockhardt",
-      "field": "pctAssets",
-      "derived": 2.1,
-      "printed": 2.06,
-      "delta": 0.04,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Wpil Ltd",
-      "securityKey": "wpil",
-      "field": "pctAssets",
-      "derived": 1.29,
-      "printed": 1.26,
-      "delta": 0.03,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "security": "Zensar Technologies Ltd",
-      "securityKey": "zensar-technologies",
-      "field": "pctAssets",
-      "derived": 1.33,
-      "printed": 1.31,
-      "delta": 0.02,
-      "severity": "explained",
-      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
-      "fromPrinted": false
-    },
-    {
       "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-appraisal",
       "provider": "V.E.C Assago Capital Management LLP",
       "accountNo": "128005",
@@ -23532,6 +22099,806 @@
       "delta": -0.09,
       "severity": "rounding",
       "cause": null,
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "APOLLO PIPES LIMITED",
+      "securityKey": "apollo-pipes",
+      "field": "pctAssets",
+      "derived": 1.69,
+      "printed": 1.66,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Arvind Fashions Ltd",
+      "securityKey": "arvind-fashions",
+      "field": "pctAssets",
+      "derived": 2.46,
+      "printed": 2.41,
+      "delta": 0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "BOROSIL RENEWABLES LTD",
+      "securityKey": "borosil-renewables",
+      "field": "pctAssets",
+      "derived": 1.98,
+      "printed": 1.94,
+      "delta": 0.04,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Birlasoft Ltd",
+      "securityKey": "birlasoft",
+      "field": "pctAssets",
+      "derived": 1.7,
+      "printed": 1.66,
+      "delta": 0.04,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "CREATIVE NEWTECH LIMITED",
+      "securityKey": "creative-newtech",
+      "field": "marketValue",
+      "derived": 2710911,
+      "printed": 2712163.5,
+      "delta": -1252.5,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "CREATIVE NEWTECH LIMITED",
+      "securityKey": "creative-newtech",
+      "field": "pctAssets",
+      "derived": 2.58,
+      "printed": 2.53,
+      "delta": 0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Caplin Point Laboratories Ltd",
+      "securityKey": "caplin-point-laboratories",
+      "field": "marketValue",
+      "derived": 4346240,
+      "printed": 4352640,
+      "delta": -6400,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Caplin Point Laboratories Ltd",
+      "securityKey": "caplin-point-laboratories",
+      "field": "pctAssets",
+      "derived": 4.14,
+      "printed": 4.06,
+      "delta": 0.08,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Ceat Ltd",
+      "securityKey": "ceat",
+      "field": "pctAssets",
+      "derived": 3.23,
+      "printed": 3.17,
+      "delta": 0.06,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Cosmo First Limited",
+      "securityKey": "cosmo-first",
+      "field": "pctAssets",
+      "derived": 2.71,
+      "printed": 2.66,
+      "delta": 0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Credit Access Grameen Limited",
+      "securityKey": "credit-access-grameen",
+      "field": "pctAssets",
+      "derived": 3.04,
+      "printed": 2.98,
+      "delta": 0.06,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Dilip Buildcon Ltd",
+      "securityKey": "dilip-buildcon",
+      "field": "pctAssets",
+      "derived": 1.63,
+      "printed": 1.6,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Edelweiss Financial Services Ltd",
+      "securityKey": "edelweiss-financial-services",
+      "field": "marketValue",
+      "derived": 2771102.95,
+      "printed": 2800225.45,
+      "delta": -29122.5,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Edelweiss Financial Services Ltd",
+      "securityKey": "edelweiss-financial-services",
+      "field": "pctAssets",
+      "derived": 2.64,
+      "printed": 2.61,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Ester Industries Limited",
+      "securityKey": "ester-industries",
+      "field": "marketValue",
+      "derived": 1992515.7,
+      "printed": 1997436.95,
+      "delta": -4921.25,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Ester Industries Limited",
+      "securityKey": "ester-industries",
+      "field": "pctAssets",
+      "derived": 1.9,
+      "printed": 1.86,
+      "delta": 0.04,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Fusion Finance Limited",
+      "securityKey": "fusion-finance",
+      "field": "pctAssets",
+      "derived": 1.34,
+      "printed": 1.31,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "GHCL Ltd",
+      "securityKey": "ghcl",
+      "field": "pctAssets",
+      "derived": 1.53,
+      "printed": 1.5,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "GHCL Textiles Limited",
+      "securityKey": "ghcl-textiles",
+      "field": "pctAssets",
+      "derived": 2.32,
+      "printed": 2.27,
+      "delta": 0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "GLAND PHARMA LIMITED",
+      "securityKey": "gland-pharma",
+      "field": "pctAssets",
+      "derived": 2.33,
+      "printed": 2.28,
+      "delta": 0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Graphite India Ltd",
+      "securityKey": "graphite-india",
+      "field": "pctAssets",
+      "derived": 1.31,
+      "printed": 1.28,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "HEG Advanced Materials Limited",
+      "securityKey": "heg-advanced-materials",
+      "field": "pctAssets",
+      "derived": 1.21,
+      "printed": 1.19,
+      "delta": 0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "HEG Graphite Limited",
+      "securityKey": "heg-graphite",
+      "field": "pctAssets",
+      "derived": 2.39,
+      "printed": 2.34,
+      "delta": 0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "IFB Industries Ltd",
+      "securityKey": "ifb-industries",
+      "field": "pctAssets",
+      "derived": 1.7,
+      "printed": 1.67,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Indo Count Industries Ltd",
+      "securityKey": "indo-count-industries",
+      "field": "pctAssets",
+      "derived": 4.6,
+      "printed": 4.51,
+      "delta": 0.09,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "KRISHCA STRAPPING SOLUTIONS LTD",
+      "securityKey": "krishca-strapping-solutions",
+      "field": "pctAssets",
+      "derived": 1.05,
+      "printed": 1.03,
+      "delta": 0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Laxmi Organic Industries Limited",
+      "securityKey": "laxmi-organic-industries",
+      "field": "pctAssets",
+      "derived": 2.64,
+      "printed": 2.59,
+      "delta": 0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Mastek Ltd",
+      "securityKey": "mastek",
+      "field": "pctAssets",
+      "derived": 1.95,
+      "printed": 1.91,
+      "delta": 0.04,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "NITIN SPINNERS LIMITED",
+      "securityKey": "nitin-spinners",
+      "field": "marketValue",
+      "derived": 3733392,
+      "printed": 3752112,
+      "delta": -18720,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "NITIN SPINNERS LIMITED",
+      "securityKey": "nitin-spinners",
+      "field": "pctAssets",
+      "derived": 3.55,
+      "printed": 3.5,
+      "delta": 0.05,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Neuland Laboratories Ltd",
+      "securityKey": "neuland-laboratories",
+      "field": "pctAssets",
+      "derived": 3.96,
+      "printed": 3.88,
+      "delta": 0.08,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "PUNJAB CHEM & CROP PROT L",
+      "securityKey": "punjab-chem-and-crop-prot-l",
+      "field": "pctAssets",
+      "derived": 2.08,
+      "printed": 2.04,
+      "delta": 0.04,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Pokarna Ltd",
+      "securityKey": "pokarna",
+      "field": "pctAssets",
+      "derived": 1.94,
+      "printed": 1.9,
+      "delta": 0.04,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Polyplex Corporation Ltd",
+      "securityKey": "polyplex",
+      "field": "pctAssets",
+      "derived": 1.65,
+      "printed": 1.61,
+      "delta": 0.04,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Puravankara Limited",
+      "securityKey": "puravankara",
+      "field": "pctAssets",
+      "derived": 2.23,
+      "printed": 2.19,
+      "delta": 0.04,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "SG Mart Limited",
+      "securityKey": "sg-mart",
+      "field": "pctAssets",
+      "derived": 1.45,
+      "printed": 1.42,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "SHARDA MOTOR INDUSTRIES LIMITED",
+      "securityKey": "sharda-motor-industries",
+      "field": "marketValue",
+      "derived": 2287110.5,
+      "printed": 2334910.5,
+      "delta": -47800,
+      "severity": "explained",
+      "cause": "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Shakti Pumps India Ltd",
+      "securityKey": "shakti-pumps-india",
+      "field": "pctAssets",
+      "derived": 0.43,
+      "printed": 0.42,
+      "delta": 0.01,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Shankara Buildpro Ltd",
+      "securityKey": "shankara-buildpro",
+      "field": "pctAssets",
+      "derived": 2.79,
+      "printed": 2.73,
+      "delta": 0.06,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Sharda Cropchem Ltd",
+      "securityKey": "sharda-cropchem",
+      "field": "pctAssets",
+      "derived": 0.86,
+      "printed": 0.84,
+      "delta": 0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Stove Kraft Limited",
+      "securityKey": "stove-kraft",
+      "field": "pctAssets",
+      "derived": 1.94,
+      "printed": 1.91,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Syrma SGS Technology Limited",
+      "securityKey": "syrma-sgs-technology",
+      "field": "pctAssets",
+      "derived": 2.81,
+      "printed": 2.75,
+      "delta": 0.06,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Time Technoplast Ltd",
+      "securityKey": "time-technoplast",
+      "field": "pctAssets",
+      "derived": 1.35,
+      "printed": 1.32,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "V2 Retail Ltd",
+      "securityKey": "v2-retail",
+      "field": "pctAssets",
+      "derived": 4.08,
+      "printed": 4,
+      "delta": 0.08,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Vaibhav Global Ltd",
+      "securityKey": "vaibhav-global",
+      "field": "pctAssets",
+      "derived": 1.17,
+      "printed": 1.14,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Varroc Engineering Limited",
+      "securityKey": "varroc-engineering",
+      "field": "pctAssets",
+      "derived": 3.78,
+      "printed": 3.71,
+      "delta": 0.07,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Viyash Scientific Limited",
+      "securityKey": "viyash-scientific",
+      "field": "pctAssets",
+      "derived": 2.84,
+      "printed": 2.78,
+      "delta": 0.06,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Wockhardt Ltd",
+      "securityKey": "wockhardt",
+      "field": "pctAssets",
+      "derived": 2.1,
+      "printed": 2.06,
+      "delta": 0.04,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Wpil Ltd",
+      "securityKey": "wpil",
+      "field": "pctAssets",
+      "derived": 1.29,
+      "printed": 1.26,
+      "delta": 0.03,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
+      "fromPrinted": false
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "security": "Zensar Technologies Ltd",
+      "securityKey": "zensar-technologies",
+      "field": "pctAssets",
+      "derived": 1.33,
+      "printed": 1.31,
+      "delta": 0.02,
+      "severity": "explained",
+      "cause": "printed %Assets is (market value + accrued income) / (total incl. income); the derived figure is on the ex-income basis of the market-value column. Reproduced exactly.",
       "fromPrinted": false
     },
     {
@@ -74089,36 +73456,6 @@
       "cause": null
     },
     {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "check": "transaction settlement",
-      "row": "2026-09-03 sell Shankara Building Products Ltd",
-      "derived": 297209.25,
-      "printed": 297202.25,
-      "delta": 7,
-      "matches": false,
-      "severity": "explained",
-      "cause": "settlement is struck on an unrounded rate; the report prints its rates to 2dp, so a derived settlement can only agree to ±10.13 on 2,025 units"
-    },
-    {
-      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "provider": "SVAN Investment Managers LLP",
-      "accountNo": "8710090",
-      "asOf": "2026-09-30",
-      "reportType": "investor-report",
-      "check": "transaction settlement",
-      "row": "2026-09-09 buy Graphite India Ltd",
-      "derived": 1459296,
-      "printed": 1459293.38,
-      "delta": 2.62,
-      "matches": false,
-      "severity": "explained",
-      "cause": "settlement is struck on an unrounded rate; the report prints its rates to 2dp, so a derived settlement can only agree to ±9 on 1,800 units"
-    },
-    {
       "docKey": "marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-transaction-statement",
       "provider": "Marathon Trends Advisory Pvt Ltd",
       "accountNo": "5110837",
@@ -81362,6 +80699,36 @@
       "matches": true,
       "severity": "ok",
       "cause": null
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "check": "transaction settlement",
+      "row": "2026-09-03 sell Shankara Building Products Ltd",
+      "derived": 297209.25,
+      "printed": 297202.25,
+      "delta": 7,
+      "matches": false,
+      "severity": "explained",
+      "cause": "settlement is struck on an unrounded rate; the report prints its rates to 2dp, so a derived settlement can only agree to ±10.13 on 2,025 units"
+    },
+    {
+      "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "provider": "SVAN Investment Managers LLP",
+      "accountNo": "8710090",
+      "asOf": "2026-09-30",
+      "reportType": "investor-report",
+      "check": "transaction settlement",
+      "row": "2026-09-09 buy Graphite India Ltd",
+      "derived": 1459296,
+      "printed": 1459293.38,
+      "delta": 2.62,
+      "matches": false,
+      "severity": "explained",
+      "cause": "settlement is struck on an unrounded rate; the report prints its rates to 2dp, so a derived settlement can only agree to ±9 on 1,800 units"
     },
     {
       "docKey": "green-lantern-capital-llp-510861-2026-09-22-transaction-statement",
@@ -227664,6 +227031,46 @@
       "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
       "accountNo": "3517383",
       "asOf": "2026-10-07",
+      "field": "flows.expenses",
+      "a": {
+        "reportType": "performance-summary",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-performance-summary",
+        "value": 314709.7
+      },
+      "b": {
+        "reportType": "profit-and-loss",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-profit-and-loss",
+        "value": 292335.75
+      },
+      "delta": 22373.95,
+      "window": "2026-04-01..2026-10-07",
+      "severity": "material",
+      "authoritative": "performance-summary"
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-10-07",
+      "field": "flows.fees",
+      "a": {
+        "reportType": "performance-summary",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-performance-summary",
+        "value": 1392847.72
+      },
+      "b": {
+        "reportType": "profit-and-loss",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-profit-and-loss",
+        "value": 1678079.5
+      },
+      "delta": -285231.78,
+      "window": "2026-04-01..2026-10-07",
+      "severity": "material",
+      "authoritative": "performance-summary"
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-10-07",
       "field": "flows.corpus",
       "a": {
         "reportType": "fact-sheet",
@@ -227678,6 +227085,26 @@
       "delta": -0.32,
       "window": "2025-01-06..2026-10-07",
       "severity": "rounding",
+      "authoritative": null
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-10-07",
+      "field": "flows.corpus",
+      "a": {
+        "reportType": "performance-summary",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-performance-summary",
+        "value": 385455077.32
+      },
+      "b": {
+        "reportType": "profit-and-loss",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-profit-and-loss",
+        "value": 385169845.54
+      },
+      "delta": 285231.78,
+      "window": "2026-04-01..2026-10-07",
+      "severity": "material",
       "authoritative": null
     },
     {
@@ -228231,8 +227658,8 @@
           "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
           "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
           "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
           "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+          "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
           "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -228246,8 +227673,8 @@
           "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
           "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
           "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
           "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+          "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
           "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -228261,8 +227688,8 @@
           "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
           "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
           "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
           "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
+          "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-06-30-investor-report",
           "svan-investment-managers-llp-8710067-2026-05-31-investor-report",
           "svan-investment-managers-llp-8710090-2026-06-30-investor-report",
@@ -228509,6 +227936,7 @@
           "kotak-mahindra-mutual-fund-4295974-2026-08-03-holdings",
           "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
           "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
+          "aditya-birla-sun-life-mutual-fund-1019265797-2026-10-06-holdings",
           "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings"
         ]
       },
@@ -228523,25 +227951,7 @@
         ]
       }
     ],
-    "reportTypesWithoutExtractor": [
-      {
-        "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
-        "reportType": "unknown",
-        "reason": "no-reader-for-report-type",
-        "docs": [
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-unknown",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-unknown-2"
-        ]
-      },
-      {
-        "provider": "V.E.C Assago Capital Management LLP",
-        "reportType": "unknown",
-        "reason": "no-reader-for-report-type",
-        "docs": [
-          "v-e-c-assago-capital-management-llp-128004-unknown-unknown"
-        ]
-      }
-    ],
+    "reportTypesWithoutExtractor": [],
     "knownOwners": [
       {
         "ownerId": "ajay-jaisinghani",

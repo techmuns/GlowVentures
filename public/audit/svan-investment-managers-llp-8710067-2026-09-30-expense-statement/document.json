@@ -17,13 +17,8 @@
  "reportType": "expense-statement",
  "sourcePath": "source/_extracted/october-2026-c/Svan _ Ajay/Z1282_8710067_Expensestmt546CT.pdf",
  "pages": 4,
- "status": "partial",
- "warnings": [
-  {
-   "code": "columns-not-matched",
-   "detail": "tranRef"
-  }
- ],
+ "status": "ok",
+ "warnings": [],
  "holdings": [],
  "totals": null,
  "returns": [],

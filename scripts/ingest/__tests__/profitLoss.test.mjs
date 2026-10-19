@@ -251,6 +251,42 @@ for (const [field, value, identity] of BREAKS) {
     codes(d).includes("profit-and-loss-not-only-cash") && d.status === "partial", `status ${d.status} ${JSON.stringify(codes(d))}`);
 }
 
+// 1g. A LAYOUT THAT PRINTS NO `Other Income` (Carnelian's, October 2026). Its
+// INCOME block is Dividend, Realized Gain/Loss and TOTAL. The line is not
+// missing — it is not part of this layout — so the account is published when
+// the lines it DOES print reproduce the TOTAL, and refused when they do not.
+{
+  const noOther = { ...PL, incomeTotal: "6,000.00", surplus: "5,340.00", reservesPeriod: "5,340.00", reservesEnding: "5,340.00", withdrawals: "105,339.66" };
+  const d = await readPl(noOther, { drop: ["otherIncome"] }, "t-pl-no-other-income");
+  ok("P&L without Other Income: published, with no warning — the line is not part of this layout",
+    d.status === "ok" && codes(d).length === 0, `status ${d.status} ${JSON.stringify(d.warnings)}`);
+  ok("P&L without Other Income: income is the dividend alone, and no line is carried that was not printed",
+    near(d.flows?.income, 1000) && !(d.flows?.lines ?? []).some((l) => /other income/i.test(l.label)), JSON.stringify(d.flows));
+  const b = await readPl({ ...noOther, incomeTotal: "6,010.00" }, { drop: ["otherIncome"] }, "t-pl-no-other-income-b");
+  ok("P&L without Other Income: …but a TOTAL its printed lines do not reproduce is still refused",
+    b.flows === null && codes(b).includes("profit-and-loss-does-not-tie") && /income lines = income TOTAL/.test(detailOf(b, "profit-and-loss-does-not-tie")),
+    JSON.stringify(b.warnings));
+}
+
+// 1h. A WINDOW THAT DOES NOT OPEN AT INCEPTION. Reserves BEGIN at −1,000.00, so
+// the account had a history before the window: the balance sheet's Capital
+// Contribution and Withdrawals are balances at the close, not the window's
+// capital movement. Published as its contribution they would claim the whole
+// corpus went in during the window. Everything else stands.
+{
+  const d = await readPl({ ...PL, reservesBeginning: "-1,000.00", reservesEnding: "4,350.00", withdrawals: "104,349.66" }, {}, "t-pl-carried");
+  const f = d.flows ?? {};
+  ok("P&L mid-life window: the income, gains, charges and closing value stand",
+    f.realized === 5000 && near(f.income, 1010) && f.fees === 500 && near(f.corpus, 0.34), JSON.stringify(f));
+  ok("P&L mid-life window: the capital balances are NOT published as the window's contribution and withdrawal",
+    f.contribution === null && f.withdrawal === null && !(f.lines ?? []).some((l) => l.flow === "contribution" || l.flow === "withdrawal"),
+    JSON.stringify(f));
+  ok("P&L mid-life window: …which is said, naming the beginning reserves", codes(d).includes("profit-and-loss-capital-is-a-balance")
+    && /-1000/.test(detailOf(d, "profit-and-loss-capital-is-a-balance")), JSON.stringify(d.warnings));
+  ok("P&L mid-life window: the balance sheet still ties, so the bank-balance holding is still read", (d.holdings ?? []).length === 1,
+    JSON.stringify(d.holdings));
+}
+
 // ── 2. MARATHON's DETAILS OF INCOME AND EXPENSES ────────────────────────────
 // One row, for this account, dated the window's end. It states no capital and
 // no closing value, so the flows carry neither: a nil there would be a claim

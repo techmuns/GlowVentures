@@ -17,7 +17,7 @@
  "reportType": "investor-report",
  "sourcePath": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_PMSInvestorReport6125OT.pdf",
  "pages": 7,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "value-bridge-mismatch",

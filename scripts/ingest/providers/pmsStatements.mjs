@@ -33,6 +33,7 @@ import {
 } from "../lib/document.mjs";
 import { toIso, trimPersonName } from "../lib/classify.mjs";
 import { PRECEDENCE } from "../precedence.mjs";
+import { securityKeyOf, splitSecurityName } from "../../../shared/securityKey.mjs";
 
 /** Every manager issuing through this reporting system. */
 export const PROVIDERS = {
@@ -237,7 +238,17 @@ const CAPITAL_GAIN_COLUMNS = {
   daysHeld:     [/^days\s*held/],
   shortTerm:    [/^st$/],
   longTerm:     [/^lt$/],
-  effectiveLT:  [/^effective\s*gain\s*lt/],
+  /**
+   * `Effective Gain-` over `LT`, wrapped. The joined label is the first alias;
+   * the top line alone is the second, because Carnelian's and SVAN's capital
+   * gain statements print a `#` marker column hard against the right of this
+   * one (x≈800, beside figures ending at 796) and the wrapped `LT` (788–796)
+   * sits nearer that marker's centre than its own column's — so the per-column
+   * join never forms and a printed, populated column read as unmatched. The top
+   * line sits squarely over its own figures. `After Index -LT` (the unlisted
+   * block's indexed gain) is a different measure and matches neither.
+   */
+  effectiveLT:  [/^effective\s*gain\s*lt/, /^effective\s*gain/],
 };
 
 /** STATEMENT OF DIVIDEND — dated income per security. */
@@ -253,6 +264,21 @@ const DIVIDEND_COLUMNS = {
   balance:      [/^balance/],
   tds:          [/^tds/],
 };
+
+/**
+ * …AND THE TDS COLUMN BY ITS WHOLE LABEL, where the first word alone did not
+ * place it.
+ *
+ * V.E.C's July statement (128005, to 06/07/2026) prints `TDS Amount` as one
+ * span (763–809) over figures right-aligned at 795–809. Matched on `tds` alone,
+ * the claim covers only those three letters (763–777), which overlap no
+ * measured column; it falls to the nearest centre — the Balance column, already
+ * taken — and a column printing `0.00` on every row read as unmatched. Matched
+ * whole, the span overlaps its own figures. Used only as a second reading where
+ * the first left `tds` unmatched, so every statement the first reading already
+ * places is read exactly as before.
+ */
+const DIVIDEND_COLUMNS_TDS_LABEL = { ...DIVIDEND_COLUMNS, tds: [/^tds\s*amount/, /^tds/] };
 
 /** CORPORATE BENEFITS — bonuses and dividends by corporate-action type. */
 const CORPORATE_BENEFIT_COLUMNS = {
@@ -295,7 +321,16 @@ const CAPITAL_REGISTER_COLUMNS = {
   balance:     [/^balance/],
 };
 
-/** STATEMENT OF EXPENSES — fees and charges, dated. */
+/**
+ * STATEMENT OF EXPENSES — fees and charges, dated.
+ *
+ * `Tran Ref.` is PRINTED AND MAY BE BLANK: SVAN's statements (Z1282_8710067 /
+ * 8710090, to 30/09/2026) print the label at x≈207–240 and not one row carries
+ * a reference beneath it, on any of their four pages. So it binds only where its
+ * own label sits over a measured column (`EXPENSE_OVERLAP_ONLY`), and a label
+ * over an empty column is not reported as a column this reader failed to find.
+ */
+const EXPENSE_OVERLAP_ONLY = ["tranRef"];
 const EXPENSE_COLUMNS = {
   date:       [/^date/],
   settleDate: [/^settlement\s*date/],
@@ -457,8 +492,14 @@ const PAGE_FOOTER = /^page\s*\d+(\s*of\s*\d+)?$/i;
  */
 const DATE_ONLY = /^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$/;
 
-/** Sub-header text that prints inside a data column, not a value. */
-const HEADER_LABEL = /^(accrued\s*income|market\s*value|unit\s*cost|total\s*cost|%\s*(g\s*\/?\s*l|assets)|price|quantity|cost)$/i;
+/**
+ * Sub-header text that prints inside a data column, not a value.
+ *
+ * `(Cost)` is Buoyant's: its appraisal heads the weight column `% Assets` and
+ * prints `(Cost)` on the line beneath — the basis the weight is struck on, a
+ * label like `Accrued Income` beside it, not a figure that failed to parse.
+ */
+const HEADER_LABEL = /^(accrued\s*income|market\s*value|unit\s*cost|total\s*cost|%\s*(g\s*\/?\s*l|assets)|price|quantity|cost|\(cost\))$/i;
 
 /**
  * Report types this engine knows how to read. Anything else is declared, not
@@ -480,6 +521,10 @@ const READABLE = new Set([
   // ASK's whole-life P&L account and balance sheet; Marathon's whole-life
   // income-and-expense row. See readProfitAndLoss and readIncomeExpense.
   "profit-and-loss", "income-expense",
+  // Read whole into the audit archive and checked; supply nothing to the book
+  // but the lot register. See readPerformanceBySecurity, readTrialBalance and
+  // readOpenLots.
+  "performance-by-security", "trial-balance", "open-lots",
 ]);
 /** These reports place the geometry at 3pt corridors; measured, not guessed. */
 const LAYOUT = { minColumnGap: 3 };
@@ -633,6 +678,8 @@ function readHoldings(pages, warnings) {
   const holdings = [];
   const subtotals = [];
   const allRows = [];
+  /** Every section heading the appraisal printed, in order — see totalsFrom. */
+  const headings = [];
   let columns = null;
   let section = null;
   let found = false;
@@ -656,7 +703,7 @@ function readHoldings(pages, warnings) {
       if (name && (DATE_ONLY.test(name) || PAGE_FOOTER.test(name))) continue;
 
       // A section heading: a bare label with no figures.
-      if (name && !populated.length && SECTION_ROW.test(name)) { section = name; continue; }
+      if (name && !populated.length && SECTION_ROW.test(name)) { section = name; headings.push(name); continue; }
 
       // A subtotal: figures but NO label — or a label that is only the section's
       // own name with no quantity against it. Either way it closes the section
@@ -702,6 +749,16 @@ function readHoldings(pages, warnings) {
     }
 
     for (const r of rows) {
+      // THE PRINT DATE IN THE FOOTER, under a figure column. SVAN's appraisal
+      // prints `07/10/2026` alone at the foot of every page, right-aligned under
+      // `% Assets` — a row with no security, no figure and nothing but that date.
+      // It is the day the report was run (the statement is as of 30/09/2026), so
+      // it is page furniture exactly as `DATE_ONLY` already treats it in the
+      // name column, and nothing was lost by not reading it as a weight.
+      const footerDate = !clean(r.fields.security)
+        && numericFields.every((f) => !clean(r.fields[f]) || DATE_ONLY.test(clean(r.fields[f])))
+        && numericFields.some((f) => DATE_ONLY.test(clean(r.fields[f])));
+      if (footerDate) continue;
       for (const f of numericFields) {
         // A HEADER LABEL or a page footer is not an unparseable figure.
         // "Accrued Income" is a sub-header printed inside the Market Value
@@ -722,6 +779,7 @@ function readHoldings(pages, warnings) {
   return {
     holdings,
     subtotals,
+    headings,
     // The audit sheet keeps EVERY row, continuations and subtotals included —
     // it is the record of what the statement said, not of what we summed.
     sheet: toAuditSheet("holdings", columns, allRows),
@@ -734,7 +792,7 @@ function readHoldings(pages, warnings) {
  * Ordering is the only thing that identifies them: the first subtotal closes the
  * Equity section, the next closes Cash, and the last is the grand total.
  */
-function totalsFrom(subtotals, source, warnings) {
+function totalsFrom(subtotals, source, warnings, headings = null) {
   if (!subtotals.length) return null;
   const val = (r, f) => parseNum(r.fields[f]);
   const bySection = (name) => subtotals.find((s) => s.section && new RegExp(`^${name}`, "i").test(s.section));
@@ -742,7 +800,20 @@ function totalsFrom(subtotals, source, warnings) {
   const equity = bySection("equit");
   const cash = bySection("cash");
   const grand = subtotals[subtotals.length - 1];
-  if (!equity) warn(warnings, "equity-subtotal-not-found", "no unlabelled subtotal closed the Equity section");
+  /**
+   * AN APPRAISAL WITH NO EQUITY SECTION HAS NO EQUITY SUBTOTAL TO FIND.
+   *
+   * Buoyant's appraisal prints two sections — `Cash and Equivalent` and
+   * `Alternative Assets` (its Category III units) — and a subtotal under each;
+   * there is no Equity heading anywhere on it, so "no subtotal closed the
+   * Equity section" described a section the statement never had. The equity
+   * figures stay null, which is the truth. Where the appraisal prints no
+   * section headings at all, or does print an Equity heading, a missing equity
+   * subtotal is still reported exactly as before.
+   */
+  const noEquitySection = Array.isArray(headings) && headings.length > 0
+    && !headings.some((h) => /^equit/i.test(h));
+  if (!equity && !noEquitySection) warn(warnings, "equity-subtotal-not-found", "no unlabelled subtotal closed the Equity section");
 
   const t = makeTotals({
     equityMarketValue: equity ? val(equity, "marketValue") : null,
@@ -911,18 +982,46 @@ const DATE_CELL = /^\s*(\d{1,2}\/\d{1,2}\/(?:\d{4}|\d{2}))\s*$/;
  */
 function readAcrossPages(pages, columns, opts = {}) {
   const rows = [];
+  const tables = [];
   let map = null, missing = null;
-  for (const page of pages) {
+  pages.forEach((page, pageIndex) => {
     const table = findTable(page, columns, { minFields: opts.minFields ?? 4, ...LAYOUT, ...opts });
-    if (!table) continue;
-    if (opts.require && !opts.require.every((f) => f in table.columns)) continue;
+    if (!table) return;
+    if (opts.require && !opts.require.every((f) => f in table.columns)) return;
     const r = readRows(page, table, {});
-    if (!r.rows.length) continue;
+    if (!r.rows.length) return;
     map ??= table.columns;
-    missing ??= table.missing;
-    rows.push(...r.rows);
-  }
-  return rows.length ? { rows, columns: map, missing } : null;
+    // A field bound only where its label sits over a measured column, whose
+    // label IS printed and has nothing under it on this page, is a printed
+    // column the statement left blank — read, and empty. It is not missing.
+    missing ??= table.missing.filter((f) => !printedOverBlank(table, columns, opts.overlapOnly, f));
+    tables.push({ pageIndex, page, table });
+    rows.push(...r.rows.map((x) => ({ ...x, pageIndex })));
+  });
+  return rows.length ? { rows, columns: map, missing, tables } : null;
+}
+
+/** Header text normalised the way `lib/table.mjs` matches it. */
+const normLabel = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9%]+/g, " ").trim();
+
+/** The header items of a located table — every line of its header block. */
+const headerItems = (table) => (table.grid?.rows ?? []).slice(0, table.headerRows ?? 1).flatMap((r) => r.items ?? []);
+
+/**
+ * IS THIS UNMATCHED FIELD A PRINTED LABEL OVER AN EMPTY COLUMN?
+ *
+ * True only for a field the caller binds by overlap alone (`overlapOnly`), when
+ * one of its header spans matches its alias AND that span overlaps no column the
+ * body measured — the statement printed the heading and nothing beneath it.
+ * Buoyant's `Exchg` over its fund's own allotments and SVAN's `Tran Ref.` over
+ * every expense are the two in this corpus. A label that does sit over a
+ * measured column and still went unbound is a real miss and stays reported.
+ */
+function printedOverBlank(table, aliases, overlapOnly, field) {
+  if (!(overlapOnly ?? []).includes(field)) return false;
+  const cols = table.grid?.columns ?? [];
+  return headerItems(table).some((it) => (aliases[field] ?? []).some((re) => re.test(normLabel(it.text)))
+    && !cols.some((c) => Math.min(it.x + it.width, c.x1) - Math.max(it.x, c.x0) > 0));
 }
 
 /** `dd/mm/yyyy` in a cell → ISO, else null. Never a partial or a guess. */
@@ -1122,10 +1221,15 @@ function readDividends(pages, source, warnings) {
   // A page can leave Balance entirely blank, including its subtotals. Its
   // header must not fall back to the neighbouring TDS column: that discarded
   // 124 explicitly printed zero-TDS values in the September ASK statements.
-  const t = readAcrossPages(pages, DIVIDEND_COLUMNS, {
-    minFields: 5, require: ["security", "exDate"], overlapOnly: ["balance"],
-  });
+  const opts = { minFields: 5, require: ["security", "exDate"], overlapOnly: ["balance"] };
+  let t = readAcrossPages(pages, DIVIDEND_COLUMNS, opts);
   if (!t) return null;
+  if (t.missing?.includes("tds")) {
+    const whole = readAcrossPages(pages, DIVIDEND_COLUMNS_TDS_LABEL, opts);
+    // Taken only where it places the TDS column and loses nothing the first
+    // reading placed.
+    if (whole && !whole.missing.includes("tds") && Object.keys(t.columns).every((f) => f in whole.columns)) t = whole;
+  }
   if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
 
   const out = [];
@@ -1233,13 +1337,34 @@ function readBankBook(pages, source, warnings) {
 function readCapitalRegister(pages, source, warnings) {
   const t = readAcrossPages(pages, CAPITAL_REGISTER_COLUMNS, { minFields: 4, require: ["description", "credit", "debit"] });
   if (!t) return null;
-  if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
+  const recovered = t.missing?.includes("notes") ? recoverRegisterNotes(t) : null;
+  const missing = (t.missing ?? []).filter((f) => !(f === "notes" && recovered));
+  if (missing.length) warn(warnings, "columns-not-matched", missing.join(", "));
+  if (recovered) {
+    for (const r of t.rows) {
+      const n = recovered.get(r);
+      if (n === undefined) continue;
+      r.fields = { ...r.fields, notes: n.notes, ...(n.setDate !== undefined ? { setDate: n.setDate } : {}) };
+      if (n.cells) r.cells = n.cells;
+    }
+  }
 
   const out = [];
   for (const r of t.rows) {
     const date = cellDate(r.fields.tranDate);
     const description = clean(r.fields.description);
-    if (!date || !description) continue;
+    if (!date || !description) {
+      // A notes line with nothing else on it CONTINUES the entry above it:
+      // `BUOYANT OPPORTUNITIES STRATEGY -` / `CATEGORY III - CLASS A4 -
+      // 1619755.801214` is one note printed over two lines.
+      const prev = out[out.length - 1];
+      const n = clean(r.fields.notes);
+      if (recovered && prev && n && !description && !date
+        && Object.entries(r.fields).every(([k, v]) => k === "notes" || k === "setDate" || !clean(v))) {
+        prev.notes = `${prev.notes ?? ""} ${n}`.replace(/\s+/g, " ").trim();
+      }
+      continue;
+    }
     const credit = parseNum(r.fields.credit);
     const debit = parseNum(r.fields.debit);
     out.push(makeCashFlow({
@@ -1255,12 +1380,66 @@ function readCapitalRegister(pages, source, warnings) {
       notes: clean(r.fields.notes) || null,
     }));
   }
-  return out.length ? { cashFlows: out, sheet: toAuditSheet("capital-register", Object.keys(t.columns), t.rows) } : null;
+  const header = Object.keys(t.columns);
+  if (recovered && !header.includes("notes")) header.splice(header.includes("setDate") ? header.indexOf("setDate") + 1 : header.length, 0, "notes");
+  return out.length ? { cashFlows: out, sheet: toAuditSheet("capital-register", header, t.rows) } : null;
+}
+
+/**
+ * THE CAPITAL REGISTER'S `Desc/Notes`, READ UNDER ITS OWN LABEL WHERE THE BODY
+ * DID NOT SEPARATE IT.
+ *
+ * Buoyant 103473's register (to 31/07/2026) prints the label at x≈229 and two
+ * notes beneath it — `BUOYANT OPPORTUNITIES STRATEGY - / CATEGORY III - CLASS A4
+ * - 1619755.801214` against the class switch's Security in, and the A1 units
+ * against its Security out. The Set Date figures end at 227 and the notes start
+ * at 235, but the Total row's `Closing Balance` (229–287) closes that corridor,
+ * so the body measures Set Date and Desc/Notes as ONE column: the notes were
+ * glued onto the settlement date (which then read as no date at all) and the
+ * label bound to nothing. 103472's register, which prints no notes, separates
+ * cleanly — the same layout, one row different.
+ *
+ * So where `notes` went unmatched and its label IS printed, each body row's
+ * notes are the spans that start at or right of the label's left edge and end
+ * before the next header label to its right (the money columns are
+ * right-aligned to theirs, so none of their figures qualifies). A Set Date cell
+ * that ended in exactly those words gives them back. Returns a Map row → {notes,
+ * setDate, cells}, or null where no page prints the label.
+ */
+function recoverRegisterNotes(t) {
+  const out = new Map();
+  let found = false;
+  for (const { pageIndex, table } of t.tables ?? []) {
+    const head = headerItems(table);
+    const label = head.find((it) => CAPITAL_REGISTER_COLUMNS.notes.some((re) => re.test(normLabel(it.text))));
+    if (!label) continue;
+    const right = head.filter((it) => it.x > label.x + label.width).map((it) => it.x).sort((a, b) => a - b)[0] ?? Infinity;
+    found = true;
+    const body = (table.grid?.rows ?? []).slice(table.bodyFrom ?? table.headerRows ?? 1);
+    for (const r of t.rows.filter((x) => x.pageIndex === pageIndex)) {
+      const g = body.find((b) => b.y === r.y);
+      if (!g) continue;
+      const spans = (g.items ?? []).filter((it) => it.x >= label.x - 1 && it.x + it.width <= right)
+        .sort((a, b) => a.x - b.x);
+      const notes = spans.map((it) => clean(it.text)).join(" ").replace(/\s+/g, " ").trim();
+      if (!notes) continue;
+      const entry = { notes };
+      const sd = clean(r.fields.setDate);
+      if (sd.endsWith(notes)) entry.setDate = sd.slice(0, sd.length - notes.length).trim();
+      // The audit sheet's cells: the glued cell split back into its two columns.
+      const at = r.cells.findIndex((c) => clean(c) === sd);
+      if (entry.setDate !== undefined && at >= 0) {
+        entry.cells = [...r.cells.slice(0, at), ...(entry.setDate ? [entry.setDate] : []), notes, ...r.cells.slice(at + 1)];
+      }
+      out.set(r, entry);
+    }
+  }
+  return found ? out : null;
 }
 
 /** STATEMENT OF EXPENSES → dated charges. */
 function readExpenses(pages, source, warnings) {
-  const t = readAcrossPages(pages, EXPENSE_COLUMNS, { minFields: 3, require: ["detail", "amount"] });
+  const t = readAcrossPages(pages, EXPENSE_COLUMNS, { minFields: 3, require: ["detail", "amount"], overlapOnly: EXPENSE_OVERLAP_ONLY });
   if (!t) return null;
   if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
 
@@ -1770,6 +1949,17 @@ const PL_LINES = {
   },
   assets: { "investments at cost": "investments" },
 };
+/**
+ * `Other Income` is NOT required. ASK's account prints it; Carnelian's
+ * (3517383, 01/04/2026 to 07/10/2026) prints its INCOME block as `Dividend`,
+ * `Realized Gain/Loss` and `TOTAL` and nothing else — 17,74,297.60 − 17,63,423.42
+ * = 17,874.18, the printed TOTAL — and its trial balance for the same window
+ * carries no other-income account at all (the liquid fund's 3,453.96 is inside
+ * the realised line, beside the shares' −17,66,877.38). A line the layout does
+ * not print is not a line the reader missed: the income identity is struck over
+ * the lines that ARE printed, and still has to reproduce the printed TOTAL.
+ */
+const PL_OPTIONAL = new Set(["otherIncome"]);
 const PL_REQUIRED = [
   "dividend", "otherIncome", "realized", "income.total",
   "custodian", "management", "stt", "otherExpenses", "expenses.total", "surplus",
@@ -1918,15 +2108,16 @@ function readProfitAndLoss(pages, source, warnings, window) {
     warn(warnings, "profit-and-loss-line-not-recognised", `${problems.join("; ")}. Nothing is published from a P&L account this reader cannot account for line by line.`);
     return null;
   }
-  const missing = PL_REQUIRED.filter((k) => !(k in got));
+  const missing = PL_REQUIRED.filter((k) => !(k in got) && !PL_OPTIONAL.has(k));
   if (missing.length) {
     warn(warnings, "profit-and-loss-line-missing", `${missing.join(", ")} not printed. Nothing is published from a P&L account that cannot be closed.`);
     return null;
   }
 
   const g = got;
+  const otherIncomePrinted = "otherIncome" in g;
   const checks = [
-    ["income lines = income TOTAL", [g.dividend, g.otherIncome, g.realized], g["income.total"]],
+    ["income lines = income TOTAL", [g.dividend, ...(otherIncomePrinted ? [g.otherIncome] : []), g.realized], g["income.total"]],
     ["expense lines = expenses TOTAL", [g.custodian, g.management, g.stt, g.otherExpenses], g["expenses.total"]],
     ["income TOTAL − expenses TOTAL = SURPLUS FOR THE PERIOD", [g["income.total"], -g["expenses.total"]], g.surplus],
     ["unrealised: end − beginning = net", [g.unrealizedEnd, -g.unrealizedBeginning], g.unrealizedNet],
@@ -1952,12 +2143,38 @@ function readProfitAndLoss(pages, source, warnings, window) {
     return null;
   }
 
+  /**
+   * THE BALANCE SHEET'S CAPITAL IS A BALANCE, AND A FLOW ONLY OVER A WINDOW
+   * THAT OPENS AT INCEPTION.
+   *
+   * `Capital Contribution` and `Less : Withdrawals` are what the account holds
+   * AT THE CLOSE, from its first day. ASK's account runs from inception (its
+   * reserves begin at 0.00), so there the balance and the window's capital
+   * movement are the same figure. Carnelian's runs from 01/04/2026 and its
+   * reserves BEGIN at −80,46,939.72: the account was years old when the window
+   * opened, and its 33,00,00,000.00 of contribution is a balance carried in —
+   * its trial balance moves the capital account by 1,77,851.00 in the window.
+   * Published as the window's contribution it would tell the bridge, the
+   * capital anchors and the bank-book witness that ₹33 Cr went in since
+   * April. So where beginning reserves are not nil, the window's contribution
+   * and withdrawal are NOT PRINTED here: null, and the balance-sheet lines stay
+   * on the audit sheet, where they tie the balance sheet as before.
+   */
+  const fromInception = Math.abs(g.reservesBeginning) < 0.005;
+  if (!fromInception) {
+    warn(warnings, "profit-and-loss-capital-is-a-balance",
+      `reserves begin the window at ${g.reservesBeginning}, so the account predates ${window?.periodFrom ?? "the window"}: `
+      + `Capital Contribution (${g.contribution}) and Withdrawals (${g.withdrawals}) are balances at the close, not the window's `
+      + "capital movement, and are not published as its contribution or withdrawal.");
+  }
+  const flowOf = fromInception ? PL_FLOW
+    : Object.fromEntries(Object.entries(PL_FLOW).filter(([k]) => k !== "contribution" && k !== "withdrawals"));
   const flows = makeFlows({
-    contribution: g.contribution,
-    withdrawal: g.withdrawals,
+    contribution: fromInception ? g.contribution : null,
+    withdrawal: fromInception ? g.withdrawals : null,
     realized: g.realized,
     unrealized: g.unrealizedNet,
-    income: round2(g.dividend + g.otherIncome),
+    income: round2(g.dividend + (otherIncomePrinted ? g.otherIncome : 0)),
     fees: g.management,
     expenses: round2(g.custodian + g.stt),
     otherExpenses: g.otherExpenses,
@@ -1967,7 +2184,7 @@ function readProfitAndLoss(pages, source, warnings, window) {
     ...NOT_PRINTED_BRIDGE_LINES,
     ...window,
     source,
-    lines: printedLines(PL_FLOW, labels, g),
+    lines: printedLines(flowOf, labels, g),
   });
 
   const nil = (v) => Math.abs(v) < 0.005;
@@ -2076,6 +2293,481 @@ function readIncomeExpense(pages, source, warnings, window, accountNo) {
   return null;
 }
 
+// ── Three more reports from the same system: read IN FULL, supplying nothing ──
+//
+// PERFORMANCE BY SECURITY SINCE INCEPTION, TRIAL BALANCE and OPEN LOTS (the
+// October 2026 delivery, Carnelian 3517383 and V.E.C 128004). None of the three
+// is named in `precedence.mjs`, deliberately: each restates, at another grain,
+// facts the appraisal, the P&L account and the dated statements already supply
+// to the book, and a second holdings snapshot or a second flow block from them
+// would be counted beside the first. So each table is captured whole as an
+// audit section, every identity the report prints is checked against its own
+// rows (`checks`), and the one fact the document model carries that only one of
+// them states — the dated purchase lots behind the holdings still held — is
+// emitted as `openLots`, the lot register, and never as a holding.
+//
+// All three print their figures RIGHT-ALIGNED TO THEIR OWN HEADER LABELS (a
+// figure ends where its label ends, measured to the point on every page), and
+// all three carry pages that print ONLY totals — the body-measured grid of
+// `findTable` has two rows to measure there and misplaced the Open Lots
+// totals by a column. So these readers place each figure under the label whose
+// RIGHT EDGE it shares: the header text still decides which column is which,
+// and the geometry is the label's own rather than whatever a page happens to
+// carry beneath it.
+
+/** Is this span a figure — a number, a date or the dash a column prints for none? */
+const isCellText = (t) => parseNumInfo(t).status === "ok" || DATE_CELL.test(t) || /^-$/.test(clean(t));
+
+/** Label spans on one header line, by alias: `{ field: item }`. First match per field. */
+function labelSpans(items, aliases) {
+  const out = {};
+  for (const it of items ?? []) {
+    const t = normLabel(it.text);
+    for (const [f, res] of Object.entries(aliases)) {
+      if (f in out) continue;
+      if (res.some((re) => re.test(t))) { out[f] = it; break; }
+    }
+  }
+  return out;
+}
+
+/** The field whose label's RIGHT EDGE this span shares (within `tol` points), or null. */
+function underLabel(it, labels, tol = 4) {
+  let best = null, dist = Infinity;
+  const r = it.x + it.width;
+  for (const [f, l] of Object.entries(labels)) {
+    const d = Math.abs(r - (l.x + l.width));
+    if (d < dist) { dist = d; best = f; }
+  }
+  return dist <= tol ? best : null;
+}
+
+/** A pass/fail ledger in the shape `makeDocument`'s `checks` carries. */
+function checkLedger() {
+  const passed = [], failed = [], notApplicable = [];
+  return {
+    passed, failed, notApplicable,
+    note(name, ok, detail = "") { (ok ? passed : failed).push(ok || !detail ? name : `${name}: ${detail}`); },
+    result: () => ({ passed, notApplicable, failed }),
+  };
+}
+
+const sumBy = (rows, key) => rows.reduce((s, r) => s + (r[key] ?? 0), 0);
+
+/** PERFORMANCE BY SECURITY — the first printed line of each record. */
+const PBS_LINE1 = {
+  security:      [/^security\s*name$/, /^security$/],
+  quantity:      [/^(qty|quantity)$/],
+  marketValue:   [/^market\s*value$/],
+  pctAssets:     [/^%\s*assets$/],
+  totalCost:     [/^total\s*cost$/],
+  unrealized:    [/^unreali[sz]ed\s*gain$/],
+  realized:      [/^reali[sz]ed\s*gain$/],
+  accruedIncome: [/^accrued\s*income$/],
+  absIrrPct:     [/^abs\s*irr\s*%?$/],
+  irrPct:        [/^irr\s*%?$/],
+  priceDate:     [/^price\s*as\s*on$/],
+};
+/** …and the second, printed under the first in the SAME columns. */
+const PBS_LINE2 = {
+  unitPrice:      [/^unit\s*price$/],
+  unitCost:       [/^unit\s*cost$/],
+  pctGainLoss:    [/^%\s*gain\s*loss$/],
+  priorGain:      [/^prior\s*transfer\s*gain$/],
+  incomeReceived: [/^income\s*received$/],
+  absBmIrrPct:    [/^abs\s*bm\s*irr\s*%?$/],
+  bmIrrPct:       [/^bm\s*irr\s*%?$/],
+  benchmark:      [/^bench\s*mark$/],
+};
+
+/**
+ * PERFORMANCE BY SECURITY SINCE INCEPTION — one record per holding, PRINTED
+ * OVER TWO LINES, and the subtotals likewise:
+ *
+ *   Security Name   Qty      Market Value  %Assets  Total Cost  Unrealised Gain  Realized Gain  Accrued Income  Abs IRR%  IRR%  Price as on
+ *                            Unit Price             Unit Cost   % Gain/Loss      Prior/Transfer Income Received Abs BM IRR BM IRR% Bench mark
+ *   Biocon Ltd      125,500  46,322,050   12.03 %  47,954,139  -1,632,089       0              0               -3.74 %   -2.19 % 06/10/2026
+ *                            369.10                382.10      -3.40 %          0              95,958          -3.74 %   -2.19 %
+ *
+ * Every column carries two labels, one per line; a figure on a record's first
+ * line is read under the first, one on its second line under the second. A
+ * long name wraps onto the second line ("Star Health and Allied Insurance
+ * Company" / "Limited").
+ *
+ * The figures are a since-inception restatement of the appraisal's holdings
+ * (same quantity, same cost) with the realised gain and income of every
+ * security ever held, so they are captured and checked, and none is a source:
+ * no holding, no return series and no flow is emitted from this report.
+ */
+function readPerformanceBySecurity(pages, warnings) {
+  const records = [];
+  const gate = checkLedger();
+  let found = false;
+  // The section headings still open — they run on across a page break (page 2
+  // of Carnelian's opens with `Total : Cash and Equivalent`).
+  let open = [];
+  for (const [pageIndex, page] of pages.entries()) {
+    const rows = page.rows ?? [];
+    const h1 = rows.findIndex((r) => Object.keys(labelSpans(r.items, PBS_LINE1)).length >= 6);
+    if (h1 < 0) continue;
+    const h2 = [h1 + 1, h1 + 2].find((i) => rows[i] && Object.keys(labelSpans(rows[i].items, PBS_LINE2)).length >= 4);
+    if (h2 === undefined) continue;
+    const l1 = labelSpans(rows[h1].items, PBS_LINE1);
+    const l2 = labelSpans(rows[h2].items, PBS_LINE2);
+    const cols1 = Object.fromEntries(Object.entries(l1).filter(([f]) => f !== "security"));
+    found = true;
+    let pending = null;
+    for (const row of rows.slice(h2 + 1)) {
+      const items = row.items ?? [];
+      const cells = items.filter((it) => isCellText(clean(it.text)) && underLabel(it, cols1));
+      const texts = items.filter((it) => !cells.includes(it)).map((it) => clean(it.text)).filter(Boolean);
+      if (!cells.length) {
+        if (!texts.length || texts.every((t) => PAGE_FOOTER.test(t))) continue;
+        // After the grand total the page carries only its footnote.
+        if (records.length && records[records.length - 1].grand) break;
+        open = [...open, texts.join(" ")];
+        continue;
+      }
+      const label = texts.join(" ");
+      const byCol = {};
+      for (const it of cells) byCol[underLabel(it, cols1)] = clean(it.text);
+      const isLine2 = pending && !pending.line2 && !byCol.quantity && !byCol.priceDate && !/^total\b/i.test(label);
+      if (isLine2) {
+        // The second line: each column's figure under that column's second label.
+        pending.line2 = {};
+        for (const [f, l] of Object.entries(l2)) {
+          const col = underLabel(l, cols1);
+          if (col && byCol[col] !== undefined) pending.line2[f] = byCol[col];
+        }
+        if (label) pending.label = `${pending.label} ${label}`.replace(/\s+/g, " ").trim();
+        continue;
+      }
+      const total = /^total\b/i.exec(label);
+      const closes = total ? clean(label.replace(/^total\s*:?/i, "")) : null;
+      pending = {
+        pageIndex, label, section: [...open], line1: byCol, line2: null,
+        total: !!total, closes: closes || null, grand: !!total && !closes,
+      };
+      records.push(pending);
+      if (total && closes) {
+        const at = open.findIndex((h) => normLabel(h) === normLabel(closes));
+        if (at >= 0) open = open.slice(0, at);
+      }
+    }
+  }
+  if (!found) {
+    warn(warnings, "performance-by-security-table-not-found", "no page printed the Security Name / Qty / Market Value header over a Unit Price line");
+    return null;
+  }
+
+  // The figures, parsed once, for the checks.
+  const v = (r, f) => parseNum((r.line1 ?? {})[f] ?? (r.line2 ?? {})[f]);
+  const holdings = records.filter((r) => !r.total);
+  const totals = records.filter((r) => r.total);
+  if (records.some((r) => !r.line2)) {
+    gate.note("every record prints its second line", false, records.filter((r) => !r.line2).map((r) => r.label).join(", "));
+  } else gate.note(`every record prints its second line (${records.length})`, true);
+  const rowFail = { value: [], cost: [], gain: [] };
+  for (const r of holdings) {
+    const q = v(r, "quantity"), p = v(r, "unitPrice"), uc = v(r, "unitCost"), mv = v(r, "marketValue"), c = v(r, "totalCost"), g = v(r, "unrealized");
+    // Value and cost are printed in whole rupees, prices to the paisa.
+    if ([q, p, mv].every((x) => x !== null) && !(Math.abs(q * p - mv) <= 0.5 + Math.abs(q) * 0.005)) rowFail.value.push(`${r.label} ${round2(q * p)} vs ${mv}`);
+    if ([q, uc, c].every((x) => x !== null) && !(Math.abs(q * uc - c) <= 0.5 + Math.abs(q) * 0.005)) rowFail.cost.push(`${r.label} ${round2(q * uc)} vs ${c}`);
+    if ([mv, c, g].every((x) => x !== null) && !(Math.abs(mv - c - g) <= 1.5)) rowFail.gain.push(`${r.label} ${mv - c} vs ${g}`);
+  }
+  gate.note(`every holding: quantity × unit price = market value (${holdings.length})`, !rowFail.value.length, rowFail.value.join("; "));
+  gate.note(`every holding: quantity × unit cost = total cost (${holdings.length})`, !rowFail.cost.length, rowFail.cost.join("; "));
+  gate.note(`every holding: market value − total cost = unrealised gain (${holdings.length})`, !rowFail.gain.length, rowFail.gain.join("; "));
+  for (const t of totals) {
+    const members = t.grand ? holdings : holdings.filter((h) => h.section.some((s) => normLabel(s) === normLabel(t.closes)));
+    for (const [f, label, tol] of [["marketValue", "market value", 0.5], ["totalCost", "total cost", 0.5], ["unrealized", "unrealised gain", 0.5], ["pctAssets", "%assets", 0.005]]) {
+      const printed = v(t, f);
+      if (printed === null) continue;
+      const got = members.reduce((s, h) => s + (v(h, f) ?? 0), 0);
+      gate.note(`${t.label}: ${label} = its ${members.length} holding(s)`, Math.abs(got - printed) <= tol * (members.length + 1) + 1e-9,
+        `Σ ${round2(got)} against ${printed} printed`);
+    }
+  }
+  gate.notApplicable.push("realised gain, income received and accrued income are not tied to the rows: each subtotal includes "
+    + "securities sold out before the as-of date, which print no row of their own");
+  if (gate.failed.length) {
+    warn(warnings, "performance-by-security-does-not-tie", gate.failed.join("; "));
+  }
+
+  const header = ["section", "security", ...Object.keys(PBS_LINE1).filter((f) => f !== "security"), ...Object.keys(PBS_LINE2)];
+  const sheetRows = records.map((r) => ({
+    cells: [r.section.join(" / "), r.label,
+      ...Object.keys(PBS_LINE1).filter((f) => f !== "security").map((f) => r.line1?.[f] ?? ""),
+      ...Object.keys(PBS_LINE2).map((f) => r.line2?.[f] ?? "")],
+  }));
+  return { checks: gate.result(), sheet: toAuditSheet("performance-by-security", header, sheetRows) };
+}
+
+/** TRIAL BALANCE — the three column groups, each split Debit / Credit. */
+const TB_GROUPS = {
+  account: [/^account$/],
+  opening: [/^opening\s*balance$/],
+  period:  [/^transaction\s*during\s*period$/],
+  closing: [/^closing\s*balance$/],
+};
+
+/**
+ * TRIAL BALANCE — every ledger account of the mandate over the window, opening,
+ * movement and closing, each as a debit and a credit:
+ *
+ *   Account                 Opening Balance       Transaction During Period    Closing Balance
+ *                           Debit      Credit     Debit        Credit          Debit        Credit
+ *   Assets / Current Assets
+ *     Bank balance-…        803,390.81  0.00      644,287.00   0.00            1,447,677.81 0.00
+ *
+ * The six sub-columns are identified by their two printed labels together — the
+ * group label above, `Debit`/`Credit` beneath it — and a figure is read under
+ * the sub-label whose right edge it shares. Headings (`Assets`, `Current
+ * Assets`, `Investment`, `Expense`, `Income`, `Liabilities`, page 2's
+ * `Unrealized Gain\Loss`) nest by their own indent.
+ *
+ * Read for the audit archive and checked, never a source: the P&L account and
+ * the dated statements already supply its figures to the book over the same
+ * window, and a ledger re-read as flows would put them there twice.
+ */
+function readTrialBalance(pages, warnings) {
+  const lines = [];
+  const gate = checkLedger();
+  let found = false;
+  for (const [pageIndex, page] of pages.entries()) {
+    const rows = page.rows ?? [];
+    const h = rows.findIndex((r) => Object.keys(labelSpans(r.items, TB_GROUPS)).length === 4);
+    if (h < 0) continue;
+    const groups = labelSpans(rows[h].items, TB_GROUPS);
+    const sub = rows[h + 1]?.items ?? [];
+    const sides = sub.filter((it) => /^(debit|credit)$/.test(normLabel(it.text)));
+    // Each Debit/Credit label belongs to the group label whose centre is nearest its own.
+    const centre = (it) => it.x + it.width / 2;
+    const cols = {};
+    for (const it of sides) {
+      let g = null, d = Infinity;
+      for (const k of ["opening", "period", "closing"]) {
+        const dd = Math.abs(centre(it) - centre(groups[k]));
+        if (dd < d) { d = dd; g = k; }
+      }
+      cols[`${g}${normLabel(it.text) === "debit" ? "Debit" : "Credit"}`] = it;
+    }
+    if (Object.keys(cols).length !== 6) continue;
+    found = true;
+    const stack = [];
+    for (const row of rows.slice(h + 2)) {
+      const items = row.items ?? [];
+      const figs = items.filter((it) => parseNumInfo(clean(it.text)).status === "ok" && underLabel(it, cols));
+      const texts = items.filter((it) => !figs.includes(it) && clean(it.text));
+      // A ledger line always names its account; a figure with no label beside it
+      // is the page number in the footer.
+      if (!texts.length) continue;
+      const label = texts.map((it) => clean(it.text)).join(" ");
+      if (!figs.length) {
+        const x = Math.min(...texts.map((it) => it.x));
+        while (stack.length && stack[stack.length - 1].x >= x - 1) stack.pop();
+        stack.push({ x, label });
+        continue;
+      }
+      const line = { pageIndex, group: stack.map((s) => s.label).join(" / "), label };
+      for (const it of figs) line[underLabel(it, cols)] = parseNum(clean(it.text));
+      line.kind = /^net\s*total$/i.test(label) ? "net" : /^total$/i.test(label) ? "total" : "account";
+      if (line.kind !== "account") line.group = "";                        // a Total closes a block, not a heading
+      line.raw = Object.fromEntries(figs.map((it) => [underLabel(it, cols), clean(it.text)]));
+      lines.push(line);
+    }
+  }
+  if (!found) {
+    warn(warnings, "trial-balance-table-not-found", "no page printed Account / Opening Balance / Transaction During Period / Closing Balance over Debit and Credit");
+    return null;
+  }
+
+  const SIDES = ["openingDebit", "openingCredit", "periodDebit", "periodCredit", "closingDebit", "closingCredit"];
+  const net = (l, g) => (l[`${g}Debit`] ?? 0) - (l[`${g}Credit`] ?? 0);
+  const accounts = lines.filter((l) => l.kind === "account");
+  const broken = accounts.filter((l) => !(Math.abs(net(l, "opening") + net(l, "period") - net(l, "closing")) <= 0.015 + 1e-9));
+  gate.note(`every account: opening + movement = closing (${accounts.length})`, !broken.length,
+    broken.map((l) => `${l.label} ${round2(net(l, "opening") + net(l, "period"))} vs ${round2(net(l, "closing"))}`).join("; "));
+  // Each Total closes the accounts printed since the previous one.
+  let from = 0, firstTotal = null, lastTotal = null;
+  lines.forEach((l, i) => {
+    if (l.kind === "total") {
+      const block = lines.slice(from, i).filter((x) => x.kind === "account");
+      const off = SIDES.filter((s) => !(Math.abs(sumBy(block, s) - (l[s] ?? 0)) <= 0.005 * (block.length + 1) + 1e-9));
+      gate.note(`Total on page ${l.pageIndex + 1} = its ${block.length} account(s), in all six columns`, !off.length,
+        off.map((s) => `${s} Σ ${round2(sumBy(block, s))} vs ${l[s] ?? 0}`).join("; "));
+      firstTotal ??= l;
+      lastTotal = l;
+      from = i + 1;
+    }
+    if (l.kind === "net" && lastTotal) {
+      // Net Total prints each pair's difference on the side that is larger.
+      const off = ["opening", "period", "closing"].filter((g) => {
+        const want = net(lastTotal, g);
+        const got = net(l, g);
+        return !(Math.abs(got - want) <= 0.01);
+      });
+      gate.note(`Net Total on page ${l.pageIndex + 1} = debit − credit of the Total above it`, !off.length, off.join(", "));
+    }
+  });
+  if (firstTotal) {
+    const off = ["opening", "period", "closing"].filter((g) => !(Math.abs(net(firstTotal, g)) <= 0.01));
+    gate.note("the ledger balances: debits = credits, opening, movement and closing", !off.length, off.join(", "));
+  } else gate.notApplicable.push("the ledger's balance: the statement prints no Total");
+  if (gate.failed.length) warn(warnings, "trial-balance-does-not-tie", gate.failed.join("; "));
+
+  const header = ["page", "group", "account", ...SIDES];
+  const sheetRows = lines.map((l) => ({ cells: [l.pageIndex + 1, l.group, l.label, ...SIDES.map((s) => l.raw[s] ?? "")] }));
+  return { checks: gate.result(), sheet: toAuditSheet("trial-balance", header, sheetRows) };
+}
+
+/** OPEN LOTS — the columns, by their printed labels. The security column has none. */
+const OPEN_LOT_COLUMNS = {
+  account:     [/^account$/],
+  buyDate:     [/^buy\s*date$/],
+  quantity:    [/^(quantity|qty)$/],
+  unitCost:    [/^unit\s*cost$/],
+  totalCost:   [/^total\s*cost$/],
+  price:       [/^price$/],
+  marketValue: [/^market\s*value$/],
+  unrealized:  [/^unreali[sz]ed$/],
+  daysHeld:    [/^no\s*of\s*days$/],
+};
+
+/**
+ * OPEN LOTS — the purchase lots behind every holding still held:
+ *
+ *   Equity
+ *                        Account                   Buy Date    Quantity   Unit Cost  Total Cost    Price     Market Value  Unrealized  No.of Days
+ *   Equity-Listed                                                                                                          Gain/Loss   Held
+ *   Ather Energy Ltd     ANKITA BHARAT JAISINGHANI - 31/07/2025  3,000.000  347.5162   10,42,548.60  1,455.0000 43,65,000.00 33,22,451.40  433
+ *                        VECBES0003
+ *
+ * THE LOT REGISTER, and the one fact here the document model already carries:
+ * `openLots`, `{ security, purchaseDate, quantity, unitCost, totalCost }` per
+ * lot — what makes an unrealised short/long-term split measurable (build-book
+ * applies it only where the lots reconcile to the appraisal's held quantity
+ * exactly). Never a holding: the appraisal is the holding, and the lots are the
+ * same shares at a finer grain. The lot's price, market value and unrealised
+ * gain are valuation the appraisal already carries; they are checked and kept
+ * in the audit sheet only.
+ *
+ * The security column prints no header; it is the text left of `Account`. The
+ * holder's name and client code under `Account` wrap over two lines. The report
+ * prints its date in the title block (`OPEN LOTS / By Asset Class / 07/10/2026`)
+ * with no "As of", and the date in the footer is the day it was printed.
+ */
+function readOpenLots(pages, source, warnings) {
+  const lots = [];
+  const totals = [];
+  const gate = checkLedger();
+  let asOf = null, found = false;
+  // `Equity-Listed` is printed once, on page 1; its lots run on over page 2.
+  let section = null;
+  for (const [pageIndex, page] of pages.entries()) {
+    const rows = page.rows ?? [];
+    const h = rows.findIndex((r) => Object.keys(labelSpans(r.items, OPEN_LOT_COLUMNS)).length >= 7);
+    if (h < 0) continue;
+    found = true;
+    // The as-of: the date-only line of the title block, above the account line.
+    const acct = rows.findIndex((r) => (r.items ?? []).some((it) => /^Account\s*:/i.test(clean(it.text))));
+    for (const r of rows.slice(0, acct < 0 ? h : acct)) {
+      const d = (r.items ?? []).map((it) => clean(it.text)).find((t) => DATE_CELL.test(t));
+      if (d) { asOf ??= cellDate(d); break; }
+    }
+    const labels = labelSpans(rows[h].items, OPEN_LOT_COLUMNS);
+    const money = Object.fromEntries(Object.entries(labels).filter(([f]) => f !== "account"));
+    const left = labels.account.x;
+    // The asset class this page lists: the lone heading printed above the header.
+    const above = rows[h - 1]?.items ?? [];
+    const assetClass = above.length === 1 && !isCellText(clean(above[0].text)) ? clean(above[0].text) : null;
+    let last = null;
+    for (const row of rows.slice(h + 1)) {
+      const items = row.items ?? [];
+      const texts = items.map((it) => clean(it.text));
+      if (texts.some((t) => /^note\s*:/i.test(t))) break;               // the footnote
+      const cells = items.filter((it) => isCellText(clean(it.text)) && underLabel(it, money));
+      const byCol = Object.fromEntries(cells.map((it) => [underLabel(it, money), clean(it.text)]));
+      const rest = items.filter((it) => !cells.includes(it));
+      const name = rest.filter((it) => it.x + it.width <= left + 1).map((it) => clean(it.text)).join(" ").trim();
+      const holder = rest.filter((it) => it.x >= left - 1 && it.x < (labels.buyDate?.x ?? Infinity) && it.x + it.width <= (labels.buyDate?.x ?? Infinity))
+        .map((it) => clean(it.text)).join(" ").trim();
+      const other = rest.filter((it) => !(it.x + it.width <= left + 1) && !(it.x >= left - 1 && it.x + it.width <= (labels.buyDate?.x ?? Infinity)))
+        .map((it) => clean(it.text)).join(" ").trim();
+      if (byCol.buyDate && byCol.quantity) {
+        last = { pageIndex, assetClass, section, security: name, holder, ...byCol };
+        lots.push(last);
+        continue;
+      }
+      if (!cells.length) {
+        // The second line of the holder's name and client code, or a heading.
+        if (holder && !name && last) { last.holder = `${last.holder} ${holder}`.trim(); continue; }
+        // The footer's print date and page number (`08/10/2026 … 1`) sit in the
+        // security column's band; a security name is never a date.
+        if (name && !holder && !other && !DATE_ONLY.test(name)) { section = name; last = null; continue; }
+        continue;
+      }
+      // A total: figures and no buy date, labelled `<section> Total` or not at all.
+      totals.push({ pageIndex, label: [name, holder, other].filter(Boolean).join(" ") || "(unlabelled total)", ...byCol });
+      last = null;
+    }
+  }
+  if (!found) {
+    warn(warnings, "open-lots-table-not-found", "no page printed the Buy Date / Quantity / Unit Cost / Total Cost header");
+    return null;
+  }
+
+  const n = (r, f) => parseNum(r[f]);
+  const fail = { cost: [], value: [], gain: [], days: [] };
+  for (const l of lots) {
+    const q = n(l, "quantity"), uc = n(l, "unitCost"), c = n(l, "totalCost"), p = n(l, "price"), mv = n(l, "marketValue"), g = n(l, "unrealized");
+    // Unit cost and price are printed to four places, values to the paisa.
+    if ([q, uc, c].every((x) => x !== null) && !(Math.abs(q * uc - c) <= Math.abs(q) * 0.00005 + 0.01)) fail.cost.push(`${l.security} ${l.buyDate} ${round2(q * uc)} vs ${c}`);
+    if ([q, p, mv].every((x) => x !== null) && !(Math.abs(q * p - mv) <= Math.abs(q) * 0.00005 + 0.01)) fail.value.push(`${l.security} ${l.buyDate} ${round2(q * p)} vs ${mv}`);
+    if ([c, mv, g].every((x) => x !== null) && !(Math.abs(mv - c - g) <= 0.015)) fail.gain.push(`${l.security} ${l.buyDate}`);
+    const days = n(l, "daysHeld"), bought = cellDate(l.buyDate);
+    if (asOf && bought && days !== null && Math.round((Date.parse(asOf) - Date.parse(bought)) / 864e5) !== days) fail.days.push(`${l.security} ${l.buyDate} ${days}`);
+  }
+  gate.note(`every lot: quantity × unit cost = total cost (${lots.length})`, !fail.cost.length, fail.cost.join("; "));
+  gate.note(`every lot: quantity × price = market value (${lots.length})`, !fail.value.length, fail.value.join("; "));
+  gate.note(`every lot: market value − total cost = unrealised gain/loss (${lots.length})`, !fail.gain.length, fail.gain.join("; "));
+  if (asOf) gate.note(`every lot: days held = ${asOf} − buy date (${lots.length})`, !fail.days.length, fail.days.join("; "));
+  else gate.notApplicable.push("days held: the report prints no as-of date to count from");
+  for (const t of totals) {
+    // `Equity-Listed Total` closes its section; `Equity Total` its asset class;
+    // `Detailed Total` and the unlabelled line beneath it close the report.
+    const name = clean(t.label.replace(/\s*total$/i, ""));
+    const members = lots.filter((l) => normLabel(l.section) === normLabel(name)).length ? lots.filter((l) => normLabel(l.section) === normLabel(name))
+      : lots.filter((l) => normLabel(l.assetClass) === normLabel(name)).length ? lots.filter((l) => normLabel(l.assetClass) === normLabel(name))
+      : lots;
+    const off = ["quantity", "totalCost", "marketValue", "unrealized"].filter((f) => n(t, f) !== null
+      && !(Math.abs(members.reduce((s, l) => s + (n(l, f) ?? 0), 0) - n(t, f)) <= 0.005 * (members.length + 1) + 1e-6));
+    gate.note(`${t.label} = its ${members.length} lot(s)`, !off.length, off.join(", "));
+  }
+  if (gate.failed.length) warn(warnings, "open-lots-do-not-tie", gate.failed.join("; "));
+
+  const openLots = lots.map((l) => {
+    const { security, isin } = splitSecurityName(l.security);
+    return {
+      security,
+      securityKey: security ? securityKeyOf(security) : null,
+      isin: isin ?? null,
+      purchaseDate: cellDate(l.buyDate),
+      quantity: n(l, "quantity"),
+      unitCost: n(l, "unitCost"),
+      totalCost: n(l, "totalCost"),
+      source,
+    };
+  });
+  const COLS = ["buyDate", "quantity", "unitCost", "totalCost", "price", "marketValue", "unrealized", "daysHeld"];
+  const header = ["assetClass", "section", "security", "account", ...COLS];
+  const sheetRows = [
+    ...lots.map((l) => ({ cells: [l.assetClass ?? "", l.section ?? "", l.security, l.holder, ...COLS.map((f) => l[f] ?? "")] })),
+    ...totals.map((t) => ({ cells: ["", "", t.label, "", ...COLS.map((f) => t[f] ?? "")] })),
+  ];
+  return { openLots, asOf, checks: gate.result(), sheet: toAuditSheet("open-lots", header, sheetRows) };
+}
+
 /**
  * Extract one statement.
  * @returns {object} partial normalized document
@@ -2106,7 +2798,7 @@ export function extract({ grid, meta }) {
     const h = readHoldings(pages, warnings);
     if (h) {
       sections.holdings = h.sheet;
-      totals = totalsFrom(h.subtotals, source, warnings);
+      totals = totalsFrom(h.subtotals, source, warnings, h.headings);
       holdings = h.holdings.map((x) => makeHolding({
         security: x.security,
         // A PMS holds ordinary listed equity — PMS is the engagement, not the
@@ -2257,13 +2949,41 @@ export function extract({ grid, meta }) {
     if (r) { flows = r.flows; sections.incomeExpense = r.sheet; }
   }
 
+  /**
+   * THE THREE REPORTS READ FOR THE ARCHIVE. A document whose every table was
+   * found and captured was READ, though it publishes no holding and no flow —
+   * by decision, not by failure — so it is not `failed`. `checks` says which of
+   * its own identities held; a broken one is also a warning, so the status
+   * falls to `partial` and says why.
+   */
+  let checks = null, openLots = [], readWhole = false;
+  const extraAsOf = {};
+  if (reportType === "performance-by-security") {
+    const r = readPerformanceBySecurity(pages, warnings);
+    if (r) { sections.performanceBySecurity = r.sheet; checks = r.checks; readWhole = true; }
+  }
+  if (reportType === "trial-balance") {
+    const r = readTrialBalance(pages, warnings);
+    if (r) { sections.trialBalance = r.sheet; checks = r.checks; readWhole = true; }
+  }
+  if (reportType === "open-lots") {
+    const r = readOpenLots(pages, source, warnings);
+    if (r) {
+      sections.openLots = r.sheet; checks = r.checks; openLots = r.openLots; readWhole = true;
+      // The title block's date — the report prints no "As of" — and only where
+      // nothing else on the page dated it.
+      if (r.asOf && !window.periodTo && !id.asOf) extraAsOf.asOf = r.asOf;
+    }
+  }
+
   if (!READABLE.has(reportType)) {
     warn(warnings, "no-reader-for-report-type",
       `${reportType}: this engine reads ${[...READABLE].join(", ")}. Left unread rather than half-read.`);
   }
 
   const gotSomething = holdings.length || totals || returns.length || flows
-    || transactions.length || capitalGains.length || income.length || expenses.length || cashFlows.length;
+    || transactions.length || capitalGains.length || income.length || expenses.length || cashFlows.length
+    || openLots.length || readWhole;
   return {
     provider: provider?.name ?? meta.provider ?? "(unidentified)",
     // A PMS mandate is how the account is RUN. Every manager here is a PMS.
@@ -2277,10 +2997,14 @@ export function extract({ grid, meta }) {
     // as-of IS that window's end. Without this the transaction statement, bank
     // book, dividend and capital gain all key as `…-unknown-…`, which files them
     // apart from the appraisal they belong beside.
-    asOf: window.periodTo ?? id.asOf ?? meta.asOfDate,
+    asOf: extraAsOf.asOf ?? window.periodTo ?? id.asOf ?? meta.asOfDate,
     inceptionDate: id.inceptionDate,
     holdings, totals, returns, flows,
     transactions, capitalGains, income, expenses, cashFlows,
+    // Set only by the three readers above, so every other document is
+    // byte-identical to what it was.
+    ...(openLots.length ? { openLots } : {}),
+    ...(checks ? { checks } : {}),
     // Every dated statement states its own window in its header. Carried so the
     // reconciler never compares a financial-year figure against a since-inception
     // one — that mismatch produced 14 phantom deltas during calibration.

@@ -17,7 +17,7 @@
  "reportType": "transaction-statement",
  "sourcePath": "source/_extracted/september-2026/Ankita Jaisinghani/Ankita Jaisinghani/Z1211_5110758_TransactionStatement_India94CT.pdf",
  "pages": 8,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "unit-movements-are-not-trades",

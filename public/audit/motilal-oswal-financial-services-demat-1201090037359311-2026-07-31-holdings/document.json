@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf",
  "pages": 1,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "aif-units-carry-face-value-not-nav",

@@ -22,10 +22,10 @@ export const BOOK_SUMMARY: BookSummary = {
   "privateValue": 1930944270.36,
   "unplacedValue": 0,
   "totalValue": 8401276132.34,
-  "positionsCount": 441,
+  "positionsCount": 444,
   "entitiesCount": 8,
   "startupsCount": 0,
-  "accountsCount": 75
+  "accountsCount": 76
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -548,6 +548,22 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "ICICI Bank (NSDL demat)",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "icici-prudential-mutual-fund-14320536",
+    "provider": "ICICI Prudential Mutual Fund",
+    "accountNo": "14320536",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a individual",
+    "members": [],
+    "asOf": "2026-10-01",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-10-01",
+    "custodian": "ICICI Prudential Mutual Fund",
     "noPositionsReason": null
   },
   {
@@ -6550,6 +6566,94 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "securityKey": "balanced-advantage-fund-growth",
+    "security": "Balanced Advantage Fund Growth",
+    "symbol": null,
+    "accountId": "icici-prudential-mutual-fund-14320536",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 76.3,
+    "costBasis": 0,
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "icici-prudential-arbitrage-fund-direct-plan-growth",
+    "security": "ICICI Prudential Arbitrage Fund - Direct Plan - Growth",
+    "symbol": null,
+    "isin": "INF109K016O4",
+    "accountId": "icici-prudential-mutual-fund-14320536",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 28.1423,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 750809.36,
+    "costOfUnitsSold": 15303436,
+    "returnPct": 4.91,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2021-04-15",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment",
+    "security": "ICICI Prudential Arbitrage Fund - Direct Plan - IDCW # IDCW Reinvestment",
+    "symbol": null,
+    "isin": "INF109K015O6",
+    "accountId": "icici-prudential-mutual-fund-14320536",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 14.8509,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 248848.99,
+    "costOfUnitsSold": 15054587.92,
+    "returnPct": 1.65,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2020-02-28",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
     "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth",
     "security": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
     "symbol": null,
@@ -7553,6 +7657,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option",
     "security": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
     "symbol": null,
+    "isin": "INF247L01EP5",
     "accountId": "motilal-oswal-active-momentum-fund-904168868444",
     "memberId": null,
     "sector": "Unclassified",
@@ -13885,10 +13990,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -19.06,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
+    "stCostBasis": 1000931.02,
+    "ltCostBasis": 2501700.43,
+    "daysToLT": 230,
+    "heldSince": "2025-08-05",
     "accruedIncome": null,
     "dividendReceived": 15764.4,
     "positionIrrPct": null
@@ -13913,10 +14018,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 3169080.6,
     "costOfUnitsSold": 1042548.6,
     "returnPct": 311.33,
-    "stCostBasis": null,
-    "ltCostBasis": null,
+    "stCostBasis": 0,
+    "ltCostBasis": 1042548.6,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13994,10 +14099,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -29.48,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
+    "stCostBasis": 3998947.25,
+    "ltCostBasis": 2501694.2,
+    "daysToLT": 251,
+    "heldSince": "2025-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14021,10 +14126,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -24.83,
-    "stCostBasis": null,
-    "ltCostBasis": null,
+    "stCostBasis": 0,
+    "ltCostBasis": 5003894.1,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-07-31",
     "accruedIncome": null,
     "dividendReceived": 91032.5,
     "positionIrrPct": null
@@ -14048,10 +14153,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": 9.28,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
+    "stCostBasis": 2501965.17,
+    "ltCostBasis": 2401948.5,
+    "daysToLT": 230,
+    "heldSince": "2025-09-19",
     "accruedIncome": null,
     "dividendReceived": 50556,
     "positionIrrPct": null
@@ -14075,10 +14180,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -24.45,
-    "stCostBasis": null,
-    "ltCostBasis": null,
+    "stCostBasis": 0,
+    "ltCostBasis": 6004702.73,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14102,10 +14207,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -17.6,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
+    "stCostBasis": 1964440.74,
+    "ltCostBasis": 2501952.13,
+    "daysToLT": 281,
+    "heldSince": "2025-08-05",
     "accruedIncome": null,
     "dividendReceived": 25189.5,
     "positionIrrPct": null
@@ -14129,10 +14234,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": 29.08,
-    "stCostBasis": null,
-    "ltCostBasis": null,
+    "stCostBasis": 0,
+    "ltCostBasis": 2496705.74,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-08-05",
     "accruedIncome": null,
     "dividendReceived": 24710,
     "positionIrrPct": null
@@ -14156,10 +14261,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -13.37,
-    "stCostBasis": null,
-    "ltCostBasis": null,
+    "stCostBasis": 0,
+    "ltCostBasis": 2499788.82,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-08-05",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14183,10 +14288,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -22.08,
-    "stCostBasis": null,
-    "ltCostBasis": null,
+    "stCostBasis": 0,
+    "ltCostBasis": 5003919.78,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-08-05",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14210,10 +14315,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -4.77,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
+    "stCostBasis": 3002632.34,
+    "ltCostBasis": 2501575.54,
+    "daysToLT": 114,
+    "heldSince": "2025-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14237,10 +14342,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -23.86,
-    "stCostBasis": null,
-    "ltCostBasis": null,
+    "stCostBasis": 0,
+    "ltCostBasis": 2501933.73,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-07-31",
     "accruedIncome": null,
     "dividendReceived": 29511,
     "positionIrrPct": null
@@ -14264,10 +14369,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": -2.47,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
+    "stCostBasis": 1000850.76,
+    "ltCostBasis": 2502034.79,
+    "daysToLT": 114,
+    "heldSince": "2025-08-05",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14291,10 +14396,10 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": 38.61,
-    "stCostBasis": null,
-    "ltCostBasis": null,
+    "stCostBasis": 0,
+    "ltCostBasis": 5003393.36,
     "daysToLT": null,
-    "heldSince": null,
+    "heldSince": "2025-08-05",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -18104,6 +18209,13 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "accountNo": "49794950",
       "date": "2026-03-31",
       "bookValue": 637631614.65
+    },
+    {
+      "accountId": "icici-prudential-mutual-fund-14320536",
+      "provider": "ICICI Prudential Mutual Fund",
+      "accountNo": "14320536",
+      "date": "2026-10-01",
+      "bookValue": 0
     },
     {
       "accountId": "icici-prudential-mutual-fund-36378950",
@@ -24530,6 +24642,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Ankita Jaisinghani · ICICI 14320536",
+    "accountId": "icici-prudential-mutual-fund-14320536",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ajay Jaisinghani · ICICI 36378950",
     "accountId": "icici-prudential-mutual-fund-36378950",
     "ownerId": "ajay-jaisinghani",
@@ -26867,6 +26993,11 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
+  "icici-prudential-mutual-fund-14320536": {
+    "latestValuationDate": "2026-10-01",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
+  },
   "icici-prudential-mutual-fund-36378950": {
     "latestValuationDate": "2026-10-01",
     "record": {
@@ -27185,7 +27316,7 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "svan-investment-managers-llp-8710067": {
-    "latestValuationDate": "2026-06-30",
+    "latestValuationDate": "2026-09-30",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
@@ -27351,6 +27482,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "icici-prudential-mutual-fund-14320536",
+    "date": "2019-11-04",
+    "direction": "in",
+    "label": "Purchase Appln : 0000010371 - INP000004409",
+    "amount": 15000000,
+    "invested": 15000000,
+    "charges": null,
+    "units": 1026792.437,
+    "security": "ICICI Prudential Arbitrage Fund - Direct Plan - IDCW # IDCW Reinvestment",
+    "securityKey": "icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2019-12-05",
     "direction": "in",
@@ -27373,6 +27516,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "icici-prudential-mutual-fund-14320536",
+    "date": "2020-02-28",
+    "direction": "out",
+    "label": "Redemption - HDFCR52020030472413395 less STT",
+    "amount": 15303436.91,
+    "invested": null,
+    "units": -1030482.325,
+    "security": "ICICI Prudential Arbitrage Fund - Direct Plan - IDCW # IDCW Reinvestment",
+    "securityKey": "icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10034025",
     "date": "2020-03-02",
     "direction": "in",
@@ -27382,6 +27536,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "icici-prudential-mutual-fund-14320536",
+    "date": "2020-03-05",
+    "direction": "in",
+    "label": "Purchase - INP000004409",
+    "amount": 15303436,
+    "invested": 15303436,
+    "charges": null,
+    "units": 570472.417,
+    "security": "ICICI Prudential Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "icici-prudential-arbitrage-fund-direct-plan-growth"
   },
   {
     "accountId": "ask-investment-managers-limited-10034025",
@@ -27569,6 +27735,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "icici-prudential-mutual-fund-14320536",
+    "date": "2021-04-15",
+    "direction": "out",
+    "label": "Redemption - ELECTRONIC PAYMENT - HDFCR52021042088639021 less STT",
+    "amount": 16054245.36,
+    "invested": null,
+    "units": -570472.417,
+    "security": "ICICI Prudential Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "icici-prudential-arbitrage-fund-direct-plan-growth"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -32402,6 +32579,7 @@ export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "ask-absolute-return-fund-9039917144",
   "buoyant-capital-103473",
   "helios-mutual-fund-10355977",
+  "icici-prudential-mutual-fund-14320536",
   "icici-prudential-mutual-fund-36378950",
   "icici-prudential-mutual-fund-36379637",
   "invesco-mutual-fund-3041491081",
@@ -36845,6 +37023,71 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "residual": 0,
       "linesTotal": 385455077.32,
       "withheldReason": null
+    },
+    {
+      "reportType": "profit-and-loss",
+      "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-profit-and-loss",
+      "periodFrom": "2026-04-01",
+      "periodTo": "2026-10-07",
+      "basis": "financial-year-to-date",
+      "opening": null,
+      "contribution": null,
+      "withdrawal": null,
+      "netCapitalInOut": null,
+      "realized": -1763423.42,
+      "unrealized": 74695551.87,
+      "income": 1781297.6,
+      "fees": 1678079.5,
+      "expenses": 292335.75,
+      "closing": 385169845.54,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": 22373.94,
+      "gainPriorToTakeover": null,
+      "unread": [],
+      "lines": [
+        {
+          "label": "Dividend",
+          "flow": "income",
+          "value": 1781297.6
+        },
+        {
+          "label": "Realized Gain/Loss",
+          "flow": "realized",
+          "value": -1763423.42
+        },
+        {
+          "label": "Custodian Fees",
+          "flow": "expenses",
+          "value": 22945.7
+        },
+        {
+          "label": "Management Fees",
+          "flow": "fees",
+          "value": 1678079.5
+        },
+        {
+          "label": "Securities Transaction Tax (STT)",
+          "flow": "expenses",
+          "value": 269390.05
+        },
+        {
+          "label": "Other Expenses",
+          "flow": "otherExpenses",
+          "value": 22373.94
+        },
+        {
+          "label": "Net Unrealized Gain / Loss during the period",
+          "flow": "unrealized",
+          "value": 74695551.87
+        }
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": null,
+      "linesTotal": null,
+      "withheldReason": "The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no gain prior to takeover, profit / loss, accrued income or change in accruals line."
     }
   ],
   "goldstandard-wealth-private-limited-100022": [

@@ -5,6 +5,7 @@
    "description",
    "tranDate",
    "setDate",
+   "notes",
    "credit",
    "debit",
    "balance"
@@ -34,7 +35,8 @@
   [
    "Security in",
    "01/06/2026",
-   "01/06/2026 BUOYANT OPPORTUNITIES STRATEGY -",
+   "01/06/2026",
+   "BUOYANT OPPORTUNITIES STRATEGY -",
    "22,53,53,990.90",
    "0.00",
    "43,53,53,990.90",
@@ -59,7 +61,8 @@
   [
    "Security out",
    "01/06/2026",
-   "01/06/2026 BUOYANT OPPORTUNITIES STRATEGY -",
+   "01/06/2026",
+   "BUOYANT OPPORTUNITIES STRATEGY -",
    "0.00",
    "22,53,53,990.90",
    "46,00,00,000.00",

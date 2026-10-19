@@ -30,7 +30,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf",
  "pages": 11,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "section-reported-empty",

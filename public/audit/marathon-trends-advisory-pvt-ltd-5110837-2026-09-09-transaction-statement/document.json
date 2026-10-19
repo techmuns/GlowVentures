@@ -17,7 +17,7 @@
  "reportType": "transaction-statement",
  "sourcePath": "source/_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_TransactionStatement_India94CT.pdf",
  "pages": 7,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "unit-movements-are-not-trades",

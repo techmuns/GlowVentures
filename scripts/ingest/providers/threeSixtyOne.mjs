@@ -406,8 +406,36 @@ function readHoldings(pages, warnings, source) {
       }
     }
 
-    if (table.missing.length) warn(warnings, "columns-not-matched", table.missing.join(", "));
-    return { holdings, sheet: toAuditSheet("detailed-holding-statement", Object.keys(table.columns), rows) };
+    // TWO "MISSING" COLUMNS THAT ARE NOT MISSING FROM THE STATEMENT.
+    //
+    // `marketPrice`: this bundle prints the holding's Net Asset Value — a total —
+    // and no NAV per unit anywhere (see the head of this file). Where the header
+    // carries "Net Asset Value" and it bound as the value column, there is no
+    // price column to miss; the alias stays for a layout that does print one.
+    //
+    // `benchmark`: the last column is stacked like the three in SECOND_LINE —
+    // "Price As on" over "Benchmark" — so the layout engine hears one header and
+    // the name arrives glued behind the date (`30-Sep-26 NIFTY 50 TRI`). The
+    // holding keeps the date; the name is split off here into its own column of
+    // the audit sheet, so what the statement printed is all on the record.
+    const columns = Object.keys(table.columns);
+    let missing = table.missing;
+    if (missing.includes("marketPrice") && "marketValue" in table.columns
+      && /net\s+asset/i.test(table.headerText ?? "")) {
+      missing = missing.filter((c) => c !== "marketPrice");
+    }
+    if (missing.includes("benchmark") && "priceAsOn" in table.columns) {
+      const named = rows.map((r) => /^(\d{1,2}[-/][A-Za-z]{3,}[-/]\d{2,4})\s+(.+)$/.exec(String(r.fields.priceAsOn ?? "").trim()));
+      if (named.every(Boolean)) {
+        // The sheet is the record's own first line, cell for cell; the name sat
+        // on a continuation line, so it is appended as the sheet's last column.
+        rows.forEach((r, i) => { r.cells = [...r.cells, named[i][2].trim()]; });
+        columns.push("benchmark");
+        missing = missing.filter((c) => c !== "benchmark");
+      }
+    }
+    if (missing.length) warn(warnings, "columns-not-matched", missing.join(", "));
+    return { holdings, sheet: toAuditSheet("detailed-holding-statement", columns, rows) };
   }
   warn(warnings, "holdings-table-not-found", "Detailed Holding Statement");
   return null;

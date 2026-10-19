@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/august-2026/INDIA SME - AJAY.pdf",
  "pages": 1,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "statement-basis",

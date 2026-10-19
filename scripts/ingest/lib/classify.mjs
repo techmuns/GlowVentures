@@ -56,6 +56,19 @@ export const REPORT_TYPES = [
   // movements are not a manager's, and one report type for both would let a
   // bank statement supersede a bank book on an account that has one.
   "bank-statement",
+  // Three more reports from the shared PMS reporting system (the October 2026
+  // delivery). Each is its own type because each answers its own question, and
+  // NONE is named in `precedence.mjs`: they are read in full into the audit
+  // archive and supply no holding, valuation or cash flow to the book.
+  //   performance-by-security  PERFORMANCE BY SECURITY SINCE INCEPTION — per
+  //                            holding: quantity, value, cost, realised and
+  //                            unrealised gain, income, IRR. A per-holding
+  //                            restatement of what the appraisal carries.
+  //   trial-balance            TRIAL BALANCE — the mandate's ledger accounts,
+  //                            opening / period / closing, debit and credit.
+  //   open-lots                OPEN LOTS — the dated purchase lots behind each
+  //                            holding still held: the lot register.
+  "performance-by-security", "trial-balance", "open-lots",
   "unknown",
 ];
 
@@ -254,6 +267,11 @@ const GOLDSTANDARD_FILE_TYPES = [
   [/corporatebenefits/i, "corporate-benefits"],
   [/profitlossaccount/i, "profit-and-loss"],
   [/incomeexpense/i, "income-expense"],
+  // `G3517383_40212_ReportPerformancebySecurityInception6077OT.pdf`,
+  // `…_ReportTrialBalance1733OT.pdf`, `G128004_145038_OpenLots_India471OT.pdf`.
+  [/reportperformancebysecurity/i, "performance-by-security"],
+  [/reporttrialbalance/i, "trial-balance"],
+  [/openlots/i, "open-lots"],
 ];
 
 /**
@@ -928,6 +946,14 @@ const ISSUER_PROVIDER_RULES = [
   [/(?=[\s\S]*Account Statement for Folio No\.)(?=[\s\S]*invescomutualfund\.com)/i, "Invesco Mutual Fund"],
   [/\bScheme\s+Motilal\s+Oswal\s+Arbitrage\s+Fund[\s\S]{0,100}ISIN No\s*:\s*INF247L01ED1/i, "Motilal Oswal Mutual Fund"],
   [/B153DZ-Aditya\s+Birla\s+Sun\s+Life\s+Liquid\s+Fund/i, "Aditya Birla Sun Life Mutual Fund"],
+  // A SCHEME'S OWN MONTHLY DISCLOSURE, by its title, BEFORE the AMC names below.
+  // WhiteOak's multi-asset fund holds `ICICI Prudential Asset Management Company
+  // Limited` — a listed share since 2026 — and that holding row satisfied the
+  // ICICI Prudential rule, which filed the disclosure as an ICICI folio statement
+  // and sent it to the folio reader (no folio, no holder, no scheme block). The
+  // fund's name and the disclosure's title head the sheet; a holding row never
+  // carries the title.
+  [/(?:WhiteOak|White\s*Oak)\s+Capital\b[\s\S]{0,160}?Monthly\s+Portfolio\s+Statement\s+as\s+on/i, "Scheme portfolio disclosure"],
   // Mutual-fund account statements. Matched on the AMC's FULL registered name,
   // which appears only on its own statement — never as a holding, where the
   // house shows up as a listed share ("HDFC Bank Ltd", "Kotak Mahindra Bank

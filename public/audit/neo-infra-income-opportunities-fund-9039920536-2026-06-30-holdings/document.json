@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
  "pages": 4,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "nav-does-not-reproduce-valuation",

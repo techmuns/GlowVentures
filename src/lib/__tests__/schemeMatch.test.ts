@@ -65,7 +65,13 @@ ok("every scheme in the store is described by the join it was actually made on",
 const named = schemes.filter(([, e]) => e.matchedVia !== "isin");
 if (!named.length) ok("the store matches at least one scheme another way than the ISIN", false);
 for (const [key, e] of named) {
-  ok(`${key}: the book carries no ISIN for it — which is why the store matched another way`, !bookIsin(key));
+  // The store was matched another way when the book carried no ISIN. Since
+  // Stage 10ep a reader may supply the ISIN its statement prints (Motilal Oswal
+  // Active Momentum's `ISIN No : INF247L01EP5`); the store's join is as built,
+  // but the book must then carry the SAME scheme the store matched, never another.
+  const carried = BOOK_POSITIONS.filter((p) => p.securityKey === key && !!p.isin).map((p) => p.isin);
+  ok(`${key}: the book carries no ISIN for it, or exactly the store's — never another scheme's`,
+    !bookIsin(key) || carried.every((i) => i === e.isin), carried.join(", "));
   // The archive's documents for this holding: does the statement PRINT the ISIN
   // the book does not carry? Then "no ISIN reported" was false of it.
   const docs = readdirSync("public/audit").filter((d) => existsSync(path.join("public/audit", d, "document.json")))

@@ -17,12 +17,8 @@
  "reportType": "transaction-statement",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_TransactionStatement_India94CT.pdf",
  "pages": 2,
- "status": "partial",
+ "status": "ok",
  "warnings": [
-  {
-   "code": "columns-not-matched",
-   "detail": "exchange"
-  },
   {
    "code": "unit-movements-are-not-trades",
    "detail": "2 unit movement row(s) (1 × \"Security in\", 1 × \"Security out\") — units moved in or out with no counterparty and no consideration (a demerger, a class switch or a transfer). None is a trade, so none is emitted as one."

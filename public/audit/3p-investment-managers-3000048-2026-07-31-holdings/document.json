@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/august-2026/reports/3P - AJAY.pdf",
  "pages": 4,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "statement-basis",

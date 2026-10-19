@@ -17,13 +17,13 @@
  "reportType": "holdings",
  "sourcePath": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
  "pages": 2,
- "status": "partial",
+ "status": "ok",
  "warnings": [],
  "holdings": [
   {
    "security": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
    "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option",
-   "isin": null,
+   "isin": "INF247L01EP5",
    "symbol": null,
    "printedSecurity": null,
    "assetClass": "Mutual Fund",

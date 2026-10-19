@@ -30,6 +30,9 @@ const fileIcon = (format: string) =>
 /** A statement's ingest status, shown as a toned pill so a reader can scan it. */
 function StatusPill({ status }: { status: LibraryDoc["status"] }) {
   if (status === "ok") return <span className="text-[11px] text-slate-500" title="Read in full">Read</span>;
+  if (status === "held-out") {
+    return <Pill tone="default"><span title="Read in full and deliberately not a statement source: no institution issued it, so no book figure is taken from it">Held out</span></Pill>;
+  }
   const tone = status === "partial" ? "warn" : status === "encrypted" ? "info" : "loss";
   const why = status === "partial"
     ? "Some sections of this document could not be read — see Data Audit for what it carried"

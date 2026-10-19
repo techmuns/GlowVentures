@@ -10,14 +10,14 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 | Outcome | Files | What it means |
 | --- | ---: | --- |
 | Read | 394 | one or more documents in `public/audit/` |
-| Read via a byte-identical twin | 45 | the pipeline reads each md5 once; the data IS in the archive |
+| Read via a byte-identical twin | 44 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
 | Read by `build-book` | 1 | the family's consolidated review — the book's source for every private-market line |
 | Held out by decision | 1 | read perfectly and deliberately not a source |
 | Not a document | 156 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
 | **Unread** | **0** | **must be zero** |
-| **Total leaf files** | **617** | |
+| **Total leaf files** | **616** | |
 
 Those files produce **424 documents** in the archive.
 
@@ -100,7 +100,6 @@ twice. `extract.mjs` reads each md5 once, so these carry no data the archive lac
 | `_extracted/october-2026-c/SKY CAPITAL/SKY024 - BJ Trust 3_SOA July 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA July 31, 2026.pdf` |
 | `_extracted/october-2026-c/SKY CAPITAL/SKY024 - BJ Trust 3_SOA June 30, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA June 30, 2026.pdf` |
 | `_extracted/october-2026-c/SKY CAPITAL/SKY024 - BJ Trust 3_SOA May 31, 2026.pdf` | `_extracted/august-2026-c/SKY CAPITAL RISING FUND/SKY024 - BJ Trust 3_SOA May 31, 2026.pdf` |
-| `october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf` | `_extracted/october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf` |
 
 ## Read as a witness of its PDF
 

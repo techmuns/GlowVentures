@@ -44,6 +44,7 @@ import * as folioLedger from "./providers/folioLedger.mjs";
 import * as schemePortfolio from "./providers/schemePortfolio.mjs";
 import { reconcile, writeReports } from "./reconcile.mjs";
 import { pmsSiblingProvider } from "./lib/pmsSiblingProvider.mjs";
+import { settleStatus } from "./lib/readStatus.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 // Overridable so a test run can point at a scratch drop without touching the
@@ -51,6 +52,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".
 const SOURCE_DIR = process.env.GLOW_SOURCE_DIR ?? path.join(ROOT, "source");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
 const DOCS_DIR = process.env.GLOW_DOCS_DIR ?? path.join(ROOT, "docs");
+// The archive an encrypted statement is carried forward FROM when this run has
+// no password for it — the archive being replaced, unless a scratch run names
+// the committed one. See `carriedForward`.
+const CARRY_DIR = process.env.GLOW_CARRY_DIR ?? AUDIT_DIR;
 
 const rel = (p) => path.relative(ROOT, p).split(path.sep).join("/");
 
@@ -288,6 +293,24 @@ function extractDocuments(file, grid) {
  * reading it — somebody goes looking for a broken download that does not exist.
  */
 function gridFromSpreadsheet(buf) {
+  /**
+   * A WORKBOOK THAT NEVER ARRIVED IS NOT AN UNREADABLE WORKBOOK.
+   *
+   * LKP's `october-2026-c` equity attachments are 85 bytes of plain text — "This
+   * attachment was removed because it contains data that could pose a security
+   * risk." — left by a mail server in place of the file. "unrecognised
+   * spreadsheet format" sent the next person to debug a parser; the ask is for
+   * LKP to re-send the workbook another way.
+   */
+  if (buf.length < 4096 && /^[\x09\x0a\x0d\x20-\x7e]*$/.test(buf.toString("latin1"))
+    && /attachment\s+was\s+removed/i.test(buf.toString("latin1"))) {
+    return {
+      pages: [], sheets: null, numPages: 0, format: "text",
+      error: `not a workbook: the file is a mail server's removal notice in its place — "${buf.toString("latin1").trim()}" `
+        + "The statement itself never arrived and must be re-sent; there is nothing here to read.",
+      pdfError: null, encrypted: false, usedPassword: null,
+    };
+  }
   const wb = readSpreadsheet(buf);
   return {
     pages: wb.sheets.map((s, i) => ({
@@ -1014,6 +1037,94 @@ function witnessDocument(file, grid, primary, pdfRel, pdfText) {
   return doc;
 }
 
+/**
+ * A STATEMENT THIS RUN CANNOT OPEN KEEPS THE RECORD A RUN THAT COULD.
+ *
+ * Fifteen documents here are encrypted with identifiers that belong to the
+ * family, and the passwords are never committed; two more are outlined-text
+ * PDFs that only read with `pdftoppm` and `tesseract` installed (lib/ocr.mjs).
+ * Without the passwords or the tools every one of those files failed,
+ * `guardAgainstShrinkingTheArchive` refused the run — correctly — and so a
+ * reader change could only land through a hand-written partial replay per
+ * change. That made `npm run extract` a command most machines could not run.
+ *
+ * So a file that fails ONLY for want of what the archiving run had — a password
+ * or the OCR tools — and that the archive records as having been opened that way
+ * (`pdf-encrypted` / `text-recovered-by-rendering` on its documents), is carried
+ * forward:
+ * its documents, sections and page text are read back from the archive exactly
+ * as a password-holding run wrote them, and go through the backfills and the
+ * reconcile like every other document. Nothing is re-derived and nothing new is
+ * claimed about a file this run never opened.
+ *
+ * ONE EXCEPTION, AND IT ONLY EVER ADDS: a carried document that FAILED is read
+ * again from its archived page text, which is byte for byte the text its reader
+ * was given. A text-based reader taught a new layout reads it; a reader that
+ * needs coordinates gets none and fails again, and the archived failure stands.
+ * The re-read is kept only when it publishes facts the failure did not.
+ */
+const UNOPENED = [
+  { lacks: (grid) => grid.encrypted && !!grid.error, opened: "pdf-encrypted", why: "encrypted, no password in this run" },
+  { lacks: (grid) => !!grid.ocrError && grid.inkKind?.kind === "vector", opened: "text-recovered-by-rendering", why: "outlined text, no OCR tools in this run" },
+];
+const unopenedBy = (grid) => UNOPENED.find((u) => u.lacks(grid)) ?? null;
+
+let carryIndex = null;
+function carriedForward(file, how) {
+  if (!carryIndex) {
+    carryIndex = new Map();
+    let manifest = [];
+    try { manifest = JSON.parse(fs.readFileSync(path.join(CARRY_DIR, "manifest.json"), "utf8")); }
+    catch { /* no archive yet — nothing to carry */ }
+    for (const e of Array.isArray(manifest) ? manifest : []) {
+      (carryIndex.get(e.sourcePath) ?? carryIndex.set(e.sourcePath, []).get(e.sourcePath)).push(e);
+    }
+  }
+  const entries = carryIndex.get(rel(file)) ?? [];
+  const carried = [];
+  for (const e of entries) {
+    const dir = path.join(CARRY_DIR, e.docKey);
+    let doc, pj;
+    try {
+      doc = JSON.parse(fs.readFileSync(path.join(dir, "document.json"), "utf8"));
+      pj = JSON.parse(fs.readFileSync(path.join(dir, "pages.json"), "utf8"));
+    } catch { return []; }
+    // Only a file the archive says was OPENED that way is carried. A document
+    // archived as unreadable for some other reason has no record worth keeping,
+    // and is read (and fails) afresh like any other file.
+    if (!(doc.warnings ?? []).some((w) => w.code === how.opened)) return [];
+    const sections = {};
+    for (const name of e.sections ?? []) {
+      if (name === "pages") continue;
+      try { sections[name] = JSON.parse(fs.readFileSync(path.join(dir, `${name}.json`), "utf8")); }
+      catch { return []; }
+    }
+    if (Object.keys(sections).length) doc.sections = sections;
+    const used = (doc.warnings.find((w) => w.code === "pdf-encrypted")?.detail ?? "").match(/#(\d+)/);
+    const grid = {
+      pages: pj.pages.map((p) => ({ page: p.page, text: p.text, rows: [], stitches: [] })),
+      numPages: doc.pages ?? pj.pages.length,
+      error: null,
+      pdfError: null,
+      encrypted: how.opened === "pdf-encrypted",
+      usedPassword: used ? Number(used[1]) : null,
+    };
+    carried.push({ doc, grid });
+  }
+  if (!carried.length) return [];
+
+  const facts = (d) => (d.holdings?.length ?? 0) + (d.cashFlows?.length ?? 0) + (d.transactions?.length ?? 0);
+  const single = carried.length === 1 && !carried[0].doc.sourcePages;
+  if (single && carried[0].doc.status === "failed") {
+    const [{ doc: before, grid }] = carried;
+    const reread = extractDocuments(file, grid);
+    if (reread.length === 1 && reread[0].doc.status !== "failed" && facts(reread[0].doc) > facts(before)) {
+      return [{ ...reread[0], reread: true }];
+    }
+  }
+  return carried;
+}
+
 function writeArchive(docs, grids) {
   fs.rmSync(AUDIT_DIR, { recursive: true, force: true });
   fs.mkdirSync(AUDIT_DIR, { recursive: true });
@@ -1169,6 +1280,19 @@ async function main() {
     const grid = SPREADSHEET.test(file)
       ? gridFromSpreadsheet(bytes)
       : await extractLayout(new Uint8Array(bytes), { passwords });
+    const how = unopenedBy(grid);
+    const carried = how ? carriedForward(file, how) : [];
+    if (carried.length) {
+      fileText.set(file, carried.map(({ grid: g }) => g.pages.map((p) => p.text).join("\n")).join("\n"));
+      for (const { doc, grid: g } of carried) {
+        grids.set(doc, g);
+        docs.push(doc);
+      }
+      console.log(carried[0].reread
+        ? `${how.why} — re-read from its archived page text: ${carried.map(({ doc: d }) => d.status).join(", ")}`
+        : `${how.why} — ${carried.length} archived document(s) carried forward`);
+      continue;
+    }
     const text = (grid.pages ?? []).map((p) => p.text ?? "").join("\n");
     fileText.set(file, text);
     const produced = extractDocuments(file, grid);
@@ -1229,6 +1353,9 @@ async function main() {
     console.log(`witness of ${primary.docKey}: ${doc.status}`);
   }
   ensureUniqueDocKeys(docs);
+  // A document whose every warning describes the STATEMENT — not the reading —
+  // was read completely. See lib/readStatus.mjs; this only ever promotes.
+  for (const d of docs) settleStatus(d);
   // RECONCILE BEFORE WRITING. The duplicate check (c) does more than report — it
   // TAGS each matching row with its `dedupeGroup` and `alsoReportedUnder`, and
   // those tags are what stop a consolidated total counting the same position

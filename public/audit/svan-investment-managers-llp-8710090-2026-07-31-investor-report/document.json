@@ -17,7 +17,7 @@
  "reportType": "investor-report",
  "sourcePath": "source/august-2026-b/SVAN - BHARAT.pdf",
  "pages": 5,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "weights-on-aum-basis",
