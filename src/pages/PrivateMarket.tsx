@@ -37,10 +37,11 @@ import {
 import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
 import { withReturnCols, returnAccessorsFor, returnColId } from "@/lib/returnColumns";
 import {
-  privateBookFolios, distributionLeftOutNote, privateBook, figuresOf, BOOK_SECTIONS,
+  privateBookFolios, distributionLeftOutNote, privateBook, figuresOf, BOOK_SECTIONS, investmentIdentities,
   type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type BrandFacts, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
 import { callTotals, callHistory } from "@/lib/capitalCalls";
+import { matchProfiles, profileSupplyNote, PROFILE_FIELDS, type InvestmentProfile, type ProfileFieldId } from "@/lib/investmentProfiles";
 import { useEnteredCalls, headlineCall, todayIso, CAUSE_WORD } from "@/lib/enteredCalls";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 import { fifoTotals, positionFifoReturn, atCostNote } from "@/lib/fifo";
@@ -68,7 +69,13 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
  * what the units held cost (the holding statement). They agree on most funds and
  * they are different documents; the header says which is which.
  */
-const BOOK_COLS = ["name", "committed", "called", "paid", "uncalled", "units", "cost", "value", "return", "weight", "asOf", "call"] as const;
+const BOOK_COLS = ["name", "strategy", "description", "committed", "called", "paid", "uncalled", "units", "cost", "value", "return", "weight", "asOf", "call"] as const;
+/**
+ * STRATEGY AND DESCRIPTION ARE THE READER'S TO SWITCH ON (Edit Columns) — text
+ * the family supplies, never a statement figure, so they start hidden and sit
+ * beside the name they describe when shown (`investmentProfiles.ts`).
+ */
+const PROFILE_COLS: readonly ProfileFieldId[] = PROFILE_FIELDS;
 /**
  * `return` IS A PLACEHOLDER, NOT A COLUMN — the Monitor's own mechanics, shared
  * since Stage 10bw (`returnColumns.ts`). The reader's picker (`?ret=`) expands it
@@ -275,6 +282,8 @@ type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled"
      * (`fundMeasuredReturn`); a band, a member and a total on the set's.
      */
     ret?: (measure: ReturnMeasure) => RowReturn;
+    /** The fund's strategy and the company's description — a fund, brand, member or folio row only. */
+    profile?: InvestmentProfile;
   };
 
 /**
@@ -345,6 +354,9 @@ const bookAccessors = (
   measures: readonly ReturnMeasure[],
 ): Record<string, Accessor<RowFigures & { label?: string }>> => ({
   name: (r) => label(r),
+  // A row with no supplied text sorts last in both directions, like every absence.
+  strategy: (r) => r.profile?.strategy.value ?? null,
+  description: (r) => r.profile?.description.value ?? null,
   committed: (r) => r.committed,
   called: (r) => r.called,
   paid: (r) => r.paid,
@@ -426,7 +438,7 @@ export function PrivateMarket() {
   const measureKey = returnMeasures.join(",");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const bookCols = useMemo(() => withReturnCols(BOOK_COLS, returnMeasures), [measureKey]);
-  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", manualEditor: true });
+  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", manualEditor: true, optional: PROFILE_COLS });
   const callView = useTableView("pm-calls", CALL_COLS, { manualEditor: true });
   /**
    * THE CALLS THE FAMILY HAS ENTERED, and which row's editor is open. Called up
@@ -1090,7 +1102,14 @@ export function PrivateMarket() {
   const book: PrivateBook = view === "brands" ? m.byBrand : m.byFund;
   const grouping = book.grouping;
   const needle = q.trim().toLowerCase();
-  const folioText = (f: BookFolio) => [f.owner, f.fundName, f.provider, f.accountNo].join(" ").toLowerCase();
+  const folioText = (f: BookFolio) => [f.owner, f.fundName, f.provider, f.accountNo,
+    ...PROFILE_FIELDS.filter((c) => bookView.order.includes(c)).map((c) => f.profile[c].value ?? "")].join(" ").toLowerCase();
+  /**
+   * WHAT THE PROFILE COLUMNS' HEADINGS SAY about the supplied records — how many
+   * files, and every record that matched no investment on this view, so a
+   * supplied line that went nowhere is named rather than dropped.
+   */
+  const profileMatch = matchProfiles(investmentIdentities(book.folios));
   const groupMatches = (g: BookGroup) => !needle || g.label.toLowerCase().includes(needle)
     || !!g.brand?.legal.some((l) => l.toLowerCase().includes(needle)) || g.folios.some((f) => folioText(f).includes(needle));
   const rowKey = (g: BookGroup) => `${grouping}:${g.key}`;
@@ -1526,6 +1545,21 @@ export function PrivateMarket() {
         : td("weight", `${ctx.weight.toFixed(1)}%`, "text-slate-400");
     }
     if (holdingRow || k === "section") out.asOf = asOfCell();
+    // TEXT, NOT A FIGURE: left-aligned, wrapped, the whole text and where it
+    // was supplied in the hover. A band or a total describes no one investment.
+    if (holdingRow && r.profile) {
+      for (const col of PROFILE_COLS) {
+        const c = r.profile[col];
+        out[col] = (
+          <td key={col} data-col-cell={col} data-pm-profile={col} data-pm-profile-source={c.source ?? undefined}
+            data-pm-profile-match={c.matchedOn ?? undefined} className={`${p} min-w-[14rem] max-w-[24rem] text-left ${k === "folio" ? "text-slate-400" : "text-slate-300"}`}>
+            {c.value != null
+              ? <span className="line-clamp-3" title={`${c.value}\n\nSupplied in ${c.source}; matched to this investment by ${c.matchedOn}.`}>{c.value}</span>
+              : <AbsentCell reason={c.reason} />}
+          </td>
+        );
+      }
+    }
     return out;
   };
   /**
@@ -1607,7 +1641,7 @@ export function PrivateMarket() {
     const kids = sortRows(
       g.folios.map((f) => ({
         f, label: grouping === "owner" ? f.fundName : f.owner,
-        fig: { ...folioFigures(f), callKey: folioCallOn(g, f), ret: folioRet(f) },
+        fig: { ...folioFigures(f), callKey: folioCallOn(g, f), ret: folioRet(f), profile: f.profile },
       })),
       bookView.sort,
       withReviewAccessors(Object.fromEntries(Object.entries(nameAcc).map(([c, a]) => [c, (x: { fig: RowFigures; label: string; f: BookFolio }) => a({ ...x.fig, label: x.label })])), (x) => folioReviewScope(x.f), memberScope.owners !== null),
@@ -2042,6 +2076,10 @@ export function PrivateMarket() {
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
                   <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Fund" : grouping === "brand" ? "Brand" : "Legal entity"}</SortHeader>
+                  <SortHeader col="strategy" view={bookView} pad="px-2 py-2" align="left"
+                    title={profileSupplyNote("strategy", profileMatch)}>Strategy</SortHeader>
+                  <SortHeader col="description" view={bookView} pad="px-2 py-2" align="left"
+                    title={profileSupplyNote("description", profileMatch)}>Description</SortHeader>
                   {/* ── THE LABELS ALONE, THE MEANING IN THE HOVER ─────────────────
                       Each heading carried a word under it — "promised", "asked
                       for", "cash sent". The family asked for the lines that say
