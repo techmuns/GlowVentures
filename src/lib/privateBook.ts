@@ -156,6 +156,28 @@ export function brandOf(f: Pick<BookFolio, "fundKey" | "fundName">): { key: stri
   return { key: `brand:${slug}`, label: name };
 }
 
+/**
+ * ── BY LEGAL NAME: ONE ROW PER COMPANY OR FUND THE FAMILY HOLDS ─────────────
+ *
+ *   *"Replace by fund toggle switch with by legal name … the legal name of the
+ *    holding company or the fund in which we have invested … In the by legal
+ *    name tab we will show companies by their legal name"* — the family,
+ *    19 Oct 2026 (Stage 10es).
+ *
+ * The row is the legal entity `BRAND_NAMES` writes for the line, so the four
+ * sellers the family bought DrinkPrime from are one Waterwala Labs row, and the
+ * two vehicles of one brand (Blue Ashva) stay two. A line no entry names keeps
+ * its own key and printed name — and fails `privateBook.test.ts` and
+ * `check-pages` until it is mapped. DISPLAY ONLY, as By brand is.
+ */
+function legalKeyOf(f: Pick<BookFolio, "fundKey">): string {
+  const named = brandNameOf(f.fundKey);
+  return named ? `legal:${named.legal.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}` : f.fundKey;
+}
+function legalLabel(f: Pick<BookFolio, "fundKey" | "fundName">): string {
+  return brandNameOf(f.fundKey)?.legal ?? f.fundName;
+}
+
 /** What a brand row says about the companies behind it: each legal entity once,
  *  how the brand is known, and where. `basis` is null where any line under the
  *  row has no `BRAND_NAMES` entry — the row then says it is unmapped. */
@@ -165,6 +187,7 @@ function brandFacts(fs: BookFolio[]): BrandFacts {
   const order: BrandBasis[] = ["as-printed", "own-name", "cited"];
   return {
     legal: [...new Set(all.map((n) => n.legal))],
+    brands: [...new Set(all.map((n) => n.brand))],
     basis: all.length < named.length ? null
       : order.find((b) => all.some((n) => n.basis === b)) ?? null,
     sources: [...new Set(all.flatMap((n) => n.source))],
@@ -375,8 +398,8 @@ export type BookGroup = BookFigures & {
   category: string | null;
   status: FolioStatus;
   folios: BookFolio[];
-  /** BY BRAND: the legal entities behind the brand and how it is known. Null on
-   *  a fund or member row, whose label is already the entity. */
+  /** BY BRAND and BY LEGAL NAME: the legal entities and brands behind the row
+   *  and how the pair is known. Null on a member row. */
   brand: BrandFacts | null;
   /** Its folios' profile — one text where every investment under the row shares it. */
   profile: InvestmentProfile;
@@ -398,6 +421,8 @@ export type BookGroup = BookFigures & {
 export type BrandFacts = {
   /** Each legal entity under the brand row once, as `BRAND_NAMES` writes it. */
   legal: string[];
+  /** Each brand under the row once — on a legal-name row, what the entity trades as. */
+  brands: string[];
   basis: BrandBasis | null;
   sources: string[];
 };
@@ -935,9 +960,17 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
   for (const id of BOOK_SECTIONS) {
     const mine = folios.filter((f) => f.section === id);
     const keyOf = (f: BookFolio) =>
-      grouping === "fund" ? f.fundKey : grouping === "brand" ? brandOf(f).key : `owner:${f.owner}`;
+      grouping === "fund" ? legalKeyOf(f) : grouping === "brand" ? brandOf(f).key : `owner:${f.owner}`;
     const buckets = new Map<string, BookFolio[]>();
     for (const f of mine) buckets.set(keyOf(f), [...(buckets.get(keyOf(f)) ?? []), f]);
+    // A legal-name row holding ONE fund keys on that fund, as it always has: its
+    // call cell, its page link and every check keyed on the fund still meet it.
+    if (grouping === "fund") {
+      for (const [k, fs] of [...buckets.entries()]) {
+        const funds = new Set(fs.map((f) => f.fundKey));
+        if (funds.size === 1 && k !== fs[0].fundKey) { buckets.delete(k); buckets.set(fs[0].fundKey, fs); }
+      }
+    }
     // A brand row is a fund row widened to every name the brand is held under, so
     // it is on the fund row's basis: each holding counted once.
     const consolidated = grouping !== "owner";
@@ -952,19 +985,17 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
         ...figuresOf(sorted, consolidated),
         key,
         kind: grouping,
-        label: grouping === "fund" ? first.fundName : grouping === "brand" ? brandLabel(sorted) : first.owner,
+        label: grouping === "fund" ? legalLabel(first) : grouping === "brand" ? brandLabel(sorted) : first.owner,
         section: id,
-        // A brand row links a page, or names a category, only where every folio
-        // under it is the one holding and agrees — never one of several.
-        securityKey: grouping === "fund" ? first.securityKey
-          : grouping === "brand" && new Set(sorted.map((f) => f.securityKey)).size === 1 ? first.securityKey : null,
-        category: grouping === "fund" ? first.category
-          : grouping === "brand" && new Set(sorted.map((f) => f.category)).size === 1 ? first.category : null,
+        // A legal-name or brand row links a page, or names a category, only where
+        // every folio under it is the one holding and agrees — never one of several.
+        securityKey: grouping !== "owner" && new Set(sorted.map((f) => f.securityKey)).size === 1 ? first.securityKey : null,
+        category: grouping !== "owner" && new Set(sorted.map((f) => f.category)).size === 1 ? first.category : null,
         // A row with ANY valued folio is a valued row: an income-only view folded
         // under it adds a line, never a doubt about whether the row is valued.
         status: sorted.some((f) => f.status === "valued") ? "valued" : statuses.size === 1 ? first.status : "other",
         folios: sorted,
-        brand: grouping === "brand" ? brandFacts(sorted) : null,
+        brand: grouping !== "owner" ? brandFacts(sorted) : null,
         profile: combineProfiles(sorted.map((f) => f.profile)),
         overlap: grouping !== "owner" ? overlapOf(sorted) : null,
         // The row is stale only where EVERY capital account under it is: one

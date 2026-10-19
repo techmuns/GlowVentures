@@ -16725,7 +16725,8 @@ const PRIVATE_SCOPE_CHECKS = [
      * written for; a valued line filed at cost would lose its gain in silence.
      */
     const fundRows = pv.groups.filter((g) => g.kind === "fund");
-    const keysIn = (id) => new Set(fundRows.filter((g) => g.section === id).map((g) => g.key));
+    // A legal-name row may hold several lines (Stage 10es): the lines are the keys.
+    const keysIn = (id) => new Set(fundRows.filter((g) => g.section === id).flatMap((g) => g.fundKeys?.length ? g.fundKeys : [g.key]));
     const same = (a, b) => !!b && a.size === b.size && [...a].every((k) => b.has(k));
     const fundsHeld = !fundRows.length
       || (same(keysIn("atCost"), SIDE_BOOK?.atCostKeys) && same(keysIn("private"), SIDE_BOOK?.struckKeys));
@@ -17002,12 +17003,18 @@ const PM_CALL_COLUMN_CHECK = ["the table carries a Capital call column, one cell
   const pv = ctx?.pmView;
   if (!pv) return { notChecked: "the private-view probe did not run" };
   const head = pv.callHead;
-  const funds = pv.groups.filter((g) => g.kind === "fund");
+  // A LEGAL-NAME ROW OF SEVERAL LINES IS NOT ONE FUND (Stage 10es): it carries
+  // no cell, and each of its open lines carries its own.
+  const rows = pv.groups.filter((g) => g.kind === "fund");
+  const funds = rows.filter((g) => (g.fundKeys?.length ?? 1) <= 1);
+  const multi = new Set(rows.filter((g) => (g.fundKeys?.length ?? 1) > 1).map((g) => g.key));
+  const multiLines = pv.children.filter((c) => multi.has(c.group) && !c.viewOf);
   if (!head || !funds.length) return false;
   return /CAPITAL CALL/i.test(head.text)
     && funds.every((g) => !!g.callCell)
-    && pv.callCells.length === funds.length
-    && pv.callCells.every((c) => c.on === "fund")
+    && rows.every((g) => !multi.has(g.key) || !g.callCell)
+    && pv.callCells.length === funds.length + multiLines.length
+    && pv.callCells.every((c) => c.on === "fund" || (c.on === "folio" && multiLines.some((l) => l.account === c.rowAccount)))
     // A valued fund keys its calls on the fund's own key — the join the
     // shared store is built on, and what the fixture below writes under.
     && funds.filter((g) => g.securityKey).every((g) => g.callCell === g.key)
@@ -17325,7 +17332,7 @@ const PM_RETURN_CHECKS = [
     if (!pr || !Array.isArray(pr.atCost)) return false;
     if (!PM_C_BOOK) return false; // the checker could not state its own expectation
     if (!PM_C_BOOK.funds.atCost) return notChecked("the family's review records no private fund at cost on this book");
-    if (pr.atCost.length !== PM_C_BOOK.funds.atCost) return false;
+    if (pr.atCost.reduce((t, r) => t + (r.lines ?? 1), 0) !== PM_C_BOOK.funds.atCost) return false;
     return pr.atCost.every((r) => r.cells.length > 0 && r.cells.every((c) => !c.shown
       && /\u2014/.test(c.text) && !/%/.test(c.text)
       && /held at cost/i.test(c.titles ?? "") && /consolidated review/i.test(c.titles ?? "")));
@@ -17393,7 +17400,9 @@ const PM_RETURN_ROUTE_CHECKS = [
      * in the hover as left out. Held to the table's own row count AND to the
      * book's own parts, so neither can drift from the other.
      */
-    const drawn = ctx?.pmReturn?.drawn;
+    // The footer pools FUNDS — the book's lines — so it is held to the lines the
+    // rows hold, not the rows: a legal-name row may hold several (Stage 10es).
+    const drawn = ctx?.pmReturn?.drawnLines;
     const bookFunds = PM_C_BOOK ? PM_C_BOOK.funds.valued + PM_C_BOOK.funds.atCost + PM_C_BOOK.funds.noNav : null;
     if (bookFunds == null) return false; // the checker could not state its own expectation
     if (of !== drawn || of !== bookFunds || covers !== PM_RETURN_BOOK.pooledCovers) return false;
@@ -28913,27 +28922,36 @@ const INVARIANTS = {
        * wider filter.
        */
       const priv = pv.groups.filter((g) => PRIVATE_BANDS.has(g.section));
-      if (priv.length !== PM_FOLIO_BOOK.funds) return false;
+      // BY LEGAL NAME A ROW MAY HOLD SEVERAL OF THE BOOK'S FUNDS (Stage 10es) —
+      // DrinkPrime's four sellers are one Waterwala Labs row — so the funds are
+      // the lines the rows hold, each once, and each line's folios are its own.
+      const fundsOf = (g) => (g.fundKeys?.length ? g.fundKeys : [g.key]);
+      const keys = priv.flatMap(fundsOf);
+      if (keys.length !== PM_FOLIO_BOOK.funds || new Set(keys).size !== keys.length) return false;
       const kids = pv.children.filter((c) => PRIVATE_BANDS.has(c.section));
       // …PLUS THE INCOME-ONLY FOLIOS THAT REPORT IT (A-15): a line each under
       // the holding whose units they report, derived off the book in
       // `UNVALUED_BOOK` — never counted among its holding statements.
       const viewsOf = (key) => [...(UNVALUED_BOOK?.viewOf ?? new Map()).values()].filter((h) => h?.securityKey === key).length;
       const allViews = [...(UNVALUED_BOOK?.viewOf ?? new Map()).values()].filter(Boolean).length;
+      const wantOf = (k) => { const held = PM_FOLIO_BOOK.statements.get(k); return held == null ? null : held + viewsOf(k); };
       return priv.every((g) => {
-        const held = PM_FOLIO_BOOK.statements.get(g.key);
-        const want = held == null ? null : held + viewsOf(g.key);
+        const ks = fundsOf(g);
+        if (ks.some((k) => wantOf(k) == null)) return false;
+        const want = ks.reduce((t, k) => t + wantOf(k), 0);
+        const views = ks.reduce((t, k) => t + viewsOf(k), 0);
         const tog = pv.toggles.find((x) => x.key === g.key);
         const lines = kids.filter((c) => c.group === g.key);
-        return want != null && g.section === PM_FOLIO_BOOK.sectionOf.get(g.key)
+        const of = (k) => lines.filter((c) => (c.fund ?? g.key) === k);
+        return ks.every((k) => g.section === PM_FOLIO_BOOK.sectionOf.get(k)
+            && of(k).length === wantOf(k) && of(k).filter((c) => !c.viewOf).length === PM_FOLIO_BOOK.statements.get(k))
           && g.folios === want && tog?.rows === want && tog.open
           && lines.length === want
-          && lines.filter((c) => !c.viewOf).length === held
-          && (viewsOf(g.key) === 0 || g.views === viewsOf(g.key));
+          && (views === 0 || g.views === views);
       }) && kids.length === PM_FOLIO_BOOK.rows + allViews
         // …AND EACH BAND DRAWS ITS OWN SHARE OF THEM, so a page that put every
         // fund in one section still adds to 69 and fails here.
-        && [...PRIVATE_BANDS].every((band) => priv.filter((g) => g.section === band).length
+        && [...PRIVATE_BANDS].every((band) => priv.filter((g) => g.section === band).flatMap(fundsOf).length
           === PM_FOLIO_BOOK.bands[band].funds);
     }],
     /**
@@ -28967,14 +28985,18 @@ const INVARIANTS = {
           // line the family's review records at cost in its own section, so a
           // lookup pinned to `"private"` missed 11 of the 14 funds reported by
           // more than one statement and read as a page that had lost them.
-          const g = pv.groups.find((x) => x.key === k
+          // …ON THE ROW THAT HOLDS IT: by legal name a row may hold several of
+          // the book's funds (Stage 10es), and then the row is their sum.
+          const fundsOf = (x) => (x.fundKeys?.length ? x.fundKeys : [x.key]);
+          const g = pv.groups.find((x) => fundsOf(x).includes(k)
             && x.section === PM_FOLIO_BOOK.sectionOf.get(k));
           if (!g) return false;
-          const lines = pv.children.filter((c) => c.group === k && !c.viewOf);
+          const lines = pv.children.filter((c) => c.group === g.key && (c.fund ?? g.key) === k && !c.viewOf);
           const sum = lines.reduce((a, c) => a + (Number(c.value) || 0), 0);
           const want = PM_FOLIO_BOOK.printed.get(k) ?? NaN;
+          const rowWant = fundsOf(g).reduce((t, x) => t + (PM_FOLIO_BOOK.printed.get(x) ?? NaN), 0);
           return lines.length === PM_FOLIO_BOOK.statements.get(k)
-            && Math.abs(sum - want) <= 1 && Math.abs(Number(g.value) - want) <= 1
+            && Math.abs(sum - want) <= 1 && Math.abs(Number(g.value) - rowWant) <= 1
             && Math.abs((PM_FOLIO_BOOK.consolidated.get(k) ?? NaN) - want) <= 1;
         });
       }
@@ -29101,6 +29123,26 @@ const INVARIANTS = {
     ["…and on companies the table draws the companies held at cost and no fund section or total", (t, ctx) => {
       const ids = (ctx?.pmView?.sections ?? []).map((s) => s.id);
       return ids.length > 0 && ids.every((id) => id === "atCost") && !ctx.pmView.totalRow;
+    }],
+    /**
+     * BY LEGAL NAME (Stage 10es). *"In the by legal name tab we will show
+     * companies by their legal name, in by brand tab we will group companies
+     * by same brand name."* Every row is a mapped legal entity, each once; the
+     * brand is drawn under it where it differs. The witnesses are the family's
+     * own: Assetgro Fintech reads as itself with StockGro under it, and the
+     * DrinkPrime sellers are one Waterwala Labs row.
+     */
+    ["by legal name, every row is one mapped legal entity, Assetgro Fintech over StockGro and DrinkPrime's sellers one Waterwala Labs row", (t, ctx) => {
+      const gs = (ctx?.pmView?.groups ?? []).filter((g) => g.kind === "fund");
+      if (!gs.length) return false;
+      const bases = new Set(["cited", "own-name", "as-printed"]);
+      const labels = gs.map((g) => g.label ?? "");
+      const ag = gs.find((g) => /^Assetgro Fintech/i.test(g.label ?? ""));
+      const wl = gs.filter((g) => /^Waterwala Labs/i.test(g.label ?? ""));
+      return gs.every((g) => bases.has(g.brandBasis) && (g.legal ?? "") === g.label)
+        && new Set(labels).size === labels.length
+        && !!ag && ag.brandLine && /StockGro/.test(ag.brands ?? "")
+        && wl.length === 1 && wl[0].fundKeys.length > 1 && wl[0].key.startsWith("legal:");
     }],
   ],
   "private-market-show-funds": [
@@ -41424,6 +41466,9 @@ for (const theme of THEMES) {
             // BY BRAND: the legal entities behind the brand and how it is known (Stage 10eh).
             legal: e.getAttribute("data-pm-legal"), brandBasis: e.getAttribute("data-pm-brand-basis"),
             legalLine: !!e.querySelector("[data-pm-legal-line]"),
+            // BY LEGAL NAME: the lines (fund keys) under the row and the brands they trade as (Stage 10es).
+            fundKeys: (e.getAttribute("data-pm-fund-keys") ?? "").split(" ").filter(Boolean),
+            brands: e.getAttribute("data-pm-brands"), brandLine: !!e.querySelector("[data-pm-brand-line]"),
             // The row's own statement dates, ISO, as its As of cell carries them.
             asOfDates: (e.querySelector("td[data-col-cell='asOf']")?.getAttribute("data-as-of") ?? "").split(" ").filter(Boolean),
             section: e.getAttribute("data-pm-row-section"), folios: num(e, "data-pm-folios"),
@@ -41443,6 +41488,8 @@ for (const theme of THEMES) {
             text: txt(e), ...cellsOf(e) })),
           children: rows("tr[data-pm-folio-row]").map((e) => ({
             group: e.getAttribute("data-pm-folio-row"), section: e.getAttribute("data-pm-row-section"),
+            // The line (fund key) the folio is a statement of — a legal-name row may hold several (Stage 10es).
+            fund: e.getAttribute("data-pm-folio-fund"),
             account: e.getAttribute("data-account"), value: e.getAttribute("data-pm-value"),
             counted: e.hasAttribute("data-pm-counted"), calls: num(e, "data-calls"),
             // The capital account this folio row carries, if any — one account
@@ -41597,8 +41644,11 @@ for (const theme of THEMES) {
            * the coverage correctly.
            */
           drawn: all.length,
+          // THE FUND LINES THOSE ROWS HOLD — a legal-name row may hold several (Stage 10es).
+          drawnLines: all.reduce((t, tr) => t + ((tr.getAttribute("data-pm-fund-keys") ?? "").split(" ").filter(Boolean).length || 1), 0),
           atCost: all.filter((tr) => tr.getAttribute("data-pm-row-section") === "atCost")
-            .map((tr) => ({ key: tr.getAttribute("data-pm-fund"), cells: cellsOf(tr) })),
+            .map((tr) => ({ key: tr.getAttribute("data-pm-fund"), cells: cellsOf(tr),
+              lines: (tr.getAttribute("data-pm-fund-keys") ?? "").split(" ").filter(Boolean).length || 1 })),
           foot: [...document.querySelectorAll("main [data-return-foot]")].map((td) => ({
             measure: td.getAttribute("data-return-foot"),
             covers: td.getAttribute("data-return-foot-covers"),
