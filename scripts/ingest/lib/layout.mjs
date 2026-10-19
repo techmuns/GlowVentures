@@ -677,6 +677,12 @@ async function readOnce(data, password, opts) {
       }
       return { pages, numPages: doc.numPages, inkKind, ocrError: o.error, error: null, pdfError: null };
     }
+    // OCR switched off by the caller is the same state as OCR not installed —
+    // the outlined text was not read — and says so, so `extract.mjs` carries
+    // the archived reading forward instead of recording a new failure.
+    if (inkKind?.kind === "vector") {
+      return { pages, numPages: doc.numPages, inkKind, ocrError: "OCR switched off for this run", error: null, pdfError: null };
+    }
     return { pages, numPages: doc.numPages, inkKind, error: null, pdfError: null };
   } catch (e) {
     return { pages, numPages: pages.length, error: e?.message ?? String(e), pdfError: e };

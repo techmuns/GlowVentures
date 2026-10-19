@@ -1279,7 +1279,8 @@ async function main() {
     const bytes = fs.readFileSync(file);
     const grid = SPREADSHEET.test(file)
       ? gridFromSpreadsheet(bytes)
-      : await extractLayout(new Uint8Array(bytes), { passwords });
+      // `GLOW_OCR=off` (CI): never re-OCR; outlined-text files are carried forward.
+      : await extractLayout(new Uint8Array(bytes), { passwords, ocr: process.env.GLOW_OCR !== "off" });
     const how = unopenedBy(grid);
     const carried = how ? carriedForward(file, how) : [];
     if (carried.length) {

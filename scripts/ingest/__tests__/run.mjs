@@ -16,6 +16,7 @@ const SUITES = [
   { name: "latestReturns", file: "accountReturnRecords.test.mjs", required: true },
   { name: "parseNum", file: "parseNum.test.mjs", required: true },
   { name: "readStatus", file: "readStatus.test.mjs", required: true },
+  { name: "checkReads", file: "checkReads.test.mjs", required: true },
   { name: "layout",   file: "layout.test.mjs",   required: true },
   { name: "pipeline", file: "pipeline.test.mjs", required: true },
   { name: "altFund",  file: "altFund.test.mjs",  required: true },

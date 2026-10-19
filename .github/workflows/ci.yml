@@ -45,3 +45,52 @@ jobs:
 
       - name: Financial calculations and feed contracts
         run: npm run test:family
+
+  # EVERY STATEMENT IN source/ IS READ IN FULL AND REACHES THE BOOK (Stage 10ep).
+  # The job above trusts the committed archive; this one re-reads every file in
+  # source/ with the committed readers and refuses a PR where:
+  #   - a delivery was dropped in without `npm run extract` (the archive differs);
+  #   - a reader changed without the archive being regenerated (same);
+  #   - any file is not in the archive at all (coverage:source);
+  #   - any document is partial, or failed without a recorded reason, or read
+  #     but missing from the book or stale in it (check:reads).
+  # No passwords and no OCR here: sealed and outlined-text statements are
+  # carried forward from the archive a run that could open them wrote.
+  statements:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Expand every delivery
+        run: npm run inventory
+
+      - name: The archive is exactly what source/ and the readers produce
+        env:
+          GLOW_OCR: "off"
+        run: |
+          npm run extract
+          if [ -n "$(git status --porcelain -- public/audit)" ]; then
+            echo "::error::public/audit is not what the committed readers make of source/. Run \`npm run extract\` and \`npm run build-book\` and commit the result."
+            git status --short -- public/audit | head -40
+            exit 1
+          fi
+
+      - name: The book is built from that archive
+        run: |
+          npm run build-book
+          if ! git diff --quiet -- src/data/glowData.ts docs/BOOK-REPORT.md; then
+            echo "::error::The book is not what the archive builds. Run \`npm run build-book\` and commit the result."
+            git --no-pager diff --stat -- src/data/glowData.ts docs/BOOK-REPORT.md
+            exit 1
+          fi
+
+      - name: Every file in source/ is accounted for
+        run: npm run coverage:source
+
+      - name: Every statement is read in full and reaches the book
+        run: npm run check:reads
