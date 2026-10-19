@@ -114,7 +114,7 @@ const navDateOf = (p: Position) => navOf(p)?.date ?? (p.depositoryUnits ? p.navD
 const valueDateOfLine = (p: Position) => navDateOf(p) ?? p.priceAsOf ?? ACC.get(p.accountId)?.asOf ?? null;
 /** A fund vehicle the fund still prices while the family holds none of its units. */
 const FUND = new Set(["AIF", "Mutual Fund", "ETF"]);
-const redeemed = (p: Position) => FUND.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+const redeemed = (p: Position) => FUND.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
 /** Each dedupeGroup counted once — its first member, in book order. */
 const firstOfGroup = (ps: Position[]) => {
   const seen = new Set<string>();
