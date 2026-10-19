@@ -186,9 +186,12 @@ if (existsSync(ltPath)) {
 const wanted = new Map();
 for (const p of positions) {
   const cur = wanted.get(p.securityKey) ?? {
-    key: p.securityKey, name: p.security, bookIsin: null, marks: [], assetClass: p.assetClass, from: "book" };
+    key: p.securityKey, name: p.security, bookIsin: null, marks: [], assetClass: p.assetClass, from: "book", holds: false };
   if (p.isin && !cur.bookIsin) cur.bookIsin = p.isin;
   if (typeof p.currentPrice === "number" && Number.isFinite(p.currentPrice)) cur.marks.push(p.currentPrice);
+  // A printed 0.000 is a measured nil (parseNum: null is "not reported"), so
+  // only a line that is not at zero units can be said to hold the scheme.
+  if (p.quantity !== 0) cur.holds = true;
   wanted.set(p.securityKey, cur);
 }
 
@@ -221,8 +224,9 @@ const unvaluedFunds = (bookArray(glow, "BOOK_UNVALUED_HOLDINGS") ?? [])
     && typeof u.isin === "string" && /^INF/i.test(u.isin));
 for (const u of unvaluedFunds) {
   const cur = wanted.get(u.securityKey) ?? {
-    key: u.securityKey, name: u.security, bookIsin: null, marks: [], assetClass: u.assetClass, from: "book" };
+    key: u.securityKey, name: u.security, bookIsin: null, marks: [], assetClass: u.assetClass, from: "book", holds: false };
   if (!cur.bookIsin) cur.bookIsin = u.isin;
+  cur.holds = true;                                   // filtered to quantity > 0 above
   if (typeof u.lastMovementRate === "number" && Number.isFinite(u.lastMovementRate) && u.lastMovementRate > 0) {
     cur.marks.push(u.lastMovementRate);
   }
@@ -242,12 +246,23 @@ for (const u of unvaluedFunds) {
  *
  * A security whose ISIN the book already reaches under its own key is priced
  * there already and is not added twice; the dashboard finds the one entry by ISIN.
+ *
+ * "REACHES" MEANS A LINE THAT HOLDS UNITS. Motilal Oswal folio 90414963315
+ * (Stage 10eq) prints Motilal Oswal Arbitrage at a Balance of 0.000 units and no
+ * NAV — the 547,324.748 non-demat units it redeemed on 23 Sep 2026. Counted as
+ * reaching INF247L01ED1, that nil line took the ISIN from the depository's own
+ * 16,308,407.445-unit balance on Ajay's demat: the scheme was published once,
+ * under the nil line's key, refused for value for want of a mark, and the
+ * depository's units — the review's own purchase — lost their NAV with nothing
+ * failing in the build. A nil line still gets its own entry; it just does not
+ * stand in for a balance that holds units.
  */
 const movements = bookObject(glow, "BOOK_SHARE_MOVEMENTS") ?? {};
 const accountsWithPositions = new Set(positions.map((p) => p.accountId));
 const transactionsOnly = new Set((bookArray(glow, "BOOK_ACCOUNTS") ?? [])
   .filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
-const reachedIsins = new Set([...wanted.values()].map((w) => w.bookIsin ?? ltIsin.get(w.key)).filter(Boolean));
+const reachedIsins = new Set([...wanted.values()].filter((w) => w.holds)
+  .map((w) => w.bookIsin ?? ltIsin.get(w.key)).filter(Boolean));
 const depositoryOnly = Object.values(movements)
   .filter((w) => transactionsOnly.has(w.accountId)
     && !accountsWithPositions.has(w.accountId)
@@ -256,11 +271,16 @@ const depositoryOnly = Object.values(movements)
     && typeof w.isin === "string" && /^INF/.test(w.isin))
   .sort((a, b) => a.securityKey.localeCompare(b.securityKey));
 for (const w of depositoryOnly) {
-  if (reachedIsins.has(w.isin) || wanted.has(w.securityKey)) continue;
+  const cur = wanted.get(w.securityKey);
+  if (reachedIsins.has(w.isin) || cur?.holds) continue;
   reachedIsins.add(w.isin);
-  wanted.set(w.securityKey, {
-    key: w.securityKey, name: w.security, bookIsin: w.isin, marks: [], assetClass: null, from: "depository",
-  });
+  // A depository window takes the key the book already carries for its ISIN
+  // (Stage 10cc), so the nil line and this balance can be ONE key. The entry is
+  // then the balance's: the units it values are the depository's, and the nil
+  // line keeps its name and whatever mark it printed.
+  wanted.set(w.securityKey, cur
+    ? { ...cur, bookIsin: cur.bookIsin ?? w.isin, from: "depository", holds: true }
+    : { key: w.securityKey, name: w.security, bookIsin: w.isin, marks: [], assetClass: null, from: "depository", holds: true });
 }
 
 // ── the published file ──────────────────────────────────────────────────────
@@ -400,6 +420,10 @@ function main() {
         security: w.name,
         isin,
         isinFrom: bookIsin ? "statement" : "look-through",
+        // The look-through ANSWERED TOO and agreed (a disagreement is skipped
+        // above), so the second tier is exercised even where the statement
+        // supplies the ISIN — Active Momentum's, since Stage 10ep read its print.
+        isinAgreedBy: bookIsin && lt ? "look-through" : null,
         from: w.from,
         schemecode: rec.schemecode,
         scheme: rec.scheme,
@@ -425,6 +449,8 @@ export interface FundNav {
   isin: string;
   /** Which tier supplied it: the family's own statement, or the look-through. */
   isinFrom: "statement" | "look-through";
+  /** The other tier answered as well, with the same ISIN; null where only one answered. */
+  isinAgreedBy: "look-through" | null;
   /**
    * What put this security in the table: a position the BOOK carries, or a
    * balance a DEPOSITORY reports for an account that sent no holding statement.
@@ -477,6 +503,7 @@ ISIN** and never on a name. ${rows.toLocaleString("en-IN")} scheme rows read.
 | Schemes priced | **${usable.length}** |
 | …of which identified by the family's own statement | ${usable.filter((e) => e.isinFrom === "statement").length} |
 | …by the look-through's resolved ISIN | ${usable.filter((e) => e.isinFrom === "look-through").length} |
+| …of the statement's, confirmed by the look-through | ${usable.filter((e) => e.isinAgreedBy === "look-through").length} |
 | Resolved but **not usable to value a holding** | ${out.length - usable.length} |
 | Named below and not resolved | ${skipped.length} |
 | Newest published date | ${out.reduce((a, e) => (e.date > a ? e.date : a), "") || "—"} |

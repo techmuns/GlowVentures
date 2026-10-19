@@ -126,7 +126,7 @@ ok("every skipped holding carries a reason", m.skipped.every((s) => !!s.reason &
   // difference from `m` is the redeemed rows `currentHoldings` drops.
   const unfiltered = navMoverModel(dedupedPositions(LIVE_POSITIONS), accts, schemes);
   const closed = dedupedPositions(LIVE_POSITIONS).filter((p) =>
-    isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null
+    isFundVehicle(p) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)
     && (NAV_MOVER_BUCKETS as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p))));
   if (closed.length === 0) {
     console.log("ok   (no redeemed ETF or mutual-fund row in this book to exclude)");

@@ -92,7 +92,7 @@ const firstPerGroup = (rows: Position[]) => {
   return rows.filter((p) => !p.dedupeGroup || (seen.has(p.dedupeGroup) ? false : (seen.add(p.dedupeGroup), true)));
 };
 const FUNDS = new Set(["AIF", "Mutual Fund", "ETF"]);
-const closed = (p: Position) => FUNDS.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+const closed = (p: Position) => FUNDS.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0);
 const deduped = firstPerGroup(positions);
 const keyValue = new Map<string, number>();
 for (const p of deduped) keyValue.set(p.securityKey, (keyValue.get(p.securityKey) ?? 0) + p.marketValue);
@@ -247,7 +247,7 @@ ok("the context is a non-empty set of named blocks",
     // A measured nil: every row at nil units against a published price, or no
     // row at all because the statement's balance is nil (its own words).
     const measuredNil = rows.length
-      ? rows.every((p) => p.quantity === 0 && p.currentPrice != null)
+      ? rows.every((p) => p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0))
       : /balance is nil/i.test(a.noPositionsReason ?? "");
     // Every row the account HAS is under the ₹1,000 floor, so the dashboard
     // lists none of them — the two ASK PMS accounts since the September 2026

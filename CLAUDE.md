@@ -350,7 +350,7 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   statement NOTES (what the document prints or lacks) and read GAPS; a document
   whose every warning is a note is `ok`. A new warning code is a gap until it is
   argued into the note list.
-- **`npm run check:reads` is the gate on every delivery** (Stage 10eq; CI's
+- **`npm run check:reads` is the gate on every delivery** (Stage 10er; CI's
   `statements` job re-extracts `source/` and runs it on every PR). It fails on a
   `partial` document, a `failed` one not held out by decision or recorded in
   `scripts/ingest/acceptedUnread.mjs` (reason + the action that fixes it — only

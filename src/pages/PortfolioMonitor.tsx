@@ -6067,7 +6067,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   const redeemedToNil = useMemo(() => {
     const by = new Map<string, Position[]>();
     for (const p of positionsReg) (by.get(p.accountId) ?? by.set(p.accountId, []).get(p.accountId)!).push(p);
-    return new Set([...by].filter(([, ps]) => ps.length > 0 && ps.every((p) => isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null)).map(([id]) => id));
+    return new Set([...by].filter(([, ps]) => ps.length > 0 && ps.every((p) => isFundVehicle(p) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0))).map(([id]) => id));
   }, [positionsReg]);
 
   /** What each return column covers, over EVERY row drawn — a manager's dealing carries no return on the family's money. */
