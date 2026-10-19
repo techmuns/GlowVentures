@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Ankita Jaisinghani  SOA Motilal AIF.pdf",
  "pages": 2,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "statement-basis",

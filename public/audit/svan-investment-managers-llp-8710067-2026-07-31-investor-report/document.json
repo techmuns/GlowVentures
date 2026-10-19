@@ -17,7 +17,7 @@
  "reportType": "investor-report",
  "sourcePath": "source/_extracted/august-2026/reports/SVAN - AJAY.pdf",
  "pages": 5,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "weights-on-aum-basis",

@@ -17,17 +17,8 @@
  "reportType": "appraisal",
  "sourcePath": "source/_extracted/october-2026-c/Svan - Bharat/Z1281_8710090_PortfolioAppraisal675CT.pdf",
  "pages": 2,
- "status": "partial",
- "warnings": [
-  {
-   "code": "unparseable-cell",
-   "detail": "(continuation) · pctAssets = \"07/10/2026\""
-  },
-  {
-   "code": "unparseable-cell",
-   "detail": "(continuation) · pctAssets = \"07/10/2026\""
-  }
- ],
+ "status": "ok",
+ "warnings": [],
  "holdings": [
   {
    "security": "Indo Count Industries Ltd",

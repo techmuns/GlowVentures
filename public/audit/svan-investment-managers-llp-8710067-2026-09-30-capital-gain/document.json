@@ -17,13 +17,8 @@
  "reportType": "capital-gain",
  "sourcePath": "source/_extracted/october-2026-c/Svan _ Ajay/Z1282_8710067_CapitalGain90CT.pdf",
  "pages": 3,
- "status": "partial",
- "warnings": [
-  {
-   "code": "columns-not-matched",
-   "detail": "effectiveLT"
-  }
- ],
+ "status": "ok",
+ "warnings": [],
  "holdings": [],
  "totals": null,
  "returns": [],
@@ -47,7 +42,7 @@
    "daysHeld": 135,
    "shortTerm": -107418.34,
    "longTerm": 0,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 0,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -66,7 +61,7 @@
    "daysHeld": 43,
    "shortTerm": 162595.43,
    "longTerm": 0,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 0,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -85,7 +80,7 @@
    "daysHeld": 39,
    "shortTerm": 620708.31,
    "longTerm": 0,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 0,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -104,7 +99,7 @@
    "daysHeld": 42,
    "shortTerm": 277050.8,
    "longTerm": 0,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 0,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -123,7 +118,7 @@
    "daysHeld": 43,
    "shortTerm": 363332.2,
    "longTerm": 0,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 0,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -142,7 +137,7 @@
    "daysHeld": 378,
    "shortTerm": 0,
    "longTerm": 406963.03,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 406963.03,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -161,7 +156,7 @@
    "daysHeld": 419,
    "shortTerm": 0,
    "longTerm": 278904.51,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 278904.51,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -180,7 +175,7 @@
    "daysHeld": 482,
    "shortTerm": 0,
    "longTerm": 823450.36,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 823450.36,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -199,7 +194,7 @@
    "daysHeld": 322,
    "shortTerm": 41632.88,
    "longTerm": 0,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 0,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -218,7 +213,7 @@
    "daysHeld": 361,
    "shortTerm": 793147.03,
    "longTerm": 0,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 0,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -237,7 +232,7 @@
    "daysHeld": 674,
    "shortTerm": 0,
    "longTerm": -16199.55,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": -16199.55,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -256,7 +251,7 @@
    "daysHeld": 563,
    "shortTerm": 0,
    "longTerm": -26494.56,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": -26494.56,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -275,7 +270,7 @@
    "daysHeld": 528,
    "shortTerm": 0,
    "longTerm": -59830.36,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": -59830.36,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -294,7 +289,7 @@
    "daysHeld": 483,
    "shortTerm": 0,
    "longTerm": -15718.53,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": -15718.53,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -313,7 +308,7 @@
    "daysHeld": 567,
    "shortTerm": 0,
    "longTerm": 884106.9,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 884106.9,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -332,7 +327,7 @@
    "daysHeld": 628,
    "shortTerm": 0,
    "longTerm": 103465.67,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 103465.67,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -351,7 +346,7 @@
    "daysHeld": 493,
    "shortTerm": 0,
    "longTerm": 45559.78,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 45559.78,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -370,7 +365,7 @@
    "daysHeld": 479,
    "shortTerm": 0,
    "longTerm": 84872.12,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 84872.12,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -389,7 +384,7 @@
    "daysHeld": 462,
    "shortTerm": 0,
    "longTerm": 187858.35,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 187858.35,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -408,7 +403,7 @@
    "daysHeld": 61,
    "shortTerm": 451201.05,
    "longTerm": 0,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 0,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {
@@ -427,7 +422,7 @@
    "daysHeld": 63,
    "shortTerm": 243005.17,
    "longTerm": 0,
-   "effectiveLongTerm": null,
+   "effectiveLongTerm": 0,
    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
   },
   {

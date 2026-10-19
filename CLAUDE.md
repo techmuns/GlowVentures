@@ -231,6 +231,7 @@ extraction mirrors each archive's own path under `source/`.
 | HDFC Bank (NSDL demat) | 67786137 | Bharat Jaisinghani Family Trust 3 | 2026-08-29 | — (**its private holding is counted under the review**, Stage 10dh) |
 | HDFC Bank (NSDL demat) | 67786547 | Bharat Jaisinghani Family Trust 2 | 2026-08-29 | — (**its private holding is counted under the review**, Stage 10dh) |
 | HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-10-05 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
+| ICICI Prudential Mutual Fund | 14320536 | Ankita Jaisinghani | 2026-10-01 | ₹0 (a MEASURED zero — every scheme redeemed to nil) |
 | Invesco Mutual Fund | 3041491081 | Bharat Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — every scheme redeemed to nil) |
 | Invesco Mutual Fund | 3041491145 | Ajay Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
 | Invesco Mutual Fund | 3041794916 | Ankita Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
@@ -263,7 +264,7 @@ block, which is ring-fenced: out of this column and every total, shown only on
 `/polycab`.
 
 **Consolidated.** `BOOK_SUMMARY` in `glowData.ts` is authoritative; at the time
-of writing: 75 accounts, 441 positions, 8 owners/entities, current value of
+of writing: 76 accounts, 444 positions, 8 owners/entities, current value of
 holdings ₹840.13 Cr — listed ₹647.03 Cr, private ₹193.09 Cr, nothing unplaced.
 
 **Side of the book**, decided in this order and generated as
@@ -336,12 +337,17 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   supersedes; a dated row does not (dated rows are unioned and deduped).
 - `reconcile.mjs` classifies every delta `rounding` / `explained` / `material`;
   a material delta blocks `__tests__/golden.mjs`.
-- **`extract.mjs` takes no options** and without the passwords would drop the
-  encrypted statements; `guardAgainstShrinkingTheArchive` refuses to write a
-  smaller archive. To land a reader change without the passwords, use the
-  matching **faithful partial replay** (`replay:*`, `rekey:archive`) — each only
-  adds the fields it names, gates on the archive, and `--check` is a no-op
-  control run. Follow with `build-book`.
+- **`extract.mjs` takes no options and runs on any machine** (Stage 10eo): a
+  statement it cannot open for want of a password or the OCR tools is CARRIED
+  FORWARD from the archive a run that could open it wrote (a failed one is
+  re-read from its archived page text, kept only if it publishes more); with no
+  password and no OCR it reproduces the committed archive byte for byte.
+  `guardAgainstShrinkingTheArchive` still refuses a smaller archive. The
+  `replay:*` / `rekey:archive` scripts remain for their own narrow changes.
+- **`partial` means a read gap** — `lib/readStatus.mjs` splits warnings into
+  statement NOTES (what the document prints or lacks) and read GAPS; a document
+  whose every warning is a note is `ok`. A new warning code is a gap until it is
+  argued into the note list.
 
 ## The live layer
 
@@ -423,7 +429,8 @@ And:
   it green.
 - `npm run dev` / `preview` — local server; checks expect a preview on :4173.
 - `npm run inventory` · `extract` (no options; `GLOW_PDF_PASSWORDS`;
-  `GLOW_SOURCE_DIR` / `GLOW_AUDIT_DIR` / `GLOW_DOCS_DIR` for a scratch tree) ·
+  `GLOW_SOURCE_DIR` / `GLOW_AUDIT_DIR` / `GLOW_DOCS_DIR` for a scratch tree,
+  `GLOW_CARRY_DIR` for the archive a scratch run carries sealed files from) ·
   `report:extraction` (extraction report from the archive).
 - `npm run build-book` — the book and its report (then `build-review-columns`).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).

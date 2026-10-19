@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/october-2026-c/SKY CAPITAL/SKY023 - BJ Trust 2_SOA Aug 31, 2026.pdf",
  "pages": 2,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "statement-basis",

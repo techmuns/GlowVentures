@@ -1,6 +1,6 @@
 # Return source coverage
 
-17 of 75 accounts have verified opening values, dated external capital and a closing valuation.
+17 of 76 accounts have verified opening values, dated external capital and a closing valuation.
 
 Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.
 
@@ -37,6 +37,7 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | 2026-08-06 | Complete through the selected date |
 | ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
+| ICICI Prudential Mutual Fund | 14320536 | Ankita Jaisinghani | 2026-10-01 | — | Opening valuation and complete dated cash flows are missing |
 | ICICI Prudential Mutual Fund | 36378950 | Ajay Jaisinghani | 2026-10-05 | 2026-10-01 | Complete through the selected date |
 | ICICI Prudential Mutual Fund | 36379637 | Bharat Jaisinghani | 2026-10-05 | 2026-10-01 | Complete through the selected date |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | — | Opening valuation and complete dated cash flows are missing |

@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/ANKITA_JAISINGHANI_Class_A1_STATEMENT_2026-03-31_AIFM_BPEPF6_0584.pdf",
  "pages": 2,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "statement-basis",

@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H43383  -BHARAT JAISINGHANI FAMILY TRUST_Holding.pdf",
  "pages": 1,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "owner-from-register",

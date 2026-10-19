@@ -17,7 +17,7 @@
  "reportType": "demat-transactions",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation.pdf",
  "pages": 1,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "owner-from-register",

@@ -30,12 +30,8 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/august-2026/reports/360 ONE WEALTH - AJAY.pdf",
  "pages": 12,
- "status": "partial",
+ "status": "ok",
  "warnings": [
-  {
-   "code": "columns-not-matched",
-   "detail": "marketPrice, benchmark"
-  },
   {
    "code": "section-reported-empty",
    "detail": "transaction: the report states \"No data available to generate …\""

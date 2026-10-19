@@ -1,0 +1,23 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "",
+   "Aditya Birla Sun Life Liquid Fund - Daily IDCW-Direct Plan",
+   7756.542,
+   100.195,
+   "2026-10-05",
+   777961.25,
+   777166.73
+  ]
+ ]
+}

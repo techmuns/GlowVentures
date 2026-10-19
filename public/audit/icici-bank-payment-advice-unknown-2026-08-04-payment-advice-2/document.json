@@ -24,10 +24,6 @@
    "detail": "a bank advice records that money left account XXXXXXXX1520 on 2026-08-04 — ₹21,42,90,815.61. It names no holder, no security and no folio: So it is read in full, kept in the archive as provenance, and attributed to no account."
   },
   {
-   "code": "field-not-in-document-contract",
-   "detail": "ICICI Bank (payment advice) returned bankAdvice, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
-  },
-  {
    "code": "duplicate-doc-key",
    "detail": "icici-bank-payment-advice-unknown-2026-08-04-payment-advice was already claimed by source/_extracted/august-2026-d/MOTILAL REPORTS/3P_Folio 3000048.pdf; filed as icici-bank-payment-advice-unknown-2026-08-04-payment-advice-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
   }

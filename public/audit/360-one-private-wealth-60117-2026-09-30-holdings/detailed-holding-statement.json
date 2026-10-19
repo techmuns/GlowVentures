@@ -12,7 +12,8 @@
    "quantity",
    "totalCost",
    "unrealized",
-   "totalGain"
+   "totalGain",
+   "benchmark"
   ],
   [
    "360 ONE SPECIAL",
@@ -24,7 +25,8 @@
    "6,329,555.43",
    "10.22 %",
    "-0.46 %",
-   "30-Sep-26"
+   "30-Sep-26",
+   "NIFTY 50 TRI"
   ]
  ]
 }

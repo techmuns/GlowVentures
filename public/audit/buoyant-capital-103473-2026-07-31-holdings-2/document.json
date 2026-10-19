@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
  "pages": 3,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "duplicate-doc-key",

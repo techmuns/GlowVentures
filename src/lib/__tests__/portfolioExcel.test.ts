@@ -462,8 +462,17 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   // LOAD-BEARING: the book must carry a holding the rule annualises, or a sheet
   // printing the plain return on cost everywhere would pass the check above.
   ok("...and the book carries one the rule annualises, so the guard can fail", annualised > 0, `${annualised} annualised`);
-  const sheetCagr = ROWS.filter((r) => r["Measure"] === "CAGR").length;
-  eq("exactly those rows are annualised, and no other", sheetCagr, annualised);
+  const sheetCagr = ROWS.filter((r) => r["Measure"] === "CAGR" && r["Mandate"] === DASH).length;
+  eq("exactly those direct rows are annualised, and no other", sheetCagr, annualised);
+  // INSIDE A MANDATE the same rule binds, and only on the mandate's OWN lot
+  // register: V.E.C 128004's open-lots report (Stage 10eo) dates its lines, and
+  // a mandate line with no dated lot behind it must never annualise.
+  const pmsDated = new Set(NAV_SET.held.filter((p) => isPms(p) && p.heldSince)
+    .map((p) => displaySecurity(PAGE[RAW.indexOf(p)].security)));
+  const mandateCagr = ROWS.filter((r) => r["Measure"] === "CAGR" && r["Mandate"] !== DASH);
+  ok("a mandate row annualises only where its own lot register dates it",
+    mandateCagr.every((r) => pmsDated.has(r["Security"] as string)),
+    mandateCagr.filter((r) => !pmsDated.has(r["Security"] as string)).map((r) => r["Security"]).join(", ") || `${mandateCagr.length} lot-dated mandate row(s)`);
   // THE WINDOW IS THE ROW'S OWN, never the book's newest date (2026-08-29): an
   // annualised row names both ends of it.
   const cagrRows = ROWS.filter((r) => r["Measure"] === "CAGR");

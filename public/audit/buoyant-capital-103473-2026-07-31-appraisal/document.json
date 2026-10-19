@@ -17,17 +17,8 @@
  "reportType": "appraisal",
  "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_PortfolioAppraisal675CT (1).pdf",
  "pages": 1,
- "status": "partial",
- "warnings": [
-  {
-   "code": "unparseable-cell",
-   "detail": "(continuation) · pctAssets = \"(Cost)\""
-  },
-  {
-   "code": "equity-subtotal-not-found",
-   "detail": "no unlabelled subtotal closed the Equity section"
-  }
- ],
+ "status": "ok",
+ "warnings": [],
  "holdings": [
   {
    "security": "Cash",

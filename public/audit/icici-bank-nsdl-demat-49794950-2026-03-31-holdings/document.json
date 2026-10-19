@@ -17,7 +17,7 @@
  "reportType": "holdings",
  "sourcePath": "source/august-2026-e/Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf",
  "pages": 2,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "price-date-precedes-holding-date",
@@ -38,10 +38,6 @@
   {
    "code": "value-is-face-value-par",
    "detail": "17 holding(s) carry units and NO market value, because the implied price is exactly a face-value denomination with no paise, on a name that declares none. A depository records the value a security was allotted at where it has no price for it, and multiplying by that produces a valuation nobody struck — National Stock Exchange of India Ltd at Re 1 a share is the plainest case. Rows: ASSETGRO FINTECH PRIVATE LIMITED - 1% SERIES B PREF 25NV44 (636 at 10.0000); BIG BANG BOOM SOLUTIONS PRIVATE LIMITED - 0.001% PREF 12SP44 (48 at 10.0000); ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/- (330898 at 1.0000); EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43 (100 at 1.0000); INFOBAY AI LIMITED - 0.01% PREF 18AG44 (107 at 10.0000); INNOVITI TECHNOLOGIES PRIVATE LIMITED - EQ (32017 at 10.0000); MATRIX GAS AND RENEWABLES LIMITED - EQ (75000 at 10.0000); OILMAX ENERGY PRIVATE LIMITED - EQ (17000 at 10.0000); ONIX RENEWABLE LIMITED - EQ (90000 at 10.0000); RAYS POWER EXPERTS PRIVATE LIMITED - EQ (59000 at 10.0000); SKS FASTENERS LIMITED - EQ (24800 at 10.0000); SOTEFIN BHARAT LIMITED - EQ (171879 at 10.0000); SPRAY ENGINEERING DEVICES LIMITED - EQ (165566 at 10.0000); URB VENTURES PRIVATE LIMITED - 0.001% PREF 07JL42 (4000 at 10.0000); URB VENTURES PRIVATE LIMITED - EQ (148000 at 10.0000); WEVOIS LABS PRIVATE LIMITED - EQ (55 at 10.0000); ZENITH LEISURE HOLIDAYS LIMITED - EQ (32791 at 10.0000)."
-  },
-  {
-   "code": "field-not-in-document-contract",
-   "detail": "ICICI Bank (NSDL demat) returned priceAsOf, printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
   }
  ],
  "holdings": [
@@ -1680,7 +1676,13 @@
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [],
- "checks": null,
+ "checks": {
+  "passed": [
+   "the rows sum to the printed `Total Value of Holding`, Rs. 124799000337.69"
+  ],
+  "notApplicable": [],
+  "failed": []
+ },
  "stitches": [],
  "derivedPortfolioTotal": 124705048718.69
 }

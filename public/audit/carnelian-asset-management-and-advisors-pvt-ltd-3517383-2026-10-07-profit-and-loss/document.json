@@ -17,17 +17,77 @@
  "reportType": "profit-and-loss",
  "sourcePath": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ProfitLossAccount1213OT.pdf",
  "pages": 2,
- "status": "failed",
+ "status": "ok",
  "warnings": [
   {
-   "code": "profit-and-loss-line-missing",
-   "detail": "otherIncome not printed. Nothing is published from a P&L account that cannot be closed."
+   "code": "profit-and-loss-capital-is-a-balance",
+   "detail": "reserves begin the window at -8046939.72, so the account predates 2026-04-01: Capital Contribution (330000000) and Withdrawals (390714) are balances at the close, not the window's capital movement, and are not published as its contribution or withdrawal."
+  },
+  {
+   "code": "profit-and-loss-not-only-cash",
+   "detail": "the balance sheet carries investments, an unrealised gain, a current liability or a current asset other than the bank balance — it states no holding line by line, so no holding is read from it; the flows stand."
   }
  ],
  "holdings": [],
  "totals": null,
  "returns": [],
- "flows": null,
+ "flows": {
+  "contribution": null,
+  "withdrawal": null,
+  "netCapitalInOut": null,
+  "realized": -1763423.42,
+  "unrealized": 74695551.87,
+  "income": 1781297.6,
+  "expenses": 292335.75,
+  "fees": 1678079.5,
+  "accruedIncome": null,
+  "changeInAccruals": null,
+  "otherExpenses": 22373.94,
+  "gainPriorToTakeover": null,
+  "profit": null,
+  "corpus": 385169845.54,
+  "openingCorpus": null,
+  "periodFrom": "2026-04-01",
+  "periodTo": "2026-10-07",
+  "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-profit-and-loss",
+  "lines": [
+   {
+    "label": "Dividend",
+    "flow": "income",
+    "value": 1781297.6
+   },
+   {
+    "label": "Realized Gain/Loss",
+    "flow": "realized",
+    "value": -1763423.42
+   },
+   {
+    "label": "Custodian Fees",
+    "flow": "expenses",
+    "value": 22945.7
+   },
+   {
+    "label": "Management Fees",
+    "flow": "fees",
+    "value": 1678079.5
+   },
+   {
+    "label": "Securities Transaction Tax (STT)",
+    "flow": "expenses",
+    "value": 269390.05
+   },
+   {
+    "label": "Other Expenses",
+    "flow": "otherExpenses",
+    "value": 22373.94
+   },
+   {
+    "label": "Net Unrealized Gain / Loss during the period",
+    "flow": "unrealized",
+    "value": 74695551.87
+   }
+  ]
+ },
  "cashFlows": [],
  "transactions": [],
  "capitalGains": [],

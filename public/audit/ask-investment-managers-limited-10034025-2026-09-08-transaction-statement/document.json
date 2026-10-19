@@ -17,7 +17,7 @@
  "reportType": "transaction-statement",
  "sourcePath": "source/september-2026/askimpms_10034025_TransactionStatement_India94CT.pdf",
  "pages": 40,
- "status": "partial",
+ "status": "ok",
  "warnings": [
   {
    "code": "tds-transfers-are-not-trades",

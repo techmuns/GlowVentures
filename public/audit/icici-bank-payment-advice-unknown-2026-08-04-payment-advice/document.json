@@ -22,10 +22,6 @@
   {
    "code": "payment-receipt-not-a-statement",
    "detail": "a bank advice records that money left account XXXXXXXX1520 on 2026-08-04 — ₹31,05,82,835.17. It names no holder, no security and no folio: So it is read in full, kept in the archive as provenance, and attributed to no account."
-  },
-  {
-   "code": "field-not-in-document-contract",
-   "detail": "ICICI Bank (payment advice) returned bankAdvice, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs."
   }
  ],
  "holdings": [],

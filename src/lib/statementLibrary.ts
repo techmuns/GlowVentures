@@ -49,7 +49,14 @@ export interface LibraryDoc {
   asOf: string | null;
   /** Upper-cased source extension — PDF, XLSX, XLS, CSV. */
   format: string;
-  status: ManifestEntry["status"];
+  /**
+   * The manifest's status, with one display distinction: a source the pipeline
+   * READ PERFECTLY and holds out by decision (the family's review and register,
+   * filed under a "… (not a statement)" provider) is `held-out`. The archive
+   * keeps it `failed` — build-book, the reconcile and source-coverage all key on
+   * that — but on this page "Failed" would say it could not be read.
+   */
+  status: ManifestEntry["status"] | "held-out";
   warnings: number;
   /** Where this file arrived — the delivery folder or archive it came in. */
   delivery: string;
@@ -78,7 +85,7 @@ export interface ProviderFolder {
   accounts: string[];
   asOfFrom: string | null;
   asOfTo: string | null;
-  status: { ok: number; partial: number; failed: number; encrypted: number };
+  status: Record<LibraryDoc["status"], number>;
   docs: LibraryDoc[];
 }
 
@@ -119,6 +126,9 @@ const REPORT_LABELS: Record<string, string> = {
   "distribution-notice": "Distribution notice",
   "statement-of-earnings": "Statement of earnings",
   "payment-advice": "Payment advice",
+  "performance-by-security": "Performance by security",
+  "trial-balance": "Trial balance",
+  "open-lots": "Open lots",
   unknown: "Unclassified",
 };
 
@@ -156,12 +166,20 @@ function deliveryOf(sourcePath: string): string {
 
 const basenameOf = (sourcePath: string): string => sourcePath.split("/").pop() ?? sourcePath;
 
+/** A provider the pipeline files a non-statement under — see `sortKey`. */
+const isNotAStatement = (provider: string): boolean => provider.toLowerCase().includes("not a statement");
+
+/** The status a document shows — see `LibraryDoc.status`. */
+function displayStatus(e: ManifestEntry): LibraryDoc["status"] {
+  return e.status === "failed" && isNotAStatement(e.provider ?? "") ? "held-out" : e.status;
+}
+
 /** A provider name sorts after real statements when it is a bracketed placeholder. */
 function sortKey(provider: string): string {
   const lower = provider.toLowerCase();
   // "(unidentified)" and "… (not a statement)" belong at the end of the list,
   // after every provider that actually issues statements.
-  const demoted = lower.startsWith("(") || lower.includes("not a statement");
+  const demoted = lower.startsWith("(") || isNotAStatement(lower);
   return `${demoted ? "1" : "0"}${lower}`;
 }
 
@@ -185,7 +203,7 @@ export function buildLibrary(manifest: readonly ManifestEntry[]): LibraryIndex {
       accountNo: e.accountNo || null,
       asOf: e.asOf || null,
       format: formatOf(e.sourcePath),
-      status: e.status,
+      status: displayStatus(e),
       warnings: e.warnings ?? 0,
       delivery: deliveryOf(e.sourcePath),
       fileName: basenameOf(e.sourcePath),
@@ -206,7 +224,7 @@ export function buildLibrary(manifest: readonly ManifestEntry[]): LibraryIndex {
     const formats = new Set<string>();
     const owners = new Set<string>();
     const accounts = new Set<string>();
-    const status = { ok: 0, partial: 0, failed: 0, encrypted: 0 };
+    const status = { ok: 0, partial: 0, failed: 0, encrypted: 0, "held-out": 0 };
     let asOfFrom: string | null = null;
     let asOfTo: string | null = null;
 

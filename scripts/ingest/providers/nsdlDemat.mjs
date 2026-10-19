@@ -366,7 +366,8 @@ export function extract({ grid, meta = {} }) {
     owner,
     ownerId,
     asOf,
-    priceAsOf,
+    // No document-level `priceAsOf`: the contract has none, and every holding
+    // carries the date as its own `priceAsOn` (above), which is where it is read.
     reportType: "holdings",
     engagement: "Direct",
     providerEngagement: `NSDL depository account at ${dpId ?? "DP not read"} — ${[category, acType].filter(Boolean).join(", ") || "type not read"}`,
@@ -383,7 +384,7 @@ function readHoldings(pages, text, meta, warnings, priceAsOf = null) {
     warn(warnings, "header-not-matched",
       "the `ISIN Code | Scrip Name | Balance | Value (Rs.)` header row was not found, so no column boundary "
       + "could be derived from the document. Nothing is read rather than reading columns at a guessed x.");
-    return { holdings: [], totals: makeTotals({ positionCount: 0, source }), printedTotalValuation: null };
+    return { holdings: [], totals: makeTotals({ positionCount: 0, source }) };
   }
 
   const lines = tableLines(pages, bands);
@@ -580,6 +581,14 @@ function readHoldings(pages, text, meta, warnings, priceAsOf = null) {
       positionCount: holdings.length,
       source,
     }),
-    printedTotalValuation: printedTotal,
+    // The printed grand total is a CHECK, never a source, and `checks` is where
+    // the contract keeps a reader's own checks. It used to ride out as
+    // `printedTotalValuation`, a field the contract does not carry, so the
+    // figure the stitched values were proven against was dropped on every run.
+    checks: printedTotal == null
+      ? { passed: [], notApplicable: ["the statement prints no `Total Value of Holding` to sum the rows against"], failed: [] }
+      : Math.abs(rowSum - printedTotal) > 1
+        ? { passed: [], notApplicable: [], failed: [`the rows sum to ${rowSum.toFixed(2)} against the printed \`Total Value of Holding\` of Rs. ${printedTotal.toFixed(2)}`] }
+        : { passed: [`the rows sum to the printed \`Total Value of Holding\`, Rs. ${printedTotal.toFixed(2)}`], notApplicable: [], failed: [] },
   };
 }
