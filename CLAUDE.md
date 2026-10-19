@@ -122,7 +122,9 @@ One line per area; the history files explain each in depth.
   accounts), `txnLedger.ts` (capital and trades as one row set — never added),
   `txnAxis.ts`, `txnSort.ts`, `txnRollup.ts`, `ledger.ts` (runtime dated record
   from `public/audit/`), `capitalCalls.ts`, `fundReturns.ts`, `privateBook.ts`
-  (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`).
+  (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`),
+  `investmentProfiles.ts` (supplied strategy/description, matched by identity —
+  security key → ISIN → name → brand → folio; Stage 10eo).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indices.ts`, `periodReturns.ts`
   (Morning CIO Returns tab), `returnMeasures.ts`, `returnColumns.ts`.
@@ -425,7 +427,8 @@ And:
 - `npm run inventory` · `extract` (no options; `GLOW_PDF_PASSWORDS`;
   `GLOW_SOURCE_DIR` / `GLOW_AUDIT_DIR` / `GLOW_DOCS_DIR` for a scratch tree) ·
   `report:extraction` (extraction report from the archive).
-- `npm run build-book` — the book and its report (then `build-review-columns`).
+- `npm run build-book` — the book and its report (then `build-review-columns`,
+  `build-profiles` → `src/data/privateProfiles.json` from any profile table in `source/`).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,

@@ -4640,3 +4640,32 @@ inside it would contain all the files of the same format in an organized way"*
   trip, the cross-origin and bad-file guards, the not-configured answer) and the
   client's cause mapping. Routes `statements` / `statements-folder` stay clean;
   the drop box degrades to a named notice where no Function runs (local preview).
+
+### Stage 10eo — PRIVATE INVESTMENTS: STRATEGY AND DESCRIPTION, MATCHED BY IDENTITY
+
+*"Add fund strategy and company-description fields to the canonical private-market
+data … Match supplementary data to the investment identity rather than requiring
+the client to maintain one upload format."*
+
+- **Model.** `BookFolio.profile` / `BookGroup.profile` (`privateBook.ts`) carry a
+  `strategy` and a `description` cell — text with its source cell and match basis,
+  or `null` with a reason. A property of the FUND; a brand or member row shows one
+  text only where every investment under it shares it, else "open the row".
+- **Intake, any layout.** `scripts/lib/privateProfiles.mjs` recognises a profile
+  table by its HEADER (an investment name / ISIN / folio / security key beside a
+  strategy or description column), wherever the header row sits, across or down
+  the sheet, in xlsx/xls/csv/JSON, loose or inside a zip. A header with two ledger
+  columns (date, amount, …) is a statement, never a profile.
+  `npm run build-profiles` (after `build-book`) writes `src/data/privateProfiles.json`.
+- **Match** (`src/lib/investmentProfiles.ts`): security key → ISIN → name (printed,
+  legal, fund without class; case/spacing/legal suffix ignored) → brand → folio,
+  most exact tier wins; a record landing on two brands matches nothing. Newest
+  delivery wins; two texts in one delivery are a conflict, shown as `—`.
+  Unmatched records are named in the column headers' hover.
+- **Columns.** `strategy`, `description` on `pm-book`, optional (Edit Columns),
+  after the name. No profile file exists in `source/` today, so every cell is `—`
+  with that reason. `source-coverage` counts a profile file as `read-as-profile`.
+- `investmentProfiles.test.ts`: four layouts of the same facts land on the same
+  investments of the real book; the refusals (shared folio, unknown name, ledger,
+  conflict) hold. `check:pages ONLY=private-market`: same 23 findings as main on
+  this Windows checkout (glowData read), none new.

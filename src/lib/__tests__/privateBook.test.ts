@@ -600,6 +600,7 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
     alsoCount: 1, alsoReportedUnder: [], capital: c, capitalCounted: true, capitalCountedAs: null,
     viewOf: null, distributed: null, distributedBasis: null, distributionCounted: true, distributionCountedAs: null,
     reason: null,
+    profile: { strategy: { value: null, source: null, matchedOn: null, reason: "none supplied" }, description: { value: null, source: null, matchedOn: null, reason: "none supplied" } },
   });
   const fig = figuresOf([
     folio("one", cap({ accountId: "a" })),

@@ -45,6 +45,7 @@ const SUITES = [
   ["account XIRR", "src/lib/__tests__/accountXirr.test.ts"],
   ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["private market table", "src/lib/__tests__/privateBook.test.ts"],
+  ["investment profiles", "src/lib/__tests__/investmentProfiles.test.ts"],
   ["review as private-market source", "src/lib/__tests__/reviewBook.test.ts"],
   ["review optional columns", "src/lib/__tests__/reviewColumns.test.ts"],
   ["separate investments", "src/lib/__tests__/separateInvestments.test.ts"],
