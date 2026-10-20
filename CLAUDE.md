@@ -176,7 +176,7 @@ extraction mirrors each archive's own path under `source/`.
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
 | ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | ₹63.76 Cr\*\* |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | ₹48.07 Cr |
-| Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-10-07 | ₹38.52 Cr |
+| Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-09-30 | ₹38.16 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani | 2026-06-30 | ₹37.26 Cr |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | ₹31.00 Cr |
 | Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹29.42 Cr |
@@ -267,7 +267,7 @@ block, which is ring-fenced: out of this column and every total, shown only on
 
 **Consolidated.** `BOOK_SUMMARY` in `glowData.ts` is authoritative; at the time
 of writing: 76 accounts, 448 positions, 8 owners/entities, current value of
-holdings ₹836.93 Cr — listed ₹643.83 Cr, private ₹193.09 Cr, nothing unplaced.
+holdings ₹836.57 Cr — listed ₹643.48 Cr, private ₹193.09 Cr, nothing unplaced.
 
 **Side of the book**, decided in this order and generated as
 `Position.marketSide`: the family's own fund placing (`FAMILY_MARKET_SIDE`) → a

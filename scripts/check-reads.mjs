@@ -113,13 +113,17 @@ for (const [k, ds] of [...held.entries()].sort()) {
    * A SNAPSHOT IS ANY STATEMENT THAT VALUES THE HOLDINGS, WHATEVER ITS REPORT
    * TYPE (Stage 10eu). This used to count only the report types the account's
    * precedence rule names, so a newer statement of a type the rule left out
-   * could never be flagged: Buoyant's account statements, SVAN 8710067's
-   * appraisal and Carnelian's investor report were all read in full and none
-   * reached the book. A fact sheet carries weights and no values, and a report
-   * whose section prints no rows is not whole, so neither counts.
+   * could never be flagged: Buoyant's account statements and SVAN 8710067's
+   * appraisal were both read in full and neither reached the book. A fact
+   * sheet carries weights and no values, and a report
+   * whose section prints no rows is not whole, so neither counts. Nor does one
+   * whose own value bridge misses its holdings total: it disagrees with its
+   * manager's other reports for that day, so the book keeps the last verified
+   * record and its report names the newer one (build-book's `wholeSnapshot`).
    */
   const rule = sourceFor(provider, "holdings");
-  const valued = (d) => d.holdings.some((h) => h.marketValue != null) && !(d.sectionsWithoutRows?.length);
+  const valued = (d) => d.holdings.some((h) => h.marketValue != null) && !(d.sectionsWithoutRows?.length)
+    && !d.warnings.some((w) => w.code === "value-bridge-mismatch");
   const snaps = ds.filter(valued);
   const newest = snaps.map((d) => d.asOf).filter(Boolean).sort().at(-1);
   if (newest && acc.asOf && newest > acc.asOf) {

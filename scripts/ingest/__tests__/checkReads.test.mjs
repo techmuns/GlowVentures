@@ -127,6 +127,12 @@ const accepted = [
   const r = run({ docs: [...accepted, holdingsDoc("a", "2026-09-30"), noRows], accounts: account("2026-09-30") });
   ok("…nor a newer report whose section prints a subtotal and no rows — it is not whole", r.code === 0, r.out);
 }
+{
+  const unreconciled = holdingsDoc("b", "2026-10-07", { reportType: "investor-report",
+    warnings: [{ code: "value-bridge-mismatch", detail: "lines reach 1, not the stated closing 2" }] });
+  const r = run({ docs: [...accepted, holdingsDoc("a", "2026-09-30"), unreconciled], accounts: account("2026-09-30") });
+  ok("…nor a newer report whose own value bridge misses its total — the last verified record stands", r.code === 0, r.out);
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

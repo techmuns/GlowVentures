@@ -209,9 +209,16 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
   for (const p of dedupedPositions(BOOK_POSITIONS)) {
     negKeyTotals.set(p.securityKey, (negKeyTotals.get(p.securityKey) ?? 0) + p.marketValue);
   }
-  ok("...but no security in this book is net negative, so the guard is unreachable here and is checked on constructed rows",
-     [...negKeyTotals.values()].every((v) => v >= 0),
-     `${[...negKeyTotals.values()].filter((v) => v < 0).length} net-negative securities`);
+  // SINCE STAGE 10eu THE BOOK CAN REACH THE GUARD ITSELF: SVAN 8710067's 30 Sep
+  // appraisal prints a `Cash Rec/Payable` of −₹24.8 L, larger than every
+  // positive row of that key put together, so the key totals −₹22.6 L. Where a
+  // net-negative security exists it must survive the floor on the live book;
+  // where none does, the constructed cases below are the only check.
+  const netNegative = [...negKeyTotals].filter(([, v]) => v < 0).map(([k]) => k);
+  const floored = negligibleKeys(BOOK_POSITIONS);
+  ok("a security that is net negative on this book is never dropped as a speck — or there is none, and the guard is checked on constructed rows",
+     netNegative.every((k) => !floored.has(k)),
+     netNegative.length ? `${netNegative.join(", ")}: ${rs(sum(netNegative.map((k) => negKeyTotals.get(k) ?? 0)))}` : "none on this book");
 
   // THE DISCRIMINATING CASE. A payable of −₹84,556.96 — V.E.C's own figure,
   // taken from the book rather than invented — standing alone as a security.

@@ -75,11 +75,13 @@ const PMS_REPORTING_SYSTEM = {
     /**
      * THE NEWER OF THE APPRAISAL AND THE SEBI INVESTOR REPORT'S HOLDING REPORT
      * (Stage 10eu). Both print every position with quantity, average cost, rate
-     * and value. Carnelian 3517383's report of 7 Oct values the same holdings a
-     * week after its 30 Sep appraisal, and with only the appraisal named here
-     * the book stayed on 30 Sep. A report whose section prints a subtotal
-     * without rows (Green Lantern's quarterly Shares) is never a candidate;
-     * build-book's `authoritative()` skips it. On one date the appraisal wins.
+     * and value, so a newer Holding Report is the newer record of the same
+     * holdings. Only a report read whole and agreeing with its manager can win
+     * (build-book's `wholeSnapshot`). Green Lantern's quarterly report, whose
+     * Shares section prints a subtotal and no rows, never can. Nor, for now, can
+     * Carnelian 3517383's 7 Oct report: its total is ₹2.85 L below the closing
+     * the same manager's other 7 Oct reports print, so the 30 Sep appraisal
+     * stands. On one date the appraisal wins.
      */
     holdings:        { reportTypes: ["appraisal", "investor-report"], newestWins: true, note: "the NEWER of the appraisal and the investor report's Holding Report; on one date the appraisal — MV = price x quantity exactly, the clean basis." },
     quantity:        { reportType: "appraisal" },

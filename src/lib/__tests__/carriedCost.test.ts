@@ -66,6 +66,17 @@ const snapSummary = (accountId: string) => {
   return { date: `${asOf[3]}-${asOf[2]}-${asOf[1]}`, value: num(value[1]), profit: num(profit[1]), income: num(income[1]) };
 };
 
+/** The account statement dated `asOf`: the Account Summary row's NAV date and printed Value. */
+const latestStatement = (accountId: string, asOf: string | undefined) => {
+  if (!asOf) return null;
+  const acctNo = accountId.split("-").at(-1)!;
+  const p = path.join(AUDIT, `buoyant-capital-${acctNo}-${asOf}-holdings`, "pages.json");
+  if (!fs.existsSync(p)) return null;
+  const text = (JSON.parse(fs.readFileSync(p, "utf8")).pages as { text: string }[]).map((x) => x.text).join("\n");
+  const row = /BUOYANT OPPORTUNITIES\s+(\d\d)\/(\d\d)\/(\d{4})\s+[\d,]+\.\d+\s+[\d,]+\.\d+\s+[\d,]+\.\d+\s+([\d,]+\.\d+)/.exec(text);
+  return row ? { date: `${row[3]}-${row[2]}-${row[1]}`, value: Number(row[4].replace(/,/g, "")) } : null;
+};
+
 console.log("\n── the book carries a cost through a switch, and says so ──");
 // A suite that passes over no input claims nothing — golden.mjs's rule.
 ok("some position's cost is carried through a class switch", carried.length > 0, `${carried.length} position(s)`);
@@ -127,27 +138,40 @@ for (const p of carried) {
     // And on the appraisal's OWN date the whole gain over the carried cost is the
     // fund's realised plus unrealised — no money left the fund, so nothing of it
     // is realised in the family's hands. Struck on the appraisal's own closing
-    // value rather than the book's: since the September 2026 delivery each folio
-    // is valued on its 31 Aug portfolio snap, a month after this appraisal, and
-    // a gain struck a month later is a different measurement.
+    // value rather than the book's: each folio is now valued on its 30 Sep
+    // account statement (Stage 10et), two months after this appraisal, and a
+    // gain struck later is a different measurement.
     near(`on the appraisal's own date, value − carried cost = its Realized + Unrealized — ${tag}`,
       (perf.closing ?? NaN) - (p.costBasis ?? 0), (perf.realized ?? 0) + (perf.unrealized ?? 0), 1);
   }
 
-  // ── the book's own date: the portfolio snap it is valued on ──
+  // ── the snap's own date: the gain over the carried cost, witnessed ──
   // The snap prints its Investment Summary as text the reader does not take —
   // Capital Invested, Income Distributed, Profit / Loss and Current Value — so
   // it stands as a witness the book never read. Its Profit / Loss is struck on
-  // the CASH invested; the book's cost also carries the distribution the fund
-  // reinvested into units, so the book's gain is the snap's Profit / Loss less
-  // its Income Distributed. Every figure is printed to the rupee.
+  // the CASH invested; the carried cost also holds the distribution the fund
+  // reinvested into units, so on the snap's date the gain over the carried cost
+  // is its Profit / Loss less its Income Distributed. Every figure is printed
+  // to the rupee. Since Stage 10et the book is valued a month later, on the
+  // 30 Sep account statement, so this is struck on the snap's own value.
   const sn = snapSummary(p.accountId);
-  ok(`the portfolio snap the book is valued on is there to witness — ${tag}`,
-    !!sn && sn.date === acct?.asOf, `${sn?.date} vs the account's ${acct?.asOf}`);
+  ok(`the portfolio snap is there to witness — ${tag}`, !!sn, `${sn?.date}`);
   if (sn) {
-    near(`the book's value = the snap's Current Value — ${tag}`, p.marketValue, sn.value, 1);
-    near(`the book's gain = the snap's Profit / Loss less the income reinvested — ${tag}`,
-      p.unrealizedPnL, sn.profit - sn.income, 1);
+    near(`on the snap's own date, value − carried cost = its Profit / Loss less the income reinvested — ${tag}`,
+      sn.value - (p.costBasis ?? 0), sn.profit - sn.income, 1);
+  }
+
+  // ── the book's own date: the account statement it is valued on ──
+  // The newest statement prints the units' value on its Account Summary row,
+  // struck at the NAV date in that row. The book's value is that figure on that
+  // date, and its gain is that value over the carried cost.
+  const st = latestStatement(p.accountId, acct?.asOf);
+  ok(`the account statement the book is valued on is there to witness — ${tag}`,
+    !!st && st.date === acct?.asOf, `${st?.date} vs the account's ${acct?.asOf}`);
+  if (st) {
+    near(`the book's value = the statement's printed Value — ${tag}`, p.marketValue, st.value, 0.01);
+    near(`the book's gain = that value over the carried cost — ${tag}`,
+      p.unrealizedPnL, st.value - (p.costBasis ?? 0), 0.01);
   }
   if (fact && perf) {
     // What left the family's bank is the fact sheet's Contribution; the cost is
