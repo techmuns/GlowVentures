@@ -6,12 +6,14 @@ const rows=[row(1,'Purchase','2020-01-01',10,-100),row(2,'Purchase','2021-01-01'
 const args={isin:'INE647U01026',asOf:'2024-01-01',quantity:15};
 const r=replayReviewRows(rows,args);
 assert.equal(r.costBasis,225);assert.equal(r.costOfUnitsSold,175);assert.equal(r.realizedPnL,325);
+assert.deepEqual(r.heldPurchases,{first:'2021-01-01',last:'2021-01-01',lots:1},'a split preserves the surviving buy date; fully sold lots do not date current units');
 assert.ok(replayReviewRows(rows,{...args,quantity:16}).reason);
 assert.ok(replayReviewRows([...rows,row(5,'Sale','2023-01-02',20,100)],args).reason);
 assert.ok(replayReviewRows(rows.map(r=>r.row===4?{...r,value:-500}:r),args).reason);
 assert.ok(replayReviewRows(rows.map(r=>r.row===3?{...r,value:50}:r),args).reason);
 assert.ok(replayReviewRows(rows.map(r=>r.row===1?{...r,date:null}:r),args).reason);
 assert.equal(replayReviewRows(rows,{...args,asOf:'2021-12-31',quantity:20}).costBasis,400);
+assert.deepEqual(replayReviewRows(rows,{...args,asOf:'2021-12-31',quantity:20}).heldPurchases,{first:'2020-01-01',last:'2021-01-01',lots:2});
 const p={accountId:'a',isin:args.isin,quantity:15,marketValue:600,costBasis:null};
 const rec={...r,accountId:'a',isin:args.isin,quantity:15,asOf:args.asOf};
 assert.equal(applyRecoveredCost(p,[rec]).returnPct,175);
@@ -27,6 +29,7 @@ console.log('holdingCostRecovery: FIFO, splits, date cutoffs, missing history an
 const twoFolios=[row(1,'Purchase','2020-01-01',10,-100),row(2,'Closing','2024-01-01',10,100),
   row(3,'Purchase','2021-01-01',20,-600),row(4,'Closing','2024-01-01',20,600)];
 assert.equal(replayReviewFundGroups(twoFolios,{...args,quantity:20}).costBasis,600);
+assert.deepEqual(replayReviewFundGroups(twoFolios,{...args,quantity:20}).heldPurchases,{first:'2021-01-01',last:'2021-01-01',lots:1},'an exact folio balance cannot borrow the other folio\'s date');
 assert.ok(replayReviewFundGroups(twoFolios,{...args,quantity:30}).reason);
 assert.ok(replayReviewFundGroups([...twoFolios,row(5,'Purchase','2022-01-01',20,-800),row(6,'Closing','2024-01-01',20,800)],{...args,quantity:20}).reason);
 // Unverified sale proceeds do not erase original lot cost, nor become zero gain.

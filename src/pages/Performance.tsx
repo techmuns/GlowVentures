@@ -10,7 +10,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, consolidatedMarketValue, currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, dedupedPositions } from "@/lib/analytics";
 import { fmtPct, fmtDate } from "@/lib/format";
 import { valuationBasis, navBasisLabel, navBasisTitle } from "@/lib/valuationBasis";
-import { SortHeader, Tr } from "@/components/SortHeader";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { withReviewAccessors } from "@/lib/reviewColumns";
 
@@ -652,24 +652,25 @@ export function Performance() {
                   </td>
                 </Tr>
               ))}
-              <tr className="border-t-2 border-ink-600 font-semibold" data-xirr-consolidated
+              <TrFoot view={xirrView} className="border-t-2 border-ink-600 px-3 py-2.5 font-semibold text-slate-200" data-xirr-consolidated
                 data-mv={measuredMV} data-book={statementBookMV} data-first={mw.firstClose ?? ""} data-last={mw.lastClose ?? ""}
-                data-pct={consolidatedXirr ?? ""} data-todate={consolidatedTotalReturn ?? ""} data-days={consWindowDays ?? ""}>
-                <td className="px-3 py-2.5 text-slate-200">
+                data-pct={consolidatedXirr ?? ""} data-todate={consolidatedTotalReturn ?? ""} data-days={consWindowDays ?? ""}
+                label={<>
                   Consolidated
                   {unmeasurable.length > 0 && (
                     <div className="text-[10.5px] font-normal text-slate-500">
                       {measurable.length} of {mw.parts.length + mw.missing.length} accounts measured · {money(measuredMV)} of the statements' {money(statementBookMV)}
                     </div>
                   )}
-                </td>
-                <td className="px-3 py-2.5 text-right mono text-slate-400">{measuredFlows.length}</td>
-                <td className="px-3 py-2.5 text-right mono text-slate-200">{money(measuredMV)}</td>
-                <td className="px-3 py-2.5 text-right mono text-slate-400"
+                </>}
+                cells={{
+                flows: <td key="flows" className="border-t-2 border-ink-600 px-3 py-2.5 text-right mono font-semibold text-slate-400">{measuredFlows.length}</td>,
+                mv: <td key="mv" className="border-t-2 border-ink-600 px-3 py-2.5 text-right mono font-semibold text-slate-200">{money(measuredMV)}</td>,
+                terminal: <td key="terminal" className="border-t-2 border-ink-600 px-3 py-2.5 text-right mono font-semibold text-slate-400"
                   title={mw.firstClose && mw.firstClose !== mw.lastClose ? "Each account closes on its own statement date." : undefined}>
                   {!mw.lastClose ? DASH : mw.firstClose === mw.lastClose ? mw.lastClose : `${mw.firstClose} → ${mw.lastClose}`}
-                </td>
-                <td className="px-3 py-2.5 text-right mono">
+                </td>,
+                return: <td key="return" className="border-t-2 border-ink-600 px-3 py-2.5 text-right mono font-semibold">
                   {consolidatedTotalReturn == null
                     ? <AbsentCell reason={mw.missing.length ? mw.reason ?? "not every account is measured"
                       : !mw.parts.length
@@ -680,8 +681,8 @@ export function Performance() {
                         title={[annualisedNote(consolidatedXirr, consWindowDays),
                           ...consUndated.map((u) => undatedSentence([u], money, u.who))].filter(Boolean).join(" ")}>
                         {fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
-                </td>
-              </tr>
+                </td>,
+                }} />
             </tbody>
           </table>
         </div>

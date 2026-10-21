@@ -109,6 +109,7 @@ import {
 import { schemeCalls, type SchemeCall } from "./capitalCalls";
 import { fifoTotals } from "./fifo";
 import { splitFundClass } from "../../shared/securityKey.mjs";
+import { investedOnOf } from "./investedOn";
 import { brandNameOf, type BrandBasis, type BrandName } from "./brandNames";
 import { matchProfiles, combineProfiles, type InvestmentIdentity, type InvestmentProfile, type SuppliedProfiles } from "./investmentProfiles";
 
@@ -381,13 +382,15 @@ export type ReviewDistribution = {
 };
 
 /** First and last investment date — `YYYY-MM-DD`, or `YYYY-MM` where only a month is printed. */
-export type InvestedSpan = { from: string; to: string; source: "review" | "capital-account" };
+export type InvestedSpan = { from: string; to: string; source: "review" | "capital-account" | "holding-record" };
 
 /** A folio's investment dates: the review line's own, else its capital account's dated calls. */
 export function investedSpanOf(position: Position | null, capital: SchemeCall | null): InvestedSpan | null {
   const d = position?.investedDates;
   if (d) return { from: d.from, to: d.to, source: "review" };
   if (capital?.firstCall) return { from: capital.firstCall, to: capital.lastCall ?? capital.firstCall, source: "capital-account" };
+  const own = position ? investedOnOf([position]) : null;
+  if (own) return { from: own.first, to: own.last, source: "holding-record" };
   return null;
 }
 

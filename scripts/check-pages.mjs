@@ -20314,12 +20314,7 @@ const CIO_RETURNS = [
     const d = r.typeDesc;
     return !!d && d.key === wantT && d.text.length > 10 && d.text.length <= 60 && d.hover.length > d.text.length;
   }],
-  ["...the selected return has an info popup and no formula on the card", (t, ctx) => {
-    const r = ctx?.returnsDom;
-    if (!r) return false;
-    return r.calculationInfo && r.formula == null && r.formulaText === "";
-  }],
-  ["...the measured window is shown, ends on or before the closing date asked for, opens on or before the opening date asked for, and a return under a year is never annualised", (t, ctx) => {
+  ["...the benchmark comparison window ends on or before the closing date asked for, opens on or before the opening date asked for, and a return under a year is never annualised", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
     if (!r.measuredFrom || !r.measuredTo) return r.pct === "" || r.pct == null ? { notChecked: "nothing measurable in this window" } : false;
@@ -20330,14 +20325,8 @@ const CIO_RETURNS = [
     // date asked for, so the measured window may start earlier — never later
     // than the close asked for, and never after its own close.
     const inside = (!to || r.measuredTo <= to) && (!from || r.measuredFrom <= from) && (!to || r.measuredFrom < to);
-    const annualised = /p\.a\./i.test(r.pctText);
+    const annualised = r.basis === "annual";
     return r.measuredFrom < r.measuredTo && days > 0 && inside && !(days < 365 && annualised);
-  }],
-  ["...the opening, flows, closing and gain are each drawn, and the coverage names its accounts", (t, ctx) => {
-    const r = ctx?.returnsDom;
-    if (!r) return false;
-    return ["Opening", "Capital in", "Capital out", "Closing", "Gain", "Return"].every((f) => r.figures.includes(f))
-      && /\d+ of \d+ accounts/.test(r.coverage);
   }],
 ];
 
@@ -20346,22 +20335,22 @@ const CIO_RETURNS = [
  * Stage 10dt — *"the client wants to see the returns of the total portfolio and
  * not the underlying holdings … combine [window and formula] into one single
  * section and provide benchmark returns in the other section."* Struck on the
- * handles: the per-holding table is gone, the window and the formula sit inside
- * the portfolio card, and the benchmark card draws every benchmark — a figure,
+ * handles: the portfolio summary has since been removed at the family's request;
+ * the benchmark subtab still draws every benchmark — a figure,
  * or an absence whose hover says why, never a bare blank.
  */
 const CIO_RETURNS_LAYOUT = [
   // Stage 10dy — the return type is a dropdown, never a row of toggle buttons,
-  // and the portfolio section sits ABOVE the benchmarks, struck on geometry.
+  // and the subtabs sit directly under the controls, struck on geometry.
   ["the return type is a dropdown, not toggle buttons", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
     return r.typeSelect === true && r.typeButtons === 0;
   }],
-  ["the portfolio section stays above the selected return details subtab", (t, ctx) => {
+  ["the return details subtabs sit directly below the toolbar", (t, ctx) => {
     const o = ctx?.returnsDom?.stackOrder;
     if (!o) return false;
-    return o.portBottom <= o.panelTop + 1;
+    return o.toolbarBottom <= o.tabsTop + 1 && o.tabsBottom <= o.panelTop + 1 && o.tabsFirst;
   }],
   ["return attribution and benchmarks are separate subtabs, with only the requested panel visible", (t, ctx) => {
     const r = ctx?.returnsDom;
@@ -20372,17 +20361,12 @@ const CIO_RETURNS_LAYOUT = [
       && r.panels.filter((x) => x.visible).map((x) => x.key).join() === want
       && r.subtabs.every((x) => x.linked && x.tabIndex === (x.active ? 0 : -1));
   }],
-  ["...the Returns tab's return is the whole portfolio's, never a table of its accounts", (t, ctx) => {
+  ["...the removed portfolio summary and account breakdown stay absent", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
-    return r.rows === 0 && r.portfolioCard;
+    return r.rows === 0 && !r.portfolioCard;
   }],
-  ["...the window and calculation info belong to the portfolio's own card", (t, ctx) => {
-    const r = ctx?.returnsDom;
-    if (!r) return false;
-    return r.infoInPortfolio && r.windowInPortfolio;
-  }],
-  ["...a second section sets every benchmark against the portfolio, in the benchmark control's order, each a figure or an absence that names why", (t, ctx) => {
+  ["...the benchmark subtab sets every benchmark against the portfolio, in the benchmark control's order, each a figure or an absence that names why", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
     if (!r.benchCard || !r.benchPortfolioRow) return false;
@@ -40470,7 +40454,7 @@ for (const theme of THEMES) {
       const returnsDom = FAST ? null : await page.evaluate(() => {
         const root = document.querySelector("main [data-cio-section=returns]");
         if (!root) return null;
-        const m = root.querySelector("[data-returns-measured]");
+        const m = root.querySelector("[data-returns-benchmarks]");
         const pct = root.querySelector("[data-returns-pct]");
         return {
           periods: [...root.querySelectorAll("[data-returns-period]")].map((b) => ({ key: b.getAttribute("data-returns-period"), active: b.getAttribute("aria-pressed") === "true" || b.getAttribute("data-active") === "true" })),
@@ -40478,11 +40462,8 @@ for (const theme of THEMES) {
           types: [...root.querySelectorAll("[data-returns-type]")].map((b) => ({ key: b.getAttribute("data-returns-type"), active: b.getAttribute("aria-pressed") === "true" || b.getAttribute("data-active") === "true" })),
           from: !!root.querySelector("[data-returns-from]"), to: !!root.querySelector("[data-returns-to]"),
           measuredFrom: m?.getAttribute("data-measured-from") ?? null, measuredTo: m?.getAttribute("data-measured-to") ?? null,
-          measuredDays: m?.getAttribute("data-measured-days") ?? null, measuredText: m?.textContent ?? "",
-          formula: root.querySelector("[data-returns-formula]")?.getAttribute("data-returns-formula") ?? null,
-          formulaText: root.querySelector("[data-returns-formula]")?.textContent ?? "",
+          measuredDays: m?.getAttribute("data-measured-days") ?? null,
           pct: pct?.getAttribute("data-returns-pct") ?? null, pctText: pct?.textContent ?? "",
-          figures: [...root.querySelectorAll("[data-returns-figure]")].map((x) => x.getAttribute("data-returns-figure")),
           rows: root.querySelectorAll("[data-returns-account]").length,
           portfolioCard: !!root.querySelector("[data-returns-portfolio]"),
           benchCard: !!root.querySelector("[data-returns-benchmarks]"),
@@ -40497,10 +40478,14 @@ for (const theme of THEMES) {
           attributionInPanel: !!root.querySelector('[data-returns-panel="attribution"] [data-returns-attribution]'),
           typeSelect: !!root.querySelector("select[data-returns-type-select]"),
           typeButtons: root.querySelectorAll("button[data-returns-type]").length,
-          stackOrder: (() => { const pc = root.querySelector("[data-returns-portfolio]")?.getBoundingClientRect(); const panel = root.querySelector("[data-returns-panel]:not([hidden])")?.getBoundingClientRect(); return pc && panel ? { portBottom: pc.bottom, panelTop: panel.top } : null; })(),
-          calculationInfo: root.querySelector("[data-returns-portfolio] [data-return-info]")?.getAttribute("aria-haspopup") === "dialog",
-          infoInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-return-info]"),
-          windowInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-window]"),
+          stackOrder: (() => {
+            const toolbar = root.querySelector("[data-returns-toolbar]")?.getBoundingClientRect();
+            const tabs = root.querySelector("[data-returns-tabs]");
+            const tabBox = tabs?.getBoundingClientRect();
+            const panel = root.querySelector("[data-returns-panel]:not([hidden])")?.getBoundingClientRect();
+            return toolbar && tabBox && panel ? { toolbarBottom: toolbar.bottom, tabsTop: tabBox.top,
+              tabsBottom: tabBox.bottom, panelTop: panel.top, tabsFirst: root.querySelector("[data-returns-stack]")?.firstElementChild === tabs } : null;
+          })(),
           benchPortfolioRow: !!root.querySelector("[data-returns-bench-portfolio]"),
           bench: [...root.querySelectorAll("[data-returns-bench]")].map((tr) => ({
             key: tr.getAttribute("data-returns-bench"),
@@ -40514,7 +40499,6 @@ for (const theme of THEMES) {
             titles: [...tr.querySelectorAll("[title]")].map((x) => x.getAttribute("title") ?? "").join(" | "),
           })),
           basis: pct?.getAttribute("data-returns-basis") ?? null,
-          coverage: root.querySelector("[data-returns-coverage]")?.textContent ?? "",
         };
       });
       // Stages 10ez, 10fd — the Returns tab's attribution section, off its own handles.
