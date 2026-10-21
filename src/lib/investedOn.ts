@@ -13,12 +13,14 @@
  * Monitor's holdings and the mandate drill-down alike, so the two cannot date
  * one holding two ways.
  *
- * FIVE SOURCES, ALL THE HOLDING'S OWN, strongest first:
+ * SIX SOURCES, ALL THE HOLDING'S OWN, strongest first:
  *
  *   • the fund's dated allotments against this very folio (`BOOK_POSITION_TRANCHES`);
  *   • a lot register's acquisition date (`Position.heldSince`);
  *   • the account's own dated trades, where they account for every unit held
  *     (`Position.tradeRecord.held`, matched first-in, first-out in build-book);
+ *   • reconciled surviving purchase lots in supplementary records
+ *     (`Position.recoveredCost.heldPurchases`, exact account, ISIN and units);
  *   • a drawdown fund's dated calls, where the account holds that fund alone
  *     and its paid-in covers every call (`callDatesByHolding`);
  *   • the family's review's "Date investment range" (`Position.investedDates`),
@@ -38,7 +40,7 @@ import { callDatesByHolding, trancheKey } from "./tranches";
 import { fmtDate } from "./format";
 import type { Account, HoldingTrade, Position } from "./types";
 
-export type InvestedOnSource = "allotments" | "lots" | "trades" | "calls" | "review" | "account";
+export type InvestedOnSource = "allotments" | "lots" | "trades" | "recovered-lots" | "calls" | "review" | "account";
 
 /**
  * The first and last date the money went in, and how many dated payments that
@@ -81,6 +83,13 @@ function lineDates(p: Position): { dates: string[]; source: InvestedOnSource } |
   // their first, last and count, which is all a cell needs.
   const held = p.tradeRecord?.held;
   if (held) return { dates: [held.first, held.last], source: "trades" };
+  const recovered = p.recoveredCost;
+  // The recovery is specific to an account, ISIN, closing date and exact unit
+  // balance. Never lend a source record's dates to another position or balance.
+  if (recovered?.heldPurchases && recovered.accountId === p.accountId && recovered.isin === p.isin
+    && p.quantity != null && Math.abs(recovered.quantity - p.quantity) <= .0005) {
+    return { dates: [recovered.heldPurchases.first, recovered.heldPurchases.last], source: "recovered-lots" };
+  }
   const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
   if (called?.length) return { dates: called, source: "calls" };
   if (p.investedDates) return { dates: [p.investedDates.from, p.investedDates.to], source: "review" };
@@ -90,6 +99,7 @@ function lineDates(p: Position): { dates: string[]; source: InvestedOnSource } |
 /** How many dated payments a line is — null where its source dates a span. */
 function linePayments(p: Position, d: { dates: string[]; source: InvestedOnSource }): number | null {
   if (d.source === "trades") return p.tradeRecord?.held?.lots ?? null;
+  if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? null;
   if (d.source === "review") return d.dates[0] === d.dates[1] && /^\d{4}-\d{2}-\d{2}$/.test(d.dates[0]) ? 1 : null;
   return d.dates.length;
 }
@@ -122,6 +132,7 @@ const SOURCE_WORDS: Record<InvestedOnSource, string> = {
   allotments: "the fund's own dated allotments",
   lots: "the lot register's acquisition dates",
   trades: "the account's own dated trades, every unit held matched to the buy that bought it, first-in, first-out",
+  "recovered-lots": "the original purchase lots in the supplementary records, reconciled to this account, ISIN and every unit still held, first-in, first-out",
   calls: "the fund's dated capital calls",
   review: "the family's review's investment dates",
   account: "the inception date and capital record the statements print",

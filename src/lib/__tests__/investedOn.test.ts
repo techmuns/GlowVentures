@@ -77,7 +77,7 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
 // ── 2. ...AND ONE THEY DO NOT ACCOUNT FOR IS NOT DATED BY THEM ──────────────
 {
   const partial = BOOK_POSITIONS.filter((p) => p.tradeRecord && !p.tradeRecord.held && (p.tradeRecord.unaccounted ?? 0) > 0
-    && !p.heldSince && !p.investedDates);
+    && !p.heldSince && !p.investedDates && !p.recoveredCost?.heldPurchases);
   ok("the book carries holdings the trades only partly account for", partial.length > 0, `${partial.length} holdings`);
   ok("none of them is dated", partial.every((p) => investedOnOf([p]) === null));
   ok("each says why, in the window's own terms", partial.every((p) => {
@@ -89,7 +89,7 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
 // ── 3. A ROW IS DATED ONLY WHERE EVERY LINE IS ──────────────────────────────
 {
   const dated = BOOK_POSITIONS.find((p) => p.tradeRecord?.held)!;
-  const undated = BOOK_POSITIONS.find((p) => p.tradeRecord && !p.tradeRecord.held && !p.heldSince && !p.investedDates)!;
+  const undated = BOOK_POSITIONS.find((p) => p.tradeRecord && !p.tradeRecord.held && !p.heldSince && !p.investedDates && !p.recoveredCost?.heldPurchases)!;
   ok("one undated line leaves the row undated, never dated by the rest", investedOnOf([dated, undated]) === null);
   const two = BOOK_POSITIONS.filter((p) => p.tradeRecord?.held).slice(0, 2);
   const both = investedOnOf(two)!;

@@ -27,6 +27,14 @@ await page.route(/fonts\.(googleapis|gstatic)\.com/, route => route.abort());
 await installReadModelRoutes(page);
 const table = key => page.locator(`table[data-table-view="${key}"]`).first();
 const go = url => page.goto(base + url, { waitUntil: 'domcontentloaded' });
+const totalsOf = t => t.evaluate(t => {
+  const columns = [...t.tHead.rows[0].cells].map(c => c.dataset.col);
+  let at = 0;
+  return Object.fromEntries([...t.tFoot.rows[0].cells].map(c => {
+    const id = columns[at]; at += c.colSpan;
+    return [id, c.innerText.trim()];
+  }));
+});
 async function check(key, dateCol = 'investedOn') {
   const t = table(key);
   await t.waitFor();
@@ -46,7 +54,7 @@ try {
   for (const [account, date] of [['hdfc-mutual-fund-15644806', '3 Aug 2022'], ['hdfc-mutual-fund-16002141', '5 Aug 2022']]) {
     assert.equal(await t.locator(`tr[data-account-row="${account}"] [data-col-cell="investedOn"]`).innerText(), date);
   }
-  const total = await t.locator('tfoot').innerText();
+  const total = await totalsOf(t);
   await t.locator('[data-col-button="investedOn"]').click();
   assert.equal(await t.locator('tr[data-account-row]').first().getAttribute('data-account-row'), 'hdfc-mutual-fund-16002141');
   await t.locator('[data-col-button="investedOn"]').click();
@@ -57,7 +65,7 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await check('stock-positions');
   assert.deepEqual(await t.locator('thead th').evaluateAll(ths => ths.map(th => th.dataset.col)), order);
-  assert.equal(await t.locator('tfoot').innerText(), total, 'adding and moving a date never changes totals');
+  assert.deepEqual(await totalsOf(t), total, 'adding and moving a date never changes the total under any financial column');
   await page.locator('[data-edit-columns="stock-positions"]').click();
   await page.locator('[data-column-checkbox="investedOn"]').uncheck();
   await page.keyboard.press('Escape');
@@ -67,6 +75,13 @@ try {
   await page.keyboard.press('Escape');
   await check('stock-positions');
   await page.screenshot({ path: `${out}/hdfc-position.png` });
+  await go('/stock/icici-ioppf-d-grw');
+  await check('stock-positions');
+  for (const [suffix, date] of [['12539150', '2025-03-06'], ['12838316', '2025-11-06'], ['12838320', '2025-07-11']]) {
+    const cell = table('stock-positions').locator(`tr[data-account-row$="${suffix}"] [data-col-cell="investedOn"]`);
+    assert.equal(await cell.getAttribute('data-invested-first'), date, 'the demat fund row keeps its own reconciled purchase date');
+  }
+  await page.screenshot({ path: `${out}/icici-position.png` });
   await go(mf + '?members=ajay-jaisinghani');
   await check('stock-positions');
   assert.equal(await t.locator('tr[data-account-row]').count(), 1);

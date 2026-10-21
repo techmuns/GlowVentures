@@ -7,6 +7,7 @@ import { shareCandidates, depositoryShareHoldings } from "../depositoryShares";
 import { quoteSymbolFor, type QuoteFeed } from "../quotes";
 import type { ActionFeed } from "../corporateActions";
 import { fifoReturnPct } from "../../../shared/fifo.mjs";
+import { investedOnOf } from "../investedOn";
 
 const near = (got: number | null | undefined, want: number) =>
   assert.ok(typeof got === "number" && Math.abs(got - want) < .02, `${got} != ${want}`);
@@ -79,6 +80,16 @@ console.log("Recovered costs: exact quantities, March cutoff, FIFO sales, live o
 const funds=[...depositoryFundHoldings(),...unpricedStatementUnits()];
 assert.equal(funds.filter(p=>p.recoveredCost).length,21);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
+for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23',4],['12838316','2025-11-06','2025-11-06',1],['12838320','2025-07-11','2025-07-11',1]] as const) {
+  const p = fp(account,'INF109KC1RH9');
+  assert.deepEqual(p.recoveredCost?.heldPurchases,{first,last,lots},`${account}: its own source lots date the held balance`);
+  assert.equal(investedOnOf([p])?.first,first);
+  assert.equal(investedOnOf([p])?.last,last);
+  assert.equal(investedOnOf([p])?.payments,lots);
+  assert.equal(investedOnOf([{...p,quantity:p.quantity!+1}]),null,'a different unit balance cannot borrow recovered dates');
+  assert.equal(investedOnOf([{...p,accountId:'different-account'}]),null,'another account cannot borrow recovered dates');
+  assert.equal(investedOnOf([{...p,isin:'different-isin'}]),null,'another scheme cannot borrow recovered dates');
+}
 near(fp('12838316','INF0R8701046').costBasis,72403187.18);
 const largeMid=fp('12539150','INF174K01LF9');
 assert.equal(largeMid.quantity,34045.997);near(largeMid.costBasis,12499374.97);
