@@ -68,6 +68,7 @@ export default function SegmentReturns() {
 
   const gainHint = (l: SegmentLine) => {
     const parts = [`FIFO since investment: unrealised + realised over ${l.struck} of ${l.holdings} holdings (${money(l.struckValue)} of ${money(l.value)})`];
+    if (l.gain != null && Math.abs(l.gain) < 0.5) parts.unshift("A measured zero: value less cost, plus anything realised, nets to nothing here — as for cash carried at its cost");
     if (l.uncostedValue > 0.5) parts.push(`${money(l.uncostedValue)} reports no cost and is in the value, in no gain`);
     if (l.atCostValue > 0.5) parts.push(`${money(l.atCostValue)} is held at cost and is in the value, in no gain`);
     if (l.wholeMandates) parts.push(`${l.wholeMandates === 1 ? "1 PMS mandate is" : `${l.wholeMandates} PMS mandates are`} struck whole on the capital paid in`);
@@ -88,7 +89,7 @@ export default function SegmentReturns() {
         {l.deployed != null ? money(l.deployed) : <AbsentCell reason={noGain(l)} />}
       </td>,
       <td key="gain" className={`${pad} text-right mono ${changeColor(l.gain)}`} title={l.gain != null ? gainHint(l) : undefined} data-seg-cell="gain">
-        {l.gain != null ? money(l.gain, true) : <AbsentCell reason={noGain(l)} />}
+        {l.gain != null ? money(l.gain, Math.abs(l.gain) >= 0.5) : <AbsentCell reason={noGain(l)} />}
       </td>,
       <td key="ret" className={`${pad} text-right mono ${changeColor(l.returnPct)}`} data-seg-cell="ret">
         {l.returnPct != null ? pct(l.returnPct) : <AbsentCell reason={noGain(l)} />}
