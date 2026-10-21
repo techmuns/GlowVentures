@@ -29,7 +29,7 @@ const close = () => page.getByRole("button", { name: "Close property", exact: tr
 async function visible(text) { await page.getByText(text, { exact: true }).first().waitFor(); }
 try {
   await page.goto(`${base}/real-estate`);
-  await visible("No properties added");
+  await page.locator("[data-real-estate-table] tbody").getByText("No properties added").waitFor();
   assert.deepEqual(await page.locator('[data-nav-group="Daily"] [data-nav-entry]').evaluateAll(links => links.map(a => a.getAttribute("data-nav-entry"))), ["/cio", "/monitor", "/private-market", "/real-estate", "/polycab"]);
   await page.screenshot({ path: path.join(out, "empty.png"), fullPage: true });
   await page.getByRole("button", { name: "Add property", exact: true }).first().click();

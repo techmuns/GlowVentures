@@ -8,6 +8,7 @@ import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
 import { SearchInput } from "@/components/SearchInput";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { EditColumns } from "@/components/EditColumns";
+import { ExportableTable } from "@/components/ExportableTable";
 import { useViewParam } from "@/components/ViewToggle";
 import { PropertyEditor, emptyProperty } from "@/components/PropertyEditor";
 import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
@@ -90,7 +91,7 @@ export function RealEstate() {
       case "type": return <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ background: TYPES_COLOR[p.type] }} />{p.type}</span>;
       case "area": return p.area === null ? <span title="Area not entered"><AbsentValue /></span> : <span title={`${p.areaBasis} area · whole property`}>{fmtNum(p.area, 2).replace(/\.00$/, "")} {p.areaUnit}</span>;
       case "yield": return <span title={f.yield === null ? "Needs monthly rent and a current value above zero" : "Annual gross rent ÷ current value. Excludes expenses and financing."}>{fmtPct(f.yield)}</span>;
-      case "pin": return <button type="button" onClick={() => { open(p); if (!hasPin(p)) setEditing(true); }} className={`inline-flex items-center gap-1 text-xs ${hasPin(p) ? "text-champagne-400" : "text-slate-500"}`}><MapPin className="h-3 w-3" />{hasPin(p) ? "View" : "Pin needed"}</button>;
+      case "pin": return <button type="button" data-export-value={hasPin(p) ? `${p.latitude}, ${p.longitude}` : "Pin needed"} onClick={() => { open(p); if (!hasPin(p)) setEditing(true); }} className={`inline-flex items-center gap-1 text-xs ${hasPin(p) ? "text-champagne-400" : "text-slate-500"}`}><MapPin className="h-3 w-3" />{hasPin(p) ? "View" : "Pin needed"}</button>;
       case "purchasedOn": case "valuationDate": case "leaseEnd": return <span title={p[key] ? undefined : "Not entered"}>{date(p[key])}</span>;
       default: return p[key as "status"] || <span title="Not entered"><AbsentValue /></span>;
     }
@@ -115,13 +116,13 @@ export function RealEstate() {
         {(q || country || state || city || type || status) && <button type="button" className="text-xs text-champagne-400 underline" onClick={() => { const next = new URLSearchParams(params); ["q", "state", "city", "country", "type", "status"].forEach(k => next.delete(k)); setParams(next, { replace: true }); }}>Clear filters</button>}
         <span className="ml-auto text-xs text-slate-500" title={shareTitle}>Selected owners’ share</span>
       </div>
-      {view === "table" ? <div className="overflow-x-auto"><table className="min-w-full text-[13px]" data-real-estate-table>
+      {view === "table" ? <div className="overflow-x-auto"><ExportableTable exportName="Real Estate — Properties" className="min-w-full text-[13px]" data-real-estate-table>
         <thead className="border-b border-ink-700"><Tr view={table}>{COLS.map(key => <SortHeader key={key} col={key} view={table} align={numeric.has(key) ? "right" : "left"} pad="px-3 py-2" title={numeric.has(key) && key !== "area" && key !== "yield" ? shareTitle : undefined} className={key === "name" ? "min-w-[12rem]" : ""}>{LABELS[key]}</SortHeader>)}</Tr></thead>
         <tbody>{rows.map(p => <Tr key={p.id} view={table} className="border-b border-ink-700/50" data-property={p.id}>{COLS.map(key => <td key={key} className={`px-3 py-3 ${numeric.has(key) ? "text-right mono tabular whitespace-nowrap" : "text-slate-300"} ${key === "owners" ? "min-w-[10rem] max-w-[15rem] text-xs" : ""}`}>{cell(p, key)}</td>)}</Tr>)}
           {!rows.length && <tr><td colSpan={table.order.length} className="px-5 py-14 text-center text-sm text-slate-500">{empty}{store.ready && !scoped.length && !scope.owners && <button type="button" className="mx-auto mt-3 block text-champagne-400 underline" onClick={() => { setAdding(emptyProperty()); setEditing(true); }}>Add property</button>}</td></tr>}
         </tbody>
-        {!!rows.length && <tfoot><TrFoot view={table} label="Total" className="border-t border-ink-600 bg-ink-800/50 font-semibold" cells={Object.fromEntries(["cost", "value", "rent", "debt", "equity", "netRent"].map(key => { const total = sum(key as "cost"); return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={shareTitle}>{money(total.value)}{total.known < total.count && <span className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{coverage(total)}</span>}</td>]; }))} /></tfoot>}
-      </table></div> : <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem]">
+        {!!rows.length && <tfoot><TrFoot view={table} label="Total" className="border-t border-ink-600 bg-ink-800/50 font-semibold" cells={Object.fromEntries(["cost", "value", "rent", "debt", "equity", "netRent"].map(key => { const total = sum(key as "cost"); return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={shareTitle}>{money(total.value)}{total.known < total.count && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{coverage(total)}</span>}</td>]; }))} /></tfoot>}
+      </ExportableTable></div> : <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="min-w-0"><Suspense fallback={<div className="p-16 text-sm text-slate-400">Loading map…</div>}><PropertyMap properties={filtered} onSelect={open} /></Suspense>
           <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-ink-700 px-4 py-2 text-xs text-slate-400">{distinct(filtered.map(p => p.type)).map(t => <span key={t} className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: TYPES_COLOR[t] }} />{t}</span>)}<span className="ml-auto">{filtered.filter(hasPin).length} pinned · {filtered.filter(p => !hasPin(p)).length} need a pin</span></div>
         </div>
