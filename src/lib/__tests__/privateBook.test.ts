@@ -630,7 +630,7 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
     position: null, units: null, cost: null, value: null, pnl: null, counted: false,
     alsoCount: 1, alsoReportedUnder: [], capital: c, capitalCounted: true, capitalCountedAs: null,
     viewOf: null, distributed: null, distributedBasis: null, distributionCounted: true, distributionCountedAs: null,
-    reason: null,
+    reason: null, invested: null,
     profile: { strategy: { value: null, source: null, matchedOn: null, reason: "none supplied" }, description: { value: null, source: null, matchedOn: null, reason: "none supplied" } },
   });
   const fig = figuresOf([
@@ -641,6 +641,23 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
   eq("called likewise", [fig.called, fig.calledOf], [60, 1]);
   eq("committed is on every capital account", [fig.committed, fig.capitalAccounts], [200, 2]);
   eq("nothing held: value is absent, not ₹0", fig.value, null);
+  eq("no folio dates its investment: the span is absent, over both", [fig.invested, fig.investedOf, fig.investedAcross], [null, 0, 2]);
+  const dated = figuresOf([
+    { ...folio("one", cap({ accountId: "a" })), invested: { from: "2022-01", to: "2023-05", source: "review" } },
+    { ...folio("two", cap({ accountId: "b" })), invested: { from: "2021-03-15", to: "2021-09-01", source: "capital-account" } },
+    folio("three", cap({ accountId: "c" })),
+  ], true);
+  eq("the span runs from the earliest first date to the latest last date, over the folios that date it",
+    [dated.invested, dated.investedOf, dated.investedAcross], [{ from: "2021-03-15", to: "2023-05" }, 2, 3]);
+}
+
+// ── Stage 10ey: every review line on the table carries the review's own investment dates ──
+{
+  const review = folios.filter((f) => f.position?.review);
+  ok("the review's lines are on the table", review.length > 0, `${review.length}`);
+  ok("each is dated by the review's printed range, a day or a month at each end",
+    review.every((f) => f.invested?.source === "review" && /^\d{4}-\d{2}(-\d{2})?$/.test(f.invested.from) && f.invested.from <= f.invested.to),
+    review.filter((f) => f.invested?.source !== "review").map((f) => f.fundName).join(", "));
 }
 
 // ── [D] DL-16: WHAT A ROW'S FIFO RETURN DIVIDES BY ───────────────────────────

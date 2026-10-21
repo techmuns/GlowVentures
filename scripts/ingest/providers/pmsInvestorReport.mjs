@@ -72,8 +72,13 @@ const num = (s) => parseNum(s);
 /** `Account : 8710067 AJAY T JAISINGHANI - SVC067` */
 const ACCOUNT = /Account\s*:?\s*(\d{4,})\s+([A-Z][A-Za-z .']+?)\s*-\s*([A-Z]{2,6}\d{2,})/;
 
-/** `From 01/06/2026 To 30/06/2026` */
-const PERIOD = /From\s+(\d{2}\/\d{2}\/\d{4})\s+To\s+(\d{2}\/\d{2}\/\d{4})/;
+/**
+ * `From 01/06/2026 To 30/06/2026` — and `From 01/09/2026 to 30/09/2026`. Nuvama's
+ * September SVAN report and Carnelian's October one print a lower-case "to";
+ * matching only "To" left both value bridges with no window, and `build-book`
+ * drops a bridge it cannot date.
+ */
+const PERIOD = /From\s+(\d{2}\/\d{2}\/\d{4})\s+To\s+(\d{2}\/\d{2}\/\d{4})/i;
 
 /**
  * One holding line of the Holding Report:
@@ -122,21 +127,6 @@ function labelled(text, label) {
   return m ? num(m[1]) : null;
 }
 
-/**
- * A row of period returns: `Returns of Client Portfolio 3.68 4.42`.
- *
- * EVERY VALUE MUST CARRY A DECIMAL POINT. SVAN prints returns to two places
- * without exception, and the benchmark's label has the index's NAME wrapped
- * around its figures:
- *
- *   Benchmark Performance(S&P BSE 500 Total Return -1.96 -1.31 Index)
- *
- * A pattern that accepts bare integers reads the 500 out of "BSE 500" and
- * reports the benchmark's one-year return as +500%. Requiring the decimal point
- * excludes the name and keeps the two real figures.
- */
-const RETURN_VALUE = /-?\d+\.\d+/g;
-
 /** The six-figure tail of a holding line with no name in front of it. */
 const FIGURES_ONLY = /^(?:[\d,]+\.\d{2,}\s+){5}[\d,]+\.\d{1,2}$/;
 const NAME_ONLY = /^[A-Za-z][A-Za-z0-9 .,&'’\-()/]*$/;
@@ -173,10 +163,61 @@ function stitchWrappedRows(lines) {
   return out;
 }
 
-function returnRow(text, label) {
-  const line = new RegExp(label + String.raw`[^\n]*`, "i").exec(text);
-  if (!line) return [];
-  return (line[0].match(RETURN_VALUE) ?? []).map((v) => num(v)).filter((v) => v !== null).slice(0, 5);
+/**
+ * THE RETURN TABLE IS READ BY COLUMN, NEVER BY POSITION ON THE LINE.
+ *
+ * The header prints 1 Year / 3 Years / 5 Years / 10 Years / Since Inception; a
+ * young account prints figures under the first and the last only. Read off the
+ * flattened line, `Returns of Client Portfolio 10.72 3.31` put the since-inception
+ * figure under 3 Years — on all nine reports in the archive, every one of them
+ * for an account under two years old — and `build-book` carries no 3-year field,
+ * so the since-inception TWRR reached the book nowhere. Each figure is
+ * right-aligned under its heading, so it belongs to the heading whose right edge
+ * it shares.
+ */
+const RETURN_COLUMNS = [
+  ["y1", /^1\s*Year$/i], ["y3", /^3\s*Years?$/i], ["y5", /^5\s*Years?$/i],
+  ["y10", /^10\s*Years?$/i], ["si", /^Since\s+Inception$/i],
+];
+/** A figure more than this far from every heading's right edge is not placed. */
+const RETURN_COLUMN_SLACK = 12;
+
+function returnHeader(pages) {
+  for (const p of pages) for (const r of p.rows ?? []) {
+    const cols = RETURN_COLUMNS.map(([key, re]) => {
+      const it = (r.items ?? []).find((i) => re.test(i.text.trim()));
+      return it ? { key, right: it.x + it.width } : null;
+    });
+    if (cols.every(Boolean)) return cols;
+  }
+  return null;
+}
+
+/** `{ y1, si, … }` for the row whose label starts with `label`; null when absent. */
+function returnRow(pages, cols, label, warnings) {
+  const re = new RegExp("^" + label, "i");
+  for (const p of pages) for (const r of p.rows ?? []) {
+    const items = r.items ?? [];
+    if (!items.length || !re.test(items[0].text.trim())) continue;
+    const out = {};
+    for (const it of items.slice(1)) {
+      const t = it.text.trim();
+      // EVERY VALUE MUST CARRY A DECIMAL POINT. The benchmark's label wraps the
+      // index's NAME around its figures (`Benchmark Performance(S&P BSE 500 Total
+      // Return -1.96 -1.31 Index)`), and a bare integer read the 500 out of "BSE
+      // 500" as a +500% one-year return.
+      if (!/^-?\d+\.\d+$/.test(t)) continue;
+      const right = it.x + it.width;
+      const col = cols.reduce((a, b) => (Math.abs(b.right - right) < Math.abs(a.right - right) ? b : a));
+      if (Math.abs(col.right - right) > RETURN_COLUMN_SLACK) {
+        warn(warnings, "return-figure-unplaced", `${label}: ${t} sits under no period heading`);
+        continue;
+      }
+      out[col.key] = num(t);
+    }
+    return out;
+  }
+  return null;
 }
 
 export function extract({ grid, meta }) {
@@ -452,24 +493,39 @@ export function extract({ grid, meta }) {
   }
 
   // ── returns: three series, never folded together ──────────────────────────
-  // SVAN prints 1Y / 3Y / 5Y / 10Y / Since Inception. This book's accounts are
-  // young, so only the first columns carry figures — the rest are blank and stay
-  // null rather than becoming zero.
+  // 1Y / 3Y / 5Y / 10Y / Since Inception, each figure placed by its column (see
+  // `returnHeader`). This book's accounts are young, so the middle columns are
+  // blank and stay null rather than becoming zero.
   const series = [];
-  const push = (name, values, isBenchmark) => {
-    if (!values.length) return;
-    const [y1, y3, y5, y10, si] = values;
-    series.push(makeReturnSeries({
-      series: name, isBenchmark,
-      y1: y1 ?? null, y3: y3 ?? null, y5: y5 ?? null, y10: y10 ?? null, si: si ?? null,
-      basis: "TWRR",
-      source,
-    }));
-  };
-  push("Client portfolio", returnRow(flat, "Returns of Client Portfolio"), false);
-  push("Investment approach", returnRow(flat, "Aggregate Returns of Investment Approach"), false);
-  push(benchmark || "Benchmark", returnRow(flat, "Benchmark Performance"), true);
+  const returnCols = returnHeader(pages);
+  const RETURN_ROWS = [
+    ["Client portfolio", "Returns of Client Portfolio", false],
+    ["Investment approach", "Aggregate Returns of Investment Approach", false],
+    [benchmark || "Benchmark", "Benchmark Performance", true],
+  ];
+  if (!returnCols) {
+    if (RETURN_ROWS.some(([, label]) => new RegExp(label, "i").test(flat)))
+      warn(warnings, "return-columns-not-read", "the TWRR rows printed but their period headings were not found by position, so no figure is placed");
+  } else {
+    for (const [name, label, isBenchmark] of RETURN_ROWS) {
+      const v = returnRow(pages, returnCols, label, warnings);
+      if (!v || !Object.keys(v).length) continue;
+      series.push(makeReturnSeries({
+        series: name, isBenchmark,
+        y1: v.y1 ?? null, y3: v.y3 ?? null, y5: v.y5 ?? null, y10: v.y10 ?? null, si: v.si ?? null,
+        basis: "TWRR",
+        source,
+      }));
+    }
+  }
   const clientXirr = labelled(flat, "XIRR of the client portfolio");
+  // The approach's spread across ALL its investors — not this family's money, so
+  // it is archived as printed and becomes no fact of the book.
+  const approachXirr = {
+    max: labelled(flat, "Maximum XIRR of the investment approach"),
+    min: labelled(flat, "Minimum XIRR of the investment approach"),
+    median: labelled(flat, "Median XIRR of the investment approach"),
+  };
 
   // ── dated rows ────────────────────────────────────────────────────────────
   const transactions = [];
@@ -594,6 +650,14 @@ export function extract({ grid, meta }) {
           ["Mutual Funds", allocFunds?.cost ?? "", allocFunds?.value ?? "", allocFunds?.pct ?? ""],
           ["Cash / Bank", allocCash?.cost ?? "", allocCash?.value ?? "", allocCash?.pct ?? ""],
           ["Total", allocTotal?.cost ?? "", allocTotal?.value ?? "", allocTotal?.pct ?? ""]]),
+      // The Performance block as printed: the TWRR table, then the XIRR lines.
+      performance: sheetRows("performance",
+        ["measure", "series", "period", "pct"],
+        [...series.flatMap((s) => [["1 Year", s.y1], ["3 Years", s.y3], ["5 Years", s.y5], ["10 Years", s.y10], ["Since Inception", s.si]]
+          .filter(([, v]) => v !== null).map(([period, v]) => ["TWRR", s.series, period, v])),
+          ...[["Client portfolio", clientXirr], ["Investment approach, maximum", approachXirr.max],
+            ["Investment approach, minimum", approachXirr.min], ["Investment approach, median", approachXirr.median]]
+            .filter(([, v]) => v !== null).map(([who, v]) => ["XIRR", who, "", v])]),
     },
     warnings,
     status: !holdings.length ? "failed" : warnings.length ? "partial" : "ok",

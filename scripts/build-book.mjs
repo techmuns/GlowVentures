@@ -3680,6 +3680,7 @@ function build(archived) {
         isBenchmark: r.isBenchmark,
         mtd: r.mtd, qtd: r.qtd, fytd: r.fytd,
         m1: r.m1, m3: r.m3, m6: r.m6, y1: r.y1,
+        y3: r.y3 ?? null, y5: r.y5 ?? null, y10: r.y10 ?? null,
         si: r.si, siAnnualised: r.siAnnualised, feeBasis: r.feeBasis,
       })),
     }));
