@@ -57,6 +57,11 @@ function checkDisplayedMoney(text, expected) {
   const decimals = m[1].split('.')[1]?.length ?? 0;
   assert.ok(Math.abs(Number(m[1].replaceAll(',', '')) * scale - expected) <= scale / 10 ** decimals / 2 + 1, 'Amount is in the correct source row: ' + text + ' vs ' + expected);
 }
+async function positionCell(row, key) {
+  const index = await row.locator('xpath=ancestor::table[1]').locator('thead th').evaluateAll((headers, key) => headers.findIndex(h => h.dataset.col === key), key);
+  assert.ok(index >= 0, 'The displayed table has the intended financial column: ' + key);
+  return row.locator(':scope > td').nth(index);
+}
 const names = ['Acctstmt_H_15644806 (1).pdf', 'Acctstmt_H_16002141 (1).pdf', 'H19119_Ajay Jaisinghani_Transation.pdf',
   'H19189_Bharat Jaisinghani_Holding .pdf', 'H19191_Ankita Jaisinghani_Transation.pdf', 'H19191-Ankita Jaisinghani_Holding.pdf',
   'H43383  -BHARAT JAISINGHANI FAMILY TRUST_Transaction.pdf'];
@@ -257,10 +262,10 @@ try {
     await page.goto(baseURL + '/stock/' + key);
     for (const e of entries) { const row = page.locator('tr[data-account-row="' + e.accountId + '"]'); await row.waitFor();
       assert.equal(await row.locator('[data-col-cell="investedOn"]').getAttribute('data-invested-first'), e.date);
-      assert.equal(Number((await row.locator('[data-col-cell="qty"]').innerText()).replaceAll(',', '')), Math.round(e.quantity));
+      assert.equal(Number((await (await positionCell(row, 'qty')).innerText()).replaceAll(',', '')), Math.round(e.quantity));
       assert.equal(Number(await row.locator('[data-cmp]').getAttribute('data-cmp')), e.livePrice);
-      checkDisplayedMoney(await row.locator('[data-col-cell="invested"]').innerText(), e.costBasis);
-      checkDisplayedMoney(await row.locator('[data-col-cell="current"]').innerText(), e.liveValue);
+      checkDisplayedMoney(await (await positionCell(row, 'invested')).innerText(), e.costBasis);
+      checkDisplayedMoney(await (await positionCell(row, 'current')).innerText(), e.liveValue);
       cells.push({ table: 'stock-positions', account: e.accountId, date: e.date, text: await row.innerText() }); }
   }
   await page.screenshot({ path: path.join(output, 'after-mf-rows.png'), fullPage: true });
