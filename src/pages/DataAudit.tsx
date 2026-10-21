@@ -1,3 +1,4 @@
+import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { loadSheetFormats, columnDecimals, type SheetFormats } from "@/lib/sheetFormats";
@@ -73,7 +74,6 @@ function defaultDocument(m: readonly FileMeta[]): FileMeta | null {
 }
 
 const BASE = import.meta.env.BASE_URL;
-const VISIBLE_CAP = 200;
 
 function colLabel(i: number): string {
   let s = "", n = i + 1;
@@ -110,7 +110,6 @@ function SourceArchive() {
   const [sheetLoading, setSheetLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [exact, setExact] = useState(false); // deep-link `eq` → whole-cell match instead of substring
-  const [showAll, setShowAll] = useState(false);
   const [formats, setFormats] = useState<SheetFormats | null>(null);
   const cache = useRef<Record<string, Sheet>>({});
   const [searchParams] = useSearchParams();
@@ -174,7 +173,6 @@ function SourceArchive() {
     if (status !== "ready" || !fileKey || !sheetKey) return;
     if (pendingFind.current) { setQuery(pendingFind.current); setExact(pendingExact.current); pendingFind.current = null; pendingExact.current = false; }
     else { setQuery(""); setExact(false); }
-    setShowAll(false);
     const id = `${fileKey}/${sheetKey}`;
     if (cache.current[id]) { setSheet(cache.current[id]); setSheetLoading(false); return; }
     let alive = true;
@@ -255,7 +253,8 @@ function SourceArchive() {
       return exact ? s === q : s.includes(q);
     }));
   }, [sheet, query, headerRowIndex, exact]);
-  const visible = showAll ? filtered : filtered.slice(0, VISIBLE_CAP);
+  const scroll = useInfiniteTable(filtered.length, JSON.stringify([fileKey, sheetKey, query, exact]));
+  const visible = filtered.slice(0, scroll.shown);
   /**
    * ── A ROW WITH FEWER CELLS THAN ITS HEADER IS NOT PLACED BY POSITION (XA-20)
    *
@@ -379,12 +378,6 @@ function SourceArchive() {
             · {shortCount.toLocaleString("en-IN")} row{shortCount === 1 ? "" : "s"} with fewer cells than headings, shown unaligned
           </span>
         )}
-        {sheet && !showAll && filtered.length > VISIBLE_CAP && (
-          <button onClick={() => setShowAll(true)}
-            className="rounded-md border border-ink-700 bg-ink-800 px-3 py-1.5 text-[12px] text-slate-300 hover:bg-ink-700/60">
-            Load all {filtered.length.toLocaleString("en-IN")} rows
-          </button>
-        )}
         <div className="ml-auto">
           {sheet && (
             <button onClick={downloadCsv}
@@ -488,6 +481,7 @@ function SourceArchive() {
                     })}
                   </tr>
                 ))}
+                <InfiniteTableEnd scroll={scroll} columns={ncols + 1} />
               </tbody>
             </table>
           )}

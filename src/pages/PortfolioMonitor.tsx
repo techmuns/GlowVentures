@@ -1,4 +1,4 @@
-import { TablePageControls, useTablePagination } from "@/components/PagedTableBody";
+import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
 import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useSearchParams } from "react-router-dom";
@@ -3462,9 +3462,9 @@ export function PortfolioMonitor() {
   const sectionKeys = showBucketSections ? bucketGroups.map((g) => `${groupAxis}|${g.key}`) : [];
   const orderedHoldings = bucketGroups.flatMap((grp) =>
     showBucketSections && closedSections.has(`${groupAxis}|${grp.key}`) ? [] : sortRows(grp.rows, holdView.sort, holdAccessors));
-  const holdingPage = useTablePagination(orderedHoldings.length,
-    JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort, [...closedSections].sort()]));
-  const visibleHoldings = new Set(orderedHoldings.slice(holdingPage.start, holdingPage.start + holdingPage.limit));
+  const holdingScroll = useInfiniteTable(orderedHoldings.length,
+    JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort, [...closedSections].sort(), memberScope.owners ? [...memberScope.owners].sort() : null]));
+  const visibleHoldings = new Set(orderedHoldings.slice(0, holdingScroll.shown));
   const allOpen = expandableKeys.length > 0
     && expandableKeys.every((k) => expanded.has(k)) && sectionKeys.every((k) => !closedSections.has(k));
   const toggleAll = () => {
@@ -3865,8 +3865,8 @@ export function PortfolioMonitor() {
                   // band). Where the table draws no band there is nothing to close.
                   const secKey = `${groupAxis}|${grp.key}`;
                   const secOpen = !showBucketSections || !closedSections.has(secKey);
-                  const pageRows = secOpen ? sortRows(grp.rows, holdView.sort, holdAccessors).filter((r) => visibleHoldings.has(r)) : [];
-                  if (secOpen && !pageRows.length) return null;
+                  const visibleRows = secOpen ? sortRows(grp.rows, holdView.sort, holdAccessors).filter((r) => visibleHoldings.has(r)) : [];
+                  if (secOpen && !visibleRows.length) return null;
                   return (
                   <Fragment key={grp.key}>
                     {showBucketSections && (
@@ -4263,7 +4263,7 @@ export function PortfolioMonitor() {
                         </Tr>
                       );
                     })()}
-                    {pageRows.map((r) => {
+                    {visibleRows.map((r) => {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;
                   /**
@@ -4867,7 +4867,7 @@ export function PortfolioMonitor() {
                   </Fragment>
                   );
                 })}
-                <TablePageControls pagination={holdingPage} columns={COL_COUNT} />
+                <InfiniteTableEnd scroll={holdingScroll} columns={COL_COUNT} />
                 {/* A PICKED HOLDING THIS AXIS DOES NOT DRAW — see `pickedNotRows`.
                     It stands in for the generic empty line where it explains the
                     whole of an empty table, and sits under the company rows where
