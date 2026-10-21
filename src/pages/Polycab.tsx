@@ -704,7 +704,8 @@ export function Polycab() {
                 on a run that reached the exchange: a truncated fetch and a
                 company that never declared one produce the identical empty
                 list, and only the fetch knows which. */}
-            <p className="shrink-0 border-t border-ink-700/60 px-4 py-2 text-[12px] text-slate-400" data-polycab-share-actions>
+            <p className="shrink-0 border-t border-ink-700/60 px-4 py-2 text-[12px] text-slate-400" data-polycab-share-actions
+              data-prose-ok="a measured nil — the exchange's complete record carries no bonus, split or spin-off, which an empty table alone cannot say">
               {live.shareActions.length > 0
                 ? <span title="A bonus, split or spin-off changes the share count and pays no cash.">{fmtNum(live.shareActions.length)} share-count action{live.shareActions.length === 1 ? "" : "s"} above</span>
                 : live.measuredNil
