@@ -1,5 +1,11 @@
 # Stage history — continuation
 
+### Stage 10fx — ONE INVESTMENT DATE COLUMN, WITH SOURCE COVERAGE
+
+- Portfolio Monitor had two date columns: the review product's range and Invested on. The latter omitted the original FIFO dates behind 44 recovered costs. Those source-backed acquisition dates now reach all holding layers. The merged Investment date / range column retains source precision; exact product-review context is visibly labelled review where current custody lots do not reconcile. Its saved placement, visibility and sorting migrate; Excel shares the same dates and qualifier.
+- The dated audit separates 446/474 costed account holdings from displayed-security date/HPR counts. It itemises the remaining direct and Cash date gaps and 159 undated non-cash PMS account/security lines. Known PMS funding dates do not date the manager's underlying shares. Client requests name original lots or unit/transfer bridges rather than requesting recorded costs again.
+- Source rebuild and independent comparison confirm only acquisition-date metadata changes in the generated book. FIFO tests exclude sold lots and split dates, preserve known dates despite unknown proceeds, and reject mismatched identities. Browser checks cover the retired column's saved preferences and category switching. Automated review was unavailable due the account's code-review usage limit; the diff was reviewed locally.
+
 ### Stage 10fs — COMPLETE COST RECOVERY FOR LIVE FUND HOLDINGS
 
 - The second audit found that Stage 10fn covered quote-only shares but omitted the analogous fund overlays. Exact owner, scheme/plan, dated units and FIFO now recover 21 more valued fund/account costs and three recorded DSP ETF costs. Twenty valued rows support HPR; ICICI Equity Savings recovers cost only because its sale proceeds have an inconsistent cash sign. Individual and pooled return paths withhold that unverified HPR. No layout, controls or styles change. Automated review also caught an aggregate path excluding the unknown-proceeds holding: Return Analysis now keeps it in the FIFO pool and withholds the pooled return. Existing absence helpers name the actual proceeds gap.

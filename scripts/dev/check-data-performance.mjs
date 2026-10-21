@@ -121,9 +121,6 @@ try {
           assert.ok(count>oldDated,`${category} includes the original dates behind recovered costs`);
           assert.equal(await table.locator('[data-col-button="investedOn"]').count(),1,'date column stays merged when switching categories');
         }
-        await page.getByRole('tab',{name:'Direct Equity',exact:true}).click();
-        const esds = table.locator('tbody tr[data-bucket]').filter({hasText:'ESDS Software'});
-        assert.match(await esds.locator('[data-invested-on]').innerText(),/review/,'unreconciled custody dates retain a visible product-review qualifier');
       }
     }
     assert.equal(await page.getByLabel('Rows per page').count(), 0, 'no page size selector');

@@ -21,6 +21,9 @@ import { BOOK_ACCOUNTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS, BOOK_RECOVERED_COST
 import { accountInvestedOn, holdingTradesOf, investedOnOf, investedOnTitle, lineUndatedReason } from "@/lib/investedOn";
 import { depositoryFundHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 import { shareCandidates } from "@/lib/depositoryShares";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { InvestedOnCell } from "@/components/InvestedOnCell";
 import type { Position } from "@/lib/types";
 
 let fails = 0;
@@ -97,6 +100,8 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   const review = investedOnOf([esds]);
   ok("ESDS keeps the printed review date without claiming its disputed units reconcile",
     review?.first === '2024-09-09' && !!review.reviewSource && /not reconciled/.test(investedOnTitle(review)));
+  const markup = renderToStaticMarkup(createElement(InvestedOnCell,{d:review,why:'No purchase date'}));
+  ok("a product-only range has a visible review qualifier as well as its source explanation", /review<\/span>/.test(markup) && /not reconciled/.test(markup));
   const unknown = { ...esds, securityKey:'no-reviewed-product', reviewSource:undefined };
   ok("a different instrument cannot inherit that review date", investedOnOf([unknown]) === null);
   const changedUnits = { ...esds, quantity:esds.quantity! + 42 };
