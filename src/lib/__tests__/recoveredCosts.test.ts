@@ -61,11 +61,12 @@ near(fund("15644806", "balanced").costBasis, 25000000);
 near(fund("16002141", "balanced").costBasis, 15000000);
 near(fund("7125255", "large").costBasis, 3360937);
 const overnight = fund("15725046", "overnight");
-near(overnight.costBasis, 142843.07); near(overnight.realizedPnL, 869249.95);
-near(overnight.costOfUnitsSold, 59130750.05);
+near(overnight.costBasis, 139163.47); near(overnight.realizedPnL, 1411596.13);
+near(overnight.costOfUnitsSold, 28588403.87);
 near(overnight.returnPct, fifoReturnPct(overnight.marketValue, overnight.costBasis, overnight.realizedPnL,
   overnight.costOfUnitsSold, overnight.dividendReceived)!);
-assert.ok(overnight.returnPct! < 2, "HPR includes the redeemed lots rather than dividing all gain by the tiny remaining cost");
+assert.ok(overnight.returnPct! > 5 && overnight.returnPct! < 6,
+  "HPR includes the redeemed lots and original cost carried through the fund switches");
 for (const p of BOOK_POSITIONS.filter(p => p.costBasis != null && p.quantity! > 0 && !p.valuedAtCost))
   assert.ok(p.avgCost != null, `${p.security} has a derivable per-unit cost`);
 console.log("Recovered costs: exact quantities, March cutoff, FIFO sales, live overlay, four folios and honest unresolved balances passed");
