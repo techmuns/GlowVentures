@@ -19,4 +19,6 @@ assert.deepEqual(applyRecoveredCost({...p,accountId:'b'},[rec]),applyRecoveredCo
 assert.equal(applyRecoveredCost(p,[{...rec,quantity:14}]),p);
 assert.equal(applyRecoveredCost(p,[{...rec,costBasis:NaN}]),p);
 assert.equal(applyRecoveredCost({...p,costBasis:1},[rec]).costBasis,1);
+assert.equal(applyRecoveredCost({...p,dividendReceived:10},[rec]).dividendReceived,10);
+assert.equal(applyRecoveredCost(p,[{...rec,salesAfter:3}]).realizedLotsAfter,3);
 console.log('holdingCostRecovery: FIFO, splits, date cutoffs, missing history and exact identity gates passed');

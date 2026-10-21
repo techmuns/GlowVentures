@@ -195,6 +195,8 @@ export type RecoveredHoldingCost = {
   accountId: string; isin: string; quantity: number; asOf: string;
   costBasis: number; realizedPnL: number | null; costOfUnitsSold: number | null;
   dividendReceived: number | null;
+  /** Later review sale rows invalidate live pricing of the old snapshot. */
+  salesAfter?: number;
   evidence: { path: string; sheet: string; rows: number[] }[];
   notes: string[];
 };

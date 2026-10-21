@@ -128,6 +128,8 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
     if(result.reason) {unresolved.push({...t,owner:a.owner,reason:result.reason});continue;}
     records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:result.costBasis,
       realizedPnL:result.realizedPnL,costOfUnitsSold:result.costOfUnitsSold,dividendReceived:result.dividendReceived,
+      ...(sourceRows.some((r)=>r.txn==='Sale'&&r.date>t.asOf)
+        ? {salesAfter:sourceRows.filter((r)=>r.txn==='Sale'&&r.date>t.asOf).length} : {}),
       evidence:[{path:REVIEW_WORKBOOK,sheet:'Transactions since inception',rows:result.rows}],notes:result.notes});
   }
   return {records,unresolved};
@@ -145,7 +147,7 @@ export function recoveryReport({ records, unresolved }, accounts) {
   lines.push('', '## Not recovered', '', '| Holder | Account | Security | ISIN | Recorded units | Required evidence |','| --- | --- | --- | --- | ---: | --- |');
   for(const r of unresolved){const a=accountById.get(r.accountId);lines.push(`| ${a?.owner} | ${a?.accountNo} | ${r.security} | ${r.isin} | ${r.quantity} | ${r.reason} |`);}
   lines.push('', '## Source qualifications', '',
-    '- The March ICICI snapshot keeps its March quantity and mark. Yash has later June disposals whose cash signs conflict with their transaction type; newer broker holdings and sale confirmations are still required before rolling that snapshot forward.',
+    '- The March ICICI snapshot keeps its March quantity and mark. Yash has later June disposals whose cash signs conflict with their transaction type; the recorded later sales block a live quote on those old units. Newer broker holdings and sale confirmations are still required before rolling that snapshot forward.',
     '- Grand Continent’s split row repeats a purchase amount. It is excluded from cash only because its duplicate and the independent closing-at-cost control agree; the split carries the original lots and their cost.',
     '- The EMA payment register establishes the matched holding’s purchase cost. Separate realised gains and dividends remain unreported; they are not written as measured zero.',
     '- Existing statement costs take precedence; supplementary records never overwrite them.',

@@ -32,6 +32,7 @@ assert.equal(ema.realizedPnL, null, "a payment register does not establish reali
 assert.equal(ema.dividendReceived, null);
 const yash = recovered.find(p => p.isin === "INE00GK01023")!;
 assert.equal(yash.quantity, 138462, "unverified June disposals never advance the March snapshot");
+assert.equal(yash.realizedLotsAfter, 3, "known later disposals block live pricing of the old units");
 
 const candidates = shareCandidates();
 assert.equal(candidates.filter(p => p.recoveredCost).length, 11);
