@@ -181,8 +181,15 @@ try {
     let position = 0;
     const directory = { isFile: false, isDirectory: true, fullPath: '/Actual statements', createReader: () => ({ readEntries: callback => { const next = leaves.slice(position, position + 3); position += next.length; callback(next); } }) };
     const data = new DataTransfer(); data.items.add(new File(['folder marker'], 'Actual statements'));
-    Object.defineProperty(data.items[0], 'webkitGetAsEntry', { value: () => directory });
-    element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
+    // Chromium can return a new JS wrapper each time items[0] is read. Override
+    // the prototype for this synchronous event so the real client's entry read
+    // sees the folder, then restore it before any further browser interaction.
+    const descriptor = Object.getOwnPropertyDescriptor(DataTransferItem.prototype, 'webkitGetAsEntry');
+    Object.defineProperty(DataTransferItem.prototype, 'webkitGetAsEntry', { ...descriptor, value: function () {
+      return this.getAsFile()?.name === 'Actual statements' ? directory : descriptor.value.call(this);
+    } });
+    try { element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data })); }
+    finally { Object.defineProperty(DataTransferItem.prototype, 'webkitGetAsEntry', descriptor); }
   }, payload);
   await page.getByRole('status').filter({ hasText: '7 statement files saved' }).waitFor({ timeout: 30_000 });
   assert.ok(workerPromise); await workerPromise; workerPromise = null;
@@ -211,6 +218,15 @@ try {
   assert.ok(inboxLog().batches.flatMap(b => b.files).every(f => f.status === 'landed'));
   assert.equal(inboxGit(['ls-tree', '-r', '--name-only', 'refs/heads/statement-inbox', '--', 'files']), '');
   const after = await model(), afterPositions = [...after.BOOK_POSITIONS, ...after.depositoryFundHoldings(), ...after.unpricedStatementUnits()];
+  const published = await (await fetch(baseURL + '/publication.json')).json();
+  const publication = await (await fetch(baseURL + published.manifest)).json();
+  for (const uploaded of inboxLog().batches.flatMap(b => b.files)) for (const version of uploaded.documentVersions.filter(v => uploaded.docKeys.includes(v.document))) {
+    const entry = publication.statementDocuments.find(d => d.document === version.document && d.revision === version.revision);
+    assert.ok(entry, 'Published manifest attests to this exact uploaded document version');
+    const provenance = await (await fetch(baseURL + '/views/' + published.revision + '/' + entry.evidence)).json();
+    assert.equal(provenance.source.sha256, uploaded.sha256, 'The published source checksum belongs to these exact uploaded bytes');
+    assert.ok(provenance.receipt, 'The published document retains its immutable delivery receipt');
+  }
   for (const e of expected) { const p = afterPositions.find(p => p.accountId === e.accountId && p.isin === e.isin); assert.ok(p);
     assert.equal(p.quantity, e.quantity); assert.equal(p.costBasis, e.costBasis); assert.equal(p.marketValue, e.marketValue); assert.equal(after.investedOnOf([p])?.first, e.date); }
   await watching.bringToFront(); await watching.evaluate(() => window.dispatchEvent(new Event('focus')));
