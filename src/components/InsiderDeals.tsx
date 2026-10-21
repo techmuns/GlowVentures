@@ -96,7 +96,7 @@ export function InsiderDeals({ ticker, name }: { ticker: string; name: string })
             <SortHeader col="post" view={view} pad="px-3 py-2">Post-holding</SortHeader>
           </Tr>
         </thead>
-        <InfiniteTableBody rows={items} columns={INSIDER_COLS.length} resetKey={JSON.stringify([ticker, view.sort])} className="divide-y divide-ink-700/60">
+        <InfiniteTableBody rows={items} columns={view.order.length} resetKey={JSON.stringify([ticker, view.sort])} className="divide-y divide-ink-700/60">
           {(t, i) => {
             const acq = /acquisition|buy|purchase/i.test(t.transaction);
             return (
