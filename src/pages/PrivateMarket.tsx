@@ -71,7 +71,7 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
  * what the units held cost (the holding statement). They agree on most funds and
  * they are different documents; the header says which is which.
  */
-const BOOK_COLS = ["name", "strategy", "description", "committed", "called", "paid", "uncalled", "units", "cost", "value", "return", "weight", "asOf", "call"] as const;
+const BOOK_COLS = ["name", "strategy", "description", "invested", "committed", "called", "paid", "uncalled", "units", "cost", "value", "return", "weight", "asOf", "call"] as const;
 /**
  * STRATEGY AND DESCRIPTION ARE THE READER'S TO SWITCH ON (Edit Columns) — text
  * the family supplies, never a statement figure, so they start hidden and sit
@@ -275,7 +275,7 @@ const SECTION_COPY: Record<BookSectionId, { title: string; marker: ReactNode; de
 };
 
 /** A row of figures in the shape the accessors read — a group, a section, a total or a folio. */
-type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled" | "units" | "cost" | "value" | "returnPct" | "deployed" | "deployedHeld" | "asOf">
+type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled" | "units" | "cost" | "value" | "returnPct" | "deployed" | "deployedHeld" | "asOf" | "invested" | "investedOf" | "investedAcross">
   & {
     /** The fund whose entered calls this row's Capital call cell shows — none on a member row or a band. */
     callKey?: string | null;
@@ -324,6 +324,9 @@ const folioFigures = (f: BookFolio): RowFigures => ({
   deployedHeld: f.position && f.cost != null && f.cost > 0 && f.pnl != null && positionFifoReturn(f.position) != null
     ? f.cost : null,
   asOf: f.asOf ? [f.asOf] : [],
+  invested: f.invested ? { from: f.invested.from, to: f.invested.to } : null,
+  investedOf: f.invested ? 1 : 0,
+  investedAcross: 1,
 });
 
 /** A small count in words, the way the page's sentences say it; a figure past ten stays a figure. */
@@ -361,6 +364,8 @@ const bookAccessors = (
   // A row with no supplied text sorts last in both directions, like every absence.
   strategy: (r) => r.profile?.strategy.value ?? null,
   description: (r) => r.profile?.description.value ?? null,
+  // The first date the money went in; a row no source dates sorts last.
+  invested: (r) => r.invested?.from ?? null,
   committed: (r) => r.committed,
   called: (r) => r.called,
   paid: (r) => r.paid,
@@ -422,6 +427,11 @@ const valueWhy = (status: BookGroup["status"], reason: string | null): string =>
 /** The start of a date range — its year dropped where the end shares it ("30 Jun" → "31 Jul 2026"). */
 const rangeStart = (a: string, b: string) =>
   a.slice(0, 4) === b.slice(0, 4) ? fmtDate(a).replace(/\s\d{4}$/, "") : fmtDate(a);
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** An investment date as its source prints it: a day, or a month (`YYYY-MM`) never widened to a day. */
+const fmtInvested = (d: string) =>
+  /^\d{4}-\d{2}$/.test(d) ? `${MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : fmtDate(d);
 
 export function PrivateMarket() {
   /**
@@ -1528,6 +1538,25 @@ export function PrivateMarket() {
         </td>
       );
     };
+    // WHEN THE MONEY WENT IN (Stage 10ey): the review's printed investment dates
+    // for a line it holds, else the capital account's first and last dated call.
+    // A row over several folios spans the earliest to the latest, and says how
+    // many of its folios date it where not all do.
+    const investedCell = () => {
+      const d = r.invested, of = r.investedOf ?? 0, across = r.investedAcross ?? 0;
+      return (
+        <td key="invested" data-col-cell="invested" data-invested={d ? `${d.from} ${d.to}` : undefined}
+          className={`${p} whitespace-nowrap text-slate-400`}
+          title={d ? `First invested ${fmtInvested(d.from)}${d.to !== d.from ? `, last ${fmtInvested(d.to)}` : ""}${of < across ? ` — over the ${of} of ${across} folios here that date it` : ""}` : undefined}>
+          {!d ? <AbsentCell reason={k === "folio"
+              ? "neither the review nor a capital account dates this investment"
+              : "no folio under this row dates its investment"} />
+            : d.from === d.to ? fmtInvested(d.from)
+              : <><div>{fmtInvested(d.from)} →</div><div>{fmtInvested(d.to)}</div></>}
+          {d && of < across && <div className="text-[10px] leading-tight text-slate-500" data-invested-cover={`${of}/${across}`}>{of} of {across} folios</div>}
+        </td>
+      );
+    };
     // A band or a total spans several funds, and a unit of one fund is not a
     // unit of another: the cell says so rather than sitting blank.
     out.units = r.units != null ? td("units", fmtNum(r.units, 3), "text-slate-400")
@@ -1599,6 +1628,7 @@ export function PrivateMarket() {
         : td("weight", `${ctx.weight.toFixed(1)}%`, "text-slate-400");
     }
     if (holdingRow || k === "section") out.asOf = asOfCell();
+    if (holdingRow || k === "section") out.invested = investedCell();
     // TEXT, NOT A FIGURE: left-aligned, wrapped, the whole text and where it
     // was supplied in the hover. A band or a total describes no one investment.
     if (holdingRow && r.profile) {
@@ -2160,6 +2190,8 @@ export function PrivateMarket() {
                     title={profileSupplyNote("strategy", profileMatch)}>Strategy</SortHeader>
                   <SortHeader col="description" view={bookView} pad="px-2 py-2" align="left"
                     title={profileSupplyNote("description", profileMatch)}>Description</SortHeader>
+                  <SortHeader col="invested" view={bookView} pad="px-2 py-2" align="left"
+                    title="When the money went in — first and last, as the source prints it: the consolidated review's investment dates for a line it holds (a day, or a month where it prints only the month), else the capital account's first and last dated call.">Date of<br />investment</SortHeader>
                   {/* ── THE LABELS ALONE, THE MEANING IN THE HOVER ─────────────────
                       Each heading carried a word under it — "promised", "asked
                       for", "cash sent". The family asked for the lines that say
