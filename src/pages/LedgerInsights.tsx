@@ -1,4 +1,4 @@
-import { PagedTableBody } from "@/components/PagedTableBody";
+import { InfiniteTableBody } from "@/components/InfiniteTableBody";
 import { useEffect, useMemo, useState } from "react";
 import { TrendingUp, Coins, ShieldAlert, ArrowLeftRight, Scissors, LogOut, Receipt, Gift } from "lucide-react";
 import { BasisPill } from "@/components/BasisPill";
@@ -159,11 +159,11 @@ export function LedgerInsights() {
       <div className="min-h-0 flex-1 overflow-auto">
         {status === "loading" && <div className="grid h-40 place-items-center text-sm text-slate-500">Reading the archive…</div>}
         {tab === "transactions" && viewTxn && (
-          <TransactionsView data={viewTxn} sales={scope.owners ? null : sales}
+          <TransactionsView key={scope.label} data={viewTxn} sales={scope.owners ? null : sales}
             scoped={scope.owners ? { label: scope.label, lots: viewLots } : null} />
         )}
-        {tab === "gains" && <GainsView data={viewLots} />}
-        {tab === "income" && <IncomeView data={viewIncome} />}
+        {tab === "gains" && <GainsView key={scope.label} data={viewLots} />}
+        {tab === "income" && <IncomeView key={scope.label} data={viewIncome} />}
       </div>
     </div>
   );
@@ -333,7 +333,7 @@ function TransactionsView({ data, sales, scoped }: {
                 <SortHeader col="realised" view={txnView}>Realised</SortHeader>
               </Tr>
             </thead>
-            <PagedTableBody rows={txnRows} columns={TXN_COLS.length} resetKey={JSON.stringify(txnView.sort)} className="divide-y divide-ink-700/70">
+            <InfiniteTableBody rows={txnRows} columns={TXN_COLS.length} resetKey={JSON.stringify(txnView.sort)} className="divide-y divide-ink-700/70">
               {(t, i) => (
                 <Tr view={txnView} key={`${t.date}-${t.securityKey}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 mono text-slate-400 whitespace-nowrap">{fmtDate(t.date)}</td>
@@ -350,7 +350,7 @@ function TransactionsView({ data, sales, scoped }: {
                   </td>
                 </Tr>
               )}
-            </PagedTableBody>
+            </InfiniteTableBody>
           </table>
         </div>
       </Card>
@@ -377,7 +377,7 @@ function TransactionsView({ data, sales, scoped }: {
                   <SortHeader col="status" view={saleView} align="left">Status</SortHeader>
                 </Tr>
               </thead>
-              <PagedTableBody rows={saleRows} columns={SALE_COLS.length} resetKey={JSON.stringify(saleView.sort)} className="divide-y divide-ink-700/70">
+              <InfiniteTableBody rows={saleRows} columns={SALE_COLS.length} resetKey={JSON.stringify(saleView.sort)} className="divide-y divide-ink-700/70">
                 {(r) => (
                   <Tr view={saleView} key={r.securityKey} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
@@ -396,7 +396,7 @@ function TransactionsView({ data, sales, scoped }: {
                     </td>
                   </Tr>
                 )}
-              </PagedTableBody>
+              </InfiniteTableBody>
             </table>
           </div>
         </Card>
@@ -649,7 +649,7 @@ function GainsView({ data }: { data: LotData | null }) {
                 <SortHeader col="gain" view={lotView}>Gain</SortHeader>
               </Tr>
             </thead>
-            <PagedTableBody rows={lotRows} columns={LOT_COLS.length} resetKey={JSON.stringify(lotView.sort)} className="divide-y divide-ink-700/70">
+            <InfiniteTableBody rows={lotRows} columns={LOT_COLS.length} resetKey={JSON.stringify(lotView.sort)} className="divide-y divide-ink-700/70">
               {(l, i) => (
                 <Tr view={lotView} key={`${l.securityKey}-${l.saleDate}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 text-slate-100"><StockLink securityKey={l.securityKey} name={l.security} /></td>
@@ -665,7 +665,7 @@ function GainsView({ data }: { data: LotData | null }) {
                   </td>
                 </Tr>
               )}
-            </PagedTableBody>
+            </InfiniteTableBody>
           </table>
         </div>
       </Card>
@@ -743,7 +743,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   <SortHeader col="net" view={cashView}>Net</SortHeader>
                 </Tr>
               </thead>
-              <PagedTableBody rows={cashRows} columns={CASH_COLS.length} resetKey={JSON.stringify(cashView.sort)} className="divide-y divide-ink-700/70">
+              <InfiniteTableBody rows={cashRows} columns={CASH_COLS.length} resetKey={JSON.stringify(cashView.sort)} className="divide-y divide-ink-700/70">
                 {(r, i) => (
                   <Tr view={cashView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
@@ -759,7 +759,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                     </td>
                   </Tr>
                 )}
-              </PagedTableBody>
+              </InfiniteTableBody>
             </table>
           </div>
         </Card>
@@ -779,7 +779,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   <SortHeader col="entitlement" view={corpView} align="left">Entitlement</SortHeader>
                 </Tr>
               </thead>
-              <PagedTableBody rows={corpRows} columns={CORP_COLS.length} resetKey={JSON.stringify(corpView.sort)} className="divide-y divide-ink-700/70">
+              <InfiniteTableBody rows={corpRows} columns={CORP_COLS.length} resetKey={JSON.stringify(corpView.sort)} className="divide-y divide-ink-700/70">
                 {(r, i) => (
                   <Tr view={corpView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
@@ -790,7 +790,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                     <td className="px-4 py-2 text-[12px] text-slate-300">{r.entitlement ?? <AbsentCell reason="the report prints no ratio for this action" />}</td>
                   </Tr>
                 )}
-              </PagedTableBody>
+              </InfiniteTableBody>
             </table>
           </div>
         </Card>

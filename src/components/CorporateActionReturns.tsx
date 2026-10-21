@@ -8,7 +8,7 @@ import { positionActionKey } from "@/lib/corporateActions";
 import { fmtDate, fmtNum, fmtPct } from "@/lib/format";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { SortHeader, Tr } from "./SortHeader";
-import { PagedTableBody } from "./PagedTableBody";
+import { InfiniteTableBody } from "./InfiniteTableBody";
 
 const COLS = ["holding", "window", "total", "dividends", "shares", "capital", "evidence"] as const;
 const LABELS: Record<string, string> = { holding: "Holding / account", window: "Window", shares: "Shares: statement → adjusted", capital: "Capital return", dividends: "Gross dividend entitlement", total: "Total return incl. dividends", evidence: "Evidence & coverage" };
@@ -92,7 +92,7 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
         <thead className="bg-ink-900 text-slate-400"><Tr view={view}>
           {view.columns.map((col) => <SortHeader key={col} view={view} col={col} align="left" title={TITLES[col]}>{LABELS[col]}</SortHeader>)}
         </Tr></thead>
-        <PagedTableBody rows={rows} columns={COLS.length} resetKey={JSON.stringify([search, view.sort, securityKey])}>{({ p, account, result: r }) => {
+        <InfiniteTableBody rows={rows} columns={COLS.length} resetKey={JSON.stringify([search, view.sort, securityKey])}>{({ p, account, result: r }) => {
           const issues = r ? [...r.quantityIssues, ...r.incomeIssues] : [LOADING];
           const lead = leadIssue(issues) ?? LOADING;
           const events = r?.lines.filter((l) => l.status !== "in-statement") ?? [];
@@ -152,7 +152,7 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
             </td>,
           };
           return <Tr key={positionActionKey(p)} view={view} className="border-t border-ink-700/70 align-top" data-corporate-return-row={positionActionKey(p)}>{COLS.map((col) => cells[col])}</Tr>;
-        }}</PagedTableBody>
+        }}</InfiniteTableBody>
       </table>
       {!rows.length && <div className="p-5"><AbsentCell reason="No listed-equity holdings match this selection" /></div>}
     </div>

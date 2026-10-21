@@ -1,3 +1,4 @@
+import { InfiniteTableBody } from "./InfiniteTableBody";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -95,8 +96,8 @@ export function InsiderDeals({ ticker, name }: { ticker: string; name: string })
             <SortHeader col="post" view={view} pad="px-3 py-2">Post-holding</SortHeader>
           </Tr>
         </thead>
-        <tbody className="divide-y divide-ink-700/60">
-          {items.slice(0, 40).map((t, i) => {
+        <InfiniteTableBody rows={items} columns={INSIDER_COLS.length} resetKey={JSON.stringify([ticker, view.sort])} className="divide-y divide-ink-700/60">
+          {(t, i) => {
             const acq = /acquisition|buy|purchase/i.test(t.transaction);
             return (
               <Tr view={view} key={t.key ?? i} className="hover:bg-ink-700/30">
@@ -112,8 +113,8 @@ export function InsiderDeals({ ticker, name }: { ticker: string; name: string })
                 <td className="px-3 py-2 text-right mono text-slate-500">{t.postPct || "—"}</td>
               </Tr>
             );
-          })}
-        </tbody>
+          }}
+        </InfiniteTableBody>
       </table>
     </div>
   );

@@ -4961,3 +4961,10 @@ current unrealized P&L."*
 - **Benchmarks** are eight tiles in two rows, portfolio first. Each shows its return, a bar on one shared scale and its gap in pp. This replaces the three-column table that stretched across the panel, together with its lone Edit Columns row. Every `data-returns-bench*` handle is unchanged.
 - The order is still portfolio, then benchmarks, then attribution (Stages 10dy, 10fd). The new surfaces use `.ret-well`, `.ret-stat`, `.ret-chip` and `.ret-bar`, each with a light-mode colour.
 - `check:pages` passes on every `cio-returns*` route. The only finding is the KPI strip's DL-11 invested-line check, which fails on main too.
+
+
+### Stage 10fq — TABLES SCROLL CONTINUOUSLY, WITHOUT PAGES
+
+- The shared table body now appends 50 rows when its end enters view. Earlier rows remain mounted, sorting and totals use the full result, and filters/sorts reset loading and vertical scroll. One boundary spans all Portfolio Monitor groups. The previous/next buttons and page-size selector are removed throughout.
+- Data Audit, all consolidated workbook tabs, Capital Gains planners and Insider Deals use the same scroll behavior; their 200/30/40-row cutoffs and Show all controls are gone. Tables already showing their full collection continue to scroll normally. A Load more button also supports keyboard access and browsers without intersection observers.
+- The browser regression drives scrolling through the final row, checks preserved row identity and totals across grouping axes, and checks filter reset and the absence of paging controls. CI runs it with local feed fixtures after the build and financial suites.
