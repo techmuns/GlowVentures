@@ -16,6 +16,7 @@
     "set-password": "node scripts/set-dashboard-password.mjs",
     "build-symbols": "node scripts/build-nse-symbols.mjs",
     "build-sectors": "node scripts/build-screener-sectors.mjs",
+    "build-index-sectors": "node scripts/build-index-sectors.mjs",
     "reconcile:review": "node scripts/review-reconcile.mjs",
     "reconcile:register": "node scripts/register-reconcile.mjs",
     "build-book": "node scripts/build-book.mjs",

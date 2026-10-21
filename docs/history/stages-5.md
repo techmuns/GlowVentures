@@ -4834,3 +4834,16 @@ current unrealized P&L."*
 - `?tab=attribution` is aliased to `returns`, so a link from the one release still lands on the section.
 - Hovers now name dividends in the gain, after Stage 10fb added income to `fifoTotals`.
 - `check:pages`: every `cio-returns` route runs `CIO_SEGMENTS`, and a new invariant puts the section under the benchmarks (geometry). The tab-list check is back to six. `cio-returns-sector` and `cio-returns-security` replace the `cio-attribution*` routes. `cio-attribution-legacy` asserts the old address lands on Returns.
+
+### Stage 10fe — SECTOR COMPOSITION AGAINST AN INDEX
+
+*"they want there to be an option of versus index sector allocation … they should be able to select the index in comparison to which they want to compare their portfolio sector allocation."*
+
+- A **Vs index** control on the Sector Composition panel and `/sectors` (`?vs=`): Off, then the NAV chart's seven `BENCHMARKS` in their order. Off is the default and param-free, so both addresses open as before.
+- **The weights are the index's own factsheet.** `npm run build-index-sectors` fetches each Nifty factsheet from niftyindices.com, checks the sheet names the index, reads the "Sector Representation" table by its header, and refuses a table that does not sum to 100 ±0.1. Output: `src/data/indexSectors.json` and `docs/INDEX-SECTORS.md`, 30 Sep 2026 for all five. Re-run it monthly.
+- **One map places both sides.** `src/lib/indexSectors.ts` resolves NSE's sector names through `resolveSector`, the map statements already use. "Diversified" maps to no single GICS sector, so it is the index's own Unclassified (0.02% of the Nifty 500).
+- **Sensex and BSE 500 are offered and absent.** BSE's public API lists their constituents' sectors but no weights. Tables published elsewhere weight by full market cap. Their pills are muted, and when picked the left card shows the reason.
+- With an index picked, the table gains the index's weight and **Over / under** columns, in percentage points. The family's weight is the existing Weight column. Unclassified takes no difference.
+- A sector the index holds and the set does not is a "₹0 none held" row: a computed zero.
+- Two bars per sector, family and index, replace the donut, in the NAV chart's book and index colours. The factsheet date shows under the title.
+- `check:pages`: new `cio-sectors-vs` (Consolidated vs Nifty 500) and `cio-sectors-vs-direct` (Direct Equity vs Nifty 50) routes. The index column is re-derived from the JSON. The `cio-sectors` route asserts the control opens Off. `test:family` gains `index sectors`.
