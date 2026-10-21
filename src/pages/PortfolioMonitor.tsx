@@ -208,13 +208,19 @@ type MandateHolding = {
  *
  * A strategy one manager runs for two members is ONE row now, and each member's
  * account is a line under it — its own figures, struck over its own positions
- * exactly as the row used to be, and a link to that account's drill-down, which
- * is where the shares the manager chose are listed. Nothing is deduped: two
- * members' accounts are two investments, and the row adds them.
+ * exactly as the row used to be. Nothing is deduped: two members' accounts are
+ * two investments, and the row adds them. The line is not a link: the strategy
+ * has one drill-down, opened from the row's name, with every member on it.
  *
  * `accountMV` / `accountCount` are the account's OWN totals, struck before this
  * page's filters, for the same reason the row carries them.
  */
+/**
+ * THE ADDRESS OF A STRATEGY'S ONE PAGE — any of its accounts' `/mandate/`
+ * addresses serves all of them, and the first by id is the one that does not
+ * move when another line grows larger.
+ */
+const mandateHrefId = (accounts: readonly { accountId: string }[]) => accounts.map((a) => a.accountId).sort()[0];
 type MandateAccountLine = {
   accountId: string; accountNo: string; owner: string; asOf: string;
   /** The account's positions on this row — every figure below is struck over these. */
@@ -3171,13 +3177,12 @@ export function PortfolioMonitor() {
         const capNote = l.costNA ? "" : investedBasisNote(l.fifo, (v) => fmtFromBase(v, { compact: true }));
         out.push(childRow(`${r.key}>${l.accountId}`, "mandate-account", 1, {
           title: <span className="font-medium text-slate-200">{l.owner}</span>,
+          // NOT A LINK: the strategy has ONE page, opened from its name above,
+          // and every member's holding is on it — *"Remove the hyperlink from
+          // the Ajay and Ankita Jaisinghani account number."*
           sub: (
             <>
-              <Link to={`/mandate/${encodeURIComponent(l.accountId)}`}
-                title={`${m.manager} — account ${l.accountNo}, ${l.accountCount} holdings. Open this account's drill-down for every share in it.`}
-                className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
-                {acct(l.accountNo)}
-              </Link>
+              {acct(l.accountNo)}
               {" · "}
               {l.holdings < l.accountCount
                 ? <span className="text-amber-400/80" title={`${l.holdings} of the account's ${l.accountCount} holdings match the filters — the account itself holds ${fmtFromBase(l.accountMV, { compact: true })}`}>{l.holdings} of {l.accountCount} holdings</span>
@@ -3209,7 +3214,7 @@ export function PortfolioMonitor() {
                 {fmtFromBase(l.realised, { compact: true, sign: true })}
               </span>,
           ret: (measure) => childReturn({ returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure),
-          sector: <AbsentCell reason="a mandate spans many sectors and is not one holding; open the account's drill-down for each share's own" />,
+          sector: <AbsentCell reason="a mandate spans many sectors and is not one holding; each share under this line carries its own" />,
           entity: <span className="text-[12px]">{l.owner}</span>,
         }, {
           "data-mandate-line": l.accountId,
@@ -3286,10 +3291,10 @@ export function PortfolioMonitor() {
             {v.vehicle}
           </Link>
         : <span title={`Account ${v.accountNo}`}>{v.vehicle}</span>;
-      // A CLASS IS WHAT `/stock/:securityKey` SERVES, so on a CLUBBED fund the
-      // class is the line's name and its link, and the row above deliberately
-      // is not one. A fund with one class keeps the vehicle as the line's name:
-      // the row above already carries the class in the name its statement prints.
+      // ON A CLUBBED fund the class is the line's name — and not a link: the
+      // row above opens the fund's one page, every class and every member on
+      // it. A fund with one class keeps the vehicle as the line's name: the row
+      // above already carries the class in the name its statement prints.
       const asClass = r.fundClasses.length > 0 && !!v.cls;
       // A LINE IS NAMED FOR WHOSE IT IS. The row above already names the
       // security, so repeating it on every line (which is what the vehicle
@@ -3298,7 +3303,7 @@ export function PortfolioMonitor() {
       // account go under it. The Entity column carries the member too — it
       // closes a row that is wider than the screen, so it is not relied on.
       out.push(childRow(`${r.key}>${fk}`, "venue", 1, {
-        title: asClass ? <StockLink securityKey={v.securityKey} name={`Class ${v.cls}`} /> : v.owner,
+        title: asClass ? <span data-venue-class={v.securityKey}>Class {v.cls}</span> : v.owner,
         // Its share only where there is more than one line to share it
         // between: over one line it is always 100%.
         sub: <>{asClass ? v.owner : <>{vehicle} · {v.route}</>} · {acct(v.accountNo)}{vs.length > 1 && vs.some((x) => x.marketValue !== 0)
@@ -4449,39 +4454,41 @@ export function PortfolioMonitor() {
                           toggleLabel={toggleLabelFor(r, isOpen)}
                           title={m ? (
                             <>
-                              {/* ONE ACCOUNT, ONE PAGE: the name opens it. SEVERAL
-                                  ACCOUNTS RUN ONE STRATEGY — Aristos for Ajay and for
-                                  Ankita — and are one row (Stage 10dn); there the name
-                                  is not a link, because it would have to pick one
-                                  member's account, and each account's own line under it
-                                  opens that account's page, where its shares are. */}
-                              {m.accounts.length === 1 ? (
-                                <Link to={`/mandate/${encodeURIComponent(m.accounts[0].accountId)}`}
-                                  title={`${m.manager} — account ${m.accounts[0].accountNo}, ${m.accountCount} holdings. Open the mandate drill-down.`}
-                                  className="font-medium text-slate-100 underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
-                                  {r.security}
-                                </Link>
-                              ) : (
-                                <span className="font-medium text-slate-100"
-                                  title={`${m.manager} — run for ${m.accounts.length} accounts (${m.accounts.map((a) => `${a.owner} ${a.accountNo}`).join(", ")}), ${m.accountCount} holdings in all. Open the row for each account; each account's own page lists its shares.`}>
-                                  {r.security}
-                                </span>
-                              )}{" "}
+                              {/* THE NAME OPENS THE STRATEGY'S ONE PAGE. Several
+                                  accounts run one strategy — Aristos for Ajay and for
+                                  Ankita — and are one row (Stage 10dn), and one page:
+                                  *"VEC main heading needs to have hyperlink that will
+                                  open a single drill down page for all the
+                                  transactions and different family entities"*. Any of
+                                  its accounts' addresses serves the whole strategy, so
+                                  the link names the first by id, which is stable
+                                  whichever line is largest today. */}
+                              <Link to={`/mandate/${encodeURIComponent(mandateHrefId(m.accounts))}`}
+                                title={m.accounts.length === 1
+                                  ? `${m.manager} — account ${m.accounts[0].accountNo}, ${m.accountCount} holdings. Open the mandate drill-down.`
+                                  : `${m.manager} — run for ${m.accounts.length} accounts (${m.accounts.map((a) => `${a.owner} ${a.accountNo}`).join(", ")}), ${m.accountCount} holdings in all. Open the drill-down: every member's holding, its value and its price, on one page.`}
+                                className="font-medium text-slate-100 underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
+                                {r.security}
+                              </Link>{" "}
                               <span className="align-middle"><Pill tone="core">PMS mandate</Pill></span>
                             </>
                           ) : (
                             <>
                               {/*
-                                A CLUBBED FUND ROW IS NOT A LINK, AND THAT IS THE
-                                POINT. `/stock/:securityKey` serves ONE class, so
+                                A CLUBBED FUND ROW OPENS THE FUND'S OWN PAGE, NEVER A
+                                CLASS'S. `/stock/:securityKey` serves ONE class, so
                                 a row reading "3P India Equity Fund 1" that opened
                                 Class B3's page would name one thing and show
-                                another. The classes are each linked on their own
-                                lines when the row is opened, where each is itself
-                                again.
+                                another; `/fund/:fund` is every class in every
+                                member's folio, which is what the row is. The lines
+                                under it are no longer links of their own.
                               */}
                               {r.fundClasses.length
-                                ? <span data-fund-classes={r.fundClasses.join(",")}>{r.security}</span>
+                                ? <Link to={`/fund/${encodeURIComponent(r.security)}`} data-fund-classes={r.fundClasses.join(",")}
+                                    title={`${r.security} — ${r.fundClasses.length} unit classes (${r.fundClasses.join(", ")}). Open the drill-down: every class in every member's folio, on one page.`}
+                                    className="font-medium text-slate-100 underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
+                                    {r.security}
+                                  </Link>
                                 : <StockLink securityKey={r.securityKey} name={r.security} />}
                               {/* THE SPACE IS LOAD-BEARING, not cosmetic. These pills are
                                   INLINE — a flex wrapper would put a newline inside the

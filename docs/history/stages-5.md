@@ -4761,6 +4761,33 @@ cells just like the capital call cells."*
 - **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
 - `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.
 
+### Stage 10ex — THE SHARED STORE MOVES FROM CLOUDFLARE KV TO THE GITHUB REPOSITORY
+
+*"We will not store in Cloudflare. Instead, we should try to store it in GitHub."*
+— and, told the repository is public, *"it is ok to store in github still"*.
+
+- **`shared/dashboardStore.mjs`**: everything typed on the dashboard (capital
+  calls, strategy / description, tile layouts) is one JSON file,
+  `store/dashboard-store.json`, on its own `dashboard-store` branch. It is created
+  on the first save as one parentless commit, so it never carries a copy of the
+  site. Every save is one commit marked `[skip ci]` (no CI, no site build) and
+  never touches `main`. The server reads the file through GitHub's API on every
+  request, so a save is visible to everyone at once.
+- **Same calls, new backend**: `list/get/put/delete` plus `flush()`, which commits a
+  request's changes once (a four-line legal-name row is one commit). A stale-sha
+  refusal (409/422) re-reads the file and lays this request's changes over the
+  other person's, so two saves at once both land.
+- **Switch-on**: a fine-grained token (Contents read/write on this repo only) as
+  the site secret `GLOW_GITHUB_TOKEN`; `GLOW_GITHUB_REPO` / `_BRANCH` / `_PATH`
+  override the defaults. `SWITCH_ON_STEPS` and the `private-market-calls-off`
+  probe name the secret; `GLOW_STORE` is gone from code.
+- **Public**: the repository is public, so everything saved there can be read by
+  anyone, whatever the dashboard password.
+- `dashboardStore.test.ts` drives a fake GitHub: branch creation, one commit per
+  request, two concurrent saves, read-after-write, the Functions end to end.
+  `private-market-calls` fails 7 walk checks identically on main before 10ev
+  (pre-existing, not this change).
+
 ### Stage 10ey — PRIVATE MARKET: DATE OF INVESTMENT
 
 *"date of investment is missing from the table in private markets page, add column to show that"*
@@ -4834,6 +4861,36 @@ current unrealized P&L."*
 - `?tab=attribution` is aliased to `returns`, so a link from the one release still lands on the section.
 - Hovers now name dividends in the gain, after Stage 10fb added income to `fifoTotals`.
 - `check:pages`: every `cio-returns` route runs `CIO_SEGMENTS`, and a new invariant puts the section under the benchmarks (geometry). The tab-list check is back to six. `cio-returns-sector` and `cio-returns-security` replace the `cio-attribution*` routes. `cio-attribution-legacy` asserts the old address lands on Returns.
+
+### Stage 10fe — SECTOR COMPOSITION AGAINST AN INDEX
+
+*"they want there to be an option of versus index sector allocation … they should be able to select the index in comparison to which they want to compare their portfolio sector allocation."*
+
+- A **Vs index** control on the Sector Composition panel and `/sectors` (`?vs=`): Off, then the NAV chart's seven `BENCHMARKS` in their order. Off is the default and param-free, so both addresses open as before.
+- **The weights are the index's own factsheet.** `npm run build-index-sectors` fetches each Nifty factsheet from niftyindices.com, checks the sheet names the index, reads the "Sector Representation" table by its header, and refuses a table that does not sum to 100 ±0.1. Output: `src/data/indexSectors.json` and `docs/INDEX-SECTORS.md`, 30 Sep 2026 for all five. Re-run it monthly.
+- **One map places both sides.** `src/lib/indexSectors.ts` resolves NSE's sector names through `resolveSector`, the map statements already use. "Diversified" maps to no single GICS sector, so it is the index's own Unclassified (0.02% of the Nifty 500).
+- **Sensex and BSE 500 are offered and absent.** BSE's public API lists their constituents' sectors but no weights. Tables published elsewhere weight by full market cap. Their pills are muted, and when picked the left card shows the reason.
+- With an index picked, the table gains the index's weight and **Over / under** columns, in percentage points. The family's weight is the existing Weight column. Unclassified takes no difference.
+- A sector the index holds and the set does not is a "₹0 none held" row: a computed zero.
+- Two bars per sector, family and index, replace the donut, in the NAV chart's book and index colours. The factsheet date shows under the title.
+- `check:pages`: new `cio-sectors-vs` (Consolidated vs Nifty 500) and `cio-sectors-vs-direct` (Direct Equity vs Nifty 50) routes. The index column is re-derived from the JSON. The `cio-sectors` route asserts the control opens Off. `test:family` gains `index sectors`.
+
+### Stage 10ff — ONE DRILL-DOWN PAGE PER PMS STRATEGY AND CLUBBED FUND, EVERY MEMBER ON IT
+
+*"VEC main heading needs to have hyperlink that will open a single drill down page for all the transactions and different family entities as well, we do not need to make separate drill down page for separate entities … Remove the hyperlink from the Ajay and Ankita Jaisinghani account number … Follow this across all the PMS and AIFs funds."*
+
+- **Monitor.** A strategy run for several members (V.E.C, Goldstandard, SVAN, Green Lantern) now links from its NAME to `/mandate/<first account id>`; the per-account lines under it are plain text. A fund clubbed across unit classes (Sanshi A2/E) links from its name to the new `/fund/:fund`; its class lines are plain text. Single-class AIFs keep their `/stock/` page, which already lists every holder.
+- **`/mandate/:accountId`** serves the WHOLE strategy when the account is one of several with current holdings (same provider and `mandateLabel`), at any of their addresses: tiles over all accounts (FIFO pooled, never an average), a "Who holds it" table (one line per account: as-of, holdings, invested, value, share, P&L, realised, return; total = column sums), every holding with a Held-by column (one company's lines kept together), then each account's capital card and dealing card, titled with the member. A lone account keeps the old page; a member scope that leaves one account shows that account's page.
+- **`/fund/:fund`** is the same page for a clubbed fund (case-blind name match), without dealing cards.
+- `useHoldingsSources` reads each account's document totals so the strategy's Statement total hover names every account's printed total.
+- The capital card's long "Why:" line is now the hover on "no appreciation or return is struck" (this also fixes main's `mandate-sector` prose finding).
+- **Checks:** the two Monitor link invariants now require the name link on every row and no link on any account line. The `mandate-fifo` date, Invested and FIFO checks are struck over the strategy (`strategyIdsOf`). New routes `mandate-strategy` and `fund-clubbed` assert one line per holding account, holdings that add to the headline, and no per-account page link. A Monitor invariant checks the clubbed fund's `/fund/` link.
+
+### Stage 10fl — INDEX SECTOR WEIGHTS REFRESH THEMSELVES EACH MONTH
+
+- `.github/workflows/index-sectors.yml` runs `npm run build-index-sectors` at 04:00 UTC on days 1–15 of each month, and on demand. NSE publishes the month-end factsheets on no fixed day, so the window catches them whenever they land. Runs before and after the new sheets appear change nothing.
+- It commits `src/data/indexSectors.json` and `docs/INDEX-SECTORS.md` to main only when a weight moved, after `npm run build` passes against them. This is the `fund-navs.yml` pattern, with the build moved ahead of the commit.
+- A factsheet that names the wrong index, or whose table is missing or does not tie to 100, fails the run before anything is written. A partial table is never committed.
 
 ### Stage 10fm — EVERY HOLDING SHOWS WHEN IT WAS BOUGHT, AND ITS DATED TRADES
 

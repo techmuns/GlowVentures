@@ -289,13 +289,13 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'note={entered.state.status === "unavailable" ? "not available" : "you enter"}'))
 EOF
 
-# 19 ── the steps name a binding the function does not read
-run_suite_case "the set-up steps name another binding" py <<'EOF'
+# 19 ── the steps name a secret the function does not read
+run_suite_case "the set-up steps name another secret" py <<'EOF'
 import sys
 p='src/lib/enteredCalls.ts'; s=open(p).read()
-old='Variable name: GLOW_STORE;'
+old='Secret named GLOW_GITHUB_TOKEN'
 if s.count(old)!=1: sys.exit(1)
-open(p,'w').write(s.replace(old,'Variable name: GLOW_KV;'))
+open(p,'w').write(s.replace(old,'Secret named GLOW_TOKEN'))
 EOF
 
 # 20 ── a store nobody connected reads as a generic error

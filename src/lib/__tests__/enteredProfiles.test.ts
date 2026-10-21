@@ -52,7 +52,7 @@ async function req(kv: KvLike | undefined, init: { body?: unknown; headers?: Rec
     headers: post ? { "content-type": "application/json", origin: SITE, ...(init.headers ?? {}) } : {},
     body: post ? JSON.stringify(init.body) : undefined,
   });
-  const res = await onRequest({ request, env: kv ? { GLOW_STORE: kv } : {} });
+  const res = await onRequest({ request, env: kv ? { DASHBOARD_STORE: kv } : {} });
   const text = await res.text();
   let body: Body | null = null;
   try { body = JSON.parse(text); } catch { body = null; }
