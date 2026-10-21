@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -319,7 +320,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
             {/* Exempt, declared — the same class as `ReturnsTable`: one row,
                 so there is nothing to sort, and the columns are the source's
                 own period sequence, so moving one would break it. */}
-            <table className="min-w-full whitespace-nowrap text-sm"
+            <ExportableTable className="min-w-full whitespace-nowrap text-sm"
               data-table-static="one row of a source's own period sequence — there is nothing to sort and moving a period would break its order">
               <thead className="border-b border-ink-700">
                 <tr>
@@ -360,7 +361,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                   ))}
                 </tr>
               </tbody>
-            </table>
+            </ExportableTable>
           </div>
         </div>
       )}
@@ -416,7 +417,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
           needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full whitespace-nowrap text-sm">
+          <ExportableTable className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
               <Tr view={view}>
                 <SortHeader col="holding" view={view} align="left" pad="px-3 py-2">Holding</SortHeader>
@@ -468,7 +469,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                   shares: <td key="shares" className="border-t-2 border-ink-600 px-3 py-2" />,
                 }} />
             </tfoot>
-          </table>
+          </ExportableTable>
         </div>
       )}
 

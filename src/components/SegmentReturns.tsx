@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 /**
  * ── MORNING CIO → RETURNS → RETURN ATTRIBUTION (Stages 10ez, 10fd) ──────────
  *
@@ -152,7 +153,7 @@ export default function SegmentReturns() {
             </div>
           }>
           <div className="overflow-x-auto">
-            <table className="min-w-full whitespace-nowrap text-[12.5px]" data-seg-table>
+            <ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-seg-table>
               <thead className="border-b border-ink-700 bg-ink-800">
                 <Tr view={view}>
                   <SortHeader col="seg" view={view} align="left" pad="px-4 py-2">{HEAD[axis]}</SortHeader>
@@ -240,7 +241,7 @@ export default function SegmentReturns() {
                     contrib: <td key="contrib" className={`px-4 py-2.5 text-right mono ${changeColor(a.total.returnPct)}`} title="The contributions above add to the book's return">{a.total.returnPct != null ? pp(a.total.returnPct) : <AbsentCell reason={noGain(a.total)} />}</td>,
                   }} />
               </tfoot>
-            </table>
+            </ExportableTable>
           </div>
         </Card>
     </div>

@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -2292,7 +2293,7 @@ export function PrivateMarket() {
 
         {(view === "funds" || view === "brands") && (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-[13px]" data-pm-table={view}>
+            <ExportableTable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}>
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
                   <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Legal name" : grouping === "brand" ? "Brand" : "Legal entity"}</SortHeader>
@@ -2381,13 +2382,13 @@ export function PrivateMarket() {
                   },
                 })}
               </tfoot>
-            </table>
+            </ExportableTable>
           </div>
         )}
 
         {view === "transactions" && (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-[13px]" data-pm-table="transactions">
+            <ExportableTable exportName="Private Market — Transactions" className="min-w-full text-[13px]" data-pm-table="transactions">
               <thead className="border-b border-ink-700">
                 <Tr view={callView}>
                   <SortHeader col="date" view={callView} align="left">Date</SortHeader>
@@ -2434,7 +2435,7 @@ export function PrivateMarket() {
                     amount: <td key="amount" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{moneyFull(sum(callsShown.map((c) => c.amount)))}</td>,
                   }} />
               </tfoot>
-            </table>
+            </ExportableTable>
           </div>
         )}
 

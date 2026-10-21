@@ -21,6 +21,7 @@ const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
   ["published data lineage", "src/lib/__tests__/publicationViews.test.ts"],
+  ["sector return coverage identities", "src/lib/__tests__/sectorReturnCoverage.test.ts"],
   ["chunk recovery", "src/lib/__tests__/chunkRecovery.test.ts"],
   ["recovered purchase costs", "src/lib/__tests__/recoveredCosts.test.ts"],
   ["latest verified account returns", "src/lib/__tests__/latestAccountReturns.test.ts"],
@@ -129,6 +130,7 @@ let failed = 0;
 // `ONLY=<name>,<name>` runs a subset, matched on the suite's name — for
 // re-running one suite while fixing it. The default is every suite.
 const ONLY = (process.env.ONLY ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+SUITES.push(["table Excel exports", "src/lib/__tests__/tableExcel.test.ts"]);
 for (const [name, rel] of SUITES) {
   if (ONLY.length && !ONLY.includes(name)) continue;
   const out = path.join(DIR, path.basename(rel).replace(/\.ts$/, ".mjs"));

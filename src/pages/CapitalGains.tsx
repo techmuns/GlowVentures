@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableBody } from "@/components/InfiniteTableBody";
 import { useEffect, useMemo, useState } from "react";
 import { Receipt, Landmark, Timer, Percent } from "lucide-react";
@@ -647,7 +648,7 @@ export function CapitalGains() {
         <Card className="mt-5" title="Realised, by how the holding was run"
           subtitle="The statement windows' total, split — the canonical figure the headline names second" pad={false}>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
                 <Tr view={bucketView}>
                   <SortHeader col="bucket" view={bucketView} align="left">Held as</SortHeader>
@@ -705,7 +706,7 @@ export function CapitalGains() {
                     total: <td key="total" className={`px-4 py-2.5 text-right mono ${changeColor(realisedTotal ?? 0)}`}>{fmtFromBase(realisedTotal ?? 0, { compact: true, sign: true })}</td>,
                   }} />
               </tfoot>
-            </table>
+            </ExportableTable>
           </div>
         </Card>
       )}
@@ -714,7 +715,7 @@ export function CapitalGains() {
         subtitle="Short- and long-term as the MANAGER split them — a tax determination taken from the statement, not re-derived here"
         pad={false}>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <ExportableTable className="min-w-full text-sm">
             <thead className="border-b border-ink-700">
               <Tr view={acctView}>
                 <SortHeader col="account" view={acctView} align="left">Account</SortHeader>
@@ -790,7 +791,7 @@ export function CapitalGains() {
                   unrealLT: <td key="unrealLT" className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>,
                 }} />
             </tfoot>
-          </table>
+          </ExportableTable>
         </div>
       </Card>
 
@@ -820,7 +821,7 @@ export function CapitalGains() {
                   this on; the calculation is already wired and dormant.`} />
           ) : (
             <div className="max-h-[440px] overflow-auto">
-              <table className="min-w-full text-sm">
+              <ExportableTable className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
                   <Tr view={holdView}>
                     <SortHeader col="security" view={holdView} align="left">Security</SortHeader>
@@ -852,7 +853,7 @@ export function CapitalGains() {
                     </Tr>
                   )}
                 </InfiniteTableBody>
-              </table>
+              </ExportableTable>
             </div>
           )}
         </Card>
@@ -880,7 +881,7 @@ export function CapitalGains() {
                 <span className="mono text-[13px] text-loss">{money(harvestTotal, true)}</span>
               </div>
               <div className="max-h-[380px] overflow-auto">
-                <table className="min-w-full text-sm">
+                <ExportableTable className="min-w-full text-sm">
                   <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
                     <Tr view={harvestView}>
                       <SortHeader col="security" view={harvestView} align="left">Security</SortHeader>
@@ -962,7 +963,7 @@ export function CapitalGains() {
                       </Tr>
                     )}
                   </InfiniteTableBody>
-                </table>
+                </ExportableTable>
               </div>
             </>
           )}

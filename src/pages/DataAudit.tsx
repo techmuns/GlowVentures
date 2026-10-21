@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -406,8 +407,9 @@ function SourceArchive() {
                of a provenance page. Sorting its rows or moving a column would
                make the grid stop matching the document a reader is checking
                against, which is the one thing it exists to do. */
-            <table className="border-separate border-spacing-0 text-[12px]"
+            <ExportableTable exportName={`${fileKey} — ${sheet.name}`} className="border-separate border-spacing-0 text-[12px]"
               data-table-static="a spreadsheet reproduced in the source's own row and column order — this page exists to be checked against the document, so neither may be rearranged">
+              {allRows => <>
               <thead className="sticky top-0 z-20">
                 <tr>
                   <th className="sticky left-0 z-30 border-b border-r border-ink-700 bg-ink-900 px-2 py-1.5 text-slate-600" />
@@ -425,7 +427,7 @@ function SourceArchive() {
                     {Array.from({ length: ncols }, (_, c) => {
                       const { text, num, full } = fmtCell(row[c] ?? null, colDecimals[c]);
                       return (
-                        <td key={c} title={full}
+                        <td key={c} title={full} data-export-value={row[c] ?? ""} data-export-type={typeof row[c] === "number" ? "number" : "text"}
                           className={`max-w-[280px] truncate border-b border-r border-ink-700 bg-ink-900/60 px-3 py-1 text-[11px] italic text-slate-400 ${num ? "text-right mono not-italic" : "text-left"}`}>
                           {text}
                         </td>
@@ -449,7 +451,7 @@ function SourceArchive() {
                 )}
               </thead>
               <tbody>
-                {visible.map(({ i, row }) => isShortRow(row) ? (
+                {(allRows ? filtered : visible).map(({ i, row }) => isShortRow(row) ? (
                   <tr key={i} className="hover:bg-ink-700/30" data-xa="audit-short-row" data-row={i + 1}
                     data-cells={row.length} data-cols={headerRow?.length ?? 0}>
                     <td className="sticky left-0 z-10 border-b border-r border-ink-700 bg-ink-900 px-2 py-1 text-right mono text-[10px] text-slate-600">
@@ -472,7 +474,7 @@ function SourceArchive() {
                       const cell = text.trim().toLowerCase();
                       const hit = q !== "" && (exact ? cell === q : cell.includes(q));
                       return (
-                        <td key={c} title={full}
+                        <td key={c} title={full} data-export-value={row[c] ?? ""} data-export-type={typeof row[c] === "number" ? "number" : "text"}
                           className={`max-w-[280px] truncate border-b border-r border-ink-700/60 px-3 py-1 ${
                             num ? "text-right mono" : ""} ${hit ? "bg-champagne-500/20 font-medium text-champagne-200" : "text-slate-300"}`}>
                           {text}
@@ -483,7 +485,8 @@ function SourceArchive() {
                 ))}
                 <InfiniteTableEnd scroll={scroll} columns={ncols + 1} />
               </tbody>
-            </table>
+              </>}
+            </ExportableTable>
           )}
         </div>
       </Card>

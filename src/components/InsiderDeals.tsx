@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableBody } from "./InfiniteTableBody";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
@@ -85,7 +86,7 @@ export function InsiderDeals({ ticker, name }: { ticker: string; name: string })
     <div className="max-h-[420px] overflow-auto" data-insider-deals="ok">
       {/* THE FENCE ON THE FACE, WHERE IT CAME FROM IN THE HOVER (Stage 10cp). */}
       <p className="mb-2 text-[11.5px] text-slate-500" title="Insider trading disclosures from the exchange feed.">Dealing by the company&rsquo;s insiders, not by this family</p>
-      <table className="min-w-full whitespace-nowrap text-[12.5px]">
+      <ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]">
         <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
           <Tr view={view}>
             <SortHeader col="date" view={view} align="left" pad="px-4 py-2">Date</SortHeader>
@@ -115,7 +116,7 @@ export function InsiderDeals({ ticker, name }: { ticker: string; name: string })
             );
           }}
         </InfiniteTableBody>
-      </table>
+      </ExportableTable>
     </div>
   );
 }

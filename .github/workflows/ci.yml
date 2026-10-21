@@ -84,6 +84,7 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-sector-return-details.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs

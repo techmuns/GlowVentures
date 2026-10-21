@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -66,7 +67,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
       {/* Wide on a phone; the table scrolls inside its own container so the page
           body never scrolls sideways (CLAUDE.md, Conventions). */}
       <div className="overflow-x-auto rounded-lg border border-ink-700">
-        <table className="min-w-full text-sm"
+        <ExportableTable className="min-w-full text-sm"
           data-table-static="one file type inside a provider folder; the Data Audit viewer sorts the rows inside any one document">
           <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
             <tr>
@@ -105,7 +106,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ExportableTable>
       </div>
       {previewing && <StatementPreview doc={previewing} onClose={preview.close} />}
     </div>
@@ -279,7 +280,7 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
       </div>
       {err && <p className="mb-2 text-xs text-loss" role="status" data-prose-ok="why a retry or removal did not go through">{err}</p>}
       <div className="overflow-x-auto rounded-lg border border-ink-700">
-        <table className="min-w-full text-sm"
+        <ExportableTable className="min-w-full text-sm"
           data-table-static="the inbox's own log, newest upload first — each file's status as the intake run left it">
           <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
             <tr>
@@ -357,7 +358,7 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
               );
             })}
           </tbody>
-        </table>
+        </ExportableTable>
       </div>
       {rows.length > LOG_ROWS && (
         <button type="button" onClick={() => setAll((x) => !x)} className="mt-2 text-xs text-accent-400 hover:underline">

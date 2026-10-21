@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -945,7 +946,7 @@ export function HoldingsBehind() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full whitespace-nowrap text-sm">
+                <ExportableTable className="min-w-full whitespace-nowrap text-sm">
                   <thead className="border-b border-ink-700">
                     <Tr view={view}>
                       <SortHeader col="unit" view={view} align="left">{unitHeading}</SortHeader>
@@ -1225,7 +1226,7 @@ export function HoldingsBehind() {
                     // rows that matched, and its return is theirs.
                     bookReturn={hidden === 0 && bookReturn?.pct != null ? { pct: bookReturn.pct, label: bookReturnLabel, fifo: bookReturn.fifo } : null}
                     closedExcluded={d.closedExcluded} negligible={d.negligibleExcluded} />
-                </table>
+                </ExportableTable>
               </div>
             )}
             {/* ── THE FOLIOS THAT VALUE NOTHING, NAMED UNDER THE TABLE ──────

@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useMemo } from "react";
 import { Database, FileText, ShieldCheck, RefreshCw, Download, RotateCcw, Layers } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -380,7 +381,7 @@ export function DataRefresh() {
           <p className="text-sm text-slate-500">No accounts registered yet — the registry is built from the statement headers during ingest.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
                 <Tr view={view}>
                   <SortHeader col="provider" view={view} align="left" pad="px-3 py-2">Provider</SortHeader>
@@ -411,7 +412,7 @@ export function DataRefresh() {
                   );
                 })}
               </tbody>
-            </table>
+            </ExportableTable>
           </div>
         )}
       </Card>
