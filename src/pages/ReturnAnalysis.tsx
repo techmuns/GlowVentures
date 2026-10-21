@@ -12,6 +12,7 @@ import { fmtPct, changeColor, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { withReviewAccessors } from "@/lib/reviewColumns";
+import type { Position } from "@/lib/types";
 
 /** Each table's columns, in the order its rows write their cells. */
 const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
@@ -153,19 +154,22 @@ export function ReturnAnalysis() {
     // Fund-I Class E — held in four accounts — stood four times under a
     // "Security" heading, taking four of the ten places. The accounts' gains
     // are summed and the return re-struck on their summed cost, never averaged.
-    const byKey = new Map<string, { key: string; security: string; pnl: number; cost: number; sold: number; accounts: Set<string> }>();
+    const byKey = new Map<string, { key: string; security: string; pnl: number; cost: number; sold: number; accounts: Set<string>; positions: Position[] }>();
     for (const x of priced) {
       const e = byKey.get(x.securityKey)
-        ?? { key: x.securityKey, security: x.security, pnl: 0, cost: 0, sold: 0, accounts: new Set<string>() };
+        ?? { key: x.securityKey, security: x.security, pnl: 0, cost: 0, sold: 0, accounts: new Set<string>(), positions: [] as Position[] };
       e.pnl += x.unrealizedPnL + realisedOf(x) + incomeOf(x);
       e.cost += x.costBasis;
       e.sold += soldOf(x);
       e.accounts.add(x.accountId);
+      // The date must cover exactly the positions that contributed this gain,
+      // including the same deduplication and cost/valuation gates.
+      e.positions.push(x);
       byKey.set(x.securityKey, e);
     }
     const contrib = [...byKey.values()]
       .map((e) => ({
-        key: e.key, security: e.security, pnl: e.pnl, accounts: e.accounts.size,
+        key: e.key, security: e.security, pnl: e.pnl, accounts: e.accounts.size, positions: e.positions,
         returnPct: e.cost + e.sold > 0 ? (e.pnl / (e.cost + e.sold)) * 100 : 0,
         contribPct: pooledFifo.gain === null ? null : deployed > 0 ? (e.pnl / deployed) * 100 : 0,
       }))
@@ -657,20 +661,19 @@ export function ReturnAnalysis() {
 }
 
 function ContribTable({ rows, money, storageKey }: {
-  rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number | null; accounts: number }[];
+  rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number | null; accounts: number; positions: readonly Position[] }[];
   money: (n: number, sign?: boolean) => string;
   /** Contributors and detractors are two tables, so each keeps its own order. */
   storageKey: string;
 }) {
-  const { scope, portfolio } = usePortfolio();
-  const rowScope = (key: string) => ({ positions: portfolio?.positions.filter((p) => p.securityKey === key) ?? [] });
+  const { scope } = usePortfolio();
   const view = useTableView(storageKey, RA_CONTRIB_COLS, { reviewKind: "holding" });
   const shown = sortRows(rows, view.sort, withReviewAccessors<typeof rows[number]>({
     security: (r) => r.security,
     pnl: (r) => r.pnl,
     return: (r) => r.returnPct,
     contrib: (r) => r.contribPct,
-  }, (r) => rowScope(r.key), scope.owners !== null));
+  }, (r) => ({ positions: r.positions }), scope.owners !== null));
   if (!rows.length) {
     return <p className="py-6 text-center text-[11.5px] text-slate-500">{DASH} no priced positions in the book</p>;
   }
@@ -687,7 +690,7 @@ function ContribTable({ rows, money, storageKey }: {
         </thead>
         <tbody>
           {shown.map((r) => (
-            <Tr view={view} reviewScope={rowScope(r.key)} key={r.key} className="border-t border-ink-700/60">
+            <Tr view={view} reviewScope={{ positions: r.positions }} key={r.key} className="border-t border-ink-700/60">
               <td className="px-2 py-2" data-xa={`${storageKey}-row`} data-key={r.key} data-pnl={r.pnl} data-accounts={r.accounts}>
                 <a className="text-slate-200 hover:text-accent-400" href={stockHref(r.key)}>{r.security}</a>
                 {r.accounts > 1 && <span className="ml-1.5 text-[10.5px] text-slate-500"

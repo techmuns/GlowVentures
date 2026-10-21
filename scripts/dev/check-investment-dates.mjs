@@ -41,7 +41,7 @@ async function check(key, dateCol = 'investedOn') {
   assert.equal(await t.locator(`thead th[data-col="${dateCol}"]`).count(), 1, `${key}: investment date is visible exactly once`);
   const widths = await t.evaluate(t => [...t.rows].filter(r => r.closest('table') === t && r.cells.length).map(r => [...r.cells].reduce((n, c) => n + c.colSpan, 0)));
   assert.ok(widths.length > 1, `${key}: rows rendered`);
-  assert.ok(widths.every(w => w === widths[0]), `${key}: headers, rows and totals align: ${widths}`);
+  if (!widths.every(w => w === widths[0])) errors.push(`${key}: headers, rows and totals do not align: ${widths}`);
   checked.push(key);
   return t;
 }
