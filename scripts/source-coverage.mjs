@@ -38,6 +38,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { listEntries, readEntry, isMacMetadata } from "./ingest/lib/unzip.mjs";
 import { REVIEW_WORKBOOK } from "./lib/reviewPrivateRead.mjs";
+import { REGISTER } from "./lib/recoverHoldingCosts.mjs";
 
 /** Every profile file `build-profiles` read, by md5 — a zip's entry and its expanded copy are one file. */
 const PROFILE_FILES = (() => {
@@ -184,12 +185,13 @@ for (const f of files) {
     if (alt) docs = bySource.get(alt) ?? [];
   }
   if (docs.length) {
-    // THE REVIEW IS THE BOOK'S PRIVATE-MARKET SOURCE (Stage 10dh). The archive
+    // Both supplementary workbooks now supply strictly reconciled costs, and the
+    // review remains the private-market source (Stage 10dh). The archive
     // still records it held out — it is no statement, and `extract.mjs` reads no
-    // fact from it — and `build-book` reads its private-market lines straight from
+    // fact from them — and `build-book` reads the licensed rows straight from
     // this path. Named by the path the builder reads, never by a provider match,
     // so a second copy of the workbook is not mistaken for the one it reads.
-    const reviewSource = f === REVIEW_WORKBOOK;
+    const reviewSource = f === REVIEW_WORKBOOK || f === REGISTER;
     const heldOut = docs.every((d) => (d.status === "failed")
       && /Family investment register|Consolidated family review/.test(d.provider ?? ""));
     const witness = docs.every((d) => d.twinOf);
@@ -223,7 +225,7 @@ say("| --- | ---: | --- |");
 say(`| Read | ${count("read")} | one or more documents in \`public/audit/\` |`);
 say(`| Read via a byte-identical twin | ${count("read-via-duplicate")} | the pipeline reads each md5 once; the data IS in the archive |`);
 if (count("read-as-witness")) say(`| Read as a witness | ${count("read-as-witness")} | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |`);
-say(`| Read by \`build-book\` | ${count("read-by-build-book")} | the family's consolidated review — the book's source for every private-market line |`);
+say(`| Read by \`build-book\` | ${count("read-by-build-book")} | the review supplies private lines and exact lot costs; the register supplies verified payment evidence |`);
 say(`| Held out by decision | ${count("held-out-by-decision")} | read perfectly and deliberately not a source |`);
 if (count("read-as-profile")) say(`| Read as a profile | ${count("read-as-profile")} | a fund's strategy or a company's description, supplied by the family — text, never a figure |`);
 say(`| Not a document | ${count("not-a-document")} | macOS \`__MACOSX/._*\` resource forks — checked, not assumed |`);
@@ -243,15 +245,16 @@ if (unread.length) {
 
 say("## Read by `build-book`");
 say();
-say("The family asked for the consolidated review (MOPWM, as on 30 June 2026) to be the source of");
-say("every private-market figure on the dashboard (Stage 10dh). `build-book` reads those lines");
-say("straight from the workbook (`scripts/lib/reviewBook.mjs`); every other figure in the book is");
-say("still the statements', and for those the review stays an independent cross-check.");
+say("The consolidated review supplies the private-market lines (Stage 10dh). At the family's");
+say("21 October instruction, its dated equity/fund transactions and the investment register also");
+say("supply missing purchase costs only after exact owner, identity, date and quantity reconciliation.");
+say("Both workbooks are read in full; source rows and rejected balances are in COST-RECOVERY.md.");
+say("They remain held out of generic statement extraction; this is not an unread or missing file.");
 say();
 say("| File | Where its data goes |");
 say("| --- | --- |");
 for (const r of rows.filter((x) => x.cls === "read-by-build-book")) {
-  say(`| \`${r.f}\` | the book's private-market lines; \`npm run reconcile:review\` cross-checks the rest |`);
+  say(`| \`${r.f}\` | ${r.f === REGISTER ? "exact payment-register cost evidence; `npm run reconcile:register` checks the rest" : "private-market lines and exact dated equity/fund lot costs; `npm run reconcile:review` checks the rest"} |`);
 }
 say();
 

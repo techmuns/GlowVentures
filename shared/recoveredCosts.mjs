@@ -13,7 +13,8 @@ export function applyRecoveredCost(position, records) {
   return {...position,costBasis:r.costBasis,avgCost:r.costBasis/r.quantity,avgCostDerived:true,costUnavailable:false,
     costBasisSource:'supplementary-record',recoveredCost:r,
     realizedPnL,costOfUnitsSold,dividendReceived,
+    ...(r.hprUnavailableReason?{hprUnavailableReason:r.hprUnavailableReason}:{}),
     ...(r.salesAfter ? {realizedLotsAfter:Math.max(position.realizedLotsAfter??0,r.salesAfter)} : {}),
     unrealizedPnL:valued?position.marketValue-r.costBasis:null,
-    returnPct:valued?fifoReturnPct(position.marketValue,r.costBasis,realizedPnL,costOfUnitsSold,dividendReceived):null};
+    returnPct:valued&&!r.hprUnavailableReason?fifoReturnPct(position.marketValue,r.costBasis,realizedPnL,costOfUnitsSold,dividendReceived):null};
 }

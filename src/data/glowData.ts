@@ -19265,6 +19265,123 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "notes": []
   },
   {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF109KA11J9",
+    "quantity": 9320249.865,
+    "asOf": "2026-07-31",
+    "costBasis": 232819841.63,
+    "realizedPnL": null,
+    "costOfUnitsSold": 43190188.98,
+    "dividendReceived": null,
+    "hprUnavailableReason": "Sale proceeds are unverified on review row(s) 474; original lots establish remaining cost only",
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          473,
+          474,
+          475
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF109KC1RH9",
+    "quantity": 4850206.378,
+    "asOf": "2026-07-31",
+    "costBasis": 184990762.71,
+    "realizedPnL": 4463855.58,
+    "costOfUnitsSold": 32498362.8,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          673,
+          674,
+          675,
+          676,
+          677,
+          678
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF174K01LF9",
+    "quantity": 34045.997,
+    "asOf": "2026-07-31",
+    "costBasis": 12499374.97,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          683,
+          684
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF174KA1HV3",
+    "quantity": 4183009.836,
+    "asOf": "2026-07-31",
+    "costBasis": 87270636.48,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          707,
+          708,
+          709,
+          710,
+          711,
+          712,
+          713,
+          714
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF179KB1HP9",
+    "quantity": 2282.178,
+    "asOf": "2026-07-31",
+    "costBasis": 12499375.94,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          118,
+          119
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "isin": "INE07K301024",
     "quantity": 12000,
@@ -19360,6 +19477,160 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "notes": []
   },
   {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF03VN01761",
+    "quantity": 3915742.08,
+    "asOf": "2026-07-31",
+    "costBasis": 59989168.67,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          479,
+          480
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF084M01AB8",
+    "quantity": 393095.951,
+    "asOf": "2026-07-31",
+    "costBasis": 31654413.89,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          447,
+          448,
+          449,
+          450
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF0R8701046",
+    "quantity": 5100984.835,
+    "asOf": "2026-07-31",
+    "costBasis": 72403187.18,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          655,
+          656,
+          657,
+          658,
+          659,
+          660
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF109KC1RH9",
+    "quantity": 993739.133,
+    "asOf": "2026-07-31",
+    "costBasis": 39998000.1,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          679,
+          680
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF194K01V89",
+    "quantity": 24406.691,
+    "asOf": "2026-07-31",
+    "costBasis": 3926402.01,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          624,
+          625
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF740KA1RE3",
+    "quantity": 123000,
+    "asOf": "2026-07-31",
+    "costBasis": 17222067.17,
+    "realizedPnL": 14667670.15,
+    "costOfUnitsSold": 14981798.27,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          91,
+          92,
+          93
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF740KA1SW3",
+    "quantity": 205000,
+    "asOf": "2026-07-31",
+    "costBasis": 30193698.9,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          11,
+          12
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "isin": "INE013P01021",
     "quantity": 48000,
@@ -19408,6 +19679,118 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "notes": []
   },
   {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF03VN01761",
+    "quantity": 1366820.78,
+    "asOf": "2026-07-31",
+    "costBasis": 16999150.04,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          481,
+          482
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF084M01AB8",
+    "quantity": 183499.511,
+    "asOf": "2026-07-31",
+    "costBasis": 14999250.03,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          451,
+          452
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF0R8701046",
+    "quantity": 2407981.455,
+    "asOf": "2026-07-31",
+    "costBasis": 34788260.57,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          661,
+          662,
+          663,
+          664,
+          665,
+          666,
+          667,
+          668
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF109K012B0",
+    "quantity": 146856.943,
+    "asOf": "2026-07-31",
+    "costBasis": 11190499.06,
+    "realizedPnL": 1223545.74,
+    "costOfUnitsSold": 8812304.83,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          468,
+          469,
+          470
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF109KC1RH9",
+    "quantity": 602441.424,
+    "asOf": "2026-07-31",
+    "costBasis": 23555459.68,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          681,
+          682
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "isin": "INE457L01029",
     "quantity": 180000,
@@ -19424,6 +19807,156 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
           376,
           377,
           378
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF084M01AB8",
+    "quantity": 242412.122,
+    "asOf": "2026-07-31",
+    "costBasis": 19999000.07,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          445,
+          446
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF109K01Q49",
+    "quantity": 21012.887,
+    "asOf": "2026-07-31",
+    "costBasis": 8592579.25,
+    "realizedPnL": 22966.05,
+    "costOfUnitsSold": 12706355.62,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          126,
+          127,
+          128
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF174KA1HV3",
+    "quantity": 612631.862,
+    "asOf": "2026-07-31",
+    "costBasis": 12724363.77,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          705,
+          706
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF194K01V89",
+    "quantity": 132634.709,
+    "asOf": "2026-07-31",
+    "costBasis": 21337476.18,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          609,
+          610
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF740KA1SW3",
+    "quantity": 1195000,
+    "asOf": "2026-07-31",
+    "costBasis": 203682805.64,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          5,
+          6,
+          7
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "isin": "INF109K01Q49",
+    "quantity": 46654.378,
+    "asOf": "2026-07-31",
+    "costBasis": 18215301.46,
+    "realizedPnL": 128261.98,
+    "costOfUnitsSold": 11783198.53,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          135,
+          136,
+          137
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "isin": "INF205K01KR8",
+    "quantity": 1092470.994,
+    "asOf": "2026-07-31",
+    "costBasis": 37698115.08,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          148,
+          149
         ]
       }
     ],

@@ -321,11 +321,13 @@ Never derive one side from the others.
   `scripts/lib/reviewBook.mjs` + `shared/reviewHolders.mjs` turn its private
   blocks into positions, each with a `reviewSource` (sheet, block, row), and
   throw rather than guess. At the family's 21 October instruction,
-  `scripts/lib/recoverHoldingCosts.mjs` also reads its dated equity transactions
+  `scripts/lib/recoverHoldingCosts.mjs` also reads its dated equity and fund transactions
   and the investment register to fill missing costs only after exact
   owner/ISIN/date/quantity reconciliation. It never replaces a statement's
   quantity, valuation, date or existing cost. Every join and unresolved balance
-  is in `docs/COST-RECOVERY.md`. Other review figures remain a cross-check
+  is in `docs/COST-RECOVERY.md`. Closing rows keep fund folios separate; a known
+  cost with unverified sale proceeds carries `hprUnavailableReason`, withholding
+  realised gain and individual/pooled HPR. Other review figures remain a cross-check
   (`npm run reconcile:review`). At-cost lines carry no gain or return
   (`AT_COST_BUCKET`, `AT_COST_RETURN`).
 - **The Motilal CDSL "rate" is the last movement's price**, not a mark or a cost

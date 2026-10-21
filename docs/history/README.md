@@ -12,7 +12,8 @@ A code comment citing "CLAUDE.md §…" or "Stage 10xx" resolves in these files.
 | [pipeline.md](pipeline.md) | the ingest pipeline and stages 1–8 (inventory, extraction, reconciliation, book, ledger, live layer, the FOOS spec) |
 | [conventions.md](conventions.md) | the conventions in full |
 | [build.md](build.md) | every npm script, described in full |
-| [stages-1.md](stages-1.md) … [stages-5.md](stages-5.md) | Stage 9 to Stage 10eh, in the order they were written |
+| [stages-1.md](stages-1.md) … [stages-5.md](stages-5.md) | Stage 9 to Stage 10fr, in the order they were written |
+| [stages-6.md](stages-6.md) | Stage 10fs onward; continued as stages-5 approached 350 KB |
 
 New stage notes go at the end of the newest `stages-N.md` (start a new file
 when one passes ~350 KB).

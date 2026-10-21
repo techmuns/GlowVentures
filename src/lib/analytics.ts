@@ -1070,6 +1070,11 @@ export const isPriced = (p: Position): p is PricedPosition =>
   && typeof p.unrealizedPnL === "number" && Number.isFinite(p.unrealizedPnL)
   && typeof p.returnPct === "number" && Number.isFinite(p.returnPct);
 
+/** Costed FIFO inputs include known-cost holdings whose proceeds are unverified. */
+export const isCostedForFifo = (p: Position): p is Position & { costBasis: number; unrealizedPnL: number } =>
+  !p.costUnavailable && typeof p.costBasis === "number" && Number.isFinite(p.costBasis) && p.costBasis > 0
+  && typeof p.unrealizedPnL === "number" && Number.isFinite(p.unrealizedPnL);
+
 /** The positions a cost-based figure cannot cover, for naming them on screen. */
 export const unpriced = (positions: Position[]) => positions.filter((p) => !isPriced(p));
 
@@ -1100,11 +1105,11 @@ export type Bucket = {
 export function bucketBy(positions: Position[], keyFn: (p: Position) => string): Bucket[] {
   const m = new Map<string, {
     mv: number; costs: (number | null)[]; pnls: (number | null)[]; count: number; withoutCost: number;
-    realised: number; deployed: (number | null)[];
+    realised: number; deployed: (number | null)[]; unverifiedReturn: boolean;
   }>();
   for (const p of positions) {
     const k = keyFn(p);
-    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0, realised: 0, deployed: [] };
+    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0, realised: 0, deployed: [], unverifiedReturn: false };
     c.mv += p.marketValue;
     c.costs.push(p.costBasis);
     c.pnls.push(p.unrealizedPnL);
@@ -1115,6 +1120,7 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
     // either, so leaving its realised out keeps the two on one set. A line HELD
     // AT COST (Stage 10dh) is in the cost and in no gain, so it stays out of
     // the capital deployed too: in it, it would blend a 0% nobody measured.
+    if (p.hprUnavailableReason) c.unverifiedReturn = true;
     if (strikesGain(p)) {
       if (typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL)) c.realised += p.realizedPnL;
       // …and the dividends it paid, which are what it earned too (Stage 10fb).
@@ -1143,7 +1149,7 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
         // — not 0, which reads as "this bucket broke even". A caller that can
         // see WHOLE mandates strikes them on their capital instead
         // (`src/lib/fifo.ts`); this roll-up has no account registry to do so.
-        returnPct: deployed !== null && pnl !== null && deployed > 0 ? ((pnl + v.realised) / deployed) * 100 : null,
+        returnPct: !v.unverifiedReturn && deployed !== null && pnl !== null && deployed > 0 ? ((pnl + v.realised) / deployed) * 100 : null,
         weight: total > 0 ? v.mv / total : 0,
       };
     })
@@ -1315,6 +1321,7 @@ export const MIXED_VALUE_DATES =
  * an unknown window is not a weaker figure, it is not a figure.
  */
 export type Holdable = {
+  hprUnavailableReason?: string;
   returnPct: number | null;
   heldSince: string | null;
   /** The date the value behind `returnPct` is struck at (`valueDateOf`); `null`
@@ -1325,6 +1332,7 @@ export type Holdable = {
 
 export function holdingReturn(p: Holdable, mode: ReturnMode, asOf: string): HoldingReturn {
   const pct = p.returnPct;
+  if (p.hprUnavailableReason) return { kind: "absent", reason: p.hprUnavailableReason };
   const end = windowEnd(p, asOf);
   const heldDays = p.heldSince && end ? daysBetween(p.heldSince, end) : null;
   if (pct === null || pct === undefined) {
@@ -1512,6 +1520,8 @@ export const isFixedIncome = (assetClass: string | null | undefined) => assetCla
  * `costNA` is the depository case — a value but no cost, so no return at all.
  */
 export type ReturnInput = {
+  hprUnavailableReason?: string;
+  fifo?: { hprUnavailableReason?: string } | null;
   returnPct: number | null;
   heldSince: string | null;
   assetClass: string | null | undefined;
@@ -1593,7 +1603,7 @@ const NIL_LINE_RETURN =
   "this line holds nothing: its statement reports a nil balance at a cost of ₹0, so there is no gain and nothing to divide one by";
 const isNilLine = (p: ReturnInput): boolean => !p.costNA && p.costBasis === 0 && (p.marketValue ?? 0) === 0;
 /** Why a return is absent where no cost stands behind it — the cause that is true of THIS row. */
-const noCostReasonOf = (p: ReturnInput): string => isNilLine(p) ? NIL_LINE_RETURN : NO_COST_RETURN;
+const noCostReasonOf = (p: ReturnInput): string => p.hprUnavailableReason ?? p.fifo?.hprUnavailableReason ?? (isNilLine(p) ? NIL_LINE_RETURN : NO_COST_RETURN);
 /**
  * "This row is one whole account" — the fact an undated whole-account row's
  * return states in the methodology's note and in the CAGR column's refusal
@@ -1648,6 +1658,8 @@ function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>
  * `cagr` delegate to `holdingReturn` so the annualisation guard is defined once.
  */
 export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: string): MeasuredReturn {
+  const unavailable = p.hprUnavailableReason ?? p.fifo?.hprUnavailableReason;
+  if (unavailable && (measure === "absolute" || !p.capital?.dated)) return { shown: false, tag: returnMeasureDef(measure).tag, reason: unavailable };
   if (p.measuredNA) return { shown: false, tag: returnMeasureDef(measure).tag, reason: DERIVED_ONLY_RETURN };
   if (p.valuedAtCost) return { shown: false, tag: returnMeasureDef(measure).tag, reason: AT_COST_RETURN };
   const noCost = !!p.costNA || p.returnPct === null || p.returnPct === undefined;

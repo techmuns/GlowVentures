@@ -63,6 +63,7 @@ import { fifoReturnPct } from "../../shared/fifo.mjs";
 export { fifoReturnPct };
 
 export type FifoTotals = {
+  hprUnavailableReason?: string;
   /** Σ market value over the set. */
   marketValue: number;
   /** Σ cost of the units still held, over the holdings that report one. */
@@ -203,6 +204,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
   let costHeld: number | null = null, unrealised: number | null = null;
   let realised: number | null = null, deployed: number | null = null, invested: number | null = null;
   let income: number | null = null;
+  let unverifiedReturn = false;
   let wholeCostHeld = 0, wholeContributed = 0, wholeWithdrawn = 0;
   const add = (a: number | null, b: number) => (a ?? 0) + b;
 
@@ -233,6 +235,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
       continue;
     }
     if (!costed(p)) { uncostedValue += p.marketValue; uncosted += 1; continue; }
+    if (p.hprUnavailableReason) unverifiedReturn = true;
     const c = p.costBasis as number;
     costHeld = add(costHeld, c);
     invested = add(invested, c);
@@ -255,12 +258,14 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     wholeWithdrawn += cap.withdrawn;
   }
 
-  const gain = unrealised === null && realised === null && income === null ? null
+  if (unverifiedReturn) realised = null;
+  const gain = unverifiedReturn || (unrealised === null && realised === null && income === null) ? null
     : (unrealised ?? 0) + (realised ?? 0) + (income ?? 0);
   const covers = costCoversSet(marketValue, uncostedValue + atCostValue) || (marketValue === 0 && isNum(deployed) && deployed > 0);
   const returnPct = covers && gain !== null && isNum(deployed) && deployed > 0 ? (gain / deployed) * 100 : null;
   return {
     marketValue, costHeld, unrealised, realised, income, deployed, invested, gain, returnPct,
+    ...(unverifiedReturn ? { hprUnavailableReason: [...new Set(set.filter(p => !whole.has(p.accountId)).map(p => p.hprUnavailableReason).filter(Boolean))].join("; ") } : {}),
     wholeCostHeld, wholeContributed, wholeWithdrawn,
     uncostedValue, uncosted, atCostValue, atCost, realisedCovered, holdings: set.length, wholeMandates: [...whole].sort(),
   };
@@ -439,7 +444,8 @@ export function realisedBasisNote(
 }
 
 /** Why a holding's realised cell is empty, in the book's own terms. */
-export function realisedReason(p: Pick<Position, "realizedPnL" | "realizedLotsAfter"> & { review?: boolean }): string {
+export function realisedReason(p: Pick<Position, "realizedPnL" | "realizedLotsAfter" | "hprUnavailableReason"> & { review?: boolean }): string {
+  if (p.hprUnavailableReason) return p.hprUnavailableReason;
   if (p.realizedLotsAfter) {
     return `${p.realizedLotsAfter} sale(s) of this holding came after its statement's date, so those units are still in it at that statement's mark — the gain is on the capital gain statement and is not added here`;
   }
@@ -452,4 +458,4 @@ export function realisedReason(p: Pick<Position, "realizedPnL" | "realizedLotsAf
 
 /** Convenience for one holding: its own FIFO return, recomputed from its fields. */
 export const positionFifoReturn = (p: Position): number | null =>
-  costed(p) && !atCostLine(p) ? fifoReturnPct(p.marketValue, p.costBasis, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived) : null;
+  costed(p) && !atCostLine(p) && !p.hprUnavailableReason ? fifoReturnPct(p.marketValue, p.costBasis, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived) : null;
