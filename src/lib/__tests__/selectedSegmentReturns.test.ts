@@ -60,6 +60,8 @@ for (const period of ['fytd', 'mtd', 'ytd', 'y1', 'y2', 'y3'] as const) {
  snapshots.push({ period, accounts: baseline.accounts, gain: baseline.total.gain, return: baseline.total.returnPct });
  for (const axis of SEGMENT_AXES) {
    const a = selectedSegmentReturns(current, left, BOOK_ACCOUNTS, axis, selection, () => 'Sector');
+   for (const p of current) assert.ok(a.total.units.some(u => u.positions.some(x => x.accountId === p.accountId && x.securityKey === p.securityKey))
+     || a.total.missing.some(g => g.accountId === p.accountId && (!g.securityKey || g.securityKey === p.securityKey)), 'every displayed holding is covered or explained');
    assert.equal(a.total.gain, baseline.total.gain); assert.equal(a.total.returnPct, baseline.total.returnPct);
    near(a.rows.reduce((s,r) => s + r.value, 0), a.total.value, 1);
    if (a.total.gain != null) near(a.rows.reduce((s,r) => s + (r.gain ?? 0), 0), a.total.gain, 1);
@@ -77,3 +79,18 @@ assert.equal(quoted.total.missing.length, 1); near(quoted.closingValue, 120);
 
 assert.match(returnGapText('Opening valuation and complete dated cash flows are missing', '2026-03-31'), /worth at the start.*money added and taken out/);
 assert.match(returnGapText("the family's review values its lines on one date, so no window can be struck over it", '2026-03-31'), /value at the start and end/);
+
+// A return-bearing exit cannot disappear from an account's segment decision.
+const mixedExit = selectedSegmentReturns([pos()], [exit], [acct('a')], 'security', { ...sel, excluded: [] });
+near(mixedExit.rows.find(r => r.key === UNSPLIT_RETURNS)!.gain, 50);
+assert.equal(mixedExit.rows.find(r => r.key === 'one')!.gain, null);
+const mixedSectorExit = selectedSegmentReturns([pos()], [exit], [acct('a')], 'sector', { ...sel, excluded: [] }, key => key === 'one' ? 'Technology' : 'Financials');
+near(mixedSectorExit.rows.find(r => r.key === UNSPLIT_RETURNS)!.gain, 50);
+// Live-only lines still count in display value and must be named among gaps.
+for (const inception of [false, true]) {
+ const outside = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, inception, type: 'xirr', excluded: [],
+   outside: [{ accountId: 'b', label: 'Custody b', reason: 'no statement in this book values this account' }] });
+ assert.ok(outside.total.missing.some(g => g.accountId === 'b' && g.securityKey === 'two'));
+ assert.match(returnGapText(outside.total.missing.find(g => g.accountId === 'b')!.reason, sel.start), /worth at the start/);
+}
+assert.match(returnGapText('it held nothing across the window', sel.start), /outside this period/);

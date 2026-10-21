@@ -279,6 +279,7 @@ export default function PortfolioReturns() {
           hidden={view !== "attribution"} tabIndex={0} className="shrink-0" data-returns-panel="attribution">
           <SegmentReturns period={period} selection={{ inception: period === "inception", type: rtype, start, end,
             windows: win?.included ?? [], inceptionRows: inception.rows,
+            outside: period === "inception" ? inputs.filter(i => i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: i.outside! })) : win?.outside ?? [],
             excluded: period === "inception" ? inception.skipped : win?.excluded ?? (inputs.filter(i => !i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: "Choose an opening date before the closing date." }))),
           }} />
         </div>

@@ -13,10 +13,11 @@ export type SelectedLine = { key: string; label: string; positions: readonly Pos
   units: ReturnUnit[]; missing: ReturnGap[]; measured: Measured | null; gain: number | null;
   invested: number | null; returnPct: number | null; contribution: number | null; children: SelectedLine[] };
 export type ReturnSelection = { inception: boolean; type: ReturnType; start: string | null; end: string | null;
-  windows: AccountWindow[]; inceptionRows: InceptionRow[]; excluded: ReturnGap[] };
+  windows: AccountWindow[]; inceptionRows: InceptionRow[]; excluded: ReturnGap[]; outside?: ReturnGap[] };
 export const UNSPLIT_RETURNS = '__account_returns';
 
-const carries = (p: Position) => p.marketValue !== 0 || (p.costBasis ?? 0) !== 0;
+const carries = (p: Position) => p.marketValue !== 0 || (p.costBasis ?? 0) !== 0
+  || (p.costOfUnitsSold ?? 0) !== 0 || (p.realizedPnL ?? 0) !== 0 || (p.dividendReceived ?? 0) !== 0;
 const holdingKey = (p: Position) => `${p.accountId}|${p.securityKey}`;
 const sourceLabel = (a: Account | undefined) => a ? `${a.owner} · ${a.provider} · account ${a.accountNo}` : 'Statement source unavailable';
 
@@ -64,7 +65,7 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
         : p.hprUnavailableReason ?? 'A live price is available, but a verified purchase-cost and statement valuation record is needed to calculate this holding’s gain.' });
   }
   else {
-    missing = selection.excluded;
+    missing = [...selection.excluded];
     units = selection.inception ? selection.inceptionRows.map(r => {
       // Review holder rows are independently dated investments, not whole accounts.
       const a = accounts.find(a => r.accountId === a.accountId || r.accountId.startsWith(`${a.accountId}|`));
@@ -74,6 +75,17 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
     }) : selection.windows.map(r => ({ key: r.accountId, accountId: r.accountId, label: `${r.owner} · ${r.label}`,
       positions: [...current, ...exited].filter(p => p.accountId === r.accountId), gain: r.gain,
       invested: r.openValue + r.capitalIn, close: r.closeValue, from: r.openDate, to: r.closeDate, window: r }));
+  }
+  // The display book can also contain live-only custody lines, absent from
+  // the statement return book. Every uncovered displayed holding needs an
+  // explanation, including accounts called "outside" by that statement book.
+  const covered = new Set(units.flatMap(u => u.positions.map(holdingKey)));
+  for (const p of current) {
+    if (covered.has(holdingKey(p)) || missing.some(g => g.accountId === p.accountId && (!g.securityKey || g.securityKey === p.securityKey))) continue;
+    const outside = selection.outside?.find(g => g.accountId === p.accountId);
+    const nil = outside && /nil throughout|held nothing|no invested capital|balance is nil/i.test(outside.reason);
+    missing.push({ accountId: p.accountId, securityKey: p.securityKey, label: `${p.security} · ${sourceLabel(idx.get(p.accountId))}`, value: p.marketValue,
+      reason: outside && nil ? outside.reason : `No verified opening value and complete dated capital record for these dates.${outside ? ` ${outside.reason}` : ''}` });
   }
   const measure = (us: ReturnUnit[]): Measured | null => {
     if (!us.length) return null;
@@ -126,7 +138,6 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
   }
   rows.sort((a, b) => a.key === UNSPLIT_RETURNS ? 1 : b.key === UNSPLIT_RETURNS ? -1 : (b.gain ?? -Infinity) - (a.gain ?? -Infinity) || b.value - a.value);
   const total = line('total', 'Total · available data', current, units, missing);
-  const covered = new Set(units.flatMap(u => u.positions.map(holdingKey)));
   return { rows, total, coveredHoldings: current.filter(p => covered.has(holdingKey(p))).length,
     coveredValue: current.filter(p => covered.has(holdingKey(p))).reduce((s, p) => s + p.marketValue, 0),
     closingValue: units.reduce((s, u) => s + u.close, 0), accounts: new Set(units.map(u => u.accountId)).size, denominator };
@@ -136,6 +147,7 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
 export function returnGapText(reason: string, start: string | null): string {
   if (/purchase or sale/.test(reason)) return 'The purchase or sale record is incomplete. We need all purchase costs and sale amounts before this holding can be included.';
   if (/Only the purchase|purchase cost/.test(reason)) return reason;
+  if (/nil throughout|held nothing|no invested capital|balance is nil/i.test(reason)) return 'This account had no money invested during the selected dates. Its current holdings are outside this period.';
   if (/review values.*one date/i.test(reason)) return 'The review shows a value for only one day. We need its value at the start and end of this period, plus dated money added or taken out.';
   if (/no statement values it on or before|record opens on|days earlier|no.*opening|opening value|opening valuation/i.test(reason))
     return `We need a statement showing what this account was worth at the start${start ? ` (${start})` : ''}, plus dated money added and taken out through a later statement.`;

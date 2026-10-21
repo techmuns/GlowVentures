@@ -83,7 +83,7 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
         <div data-attribution-missing>
           <p className="font-semibold text-slate-100">What is missing?</p>
           {l.missing.length ? <>
-            <p className="mt-1">These records are left out of this figure. They are not counted as zero.</p>
+            <p className="mt-1">These holdings are left out of this figure. Each item explains why and which records are needed.</p>
             <ul className="mt-3 space-y-3">{l.missing.map((g, i) => <li key={`${g.label}|${i}`} data-return-gap={g.accountId}>
               <p className="font-medium text-slate-100">{g.label}</p>
               <p className="text-xs text-slate-400">{(() => { const source = statementPortfolio?.accounts.find(a => a.accountId === g.accountId); return source ? `${source.owner} · ${source.provider} · account ${source.accountNo} · statement ${fmtDate(source.asOf)} · ` : ''; })()}{g.value != null ? `${money(g.value)} · ` : ''}{returnGapText(g.reason, selection.start)}</p>
