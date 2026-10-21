@@ -23618,7 +23618,27 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-09-30",
       "latestValue": 12528737.43,
       "bookValue": 14580413,
-      "flowBasis": "units-unchanged"
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-05-31",
+          "to": "2026-06-30",
+          "basis": "units-unchanged",
+          "net": 0
+        },
+        {
+          "from": "2026-06-30",
+          "to": "2026-07-31",
+          "basis": "units-unchanged",
+          "net": 0
+        },
+        {
+          "from": "2026-07-31",
+          "to": "2026-09-30",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "360-one-private-wealth-60117",
@@ -23627,7 +23647,21 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-09-30",
       "latestValue": 12528737.43,
       "bookValue": 14580412.51,
-      "flowBasis": "units-unchanged"
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-05-31",
+          "to": "2026-06-30",
+          "basis": "units-unchanged",
+          "net": 0
+        },
+        {
+          "from": "2026-06-30",
+          "to": "2026-09-30",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "aditya-birla-sun-life-mutual-fund-1019265797",
@@ -23636,7 +23670,21 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-10-06",
       "latestValue": 777166.73,
       "bookValue": 777166.73,
-      "flowBasis": "unreported"
+      "flowBasis": "unreported",
+      "steps": [
+        {
+          "from": "2026-07-01",
+          "to": "2026-08-03",
+          "basis": "unproven",
+          "net": null
+        },
+        {
+          "from": "2026-08-03",
+          "to": "2026-10-06",
+          "basis": "unproven",
+          "net": null
+        }
+      ]
     },
     {
       "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
@@ -23645,7 +23693,15 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-08-03",
       "latestValue": 798563.95,
       "bookValue": 798563.95,
-      "flowBasis": "units-unchanged"
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-07-01",
+          "to": "2026-08-03",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "buoyant-capital-103472",
@@ -23654,7 +23710,27 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-09-30",
       "latestValue": 269970617.52,
       "bookValue": 269970617.52,
-      "flowBasis": "unreported"
+      "flowBasis": "unreported",
+      "steps": [
+        {
+          "from": "2026-07-31",
+          "to": "2026-08-31",
+          "basis": "unproven",
+          "net": null
+        },
+        {
+          "from": "2026-08-31",
+          "to": "2026-09-29",
+          "basis": "units-unchanged",
+          "net": 0
+        },
+        {
+          "from": "2026-09-29",
+          "to": "2026-09-30",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "buoyant-capital-103473",
@@ -23663,7 +23739,27 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-09-30",
       "latestValue": 480677231.99,
       "bookValue": 480677231.99,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-07-31",
+          "to": "2026-08-31",
+          "basis": "dated-record",
+          "net": 0
+        },
+        {
+          "from": "2026-08-31",
+          "to": "2026-09-29",
+          "basis": "units-unchanged",
+          "net": 0
+        },
+        {
+          "from": "2026-09-29",
+          "to": "2026-09-30",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
@@ -23672,7 +23768,33 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-10-07",
       "latestValue": 385169845.54,
       "bookValue": 381629575.81,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-03-31",
+          "to": "2026-07-10",
+          "basis": "printed-totals",
+          "net": -109782
+        },
+        {
+          "from": "2026-07-10",
+          "to": "2026-08-10",
+          "basis": "printed-totals",
+          "net": -30690
+        },
+        {
+          "from": "2026-08-10",
+          "to": "2026-09-30",
+          "basis": "dated-record",
+          "net": -37379
+        },
+        {
+          "from": "2026-09-30",
+          "to": "2026-10-07",
+          "basis": "dated-record",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "goldstandard-wealth-private-limited-100022",
@@ -23681,7 +23803,27 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-10-06",
       "latestValue": 76718509.44,
       "bookValue": 76718509.44,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-03-31",
+          "to": "2026-07-10",
+          "basis": "printed-totals",
+          "net": -9844
+        },
+        {
+          "from": "2026-07-10",
+          "to": "2026-08-11",
+          "basis": "printed-totals",
+          "net": -19100
+        },
+        {
+          "from": "2026-08-11",
+          "to": "2026-10-06",
+          "basis": "printed-totals",
+          "net": -18265
+        }
+      ]
     },
     {
       "accountId": "goldstandard-wealth-private-limited-100023",
@@ -23690,7 +23832,27 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-10-06",
       "latestValue": 180331134.41,
       "bookValue": 180331134.41,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-03-31",
+          "to": "2026-07-10",
+          "basis": "printed-totals",
+          "net": -22975
+        },
+        {
+          "from": "2026-07-10",
+          "to": "2026-08-11",
+          "basis": "printed-totals",
+          "net": -46635
+        },
+        {
+          "from": "2026-08-11",
+          "to": "2026-10-06",
+          "basis": "printed-totals",
+          "net": -51740
+        }
+      ]
     },
     {
       "accountId": "green-lantern-capital-llp-510854",
@@ -23699,7 +23861,21 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-07-27",
       "latestValue": 57966679.22,
       "bookValue": 57966679.22,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-03-31",
+          "to": "2026-06-25",
+          "basis": "dated-record",
+          "net": -13645
+        },
+        {
+          "from": "2026-06-25",
+          "to": "2026-07-27",
+          "basis": "printed-totals",
+          "net": -3209
+        }
+      ]
     },
     {
       "accountId": "green-lantern-capital-llp-510861",
@@ -23708,7 +23884,27 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-07-27",
       "latestValue": 114484083.55,
       "bookValue": 114484083.55,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-03-31",
+          "to": "2026-06-25",
+          "basis": "dated-record",
+          "net": -27093
+        },
+        {
+          "from": "2026-06-25",
+          "to": "2026-06-30",
+          "basis": "dated-record",
+          "net": 0
+        },
+        {
+          "from": "2026-06-30",
+          "to": "2026-07-27",
+          "basis": "dated-record",
+          "net": -6350
+        }
+      ]
     },
     {
       "accountId": "hdfc-mutual-fund-16180583",
@@ -23717,7 +23913,21 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-10-05",
       "latestValue": 0,
       "bookValue": 0,
-      "flowBasis": "units-unchanged"
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-07-01",
+          "to": "2026-08-06",
+          "basis": "units-unchanged",
+          "net": 0
+        },
+        {
+          "from": "2026-08-06",
+          "to": "2026-10-05",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "kotak-mahindra-mutual-fund-4295974",
@@ -23726,7 +23936,21 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-10-05",
       "latestValue": 784987.77,
       "bookValue": 784987.77,
-      "flowBasis": "unreported"
+      "flowBasis": "unreported",
+      "steps": [
+        {
+          "from": "2026-07-01",
+          "to": "2026-08-03",
+          "basis": "unproven",
+          "net": null
+        },
+        {
+          "from": "2026-08-03",
+          "to": "2026-10-05",
+          "basis": "unproven",
+          "net": null
+        }
+      ]
     },
     {
       "accountId": "mirae-asset-mutual-fund-70413280453",
@@ -23735,7 +23959,21 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-10-06",
       "latestValue": 950812.26,
       "bookValue": 950812.26,
-      "flowBasis": "units-unchanged"
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-07-02",
+          "to": "2026-08-06",
+          "basis": "units-unchanged",
+          "net": 0
+        },
+        {
+          "from": "2026-08-06",
+          "to": "2026-10-06",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "molecule-ventures-llp-7810404",
@@ -23744,7 +23982,15 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-07-31",
       "latestValue": 11597496.65,
       "bookValue": 11597496.65,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-06-30",
+          "to": "2026-07-31",
+          "basis": "printed-totals",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "motilal-oswal-founders-fund-90410016093",
@@ -23753,7 +23999,15 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-09-30",
       "latestValue": 111143737.78,
       "bookValue": 111143737.78,
-      "flowBasis": "units-unchanged"
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-07-31",
+          "to": "2026-09-30",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "motilal-oswal-founders-fund-90410016104",
@@ -23762,7 +24016,15 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-09-30",
       "latestValue": 220720561.83,
       "bookValue": 220720561.83,
-      "flowBasis": "units-unchanged"
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-07-31",
+          "to": "2026-09-30",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
     },
     {
       "accountId": "svan-investment-managers-llp-8710067",
@@ -23771,7 +24033,33 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-09-30",
       "latestValue": 162233697.32,
       "bookValue": 162233697.32,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-04-30",
+          "to": "2026-05-31",
+          "basis": "printed-totals",
+          "net": 0
+        },
+        {
+          "from": "2026-05-31",
+          "to": "2026-06-30",
+          "basis": "printed-totals",
+          "net": -986
+        },
+        {
+          "from": "2026-06-30",
+          "to": "2026-07-31",
+          "basis": "printed-totals",
+          "net": -14367
+        },
+        {
+          "from": "2026-07-31",
+          "to": "2026-09-30",
+          "basis": "dated-record",
+          "net": -37099.8
+        }
+      ]
     },
     {
       "accountId": "svan-investment-managers-llp-8710090",
@@ -23780,7 +24068,39 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-09-30",
       "latestValue": 107132060.02,
       "bookValue": 107132060.02,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-04-30",
+          "to": "2026-05-31",
+          "basis": "printed-totals",
+          "net": 0
+        },
+        {
+          "from": "2026-05-31",
+          "to": "2026-06-30",
+          "basis": "printed-totals",
+          "net": 0
+        },
+        {
+          "from": "2026-06-30",
+          "to": "2026-07-31",
+          "basis": "printed-totals",
+          "net": -8578
+        },
+        {
+          "from": "2026-07-31",
+          "to": "2026-08-31",
+          "basis": "dated-record",
+          "net": -14984.6
+        },
+        {
+          "from": "2026-08-31",
+          "to": "2026-09-30",
+          "basis": "printed-totals",
+          "net": -6526
+        }
+      ]
     },
     {
       "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -23789,7 +24109,27 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-10-07",
       "latestValue": 61099614.2,
       "bookValue": 61099614.2,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-03-31",
+          "to": "2026-07-06",
+          "basis": "printed-totals",
+          "net": -4990
+        },
+        {
+          "from": "2026-07-06",
+          "to": "2026-08-13",
+          "basis": "printed-totals",
+          "net": 0
+        },
+        {
+          "from": "2026-08-13",
+          "to": "2026-10-07",
+          "basis": "printed-totals",
+          "net": -18689
+        }
+      ]
     },
     {
       "accountId": "v-e-c-assago-capital-management-llp-128005",
@@ -23798,7 +24138,21 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-08-13",
       "latestValue": 202879639.73,
       "bookValue": 202879639.73,
-      "flowBasis": "reported"
+      "flowBasis": "reported",
+      "steps": [
+        {
+          "from": "2026-03-31",
+          "to": "2026-07-06",
+          "basis": "printed-totals",
+          "net": -2504
+        },
+        {
+          "from": "2026-07-06",
+          "to": "2026-08-13",
+          "basis": "printed-totals",
+          "net": 112393342
+        }
+      ]
     }
   ],
   "single": [
