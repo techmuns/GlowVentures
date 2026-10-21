@@ -4761,6 +4761,33 @@ cells just like the capital call cells."*
 - **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
 - `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.
 
+### Stage 10ex — THE SHARED STORE MOVES FROM CLOUDFLARE KV TO THE GITHUB REPOSITORY
+
+*"We will not store in Cloudflare. Instead, we should try to store it in GitHub."*
+— and, told the repository is public, *"it is ok to store in github still"*.
+
+- **`shared/dashboardStore.mjs`**: everything typed on the dashboard (capital
+  calls, strategy / description, tile layouts) is one JSON file,
+  `store/dashboard-store.json`, on its own `dashboard-store` branch. It is created
+  on the first save as one parentless commit, so it never carries a copy of the
+  site. Every save is one commit marked `[skip ci]` (no CI, no site build) and
+  never touches `main`. The server reads the file through GitHub's API on every
+  request, so a save is visible to everyone at once.
+- **Same calls, new backend**: `list/get/put/delete` plus `flush()`, which commits a
+  request's changes once (a four-line legal-name row is one commit). A stale-sha
+  refusal (409/422) re-reads the file and lays this request's changes over the
+  other person's, so two saves at once both land.
+- **Switch-on**: a fine-grained token (Contents read/write on this repo only) as
+  the site secret `GLOW_GITHUB_TOKEN`; `GLOW_GITHUB_REPO` / `_BRANCH` / `_PATH`
+  override the defaults. `SWITCH_ON_STEPS` and the `private-market-calls-off`
+  probe name the secret; `GLOW_STORE` is gone from code.
+- **Public**: the repository is public, so everything saved there can be read by
+  anyone, whatever the dashboard password.
+- `dashboardStore.test.ts` drives a fake GitHub: branch creation, one commit per
+  request, two concurrent saves, read-after-write, the Functions end to end.
+  `private-market-calls` fails 7 walk checks identically on main before 10ev
+  (pre-existing, not this change).
+
 ### Stage 10ey — PRIVATE MARKET: DATE OF INVESTMENT
 
 *"date of investment is missing from the table in private markets page, add column to show that"*
