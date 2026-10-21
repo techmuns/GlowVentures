@@ -1,5 +1,6 @@
 import { lazy, Suspense, useSyncExternalStore } from "react";
 import { deploymentChanged, subscribeToDeployment } from "@/lib/deploymentVersion";
+import { publicationRefreshBlocked } from "../shared/publicationRefresh.mjs";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { BOOK_POLYCAB } from "@/data/glowData";
 import { Sidebar } from "@/components/Sidebar";
@@ -14,6 +15,7 @@ const MorningCIO = lazy(() => import("@/pages/MorningCIO").then((m) => ({ defaul
 const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.Polycab })));
 const PortfolioMonitor = lazy(() => import("@/pages/PortfolioMonitor").then((m) => ({ default: m.PortfolioMonitor })));
 const PrivateMarket = lazy(() => import("@/pages/PrivateMarket").then((m) => ({ default: m.PrivateMarket })));
+const RealEstate = lazy(() => import("@/pages/RealEstate").then((m) => ({ default: m.RealEstate })));
 const FamilyEntities = lazy(() => import("@/pages/FamilyEntities").then((m) => ({ default: m.FamilyEntities })));
 const SectorComposition = lazy(() => import("@/pages/SectorComposition").then((m) => ({ default: m.SectorComposition })));
 const CapitalGains = lazy(() => import("@/pages/CapitalGains").then((m) => ({ default: m.CapitalGains })));
@@ -115,7 +117,7 @@ function StockRoute() {
 
 export default function App() {
   const updated = useSyncExternalStore(subscribeToDeployment, deploymentChanged);
-  if (updated) return <div role="alert" className="flex h-full items-center justify-center bg-ink-950 p-6 text-slate-200">
+  if (updated && !publicationRefreshBlocked()) return <div role="alert" className="flex h-full items-center justify-center bg-ink-950 p-6 text-slate-200">
     <div className="max-w-md rounded-lg border border-ink-700 bg-ink-900 p-6">
       <h1 className="text-lg font-semibold">A new dashboard version is ready</h1>
       <p className="mt-2 text-sm text-slate-400">Reload to continue with the latest portfolio data. Your saved preferences will be kept.</p>
@@ -158,6 +160,7 @@ export default function App() {
                 fund-of-funds tracker removed at Stage 10f. See the note on the
                 redirects below, and the header of PrivateMarket.tsx. */}
             <Route path="/private-market" element={<Gate><PrivateMarket /></Gate>} />
+            <Route path="/real-estate" element={<RealEstate />} />
             {/* Keyed by securityKey, not ISIN: several providers in this book print
                 no ISIN at all, so a route keyed on one would have no address for
                 most of the holdings. */}

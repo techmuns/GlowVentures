@@ -236,6 +236,10 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
   const fencedAccounts = [...new Set(BOOK_POLYCAB.map((p) => p.accountId))]
     .map((id) => accts.get(id)).filter((a): a is Account => !!a);
   const fencedAsOf = [...new Set(fencedAccounts.map((a) => a.asOf).filter(Boolean))].sort();
+  // A demat whose statement prints quantities only values none of its shares
+  // (Stage 10gk): the value is the valued demats', and the others are named.
+  const fencedValued = BOOK_POLYCAB.filter((p): p is typeof p & { marketValue: number } => typeof p.marketValue === "number");
+  const fencedUnvalued = fencedAccounts.filter((a) => !fencedValued.some((p) => p.accountId === a.accountId));
 
   return [
     {
@@ -627,9 +631,11 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
         security: BOOK_POLYCAB[0]?.security ?? null,
         isin: BOOK_POLYCAB[0]?.isin ?? null,
         shares: BOOK_POLYCAB.length ? totalQuantity(BOOK_POLYCAB) : null,
-        valueCr: BOOK_POLYCAB.length ? cr(sum(BOOK_POLYCAB.map((p) => p.marketValue))) : null,
+        valueCr: fencedValued.length ? cr(sum(fencedValued.map((p) => p.marketValue))) : null,
         valueBasis: "the depository statement's own value column (an NSDL statement prints no rate, so its mark is value ÷"
-          + ` units) — the statement's mark${fencedAsOf.length === 1 ? ` as of ${fencedAsOf[0]}` : ""}, not today's price`,
+          + ` units) — the statement's mark${fencedAsOf.length === 1 ? ` as of ${fencedAsOf[0]}` : ""}, not today's price`
+          + (fencedUnvalued.length ? `. It values ${fencedValued.length} of the ${fencedAccounts.length} demats: `
+            + `${fencedUnvalued.map((a) => `${a.owner}'s ${a.provider} ${a.accountNo}`).join(", ")} prints quantities only, so its shares are in \`shares\` and in no value` : ""),
         statementAsOf: fencedAsOf.length === 1 ? fencedAsOf[0] : fencedAsOf.length ? fencedAsOf : null,
         heldIn: fencedAccounts.map((a) => ({ owner: a.owner, provider: a.provider, accountNo: a.accountNo, statementAsOf: a.asOf })),
         scope: "What the statement(s) above report, for those account(s) only.",

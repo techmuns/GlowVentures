@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "test:real-estate": "node scripts/dev/test-real-estate.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
@@ -28,6 +29,12 @@
     "replay:dedupe": "node scripts/replay-dedupe.mjs",
     "coverage:source": "node scripts/source-coverage.mjs",
     "check:reads": "node scripts/check-reads.mjs",
+    "test:statements": "node --test scripts/ingest/__tests__/publication.test.mjs",
+    "statements:verify": "node scripts/ingest/verify-publication.mjs",
+    "statements:verify-book": "node scripts/ingest/verify-book.mjs",
+    "statements:prepare": "node scripts/ingest/prepare-delivery.mjs",
+    "statements:publish": "node scripts/ingest/publish-delivery.mjs",
+    "statements:finalize": "node scripts/ingest/finalize-delivery.mjs",
     "check:pages": "node scripts/check-pages.mjs",
     "check:columns": "node scripts/check-columns.mjs",
     "dev:mock-quotes": "node scripts/dev/mock-quotes.mjs",
@@ -52,6 +59,7 @@
   },
   "dependencies": {
     "exceljs": "^4.4.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.452.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -60,6 +68,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^22.7.5",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",

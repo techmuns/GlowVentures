@@ -1,3 +1,5 @@
+import { useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -457,13 +459,15 @@ export function PrivateMarket() {
    */
   const { statementPortfolio: portfolio, portfolio: live, fmtFromBase, scope: memberScope } = usePortfolio();
   const [q, setQ] = useState("");
+  const exportingTable = useTableExporting();
   /**
    * WHICH TAB. In the URL like every other view in this app, so a tab is a link
    * a reader can send and the sweep can hold each one to the light rather than
    * guessing at a click. `useViewParam` keeps the default param-free.
    */
   const [view, setView] = useViewParam(BOOK_VIEWS, {}, "view");
-  const [show, setShow] = useViewParam(BOOK_SHOW, {}, "show");
+  const [showFilter, setShow] = useViewParam(BOOK_SHOW, {}, "show");
+  const show = useTableExportFilter(showFilter, "both");
   const shown = SHOW_SECTIONS[show];
   /** Open fund / member rows, keyed `<grouping>:<key>` so the two tabs keep their own. */
   const rows = useExpanded();
@@ -1272,7 +1276,7 @@ export function PrivateMarket() {
    * supplied line that went nowhere is named rather than dropped.
    */
   const profileMatch = matchProfiles(investmentIdentities(book.folios));
-  const groupMatches = (g: BookGroup) => !needle || g.label.toLowerCase().includes(needle)
+  const groupMatches = (g: BookGroup) => exportingTable || !needle || g.label.toLowerCase().includes(needle)
     || !!g.brand?.legal.some((l) => l.toLowerCase().includes(needle))
     || !!g.brand?.brands.some((b) => b.toLowerCase().includes(needle)) || g.folios.some((f) => folioText(f).includes(needle));
   const rowKey = (g: BookGroup) => `${grouping}:${g.key}`;
@@ -2043,12 +2047,12 @@ export function PrivateMarket() {
   };
 
   /** A section band — heading, marker, and the section's own totals in their columns. */
-  const renderSection = (id: BookSectionId) => {
+  const renderSection = (id: BookSectionId, exporting = false) => {
     const s = book.sections[id];
     if (!s.groups.length) return null;
     const copy = SECTION_COPY[id];
     const title = copy.title;
-    const open = sectionOpen(id);
+    const open = exporting || sectionOpen(id);
     // EACH ROW CARRIES ITS OWN RETURN RESOLVER before it is sorted, so the
     // return columns order the rows on the figure each one prints.
     const shown = sortRows(
@@ -2216,7 +2220,7 @@ export function PrivateMarket() {
 
   // ── THE TRANSACTIONS TAB ─────────────────────────────────────────────────────
   const callsShown = sortRows(
-    m.history.filter((c) => !needle || [c.fund, c.owner ?? "", c.label ?? ""].join(" ").toLowerCase().includes(needle)),
+    m.history.filter((c) => exportingTable || !needle || [c.fund, c.owner ?? "", c.label ?? ""].join(" ").toLowerCase().includes(needle)),
     callView.sort,
     {
       date: (c) => c.date,
@@ -2292,7 +2296,8 @@ export function PrivateMarket() {
 
         {(view === "funds" || view === "brands") && (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-[13px]" data-pm-table={view}>
+            <ExportableTable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}>
+              {allRows => <>
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
                   <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Legal name" : grouping === "brand" ? "Brand" : "Legal entity"}</SortHeader>
@@ -2357,7 +2362,7 @@ export function PrivateMarket() {
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
-                {shown.map((id) => <Fragment key={id}>{renderSection(id)}</Fragment>)}
+                {shown.map((id) => <Fragment key={id}>{renderSection(id, allRows)}</Fragment>)}
               </tbody>
               <tfoot>
                 {show === "both" && totalRow(book.privateTotal, "Private market total", {
@@ -2381,13 +2386,14 @@ export function PrivateMarket() {
                   },
                 })}
               </tfoot>
-            </table>
+              </>}
+            </ExportableTable>
           </div>
         )}
 
         {view === "transactions" && (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-[13px]" data-pm-table="transactions">
+            <ExportableTable exportName="Private Market — Transactions" className="min-w-full text-[13px]" data-pm-table="transactions">
               <thead className="border-b border-ink-700">
                 <Tr view={callView}>
                   <SortHeader col="date" view={callView} align="left">Date</SortHeader>
@@ -2429,12 +2435,12 @@ export function PrivateMarket() {
               </tbody>
               <tfoot>
                 <TrFoot view={callView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
-                  label={<>Total · {callsShown.length} calls{needle ? ` of ${m.history.length}` : ""}</>}
+                  label={<>Total · {callsShown.length} calls{needle && !exportingTable ? ` of ${m.history.length}` : ""}</>}
                   cells={{
                     amount: <td key="amount" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{moneyFull(sum(callsShown.map((c) => c.amount)))}</td>,
                   }} />
               </tfoot>
-            </table>
+            </ExportableTable>
           </div>
         )}
 

@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, Navigate, useParams } from "react-router-dom";
@@ -2014,7 +2015,7 @@ export function StockInfo() {
                 right={heldTabs || undefined}
                 pad={false}>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full whitespace-nowrap text-sm" data-held-table={heldTab}>
+                  <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-held-table={heldTab}>
                     <thead className="border-b border-ink-700">
                       <Tr view={posView}>
                         <SortHeader col="entity" view={posView} align="left">Entity</SortHeader>
@@ -2100,7 +2101,7 @@ export function StockInfo() {
                         ) : null}
                       </tfoot>
                     )}
-                  </table>
+                  </ExportableTable>
                 </div>
                 {/* CARRY BOTH, COUNT ONCE — and SAY SO where both are on screen.
                     Every row above is a statement as its issuer printed it, so a
@@ -2243,7 +2244,7 @@ export function StockInfo() {
                     </span>
                   </div>
                 ) : (
-                  <table className="min-w-full whitespace-nowrap text-sm">
+                  <ExportableTable className="min-w-full whitespace-nowrap text-sm">
                     <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
                       <Tr view={txnView}>
                         <SortHeader col="date" view={txnView} align="left">Date</SortHeader>
@@ -2275,7 +2276,7 @@ export function StockInfo() {
                         </Tr>
                       ))}
                     </tbody>
-                  </table>
+                  </ExportableTable>
                 )}
               </div>
             </Card>

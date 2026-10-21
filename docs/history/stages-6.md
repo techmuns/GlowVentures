@@ -87,6 +87,12 @@
 - `scripts/ingest/intake-uploads.mjs` drops byte-identical files (ZIP members too), files each new one under `source/uploads-<IST date>/<provider>/` by the classifier's issuer, runs inventory → extract → build-symbols (additions only) → build-book, coverage:source and check:reads (now `GLOW_CHECK_READS_JSON`), holds back exactly the file each finding names and reads again, then accounts-table, build, test:ingest and test:family (a gate failing on main too is not the upload's). Only what passes lands on main, in one commit; the outcome goes back to the inbox log. Held files show the gate's reason with Retry/Remove; a landed file reads Publishing until the redeployed manifest carries its documents.
 - Upload History is removed from the nav, search and routes; `/history` forwards to `/statements`, asserted in check:pages, which also strikes the one upload control (folder button) on the grid and none inside a folder. The library is open on an empty book. `pull-uploads.mjs` is retired.
 
+### Stage 10gb — SHOW WHICH SECTOR HOLDINGS HAVE NO PURCHASE COST
+
+- The sector return percentage and its N-of-M count open one readable card. It names every excluded stock, owner, provider, statement date and account, says whether the purchase cost is missing or unverified, and names the record needed. Holdings inside funds are explained separately from the account-holding count. The formula and included-holding list stay under an optional expansion.
+- The same card works on both sector views, the Morning CIO panel and Compare. It remains usable with live prices and on narrow screens; opening it does not also expand the sector row. The existing FIFO calculation and cost gate are unchanged.
+- Coverage tests distinguish the same stock in two accounts, absent versus unverified cost, recorded zero, unknown sources, and the actual unresolved Polycab statement. A built-app CI browser regression checks source identity, complete exclusion lists, light/dark mobile/desktop layouts, collapsed math, scrolling and keyboard dismissal/focus.
+
 ### Stage 10gc — EVERY FILE IN THE STATEMENT LIBRARY OPENS IN A PREVIEW WINDOW
 
 *"we should be able to open and see contents of every file in the dashboard itself, irrespective of the type of file it is … a small preview window"* — the family, 21 Oct 2026.
@@ -95,6 +101,19 @@
 - It reads `public/audit/<docKey>/pages.json`, the text the pipeline read and the archive already serves behind the gate, labelled "Text as read". No original file is published: copying `source/` into the build was considered and not done, pending the family's decision. `src/lib/statementPreview.ts` turns a sheet's tab-separated rows into cells and shows a stored double at 15 significant digits (`12.085000000000001` → `12.085`, stored text on hover). Whole numbers are never touched, because a 16-digit demat number would round into an account that does not exist.
 - A document with no text (the HDFC scan, the LKP mail-server removal notice) shows its own `document.json` warning through `AbsentSection`, never an empty window. Opened deliberately, a preview may name the ring-fenced holding (the family's email domain is on many statements), as Data Audit's raw page text does; no route opens one by default.
 - `test:family` suite `statement preview`: all 424 documents have `pages.json`, each with text or a stated reason, every spreadsheet lays out across columns, and the number clean-up leaves account numbers alone.
+
+### Stage 10gd — EXPORT EXCEL FROM EVERY TABLE
+
+- Every dashboard table, drilldown and document table uses the shared
+  `ExportableTable` control; existing full Portfolio Monitor and consolidated
+  workbook downloads remain available.
+- Exports include all matching scroll rows in the current sort and column
+  arrangement. The scroll batch, position, filters and open rows are preserved.
+- Saved Private Market Strategy/Description text is included without saving or
+  discarding drafts. Excel retains missing values, numeric currencies/percentages,
+  source precision where available, totals, links and multi-row headings.
+- Workbook round-trip and browser download checks cover full scroll collections,
+  saved profiles, source sheets and recovery after a failed download.
 
 ### Stage 10ge — THE NAV CHART IS THE WHOLE BOOK, STRUCK FROM THE DATED RECORD
 
@@ -105,3 +124,72 @@
 - **Two panels.** The return chains over the investments valued at both ends of each link. One joins at its first valuation in the window, or on its payment day when bought from nil inside it. A holding bought before 31 Mar and first valued later (Sanshi ×5, Buoyant ×2, Founders, NSE …) joins on that valuation. Lines the review holds at cost (76, ₹140.7 Cr) are in the NAV and never in the return. The NAV level carries everything, at cost until first valued.
 - **On the card:** the return is solid from 31 Jul 2026, when every valued investment is in it. Before that it is a lighter line, and no return is stated over it (Stage 10fc). The book reads −0.43% over 31 Jul → 7 Oct net of ₹49 Cr of capital (+5.81% with it). Only material capital is circled. The fold lists what joined later, what is held at cost, what has not been revalued since 31 Mar and what carries no value. The NAV ties to the statement book plus ₹61.4 L of valuations newer than the book's holdings statements. Return & Drawdown strikes its drawdown on the same series' whole-book segment. The statement series stays for its own uses, its per-step proofs now emitted (`BOOK_NAV_COVERAGE.covered[].steps`).
 - **Checks:** `test:family` suite `whole-book NAV series` (constructed books for each rule, and the real book's coverage, tie-out, capital dates and chain). `check:pages` builds the series with esbuild and re-derives the chain, the coverage partition and the NAV tie-out off `glowData.ts`. On the NAV routes its findings equal main's.
+
+### Stage 10gf — EXCEL INCLUDES HIDDEN COLUMNS AND COLLAPSED SECTIONS
+
+- Table exports include every available column in its saved arrangement,
+  including fields hidden through Edit Columns. Headers, values and totals
+  share the complete order without changing screen preferences.
+- All matching scroll rows remain included. Closed Portfolio Monitor and
+  Private Market sections also contribute their investment rows.
+- Browser checks hide columns, reopen the workbook, compare its complete
+  schema and verify that visibility and scroll state stay intact; a collapsed
+  Private Market section is exported without opening it on screen.
+
+### Stage 10gg — REAL ESTATE TABLE AND PROPERTY MAP
+
+- Real Estate sits directly below Private Market. The existing header, four configurable tiles, sortable/reorderable columns and column picker frame one register with Table and Map tabs. Both views share city/district, state, country, property type, status and search filters, and open the same property details and editor.
+- One record per property supports joint owners and their shares, Indian area units and area basis, acquisition cost, dated valuation, rental income and costs, loans, lease and title details. Displayed money follows recorded shares and the dashboard's member/currency selections. Unknown inputs remain absent; partial totals show coverage. These manually recorded assets do not enter the statement portfolio's totals.
+- `functions/api/real-estate.js` uses the existing authenticated GitHub dashboard store, one key per property, with bounded requests and same-origin writes. Saves are acknowledged after the store commits; a failed save retains the editor. Only confirmed coordinates are plotted. Co-located properties share a selectable pin; unpinned properties remain listed. Leaflet and attributed OpenStreetMap tiles need no paid API or new credentials.
+- `test:real-estate` covers ownership arithmetic, missing values, validation, CRUD and endpoint failure contracts. The localhost-only browser check uses the real handler and an in-memory store for creation, editing, persistence, filters, map/details parity, coincident pins, deletion, themes and mobile layout; CI runs it with the existing browser checks.
+
+### Stage 10gh — RETURN ATTRIBUTION FOLLOWS THE PERIOD AND SHOWS COVERED TOTALS
+
+- The period and return-type toolbar now drives the attribution table. Dated windows use the shared verified account inputs (including proven nil origins), opening market values and dated capital; Absolute uses Modified Dietz, XIRR uses dated flows, and CAGR keeps its history requirements. Since-investment Absolute includes all usable purchase-cost records and exits while excluding incomplete sales and missing valuations individually.
+- Total gain and return show the measurable subset, labelled “available data”, with the covered holding count and value. Separate i buttons beside gain and return explain the amount covered, actual statement dates, accounts used and the records still needed in plain English. Missing data is never zero. This is the family's explicit exception to the older whole-portfolio refusal on this table.
+- Whole-account returns that cannot be assigned to a stock/sector without inventing historical holding values stay in a named “Account returns without a holding split” row. Values, gains and Absolute contributions tie out across axes; XIRR/CAGR percentages are never added. Statement values keep live prices out of historical calculations. Account children identify the return's source.
+- Arithmetic regressions cover every period and axis on the real archive, distinct return measures, valid partial totals, missing costs/sales/valuations, whole mandates, exited holdings and unsplit accounts. Browser regression changes the actual toolbar and checks totals, info cards and narrow layouts.
+
+### Stage 10gi — VERIFIED STATEMENT PUBLICATION AND EXACT SOURCE ROWS
+
+- Added the backend contract for the upload worker: isolate extraction/builds, verify owner/account/security and format/field coverage, compare individual reconciliation findings with the verified base, retain source receipts, seal artifacts and publish an atomic Git tree through a codex PR. CI/review and deployment verification remain explicit gates; intake never directly mutates production or clears staged files.
+- The generated book retains the actual selected normalized holding pointer. Audit source links use it, and canonical data, per-field evidence and all reporting projections share one content-addressed revision. Quotes/NAVs retain independent instrument/value/time evidence. No dashboard layout changes.
+- Added format-mutation, identity, duplicate, reconciliation, stale-artifact, atomic Git/retry and merge-gate tests, plus an actual-book/source-row contract. See `docs/STATEMENT-PUBLICATION.md` for the teammate's handoff and the precise evidence/format limitations.
+- Integrated the teammate's actual intake runner: source identity/reconciliation gates and checksum receipts now precede PR publication. It starts on codex branches, retains inbox bytes while checks/review/deployment are pending, monitors exact document versions with authenticated GETs and requeues a stale candidate. Main is never committed/pushed/reset by intake; a failing baseline cannot waive required gates. Existing status/reason controls carry the lifecycle without a UI change.
+- A version listener replaces the whole browser application when a verified publication changes, retaining its URL/member scope. Uploads, folder reading and edits defer refresh, and a persisted guard stops reload loops. Controller tests and a built-app browser regression cover drafts, navigation and exact URL retention; no controls or layout were added.
+
+
+### Stage 10gj — EXCEL EXPORTS IGNORE DISPLAY FILTERS
+
+- Excel snapshots read the complete family dataset and bypass table search,
+  category, entity, side and date filters. Private Market includes funds and
+  companies regardless of its selector; consolidated/source searches also do
+  not constrain downloads. The Monitor's whole-book export follows the same rule.
+- Filters and saved preferences are never written by export. The synchronous
+  snapshot restores loaded row batches and scroll positions; scope-dependent
+  look-through and lot records are prepared before the snapshot.
+- Regression checks compare complete workbooks under no-match search, member,
+  sector, property location/type and Private Market type filters, and retain hidden-column, profile
+  draft, scroll, retry and source-precision coverage.
+
+### Stage 10gk — EVERY STATEMENT IS READ: A SCAN BY OCR, CHECKED BY THE PAGE; A REMOVAL NOTICE IS A STATEMENT THAT NEVER ARRIVED
+
+*"check and fix why these two files are unreadable, find the root cause and make sure no file in future is left unread and no data in any file should be dropped"* — the family, 21 Oct 2026.
+
+- **Bharat's HDFC NSDL statement (`august-2026-e/`) was refused by policy, not by necessity.** It is four photographed JPEG pages with no text layer, and a figure OCR'd off a photograph could not be checked. The page checks itself, though. Each row prints its quantity twice (Quantity and Total Balance, in two digit groupings), each ISIN carries a check digit, and the footers count the pages and close with `End of Report`.
+- **How it is read now.** `lib/scan.mjs` (tesseract.js 5.1.1, deskew, 2× enlargement, cleaned cell re-reads) and `providers/nsdlScan.mjs` read it. A row is published only when its two printings agree and its ISIN passes the check digit (`lib/isin.mjs` repairs OCR's letter/digit confusions, cheapest repair across the readings). One unchecked row refuses the whole document (`scan-not-verified`). A scan of any other layout is `scan-no-reader`.
+- **What it adds.** 38/38 rows match a person's reading. The account is DP IN301151, client 22025655, Bharat, 31 Mar 2026; pages 1–4 are present, scanned out of order.
+- **Names.** A scanned row takes the name its own depository prints for the ISIN on a text-layer statement (Ajay's ICICI NSDL). A row with no such statement takes the name every text statement printing the ISIN agrees on, and otherwise keeps OCR's words, named in `security-name-from-scan`. A scan's names never rename another statement's holdings. Lines are grouped by word centre, so a hyphen stays on its line. Height, not OCR confidence, keeps a word (`INDIA`, `AL`, `SANSHI` were dropped at confidence < 60).
+- **In the book.** It is a quantity-only custody account; the statement prints no rate. Polycab's 51,08,911 shares go to `BOOK_POLYCAB` (ring-fenced rows on an unvalued statement are now carried there, and `/polycab` shows `—` with the reason for a holder with no mark). Sanshi Class E is cross-referenced to the fund's own statement. Twelve private rows are counted under the review (`SUPERSEDED`): Everest Fleet ×2, Integris, Matrix Gas, Big Bang Boom, India SME, Sky Capital Hudle, 360 ONE, Karban, Zippmat ×3. Bharat's shares correct two witnesses: Matrix Gas is ₹4.5 Cr ÷ 1,12,500 = ₹400 a share, and Big Bang Boom is ₹6,30,000 a share. Left unjoined: Stay Vista (one row, two review lines), Procyon Star (refused: not Procyon Enterprise LLP) and Innoviti Technologies (refused).
+- **The LKP files (`october-2026-c/LKP EQUITY/`) never arrived.** The mail server replaced both `.xls` attachments (`519_…` capital gain, `666125807_…` transactions) with its 85-byte removal notice. The second was hidden as a byte duplicate of the first. Each notice is now its own document, `attachment-removed`, never deduped. `check:reads`, `coverage:source` and the Statement Library list both as **never arrived**: not passed, not failed. The fix is LKP re-sending them. `acceptedUnread.mjs` is empty.
+- **For future uploads.** The upload refuses a removal notice or a file that is not the format it claims (`shared/statementBytes.mjs`, 400 `NOT_A_STATEMENT` / `INVALID`). The intake holds an all-notice delivery as `not-a-statement`, lands the rest of a ZIP and names what never arrived, and reads a new scan (`GLOW_OCR=new`). CI carries scans forward (`GLOW_OCR=off`).
+- **Publication (Stage 10gg's verifier).** `lib/publication.mjs` now accepts three cases.
+  - A failed reading that published nothing may be replaced by another reading of the same source file. That is not `ARCHIVE_LOSS`.
+  - A never-arrived notice publishes no facts, so it is not a `READ_GAP`, `UNKNOWN_FORMAT`, `EMPTY_EXTRACTION` or content duplicate.
+  - `SECURITY_SPLIT` / `SECURITY_CONFLICT` fire on a pairing the verified book does not already carry. An AIF's units filed under the depository's name and under the fund's (`sanshi-trust-fd-i-cl-e-…` / `sanshi-fund-i-class-e`) are the reviewed state. Under the old `size !== 1` rule, no future NSDL or Motilal delivery carrying those ISINs could have been published.
+  - The intake carries a ZIP's `neverArrived` names through every publication stage (`withNotice`).
+- **Polycab.** `BOOK_POLYCAB` is `PolycabHolding[]`, a Position whose `marketValue` may be `null`. The type surfaced two misreads:
+  - `chatContext` summed the value as if Bharat's block were ₹0. It now values the demat that prints a value and names the one that does not.
+  - `sectorReturnCoverage.test` used the fenced row as a Position.
+  - The store (`build-polycab`) carries the book's 1,90,10,140 shares. The corporate-action capture was re-imported for Bharat's 21 new symbols, so the depository-share gate can rule on each.
+- **Checks.** `test:ingest` adds suite `scanRead` (ISIN repair, the two printings, bytes, refusals) and golden case HDFC 22025655 (ten quantities read off the page). `checkReads` gains never-arrived and scan-not-verified cases; `statementUploads` refuses a notice and a sign-in page saved as `.pdf`. `test:statements` adds the three publication cases.

@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { TableExportAllRows } from "./ExportableTable";
+import { isTableExporting } from "@/lib/tableExportSnapshot";
 
 /** Sorting, totals and exports use the full collection; scrolling only appends rows. */
 export function useInfiniteTable(total: number, resetKey: string, batchSize = 50) {
   const [state, setState] = useState({ key: resetKey, limit: batchSize });
-  if (state.key !== resetKey) setState({ key: resetKey, limit: batchSize });
-  const limit = state.key === resetKey ? state.limit : batchSize;
+  if (!isTableExporting() && state.key !== resetKey) setState({ key: resetKey, limit: batchSize });
+  const limit = isTableExporting() || state.key === resetKey ? state.limit : batchSize;
   const shown = Math.min(total, limit);
   const loadMore = useCallback(() => {
     setState(current => current.key === resetKey
@@ -16,11 +18,13 @@ export function useInfiniteTable(total: number, resetKey: string, batchSize = 50
 
 /** A full-width row is visible at any horizontal position in a wide table. */
 export function InfiniteTableEnd({ scroll, columns }: { scroll: ReturnType<typeof useInfiniteTable>; columns: number }) {
+  const allRows = useContext(TableExportAllRows);
   const end = useRef<HTMLTableRowElement>(null);
   const previousKey = useRef(scroll.resetKey);
   const { total, shown, hasMore, loadMore, resetKey } = scroll;
 
   useLayoutEffect(() => {
+    if (isTableExporting()) return;
     if (previousKey.current === resetKey) return;
     previousKey.current = resetKey;
     // Reset only this table's vertical scroll, keeping its horizontal position.
@@ -34,7 +38,7 @@ export function InfiniteTableEnd({ scroll, columns }: { scroll: ReturnType<typeo
 
   useEffect(() => {
     const target = end.current;
-    if (!hasMore || !target || typeof IntersectionObserver === "undefined") return;
+    if (allRows || !hasMore || !target || typeof IntersectionObserver === "undefined") return;
     let active = true;
     const observer = new IntersectionObserver(entries => {
       if (active && entries.some(entry => entry.isIntersecting)) {
@@ -45,8 +49,9 @@ export function InfiniteTableEnd({ scroll, columns }: { scroll: ReturnType<typeo
     }, { rootMargin: "0px 0px 200px 0px" });
     observer.observe(target);
     return () => { active = false; observer.disconnect(); };
-  }, [hasMore, shown, loadMore, resetKey]);
+  }, [allRows, hasMore, shown, loadMore, resetKey]);
 
+  if (allRows) return null;
   return <tr ref={end} data-table-scroll-end data-loaded-rows={shown} data-total-rows={total}>
     <td colSpan={columns} className="border-t border-ink-700 px-4 py-2 text-xs text-slate-500">
       <div className="sticky left-4 flex w-fit items-center gap-3">
@@ -61,9 +66,10 @@ export function InfiniteTableBody<T>({ rows, children, columns, resetKey, batchS
   rows: readonly T[]; children: (row: T, index: number) => ReactNode;
   columns: number; resetKey: string; batchSize?: number; className?: string; empty?: ReactNode;
 }) {
+  const allRows = useContext(TableExportAllRows);
   const scroll = useInfiniteTable(rows.length, resetKey, batchSize);
   return <tbody className={className} data-infinite-rows={rows.length}>
-    {rows.length ? rows.slice(0, scroll.shown).map(children) : empty}
+    {rows.length ? rows.slice(0, allRows ? rows.length : scroll.shown).map(children) : empty}
     <InfiniteTableEnd scroll={scroll} columns={columns} />
   </tbody>;
 }

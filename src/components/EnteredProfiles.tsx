@@ -51,7 +51,7 @@ export function ProfileCellInput({ cell, field, rowName, funds, entered, state, 
   };
 
   return (
-    <form onSubmit={save} data-pm-profile-form={field} data-pm-profile-funds={funds.join(" ")} className="min-w-0">
+    <form onSubmit={save} data-pm-profile-form={field} data-pm-profile-funds={funds.join(" ")} data-export-value={cell.value ?? "—"} className="min-w-0">
       <textarea value={draft ?? shown} rows={2} maxLength={2000} disabled={!writable || busy}
         aria-label={label} aria-invalid={error ? true : undefined} title={title} data-pm-profile-input={field}
         placeholder={field === "strategy" ? "Write strategy…" : "Write description…"}

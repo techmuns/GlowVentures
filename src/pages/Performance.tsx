@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { InvestorReturnDetails } from "@/components/InvestorReturnDetails";
@@ -506,7 +507,7 @@ export function Performance() {
                     {/* Exempt, declared: TRANSPOSED — its rows are the bridge's
                         fixed components and its columns are the statements that
                         publish them. */}
-                    <table className="w-full text-[12.5px]" data-bridge-table={a.accountId}
+                    <ExportableTable className="w-full text-[12.5px]" data-bridge-table={a.accountId}
                       data-table-static="transposed — the rows are a fixed component list rather than records, and the columns are the statements that publish them">
                       <thead className="label-xs border-b border-ink-700">
                         <tr>
@@ -587,7 +588,7 @@ export function Performance() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </ExportableTable>
                   </div>
                 )}
               </div>
@@ -604,7 +605,7 @@ export function Performance() {
       <Card className="mt-5" title="Money-weighted return to date, per account · not annualised"
         subtitle="From each account's own dated capital movements, closed against the value its own statement strikes on its own date — the return earned to date, not annualised.">
         <div className="overflow-x-auto">
-          <table className="w-full text-[12.5px]">
+          <ExportableTable className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
               <Tr view={xirrView}>
                 <SortHeader col="account" view={xirrView} align="left" pad="px-3 py-2">Account</SortHeader>
@@ -684,7 +685,7 @@ export function Performance() {
                 </td>,
                 }} />
             </tbody>
-          </table>
+          </ExportableTable>
         </div>
       </Card>
     </div>

@@ -205,7 +205,19 @@ export type RecoveredHoldingCost = {
   notes: string[];
 };
 
+/**
+ * A ring-fenced promoter holding (`BOOK_POLYCAB`, the `/polycab` route alone): a
+ * Position, except that a custody statement printing quantities only carries no
+ * value — `null`, never a zero (Bharat's scanned HDFC statement, Stage 10gk).
+ */
+export type PolycabHolding = Omit<Position, "marketValue"> & { marketValue: number | null };
+
 export type Position = {
+  /** Exact normalized record selected by the builder, before any live overlay. */
+  statementRecord?: { document: string; pointer: string };
+  /** Price overlays retain their own identity/time and never replace statement evidence. */
+  priceEvidence?: { kind: "quote" | "published-nav"; source: string | null; instrument: string;
+    value: number; effectiveAt: string | null; observedAt: string | null };
   /**
    * Stable slug of the normalized security name — the join key used for
    * grouping, look-through, dedupe and the /stock/:securityKey route. Present on
@@ -1378,6 +1390,7 @@ export type RealisedByClass = {
  * its units — inside an account that may carry positions besides.
  */
 export type UnvaluedStatementHolding = {
+  statementRecord?: { document: string; pointer: string };
   accountId: string;
   ownerId: string;
   securityKey: string;

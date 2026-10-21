@@ -278,6 +278,7 @@ export function unpricedStatementShareCandidates(
       // The book's own name for the company where it holds it; otherwise the
       // statement's, with the depository's `- EQ NEW FV …` furniture off.
       security: securityLabel(securityKey, book?.security ?? displayDepositoryName(u.security)),
+      statementRecord: u.statementRecord,
       isin: u.isin,
       symbol,
       accountId: u.accountId,
@@ -306,11 +307,11 @@ export function unpricedStatementShareCandidates(
       // balance — and a page must say so rather than that it printed none.
       depositoryUnits: typeof u.lastMovementRate === "number" && u.lastMovementRate > 0
         ? {
-          asOf: u.asOf, source: null, kind: "last-movement",
+          asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "last-movement",
           lastMovementRate: u.lastMovementRate, lastMovementDate: u.lastMovementDate ?? null,
           lastMovementSide: u.lastMovementSide ?? null,
         }
-        : { asOf: u.asOf, source: null, kind: "no-price" },
+        : { asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "no-price" },
     });
   }
   return out;

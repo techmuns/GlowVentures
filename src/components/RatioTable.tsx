@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { requestDeadline } from "@/lib/requestDeadline";
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, ShieldAlert, ShieldCheck, Split } from "lucide-react";
@@ -178,7 +179,7 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
                 and the rows are its line items with its own section headings, so
                 sorting would scramble a document and moving a year would break
                 its chronology. */}
-            <table className="min-w-full whitespace-nowrap text-[12.5px]"
+            <ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]"
               data-table-static="the columns are the periods of an upstream financial document and the rows are its own line items, in its own order — sorting the rows would scramble a statement and moving a period would break its chronology">
             <thead className="border-b border-ink-700">
               <tr>
@@ -211,7 +212,7 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
                 )
               ))}
             </tbody>
-          </table>
+          </ExportableTable>
         </div>
 
         {/* THE BASIS AND THE SOURCE LINK ON THE FACE; how the table is read is

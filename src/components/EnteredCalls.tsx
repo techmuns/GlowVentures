@@ -61,7 +61,7 @@ export function CallCell({ fund, fundName, state, today, open, onToggle, money }
   if (!head) {
     return (
       <button type="button" onClick={onToggle} aria-expanded={open}
-        data-pm-call-add={fund} data-pm-call-state="empty"
+        data-pm-call-add={fund} data-pm-call-state="empty" data-export-value="—"
         title={`Add a capital call for ${fundName}`}
         className={`${cls} text-slate-500 hover:text-champagne-400`}>
         <Plus className="h-3 w-3" /> Add

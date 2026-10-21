@@ -5,8 +5,12 @@ sheets, capital-call and distribution notices. Nested ZIPs are fine.
 
 `october-2026-c/` preserves the September statements received from Glow on 9–13
 October and forwarded on 14 October. The LKP archive omits its password note;
-statement bytes are preserved. Its separate Excel attachments are mail-server
-removal notices and contain no workbook data. Parser failures and incomplete
+statement bytes are preserved. Its two separate Excel attachments in `LKP EQUITY/`
+(`519_06102026124925.xls`, the capital gain report, and
+`666125807_06102026125819.xls`, the transactions) NEVER ARRIVED: the mail server
+replaced each with its 85-byte removal notice. `check:reads`, `coverage:source`
+and the Statement Library list them as never arrived until LKP re-sends them
+another way (Stage 10gk). Parser failures and incomplete
 reports remain visible in the extraction report; this delivery is not a claim
 that every account's current return can be measured.
 
@@ -29,11 +33,21 @@ An upload is saved to this repository's `statement-inbox` branch and starts the
 `scripts/ingest/intake-uploads.mjs`), which does everything below by itself: it
 skips a file byte-identical to one already here, files each new one under
 `uploads-<date>/<provider>/` (the provider read off the statement), runs the
-pipeline and every CI gate, and lands on `main` only what passes. A file it
+pipeline and every required gate, and opens a `codex/*` PR for the complete
+verified version. CI and review precede merge; the existing deployment must
+contain the exact document versions before inbox bytes are cleared. A file it
 cannot read in full stays in the inbox, held, with the gate's reason on the
 Statement Library — the fix is the same as for a hand-dropped delivery (write
 the reader, or set the `GLOW_PDF_PASSWORDS` Actions secret for a sealed PDF),
-then Retry on the page.
+then Retry on the page. The upload itself refuses a mail server's removal notice
+and a file that is not the format its name claims (a sign-in page saved as
+`.pdf`) — `shared/statementBytes.mjs`; a new scan is read by OCR where the page
+checks it (`GLOW_OCR=new`).
+
+Matching, changed-format validation, source receipts and resumable publication
+are described in `docs/STATEMENT-PUBLICATION.md`. No new upload is a dashboard
+figure merely because its file was stored. A new layout that drops dates or
+misidentifies an account cannot replace the last verified book.
 
 **Every delivery, start to finish** — no passwords or OCR tools needed (a sealed
 statement keeps the reading a password-holding run archived):
@@ -47,10 +61,12 @@ npm run check:reads
 full (a new layout or report type, a column a reader misses) or is read but does
 not reach the dashboard (a new account the book does not carry, a newer statement
 the book did not move to). Fix the reader it names and run the four commands
-again; a file that carries nothing to read (a scan, a mail server's removal
-notice) is recorded with its reason and the fix in
-`scripts/ingest/acceptedUnread.mjs`. CI runs the same check on every PR, so a
-half-read delivery cannot be merged.
+again. A scan is read by OCR (`lib/scan.mjs`) and published only where the page
+checks every row; one it cannot check is held with what the page could not
+confirm. A mail server's removal notice where a statement should be is listed as
+NEVER ARRIVED — ask the sender to re-send it. `scripts/ingest/acceptedUnread.mjs`
+is empty. CI runs the same check on every PR, so a half-read delivery cannot be
+merged.
 
 Then run:
 
@@ -105,7 +121,7 @@ row, one of them names a `BHARAT JAISINGHANI FAMILY TRUST` with no numeral
 against two trusts that both exist, and the consolidated review workbook is
 deliberately not a source.
 
-## `august-2026-e/` — and the one thing a statement can be that no reader fixes
+## `august-2026-e/` — a scan, refused until the page could check it
 
 Two files, both arriving from the client's Google Drive after every other
 delivery, and both dated **31 March 2026** — five months behind everything else
@@ -116,7 +132,16 @@ family's unlisted holdings, their pre-IPO allotments and their promoter stock.
 | File | Whose | What happened |
 | --- | --- | --- |
 | `Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf` | Ajay, ICICI Bank NSDL, client 49794950 | READ — `providers/nsdlDemat.mjs`, 38 holdings |
-| `HOLDING STATEMENT AS ON 31 MARCH 2026.pdf` | Bharat, HDFC Bank NSDL, client 22025655 | **NOT READ — it is a scan** |
+| `HOLDING STATEMENT AS ON 31 MARCH 2026.pdf` | Bharat, HDFC Bank NSDL, client 22025655 | READ — a scan, by OCR checked by the page (`providers/nsdlScan.mjs`, Stage 10gk), 38 holdings, quantities only |
+
+**READ SINCE 21 OCTOBER 2026 — the refusal below was overturned (Stage 10gk).**
+The guarantee it defended holds: OCR text alone publishes nothing. But this page
+checks itself. Every row prints its quantity twice (Quantity and Total Balance,
+in two digit groupings), every ISIN carries a check digit, and the footers count
+the pages and end with `End of Report`. A row is published only when both
+printings agree and its ISIN passes the check digit, and one unchecked row
+refuses the whole document. All 38 rows matched a person's reading of the page.
+What follows is the record of why it was refused until then.
 
 **A SCANNED PDF IS NOT A DOCUMENT WITH NO READER.** Bharat's four pages are
 JPEGs: pdfjs returns zero text items on every one of them, so there is no header
@@ -204,7 +229,9 @@ difference is not a technicality:
 - a SCAN is a photograph of paper. Its information is genuinely lossy — sensor
   noise, skew, JPEG ringing — so a recovered figure cannot be traced to what the
   document printed, and a wrong digit looks exactly like a right one. **Bharat's
-  `august-2026-e/` statement stays refused for that reason.**
+  `august-2026-e/` statement stayed refused for that reason** — until Stage 10gk
+  read it only where the page itself checks each digit (two printings of every
+  quantity, the ISIN's check digit), which is the trace a lone OCR reading lacks.
 - OUTLINED TEXT is a photograph of nothing. The file carries every glyph's exact
   bezier curves; rendering them EVALUATES data the document already holds, at
   whatever resolution we choose. At 600 dpi the bitmap is a clean synthetic

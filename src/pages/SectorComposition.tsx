@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Check, ChevronRight } from "lucide-react";
@@ -13,6 +14,8 @@ import {
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { fifoTotals } from "@/lib/fifo";
+import { hasSectorReturnCost } from "@/lib/sectorReturnCoverage";
+import { SectorReturnDetails } from "@/components/SectorReturnDetails";
 import { companyExposure, companySymbol, type CompanyExposure } from "@/lib/lookthrough";
 import { isArbitrageFund } from "@/lib/fundNavs";
 import { UNCLASSIFIED, GICS_SECTORS } from "@/lib/sectors";
@@ -192,11 +195,11 @@ type SectorRow = {
    */
   unrealised: number | null; income: number | null;
   /** Holdings behind the sector that report a cost, and how many there are. */
-  costed: number; holdings: number;
+  costed: number; holdings: number; positions: Position[];
   /**
    * The part of the sector's MEASURED value whose holdings report NO cost. On
    * Consolidated the derived fund half carries no cost either and is
-   * `mv − costedMV − uncostedMV`; the return's hover names both.
+   * `mv − costedMV − uncostedMV`; the return details name both.
    */
   uncostedMV: number;
   /** The value of the holdings that report a cost — the set the return covers. */
@@ -223,7 +226,7 @@ type SectorRow = {
  * Direct Equity rolls up the family's own shares. On both, the return is FIFO
  * over the holdings whose statement reports a cost, and the cell names that set
  * ("N of M") — Stage 10dt. The derived fund half and a depository's costless
- * rows carry no cost, so they are named in the hover and never blended in.
+ * rows carry no cost, so they are named in the return details and never blended in.
  */
 function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) => number, withCost: boolean): SectorRow[] {
   const m = new Map<string, { entries: CompanyExposure[]; mv: number }>();
@@ -249,12 +252,12 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
        * about how a sector has done. The figure is now struck over the costed
        * holdings alone (`fifoTotals` over exactly those rows, so it covers them
        * fully), the B-07 rule the whole-book return on cost already follows:
-       * the cell names its set ("N of M"), and its hover names the value it
-       * covers and what the rest is — holdings no statement prices at cost,
-       * and on Consolidated the derived fund half, which carries no cost at all.
+       * the cell names its set ("N of M"), and its detail card identifies every
+       * excluded stock/account and its missing purchase cost. Consolidated's
+       * fund-held share is explained separately from that holding count.
        * A dash remains only where NO holding in the sector reports a cost.
        */
-      const costedRows = positions.filter((x) => typeof x.costBasis === "number" && !x.costUnavailable);
+      const costedRows = positions.filter(hasSectorReturnCost);
       const cost = sumOrNull(costedRows.map((x) => x.costBasis));
       const pnl = sumOrNull(costedRows.map((x) => x.unrealizedPnL));
       const costedMV = sum(costedRows.map((x) => x.marketValue));
@@ -275,7 +278,7 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
         key, mv: v.mv, count: withCost ? positions.length : v.entries.length, weight: tot > 0 ? v.mv / tot : 0,
         measured, derived, cost, pnl, returnPct, realised: fifo.realised, deployed: fifo.deployed,
         unrealised: fifo.unrealised, income: fifo.income,
-        costed: costedRows.length, holdings: positions.length, uncostedMV, costedMV,
+        costed: costedRows.length, holdings: positions.length, positions, uncostedMV, costedMV,
         returnWhy,
         top: withCost ? topPos?.security ?? null : byValue[0]?.name ?? null,
         topKey: withCost ? topPos?.securityKey ?? null : byValue[0]?.key ?? null,
@@ -283,15 +286,6 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
       };
     })
     .sort((a, b) => b.mv - a.mv);
-}
-
-/** Which holdings a sector's return covers, in words — the cell's hover. */
-function returnCoverage(s: SectorRow, consolidated: boolean, fmt: (v: number) => string): string {
-  const derived = Math.max(0, s.mv - s.costedMV - s.uncostedMV);
-  const parts = [`FIFO over the ${s.costed} of ${s.holdings} holding${s.holdings === 1 ? "" : "s"} that report a cost — ${fmt(s.costedMV)} of the sector's ${fmt(s.mv)}`];
-  if (s.uncostedMV >= 1) parts.push(`${fmt(s.uncostedMV)} is held where the statement reports no cost (a depository)`);
-  if (consolidated && derived >= 1) parts.push(`${fmt(derived)} is the family's derived share inside their funds, which carries no cost`);
-  return parts.join("; ");
 }
 
 /**
@@ -377,7 +371,7 @@ function emptySector(key: string): SectorRow {
   return {
     key, mv: 0, count: 0, weight: 0, measured: 0, derived: 0,
     cost: null, pnl: null, returnPct: null, realised: null, deployed: null, unrealised: null, income: null,
-    costed: 0, holdings: 0, uncostedMV: 0, costedMV: 0,
+    costed: 0, holdings: 0, positions: [], uncostedMV: 0, costedMV: 0,
     returnWhy: "The family holds nothing this view places in this sector, so there is no return to strike.",
     top: null, topKey: null, topDerivedOnly: false,
   };
@@ -1251,7 +1245,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                 /* Exempt, declared: this table is TRANSPOSED. Its rows are a fixed
                    list of metrics rather than records, so there is nothing to
                    sort, and its columns are the sectors the picker selected. */
-                <table className="min-w-full text-[12.5px]" data-sector-compare
+                <ExportableTable className="min-w-full text-[12.5px]" data-sector-compare
                   data-table-static="transposed — its rows are a fixed metric list rather than records, and its columns are the sectors the picker selected">
                   <thead>
                     <tr className="border-b border-ink-700">
@@ -1326,13 +1320,13 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                     <CompareRow label="Return on cost" keys={compare} render={(k) => {
                       const s = directByKey.get(k);
                       if (!s) return <AbsentCell reason="no own-account holding in this sector" />;
-                      return s.returnPct === null
-                        ? <AbsentCell reason={s.returnWhy ?? "no return can be struck"} />
-                        : <span className={changeColor(s.returnPct)} title={returnCoverage(s, false, (v) => fmtFromBase(v, { compact: true }))}>{fmtPct(s.returnPct, { sign: true })}{s.costed < s.holdings && <span className="ml-1 text-[10.5px] text-slate-500">{s.costed} of {s.holdings}</span>}</span>;
+                      return <span className={changeColor(s.returnPct)}><SectorReturnDetails sector={s.key} positions={s.positions}
+                        accounts={accIdx} returnPct={s.returnPct} reason={s.returnWhy} fundValue={0}
+                        live={s.positions.some(p => p.live)} money={money} /></span>;
                     }} />
                     <CompareRow label="Largest holding" keys={compare} plain render={(k) => directByKey.get(k)?.top ?? <AbsentCell reason="no own-account holding in this sector" />} />
                   </tbody>
-                </table>
+                </ExportableTable>
               )}
             </div>
           </Card>
@@ -1342,7 +1336,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
               ? "Click a sector for the issuers in it — what the statements report and what the funds disclose."
               : "Click a sector for its holdings."}>Sector breakdown{vs ? ` vs ${vs.bench.label}` : ""}</span>}>
             <div className="mt-3 min-h-0 flex-1 overflow-auto">
-              <table className="min-w-full text-[13px]" data-sector-table>
+              <ExportableTable className="min-w-full text-[13px]" data-sector-table>
                 <thead className="sticky top-0 z-10 bg-ink-800">
                   <Tr view={sectorView} className="border-b border-ink-700">
                     <SortHeader col="sector" view={sectorView} align="left" pad="px-3 py-2">Sector</SortHeader>
@@ -1457,19 +1451,17 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                           <td className="px-3 py-2 text-right mono text-slate-400" data-cell="count">{s.count}</td>
                           {/* FIFO OVER THE COSTED HOLDINGS, NAMING ITS SET (Stage 10dt). A
                               dash only where no holding in the sector reports a cost. */}
-                          <td className={`px-3 py-2 text-right mono whitespace-nowrap ${changeColor(s.returnPct)}`} title={s.returnPct === null ? undefined : `${returnCoverage(s, consolidatedView, (v) => fmtFromBase(v, { compact: true }))}${liveBySector[s.key] ? ` · ${LIVE_CELL}` : ""}`}
+                          <td className={`px-3 py-2 text-right mono whitespace-nowrap ${changeColor(s.returnPct)}`}
                             data-cell="return"
                             /* THE SET A RETURN IS STRUCK OVER, carried on the cell, so
                                `check:pages` can hold the figure to its coverage. */
                             data-costed={s.costed} data-holdings={s.holdings}
                             data-costed-mv={Math.round(s.costedMV)} data-uncosted-mv={Math.round(s.uncostedMV)} data-mv={Math.round(s.mv)}>
-                            {s.returnPct === null
-                              ? <AbsentCell reason={s.returnWhy ?? "no return can be struck"} />
-                              : <>
-                                  <span data-return-figure>{liveBySector[s.key] ? fmtPct(s.returnPct, { sign: true })
-                                    : <Auditable formula={{ title: "Sector return (FIFO)", excel: "= (Σ unrealised + Σ realised + Σ dividends) ÷ Σ (cost held + cost of units sold) × 100, over the holdings that report a cost", plain: `${returnCoverage(s, consolidatedView, (v) => fmtFromBase(v, { compact: true }))}. The unrealised gain on what is held, the realised gain on units already sold, matched first-in, first-out, and the dividends the holdings paid, over every rupee that bought a unit of them.`, worked: `= (${money(s.unrealised ?? 0)} + ${money(s.realised ?? 0)} + ${money(s.income ?? 0)}) ÷ ${money(s.deployed)} × 100 = ${fmtPct(s.returnPct, { sign: true })}` }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}</span>
-                                  {s.costed < s.holdings && <span className="ml-1 text-[10.5px] text-slate-500" data-return-coverage>{s.costed} of {s.holdings}</span>}
-                                </>}
+                            {indexOnlyRow ? <AbsentCell reason={s.returnWhy ?? "No holdings in this sector"} />
+                              : <SectorReturnDetails sector={s.key} positions={s.positions} accounts={accIdx}
+                                  returnPct={s.returnPct} reason={s.returnWhy}
+                                  fundValue={consolidatedView ? Math.max(0, s.mv - s.costedMV - s.uncostedMV) : 0}
+                                  live={s.positions.some(p => p.live)} money={money} />}
                           </td>
                           <td className="px-3 py-2 text-left text-[12px] text-slate-400" data-cell="top"
                             data-top-key={s.topKey ?? ""} data-top-derived={s.topDerivedOnly ? "true" : "false"}>
@@ -1513,7 +1505,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                         </td>
                                       );
                                       return (
-                                    <table className="min-w-full text-[12px]" data-sector-companies>
+                                    <ExportableTable className="min-w-full text-[12px]" data-sector-companies>
                                       <thead className="sticky top-0 bg-ink-800">
                                         <Tr view={companyView} className="border-b border-ink-700/70">
                                           <SortHeader col="company" view={companyView} align="left" pad="px-3 py-1.5">Issuer</SortHeader>
@@ -1572,11 +1564,11 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                             share: <td key="share" className={`${footCls} text-slate-400`} data-sector-foot="share">{s.mv > 0 ? ((footTotal / s.mv) * 100).toFixed(1) : "0.0"}%</td>,
                                           }} />
                                       </tfoot>
-                                    </table>
+                                    </ExportableTable>
                                       );
                                     })()
                                   ) : (
-                                    <table className="min-w-full text-[12px]">
+                                    <ExportableTable className="min-w-full text-[12px]">
                                       <thead className="sticky top-0 bg-ink-800">
                                         <Tr view={holdingView} className="border-b border-ink-700/70">
                                           <SortHeader col="security" view={holdingView} align="left" pad="px-3 py-1.5">Security</SortHeader>
@@ -1613,7 +1605,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                           </Tr>
                                         ))}
                                       </tbody>
-                                    </table>
+                                    </ExportableTable>
                                   )}
                                 </div>
                               </div>
@@ -1624,7 +1616,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                     );
                   })}
                 </tbody>
-              </table>
+              </ExportableTable>
             </div>
           </Card>
         )}

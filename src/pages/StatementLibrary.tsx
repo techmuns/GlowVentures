@@ -1,3 +1,5 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
+import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -69,7 +71,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
       {/* Wide on a phone; the table scrolls inside its own container so the page
           body never scrolls sideways (CLAUDE.md, Conventions). */}
       <div className="overflow-x-auto rounded-lg border border-ink-700">
-        <table className="min-w-full text-sm"
+        <ExportableTable className="min-w-full text-sm"
           data-table-static="one file type inside a provider folder; the Data Audit viewer sorts the rows inside any one document">
           <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
             <tr>
@@ -108,7 +110,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ExportableTable>
       </div>
       {previewing && <StatementPreview doc={previewing} onClose={preview.close} />}
     </div>
@@ -133,6 +135,7 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
   const folderRef = useRef<HTMLInputElement | null>(null);
   const [drag, setDrag] = useState(false);
   const [progress, setProgress] = useState<{ done: number; of: number } | null>(null);
+  const [collecting, setCollecting] = useState(false);
   const [msg, setMsg] = useState<{ tone: "err" | "ok"; text: string; title?: string } | null>(null);
 
   const send = async (picked: PickedFile[]) => {
@@ -189,9 +192,9 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
     );
   }
 
-  const busy = !!progress || state.status === "loading";
+  const busy = !!progress || collecting || state.status === "loading";
   return (
-    <div data-xa="statement-upload" data-upload-state={state.status}>
+    <div data-xa="statement-upload" data-upload-state={state.status} data-publication-busy={!!progress || collecting ? "true" : undefined}>
     <Card className="mb-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <UploadCloud className="h-4 w-4 text-champagne-400" />
@@ -212,7 +215,10 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
         onClick={() => filesRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
-        onDrop={(e) => { e.preventDefault(); setDrag(false); void fromDrop(e.dataTransfer).then(send); }}
+        onDrop={(e) => {
+          e.preventDefault(); setDrag(false); if (busy) return; setCollecting(true);
+          void fromDrop(e.dataTransfer).then(send).finally(() => setCollecting(false));
+        }}
         data-upload-drop
         className={`flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-4 py-7 text-center transition-colors disabled:cursor-wait
           ${drag ? "border-champagne-500/60 bg-champagne-500/10" : "border-ink-600 hover:border-ink-500 hover:bg-ink-700/30"}`}>
@@ -261,8 +267,9 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const rows = useMemo(() => batches.flatMap((b) => b.files.map((f) => ({ b, f, v: fileView(f, served) }))), [batches, served]);
+  const exportAll = useTableExportFilter(all, true);
+  const shown = exportAll ? rows : rows.slice(0, LOG_ROWS);
   if (!rows.length) return null;
-  const shown = all ? rows : rows.slice(0, LOG_ROWS);
   const tally = (k: string) => rows.filter((r) => r.v.key === k).length;
   const act = async (id: string, run: () => Promise<{ ok: true } | { ok: false; reason: string }>) => {
     setBusy(id); setErr(null);
@@ -282,7 +289,7 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
       </div>
       {err && <p className="mb-2 text-xs text-loss" role="status" data-prose-ok="why a retry or removal did not go through">{err}</p>}
       <div className="overflow-x-auto rounded-lg border border-ink-700">
-        <table className="min-w-full text-sm"
+        <ExportableTable className="min-w-full text-sm"
           data-table-static="the inbox's own log, newest upload first — each file's status as the intake run left it">
           <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
             <tr>
@@ -360,7 +367,7 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
               );
             })}
           </tbody>
-        </table>
+        </ExportableTable>
       </div>
       {rows.length > LOG_ROWS && (
         <button type="button" onClick={() => setAll((x) => !x)} className="mt-2 text-xs text-accent-400 hover:underline">

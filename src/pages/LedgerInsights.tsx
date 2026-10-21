@@ -1,3 +1,5 @@
+import { ExportableTable } from "@/components/ExportableTable";
+import { useTableExportIdentity } from "@/lib/tableExportSnapshot";
 import { InfiniteTableBody } from "@/components/InfiniteTableBody";
 import { useEffect, useMemo, useState } from "react";
 import { TrendingUp, Coins, ShieldAlert, ArrowLeftRight, Scissors, LogOut, Receipt, Gift } from "lucide-react";
@@ -62,6 +64,7 @@ export function LedgerInsights() {
   const [income, setIncome] = useState<IncomeData | null>(null);
   const [sales, setSales] = useState<SalesData | null>(null);
   const { portfolio, scope } = usePortfolio();
+  const scopeKey = useTableExportIdentity(JSON.stringify(scope.owners ? [...scope.owners].sort() : null));
 
   useEffect(() => {
     let alive = true;
@@ -159,11 +162,11 @@ export function LedgerInsights() {
       <div className="min-h-0 flex-1 overflow-auto">
         {status === "loading" && <div className="grid h-40 place-items-center text-sm text-slate-500">Reading the archive…</div>}
         {tab === "transactions" && viewTxn && (
-          <TransactionsView key={JSON.stringify(scope.owners ? [...scope.owners].sort() : null)} data={viewTxn} sales={scope.owners ? null : sales}
+          <TransactionsView key={scopeKey} data={viewTxn} sales={scope.owners ? null : sales}
             scoped={scope.owners ? { label: scope.label, lots: viewLots } : null} />
         )}
-        {tab === "gains" && <GainsView key={JSON.stringify(scope.owners ? [...scope.owners].sort() : null)} data={viewLots} />}
-        {tab === "income" && <IncomeView key={JSON.stringify(scope.owners ? [...scope.owners].sort() : null)} data={viewIncome} />}
+        {tab === "gains" && <GainsView key={scopeKey} data={viewLots} />}
+        {tab === "income" && <IncomeView key={scopeKey} data={viewIncome} />}
       </div>
     </div>
   );
@@ -294,7 +297,7 @@ function TransactionsView({ data, sales, scoped }: {
         && Math.abs(sales.statementRealized - sales.totalRealized) > 1 && (
         <div className="rounded-lg border border-dashed border-ink-600/70 px-3 py-2.5 text-xs leading-relaxed text-slate-500">
           <div className="font-medium text-slate-400" title="Each lot attributed to the sale that produced it, set against the statement's own total.">Cross-check · lots by sale</div>
-          <table className="mt-2 w-full max-w-2xl">
+          <ExportableTable className="mt-2 w-full max-w-2xl">
             <tbody className="mono">
               <tr>
                 <td className="py-0.5 pr-4">Statement total — <span className="text-slate-400">canonical</span></td>
@@ -314,13 +317,13 @@ function TransactionsView({ data, sales, scoped }: {
                 </tr>
               )}
             </tbody>
-          </table>
+          </ExportableTable>
         </div>
       )}
 
       <Card pad={false}>
         <div className="max-h-[560px] overflow-auto">
-          <table className="min-w-full text-sm">
+          <ExportableTable className="min-w-full text-sm">
             <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
               <Tr view={txnView}>
                 <SortHeader col="date" view={txnView} align="left">Date</SortHeader>
@@ -351,7 +354,7 @@ function TransactionsView({ data, sales, scoped }: {
                 </Tr>
               )}
             </InfiniteTableBody>
-          </table>
+          </ExportableTable>
         </div>
       </Card>
 
@@ -366,7 +369,7 @@ function TransactionsView({ data, sales, scoped }: {
         <Card title="Sales &amp; exits" subtitle="Per security, over the same window — and whether the name is still held" pad={false}
           right={<Pill tone="info">{sales.exits} exited · {sales.trims} trimmed</Pill>}>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <Tr view={saleView}>
                   <SortHeader col="security" view={saleView} align="left">Security</SortHeader>
@@ -397,7 +400,7 @@ function TransactionsView({ data, sales, scoped }: {
                   </Tr>
                 )}
               </InfiniteTableBody>
-            </table>
+            </ExportableTable>
           </div>
         </Card>
       )}
@@ -573,7 +576,7 @@ function GainsView({ data }: { data: LotData | null }) {
       {byBucket.length > 1 && (
         <Card title="Realised, by how the holding was run" subtitle="The same canonical total, split — the headline nets these together" pad={false}>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <Tr view={bucketView}>
                   <SortHeader col="bucket" view={bucketView} align="left">Held as</SortHeader>
@@ -621,7 +624,7 @@ function GainsView({ data }: { data: LotData | null }) {
                     total: <td key="total" className={`px-4 py-2.5 text-right mono ${changeColor((data.totalShort ?? 0) + (data.totalLong ?? 0))}`}>{fmtFromBase((data.totalShort ?? 0) + (data.totalLong ?? 0), { compact: true, sign: true })}</td>,
                   }} />
               </tfoot>
-            </table>
+            </ExportableTable>
           </div>
         </Card>
       )}
@@ -635,7 +638,7 @@ function GainsView({ data }: { data: LotData | null }) {
 
       <Card pad={false}>
         <div className="max-h-[560px] overflow-auto">
-          <table className="min-w-full text-sm">
+          <ExportableTable className="min-w-full text-sm">
             <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
               <Tr view={lotView}>
                 <SortHeader col="security" view={lotView} align="left">Security</SortHeader>
@@ -666,7 +669,7 @@ function GainsView({ data }: { data: LotData | null }) {
                 </Tr>
               )}
             </InfiniteTableBody>
-          </table>
+          </ExportableTable>
         </div>
       </Card>
     </div>
@@ -731,7 +734,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
       {data.cash.length > 0 && (
         <Card title="Cash dividends" pad={false}>
           <div className="max-h-[420px] overflow-auto">
-            <table className="min-w-full text-sm">
+            <ExportableTable className="min-w-full text-sm">
               <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
                 <Tr view={cashView}>
                   <SortHeader col="security" view={cashView} align="left">Security</SortHeader>
@@ -760,7 +763,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   </Tr>
                 )}
               </InfiniteTableBody>
-            </table>
+            </ExportableTable>
           </div>
         </Card>
       )}
@@ -768,7 +771,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
       {data.corporate.length > 0 && (
         <Card title="Corporate actions" subtitle="Bonus, split and rights — an entitlement in shares, never an amount" pad={false}>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <Tr view={corpView}>
                   <SortHeader col="security" view={corpView} align="left">Security</SortHeader>
@@ -791,7 +794,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   </Tr>
                 )}
               </InfiniteTableBody>
-            </table>
+            </ExportableTable>
           </div>
         </Card>
       )}

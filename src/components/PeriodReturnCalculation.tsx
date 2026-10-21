@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import type { ReactNode } from "react";
 import { MoneyWeightedCalculation } from "@/components/ReturnCalculation";
 import { fmtDate } from "@/lib/format";
@@ -38,7 +39,7 @@ export function PeriodReturnCalculation({ measured, type, inception, result, con
         <p className="my-2 text-xs text-slate-400">{w.weighted
           ? `Each amount × days remaining ÷ ${w.days} days. Money invested adds to the total; withdrawals and closing values subtract. Each account closes on its own valuation date.`
           : "Minus means money invested, including opening values. Plus means money taken out or a closing value."}</p>
-        <table className="w-full text-xs" data-return-inputs data-table-static="Terms in the selected calculation, in calculation order">
+        <ExportableTable className="w-full text-xs" data-return-inputs data-table-static="Terms in the selected calculation, in calculation order">
           <thead><tr className="text-slate-400"><th className="py-2 text-left font-medium">Date</th><th className="py-2 text-right font-medium">Amount</th>
             {w.weighted && <th className="py-2 pl-3 text-right font-medium">Days / {w.days} × amount</th>}</tr></thead>
           <tbody>{w.weighted ? w.weighted.map((f, i) => <tr key={i} className="border-t border-ink-700">
@@ -48,7 +49,7 @@ export function PeriodReturnCalculation({ measured, type, inception, result, con
             <td className="py-1.5">{fmtDate(f.date.toISOString().slice(0, 10))}</td><td className="py-1.5 text-right tabular">{f.amount > 0 ? "+" : ""}{money(f.amount)}</td>
           </tr>)}</tbody>
           {w.weighted && <tfoot><tr className="border-t border-ink-600"><th colSpan={2} className="py-2 text-left font-medium">Total money at work</th><td className="py-2 text-right tabular">{money(w.base)}</td></tr></tfoot>}
-        </table>
+        </ExportableTable>
       </div>}
       <p className="text-xs text-slate-400">Amounts are rounded for display. The return uses full precision.</p>
     </>}

@@ -100,6 +100,8 @@ export function applyFundNavs(positions: Position[]): Position[] {
     return {
       ...p,
       currentPrice: e.nav,
+      priceEvidence: { kind: "published-nav" as const, source: "AMFI", instrument: e.isin, value: e.nav,
+        effectiveAt: e.date, observedAt: null },
       marketValue,
       unrealizedPnL,
       // FIFO's one return: a live price moves the unrealised half and nothing
@@ -284,6 +286,7 @@ export function depositoryFundHoldings(
       returnPct: null,
       avgCost: null,
       currentPrice: nav.nav,
+      priceEvidence: { kind: "published-nav" as const, source: "AMFI", instrument: nav.isin, value: nav.nav, effectiveAt: nav.date, observedAt: null },
       stCostBasis: null,
       ltCostBasis: null,
       daysToLT: null,
@@ -432,6 +435,7 @@ export function unpricedStatementUnits(
     const book = positions.find((p) => p.securityKey === u.securityKey);
     out.push({
       securityKey: u.securityKey,
+      statementRecord: u.statementRecord,
       // The book's ONE name for the key (#76's rule, `securityLabel`), which
       // reads the book's quantity rows as well as its positions.
       security: securityLabel(u.securityKey, u.security),
@@ -453,6 +457,7 @@ export function unpricedStatementUnits(
       returnPct: null,
       avgCost: null,
       currentPrice: nav.nav,
+      priceEvidence: { kind: "published-nav" as const, source: "AMFI", instrument: nav.isin, value: nav.nav, effectiveAt: nav.date, observedAt: null },
       stCostBasis: null,
       ltCostBasis: null,
       daysToLT: null,
@@ -464,10 +469,10 @@ export function unpricedStatementUnits(
       navDate: nav.date,
       depositoryUnits: ownRate !== null
         ? {
-          asOf: u.asOf, source: null, kind: "last-movement",
+          asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "last-movement",
           lastMovementRate: ownRate, lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null,
         }
-        : { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId },
+        : { asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "no-rate", witnessAccountId },
     });
   }
   return out.map(p => applyRecoveredCost(p, BOOK_RECOVERED_COSTS)).sort((a, b) => b.marketValue - a.marketValue);

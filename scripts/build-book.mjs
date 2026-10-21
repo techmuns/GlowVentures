@@ -109,11 +109,6 @@ const r4 = (n) => (n === null || n === undefined ? null : Math.round(n * 10000) 
  * `check:pages` asserts the absence on nine routes and is what catches it.
  */
 const RINGFENCED_SECURITY_KEYS = new Set(["polycab-india"]);
-/** A fenced Position's fields, in emit order — for a quantity-only row when no valued one is there to copy. */
-const FENCED_POSITION_KEYS = ["securityKey", "security", "symbol", "isin", "accountId", "memberId", "sector", "providerSector",
-  "assetClass", "marketSide", "quantity", "avgCost", "currentPrice", "costBasis", "marketValue", "unrealizedPnL", "realizedPnL",
-  "costOfUnitsSold", "returnPct", "stCostBasis", "ltCostBasis", "daysToLT", "heldSince", "priceAsOf", "accruedIncome",
-  "dividendReceived", "positionIrrPct"];
 
 /**
  * THE FAMILY'S CONSOLIDATED REVIEW (MOPWM) IS THE SOURCE FOR PRIVATE-MARKET
@@ -3652,6 +3647,7 @@ function build(archived, archiveCount = archived.length) {
           + `of the ${unitsHeld} unit(s) held, so they carry a quantity and no value`
         : `the ${provider} statement of ${holdingsDoc.asOf} prints no rate for this holding, so it carries a quantity and no value`;
       unvaluedHoldings.push({
+        statementRecord: { document: holdingsDoc.docKey, pointer: `/holdings/${holdingsDoc.holdings.indexOf(h)}` },
         accountId, ownerId, securityKey: h.securityKey, security: h.security, isin: h.isin || null,
         assetClass: h.assetClass ?? null, quantity: qty, faceValue: fv,
         lastMovementRate: moved?.rate ?? null, lastMovementValue: moved?.value ?? null,
@@ -3912,6 +3908,7 @@ function build(archived, archiveCount = archived.length) {
           .sort((a, b) => a.date.localeCompare(b.date) || a.cost - b.cost);
       }
       positions.push({
+        statementRecord: { document: holdingsDoc.docKey, pointer: `/holdings/${holdingsDoc.holdings.indexOf(h)}` },
         securityKey: h.securityKey,
         security: h.security,
         symbol: symbols[h.securityKey] ?? null,
@@ -4763,13 +4760,18 @@ function build(archived, archiveCount = archived.length) {
     const u = unvaluedHoldings[i];
     if (!RINGFENCED_SECURITY_KEYS.has(u.securityKey)) continue;
     const like = polycab[0] ?? null;
-    const row = Object.fromEntries((like ? Object.keys(like) : FENCED_POSITION_KEYS).map((k) => [k, null]));
-    Object.assign(row, {
+    // A `PolycabHolding`: a Position whose value may be absent — the fields a
+    // quantity-only row has, each null where nothing measures it.
+    polycab.push({
+      ...(u.statementRecord ? { statementRecord: u.statementRecord } : {}),
       securityKey: u.securityKey, security: u.security, symbol: like?.symbol ?? null, isin: u.isin ?? null,
-      accountId: u.accountId, sector: like?.sector ?? "Unclassified", assetClass: u.assetClass ?? like?.assetClass ?? "Equity",
-      marketSide: like?.marketSide ?? "listed", quantity: u.quantity, marketValue: null,
+      accountId: u.accountId, memberId: null, sector: like?.sector ?? "Unclassified", providerSector: null,
+      assetClass: u.assetClass ?? like?.assetClass ?? "Equity", marketSide: like?.marketSide ?? "listed",
+      quantity: u.quantity, avgCost: null, currentPrice: null, costBasis: null, marketValue: null,
+      unrealizedPnL: null, realizedPnL: null, costOfUnitsSold: null, returnPct: null,
+      stCostBasis: null, ltCostBasis: null, daysToLT: null, heldSince: null, priceAsOf: null,
+      accruedIncome: null, dividendReceived: null, positionIrrPct: null,
     });
-    polycab.push(row);
     unvaluedHoldings.splice(i, 1);
   }
   polycab.sort((a, b) => a.accountId.localeCompare(b.accountId));
@@ -5338,7 +5340,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
+  L.push("  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -5389,7 +5391,7 @@ function emit(book) {
   L.push(" * reader. See RINGFENCED_SECURITY_KEYS in scripts/build-book.mjs and");
   L.push(" * docs/BOOK-REPORT.md. Folding it back into the book is a one-line change.");
   L.push(" */");
-  L.push(`export const BOOK_POLYCAB: Position[] = ${j(book.polycab)};`);
+  L.push(`export const BOOK_POLYCAB: PolycabHolding[] = ${j(book.polycab)};`);
   L.push("");
   L.push("/**");
   L.push(" * THE CONSOLIDATED DATED NAV SERIES — one point per date on which any covered");

@@ -1,3 +1,5 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
+import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -93,7 +95,8 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
 }) {
   const { fmtFromBase } = usePortfolio();
   const [state, setState] = useState<LookthroughState>({ status: "loading" });
-  const [q, setQ] = useState("");
+  const [qFilter, setQ] = useState("");
+  const q = useTableExportFilter(qFilter, "");
 
   useEffect(() => {
     let alive = true;
@@ -319,7 +322,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
             {/* Exempt, declared — the same class as `ReturnsTable`: one row,
                 so there is nothing to sort, and the columns are the source's
                 own period sequence, so moving one would break it. */}
-            <table className="min-w-full whitespace-nowrap text-sm"
+            <ExportableTable className="min-w-full whitespace-nowrap text-sm"
               data-table-static="one row of a source's own period sequence — there is nothing to sort and moving a period would break its order">
               <thead className="border-b border-ink-700">
                 <tr>
@@ -360,7 +363,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                   ))}
                 </tr>
               </tbody>
-            </table>
+            </ExportableTable>
           </div>
         </div>
       )}
@@ -411,12 +414,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
           needs={sr.refused > 0
             ? `No monthly portfolio disclosure for this scheme is in the store. Its NAV is on the Price & returns tab; ${sr.refused} of ${periods.length} of its returns there are refused — each spans a change in the unit.`
             : "No monthly portfolio disclosure for this scheme is in the store; its NAV, change and returns are complete on the Price & returns tab."} />
-      ) : shown.length === 0 ? (
-        <AbsentSection what="Nothing matches that filter"
-          needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />
-      ) : (
+      ) : (<>
+        {shown.length === 0 && <AbsentSection what="Nothing matches that filter"
+          needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />}
         <div className="overflow-x-auto">
-          <table className="min-w-full whitespace-nowrap text-sm">
+          <ExportableTable className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
               <Tr view={view}>
                 <SortHeader col="holding" view={view} align="left" pad="px-3 py-2">Holding</SortHeader>
@@ -457,7 +459,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                 </Tr>
               ))}
             </tbody>
-            <tfoot>
+            {shown.length > 0 && <tfoot>
               <TrFoot view={view} className="border-t-2 border-ink-600 px-3 py-2 font-semibold text-slate-200"
                 label={<>{fmtNum(shown.length)} of {fmtNum(rows.length)} disclosed holdings shown</>}
                 cells={{
@@ -467,10 +469,10 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                     : money(shown.reduce((a, h) => a + familyValue(holdingValue, h.pctAum), 0))}</td>,
                   shares: <td key="shares" className="border-t-2 border-ink-600 px-3 py-2" />,
                 }} />
-            </tfoot>
-          </table>
+            </tfoot>}
+          </ExportableTable>
         </div>
-      )}
+      </>)}
 
       {/* ONE LINE, the rest in its hover (main's Stage 10ci). What must stay
           on screen is that none of this is in any total: a derived exposure

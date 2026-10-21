@@ -1,3 +1,5 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
+import { ExportableTable } from "@/components/ExportableTable";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -40,7 +42,8 @@ function leadIssue(issues: readonly string[]): string | null {
 
 export function CorporateActionReturns({ securityKey }: { securityKey?: string }) {
   const { statementPortfolio, corporateActions, corporateActionsStatus, corporateActionReturns, fmtFromBase, scope } = usePortfolio();
-  const [search, setSearch] = useState("");
+  const [searchFilter, setSearch] = useState("");
+  const search = useTableExportFilter(searchFilter, "");
   const view = useTableView("corporate-actions-returns", COLS);
   const rows = useMemo(() => {
     // CURRENT HOLDINGS, like every allocation surface: a closed position and a
@@ -88,7 +91,7 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
       </div>}
     </div>
     <div className="overflow-x-auto">
-      <table className="w-full text-xs" data-corporate-return-table>
+      <ExportableTable className="w-full text-xs" data-corporate-return-table>
         <thead className="bg-ink-900 text-slate-400"><Tr view={view}>
           {view.columns.map((col) => <SortHeader key={col} view={view} col={col} align="left" title={TITLES[col]}>{LABELS[col]}</SortHeader>)}
         </Tr></thead>
@@ -153,7 +156,7 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
           };
           return <Tr key={positionActionKey(p)} view={view} className="border-t border-ink-700/70 align-top" data-corporate-return-row={positionActionKey(p)}>{COLS.map((col) => cells[col])}</Tr>;
         }}</InfiniteTableBody>
-      </table>
+      </ExportableTable>
       {!rows.length && <div className="p-5"><AbsentCell reason="No listed-equity holdings match this selection" /></div>}
     </div>
     {/* THE LINE UNDER THE TABLE IS GONE (Stage 10cp): the formula and why

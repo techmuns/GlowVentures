@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useWholePortfolio } from "@/context/PortfolioContext";
+import { dedupedPositions } from "@/lib/analytics";
+import { isTableExporting, usePrepareTableExport, useTableExporting } from "./tableExportSnapshot";
 import { isCompanyShare } from "@/lib/analytics";
 import { bookIsinBridge, heldFundVehicles, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
 import { fetchStockExposure } from "./stockExposureClient";
@@ -53,6 +56,16 @@ export function useStockExposure(
    */
   scope?: { vehiclesFrom?: Position[]; scopeKey?: string },
 ): StockExposureState {
+  const wholePortfolio = useWholePortfolio();
+  const exporting = useTableExporting();
+  const exportExposure = useRef<StockExposureState>();
+  usePrepareTableExport(async () => {
+    if (!enabled || !wholePortfolio) return;
+    const all = dedupedPositions(wholePortfolio.positions);
+    const companies = lookthroughCompanies(all);
+    exportExposure.current = await fetchStockExposure(heldFundVehicles(all), bookIsinBridge(companies).index,
+      new Set(companies.filter(isCompanyShare).map(p => p.securityKey)));
+  });
   // Struck over the DEDUPED set — a fund two members' statements both report is
   // one fund at the value the book carries for both, because this feeds a
   // DERIVED exposure and a fund counted twice would double the share derived
@@ -105,10 +118,11 @@ export function useStockExposure(
   const [exposure, setExposure] = useState<{ scopeKey: string | undefined; state: StockExposureState }>(
     { scopeKey: undefined, state: LOADING });
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || isTableExporting()) return;
     let live = true;
     fetchStockExposure(heldVehicles, isinToBookKey, bookCompanyKeys).then((s) => { if (live) setExposure({ scopeKey, state: s }); });
     return () => { live = false; };
   }, [enabled, heldVehicles, isinToBookKey, bookCompanyKeys, scopeKey]);
-  return exposure.scopeKey === scopeKey ? exposure.state : LOADING;
+  return exporting && enabled && exportExposure.current ? exportExposure.current
+    : exposure.scopeKey === scopeKey ? exposure.state : LOADING;
 }

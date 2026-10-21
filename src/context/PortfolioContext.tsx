@@ -1,3 +1,4 @@
+import { isTableExporting, useTableExporting } from "@/lib/tableExportSnapshot";
 // Portfolio state hub. Loads the ingested book as the default portfolio so the
 // dashboard is live on open. Display-currency toggle converts all aggregates
 // from the INR base at the display layer.
@@ -7,6 +8,9 @@
 // empty state by <Gate> in App.tsx — a book of zeros must never render as if the
 // family's holdings had been measured at zero.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { startPublicationRefresh } from "../../shared/publicationRefresh.mjs";
+import readModels from "@/data/readModels.json";
+import { subscribeToDeployment } from "@/lib/deploymentVersion";
 import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
@@ -493,6 +497,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const extraSymbols = useRef<Set<string>>(new Set());
   const [extraTick, setExtraTick] = useState(0);
   const requestSymbols = useCallback((symbols: readonly string[]) => {
+    if (isTableExporting()) return;
     let grew = false;
     for (const s of symbols) if (s && !extraSymbols.current.has(s)) { extraSymbols.current.add(s); grew = true; }
     if (grew) setExtraTick((n) => n + 1);
@@ -669,6 +674,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // (never set from an effect first), so the page never paints the whole family
   // for one frame before narrowing.
   const location = useLocation();
+  const publicationRefresh = useRef<ReturnType<typeof startPublicationRefresh> | null>(null);
+  useEffect(() => {
+    const controller = startPublicationRefresh({ revision: readModels.revision, path: `${import.meta.env.BASE_URL}publication.json` });
+    const unsubscribe = subscribeToDeployment(() => { void controller.check(); });
+    publicationRefresh.current = controller;
+    return () => { unsubscribe(); controller.stop(); publicationRefresh.current = null; };
+  }, []);
+  useEffect(() => { void publicationRefresh.current?.check(); }, [location.pathname]);
   const navigate = useNavigate();
   const memberOpts = useMemo(() => memberOptions(BOOK_ACCOUNTS, BOOK_OWNERS), []);
   const knownOwners = useMemo(() => new Set(memberOpts.map((o) => o.ownerId)), [memberOpts]);
@@ -814,7 +827,8 @@ export function WholeFamily({ children }: { children: React.ReactNode }) {
 /**
  * The whole family's book, whatever the selector holds. Only for saying WHOSE
  * something is when the scope leaves it out — "another member holds this" is
- * true where "nobody holds this" would be false. Never for a figure.
+ * true where "nobody holds this" would be false. Also supplies the complete
+ * read-only Excel snapshot; screen figures always keep the selected scope.
  */
 export function useWholePortfolio(): Portfolio | null {
   return useContext(WholeFamilyContext)?.portfolio ?? null;
@@ -827,6 +841,8 @@ export function useMemberScope(): MemberScope {
 
 export function usePortfolio() {
   const ctx = useContext(PortfolioContext);
+  const whole = useContext(WholeFamilyContext);
+  const exporting = useTableExporting();
   if (!ctx) throw new Error("usePortfolio must be used within PortfolioProvider");
-  return ctx;
+  return exporting && whole ? whole : ctx;
 }

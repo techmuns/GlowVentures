@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Shield } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -270,7 +271,7 @@ export function Polycab() {
     account: ({ a }) => (a ? `${a.provider} ${a.accountNo}` : null),
     asOf: ({ a }) => a?.asOf ?? null,
     shares: ({ p }) => (typeof p.quantity === "number" ? p.quantity : null),
-    mark: ({ p }) => (typeof p.quantity === "number" && p.quantity > 0 ? p.marketValue / p.quantity : null),
+    mark: ({ p }) => (typeof p.quantity === "number" && p.quantity > 0 && typeof p.marketValue === "number" ? p.marketValue / p.quantity : null),
     value: ({ p }) => p.marketValue,
     cost: ({ p }) => p.costBasis ?? null,
     pledge: () => null,
@@ -460,7 +461,7 @@ export function Polycab() {
             market price with its day move, and the block at that price. */}
         {view === "holding" && (
           <div className="mt-3 min-h-0 flex-1 overflow-auto">
-            <table className="min-w-full whitespace-nowrap text-[13px]" data-polycab-table="holding">
+            <ExportableTable className="min-w-full whitespace-nowrap text-[13px]" data-polycab-table="holding">
               <thead className="sticky top-0 z-10 bg-ink-800">
                 <Tr view={holdingView} className="border-b border-ink-700">
                   <SortHeader col="security" view={holdingView} align="left" pad={HEAD}>Security</SortHeader>
@@ -593,7 +594,7 @@ export function Polycab() {
                     }} />
                 </tfoot>
               )}
-            </table>
+            </ExportableTable>
           </div>
         )}
 
@@ -601,7 +602,7 @@ export function Polycab() {
         {view === "actions" && (
           <>
             <div className="mt-3 min-h-0 flex-1 overflow-auto">
-              <table className="min-w-full whitespace-nowrap text-[13px]" data-polycab-table="actions" data-polycab-dividends>
+              <ExportableTable className="min-w-full whitespace-nowrap text-[13px]" data-polycab-table="actions" data-polycab-dividends>
                 <thead className="sticky top-0 z-10 bg-ink-800">
                   <Tr view={actionView} className="border-b border-ink-700">
                     <SortHeader col="exDate" view={actionView} align="left" pad={HEAD}>Ex-date</SortHeader>
@@ -696,7 +697,7 @@ export function Polycab() {
                     </tr>
                   )}
                 </tbody>
-              </table>
+              </ExportableTable>
             </div>
             {/* BONUS, SPLIT AND SPIN-OFF — A MEASURED NIL, WHICH IS NOT AN
                 ABSENCE. Gated on `actionsComplete`, which the builder sets only
@@ -727,7 +728,7 @@ export function Polycab() {
         {view === "promoter" && (
           <>
             <div className="mt-3 min-h-0 flex-1 overflow-auto">
-              <table className="min-w-full whitespace-nowrap text-[13px]" data-polycab-table="promoter" data-polycab-quarters>
+              <ExportableTable className="min-w-full whitespace-nowrap text-[13px]" data-polycab-table="promoter" data-polycab-quarters>
                 <thead className="sticky top-0 z-10 bg-ink-800">
                   <Tr view={quarterView} className="border-b border-ink-700">
                     <SortHeader col="quarter" view={quarterView} align="left" pad={HEAD}>Quarter</SortHeader>
@@ -772,7 +773,7 @@ export function Polycab() {
                     </tr>
                   )}
                 </tbody>
-              </table>
+              </ExportableTable>
             </div>
             {sourcesLine("promoter")}
           </>

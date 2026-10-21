@@ -81,8 +81,7 @@ every one takes the reason as a required argument.
 - **Never blend a missing value into a total as zero** — `sumOrNull` in
   `src/lib/analytics.ts`.
 - **A figure that exists for SOME accounts is shown for those and the rest are
-  named**, including in the total's own caption. **A pooled return is the exception: never
-  partial.** It is struck over every account holding value or shown as `—`
+  named**, including in the total's own caption. **The Returns attribution table shows the covered subset**, as requested in Stage 10gh: the total is labelled “available data” and its info cards name what is missing. Other whole-portfolio pooled figures are struck over every account holding value or shown as `—`
   with the unmeasured accounts named (`nothingToMeasure`, `measuredAccountsReturn`
   in `src/lib/returns.ts`; Stage 10fc).
 - **A COMPUTED zero is legitimate and stays**, with its reason on the face.
@@ -198,8 +197,15 @@ One line per area; the history files explain each in depth.
 - `src/lib/statementUploads.ts` + `functions/api/statement-uploads.js` — the
   Statement Library's one upload (files or folders): each file a blob on the
   repo's `statement-inbox` branch (`shared/statementInbox.mjs`), read into the
-  book by `scripts/ingest/intake-uploads.mjs` and landed on main only if every
-  gate passes; a file it cannot read is held with the reason (Stage 10ga).
+  book by `scripts/ingest/intake-uploads.mjs`, verified against the Git baseline
+  and published through a codex PR after CI/review. Exact document versions must
+  be verified live before its inbox bytes are cleared. Never push/reset main or
+  waive a failing baseline gate. See `docs/STATEMENT-PUBLICATION.md` (Stage 10gg).
+- `scripts/ingest/lib/publication.mjs` — the matching, format/field coverage and
+  provenance boundary. Preserve the builder's `statementRecord` pointers for
+  valued and unpriced holdings; never infer source by equal amounts. Canonical
+  data, normalized documents and audit/ledger projections share the revision
+  discovered at `/publication.json`. Unknown layouts/identity conflicts stay held.
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.

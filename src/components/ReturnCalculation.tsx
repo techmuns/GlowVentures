@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Info, X } from "lucide-react";
@@ -6,8 +7,9 @@ import type { DatedFlow } from "@/lib/xirr";
 import { xirrWorking } from "@/lib/xirrWorking";
 
 /** The result is the tile's own rendered value, never a second calculation. */
-export function ReturnCalculationInfo({ label, value, children }: {
+export function ReturnCalculationInfo({ label, value, children, trigger, triggerLabel, intro }: {
   label: string; value: ReactNode; children: ReactNode;
+  trigger?: ReactNode; triggerLabel?: string; intro?: string;
 }) {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
@@ -27,11 +29,11 @@ export function ReturnCalculationInfo({ label, value, children }: {
   }, [open]);
 
   return <>
-    <button ref={button} type="button" aria-label={`How is ${label.toLowerCase()} calculated?`}
+    <button ref={button} type="button" aria-label={triggerLabel ?? `How is ${label.toLowerCase()} calculated?`}
       aria-haspopup="dialog" aria-expanded={open} data-return-info
-      title="How is this return calculated?" onClick={() => setOpen(true)}
-      className="pointer-events-auto grid h-6 w-6 shrink-0 place-items-center rounded-full text-slate-400 ring-focus hover:bg-ink-700 hover:text-slate-100">
-      <Info className="h-4 w-4" aria-hidden="true" />
+      title={triggerLabel ?? "How is this return calculated?"} onClick={(event) => { event.stopPropagation(); setOpen(true); }}
+      className={trigger ? "pointer-events-auto inline-flex items-baseline rounded border-b border-dashed border-current/40 text-inherit ring-focus hover:border-current" : "pointer-events-auto grid h-6 w-6 shrink-0 place-items-center rounded-full text-slate-400 ring-focus hover:bg-ink-700 hover:text-slate-100"}>
+      {trigger ?? <Info className="h-4 w-4" aria-hidden="true" />}
     </button>
     {open && createPortal(<dialog ref={dialog} aria-labelledby={titleId} data-return-calculation
       onCancel={(event) => { event.preventDefault(); setOpen(false); }}
@@ -44,6 +46,7 @@ export function ReturnCalculationInfo({ label, value, children }: {
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
       }}
       onClick={(event) => {
+        event.stopPropagation();
         if (event.target !== event.currentTarget) return;
         const box = event.currentTarget.getBoundingClientRect();
         if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) setOpen(false);
@@ -52,7 +55,7 @@ export function ReturnCalculationInfo({ label, value, children }: {
       <div className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs text-slate-400">How this return is calculated</p>
+            <p className="text-xs text-slate-400">{intro ?? "How this return is calculated"}</p>
             <h2 id={titleId} className="mt-1 text-lg font-semibold text-slate-100">{label}</h2>
           </div>
           <button type="button" autoFocus aria-label="Close return calculation" onClick={() => setOpen(false)}
@@ -160,10 +163,10 @@ export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, r
       {!reason && <div>
         <p className="font-medium text-slate-100">Amounts and dates used</p>
         <p className="my-2 text-xs text-slate-400">Minus means money invested, including opening values. Plus means money taken out or a closing value. Amounts are rounded for display; the calculation uses full precision.</p>
-        <table className="w-full text-xs" data-table-static="Dated calculation inputs, in date order">
+        <ExportableTable className="w-full text-xs" data-table-static="Dated calculation inputs, in date order">
           <thead><tr className="text-slate-400"><th className="py-2 text-left font-medium">Date</th><th className="py-2 text-right font-medium">Amount</th></tr></thead>
           <tbody>{dated.map((f, i) => <tr key={i} className="border-t border-ink-700"><td className="py-1.5">{fmtDate(f.date.toISOString().slice(0, 10))}</td><td className="py-1.5 text-right tabular">{f.amount > 0 ? "+" : ""}{money(f.amount)}</td></tr>)}</tbody>
-        </table>
+        </ExportableTable>
       </div>}
       {more}
       </div>

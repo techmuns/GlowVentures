@@ -8,17 +8,29 @@ book total, and it is deliberately NOT a statement about what the family's
 own demat reports — that distinction is the whole design and is set out at
 the top of `scripts/build-polycab-live.mjs`.
 
-Retrieved `2026-10-19T17:56:49.262Z`.
+Retrieved `2026-10-21T18:13:17.298Z`.
 
 ## Identity — the gate everything else passed
 
-**The identity gate did not pass this run**, so nothing from the exchange was
-refreshed. Whatever the store already held is kept and carries its own dates.
+The exchange returns **INE455K01017** for scrip `542652`, and the book's
+ring-fenced holding carries **INE455K01017**. They match, so the figures below are published.
+
+| | |
+| --- | --- |
+| Security id | POLYCAB |
+| Face value | 10 |
+| Industry | Cables - Electricals |
+| Group / index | A / BSE 200 |
 
 ## Corporate actions — the exchange's own record since listing
 
-**8** action(s) — **kept from a previous run**, so not republished as complete.
+**8** action(s), fetched whole this run.
 By kind: 8 dividend.
+
+**No bonus, split or spin-off has ever been declared on this scrip.** The record
+is complete from listing, so that is a MEASURED nil rather than an absence of
+reporting — which is the one thing this store retires from the page's own
+"unreported rather than confirmed" wording.
 
 | Ex-date | Kind | Per share | Ratio | Record / book closure | Payment | The exchange's own words |
 | --- | --- | ---: | --- | --- | --- | --- |
@@ -61,14 +73,14 @@ row for this scrip) — and is published as such.
 
 | | |
 | --- | ---: |
-| Last traded | 8354 |
-| Fetched | 2026-09-23T15:46:09.211Z — 21:16 IST on 2026-09-23, outside trading hours, so the last session's close |
-| Previous close | 8375 |
-| Day change | -21 (-0.25%) |
-| Open / high / low | 8376.65 / 8441.25 / 8343 |
+| Last traded | 7747 |
+| Fetched | 2026-10-21T18:13:18.877Z — 23:43 IST on 2026-10-21, outside trading hours, so the last session's close |
+| Previous close | 8020 |
+| Day change | -273 (-3.40%) |
+| Open / high / low | 8098 / 8098 / 7716 |
 
 The day change is DERIVED as last-traded less previous close, and checked against
-the exchange's own printed `-21`. Both are shown because a level
+the exchange's own printed `-273`. Both are shown because a level
 differenced against its OWN session prints a plausible near-zero, which is a defect
 this repo has already paid for once on the index strip.
 
@@ -86,5 +98,4 @@ That is recorded rather than worked around; nothing above needs it.
 
 ## This run's findings
 
-- **fail** `identity` — BSE identity refused — HTTP 403. Nothing from the exchange is published this run.
 - **info** `promoter-agreement` — 6 quarter(s) carried by both witnesses; all agree within 0.05pp.

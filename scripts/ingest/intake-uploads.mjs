@@ -33,17 +33,15 @@
 //      reads the rest again without it. Nothing is landed on a guess and no
 //      exception list is widened: a held file waits in the inbox for its
 //      reader, and the page's Retry sends it round again.
-//   6. Runs the gates CI runs on every PR — accounts-table, build, test:ingest,
-//      test:family. A gate that fails WITH the new statements and passes
-//      without them holds them all; one that already fails on `main` is not
-//      theirs to answer for.
-//   7. LANDS what passed — the statements, the archive, the book and every
-//      report regenerated, never text-merged — as one commit on `main`. The
-//      site redeploys from it. If `main` moved meanwhile, it starts again from
-//      the new `main`.
+//   6. Runs the required publication, identity/source-row and financial gates.
+//      A failing baseline never grants a new upload permission to bypass CI.
+//   7. Publishes the complete data tree on codex and opens a PR. Later runs
+//      monitor the exact head's checks/review, merge through that PR when clear,
+//      and confirm the existing Pages deployment contains the document versions.
+//      A moved base requires a fresh candidate, never a forced stale publish.
 //   8. Writes each file's outcome back to the inbox log (`landed` with its
 //      folders and documents, `duplicate`, or `held` with the reason) and
-//      clears the bytes of every file now in `source/`.
+//      clears bytes only after verifying their deployment, or proving a duplicate.
 //
 // The workflow's concurrency group runs one intake at a time, so a file still
 // `processing` when a run starts belongs to a run that died, and is read again.
@@ -54,6 +52,9 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { listEntries, readEntry, isMacMetadata } from "./lib/unzip.mjs";
 import { checkStatementBytes } from "../../shared/statementBytes.mjs";
+import { verify as verifyPublication, readArchive, readBaseline } from "./verify-publication.mjs";
+import { digest, documentRevision, archiveRevision } from "./lib/publication.mjs";
+import { monitorPublication, neverArrivedNote, withNotice } from "./lib/intakePublication.mjs";
 import {
   INBOX_DEFAULTS, STATEMENT_EXT, extOf, emptyLog, parseLog, serializeLog, applyUpdates, inboxPath,
 } from "../../shared/statementInbox.mjs";
@@ -105,6 +106,12 @@ function npm(script, args = [], env = {}) {
   if (r.stdout) process.stdout.write(r.stdout);
   if (r.stderr) process.stdout.write(r.stderr);
   return { ok: r.status === 0, out: `${r.stdout ?? ""}\n${r.stderr ?? ""}` };
+}
+
+function gh(args) {
+  const r = spawnSync('gh', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 16 << 20 });
+  if (r.status !== 0) throw new Error(`GitHub publication failed: ${clip(r.stderr, 400)}`);
+  return (r.stdout ?? '').trim();
 }
 
 // ── the inbox branch ──────────────────────────────────────────────────────────
@@ -161,13 +168,14 @@ function commitInbox(message, change) {
 
 /** Files to read this run: queued ones, and any a dead run left `processing`. */
 const waitingFiles = (log) => [...log.batches].sort((a, b) => a.id.localeCompare(b.id))
-  .flatMap((b) => b.files.filter((f) => f.status === "queued" || f.status === "processing").map((f) => ({ batch: b.id, file: f })));
+  .flatMap((b) => b.files.filter((f) => f.status === "queued" || f.status === "processing" || (f.status === "held" && f.pullRequest)).map((f) => ({ batch: b.id, file: f })));
 
 // ── main, and what is already in source/ ─────────────────────────────────────
 
 function resetToMain() {
   git(["fetch", "--no-tags", "--quiet", "--depth=1", REMOTE, `+refs/heads/${MAIN}:refs/remotes/${REMOTE}/${MAIN}`]);
-  git(["reset", "--hard", "--quiet", `${REMOTE}/${MAIN}`]);
+  // The worker checkout is isolated. Never commit, push or reset the main ref.
+  git(["switch", "--create", `codex/statement-intake-${process.env.GITHUB_RUN_ID ?? Date.now()}-${crypto.randomBytes(4).toString('hex')}`, `${REMOTE}/${MAIN}`]);
   git(["clean", "-fdq", "--", ...GENERATED]);
   // Every archive is expanded afresh by `inventory`; an expansion of a file a
   // previous round held back must not linger to be read.
@@ -361,6 +369,10 @@ const SEALED = /password|encrypt|sealed/i;
 /** Each placed upload's verdict, from the archive, coverage:source and check:reads. */
 function judge(live, baseline) {
   const manifest = JSON.parse(fs.readFileSync(abs("public/audit/manifest.json"), "utf8"));
+  const publication = verifyPublication({ baseRef: `${REMOTE}/${MAIN}` });
+  if (!['verified', 'unchanged'].includes(publication.decision)) return {
+    all: `Publication held (${publication.decision}): ${publication.issues.map(i => `${i.code}: ${i.reason}`).slice(0, 3).join(' · ') || 'Repeated normalized documents must not add rows.'}`,
+  };
   const cov = npm("coverage:source");
   const lines = cov.out.split(/\r?\n/);
   const at = lines.findIndex((l) => /FILE\(S\) UNREAD:/.test(l));
@@ -396,8 +408,8 @@ function judge(live, baseline) {
       const missing = entries.filter((e) => e.failedBecause === "attachment-removed").map((e) => path.basename(e.sourcePath));
       v = {
         status: "landed", hold: null,
-        reason: missing.length ? `Landed, but ${missing.length} file(s) inside never arrived — a mail server removed them and left a notice: `
-          + `${missing.join(", ")}. Ask the sender to re-send ${missing.length === 1 ? "it" : "them"}.` : null,
+        neverArrived: missing.length ? missing : null,
+        reason: neverArrivedNote(missing),
         providers: [...new Set(read.map((e) => e.provider || "(unidentified)"))].sort(),
         docKeys: [...new Set(read.map((e) => e.docKey))].sort(),
       };
@@ -435,22 +447,34 @@ function atBaseline(fn) {
  * these statements; `already` the ones that fail on main without them too.
  */
 function gates() {
-  const steps = [["accounts-table", ["--write"]], ["build", []], ["test:ingest", []], ["test:family", []]];
+  const steps = [["accounts-table", ["--write"]], ["statements:verify-book", []], ["test:statements", []], ["build", []], ["test:ingest", []], ["test:family", []]];
   const already = [];
   for (const [script, args] of steps) {
     if (npm(script, args).ok) continue;
     if (!atBaseline(() => npm(script, args).ok)) {
       say(`  \`npm run ${script}\` fails on ${MAIN} without these statements too — not theirs to answer for.`);
       already.push(script);
-      continue;
+      return { blocked: `Required gate \`npm run ${script}\` is failing on ${MAIN}; publication waits for a green verified base.`, already };
     }
     return { blocked: `\`npm run ${script}\` fails with these statements and passes without them. The run log names the failing check${RUN ? `: ${RUN}` : "."}`, already };
   }
   return { blocked: null, already };
 }
 
-/** One commit on main carrying the statements and everything regenerated from them. */
+/** One atomic data commit on codex, followed by a PR. Never push data to main. */
 function land(live, verdicts, already) {
+  const assessment = verifyPublication({ baseRef: `${REMOTE}/${MAIN}` });
+  if (assessment.decision !== 'verified') throw new Error('Publication changed after validation.');
+  const documents = readArchive(abs('public/audit'));
+  const versions = assessment.changed.map(key => {
+    const d = documents.find(d => d.docKey === key);
+    return { document: key, revision: documentRevision(d), sourcePath: d.sourcePath, sha256: digest(fs.readFileSync(abs(d.sourcePath))) };
+  });
+  const receipt = { schemaVersion: 1, baseCommit: assessment.baseCommit, archiveRevision: assessment.candidateRevision,
+    files: live.map(p => ({ path: p.landing, sha256: digest(fs.readFileSync(abs(p.landing))) })), documents: versions };
+  const id = digest(receipt);
+  fs.mkdirSync(abs('public/audit/deliveries'), { recursive: true });
+  fs.writeFileSync(abs(`public/audit/deliveries/${id}.json`), JSON.stringify({ ...receipt, id }) + '\n');
   git(["add", "-A", "--", ...GENERATED]);
   const list = live.map((p) => `- ${p.landing}${verdicts.get(p)?.providers?.length ? ` → ${verdicts.get(p).providers.join(", ")}` : ""}`);
   const passed = ["accounts-table", "build", "test:ingest", "test:family"].filter((s) => !already.includes(s));
@@ -465,9 +489,36 @@ function land(live, verdicts, already) {
     ...(RUN ? ["", `Run: ${RUN}`] : []),
   ].join("\n");
   git([...BOT, "commit", "-q", "-m", message]);
-  const sha = git(["rev-parse", "HEAD"]).out;
-  if (DRY) { say(`(dry run) ${MAIN} not pushed: ${sha}`); return sha; }
-  return git(["push", "--quiet", REMOTE, `HEAD:refs/heads/${MAIN}`], { allowFail: true }).ok ? sha : null;
+  let sha = git(["rev-parse", "HEAD"]).out;
+  if (DRY) { say(`(dry run) verified codex commit not pushed: ${sha}`); return { status: 'processing', commit: sha, reason: 'Local rehearsal; no PR or production change.' }; }
+  const branch = `codex/statement-delivery-${id.slice(0, 16)}`;
+  const existingRef = git(['ls-remote', '--heads', REMOTE, `refs/heads/${branch}`]).out.split(/\s/)[0];
+  if (existingRef) {
+    git(['fetch', '--no-tags', '--quiet', REMOTE, existingRef]);
+    const prior = readBaseline(existingRef);
+    if (archiveRevision(prior.documents) !== assessment.candidateRevision
+      || git(['show', `${existingRef}:src/data/glowData.ts`]).out !== fs.readFileSync(abs('src/data/glowData.ts'), 'utf8').trim()) throw new Error('An existing delivery branch contains different canonical data; review it before retrying.');
+    sha = existingRef;
+  } else if (!git(['push', '--quiet', REMOTE, `HEAD:refs/heads/${branch}`], { allowFail: true }).ok) return null;
+  const body = path.join(WORK, 'publication-pr.md');
+  fs.writeFileSync(body, `${message}\n\nOwner/account/security, changed-format field coverage and reconciliation publication checks passed. Exact source records and upload checksums are retained. Required CI and review must finish before merge.\n\nArchive revision: ${assessment.candidateRevision}\n`);
+  const metadata = { status: 'processing', hold: null, reason: 'Your statement is verified and waiting to appear on the dashboard.', commit: sha, branch,
+    pullRequest: null, baseCommit: assessment.baseCommit, archiveRevision: assessment.candidateRevision, ciDispatched: false,
+    documentVersions: versions.map(({ document, revision }) => ({ document, revision })) };
+  // Persist the handoff before PR creation/dispatch: a worker dying between
+  // network calls resumes this branch rather than creating another delivery.
+  commitInbox('Intake: verified publication branch prepared', () => ({ updates: live.map(p => ({ batch: p.item.batch, name: p.item.name,
+    ...verdicts.get(p), landedAs: [p.landing], ...metadata, reason: withNotice(metadata.reason, verdicts.get(p)) })) }));
+  const existingPR = JSON.parse(gh(['pr', 'list', '--head', branch, '--state', 'all', '--json', 'url']));
+  let url;
+  try { url = existingPR[0]?.url ?? gh(['pr', 'create', '--base', MAIN, '--head', branch, '--title', `Publish ${live.length} verified statement upload(s)`, '--body-file', body]); }
+  catch (error) { return { ...metadata, publicationDetail: `PR creation will resume from the saved branch: ${clip(error.message)}` }; }
+  // GITHUB_TOKEN may leave PR-triggered CI waiting for approval. Explicit CI
+  // dispatch is a documented GitHub exception and runs against this codex ref.
+  let ciDispatched = false;
+  try { gh(['workflow', 'run', 'ci.yml', '--ref', branch, '-f', `baseline=${assessment.baseCommit}`]); ciDispatched = true; }
+  catch { /* preserve PR metadata; the next monitor retries dispatch */ }
+  return { ...metadata, ciDispatched, publicationDetail: `Awaiting required CI and review: ${url}`, pullRequest: url };
 }
 
 // ── the run ───────────────────────────────────────────────────────────────────
@@ -533,9 +584,9 @@ async function intake(items) {
       break;
     }
 
-    const sha = land(live, verdicts, gate.already);
-    if (sha) {
-      for (const p of live) results.set(keyOf(p.item), { ...verdicts.get(p), landedAs: [p.landing], commit: sha });
+    const publication = land(live, verdicts, gate.already);
+    if (publication) {
+      for (const p of live) results.set(keyOf(p.item), { ...verdicts.get(p), landedAs: [p.landing], ...publication, reason: withNotice(publication.reason, verdicts.get(p)) });
       pending = [];
       break;
     }
@@ -548,7 +599,7 @@ async function intake(items) {
 
 function summarize(updates) {
   const count = (s) => updates.filter((u) => u.status === s).length;
-  const parts = [["landed", "landed"], ["duplicate", "already in the library"], ["held", "held"]]
+  const parts = [["landed", "landed"], ["duplicate", "already in the library"], ["held", "held"], ["processing", "awaiting publication"]]
     .filter(([s]) => count(s)).map(([s, w]) => `${count(s)} ${w}`);
   const line = parts.join(", ") || "nothing to do";
   if (process.env.GITHUB_STEP_SUMMARY) {
@@ -561,7 +612,7 @@ function summarize(updates) {
 
 async function main() {
   if (!CHECK && !process.env.CI && !process.argv.includes("--allow-reset")) {
-    console.error("This run resets the checkout to the remote main (git reset --hard). Run it in CI, or pass --allow-reset in a scratch clone.");
+    console.error("Run intake in an isolated CI checkout, or pass --allow-reset in a scratch clone. It prepares codex branches from remote main.");
     process.exit(2);
   }
   if (!fetchInbox()) {
@@ -594,12 +645,24 @@ async function main() {
     const to = path.join(WORK, "files", batch, ...file.name.split("/"));
     fs.mkdirSync(path.dirname(to), { recursive: true });
     fs.copyFileSync(from, to);
-    return { batch, name: file.name, file: to };
+    return { batch, name: file.name, file: to, publication: file.pullRequest || file.branch ? file : null };
   });
 
   let results;
   try {
-    results = await intake(items);
+    results = new Map();
+    const pending = items.filter(i => i.publication);
+    if (pending.length) git(['fetch', '--no-tags', '--quiet', REMOTE, `refs/heads/${MAIN}:refs/remotes/${REMOTE}/${MAIN}`]);
+    for (const item of pending) {
+      if (DRY) { results.set(keyOf(item), { ...item.publication, status: 'processing', reason: 'Local rehearsal; publication monitoring skipped.' }); continue; }
+      try {
+        results.set(keyOf(item), await monitorPublication(item.publication, { gh,
+          currentBase: git(['rev-parse', `${REMOTE}/${MAIN}`]).out, credential: process.env.GLOW_DASHBOARD_PASSWORD,
+          baseURL: process.env.GLOW_BASE_URL }));
+      } catch (error) { results.set(keyOf(item), { ...item.publication, status: 'processing', hold: null,
+        reason: 'Your statement is saved. Processing will continue automatically.', publicationDetail: `Publication check will retry: ${clip(error.message)}` }); }
+    }
+    for (const [key, result] of await intake(items.filter(i => !i.publication))) results.set(key, result);
   } catch (e) {
     console.error(e);
     process.exitCode = 1;

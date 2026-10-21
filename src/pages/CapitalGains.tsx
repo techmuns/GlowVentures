@@ -1,12 +1,14 @@
+import { isTableExporting, usePrepareTableExport, useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
+import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableBody } from "@/components/InfiniteTableBody";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Receipt, Landmark, Timer, Percent } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { SearchInput } from "@/components/SearchInput";
 import { BasisPill } from "@/components/BasisPill";
-import { usePortfolio } from "@/context/PortfolioContext";
+import { usePortfolio, useWholePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { sumOrNull, sum, isPriced, holdingBucket, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
@@ -75,13 +77,16 @@ const HOLD_COLS = ["security", "gain", "turns", "saved"] as const;
 const HARVEST_COLS = ["security", "entity", "loss", "return", "marked", "term"] as const;
 
 export function CapitalGains() {
+  const wholePortfolio = useWholePortfolio();
+  const exportingTable = useTableExporting();
   // STATEMENT BASIS, ALWAYS. This page has to tie to the capital gain statements
   // — a reader checks a figure here by opening the PDF. Reading the live-overlaid
   // book would drift its unrealised figures with the market while the realised
   // ones stayed printed, so two halves of the same table would be on two
   // different measurements with nothing on screen to say which.
   const { statementPortfolio: portfolio, portfolio: livePortfolio, fmtFromBase, scope } = usePortfolio();
-  const [harvestQ, setHarvestQ] = useState("");
+  const [harvestQFilter, setHarvestQ] = useState("");
+  const harvestQ = useTableExportFilter(harvestQFilter, "");
   // The "no capital gain statement" band opens here; above the early return,
   // as every hook must be.
   const [missingOpen, setMissingOpen] = useState(false);
@@ -141,9 +146,16 @@ export function CapitalGains() {
   // Keyed on the joined STRING, so a render that rebuilds an equal list (an
   // empty book's `[]` is a new array every time) does not re-run the reads.
   const datedKeyList = useMemo(() => [...new Set(datedLots.map((x) => x.securityKey))].sort().join(","), [datedLots]);
-  const [registers, setRegisters] = useState<Map<string, StockLedger["openLots"] | null> | undefined>(undefined);
+  const [displayRegisters, setRegisters] = useState<Map<string, StockLedger["openLots"] | null> | undefined>(undefined);
+  const exportRegisters = useRef<Map<string, StockLedger["openLots"] | null>>();
+  usePrepareTableExport(async () => {
+    const keys = [...new Set((wholePortfolio?.positions ?? []).filter(x => x.stCostBasis != null || x.ltCostBasis != null).map(x => x.securityKey))];
+    exportRegisters.current = new Map(await Promise.all(keys.map(k => loadStockLedger(k).then(l => [k, l?.openLots ?? null] as const))));
+  });
+  const registers = exportingTable ? exportRegisters.current : displayRegisters;
   useEffect(() => {
     let alive = true;
+    if (isTableExporting()) return;
     const keys = datedKeyList ? datedKeyList.split(",") : [];
     if (!keys.length) { setRegisters(new Map()); return; }
     setRegisters(undefined);
@@ -647,7 +659,7 @@ export function CapitalGains() {
         <Card className="mt-5" title="Realised, by how the holding was run"
           subtitle="The statement windows' total, split — the canonical figure the headline names second" pad={false}>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
                 <Tr view={bucketView}>
                   <SortHeader col="bucket" view={bucketView} align="left">Held as</SortHeader>
@@ -705,7 +717,7 @@ export function CapitalGains() {
                     total: <td key="total" className={`px-4 py-2.5 text-right mono ${changeColor(realisedTotal ?? 0)}`}>{fmtFromBase(realisedTotal ?? 0, { compact: true, sign: true })}</td>,
                   }} />
               </tfoot>
-            </table>
+            </ExportableTable>
           </div>
         </Card>
       )}
@@ -714,7 +726,7 @@ export function CapitalGains() {
         subtitle="Short- and long-term as the MANAGER split them — a tax determination taken from the statement, not re-derived here"
         pad={false}>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <ExportableTable className="min-w-full text-sm">
             <thead className="border-b border-ink-700">
               <Tr view={acctView}>
                 <SortHeader col="account" view={acctView} align="left">Account</SortHeader>
@@ -790,7 +802,7 @@ export function CapitalGains() {
                   unrealLT: <td key="unrealLT" className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>,
                 }} />
             </tfoot>
-          </table>
+          </ExportableTable>
         </div>
       </Card>
 
@@ -820,7 +832,7 @@ export function CapitalGains() {
                   this on; the calculation is already wired and dormant.`} />
           ) : (
             <div className="max-h-[440px] overflow-auto">
-              <table className="min-w-full text-sm">
+              <ExportableTable className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
                   <Tr view={holdView}>
                     <SortHeader col="security" view={holdView} align="left">Security</SortHeader>
@@ -852,7 +864,7 @@ export function CapitalGains() {
                     </Tr>
                   )}
                 </InfiniteTableBody>
-              </table>
+              </ExportableTable>
             </div>
           )}
         </Card>
@@ -880,7 +892,7 @@ export function CapitalGains() {
                 <span className="mono text-[13px] text-loss">{money(harvestTotal, true)}</span>
               </div>
               <div className="max-h-[380px] overflow-auto">
-                <table className="min-w-full text-sm">
+                <ExportableTable className="min-w-full text-sm">
                   <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
                     <Tr view={harvestView}>
                       <SortHeader col="security" view={harvestView} align="left">Security</SortHeader>
@@ -962,7 +974,7 @@ export function CapitalGains() {
                       </Tr>
                     )}
                   </InfiniteTableBody>
-                </table>
+                </ExportableTable>
               </div>
             </>
           )}

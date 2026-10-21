@@ -110,6 +110,14 @@ extracted statement tables stay private.
 
 ## The ingest pipeline
 
+Dashboard uploads enter a durable statement inbox, then the backend validates
+their owner/account/security, format coverage and reconciliation before preparing
+a complete version through a codex PR. Data Audit and the dashboard read that
+same book; Data Audit is its inspection view. Canonical data and field evidence
+share immutable versions discovered at `/publication.json`. The exact intake,
+review/deployment gates and source links are in
+[Verified statement publication](docs/STATEMENT-PUBLICATION.md).
+
 Statements in, book out. Every step is idempotent, and `glowData.ts` regenerates
 **byte-identically** from `source/` alone.
 
