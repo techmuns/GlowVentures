@@ -4728,35 +4728,13 @@ Follows Stage 10et. With `check:reads`' precedence filter removed, six more acco
 - **SVAN 8710067's appraisal prints a `Cash Rec/Payable` of −₹24.8 L**, which makes that key net negative (−₹22.6 L) for the first time. `negligibleFloor.test.ts` asserted no such key existed; it now checks that a net-negative key survives the floor on the live book. `clubbedFigures.test.ts`' re-expression now leaves the average cost absent over a non-positive unit count, as `costedFigures` does. `datedCapital.test.ts` and `carriedCost.test.ts` take Buoyant's close from the 30 Sep account statement, and keep the snap as a witness on its own date.
 - Book: consolidated ₹836.60 Cr → **₹836.57 Cr**, 444 → 448 positions. Left alone: Kotak 4295974's ₹619 MATERIAL break on a liquid-fund line (Hope India Trust, excluded from the book as a separate taxpayer), and 0.01-point weight deltas on Carnelian's report, whose printed weights total 99.93%.
 
-### Stage 10ev — PRIVATE MARKET: STRATEGY AND DESCRIPTION, TYPED IN THE CELL
 
-*"give the option to edit and write information in the strategy and description
-cells just like the capital call cells."*
+### Stage 10ez — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
 
-- **Store:** `functions/api/investment-profiles.js` — the capital calls' store and
-  gate (`GLOW_STORE` KV, edge password, same-origin writes), one key per
-  investment and field (`investment-profile:<field>:<fund>`), keyed on the calls'
-  own `callKeyOf`. A save may name several investments: a legal-name or brand row
-  writes its text to every fund line under it. Up to 2,000 characters, line
-  breaks kept; a record too long for KV metadata is read from its value.
-- **Client:** `src/lib/enteredProfiles.ts` (same `StoreCause` / `CAUSE_WORD` /
-  `SWITCH_ON_STEPS` as the calls) and `components/EnteredProfiles.tsx`. Each cell
-  is a button: its text, "Add", or the store's cause in a word; it opens an
-  editor row under the row with both fields. A member row only reads; its folio
-  lines edit.
-- **Precedence:** typed text (`matchedOn: "entered"`) shows over a supplied
-  file's (`withEntered`); "Remove typed text" shows the file's again. Cells,
-  sort and search read the one resolution; the hover says which it is.
-- `enteredProfiles.test.ts` drives the Function on an in-memory KV and the
-  precedence. Checked in the browser with the store mocked: save, remove, the
-  four-line Waterwala row. `check:pages ONLY=private-market`: no new finding.
+*"not all accounts are being read into the dashboard. It says partial return, 2 out of 76 accounts … We do not need to show partial return anywhere on the dashboard"* — the family, 21 Oct 2026.
 
-### Stage 10ew — THE SEBI INVESTOR REPORT'S SINCE-INCEPTION TWRR AND ITS LOWER-CASE WINDOW
-
-*"we need to integrate these files into the dashboard data … Make sure no information is missed"* — the family, 21 Oct 2026, re-sending `Svan - Bharat.zip`, `Svan _ Ajay.zip`, the Z660 report and `Svan - Bharat.eml`.
-
-- **Nothing new by bytes.** The three files are already in `source/october-2026-c/`, and the email's one attachment is the same Z660 PDF. Its provenance (Nuvama FA, 8 Oct, forwarded by Bharat on 9 Oct) is recorded in `source/README.md`. All 15 documents behind them read `ok`.
-- **The since-inception TWRR reached the book nowhere.** `pmsInvestorReport.mjs` mapped figures by their position on the flattened line, and blank 3Y/5Y/10Y cells vanish there. So `Returns of Client Portfolio 10.72 3.31` filed 3.31 as a 3-year return, on all nine investor reports, for accounts under two years old. `build-book` carries no 3-year field, so the figure was dropped. Each figure is now placed under the heading whose right edge it shares. Missing geometry raises `return-columns-not-read` and places nothing. `ReturnSeries` and `build-book` now carry `y3`/`y5`/`y10`.
-- **`From 01/09/2026 to 30/09/2026` read as no window.** The period pattern required "To". Bharat's SVAN 8710090 September report and Carnelian's 7 Oct report print "to", so both bridges were undated and dropped. 8710090 now has its September bridge on `/performance`, and its printed 31 Aug opening (₹11.12 Cr) joins the NAV series. Carnelian's 7 Oct bridge is WITHHELD, ₹2,85,231.78 short of its closing, the gap Stage 10eu names.
-- **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
-- `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.
+- **Code cause:** Morning CIO → Returns built its own inputs from NAV history and cash-flow rows instead of the verified `accountReturnRecords` every other return surface reads (Stage 10ei/10em). FYTD measured 9 accounts where 17 are verified; the unit-ledger openings (HDFC ×3, Kotak, ICICI ×2, Invesco, 3P, Motilal MF) never reached it. The tab now opens and closes each account on its verified record, with statement marks between the two as window points.
+- **Data cause, unchanged:** 42 accounts holding value have no verified opening valuation and dated capital through a closing valuation (Sanshi ×5, the MOPWM review ×6, ICICI NSDL, Buoyant ×2, SVAN ×2, Motilal Founders/Delphi/Active Momentum, India SME ×3, Carnelian Amritkaal and others; `RETURN-COVERAGE.md`). Records start on 1 Apr 2026, so YTD and 1Y/2Y/3Y have no opening value for any account.
+- **Never a partial pool.** `measuredAccountsReturn` now returns `missing`, `outside`, `whole` and `reason`; its rate is null unless every account holding value is measured. Morning CIO's money-weighted and annualised tiles, NAV & Performance's consolidated row and tile, each Family & Entities member and `/holdings?of=measured` show `—` with the reason and the missing accounts named. A partial pool's flows are no longer handed to a calculation popup. The Returns tab's figures, opening/flows/closing/gain and portfolio-vs-index gap follow the same rule; "Partial return" is gone from every surface.
+- **Accounted for, not missing:** `nothingToMeasure` — a verified nil (`notApplicable`), or an account with no record, no position and no opening value (custody counted under the review, income-only folios, quantity-only demats, nil statements). 17 such accounts are outside the whole; the "N of M" counts are of the 59 accounts holding value.
+- Tests: `latestAccountReturns` (every account placed once; the book's rate absent; the tile and pool agree over the wholly verified set), `investorSummary` (an unvalued custody account neither blocks nor joins; a missing one leaves the annual rate absent with no inputs), `xirrWorking` (bridge proved on the verified set).

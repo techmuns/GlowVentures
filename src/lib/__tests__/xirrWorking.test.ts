@@ -43,7 +43,11 @@ assert.equal(xirrWorking([flow("2025-01-01", NaN)], 20, 365, true), null);
 // Real card inputs: prove the missing numerical bridge reaches the same rate
 // and balances the whole dated pool, including its different closing dates.
 const statement = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS, accountReturnRecords:BOOK_ACCOUNT_RETURN_RECORDS } as unknown as Portfolio;
-const measured = measuredAccountsReturn(statement, BOOK_ACCOUNTS);
+// Over the wholly measured accounts: the book's own pool is absent until every
+// account is measured (Stage 10ez), so the bridge is proved on the ones that are.
+const verified = measuredAccountsReturn(statement, BOOK_ACCOUNTS).parts.map((p) => p.accountId);
+const measured = measuredAccountsReturn(statement, BOOK_ACCOUNTS.filter((a) => verified.includes(a.accountId)));
+assert.ok(measured.whole);
 const actual = xirrWorking(measured.parts.flatMap((p) => [...p.flows, { date: p.asOf, amount: p.terminalValue }]),
   measured.annPct, measured.windowDays, false)!;
 near(actual.pct, measured.toDatePct!);

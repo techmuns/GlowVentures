@@ -78,6 +78,12 @@ export type AccountInput = {
   flowsUnknown: string | null;
   /** [from, to] windows the statements print capital no dated row carries. */
   undated: { from: string; to: string; amount: number }[];
+  /**
+   * Why the account has nothing of its own to measure (a verified nil, or
+   * valued nowhere in the book), where it has not. Such an account is outside
+   * the whole, never a gap in it.
+   */
+  outside?: string | null;
 };
 
 export type AccountWindow = {
@@ -102,7 +108,12 @@ export type WindowResult = {
   start: string;
   end: string;
   included: AccountWindow[];
+  /** Accounts the whole must cover and cannot be measured over this window. */
   excluded: Excluded[];
+  /** Accounts with nothing to measure over this window — not gaps in the whole. */
+  outside: Excluded[];
+  /** True only when every account that must be covered is measured. */
+  whole: boolean;
   /** The window the included accounts actually span. */
   measuredFrom: string | null;
   measuredTo: string | null;
@@ -188,8 +199,10 @@ function markOnOrBefore(v: Valuation[], d: string, notBefore: string | null, aft
 export function windowReturns(accounts: AccountInput[], start: string, end: string): WindowResult {
   const included: AccountWindow[] = [];
   const excluded: Excluded[] = [];
+  const outside: Excluded[] = [];
   for (const a of accounts) {
     const ex = (reason: string) => excluded.push({ accountId: a.accountId, label: a.label, owner: a.owner, reason });
+    if (a.outside) { outside.push({ accountId: a.accountId, label: a.label, owner: a.owner, reason: a.outside }); continue; }
     if (a.flowsUnknown) { ex(a.flowsUnknown); continue; }
     const vals = [...a.valuations].sort((x, y) => x.date.localeCompare(y.date));
     let open = markOnOrBefore(vals, start, a.knownFrom);
@@ -225,7 +238,7 @@ export function windowReturns(accounts: AccountInput[], start: string, end: stri
     const capitalIn = flows.filter((f) => f.amount < 0).reduce((s, f) => s - f.amount, 0);
     const capitalOut = flows.filter((f) => f.amount > 0).reduce((s, f) => s + f.amount, 0);
     if (open.value === 0 && close.value === 0 && flows.length === 0) {
-      ex("it held nothing across the window");
+      outside.push({ accountId: a.accountId, label: a.label, owner: a.owner, reason: "it held nothing across the window" });
       continue;
     }
     included.push({
@@ -240,7 +253,8 @@ export function windowReturns(accounts: AccountInput[], start: string, end: stri
   const measuredTo = included.length ? included.map((x) => x.closeDate).sort().at(-1)! : null;
   const sum = (f: (x: AccountWindow) => number) => included.reduce((s, x) => s + f(x), 0);
   return {
-    start, end, included, excluded, measuredFrom, measuredTo,
+    start, end, included, excluded, outside, whole: included.length > 0 && excluded.length === 0,
+    measuredFrom, measuredTo,
     days: measuredFrom && measuredTo ? daysBetween(measuredFrom, measuredTo) : null,
     openValue: sum((x) => x.openValue), closeValue: sum((x) => x.closeValue),
     capitalIn: sum((x) => x.capitalIn), capitalOut: sum((x) => x.capitalOut), gain: sum((x) => x.gain),

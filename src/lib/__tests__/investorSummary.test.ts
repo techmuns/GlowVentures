@@ -123,4 +123,18 @@ const empty = book();
 empty.accounts = [];
 empty.positions = [];
 assert.equal(investorPeriodReturn(empty, today, "fytd").pct, null);
+// Stage 10ez — an account the book values nowhere has nothing of its own to
+// measure, so it neither blocks nor joins the whole; one holding value without
+// a record leaves the annual rate absent and named, never a partial pool.
+const custody = book();
+custody.accounts.push({ accountId: "demat", accountNo: "9", asOf: "2026-09-01", noPositionsReason: "quantities only" } as Portfolio["accounts"][number]);
+r = investorPeriodReturn(custody, today, "fytd");
+assert.equal(r.total, 1);
+assert.equal(r.reason, null);
+const annualPartial = investorAnnualReturn(partial);
+assert.equal(annualPartial.pct, null);
+assert.equal(annualPartial.issueLabel, "Incomplete records");
+assert.deepEqual(annualPartial.missing.map((m) => m.accountNo), ["2"]);
+assert.equal(annualPartial.flows.length, 0);
+assert.equal(investorPeriodReturn(partial, today, "fytd").flows.length, 0);
 console.log("Investor period returns: cash flows, coverage, dates and missing history passed");

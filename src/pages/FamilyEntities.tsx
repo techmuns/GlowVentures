@@ -1144,9 +1144,10 @@ export function FamilyEntities() {
                 </thead>
                 <tbody className="divide-y divide-ink-700/70">
                   {entityRows.map((e) => {
-                    // Money-weighted return over this owner's MEASURABLE accounts
-                    // only — closing the whole entity MV against partial openings
-                    // returned +147%/+353% here for real family members.
+                    // Money-weighted return over ALL this owner's accounts, or
+                    // none — closing the whole entity MV against partial openings
+                    // returned +147%/+353% here for real family members, and a
+                    // rate over some of them is not the member's (Stage 10ez).
                     const mwr = ownerMeasuredReturn(statementPortfolio ?? portfolio, p, e.key);
                     const xirrPct = mwr.toDatePct;
                     // Stated on the STATEMENT basis the rate is struck on: the
@@ -1183,12 +1184,16 @@ export function FamilyEntities() {
                     const coverNote = mwr.annPct == null ? undefined
                       : `Money-weighted, over ${mwr.windowDays} days — ${fmtDate(mwParts.windowStart ?? "")}, the first dated flow, to ${fmtDate(mwParts.lastClose ?? "")}, the latest statement it closes on — ${basisNote}. Covers ${mwr.covered} ${mwr.covered === 1 ? "account" : "accounts"} — ${coveredNames.join(", ")} — worth ${money(mwr.measuredMV)} on their own statements, ${closes}${mwr.excluded.length ? `; ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
                     const cov = coverageOf(e.key);
-                    const noRateWhy = mwParts.parts.length > 0
+                    const noRateWhy = mwParts.missing.length > 0
+                      ? (mwParts.parts.length === 0
+                        ? `no rate: ${mwParts.missing.length === 1 ? "the one account" : `none of the ${mwParts.missing.length} accounts`} this entity holds value in has a verified opening value and dated capital through a closing valuation (${mwParts.missing.map((m) => m.accountNo).join(", ")})`
+                        : `no rate: ${mwParts.missing.length} of the ${mwParts.parts.length + mwParts.missing.length} accounts this entity holds value in ${mwParts.missing.length === 1 ? "lacks" : "lack"} a verified opening value and dated capital through a closing valuation (${mwParts.missing.map((m) => m.accountNo).join(", ")}), so no whole return is struck — a rate over the other ${mwParts.parts.length === 1 ? "one" : mwParts.parts.length} would not be this entity's`)
+                      : mwParts.parts.length > 0
                       ? `no rate: the dated flows of the ${mwParts.parts.length === 1 ? "one account" : `${mwParts.parts.length} accounts`} that publish an opening portfolio value do not solve for one`
                       : `no rate here: this column pools only accounts whose statements publish an opening portfolio value for the year, and none of this entity's accounts that hold something does${cov.records > 0
                         ? ` — ${cov.records === 1 ? "one of its accounts publishes" : `${cov.records} of its accounts publish`} a dated capital record instead, and the Portfolio Monitor's Transactions tab strikes each one's return from it, since its first payment, where the account is valued`
                         : "; nor does any of its accounts publish a dated capital record"}`;
-                    const struckFromOpening = mwParts.parts.length === cov.opening && mwParts.windowStart === fyStartIso;
+                    const struckFromOpening = mwParts.whole && mwParts.parts.length === cov.opening && mwParts.windowStart === fyStartIso;
                     const ytdWhy = cov.opening === 0
                       ? `not struck: a year-to-date return needs the entity's whole value on ${fyLabel}, and ${cov.held === 1 ? "the one account it holds something in publishes none" : `none of the ${cov.held} accounts it holds something in publishes one`}`
                       : cov.opening < cov.held
