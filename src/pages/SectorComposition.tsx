@@ -21,6 +21,7 @@ import { fmtPct, fmtCurrency, changeColor, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { heldRouteOf, measuredSplit, HELD_ROUTE_NOTE, type MeasuredSplit } from "@/lib/heldThrough";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { investedOnOf } from "@/lib/investedOn";
 import { withReviewAccessors } from "@/lib/reviewColumns";
 import { BENCHMARKS, type BenchmarkKey } from "@/lib/benchmarks";
 import { indexSectors, indexSectorFrom, type IndexSectorRow } from "@/lib/indexSectors";
@@ -394,7 +395,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
     return currentHoldings(consolidated)
       .some((x) => isCompanyShare(x) && heldRouteOf(holdingRoute(engagementOf(idx, x) || null)) === "other");
   }, [portfolio, consolidated]);
-  const companyView = useTableView("sector-companies", otherRouteHeld ? SECTOR_COMPANY_COLS_OTHER : SECTOR_COMPANY_COLS);
+  const companyView = useTableView("sector-companies", otherRouteHeld ? SECTOR_COMPANY_COLS_OTHER : SECTOR_COMPANY_COLS, { investmentDates: true });
   const holdingView = useTableView("sector-holdings", SECTOR_HOLDING_COLS, { reviewKind: "holding" });
   /**
    * THE SECTORS BEING COMPARED. `null` until the reader picks, which reads as
@@ -1313,6 +1314,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                       return: (h) => (h.costUnavailable ? null : h.returnPct),
                     }, (h) => ({ positions: [h] }), memberScope.owners !== null));
                     const companies = sortRows(companiesBySector[s.key] ?? [], companyView.sort, {
+                      investedOn: (e) => e.derived > 0 ? null : investedOnOf(e.positions)?.first ?? null,
                       company: (e) => e.name,
                       direct: (e) => splitOf(e).direct,
                       pms: (e) => splitOf(e).manager,
@@ -1458,7 +1460,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                         {companies.map((e) => {
                                           const sp = splits.get(e.key)!;
                                           return (
-                                          <Tr view={companyView} key={e.key} className="hover:bg-ink-700/30" data-sector-company={e.key}
+                                          <Tr view={companyView} reviewScope={{ positions: e.derived > 0 ? [] : e.positions }} key={e.key} className="hover:bg-ink-700/30" data-sector-company={e.key}
                                             data-split-direct={sp.direct ?? ""} data-split-pms={sp.manager ?? ""} data-split-other={sp.other ?? ""}
                                             data-split-derived={e.derived} data-split-total={e.total}>
                                             <td className="px-3 py-1.5 text-slate-200">

@@ -69,6 +69,15 @@ export function selectedColumns(declared: readonly string[], visibility: StoredV
   return declared.filter((col, i) => i === 0 || (visibility?.[col] ?? !optional.includes(col)));
 }
 
+/** New holdings tables get purchase dates by default, beside the invested amount. */
+export function investmentDateColumns(columns: readonly string[], enabled: boolean): string[] {
+  if (!enabled || columns.includes("investedOn")) return [...columns];
+  const result = [...columns];
+  const invested = result.indexOf("invested");
+  result.splice(invested >= 0 ? invested + 1 : 1, 0, "investedOn");
+  return result;
+}
+
 /**
  * What a table saved, falling back to the keys it used to save under — so a
  * table whose key was merged keeps the arrangement the reader already made.
@@ -249,14 +258,20 @@ export function nudgeColumn(stored: readonly string[], declared: readonly string
  * would make every address unreadable. Visibility and arrangement only change
  * presentation; the records, calculations and export data remain intact.
  */
-export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[]; optional?: readonly string[]; manualEditor?: boolean; reviewKind?: ReviewKind }): TableView {
+export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[]; optional?: readonly string[]; manualEditor?: boolean; reviewKind?: ReviewKind; investmentDates?: boolean }): TableView {
   // Keyed on the CONTENT of the list, so a caller that rebuilds the same list
   // every render does not re-derive the arrangement every render.
   const colKey = columns.join("\u0001");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const baseColumns = useMemo(() => columns.filter((c, i) => columns.indexOf(c) === i), [colKey]);
-  const additionalColumns = useMemo(() => opts?.reviewKind ? reviewColumnIds(opts.reviewKind).filter((c) => !baseColumns.includes(c)) : [], [opts?.reviewKind, baseColumns]);
+  const dates = opts?.investmentDates ?? opts?.reviewKind === "holding";
+  const autoDate = dates && !baseColumns.includes("investedOn");
+  const reviewColumns = useMemo(() => opts?.reviewKind ? reviewColumnIds(opts.reviewKind).filter((c) => !baseColumns.includes(c)) : [], [opts?.reviewKind, baseColumns]);
+  const additionalColumns = useMemo(() => [...(autoDate ? ["investedOn"] : []), ...reviewColumns], [autoDate, reviewColumns]);
   const declared = useMemo(() => [...baseColumns, ...additionalColumns], [baseColumns, additionalColumns]);
+  // The JSX still arrives in base + additional order. Only the default display
+  // order inserts the generated date beside Invested; Tr maps cells by id.
+  const layoutColumns = useMemo(() => [...investmentDateColumns(baseColumns, dates), ...reviewColumns], [baseColumns, dates, reviewColumns]);
   const fixed = declared[0] ?? "";
   const legacy = opts?.legacyKeys ?? NO_LEGACY;
   const legacyKey = legacy.join("\u0001");
@@ -266,9 +281,9 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   const stored = useSyncExternalStore(subscribe, read, read);
   const optionalKey = opts?.optional?.join("\u0001") ?? "";
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const optional = useMemo(() => [...additionalColumns, ...(opts?.optional ?? NO_LEGACY)], [additionalColumns, optionalKey]);
-  const drawn = selectedColumns(declared, stored.visibility, optional);
-  const availableOrder = useMemo(() => visibleOrder(stored.order, declared), [stored.order, declared]);
+  const optional = useMemo(() => [...reviewColumns, ...(opts?.optional ?? NO_LEGACY)], [reviewColumns, optionalKey]);
+  const drawn = selectedColumns(layoutColumns, stored.visibility, optional);
+  const availableOrder = useMemo(() => visibleOrder(stored.order, layoutColumns), [stored.order, layoutColumns]);
   const order = availableOrder.filter((col) => drawn.includes(col));
   const hidden = declared.filter((col) => !drawn.includes(col));
   const sort = visibleSort(stored.sort, drawn);
@@ -281,7 +296,7 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
 
   const toggleSort = useCallback((col: string) => {
     const cur = current();
-    const shown = selectedColumns(declared, cur.visibility, optional);
+    const shown = selectedColumns(layoutColumns, cur.visibility, optional);
     if (!shown.includes(col)) return;
     const eff = visibleSort(cur.sort, shown);
     /**
@@ -294,29 +309,29 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
     const next: TableSort = eff?.col !== col ? { col, dir: "desc" }
       : eff.dir === "desc" ? { col, dir: "asc" } : null;
     save({ ...cur, sort: next });
-  }, [current, declared, optional, save]);
+  }, [current, layoutColumns, optional, save]);
 
   const move = useCallback((col: string, before: string | null) => {
     const cur = current();
-    const next = moveColumn(arrangeColumns(cur.order, declared), selectedColumns(declared, cur.visibility, optional), col, before);
+    const next = moveColumn(arrangeColumns(cur.order, layoutColumns), selectedColumns(layoutColumns, cur.visibility, optional), col, before);
     if (next) save({ ...cur, order: next });
-  }, [current, declared, optional, save]);
+  }, [current, layoutColumns, optional, save]);
 
   const nudge = useCallback((col: string, delta: -1 | 1) => {
     const cur = current();
-    const next = nudgeColumn(arrangeColumns(cur.order, declared), selectedColumns(declared, cur.visibility, optional), col, delta);
+    const next = nudgeColumn(arrangeColumns(cur.order, layoutColumns), selectedColumns(layoutColumns, cur.visibility, optional), col, delta);
     if (next) save({ ...cur, order: next });
-  }, [current, declared, optional, save]);
+  }, [current, layoutColumns, optional, save]);
 
   const setVisible = useCallback((col: string, visible: boolean) => {
     if (col === fixed || !declared.includes(col)) return;
     const cur = current();
-    save({ ...cur, order: arrangeColumns(cur.order, declared), visibility: { ...cur.visibility, [col]: visible } });
-  }, [current, declared, fixed, save]);
+    save({ ...cur, order: arrangeColumns(cur.order, layoutColumns), visibility: { ...cur.visibility, [col]: visible } });
+  }, [current, declared, layoutColumns, fixed, save]);
 
   const reset = useCallback(() => save({ order: [], sort: null }), [save]);
 
-  const defaults = selectedColumns(declared, undefined, optional);
+  const defaults = selectedColumns(layoutColumns, undefined, optional);
   const isDefault = sort == null && order.length === defaults.length && order.every((c, i) => c === defaults[i]);
 
   return { storageKey, availableOrder, hidden, setVisible, manualEditor: opts?.manualEditor ?? false,

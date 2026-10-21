@@ -21,6 +21,7 @@ import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { TreeSectionCell, TREE_ROW } from "@/components/TreeTable";
 import { Pill } from "@/components/Pill";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { investedOnOf } from "@/lib/investedOn";
 import type { Position } from "@/lib/types";
 
 // Capital Gains & Tax — honest about two holes.
@@ -154,8 +155,8 @@ export function CapitalGains() {
   // others is a hooks-order error rather than a conditional table.
   const bucketView = useTableView("cg-bucket", BUCKET_COLS);
   const acctView = useTableView("cg-accounts", CG_ACCT_COLS);
-  const holdView = useTableView("cg-hold", HOLD_COLS);
-  const harvestView = useTableView("cg-harvest", HARVEST_COLS);
+  const holdView = useTableView("cg-hold", HOLD_COLS, { investmentDates: true });
+  const harvestView = useTableView("cg-harvest", HARVEST_COLS, { investmentDates: true });
 
   if (!portfolio) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -207,12 +208,14 @@ export function CapitalGains() {
     ? harvest.filter((h) => h.security.toLowerCase().includes(harvestQ.trim().toLowerCase()))
     : harvest;
   const holdShown = sortRows(holdCandidates, holdView.sort, {
+    investedOn: (h) => investedOnOf([h])?.first ?? null,
     security: (h) => h.security,
     gain: (h) => h.unrealizedPnL,
     turns: (h) => h.daysLeft,
     saved: (h) => h.saving,
   });
   const harvestShown = sortRows(harvestRows, harvestView.sort, {
+    investedOn: (h) => investedOnOf([h])?.first ?? null,
     security: (h) => h.security,
     entity: (h) => ownerOf(accIdx, h),
     loss: (h) => h.unrealizedPnL,
@@ -689,7 +692,7 @@ export function CapitalGains() {
                 </thead>
                 <InfiniteTableBody rows={holdShown} columns={holdView.order.length} resetKey={JSON.stringify([holdView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70">
                   {(h) => (
-                    <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
+                    <Tr view={holdView} reviewScope={{ positions: [h] }} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
                       <td className="px-4 py-2.5 text-right mono text-gain">{money(h.unrealizedPnL)}</td>
                       <td className="px-4 py-2.5 text-right text-[11px] text-slate-400">{fmtDate(h.ltDate)} · {h.daysLeft}d</td>
@@ -739,7 +742,7 @@ export function CapitalGains() {
                   <InfiniteTableBody rows={harvestShown} columns={harvestView.order.length} resetKey={JSON.stringify([harvestQ, harvestView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70"
                     empty={<tr><td colSpan={harvestView.order.length} className="py-10 text-center text-sm text-slate-500">No security matches "{harvestQ}".</td></tr>}>
                     {(h) => (
-                      <Tr view={harvestView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
+                      <Tr view={harvestView} reviewScope={{ positions: [h] }} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
                         <td className="px-4 py-2.5 text-slate-100" data-xa="cg-harvest-row" data-key={h.securityKey}
                           data-account={h.accountId} data-marked={accountAsOf.get(h.accountId) ?? ""}
                           data-nav-turned={navTurned(h) ? "1" : "0"}>

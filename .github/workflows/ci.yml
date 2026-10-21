@@ -38,6 +38,16 @@ jobs:
             exit 1
           fi
 
+      - name: Preserve generated book on a regeneration mismatch
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regenerated-book
+          path: |
+            src/data/glowData.ts
+            src/data/reviewColumns.ts
+            docs/BOOK-REPORT.md
+
       # 3. The ingest & reconciliation test suites pass (parseNum, layout,
       #    pipeline, and the golden figures a human read off the real statements).
       - name: Ingest tests
@@ -59,6 +69,7 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs
 

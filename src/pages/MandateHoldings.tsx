@@ -27,7 +27,7 @@ import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPI
 const DATED_ACCOUNTS = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId)).size;
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
-import { investedOnOf, lineUndatedReason } from "@/lib/investedOn";
+import { investedOnOf, lineUndatedReason, accountInvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
@@ -1122,7 +1122,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
 }) {
   const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, scope } = usePortfolio();
   const [q, setQ] = useState("");
-  const holdersView = useTableView("strategy-holders", HOLDER_COLS);
+  const holdersView = useTableView("strategy-holders", HOLDER_COLS, { investmentDates: true });
   const holdingsView = useTableView("strategy-holdings", GROUP_COLS, { reviewKind: "holding" });
   const sources = useHoldingsSources(kind === "mandate" ? accounts : []);
   const exposure = useStockExposure(consolidated, false);
@@ -1236,6 +1236,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
   }, (r) => ({ positions: [r] }), scope.owners !== null));
   const hidden = rows.length - shown.length;
   const holderRows = sortRows(lines, holdersView.sort, {
+    investedOn: (l) => (kind === "mandate" ? accountInvestedOn([l.account.accountId]) : investedOnOf(l.rows))?.first ?? null,
     entity: (l) => l.owner,
     account: (l) => l.account.accountNo,
     asOf: (l) => l.account.asOf,
@@ -1357,7 +1358,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
             </thead>
             <tbody className="divide-y divide-ink-700/60">
               {holderRows.map((l) => (
-                <Tr view={holdersView} key={l.account.accountId} className="hover:bg-ink-700/40"
+                <Tr view={holdersView} reviewScope={kind === "mandate" ? { accountId: l.account.accountId, isMandate: true } : { positions: l.rows }} key={l.account.accountId} className="hover:bg-ink-700/40"
                   data-holder-line={l.account.accountId} data-holder-owner={l.owner} data-holder-mv={l.mv}
                   data-holder-holdings={l.rows.length} data-holder-return={l.fifo.returnPct ?? undefined}>
                   <td className="px-4 py-2.5 font-medium text-slate-100">{l.owner}</td>
