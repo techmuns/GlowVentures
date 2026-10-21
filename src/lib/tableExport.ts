@@ -42,8 +42,9 @@ function textOf(node: Node): string {
   if (node instanceof HTMLTextAreaElement) return node.value;
   if (node instanceof HTMLSelectElement) return node.selectedOptions[0]?.text ?? "";
   if (node.tagName === "BR") return "\n";
-  const text = Array.from(node.childNodes, textOf).join("");
-  return /^(DIV|P|LI|FORM)$/.test(node.tagName) ? `\n${text}\n` : text;
+  const gap = node.classList.contains("flex-col") ? "\n" : node.classList.contains("flex") || node.classList.contains("inline-flex") ? " " : "";
+  const text = Array.from(node.childNodes, textOf).filter(Boolean).join(gap);
+  return /^(DIV|P|LI|FORM)$/.test(node.tagName) || node.classList.contains("block") ? `\n${text}\n` : text;
 }
 
 /** Read only this table's rows; a nested drilldown has its own export control. */

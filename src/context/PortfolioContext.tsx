@@ -18,6 +18,7 @@ import { applyCorporateActionQuotes, fetchCorporateActions, liveWithheldReason, 
 import { readCachedQuotes, writeCachedQuotes, mergeQuoteFeeds, retainQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
+import { WHOLE_BOOK_NAV } from "@/lib/bookNavBook";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -25,7 +26,7 @@ import {
   type MemberOption,
 } from "@/lib/memberScope";
 import {
-  BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_OWNERS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
+  BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_OWNERS, BOOK_POSITIONS, BOOK_CAPITAL_GAINS,
   BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURN_RECORDS, BOOK_ENTITY_CASH_FLOWS,
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
   BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS,
@@ -103,7 +104,9 @@ function defaultPortfolio(): Portfolio {
     // spellings they printed, so it is one option in a pick-list and one name
     // in every table — see `src/lib/securityLabel.ts` for the rule.
     positions: labelledPositions(BOOK_POSITIONS),
-    navHistory: BOOK_NAV_HISTORY,
+    // THE WHOLE BOOK'S SERIES (Stage 10ge), not the statement-only panel
+    // `BOOK_NAV_HISTORY` is struck over — see `bookNav.ts`.
+    navHistory: WHOLE_BOOK_NAV.points,
     capitalGains: BOOK_CAPITAL_GAINS,
     // Dated external capital movements per account — the money-weighted-return
     // input. Empty for an account whose statements carry none, which is a real

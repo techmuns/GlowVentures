@@ -108,7 +108,10 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
    * undefined before it — the one thing a chain-link cannot rescue, because it
    * is a LEVEL rather than a return.
    */
-  const firstComplete = history.find((p) => p.panelComplete !== false);
+  // The whole-book series (Stage 10ge) says separately when its LEVEL is whole
+  // (`levelComplete`); the statement series only ever said it of its panel.
+  const levelWhole = (p: NavPoint) => (p.levelComplete ?? p.panelComplete) !== false;
+  const firstComplete = history.find(levelWhole);
   const base = firstComplete ? firstComplete.nav : history[0].nav;
   /**
    * …AND IT STARTS ON THE BOOK'S LINE, NOT AT ITS OWN 100 (MNT-12).
@@ -143,9 +146,13 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
       const flow = p.flowIn ?? 0;
       const fw = (p as WeightedNavPoint).flowWeighted;
       const weighted = typeof fw === "number" && Number.isFinite(fw) ? fw : 0;
+      // A LINK WHOSE ONLY MOVE IS ROUNDING MEASURED NOTHING. The whole-book
+      // series has a point on every date capital moved (Stage 10ge), and three
+      // figures each rounded to the paisa would otherwise print a −0.00% there.
+      const moved = Math.abs(close - flow - open) > open * 1e-10;
       // Weight 0 is computed in the end-of-interval form itself, so a book
       // without the field chains to the same bit as it always did.
-      if (open > 0 && weighted === 0) idx *= (close - flow) / open;
+      if (open > 0 && weighted === 0) { if (moved) idx *= (close - flow) / open; }
       else if (open > 0 && open + weighted > 0) idx *= 1 + (close - open - flow) / (open + weighted);
     }
     if (p === firstComplete) anchor = idx;
@@ -154,7 +161,7 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
       nav: p.nav,
       flowIn: p.flowIn ?? 0,
       index: idx,
-      navIndex: p.panelComplete === false || base <= 0 ? NaN : (p.nav / base) * anchor,
+      navIndex: !levelWhole(p) || base <= 0 ? NaN : (p.nav / base) * anchor,
       accountsOnDate: p.accountsOnDate ?? 0,
       accountsCarried: p.accountsCarried ?? 0,
       unreportedFlowValue: p.unreportedFlowValue ?? 0,

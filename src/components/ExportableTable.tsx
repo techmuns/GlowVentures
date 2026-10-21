@@ -27,7 +27,8 @@ export function ExportableTable({ children, exportName, ...props }: Omit<TableHT
       if (!table.current) return;
       const element = table.current;
       const heading = element.closest("main")?.querySelector("h1")?.textContent ?? document.querySelector("h1")?.textContent ?? "Dashboard";
-      const title = exportName ?? `${heading} — ${element.querySelector("thead tr")?.textContent?.trim().slice(0, 80) || "Table"}`;
+      const columns = Array.from(element.tHead?.rows[0]?.cells ?? []).slice(0, 3).map(cell => cell.textContent?.trim()).filter(Boolean).join(" · ");
+      const title = exportName ?? `${heading} — ${columns || "Table"}`;
       const positions: [HTMLElement, number, number][] = [];
       for (let parent = element.parentElement; parent; parent = parent.parentElement) positions.push([parent, parent.scrollTop, parent.scrollLeft]);
       let snapshot;

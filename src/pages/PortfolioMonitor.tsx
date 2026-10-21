@@ -3884,7 +3884,7 @@ export function PortfolioMonitor() {
                     figure it belongs to.
                   */}
                   <SortHeader col="investedOn" view={holdView} align="left" pad="px-2 py-1.5"
-                    title="When this holding's own money went in: the fund's dated allotments against this very folio, a lot register's acquisition date, the account's own dated trades where they account for every unit held (matched first-in, first-out), the capital calls a drawdown fund dates against a folio that holds nothing else, or the investment dates the family's review prints. A mandate's row is the family's own: the inception date its statement prints, and its dated contributions where its capital record starts there — never lent to the shares inside, which carry their manager's trade dates. A row that rolls up several holdings shows a date only where every one of them carries one. Open a row for each dated purchase and sale.">Invested on</SortHeader>
+                    title="Acquisition dates or ranges from the holding's allotments, original FIFO lots, complete dated trades or capital calls. A mandate shows the family's inception/contribution dates. A range labelled review is the family product's date/range in the June workbook; it does not verify every unit in the current custody balance. Month-only source dates stay months. Cost coverage is separate from date coverage.">Investment date / range</SortHeader>
                   <SortHeader col="cmp" view={holdView} pad="px-2 py-1.5">CMP</SortHeader>
                   <SortHeader col="day" view={holdView} pad="px-2 py-1.5">Day</SortHeader>
                   {/* WHO CHOSE THE SHARES, ONE COLUMN EACH (stock axis only): the
@@ -5110,7 +5110,7 @@ export function PortfolioMonitor() {
                     <td key="investedOn" className="px-2 py-1.5 text-left text-[10.5px] font-normal text-slate-500 whitespace-nowrap"
                       data-invested-on-coverage={rows.filter((r) => r.investedOn).length}
                       data-invested-on-of={measuredRows.length}
-                      title={`A holding is dated where a lot register reports when it was acquired, or where the fund reports its own dated allotments against that folio. The rest report a cost and not a date, or no cost at all — a depository records what is held and never what was paid for it.${rows.length > measuredRows.length ? ` Counted over the ${measuredRows.length} rows the statements report: the other ${rows.length - measuredRows.length} are companies the family reaches only through funds, which carry no date of the family's own.` : ""}`}>
+                      title={`${rows.filter((r) => r.investedOn && !r.investedOn.reviewSource).length} rows have holding/account dates; ${rows.filter((r) => r.investedOn?.reviewSource).length} show a family-product review range, labelled review. The rest need acquisition history or a quantity/transfer bridge; cash itself has no purchase date. Purchase-cost coverage is a separate measure.${rows.length > measuredRows.length ? ` Counted over the ${measuredRows.length} rows the statements report: the other ${rows.length - measuredRows.length} are companies the family reaches only through funds, which carry no date of the family's own.` : ""}`}>
                       {rows.filter((r) => r.investedOn).length} of {measuredRows.length} dated
                     </td>
                     ),

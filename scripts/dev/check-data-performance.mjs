@@ -6,7 +6,7 @@ import { chromium } from 'playwright-core';
 import { installReadModelRoutes } from './read-model-api.mjs';
 import { assertStickyTableHeaders, assertTableHeaderFixture } from './table-headers.mjs';
 import { installProfileStoreFixture, assertInlineProfileEditing } from './private-profile-inputs.mjs';
-import { assertTableExportControls, assertInfiniteTableExport, assertPrivateProfileExport, assertExportRetry } from './table-excel.mjs';
+import { assertTableExportControls, assertInfiniteTableExport, assertPrivateProfileExport, assertExportRetry, downloadTableWorkbook } from './table-excel.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const capture = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
@@ -50,6 +50,12 @@ try {
     await page.route('**/api/**', r => r.fulfill({ json: new URL(r.request().url()).pathname === '/api/corporate-actions'
       ? { ok:true, retained:true, feed:capture } : { ok:false, reason:'local audit fixture' } }));
     await installReadModelRoutes(page);
+    if (route === '/monitor?group=category') await page.addInitScript(() => {
+      localStorage.setItem('glow:tableView:monitor:v1', JSON.stringify({
+        order:['security','review:investmentRange','mv','investedOn'], sort:{col:'review:investmentRange',dir:'asc'},
+        visibility:{'review:investmentRange':true,investedOn:false},
+      }));
+    });
     const profileStore = route === '/private-market' ? await installProfileStoreFixture(page) : null;
     await page.addInitScript(() => { window.__long=[]; new PerformanceObserver(l => window.__long.push(...l.getEntries().map(e=>e.duration))).observe({type:'longtask',buffered:true}); });
     const started = Date.now(); await page.goto(base+route); await page.waitForLoadState('networkidle');
@@ -112,6 +118,16 @@ try {
       await page.screenshot({ path: `.cache/table-scroll-check/monitor-${new URL(base+route).searchParams.get('group') || 'security'}.png` });
       await table.locator('[data-col-button="security"]').click();
       assert.equal(await holdings.count(), 50, 'sorting resets the Monitor to its first batch');
+      if (route === '/monitor?group=category') {
+        assert.equal(await table.locator('[data-col-button="review:investmentRange"]').count(),0,'the retired review date column cannot reappear from saved preferences');
+        assert.equal(await table.locator('[data-col-button="investedOn"]').count(),1,'one merged investment date column remains visible');
+        for (const [category, oldDated] of [['Direct Equity',4],['Mutual Fund',4],['Cash',1]]) {
+          await page.getByRole('tab',{name:category,exact:true}).click();
+          const count = Number(await table.locator('[data-invested-on-coverage]').getAttribute('data-invested-on-coverage'));
+          assert.ok(count>oldDated,`${category} includes the original dates behind recovered costs`);
+          assert.equal(await table.locator('[data-col-button="investedOn"]').count(),1,'date column stays merged when switching categories');
+        }
+      }
     }
     assert.equal(await page.getByLabel('Rows per page').count(), 0, 'no page size selector');
     assert.equal(await page.getByRole('button', {name:'Next table page',exact:true}).count(), 0, 'no next page');
@@ -123,6 +139,8 @@ try {
       assert.equal(await table.locator('[data-consolidated-row]').count(), total);
       await page.getByRole('textbox', {name:'Search consolidated sheet'}).fill('no-such-row-in-workbook');
       assert.equal(await table.locator('[data-consolidated-row]').count(), 0);
+      const emptyExport = await downloadTableWorkbook(table,'filtered-empty-consolidated-sheet');
+      assert.equal(emptyExport.rowCount,1,'an empty filtered export has headings without unrelated rows');
       await page.getByRole('textbox', {name:'Search consolidated sheet'}).fill('');
       assert.equal(await table.locator('[data-consolidated-row]').count(), 50, 'clearing workbook search resets row loading');
     }

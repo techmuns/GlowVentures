@@ -43,6 +43,20 @@ export type StoredView = { order: readonly string[]; sort: TableSort; visibility
 const KEY = (k: string) => `glow:tableView:${k}:v1`;
 const EMPTY: StoredView = Object.freeze({ order: Object.freeze([]) as readonly string[], sort: null });
 const NO_LEGACY: readonly string[] = [];
+const NO_ALIASES: Readonly<Record<string, string>> = {};
+const DATE_ALIASES = { "review:investmentRange": "investedOn" } as const;
+
+/** Merge retired columns while retaining placement, visibility and sorting. */
+export function mergeColumnAliases(view: StoredView, aliases: Readonly<Record<string, string>>): StoredView {
+  if (!Object.keys(aliases).length) return view;
+  const id = (col: string) => aliases[col] ?? col;
+  const visibility = { ...view.visibility };
+  for (const [old, next] of Object.entries(aliases)) {
+    if (visibility[old] === true) visibility[next] = true;
+    delete visibility[old];
+  }
+  return { order: [...new Set(view.order.map(id))], sort: view.sort ? { ...view.sort, col: id(view.sort.col) } : null, visibility };
+}
 
 /** Read what a table saved, from any build: unknown fields are ignored, a bad sort is dropped. */
 export function parseStoredView(raw: unknown): StoredView | null {
@@ -265,8 +279,9 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const baseColumns = useMemo(() => columns.filter((c, i) => columns.indexOf(c) === i), [colKey]);
   const dates = opts?.investmentDates ?? opts?.reviewKind === "holding";
+  const aliases: Readonly<Record<string, string>> = dates ? DATE_ALIASES : NO_ALIASES;
   const autoDate = dates && !baseColumns.includes("investedOn");
-  const reviewColumns = useMemo(() => opts?.reviewKind ? reviewColumnIds(opts.reviewKind).filter((c) => !baseColumns.includes(c)) : [], [opts?.reviewKind, baseColumns]);
+  const reviewColumns = useMemo(() => opts?.reviewKind ? reviewColumnIds(opts.reviewKind).filter((c) => !baseColumns.includes(c) && !aliases[c]) : [], [opts?.reviewKind, baseColumns, aliases]);
   const additionalColumns = useMemo(() => [...(autoDate ? ["investedOn"] : []), ...reviewColumns], [autoDate, reviewColumns]);
   const declared = useMemo(() => [...baseColumns, ...additionalColumns], [baseColumns, additionalColumns]);
   // The JSX still arrives in base + additional order. Only the default display
@@ -278,7 +293,8 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
 
   const subscribe = useCallback((l: () => void) => subscribeMemory(KEY(storageKey), l), [storageKey]);
   const read = () => storedView(storageKey, legacy);
-  const stored = useSyncExternalStore(subscribe, read, read);
+  const rawStored = useSyncExternalStore(subscribe, read, read);
+  const stored = useMemo(() => mergeColumnAliases(rawStored, aliases), [rawStored, aliases]);
   const optionalKey = opts?.optional?.join("\u0001") ?? "";
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const optional = useMemo(() => [...reviewColumns, ...(opts?.optional ?? NO_LEGACY)], [reviewColumns, optionalKey]);
@@ -291,7 +307,7 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   // Every change reads what is saved NOW rather than what this render saw, so
   // two quick changes cannot write over each other.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const current = useCallback(() => storedView(storageKey, legacy), [storageKey, legacyKey]);
+  const current = useCallback(() => mergeColumnAliases(storedView(storageKey, legacy), aliases), [storageKey, legacyKey, aliases]);
   const save = useCallback((next: StoredView) => writeMemory(KEY(storageKey), next), [storageKey]);
 
   const toggleSort = useCallback((col: string) => {
