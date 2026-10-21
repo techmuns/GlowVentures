@@ -134,8 +134,8 @@ export function ReturnAnalysis() {
     const realisedOf = (x: { realizedPnL?: number | null }) => (typeof x.realizedPnL === "number" ? x.realizedPnL : 0);
     const soldOf = (x: { costOfUnitsSold?: number | null }) => (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
     const incomeOf = (x: { dividendReceived?: number | null }) => (typeof x.dividendReceived === "number" ? x.dividendReceived : 0);
-    const realised = sum(priced.map(realisedOf));
-    const income = sum(priced.map(incomeOf));
+    const realised = pooledFifo.realised;
+    const income = pooledFifo.income;
     const deployed = cost + sum(costed.map(soldOf));
 
     // Distribution by VALUE, not by count: ten small losers and one large winner
