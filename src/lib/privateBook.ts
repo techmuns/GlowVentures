@@ -277,6 +277,13 @@ export type BookFolio = {
   /** The book's own words for why nothing values this folio. Never re-worded. */
   reason: string | null;
   /**
+   * WHEN THE MONEY WENT IN (Stage 10ey) — first and last, from the source that
+   * holds the line: the review's printed investment dates for a line it holds,
+   * else the capital account's first and last dated call. Each end is a day or,
+   * where the source prints only a month, a month. Null where neither dates it.
+   */
+  invested: InvestedSpan | null;
+  /**
    * THE FUND'S STRATEGY AND THE COMPANY'S DESCRIPTION — supplied by the family,
    * never printed on a statement, and joined to the investment by its identity
    * (`investmentProfiles.ts`). A property of the FUND: every folio of one fund
@@ -292,6 +299,17 @@ export type BookFolio = {
  * it). Said on the page, because the two are different bases added together.
  */
 export type DistributionBasis = "capital-account" | "letter";
+
+/** First and last investment date — `YYYY-MM-DD`, or `YYYY-MM` where only a month is printed. */
+export type InvestedSpan = { from: string; to: string; source: "review" | "capital-account" };
+
+/** A folio's investment dates: the review line's own, else its capital account's dated calls. */
+export function investedSpanOf(position: Position | null, capital: SchemeCall | null): InvestedSpan | null {
+  const d = position?.investedDates;
+  if (d) return { from: d.from, to: d.to, source: "review" };
+  if (capital?.firstCall) return { from: capital.firstCall, to: capital.lastCall ?? capital.firstCall, source: "capital-account" };
+  return null;
+}
 
 /**
  * A dated distribution a fund paid to one account, read from its own letter —
@@ -374,6 +392,14 @@ export type BookFigures = {
    */
   deployedHeld: number | null;
   asOf: string[];
+  /**
+   * THE EARLIEST AND LATEST INVESTMENT DATE over the folios that carry a figure
+   * here (the same set `asOf` reads), and how many of them date it — so a cell
+   * over part of its folios says which part. Null where none does.
+   */
+  invested: { from: string; to: string } | null;
+  investedOf: number;
+  investedAcross: number;
   /** Every capital account's committed − called = still to call. Null where none can be struck. */
   ties: boolean | null;
   /**
@@ -565,6 +591,7 @@ export function bookFolios(args: {
   // left to array order.
   for (const p of [...inScope].sort((a, b) => b.marketValue - a.marketValue)) {
     const a = accIdx.get(p.accountId);
+    const cap = capitalOf(p.accountId);
     out.push({
       key: `${p.accountId}|${p.securityKey}`,
       section: sectionOf(p)!,
@@ -590,7 +617,8 @@ export function bookFolios(args: {
       counted: counted.has(p),
       alsoCount: p.dedupeGroup ? groupSize.get(p.dedupeGroup) ?? 1 : 1,
       alsoReportedUnder: p.alsoReportedUnder ?? [],
-      ...capitalOf(p.accountId),
+      ...cap,
+      invested: investedSpanOf(p, cap.capital),
       viewOf: null,
       reason: null,
     });
@@ -644,6 +672,8 @@ export function bookFolios(args: {
         alsoCount: 1,
         alsoReportedUnder: [],
         ...capitalOf(a.accountId),
+        // Its units — and when they were bought — are the valued line's.
+        invested: null,
         viewOf: p.accountId,
         distributed: paid,
         distributedBasis: paid != null ? "letter" : null,
@@ -801,6 +831,7 @@ function unvaluedFolio(
     alsoCount: 1,
     alsoReportedUnder: [],
     ...capital,
+    invested: investedSpanOf(null, capital.capital),
     viewOf: null,
     reason,
   };
@@ -909,6 +940,17 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     // and on a consolidated row never the second statement of a holding
     // counted once (PM-C7).
     asOf: [...new Set(carries.map((f) => f.asOf).filter((d): d is string => !!d))].sort(),
+    ...(() => {
+      const dated = carries.map((f) => f.invested).filter((d): d is InvestedSpan => d != null);
+      // A month sorts before every day inside it ("2022-01" < "2022-01-15"), so
+      // the earliest end is never a day the source did not print.
+      const froms = dated.map((d) => d.from).sort(), tos = dated.map((d) => d.to).sort();
+      return {
+        invested: dated.length ? { from: froms[0], to: tos[tos.length - 1] } : null,
+        investedOf: dated.length,
+        investedAcross: carries.length,
+      };
+    })(),
     ties: ties.length ? ties.every(Boolean) : null,
     capitalCover,
   };

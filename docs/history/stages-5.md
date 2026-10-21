@@ -4760,3 +4760,12 @@ cells just like the capital call cells."*
 - **`From 01/09/2026 to 30/09/2026` read as no window.** The period pattern required "To". Bharat's SVAN 8710090 September report and Carnelian's 7 Oct report print "to", so both bridges were undated and dropped. 8710090 now has its September bridge on `/performance`, and its printed 31 Aug opening (₹11.12 Cr) joins the NAV series. Carnelian's 7 Oct bridge is WITHHELD, ₹2,85,231.78 short of its closing, the gap Stage 10eu names.
 - **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
 - `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.
+
+### Stage 10ey — PRIVATE MARKET: DATE OF INVESTMENT
+
+*"date of investment is missing from the table in private markets page, add column to show that"*
+
+- **The review's "Date investment range" column reaches the book.** `reviewBook.mjs` writes it onto every review position as `Position.investedDates` (`from`, `to`, `text`). Each end is a day, or a month (`YYYY-MM`) where the review prints only "Feb 20 - Jul 23"; a month is never widened to a day. A cell the reader cannot read as a date carries `null`. 89 review positions are dated; book totals are unchanged.
+- **`BookFolio.invested`** (`investedSpanOf`) takes the review line's dates first, then the capital account's first and last dated call. An income-only view carries none: its units are the valued line's. `figuresOf` spans the earliest to the latest over the same folios `asOf` reads, and counts how many of them carry a date (`investedOf` of `investedAcross`).
+- **Private Market gains a "Date of investment" column** after the name (`data-col-cell="invested"`, `data-invested`). It shows one date, or a "first → last" range. A row where only some folios carry a date says "N of M folios". A row with no dated folio renders `—` with the reason. The column sorts by first date.
+- `privateBook.test.ts` checks the span on constructed folios and checks that every review line on the table is dated by the review.
