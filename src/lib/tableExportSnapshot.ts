@@ -19,6 +19,13 @@ export function useTableExportFilter<T>(value: T, unfiltered: T): T {
   return useTableExporting() ? unfiltered : value;
 }
 
+/** Export may widen data, but must not remount the table or discard its state. */
+export function useTableExportIdentity<T>(value: T): T {
+  const display = useRef(value);
+  if (!useTableExporting()) display.current = value;
+  return display.current;
+}
+
 const preparations = new Set<() => Promise<unknown>>();
 /** Resolve scope-dependent read models before the synchronous snapshot. */
 export function usePrepareTableExport(prepare: () => Promise<unknown>) {
