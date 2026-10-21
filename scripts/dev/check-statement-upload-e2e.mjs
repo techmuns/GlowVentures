@@ -224,7 +224,7 @@ try {
     const entry = publication.statementDocuments.find(d => d.document === version.document && d.revision === version.revision);
     assert.ok(entry, 'Published manifest attests to this exact uploaded document version');
     const provenance = await (await fetch(baseURL + '/views/' + published.revision + '/' + entry.evidence)).json();
-    assert.equal(provenance.source.sha256, uploaded.sha256, 'The published source checksum belongs to these exact uploaded bytes');
+    assert.equal(provenance.source.sha256, hash(fixtureFiles.find(f => f.name === path.basename(uploaded.name)).bytes), 'The published source checksum belongs to these exact uploaded bytes');
     assert.ok(provenance.receipt, 'The published document retains its immutable delivery receipt');
   }
   for (const e of expected) { const p = afterPositions.find(p => p.accountId === e.accountId && p.isin === e.isin); assert.ok(p);
