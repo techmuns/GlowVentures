@@ -16,6 +16,7 @@ import { extractLayout } from '../lib/layout.mjs';
 import { findTable, readRows } from '../lib/table.mjs';
 import { parseNum } from '../lib/parseNum.mjs';
 import { makeGridPdf } from './fixtures/makePdf.mjs';
+import { readDeliveryReceipts, writeDeliveryReceipts } from '../lib/deliveryReceipts.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 fs.mkdirSync(path.join(ROOT, '.cache'), { recursive: true });
@@ -25,6 +26,35 @@ const doc = (overrides = {}) => deriveDocument(makeDocument({ docKey: 'hdfc-123-
 const later = (overrides = {}) => doc({ docKey: 'hdfc-123-2026-10-21', asOf: '2026-10-21', ...overrides });
 const assess = (documents, baseline = [doc()], extra = {}) => assessPublication({ baseline, documents, ...extra });
 const has = (r, code) => r.issues.some(i => i.code === code);
+
+test('archive rebuild retains exact delivery receipt bytes from the archive and its carry history', () => {
+  const directory = fs.mkdtempSync(path.join(ROOT, '.cache/publication-receipts-'));
+  const current = path.join(directory, 'current'), carry = path.join(directory, 'carry');
+  const name = 'a'.repeat(64) + '.json', other = 'b'.repeat(64) + '.json';
+  const bytes = Buffer.from('{ "id": "immutable", "documents": [] }\n');
+  for (const archive of [current, carry]) { fs.mkdirSync(path.join(archive, 'deliveries'), { recursive: true }); fs.writeFileSync(path.join(archive, 'deliveries', name), bytes); }
+  fs.writeFileSync(path.join(carry, 'deliveries', other), 'historical bytes\n');
+  const receipts = readDeliveryReceipts([current, carry, current]);
+  assert.equal(receipts.size, 2);
+  fs.rmSync(current, { recursive: true }); fs.mkdirSync(current);
+  writeDeliveryReceipts(current, receipts);
+  assert.deepEqual(fs.readFileSync(path.join(current, 'deliveries', name)), bytes);
+  assert.equal(fs.readFileSync(path.join(current, 'deliveries', other), 'utf8'), 'historical bytes\n');
+  assert.equal(readDeliveryReceipts([path.join(directory, 'missing')]).size, 0);
+  fs.writeFileSync(path.join(carry, 'deliveries', name), 'conflicting bytes');
+  assert.throws(() => readDeliveryReceipts([current, carry]), /Conflicting delivery receipt/);
+  assert.deepEqual(fs.readFileSync(path.join(current, 'deliveries', name)), bytes);
+});
+test('receipt preservation refuses unsafe filenames and symbolic links before replacing the archive', () => {
+  const directory = fs.mkdtempSync(path.join(ROOT, '.cache/publication-receipts-'));
+  const deliveries = path.join(directory, 'deliveries'); fs.mkdirSync(deliveries);
+  fs.writeFileSync(path.join(deliveries, 'unexpected.json'), 'opaque');
+  assert.throws(() => readDeliveryReceipts([directory]), /Unsafe delivery receipt/);
+  fs.renameSync(path.join(deliveries, 'unexpected.json'), path.join(directory, 'original'));
+  fs.symlinkSync(path.join(directory, 'original'), path.join(deliveries, 'c'.repeat(64) + '.json'));
+  assert.throws(() => readDeliveryReceipts([directory]), /Unsafe delivery receipt/);
+  assert.equal(fs.readFileSync(path.join(directory, 'original'), 'utf8'), 'opaque');
+});
 
 test('verified later snapshot preserves the earlier document and is deterministic', () => {
   const old = doc(), next = later();

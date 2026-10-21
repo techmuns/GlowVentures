@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 import { chromium } from 'playwright-core';
+import ts from 'typescript';
 import { onRequest } from '../../functions/api/statement-uploads.js';
 import { inboxService, localGit, readControl, writeControl } from './statement-e2e-git.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -88,13 +89,29 @@ try {
   ].join('\n');
   execFileSync('python3', ['-c', prepare, JSON.stringify(['source/august-2026-d/MOTILAL REPORTS.zip', 'source/october-2026-c/MOTILAL FOLDER 1..zip']), JSON.stringify(names), fixtureDir], { cwd: workspace });
   fixtureFiles = names.map(name => ({ name, bytes: fs.readFileSync(path.join(fixtureDir, name)) }));
-  const auditManifest = path.join(workspace, 'public/audit/manifest.json');
-  const all = JSON.parse(fs.readFileSync(auditManifest));
-  const withdrawn = all.filter(d => names.includes(path.basename(d.sourcePath)));
-  assert.equal(withdrawn.length, names.length);
-  fs.writeFileSync(auditManifest, JSON.stringify(all.filter(d => !withdrawn.includes(d)), null, 1) + '\n');
-  await npm('inventory', 'baseline-inventory'); await npm('extract', 'baseline-extraction', { GLOW_OCR: 'off' });
-  await npm('build-book', 'baseline-book'); await npm('build', 'baseline-app');
+  const all = JSON.parse(fs.readFileSync(path.join(workspace, 'public/audit/manifest.json')));
+  assert.equal(all.filter(d => names.includes(path.basename(d.sourcePath))).length, names.length);
+  await npm('inventory', 'baseline-inventory');
+  // Deliberately reproduce a stale/incomplete generated dashboard, keeping all
+  // trusted source history. Do not weaken the builder's coverage assertions to
+  // manufacture this fixture. Only the initial served book omits these accounts;
+  // the real upload must regenerate it and pass every normal production gate.
+  const bookPath = path.join(workspace, 'src/data/glowData.ts');
+  let initialBook = fs.readFileSync(bookPath, 'utf8');
+  const changes = {
+    BOOK_POSITIONS: original.BOOK_POSITIONS.filter(p => !accounts.has(p.accountId)),
+    BOOK_UNVALUED_HOLDINGS: original.BOOK_UNVALUED_HOLDINGS.filter(p => !accounts.has(p.accountId)),
+    BOOK_SHARE_MOVEMENTS: Object.fromEntries(Object.entries(original.BOOK_SHARE_MOVEMENTS).filter(([key]) => !accounts.has(key.split('|')[0]))),
+  };
+  const parsed = ts.createSourceFile(bookPath, initialBook, ts.ScriptTarget.Latest, true), replacements = [];
+  for (const statement of parsed.statements) if (ts.isVariableStatement(statement)) for (const declaration of statement.declarationList.declarations) {
+    const name = declaration.name.getText(parsed);
+    if (Object.hasOwn(changes, name)) replacements.push({ start: declaration.initializer.getStart(parsed), end: declaration.initializer.end, value: JSON.stringify(changes[name], null, 2) });
+  }
+  assert.equal(replacements.length, 3);
+  for (const r of replacements.sort((a, b) => b.start - a.start)) initialBook = initialBook.slice(0, r.start) + r.value + initialBook.slice(r.end);
+  fs.writeFileSync(bookPath, initialBook);
+  await npm('build', 'baseline-app');
   const before = await model();
   assert.ok(!before.BOOK_POSITIONS.some(p => accounts.has(p.accountId)));
   assert.ok(!before.unpricedStatementUnits().some(p => accounts.has(p.accountId)));
