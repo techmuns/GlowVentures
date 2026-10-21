@@ -25,6 +25,8 @@ export type InboxFile = {
   commit: string | null;
   /** Backend publication state; the existing status/reason UI remains usable. */
   pullRequest?: string | null;
+  branch?: string | null;
+  ciDispatched?: boolean | null;
   baseCommit?: string | null;
   archiveRevision?: string | null;
   documentVersions?: { document: string; revision: string }[] | null;

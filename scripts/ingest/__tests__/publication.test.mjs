@@ -235,3 +235,19 @@ test('pending uploads keep their PR and raw-file lifecycle separate from CI/revi
   assert.equal(stale.status, 'queued'); assert.equal(stale.pullRequest, null);
   assert.ok(commands.some(a => a[1] === 'close'));
 });
+test('a worker resumes the saved branch after PR/CI network failures without duplicating the delivery', async () => {
+  const file = { branch: `codex/statement-delivery-${'a'.repeat(16)}`, commit: 'head', baseCommit: 'base', ciDispatched: false,
+    documentVersions: [{ document: 'd', revision: 'r' }] };
+  let creates = 0, dispatches = 0;
+  const gh = args => {
+    if (args[1] === 'list') return '[]';
+    if (args[1] === 'create') { creates++; return 'https://github.com/example/repo/pull/2'; }
+    if (args[1] === 'view') return JSON.stringify({ state: 'OPEN', headRefOid: 'head', statusCheckRollup: [] });
+    if (args[0] === 'workflow') { dispatches++; if (dispatches === 1) throw new Error('temporary network failure'); return ''; }
+    throw new Error('Unexpected side effect');
+  };
+  const first = await monitorPublication(file, { gh, currentBase: 'base' });
+  assert.equal(first.status, 'processing'); assert.equal(first.ciDispatched, false); assert.match(first.pullRequest, /pull\/2$/);
+  const next = await monitorPublication(first, { gh, currentBase: 'base' });
+  assert.equal(next.status, 'processing'); assert.equal(next.ciDispatched, true); assert.equal(creates, 1); assert.equal(dispatches, 2);
+});

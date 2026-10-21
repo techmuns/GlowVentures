@@ -51,8 +51,8 @@ import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { listEntries, readEntry, isMacMetadata } from "./lib/unzip.mjs";
-import { verify as verifyPublication, readArchive } from "./verify-publication.mjs";
-import { digest, documentRevision } from "./lib/publication.mjs";
+import { verify as verifyPublication, readArchive, readBaseline } from "./verify-publication.mjs";
+import { digest, documentRevision, archiveRevision } from "./lib/publication.mjs";
 import { monitorPublication } from "./lib/intakePublication.mjs";
 import {
   INBOX_DEFAULTS, STATEMENT_EXT, extOf, emptyLog, parseLog, serializeLog, applyUpdates, inboxPath,
@@ -475,20 +475,36 @@ function land(live, verdicts, already) {
     ...(RUN ? ["", `Run: ${RUN}`] : []),
   ].join("\n");
   git([...BOT, "commit", "-q", "-m", message]);
-  const sha = git(["rev-parse", "HEAD"]).out;
+  let sha = git(["rev-parse", "HEAD"]).out;
   if (DRY) { say(`(dry run) verified codex commit not pushed: ${sha}`); return { status: 'processing', commit: sha, reason: 'Local rehearsal; no PR or production change.' }; }
-  const branch = git(['branch', '--show-current']).out;
-  if (!branch.startsWith('codex/')) throw new Error('Intake publication must use a codex branch.');
-  if (!git(['push', '--quiet', REMOTE, `HEAD:refs/heads/${branch}`], { allowFail: true }).ok) return null;
+  const branch = `codex/statement-delivery-${id.slice(0, 16)}`;
+  const existingRef = git(['ls-remote', '--heads', REMOTE, `refs/heads/${branch}`]).out.split(/\s/)[0];
+  if (existingRef) {
+    git(['fetch', '--no-tags', '--quiet', REMOTE, existingRef]);
+    const prior = readBaseline(existingRef);
+    if (archiveRevision(prior.documents) !== assessment.candidateRevision
+      || git(['show', `${existingRef}:src/data/glowData.ts`]).out !== fs.readFileSync(abs('src/data/glowData.ts'), 'utf8').trim()) throw new Error('An existing delivery branch contains different canonical data; review it before retrying.');
+    sha = existingRef;
+  } else if (!git(['push', '--quiet', REMOTE, `HEAD:refs/heads/${branch}`], { allowFail: true }).ok) return null;
   const body = path.join(WORK, 'publication-pr.md');
   fs.writeFileSync(body, `${message}\n\nOwner/account/security, changed-format field coverage and reconciliation publication checks passed. Exact source records and upload checksums are retained. Required CI and review must finish before merge.\n\nArchive revision: ${assessment.candidateRevision}\n`);
-  const url = gh(['pr', 'create', '--base', MAIN, '--head', branch, '--title', `Publish ${live.length} verified statement upload(s)`, '--body-file', body]);
+  const metadata = { status: 'processing', hold: null, reason: 'Verified branch saved; opening its publication PR.', commit: sha, branch,
+    pullRequest: null, baseCommit: assessment.baseCommit, archiveRevision: assessment.candidateRevision, ciDispatched: false,
+    documentVersions: versions.map(({ document, revision }) => ({ document, revision })) };
+  // Persist the handoff before PR creation/dispatch: a worker dying between
+  // network calls resumes this branch rather than creating another delivery.
+  commitInbox('Intake: verified publication branch prepared', () => ({ updates: live.map(p => ({ batch: p.item.batch, name: p.item.name,
+    ...verdicts.get(p), landedAs: [p.landing], ...metadata })) }));
+  const existingPR = JSON.parse(gh(['pr', 'list', '--head', branch, '--state', 'all', '--json', 'url']));
+  let url;
+  try { url = existingPR[0]?.url ?? gh(['pr', 'create', '--base', MAIN, '--head', branch, '--title', `Publish ${live.length} verified statement upload(s)`, '--body-file', body]); }
+  catch (error) { return { ...metadata, reason: `PR creation will resume from the saved branch: ${clip(error.message)}` }; }
   // GITHUB_TOKEN may leave PR-triggered CI waiting for approval. Explicit CI
   // dispatch is a documented GitHub exception and runs against this codex ref.
-  gh(['workflow', 'run', 'ci.yml', '--ref', branch, '-f', `baseline=${assessment.baseCommit}`]);
-  return { status: 'processing', hold: null, reason: `Awaiting required CI and review: ${url}`, commit: sha,
-    pullRequest: url, baseCommit: assessment.baseCommit, archiveRevision: assessment.candidateRevision,
-    documentVersions: versions.map(({ document, revision }) => ({ document, revision })) };
+  let ciDispatched = false;
+  try { gh(['workflow', 'run', 'ci.yml', '--ref', branch, '-f', `baseline=${assessment.baseCommit}`]); ciDispatched = true; }
+  catch { /* preserve PR metadata; the next monitor retries dispatch */ }
+  return { ...metadata, ciDispatched, reason: `Awaiting required CI and review: ${url}`, pullRequest: url };
 }
 
 // ── the run ───────────────────────────────────────────────────────────────────
@@ -615,7 +631,7 @@ async function main() {
     const to = path.join(WORK, "files", batch, ...file.name.split("/"));
     fs.mkdirSync(path.dirname(to), { recursive: true });
     fs.copyFileSync(from, to);
-    return { batch, name: file.name, file: to, publication: file.pullRequest ? file : null };
+    return { batch, name: file.name, file: to, publication: file.pullRequest || file.branch ? file : null };
   });
 
   let results;
