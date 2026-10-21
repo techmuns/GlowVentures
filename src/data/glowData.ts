@@ -10,7 +10,7 @@
 import type {
   Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
-  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
+  RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -8049,14 +8049,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 94967,
-    "avgCost": null,
+    "avgCost": 988.322164541367,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 93857991,
+    "costBasisSource": "supplementary-record",
     "marketValue": 126923395.5,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 33065404.5,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 35.22918416184723,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -8064,7 +8065,29 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE647U01026",
+      "quantity": 94967,
+      "asOf": "2026-03-31",
+      "costBasis": 93857991,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            262
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "ema-partners-india",
@@ -8078,14 +8101,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 44643,
-    "avgCost": null,
+    "avgCost": 104,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 4642872,
+    "costBasisSource": "supplementary-record",
     "marketValue": 3660726,
-    "unrealizedPnL": null,
+    "unrealizedPnL": -982146,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": null,
+    "returnPct": -21.153846153846153,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -8093,7 +8117,31 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE0ZOL01023",
+      "quantity": 44643,
+      "asOf": "2026-03-31",
+      "costBasis": 4642872,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+          "sheet": "AJAY SIR - AARTI",
+          "rows": [
+            46
+          ]
+        }
+      ],
+      "notes": [
+        "Payment register matches owner and every unit; no complete separate sales/income record is claimed"
+      ]
+    }
   },
   {
     "securityKey": "fractal-analytics",
@@ -8107,14 +8155,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 180185,
-    "avgCost": null,
+    "avgCost": 981.6515303715626,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 176878881,
+    "costBasisSource": "supplementary-record",
     "marketValue": 151724779.25,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": -25154101.75,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -14.221088242863772,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -8122,7 +8171,30 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE212S01015",
+      "quantity": 180185,
+      "asOf": "2026-03-31",
+      "costBasis": 176878881,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            275,
+            276
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "grand-continent-hotels",
@@ -8136,14 +8208,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 262125,
-    "avgCost": null,
+    "avgCost": 62.09728183118741,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 16277250,
+    "costBasisSource": "supplementary-record",
     "marketValue": 29344893.75,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 13067643.75,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 80.28164309081693,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -8151,7 +8224,33 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE12E301017",
+      "quantity": 262125,
+      "asOf": "2026-03-31",
+      "costBasis": 16277250,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            323,
+            324,
+            325
+          ]
+        }
+      ],
+      "notes": [
+        "row 325: duplicated purchase amount excluded from the noncash split; Closing independently equals purchase cost"
+      ]
+    }
   },
   {
     "securityKey": "insolation-energy",
@@ -8165,14 +8264,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 212000,
-    "avgCost": null,
+    "avgCost": 328.7,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 69684400,
+    "costBasisSource": "supplementary-record",
     "marketValue": 25251320,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": -44433080,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -63.76331000912686,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -8180,7 +8280,30 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE0LGX01024",
+      "quantity": 212000,
+      "asOf": "2026-03-31",
+      "costBasis": 69684400,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            299,
+            300
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "jaro-institute-of-technology-management-and-research",
@@ -8194,14 +8317,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 116979,
-    "avgCost": null,
+    "avgCost": 641.1437095547064,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 75000350,
+    "costBasisSource": "supplementary-record",
     "marketValue": 57758381.25,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": -17241968.75,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -22.989184383806208,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -8209,7 +8333,30 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE00YJ01010",
+      "quantity": 116979,
+      "asOf": "2026-03-31",
+      "costBasis": 75000350,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            305,
+            306
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "parth-electricals-and-engineering",
@@ -8223,14 +8370,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 59000,
-    "avgCost": null,
+    "avgCost": 170,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 10030000,
+    "costBasisSource": "supplementary-record",
     "marketValue": 26252050,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 16222050,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 161.73529411764707,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -8238,7 +8386,29 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE1H7V01011",
+      "quantity": 59000,
+      "asOf": "2026-03-31",
+      "costBasis": 10030000,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            374
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "smartworks-coworking-spaces",
@@ -8252,14 +8422,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 187778,
-    "avgCost": null,
+    "avgCost": 450,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 84500100,
+    "costBasisSource": "supplementary-record",
     "marketValue": 91269496.9,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 6769396.900000006,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 8.011111111111118,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -8267,7 +8438,29 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE0NAZ01010",
+      "quantity": 187778,
+      "asOf": "2026-03-31",
+      "costBasis": 84500100,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            379
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "yash-highvoltage",
@@ -8281,14 +8474,16 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 138462,
-    "avgCost": null,
+    "avgCost": 72.22284814606174,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 10000120,
+    "costBasisSource": "supplementary-record",
     "marketValue": 125446572,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 115446452,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "realizedLotsAfter": 3,
+    "returnPct": 1154.450666592001,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -8296,7 +8491,30 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE00GK01023",
+      "quantity": 138462,
+      "asOf": "2026-03-31",
+      "costBasis": 10000120,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "salesAfter": 3,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            434
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "balanced-advantage-fund-growth",
@@ -18753,6 +18971,463 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
+  }
+];
+
+/** Supplementary source costs, accepted only for the exact account, ISIN, date and unit balance. No valuation or quantity overrides. */
+export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE00GK01023",
+    "quantity": 138462,
+    "asOf": "2026-03-31",
+    "costBasis": 10000120,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "salesAfter": 3,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          434
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE00YJ01010",
+    "quantity": 116979,
+    "asOf": "2026-03-31",
+    "costBasis": 75000350,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          305,
+          306
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE0LGX01024",
+    "quantity": 212000,
+    "asOf": "2026-03-31",
+    "costBasis": 69684400,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          299,
+          300
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE0NAZ01010",
+    "quantity": 187778,
+    "asOf": "2026-03-31",
+    "costBasis": 84500100,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          379
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE0ZOL01023",
+    "quantity": 44643,
+    "asOf": "2026-03-31",
+    "costBasis": 4642872,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "AJAY SIR - AARTI",
+        "rows": [
+          46
+        ]
+      }
+    ],
+    "notes": [
+      "Payment register matches owner and every unit; no complete separate sales/income record is claimed"
+    ]
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE12E301017",
+    "quantity": 262125,
+    "asOf": "2026-03-31",
+    "costBasis": 16277250,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          323,
+          324,
+          325
+        ]
+      }
+    ],
+    "notes": [
+      "row 325: duplicated purchase amount excluded from the noncash split; Closing independently equals purchase cost"
+    ]
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE1H7V01011",
+    "quantity": 59000,
+    "asOf": "2026-03-31",
+    "costBasis": 10030000,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          374
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE212S01015",
+    "quantity": 180185,
+    "asOf": "2026-03-31",
+    "costBasis": 176878881,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          275,
+          276
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE647U01026",
+    "quantity": 94967,
+    "asOf": "2026-03-31",
+    "costBasis": 93857991,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          262
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE013P01021",
+    "quantity": 43000,
+    "asOf": "2026-07-31",
+    "costBasis": 57061000,
+    "realizedPnL": 23795397.75,
+    "costOfUnitsSold": 62939610,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          216,
+          217,
+          218,
+          219
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE559A01017",
+    "quantity": 15772,
+    "asOf": "2026-07-31",
+    "costBasis": 23865639.84,
+    "realizedPnL": -22586920.91,
+    "costOfUnitsSold": 73027344.39,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          278,
+          279,
+          280,
+          281,
+          282,
+          283,
+          284,
+          285,
+          286,
+          287,
+          288,
+          289,
+          290
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE589A01014",
+    "quantity": 32000,
+    "asOf": "2026-07-31",
+    "costBasis": 10034018.55,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          366,
+          367
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE943D01017",
+    "quantity": 4878,
+    "asOf": "2026-07-31",
+    "costBasis": 8860617.08,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          355,
+          356,
+          357
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE07K301024",
+    "quantity": 12000,
+    "asOf": "2026-07-31",
+    "costBasis": 5017440,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          441,
+          442
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE0MRE01011",
+    "quantity": 8000,
+    "asOf": "2026-07-31",
+    "costBasis": 2646660,
+    "realizedPnL": -88917.69,
+    "costOfUnitsSold": 330630,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          291,
+          292,
+          293,
+          294,
+          295,
+          296,
+          297,
+          298
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE365Y01019",
+    "quantity": 603,
+    "asOf": "2026-07-31",
+    "costBasis": 907450.32,
+    "realizedPnL": 1135.05,
+    "costOfUnitsSold": 22569.75,
+    "dividendReceived": 603,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          223,
+          224,
+          225,
+          226,
+          227,
+          228,
+          229
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE647U01026",
+    "quantity": 94967,
+    "asOf": "2026-07-31",
+    "costBasis": 93857991,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          264,
+          265
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INE013P01021",
+    "quantity": 48000,
+    "asOf": "2026-07-31",
+    "costBasis": 63696000,
+    "realizedPnL": 5405142.15,
+    "costOfUnitsSold": 16304849,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          220,
+          221,
+          222
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INE800A01015",
+    "quantity": 11900,
+    "asOf": "2026-07-31",
+    "costBasis": 2863973,
+    "realizedPnL": -299952,
+    "costOfUnitsSold": 1107082,
+    "dividendReceived": 70125,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          247,
+          248,
+          249,
+          250,
+          251,
+          252,
+          253
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INE457L01029",
+    "quantity": 180000,
+    "asOf": "2026-07-31",
+    "costBasis": 94396845.22,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          376,
+          377,
+          378
+        ]
+      }
+    ],
+    "notes": []
   }
 ];
 

@@ -21,7 +21,8 @@ const expected: Record<string, [number, number]> = {
 for (const p of recovered) {
   const [units, cost] = expected[p.isin!];
   assert.equal(p.quantity, units); near(p.costBasis, cost); near(p.avgCost, cost / units);
-  near(p.marketValue, p.currentPrice! * units);
+  assert.equal(p.currentPrice, null, "the depository's value does not establish a per-share market quote");
+  assert.ok(p.marketValue > 0);
   assert.equal(p.costBasisSource, "supplementary-record");
   assert.ok(p.recoveredCost!.evidence.every(e => e.rows.length > 0 && e.sheet && e.path.startsWith("source/")));
   near(p.returnPct, fifoReturnPct(p.marketValue, cost, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived)!);
