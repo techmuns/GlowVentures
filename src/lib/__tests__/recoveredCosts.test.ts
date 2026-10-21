@@ -8,6 +8,7 @@ import { quoteSymbolFor, type QuoteFeed } from "../quotes";
 import type { ActionFeed } from "../corporateActions";
 import { fifoReturnPct } from "../../../shared/fifo.mjs";
 import { investedOnOf } from "../investedOn";
+import { investedSpanOf } from "../privateBook";
 
 const near = (got: number | null | undefined, want: number) =>
   assert.ok(typeof got === "number" && Math.abs(got - want) < .02, `${got} != ${want}`);
@@ -86,6 +87,7 @@ for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23
   assert.equal(investedOnOf([p])?.first,first);
   assert.equal(investedOnOf([p])?.last,last);
   assert.equal(investedOnOf([p])?.payments,lots);
+  assert.deepEqual(investedSpanOf(p,null),{from:first,to:last,source:'holding-record'},'the private-market date cell shares the reconciled source');
   assert.equal(investedOnOf([{...p,quantity:p.quantity!+1}]),null,'a different unit balance cannot borrow recovered dates');
   assert.equal(investedOnOf([{...p,accountId:'different-account'}]),null,'another account cannot borrow recovered dates');
   assert.equal(investedOnOf([{...p,isin:'different-isin'}]),null,'another scheme cannot borrow recovered dates');
