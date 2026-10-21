@@ -14,6 +14,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   const coveredPositions = new Set(l.units.flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
   const coveredValue = l.positions.filter(p => coveredPositions.has(`${p.accountId}|${p.securityKey}`)).reduce((s, p) => s + p.marketValue, 0);
   const closing = l.units.reduce((s, u) => s + u.close, 0);
+  const gaps = [...l.missing].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
   const count = new Set(l.units.map(u => u.accountId)).size;
   const reason = (line: SelectedLine) => line.measured?.reason ?? (line.missing.length ? returnGapText(line.missing[0].reason, selection.start)
     : 'No complete value and money record is available for these dates.');
@@ -49,8 +50,12 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
           <p className="font-semibold text-slate-100">What is missing?</p>
           {l.missing.length ? <>
             <p className="mt-1">These holdings are left out of this figure. Each item explains why and which records are needed.</p>
-            <ul className="mt-3 space-y-3">{l.missing.map((g, i) => <li key={`${g.label}|${i}`} data-return-gap={g.accountId}>
-              <p className="font-medium text-slate-100">{g.label}</p>
+            <ul className="mt-3 space-y-3">{gaps.map((g, i) => <li key={`${g.label}|${i}`} data-return-gap={g.accountId}>
+              <p className="font-medium text-slate-100">{(() => {
+                const source = accounts.find(a => a.accountId === g.accountId);
+                const suffix = source ? ` · ${source.owner} · ${source.provider} · account ${source.accountNo}` : '';
+                return suffix && g.label.endsWith(suffix) ? g.label.slice(0, -suffix.length) : g.label;
+              })()}</p>
               <p className="text-xs text-slate-400">{(() => { const source = accounts.find(a => a.accountId === g.accountId); return source ? `${source.owner} · ${source.provider} · account ${source.accountNo} · statement ${fmtDate(source.asOf)} · ` : ''; })()}{g.value != null ? `${money(g.value)} · ` : ''}{returnGapText(g.reason, selection.start)}</p>
               <details className="mt-1 text-xs text-slate-400"><summary className="cursor-pointer">Statement detail</summary><p className="mt-1">{g.reason}</p></details>
             </li>)}</ul>

@@ -1058,7 +1058,7 @@ export function MorningCIO() {
     data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
     data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
     {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
-    {money(r.coveredValue)} covered · {r.coveredAccounts} of {r.totalAccounts} accounts</span>;
+    {money(r.coveredValue)} covered · {r.coveredAccounts} accounts</span>;
   const history = m.available.history;
   const historyAnnual = history.total.measured?.basis === 'annual';
   const historyLabel = historyAnnual ? 'Annualised return' : 'Return over available history';
