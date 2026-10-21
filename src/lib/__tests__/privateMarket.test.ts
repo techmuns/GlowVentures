@@ -77,7 +77,10 @@
 // on the listed side now — the review's own ₹41.5 Cr kept exactly, no figure
 // invented — which is why the page falls from 90 rows to 88 and from ₹234.59 Cr
 // to ₹193.09 Cr. The guard below holds the move load-bearing.
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
+import { unitsSinceCapital } from "@/lib/privateMarket";
+import { startupMoic, privateValueModel, netMultiple, netMultipleKind } from "@/lib/privateValue";
+import type { Portfolio } from "@/lib/types";
 import { accountIndex } from "@/lib/accounts";
 import { sum, sumOrNull, isValuedAtCost } from "@/lib/analytics";
 import {
@@ -230,13 +233,16 @@ const atCostReview = reviewRows.filter(isValuedAtCost);
 // ₹5 Cr drawn, less the ₹14,16,280 cost of the 14,162.8 units it redeemed.
 near("Neo Infra's cost — its own statement, under FIFO", sumOrNull(statementPrivate.map((p) => p.costBasis)) ?? NaN, 50000000 - 1416280);
 near("cost = what every row reports", sumOrNull(funds.map((f) => f.cost)), sumOrNull(scope.dedupedRows.map((p) => p.costBasis)) ?? NaN);
-near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 349608469.84 + 1406775806.88);
+// 360 ONE's two lines carry FIFO's cost since Stage 10fx — ₹99,41,987.06 held
+// each, where the review's purchases less sale proceeds read ₹99,21,180.02 —
+// so the valued review lines' cost is ₹41,614.08 above the review's own sum.
+near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + (349608469.84 + 2 * 20807.04) + 1406775806.88);
 near("…the at-cost lines' cost is their value", sum(atCostReview.map((p) => p.costBasis ?? NaN)), sum(atCostReview.map((p) => p.marketValue)));
 ok("an at-cost line carries no P&L, no return and no per-unit mark",
   atCostReview.every((p) => p.unrealizedPnL == null && p.returnPct == null && p.currentPrice == null));
 near("unrealised P&L = value less cost on the valued rows alone", sumOrNull(funds.map((f) => f.pnl)),
   sum([...statementPrivate, ...valuedReview].map((p) => p.marketValue - (p.costBasis as number))));
-near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), (55498303.25 - 48583720) + 119061690.39);
+near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), (55498303.25 - 48583720) + (119061690.39 - 2 * 20807.04));
 ok("an at-cost fund shows no P&L and no return", funds.filter((f) => f.atCost).every((f) => f.pnl == null && f.returnPct == null));
 // DERIVED, NOT TYPED. The coverage count is a fact about which holdings are
 // private, and that is exactly what changed — a literal here went stale once
@@ -545,6 +551,53 @@ console.log("\n── the count-once policy, on a tagged copy ──");
       const row = tOwners.find((o) => o.owner === owner);
       return !!row && row.mv >= p.marketValue;
     }), leftOut.map((p) => `${accIdx.get(p.accountId)?.owner}: ${p.marketValue}`).join(", "));
+}
+
+// ── Stage 10fx: A LATER STATEMENT THAT HOLDS MORE UNITS THAN A CAPITAL ACCOUNT ──
+console.log("\n── units a later statement holds that a capital account does not (Stage 10fx) ──");
+{
+  const since = unitsSinceCapital(BOOK_COMMITMENTS, BOOK_POSITIONS, BOOK_REVIEW_SUPERSEDED, BOOK_ACCOUNTS);
+  const baring = since.find((x) => x.commitment.accountId === "baring-private-equity-india-fund-AIFM_BPEPF6_0584");
+  ok("Baring's 31 Mar capital account is outrun by Ankita's later demat units", !!baring && baring.laterUnits > baring.units,
+    baring ? `${baring.units} → ${baring.laterUnits} on ${baring.laterAsOf}` : since.map((x) => x.commitment.accountId).join(", "));
+  ok("…every finding is the same owner's, on a later statement, with more units",
+    since.every((x) => {
+      const later = BOOK_ACCOUNTS.find((a) => a.accountId === x.laterAccountId);
+      const own = BOOK_ACCOUNTS.find((a) => a.accountId === x.commitment.accountId);
+      return !!later && !!own && later.ownerId === own.ownerId && (later.asOf ?? "") > (x.commitment.asOf ?? "") && x.laterUnits > x.units;
+    }));
+  ok("…and a statement row of the same account is never a finding against itself",
+    since.every((x) => x.laterAccountId !== x.commitment.accountId));
+}
+
+// ── Stage 10fx: THE PRIVATE VALUE MODEL'S MULTIPLES — RVPI IS NOT MOIC, AND ABSENT IS NULL ──
+console.log("\n── the private value model's multiples (Stage 10fx) ──");
+{
+  eq("a startup with nothing invested and no stored MOIC has no multiple — never a made-up 1.0×", startupMoic({ moic: null, invested: 0, fairValue: 5 }), null);
+  eq("…its stored MOIC stands", startupMoic({ moic: 2, invested: 0, fairValue: 5 }), 2);
+  eq("…else fair value ÷ invested", startupMoic({ moic: null, invested: 4, fairValue: 6 }), 1.5);
+  eq("netMultiple keeps its signature: (mark + distributed) ÷ invested", netMultiple(10, 12, 3), 1.5);
+  eq("…null where nothing was invested", netMultiple(0, 12, 3), null);
+  eq("netMultipleKind keeps its signature", [netMultipleKind(0), netMultipleKind(1)], ["MOIC", "TVPI"]);
+  const fund = (over: object) => ({ name: "F", committed: 100, drawn: 100, distributed: 50, currentValue: 90, ...over });
+  const pf = {
+    privateMarkets: {
+      startups: [{ name: "S", invested: 0, fairValue: 0, moic: null }],
+      peFunds: [fund({})], preIpoFunds: [], unlistedCompanies: [], debtFunds: [], closedFunds: [],
+    },
+  } as unknown as Portfolio;
+  const pv = privateValueModel(pf);
+  const pe = pv.classes.find((c) => c.key === "pe")!;
+  eq("RVPI is the mark over what went in — the reading that was labelled MOIC", pe.rvpi, 0.9);
+  eq("…and the net multiple adds the cash returned", pe.netMultiple, 1.4);
+  ok("the model's RVPI and MOIC differ wherever cash came back", pv.rvpi !== pv.moic && pv.moic != null && Math.abs(pv.moic - 1.4) < 1e-9, `${pv.rvpi} vs ${pv.moic}`);
+  eq("DPI and TVPI over the funds", [pv.dpi, pv.tvpi], [0.5, 1.4]);
+  const empty = privateValueModel({ privateMarkets: { startups: [], peFunds: [], preIpoFunds: [], unlistedCompanies: [], debtFunds: [], closedFunds: [] } } as unknown as Portfolio);
+  eq("an empty book's multiples are absent, never 0", [empty.rvpi, empty.moic, empty.dpi, empty.tvpi], [null, null, null, null]);
+  const st = pv.startups[0];
+  eq("a startup no multiple can be struck for has no bucket", [st.moicEff, st.bucket], [null, null]);
+  const startups = pv.classes.find((c) => c.key === "startups");
+  ok("the startup class carries no distribution it never recorded", !startups || (startups.distributed === null && startups.netMultiple === null));
 }
 
 process.exit(fails ? 1 : 0);

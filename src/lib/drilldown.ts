@@ -26,8 +26,9 @@
 // one level down.
 import type { Portfolio, Position } from "./types";
 import { accountIndex } from "./accounts";
-import { costCoversSet, currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, SIDE_NOTE, strikesGain, sum, unstruckValue } from "./analytics";
+import { costCoversSet, currentHoldings, dedupedPositions, droppedHoldings, isPrivateClass, isUnplacedSide, SIDE_NOTE, strikesGain, sum, unstruckValue } from "./analytics";
 import { fifoTotals, type FifoOptions, type FifoTotals } from "./fifo";
+import { concentrationNames } from "./concentration";
 /**
  * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
  * allocation table can be grouped three ways, and a drill-down that re-derived
@@ -222,6 +223,14 @@ export type Drilldown = {
   crumb: string;
   /** The rows, on the same basis the figure was struck on. */
   rows: Position[];
+  /**
+   * WHICH NAME A ROW IS, where a page counts names by investment rather than
+   * by key (Stage 10fx): the top-names page ranks `concentrationNames`' groups,
+   * so its "N names" counts those groups — ten names that span eleven or more
+   * keys — or the count beside its heading would disagree with the heading.
+   * Absent, a name is a `securityKey`.
+   */
+  nameOf?: (p: Position) => string;
   /**
    * TRUE where each `dedupeGroup` is counted once (a consolidated figure), FALSE
    * where every statement's row stands as printed (a per-account figure).
@@ -505,18 +514,24 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
     }
 
     case "top-names": {
-      // GROUPED ON `securityKey`, LIKE THE FIGURE. The same company arrives from
-      // two platforms under two spellings and, more often than not, with no ISIN
-      // on either side, so the key is the only identity that joins them.
-      const byKey = new Map<string, number>();
-      for (const p of consolidated) byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
-      const top = new Set([...byKey.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_NAMES).map(([k]) => k));
+      // GROUPED LIKE THE FIGURE — `concentrationNames`, the tile's own ranking
+      // (Stage 10fx). A fund held in two unit classes is one investment (Sanshi
+      // Fund I's Class E and A2, ₹204.48 Cr between them, the book's largest),
+      // and two keys that share an ISIN are one (Helios Flexi Cap's statement
+      // line and its depository units). Ranked on `securityKey` alone this page
+      // listed a different ten from the tile that opens it. Every position row
+      // of each of the ten GROUPS is listed, so ten names can span eleven or
+      // more keys; `securityKey` itself is never rewritten.
+      const topGroups = concentrationNames(consolidated).slice(0, TOP_NAMES);
+      const top = new Set(topGroups.flatMap((g) => g.securityKeys));
       const inTop = (p: Position) => top.has(p.securityKey);
       const rows = consolidated.filter(inTop);
+      const groupOf = new Map(topGroups.flatMap((g) => g.securityKeys.map((k) => [k, g.key] as const)));
       return {
         ...base, ...excludedWhere(inTop), id: scope.id, key: "",
-        title: `The ${top.size} largest names`,
-        crumb: `Top-${top.size} concentration`,
+        nameOf: (p: Position) => groupOf.get(p.securityKey) ?? p.securityKey,
+        title: `The ${topGroups.length} largest names`,
+        crumb: `Top-${topGroups.length} concentration`,
         rows,
         absent: rows.length ? null : {
           what: "No holding to rank",
@@ -850,10 +865,42 @@ export function costedSetLabel(
  * the figure they land on, and a change to the set moves all of them together.
  */
 export type BookReturnOnCost = { set: CostedBookSet; fifo: FifoTotals; pct: number | null };
+/**
+ * ── SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fx) ─────────────────────────
+ *
+ * The rows and the value are the CURRENT holdings — `costedBookSet` over
+ * `currentHoldings` (idempotent, so a caller that already filtered loses
+ * nothing) — but the RETURN is what the family's capital earned, and that
+ * includes what it has since left: every row `current` or `opts.universe`
+ * carries that `currentHoldings` drops enters the gain and the capital
+ * deployed through `fifoTotals`' `exited` (3P's class B3, ASK Absolute
+ * Return's folios, the redeemed arbitrage schemes, ASK's two closed PMS
+ * mandates). On this book that moved the struck return from 21.98% to 21.16%.
+ * A caller whose `universe` is the current set alone passes no exits and gets
+ * the survivor's figure — pass the whole deduped book as `universe`.
+ * `fifoBasisNote` names the exits in the hover the figure already has.
+ */
 export function bookReturnOnCost(current: readonly Position[], opts: FifoOptions): BookReturnOnCost {
-  const set = costedBookSet(current);
-  const fifo = fifoTotals(set.struck, opts);
+  const set = costedBookSet(currentHoldings(current));
+  const exited = opts.exited ?? exitedRows(current, opts.universe);
+  const fifo = fifoTotals(set.struck, { ...opts, exited });
   return { set, fifo, pct: fifo.returnPct };
+}
+
+/**
+ * The rows any of `sets` carries that a current-holdings surface drops —
+ * redeemed to nil, or under the ₹1,000 floor (`droppedHoldings`) — each
+ * duplicated holding once. What `fifoTotals`' `exited` takes (Stage 10fx).
+ */
+export function exitedRows(...sets: readonly (readonly Position[] | undefined)[]): Position[] {
+  const out: Position[] = [];
+  const seen = new Set<Position>();
+  for (const s of sets) {
+    if (!s?.length) continue;
+    const d = droppedHoldings(s as Position[]);
+    for (const p of [...d.closed, ...d.negligible]) if (!seen.has(p)) { seen.add(p); out.push(p); }
+  }
+  return dedupedPositions(out);
 }
 
 /**
@@ -883,24 +930,36 @@ export type BookMoneyWeighted = {
   /** Accounts in the book, for "N of M accounts". */
   bookAccounts: number;
   gaps: { accountId: string; accountNo: string; asOf: string; reason: string }[];
+  /**
+   * The fund-of-funds model's lines LEFT OUT of the pool, and why (Stage 10fx).
+   * Empty on this book, whose model carries none.
+   */
+  privateExcluded: { name: string; reason: string }[];
 };
-export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | null, today: Date): BookMoneyWeighted {
+/**
+ * WHY THE FUND-OF-FUNDS MODEL'S LINES ARE NOT POOLED (Stage 10fx). They were:
+ * each one's first drawdown, then its value dated `today` — the page's clock,
+ * not the date the fund marked itself — and pooled into accounts whose flows
+ * open on a statement's OPENING value. Both halves are wrong: a value is struck
+ * on its own valuation date (`valueDateOf`'s rule) and the model carries none,
+ * and a since-inception leg (first call to now) pooled with FY-window legs
+ * (opening value to close) solves to one rate over two different windows. So
+ * a line is named here rather than pooled until it carries a valuation date and
+ * a window matching the pool's. Latent: the model is empty on this book.
+ */
+const PRIVATE_NOT_POOLED =
+  "not pooled: the fund-of-funds model carries no valuation date for this line's value and its flows run since inception, while the accounts' pool opens on each statement's opening value — one rate over two windows would be neither";
+export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | null, _today: Date): BookMoneyWeighted {
   const mw = measuredAccountsReturn(statement ?? portfolio, portfolio.accounts);
   const pm = portfolio.privateMarkets;
-  const privateFlows = [
-    ...pm.startups.filter((s) => s.investDate && s.invested > 0)
-      .flatMap((s) => [{ date: new Date(s.investDate!), amount: -s.invested }, { date: today, amount: s.fairValue }]),
+  const privateExcluded = [
+    ...pm.startups.filter((s) => s.invested > 0).map((s) => ({ name: s.name, reason: PRIVATE_NOT_POOLED })),
     ...[...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]
-      .filter((f) => f.firstInvest && f.drawn > 0)
-      .flatMap((f) => [{ date: new Date(f.firstInvest!), amount: -f.drawn }, { date: today, amount: f.distributed + f.currentValue }]),
+      .filter((f) => f.drawn > 0).map((f) => ({ name: f.name, reason: PRIVATE_NOT_POOLED })),
   ];
-  // The private flows join the SAME per-account parts, each still closing on
-  // its own statement date. The window is the rate's own: its first flow to its
-  // last — with no private flows (this book carries none), exactly the pool's.
-  const flows = [
-    ...mw.parts.flatMap((x) => [...x.flows, { date: x.asOf, amount: x.terminalValue }]),
-    ...privateFlows,
-  ];
+  // The per-account parts, each closing on its own statement date. The window
+  // is the rate's own: its first flow to its last.
+  const flows = mw.parts.flatMap((x) => [...x.flows, { date: x.asOf, amount: x.terminalValue }]);
   const annual = mw.parts.length ? xirrPct(flows) : null;
   const times = flows.map((f) => f.date.getTime());
   const windowDays = mw.parts.length ? Math.round((Math.max(...times) - Math.min(...times)) / 864e5) : null;
@@ -913,6 +972,7 @@ export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | n
     lastClose: mw.lastClose,
     bookAccounts: portfolio.accounts.length,
     gaps: mw.gaps,
+    privateExcluded,
   };
 }
 

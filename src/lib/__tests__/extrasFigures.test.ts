@@ -12,7 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { BOOK_CAPITAL_GAINS, BOOK_NAV_HISTORY } from "@/data/glowData";
-import { estimateRealisedTax } from "@/lib/taxEstimate";
+import { estimateRealisedTax, realisedInYear } from "@/lib/taxEstimate";
 import { bookDrawdown, maxDrawdown } from "@/lib/drawdown";
 import type { EntityCG, NavPoint } from "@/lib/types";
 
@@ -97,15 +97,20 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
   }
   // s.70(2): a short-term loss sets off against the same person's long-term
   // gain; s.70(3): a long-term loss never against a short-term gain. Every
-  // figure here is one year's, so the set-off always applies.
+  // figure here is one year's, so the set-off always applies. s.112A: the
+  // first ₹1.25 L of what long-term gain is left after it is exempt, once per
+  // person (Stage 10fx) — the one other statutory literal this suite carries.
+  const EXEMPT = 125_000;
   const withSetOff = (e: { st: number; lt: number }) => {
     const off = e.st < 0 && e.lt > 0 ? Math.min(-e.st, e.lt) : 0;
-    return Math.max(0, e.st + off) * ST + Math.max(0, e.lt - off) * LT;
+    return Math.max(0, e.st + off) * ST + Math.max(0, e.lt - off - EXEMPT) * LT;
   };
-  let expected = 0, noSetOff = 0;
+  let expected = 0, noSetOff = 0, noExemption = 0;
   for (const e of perOwner.values()) {
     expected += withSetOff(e);
-    noSetOff += Math.max(0, e.st) * ST + Math.max(0, e.lt) * LT;
+    noSetOff += Math.max(0, e.st) * ST + Math.max(0, e.lt - EXEMPT) * LT;
+    const off = e.st < 0 && e.lt > 0 ? Math.min(-e.st, e.lt) : 0;
+    noExemption += Math.max(0, e.st + off) * ST + Math.max(0, e.lt - off) * LT;
   }
   const sumST = reported.reduce((s, c) => s + (yearHeads(c).st ?? 0), 0);
   const sumLT = reported.reduce((s, c) => s + (yearHeads(c).lt ?? 0), 0);
@@ -155,7 +160,9 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
   ok("the book carries a short-term loss beside another taxpayer's short-term gain, in the year",
     signs.includes(-1) && signs.includes(1));
   ok("…so the pooled figure differs from the per-taxpayer one, by more than a lakh",
-    Math.abs(pooled - expected) > 1e5, `pooled ${inr(pooled)} · per taxpayer ${inr(expected)}`);
+    // On the same rules: the pooled figure applies no exemption, so it is held
+    // to the per-taxpayer figure without one — the difference is the pooling.
+    Math.abs(pooled - noExemption) > 1e5, `pooled ${inr(pooled)} · per taxpayer, no exemption ${inr(noExemption)}`);
   ok("the helper reports the pooled figure it replaced, over the same year, for the page to state", near(est.pooled, pooled));
   ok("no reported account is left without a canonical owner on this book", est.unattributed.length === 0);
 
@@ -171,6 +178,46 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
     paired.every(([o, e]) => near(est.byTaxpayer.find((t) => t.ownerId === o)?.setOff, Math.min(-e.st, e.lt))));
   ok("…and strikes no set-off it withholds: every figure is one year's",
     est.byTaxpayer.every((t) => !t.setOffWithheld));
+  // THE s.112A EXEMPTION (Stage 10fx). LOAD-BEARING: the book must carry a
+  // person with a long-term gain left after the set-off, or the figure above
+  // would pass just as well without it.
+  const exempted = est.byTaxpayer.filter((t) => t.exemption > 0);
+  ok("the book carries a taxpayer with a long-term gain left after the set-off, so the exemption moves the estimate",
+    exempted.length > 0 && noExemption - expected > 1e4, `without it ${inr(noExemption)} · with it ${inr(expected)}`);
+  ok("…the exemption is at most ₹1.25 L a person, once, and never withheld on a one-year figure",
+    est.byTaxpayer.every((t) => t.exemption >= 0 && t.exemption <= EXEMPT + 1e-6 && !t.exemptionWithheld)
+    && exempted.every((t) => near(t.exemption, Math.min(EXEMPT, (t.lt ?? 0) - t.setOff))),
+    exempted.map((t) => `${t.owner} ${inr(t.exemption)}`).join(", "));
+
+  // EACH ACCOUNT TO ITS OWN CLOSE (C4, Stage 10fx): the year is never one
+  // statement's — every taxpayer's spans are their own accounts, from 1 April
+  // or a later opening to their own close, and a person whose accounts close
+  // before the newest close in the book is flagged with the date through which
+  // all of theirs are covered.
+  const newestClose = reported.reduce((a, c) => (c.periodTo && c.periodTo > a ? c.periodTo : a), "");
+  ok("each taxpayer names every account's covered span, to its own statement close",
+    est.newestClose === newestClose && est.byTaxpayer.every((t) => t.spans.length === t.accounts.length
+      && t.spans.every((sp) => {
+        const c = reported.find((r) => r.entity === sp.entity)!;
+        return !!c && sp.to === c.periodTo && !!sp.from && sp.from >= fy;
+      })), `newest close ${newestClose}`);
+  const earliest = (t: { spans: { to: string | null }[] }) => t.spans.map((sp) => sp.to ?? "").sort()[0];
+  ok("…and a taxpayer whose accounts close before the newest close is flagged, with the date all of theirs reach",
+    est.byTaxpayer.every((t) => t.coveredThrough === earliest(t) && t.shortOfNewest === (earliest(t) < newestClose))
+    && est.byTaxpayer.some((t) => t.shortOfNewest),
+    est.byTaxpayer.map((t) => `${t.owner} through ${t.coveredThrough}`).join("; "));
+
+  // THE YEAR'S REALISED (C5, Stage 10fx): the year's heads summed over every
+  // account, and — LOAD-BEARING — the windows' total, which the headline used
+  // to print, differs from it by more than a crore on this book.
+  const yr = realisedInYear(BOOK_CAPITAL_GAINS);
+  const yST = reported.reduce((s, c) => s + (yearHeads(c).st ?? 0), 0), yLT = reported.reduce((s, c) => s + (yearHeads(c).lt ?? 0), 0);
+  const windows = reported.reduce((s, c) => s + (c.realisedST ?? 0) + (c.realisedLT ?? 0), 0);
+  ok("the year's realised is the year's heads over every account, re-expressed", yr.year === fy && near(yr.st, yST) && near(yr.lt, yLT)
+    && near(yr.total, yST + yLT) && yr.unplaced.length === 0, `year ${inr(yr.total)}`);
+  ok("…and the statement windows' total is a different figure, by more than a crore",
+    Math.abs(windows - (yr.total ?? 0)) > 1e7, `windows ${inr(windows)} · year ${inr(yr.total)}`);
+
   ok("a long-term loss never absorbs a short-term gain",
     [...perOwner.entries()].filter(([, e]) => e.lt < 0 && e.st > 0).every(([o, e]) =>
       near(est.byTaxpayer.find((t) => t.ownerId === o)?.tax, e.st * ST)));
@@ -187,9 +234,9 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
   ]);
   const x = spans.byTaxpayer.find((t) => t.ownerId === "x"), y = spans.byTaxpayer.find((t) => t.ownerId === "y");
   ok("an unsplit window that spans financial years strikes no set-off, and says so",
-    !!x && x.setOff === 0 && x.setOffWithheld && near(x.tax, 400_000 * LT), x ? `${inr(x.tax)}` : "missing");
+    !!x && x.setOff === 0 && x.setOffWithheld && near(x.tax, 400_000 * LT) && x.exemption === 0 && x.exemptionWithheld, x ? `${inr(x.tax)}` : "missing");
   ok("…while the same figures inside one year do",
-    !!y && near(y.setOff, 100_000) && !y.setOffWithheld && near(y.tax, 300_000 * LT), y ? `${inr(y.tax)}` : "missing");
+    !!y && near(y.setOff, 100_000) && !y.setOffWithheld && near(y.exemption, 125_000) && near(y.tax, (300_000 - 125_000) * LT), y ? `${inr(y.tax)}` : "missing");
 
   // THE SAME WINDOW, SPLIT BY SALE DATE: only the year's sales are taxed, the
   // set-off is struck, the earlier year is named — and a lot with no sale date
@@ -210,7 +257,7 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
   // `st` and `lt` are the year's heads BEFORE the set-off (the helper's own
   // contract); the set-off and the tax struck after it are separate fields.
   ok("constructed: a split window taxes only the year's own sales, with the set-off struck",
-    !!z && near(z.st, -100_000) && near(z.lt, 400_000) && near(z.setOff, 100_000) && !z.setOffWithheld && near(z.tax, 300_000 * LT),
+    !!z && near(z.st, -100_000) && near(z.lt, 400_000) && near(z.setOff, 100_000) && !z.setOffWithheld && near(z.tax, (300_000 - 125_000) * LT),
     z ? `ST ${inr(z.st)} LT ${inr(z.lt)} tax ${inr(z.tax)}` : "missing");
   ok("constructed: …the earlier year's sales are named and taxed nowhere",
     split.earlierYears.some((e) => e.entity === "z · C" && near(e.st, 50_000) && near(e.lt, 70_000) && e.lots === 1));

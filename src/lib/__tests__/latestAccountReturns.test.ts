@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { measuredAccountsReturn, accountReturnInputs } from '../returns';
+import { measuredAccountsReturn, accountReturnInputs, entityYtdPct } from '../returns';
 import { bookMoneyWeighted } from '../drilldown';
 import { investorPeriodReturn } from '../investorSummary';
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURN_RECORDS } from '../../data/glowData';
@@ -26,6 +26,17 @@ assert.equal(tile.lastClose, current.lastClose);
 assert.equal(tile.measuredValue, current.measuredMV);
 assert(Math.abs(tile.result.pct! - current.toDatePct!) < 1e-9);
 assert.equal(tile.flows.length, current.parts.reduce((n, p) => n + p.flows.length + 1, 0));
+// Stage 10fx: a fund-of-funds line carries no valuation date and runs since
+// inception, so it is named and never pooled into the FY-window accounts' rate —
+// nor dated at the page's clock.
+{
+  const withFund = { ...statement, privateMarkets: { ...empty, peFunds: [{ name: 'Constructed fund', firstInvest: '2023-01-01', committed: 100, drawn: 100, distributed: 0, currentValue: 150, tvpi: null, dpi: null }] } } as unknown as Portfolio;
+  const t2 = bookMoneyWeighted(withFund, statement, new Date('2026-10-15'));
+  assert.equal(t2.flows.length, tile.flows.length, 'a private leg is not pooled into the accounts window');
+  assert(Math.abs(t2.result.pct! - tile.result.pct!) < 1e-12);
+  assert.deepEqual(t2.privateExcluded.map(x => x.name), ['Constructed fund']);
+  assert.deepEqual(tile.privateExcluded, []);
+}
 
 // Whole-portfolio FYTD still requires all accounts and one closing date.
 assert.equal(investorPeriodReturn(statement, new Date(2026, 9, 15), 'fytd').pct, null);
@@ -57,3 +68,19 @@ assert.equal(redeemedReturn.parts.length, 1);
 assert(Math.abs(redeemedReturn.toDatePct! - 10) < 1e-7, 'a verified closing zero still includes redemption proceeds');
 assert.equal(bookMoneyWeighted(redeemed, redeemed, new Date('2026-10-15')).result.pct, redeemedReturn.toDatePct);
 console.log(`PASS current corpus returns: ${current.toDatePct?.toFixed(1)}%, through ${current.lastClose}; latest source and named gaps shared across return surfaces`);
+
+// D9 (Stage 10fx): an entity's FYTD return is struck on ISO dates (a 1 Apr
+// opening NAV is kept in any time zone), closes on its own latest STATEMENT
+// NAV — never the live value the caller passes — and weights each dated flow
+// for the days it was invested (Modified Dietz).
+{
+  const ent = { asOf: '2026-10-07',
+    entityNavHistory: { E: [{ period: 'o', date: '2026-04-01', nav: 100 }, { period: 'c', date: '2026-09-30', nav: 160 }] },
+    entityCashFlows: { E: [{ date: '2026-07-01', amount: -50, description: 'Contribution' }] } } as unknown as Portfolio;
+  const span = 182, held = 91;
+  const want = (160 - 100 - 50) / (100 + 50 * held / span) * 100;
+  assert.ok(Math.abs(entityYtdPct(ent, 'E', 999)! - want) < 1e-9, `${entityYtdPct(ent, 'E', 999)} vs ${want}`);
+  assert.equal(entityYtdPct(ent, 'E', 999), entityYtdPct(ent, 'E', 1), 'the live value passed in is not read');
+  assert.equal(entityYtdPct({ ...ent, entityNavHistory: {} } as unknown as Portfolio, 'E', 1), null);
+}
+console.log('PASS entity FYTD: ISO dates, statement close, Modified Dietz');

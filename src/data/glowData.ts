@@ -1269,13 +1269,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "capitalRecordTo": "2026-07-31",
     "custodian": "SVAN Investment Managers LLP",
     "noPositionsReason": null,
-    "capital": {
-      "contributed": 145000000,
-      "withdrawn": 114206.85,
-      "from": "2024-09-03",
-      "to": "2026-09-30",
-      "source": "capital-record"
-    }
+    "capital": null
   },
   {
     "accountId": "svan-investment-managers-llp-8710090",
@@ -1428,22 +1422,24 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "private",
     "quantity": 990429.68,
-    "avgCost": 10.02,
+    "avgCost": 10.04,
     "currentPrice": null,
-    "costBasis": 9921180.02,
+    "costBasis": 9941987.06,
     "costBasisSource": "review",
+    "printedCostBasis": 9921180.02,
     "marketValue": 14580413,
-    "unrealizedPnL": 4659232.98,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": 46.96,
+    "unrealizedPnL": 4638425.94,
+    "realizedPnL": 20807.04,
+    "costOfUnitsSold": 57512.96,
+    "returnPct": 65.59,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-06-30",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 1899476,
+    "dividendFrom": "2021-04-22",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -1473,22 +1469,24 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "private",
     "quantity": 990429.68,
-    "avgCost": 10.02,
+    "avgCost": 10.04,
     "currentPrice": null,
-    "costBasis": 9921180.02,
+    "costBasis": 9941987.06,
     "costBasisSource": "review",
+    "printedCostBasis": 9921180.02,
     "marketValue": 14580412.51,
-    "unrealizedPnL": 4659232.49,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": 46.96,
+    "unrealizedPnL": 4638425.45,
+    "realizedPnL": 20807.04,
+    "costOfUnitsSold": 57512.96,
+    "returnPct": 65.59,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-06-30",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 1899476,
+    "dividendFrom": "2021-04-22",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -1724,14 +1722,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -1407791.26,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -6.95,
+    "returnPct": -6.25,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 142867,
+    "dividendFrom": "2024-10-03",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -1800,14 +1799,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 20618370.33,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 4.48,
+    "returnPct": 4.49,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 58861.66,
+    "dividendFrom": "2024-06-01",
     "positionIrrPct": null
   },
   {
@@ -1863,6 +1863,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 95958,
     "dividendReceived": 62750,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -1971,6 +1972,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 165040,
     "dividendReceived": 165040,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -2025,6 +2027,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 495063,
     "dividendReceived": 306900,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -2052,6 +2055,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 146000,
     "dividendReceived": 146000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -2161,6 +2165,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 2788,
     "dividendReceived": 2787.6,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -2215,6 +2220,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 16000,
     "dividendReceived": 16000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 27.18
   },
   {
@@ -2242,6 +2248,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 3000,
     "dividendReceived": 3000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.08
   },
   {
@@ -2269,6 +2276,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 7200,
     "dividendReceived": 7200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 41.74
   },
   {
@@ -2289,13 +2297,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -587853.3,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -20.5,
+    "returnPct": -20.42,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 24000,
-    "dividendReceived": 21600,
+    "dividendReceived": 24000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -25.72
   },
   {
@@ -2323,6 +2332,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 3600,
     "dividendReceived": 7200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 117.67
   },
   {
@@ -2377,6 +2387,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 8000,
     "dividendReceived": 8000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 822.66
   },
   {
@@ -2404,6 +2415,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 1600,
     "dividendReceived": 1600,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 179.89
   },
   {
@@ -2424,13 +2436,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -572477.6,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -16.43,
+    "returnPct": -16.39,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 14250,
-    "dividendReceived": 12825,
+    "dividendReceived": 14250,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -21.16
   },
   {
@@ -2451,13 +2464,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 250845.64,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 9.65,
+    "returnPct": 9.75,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 28800,
-    "dividendReceived": 25920,
+    "dividendReceived": 28800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 71.99
   },
   {
@@ -2478,13 +2492,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -199177,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -5.24,
+    "returnPct": -5.03,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 59400,
-    "dividendReceived": 53460,
+    "dividendReceived": 59400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -6.86
   },
   {
@@ -2506,13 +2521,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -28660,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -0.26,
+    "returnPct": -0.17,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 24000,
-    "dividendReceived": 21600,
+    "dividendReceived": 24000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -0.23
   },
   {
@@ -2533,13 +2549,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -358323.43,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -17.23,
+    "returnPct": -17.08,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 30000,
-    "dividendReceived": 27000,
+    "dividendReceived": 30000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.16
   },
   {
@@ -2567,6 +2584,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 31000,
     "dividendReceived": 31000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -28.68
   },
   {
@@ -2594,6 +2612,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 9750,
     "dividendReceived": 9750,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -7.27
   },
   {
@@ -2615,13 +2634,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 582052.8,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 27.64,
+    "returnPct": 27.74,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 22100,
-    "dividendReceived": 19890,
+    "dividendReceived": 22100,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 37.52
   },
   {
@@ -2649,6 +2669,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 7500,
     "dividendReceived": 7500,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 4.19
   },
   {
@@ -2669,13 +2690,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -191044.65,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -5.43,
+    "returnPct": -5.19,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 60000,
-    "dividendReceived": 54000,
+    "dividendReceived": 60000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -6.86
   },
   {
@@ -2696,13 +2718,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -222350.3,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -10.22,
+    "returnPct": -10.14,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 16200,
-    "dividendReceived": 14580,
+    "dividendReceived": 16200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -26.43
   },
   {
@@ -2723,13 +2746,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -267488.29,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -9.54,
+    "returnPct": -9.44,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 26400,
-    "dividendReceived": 23760,
+    "dividendReceived": 26400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -15.87
   },
   {
@@ -2811,6 +2835,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 6000,
     "dividendReceived": 4000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 27.34
   },
   {
@@ -2865,6 +2890,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 4500,
     "dividendReceived": 4500,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -19.61
   },
   {
@@ -2885,13 +2911,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 138006.26,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 15.89,
+    "returnPct": 16.14,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 25000,
-    "dividendReceived": 22500,
+    "dividendReceived": 25000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 29.71
   },
   {
@@ -2912,13 +2939,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -838217.39,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -25.43,
+    "returnPct": -25.27,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 59850,
-    "dividendReceived": 43740,
+    "dividendReceived": 48600,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.48
   },
   {
@@ -2940,13 +2968,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -11701.12,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 1.08,
+    "returnPct": 1.26,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 39038,
-    "dividendReceived": 35133.5,
+    "dividendReceived": 39037.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 1.65
   },
   {
@@ -2967,13 +2996,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 108157.87,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 4.47,
+    "returnPct": 4.52,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 17550,
-    "dividendReceived": 10800,
+    "dividendReceived": 12000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 6.66
   },
   {
@@ -3028,6 +3058,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 37500,
     "dividendReceived": 3750,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -21.2
   },
   {
@@ -3055,6 +3086,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 1000,
     "dividendReceived": 1000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -55.48
   },
   {
@@ -3082,6 +3114,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 2800,
     "dividendReceived": 2800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 34.88
   },
   {
@@ -3109,6 +3142,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 40000,
     "dividendReceived": 40000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 27.18
   },
   {
@@ -3136,6 +3170,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 6250,
     "dividendReceived": 6250,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.08
   },
   {
@@ -3156,13 +3191,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1631552.51,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 25.99,
+    "returnPct": 26.01,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 18000,
-    "dividendReceived": 16200,
+    "dividendReceived": 18000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 43.41
   },
   {
@@ -3183,13 +3219,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -1371657.7,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -20.5,
+    "returnPct": -20.42,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 56000,
-    "dividendReceived": 50400,
+    "dividendReceived": 56000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -25.72
   },
   {
@@ -3210,13 +3247,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1854877.78,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 55.77,
+    "returnPct": 55.8,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 8000,
-    "dividendReceived": 15200,
+    "dividendReceived": 16000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 117.67
   },
   {
@@ -3264,13 +3302,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 2690725,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 56.76,
+    "returnPct": 56.82,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 25000,
-    "dividendReceived": 22500,
+    "dividendReceived": 25000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 822.66
   },
   {
@@ -3298,6 +3337,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 3600,
     "dividendReceived": 3600,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 179.89
   },
   {
@@ -3318,13 +3358,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -1214561,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -16.54,
+    "returnPct": -16.5,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 30000,
-    "dividendReceived": 27000,
+    "dividendReceived": 30000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -21.27
   },
   {
@@ -3345,13 +3386,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 627114.24,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 9.65,
+    "returnPct": 9.75,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 72000,
-    "dividendReceived": 64800,
+    "dividendReceived": 72000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 71.99
   },
   {
@@ -3372,13 +3414,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -461320,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -5.37,
+    "returnPct": -5.16,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 135000,
-    "dividendReceived": 121500,
+    "dividendReceived": 135000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -7.04
   },
   {
@@ -3400,13 +3443,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -71650,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -0.26,
+    "returnPct": -0.17,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 60000,
-    "dividendReceived": 54000,
+    "dividendReceived": 60000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -0.23
   },
   {
@@ -3427,13 +3471,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -720274.92,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -17.31,
+    "returnPct": -17.15,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 60000,
-    "dividendReceived": 54000,
+    "dividendReceived": 60000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.21
   },
   {
@@ -3461,6 +3506,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 70000,
     "dividendReceived": 70000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -29.33
   },
   {
@@ -3481,13 +3527,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -187376,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -3.13,
+    "returnPct": -3.09,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 21000,
-    "dividendReceived": 18900,
+    "dividendReceived": 21000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -7.27
   },
   {
@@ -3509,13 +3556,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1369536,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 27.64,
+    "returnPct": 27.74,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 52000,
-    "dividendReceived": 46800,
+    "dividendReceived": 52000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 37.52
   },
   {
@@ -3536,13 +3584,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 207119.4,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 3.21,
+    "returnPct": 3.24,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 18000,
-    "dividendReceived": 16200,
+    "dividendReceived": 18000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 4.23
   },
   {
@@ -3563,13 +3612,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -519554.43,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -5.4,
+    "returnPct": -5.16,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 164000,
-    "dividendReceived": 147600,
+    "dividendReceived": 164000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -6.87
   },
   {
@@ -3590,13 +3640,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -494106.84,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -10.22,
+    "returnPct": -10.14,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 36000,
-    "dividendReceived": 32400,
+    "dividendReceived": 36000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -26.43
   },
   {
@@ -3617,13 +3668,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -603962.88,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -9.58,
+    "returnPct": -9.47,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 59400,
-    "dividendReceived": 53460,
+    "dividendReceived": 59400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -15.92
   },
   {
@@ -3705,6 +3757,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 13200,
     "dividendReceived": 8800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 27.34
   },
   {
@@ -3752,13 +3805,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -697940,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -13.9,
+    "returnPct": -13.88,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 10000,
-    "dividendReceived": 9000,
+    "dividendReceived": 10000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -19.61
   },
   {
@@ -3779,13 +3833,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 315887.21,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 15.16,
+    "returnPct": 15.41,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 60000,
-    "dividendReceived": 54000,
+    "dividendReceived": 60000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 28.2
   },
   {
@@ -3806,13 +3861,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -1946408.86,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -25.33,
+    "returnPct": -25.18,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 139650,
-    "dividendReceived": 102060,
+    "dividendReceived": 113400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.37
   },
   {
@@ -3834,13 +3890,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -26002.5,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 1.08,
+    "returnPct": 1.26,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 86750,
-    "dividendReceived": 78075,
+    "dividendReceived": 86750,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 1.65
   },
   {
@@ -3861,13 +3918,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 347571.27,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 5.7,
+    "returnPct": 5.74,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": 41250,
-    "dividendReceived": 27000,
+    "dividendReceived": 30000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 8.27
   },
   {
@@ -3922,6 +3980,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 85000,
     "dividendReceived": 8500,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -21.28
   },
   {
@@ -3949,6 +4008,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 3000,
     "dividendReceived": 3000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -55.48
   },
   {
@@ -3976,6 +4036,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 6000,
     "dividendReceived": 6000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 34.88
   },
   {
@@ -4113,6 +4174,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 17850,
     "dividendReceived": 17850,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4140,6 +4202,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 10763.2,
     "dividendReceived": 10763.2,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4248,6 +4311,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 14234,
     "dividendReceived": 14234,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4329,6 +4393,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 12040,
     "dividendReceived": 12040,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4411,6 +4476,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 4360,
     "dividendReceived": 4360,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4438,6 +4504,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 15302,
     "dividendReceived": 15302,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4548,6 +4615,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 11673,
     "dividendReceived": 11673.2,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4629,6 +4697,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 12567,
     "dividendReceived": 12567,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4711,6 +4780,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 66228,
     "dividendReceived": 44763,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4738,6 +4808,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 27792,
     "dividendReceived": 27792,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4792,6 +4863,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 5680,
     "dividendReceived": 5680,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -4900,6 +4972,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 2064,
     "dividendReceived": 2064,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5037,6 +5110,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 35400,
     "dividendReceived": 35400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5064,6 +5138,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 21270.2,
     "dividendReceived": 21270.2,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5172,6 +5247,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 28100,
     "dividendReceived": 28100,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5253,6 +5329,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 23758,
     "dividendReceived": 23758,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5335,6 +5412,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 8900,
     "dividendReceived": 8900,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5362,6 +5440,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 30275,
     "dividendReceived": 30275,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5472,6 +5551,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 23052,
     "dividendReceived": 23051.6,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5553,6 +5633,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 24813,
     "dividendReceived": 24813,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5635,6 +5716,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 129334,
     "dividendReceived": 88311.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5662,6 +5744,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 55800,
     "dividendReceived": 55800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5716,6 +5799,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 11280,
     "dividendReceived": 11280,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5824,6 +5908,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 4128,
     "dividendReceived": 4128,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -6666,6 +6751,7 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2020-02-28",
     "accruedIncome": null,
     "dividendReceived": 54587.92,
+    "dividendFrom": "2019-11-04",
     "positionIrrPct": null
   },
   {
@@ -6746,14 +6832,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 14580000,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 18,
+    "returnPct": 18.35,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 284007,
+    "dividendFrom": "2024-09-11",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -6792,14 +6879,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 4860000,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 18,
+    "returnPct": 18.3,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 81176,
+    "dividendFrom": "2024-09-11",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -6838,14 +6926,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 4860000,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 18,
+    "returnPct": 18.15,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 40697,
+    "dividendFrom": "2024-10-17",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -7142,8 +7231,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -27.78,
     "stCostBasis": 558963,
     "ltCostBasis": 988054.8,
-    "daysToLT": 226,
+    "daysToLT": 227,
     "heldSince": "2025-03-04",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -7247,8 +7337,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -28.55,
     "stCostBasis": 1503495.2,
     "ltCostBasis": 0,
-    "daysToLT": 226,
+    "daysToLT": 227,
     "heldSince": "2025-11-12",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -7342,8 +7433,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -42.83,
     "stCostBasis": 1995826.25,
     "ltCostBasis": 0,
-    "daysToLT": 163,
+    "daysToLT": 164,
     "heldSince": "2025-09-10",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -7519,6 +7611,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 48750,
     "dividendReceived": 11250,
+    "dividendFrom": "2026-07-01",
     "positionIrrPct": 72.06
   },
   {
@@ -7573,6 +7666,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 34120,
     "dividendReceived": 8901,
+    "dividendFrom": "2026-07-01",
     "positionIrrPct": -11.61
   },
   {
@@ -7654,6 +7748,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 1300,
     "dividendReceived": 1300,
+    "dividendFrom": "2026-07-01",
     "positionIrrPct": -89.48
   },
   {
@@ -7892,7 +7987,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "private",
     "quantity": 485837,
-    "avgCost": null,
+    "avgCost": 100,
     "currentPrice": null,
     "costBasis": 48583720,
     "costBasisSource": "fifo",
@@ -7901,13 +7996,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 6914583.25,
     "realizedPnL": 0,
     "costOfUnitsSold": 1416280,
-    "returnPct": 13.83,
+    "returnPct": 21.21,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 3688118,
+    "dividendFrom": "2023-10-04",
     "positionIrrPct": null
   },
   {
@@ -11860,6 +11956,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 14976,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -11887,6 +11984,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 40440,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -11941,6 +12039,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 9860,
     "dividendReceived": 19720,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12022,6 +12121,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 55650,
     "dividendReceived": 55650,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12049,6 +12149,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 20760,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12076,6 +12177,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 1927.5,
     "dividendReceived": 1927.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12130,6 +12232,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 6460,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12157,6 +12260,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 44782.5,
     "dividendReceived": 44782.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12184,6 +12288,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 7772.5,
     "dividendReceived": 7772.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12238,6 +12343,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 73020,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12265,6 +12371,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 11910,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12292,6 +12399,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 26000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12346,6 +12454,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 27948,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12427,6 +12536,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 24150,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12508,6 +12618,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 7200,
     "dividendReceived": 7200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12535,6 +12646,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 32080,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12562,6 +12674,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 10200,
     "dividendReceived": 10200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12589,6 +12702,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 28740,
     "dividendReceived": 28740,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12616,6 +12730,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 2430,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12643,6 +12758,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 2502,
     "dividendReceived": 2502,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12670,6 +12786,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 2515,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12697,6 +12814,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 8745,
     "dividendReceived": 8745,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12779,6 +12897,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 1350,
     "dividendReceived": 1350,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12807,6 +12926,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 18300,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12834,6 +12954,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 17280,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12861,6 +12982,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 67000,
     "dividendReceived": 67000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12888,6 +13010,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 13772.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12915,6 +13038,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 3825,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12942,6 +13066,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 16350,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -12996,6 +13121,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 13800,
     "dividendReceived": 27600,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13023,6 +13149,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 8895,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13104,6 +13231,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 8490,
     "dividendReceived": 8490,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13131,6 +13259,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 64134,
     "dividendReceived": 64134,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13185,6 +13314,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 10656,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13212,6 +13342,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 26240,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13266,6 +13397,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 6400,
     "dividendReceived": 12800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13320,6 +13452,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 36400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13347,6 +13480,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 13480,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13374,6 +13508,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 1252.5,
     "dividendReceived": 1252.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13428,6 +13563,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 4215,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13455,6 +13591,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 29122.5,
     "dividendReceived": 29122.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13482,6 +13619,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 4921.25,
     "dividendReceived": 4921.25,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13536,6 +13674,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 47640,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13563,6 +13702,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 7773,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13590,6 +13730,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 16900,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13644,6 +13785,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 18241,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13725,6 +13867,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 15757.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13779,6 +13922,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 4698,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13806,6 +13950,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 20960,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13833,6 +13978,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 6630,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13860,6 +14006,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 18720,
     "dividendReceived": 18720,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13887,6 +14034,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 1575,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13914,6 +14062,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 1731,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13941,6 +14090,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 1640,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -13968,6 +14118,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 6225,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14050,6 +14201,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 980,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14078,6 +14230,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 11900,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14105,6 +14258,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 11205,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14132,6 +14286,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 47800,
     "dividendReceived": 47800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14159,6 +14314,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 8995,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14186,6 +14342,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 2482.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14213,6 +14370,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 11640,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14267,6 +14425,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 18015,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14294,6 +14453,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 6465,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14375,6 +14535,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 6180,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14402,6 +14563,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 41832,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14517,10 +14679,12 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -18.61,
     "stCostBasis": 1000931.02,
     "ltCostBasis": 2501700.43,
-    "daysToLT": 230,
+    "daysToLT": 231,
     "heldSince": "2025-08-05",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": 15764.4,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14547,6 +14711,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 1042548.6,
     "daysToLT": null,
     "heldSince": "2025-07-31",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14626,8 +14791,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -29.48,
     "stCostBasis": 3998947.25,
     "ltCostBasis": 2501694.2,
-    "daysToLT": 251,
+    "daysToLT": 252,
     "heldSince": "2025-07-31",
+    "purchaseDates": 3,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14655,8 +14821,10 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 5003894.1,
     "daysToLT": null,
     "heldSince": "2025-07-31",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": 91032.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14680,10 +14848,12 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": 10.31,
     "stCostBasis": 2501965.17,
     "ltCostBasis": 2401948.5,
-    "daysToLT": 230,
+    "daysToLT": 231,
     "heldSince": "2025-09-19",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": 50556,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14709,6 +14879,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 6004702.73,
     "daysToLT": null,
     "heldSince": "2025-07-31",
+    "purchaseDates": 3,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14734,10 +14905,12 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -17.03,
     "stCostBasis": 1964440.74,
     "ltCostBasis": 2501952.13,
-    "daysToLT": 281,
+    "daysToLT": 282,
     "heldSince": "2025-08-05",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": 25189.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14763,8 +14936,10 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 2496705.74,
     "daysToLT": null,
     "heldSince": "2025-08-05",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": 24710,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14790,6 +14965,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 2499788.82,
     "daysToLT": null,
     "heldSince": "2025-08-05",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14817,6 +14993,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 5003919.78,
     "daysToLT": null,
     "heldSince": "2025-08-05",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14842,8 +15019,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -4.77,
     "stCostBasis": 3002632.34,
     "ltCostBasis": 2501575.54,
-    "daysToLT": 114,
+    "daysToLT": 115,
     "heldSince": "2025-07-31",
+    "purchaseDates": 3,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14871,8 +15049,10 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 2501933.73,
     "daysToLT": null,
     "heldSince": "2025-07-31",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": 29511,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14896,8 +15076,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -2.47,
     "stCostBasis": 1000850.76,
     "ltCostBasis": 2502034.79,
-    "daysToLT": 114,
+    "daysToLT": 115,
     "heldSince": "2025-08-05",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14925,6 +15106,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 5003393.36,
     "daysToLT": null,
     "heldSince": "2025-08-05",
+    "purchaseDates": 1,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15064,6 +15246,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 66573,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15118,6 +15301,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 200920,
     "dividendReceived": 200920,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15145,6 +15329,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": 77208,
     "dividendReceived": 77208,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15199,6 +15384,7 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": 25036.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -26013,6 +26199,28 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
 /** The canonical realised total, split by asset class — the headline nets these. */
 export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
   {
+    "accountId": "green-lantern-capital-llp-510861",
+    "entity": "Ajay Jaisinghani · Green 510861",
+    "assetClass": "Cash",
+    "lots": 8,
+    "realisedST": 578366.03,
+    "realisedLT": 0,
+    "securities": [
+      "Axis Liquid Fund - Direct Plan - Growth"
+    ]
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510854",
+    "entity": "Ankita Jaisinghani · Green 510854",
+    "assetClass": "Cash",
+    "lots": 10,
+    "realisedST": 283865.6,
+    "realisedLT": 0,
+    "securities": [
+      "Axis Liquid Fund - Direct Plan - Growth"
+    ]
+  },
+  {
     "accountId": "ask-investment-managers-limited-10034025",
     "entity": "Ajay Jaisinghani · ASK 10034025",
     "assetClass": "Equity",
@@ -26075,12 +26283,11 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "accountId": "green-lantern-capital-llp-510861",
     "entity": "Ajay Jaisinghani · Green 510861",
     "assetClass": "Equity",
-    "lots": 83,
-    "realisedST": -1382686.39,
+    "lots": 75,
+    "realisedST": -1961052.42,
     "realisedLT": 202985.8,
     "securities": [
       "Aurobindo Pharma Ltd",
-      "Axis Liquid Fund - Direct Plan - Growth",
       "Bajaj Auto Ltd",
       "Gujarat Ambuja Exports Ltd",
       "Jamna Auto Ind Ltd",
@@ -26225,12 +26432,11 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "accountId": "green-lantern-capital-llp-510854",
     "entity": "Ankita Jaisinghani · Green 510854",
     "assetClass": "Equity",
-    "lots": 84,
-    "realisedST": -710831.73,
+    "lots": 74,
+    "realisedST": -994697.33,
     "realisedLT": 147393.06,
     "securities": [
       "Aurobindo Pharma Ltd",
-      "Axis Liquid Fund - Direct Plan - Growth",
       "Bajaj Auto Ltd",
       "Gujarat Ambuja Exports Ltd",
       "Jamna Auto Ind Ltd",
@@ -26305,7 +26511,7 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "accountId": "lkp-securities-98245",
     "entity": "Bharat Jaisinghani · LKP 98245",
     "assetClass": "Equity",
-    "lots": 10,
+    "lots": 9,
     "realisedST": 1241115.44,
     "realisedLT": -539913.5,
     "securities": [
@@ -26313,7 +26519,6 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
       "CAPRI GLOBAL CAPITAL LIMITED",
       "Electronics Mart India Limited",
       "JYOTHY LABS LIMITED",
-      "NIPPON INDIA ETF LIQUID BEES",
       "Varun Beverages Limited"
     ]
   },
@@ -26335,6 +26540,17 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
       "Sterlite Technologies Ltd",
       "Surya Roshni Ltd",
       "Syrma SGS Technology Limited"
+    ]
+  },
+  {
+    "accountId": "lkp-securities-98245",
+    "entity": "Bharat Jaisinghani · LKP 98245",
+    "assetClass": "Mutual Fund",
+    "lots": 1,
+    "realisedST": 0,
+    "realisedLT": 0,
+    "securities": [
+      "NIPPON INDIA ETF LIQUID BEES"
     ]
   },
   {

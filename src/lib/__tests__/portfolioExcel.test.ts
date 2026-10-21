@@ -54,6 +54,7 @@ import { shareCandidates } from "@/lib/depositoryShares";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { buildDatedCapital } from "@/lib/datedCapital";
 import { displaySecurity, DASH } from "@/lib/format";
+import { singlePurchaseGap } from "@/lib/analytics";
 import type { Position } from "@/lib/types";
 import type { Txn, TxnData } from "@/lib/ledger";
 
@@ -432,7 +433,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     if (isPms(p)) continue;
     (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).get(p.securityKey)!).push(p);
   }
-  let subjects = 0, annualised = 0;
+  let subjects = 0, annualised = 0, refused = 0;
   const wrong: string[] = [];
   for (const [key, ps] of byKey) {
     if (ps.length !== 1) continue;
@@ -446,7 +447,11 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     const mv = navMV(p);
     const hpr = fifoOf(p, mv);
     const days = daysBetween(p.heldSince, valuedAt);
-    const cagr = days >= 365 && 1 + hpr / 100 > 0;
+    // ONE PURCHASE, NOTHING SOLD (Stage 10fx): a holding bought in lots or
+    // partly sold is a year old by its oldest unit only, and stays its HPR.
+    const onePurchase = singlePurchaseGap(p) === null;
+    if (days >= 365 && !onePurchase) refused++;
+    const cagr = days >= 365 && onePurchase && 1 + hpr / 100 > 0;
     const want = cagr ? (Math.pow(1 + hpr / 100, 365 / days) - 1) * 100 : hpr;
     const name = displaySecurity(PAGE[RAW.indexOf(p)].security);
     const row = ROWS.filter((r) => r["Security"] === name && r["Mandate"] === DASH);
@@ -461,7 +466,12 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
      subjects > 0 && wrong.length === 0, wrong.join("; ") || `${subjects} lot-dated rows`);
   // LOAD-BEARING: the book must carry a holding the rule annualises, or a sheet
   // printing the plain return on cost everywhere would pass the check above.
-  ok("...and the book carries one the rule annualises, so the guard can fail", annualised > 0, `${annualised} annualised`);
+  // Either half of the rule can fail: a row it annualises (a sheet printing the
+  // plain return everywhere fails), or a year-old row it REFUSES because its
+  // units were bought on several dates (a sheet compounding from the oldest lot
+  // fails) — Crompton at LKP is two lots since Stage 10fx's purchase count.
+  ok("...and the book carries a year-old row the rule annualises or refuses, so the guard can fail", annualised + refused > 0,
+     `${annualised} annualised, ${refused} refused as staggered or partly sold`);
   const sheetCagr = ROWS.filter((r) => r["Measure"] === "CAGR" && r["Mandate"] === DASH).length;
   eq("exactly those direct rows are annualised, and no other", sheetCagr, annualised);
   // INSIDE A MANDATE the same rule binds, and only on the mandate's OWN lot

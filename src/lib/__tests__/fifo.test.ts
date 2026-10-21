@@ -34,8 +34,9 @@ import {
   BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES,
 } from "@/data/glowData";
 import { fifoLedger, fifoForClass, fifoReturnPct, fifoFromCashFlows } from "../../../shared/fifo.mjs";
-import { fifoTotals, fifoBasisNote, realisedReason, positionFifoReturn } from "@/lib/fifo";
-import { currentHoldings, dedupedPositions, holdingBucket } from "@/lib/analytics";
+import { fifoTotals, fifoBasisNote, realisedReason, positionFifoReturn, exitedNote } from "@/lib/fifo";
+import { currentHoldings, dedupedPositions, holdingBucket, bucketBy } from "@/lib/analytics";
+import { bookReturnOnCost, exitedRows } from "@/lib/drilldown";
 import type { Account, Position } from "@/lib/types";
 
 let fails = 0, notChecked = 0;
@@ -207,6 +208,76 @@ const acct = (accountId: string, engagement: Account["engagement"], capital?: Ac
   near("B7 a holding sold down to nothing keeps its realised return", fifoTotals([gone]).returnPct, 20);
   ok("B8 the basis note names the arithmetic",
     /unrealised .* realised .* capital deployed/.test(fifoBasisNote(fifoTotals([c]), (n) => String(n))));
+}
+
+// ── Stage 10fx ──────────────────────────────────────────────────────────────
+{
+  // B9 — A WHOLE MANDATE'S UNCOSTED ROW STAYS IN ITS GAIN. The unrealised half
+  // was `mv − cost` with mv over every row and cost over the costed ones, so a
+  // ₹30,000 row with no cost was added to the unrealised there and to no
+  // per-row unrealised — and vanished from the mandate's gain.
+  const accounts = [acct("m", "PMS", { contributed: 100_000, withdrawn: 0, from: "2025-01-01", to: "2026-01-01", source: "t" })];
+  const a = pos({ accountId: "m", securityKey: "a", marketValue: 90_000, costBasis: 80_000 });
+  const u = pos({ accountId: "m", securityKey: "u", marketValue: 30_000, costBasis: null });
+  const t = fifoTotals([a, u], { accounts, universe: [a, u] });
+  ok("B9 the mandate is whole", t.wholeMandates.join() === "m");
+  near("B9 …and its gain is the capital bridge, the uncosted row's value included", t.gain, 120_000 - 100_000);
+  near("B9 …the unrealised half is the costed rows' own", t.unrealised, 10_000);
+  near("B9 …and unrealised + realised ties to the gain", (t.unrealised ?? 0) + (t.realised ?? 0) + (t.income ?? 0), t.gain ?? NaN);
+}
+
+{
+  // B10 — EXITS ARE IN THE GAIN AND THE CAPITAL, NOT IN THE ROWS (survivorship).
+  const accounts = [
+    acct("m", "PMS", { contributed: 100_000, withdrawn: 10_000, from: "2025-01-01", to: "2026-01-01", source: "t" }),
+    acct("closed", "PMS", { contributed: 50_000, withdrawn: 80_000, from: "2019-01-01", to: "2026-09-08", source: "t" }),
+    acct("f", "AIF"),
+  ];
+  const held = pos({ accountId: "f", securityKey: "held", marketValue: 120_000, costBasis: 100_000, realizedPnL: 0, costOfUnitsSold: 0 });
+  const m1 = pos({ accountId: "m", securityKey: "m1", marketValue: 110_000, costBasis: 90_000 });
+  const gone = pos({ accountId: "f", securityKey: "gone", assetClass: "AIF", marketValue: 0, quantity: 0, currentPrice: 10, costBasis: 0,
+    realizedPnL: 8_000, costOfUnitsSold: 40_000, dividendReceived: 500 });
+  const goneInMandate = pos({ accountId: "m", securityKey: "sold-out", assetClass: "Mutual Fund", marketValue: 0, quantity: 0, currentPrice: 5, costBasis: 0,
+    realizedPnL: 3_000, costOfUnitsSold: 10_000 });
+  const residue = pos({ accountId: "closed", securityKey: "bank", assetClass: "Cash", marketValue: 0.34, costBasis: 0.34, realizedPnL: 0, costOfUnitsSold: 0 });
+  const uncostedSpeck = pos({ accountId: "f", securityKey: "speck", assetClass: "Mutual Fund", marketValue: 54, costBasis: null });
+  const universe = [held, m1, gone, goneInMandate, residue, uncostedSpeck];
+  const current = currentHoldings(universe);
+  ok("B10 the current set drops the redeemed rows, the residue and the speck", current.length === 2);
+  const exited = exitedRows(universe);
+  ok("B10 exitedRows names each dropped row once", exited.length === 4, exited.map((p) => p.securityKey).join());
+  const survivors = fifoTotals(current, { accounts, universe });
+  const t = fifoTotals(current, { accounts, universe, exited });
+  near("B10 survivors: (20,000 + mandate 20,000) ÷ (100,000 + 100,000)", survivors.returnPct, 20);
+  // + the redeemed fund (8,000 + 500 on 40,000) + the closed mandate (0.34 + 80,000 − 50,000 on 50,000);
+  // the sold-out line inside mandate m is already in m's capital bridge and is not added again.
+  near("B10 with exits: the gain carries the redeemed fund and the closed mandate", t.gain, 20_000 + 20_000 + 8_500 + 30_000.34, 0.01);
+  near("B10 …over their capital too", t.deployed, 200_000 + 40_000 + 50_000);
+  ok("B10 …and the exits are counted, named and kept out of the rows",
+    t.exitedHoldings === 1 && t.exitedMandates.join() === "closed" && t.marketValue === survivors.marketValue
+    && t.holdings === survivors.holdings && t.invested === survivors.invested && t.uncosted === survivors.uncosted);
+  near("B10 …exited gain and capital, as their own terms", t.exitedGain, 38_500.34, 0.01);
+  ok("B10 the hover names them", /1 exited holding and 1 closed mandate are in the gain .* not in the rows/.test(fifoBasisNote(t, (n) => String(Math.round(n))))
+    && exitedNote(survivors, String) === "", fifoBasisNote(t, (n) => String(Math.round(n))));
+  // bookReturnOnCost takes the exits from the universe it is handed.
+  const book = bookReturnOnCost(current, { accounts, universe });
+  near("B10 bookReturnOnCost strikes the since-inception return", book.pct, t.returnPct ?? NaN, 1e-9);
+  near("B10 …and, handed the current set alone, the survivors'", bookReturnOnCost(current, { accounts, universe: current }).pct, 20, 1e-9);
+
+  // B11 — A CLOSED MANDATE IS WHOLE WHEREVER EVERY ROW OF IT IS IN THE SET,
+  // not only where the set is that account alone.
+  const mixed = fifoTotals([held, residue], { accounts, universe });
+  ok("B11 a closed mandate's every row beside another account's holding is whole", mixed.wholeMandates.join() === "closed");
+}
+
+{
+  // B12 — bucketBy's return has the coverage gate `fifoTotals` has.
+  const c = pos({ accountId: "d", securityKey: "c", marketValue: 1_000_000, costBasis: 900_000, unrealizedPnL: 100_000 });
+  const u = pos({ accountId: "d", securityKey: "u", marketValue: 1_000_000, costBasis: null, unrealizedPnL: null });
+  const [b] = bucketBy([c, u], () => "one");
+  ok("B12 a bucket half without a cost refuses its return", b.returnPct === null, String(b.returnPct));
+  const [b2] = bucketBy([c], () => "one");
+  near("B12 …and a covered one strikes it", b2.returnPct, (100_000 / 900_000) * 100);
 }
 
 // ═══ C. THE GENERATED BOOK ═══════════════════════════════════════════════════
@@ -507,6 +578,39 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
   }
   near("C7 the category buckets' gains add to the book's", g, t.gain ?? NaN, 1);
   near("C7 …and their capital deployed", d, t.deployed ?? NaN, 1);
+}
+
+// C8 — THE BOOK'S RETURN IS SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fx).
+// Re-expressed off the book: every row the current set drops that carries a
+// realised record and its cost sold, plus every closed PMS mandate's capital.
+{
+  const cons = dedupedPositions(BOOK_POSITIONS);
+  const held = currentHoldings(cons);
+  const survivors = bookReturnOnCost(held, { accounts: BOOK_ACCOUNTS, universe: held });
+  const sinceInception = bookReturnOnCost(held, { accounts: BOOK_ACCOUNTS, universe: cons });
+  const heldAccts = new Set(held.map((p) => p.accountId));
+  let g = 0, d = 0;
+  for (const p of cons) {
+    if (held.includes(p)) continue;
+    const a = byAcct.get(p.accountId);
+    if (a?.engagement === "PMS" && a.capital && a.capital.contributed > 0) continue;
+    if (!isNum(p.realizedPnL) || !isNum(p.costOfUnitsSold) || p.costBasis == null) continue;
+    g += p.realizedPnL + (isNum(p.dividendReceived) ? p.dividendReceived : 0); d += p.costOfUnitsSold;
+  }
+  for (const a of BOOK_ACCOUNTS) {
+    if (a.engagement !== "PMS" || !a.capital || !(a.capital.contributed > 0) || heldAccts.has(a.accountId)) continue;
+    const rows = cons.filter((p) => p.accountId === a.accountId);
+    if (!rows.length) continue;
+    g += rows.reduce((s, p) => s + p.marketValue, 0) + a.capital.withdrawn - a.capital.contributed; d += a.capital.contributed;
+  }
+  near("C8 the since-inception gain is the survivors' plus every exit's", sinceInception.fifo.gain, (survivors.fifo.gain ?? 0) + g, 1);
+  near("C8 …and its capital deployed likewise", sinceInception.fifo.deployed, (survivors.fifo.deployed ?? 0) + d, 1);
+  ok("C8 the exits move the book's return (load-bearing)", Math.abs((sinceInception.pct ?? 0) - (survivors.pct ?? 0)) > 0.1,
+    `${survivors.pct?.toFixed(2)}% survivors → ${sinceInception.pct?.toFixed(2)}% since inception`);
+  ok("C8 …while the rows and the value are still the current holdings'",
+    sinceInception.set.struckCount === survivors.set.struckCount && sinceInception.fifo.marketValue === survivors.fifo.marketValue);
+  ok("C8 ASK's two closed mandates are struck on their capital",
+    ["ask-investment-managers-limited-10032723", "ask-investment-managers-limited-10034025"].every((id) => sinceInception.fifo.exitedMandates.includes(id)));
 }
 
 function a_contrib(id: string): number { return byAcct.get(id)?.capital?.contributed ?? NaN; }

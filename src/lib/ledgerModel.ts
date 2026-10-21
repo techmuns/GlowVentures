@@ -137,6 +137,14 @@ export type ArchiveDoc = ManifestEntry & {
   income?: ArchiveIncome[]; holdings?: ArchiveHolding[];
   /** What the FUND holds, where the statement discloses it. Not this family's. */
   schemeHoldings?: ArchiveSchemeHolding[];
+  /** A lot register's dated acquisition lots STILL HELD (LKP's, V.E.C's). See `openLotsOf`. */
+  openLots?: ArchiveOpenLot[];
+  /** Set on a spreadsheet beside a PDF: a witness of that PDF, never a document of the book. */
+  twinOf?: string | null;
+};
+type ArchiveOpenLot = {
+  security: string; securityKey: string | null;
+  purchaseDate: string | null; quantity: number | null; unitCost: number | null; totalCost: number | null;
 };
 
 /**
@@ -730,7 +738,28 @@ export function deriveIncome(docs: ArchiveDoc[]): IncomeData {
   // Dividend statements first, so a cash event listed on both wins from there.
   const src = [...of(docs, AUTHORITATIVE.cashIncome), ...of(docs, AUTHORITATIVE.nonCashIncome)];
   const cash: IncomeRow[] = [], corporate: IncomeRow[] = [];
-  const seen = new Set<string>();
+  /**
+   * ONE CASH EVENT, HOWEVER MANY DOCUMENTS PRINT IT — AND EVERY ONE A SINGLE
+   * DOCUMENT PRINTS (Stage 10fx). The match on (account, date, security,
+   * amount) does two jobs and both are load-bearing: it removes the corporate
+   * benefits report's reprint of a dividend statement's row, AND the same
+   * dividend on successive issues of the dividend statement, where the row is
+   * not identical — V.E.C 128004's 13 Aug issue prints Greaves Cotton's
+   * 28 Jul dividend as receivable, its 7 Oct issue as received with a date —
+   * so `datedRows` keeps both and only this match makes them one (six such
+   * events, ₹5.64 L, measured on this archive).
+   *
+   * What it must not do is merge two rows ONE document prints — two genuine
+   * same-day dividends of the same amount in one account (a final and a
+   * special credited apart), which `datedRows` keeps on their ordinal. It was
+   * one set over every row, so the second was dropped. Now each document's
+   * repeats are counted, and the event is kept as many times as the document
+   * that prints it MOST often does: a repeat inside a document is data, a
+   * repeat across two is a duplicate. (No document in this archive prints such
+   * a pair today, so no figure moves.)
+   */
+  const kept = new Map<string, number>();
+  const inDoc = new Map<string, number>();
 
   // Each issuer's own repeated issues are deduped first (`datedRows`), then the
   // cross-REPORT rule below removes a cash event the corporate benefits report
@@ -752,8 +781,10 @@ export function deriveIncome(docs: ArchiveDoc[]): IncomeData {
     };
     if (CASH_KIND.test(ev.kind)) {
       const k = `${d.accountNo}|${row.date}|${ev.securityKey}|${ev.netAmount}`;
-      if (seen.has(k)) continue;
-      seen.add(k);
+      const nth = (inDoc.get(`${d.docKey}\u0001${k}`) ?? 0) + 1;
+      inDoc.set(`${d.docKey}\u0001${k}`, nth);
+      if (nth <= (kept.get(k) ?? 0)) continue;
+      kept.set(k, nth);
       cash.push(row);
     } else {
       corporate.push(row);
@@ -920,7 +951,48 @@ export type StockLedger = {
   periodFrom: string | null; periodTo: string | null;
   /** Purchase dates the capital gain statements carry for this name's SOLD lots. */
   lotDates: string[];
+  /**
+   * The dated lots STILL HELD in this name, from every lot register in the
+   * archive (Stage 10fx) — per account, the newest issue of each report type,
+   * which is the set `build-book` ages `stCostBasis` / `ltCostBasis` on. The
+   * hold-to-LTCG planner and the company page's term split work LOT BY LOT on
+   * these (`src/lib/ltDate.ts`); a position-level split cannot say which lot is
+   * at a gain. Joined to a position only where the lots account for its units
+   * exactly (`lotsForPosition`).
+   */
+  openLots: StockOpenLot[];
 };
+export type StockOpenLot = {
+  account: string; accountNo: string; provider: string;
+  /** The register's own date. */
+  registerDate: string;
+  purchaseDate: string; quantity: number; totalCost: number; source: string;
+};
+
+/**
+ * EVERY LOT REGISTER'S HELD LOTS, as `build-book` reads them: per account, only
+ * the NEWEST issue of each report type (`newestPerReportType`, ties broken on
+ * docKey) — a register restates what is held, so June's and July's LKP
+ * registers listing the same Transrail lots are one holding, not two — and
+ * never a spreadsheet witness. A lot without a date, a quantity or a cost
+ * cannot be aged or valued and is left out, as `build-book` leaves it out.
+ */
+function openLotsOf(docs: ArchiveDoc[]): { doc: ArchiveDoc; lot: ArchiveOpenLot }[] {
+  const out: { doc: ArchiveDoc; lot: ArchiveOpenLot }[] = [];
+  for (const group of byAccount(docs.filter((d) => !d.twinOf)).values()) {
+    const best = new Map<string, ArchiveDoc>();
+    for (const d of group) {
+      const cur = best.get(d.reportType);
+      if (!cur || (d.asOf ?? "") > (cur.asOf ?? "") || ((d.asOf ?? "") === (cur.asOf ?? "") && d.docKey < cur.docKey)) best.set(d.reportType, d);
+    }
+    for (const d of [...best.values()].sort((a, b) => a.docKey.localeCompare(b.docKey))) {
+      for (const lot of d.openLots ?? []) {
+        if (lot.securityKey && lot.purchaseDate && typeof lot.quantity === "number" && typeof lot.totalCost === "number") out.push({ doc: d, lot });
+      }
+    }
+  }
+  return out;
+}
 
 export function deriveStockLedger(docs: ArchiveDoc[], securityKey: string): StockLedger {
   const txns: StockTxn[] = [];
@@ -955,7 +1027,18 @@ export function deriveStockLedger(docs: ArchiveDoc[], securityKey: string): Stoc
     realized = (realized ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0);
     if (l.purchaseDate) lotDates.push(l.purchaseDate);
   }
-  return { securityKey, name, txns, realizedProfit: realized, periodFrom, periodTo, lotDates: lotDates.sort() };
+  const openLots: StockOpenLot[] = [];
+  for (const { doc: d, lot } of openLotsOf(docs)) {
+    if (lot.securityKey !== securityKey) continue;
+    if (name === securityKey) name = securityLabel(securityKey, lot.security);
+    openLots.push({
+      account: accountLabel(d), accountNo: d.accountNo, provider: d.provider, registerDate: d.asOf,
+      purchaseDate: lot.purchaseDate as string, quantity: lot.quantity as number, totalCost: lot.totalCost as number,
+      source: d.docKey,
+    });
+  }
+  openLots.sort((a, b) => a.accountNo.localeCompare(b.accountNo) || a.purchaseDate.localeCompare(b.purchaseDate));
+  return { securityKey, name, txns, realizedProfit: realized, periodFrom, periodTo, lotDates: lotDates.sort(), openLots };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

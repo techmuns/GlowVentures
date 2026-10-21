@@ -570,10 +570,20 @@ export function applyDedupePolicy(docs, groups) {
 }
 
 /**
- * Consolidated market value with each dedupeGroup counted once.
+ * The holding rows of EVERY archived statement, summed — with each dedupeGroup
+ * counted once in `deduped`.
  *
- * Returned alongside the naive sum so the report states both and the difference
- * is never invisible.
+ * A SIZE OF THE ARCHIVE, NEVER A PORTFOLIO VALUE (Stage 10fx). Every monthly
+ * issue of an account adds that account again, and the ring-fenced promoter
+ * block, the depository's copy of fund units and every superseded issue are all
+ * inside it: on this archive it is ₹13,779.65 Cr where the book is ₹836.57 Cr.
+ * The report printed it as "Consolidated (duplicates counted once)", which is
+ * the family's worth stated sixteen times over under a heading that says it is
+ * the family's worth. The figure is kept — it is what this function measures,
+ * and the dedupe-group difference is still the check it exists for — and the
+ * report now says what it is; the consolidated value is the book's
+ * (`BOOK_SUMMARY`, docs/BOOK-REPORT.md), which alone picks one snapshot per
+ * account and applies the ring-fence and the depository drop.
  */
 export function consolidatedValue(docs) {
   let naive = 0;
@@ -1202,15 +1212,19 @@ export function renderMarkdown(r) {
 
   // ── consolidated ──
   if (r.consolidated) {
-    L.push("## Consolidated position");
+    L.push("## Every statement row, summed — not a portfolio value");
     L.push("");
-    L.push("Each `dedupeGroup` is counted ONCE. The naive sum is shown beside it so the");
-    L.push("difference is never invisible — see section (c).");
+    L.push("The holding rows of every archived statement added together: each monthly issue of an");
+    L.push("account adds that account again, and the ring-fenced block, the depository's copy of");
+    L.push("fund units and every superseded issue are inside it. It measures the archive, never the");
+    L.push("family's worth — the consolidated value is the book's (`BOOK_SUMMARY` in");
+    L.push("`src/data/glowData.ts`, docs/BOOK-REPORT.md). The second line counts each `dedupeGroup`");
+    L.push("once, so the difference a duplicate pair makes is never invisible — see section (c).");
     L.push("");
     L.push("| | |");
     L.push("| --- | ---: |");
-    L.push(`| Sum of every reported holding | ${fmt(r.consolidated.naive)} |`);
-    L.push(`| **Consolidated (duplicates counted once)** | **${fmt(r.consolidated.deduped)}** |`);
+    L.push(`| Sum of every statement row, every issue | ${fmt(r.consolidated.naive)} |`);
+    L.push(`| The same, each dedupeGroup counted once | ${fmt(r.consolidated.deduped)} |`);
     L.push(`| Removed as double-counted | ${fmt(r.consolidated.doubleCounted)} |`);
     L.push("");
   }

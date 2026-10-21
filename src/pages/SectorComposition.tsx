@@ -183,6 +183,13 @@ type SectorRow = {
    * behind the return (cost held + cost of units sold), over the costed holdings.
    */
   realised: number | null; deployed: number | null;
+  /**
+   * …and the two other terms of the same FIFO gain, as `fifoTotals` struck
+   * them: the unrealised gain (value − cost held, over the costed holdings)
+   * and the dividends they paid (Stage 10fb). The popover's worked line adds
+   * exactly these, so it reproduces the return beside it (Stage 10fx).
+   */
+  unrealised: number | null; income: number | null;
   /** Holdings behind the sector that report a cost, and how many there are. */
   costed: number; holdings: number;
   /**
@@ -266,6 +273,7 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
       return {
         key, mv: v.mv, count: withCost ? positions.length : v.entries.length, weight: tot > 0 ? v.mv / tot : 0,
         measured, derived, cost, pnl, returnPct, realised: fifo.realised, deployed: fifo.deployed,
+        unrealised: fifo.unrealised, income: fifo.income,
         costed: costedRows.length, holdings: positions.length, uncostedMV, costedMV,
         returnWhy,
         top: withCost ? topPos?.security ?? null : byValue[0]?.name ?? null,
@@ -363,7 +371,7 @@ const fmtPts = (d: number) => {
 function emptySector(key: string): SectorRow {
   return {
     key, mv: 0, count: 0, weight: 0, measured: 0, derived: 0,
-    cost: null, pnl: null, returnPct: null, realised: null, deployed: null,
+    cost: null, pnl: null, returnPct: null, realised: null, deployed: null, unrealised: null, income: null,
     costed: 0, holdings: 0, uncostedMV: 0, costedMV: 0,
     returnWhy: "The family holds nothing this view places in this sector, so there is no return to strike.",
     top: null, topKey: null, topDerivedOnly: false,
@@ -632,8 +640,61 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   const tableSectors = [...sectors, ...indexOnly];
   /** The index's weight in a sector: its factsheet's, or a computed zero where it lists none. */
   const indexWeightOf = (key: string) => idxBy.get(key)?.weight ?? 0;
+  /**
+   * ── WHAT IS WEIGHED AGAINST AN EQUITY INDEX, AND OVER WHAT (Stage 10fx) ───
+   *
+   * TWO DEFECTS, ONE PLACE. The family's weight was its share of the WHOLE
+   * set, Unclassified included, while the index's sectors sum to 100% — so the
+   * classified sectors summed to 100% − U and every active weight was biased
+   * by −U: Direct Equity carries ₹106.25 Cr with 11.8% unplaced (Yash
+   * Highvoltage ₹12.54 Cr alone), and Financials' 39.2% against Nifty 50's
+   * 37.45% read +1.8 pp where, over the classified shares, it is 44.4% and
+   * +7.0 pp. And on Consolidated the set is every issuer reached through
+   * anything — the liquid funds' paper, the balanced-advantage debt sleeves,
+   * bank CDs filed under the bank's own equity key — none of which an equity
+   * index holds.
+   *
+   * So while an index is picked, the family's side is its EQUITY SLEEVE —
+   * the shares its statements report plus the equity lines of its funds
+   * (`CompanyExposure.derivedEquity`: no debt paper, no cash-equivalent
+   * scheme, no balanced-advantage equity disclosed gross of its hedges) — and
+   * every classified sector's Weight and Over / under is struck over the
+   * CLASSIFIED sleeve. Unclassified stays a named residual, its share of the
+   * whole sleeve, with no active weight. Off, the Weight column is what it
+   * always was.
+   */
+  const sleeveOf = (e: CompanyExposure) => (consolidatedView ? e.measured + e.derivedEquity : e.measured);
+  const sleeveBySector = new Map<string, number>();
+  for (const e of entries) {
+    const k = e.sector || UNCLASSIFIED;
+    sleeveBySector.set(k, (sleeveBySector.get(k) ?? 0) + sleeveOf(e));
+  }
+  const sleeveTotal = [...sleeveBySector.values()].reduce((a, v) => a + v, 0);
+  const sleeveUnplaced = sleeveBySector.get(UNCLASSIFIED) ?? 0;
+  const sleeveClassified = sleeveTotal - sleeveUnplaced;
+  /** What the comparison leaves out of the family's side, by why (Consolidated only). */
+  const sleeveLeftOut = consolidatedView
+    ? { debtAndCash: entries.reduce((a, e) => a + Math.max(0, e.derived - e.derivedEquity - e.derivedGross), 0),
+        gross: entries.reduce((a, e) => a + e.derivedGross, 0) }
+    : { debtAndCash: 0, gross: 0 };
+  /** A sector's sleeve and the denominator it is weighed over — the classified sleeve, or for the residual the whole. */
+  const vsSleeveOf = (s: SectorRow) => sleeveBySector.get(s.key) ?? 0;
+  const vsBaseOf = (s: SectorRow) => (s.key === UNCLASSIFIED ? sleeveTotal : sleeveClassified);
+  /** THE WEIGHT A ROW PRINTS — the comparison's while an index is picked, the set's own otherwise. */
+  const rowWeight = (s: SectorRow) => {
+    if (!vs) return s.weight;
+    const base = vsBaseOf(s);
+    return base > 0 ? vsSleeveOf(s) / base : 0;
+  };
   /** The family's difference from the index, in points — none for the unplaced. */
-  const activeOf = (s: SectorRow) => (s.key === UNCLASSIFIED ? null : s.weight - indexWeightOf(s.key));
+  const activeOf = (s: SectorRow) => (s.key === UNCLASSIFIED ? null : rowWeight(s) - indexWeightOf(s.key));
+  /** What the comparison's family side is, and what it leaves out — the Weight header's hover while an index is picked. */
+  const vsBasisNote = vs ? [
+    `Weighed against ${vs.bench.name}: the family's equity ${consolidatedView ? "— the shares their statements report plus the equity lines their funds disclose —" : "shares"}, each classified sector over the classified ${money(sleeveClassified)}`,
+    sleeveUnplaced > 0 ? `${money(sleeveUnplaced)} no source placed in a sector is the Unclassified residual, its share of the whole ${money(sleeveTotal)}, with no over / under` : "",
+    sleeveLeftOut.debtAndCash >= 1 ? `left out: ${money(sleeveLeftOut.debtAndCash)} the funds disclose as debt paper (bonds, CDs, commercial paper, bills) or hold in cash-equivalent schemes — no part of an equity index` : "",
+    sleeveLeftOut.gross >= 1 ? `and ${money(sleeveLeftOut.gross)} of equity in balanced-advantage and equity-savings funds, which their filings disclose gross of the derivative hedges they run, so the net equity is not known` : "",
+  ].filter(Boolean).join(" · ") : "";
   const vsSetName = consolidatedView ? "total exposure" : "Direct Equity";
 
   /**
@@ -645,7 +706,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
     sector: (x) => x.key,
     value: (x) => x.mv,
     // Weight is this sector's value over the page's, so it orders as Value does.
-    weight: (x) => x.mv,
+    weight: (x) => (vs ? rowWeight(x) : x.mv),
     index: (x) => (vs ? indexWeightOf(x.key) : null),
     active: (x) => (vs ? activeOf(x) : null),
     count: (x) => x.count,
@@ -987,8 +1048,8 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
    */
   const vsRows = vs ? [...tableSectors].sort((a, b) =>
     (a.key === UNCLASSIFIED ? 1 : 0) - (b.key === UNCLASSIFIED ? 1 : 0)
-    || b.weight - a.weight || indexWeightOf(b.key) - indexWeightOf(a.key)) : [];
-  const vsMax = Math.max(0.0001, ...vsRows.map((s) => Math.max(s.weight, indexWeightOf(s.key))));
+    || rowWeight(b) - rowWeight(a) || indexWeightOf(b.key) - indexWeightOf(a.key)) : [];
+  const vsMax = Math.max(0.0001, ...vsRows.map((s) => Math.max(rowWeight(s), indexWeightOf(s.key))));
   const pct1 = (w: number) => `${(w * 100).toFixed(1)}%`;
   const vsChart = vs && (
     <div data-sector-vs data-vs-index={vs.bench.key} data-vs-asof={vs.asOf}>
@@ -1008,23 +1069,24 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
       <div className="mt-3 space-y-2.5">
         {vsRows.map((s) => {
           const iw = indexWeightOf(s.key);
+          const bw = rowWeight(s);
           return (
-            <div key={s.key} data-vs-row={s.key} data-vs-book={s.weight} data-vs-weight={iw}>
+            <div key={s.key} data-vs-row={s.key} data-vs-book={bw} data-vs-weight={iw}>
               <div className="flex items-baseline justify-between gap-2 text-[12px]">
                 <span className="flex min-w-0 items-center gap-1.5 text-slate-200">
                   <span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: colorOf(s.key) }} />
                   <span className="truncate">{s.key}</span>
                 </span>
                 <span className="mono shrink-0 text-[11px]"
-                  title={s.key === UNCLASSIFIED ? "The family's exposure no source placed in a sector, against what of the index its map places in none."
-                    : `${pct1(s.weight)} of the family's ${vsSetName} against ${pct1(iw)} of ${vs.bench.name}: ${fmtPts(s.weight - iw)}`}>
-                  <span style={{ color: BOOK_COLOR }}>{pct1(s.weight)}</span>
+                  title={s.key === UNCLASSIFIED ? "The family's equity no source placed in a sector, as a share of the whole of it — a residual outside the comparison — against what of the index its map places in none."
+                    : `${pct1(bw)} of the family's classified equity against ${pct1(iw)} of ${vs.bench.name}: ${fmtPts(bw - iw)}`}>
+                  <span style={{ color: BOOK_COLOR }}>{pct1(bw)}</span>
                   <span className="text-slate-500"> · </span>
                   <span style={{ color: INDEX_COLOR }}>{pct1(iw)}</span>
                 </span>
               </div>
               <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink-900/40">
-                <div className="h-full rounded-full" style={{ width: `${(s.weight / vsMax) * 100}%`, background: BOOK_COLOR }} />
+                <div className="h-full rounded-full" style={{ width: `${(bw / vsMax) * 100}%`, background: BOOK_COLOR }} />
               </div>
               <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-ink-900/40">
                 <div className="h-full rounded-full" style={{ width: `${(iw / vsMax) * 100}%`, background: INDEX_COLOR }} />
@@ -1289,12 +1351,12 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                   <Tr view={sectorView} className="border-b border-ink-700">
                     <SortHeader col="sector" view={sectorView} align="left" pad="px-3 py-2">Sector</SortHeader>
                     <SortHeader col="value" view={sectorView} pad="px-3 py-2">Value</SortHeader>
-                    <SortHeader col="weight" view={sectorView} pad="px-3 py-2">Weight</SortHeader>
+                    <SortHeader col="weight" view={sectorView} pad="px-3 py-2" title={vs ? vsBasisNote : undefined}>Weight</SortHeader>
                     {vs && <SortHeader col="index" view={sectorView} pad="px-3 py-2"
                       title={`${vs.bench.name}'s weight in each sector, from ${vs.publisher}'s factsheet of ${fmtDate(vs.asOf)} — its own sectors placed in GICS sectors by the map the family's holdings go through.`}>
                       {vs.bench.label}</SortHeader>}
                     {vs && <SortHeader col="active" view={sectorView} pad="px-3 py-2"
-                      title={`The family's weight minus ${vs.bench.name}'s, in percentage points: positive where their ${vsSetName} holds more of a sector than the index does.`}>
+                      title={`The family's weight minus ${vs.bench.name}'s, in percentage points: positive where their ${vsSetName} holds more of a sector than the index does. ${vsBasisNote}.`}>
                       Over / under</SortHeader>}
                     <SortHeader col="count" view={sectorView} pad="px-3 py-2">{consolidatedView ? "Issuers" : "Positions"}</SortHeader>
                     <SortHeader col="return" view={sectorView} pad="px-3 py-2">Return</SortHeader>
@@ -1330,6 +1392,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                     const indexOnlyRow = s.count === 0;
                     const ir = idxBy.get(s.key);
                     const active = vs ? activeOf(s) : null;
+                    const w = rowWeight(s);
                     return (
                       <Fragment key={s.key}>
                         <Tr view={sectorView} reviewScope={{ sector: s.key }} className={indexOnlyRow ? "" : "cursor-pointer hover:bg-ink-700/40"}
@@ -1359,8 +1422,15 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                               : <Auditable formula={{ title: "Sector value", excel: "= Σ market value of the sector's holdings", plain: consolidatedView ? "Every issuer in this sector, added up — what the statements report plus the family's share of every instrument their funds disclose." : "Every holding in this sector, added up.", worked: `= ${money(s.mv)} across ${s.count} ${consolidatedView ? "issuers" : "holdings"}` }}>{fmtFromBase(s.mv, { compact: true })}</Auditable>}
                           </td>
                           <td className="px-3 py-2 text-right mono text-slate-400" title={liveBySector[s.key] ? LIVE_CELL : undefined}
-                            data-cell="weight" data-weight={s.weight}>
-                            {indexOnlyRow || liveBySector[s.key] ? `${(s.weight * 100).toFixed(1)}%`
+                            data-cell="weight" data-weight={w}>
+                            {indexOnlyRow || liveBySector[s.key] ? `${(w * 100).toFixed(1)}%`
+                              : vs
+                                /* AGAINST AN INDEX: the sector's equity sleeve over the classified sleeve —
+                                   or, for the residual, over the whole of it (Stage 10fx). */
+                                ? <Auditable formula={weightFormula(vsSleeveOf(s), vsBaseOf(s), w * 100, money,
+                                    s.key === UNCLASSIFIED
+                                      ? `the family's whole equity ${consolidatedView ? "sleeve — their shares plus their funds' equity lines" : "shares"}: this is the residual no source placed in a sector, outside the comparison`
+                                      : `the family's classified equity ${consolidatedView ? "sleeve — their shares plus their funds' equity lines, no debt paper, no cash-equivalent scheme, no balanced-advantage equity disclosed gross of its hedges" : "shares"} — the set an index's 100% is weighed against`)}>{`${(w * 100).toFixed(1)}%`}</Auditable>
                               : <Auditable formula={weightFormula(s.mv, totalMV, s.weight * 100, money,
                                   /* The denominator is THIS page's set, not the book. */
                                   consolidatedView
@@ -1384,7 +1454,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                             <td className="px-3 py-2 text-right mono whitespace-nowrap text-slate-200" data-cell="active" data-active={active ?? ""}>
                               {active === null
                                 ? <AbsentCell reason="Not a sector: what no source placed for the family. A difference from the index here would be a gap in classification, not a position." />
-                                : <span title={`${(s.weight * 100).toFixed(1)}% of the family's ${vsSetName} against ${(indexWeightOf(s.key) * 100).toFixed(1)}% of ${vs.bench.name}`}>{fmtPts(active)}</span>}
+                                : <span title={`${(w * 100).toFixed(1)}% of the family's classified equity against ${(indexWeightOf(s.key) * 100).toFixed(1)}% of ${vs.bench.name}`}>{fmtPts(active)}</span>}
                             </td>
                           )}
                           <td className="px-3 py-2 text-right mono text-slate-400" data-cell="count">{s.count}</td>
@@ -1400,7 +1470,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                               ? <AbsentCell reason={s.returnWhy ?? "no return can be struck"} />
                               : <>
                                   <span data-return-figure>{liveBySector[s.key] ? fmtPct(s.returnPct, { sign: true })
-                                    : <Auditable formula={{ title: "Sector return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ (cost held + cost of units sold) × 100, over the holdings that report a cost", plain: `${returnCoverage(s, consolidatedView, (v) => fmtFromBase(v, { compact: true }))}. The unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out, over every rupee that bought a unit of them.`, worked: `= (${money(s.pnl)} + ${money(s.realised ?? 0)}) ÷ ${money(s.deployed)} × 100 = ${fmtPct(s.returnPct, { sign: true })}` }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}</span>
+                                    : <Auditable formula={{ title: "Sector return (FIFO)", excel: "= (Σ unrealised + Σ realised + Σ dividends) ÷ Σ (cost held + cost of units sold) × 100, over the holdings that report a cost", plain: `${returnCoverage(s, consolidatedView, (v) => fmtFromBase(v, { compact: true }))}. The unrealised gain on what is held, the realised gain on units already sold, matched first-in, first-out, and the dividends the holdings paid, over every rupee that bought a unit of them.`, worked: `= (${money(s.unrealised ?? 0)} + ${money(s.realised ?? 0)} + ${money(s.income ?? 0)}) ÷ ${money(s.deployed)} × 100 = ${fmtPct(s.returnPct, { sign: true })}` }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}</span>
                                   {s.costed < s.holdings && <span className="ml-1 text-[10.5px] text-slate-500" data-return-coverage>{s.costed} of {s.holdings}</span>}
                                 </>}
                           </td>

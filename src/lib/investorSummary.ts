@@ -2,23 +2,48 @@ import type { Portfolio } from "./types";
 import { measuredAccountsReturn, accountReturnInputs } from "./returns";
 import { accountEmptiness } from "./searchIndex";
 import { xirrPct, totalReturnFromXirr } from "./bucketXirr";
+import { fmtDate } from "./format";
 
-export function annualisedReturnIssue(annualPct: number | null, days: number | null) {
-  if (days == null || days < 365) return {
-    issueLabel: "Insufficient history",
-    reason: days == null ? "Need dated opening values and cash flows" : `${days} days recorded · need at least 1 year`,
-  };
+/**
+ * WHY THE ANNUAL RATE IS ABSENT — and whether it is waiting or cannot come.
+ *
+ * Every verified return record opens on the financial year's first day
+ * (`accountReturnRecords.mjs`, periodStart = YYYY-04-01), so the window from
+ * that opening can reach at most 364 days before the next year's records open
+ * on the next 1 April. "189 days recorded · need at least 1 year" read like a
+ * card that fills itself in time, which this one never does (CLAUDE.md: a card
+ * that can never be filled must not look like one that is waiting). Where the
+ * window opens on an FY start the reason says that, and what would fill it;
+ * no annual rate is struck either way (Stage 10fx). The "N days recorded"
+ * clause stays the first words, as the tile's probe reads it. The face keeps
+ * to a few words (no explainer lines, Stage 10cp); the why is `detail`, for
+ * the hover.
+ */
+export function annualisedReturnIssue(annualPct: number | null, days: number | null, start?: string | null) {
+  if (days == null || days < 365) {
+    const fyOpening = days != null && !!start && /^\d{4}-04-01$/.test(start);
+    return {
+      issueLabel: "Insufficient history",
+      reason: days == null ? "Need dated opening values and cash flows"
+        : fyOpening ? `${days} days recorded · records open each 1 Apr`
+        : `${days} days recorded · need at least 1 year`,
+      detail: fyOpening
+        ? `The verified records open at the financial year's start (${fmtDate(start!)}), so no window reaches a year until a since-inception record is reconciled.`
+        : null,
+    };
+  }
   if (annualPct == null || !Number.isFinite(annualPct)) return {
     issueLabel: "Unable to calculate",
     reason: "Cash flows do not produce a valid XIRR",
+    detail: null,
   };
-  return { issueLabel: null, reason: null };
+  return { issueLabel: null, reason: null, detail: null };
 }
 
 /** Statement accounts only: coverage and the destination show exactly this set. */
 export function investorAnnualReturn(statement: Portfolio) {
   const measured = measuredAccountsReturn(statement, statement.accounts);
-  const issue = annualisedReturnIssue(measured.annPct, measured.windowDays);
+  const issue = annualisedReturnIssue(measured.annPct, measured.windowDays, measured.windowStart);
   return { ...issue, start: measured.windowStart, end: measured.lastClose,
     covered: measured.parts.length, total: statement.accounts.length,
     windowDays: measured.windowDays, measuredValue: measured.measuredMV,

@@ -23,6 +23,7 @@ import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_UNVALUED_HOLD
 import { depositoryBalancesOf } from "@/lib/fundNavs";
 import { shareCandidates } from "@/lib/depositoryShares";
 import { fifoTotals } from "@/lib/fifo";
+import { exitedRows } from "@/lib/drilldown";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { UNCLASSIFIED } from "@/lib/sectors";
@@ -383,7 +384,10 @@ export function FamilyEntities() {
   const entities = byEntity(p, portfolio.accounts).map((e) => {
     const own = p.filter((x) => ownerOf(accIdx, x) === e.key);
     const struckSet = own.filter(strikesGain);
-    const fifo = fifoTotals(struckSet, { accounts: accIdx, universe: p });
+    // NO SURVIVORSHIP (Stage 10fx): the entity's own exited holdings and closed
+    // mandates stay in its gain and capital deployed, as they do in the book's.
+    const exited = exitedRows(portfolio.positions).filter((x) => ownerOf(accIdx, x) === e.key);
+    const fifo = fifoTotals(struckSet, { accounts: accIdx, universe: p, exited });
     const atCostRows = own.filter(isValuedAtCost);
     return {
       ...e,
@@ -1284,7 +1288,25 @@ export function FamilyEntities() {
                             ? <AbsentCell reason={noGainWhy(AT_COST_RETURN, e.cost == null
                                 ? "no statement behind this entity's holdings reports a cost, so there is no return to strike"
                                 : "the capital behind this entity's costed holdings is not positive, so a return on it has nothing to divide")} />
-                            : <Auditable formula={rf}>{fmtPct(e.returnPct, { sign: true })}</Auditable>}
+                            : <><Auditable formula={rf}>{fmtPct(e.returnPct, { sign: true })}</Auditable>
+                              {/* WHAT THE FIGURE IS STRUCK ON, ON ITS FACE (Stage 10fx).
+                                  The return is FIFO over the holdings a gain can be
+                                  struck on, and that set was named only in the
+                                  popover — on the live basis it is 54% of Ajay's
+                                  value, 38% of Bharat's, 32% of each numbered
+                                  trust's — while the categories refuse a return
+                                  below `costCoversSet`'s half a percent. Refusing
+                                  here would blank six of seven rows, the outcome
+                                  Stage 10dh measured and turned down (an at-cost
+                                  line carries no gain by definition), so the set is
+                                  stated beside the figure instead, as Morning CIO's
+                                  whole-book return states it (`costedSetLabel`). */}
+                              {e.mv - e.fifo.marketValue > Math.max(1, e.mv * 0.005) && (
+                                <span className="block text-[10.5px] text-slate-500" data-entity-return-covers={e.fifo.marketValue}
+                                  title={`Struck over the ${e.struck} of ${e.count} holdings a gain can be struck on — ${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}; the other ${leftOut}, never counted at zero.`}>
+                                  on {money(e.fifo.marketValue)} of {money(e.mv)}
+                                </span>
+                              )}</>}
                         </td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}
                           data-mwr-accounts={mwParts.parts.map((pt) => pt.accountNo).join(",")}

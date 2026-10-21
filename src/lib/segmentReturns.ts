@@ -38,12 +38,23 @@
  * Since investment, never a window: the book carries no dated value per
  * holding, so a segment cannot be measured over FYTD the way an account can
  * (`periodReturns.ts`). The Returns tab's windows stay whole-account.
+ *
+ * ── AND SINCE INCEPTION MEANS THE EXITS TOO (Stage 10fx) ─────────────────────
+ *
+ * The rows are the current holdings; the gains are not only theirs. A holding
+ * redeemed to nil or a closed mandate (`exitedRows`) earned what its record
+ * says, and a return struck without it is a survivor's (`bookReturnOnCost`).
+ * Each exit is filed under the segment its own key falls in and enters that
+ * segment's gain and capital deployed — as a child line of its own, "Exited",
+ * so the children still add — and an exit whose segment holds nothing current
+ * is one top-level line of the same name, never a segment row of a holding the
+ * family no longer has. The Total is `bookReturnOnCost`'s.
  */
 import type { Account, Position } from "./types";
 import { accountIndex, type AccountIndex } from "./accounts";
 import { bucketLabel, isCompanyShare, mandateLabelWithOwner, readerClassOf, MANDATE_BUCKET } from "./analytics";
 import { fifoTotals, type FifoOptions } from "./fifo";
-import { costedBookSet } from "./drilldown";
+import { costedBookSet, exitedRows } from "./drilldown";
 import { groupKeyFor, groupLabelFor, groupOrdFor, type GroupAxis } from "./groupAxis";
 import { UNCLASSIFIED } from "./familyTaxonomy";
 import { securityLabel } from "./securityLabel";
@@ -89,6 +100,11 @@ export type SegmentLine = {
   weightPct: number | null;
   /** Mandates struck whole on their capital inside this line. */
   wholeMandates: number;
+  /** Exited holdings / closed mandates whose earnings are in this line's gain and deployed, in no row (Stage 10fx). */
+  exitedHoldings: number;
+  exitedMandates: number;
+  exitedGain: number;
+  exitedDeployed: number;
 };
 
 export type SegmentRow = SegmentLine & {
@@ -110,7 +126,16 @@ export type SegmentAttribution = {
   total: SegmentLine;
   /** The whole mandates' capital remainder no segment holds. Null where they add. */
   mandateRemainder: { gain: number; deployed: number; contribPct: number | null; mandates: number } | null;
+  /**
+   * Exits whose segment holds nothing current (Stage 10fx): in the Total's gain
+   * and deployed, and in no segment. Null where every exit has a segment.
+   */
+  exited: SegmentLine | null;
 };
+
+/** The key of the "Exited" line, top-level or under a segment. */
+export const EXITED_KEY = "__exited";
+const EXITED_LABEL = "Exited — no longer held";
 
 const NO_SECTOR = "Sector not reported";
 /** What a statement prints where it places a company in no sector. */
@@ -171,7 +196,11 @@ function childOf(axis: SegmentAxis, segKey: string, idx: AccountIndex): { key: (
 function lineOf(key: string, label: string, set: readonly Position[], opts: FifoOptions, book: { deployed: number | null; value: number }): SegmentLine {
   const s = costedBookSet(set);
   const f = fifoTotals(s.struck, opts);
-  const gain = s.struckCount ? f.gain : null;
+  // An exit that entered the gain makes it a measurement even where nothing
+  // current strikes one — the "Exited" line is all exits (Stage 10fx).
+  const exits = f.exitedHoldings + f.exitedMandates.length;
+  const strikes = s.struckCount > 0 || exits > 0;
+  const gain = strikes ? f.gain : null;
   return {
     key, label,
     holdings: set.length,
@@ -181,12 +210,25 @@ function lineOf(key: string, label: string, set: readonly Position[], opts: Fifo
     struck: s.struckCount,
     struckValue: s.struckValue,
     gain,
-    deployed: s.struckCount ? f.deployed : null,
-    returnPct: s.struckCount ? f.returnPct : null,
+    deployed: strikes ? f.deployed : null,
+    returnPct: strikes ? f.returnPct : null,
     contribPct: gain != null && book.deployed != null && book.deployed > 0 ? (gain / book.deployed) * 100 : null,
     weightPct: book.value > 0 ? (s.bookValue / book.value) * 100 : null,
     wholeMandates: f.wholeMandates.length,
+    exitedHoldings: f.exitedHoldings, exitedMandates: f.exitedMandates.length,
+    exitedGain: f.exitedGain, exitedDeployed: f.exitedDeployed,
   };
+}
+
+/**
+ * The exits a set's own FIFO total actually used — those not already inside a
+ * mandate it strikes whole on its capital (`fifoTotals` skips them) — so the
+ * "Exited" child line carries exactly what its parent did.
+ */
+function exitsUsed(set: readonly Position[], exits: readonly Position[], opts: FifoOptions): Position[] {
+  if (!exits.length) return [];
+  const whole = new Set(fifoTotals(costedBookSet(set).struck, opts).wholeMandates);
+  return exits.filter((p) => !whole.has(p.accountId));
 }
 
 const RUPEE = 1;
@@ -194,18 +236,21 @@ const RUPEE = 1;
 /**
  * The attribution of `current` — the CURRENT, deduped holdings a page shows —
  * on one axis. `accounts` decides which mandates are whole; nothing is struck
- * whole without them.
+ * whole without them. `exited` is what the family has left (`exitedRows` over
+ * the whole deduped book): in the gains, in no segment's value (Stage 10fx).
  */
 export function segmentAttribution(
   current: readonly Position[],
   accounts: Account[],
   axis: SegmentAxis,
   sectorOf: SectorLookup = () => null,
+  exited: readonly Position[] = exitedRows(current),
 ): SegmentAttribution {
   const idx = accountIndex(accounts);
   const opts: FifoOptions = { accounts: idx, universe: current };
+  const withExits = (xs: readonly Position[]): FifoOptions => ({ ...opts, exited: xs });
   const bookValue = current.reduce((s, p) => s + p.marketValue, 0);
-  const total = lineOf("total", "Total", current, opts, { deployed: null, value: bookValue });
+  const total = lineOf("total", "Total", current, withExits(exited), { deployed: null, value: bookValue });
   const book = { deployed: total.deployed, value: bookValue };
   total.contribPct = total.returnPct;
   total.weightPct = bookValue > 0 ? 100 : null;
@@ -218,9 +263,34 @@ export function segmentAttribution(
     if (g) g.push(p); else groups.set(k, [p]);
   }
 
+  // Each exit under the segment its own key falls in; one with no current
+  // segment is the top-level "Exited" line.
+  //
+  // A CLOSED MANDATE IS FILED BY ITS SEGMENT ONLY ON AN AXIS THAT KEEPS A
+  // MANDATE WHOLE (category, side). Its capital since inception is what the
+  // whole account earned; what it holds now is a bank balance, and filing ASK's
+  // ₹10.56 Cr under "Cash" by that ₹0.35 residue would credit an asset class
+  // with a manager's equity gains — the reason `mandateRemainder` exists for a
+  // live mandate an axis splits. On every other axis it is the Exited line.
+  const heldAccounts = new Set(current.map((p) => p.accountId));
+  const closedMandate = (p: Position) => {
+    const a = idx.get(p.accountId);
+    return a?.engagement === "PMS" && !!a.capital && a.capital.contributed > 0 && !heldAccounts.has(p.accountId);
+  };
+  const keepsMandates = axis === "category" || axis === "side";
+  const exitsBy = new Map<string, Position[]>();
+  const orphanExits: Position[] = [];
+  for (const p of exited) {
+    const k = seg.key(p);
+    if (!groups.has(k) || (!keepsMandates && closedMandate(p))) { orphanExits.push(p); continue; }
+    const g = exitsBy.get(k);
+    if (g) g.push(p); else exitsBy.set(k, [p]);
+  }
+
   const rows: SegmentRow[] = [];
   for (const [k, set] of groups) {
-    const line = lineOf(k, seg.label(k, set[0]), set, opts, book);
+    const segExits = exitsUsed(set, exitsBy.get(k) ?? [], opts);
+    const line = lineOf(k, seg.label(k, set[0]), set, withExits(segExits), book);
     const ch = childOf(axis, k, idx);
     const byChild = new Map<string, Position[]>();
     for (const p of set) {
@@ -233,6 +303,11 @@ export function segmentAttribution(
     const children = [...byChild.values()]
       .map((cs) => lineOf(ch.key(cs[0]), ch.label(cs[0]), cs, opts, book))
       .sort((a, b) => (b.gain ?? -Infinity) - (a.gain ?? -Infinity) || b.value - a.value);
+    // The segment's exits, as one child after the holdings, so the children add.
+    if (segExits.length) {
+      const x = lineOf(EXITED_KEY, EXITED_LABEL, [], withExits(segExits), book);
+      if (x.gain != null) children.push(x);
+    }
     const cGain = children.reduce((s, c) => s + (c.gain ?? 0), 0);
     const cDep = children.reduce((s, c) => s + (c.deployed ?? 0), 0);
     const remGain = (line.gain ?? 0) - cGain;
@@ -244,13 +319,15 @@ export function segmentAttribution(
   }
   rows.sort((a, b) => Number(a.unplaced) - Number(b.unplaced) || (b.gain ?? -Infinity) - (a.gain ?? -Infinity) || b.value - a.value);
 
-  const sumGain = rows.reduce((s, r) => s + (r.gain ?? 0), 0);
-  const sumDep = rows.reduce((s, r) => s + (r.deployed ?? 0), 0);
+  const orphan = orphanExits.length ? lineOf(EXITED_KEY, EXITED_LABEL, [], withExits(orphanExits), book) : null;
+  const exitedLine = orphan && orphan.gain != null ? orphan : null;
+  const sumGain = rows.reduce((s, r) => s + (r.gain ?? 0), 0) + (exitedLine?.gain ?? 0);
+  const sumDep = rows.reduce((s, r) => s + (r.deployed ?? 0), 0) + (exitedLine?.deployed ?? 0);
   const remGain = (total.gain ?? 0) - sumGain;
   const remDep = (total.deployed ?? 0) - sumDep;
   const split = fifoTotals(costedBookSet(current).struck, opts).wholeMandates.length - rows.reduce((s, r) => s + r.wholeMandates, 0);
   return {
-    axis, rows, total,
+    axis, rows, total, exited: exitedLine,
     mandateRemainder: Math.abs(remGain) > RUPEE || Math.abs(remDep) > RUPEE
       ? { gain: remGain, deployed: remDep, contribPct: book.deployed ? (remGain / book.deployed) * 100 : null, mandates: Math.max(split, 0) }
       : null,

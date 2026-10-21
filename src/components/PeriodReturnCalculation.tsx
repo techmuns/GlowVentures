@@ -77,9 +77,12 @@ export function PeriodReturnCalculation({ measured, type, inception, result, con
             : "This return is unavailable for the selected dates. The missing records are listed under Show more."}</li>
         </> : <>
           <li>Gain / loss: <span className="block tabular">{stepMoney(w.closing)} − {stepMoney(w.opening)} − {stepMoney(w.capitalIn)} + {stepMoney(w.capitalOut)} = <strong>{stepMoney(w.gain)}</strong>.</span></li>
-          <li>{type === "absolute" ? <>Money invested: <span className="block tabular">{stepMoney(w.opening)} + {stepMoney(w.capitalIn)} = <strong>{stepMoney(w.base)}</strong>.</span></>
+          {/* A dated window's Absolute return is Modified Dietz (Stage 10fx), so it
+              carries the same day-weighted money at work as CAGR; only since
+              investment is it the simple gain over what was paid in. */}
+          <li>{type === "absolute" && !w.weighted ? <>Money invested: <span className="block tabular">{stepMoney(w.opening)} + {stepMoney(w.capitalIn)} = <strong>{stepMoney(w.base)}</strong>.</span></>
             : w.growthRatio != null ? <>Growth: <span className="block tabular">{stepMoney(w.closing)} ÷ {stepMoney(w.capitalIn)} = <strong>{factor.toFixed(8)}</strong>.</span></>
-            : <>Count each amount only for the days held. Money at work: <span className="block tabular">{stepMoney(weightedIn)} − {stepMoney(weightedOut)} = <strong>{stepMoney(w.base)}</strong>.</span></>}</li>
+            : <>Count each amount only for the days held (Modified Dietz). Money at work: <span className="block tabular">{stepMoney(weightedIn)} − {stepMoney(weightedOut)} = <strong>{stepMoney(w.base)}</strong>.</span></>}</li>
           <li data-return-conversion>{type === "cagr" ? <>
             {w.growthRatio == null && <span className="block tabular">Period growth: 1 + {stepMoney(w.gain)} ÷ {stepMoney(w.base)} = {factor.toFixed(8)}.</span>}
             <span className="block tabular">Yearly growth: {factor.toFixed(8)}<sup>(365/{w.days})</sup> = {yearlyFactor.toFixed(8)}.</span>

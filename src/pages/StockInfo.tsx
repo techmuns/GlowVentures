@@ -52,6 +52,7 @@ import { useDatedCapital } from "@/lib/useDatedCapital";
 import { TREE_ROW, TreeSectionCell } from "@/components/TreeTable";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
+import { istToday, lotsForPosition, termSplitOn } from "@/lib/ltDate";
 import {
   heldThrough, heldRouteOf, measuredTotals, HELD_ROUTES, HELD_ROUTE_LABEL, HELD_ROUTE_NOTE,
   type FundLine, type HeldRoute,
@@ -706,9 +707,49 @@ export function StockInfo() {
     return "no statement in this book reports a cost for this holding";
   })();
   const weight = bookMV > 0 ? (mv / bookMV) * 100 : 0;
-  // Null, not zero, when no statement supplied the figure — see sumOrNull.
-  const stCost = sumOrNull(drows.map((r) => r.stCostBasis));
-  const ltCost = sumOrNull(drows.map((r) => r.ltCostBasis));
+  /**
+   * ── THE TERM SPLIT, OVER THE ROWS THAT CARRY ONE, AS OF TODAY (Stage 10fx) ──
+   *
+   * Two faults, both on screen. The bar divided the long-term cost of the rows
+   * WITH a lot register by the cost of EVERY row and called the remainder
+   * short-term: Ather Energy is ₹10.43 L on V.E.C 128004, every lot long-term,
+   * and ₹34.50 L on V.E.C 128005, which issues no register — and the bar read
+   * "Long-term 23% · Short-term 77%" where the short-term cost anyone measured
+   * is ₹0. Fifteen of this book's names were drawn that way. The split is now
+   * struck over the rows that carry one, and the rest are NAMED, with their
+   * cost, as unknown — never as short-term.
+   *
+   * And the split was struck at each account's statement date: LKP's is
+   * 31 Mar 2026, so Transrail Lighting read short-term 100% though both its
+   * lots (10 and 17 Sep 2025) went long-term on 11 and 18 Sep 2026. Where the
+   * register's lots are in hand (`StockLedger.openLots`, joined under the
+   * book's own gate) each row is re-aged from its lots' purchase dates to
+   * today, India's date; where they are not, the split is the statement's and
+   * says the date it is struck at.
+   */
+  const termToday = istToday(nowMs);
+  const splitRows = drows.filter((r) => r.stCostBasis != null || r.ltCostBasis != null);
+  const unsplitRows = drows.filter((r) => r.stCostBasis == null && r.ltCostBasis == null);
+  const agedSplit = splitRows.map((r) => {
+    const lots = led ? lotsForPosition(r, accIdx.get(r.accountId), led.openLots) : null;
+    const now = lots ? termSplitOn(lots, termToday, r) : null;
+    if (now) {
+      return { r, st: now.st, lt: now.lt, at: termToday, aged: true };
+    }
+    return { r, st: r.stCostBasis ?? 0, lt: r.ltCostBasis ?? 0, at: accIdx.get(r.accountId)?.asOf ?? null, aged: false };
+  });
+  // Null, not zero, when no row carries a split — see sumOrNull.
+  const stCost = agedSplit.length ? agedSplit.reduce((s, a) => s + a.st, 0) : null;
+  const ltCost = agedSplit.length ? agedSplit.reduce((s, a) => s + a.lt, 0) : null;
+  const splitAt = [...new Set(agedSplit.filter((a) => !a.aged).map((a) => a.at).filter((d): d is string => !!d))].sort();
+  const splitAged = agedSplit.length > 0 && agedSplit.every((a) => a.aged);
+  const unsplitCost = sumOrNull(unsplitRows.map((r) => r.costBasis));
+  const unsplitWho = unsplitRows.map((r) => `${providerOf(accIdx, r) || r.accountId} ${accIdx.get(r.accountId)?.accountNo ?? ""}`.trim());
+  // HOW MANY ACCOUNTS ISSUE A LOT REGISTER — counted, never typed (it said
+  // "one account in this book issues one" while LKP and V.E.C 128004 both do).
+  const registerAccounts = new Set((wholePortfolio?.positions ?? portfolio.positions)
+    .filter((r) => r.stCostBasis != null || r.ltCostBasis != null).map((r) => r.accountId)).size;
+  const noSplitReason = `the long/short split needs per-lot purchase dates, and only a lot register carries them — ${registerAccounts === 1 ? "one account in this book issues one" : `${registerAccounts} accounts in this book issue one`}, and none for this holding`;
   const div = sumOrNull(drows.map((r) => r.dividendReceived));
   // Live-quote state for this name. Every lot shares one quote, so this is
   // all-or-nothing in practice; the day move is summed across the lots.
@@ -1043,7 +1084,28 @@ export function StockInfo() {
   const lastAdded = buys.length ? buys[0].date : null;
   // Null when the long-term cost is unknown — the bar is hidden rather than
   // drawn at zero, which would read as "none of this is long-term".
-  const ltPct = ltCost !== null && cost !== null && cost > 0 ? (ltCost / cost) * 100 : null;
+  // OVER THE ROWS THAT CARRY A SPLIT ONLY (Stage 10fx) — never over `cost`,
+  // which includes accounts no register dates, whose lots are unknown.
+  const splitCost = stCost !== null && ltCost !== null ? stCost + ltCost : null;
+  const ltPct = ltCost !== null && splitCost !== null && splitCost > 0 ? (ltCost / splitCost) * 100 : null;
+  /** When the split is struck: today where every row was re-aged, else the statement date(s) it is at. */
+  const splitWhen = splitAged ? `today, ${fmtDate(termToday)}`
+    : agedSplit.some((a) => a.aged) ? `today where the lots are in hand, else at ${splitAt.map(fmtDate).join(", ")}`
+    : `at ${splitAt.map(fmtDate).join(", ")}`;
+  const splitHover = [
+    `${splitRows.length === drows.length ? "Every account holding this name" : `${splitRows.length} of the ${drows.length} accounts holding this name`} issues a lot register; the split is struck over ${splitRows.length === 1 ? "its" : "their"} ${splitCost === null ? "" : money(splitCost)} of cost, ${splitAged
+      ? `each lot aged from its own purchase date to today (${fmtDate(termToday)} IST) — long-term from the day after its first anniversary`
+      : `${splitWhen}${agedSplit.some((a) => !a.aged) ? " — the statement's own split, which a lot that has since passed its anniversary has outgrown" : ""}`}.`,
+    unsplitRows.length
+      ? `${unsplitWho.join(", ")} issue${unsplitRows.length === 1 ? "s" : ""} no lot register, so ${unsplitCost === null ? "its cost" : `${money(unsplitCost)} of cost`} is neither short- nor long-term here: unknown, and in neither figure.`
+      : "",
+  ].filter(Boolean).join(" ");
+  /** "· 1 of 2 accounts" on a tile whose figure covers some of the accounts holding the name. */
+  const splitCoverage = splitRows.length < drows.length
+    ? <span className="ml-1 text-[10.5px] font-normal text-slate-500" title={splitHover} data-stock-term-coverage={`${splitRows.length}/${drows.length}`}>
+        · {splitRows.length} of {drows.length} accounts
+      </span>
+    : null;
   /** A recorded line's statement date is its own — the date its units are counted on. */
   const recordedAsOf = (l: RecordedLine) => l.asOf ?? accIdx.get(l.accountId)?.asOf ?? null;
   const holdingAsOf = rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf
@@ -2096,8 +2158,11 @@ export function StockInfo() {
                 subtitle="The long- and short-term cost split, the purchase dates and the dividends recorded for this holding">
                 <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5" data-stock-tax>
                   {([
-                    ["Long-term cost", ltCost === null ? <AbsentCell reason="the long/short split needs per-lot purchase dates, and only a lot register carries them — one account in this book issues one" /> : money(ltCost)],
-                    ["Short-term cost", stCost === null ? <AbsentCell reason="the long/short split needs per-lot purchase dates, and only a lot register carries them — one account in this book issues one" /> : money(stCost)],
+                    /* EACH FIGURE OVER THE ACCOUNTS WHOSE REGISTER DATES ITS LOTS,
+                       and the count on its face where that is not every account
+                       (Stage 10fx); the hover names the others and their cost. */
+                    ["Long-term cost", ltCost === null ? <AbsentCell reason={noSplitReason} /> : <>{money(ltCost)}{splitCoverage}</>],
+                    ["Short-term cost", stCost === null ? <AbsentCell reason={noSplitReason} /> : <>{money(stCost)}{splitCoverage}</>],
                     /* A purchase date only exists where the statements' window
                        covers the buy. Absent here means "not in this window", not
                        "never bought" — the reason says which. */
@@ -2118,12 +2183,17 @@ export function StockInfo() {
                   <p className="mt-2.5 text-[11px] text-slate-500">Long-term / short-term split <AbsentCell reason="No lot dates on the statements for this holding." /></p>
                 ) : (
                   <>
-                    <div className="mt-3 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
+                    <div className="mt-3 flex h-2.5 overflow-hidden rounded-full border border-ink-700" title={splitHover}>
                       <div style={{ width: `${ltPct}%`, background: "#10b981" }} />
                       <div style={{ width: `${100 - ltPct}%`, background: "rgba(245,158,11,.5)" }} />
                     </div>
-                    <div className="mt-1.5 flex justify-between text-[10.5px] text-slate-500">
-                      <span>Long-term {ltPct.toFixed(0)}%</span><span>Short-term {(100 - ltPct).toFixed(0)}%</span>
+                    <div className="mt-1.5 flex justify-between gap-3 text-[10.5px] text-slate-500" data-stock-term-split={ltPct.toFixed(2)}
+                      data-stock-term-at={splitAged ? termToday : splitAt.join(",")} data-stock-term-unknown={unsplitCost ?? ""}>
+                      <span title={splitHover}>Long-term {ltPct.toFixed(0)}% · Short-term {(100 - ltPct).toFixed(0)}% · {splitWhen}</span>
+                      {unsplitRows.length > 0 && (
+                        /* UNKNOWN IS ITS OWN WORD, never folded into short-term. */
+                        <span title={splitHover}>Unknown {unsplitCost === null ? DASH : money(unsplitCost)} · no register</span>
+                      )}
                     </div>
                   </>
                 )}

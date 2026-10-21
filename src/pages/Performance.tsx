@@ -22,6 +22,7 @@ import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
 import { bookReturnOnCost, costedSetLabel } from "@/lib/drilldown";
+import { exitedNote } from "@/lib/fifo";
 import { BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { Account, AccountBridge } from "@/lib/types";
 import { measuredAccountsReturn, accountHasOpeningValue, accountReturnInputs } from "@/lib/returns";
@@ -201,9 +202,17 @@ export function Performance() {
    * redeemed on 31 July, put its ₹2.56 Cr realised gain and ₹28.50 Cr cost of
    * units sold into this tile and not into Morning CIO's: +16.24% here against
    * +16.68% there, for one book.
+   *
+   * …AND THEN THE EXITS CAME BACK IN, BY RULE (Stage 10fx). `bookReturnOnCost`
+   * now strikes the CURRENT holdings and adds the exited holdings and closed
+   * mandates it finds in `universe` — their realised gain over the cost of the
+   * units sold — as /holdings and Morning CIO do. Passing the current holdings
+   * as the universe found no exits at all; the universe is the whole deduped
+   * book, `consolidated`, so this tile is their figure (21.20% on the
+   * statement basis, ₹127.84 Cr on ₹602.89 Cr at the time of writing).
    */
   const held = currentHoldings(consolidated);
-  const { set: costedSet, fifo: bookFifo, pct: embeddedRet } = bookReturnOnCost(held, { accounts, universe: held });
+  const { set: costedSet, fifo: bookFifo, pct: embeddedRet } = bookReturnOnCost(held, { accounts, universe: consolidated });
 
   // ── Money-weighted return, per account and consolidated ──
   //
@@ -402,15 +411,18 @@ export function Performance() {
         <StatTile label="Return · FIFO"
           value={<Auditable formula={{
             title: "Return (FIFO)",
-            excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100",
-            plain: "Everything the book has produced — the unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out — over every rupee that bought a unit of it. A whole mandate is struck on its capital since inception.",
-            worked: `= (${money(bookFifo.unrealised, true)} + ${money(bookFifo.realised, true)}) ÷ ${money(bookFifo.deployed)} × 100 = ${fmtPct(embeddedRet, { sign: true })}`,
+            excel: "= (Σ unrealised + Σ realised + Σ dividends) ÷ Σ capital deployed × 100",
+            plain: "Everything the book has produced — the unrealised gain on what is held, the realised gain on units already sold (exited holdings and closed mandates included), matched first-in, first-out, and the dividends received — over every rupee that bought a unit of it. A whole mandate is struck on its capital since inception.",
+            // The worked line carries every term `fifoTotals` adds (gain =
+            // unrealised + realised + income, Stage 10fx), and names the exits
+            // in `fifoBasisNote`'s own words, so its sum is the figure.
+            worked: `= (${money(bookFifo.unrealised, true)} + ${money(bookFifo.realised, true)}${bookFifo.income != null ? ` + dividends ${money(bookFifo.income, true)}` : ""}) ÷ ${money(bookFifo.deployed)} × 100 = ${fmtPct(embeddedRet, { sign: true })}${(() => { const ex = exitedNote(bookFifo, (n) => money(n)); return ex ? ` · ${ex}` : ""; })()}`,
           }}><span data-xa="perf-fifo" data-value={embeddedRet ?? ""}>{fmtPct(embeddedRet, { sign: true })}</span></Auditable>}
           title={`${costedSetLabel(costedSet, (n) => money(n))}. ${
             costedSet.atCost > 0
               ? `The ${costedSet.atCost} private investments the family's consolidated review holds at cost (${money(costedSet.atCostValue)}) are outside it: their value IS what was paid, so there is no gain on them to strike. `
               : ""}${money(costedSet.bookValue - costedSet.costedValue)} reports no cost at all. Morning CIO's Consolidated return is this figure, over this set.`}
-          sub={<>{money(bookFifo.unrealised, true)} unrealised + {money(bookFifo.realised, true)} realised</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
+          sub={<>{money(bookFifo.unrealised, true)} unrealised + {money(bookFifo.realised, true)} realised{bookFifo.income != null && <> + {money(bookFifo.income, true)} dividends</>}</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
 
         {consolidatedXirr == null ? (
           <StatTile label="Money-weighted return (XIRR)"

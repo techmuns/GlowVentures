@@ -22,6 +22,8 @@ const SUITES = [
   { name: "altFund",  file: "altFund.test.mjs",  required: true },
   { name: "buoyant",  file: "buoyantFlows.test.mjs", required: true },
   { name: "classSwitch", file: "classSwitch.test.mjs", required: true },
+  // The calculation audit's book-side rules and the figures they moved (Stage 10fx).
+  { name: "calcAudit", file: "calcAudit.test.mjs", required: true },
   { name: "capitalCalls", file: "capitalCalls.test.mjs", required: true },
   { name: "payouts", file: "payouts.test.mjs", required: true },
   { name: "hdfcOwner", file: "hdfcNsdlOwner.test.mjs", required: true },

@@ -238,6 +238,24 @@ eq("one point produces no index", navIndexSeries([{ period: "x", date: "2026-01-
   ok("an interval starting at zero leaves the index unchanged rather than infinite",
     Number.isFinite(s[1].index) && s[1].index === 100);
 }
+{
+  // MODIFIED DIETZ INSIDE THE LINK WHERE THE FLOW'S WEIGHT IS CARRIED (Stage
+  // 10fx) — 128005, 6 Jul → 13 Aug: ₹9.244 Cr → ₹20.288 Cr with ₹11.24 Cr in on
+  // 28–29 Jul, 16 of the 38 days. End-weighted that reads −2.06%; Modified
+  // Dietz −1.36%. Without the weight the chain is the end-of-interval one, to
+  // the bit, so a book that does not carry it is unchanged.
+  const open = 92_440_000, close = 202_879_640, flow = 112_393_342;
+  const pts = (fw?: number) => navIndexSeries([
+    { period: "a", date: "2026-07-06", nav: open },
+    { period: "b", date: "2026-08-13", nav: close, linkOpen: open, linkClose: close, flowIn: flow,
+      ...(fw == null ? {} : { flowWeighted: fw }) } as Parameters<typeof navIndexSeries>[0][number],
+  ]);
+  const endWeighted = pts()[1].index - 100;
+  eq("no weight: the end-of-interval link, unchanged", pts()[1].index, ((close - flow) / open) * 100);
+  const md = pts(flow * (16 / 38))[1].index - 100;
+  near("with the weight: Modified Dietz", md, ((close - open - flow) / (open + flow * 16 / 38)) * 100);
+  ok("…which reads the deposit's 16 days at work, not none", md > endWeighted && endWeighted < -2 && md > -1.5, `${endWeighted} → ${md}`);
+}
 
 // ── THE LONGER WINDOW, AND THE TWO THINGS IT MUST NOT DO ────────────────────
 //

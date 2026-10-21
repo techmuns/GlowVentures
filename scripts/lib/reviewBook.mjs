@@ -21,7 +21,7 @@ import {
 } from "../../shared/reviewHolders.mjs";
 import { securityKeyOf } from "../../shared/securityKey.mjs";
 import { resolveSector, UNCLASSIFIED } from "../../shared/sectors.mjs";
-import { fifoReturnPct } from "../../shared/fifo.mjs";
+import { fifoReturnPct, fifoLedger } from "../../shared/fifo.mjs";
 import { ownerById } from "../../shared/owners.mjs";
 
 // A date is a date, never an Excel serial (Stage 10dg): the review stores a
@@ -62,6 +62,48 @@ const INVESTOR = {
   "Bharat Jaisinghani Family Trust II": "bharat-jaisinghani-family-trust-2",
   "Bharat Jaisinghani Family Trust III": "bharat-jaisinghani-family-trust-3",
 };
+
+/**
+ * WHAT A VALUED LINE'S OWN DATED ROWS MEASURE (Stage 10fx) — its income, and its
+ * cost first-in, first-out. Pure: one holder's dated rows (`flowsOf(...).dated`)
+ * and the date the line is valued on, in; `{ fifo, income, why }` out.
+ *
+ * INCOME. The review's Transactions tab dates every payout a fund made ("Div"
+ * rows), and `BOOK_REVIEW_FLOWS` already carried them; the line itself carried
+ * none, so FIFO's one return read 46.96% on 360 ONE Special Opportunities
+ * Series 8 where its own rows hold ₹18,99,476 of income besides the gain. Each
+ * payout is counted ONCE, from this one source: the same 18 May 2026 ₹7,15,619
+ * is also on 360 ONE Alternates' distribution notices (folios 1000632/1000633,
+ * which carry no position) and among 360 ONE Private Wealth's unkeyed
+ * corporate-action rows, and neither reaches a position. Only payouts dated on
+ * or before the valuation count — a later one is inside the value — and the
+ * window opens on the holder's first dated row, where the review's record of
+ * the holding starts (`Position.dividendFrom`).
+ *
+ * COST. The review's `cost` is purchases less sale PROCEEDS, which books a
+ * sale's gain as a reduction of cost: 360 ONE's 5,751.296 units sold on 30 Apr
+ * 2024 for ₹78,320 cost ₹57,512.96 first-in, first-out, so the line read a cost
+ * of ₹99,21,180.02 and no realised gain. Where every purchase and sale row
+ * prints its units, they run through the one lot engine and the line carries
+ * FIFO's cost held, realised gain and cost of units sold. A row without units,
+ * a row after the valuation, or a sale the purchases cannot cover leaves the
+ * review's own figure standing (`fifo: null`, `why` says which). A line nothing
+ * was sold from is left alone: FIFO's cost is then the purchases, which is the
+ * review's figure already.
+ */
+export function measuredFromRows(dated, valuedOn) {
+  const paid = dated.filter((x) => x.kind === "income" && x.date <= valuedOn);
+  const lateIncome = dated.filter((x) => x.kind === "income" && x.date > valuedOn).length;
+  const income = paid.length ? { amount: r2(sum(paid.map((x) => x.amount))), from: dated[0].date } : null;
+  const unitRows = dated.filter((x) => x.kind !== "income");
+  if (!unitRows.some((x) => x.kind === "sale")) return { fifo: null, income, lateIncome, why: null };
+  if (!unitRows.every((x) => typeof x.units === "number" && x.units > 0 && x.date <= valuedOn)) {
+    return { fifo: null, income, lateIncome, why: `a purchase or sale row prints no units, or is dated after the ${valuedOn} valuation` };
+  }
+  const led = fifoLedger(unitRows.map((x) => ({ date: x.date, kind: x.kind === "purchase" ? "buy" : "sell", units: x.units, amount: x.amount })));
+  if (led.shortfalls.length) return { fifo: null, income, lateIncome, why: "a sale takes units no dated purchase holds" };
+  return { fifo: { costHeld: r2(led.costHeld), realised: r2(led.realisedGain), costSold: r2(led.costSold) }, income, lateIncome, why: null };
+}
 
 export function reviewBookLayer({ root = ".", positions, unvalued }) {
   const listedNames = REVIEW_PRIVATE_JOIN.filter((j) => j.listed).map((j) => j.listed);
@@ -209,7 +251,10 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     if (r === UNCLASSIFIED) fail(`${security}: listed sector label ${listed.providerSector} resolves to no GICS sector`);
     return r;
   };
-  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row, listed, dates }) => {
+  // `fifo` and `income` are what the review's own dated rows measure for a valued
+  // line (`measuredFromRows`, Stage 10fx); absent, the line carries the review's
+  // figures exactly as before.
+  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row, listed, dates, fifo = null, income = null }) => {
     if (key !== securityKeyOf(security) && !statementKeys.has(key)) {
       fail(`${security}: key ${key} is neither its name's own (${securityKeyOf(security)}) nor a statement row's`);
     }
@@ -223,14 +268,19 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       quantity: qty ?? null,
       // What one unit cost, wherever the review records units — held at cost or not:
       // a price paid is a cost, not a valuation (Stage 10dh).
-      avgCost: !qty ? null : r2(cost / qty),
-      currentPrice: null, costBasis: r2(cost), costBasisSource: "review", printedCostBasis: undefined,
+      avgCost: !qty ? null : r2((fifo ? fifo.costHeld : cost) / qty),
+      currentPrice: null, costBasis: r2(fifo ? fifo.costHeld : cost), costBasisSource: "review",
+      // The review's own figure — purchases less sale proceeds — kept beside a
+      // FIFO cost as the CHECK it is (rule 4), never as the source.
+      printedCostBasis: fifo ? r2(cost) : undefined,
       marketValue: r2(atCost ? cost : value),
-      unrealizedPnL: atCost ? null : r2(value - cost),
-      realizedPnL: null, costOfUnitsSold: null, realizedLotsAfter: undefined,
-      returnPct: atCost ? null : r2(fifoReturnPct(value, cost, null, null)),
+      unrealizedPnL: atCost ? null : r2(value - (fifo ? fifo.costHeld : cost)),
+      realizedPnL: fifo ? fifo.realised : null, costOfUnitsSold: fifo ? fifo.costSold : null, realizedLotsAfter: undefined,
+      returnPct: atCost ? null : r2(fifoReturnPct(value, fifo ? fifo.costHeld : cost, fifo?.realised ?? null, fifo?.costSold ?? null, income?.amount ?? null)),
       stCostBasis: null, ltCostBasis: null, daysToLT: null, heldSince: null,
-      priceAsOf: asOf ?? REVIEW_AS_OF, accruedIncome: null, dividendReceived: null, positionIrrPct: null,
+      priceAsOf: asOf ?? REVIEW_AS_OF, accruedIncome: null, dividendReceived: income ? income.amount : null,
+      ...(income ? { dividendFrom: income.from } : {}),
+      positionIrrPct: null,
       dedupeGroup: undefined, alsoReportedUnder: undefined,
       review: true, valuedAtCost: atCost ? true : undefined, reviewTaxonomy: taxonomyOf(tab, key), reviewSource: sourceOf(tab, row),
       investedDates: investedDatesOf(dates),
@@ -315,8 +365,18 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
           notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s Transactions rows walk to ${walked.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units; the closing holds ${s.qty.toLocaleString("en-IN", { maximumFractionDigits: 3 })}, so ${(walked - s.qty).toLocaleString("en-IN", { maximumFractionDigits: 3 })} units are on no dated row`);
         }
       }
+      const valuedOn = e.atCost ? REVIEW_AS_OF : f.closingDate ?? REVIEW_AS_OF;
+      const measured = e.atCost ? { fifo: null, income: null } : measuredFromRows(f.dated, valuedOn);
+      if (measured.lateIncome) notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s ${measured.lateIncome} income row(s) dated after the ${valuedOn} valuation are inside the value and are not counted as income`);
+      if (measured.why) notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s cost stays the review's purchases less sale proceeds: ${measured.why}, so FIFO cannot run`);
+      if (measured.fifo) {
+        const inr = (x) => `₹${x.toLocaleString("en-IN")}`;
+        notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s cost is FIFO over the review's dated rows: ${inr(measured.fifo.costHeld)} held, `
+          + `${inr(measured.fifo.costSold)} of cost sold for a realised ${inr(measured.fifo.realised)}; the review's purchases less sale proceeds `
+          + `(${inr(r2(s.cost))}) is kept as the check`);
+      }
       push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab, row: l.row, listed: e.listed, dates: l.dates,
-        cost: s.cost, value: s.value, atCost: !!e.atCost, asOf: e.atCost ? REVIEW_AS_OF : f.closingDate ?? REVIEW_AS_OF,
+        cost: s.cost, value: s.value, atCost: !!e.atCost, asOf: valuedOn, fifo: measured.fifo, income: measured.income,
         note: `${e.atCost ? "Held at cost" : `Valued at ₹${s.value.toLocaleString("en-IN")}`} on the family's consolidated review (MOPWM, 30 Jun 2026), ${tabName} row ${l.row}${f.closingDate && !e.atCost ? `, its closing of ${dayText(f.closingDate)}` : ""}. ${cap(e.why)}.` });
     }
   }

@@ -26,10 +26,10 @@ import {
   isValuedAtCost, AT_COST_RETURN, AT_COST_BUCKET,
   type MeasuredReturn, type ReturnMeasure,
 } from "@/lib/analytics";
-import { BOOK_CORPORATE_ACTIONS, BOOK_CAPITAL_MOVES, BOOK_SHARE_MOVEMENTS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
+import { BOOK_CORPORATE_ACTIONS, BOOK_CAPITAL_MOVES, BOOK_SHARE_MOVEMENTS, BOOK_REVIEW_FLOWS, BOOK_REVIEW_WRITTEN_OFF, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
-  countedOnceNote,
+  countedOnceNote, unitsSinceCapital,
 } from "@/lib/privateMarket";
 import { isValuedByNoStatement } from "@/lib/aifCategory";
 import {
@@ -39,7 +39,7 @@ import {
 import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
 import { withReturnCols, returnAccessorsFor, returnColId } from "@/lib/returnColumns";
 import {
-  privateBookFolios, distributionLeftOutNote, privateBook, figuresOf, BOOK_SECTIONS, investmentIdentities,
+  privateBookFolios, distributionLeftOutNote, privateBook, figuresOf, BOOK_SECTIONS, investmentIdentities, privateMultiples, writtenOffNote,
   type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type BrandFacts, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
 import { callTotals, callHistory } from "@/lib/capitalCalls";
@@ -349,10 +349,28 @@ const NO_RETURN: RowReturn = { shown: false, tag: "—", reason: "no return is s
  * before Stage 10ca and false after it of Neo Infra's ₹14.16 L principal, on
  * the one cell that sums the whole private book.
  */
-const aggHprNote = (held: BookFolio[]): string =>
-  held.some((f) => (f.position?.costOfUnitsSold ?? 0) > 0)
-    ? "FIFO, not annualised: the gain on the units held plus the gain on units redeemed, over what those units cost — not a return on Paid in. The principal returned on redeemed units is in it; income, equalisation and any payout that redeemed no units are not — XIRR counts those."
-    : "FIFO, not annualised: the gain on the units held, over what they cost — not a return on Paid in. Cash the funds have paid back is not in it — XIRR counts it.";
+/*
+ * …AND THE INCOME A HOLDING CARRIES IS IN IT (Stage 10fx). `fifoTotals` adds
+ * `Position.dividendReceived` to the gain — income received, gross of TDS, over
+ * the window its record covers (`dividendFrom` → the statement date). So the
+ * note reads that field rather than assuming: income is in the figure exactly
+ * where a holding carries it, and named as out of it everywhere else.
+ */
+const aggHprNote = (held: BookFolio[], money: (n: number) => string): string => {
+  const incomeHeld = held.filter((f) => typeof f.position?.dividendReceived === "number"
+    && Number.isFinite(f.position.dividendReceived) && f.position.dividendReceived !== 0);
+  const income = incomeHeld.reduce((t, f) => t + (f.position!.dividendReceived as number), 0);
+  const incomeIn = incomeHeld.length
+    ? `the income ${incomeHeld.length === held.length ? "these holdings carry" : `${incomeHeld.length} of these ${held.length} holdings carry`} is in it too — ${money(income)}, gross of TDS, over the window each one's income record covers`
+    : "";
+  return held.some((f) => (f.position?.costOfUnitsSold ?? 0) > 0)
+    ? "FIFO, not annualised: the gain on the units held plus the gain on units redeemed, over what those units cost — not a return on Paid in. The principal returned on redeemed units is in it"
+      + (incomeIn
+        ? `, and ${incomeIn}; any other payout that redeemed no units is not — XIRR counts it.`
+        : "; income, equalisation and any payout that redeemed no units are not — XIRR counts those.")
+    : "FIFO, not annualised: the gain on the units held, over what they cost — not a return on Paid in."
+      + (incomeIn ? ` ${incomeIn.charAt(0).toUpperCase()}${incomeIn.slice(1)}. Any other cash paid back is not — XIRR counts it.` : " Cash the funds have paid back is not in it — XIRR counts it.");
+};
 
 /** One set of accessors for every row kind, so a column sorts parents and their folios alike. */
 const bookAccessors = (
@@ -674,8 +692,20 @@ export function PrivateMarket() {
         const rows = scope.dedupedRows.filter((p) => !isValuedAtCost(p));
         const atCost = scope.dedupedRows.filter(isValuedAtCost);
         const cg = new Map((portfolio.capitalGains ?? []).map((e) => [e.accountId, e]));
-        const redeemed = (p: (typeof rows)[number]) => BOOK_CAPITAL_MOVES.filter((x) => x.accountId === p.accountId
-          && x.securityKey === p.securityKey && x.direction === "out" && x.units != null && x.units < 0);
+        /*
+         * A LINE THE REVIEW DATES REDEEMS UNITS ON THE REVIEW'S OWN SALE ROWS
+         * (Stage 10fx): its FIFO cost of units sold and realised gain are struck
+         * off them (360 ONE Special Opportunities: 5,751.296 units on 30 Apr 2024
+         * for ₹78,320, at a FIFO cost of ₹57,512.96 — ₹20,807.04 realised), so
+         * the hover reconciles that sale to the rupee as it does a capital-move
+         * redemption, never naming a gain with no proceeds or cost beside it.
+         */
+        const redeemed = (p: (typeof rows)[number]): { date: string; units: number | null; amount: number | null }[] => [
+          ...BOOK_CAPITAL_MOVES.filter((x) => x.accountId === p.accountId
+            && x.securityKey === p.securityKey && x.direction === "out" && x.units != null && x.units < 0),
+          ...(p.review ? BOOK_REVIEW_FLOWS.filter((r) => r.accountId === p.accountId && r.securityKey === p.securityKey
+            && r.kind === "sale" && r.units != null && r.units > 0).map((r) => ({ date: r.date, units: -(r.units as number), amount: r.amount })) : []),
+        ];
         return {
           value: sumOrNull(rows.map((p) => p.realizedPnL ?? null)),
           of: rows.length,
@@ -814,15 +844,66 @@ export function PrivateMarket() {
    * in the XIRR's own figures rather than a restatement of them.
    */
   const distFig = m.byFund.privateTotal;
+  /** The ILPA multiples over the Private funds band (Stage 10fx) — `privateMultiples`. */
+  const mult = privateMultiples(m.byFund.folios);
+  const fmtX = (x: number) => `${x.toFixed(2)}×`;
+  /** The review's write-offs, named wherever a figure sums the private book (Stage 10fx). */
+  const writtenOff = writtenOffNote(BOOK_REVIEW_WRITTEN_OFF, memberScope.owners !== null);
+  /**
+   * UNITS A LATER STATEMENT HOLDS THAT A COUNTED CAPITAL ACCOUNT DOES NOT
+   * (Stage 10fx, `unitsSinceCapital`) — the evidence that a still-to-call
+   * figure is older than the calls it describes, said in one sentence.
+   */
+  const callSince = (() => {
+    const xs = unitsSinceCapital(m.counting.counted, portfolio?.positions ?? [], BOOK_REVIEW_SUPERSEDED, portfolio?.accounts ?? []);
+    if (!xs.length) return "";
+    return xs.map((x) => `${accName(x.laterAccountId)} records ${fmtNum(x.laterUnits, 3)} units of ${x.security} on ${fmtDate(x.laterAsOf)}, against the ${fmtNum(x.units, 3)} ${accName(x.commitment.accountId)}'s capital account carries on ${fmtDate(x.commitment.asOf!)} — units a fund issues against capital it calls, so its ${x.commitment.undrawn == null ? "still to call" : `${money(x.commitment.undrawn)} still to call`} may be lower now than that statement prints`).join("; ") + ".";
+  })();
   const distParts = m.byFund.folios
     .filter((f) => f.distributed != null && f.distributionCounted)
     .sort((a, b) => (b.distributed ?? 0) - (a.distributed ?? 0));
   const distLeftOut = m.byFund.folios.filter((f) => f.distributed != null && !f.distributionCounted && f.distributedBasis != null);
+  /**
+   * A LINE THE REVIEW PAYS BACK, IN ITS OWN WORDS (Stage 10fx): the review's
+   * dated income and sale rows by its value date — the rows its XIRR counts —
+   * and, beside them, whatever the same account's statement says that does
+   * not agree, the letter the review's row already carries, and any units the
+   * review's rows do not move. Each clause only where it is true of the line.
+   */
+  const reviewDistWords = (f: BookFolio) => {
+    const r = f.reviewDistribution!;
+    const parts = [r.income > 0 ? `income ${money(r.income)}` : null, r.sale > 0 ? `sale proceeds ${money(r.sale)}` : null].filter(Boolean);
+    const views = m.byFund.folios.filter((v) => v.letterOnReview != null && v.distributionCountedAs === f.accountId && v.fundKey === f.fundKey);
+    const gap = r.units ? r.units.bought - r.units.sold - r.units.held : 0;
+    return `${money(f.distributed)} — the family's consolidated review's dated ${parts.join(" and ")} on ${f.provider} ${f.accountNo}'s line by its ${fmtDate(r.valuedAt)} value, the same rows its XIRR counts`
+      + (r.statement != null && Math.abs(r.statement - (f.distributed ?? 0)) > 1
+        ? `; its capital account's statement${r.statementAsOf ? ` of ${fmtDate(r.statementAsOf)}` : ""} prints ${money(r.statement)} distributed${r.statementEqualisation ? ` and ${money(r.statementEqualisation)} of equalisation apart from it` : ""} — the two disagree, and the review is the record this line is valued and dated on`
+        : "")
+      + (views.length
+        ? `; ${views.map((v) => `${v.provider} ${v.accountNo}'s distribution letter of ${money(v.letterOnReview)}`).join(" and ")} ${views.length === 1 ? "is" : "are"} the same payment as an income row here, counted once`
+        : "")
+      + (r.lettersNotOnReview > 1 ? `; ${money(r.lettersNotOnReview)} of letters on its income-only folio match no income row here and are in no figure` : "")
+      + (Math.abs(gap) > 0.005
+        ? `; the review's dated rows buy ${fmtNum(r.units!.bought, 3)} units and sell ${fmtNum(r.units!.sold, 3)} against the ${fmtNum(r.units!.held, 3)} it carries — ${fmtNum(Math.abs(gap), 3)} units no dated row moves, and no row moves cash for them`
+        : "")
+      + (r.afterValuation > 1 ? `; the ${money(r.afterValuation)} it dates after that value is inside it, and not here` : "");
+  };
   const distWords = (f: BookFolio) => f.distributedBasis === "letter"
     ? `${money(f.distributed)} — the amount ${f.provider} ${f.accountNo}'s distribution letter says was remitted, after the fund's expenses and TDS`
-    : f.distributed === 0
-      ? `${money(0)} — its capital account reports no distribution, a measured nil`
-      : `${money(f.distributed)} — its capital account's distribution total: income and principal, before TDS`;
+    : f.distributedBasis === "review"
+      ? reviewDistWords(f)
+      : f.distributed === 0
+        ? `${money(0)} — its capital account reports no distribution, a measured nil`
+        : `${money(f.distributed)} — its capital account's distribution total: income and principal, before TDS`;
+  /**
+   * THE MEASURED NILS, ONCE (Stage 10fx). Since a review line is paid back by
+   * the review's rows, every line it dates and pays nothing on is a measured
+   * nil — over ten on this book. Listed one by one they buried the funds that
+   * paid; named together they say the same thing in one clause.
+   */
+  const distNil = distParts.filter((f) => f.distributed === 0);
+  const distPaid = distParts.filter((f) => f.distributed !== 0);
+  const nilWho = (f: BookFolio) => `${f.fundName} (${f.provider} ${f.accountNo}: ${f.distributedBasis === "review" ? "the review dates no income or sale" : "its capital account reports none"})`;
   const distReconcile = distParts.filter((f) => f.distributedBasis === "capital-account" && f.securityKey).map((f) => {
     const d = fundDated.get(f.securityKey!);
     if (!d || d.payouts !== "measured" || !d.valuedAt) return null;
@@ -942,7 +1023,9 @@ export function PrivateMarket() {
           : "")
         + "."
         + alsoNote(m.alsoCt.undrawn, "uncalled balance")
-        + " A fund whose capital account nobody sent contributes nothing, so this is a floor.",
+        + (callSince
+          ? ` A fund whose capital account nobody sent contributes nothing, which would make this a floor — but each figure is as of its own statement, and ${callSince} So this is not a floor: a call since a statement makes the figure lower, a fund with no statement here makes it higher.`
+          : " A fund whose capital account nobody sent contributes nothing, so this is a floor."),
     },
     /* ── COMMITTED vs CALLED vs PAID IN — three figures, not two ─────────────
         *"Capital committed, or is it capital invested? … I would commit 10
@@ -1017,9 +1100,15 @@ export function PrivateMarket() {
       detail: (distFig.distributed == null
         ? "No private-market fund's papers in this book report a distribution. "
         : `Income and principal the funds' own papers report paying back, each counted once: `
-          + distParts.map((f) => `${f.fundName} ${distWords(f)}`).join("; ") + ". ")
-        + `${distFig.distributedOf} of the ${distFig.distributionAccounts} private-market accounts that could report one do; the rest print no distribution line and are skipped, never counted as nil. `
-        + "Equalisation is not a distribution — the statements print it apart — and is not in this figure. "
+          + distPaid.map((f) => `${f.fundName} ${distWords(f)}`).join("; ")
+          + (distNil.length ? `; and ${money(0)}, a measured nil, on ${distNil.length === 1 ? "one more" : `${distNil.length} more`} — ${distNil.map(nilWho).join("; ")}` : "")
+          + ". ")
+        + `${distFig.distributedOf} of the ${distFig.distributionAccounts} private-market accounts that could report one do`
+        + (distFig.distributionAccounts > distFig.distributedOf ? "; the rest print no distribution line and are skipped, never counted as nil. " : ". ")
+        + "Equalisation is not a distribution — the statements print it apart — and no capital account's equalisation is in this figure"
+        + (distParts.some((f) => f.distributedBasis === "review")
+          ? "; the review's rows do not set it apart, so a line the review pays back carries every income row it dates. "
+          : ". ")
         + (distReconcile.length ? distReconcile.join(" ") + " " : "")
         + (distLeftOut.length ? distributionLeftOutNote(m.byFund.folios, accName, money) + " " : "")
         + "Not part of the value above, and it does not reduce what a fund can still call.",
@@ -1055,11 +1144,36 @@ export function PrivateMarket() {
         "Income a fund pays out is not a realised gain here; it is under Distributions.",
       ].filter(Boolean).join(" "),
     },
+    /* ── TVPI / DPI, STRUCK WHERE THE BAND CAN SAY WHAT WENT IN AND CAME BACK ──
+        Stage 10fx. The tile was refused outright ("too few distribution
+        figures") while 6 of 13 accounts reported one. With a line the review
+        values paid back by the review's own rows, every holding of the Private
+        funds band can say what went in and what came back by its value date, so
+        the refusal is re-evaluated on that coverage (`privateMultiples`) and the
+        multiple is struck where it holds — refused, naming each holding that
+        stops it, where it does not. */
     {
       id: "multiple", label: "TVPI / DPI", icon: <Handshake className="h-4 w-4" />,
-      value: <AbsentValue />,
-      sub: absentLine("Too few distribution figures"),
-      detail: `Only ${distFig.distributedOf} of the ${distFig.distributionAccounts} private-market accounts that could report a distribution do. A multiple divides what has come back plus what is still inside by what went in; for the other ${distFig.distributionAccounts - distFig.distributedOf} this book carries no distribution total — the statement prints none, or prints one no reader here captures yet — and reading those as nil would report a fund that has returned nothing when its statement does not say so.`,
+      value: mult.tvpi == null || mult.dpi == null ? <AbsentValue /> : `${fmtX(mult.tvpi)} / ${fmtX(mult.dpi)}`,
+      sub: mult.tvpi == null || mult.rvpi == null
+        ? absentLine(mult.missing.length ? `${mult.missing.length} of ${mult.missing.length + mult.parts.length} holdings can't say` : "Nothing valued to divide")
+        : `RVPI ${fmtX(mult.rvpi)} · ${mult.parts.length} valued holdings`,
+      detail: mult.tvpi == null || mult.dpi == null || mult.rvpi == null
+        ? (mult.missing.length
+          ? `A multiple divides what has come back plus what is still inside by what went in, over one set. ${mult.missing.length} of the ${mult.missing.length + mult.parts.length} holdings the Private funds band values cannot say both by the date their value is struck on — `
+            + mult.missing.map((x) => `${x.folio.fundName} (${x.folio.provider} ${x.folio.accountNo}): ${x.why}`).join("; ")
+            + " — and a multiple over the rest would be a figure over a set nobody chose."
+          : "No holding of the Private funds band carries a value to divide.")
+          + (mult.atCost.holdings ? ` ${atCostNote({ atCost: mult.atCost.holdings, atCostValue: mult.atCost.value }, (n) => money(n))}.` : "")
+        : `Over the ${mult.parts.length} holdings the Private funds band values, each counted once and each on its own value date: `
+          + `${money(mult.distributed)} paid back by those dates and ${money(mult.value)} still inside, over ${money(mult.paidIn)} paid in. `
+          + `DPI ${fmtX(mult.dpi)} = ${money(mult.distributed)} ÷ ${money(mult.paidIn)}; RVPI ${fmtX(mult.rvpi)} = ${money(mult.value)} ÷ ${money(mult.paidIn)}; TVPI ${fmtX(mult.tvpi)} = DPI + RVPI. `
+          + "Paid in is each fund's dated calls, or the purchases the family's consolidated review dates, on or before the value date; paid back is the Distributions figure's own cash to the same date. "
+          + (mult.afterValuation > 1 ? `${money(mult.afterValuation)} of distributions paid after a holding's value date is inside that value, so it is not added again. ` : "")
+          + (mult.equalisation > 1 ? `${money(mult.equalisation)} of equalisation a capital account prints apart is not a distribution and is in neither side; the XIRR counts it as cash received. ` : "")
+          + (mult.atCost.holdings ? `${atCostNote({ atCost: mult.atCost.holdings, atCostValue: mult.atCost.value }, (n) => money(n))} — no multiple: their value is what was paid, so their RVPI would be 1.00× by construction, not by measurement. ` : "")
+          + (writtenOff ? `${writtenOff} ` : "")
+          + "Not annualised: a multiple says how much, never how fast.",
     },
     /* Counts of sets this page already draws, so none is a new measurement. */
     {
@@ -1075,7 +1189,10 @@ export function PrivateMarket() {
       detail: `Every fund row the table draws: the ${tableCounts.valuedFunds} under Private funds, each counted once however many folios hold it`
         + (tableCounts.atCostFunds ? `, the ${tableCounts.atCostFunds} under ${SECTION_COPY.atCost.title}, which the family's consolidated review records at what was paid and no valuation` : "")
         + (tableCounts.noNavFunds ? `, and the ${tableCounts.noNavFunds} under Not valued, which publish no NAV` : "")
-        + ".",
+        + "."
+        // THE COUNT IS OF SURVIVORS (Stage 10fx): the review's write-offs are
+        // on no row, so the hover names them rather than let the count widen.
+        + (writtenOff ? ` ${writtenOff}` : ""),
     },
     {
       id: "folios", label: "Folios", icon: <Layers className="h-4 w-4" />,
@@ -1334,7 +1451,14 @@ export function PrivateMarket() {
     const pooledIn = recs.filter((r) => complete(r.d));
     const pooledOut = recs.filter((r) => !complete(r.d));
     const poolOf = recs.length + atCostFunds;
-    const whose = scope === "total" ? "This is the whole private book, not one fund"
+    /**
+     * THE TOTAL IS OVER THE SURVIVORS (Stage 10fx): the review's write-offs
+     * carry no cost and no value, so they are on no row and in no return — and
+     * the total's hover, which says it is the whole private book, names them
+     * rather than let the caption widen the figure.
+     */
+    const wo = scope === "total" && writtenOff ? ` ${writtenOff}` : "";
+    const whose = scope === "total" ? "This is the whole private book the table draws, not one fund"
       : scope === "section" ? "This band spans several funds"
       : scope === "brand" ? "This brand spans several funds"
       : scope === "legal" ? "This company is held through several lines" : "A family member's row spans their funds";
@@ -1353,7 +1477,7 @@ export function PrivateMarket() {
             : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another" };
         }
         return { shown: true, pct: fig.returnPct, tag: "HPR",
-          note: aggHprNote(held) + (fig.atCostHoldings > 0 ? ` Struck on the valued holdings only: ${atCostNote({ atCost: fig.atCostHoldings, atCostValue: fig.atCostValue }, (n) => money(n))}.` : "") };
+          note: aggHprNote(held, (n) => money(n)) + (fig.atCostHoldings > 0 ? ` Struck on the valued holdings only: ${atCostNote({ atCost: fig.atCostHoldings, atCostValue: fig.atCostValue }, (n) => money(n))}.` : "") + wo };
       }
       if (measure === "xirr") {
         // WHICH RECORDS THE RATE POOLS, carried whether or not it shows one: a
@@ -1396,9 +1520,9 @@ export function PrivateMarket() {
           subYear: subYear.map((x) => ({ name: x.r.name, days: x.w!.windowDays! })),
           withoutSubYear: without?.pct != null && without.annualised ? without.pct : null,
           note: `Pooled across ${pooledIn.length} of ${poolOf} ${unit(poolOf)}: every dated call, every dated payout and each fund's own valuation date, annualised over the ${pooled.windowDays} days since the first call.`
-            + (left ? ` Not in it: ${left}.` : "") + subNote };
+            + (left ? ` Not in it: ${left}.` : "") + subNote + wo };
       }
-      return { shown: false, tag, reason: `${whose}: ${PM_AGG_NO_MEASURE[measure] ?? "no such figure applies"}` };
+      return { shown: false, tag, reason: `${whose}: ${PM_AGG_NO_MEASURE[measure] ?? "no such figure applies"}${wo}` };
     };
   }
   /**
@@ -2100,7 +2224,9 @@ export function PrivateMarket() {
       alsoClause(m.alsoCt.undrawn, "still to call"),
       // EVERY STATEMENT, not the counted set: a second statement of a holding
       // counted once is still an account that sends one.
-      `${m.schemes.length - m.capOutside} of this page’s ${m.scope.accounts.length} private accounts send a capital-account statement, and the family’s own investment register names funds with no statement in this book at all — so ${money(m.cc.uncalled)} is the floor of what the funds can still call, never the ceiling.`,
+      callSince
+        ? `${m.schemes.length - m.capOutside} of this page’s ${m.scope.accounts.length} private accounts send a capital-account statement, and the family’s own investment register names funds with no statement in this book at all, which would make ${money(m.cc.uncalled)} a floor — but each is as of its own statement, and ${callSince} A call since a statement lowers the figure and a fund with no statement raises it, so it is neither a floor nor a ceiling.`
+        : `${m.schemes.length - m.capOutside} of this page’s ${m.scope.accounts.length} private accounts send a capital-account statement, and the family’s own investment register names funds with no statement in this book at all — so ${money(m.cc.uncalled)} is the floor of what the funds can still call, never the ceiling.`,
     ].filter(Boolean).join(" "),
   };
 

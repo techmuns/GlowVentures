@@ -278,3 +278,75 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
     };
   });
 }
+
+/**
+ * ── A DAY MOVE IS STRUCK OVER THE LINES THAT HAVE ONE (Stage 10fx) ─────────
+ *
+ * The Monitor's mandate rows summed `dayChange ?? 0` over every live
+ * constituent and divided by the market value of every live constituent. A
+ * live line can carry NO day change — the quote arrived without a previous
+ * close, or a split / bonus ex-date leaves that close on the pre-action basis
+ * and `applyCorporateActionReturns` nulls the move — and such a line added ₹0
+ * to the numerator and its whole value to the denominator. That is a missing
+ * value blended into a total as zero: the mandate's day % was diluted by every
+ * share whose move nobody measured, and nothing on screen said so.
+ *
+ * So the move and its base are struck over ONE set — the live lines whose day
+ * change is a finite number (and, where the caller passes `inSession`, whose
+ * quote belongs to the session the rest are on: two sessions' moves added
+ * together are not one day's move). Every live line left out is returned with
+ * its reason so the figure's hover can name it; with none struck the move is
+ * `null`, absent, never a measured 0.00%.
+ *
+ * `pct` is over the PRIOR value of the struck lines, `change ÷ (base −
+ * change)`, which is what the page computed before for a whole set.
+ */
+export type DayMoveLeft = { position: Position; reason: string };
+export type DayMove = {
+  /** Σ day change over the struck lines; null when none was struck. */
+  change: number | null;
+  /** change ÷ (base − change) × 100; null when nothing was struck or the prior value is not positive. */
+  pct: number | null;
+  /** Σ market value of the struck lines — the day figure's own base. */
+  base: number;
+  /** Σ market value of every live line, struck or not. */
+  liveMV: number;
+  struck: number;
+  /** Live lines whose move could not be counted, each with why. */
+  left: DayMoveLeft[];
+};
+export const DAY_NO_PREV_CLOSE = "no measurable day change: the quote carried no previous close, or a corporate action's ex-date leaves that close on another basis";
+export const DAY_OTHER_SESSION = "its quote belongs to an older trading session than the rest";
+export function dayMoveOf(
+  ps: readonly Position[],
+  inSession: (p: Position) => boolean = () => true,
+): DayMove {
+  let change = 0, base = 0, liveMV = 0, struck = 0;
+  const left: DayMoveLeft[] = [];
+  for (const p of ps) {
+    if (!p.live) continue;
+    liveMV += p.marketValue;
+    if (typeof p.dayChange !== "number" || !Number.isFinite(p.dayChange)) { left.push({ position: p, reason: DAY_NO_PREV_CLOSE }); continue; }
+    if (!inSession(p)) { left.push({ position: p, reason: DAY_OTHER_SESSION }); continue; }
+    change += p.dayChange;
+    base += p.marketValue;
+    struck++;
+  }
+  const prior = base - change;
+  return {
+    change: struck ? change : null,
+    pct: struck && prior > 0 ? (change / prior) * 100 : null,
+    base, liveMV, struck, left,
+  };
+}
+
+/** The lines a day figure leaves out, in words for its hover; "" when none. */
+export function dayMoveLeftNote(left: readonly DayMoveLeft[]): string {
+  if (!left.length) return "";
+  const by = new Map<string, string[]>();
+  for (const { position, reason } of left) {
+    const names = by.get(reason) ?? by.set(reason, []).get(reason)!;
+    if (!names.includes(position.security)) names.push(position.security);
+  }
+  return ` Left out of the move and its base: ${[...by].map(([why, names]) => `${names.join(", ")} — ${why}`).join("; ")}.`;
+}

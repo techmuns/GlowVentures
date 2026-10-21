@@ -86,11 +86,14 @@ ok("...and every one keeps the statement's own figure beside it",
 // each: a class switch carried (above), FIFO where units LEFT a holding
 // (`shared/fifo.mjs` — Neo Infra's capital redemption), and a contribution whose
 // statement prints stamp duty against it, costed at what was PAID
-// (`grossPaid.test.ts`, VD-24). Nothing else may.
+// (`grossPaid.test.ts`, VD-24). A fourth since Stage 10fx: a review line whose
+// dated rows sold units, costed FIFO over them (`measuredFromRows` in
+// `scripts/lib/reviewBook.mjs`), keeps the review's purchases less sale proceeds
+// beside it — its source is still the review. Nothing else may.
 ok("the statement's figure appears ONLY where the book's cost differs from it",
   BOOK_POSITIONS.filter((p) => p.printedCostBasis !== undefined).every((p) =>
     (p.costBasisSource === "carried-through-switch" || p.costBasisSource === "fifo"
-      || p.costBasisSource === "gross-paid")
+      || p.costBasisSource === "gross-paid" || (p.review === true && p.costBasisSource === "review" && p.realizedPnL != null))
     && p.printedCostBasis !== p.costBasis));
 ok("the dated record itself keeps the class each payment BOUGHT",
   BOOK_CAPITAL_MOVES.every((m) => !("carriedFrom" in m)));

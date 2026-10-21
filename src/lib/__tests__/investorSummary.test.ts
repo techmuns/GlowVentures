@@ -5,6 +5,17 @@ import { investorPeriodReturn, investorPeriodStart, investorAnnualReturn, annual
 assert.equal(annualisedReturnIssue(null, 500).issueLabel, "Unable to calculate");
 assert.equal(annualisedReturnIssue(10, 134).issueLabel, "Insufficient history");
 assert.equal(annualisedReturnIssue(10, 500).reason, null);
+// D3 (Stage 10fx): a window that opens on the FY start can never reach a year
+// before the next FY's records open, so the reason says so instead of reading
+// like a card that is waiting — and still strikes no annual rate.
+{
+  const fy = annualisedReturnIssue(43.56, 189, "2026-04-01");
+  assert.match(fy.reason!, /^189 days recorded · records open each 1 Apr$/);
+assert.match(fy.detail!, /the verified records open at the financial year's start/);
+  assert.match(fy.reason!, /since-inception record is reconciled/);
+  assert.doesNotMatch(fy.reason!, /need at least 1 year/);
+  assert.equal(annualisedReturnIssue(43.56, 189, "2026-02-10").reason, "189 days recorded · need at least 1 year");
+}
 
 const today = new Date(2026, 8, 28, 12);
 const emptyFunds = { peFunds: [], preIpoFunds: [], unlistedCompanies: [], debtFunds: [], closedFunds: [], startups: [] };

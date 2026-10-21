@@ -5,7 +5,6 @@
 //   • YTD   — needs entityNavHistory (a per-entity opening NAV for the FY).
 import type { Portfolio, Position } from "./types";
 import { xirrPct, totalReturnFromXirr } from "./bucketXirr";
-import { fyStartYear } from "./analytics";
 import { ownerDisplayName } from "./owners";
 
 /**
@@ -193,25 +192,49 @@ export function ownerMeasuredReturn(statement: Portfolio, positions: Position[],
   };
 }
 
-// Financial-year-to-date return (1 Apr → as-of) for one owning entity, using the
-// Simple Dietz method so mid-year contributions don't distort the figure.
-// Returns a non-annualized percentage for the period, or null when the entity
-// carries no opening NAV for the financial year (this book carries none, so it
-// renders "—" — never a fabricated figure against a partial opening).
-export function entityYtdPct(portfolio: Portfolio, owner: string, currentMV: number): number | null {
+/**
+ * Financial-year-to-date return (FY opening → the entity's latest statement
+ * NAV) for one owning entity, by MODIFIED DIETZ: each dated contribution
+ * counted for the share of the window it was invested. Non-annualised; null
+ * when the entity carries no opening NAV for the financial year (this book
+ * carries none, so it renders "—" — never a figure against a partial opening).
+ *
+ * Stage 10fx, three latent defects, each of which would have printed a wrong
+ * figure the day an `entityNavHistory` arrived:
+ *   • DATES WERE MIXED. The FY start was LOCAL midnight (`new Date(y, 3, 1)`)
+ *     and every row's date was parsed as UTC, so in India 1 Apr 00:00 UTC is
+ *     after 1 Apr 00:00 IST and a 1 April opening NAV was dropped. Every
+ *     comparison is now on the ISO date strings themselves.
+ *   • THE CLOSE WAS LIVE. It closed on `currentMV` — the page's live value —
+ *     against a STATEMENT opening and flows complete only to their statement.
+ *     It closes on the entity's own latest statement NAV, on that NAV's date,
+ *     with the flows through that date; `currentMV` is no longer read.
+ *   • SIMPLE DIETZ (½ weight on every flow) where every flow is dated.
+ */
+export function entityYtdPct(portfolio: Portfolio, owner: string, _currentMV?: number): number | null {
   const nav = portfolio.entityNavHistory?.[owner];
-  if (!nav || nav.length === 0 || currentMV <= 0) return null;
-  const asOf = new Date(portfolio.asOf);
-  const fyStart = new Date(fyStartYear(asOf), 3, 1); // 1 April of the current FY
-  const opening = [...nav]
-    .filter((n) => new Date(n.date) <= fyStart)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-  if (!opening || opening.nav <= 0) return null;
-  // Net capital contributed during the FY-to-date window (amount < 0 = capital in).
-  const contrib = (portfolio.entityCashFlows?.[owner] ?? [])
-    .filter((f) => { const d = new Date(f.date); return d > fyStart && d <= asOf; })
-    .reduce((s, f) => s + (-f.amount), 0);
-  const gain = currentMV - opening.nav - contrib;
-  const base = opening.nav + contrib / 2;
+  if (!nav || nav.length === 0 || !portfolio.asOf) return null;
+  const asOf = portfolio.asOf.slice(0, 10);
+  const y = Number(asOf.slice(0, 4)), m = Number(asOf.slice(5, 7));
+  const fyStart = `${m >= 4 ? y : y - 1}-04-01`;
+  const sorted = [...nav].filter((n) => /^\d{4}-\d{2}-\d{2}/.test(n.date)).sort((a, b) => a.date.localeCompare(b.date));
+  // The opening is the FY's opening value: a 31 Mar close or a 1 Apr print.
+  const opening = sorted.filter((n) => n.date.slice(0, 10) <= fyStart).at(-1);
+  if (!opening || !(opening.nav > 0)) return null;
+  const open = opening.date.slice(0, 10);
+  const closing = sorted.filter((n) => n.date.slice(0, 10) > open && n.date.slice(0, 10) <= asOf).at(-1);
+  if (!closing || !Number.isFinite(closing.nav) || closing.nav < 0) return null;
+  const close = closing.date.slice(0, 10);
+  const span = daysBetweenIso(open, close);
+  if (!(span > 0)) return null;
+  // Investor's view: amount < 0 is capital in, so −amount is the money added.
+  const flows = (portfolio.entityCashFlows?.[owner] ?? [])
+    .filter((f) => { const d = f.date.slice(0, 10); return d > open && d <= close; });
+  const added = flows.reduce((s, f) => s - f.amount, 0);
+  const weighted = flows.reduce((s, f) => s - f.amount * (daysBetweenIso(f.date.slice(0, 10), close) / span), 0);
+  const gain = closing.nav - opening.nav - added;
+  const base = opening.nav + weighted;
   return base > 0 ? (gain / base) * 100 : null;
 }
+
+const daysBetweenIso = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 864e5);

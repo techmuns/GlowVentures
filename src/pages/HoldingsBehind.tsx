@@ -318,7 +318,9 @@ export function HoldingsBehind() {
    * them can be struck on the cost of shares while another is on capital.
    */
   const invested = investedWithCapital(cost, ret.fifo);
-  const names = new Set(rows.map((r) => r.securityKey));
+  // A name is an investment where the set ranks investments (`nameOf`, the
+  // top-names page — Stage 10fx), and a key everywhere else.
+  const names = new Set(rows.map((r) => d.nameOf?.(r) ?? r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
   /**
    * THE ACCOUNTS THE RATE IS ACTUALLY STRUCK ON, for the derivation card below.
