@@ -88,6 +88,7 @@ jobs:
           done
           CHROME="$(command -v google-chrome)" node scripts/dev/check-sector-return-details.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-publication-refresh.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs
 

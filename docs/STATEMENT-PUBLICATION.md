@@ -98,6 +98,13 @@ That manifest names the canonical book and position evidence; document entries n
 their field evidence and immutable normalized document. These are authenticated static
 backend endpoints, not a second editable register. No new service or UI is required.
 
+An invisible browser controller checks the published revision and reloads the whole
+application at the current URL. It never swaps a new positions array into modules
+still carrying old cash flows/lots. Upload/folder-reading activity, focused controls,
+dialogs and draft/scenario edits defer replacement; navigation then picks up the new
+version. A persisted retry guard prevents stale HTML or an outage causing reload loops.
+There are no new controls or layout changes.
+
 The book builder records its actual selected normalized holding pointer. Audit links
 use that pointer rather than finding a statement with an equal market value. Evidence
 checks provider/account/owner/member/security/quantity and valuation before publication.

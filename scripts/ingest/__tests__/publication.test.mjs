@@ -11,6 +11,7 @@ import { checkSeal, commitDelivery } from '../publish-delivery.mjs';
 import { finalizationGate } from '../finalize-delivery.mjs';
 import { completedBotReview, deploymentContains, monitorPublication } from '../lib/intakePublication.mjs';
 import { git as repositoryGit } from '../verify-publication.mjs';
+import { refreshForPublication, startPublicationRefresh } from '../../../shared/publicationRefresh.mjs';
 import { extractLayout } from '../lib/layout.mjs';
 import { findTable, readRows } from '../lib/table.mjs';
 import { parseNum } from '../lib/parseNum.mjs';
@@ -272,4 +273,62 @@ test('a worker resumes the saved branch after PR/CI network failures without dup
   assert.equal(first.status, 'processing'); assert.equal(first.ciDispatched, false); assert.match(first.pullRequest, /pull\/2$/);
   const next = await monitorPublication(first, { gh, currentBase: 'base' });
   assert.equal(next.status, 'processing'); assert.equal(next.ciDispatched, true); assert.equal(creates, 1); assert.equal(dispatches, 2);
+});
+
+function refreshBrowser() {
+  const values = new Map(), listeners = new Map(), wake = new Map(), loads = [];
+  const doc = { visibilityState: 'visible', activeElement: {}, busy: false, hasFocus: () => true,
+    querySelector: () => doc.busy ? {} : null,
+    addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) };
+  const browser = { document: doc, navigator: { onLine: true }, sessionStorage: { getItem: k => values.get(k) ?? null, setItem: (k, v) => values.set(k, v) },
+    location: { pathname: '/audit', reload: () => loads.push(browser.location.pathname) },
+    setTimeout: (fn, delay) => { if (delay === 0) queueMicrotask(fn); return 2; }, clearTimeout: () => {}, setInterval: () => 1, clearInterval: () => {},
+    addEventListener: (name, fn) => wake.set(name, fn), removeEventListener: name => wake.delete(name),
+  };
+  return { browser, doc, listeners, values, loads };
+}
+test('new book versions reload as a whole once, preserve the route and avoid storage/offline loops', () => {
+  const { browser, loads } = refreshBrowser();
+  const options = { revision: 'a'.repeat(20), published: { schemaVersion: 1, revision: 'b'.repeat(20) }, browser, now: 1000 };
+  assert.equal(refreshForPublication({ ...options, blocked: true }), false);
+  assert.equal(refreshForPublication(options), true); assert.deepEqual(loads, ['/audit']);
+  assert.equal(refreshForPublication({ ...options, now: 2000 }), false);
+  assert.equal(refreshForPublication({ ...options, published: { schemaVersion: 1, revision: '<invalid>' } }), false);
+  browser.navigator.onLine = false; assert.equal(refreshForPublication({ ...options, now: 400000 }), false);
+  browser.navigator.onLine = true; browser.sessionStorage.setItem = () => { throw new Error('storage disabled'); };
+  assert.equal(refreshForPublication({ ...options, now: 400000 }), false);
+});
+test('draft edits defer data replacement until navigation; controllers clean up', async () => {
+  const { browser, doc, listeners, loads } = refreshBrowser();
+  let published = { schemaVersion: 1, revision: 'a'.repeat(20) };
+  browser.fetch = async () => ({ ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => published });
+  const controller = startPublicationRefresh({ revision: published.revision, browser });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  listeners.get('input')({ target: { tagName: 'TEXTAREA' } });
+  published = { schemaVersion: 1, revision: 'b'.repeat(20) };
+  await controller.check(); assert.equal(loads.length, 0);
+  browser.location.pathname = '/monitor'; await controller.check(); assert.deepEqual(loads, ['/monitor']);
+  controller.stop(); assert.equal(listeners.size, 0);
+  await controller.check(); assert.equal(loads.length, 1);
+});
+test('upload activity defers refresh, and file selection does not leave a permanent dirty flag', async () => {
+  const { browser, doc, listeners, loads } = refreshBrowser();
+  browser.fetch = async () => ({ ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => ({ schemaVersion: 1, revision: 'b'.repeat(20) }) });
+  doc.busy = true;
+  const controller = startPublicationRefresh({ revision: 'a'.repeat(20), browser });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  listeners.get('change')({ target: { tagName: 'INPUT', type: 'file' } });
+  await controller.check(); assert.equal(loads.length, 0);
+  doc.busy = false; await controller.check(); assert.equal(loads.length, 1);
+  controller.stop();
+});
+test('unmounting with a pending version request cannot reload a replaced page', async () => {
+  const { browser, loads } = refreshBrowser();
+  let respond, signal;
+  browser.fetch = (_url, options) => { signal = options.signal; return new Promise(resolve => { respond = resolve; }); };
+  const controller = startPublicationRefresh({ revision: 'a'.repeat(20), browser });
+  controller.stop(); assert.equal(signal.aborted, true);
+  respond({ ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => ({ schemaVersion: 1, revision: 'b'.repeat(20) }) });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(loads.length, 0);
 });

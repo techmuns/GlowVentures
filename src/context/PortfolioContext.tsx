@@ -7,6 +7,8 @@
 // empty state by <Gate> in App.tsx — a book of zeros must never render as if the
 // family's holdings had been measured at zero.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { startPublicationRefresh } from "../../shared/publicationRefresh.mjs";
+import readModels from "@/data/readModels.json";
 import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
@@ -669,6 +671,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // (never set from an effect first), so the page never paints the whole family
   // for one frame before narrowing.
   const location = useLocation();
+  const publicationRefresh = useRef<ReturnType<typeof startPublicationRefresh> | null>(null);
+  useEffect(() => {
+    const controller = startPublicationRefresh({ revision: readModels.revision, path: `${import.meta.env.BASE_URL}publication.json` });
+    publicationRefresh.current = controller;
+    return () => { controller.stop(); publicationRefresh.current = null; };
+  }, []);
+  useEffect(() => { void publicationRefresh.current?.check(); }, [location.pathname]);
   const navigate = useNavigate();
   const memberOpts = useMemo(() => memberOptions(BOOK_ACCOUNTS, BOOK_OWNERS), []);
   const knownOwners = useMemo(() => new Set(memberOpts.map((o) => o.ownerId)), [memberOpts]);
