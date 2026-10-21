@@ -141,7 +141,7 @@ One line per area; the history files explain each in depth.
   `functions/api/investment-profiles.js`, `tileSets.ts` +
   `functions/api/tile-sets.js` — the shared store: one JSON file on the repo's
   `dashboard-store` branch, written with `GLOW_GITHUB_TOKEN` (`shared/dashboardStore.mjs`,
-  Stage 10ew; the repo is public, so everything saved there is public).
+  Stage 10ex; the repo is public, so everything saved there is public).
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.

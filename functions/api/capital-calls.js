@@ -15,7 +15,7 @@
 // for all" rules that out in five words: a call entered on one laptop has to be
 // on every screen that opens the dashboard. So it lives in the dashboard's shared
 // store — one JSON file in the GitHub repository (`shared/dashboardStore.mjs`,
-// Stage 10ew) — written through this function, behind the same edge password gate as every other `/api/*` route — `_middleware.js`
+// Stage 10ex) — written through this function, behind the same edge password gate as every other `/api/*` route — `_middleware.js`
 // answers any request without the session cookie with the login page, POSTs
 // included, before this file ever runs.
 //

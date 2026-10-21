@@ -13619,7 +13619,7 @@ async function installCallStore(page) {
 
 /**
  * THE STORE BEFORE ITS BINDING EXISTS — the production state until somebody
- * gives the site its `GLOW_GITHUB_TOKEN` secret (Stage 10ew). The function's own 503.
+ * gives the site its `GLOW_GITHUB_TOKEN` secret (Stage 10ex). The function's own 503.
  */
 /**
  * A READER THE EDGE GATE HAS SIGNED OUT. The gate answers every `/api/*` path
@@ -29383,7 +29383,7 @@ const INVARIANTS = {
      * The state production is in until the site has its GitHub token. Every cell is a
      * button reading "Not set up", the header note says it once, and clicking
      * one opens the editor — which states the reason, gives the one-time
-     * steps naming the GitHub token secret the function reads (Stage 10ew), and keeps Save
+     * steps naming the GitHub token secret the function reads (Stage 10ex), and keeps Save
      * off. "Saved for everyone" is not printed, because nothing here is.
      */
     ["every cell is a button reading Not set up, and the header says it once", (t, ctx) => {

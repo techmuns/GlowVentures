@@ -17661,26 +17661,26 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-08-31",
     "date": "2026-08-31",
-    "nav": 2530373230.28,
-    "accountsOnDate": 2,
-    "accountsCarried": 15,
-    "flowIn": 0,
+    "nav": 2534513699.73,
+    "accountsOnDate": 3,
+    "accountsCarried": 14,
+    "flowIn": -14984.6,
     "unreportedFlowValue": 5781806.04,
     "linkOpen": 2514297035.48,
-    "linkClose": 2530373230.28,
+    "linkClose": 2534513699.73,
     "linkAccounts": 17,
     "panelComplete": true
   },
   {
     "period": "2026-09-29",
     "date": "2026-09-29",
-    "nav": 2494928235.38,
+    "nav": 2499068704.83,
     "accountsOnDate": 2,
     "accountsCarried": 15,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2530373230.28,
-    "linkClose": 2494928235.38,
+    "linkOpen": 2534513699.73,
+    "linkClose": 2499068704.83,
     "linkAccounts": 17,
     "panelComplete": true
   },
@@ -17690,9 +17690,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "nav": 2478694553.51,
     "accountsOnDate": 9,
     "accountsCarried": 8,
-    "flowIn": -95989.4,
+    "flowIn": -81004.8,
     "unreportedFlowValue": 0,
-    "linkOpen": 2494928235.38,
+    "linkOpen": 2499068704.83,
     "linkClose": 2478694553.51,
     "linkAccounts": 17,
     "panelComplete": true
@@ -18038,6 +18038,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "nav": 107025588.35
     },
     {
+      "period": "2026-08-31",
+      "date": "2026-08-31",
+      "nav": 111166057.8
+    },
+    {
       "period": "2026-09-30",
       "date": "2026-09-30",
       "nav": 107132060.02
@@ -18227,7 +18232,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "svan-investment-managers-llp-8710090",
-      "points": 5,
+      "points": 6,
       "first": "2026-04-30",
       "last": "2026-09-30",
       "latestValue": 107132060.02,
@@ -35730,6 +35735,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 17.45,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35744,6 +35752,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 21.99,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35758,6 +35769,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 18.55,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35780,6 +35794,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 17.92,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35794,6 +35811,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 21.47,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35808,6 +35828,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 18.33,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35830,6 +35853,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 9.76,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35850,6 +35876,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 3.69,
           "m6": 4.7,
           "y1": 7.91,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.03,
           "siAnnualised": true,
           "feeBasis": null
@@ -35870,6 +35899,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 5.87,
           "m6": null,
           "y1": 12.02,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.65,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35892,6 +35924,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 15.3,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35912,6 +35947,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 3.64,
           "m6": 4.53,
           "y1": 7.41,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 9.65,
           "siAnnualised": true,
           "feeBasis": null
@@ -35932,6 +35970,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 5.87,
           "m6": null,
           "y1": 11.56,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.28,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35954,6 +35995,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -0.84,
           "m6": null,
           "y1": 5.77,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 14.15,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35968,6 +36012,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -4.71,
           "m6": null,
           "y1": -3.81,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -0.5,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -35988,6 +36035,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36002,6 +36052,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36022,7 +36075,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 5.77,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 14.15,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -36036,7 +36092,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 17.16,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 11.44,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -36050,7 +36109,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": -3.81,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": -0.5,
           "siAnnualised": null,
           "feeBasis": null
         }
@@ -36070,6 +36132,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -0.84,
           "m6": 20.47,
           "y1": 5.77,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 14.15,
           "siAnnualised": true,
           "feeBasis": null
@@ -36084,6 +36149,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -4.71,
           "m6": 4.64,
           "y1": -3.81,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -0.5,
           "siAnnualised": true,
           "feeBasis": null
@@ -36106,6 +36174,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 2.44,
           "siAnnualised": false,
           "feeBasis": "after"
@@ -36120,6 +36191,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -12.91,
           "siAnnualised": false,
           "feeBasis": "after"
@@ -36140,6 +36214,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36154,6 +36231,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36174,6 +36254,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.68,
           "m6": 10.19,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 2.44,
           "siAnnualised": false,
           "feeBasis": null
@@ -36188,6 +36271,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -7.4,
           "m6": -0.99,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -12.91,
           "siAnnualised": false,
           "feeBasis": null
@@ -36210,6 +36296,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.2,
           "siAnnualised": false,
           "feeBasis": "after"
@@ -36224,6 +36313,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -12.91,
           "siAnnualised": false,
           "feeBasis": "after"
@@ -36244,6 +36336,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36258,6 +36353,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36278,6 +36376,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.02,
           "m6": 11.04,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.2,
           "siAnnualised": false,
           "feeBasis": null
@@ -36292,6 +36393,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -7.4,
           "m6": -0.99,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -12.91,
           "siAnnualised": false,
           "feeBasis": null
@@ -36314,6 +36418,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -2.8,
           "m6": null,
           "y1": 9.37,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.09,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36328,6 +36435,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.52,
           "m6": null,
           "y1": -1.93,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 5.12,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36348,6 +36458,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36362,6 +36475,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36382,6 +36498,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.25,
           "m6": 11.89,
           "y1": 10.93,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 9.53,
           "siAnnualised": true,
           "feeBasis": null
@@ -36396,6 +36515,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -4.96,
           "m6": 5.16,
           "y1": -3.66,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.38,
           "siAnnualised": true,
           "feeBasis": null
@@ -36418,6 +36540,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -2.81,
           "m6": null,
           "y1": 9.43,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 9.32,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36432,6 +36557,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.52,
           "m6": null,
           "y1": -1.93,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.81,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36452,7 +36580,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 9.97,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 11.42,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -36466,7 +36597,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 8.56,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 10.57,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -36480,7 +36614,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": -1.96,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 5.33,
           "siAnnualised": null,
           "feeBasis": null
         }
@@ -36500,6 +36637,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36514,6 +36654,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36534,6 +36677,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.26,
           "m6": 11.9,
           "y1": 10.97,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 8.77,
           "siAnnualised": true,
           "feeBasis": null
@@ -36548,6 +36694,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -4.96,
           "m6": 5.16,
           "y1": -3.66,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 2.12,
           "siAnnualised": true,
           "feeBasis": null
@@ -36570,6 +36719,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.67,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36584,6 +36736,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -1.03,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36606,7 +36761,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 7.27,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 5.86,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -36620,7 +36778,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 6.57,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 3.15,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -36634,7 +36795,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 2.98,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": -0.12,
           "siAnnualised": null,
           "feeBasis": null
         }
@@ -36656,7 +36820,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 10.72,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 3.31,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -36670,7 +36837,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 8.27,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 2.24,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -36684,7 +36854,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": -2.33,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": -0.77,
           "siAnnualised": null,
           "feeBasis": null
         }
@@ -36706,6 +36879,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 18.39,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36720,6 +36896,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -2.26,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36734,6 +36913,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 4.36,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36754,6 +36936,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36768,6 +36953,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36788,6 +36976,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -5.96,
           "m6": 33.39,
           "y1": 16.63,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 18.39,
           "siAnnualised": true,
           "feeBasis": null
@@ -36802,6 +36993,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -5.31,
           "m6": 3.98,
           "y1": -4.42,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -2.26,
           "siAnnualised": true,
           "feeBasis": null
@@ -36816,6 +37010,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 0.09,
           "m6": 20.71,
           "y1": 5.7,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 4.36,
           "siAnnualised": true,
           "feeBasis": null
@@ -36838,6 +37035,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 15,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36852,6 +37052,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -2.76,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36866,6 +37069,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.05,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -36886,6 +37092,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36900,6 +37109,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -36920,6 +37132,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 11.68,
           "m6": 29.88,
           "y1": 21.51,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 19.82,
           "siAnnualised": true,
           "feeBasis": null
@@ -36934,6 +37149,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 6.33,
           "m6": 1.98,
           "y1": 4.93,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.46,
           "siAnnualised": true,
           "feeBasis": null
@@ -36948,6 +37166,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 9.74,
           "m6": 15.25,
           "y1": 10.43,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 6.52,
           "siAnnualised": true,
           "feeBasis": null
@@ -37389,6 +37610,37 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "residual": -0.01,
       "linesTotal": 385455077.33,
       "withheldReason": null
+    },
+    {
+      "reportType": "investor-report",
+      "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
+      "periodFrom": "2026-04-01",
+      "periodTo": "2026-10-07",
+      "basis": "financial-year-to-date",
+      "opening": 312627059.69,
+      "contribution": 0,
+      "withdrawal": 177851,
+      "netCapitalInOut": null,
+      "realized": -1763423.42,
+      "unrealized": 74695551.87,
+      "income": 1781297.6,
+      "fees": 1678079.5,
+      "expenses": 269390.05,
+      "closing": 385455077.32,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": 45319.65,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": 285231.78,
+      "linesTotal": 385169845.54,
+      "withheldReason": "Its lines do not add to its closing value. Not read from this report: gain prior to takeover and accrued income."
     },
     {
       "reportType": "performance-summary",
@@ -38218,6 +38470,39 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "openingNil": false,
       "residual": 0.01,
       "linesTotal": 164761718.63,
+      "withheldReason": null
+    }
+  ],
+  "svan-investment-managers-llp-8710090": [
+    {
+      "reportType": "investor-report",
+      "source": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "periodFrom": "2026-09-01",
+      "periodTo": "2026-09-30",
+      "basis": "window",
+      "opening": 111166057.8,
+      "contribution": 0,
+      "withdrawal": 6526,
+      "netCapitalInOut": null,
+      "realized": -122452.97,
+      "unrealized": -3926509.16,
+      "income": 90630,
+      "fees": 0,
+      "expenses": 1755,
+      "closing": 107240276.27,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": 44076.25,
+      "otherExpenses": 3244.65,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0,
+      "linesTotal": 107240276.27,
       "withheldReason": null
     }
   ],

@@ -111,7 +111,7 @@ export const CAUSE_WORD: Record<StoreCause, string> = {
  * ── HOW TO SWITCH IT ON, ONCE ───────────────────────────────────────────────
  *
  * The store is one JSON file in this GitHub repository, on its own
- * `dashboard-store` branch (`shared/dashboardStore.mjs`, Stage 10ew). The site
+ * `dashboard-store` branch (`shared/dashboardStore.mjs`, Stage 10ex). The site
  * writes it with a GitHub token, which nothing in the repository can hold — a
  * token committed here would be a token anyone with the code could use — so
  * the editor names the steps rather than leaving the next reader to find them

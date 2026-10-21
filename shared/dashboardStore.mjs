@@ -1,7 +1,7 @@
 // THE DASHBOARD'S SHARED STORE, KEPT IN THE GITHUB REPOSITORY.
 //
 //   *"We will not store in Cloudflare. Instead, we should try to store it in
-//    GitHub."* — the family, 21 Oct 2026 (Stage 10ew).
+//    GitHub."* — the family, 21 Oct 2026 (Stage 10ex).
 //
 // What the family types on the dashboard — a capital call, a fund's strategy, a
 // company's description, a tile layout — has to be saved once and seen by
