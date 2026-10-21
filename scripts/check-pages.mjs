@@ -18276,6 +18276,37 @@ const CIO_TILES_SAVED = [
     /saved for everyone/i.test(ctx?.tileSaved?.savedWhere ?? "") && /saved for everyone/i.test(ctx?.tileSaved?.savedAfter ?? "")],
 ];
 
+// Headline cards now show the requested available subset; strict whole-book
+// measurements elsewhere retain MWR_BOOK / COSTED_BOOK's original contract.
+const AVAILABLE_CARDS_BOOK = await (async () => {
+  try {
+    const { build } = await import('esbuild');
+    const rootPath = decodeURIComponent(new URL('..', import.meta.url).pathname);
+    const out = await build({ stdin: { contents: `
+      import { availableCardReturns, statementReturnInputs } from './src/lib/availableCardReturns';
+      import { dedupedPositions } from './src/lib/analytics';
+      import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from './src/data/glowData';
+      const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
+      export const cards = (display) => availableCardReturns(book, dedupedPositions(display), statementReturnInputs(book), new Date());
+    `, resolveDir: rootPath }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': rootPath + '/src' }, logLevel: 'error' });
+    const mod = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
+    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'));
+  } catch (e) { console.error('Headline coverage inputs unavailable:', e.message); return null; }
+})();
+const headlineMatches = (tile, expected, field = 'return') => {
+  if (!tile || !expected || !tile.coverage || tile.returnInfo !== 1) return false;
+  const raw = tile.coverage, value = field === 'gain' ? expected.total.gain : expected.total.returnPct;
+  const shown = field === 'gain' ? money2cr(tile.value ?? '') * 1e7 : pctIn(tile.value)?.v;
+  return value != null && Number.isFinite(shown) && Math.abs(shown - value) <= (field === 'gain' ? compactTieCr(shown / 1e7) * 1e7 : .051)
+    && Math.abs(Number(raw.cardGain) - expected.total.gain) < .001
+    && Math.abs(Number(raw.cardReturn) - expected.total.returnPct) < 1e-8
+    && Number(raw.cardCovered) === expected.coveredHoldings
+    // A quote feed can add custody shares to this no-feed display baseline.
+    && Number(raw.cardHoldings) >= expected.totalHoldings
+    && Number(raw.cardAccounts) === expected.coveredAccounts
+    && /Available data/.test(tile.sub ?? '');
+};
+
 const CIO_SHARED = [
     /**
      * ── THE REGISTER'S SENTINEL DERIVED, SO ITS ABSENCE CHECK MEANS SOMETHING ─
@@ -18328,7 +18359,7 @@ const CIO_SHARED = [
     return !!nav && /of=book\b/.test(nav.links[0] ?? "");
   }],
   ["the yearly return has its own tile", (t, ctx) =>
-    ctx?.kpiTiles?.some((x) => x.slot === "annualised" && /annualised return/i.test(x.label))],
+    ctx?.kpiTiles?.some((x) => x.slot === "annualised" && /annualised return|return over available history/i.test(x.label))],
   /**
    * ── THE TILES CARRY A LABEL AND A FIGURE, AND NOTHING ELSE ────────────────
    *
@@ -18355,7 +18386,7 @@ const CIO_SHARED = [
     const value = ctx?.kpiTiles?.find((x) => x.slot === "value");
     const gain = ctx?.kpiTiles?.find((x) => x.slot === "gain");
     return !!value && /Valuations|Live quotes/.test(value.sub ?? "")
-      && !!gain && /Recorded/.test(gain.sub ?? "") && /Separate income excluded/.test(gain.sub ?? "");
+      && headlineMatches(gain, AVAILABLE_CARDS_BOOK?.gain, "gain");
   }],
   ["...and a tile with no figure still names why", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
@@ -18402,9 +18433,9 @@ const CIO_SHARED = [
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const at = (re) => ctx.kpiTiles.find((x) => re.test(x.label))?.links?.[0] ?? "";
     return at(/portfolio value/i) === "/holdings?of=book"
-      && /of=book&facet=costed\b/.test(at(/gain \/ loss/i))
-      && at(/annualised return/i) === "/performance?summary=annualised#investor-return"
-      && at(/return this financial year/i) === "/performance?summary=fytd#investor-return";
+      && at(/gain \/ loss/i) === "/cio?tab=returns&rp=inception&rtype=absolute"
+      && at(/annualised return|return over available history/i) === "/cio?tab=returns&rp=fytd&rtype=xirr"
+      && at(/return this financial year/i) === "/cio?tab=returns&rp=fytd&rtype=xirr";
   }],
   /**
    * ── CURRENT VALUE AND CAPITAL INVESTED ARE ONE TILE AND ONE PAGE ─────────
@@ -18532,11 +18563,10 @@ const CIO_SHARED = [
     const titles = ctx?.titles ?? [];
     return titles.some((x) => /NOT IN THIS FIGURE: ₹[\d,.]+\s*(?:Cr|L|K)? of accrued income/i.test(x));
   }],
-  ["the annualised tile states its period and keeps short histories off a yearly scale", (t, ctx) => {
-    const tile = ctx?.kpiTiles?.find((x) => x.slot === "annualised");
-    if (!tile || !MWR_BOOK) return false;
-    return (tile.hover ?? "").includes(MWR_BOOK.lastClose)
-      && (MWR_BOOK.windowDays >= 365 ? /p.a./.test(tile.value ?? "") : tile.absent);
+  ["the history card shows available records and names its actual scale", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'annualised'), r = AVAILABLE_CARDS_BOOK?.history;
+    return headlineMatches(tile, r) && (tile.hover ?? '').includes(r.to)
+      && (r.total.measured?.basis === 'annual' ? /p.a./.test(tile.value ?? '') : /not annualised/.test(tile.second ?? ''));
   }],
   /**
    * ...AND THE RATE AND ITS WINDOW ARE THE BOOK'S, ON STATEMENT VALUES, TO THE
@@ -18548,21 +18578,10 @@ const CIO_SHARED = [
    * can reach.
    */
   ["the money-weighted tile is the statement-basis rate, de-annualised to the pool's last close", (t, ctx) => {
-    if (!MWR_BOOK) return { notChecked: "the book's opening-value accounts could not be read on this run" };
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    const tile = ctx.kpiTiles.find((x) => /^(money-weighted return|xirr \(annualised\))$/i.test(x.label));
-    if (!tile) return { notChecked: "the reader's strip does not show the money-weighted tile" };
-    // Never a partial pool: with any account holding value unmeasured the tile
-    // is a dash that counts them, and its hover says no whole-book rate is struck.
-    if (!MWR_BOOK.whole) return !/ds*%/.test(tile.value ?? "")
-      && (tile.sub ?? "").includes(`${MWR_BOOK.missing} of ${MWR_BOOK.total} accounts need opening values`)
-      && /No whole-book money-weighted return/.test(tile.hover ?? "");
-    const shown = Number(/([+\-−]?\d+(?:\.\d+)?)\s*%/.exec(tile.value ?? "")?.[1]?.replace("−", "-"));
-    const days = Number(/the window is (\d+) days/i.exec(tile.hover ?? "")?.[1]);
-    // The printed figure carries one decimal; half of it is the bound.
-    return Number.isFinite(shown) && Math.abs(shown - MWR_BOOK.toDate) <= 0.05 + 1e-9
-      && days === MWR_BOOK.windowDays
-      && (tile.hover ?? "").includes(MWR_BOOK.lastClose);
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'mwr');
+    if (!tile) return notChecked('this strip does not show the money-weighted card');
+    return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.history)
+      && (tile.hover ?? '').includes(AVAILABLE_CARDS_BOOK.history.to);
   }],
   // A newer book date exercises the distinction here. When every selected
   // close reaches it, the synthetic account-return test still proves that a
@@ -18638,11 +18657,11 @@ const CIO_SHARED = [
       // is summed over. Each entry is [what the reader clicks, where it goes].
       const tiles = [
         [/^portfolio value$/i, "/holdings?of=book"],
-        [/^annualised return$/i, "/performance?summary=annualised#investor-return"],
+        [/^(annualised return|return over available history)$/i, "/cio?tab=returns&rp=fytd&rtype=xirr"],
         // Capital invested is part of the value tile's page now, so the return
         // struck on it opens that page on the holdings that report a cost.
-        [/^gain \/ loss$/i, "/holdings?of=book&facet=costed"],
-        [/^return this financial year$/i, "/performance?summary=fytd#investor-return"],
+        [/^gain \/ loss$/i, "/cio?tab=returns&rp=inception&rtype=absolute"],
+        [/^return this financial year$/i, "/cio?tab=returns&rp=fytd&rtype=xirr"],
       ];
       return tiles.every(([label, href]) =>
         ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === href));
@@ -18916,14 +18935,9 @@ const CIO_BOOK_RETURN = [
       && nv[2].split(/,\s*/).join(",") === V.nav.join(",");
   }],
   ["the gain tile pairs the recorded gain with its return and coverage", (t, ctx) => {
-    if (!COSTED_BOOK || COSTED_BOOK.pct == null) return false;
-    const tile = ctx?.kpiTiles?.find((x) => x.slot === "gain");
-    if (!tile) return false;
-    const p = pctIn(tile.second);
-    // THE COUNT IS THE STRUCK SET'S (Stage 10dh): the holdings with a cost
-    // AND a valuation, which is what the gain and its return are struck over.
-    return !!p && Math.abs(p.v - COSTED_BOOK.pct) <= p.tie
-      && (tile.sub ?? "").includes(`${COSTED_BOOK.struckCount} of ${COSTED_BOOK.holdings} holdings`);
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'gain');
+    return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.gain, 'gain')
+      && Math.abs(pctIn(tile.second)?.v - AVAILABLE_CARDS_BOOK.gain.total.returnPct) <= .051;
   }],
   /**
    * ...AND ITS HOVER NAMES THE LINES HELD AT COST (Stage 10dh). The family's
@@ -18932,33 +18946,21 @@ const CIO_BOOK_RETURN = [
    * reader who sees ₹140 Cr in the one and nothing in the other is told why —
    * their count and value, the book's, re-derived here.
    */
-  ["the gain tile's hover names the private investments held at cost, in Invested and in no gain (Stage 10dh)", (t, ctx) => {
-    if (!COSTED_BOOK) return false;
-    const tile = ctx?.kpiTiles?.find((x) => x.slot === "gain");
-    if (!tile) return false;
-    // The probe carries every `a[title]` in the tile joined as `hover` — the
-    // tile's stretched link is the one anchor, so this is its own hover.
-    const h = tile.hover ?? "";
-    if (COSTED_BOOK.atCost === 0) return !/held at cost|holds at cost/i.test(h);
-    const m = /The ([\d,]+) private investments the family's consolidated review holds at cost, (₹[\d,.]+\s*(?:Cr|L|K)?), are in Recorded invested and in no gain/.exec(h);
-    if (!m) return false;
-    const v = money2cr(m[2]);
-    return cr(m[1]) === COSTED_BOOK.atCost && Math.abs(v - COSTED_BOOK.atCostValue / 1e7) <= compactTieCr(v)
-      && new RegExp(String.raw`struck over the ${COSTED_BOOK.struckCount.toLocaleString("en-IN")} of them`).test(h);
+  ["the gain card provides coverage and a source explanation for records left out", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'gain');
+    return !!tile && tile.returnInfo === 1 && /records they need/.test(tile.hover ?? '')
+      && Number(tile.coverage?.cardCovered) < Number(tile.coverage?.cardHoldings);
   }],
-  ["annualised return never substitutes the short-period percentage", (t, ctx) => {
-    const tile = ctx?.kpiTiles?.find((x) => x.slot === "annualised");
-    if (!tile || !MWR_BOOK) return false;
-    if (!MWR_BOOK.whole) return tile.absent && /Incomplete records/.test(tile.sub ?? "")
-      && (tile.sub ?? "").includes(`${MWR_BOOK.missing} of ${MWR_BOOK.total} accounts`);
-    if (MWR_BOOK.windowDays >= 365) return /p.a./.test(tile.value ?? "");
-    return tile.absent && /Insufficient history/.test(tile.sub ?? "")
-      && (tile.sub ?? "").includes(`${MWR_BOOK.windowDays} days recorded`);
+  ["short history is shown as an available period return with its own label", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'annualised'), r = AVAILABLE_CARDS_BOOK?.history;
+    return headlineMatches(tile, r) && (r.total.measured?.basis === 'annual'
+      ? /annualised return/i.test(tile.label) && /p.a./.test(tile.value ?? '')
+      : /return over available history/i.test(tile.label) && /not annualised/.test(tile.second ?? '') && !/p.a./.test(tile.value ?? ''));
   }],
-  ["FYTD shows its start date and names incomplete history", (t, ctx) => {
-    const tile = ctx?.kpiTiles?.find((x) => x.slot === "fytd");
-    return !!tile && /FYTD · since 0?1 Apr/.test(tile.second ?? "")
-      && (!tile.absent || /Insufficient history.*accounts/.test(tile.sub ?? ""));
+  ["FYTD shows its measured dates, available return and coverage", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'fytd');
+    return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.fytd) && /FYTD/.test(tile.second ?? '')
+      && !!tile.coverage.cardFrom && !!tile.coverage.cardTo;
   }],
 ];
 
@@ -40046,6 +40048,8 @@ for (const theme of THEMES) {
           // under Current Value of Holdings. A figure, not a caption, and told
           // apart from one by its own handle rather than by its words.
           second: (c.querySelector("[data-kpi-second]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+          coverage: c.querySelector('[data-card-coverage]') ? { ...c.querySelector('[data-card-coverage]').dataset } : null,
+          returnInfo: c.querySelectorAll('[data-return-info]').length,
           sub: (c.querySelector("[data-kpi-sub]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
           // THE TILE'S OWN FIGURE, off its own handle — what a value check
           // reconciles against the book.

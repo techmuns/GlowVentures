@@ -19,6 +19,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROME || '/
 let page;
 try {
  page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+ await page.clock.install({ time: new Date('2026-10-22T06:30:00Z') });
  const errors = []; page.on('pageerror', e => errors.push(e.message));
  await page.route('**/api/**', r => r.fulfill({ status: 503, json: { status: 'unreachable' } }));
  await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
@@ -26,6 +27,48 @@ try {
  await page.goto(base + '/cio?tab=returns');
  const table = page.locator('[data-segment-returns]');
  await table.waitFor();
+ // Headline cards show their covered subset and open the same simple source explanation.
+ for (const id of ['gain', 'annualised', 'fytd']) {
+  const card = page.locator(`[data-tile-slot="${id}"]`);
+  await card.locator('[data-card-coverage]').waitFor();
+  const numeric = await card.locator('[data-card-coverage]').evaluate(el => ({ ...el.dataset }));
+  assert.notEqual(numeric.cardGain, ''); assert.notEqual(numeric.cardReturn, '');
+  assert.match(await card.innerText(), /Available data/);
+  assert.equal(await card.locator('[data-return-info]').count(), 1);
+  await card.locator('[data-return-info]').click();
+  const popup = page.getByRole('dialog'); await popup.waitFor();
+  assert.match(await popup.innerText(), /Based on the available records/);
+  assert.match(await popup.innerText(), /What is missing/);
+  assert.ok(await popup.locator('[data-return-gap]').count() > 0);
+  assert.match(await popup.innerText(), /account .*statement/i);
+  assert.match(await popup.innerText(), /purchase|opening|dated|money/i);
+  if (id === 'gain') {
+   assert.equal(await popup.locator('[data-return-result]').innerText(), await card.locator('[data-kpi-value]').innerText());
+   await page.screenshot({ path: `${out}/headline-gain-info.png` });
+  }
+  await page.keyboard.press('Escape');
+  assert.equal(await card.locator('[data-return-info]').evaluate(el => el === document.activeElement), true);
+ }
+ const historyCard = page.locator('[data-tile-slot="annualised"]');
+ assert.match(await historyCard.innerText(), /Return over available history/i);
+ assert.match(await historyCard.innerText(), /not annualised/);
+ const fytdCard = page.locator('[data-tile-slot="fytd"] [data-card-coverage]');
+ assert.ok(Math.abs(Number(await fytdCard.getAttribute('data-card-gain')) - Number(await table.getAttribute('data-seg-total-gain'))) < .001);
+ assert.ok(Math.abs(Number(await fytdCard.getAttribute('data-card-return')) - Number(await table.getAttribute('data-seg-total-ret'))) < 1e-8);
+ await page.screenshot({ path: `${out}/headline-cards.png` });
+ // Saved choices use the same covered inputs as the default cards.
+ for (const id of ['mwr', 'return']) {
+  await page.locator('[data-tile-select="2"]').click();
+  await page.locator(`[data-tile-option="${id}"]`).click();
+  const card = page.locator(`[data-tile-slot="${id}"]`);
+  const data = card.locator('[data-card-coverage]'); await data.waitFor();
+  assert.notEqual(await data.getAttribute('data-card-return'), '');
+  await card.locator('[data-return-info]').click();
+  assert.match(await page.getByRole('dialog').innerText(), /What is missing/);
+  await page.keyboard.press('Escape');
+ }
+ await page.locator('[data-tile-select="2"]').click();
+ await page.locator('[data-tile-option="annualised"]').click();
  const results = [];
  for (const period of ['fytd', 'mtd', 'ytd', 'y1', 'y2', 'y3']) {
   await page.locator(`[data-returns-period="${period}"]`).click();
