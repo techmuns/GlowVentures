@@ -322,8 +322,14 @@ for (const g of flowGated) {
 console.log("\n── the window ends where the pool closes ──");
 {
   const stmt = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS };
-  const got = measuredAccountsReturn(stmt as never, BOOK_ACCOUNTS);
+  const all = measuredAccountsReturn(stmt as never, BOOK_ACCOUNTS);
   const mine = measurable.filter((a) => accountMV(a.accountId) > 0);
+  // Stage 10fc — the whole book's rate is absent while any account holding
+  // value is unmeasured; the bridge is proved on the accounts that ARE measured.
+  ok("over the whole book the rate is absent while an account holding value is unmeasured",
+    all.missing.length === 0 || (all.annPct == null && all.toDatePct == null && !all.whole), `${all.missing.length} missing`);
+  const pool = BOOK_ACCOUNTS.filter((a) => mine.some((m) => m.accountId === a.accountId));
+  const got = measuredAccountsReturn(stmt as never, pool);
   const flows = mine.flatMap((a) => [
     ...(BOOK_ACCOUNT_CASH_FLOWS[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount })),
     { date: new Date(a.asOf), amount: accountMV(a.accountId) },
@@ -333,7 +339,7 @@ console.log("\n── the window ends where the pool closes ──");
   const firstFlow = flows.reduce((m, f) => (f.date < m ? f.date : m), flows[0].date);
   const days = Math.round((Date.parse(lastClose) - firstFlow.getTime()) / 864e5);
   eq("the helper covers exactly the accounts with an opening value and a value to close on",
-    got.parts.map((x) => x.accountId).sort(), mine.map((a) => a.accountId).sort());
+    all.parts.map((x) => x.accountId).sort(), mine.map((a) => a.accountId).sort());
   ok("its annual rate is the pooled XIRR of those accounts, each on its own date",
     ann != null && got.annPct != null && Math.abs(got.annPct - ann * 100) < 1e-6,
     `${got.annPct?.toFixed(4)} vs ${(ann ?? NaN) * 100}`);
@@ -345,7 +351,7 @@ console.log("\n── the window ends where the pool closes ──");
   // or ending the window on it would change nothing and this would pass against
   // the defect.
   const newerBookDate = new Date(Date.parse(lastClose) + 30 * 86400000).toISOString().slice(0,10);
-  const laterBook = measuredAccountsReturn({ ...stmt, asOf:newerBookDate } as never, BOOK_ACCOUNTS);
+  const laterBook = measuredAccountsReturn({ ...stmt, asOf:newerBookDate } as never, pool);
   eq('a later unrelated book date cannot extend the measured closing date',laterBook.lastClose,lastClose);
   const wrongDays = Math.round((Date.parse(newerBookDate) - firstFlow.getTime()) / 864e5);
   const wrong = moneyWeightedReturn(got.annPct, wrongDays);
@@ -357,7 +363,7 @@ console.log("\n── the window ends where the pool closes ──");
   // helper must be handed the STATEMENT portfolio and so not move at all.
   const lifted = { accounts: BOOK_ACCOUNTS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS,
     positions: BOOK_POSITIONS.map((p) => ({ ...p, marketValue: p.marketValue * 1.1 })) } as never;
-  const liftedR = measuredAccountsReturn(lifted, BOOK_ACCOUNTS);
+  const liftedR = measuredAccountsReturn(lifted, pool);
   ok("a portfolio priced away from its statements gives a DIFFERENT rate — so callers must pass the statement one",
     liftedR.annPct != null && got.annPct != null && Math.abs(liftedR.annPct - got.annPct) > 5,
     `${liftedR.annPct?.toFixed(1)}% vs ${got.annPct?.toFixed(1)}%`);

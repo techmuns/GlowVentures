@@ -8,7 +8,10 @@
  * actually measured printed beside the one asked for.
  *
  * ONE COLUMN: the portfolio's card first, the benchmarks under it (Stage 10dy,
- * at the family's request). The panel scrolls inside itself; the page does not.
+ * at the family's request), and under those the return ATTRIBUTION — which
+ * category, asset class, basket, sector, side or security earned the return
+ * (`SegmentReturns`, Stage 10fd: *"a section inside the returns page only"*).
+ * The panel scrolls inside itself; the page does not.
  *
  * A DATED WINDOW OPENS ON A MARKET VALUE, NEVER A COST. Each account opens on
  * its latest statement valuation on or before the opening date and closes on
@@ -35,6 +38,7 @@ import { Card } from "@/components/Card";
 import { AbsentCell } from "@/components/Absent";
 import { ReturnCalculationInfo } from "@/components/ReturnCalculation";
 import { PeriodReturnCalculation } from "@/components/PeriodReturnCalculation";
+import SegmentReturns from "@/components/SegmentReturns";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason } from "@/lib/benchmarks";
@@ -368,6 +372,9 @@ export default function PortfolioReturns() {
           </div>
         </Card>
         </div>
+
+        {/* ── Which part of the book earned the return ── */}
+        <SegmentReturns />
       </div>
     </div>
   );

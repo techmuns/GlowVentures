@@ -18,7 +18,7 @@
  * ── WHERE THEY WOULD NOT ADD, AND THE LINE THAT MAKES THEM ──────────────────
  *
  * A whole mandate is struck on its capital since inception: its gain carries
- * the income less fees and every sale before its capital-gain window, which
+ * its fees and the sales and income outside its holdings' own records, which
  * belong to no one share. Where an axis keeps a mandate in one segment (the
  * PMS mandates category, one market side) the segment is whole and carries all
  * of it. Where an axis splits a mandate (by sector, by security) each piece is

@@ -4825,6 +4825,16 @@ current unrealized P&L."*
   `corporateActions` and `heldThrough` assertions follow the new rule; a recorded
   ₹23 dividend on ₹1,000 is +2.3%.
 
+### Stage 10fd — RETURN ATTRIBUTION IS A SECTION OF THE RETURNS TAB, NOT A TAB
+
+*"We did not have to make a return attribution as a separate tab. It is supposed to be a section inside the returns page only … also give option to select sector as a segment."*
+
+- The Stage 10ez tab is gone. Morning CIO is back to six tabs. `SegmentReturns` is the Returns tab's third section, under the portfolio card and the benchmarks. Its axis selector (Category, Asset class, Basket, **Sector**, Listed / Private, All Securities), the top and drag pills and Expand all sit in the card's header.
+- The section is **since investment** and says so in its title, because it sits under a period selector it does not follow: no holding carries a dated value to open a window on.
+- `?tab=attribution` is aliased to `returns`, so a link from the one release still lands on the section.
+- Hovers now name dividends in the gain, after Stage 10fb added income to `fifoTotals`.
+- `check:pages`: every `cio-returns` route runs `CIO_SEGMENTS`, and a new invariant puts the section under the benchmarks (geometry). The tab-list check is back to six. `cio-returns-sector` and `cio-returns-security` replace the `cio-attribution*` routes. `cio-attribution-legacy` asserts the old address lands on Returns.
+
 ### Stage 10fc — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
 
 *"not all accounts are being read into the dashboard. It says partial return, 2 out of 76 accounts … We do not need to show partial return anywhere on the dashboard"* — the family, 21 Oct 2026.
