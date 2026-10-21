@@ -2,7 +2,7 @@ import { createContext, useId, useRef, useState, type ReactNode, type TableHTMLA
 import { flushSync } from "react-dom";
 import { FileSpreadsheet } from "lucide-react";
 import { readTableExport } from "@/lib/tableExport";
-import { prepareTableExport, setTableExporting } from "@/lib/tableExportSnapshot";
+import { prepareTableExport, setTableExporting, useTableExporting } from "@/lib/tableExportSnapshot";
 
 /** Include every row and available column in this table's export snapshot. */
 export const TableExportAllRows = createContext(false);
@@ -14,6 +14,9 @@ export function ExportableTable({ children, exportName, ...props }: Omit<TableHT
   const table = useRef<HTMLTableElement>(null);
   const busyRef = useRef(false);
   const [allRows, setAllRows] = useState(false);
+  // Keep ancestor rows mounted when an expanded/nested table is exported and
+  // removing a filter moves its parent beyond the current scroll window.
+  const snapshotRows = useTableExporting() || allRows;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const errorId = useId();
@@ -64,6 +67,6 @@ export function ExportableTable({ children, exportName, ...props }: Omit<TableHT
         {error && <span id={errorId} role="alert" className="text-xs text-loss">{error}</span>}
       </div>
     </caption>
-    <TableExportAllRows.Provider value={allRows}>{typeof children === "function" ? children(allRows) : children}</TableExportAllRows.Provider>
+    <TableExportAllRows.Provider value={snapshotRows}>{typeof children === "function" ? children(snapshotRows) : children}</TableExportAllRows.Provider>
   </table>;
 }
