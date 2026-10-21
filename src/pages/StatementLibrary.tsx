@@ -4,6 +4,7 @@ import { Folder, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileS
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
+import { StatementPreview, useFilePreview } from "@/components/StatementPreview";
 import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { buildLibrary, type ManifestEntry, type ProviderFolder, type LibraryDoc } from "@/lib/statementLibrary";
@@ -43,8 +44,11 @@ function StatusPill({ status }: { status: LibraryDoc["status"] }) {
 }
 
 /** One format's files inside an open folder — "all the files of the same
- *  format", in one labelled block, as a desktop folder groups a file type. */
+ *  format", in one labelled block, as a desktop folder groups a file type.
+ *  A row opens that file's contents in a preview window. */
 function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
+  const preview = useFilePreview();
+  const previewing = preview.openKey ? docs.find((d) => d.fileKey === preview.openKey) : undefined;
   return (
     <div data-format-block={format}>
       <div className="mb-2 flex items-center gap-2">
@@ -69,12 +73,16 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
           </thead>
           <tbody className="divide-y divide-ink-700/70">
             {docs.map((d) => (
-              <tr key={d.fileKey} className="hover:bg-ink-700/40">
+              <tr key={d.fileKey} className="cursor-pointer hover:bg-ink-700/40" onClick={() => preview.open(d.fileKey)}
+                data-preview-row={d.fileKey}>
                 <td className="px-4 py-3 text-slate-200">
                   <span className="inline-flex items-center gap-1.5">
-                    {d.reportLabel}
+                    <button type="button" onClick={(e) => { e.stopPropagation(); preview.open(d.fileKey); }}
+                      className="text-left hover:text-accent-400 hover:underline" title={`Open ${d.fileName}`}>
+                      {d.reportLabel}
+                    </button>
                     {d.hasSheets && (
-                      <Link to={`/audit?file=${encodeURIComponent(d.fileKey)}`}
+                      <Link to={`/audit?file=${encodeURIComponent(d.fileKey)}`} onClick={(e) => e.stopPropagation()}
                         className="text-slate-500 hover:text-accent-400"
                         title="Open this document in Data Audit">
                         <ExternalLink className="h-3.5 w-3.5" />
@@ -92,6 +100,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
           </tbody>
         </table>
       </div>
+      {previewing && <StatementPreview doc={previewing} onClose={preview.close} />}
     </div>
   );
 }

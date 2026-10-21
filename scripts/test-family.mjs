@@ -114,6 +114,7 @@ const SUITES = [
   ["member scope", "src/lib/__tests__/memberScope.test.ts"],
   ["statement library", "src/lib/__tests__/statementLibrary.test.ts"],
   ["statement uploads", "src/lib/__tests__/statementUploads.test.ts"],
+  ["statement preview", "src/lib/__tests__/statementPreview.test.ts"],
   ["invested on", "src/lib/__tests__/investedOn.test.ts"],
   ["holding flows", "src/lib/__tests__/holdingFlows.test.ts"],
 ];
