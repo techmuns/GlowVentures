@@ -38,9 +38,11 @@ import {
 import { nothingToMeasure } from "@/lib/returns";
 import {
   PERIODS, RETURN_TYPES, FORMULAS, INCEPTION_FORMULAS, periodStart, windowReturns, measureWindow,
-  measureInception, daysBetween, pmeWindowRows, pmeInceptionRows, accountInputs,
+  measureInception, daysBetween, pmeWindowRows, pmeInceptionRows,
   type AccountInput, type InceptionRow, type PeriodKey, type ReturnType, type Measured,
 } from "@/lib/periodReturns";
+
+import { statementReturnInputs } from "@/lib/availableCardReturns";
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const pctText = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
@@ -67,11 +69,7 @@ export default function PortfolioReturns() {
   // ── Every account's valuations and dated flows ───────────────────────────
   const inputs = useMemo<AccountInput[]>(() => {
     if (!statementPortfolio) return [];
-    return accountInputs({ accounts: statementPortfolio.accounts, positions: statementPortfolio.positions,
-      returnRecords: statementPortfolio.accountReturnRecords, navHistory: BOOK_ACCOUNT_NAV_HISTORY,
-      cashFlows: BOOK_ACCOUNT_CASH_FLOWS, groups: [], coverage: BOOK_NAV_COVERAGE.covered,
-      undated: BOOK_UNDATED_CAPITAL, fromInception: BOOK_CAPITAL_FROM_INCEPTION, labelOf: a => mandateLabel(a) || a.provider,
-    }).map(input => ({ ...input, outside: nothingToMeasure(statementPortfolio, statementPortfolio.accounts.find(a => a.accountId === input.accountId)!) }));
+    return statementReturnInputs(statementPortfolio);
   }, [statementPortfolio]);
 
   const inception = useMemo<{ rows: InceptionRow[]; skipped: { accountId: string; label: string; owner: string; reason: string }[] }>(() => {

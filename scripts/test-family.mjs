@@ -21,6 +21,7 @@ const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
   ["custody audit source rows", "src/lib/__tests__/custodyAudit.test.ts"],
+  ["available headline returns", "src/lib/__tests__/availableCardReturns.test.ts"],
   ["published data lineage", "src/lib/__tests__/publicationViews.test.ts"],
   ["selected attribution periods and coverage", "src/lib/__tests__/selectedSegmentReturns.test.ts"],
   ["sector return coverage identities", "src/lib/__tests__/sectorReturnCoverage.test.ts"],
