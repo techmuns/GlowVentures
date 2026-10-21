@@ -114,7 +114,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       qty: p.quantity, cost: p.costBasis, avg: p.avgCost, price: p.currentPrice,
       basis: p.valuedAtCost ? "At cost" : p.review ? "Review value" : "Statement value", mvov: null, mv: p.marketValue,
       // The holding's FIFO return — unrealised, realised and the income it paid,
-      // over every rupee that bought a unit (Stage 10fa) — never unrealised ÷ cost.
+      // over every rupee that bought a unit (Stage 10fb) — never unrealised ÷ cost.
       ugain: p.valuedAtCost ? null : p.unrealizedPnL, absret: p.valuedAtCost || p.returnPct == null ? null : p.returnPct / 100,
       income: p.dividendReceived, rgain: p.realizedPnL ?? null, xirr, bench: null, babs: null, bxirr: null, alpha: null,
       shown: xirr != null ? "XIRR" : !p.valuedAtCost && p.returnPct != null ? "Absolute" : null,
@@ -285,7 +285,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const realisedGain = completeSum(ps.map(p => p.realizedPnL));
     const income = sum(ps.map(p => p.dividendReceived));
     // ONE RETURN: FIFO over the costed, valued rows — unrealised + realised +
-    // dividends over capital deployed, a whole mandate on its capital (Stage 10fa).
+    // dividends over capital deployed, a whole mandate on its capital (Stage 10fb).
     const fifo = costed.length ? fifoTotals(costed, { accounts, universe: rows }) : null;
     return { range: ds.length ? `${ds[0]} – ${ds.at(-1)}` : null, cost, value, unrealised,
       fullGain: realisedGain != null && unrealised != null && costed.length === ps.length ? fifo?.gain ?? null : null,

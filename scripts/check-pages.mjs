@@ -1190,6 +1190,9 @@ const SECURITY_AXIS_BOOK = (() => {
       },
       smallDroppedKeys: [...smallKeys],
       measured, measuredCr: measured / 1e7,
+      // The measured half by route, off each account's own engagement (Stage 10fa).
+      directCr: sum(stocks.filter((p) => ["Direct", "Execution"].includes(acc.get(p.accountId)?.engagement)).map((p) => p.marketValue)) / 1e7,
+      pmsCr: sum(stocks.filter((p) => acc.get(p.accountId)?.engagement === "PMS").map((p) => p.marketValue)) / 1e7,
       derived, derivedCr: derived / 1e7,
       totalCr: (measured + derived) / 1e7,
       opaqueCr: skippedValue / 1e7,
@@ -9164,7 +9167,7 @@ const XA_BOOK = (() => {
         // rounded: a cash sleeve's ₹0.01 of P&L is a 0.00% return, which is not
         // a gain). A NAV-priced row's is FIFO's, struck here from its fields —
         // never this file's overlaid `returnPct`, which divides by cost alone.
-        // Realised and the dividends a holding paid: the page's FIFO gain (Stage 10fa).
+        // Realised and the dividends a holding paid: the page's FIFO gain (Stage 10fb).
         const realisedOf = (x) => (typeof x.realizedPnL === "number" ? x.realizedPnL : 0)
           + (typeof x.dividendReceived === "number" ? x.dividendReceived : 0);
         const soldOf = (x) => (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
@@ -14464,12 +14467,13 @@ const txnBasketChecks = () => {
 
 const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, day: 6, mv: 7, weight: 8, pnl: 9, realised: 10, ret: 11, sector: 12, entity: 13 };
 /**
- * THE STOCK AXIS DRAWS TWO MORE COLUMNS, so everything after Market value sits
- * two places right. Read positionally against `COL` a Weight assertion would be
- * struck on `Via funds` — a real percentage against a real money figure, which
- * is the plausible-wrong-answer this sweep exists to catch rather than commit.
+ * THE STOCK AXIS DRAWS FOUR MORE COLUMNS — Direct and PMS before Market value
+ * (Stage 10fa), Via funds and Total exposure after it — so everything shifts.
+ * Read positionally against `COL` a Weight assertion would be struck on a money
+ * column — a real percentage against a real money figure, which is the
+ * plausible-wrong-answer this sweep exists to catch rather than commit.
  */
-const COL_STOCK = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, day: 6, mv: 7, viaFunds: 8, exposure: 9, weight: 10, pnl: 11, realised: 12, ret: 13, sector: 14, entity: 15 };
+const COL_STOCK = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, day: 6, direct: 7, pms: 8, mv: 9, viaFunds: 10, exposure: 11, weight: 12, pnl: 13, realised: 14, ret: 15, sector: 16, entity: 17 };
 /**
  * A money cell in crore. `null` for a rendered em dash — an ABSENT figure, which
  * is a different answer from an unparseable one; NaN for anything else, so a
@@ -24083,7 +24087,7 @@ const INVARIANTS = {
       const R = ctx.remember;
       if (!R?.c1 || !R.s1) return false;
       return R.s1.axis === "security" && R.s1.cols[1] === "mv" && R.s1.cols[2] === "viaFunds" && R.s1.cols[3] === "totalExposure"
-        && sameCols(R.s1.cols.filter((c) => c !== "viaFunds" && c !== "totalExposure"), R.c1.cols);
+        && sameCols(R.s1.cols.filter((c) => !["viaFunds", "totalExposure", "direct", "pms"].includes(c)), R.c1.cols);
     }],
     ["…a move made on All Securities is kept", (t, ctx) => {
       const R = ctx.remember;
@@ -29519,6 +29523,32 @@ const INVARIANTS = {
      * "Direct Equity" are words this page's own figures print.
      */
     ...sectorLayoutChecks("consolidated"),
+    /**
+     * ── AN OPENED SECTOR SPLITS EVERY ISSUER BY ROUTE (Stage 10fa) ──────────
+     *
+     * Direct, PMS and Via funds are three columns, never one "Direct + PMS",
+     * and on every issuer they add to its Total exposure — struck on the rows'
+     * unrounded handles. The footer is each column summed from its own rows.
+     */
+    ["an opened sector's issuers carry Direct, PMS and Via funds apart, and each row adds to its Total", (_t, ctx) => {
+      const S = ctx?.sectorSplit;
+      if (!S?.rows?.length) return false;
+      const h = S.heads ?? [];
+      if (!h.includes("direct") || !h.includes("pms") || !h.includes("derived") || !h.includes("total") || h.includes("measured")) return false;
+      // At least one issuer in the book's largest sector is reported by a statement.
+      if (!S.rows.some((r) => r.direct !== null || r.pms !== null)) return false;
+      return S.rows.every((r) => Number.isFinite(r.total)
+        && Math.abs((r.direct ?? 0) + (r.pms ?? 0) + (r.other ?? 0) + (r.derived ?? 0) - r.total) <= 2);
+    }],
+    ["…and the opened sector's footer is each route column summed from its rows", (_t, ctx) => {
+      const S = ctx?.sectorSplit;
+      if (!S?.rows?.length || !S.foot) return false;
+      const near = (printed, rupees) => rupees === 0 ? printed === null
+        : Number.isFinite(printed) && Math.abs(printed - rupees / 1e7) <= Math.max(0.011, 0.006 * Math.abs(rupees / 1e7));
+      const sumOf = (k) => S.rows.reduce((a, r) => a + (r[k] ?? 0), 0);
+      return near(moneyCell(S.foot.direct), sumOf("direct")) && near(moneyCell(S.foot.pms), sumOf("pms"))
+        && near(moneyCell(S.foot.derived), sumOf("derived")) && near(moneyCell(S.foot.total), sumOf("total"));
+    }],
     ...SECTOR_TABLE_TAB,
     ["the donut's hole is the Consolidated set's", (t) =>
       /TOTAL EXPOSURE\s*\n\s*₹/i.test(t) && !/DIRECT EQUITY\s*\n\s*₹/i.test(t)],
@@ -31917,6 +31947,27 @@ const INVARIANTS = {
      * independently of its rows ties to the book and not to the screen, and a
      * row build that dropped a name ties to the screen and not to the book.
      */
+    /**
+     * DIRECT AND PMS ARE THEIR OWN COLUMNS (Stage 10fa), and they add to Direct
+     * + PMS on the footer and on every row. Each route's footer is the book's
+     * own figure for that route — re-derived off the accounts' engagement, not
+     * through `holdingRoute`.
+     */
+    ["Direct and PMS add to Direct + PMS, on the footer and on every row, and each footer is the book's own", (t, ctx) => {
+      const rows = ctx?.tableRows, foot = ctx?.footerCells;
+      if (!rows?.length || !foot?.length) return { notChecked: "the table or its footer was not captured on this run" };
+      if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read" };
+      const d = moneyCell(foot[COL_STOCK.direct]), p = moneyCell(foot[COL_STOCK.pms]), mv = moneyCell(foot[COL_STOCK.mv]);
+      if (![d, p, mv].every(Number.isFinite)) return false;
+      if (Math.abs(d + p - mv) > 0.15) return false;
+      if (Math.abs(d - SECURITY_AXIS_BOOK.directCr) > 0.15 || Math.abs(p - SECURITY_AXIS_BOOK.pmsCr) > 0.15) return false;
+      return rows.every((r) => {
+        const m = moneyCell(r.cells?.[COL_STOCK.mv]);
+        if (m === null) return moneyCell(r.cells?.[COL_STOCK.direct]) === null && moneyCell(r.cells?.[COL_STOCK.pms]) === null;
+        const a = moneyCell(r.cells?.[COL_STOCK.direct]) ?? 0, b = moneyCell(r.cells?.[COL_STOCK.pms]) ?? 0;
+        return Number.isFinite(m) && Number.isFinite(a) && Number.isFinite(b) && Math.abs(a + b - m) <= 0.11;
+      });
+    }],
     ["the Direct + PMS footer is the book's own stock total, and ties to its column", (t, ctx) => {
       const rows = ctx?.tableRows, foot = ctx?.footerCells;
       if (!rows?.length || !foot?.length) return { notChecked: "the table or its footer was not captured on this run" };
@@ -42670,6 +42721,37 @@ for (const theme of THEMES) {
         };
       });
       /**
+       * ── THE ISSUER DRILL-DOWN, SPLIT BY ROUTE (Stage 10fa) ────────────────
+       *
+       * *"Make direct, PMS and fund exposure clear in sector drill-downs."* The
+       * largest sector opened on the Consolidated view, each issuer row's
+       * Direct / PMS / Other / Via funds / Total read off its own handles, the
+       * header ids, and the footer's cells by column id. Closed again after.
+       */
+      const sectorSplit = FAST || name !== "sectors" ? null : await (async () => {
+        const first = await page.$("main [data-sector-table] [data-sector-row]");
+        if (!first) return null;
+        await first.click();
+        await page.waitForSelector("main [data-sector-companies]", { timeout: 5000 }).catch(() => {});
+        const got = await page.evaluate(() => {
+          const t = document.querySelector("main [data-sector-companies]");
+          if (!t) return null;
+          const num = (el, a) => { const v = el.getAttribute(a); return v === null || v === "" ? null : Number(v); };
+          return {
+            heads: [...t.querySelectorAll("thead th[data-col]")].map((th) => th.getAttribute("data-col")),
+            rows: [...t.querySelectorAll("tbody [data-sector-company]")].map((r) => ({
+              key: r.getAttribute("data-sector-company"),
+              direct: num(r, "data-split-direct"), pms: num(r, "data-split-pms"), other: num(r, "data-split-other"),
+              derived: num(r, "data-split-derived"), total: num(r, "data-split-total"),
+            })),
+            foot: Object.fromEntries([...t.querySelectorAll("tfoot [data-sector-foot]")]
+              .map((td) => [td.getAttribute("data-sector-foot"), (td.innerText ?? "").replace(/\s+/g, " ").trim()])),
+          };
+        });
+        await first.click();
+        return got;
+      })();
+      /**
        * ── FAMILY & ENTITIES: WHAT ITS THREE REMOVALS LEFT, AND WHERE ────────
        *
        * *"remove the 4 KPI tiles… remove the bar graph… in the table remove the
@@ -44106,7 +44188,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -3221,7 +3221,7 @@ function build(archived) {
       }
     }
     /**
-     * …AND A FUND'S OWN UNIT RECORD PRINTS ITS INCOME TOO (Stage 10fa). An IDCW
+     * …AND A FUND'S OWN UNIT RECORD PRINTS ITS INCOME TOO (Stage 10fb). An IDCW
      * reinvestment is income that bought units: FIFO books those units at the
      * reinvested amount, so the gain on them is nil and, without this, the
      * dividend is in no return at all — HDFC Liquid daily IDCW (₹20.7 Cr sold,

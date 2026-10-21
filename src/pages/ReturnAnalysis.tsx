@@ -124,7 +124,7 @@ export function ReturnAnalysis() {
      * FIFO, HOLDING BY HOLDING — this page decomposes the return BY NAME, so
      * every figure on it is struck from each holding's own FIFO fields: the
      * unrealised gain on what is held, the realised gain on units already
-     * sold and the dividends it paid (Stage 10fa), over the cost of both. A whole mandate's income, fees and the sales
+     * sold and the dividends it paid (Stage 10fb), over the cost of both. A whole mandate's income, fees and the sales
      * before its capital-gain window belong to no name, so they are not here;
      * Morning CIO and each mandate's own page strike a whole mandate on its
      * capital. Summed before it is divided, so the names add to the total.

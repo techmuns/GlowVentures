@@ -63,7 +63,7 @@ export const returnFormula = (
    */
   fifo?: {
     realised?: number | null; costSold?: number | null; deployed?: number | null;
-    /** Dividends and distributions the holding paid (Stage 10fa) — in the gain, never in the cost. */
+    /** Dividends and distributions the holding paid (Stage 10fb) — in the gain, never in the cost. */
     income?: number | null;
     /**
      * A WHOLE MANDATE'S CAPITAL BRIDGE (DL-7). Its return is (value + withdrawn
