@@ -21909,6 +21909,10 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
  */
 export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/7"
+    },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "esds-software-solution-limited-eq-new-fv-rs-1",
@@ -21926,6 +21930,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 330898 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/13"
+    },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "infobay-ai-limited-0-01-pref-18ag44",
@@ -21943,6 +21951,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 107 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/14"
+    },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "innoviti-technologies",
@@ -21960,6 +21972,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 32017 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/35"
+    },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "wevois-labs",
@@ -21977,6 +21993,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 55 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "3p-india-equity-fund-1-class-b3",
@@ -21994,6 +22014,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 1416918.692 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "absl-bal-adv-growth",
@@ -22011,6 +22035,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "axis-bank",
@@ -22028,6 +22056,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,368.25 a unit, on a receipt of 1,559 unit(s) on 2026-07-02 — not a valuation of the 7,300 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/4"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "bharat-parenteral",
@@ -22045,6 +22077,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹1,604.2 a unit — not a valuation of the 603 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/5"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "bndh-l-and-mcf-dp-gr",
@@ -22062,6 +22098,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹160.874 a unit, on a receipt of 24,406.691 unit(s) on 2026-04-20 — not a valuation of the 24,406.691 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/6"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "buoyant-opportunities-strategy-class-a4",
@@ -22079,6 +22119,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 1918953.2 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/8"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "carnelian-bharat-amritkaal-fund-class-a2",
@@ -22096,6 +22140,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 12993094.825 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/10"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "city-union",
@@ -22113,6 +22161,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹216.15 a unit, on a receipt of 28,745 unit(s) on 2026-07-02 — not a valuation of the 34,500 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/11"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "clean-max-env",
@@ -22130,6 +22182,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/12"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "dsp-gold-etf",
@@ -22147,6 +22203,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹151.1 a unit — not a valuation of the 2,05,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/13"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "dsp-silver-etf",
@@ -22164,6 +22224,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹276.82 a unit — not a valuation of the 1,23,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/16"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "federal-bank",
@@ -22181,6 +22245,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹331.3 a unit, on a receipt of 24,402 unit(s) on 2026-07-02 — not a valuation of the 30,000 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/17"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "hdfc-baf-r-grow",
@@ -22198,6 +22266,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹517.054 a unit, on a delivery of 8,407.246 unit(s) on 2026-07-27 — not a valuation of the 37,755.485 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/18"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "helios-fcf-d-grow",
@@ -22215,6 +22287,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹14.18 a unit — not a valuation of the 51,00,984.835 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/19"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "icici-bank",
@@ -22232,6 +22308,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,379.1 a unit, on a receipt of 5,341 unit(s) on 2026-07-02 — not a valuation of the 14,500 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/20"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "icici-ioppf-d-grw",
@@ -22249,6 +22329,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹40.25 a unit — not a valuation of the 9,93,739.133 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/21"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "indian-bank",
@@ -22266,6 +22350,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹820.95 a unit, on a receipt of 671 unit(s) on 2026-07-02 — not a valuation of the 9,000 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/22"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "indusind-bank",
@@ -22283,6 +22371,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹941.15 a unit, on a receipt of 4,320 unit(s) on 2026-07-02 — not a valuation of the 5,250 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/23"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "infinium-pharma",
@@ -22300,6 +22392,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹236.25 a unit — not a valuation of the 8,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/25"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "itf-class-a",
@@ -22317,6 +22413,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/35"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "karur-vysya-bank",
@@ -22334,6 +22434,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹300.15 a unit, on a receipt of 16,250 unit(s) on 2026-07-02 — not a valuation of the 16,250 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/26"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "kaynes-technology",
@@ -22351,6 +22455,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹3,358.7 a unit, on a receipt of 4,875 unit(s) on 2026-07-07 — not a valuation of the 4,875 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/27"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "mirae-lcf-d-grow",
@@ -22368,6 +22476,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/28"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
@@ -22385,6 +22497,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/30"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "nip-etnf1d-rtliqbees",
@@ -22402,6 +22518,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹999.99 a unit, on a receipt of 0.197 unit(s) on 2026-07-27 — not a valuation of the 257.411 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/32"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "rbl-bnk",
@@ -22419,6 +22539,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹361.75 a unit, on a receipt of 13,500 unit(s) on 2026-07-02 — not a valuation of the 13,500 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/33"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "sanshi-fund-i-class-e",
@@ -22436,6 +22560,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/34"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "state-bank-of-india",
@@ -22453,6 +22581,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,044.25 a unit, on a receipt of 2,188 unit(s) on 2026-07-22 — not a valuation of the 27,750 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/38"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "vof-i-class-a2",
@@ -22470,6 +22602,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/39"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "woc-maaf-d-grow",
@@ -22487,6 +22623,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹15.336 a unit — not a valuation of the 39,15,742.08 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/40"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "zaggle-prepaid",
@@ -22504,6 +22644,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹420.35 a unit — not a valuation of the 12,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "absl-bal-adv-growth",
@@ -22521,6 +22665,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹108.65 a unit — not a valuation of the 1,83,499.511 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "absl-liqf-d-growth",
@@ -22538,6 +22686,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹454.566 a unit, on a receipt of 2,64,720.521 unit(s) on 2026-07-01 — not a valuation of the 2,64,720.521 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "birla-cable",
@@ -22555,6 +22707,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹170.6 a unit — not a valuation of the 11,900 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/3"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "hdfc-baf-d-grow",
@@ -22572,6 +22728,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹570.133 a unit, on a delivery of 26,309.651 unit(s) on 2026-07-13 — not a valuation of the 1,469.627 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/4"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "helios-fcf-d-grow",
@@ -22589,6 +22749,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹15.74 a unit — not a valuation of the 24,07,981.455 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/5"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-ioppf-d-grw",
@@ -22606,6 +22770,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹39.29 a unit — not a valuation of the 6,02,441.424 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/6"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-nft-nt-50-dp-g",
@@ -22623,6 +22791,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹60.4 a unit — not a valuation of the 0.048 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/7"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-nft-nx-50-r-gr",
@@ -22640,6 +22812,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹57.356 a unit — not a valuation of the 0.629 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/8"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-nift50ind-dp-g",
@@ -22657,6 +22833,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹268.815 a unit — not a valuation of the 0.43 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/9"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-pru-baf-dp-grw",
@@ -22674,6 +22854,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹86.47 a unit, on a delivery of 1,15,647.045 unit(s) on 2026-06-22 — not a valuation of the 1,46,856.943 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/10"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "inves-con-r-growth",
@@ -22691,6 +22875,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹137.62 a unit — not a valuation of the 0.39 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/11"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "nip-etnf1d-rtliqbees",
@@ -22708,6 +22896,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹999.99 a unit, on a receipt of 2.925 unit(s) on 2026-07-27 — not a valuation of the 3,828.05 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/12"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "onesource-special",
@@ -22725,6 +22917,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,792.85 a unit, on a delivery of 12,287 unit(s) on 2026-05-29 — not a valuation of the 48,000 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/13"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "woc-maaf-d-grow",
@@ -22742,6 +22938,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹15.336 a unit — not a valuation of the 13,66,820.78 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "absl-bal-adv-growth",
@@ -22759,6 +22959,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "bndh-l-and-mcf-dp-gr",
@@ -22776,6 +22980,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹160.874 a unit, on a receipt of 1,32,634.709 unit(s) on 2026-04-20 — not a valuation of the 1,32,634.709 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "dsp-gold-etf",
@@ -22793,6 +23001,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹141.24 a unit — not a valuation of the 11,95,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/3"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "icici-liqf-d-growth",
@@ -22810,6 +23022,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹409.572 a unit, on a delivery of 31,073 unit(s) on 2026-04-16 — not a valuation of the 21,012.887 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/4"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "kotak-mtcf-d-grow",
@@ -22827,6 +23043,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹20.77 a unit, on a receipt of 6,12,631.862 unit(s) on 2026-04-20 — not a valuation of the 6,12,631.862 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/5"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "nip-etnf1d-rtliqbees",
@@ -22844,6 +23064,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹999.99 a unit, on a receipt of 5.867 unit(s) on 2026-07-27 — not a valuation of the 7,679.495 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/6"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "pg-electro",
@@ -22861,6 +23085,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹502.2 a unit — not a valuation of the 1,80,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
     "ownerId": "bharat-jaisinghani-family-trust",
     "securityKey": "icici-liqf-d-growth",
@@ -22878,6 +23106,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹394.625 a unit — not a valuation of the 46,654.378 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
     "ownerId": "bharat-jaisinghani-family-trust",
     "securityKey": "inves-arbf-d-grow",
@@ -22895,6 +23127,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹34.507 a unit — not a valuation of the 10,92,470.994 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
     "ownerId": "bharat-jaisinghani-family-trust",
     "securityKey": "kotak-arbfd-dp-grow",
@@ -22912,6 +23148,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹42.658 a unit, on a receipt of 6,13,293.929 unit(s) on 2026-07-02 — not a valuation of the 6,13,293.929 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "3p-india-equity-fund-1-class-b3",
@@ -22929,6 +23169,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 2053614.026 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "buoyant-opportunities-strategy-class-a4",
