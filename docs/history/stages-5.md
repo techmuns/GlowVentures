@@ -4975,4 +4975,3 @@ current unrealized P&L."*
 - One shared sticky rule pins each complete `thead`, including source-sheet column letters, preamble and headings, above scrolling cells. An opaque theme surface prevents body rows and pinned columns showing through. Calculation dialogs receive the same rule outside the app root.
 - Table wrappers that previously scrolled only horizontally now also scroll vertically at a bounded height. Existing panels retain their own scroll height; Snapshot History gains the same table wrapper. Print keeps normal repeating table headers.
 - The browser regression measures actual body movement and header position in both themes on every visited table, and checks that multi-row headers retain their row spacing. Existing infinite scrolling and full-data checks still run.
-
