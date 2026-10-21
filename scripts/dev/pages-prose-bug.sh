@@ -42,7 +42,6 @@ FILES=(
   "src/components/ReturnsTable.tsx"
   "src/components/CorporateActionReturns.tsx"
   "src/pages/SectorComposition.tsx"
-  "src/pages/UploadHistory.tsx"
   "src/pages/MorningCIO.tsx"
   "src/pages/PortfolioMonitor.tsx"
   "src/pages/MandateHoldings.tsx"
@@ -111,7 +110,6 @@ PC=src/pages/Polycab.tsx
 RT=src/components/ReturnsTable.tsx
 CAR=src/components/CorporateActionReturns.tsx
 SC=src/pages/SectorComposition.tsx
-UH=src/pages/UploadHistory.tsx
 CIO=src/pages/MorningCIO.tsx
 PM2=src/pages/PortfolioMonitor.tsx
 MH=src/pages/MandateHoldings.tsx
@@ -122,7 +120,7 @@ FL=src/components/FundLookthrough.tsx
 EC=src/components/EnteredCalls.tsx
 
 ROUND="private-market-calls-off,monitor-absent-name,cio-alloc-basket,monitor-assetclass,mandate-fund,mandate,stock-mandates-many,stock-aif-dual,stock-arbitrage-research,stock-qty,holdings-measured,stock-mf-lookthrough,cio-cached"
-ALL="performance,capital-gains,capital-gains-missing,family,sectors,sectors-direct,ledger,history,upload,polycab,cio,cio-allocation,cio-nav,stock-market,corporate-actions"
+ALL="performance,capital-gains,capital-gains-missing,family,sectors,sectors-direct,ledger,upload,polycab,cio,cio-allocation,cio-nav,stock-market,corporate-actions"
 
 echo "════════ CONTROL: no patch"
 npm run build >/dev/null 2>&1 && THEMES=light SHOTS=0 ONLY="$ALL,polycab-dividends,polycab-promoter,cio-live,cio-movers-funds,stock-funds-only-market,stock-funds-only-research,$ROUND" npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | sed 's/^/   /'
@@ -227,8 +225,7 @@ run_case "sectors-direct" "the excluded card's sentence is back on its face" sub
         </span>
       </Figure>'
 
-run_case "history" "the history page stops showing its coverage" sub $UH \
-  '          {nav.length > 0 && <Pill>{covered} of {accounts} accounts</Pill>}' '          {null}'
+# (Upload History was removed on 21 Oct 2026; its case went with it.)
 
 
 # ── THIS ROUND'S MOVES (Stage 10cp, the full sweep's 26 routes) ──────────

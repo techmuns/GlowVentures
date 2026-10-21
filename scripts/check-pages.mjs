@@ -8622,6 +8622,8 @@ const ROUTES = [
   // XA-20: the extracted table with the most rows shorter than their headings,
   // DERIVED from the archive so the next drop picks its own worst case.
   ["audit-short-rows", () => (XA_BOOK?.auditShort ? `/audit?file=${encodeURIComponent(XA_BOOK.auditShort.fileKey)}&sheet=${encodeURIComponent(XA_BOOK.auditShort.sheet)}` : "/audit?file=no-short-row-in-the-archive")],
+  // UPLOAD HISTORY WAS REMOVED (21 Oct 2026). Its address is still walked, to
+  // assert it forwards to the Statement Library rather than 404s.
   ["history", "/history"],
   // THE STATEMENT LIBRARY — the source documents grouped into one folder per
   // provider. It reads the same `public/audit/manifest.json` the Data Audit
@@ -8640,7 +8642,6 @@ const ROUTES = [
   ["cio-scope", () => `/cio?members=${SCOPE_BOOK?.pairParam ?? "none-resolved"}`],
   ["family-scoped", () => `/family?members=${SCOPE_BOOK?.single ?? "none-resolved"}`],
   ["cio-nav-scoped", () => `/cio?tab=nav&members=${SCOPE_BOOK?.single ?? "none-resolved"}`],
-  ["history-scoped", () => `/history?members=${SCOPE_BOOK?.single ?? "none-resolved"}`],
   ["ledger-scoped", () => `/ledger?members=${SCOPE_BOOK?.first ?? "none-resolved"}`],
   ["mandate-out-of-scope", () => (SCOPE_BOOK?.mandate ? `/mandate/${encodeURIComponent(SCOPE_BOOK.mandate)}?members=${SCOPE_BOOK.first}` : "/mandate/none-resolved-from-the-book")],
   ["polycab-out-of-scope", () => `/polycab?members=${SCOPE_BOOK?.outsidePolycab ?? "none-resolved"}`],
@@ -22097,9 +22098,6 @@ const INVARIANTS = {
   "cio-nav-scoped": [
     ["the NAV series says it is whole-family only, rather than drawing one member's line", (t, ctx) =>
       (ctx?.memberScopeDom?.navAbsent ?? 0) >= 1 && !(ctx?.navChart?.lines > 0)],
-  ],
-  "history-scoped": [
-    ["the NAV history says it is whole-family only", (t, ctx) => (ctx?.memberScopeDom?.navAbsent ?? 0) >= 1],
   ],
   "ledger-scoped": [
     ["the dated sales record says it is whole-family only", (t, ctx) => (ctx?.memberScopeDom?.ledgerAbsent ?? 0) >= 1],
@@ -36579,141 +36577,20 @@ const INVARIANTS = {
     }],
   ],
 
+  /**
+   * ── UPLOAD HISTORY IS GONE, AND ITS ADDRESS FORWARDS ─────────────────────
+   *
+   * *"Remove the upload history page from the dashboard UI."* — the family,
+   * 21 Oct 2026. Asserted rather than deleted with the page, the treatment the
+   * `/news` redirects get: a bookmark lands on the Statement Library, where
+   * statements are uploaded now, and nothing on any page offers the old one.
+   */
   history: [
-    ...SIDE_HOVER_CHECKS,
-    /**
-     * EVERY ONE OF THESE IS CASE-INSENSITIVE AND THE COLUMN ONES ARE STRUCK ON
-     * THE HEADER ROW, both of which were found by reintroducing their bugs.
-     *
-     * `label-xs` applies `uppercase`, and `innerText` returns the TRANSFORMED
-     * text — so restoring the old "Listed NAV" heading left a check reading
-     * `/Listed NAV/` green against a page rendering `LISTED NAV`. And renaming
-     * the capital column to "Flows" left `/Capital in/` green too, because the
-     * FOOTNOTE under the table contains that phrase: a page-wide match for a
-     * COLUMN name is satisfied by prose about the column. `innerText` joins a
-     * header row's cells with tabs, so the header is one line and is where a
-     * claim about a column has to be struck.
-     */
-    ["the page does not claim year-ends, a listed-only NAV, or performance-history statements",
-      (t) => !/year-end/i.test(t) && !/listed nav/i.test(t) && !/performance-history statements/i.test(t)],
-    ["it states its own coverage — how many accounts the series spans",
-      (t) => /\d+ of \d+ accounts/.test(t)],
-    /**
-     * AND EACH POINT SAYS HOW MUCH OF ITS STEP WAS MONEY RATHER THAN VALUE. The
-     * largest step in this series is a deposit; a table of NAV changes with no
-     * capital column presents it as performance.
-     */
-    ["each dated point carries the external capital that entered its interval, and its composition",
-      (t) => /^.*\bas of\b.*\bcapital in\b.*\bmarked on this date\b.*$/im.test(t)],
-    ["a ₹0 in the capital column has its cause on the page, not only in a hover",
-      (t) => !/₹0/.test(t) || /under capital in is measured/i.test(t)],
-    /**
-     * NOTHING HERE IS "ARCHIVED". These are statement dates and every one of
-     * them still stands; the word read as an upload log of superseded files.
-     */
-    ["no dated point is labelled Archived or Active", (t) => !/\barchived\b/i.test(t)],
-    /**
-     * ── THE CHANGE COLUMN IS THE LIKE-FOR-LIKE LINK, NEVER THE LEVEL (XA-2) ─
-     *
-     * The column read `nav ÷ previous nav − 1` over a panel that grows as
-     * accounts first publish, so three dates on which accounts ARRIVED printed
-     * +68%, +34% and +106% beside ₹0 of capital. Struck on every row's own
-     * handle against the link re-expressed off the book, on the rendered text at
-     * the page's printing precision, and — the load-bearing half — the book must
-     * carry a date on which accounts joined, where the level and the link
-     * genuinely differ, or the equality would pass against the defect too.
-     */
-    ["every dated point's change is the like-for-like link the book's own link fields give", (t, ctx) => {
-      const want = XA_BOOK?.history ?? [];
-      const got = (ctx?.xa ?? []).filter((x) => x.xa === "history-change");
-      if (!want.length || got.length !== want.length) return false;
-      return want.every((w) => {
-        const g = got.find((x) => x.attrs.date === w.date);
-        if (!g) return false;
-        if (w.link === null) return g.attrs.link === "" && !/%/.test(g.text);
-        const shown = Number(/([\d.]+)%/.exec(g.text)?.[1]);
-        return Math.abs(Number(g.attrs.link) - w.link) < 1e-6 && Math.abs(shown - Math.abs(w.link)) <= 0.0051;
-      });
+    ["the retired Upload History address forwards to the Statement Library", (t, ctx) => {
+      try { return new URL(ctx?.url ?? "").pathname === "/statements"; } catch { return false; }
     }],
-    ["and the book carries a date on which accounts joined, where the level ratio would have lied", (t, ctx) => {
-      const want = (XA_BOOK?.history ?? []).filter((w) => w.joined > 0 && w.level !== null
-        && Math.abs(w.level - (w.link ?? 0)) > 1);
-      if (!want.length) return { notChecked: "no dated point in this book has accounts joining the series" };
-      const got = (ctx?.xa ?? []).filter((x) => x.xa === "history-change");
-      return want.every((w) => {
-        const g = got.find((x) => x.attrs.date === w.date);
-        const shown = Number(/([\d.]+)%/.exec(g?.text ?? "")?.[1]);
-        return !!g && Number(g.attrs.joined) === w.joined
-          && (!Number.isFinite(shown) || Math.abs(shown - Math.abs(w.level)) > 0.01);
-      });
-    }],
-    /**
-     * XA-13. "Total ₹713.3 Cr · as of 29 Aug 2026" dated a total struck on marks
-     * of 31 Mar → 13 Aug and, for every fund AMFI prices, on a NAV of 22 Sep by
-     * the one statement in the book that values nothing. The line names both
-     * prices and their dates now, and the statement-marked part plus what the
-     * statements marked the NAV part at is the statement total.
-     */
-    ["the snapshot's total names the prices and dates it is struck on, not the book's newest statement", (t, ctx) => {
-      const v = XA_BOOK?.valuation;
-      if (!v) return { notChecked: "the book's valuation basis could not be re-derived from glowData.ts" };
-      const el = xaEl(ctx, "history-total-basis");
-      if (!el) return false;
-      const a = el.attrs;
-      const near = (x, y) => Number.isFinite(Number(x)) && Math.abs(Number(x) - y) <= 1;
-      // THE FACE IS A LINE OF FIGURES AND THE SENTENCE ITS HOVER (Stage 10cp):
-      // each price and its dates are held on the face, and the statements'
-      // own marks and the units no statement marks on the hover of the same
-      // line — never on the page text, where they no longer stand.
-      const hover = el.title ?? "";
-      return a["stmt-from"] === v.stmtFrom && a["stmt-to"] === v.stmtTo
-        && (v.navRows
-          ? a["nav-to"] === v.navTo && near(a["nav-value"], v.navValue) && near(a["nav-printed"], v.navPrinted)
-            && xaUnitsOk(a, v, hover)
-            && el.text.includes("at AMFI's published NAV of") && hover.includes("at AMFI's published NAV of")
-          : !el.text.includes("NAV"))
-        && el.text.includes("at statement marks") && hover.includes("at the statements' own marks")
-        && !/Total\s+[−-]?₹\s*[\d.,]+\s*(Cr|L|K)?\s*·\s*as of/i.test(t);
-    }],
-    /**
-     * XA-19. The footnote said every ₹0 under Capital in is measured; on
-     * 30 Jun and 31 Jul accounts that publish no dated capital record restated,
-     * so the ₹0 there was a sum over the others. The subtitle said every other
-     * account "is held at its latest mark" — false before the panel completes,
-     * when an account that has not yet published is absent, not carried. And
-     * the footnote's "Four covered accounts" was a count typed into prose.
-     */
-    ["a ₹0 under Capital in stands only where it was measured", (t, ctx) => {
-      const want = XA_BOOK?.historyCapital;
-      if (!want?.length) return { notChecked: "the book's NAV series could not be re-derived from glowData.ts" };
-      if (!want.some((w) => w.kind === "unmeasured" && !w.flow)) return { notChecked: "no interval here restated an account that publishes no capital record" };
-      const got = (ctx?.xa ?? []).filter((x) => x.xa === "history-capital");
-      return got.length === want.length && want.every((w) => {
-        const g = got.find((x) => x.attrs.date === w.date);
-        if (!g || g.attrs.kind !== w.kind) return false;
-        const zero = /₹\s*0(?![\d.,])/.test(g.text);
-        return w.kind === "measured" && !w.flow ? zero : w.kind === "measured" ? true : !zero;
-      });
-    }],
-    // Both claims moved into hovers when the family asked for the notes around
-    // the tables to go (Stage 10ci), so they are struck on the page's text AND
-    // its titles: a false sentence in a hover is still a sentence a reader reads.
-    ["the subtitle holds no account at its latest mark before it has published", (t, ctx) => {
-      const g = XA_BOOK?.historyPanel;
-      if (!g?.completeFrom || !g.first) return { notChecked: "the NAV coverage block carries no panel date" };
-      if (!(g.first < g.completeFrom)) return { notChecked: "the panel is complete from the series' first point" };
-      const all = [t, ...(ctx?.titles ?? [])].join("\n");
-      return !/Every other account is held at its latest mark/.test(all)
-        && /has not yet published is not in the point at all/.test(all);
-    }],
-    ["the footnote's count of accounts with no dated capital record is the coverage block's", (t, ctx) => {
-      const g = XA_BOOK?.historyPanel;
-      if (!g) return { notChecked: "the NAV coverage block could not be re-derived from glowData.ts" };
-      const n = g.unreportedAccounts;
-      const all = [t, ...(ctx?.titles ?? [])].join("\n");
-      return !/Four covered accounts/.test(all)
-        && new RegExp(`${n} covered account${n === 1 ? " publishes" : "s publish"} no dated capital record`).test(all);
-    }],
+    ["nothing offers Upload History again — no link to it, no heading of it", (t, ctx) =>
+      !(ctx?.hrefs ?? []).some((h) => /^\/history(?:[?#]|$)/.test(h)) && !/upload history|snapshot history/i.test(t)],
   ],
 
 
@@ -36746,6 +36623,29 @@ const INVARIANTS = {
    * all four is numbered, so no two chips read alike. Struck against the
    * archive's own manifest, read here rather than off the page.
    */
+  /**
+   * ── ONE UPLOAD FOR THE WHOLE LIBRARY ────────────────────────────────────
+   *
+   * *"instead of giving file upload option inside each folder, give a
+   * universal file/folder upload option on the main statement library page"*
+   * — the family, 21 Oct 2026. Struck on the control's own handles: the grid
+   * carries the upload and a way to pick a FOLDER; an opened folder carries
+   * none. Offline the preview runs no Functions, so the panel names that cause
+   * (`no-function`) rather than offering a drop zone that would drop.
+   */
+  statements: [
+    ["the library's main page carries the one upload control, and it takes folders", (t, ctx) => {
+      const up = (ctx?.xa ?? []).filter((x) => x.xa === "statement-upload");
+      if (up.length !== 1) return false;
+      const state = up[0].attrs["upload-state"];
+      if (state === "ready") return (ctx?.buttonLabels ?? []).some((b) => /^\s*folder\s*$/i.test(b));
+      return ["no-function", "not-configured", "signed-out", "no-answer", "error", "loading"].includes(state);
+    }],
+  ],
+  "statements-folder": [
+    ["an opened folder carries no upload of its own", (t, ctx) =>
+      !(ctx?.xa ?? []).some((x) => x.xa === "statement-upload" || x.xa === "statement-upload-log")],
+  ],
   audit: [
     ["the consolidated sheet is primary and original documents are a collapsed source footnote", (t, ctx) => {
       return xaEl(ctx, "consolidated-sheet")?.attrs.tabs === "17"
