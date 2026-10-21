@@ -164,7 +164,7 @@ try {
   const filterPage = await browser.newPage({viewport:{width:1440,height:1000}});
   await filterPage.route('**/api/**',r=>r.fulfill({json:{ok:false,reason:'local export fixture'}}));
   await installReadModelRoutes(filterPage);
-  for(const [route,selector] of [['/monitor','[data-monitor-table="holdings"]'],['/private-market','table[data-pm-table="brands"]'],['/ledger','table[data-table-view]']]) {
+  for(const [route,selector] of [['/monitor','[data-monitor-table="holdings"]'],['/private-market?view=brands','table[data-pm-table="brands"]'],['/ledger','table[data-table-view]']]) {
     await assertMemberFilterExport(filterPage,base,route,selector);
   }
   await assertTransactionFilterExport(filterPage,base);
