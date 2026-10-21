@@ -1120,7 +1120,7 @@ export function MorningCIO() {
     {
       id: "annualised", label: historyLabel, icon: <TrendingUp className="h-4 w-4" />,
       href: returnsHref('fytd'),
-      hrefTitle: `Money-weighted return over available verified records, ${history.from ?? 'unknown'} to ${history.to ?? 'unknown'}. Each account uses its own recorded dates. The info button lists every included account and missing record. Open Returns to choose a common period.`,
+      hrefTitle: `Return over available verified records, ${history.from ?? 'unknown'} to ${history.to ?? 'unknown'}. Each account uses its own recorded dates. The info button lists every included account and missing record. Open Returns to choose a common period.`,
       value: historyValue,
       calculation: coverageInfo(history, 'return'),
       second: <span className="whitespace-normal">{measuredDates(history)} · {historyAnnual ? 'yearly rate' : 'not annualised'}</span>,
@@ -1131,20 +1131,12 @@ export function MorningCIO() {
       return {
         id: period, label: period === 'fytd' ? 'Return this financial year' : 'Return this calendar year',
         icon: <CalendarDays className="h-4 w-4" />, href: returnsHref(period),
-        hrefTitle: `Money-weighted return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
+        hrefTitle: `Return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
         value: pct1(r.total.returnPct), calculation: coverageInfo(r, 'return'),
         second: <span className="whitespace-normal">{period.toUpperCase()} · {measuredDates(r)}{r.total.gain != null && <> · {money(r.total.gain, true)}</>}</span>,
         sub: coveredCaption(r),
       };
     }),
-    {
-      id: "mwr", label: historyAnnual ? 'XIRR (annualised)' : 'Money-weighted return',
-      icon: <TrendingUp className="h-4 w-4" />, href: returnsHref('fytd'),
-      hrefTitle: `Available verified history, ${history.from ?? 'unknown'} to ${history.to ?? 'unknown'}. Each account closes on its own statement date. Open Returns to choose a common period.`,
-      value: historyValue, calculation: coverageInfo(history, 'return'),
-      second: <span className="whitespace-normal">{measuredDates(history)} · {historyAnnual ? 'yearly rate' : 'not annualised'}</span>,
-      sub: coveredCaption(history),
-    },
     {
       id: "return", label: "Consolidated return", icon: <Percent className="h-4 w-4" />,
       calculation: capitalCalculation, href: returnsHref('inception'),
@@ -1942,13 +1934,10 @@ export function MorningCIO() {
             It sat here reading "Listed vs private, on a like-for-like basis" over
             two tiles: the listed book invested → today with its unrealised gain,
             return and money-weighted return, and the same for the private (AIF)
-            half. Every one of those figures is still on this page and still
-            derived — invested and current value per bucket in the allocation
-            table, the money-weighted return in its own KPI tile with its own
-            coverage line, and the sides of the book on Concentration & risk,
-            which links each to the holdings behind it. So this is a LAYOUT
-            removal and not a measurement one, and `marketSides` in the model
-            above still feeds that row.
+            half. Invested and current value per bucket remain in the allocation
+            table; Concentration & risk links each side to its holdings. The
+            standalone money-weighted KPI has since been retired (Stage 10go).
+            `marketSides` in the model above still feeds the allocation row.
 
             `listedBook` and `privateBook` were named here too and fed NOTHING —
             this card was their only reader and they outlived it. A local that
