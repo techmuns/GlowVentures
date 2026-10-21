@@ -126,7 +126,10 @@ export function investedOnOf(ps: readonly Position[]): InvestedOn | null {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 /** A date as its source prints it: a day, or a month (`YYYY-MM`) never widened to a day. */
 export const fmtInvestedDate = (d: string) =>
-  /^\d{4}-\d{2}$/.test(d) ? `${MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : fmtDate(d);
+  /^\d{4}-\d{2}$/.test(d) ? `${MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}`
+    // These are calendar dates, not instants. Parsing UTC midnight into the
+    // viewer's timezone can turn a 3 August purchase into 2 August.
+    : /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${Number(d.slice(8, 10))} ${MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : fmtDate(d);
 
 const SOURCE_WORDS: Record<InvestedOnSource, string> = {
   allotments: "the fund's own dated allotments",

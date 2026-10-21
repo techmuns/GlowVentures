@@ -17,7 +17,7 @@ const mandate = pms.find(a => peers(a).length === 1);
 const strategy = pms.find(a => peers(a).length > 1);
 assert.ok(mandate && strategy);
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
-const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'America/Los_Angeles' });
 const page = await context.newPage();
 const errors = [], checked = [];
 page.on('pageerror', error => errors.push(error.message));

@@ -18,7 +18,7 @@
 //
 // and each refusal is made to refuse on the real book.
 import { BOOK_ACCOUNTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS } from "@/data/glowData";
-import { accountInvestedOn, holdingTradesOf, investedOnOf, lineUndatedReason, investmentDateOf, investmentDateMissingReason } from "@/lib/investedOn";
+import { accountInvestedOn, holdingTradesOf, investedOnOf, lineUndatedReason, investmentDateOf, investmentDateMissingReason, fmtInvestedDate } from "@/lib/investedOn";
 import { withReviewAccessors } from "@/lib/reviewColumns";
 import type { Position } from "@/lib/types";
 
@@ -28,6 +28,17 @@ const ok = (name: string, pass: boolean, detail = "") => {
   else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
 };
 const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
+
+{
+  const tz = process.env.TZ;
+  try {
+    process.env.TZ = "America/Los_Angeles";
+    ok("a purchase keeps its calendar day west of UTC", fmtInvestedDate("2022-08-03") === "3 Aug 2022");
+    ok("month-only dates retain their precision", fmtInvestedDate("2025-03") === "Mar 2025");
+  } finally {
+    if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz;
+  }
+}
 
 {
   const key = "hdfc-balanced-advantage-fund-regular-plan-growth";

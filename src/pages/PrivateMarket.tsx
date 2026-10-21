@@ -7,6 +7,7 @@ import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
 import { withReviewAccessors, type ReviewScope } from "@/lib/reviewColumns";
+import { fmtInvestedDate as fmtInvested } from "@/lib/investedOn";
 import { EditColumns } from "@/components/EditColumns";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
@@ -427,11 +428,6 @@ const valueWhy = (status: BookGroup["status"], reason: string | null): string =>
 /** The start of a date range — its year dropped where the end shares it ("30 Jun" → "31 Jul 2026"). */
 const rangeStart = (a: string, b: string) =>
   a.slice(0, 4) === b.slice(0, 4) ? fmtDate(a).replace(/\s\d{4}$/, "") : fmtDate(a);
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-/** An investment date as its source prints it: a day, or a month (`YYYY-MM`) never widened to a day. */
-const fmtInvested = (d: string) =>
-  /^\d{4}-\d{2}$/.test(d) ? `${MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : fmtDate(d);
 
 export function PrivateMarket() {
   /**
