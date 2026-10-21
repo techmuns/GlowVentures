@@ -2584,6 +2584,10 @@ function build(archived) {
   const splitUnreconciled = [];
   /** Every dated buy and sell behind a holding, keyed `${accountId}|${securityKey}` — see `holdingTradeRows`. */
   const holdingTrades = {};
+  /** The cash income each holding was paid, dated as its statement dates it (Stage 10fs). */
+  const holdingIncome = {};
+  /** The lots a lot register dates a holding by, where they account for every unit held (Stage 10fs). */
+  const holdingLots = {};
   /** Positions whose statement cost FIFO over the fund's own unit record restates — named in the report. */
   const fifoRestated = [];
   /** The FIFO lots still held, per `${accountId}|${securityKey}` — the per-contribution breakdown's source. */
@@ -3189,6 +3193,7 @@ function build(archived) {
       // nothing about it — a fund whose own allotments are its tranches, say.
       if (!rows.length && (!tapeWindow || !asOf || tapeWindow.to < asOf)) return null;
       if (rows.length) holdingTrades[`${accountId}|${h.securityKey}`] = rows;
+
       return holdingTradeRecord({ rows, quantity: h.quantity, asOf, window: tapeWindow });
     };
     const rollForwardOf = (h, base) => {
@@ -3256,6 +3261,14 @@ function build(archived) {
     const CASH_KIND = /^dividend$/i;
     const cashSeen = new Set();
     const dividendByKey = new Map();
+    /**
+     * …AND EACH OF THOSE DIVIDENDS ON ITS OWN DATE (Stage 10fs) — the received
+     * date, else the ex date, as the statement prints them; null where it
+     * prints neither. A holding's FIFO return adds its dividends as a total; a
+     * money-weighted return over its dated trades needs the same dividends on
+     * their days, or the two would be struck over different money.
+     */
+    const datedIncomeByKey = new Map();
     const corporateActions = [];
     // The DIVIDEND STATEMENT wins a cash event listed by both reports, so its
     // rows come first — `datedRowsAcross` has already deduped identical rows
@@ -3274,6 +3287,8 @@ function build(archived) {
           if (cashSeen.has(k)) continue;         // same event, both reports
           cashSeen.add(k);
           dividendByKey.set(ev.securityKey, r2((dividendByKey.get(ev.securityKey) ?? 0) + ev.netAmount));
+          datedIncomeByKey.set(ev.securityKey, [...(datedIncomeByKey.get(ev.securityKey) ?? []),
+            { date: ev.receivedDate ?? ev.exDate ?? null, amount: r2(ev.netAmount) }]);
         } else {
           // Non-cash: a bonus prints Amount 0.00, and that zero is REAL — the
           // entitlement is the substance. Carried as an action, never summed
@@ -3645,6 +3660,13 @@ function build(archived) {
         // The OLDEST lot, not the newest: the holding has existed since its
         // first surviving unit was bought.
         for (const l of dated) if (heldSince === null || l.purchaseDate < heldSince) heldSince = l.purchaseDate;
+        // EACH LOT ON ITS OWN DATE (Stage 10fs): a holding bought in two lots
+        // was not all bought on the oldest one's day, and a rate compounded from
+        // it says it was. The lots go to the book so a money-weighted return can
+        // place each rupee on its own day.
+        holdingLots[`${accountId}|${h.securityKey}`] = dated
+          .map((l) => ({ date: l.purchaseDate, quantity: isNum(l.quantity) ? l.quantity : null, cost: r2(l.totalCost) }))
+          .sort((a, b) => a.date.localeCompare(b.date) || a.cost - b.cost);
       }
       positions.push({
         securityKey: h.securityKey,
@@ -3716,6 +3738,14 @@ function build(archived) {
         heldSince,
         /** What the account's own dated trades say about when these units were bought — see `holdingTradeRecord`. */
         tradeRecord: tradeRecordOf(h) ?? undefined,
+        ...((income) => {
+          // THE SAME DIVIDENDS `dividendReceived` TOTALS, each on its day (Stage 10fs).
+          if (income.length) {
+            holdingIncome[`${accountId}|${h.securityKey}`] = [...income]
+              .sort((a, b) => (a.date ?? "9999").localeCompare(b.date ?? "9999") || a.amount - b.amount);
+          }
+          return {};
+        })(datedIncomeByKey.get(h.securityKey) ?? []),
         // The date the statement PRINTS its price or value as struck at, which
         // need not be the account's as-of: ICICI's NSDL balance is at 31 Mar and
         // its values "Prices as on 30-Mar-2026". Only where printed; never the as-of.
@@ -4920,6 +4950,12 @@ function build(archived) {
     holdingTrades: Object.fromEntries(Object.keys(holdingTrades).sort()
       .filter((k) => positions.some((p) => `${p.accountId}|${p.securityKey}` === k))
       .map((k) => [k, holdingTrades[k]])),
+    holdingIncome: Object.fromEntries(Object.keys(holdingIncome).sort()
+      .filter((k) => positions.some((p) => `${p.accountId}|${p.securityKey}` === k))
+      .map((k) => [k, holdingIncome[k]])),
+    holdingLots: Object.fromEntries(Object.keys(holdingLots).sort()
+      .filter((k) => positions.some((p) => `${p.accountId}|${p.securityKey}` === k))
+      .map((k) => [k, holdingLots[k]])),
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
     excludedAccounts, bankAccounts, unvaluedHoldings, separateInvestments,
@@ -5167,6 +5203,23 @@ function emit(book) {
   L.push(" * `Position.tradeRecord` says which of these date the units held.");
   L.push(" */");
   L.push(`export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = ${j(book.holdingTrades)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * THE CASH DIVIDENDS EACH HOLDING WAS PAID, ON THEIR OWN DATES");
+  L.push(" * (Stage 10fs) — the same events `Position.dividendReceived` totals, keyed as");
+  L.push(" * `BOOK_HOLDING_TRADES`. `date` is the received date, else the ex date; null");
+  L.push(" * where the statement prints neither. What a money-weighted return over the");
+  L.push(" * holding's own dated trades adds on each day.");
+  L.push(" */");
+  L.push(`export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number }[]> = ${j(book.holdingIncome)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * THE LOTS A LOT REGISTER DATES A HOLDING BY (Stage 10fs), keyed as");
+  L.push(" * `BOOK_HOLDING_TRADES` — present exactly where `Position.heldSince` is, under");
+  L.push(" * the same gate: the lots account for every unit held. Each lot's purchase");
+  L.push(" * date, units and total cost as the register prints them.");
+  L.push(" */");
+  L.push(`export const BOOK_HOLDING_LOTS: Record<string, { date: string; quantity: number | null; cost: number }[]> = ${j(book.holdingLots)};`);
 
   L.push("");
   L.push("/**");

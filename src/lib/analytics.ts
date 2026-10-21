@@ -1317,6 +1317,12 @@ export const MIXED_VALUE_DATES =
 export type Holdable = {
   returnPct: number | null;
   heldSince: string | null;
+  /**
+   * WHEN THE UNITS HELD NOW BEGAN, where the holding's own dated trades prove
+   * it held nothing before (`holdingPeriodOf`, Stage 10fs) — what lets a
+   * holding opened this year carry its year-to-date return. Unset elsewhere.
+   */
+  opened?: { nilSince: string; openedOn: string } | null;
   /** The date the value behind `returnPct` is struck at (`valueDateOf`); `null`
    *  where the row's holdings are valued on different dates; omitted where the
    *  caller has no value date and the fallback `asOf` stands. */
@@ -1406,6 +1412,27 @@ export type HoldingYtd =
 export function holdingYtd(p: Holdable, asOf: string): HoldingYtd {
   // The year is the one the VALUE is struck in, not the book's newest date.
   const yearStart = `${(windowEnd(p, asOf) ?? asOf).slice(0, 4)}-01-01`;
+  /**
+   * …OR ITS OWN DATED TRADES (Stage 10fs). Where they run from a nil opening,
+   * they say whether the holding held anything on 1 January: nothing, and its
+   * return since the buy that opened it IS its year to date; something, and
+   * the value it was worth that day is still the missing figure.
+   */
+  if (!p.heldSince && p.opened) {
+    const o = p.opened;
+    if (o.openedOn < yearStart) {
+      return { kind: "absent",
+        reason: `its own dated trades show it already held on 1 January (the units it holds now were first bought on ${o.openedOn}), so its year-to-date return needs its value on that date, which no statement in this book carries — the share's own market move since January is a different figure and is not shown in its place.` };
+    }
+    if (o.nilSince > yearStart) {
+      return { kind: "absent",
+        reason: `its account's dated trades begin on ${o.nilSince}, after 1 January, so whether it was held on that day is not on record — and a year-to-date return needs either its value then or proof it held nothing.` };
+    }
+    if (p.returnPct === null || p.returnPct === undefined) {
+      return { kind: "absent", reason: "this holding was opened during the year, but no statement reports a cost for it, so there is nothing to measure a return against" };
+    }
+    return { kind: "since-open", pct: p.returnPct, since: o.openedOn };
+  }
   if (!p.heldSince) {
     return {
       kind: "absent",
@@ -1452,10 +1479,11 @@ export function ytdCoverage(positions: Holdable[], asOf: string) {
 //    `auto` and `cagr` delegate to it, so a sub-year window can never be
 //    compounded onto a year (the +99.0% / +47,695% failure this repo has met).
 //  - A measure this book cannot strike renders a DASH WITH THE REASON, never a
-//    plausible wrong number. Per-holding XIRR is the honest example: the
-//    statements cover the current period only, so no cash-flow history exists to
-//    solve one against, and `positionIrrPct` is the banned extrapolation — so the
-//    XIRR measure names why it is absent rather than reaching for a figure.
+//    plausible wrong number. Per-holding XIRR is the honest example: it stands
+//    only where the holding's own dated trades or lot register account for every
+//    unit it holds (Stage 10fs, `holdingFlows.ts`), and `positionIrrPct` is the
+//    banned extrapolation — so everywhere else the XIRR measure names why it is
+//    absent rather than reaching for a figure.
 
 export type ReturnMeasure = "auto" | "absolute" | "cagr" | "xirr" | "ytd" | "calendar";
 
@@ -1481,9 +1509,9 @@ export const RETURN_MEASURES: ReturnMeasureDef[] = [
   { key: "absolute", label: "Holding Period Return", tag: "HPR",
     hint: "FIFO return on deployed capital, not annualised. Individual-share returns exclude separately paid dividends; dividend-inclusive period returns are on Corporate actions & dividends." },
   { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
-    hint: "The return on cost annualised — struck only where a purchase date is on file and the holding is at least a year old; a shorter window stays the holding-period return." },
+    hint: "The return on cost annualised — struck only where the money went in on one dated payment at least a year ago; a shorter window stays the holding-period return, and money that went in over several dates is XIRR's." },
   { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",
-    hint: "A money-weighted return across every cash flow. It needs each payment's date and amount, which the statements carry for a whole ACCOUNT and never for a holding inside one — so it shows on a row that is whole accounts with every payment dated, and is absent, with the reason, everywhere else." },
+    hint: "A money-weighted return across every cash flow. It needs each payment's date and amount — which the statements carry for a whole account, and for a holding whose every unit its account's dated trades or lot register account for — so it shows on those rows, and is absent, with the reason, everywhere else." },
   { key: "ytd", label: "Year to date", tag: "YTD",
     hint: "The holding's own return since 1 January — measurable only where it was opened during the year, because otherwise its value on 1 January is missing." },
   { key: "calendar", label: "Calendar year", tag: "CY",
@@ -1526,6 +1554,8 @@ export type ReturnInput = {
   marketValue?: number;
   /** See `Holdable.valuedAt`. */
   valuedAt?: string | null;
+  /** See `Holdable.opened`. */
+  opened?: { nilSince: string; openedOn: string } | null;
   /**
    * THE DATED CAPITAL BEHIND THE ROW, where the row IS one or more whole
    * accounts (`datedCapital.ts`). Undefined on a holding inside an account —
@@ -1554,8 +1584,10 @@ export type ReturnInput = {
  * accounts. `dated: true` where every one of those accounts has a complete dated
  * record of the family's payments (`capitalRollup`) — the one thing a
  * money-weighted return needs — and `dated: false`, with the reason, where the
- * row is whole accounts and one of them has no such record. A HOLDING has none:
- * it is not an account, and `capital` is left undefined.
+ * row is whole accounts and one of them has no such record. A HOLDING is not an
+ * account and never takes one's record; since Stage 10fs it carries its OWN dated
+ * money (`holdings` set) where its trades or lot register date every unit of it,
+ * and `capital` is left undefined where they do not.
  */
 export type RowCapital =
   | {
@@ -1572,6 +1604,13 @@ export type RowCapital =
       days: number;
       /** The pooled XIRR, annual; null where the flows do not solve. */
       annualPct: number | null;
+      /**
+       * SET WHERE THE ROW IS HOLDINGS, NOT WHOLE ACCOUNTS (Stage 10fs): its
+       * money is each holding's own dated buys, sales and dividends
+       * (`holdingFlows.ts`), and this counts how many of its lines each kind of
+       * record dates. `accounts` is then the number of lines pooled.
+       */
+      holdings?: { trades: number; lots: number };
     }
   | { dated: false; accountIds: string[]; reason: string };
 
@@ -1603,7 +1642,7 @@ const wholeAccountsOf = (n: number): string => n === 1 ? "This row is one whole 
 const DERIVED_ONLY_RETURN =
   "no statement in this book reports this company as a holding — the family reaches it only through funds whose filings name it — so there is no cost or value of the family's own to strike a return on";
 const NO_HOLDING_XIRR =
-  "a money-weighted return (XIRR) needs every cash flow for this holding — each tranche's date and amount — and the statements in this book cover the current period only, so no per-holding XIRR can be struck. The per-account money-weighted return is on the Performance page.";
+  "a money-weighted return (XIRR) needs every cash flow for this holding — the date and amount of every purchase and sale of every unit it holds — and no statement in this drop carries them all: its account's dated trades or lot register do not account for every unit it holds, or it has neither. The per-account money-weighted return is on the Performance page.";
 export const noCalendarReason = (asOf: string) =>
   `a calendar-year return needs the holding's value at the start and end of that year, and the earliest statement in this book is dated in ${asOf.slice(0, 4)}, after the current year began — there is no earlier window to measure from.`;
 
@@ -1632,6 +1671,15 @@ function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>
     return noCost ? { shown: false, tag: "XIRR", reason: noCostReasonOf(p) } : capitalSubYear(p.returnPct as number, cap);
   }
   if (cap.annualPct == null) return { shown: false, tag: "XIRR", reason: "these dated payments and this value do not solve to a rate" };
+  // A ROW OF HOLDINGS (Stage 10fs): its money is each holding's own dated
+  // purchases, sales and dividends, and the note says whose record dates them.
+  if (cap.holdings) {
+    const by = [cap.holdings.trades ? "its account's dated trades" : null, cap.holdings.lots ? "its lot register" : null].filter(Boolean).join(" and ");
+    return { shown: true, pct: cap.annualPct, tag: "XIRR",
+      note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "purchase" : "purchases and sales"} and the dividends paid on them, as ${by} ${cap.holdings.trades + cap.holdings.lots === 1 ? "dates" : "date"} them`
+        + (cap.accounts > 1 ? `, across ${cap.accounts} holdings each closing on its own statement's value and date` : ", and the value on the statement's own date")
+        + `, from ${cap.since} to ${cap.to} (${cap.days} days).` };
+  }
   return { shown: true, pct: cap.annualPct, tag: "XIRR",
     note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "payment" : "payments"}`
       + (cap.accounts > 1 ? ` across ${cap.accounts} accounts, each closing on its own statement's value and date` : ", and the value on the statement's own date")
@@ -1642,8 +1690,9 @@ function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>
  * The return to print for one holding, on the measure the reader picked.
  *
  * `auto` applies the family's rule and tags each cell with the measure it
- * resolved to (HPR or CAGR here — XIRR falls back to the return on cost because
- * this book cannot strike it, and says so in the note). The concrete measures
+ * resolved to — XIRR where the row's dated money (whole accounts', or since
+ * Stage 10fs its holdings' own) went in over several payments, and the return on
+ * cost, saying so, where nothing dates it. The concrete measures
  * render that measure or a dash naming why this book cannot. `absolute` and
  * `cagr` delegate to `holdingReturn` so the annualisation guard is defined once.
  */
@@ -1774,7 +1823,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
     note: p.heldSince && end === null
       ? `Total return on cost — ${MIXED_VALUE_DATES}.`
       : heldDays === null
-      ? "No lot register dates the units this row holds, so this is the total return on cost, not annualised — a holding of a year or more shows as CAGR where its lots are dated."
+      ? "No dated trade or lot register accounts for every unit this row holds, so this is the total return on cost, not annualised — a holding whose every purchase is dated shows as CAGR or XIRR once it is a year old."
       : `Held ${heldDays} days to its valuation on ${end} — under a year, so this is the total return on cost.` };
 }
 
