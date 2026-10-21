@@ -187,7 +187,7 @@ type SectorRow = {
    * …and the two other terms of the same FIFO gain, as `fifoTotals` struck
    * them: the unrealised gain (value − cost held, over the costed holdings)
    * and the dividends they paid (Stage 10fb). The popover's worked line adds
-   * exactly these, so it reproduces the return beside it (Stage 10fx).
+   * exactly these, so it reproduces the return beside it (Stage 10fz).
    */
   unrealised: number | null; income: number | null;
   /** Holdings behind the sector that report a cost, and how many there are. */
@@ -645,7 +645,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   /** The index's weight in a sector: its factsheet's, or a computed zero where it lists none. */
   const indexWeightOf = (key: string) => idxBy.get(key)?.weight ?? 0;
   /**
-   * ── WHAT IS WEIGHED AGAINST AN EQUITY INDEX, AND OVER WHAT (Stage 10fx) ───
+   * ── WHAT IS WEIGHED AGAINST AN EQUITY INDEX, AND OVER WHAT (Stage 10fz) ───
    *
    * TWO DEFECTS, ONE PLACE. The family's weight was its share of the WHOLE
    * set, Unclassified included, while the index's sectors sum to 100% — so the
@@ -1421,7 +1421,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                             {indexOnlyRow || liveBySector[s.key] ? `${(w * 100).toFixed(1)}%`
                               : vs
                                 /* AGAINST AN INDEX: the sector's equity sleeve over the classified sleeve —
-                                   or, for the residual, over the whole of it (Stage 10fx). */
+                                   or, for the residual, over the whole of it (Stage 10fz). */
                                 ? <Auditable formula={weightFormula(vsSleeveOf(s), vsBaseOf(s), w * 100, money,
                                     s.key === UNCLASSIFIED
                                       ? `the family's whole equity ${consolidatedView ? "sleeve — their shares plus their funds' equity lines" : "shares"}: this is the residual no source placed in a sector, outside the comparison`

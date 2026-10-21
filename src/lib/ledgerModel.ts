@@ -740,7 +740,7 @@ export function deriveIncome(docs: ArchiveDoc[]): IncomeData {
   const cash: IncomeRow[] = [], corporate: IncomeRow[] = [];
   /**
    * ONE CASH EVENT, HOWEVER MANY DOCUMENTS PRINT IT — AND EVERY ONE A SINGLE
-   * DOCUMENT PRINTS (Stage 10fx). The match on (account, date, security,
+   * DOCUMENT PRINTS (Stage 10fz). The match on (account, date, security,
    * amount) does two jobs and both are load-bearing: it removes the corporate
    * benefits report's reprint of a dividend statement's row, AND the same
    * dividend on successive issues of the dividend statement, where the row is
@@ -953,7 +953,7 @@ export type StockLedger = {
   lotDates: string[];
   /**
    * The dated lots STILL HELD in this name, from every lot register in the
-   * archive (Stage 10fx) — per account, the newest issue of each report type,
+   * archive (Stage 10fz) — per account, the newest issue of each report type,
    * which is the set `build-book` ages `stCostBasis` / `ltCostBasis` on. The
    * hold-to-LTCG planner and the company page's term split work LOT BY LOT on
    * these (`src/lib/ltDate.ts`); a position-level split cannot say which lot is

@@ -39,7 +39,7 @@
  * before the year gets no set-off, which `setOffWithheld` says for the page.
  *
  * THE ₹1.25 L s.112A EXEMPTION IS APPLIED, ONCE PER PERSON PER YEAR (Stage
- * 10fx). Long-term gains on listed equity shares and equity-oriented fund units
+ * 10fz). Long-term gains on listed equity shares and equity-oriented fund units
  * are taxed at 12.5% only on what exceeds ₹1.25 L in the financial year, per
  * assessee, after the set-off. Leaving it out overstated every taxpayer with a
  * long-term gain by up to ₹15,625. It is applied to the long-term head these
@@ -49,7 +49,7 @@
  * spanning years carries several years' exemptions and gets none, like the
  * set-off).
  *
- * EACH ACCOUNT'S YEAR ENDS AT ITS OWN STATEMENT (Stage 10fx). "The sales made
+ * EACH ACCOUNT'S YEAR ENDS AT ITS OWN STATEMENT (Stage 10fz). "The sales made
  * in FY 2026-27" was the caption, and no account's statement covers the year:
  * Molecule's closes 30 Jun, Green Lantern's 27 Jul, LKP's 31 Jul, V.E.C
  * 128005's 13 Aug, the rest 30 Sep or 7 Oct. So every taxpayer's figure is
@@ -249,7 +249,7 @@ export function estimateRealisedTax(rows: readonly EntityCG[]): RealisedTaxEstim
 }
 
 /**
- * ── THE YEAR'S REALISED GAINS, AS EACH STATEMENT COVERS THEM (Stage 10fx) ───
+ * ── THE YEAR'S REALISED GAINS, AS EACH STATEMENT COVERS THEM (Stage 10fz) ───
  *
  * Capital Gains' headline summed every account's WINDOW — ₹16.17 Cr on the
  * October book, where ASK's and Marathon's windows run from 2019 and 2024 and

@@ -138,7 +138,7 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
           // filed under "no purchase date", which would send a reader looking
           // for a document the row does not need.
           + (cov.staggered > 0 ? ` ${cov.staggered} ${cov.staggered === 1 ? "row is a whole account" : "rows are whole accounts"} funded over several dated payments: a single-start compound rate would treat every rupee as invested on the first date, so ${cov.staggered === 1 ? "its" : "their"} annual rate is in the XIRR column.` : "")
-          // A DATED HOLDING BOUGHT IN LOTS, OR PARTLY SOLD (Stage 10fx), is
+          // A DATED HOLDING BOUGHT IN LOTS, OR PARTLY SOLD (Stage 10fz), is
           // refused because its start is the oldest unit's, not one purchase's —
           // counted apart for the same reason the staggered accounts are.
           + (cov.lotted > 0 ? ` ${cov.lotted} ${cov.lotted === 1 ? "holding was" : "holdings were"} bought on several dates or partly sold, so the oldest unit's date does not start one purchase and a single-start compound rate would misstate ${cov.lotted === 1 ? "it" : "them"}; ${cov.lotted === 1 ? "its" : "their"} Holding Period Return stands.` : "")

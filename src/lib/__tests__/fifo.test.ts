@@ -210,7 +210,7 @@ const acct = (accountId: string, engagement: Account["engagement"], capital?: Ac
     /unrealised .* realised .* capital deployed/.test(fifoBasisNote(fifoTotals([c]), (n) => String(n))));
 }
 
-// ── Stage 10fx ──────────────────────────────────────────────────────────────
+// ── Stage 10fz ──────────────────────────────────────────────────────────────
 {
   // B9 — A WHOLE MANDATE'S UNCOSTED ROW STAYS IN ITS GAIN. The unrealised half
   // was `mv − cost` with mv over every row and cost over the costed ones, so a
@@ -603,7 +603,7 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
   near("C7 …and their capital deployed", d, t.deployed ?? NaN, 1);
 }
 
-// C8 — THE BOOK'S RETURN IS SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fx).
+// C8 — THE BOOK'S RETURN IS SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fz).
 // Re-expressed off the book: every row the current set drops that carries a
 // realised record and its cost sold, plus every closed PMS mandate's capital.
 {

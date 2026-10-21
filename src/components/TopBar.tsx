@@ -49,7 +49,7 @@ function CurrencySwitch() {
           miss. The quote feed already flags a price it could not refresh; the
           rate gets the same treatment, in the chip rather than behind it.
 
-          AND THERE IS NO STATIC FALLBACK ANY MORE (Stage 10fx). `$1 = ₹83.50`
+          AND THERE IS NO STATIC FALLBACK ANY MORE (Stage 10fz). `$1 = ₹83.50`
           was a rate nobody published. With the feed down the chip names the
           LAST rate this browser fetched and its date; with no such rate the
           cockpit is in INR and the USD button above says why. */}

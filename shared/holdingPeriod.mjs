@@ -1,4 +1,4 @@
-// HOW LONG A LOT HAS BEEN HELD, AS THE INCOME-TAX ACT COUNTS IT (Stage 10fx).
+// HOW LONG A LOT HAS BEEN HELD, AS THE INCOME-TAX ACT COUNTS IT (Stage 10fz).
 //
 // `build-book` split a lot register into short- and long-term cost with
 // `held >= 365 days`. Section 2(42A) does not count days: a capital asset is
@@ -18,7 +18,7 @@
 // a tax basis is a figure somebody might act on.
 //
 // Pure, so the suite can hold the rule to dated cases without a build — and
-// SHARED (Stage 10fx): `build-book` splits the registers with it and the browser
+// SHARED (Stage 10fz): `build-book` splits the registers with it and the browser
 // re-ages the same lots to today with it (`src/lib/ltDate.ts`), so the book's
 // split and the page's cannot disagree about when a lot turns long-term.
 

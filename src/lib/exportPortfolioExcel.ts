@@ -280,13 +280,13 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
        * lot as if all of it were a year old.
        */
       const fifo = fifoTotals(ps, fifoOpts);
-      // NO `cost > 0` GUARD (Stage 10fx, after 10df): a holding whose units
+      // NO `cost > 0` GUARD (Stage 10fz, after 10df): a holding whose units
       // are all sold holds a cost of ₹0 and its whole gain is realised —
       // `fifoTotals` divides by the capital deployed (cost held + cost of
       // units sold) and refuses only where that is not above zero.
       const fifoRet = costNA ? null : fifo.returnPct;
       // The row's start, and whether it is ONE purchase held throughout — the
-      // only thing a CAGR measures (Stage 10fx, `clubbedPurchase`).
+      // only thing a CAGR measures (Stage 10fz, `clubbedPurchase`).
       const purchase = clubbedPurchase(ps);
       const since = purchase.heldSince;
       const valuedAt = commonValueDate(ps.map(valueDate));

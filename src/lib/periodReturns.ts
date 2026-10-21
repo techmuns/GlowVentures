@@ -31,7 +31,7 @@
  * handle "investments made during the window" each in their own way and say
  * how.
  *
- * ── ONE SELECTED RECORD PER ACCOUNT (Stage 10fx) ─────────────────────────────
+ * ── ONE SELECTED RECORD PER ACCOUNT (Stage 10fz) ─────────────────────────────
  *
  * The Returns tab used to assemble its own inputs — the account's cash-flow
  * rows, its NAV history, the capital rollup — and never read the verified
@@ -213,7 +213,7 @@ function markOnOrBefore(v: Valuation[], d: string, notBefore: string | null, aft
 }
 
 /**
- * ── HOW OLD AN OPENING MARK MAY BE (Stage 10fx) ─────────────────────────────
+ * ── HOW OLD AN OPENING MARK MAY BE (Stage 10fz) ─────────────────────────────
  *
  * An account opens on its latest statement value ON OR BEFORE the opening
  * date, and nothing used to bound how far before. Over October's MTD the two
@@ -339,7 +339,7 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
       worked: `${D} days is under a year, so the rate is not annualised: (1 + ${pct(r * 100)})^(${D}/365) − 1 = ${pct(w)} over the period.` });
   }
   /**
-   * ── ABSOLUTE RETURN IS MODIFIED DIETZ OVER A DATED WINDOW (Stage 10fx) ────
+   * ── ABSOLUTE RETURN IS MODIFIED DIETZ OVER A DATED WINDOW (Stage 10fz) ────
    *
    * It divided the gain by `V₀ + capital in`, counting money added on the
    * window's last weeks at the weight of money held all along. Over FYTD that
@@ -378,7 +378,7 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
   // CAGR's period growth uses dated capital weights, including each account's
   // own opening and closing dates, before it is stated per year. It is ONE
   // Modified Dietz period annualised, not a chain of statement intervals
-  // (Stage 10fx): the pooled accounts share no set of interval dates to chain
+  // (Stage 10fz): the pooled accounts share no set of interval dates to chain
   // on, so the label says which it is rather than claim a time-weighted rate.
   if (!(denom > 0)) return finish({ shown: false, reason: "the money at work over this period is not positive", formula });
   const p = (gain / denom) * 100;
@@ -437,7 +437,7 @@ const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
  *     place — that is how Active Momentum 904168868444 opened at nil over FYTD
  *     and Sanshi 9039671912 over 1Y while the record refuses both.
  *   • NO RECORD AT ALL (an older book, a fixture): the sources this tab read
- *     before Stage 10fx — the cash-flow opening, the rollup, unit-unchanged
+ *     before Stage 10fz — the cash-flow opening, the rollup, unit-unchanged
  *     coverage — in that order.
  */
 export function accountInputs(book: InputBook): AccountInput[] {
@@ -476,7 +476,7 @@ export function accountInputs(book: InputBook): AccountInput[] {
         flowsUnknown: null, undated });
       continue;
     }
-    // ── No record for this account: the pre-Stage-10fx sources. ──
+    // ── No record for this account: the pre-Stage-10fz sources. ──
     const vals = new Map<string, number>();
     for (const p of marks) vals.set(p.date, p.nav);
     const held = book.positions.filter((p) => p.accountId === a.accountId);
@@ -514,7 +514,7 @@ export function accountInputs(book: InputBook): AccountInput[] {
 }
 
 /**
- * ── THE INDEX ON THE PORTFOLIO'S OWN FLOWS (PME, Stage 10fx) ────────────────
+ * ── THE INDEX ON THE PORTFOLIO'S OWN FLOWS (PME, Stage 10fz) ────────────────
  *
  * The Benchmarks card set a MONEY-weighted portfolio figure beside an index's
  * TIME-weighted close-to-close move over measuredFrom → measuredTo — while

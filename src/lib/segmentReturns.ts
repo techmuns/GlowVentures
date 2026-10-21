@@ -39,7 +39,7 @@
  * holding, so a segment cannot be measured over FYTD the way an account can
  * (`periodReturns.ts`). The Returns tab's windows stay whole-account.
  *
- * ── AND SINCE INCEPTION MEANS THE EXITS TOO (Stage 10fx) ─────────────────────
+ * ── AND SINCE INCEPTION MEANS THE EXITS TOO (Stage 10fz) ─────────────────────
  *
  * The rows are the current holdings; the gains are not only theirs. A holding
  * redeemed to nil or a closed mandate (`exitedRows`) earned what its record
@@ -100,7 +100,7 @@ export type SegmentLine = {
   weightPct: number | null;
   /** Mandates struck whole on their capital inside this line. */
   wholeMandates: number;
-  /** Exited holdings / closed mandates whose earnings are in this line's gain and deployed, in no row (Stage 10fx). */
+  /** Exited holdings / closed mandates whose earnings are in this line's gain and deployed, in no row (Stage 10fz). */
   exitedHoldings: number;
   exitedMandates: number;
   exitedGain: number;
@@ -127,7 +127,7 @@ export type SegmentAttribution = {
   /** The whole mandates' capital remainder no segment holds. Null where they add. */
   mandateRemainder: { gain: number; deployed: number; contribPct: number | null; mandates: number } | null;
   /**
-   * Exits whose segment holds nothing current (Stage 10fx): in the Total's gain
+   * Exits whose segment holds nothing current (Stage 10fz): in the Total's gain
    * and deployed, and in no segment. Null where every exit has a segment.
    */
   exited: SegmentLine | null;
@@ -197,7 +197,7 @@ function lineOf(key: string, label: string, set: readonly Position[], opts: Fifo
   const s = costedBookSet(set);
   const f = fifoTotals(s.struck, opts);
   // An exit that entered the gain makes it a measurement even where nothing
-  // current strikes one — the "Exited" line is all exits (Stage 10fx).
+  // current strikes one — the "Exited" line is all exits (Stage 10fz).
   const exits = f.exitedHoldings + f.exitedMandates.length;
   const strikes = s.struckCount > 0 || exits > 0;
   const gain = strikes ? f.gain : null;
@@ -237,7 +237,7 @@ const RUPEE = 1;
  * The attribution of `current` — the CURRENT, deduped holdings a page shows —
  * on one axis. `accounts` decides which mandates are whole; nothing is struck
  * whole without them. `exited` is what the family has left (`exitedRows` over
- * the whole deduped book): in the gains, in no segment's value (Stage 10fx).
+ * the whole deduped book): in the gains, in no segment's value (Stage 10fz).
  */
 export function segmentAttribution(
   current: readonly Position[],

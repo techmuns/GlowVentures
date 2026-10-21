@@ -7883,7 +7883,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 1675096.28,
+    "dividendFrom": "2019-05-08",
     "positionIrrPct": null
   },
   {
@@ -7907,15 +7908,14 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 58131.54,
     "realizedPnL": 1411596.13,
     "costOfUnitsSold": 28588403.87,
-    "returnPct": 10.95,
+    "returnPct": 5.12,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
-    "dividendReceived": 1675096.28,
-    "dividendFrom": "2019-05-08",
+    "dividendReceived": null,
     "positionIrrPct": null
   },
   {
@@ -50432,7 +50432,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
       "amount": 131306.97
     }
   ],
-  "hdfc-mutual-fund-15725046|hdfc-overnight-fund-direct-plan-growth-option": [
+  "hdfc-mutual-fund-15725046|hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": [
     {
       "date": "2019-05-09",
       "amount": 14433.92

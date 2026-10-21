@@ -14,7 +14,7 @@ import { fmtDate } from "./format";
  * card that fills itself in time, which this one never does (CLAUDE.md: a card
  * that can never be filled must not look like one that is waiting). Where the
  * window opens on an FY start the reason says that, and what would fill it;
- * no annual rate is struck either way (Stage 10fx). The "N days recorded"
+ * no annual rate is struck either way (Stage 10fz). The "N days recorded"
  * clause stays the first words, as the tile's probe reads it. The face keeps
  * to a few words (no explainer lines, Stage 10cp); the why is `detail`, for
  * the hover.

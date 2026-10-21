@@ -209,7 +209,7 @@ type Ctx = {
   bookIsEmpty: boolean;
   /**
    * The currency every figure is ACTUALLY rendered in — `requestedCurrency`
-   * when a published rate is in hand, INR when none is (Stage 10fx,
+   * when a published rate is in hand, INR when none is (Stage 10fz,
    * `effectiveCurrency`). Pages label money by this, so a label never says USD
    * over a figure that could not be converted.
    */
@@ -226,7 +226,7 @@ type Ctx = {
   fxAsOf: string | null;  // the publication date of the rate in use, if its source supplied one
   /**
    * Where the rate in use came from: this load's feed, the last rate this
-   * browser fetched (with its date), or none (Stage 10fx). There is no static
+   * browser fetched (with its date), or none (Stage 10fz). There is no static
    * fallback rate any more — `DEFAULT_INR_PER_USD = 83.5` was a figure nobody
    * published, and every USD figure was divided by it whenever the feed missed.
    */
@@ -434,7 +434,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const [requestedCurrency, setCcy] = useState<DisplayCurrency>(() => readDisplayCurrency() ?? "INR");
   // Live daily USD→INR rate (₹ per $1), fetched once on load. NO STATIC
-  // FALLBACK (Stage 10fx): until and unless the feed answers, the rate in use
+  // FALLBACK (Stage 10fz): until and unless the feed answers, the rate in use
   // is the last one this browser fetched, dated; with neither, the cockpit
   // renders in INR and the currency control says why. `undefined` = the fetch
   // has not settled, `null` = it failed.

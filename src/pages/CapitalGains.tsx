@@ -50,11 +50,11 @@ import type { Position } from "@/lib/types";
 
 // (HOLE 2 has since narrowed: two accounts — LKP 98245 and V.E.C 128004 —
 // issue a LOT REGISTER, and the planner revived on them. It now works lot by
-// lot, Stage 10fx; see `src/lib/ltDate.ts`.)
+// lot, Stage 10fz; see `src/lib/ltDate.ts`.)
 
 // Illustrative Indian equity rates: STCG u/s 111A = 20%; LTCG u/s 112A = 12.5%,
 // with the ₹1.25 L s.112A exemption applied once per taxpayer to the tax
-// estimate (Stage 10fx). ONE definition, in `taxEstimate.ts`, because the tax
+// estimate (Stage 10fz). ONE definition, in `taxEstimate.ts`, because the tax
 // tile and the hold-to-LTCG planner both apply them and two copies would be
 // two chances to disagree.
 
@@ -84,7 +84,7 @@ export function CapitalGains() {
   // The "no capital gain statement" band opens here; above the early return,
   // as every hook must be.
   const [missingOpen, setMissingOpen] = useState(false);
-  // INDIA'S DATE, NOT UTC'S (Stage 10fx). `toISOString()` is the UTC date, a
+  // INDIA'S DATE, NOT UTC'S (Stage 10fz). `toISOString()` is the UTC date, a
   // day behind from 00:00 to 05:30 IST — and on the morning a lot turns
   // long-term the planner would still have called it short-term.
   const today = useMemo(() => istToday(), []);
@@ -97,7 +97,7 @@ export function CapitalGains() {
    *
    * `build-book` derives it as the days from THAT DOCUMENT's as-of to the first
    * day its soonest short-term lot is long-term — the purchase anniversary + 1
-   * day under `shared/holdingPeriod.mjs` (Stage 10fx; it was `365 − days held`,
+   * day under `shared/holdingPeriod.mjs` (Stage 10fz; it was `365 − days held`,
    * one day early) — so the date that lot turns long-term is
    * `account.asOf + daysToLT`, which the harvest table's fallback still uses
    * where a register's lots are not in hand. This anchored
@@ -127,11 +127,11 @@ export function CapitalGains() {
   // reconciled — it carries a short/long cost split — which includes a holding
   // whose every lot is already long-term (`daysToLT` is null on those, and
   // counting on it left eight of V.E.C 128004's fourteen dated holdings out
-  // of the count, Stage 10fx).
+  // of the count, Stage 10fz).
   const datedLots = useMemo(() => p.filter((x) => x.stCostBasis != null || x.ltCostBasis != null), [p]);
 
   /**
-   * THE LOTS THEMSELVES (Stage 10fx). The book carries only each dated
+   * THE LOTS THEMSELVES (Stage 10fz). The book carries only each dated
    * position's cost split; which LOT is at a gain needs the register's lots,
    * which the per-security ledger view publishes (`StockLedger.openLots`). One
    * read per dated security, shared with the company page's cache. `undefined`
@@ -163,7 +163,7 @@ export function CapitalGains() {
   }, [datedLots, registers, portfolio]);
 
   /**
-   * THE PLANNER, LOT BY LOT (Stage 10fx). It filtered POSITIONS at a net gain
+   * THE PLANNER, LOT BY LOT (Stage 10fz). It filtered POSITIONS at a net gain
    * and applied the rate difference to the position's whole unrealised gain —
    * so V.E.C's Greaves Cotton (a long-term lot under water, a short-term lot
    * +₹5.81 L) was credited ₹34,127 for ₹43,555 of saving, and Shoppers Stop and
@@ -251,7 +251,7 @@ export function CapitalGains() {
   const fyStart = financialYearStart(reported);
   const priorYear = fyStart ? reported.filter((c) => c.periodFrom && c.periodFrom < fyStart).map((c) => c.entity) : [];
   /**
-   * EACH ACCOUNT'S YEAR ENDS AT ITS OWN STATEMENT (C4, Stage 10fx). The hover
+   * EACH ACCOUNT'S YEAR ENDS AT ITS OWN STATEMENT (C4, Stage 10fz). The hover
    * said "the sales made in FY 2026-27 only", and no account's statement covers
    * the year — Molecule's closes 30 Jun, Green Lantern's 27 Jul, LKP's 31 Jul,
    * V.E.C 128005's 13 Aug. So it names every account's covered stretch, and
@@ -273,7 +273,7 @@ export function CapitalGains() {
       ? `; ${taxEst.byTaxpayer.filter((t) => t.exemptionWithheld).map((t) => t.owner).join(", ")} get none, their windows spanning financial years` : ""} — it is shared with any long-term gain the person made on accounts outside this book, which this page cannot see.`
     : "";
   /**
-   * THE HEADLINE IS THE YEAR'S REALISED (C5, Stage 10fx). It summed every
+   * THE HEADLINE IS THE YEAR'S REALISED (C5, Stage 10fz). It summed every
    * account's WINDOW — "Realised gains (period)", ₹16.17 Cr on this book, of
    * which ASK's and Marathon's windows from 2019 and 2024 carry seven financial
    * years of sales — beside a tax tile struck on FY 2026-27's ₹3.35 Cr. Stage
@@ -338,7 +338,7 @@ export function CapitalGains() {
    * account's report date. That is a term, and it is shown; a row with no
    * dated lot keeps its reason.
    *
-   * RE-AGED TO TODAY WHERE THE LOTS ARE IN HAND (Stage 10fx). The split is
+   * RE-AGED TO TODAY WHERE THE LOTS ARE IN HAND (Stage 10fz). The split is
    * struck at the account's statement date, and LKP's is 31 Mar 2026: both
    * Transrail Lighting lots (10 and 17 Sep 2025) went long-term on 11 and
    * 18 Sep 2026, and the cell still read ST. With the lots it is aged from each
@@ -615,7 +615,7 @@ export function CapitalGains() {
             ? {
               value: <span data-xa="cg-hold" data-value={totalSaving} data-lots={holdCandidates.length}
                 data-names={candidateNames} data-crossed={crossed}>{fmtFromBase(totalSaving, { compact: true })}</span>,
-              // LOTS, NOT POSITIONS (Stage 10fx): "4 lots still short-term · 3
+              // LOTS, NOT POSITIONS (Stage 10fz): "4 lots still short-term · 3
               // holdings" — a holding with a crossed lot and a short-term one is
               // on both sides of the count, never "crossed" while it holds one.
               sub: `${holdCandidates.length} lot${holdCandidates.length === 1 ? "" : "s"} still short-term · ${candidateNames} holding${candidateNames === 1 ? "" : "s"}${crossed ? ` · ${crossed} crossed since the statement` : ""}`,
@@ -827,7 +827,7 @@ export function CapitalGains() {
                   </Tr>
                 </thead>
                 <InfiniteTableBody rows={holdShown} columns={holdView.order.length} resetKey={JSON.stringify([holdView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70">
-                  {/* ONE ROW PER SHORT-TERM LOT (Stage 10fx): a holding's lots
+                  {/* ONE ROW PER SHORT-TERM LOT (Stage 10fz): a holding's lots
                       turn long-term on their own dates, and each one's gain is
                       its own units at the mark less its own cost. */}
                   {(h) => (

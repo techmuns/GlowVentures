@@ -189,7 +189,7 @@ console.log("\n── PMS mandates ──");
   }
 }
 
-// ── 7b. THE NEWEST VERIFIED CLOSE (Stage 10fx) ─────────────────────────────
+// ── 7b. THE NEWEST VERIFIED CLOSE (Stage 10fz) ─────────────────────────────
 // A since-inception return closes on the account's verified return record
 // where that is newer than the holdings statement and the two dated records
 // agree across the gap — and only there. Value today, appreciation and its
@@ -215,7 +215,7 @@ console.log("\n── the newest verified close ──");
   ok("an OLDER record never pulls the close back (Helios: record 6 Aug, holdings 7 Aug)", helios.closeAsOf === "2026-08-07", String(helios.closeAsOf));
 }
 
-// ── 7c. YEAR TO DATE IS TODAY'S YEAR (Stage 10fx) ──────────────────────────
+// ── 7c. YEAR TO DATE IS TODAY'S YEAR (Stage 10fz) ──────────────────────────
 console.log("\n── year to date is the current year ──");
 {
   const inYear = G.find((g) => g.appreciation != null && g.valueAsOf != null && capitalReturn(g, "ytd", `${g.valueAsOf.slice(0, 4)}-12-31`).shown);
@@ -334,7 +334,7 @@ console.log("\n── the review's dated payouts ──");
     if (!g) continue;
     near(`${id}: purchase is the review's dated purchases`, g.paidIn, reviewSum(id, ["purchase"]));
     near(`${id}: redemption is the review's sales and Div / Int`, g.redemption, reviewSum(id, ["sale", "income"]));
-    // A line on FIFO's cost (Stage 10fx, 360 ONE 37702 / 60117) books its sale
+    // A line on FIFO's cost (Stage 10fz, 360 ONE 37702 / 60117) books its sale
     // against the cost of the units sold: realised is the Div / Int plus the
     // sale over that cost, unrealised is value less the cost of the units held.
     const held = BOOK_POSITIONS.filter((p) => p.accountId === id && keys.includes(p.securityKey));

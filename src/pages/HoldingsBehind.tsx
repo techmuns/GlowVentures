@@ -319,7 +319,7 @@ export function HoldingsBehind() {
    */
   const invested = investedWithCapital(cost, ret.fifo);
   // A name is an investment where the set ranks investments (`nameOf`, the
-  // top-names page — Stage 10fx), and a key everywhere else.
+  // top-names page — Stage 10fz), and a key everywhere else.
   const names = new Set(rows.map((r) => d.nameOf?.(r) ?? r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
   /**

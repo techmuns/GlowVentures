@@ -28,7 +28,7 @@
 // here for as long as the builder read one table for proof: that was the VALUE
 // of four accounts, ten times what they moved, and their own statements settle
 // every step (A-10). It then said "on this archive no step is unproven", which
-// stopped being true (Stage 10fx): the 31 Aug 2026 point carries
+// stopped being true (Stage 10fz): the 31 Aug 2026 point carries
 // `unreportedFlowValue` ₹57.8 L — Buoyant 103472, whose coverage `flowBasis` is
 // "unreported" — and that point is the drawdown's PEAK, so Return & Drawdown's
 // tile names it in its hover rather than this file asserting otherwise.
@@ -81,7 +81,7 @@ export type NavIndexPoint = {
  * division: an index cannot be chained through zero, and inventing 0% there
  * would be a measurement nothing made.
  *
- * ── MODIFIED DIETZ INSIDE THE LINK, WHERE THE FLOW'S DATE IS CARRIED (Stage 10fx) ──
+ * ── MODIFIED DIETZ INSIDE THE LINK, WHERE THE FLOW'S DATE IS CARRIED (Stage 10fz) ──
  *
  *   r = (linkClose − linkOpen − flowIn) ÷ (linkOpen + flowWeighted)
  *

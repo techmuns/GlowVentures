@@ -177,7 +177,7 @@ type Venue = {
   depositoryWhy: string | null;
   live: boolean; dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
-  /** The line's purchase facts for the CAGR gate (Stage 10fx, `clubbedPurchase`). */
+  /** The line's purchase facts for the CAGR gate (Stage 10fz, `clubbedPurchase`). */
   purchaseDates?: number; costOfUnitsSold?: number | null;
   /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
   opened?: HoldingPeriod | null;
@@ -196,7 +196,7 @@ type MandateHolding = {
   /** For the row's own Day, Invested on and return cells — see `Venue`. */
   dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
-  /** The share's purchase facts for the CAGR gate (Stage 10fx, `singlePurchaseGap`). */
+  /** The share's purchase facts for the CAGR gate (Stage 10fz, `singlePurchaseGap`). */
   purchaseDates?: number; costOfUnitsSold?: number | null;
   /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
   opened?: HoldingPeriod | null;
@@ -350,7 +350,7 @@ type Row = {
   /** When the units held now began, where every line's dated trades prove it (`holdingPeriodOf`, Stage 10fw). */
   opened?: HoldingPeriod | null;
   /**
-   * WHETHER `heldSince` STARTS ONE PURCHASE HELD THROUGHOUT (Stage 10fx) — the
+   * WHETHER `heldSince` STARTS ONE PURCHASE HELD THROUGHOUT (Stage 10fz) — the
    * distinct purchase dates behind the units held and the cost of units sold,
    * which `measuredReturn`'s CAGR gate (`singlePurchaseGap`) reads. A clubbed
    * row carries `clubbedPurchase` of its lines; a mandate row carries neither,
@@ -416,7 +416,7 @@ type Row = {
   liveMV: number;
   /**
    * WHAT THE DAY FIGURE IS ACTUALLY STRUCK OVER, AND WHAT IT LEFT OUT (Stage
-   * 10fx) — `dayMoveOf`. `liveMV` above is every live-priced line, which is the
+   * 10fz) — `dayMoveOf`. `liveMV` above is every live-priced line, which is the
    * right figure for "how much of this mandate is repriced"; the day move is
    * struck over the live lines that HAVE a measurable move on the session the
    * rest are on, and a live line with none is named in `dayLeft` rather than
@@ -1063,7 +1063,7 @@ export function PortfolioMonitor() {
   const accIdx = useMemo(() => accountIndex(portfolio.accounts), [portfolio.accounts]);
   const owner = (p: Position) => ownerOf(accIdx, p);
   /**
-   * ── THE LOOK-THROUGH UNDER AN ENTITY FILTER IS THAT ENTITY'S FUNDS (Stage 10fx) ──
+   * ── THE LOOK-THROUGH UNDER AN ENTITY FILTER IS THAT ENTITY'S FUNDS (Stage 10fz) ──
    *
    * `exposure` above is struck over every fund the scope holds, and the rows
    * below used to add it to an entity-filtered measured half and divide by an
@@ -1290,7 +1290,7 @@ export function PortfolioMonitor() {
     // are struck over what the family actually holds.
     let base = currentHoldings(positions);
     /**
-     * ONE TRADING SESSION FOR EVERY DAY FIGURE ON THIS TABLE (Stage 10fx).
+     * ONE TRADING SESSION FOR EVERY DAY FIGURE ON THIS TABLE (Stage 10fz).
      *
      * A quote stamped on an older session than the rest — an illiquid share
      * that last traded yesterday — carries yesterday's move, and adding it into
@@ -1461,7 +1461,7 @@ export function PortfolioMonitor() {
       const costNA = cf.cost === null || (cf.cost === 0 && mv > 0);
       const livePs = ps.filter((x) => x.live);
       const liveMV = sum(livePs.map((x) => x.marketValue));
-      // Struck over the live lines that HAVE a move (Stage 10fx) — `dayMoveOf`.
+      // Struck over the live lines that HAVE a move (Stage 10fz) — `dayMoveOf`.
       const dm = dayMoveOf(ps, inDaySession);
       const whole = mandateTotals.get(accountId);
       const fifo = fifoTotals(ps, fifoOpts);
@@ -1499,7 +1499,7 @@ export function PortfolioMonitor() {
       // quoted must not divide its move by the half that never moved.
       const livePs = ps.filter((x) => x.live);
       const liveMV = sum(livePs.map((x) => x.marketValue));
-      // …AND OVER THE LIVE CONSTITUENTS THAT HAVE A MOVE (Stage 10fx). This was
+      // …AND OVER THE LIVE CONSTITUENTS THAT HAVE A MOVE (Stage 10fz). This was
       // `Σ (dayChange ?? 0)` over every live share, divided by every live
       // share's value: a share on its split's ex-date added ₹0 to the move and
       // its whole value to the base. `dayMoveOf` strikes both over one set and
@@ -1709,7 +1709,7 @@ export function PortfolioMonitor() {
         // consolidated holding whose second account reports no purchase date
         // has no measurable start, and dating it from the account that does
         // would annualise over a window the other half never occupied.
-        // `clubbedPurchase` (Stage 10fx) is that rule plus the CAGR gate's two
+        // `clubbedPurchase` (Stage 10fz) is that rule plus the CAGR gate's two
         // facts: the row is ONE purchase only where every line is one, on one
         // date, and the cost of units sold is summed over the lines reporting it.
         // Over `dps`, the deduped set every other figure on this row sums.
@@ -1771,7 +1771,7 @@ export function PortfolioMonitor() {
           // The DEDUPED set, which is what every other figure on this row sums.
           trancheSet: dps,
           live,
-          // ONE SET FOR THE MOVE AND ITS BASE (Stage 10fx): the deduped lines
+          // ONE SET FOR THE MOVE AND ITS BASE (Stage 10fz): the deduped lines
           // with a measurable move on the book's session. For one quote this is
           // that quote's own percentage; for clubbed classes it is their move
           // over their prior value, rather than the first class's percentage.
@@ -2180,7 +2180,7 @@ export function PortfolioMonitor() {
       // HELD AT COST reports a cost and no valuation, so it is in Invested and
       // in no return (Stage 10dh) — Morning CIO's Consolidated return does the same.
       //
-      // SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fx): the holdings and
+      // SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fz): the holdings and
       // mandates the family has LEFT — redeemed to nil, or under the ₹1,000
       // floor — enter the gain and the capital deployed through `exited`,
       // exactly as `bookReturnOnCost` passes them for Morning CIO's tile and
@@ -2290,7 +2290,7 @@ export function PortfolioMonitor() {
         const live = rs.filter((r) => r.live && r.dayChangePct != null);
         const day = sum(live.map((r) => r.dayChange));
         const dayBase = sum(live.map((r) => r.dayBase ?? r.liveMV));
-        // The live lines no move could be struck for, named on the subtotal's hover (Stage 10fx).
+        // The live lines no move could be struck for, named on the subtotal's hover (Stage 10fz).
         const dayLeft = rs.flatMap((r) => r.dayLeft ?? []);
         /**
          * HOW MUCH OF THIS SECTION THE FAMILY PLACED BY RULE RATHER THAN BY
@@ -2646,7 +2646,7 @@ export function PortfolioMonitor() {
   const feedLive = rows.some((r) => r.live);
   const liveRows = rows.filter((r) => r.live && r.dayChangePct != null);
   const totDay = sum(liveRows.map((r) => r.dayChange));
-  // Each row's own day base — the lines its move was struck over (Stage 10fx).
+  // Each row's own day base — the lines its move was struck over (Stage 10fz).
   const liveMV = sum(liveRows.map((r) => r.dayBase ?? r.liveMV));
   const totDayLeft = rows.flatMap((r) => r.dayLeft ?? []);
   const totDayPct = liveRows.length && liveMV - totDay !== 0 ? (totDay / (liveMV - totDay)) * 100 : null;
@@ -2998,7 +2998,7 @@ export function PortfolioMonitor() {
         // so it is the one place a CAGR is genuinely strikable — through the same
         // guard, so a four-month contribution still reads as its holding-period
         // return and says so.
-        // ONE PAYMENT BY CONSTRUCTION (Stage 10fx): a contribution is a single
+        // ONE PAYMENT BY CONSTRUCTION (Stage 10fz): a contribution is a single
         // dated purchase with nothing sold out of it, which is what the CAGR gate
         // asks a row to prove — so it says so rather than reading "not counted".
         ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false, purchaseDates: 1, costOfUnitsSold: null }, measure),
@@ -3653,7 +3653,7 @@ export function PortfolioMonitor() {
           are added back. */}
       <div className="mb-3 text-xs">
         <Link to="/corporate-actions" className="text-champagne-400 hover:underline"
-          /* THE HOVER SAYS WHAT THE RETURNS INCLUDE (Stage 10fx). It said they
+          /* THE HOVER SAYS WHAT THE RETURNS INCLUDE (Stage 10fz). It said they
              exclude dividend income, which Stage 10fb made false: FIFO adds
              `Position.dividendReceived`, gross of TDS, over the window each
              holding's income record covers (`dividendFrom`) — VEC 128004's
@@ -4760,7 +4760,7 @@ export function PortfolioMonitor() {
                             ? `${r.dayChangePct >= 0 ? "+" : ""}${r.dayChangePct.toFixed(2)}%`
                             : <AbsentCell reason={r.measuredNA
                                 ? DERIVED_ONLY_WHY
-                                // A LIVE ROW WITH NO MOVE TO COUNT (Stage 10fx) — every
+                                // A LIVE ROW WITH NO MOVE TO COUNT (Stage 10fz) — every
                                 // live line's quote lacks a usable previous close or
                                 // sits on another session; named, not a 0.00%.
                                 : r.live && (r.dayLeft?.length ?? 0) > 0
@@ -5180,7 +5180,7 @@ export function PortfolioMonitor() {
                         title={rowExposure.status !== "ok"
                           ? `${entity === "All" ? money(stockCoverage.measured) : `${entity}'s ${money(totMV)}`} of companies the statements report directly. The fund look-through ${rowExposure.status === "loading" ? "is still loading" : "store did not answer"}, so what is held inside the funds is not in this figure — that is a fact about the fetch, not about the book.`
                           /* UNDER AN ENTITY FILTER THE PARTITION BELOW IS NOT THIS
-                             FIGURE'S (Stage 10fx). It is struck over the whole
+                             FIGURE'S (Stage 10fz). It is struck over the whole
                              scope, and the cell now sums that entity's own rows and
                              the look-through of that entity's own funds — so the
                              hover says what the figure is and leaves the whole-book
@@ -5319,7 +5319,7 @@ export function PortfolioMonitor() {
                             so the check reads it without a visible sentence. */
                         <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${onCost ? changeColor(totalRet) : "text-slate-500"}`}
                           title={onCost && totalRet !== null
-                            // THE BASIS, EXITS INCLUDED (Stage 10fx): `fifoBasisNote` names
+                            // THE BASIS, EXITS INCLUDED (Stage 10fz): `fifoBasisNote` names
                             // what the exited holdings and mandates put in the figure.
                             ? [returnSetLine, fifoBasisNote(totFifoCosted, money) ? `${fifoBasisNote(totFifoCosted, money)}.` : "", feedLive ? LIVE_CELL : ""].filter(Boolean).join(" ")
                             : onCost && feedLive ? LIVE_CELL : undefined}
@@ -5630,7 +5630,7 @@ function venuesOf(ps: Position[], accIdx: AccountIndex, valueDate: (p: Position)
       live: xs.every((x) => x.live),
       dayChangePct: xs[0].dayChangePct ?? null,
       // The oldest start where every line has one, and the CAGR gate's purchase
-      // facts — one rule with the row above (`clubbedPurchase`, Stage 10fx).
+      // facts — one rule with the row above (`clubbedPurchase`, Stage 10fz).
       ...clubbedPurchase(xs),
       valuedAt: commonValueDate(xs.map(valueDate)),
       assetClass: xs[0].assetClass,

@@ -39,7 +39,7 @@ const near = (name: string, got: number, want: number, tol: number) =>
   ok(name, Math.abs(got - want) <= tol, `${got.toFixed(4)} vs ${want} (±${tol})`);
 
 const ASOF = "2026-08-13";
-// ONE PURCHASE, NOTHING SOLD — the only holding a CAGR measures (Stage 10fx);
+// ONE PURCHASE, NOTHING SOLD — the only holding a CAGR measures (Stage 10fz);
 // section 9 holds the refusals for every other shape.
 const h = (returnPct: number | null, heldSince: string | null): Holdable => ({ returnPct, heldSince, purchaseDates: 1, costOfUnitsSold: 0 });
 
@@ -400,7 +400,7 @@ console.log("\n── 8. the window ends at the valuation ──");
      `${moved} of ${dated.length}; newest date ${BOOK_SUMMARY.asOf}`);
 }
 
-// ── 9. A CAGR IS ONE PURCHASE, HELD THROUGHOUT (Stage 10fx) ──────────────────
+// ── 9. A CAGR IS ONE PURCHASE, HELD THROUGHOUT (Stage 10fz) ──────────────────
 //
 // `heldSince` is the OLDEST unit still held. V.E.C 128004's Eureka Forbes is
 // three lots — ₹25.02 L on 31 Jul 2025, ₹20.01 L on 15 Jun 2026, ₹19.97 L on
@@ -475,8 +475,10 @@ console.log("\n── 9. one purchase, held throughout ──");
   // NO_HOLDING_XIRR no longer claims the statements cover the current period
   // only — false of every lot-dated row.
   const x = measuredReturn({ ...base, purchaseDates: 1 }, "xirr", ASOF);
-  ok("the per-holding XIRR reason says what is true — no per-holding dated record is assembled",
-     !x.shown && !/current period only/.test(x.reason) && /per account, not per holding/.test(x.reason));
+  // Stage 10fw's wording: where no dated trades or lot register account for
+  // every unit, that is the cause it names.
+  ok("the per-holding XIRR reason says what is true — no dated record accounts for every unit",
+     !x.shown && !/current period only/.test(x.reason) && /do not account for every unit it holds/.test(x.reason));
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");

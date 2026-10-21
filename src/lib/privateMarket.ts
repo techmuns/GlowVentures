@@ -663,7 +663,7 @@ export function privateCapital(
 /**
  * ── A LATER STATEMENT THAT HOLDS MORE UNITS THAN A CAPITAL ACCOUNT KNOWS OF ──
  *
- * Stage 10fx. A capital account's still-to-call is as of its own statement,
+ * Stage 10fz. A capital account's still-to-call is as of its own statement,
  * and a drawdown fund issues units against the capital it calls. Baring's
  * capital account of 31 Mar 2026 carries 202.5 units and ₹2.98 Cr still to
  * call; Ankita's Motilal Oswal demat records 252.5 units of the same class on

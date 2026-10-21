@@ -350,7 +350,7 @@ const NO_RETURN: RowReturn = { shown: false, tag: "—", reason: "no return is s
  * the one cell that sums the whole private book.
  */
 /*
- * …AND THE INCOME A HOLDING CARRIES IS IN IT (Stage 10fx). `fifoTotals` adds
+ * …AND THE INCOME A HOLDING CARRIES IS IN IT (Stage 10fz). `fifoTotals` adds
  * `Position.dividendReceived` to the gain — income received, gross of TDS, over
  * the window its record covers (`dividendFrom` → the statement date). So the
  * note reads that field rather than assuming: income is in the figure exactly
@@ -694,7 +694,7 @@ export function PrivateMarket() {
         const cg = new Map((portfolio.capitalGains ?? []).map((e) => [e.accountId, e]));
         /*
          * A LINE THE REVIEW DATES REDEEMS UNITS ON THE REVIEW'S OWN SALE ROWS
-         * (Stage 10fx): its FIFO cost of units sold and realised gain are struck
+         * (Stage 10fz): its FIFO cost of units sold and realised gain are struck
          * off them (360 ONE Special Opportunities: 5,751.296 units on 30 Apr 2024
          * for ₹78,320, at a FIFO cost of ₹57,512.96 — ₹20,807.04 realised), so
          * the hover reconciles that sale to the rupee as it does a capital-move
@@ -844,14 +844,14 @@ export function PrivateMarket() {
    * in the XIRR's own figures rather than a restatement of them.
    */
   const distFig = m.byFund.privateTotal;
-  /** The ILPA multiples over the Private funds band (Stage 10fx) — `privateMultiples`. */
+  /** The ILPA multiples over the Private funds band (Stage 10fz) — `privateMultiples`. */
   const mult = privateMultiples(m.byFund.folios);
   const fmtX = (x: number) => `${x.toFixed(2)}×`;
-  /** The review's write-offs, named wherever a figure sums the private book (Stage 10fx). */
+  /** The review's write-offs, named wherever a figure sums the private book (Stage 10fz). */
   const writtenOff = writtenOffNote(BOOK_REVIEW_WRITTEN_OFF, memberScope.owners !== null);
   /**
    * UNITS A LATER STATEMENT HOLDS THAT A COUNTED CAPITAL ACCOUNT DOES NOT
-   * (Stage 10fx, `unitsSinceCapital`) — the evidence that a still-to-call
+   * (Stage 10fz, `unitsSinceCapital`) — the evidence that a still-to-call
    * figure is older than the calls it describes, said in one sentence.
    */
   const callSince = (() => {
@@ -864,7 +864,7 @@ export function PrivateMarket() {
     .sort((a, b) => (b.distributed ?? 0) - (a.distributed ?? 0));
   const distLeftOut = m.byFund.folios.filter((f) => f.distributed != null && !f.distributionCounted && f.distributedBasis != null);
   /**
-   * A LINE THE REVIEW PAYS BACK, IN ITS OWN WORDS (Stage 10fx): the review's
+   * A LINE THE REVIEW PAYS BACK, IN ITS OWN WORDS (Stage 10fz): the review's
    * dated income and sale rows by its value date — the rows its XIRR counts —
    * and, beside them, whatever the same account's statement says that does
    * not agree, the letter the review's row already carries, and any units the
@@ -896,7 +896,7 @@ export function PrivateMarket() {
         ? `${money(0)} — its capital account reports no distribution, a measured nil`
         : `${money(f.distributed)} — its capital account's distribution total: income and principal, before TDS`;
   /**
-   * THE MEASURED NILS, ONCE (Stage 10fx). Since a review line is paid back by
+   * THE MEASURED NILS, ONCE (Stage 10fz). Since a review line is paid back by
    * the review's rows, every line it dates and pays nothing on is a measured
    * nil — over ten on this book. Listed one by one they buried the funds that
    * paid; named together they say the same thing in one clause.
@@ -1145,7 +1145,7 @@ export function PrivateMarket() {
       ].filter(Boolean).join(" "),
     },
     /* ── TVPI / DPI, STRUCK WHERE THE BAND CAN SAY WHAT WENT IN AND CAME BACK ──
-        Stage 10fx. The tile was refused outright ("too few distribution
+        Stage 10fz. The tile was refused outright ("too few distribution
         figures") while 6 of 13 accounts reported one. With a line the review
         values paid back by the review's own rows, every holding of the Private
         funds band can say what went in and what came back by its value date, so
@@ -1190,7 +1190,7 @@ export function PrivateMarket() {
         + (tableCounts.atCostFunds ? `, the ${tableCounts.atCostFunds} under ${SECTION_COPY.atCost.title}, which the family's consolidated review records at what was paid and no valuation` : "")
         + (tableCounts.noNavFunds ? `, and the ${tableCounts.noNavFunds} under Not valued, which publish no NAV` : "")
         + "."
-        // THE COUNT IS OF SURVIVORS (Stage 10fx): the review's write-offs are
+        // THE COUNT IS OF SURVIVORS (Stage 10fz): the review's write-offs are
         // on no row, so the hover names them rather than let the count widen.
         + (writtenOff ? ` ${writtenOff}` : ""),
     },
@@ -1452,7 +1452,7 @@ export function PrivateMarket() {
     const pooledOut = recs.filter((r) => !complete(r.d));
     const poolOf = recs.length + atCostFunds;
     /**
-     * THE TOTAL IS OVER THE SURVIVORS (Stage 10fx): the review's write-offs
+     * THE TOTAL IS OVER THE SURVIVORS (Stage 10fz): the review's write-offs
      * carry no cost and no value, so they are on no row and in no return — and
      * the total's hover, which says it is the whole private book, names them
      * rather than let the caption widen the figure.

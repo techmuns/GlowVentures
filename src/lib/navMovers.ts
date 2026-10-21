@@ -59,7 +59,7 @@
 // what the book says the family held BEFORE it. Every row then ties to its own
 // columns: `move ÷ priorValue` is the printed percentage, exactly — and on a
 // NAV-priced holding the prior value is `value ÷ (1 + c)`, because `value` is
-// already struck at the new NAV (Stage 10fx).
+// already struck at the new NAV (Stage 10fz).
 //
 // THE RUPEE FIGURE IS DERIVED AND IS LABELLED AS SUCH, because the two sides
 // are dated differently: the NAV move is the scheme's latest published day, the
@@ -143,7 +143,7 @@ export type NavMover = {
    * DERIVED: the scheme's move applied to the value the row held BEFORE it.
    * `move / priorValue === changePct`, exactly.
    *
-   * IT USED TO BE `value × changePct / 100` (Stage 10fx), and on a NAV-priced
+   * IT USED TO BE `value × changePct / 100` (Stage 10fz), and on a NAV-priced
    * holding `value` is units × TODAY's NAV — the value AFTER the move — so the
    * rupee move was overstated by a factor of (1 + c). The move of a value
    * struck at the new NAV is `value × c / (100 + c)`, which is units × (NAV −
@@ -155,7 +155,7 @@ export type NavMover = {
   /**
    * The value the move is measured from: the NAV-priced part at the PREVIOUS
    * published NAV (`value ÷ (1 + c)`), and the statement-marked part at its
-   * mark (Stage 10fx).
+   * mark (Stage 10fz).
    */
   priorValue: number;
   /** The newest statement date behind `value`, so the two bases can be told apart. */
@@ -199,7 +199,7 @@ export type NavMoverModel = {
   coveredValue: number;
   /** Σ move over those rows. */
   move: number;
-  /** Σ priorValue over the same rows — what the move is measured from (Stage 10fx). */
+  /** Σ priorValue over the same rows — what the move is measured from (Stage 10fz). */
   coveredPriorValue: number;
   /** `move / coveredPriorValue`, or null where nothing is covered. */
   changePct: number | null;
@@ -375,7 +375,7 @@ export function navMoverModel(
   const rows: NavMover[] = [...byScheme.entries()].map(([id, r]) => {
     const { navValue, stValue, ...rest } = r;
     const perUnit = r.quantity > 0 ? r.value / r.quantity : null;
-    // THE VALUE BEFORE THE MOVE (Stage 10fx). The NAV-priced part is units ×
+    // THE VALUE BEFORE THE MOVE (Stage 10fz). The NAV-priced part is units ×
     // THIS NAV — the overlay and this row read the same AMFI record — so it
     // stood at `navValue ÷ (1 + c)` on the previous NAV; a statement-marked
     // part is the mark the move is applied to.
@@ -405,7 +405,7 @@ export function navMoverModel(
     // VALUE-WEIGHTED, and it ties to the two figures beside it by construction.
     // Averaging the rows' percentages would weight a ₹107 residual holding the
     // same as a ₹31 Cr one — a figure neither side supports. Over the PRIOR
-    // value (Stage 10fx), so the aggregate is a move from somewhere, exactly
+    // value (Stage 10fz), so the aggregate is a move from somewhere, exactly
     // as each row's percentage is.
     changePct: coveredPriorValue > 0 ? (move / coveredPriorValue) * 100 : null,
     olderRows: older.length,

@@ -259,7 +259,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const value = ps.length ? sum(ps.map(p => p.marketValue)) : null;
     const sameBasis = ps.length > 0 && ps.every(p => !p.review && (p.priceAsOf ?? a?.asOf) === c.asOf);
     // TVPI ADDS DISTRIBUTIONS TO A VALUE STRUCK ON ONE DATE, so only the ones
-    // paid by that date (Stage 10fx). Neo's printed ₹49,48,221 includes
+    // paid by that date (Stage 10fz). Neo's printed ₹49,48,221 includes
     // ₹7,13,178 paid 9 Jul 2026, after the 30 Jun NAV it was added to — which
     // counts that money twice (in the NAV it left and in the payout) and read
     // 1.209× where 1.195× is the multiple on 30 Jun. The printed total is the
@@ -299,7 +299,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const cost = sum(ps.map(p => p.costBasis)), value = completeSum(ps.map(p => p.marketValue));
     const costed = ps.filter(p => !p.valuedAtCost && p.costBasis != null && p.unrealizedPnL != null);
     const unrealised = sum(costed.map(p => p.unrealizedPnL));
-    // ONE POOLED XIRR, NOT AN AVERAGE OF THEM (Stage 10fx). This was
+    // ONE POOLED XIRR, NOT AN AVERAGE OF THEM (Stage 10fz). This was
     // Σ(value × XIRR) ÷ Σ value under "Annualised return — XIRR": a value-
     // weighted mean of rates solved over different windows is no rate of
     // anything. The rows that carry an XIRR are each whole accounts on a dated

@@ -573,7 +573,7 @@ export function applyDedupePolicy(docs, groups) {
  * The holding rows of EVERY archived statement, summed — with each dedupeGroup
  * counted once in `deduped`.
  *
- * A SIZE OF THE ARCHIVE, NEVER A PORTFOLIO VALUE (Stage 10fx). Every monthly
+ * A SIZE OF THE ARCHIVE, NEVER A PORTFOLIO VALUE (Stage 10fz). Every monthly
  * issue of an account adds that account again, and the ring-fenced promoter
  * block, the depository's copy of fund units and every superseded issue are all
  * inside it: on this archive it is ₹13,779.65 Cr where the book is ₹836.57 Cr.

@@ -99,7 +99,7 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
   // gain; s.70(3): a long-term loss never against a short-term gain. Every
   // figure here is one year's, so the set-off always applies. s.112A: the
   // first ₹1.25 L of what long-term gain is left after it is exempt, once per
-  // person (Stage 10fx) — the one other statutory literal this suite carries.
+  // person (Stage 10fz) — the one other statutory literal this suite carries.
   const EXEMPT = 125_000;
   const withSetOff = (e: { st: number; lt: number }) => {
     const off = e.st < 0 && e.lt > 0 ? Math.min(-e.st, e.lt) : 0;
@@ -178,7 +178,7 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
     paired.every(([o, e]) => near(est.byTaxpayer.find((t) => t.ownerId === o)?.setOff, Math.min(-e.st, e.lt))));
   ok("…and strikes no set-off it withholds: every figure is one year's",
     est.byTaxpayer.every((t) => !t.setOffWithheld));
-  // THE s.112A EXEMPTION (Stage 10fx). LOAD-BEARING: the book must carry a
+  // THE s.112A EXEMPTION (Stage 10fz). LOAD-BEARING: the book must carry a
   // person with a long-term gain left after the set-off, or the figure above
   // would pass just as well without it.
   const exempted = est.byTaxpayer.filter((t) => t.exemption > 0);
@@ -189,7 +189,7 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
     && exempted.every((t) => near(t.exemption, Math.min(EXEMPT, (t.lt ?? 0) - t.setOff))),
     exempted.map((t) => `${t.owner} ${inr(t.exemption)}`).join(", "));
 
-  // EACH ACCOUNT TO ITS OWN CLOSE (C4, Stage 10fx): the year is never one
+  // EACH ACCOUNT TO ITS OWN CLOSE (C4, Stage 10fz): the year is never one
   // statement's — every taxpayer's spans are their own accounts, from 1 April
   // or a later opening to their own close, and a person whose accounts close
   // before the newest close in the book is flagged with the date through which
@@ -207,7 +207,7 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
     && est.byTaxpayer.some((t) => t.shortOfNewest),
     est.byTaxpayer.map((t) => `${t.owner} through ${t.coveredThrough}`).join("; "));
 
-  // THE YEAR'S REALISED (C5, Stage 10fx): the year's heads summed over every
+  // THE YEAR'S REALISED (C5, Stage 10fz): the year's heads summed over every
   // account, and — LOAD-BEARING — the windows' total, which the headline used
   // to print, differs from it by more than a crore on this book.
   const yr = realisedInYear(BOOK_CAPITAL_GAINS);

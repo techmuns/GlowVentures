@@ -118,7 +118,7 @@ console.log("── the record is built over the row's own folios ──");
     // A LINE THE REVIEW DATES (Stage 10dh) sets its sale proceeds against its
     // cost, so its purchases are the cost PLUS what the sales returned — or,
     // where its rows print their units, carries FIFO's cost held with the cost
-    // of the units sold beside it (Stage 10fx), so its purchases are the two.
+    // of the units sold beside it (Stage 10fz), so its purchases are the two.
     const rec = tDated.get(doubled.securityKey)!;
     const proceeds = rec.saleProceeds + rec.redeemedAtCost;
     ok("…and over the row's own folios its calls tie to the one holding's cost, plus what its sales took out of it",
@@ -295,7 +295,7 @@ console.log("── the money-weighted return counts the cash paid back ──")
     ok(`${d.securityKey.slice(0, 32)}: the XIRR column shows it, tagged XIRR`, x.shown && x.tag === "XIRR",
       x.shown ? x.tag : x.reason);
     // AND THE HPR BESIDE IT SAYS WHAT OF THAT CASH IT COUNTS — read off the
-    // positions (Stage 10fx): income a position carries is IN the FIFO figure
+    // positions (Stage 10fz): income a position carries is IN the FIFO figure
     // and named as in; only what remains outside is handed to XIRR.
     const h = fundMeasuredReturn(f, d, "absolute", money, date);
     const ps = scope.dedupedRows.filter((p) => p.securityKey === d.securityKey);
@@ -325,7 +325,7 @@ for (const f of funds) {
   const sold = ps.reduce((t, p) => t + (p.costOfUnitsSold ?? 0), 0);
   const realised = ps.reduce((t, p) => t + (p.realizedPnL ?? 0), 0);
   const mv = ps.reduce((t, p) => t + p.marketValue, 0);
-  // …PLUS THE INCOME EACH POSITION CARRIES (Stage 10fx): FIFO's one return is
+  // …PLUS THE INCOME EACH POSITION CARRIES (Stage 10fz): FIFO's one return is
   // (unrealised + realised + income) ÷ (cost held + cost of units sold).
   const income = ps.reduce((t, p) => t + (p.dividendReceived ?? 0), 0);
   if (sold > 0) redeemedFunds++;
@@ -468,8 +468,8 @@ console.log("── the header note ──");
   ok("a single fund reads in the singular", /Shown on 1 of 1 fund\./.test(x?.title ?? ""), x?.title);
 }
 
-// ── Stage 10fx: A FIFO REVIEW LINE, THE INCOME IN THE HPR, THE UNITS NO ROW MOVES ──
-console.log("── a review line on FIFO's cost, and the income its HPR counts (Stage 10fx) ──");
+// ── Stage 10fz: A FIFO REVIEW LINE, THE INCOME IN THE HPR, THE UNITS NO ROW MOVES ──
+console.log("── a review line on FIFO's cost, and the income its HPR counts (Stage 10fz) ──");
 {
   const key = "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii";
   const d = dated.get(key);

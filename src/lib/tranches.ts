@@ -447,7 +447,7 @@ export type CapitalGroup = {
   /** The report date that value is struck at. */
   valueAsOf: string | null;
   /**
-   * ── WHERE A MONEY-WEIGHTED RETURN CLOSES (Stage 10fx) ─────────────────────
+   * ── WHERE A MONEY-WEIGHTED RETURN CLOSES (Stage 10fz) ─────────────────────
    *
    * The newest verified valuation whose dated capital reconciles with this
    * record (`newerVerifiedClose`) — Carnelian 3517383 on 7 Oct at ₹38.55 Cr,
@@ -566,14 +566,14 @@ export function recordShortfall(a: { asOf?: string | null; capitalRecordTo?: str
  *     proceeds must reproduce that cost to the rupee — or the two sides of a
  *     return describe different money (a purchase missing from the sheet).
  *     A line on FIFO's cost ties instead on cost held + cost of the units
- *     sold (`reviewCostBasis`, Stage 10fx).
+ *     sold (`reviewCostBasis`, Stage 10fz).
  *   • IS EVERY ROW ON OR BEFORE THE VALUE'S DATE? A row after it is money the
  *     value cannot hold.
  *
  * Null where a return can be struck; otherwise the reason, true of this line.
  */
 /**
- * ── TWO COSTS A REVIEW LINE CAN CARRY, AND EITHER MUST TIE (Stage 10fx) ─────
+ * ── TWO COSTS A REVIEW LINE CAN CARRY, AND EITHER MUST TIE (Stage 10fz) ─────
  *
  * The review's own: what was paid less what the sales returned ("net"). Or
  * FIFO's, which the build now carries where every purchase and sale row prints
@@ -855,7 +855,7 @@ export function capitalMovesWithCalls(
 }
 
 /**
- * ── A SINCE-INCEPTION RETURN CLOSES ON THE NEWEST VERIFIED VALUATION (Stage 10fx) ──
+ * ── A SINCE-INCEPTION RETURN CLOSES ON THE NEWEST VERIFIED VALUATION (Stage 10fz) ──
  *
  * The standing rule: money-weighted returns close on the newest account
  * closing valuation with matching reconciled dated capital through that date,
@@ -994,7 +994,7 @@ export function capitalRollup(
       ? commonValueDate(own.map((p) => p.priceAsOf ?? a?.asOf ?? null))
       : a?.asOf ?? null;
     // The newest verified valuation, where its dated capital reconciles with
-    // this record across the gap (Stage 10fx) — a statement account's record
+    // this record across the gap (Stage 10fz) — a statement account's record
     // only, never a review line or a call list, and never conjuring a value
     // for an account no holdings statement values. It moves the MONEY-WEIGHTED
     // CLOSE (`closeValue` / `closeAsOf`) and nothing else: Value today, the
@@ -1116,7 +1116,7 @@ export function capitalRollup(
        * the purchases less the sale proceeds ARE that cost.
        */
       const saleProceeds = outsAll.filter((m) => m.payoutKind === "capital").reduce((t, m) => t + (m.amount ?? 0), 0);
-      // A line on FIFO's cost (Stage 10fx) books its sale against the cost of
+      // A line on FIFO's cost (Stage 10fz) books its sale against the cost of
       // the units sold, as a statement's redemption is booked: what the sale
       // returned over that cost is realised gain beside the Div / Int, and
       // unrealised is value less the cost of the units still held.
@@ -1296,7 +1296,7 @@ export function capitalRollup(
 const YEAR = 365;
 const dayDiff = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
 
-/** Where a money-weighted return on this row closes — `closeValue` / `closeAsOf`, else the value on its own date (Stage 10fx). */
+/** Where a money-weighted return on this row closes — `closeValue` / `closeAsOf`, else the value on its own date (Stage 10fz). */
 export const capitalClose = (g: CapitalGroup): { value: number | null; asOf: string | null } =>
   g.closeValue !== undefined ? { value: g.closeValue, asOf: g.closeAsOf ?? g.valueAsOf } : { value: g.value, asOf: g.valueAsOf };
 
@@ -1331,7 +1331,7 @@ const multiFlow = (g: CapitalGroup) =>
 const istToday = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
 
 /**
- * ── WHICH YEAR "YEAR TO DATE" IS (Stage 10fx) ──────────────────────────────
+ * ── WHICH YEAR "YEAR TO DATE" IS (Stage 10fz) ──────────────────────────────
  *
  * It was the year of the row's own value date, so a line the review values on
  * 31 Jul 2025 (Zepto) read "YTD +52.17%" in October 2026 — a 2025 return under

@@ -512,7 +512,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     // whose money is NOT all dated keeps the oldest-lot rule.
     const sol = holdingRate([p]);
     const days = daysBetween(p.heldSince, valuedAt);
-    // ONE PURCHASE, NOTHING SOLD (Stage 10fx): a line the dated record does not
+    // ONE PURCHASE, NOTHING SOLD (Stage 10fz): a line the dated record does not
     // cover keeps the oldest-lot rule only where its units were bought on one
     // date and none sold; bought in lots or partly sold, it stays its HPR.
     const onePurchase = singlePurchaseGap(p) === null;
@@ -536,7 +536,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   // Either half of the rule can fail: a row it annualises (a sheet printing the
   // plain return everywhere fails), or a year-old row it REFUSES because its
   // units were bought on several dates (a sheet compounding from the oldest lot
-  // fails, Stage 10fx).
+  // fails, Stage 10fz).
   ok("...and the book carries a year-old row the rule annualises or refuses, so the guard can fail", annualised + refused > 0,
      `${annualised} annualised, ${refused} refused as staggered or partly sold`);
   // A row that is whole accounts on a dated record of ONE payment held a year or

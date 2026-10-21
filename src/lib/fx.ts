@@ -10,7 +10,7 @@ export type DisplayCurrency = (typeof SUPPORTED_DISPLAY_CURRENCIES)[number];
 // chip says "reference rate" and its date, which is true of both. When the
 // function reports the upstream that actually answered, it can be named.
 //
-// ── THERE IS NO FALLBACK RATE ANY MORE (Stage 10fx) ─────────────────────────
+// ── THERE IS NO FALLBACK RATE ANY MORE (Stage 10fz) ─────────────────────────
 //
 // This file carried `DEFAULT_INR_PER_USD = 83.5`, and when /api/fx did not
 // answer every USD figure in the cockpit was divided by it — a rate nobody

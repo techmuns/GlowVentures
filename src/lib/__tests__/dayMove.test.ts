@@ -1,4 +1,4 @@
-// A DAY MOVE IS STRUCK OVER THE LINES THAT HAVE ONE (Stage 10fx).
+// A DAY MOVE IS STRUCK OVER THE LINES THAT HAVE ONE (Stage 10fz).
 //   npm run test:family
 //
 // The Monitor's mandate rows summed `dayChange ?? 0` over every live share and

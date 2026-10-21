@@ -143,7 +143,7 @@ export type FundDated = {
    */
   saleProceeds: number;
   /**
-   * THE INCOME THE HOLDING-PERIOD RETURN ALREADY COUNTS (Stage 10fx): the
+   * THE INCOME THE HOLDING-PERIOD RETURN ALREADY COUNTS (Stage 10fz): the
    * `dividendReceived` its folios' positions carry, which `fifoTotals` adds to
    * the gain — income received, gross of TDS, over the window each record
    * covers, from `incomeFrom`. Read off the positions rather than assumed, so a
@@ -155,12 +155,12 @@ export type FundDated = {
   incomeFrom: string | null;
   /**
    * TRUE WHERE A REVIEW LINE CARRIES FIFO'S COST rather than the review's net
-   * one (Stage 10fx): its sale is then in `redeemedAtCost`, booked at the
+   * one (Stage 10fz): its sale is then in `redeemedAtCost`, booked at the
    * units' cost, and in no `saleProceeds` — the words say so.
    */
   reviewFifo: boolean;
   /**
-   * A REVIEW LINE WHOSE DATED ROWS DO NOT MOVE ALL ITS UNITS (Stage 10fx) —
+   * A REVIEW LINE WHOSE DATED ROWS DO NOT MOVE ALL ITS UNITS (Stage 10fz) —
    * 360 ONE: the review buys 9,99,950.002 units and sells 5,751.296, against the
    * 9,90,429.68 it carries. A sentence naming the gap, or null. No dated row
    * moves those units and none moves cash for them, so a money-weighted return
@@ -271,7 +271,7 @@ export function fundDatedRecords(
         const bought = rf.filter((r) => r.kind === "purchase").reduce((t, r) => t + r.amount, 0);
         const soldFor = rf.filter((r) => r.kind === "sale").reduce((t, r) => t + r.amount, 0);
         /**
-         * TWO COSTS A REVIEW LINE CAN CARRY, AND BOTH MUST TIE (Stage 10fx).
+         * TWO COSTS A REVIEW LINE CAN CARRY, AND BOTH MUST TIE (Stage 10fz).
          * The review's own: what was paid less what the sales returned. Or
          * FIFO's, where every purchase and sale row prints its units
          * (`measuredFromRows` in the build): the cost of the units held, with
@@ -529,7 +529,7 @@ export function fundMeasuredReturn(
   const statementPrincipal = d ? d.paidOutByKind.capital - d.saleProceeds : 0;
   const principalIn = d ? d.saleProceeds + (d.redeemedAtCost > 0 ? statementPrincipal : 0) : 0;
   /**
-   * …AND THE INCOME ITS POSITIONS CARRY (Stage 10fx): `fifoTotals` counts
+   * …AND THE INCOME ITS POSITIONS CARRY (Stage 10fz): `fifoTotals` counts
    * `dividendReceived` in the gain, so that income is inside this figure and
    * only the rest of what was paid back is outside it. Read off the record
    * (`incomeInHpr`), never assumed — a position that carries none leaves every

@@ -572,7 +572,6 @@ never guessed into the nearest plausible bucket.
 - account 15644806: no time-weighted return series in any statement
 - account 15644806: no flow block in any statement, so no value bridge
 - account 15644806: no external capital movements found, so no money-weighted return series
-- account 15725046: 16,75,096.28 of income earned on hdfc-liquid-fund-direct-plan-idcw-daily-reinvest follows its units through the class switch to hdfc-overnight-fund-direct-plan-growth-option, which holds them
 - account 15725046: no time-weighted return series in any statement
 - account 15725046: no flow block in any statement, so no value bridge
 - account 15725046: no external capital movements found, so no money-weighted return series

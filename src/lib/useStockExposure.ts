@@ -35,7 +35,7 @@ export function useStockExposure(
   consolidated: Position[],
   enabled: boolean,
   /**
-   * ── WHOSE FUNDS ARE LOOKED THROUGH (Stage 10fx) ─────────────────────────
+   * ── WHOSE FUNDS ARE LOOKED THROUGH (Stage 10fz) ─────────────────────────
    *
    * By default the vehicles are struck over `consolidated` — every fund the
    * scope holds. A view filtered to ONE member must strike them over that

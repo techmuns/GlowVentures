@@ -46,7 +46,7 @@ assert.equal(tile.lastClose, current.lastClose);
 assert.equal(tile.measuredValue, current.measuredMV);
 assert(Math.abs(tile.result.pct! - pooled.toDatePct!) < 1e-9);
 assert.equal(tile.flows.length, pooled.parts.reduce((n, p) => n + p.flows.length + 1, 0));
-// Stage 10fx: a fund-of-funds line carries no valuation date and runs since
+// Stage 10fz: a fund-of-funds line carries no valuation date and runs since
 // inception, so it is named and never pooled into the FY-window accounts' rate —
 // nor dated at the page's clock.
 {
@@ -88,7 +88,7 @@ assert.equal(redeemedReturn.parts.length, 1);
 assert(Math.abs(redeemedReturn.toDatePct! - 10) < 1e-7, 'a verified closing zero still includes redemption proceeds');
 assert.equal(bookMoneyWeighted(redeemed, redeemed, new Date('2026-10-15')).result.pct, redeemedReturn.toDatePct);
 
-// D9 (Stage 10fx): an entity's FYTD return is struck on ISO dates (a 1 Apr
+// D9 (Stage 10fz): an entity's FYTD return is struck on ISO dates (a 1 Apr
 // opening NAV is kept in any time zone), closes on its own latest STATEMENT
 // NAV — never the live value the caller passes — and weights each dated flow
 // for the days it was invested (Modified Dietz).

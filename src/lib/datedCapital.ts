@@ -129,7 +129,7 @@ export function buildDatedCapital(input: {
    * The verified return records (`Portfolio.accountReturnRecords`). Omitted,
    * `capitalRollup` reads the book's own — so a row's rate closes on the
    * newest verified valuation whose dated capital reconciles, the record every
-   * other return surface closes on (Stage 10fx): Carnelian 3517383 on 7 Oct at
+   * other return surface closes on (Stage 10fz): Carnelian 3517383 on 7 Oct at
    * ₹38.55 Cr, not its 30 Sep holdings statement.
    */
   returnRecords?: Record<string, AccountReturnCoverage> | null;
@@ -229,7 +229,7 @@ export function buildDatedCapital(input: {
         n += 1;
         if (f.amount < 0 && (since === null || f.date < since)) since = f.date;
       }
-      // Closing on the row's newest verified valuation (`capitalClose`, Stage 10fx).
+      // Closing on the row's newest verified valuation (`capitalClose`, Stage 10fz).
       const lastFlow = g.flows!.map((f) => f.date).sort().at(-1)!;
       const c = capitalClose(g);
       const close = c.value === 0 ? lastFlow : (c.asOf ?? lastFlow);

@@ -86,7 +86,7 @@ ok("...and every one keeps the statement's own figure beside it",
 // each: a class switch carried (above), FIFO where units LEFT a holding
 // (`shared/fifo.mjs` — Neo Infra's capital redemption), and a contribution whose
 // statement prints stamp duty against it, costed at what was PAID
-// (`grossPaid.test.ts`, VD-24). A fourth since Stage 10fx: a review line whose
+// (`grossPaid.test.ts`, VD-24). A fourth since Stage 10fz: a review line whose
 // dated rows sold units, costed FIFO over them (`measuredFromRows` in
 // `scripts/lib/reviewBook.mjs`), keeps the review's purchases less sale proceeds
 // beside it — its source is still the review. Nothing else may.

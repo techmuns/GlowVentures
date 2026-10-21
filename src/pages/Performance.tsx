@@ -203,7 +203,7 @@ export function Performance() {
    * units sold into this tile and not into Morning CIO's: +16.24% here against
    * +16.68% there, for one book.
    *
-   * …AND THEN THE EXITS CAME BACK IN, BY RULE (Stage 10fx). `bookReturnOnCost`
+   * …AND THEN THE EXITS CAME BACK IN, BY RULE (Stage 10fz). `bookReturnOnCost`
    * now strikes the CURRENT holdings and adds the exited holdings and closed
    * mandates it finds in `universe` — their realised gain over the cost of the
    * units sold — as /holdings and Morning CIO do. Passing the current holdings
@@ -414,7 +414,7 @@ export function Performance() {
             excel: "= (Σ unrealised + Σ realised + Σ dividends) ÷ Σ capital deployed × 100",
             plain: "Everything the book has produced — the unrealised gain on what is held, the realised gain on units already sold (exited holdings and closed mandates included), matched first-in, first-out, and the dividends received — over every rupee that bought a unit of it. A whole mandate is struck on its capital since inception.",
             // The worked line carries every term `fifoTotals` adds (gain =
-            // unrealised + realised + income, Stage 10fx), and names the exits
+            // unrealised + realised + income, Stage 10fz), and names the exits
             // in `fifoBasisNote`'s own words, so its sum is the figure.
             worked: `= (${money(bookFifo.unrealised, true)} + ${money(bookFifo.realised, true)}${bookFifo.income != null ? ` + dividends ${money(bookFifo.income, true)}` : ""}) ÷ ${money(bookFifo.deployed)} × 100 = ${fmtPct(embeddedRet, { sign: true })}${(() => { const ex = exitedNote(bookFifo, (n) => money(n)); return ex ? ` · ${ex}` : ""; })()}`,
           }}><span data-xa="perf-fifo" data-value={embeddedRet ?? ""}>{fmtPct(embeddedRet, { sign: true })}</span></Auditable>}

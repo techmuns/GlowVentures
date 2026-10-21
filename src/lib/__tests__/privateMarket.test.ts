@@ -233,7 +233,7 @@ const atCostReview = reviewRows.filter(isValuedAtCost);
 // ₹5 Cr drawn, less the ₹14,16,280 cost of the 14,162.8 units it redeemed.
 near("Neo Infra's cost — its own statement, under FIFO", sumOrNull(statementPrivate.map((p) => p.costBasis)) ?? NaN, 50000000 - 1416280);
 near("cost = what every row reports", sumOrNull(funds.map((f) => f.cost)), sumOrNull(scope.dedupedRows.map((p) => p.costBasis)) ?? NaN);
-// 360 ONE's two lines carry FIFO's cost since Stage 10fx — ₹99,41,987.06 held
+// 360 ONE's two lines carry FIFO's cost since Stage 10fz — ₹99,41,987.06 held
 // each, where the review's purchases less sale proceeds read ₹99,21,180.02 —
 // so the valued review lines' cost is ₹41,614.08 above the review's own sum.
 near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + (349608469.84 + 2 * 20807.04) + 1406775806.88);
@@ -568,8 +568,8 @@ console.log("\n── the count-once policy, on a tagged copy ──");
     }), leftOut.map((p) => `${accIdx.get(p.accountId)?.owner}: ${p.marketValue}`).join(", "));
 }
 
-// ── Stage 10fx: A LATER STATEMENT THAT HOLDS MORE UNITS THAN A CAPITAL ACCOUNT ──
-console.log("\n── units a later statement holds that a capital account does not (Stage 10fx) ──");
+// ── Stage 10fz: A LATER STATEMENT THAT HOLDS MORE UNITS THAN A CAPITAL ACCOUNT ──
+console.log("\n── units a later statement holds that a capital account does not (Stage 10fz) ──");
 {
   const since = unitsSinceCapital(BOOK_COMMITMENTS, BOOK_POSITIONS, BOOK_REVIEW_SUPERSEDED, BOOK_ACCOUNTS);
   const baring = since.find((x) => x.commitment.accountId === "baring-private-equity-india-fund-AIFM_BPEPF6_0584");
@@ -585,8 +585,8 @@ console.log("\n── units a later statement holds that a capital account does 
     since.every((x) => x.laterAccountId !== x.commitment.accountId));
 }
 
-// ── Stage 10fx: THE PRIVATE VALUE MODEL'S MULTIPLES — RVPI IS NOT MOIC, AND ABSENT IS NULL ──
-console.log("\n── the private value model's multiples (Stage 10fx) ──");
+// ── Stage 10fz: THE PRIVATE VALUE MODEL'S MULTIPLES — RVPI IS NOT MOIC, AND ABSENT IS NULL ──
+console.log("\n── the private value model's multiples (Stage 10fz) ──");
 {
   eq("a startup with nothing invested and no stored MOIC has no multiple — never a made-up 1.0×", startupMoic({ moic: null, invested: 0, fairValue: 5 }), null);
   eq("…its stored MOIC stands", startupMoic({ moic: 2, invested: 0, fairValue: 5 }), 2);

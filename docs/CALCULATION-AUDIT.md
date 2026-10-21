@@ -1,4 +1,4 @@
-# Calculation audit — 21 October 2026 (Stage 10fx)
+# Calculation audit — 21 October 2026 (Stage 10fz)
 
 *"These were basic logical calculations that are pre-assumed while calculating any
 returns. we need to make sure we do not make any such logical errors while
@@ -90,4 +90,5 @@ book has or will soon have; **L** latent or edge.
 - **HDFC folios' as-of** is the issue date, not the 31 Aug mark. The return records use the mark; moving the account date shifts staleness across pages.
 - **Depository fund units under a second key (B-14):** an identity change for the extractor. Concentration now joins those units by ISIN.
 - **Equalisation received** counts as income in the FIFO return and the XIRR. It is kept out of the Distributions tile, where it is named; ILPA practice varies.
+- **Income on a fund class split across several switches** stays on the line that earned it. That line is closed and carries no cost, so the income is in no return. HDFC 15725046's Liquid daily-IDCW ₹16.75 L is the case. It moves with the units only where every switch-out goes to one class (Buoyant A1 → A4).
 - **Per-link Modified Dietz on the NAV index** waits for the build to emit `NavPoint.flowWeighted`.

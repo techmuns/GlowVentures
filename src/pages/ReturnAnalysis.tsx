@@ -329,7 +329,7 @@ export function ReturnAnalysis() {
   const { index: ddIndex, drawdown: dd } = bookDrawdown(portfolio.navHistory ?? []);
   const ddCovered = BOOK_NAV_COVERAGE.covered.length;
   /**
-   * A PEAK OR TROUGH STRUCK ON AN UNSETTLED STEP SAYS SO (Stage 10fx). The
+   * A PEAK OR TROUGH STRUCK ON AN UNSETTLED STEP SAYS SO (Stage 10fz). The
    * 31 Aug 2026 point — this drawdown's peak — carries ₹57.8 L of movement no
    * statement settles (Buoyant 103472, `flowBasis` "unreported"): capital may
    * have moved inside that step, and the chain cannot net what it cannot see.

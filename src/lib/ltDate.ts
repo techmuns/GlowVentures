@@ -1,5 +1,5 @@
 /**
- * ── WHEN A LOT TURNS LONG-TERM, AND WHAT HOLDING IT THERE SAVES (Stage 10fx) ──
+ * ── WHEN A LOT TURNS LONG-TERM, AND WHAT HOLDING IT THERE SAVES (Stage 10fz) ──
  *
  * One definition for the hold-to-LTCG planner on /capital-gains and the
  * holding-period card on the company page, because both answer the same
@@ -41,7 +41,7 @@ import { STCG_RATE, LTCG_RATE } from "./taxEstimate";
 import { longTermFrom as longTermFromShared, longTermRuleOf, SPECIFIED_FUND_FROM, type LongTermRule } from "../../shared/holdingPeriod.mjs";
 
 /*
- * THE RULE ITSELF IS SHARED (Stage 10fx): `shared/holdingPeriod.mjs` is the
+ * THE RULE ITSELF IS SHARED (Stage 10fz): `shared/holdingPeriod.mjs` is the
  * one copy, read by `build-book` when it splits a register at its statement
  * date and here when the same lots are re-aged to today. This file adds only
  * what the browser needs around it — India's date, the join of a register's

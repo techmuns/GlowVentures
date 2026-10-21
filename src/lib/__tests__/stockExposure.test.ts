@@ -638,7 +638,7 @@ ok("every skipped vehicle carries its own value, so a caller can state the size"
 near("what no disclosed line accounted for is exactly the disclosed value the rows do not reach",
   ex.unaccountedValue, ex.disclosedValue - ex.total - ex.fencedValue, 0.01);
 
-// ── Stage 10fx: what an EQUITY index is weighed against ──────────────────────
+// ── Stage 10fz: what an EQUITY index is weighed against ──────────────────────
 // `derivedEquity` is the derived half's equity lines, re-struck here line by
 // line off the rows the store returns: no Debt line, no CD (`16`) or commercial
 // paper (`14`) by its ISIN type code, nothing from a cash-equivalent scheme,

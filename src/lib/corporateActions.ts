@@ -193,7 +193,7 @@ export function applyCorporateActionQuotes(
     const sym = quoteSymbolFor(p);
     const q = quotes?.quotes[sym || ""];
     /**
-     * THE WINDOW OPENS ON THE MARK'S OWN DATE, ROLLED OR NOT (Stage 10fx). It
+     * THE WINDOW OPENS ON THE MARK'S OWN DATE, ROLLED OR NOT (Stage 10fz). It
      * opened on `rf.through` for a rolled holding, while `rolledPosition`
      * values the opening at the STATEMENT's price: Belrise Industries on LKP
      * 98245 read "from 4 Aug 2026" over an opening of 6,500 × ₹186, the
@@ -301,7 +301,7 @@ function rolledPosition(p: Position, rf: NonNullable<Position["rolledForward"]>)
     realizedPnL: rf.realizedPnL,
     costOfUnitsSold: rf.costOfUnitsSold,
     realizedLotsAfter: 0,
-    // NO `cost > 0` GATE (Stage 10fx). It refused a holding whose remaining
+    // NO `cost > 0` GATE (Stage 10fz). It refused a holding whose remaining
     // units cost nothing — bonus shares left after every bought one was sold,
     // the whole gain realised — though its return on what was deployed is a
     // measurement: `fifoReturnPct` abstains exactly where the cost held plus

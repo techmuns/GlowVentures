@@ -262,7 +262,7 @@ export function ownerMeasuredReturn(statement: Portfolio, positions: Position[],
  * when the entity carries no opening NAV for the financial year (this book
  * carries none, so it renders "—" — never a figure against a partial opening).
  *
- * Stage 10fx, three latent defects, each of which would have printed a wrong
+ * Stage 10fz, three latent defects, each of which would have printed a wrong
  * figure the day an `entityNavHistory` arrived:
  *   • DATES WERE MIXED. The FY start was LOCAL midnight (`new Date(y, 3, 1)`)
  *     and every row's date was parsed as UTC, so in India 1 Apr 00:00 UTC is

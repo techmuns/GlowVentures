@@ -225,7 +225,7 @@ export type Drilldown = {
   rows: Position[];
   /**
    * WHICH NAME A ROW IS, where a page counts names by investment rather than
-   * by key (Stage 10fx): the top-names page ranks `concentrationNames`' groups,
+   * by key (Stage 10fz): the top-names page ranks `concentrationNames`' groups,
    * so its "N names" counts those groups — ten names that span eleven or more
    * keys — or the count beside its heading would disagree with the heading.
    * Absent, a name is a `securityKey`.
@@ -515,7 +515,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
 
     case "top-names": {
       // GROUPED LIKE THE FIGURE — `concentrationNames`, the tile's own ranking
-      // (Stage 10fx). A fund held in two unit classes is one investment (Sanshi
+      // (Stage 10fz). A fund held in two unit classes is one investment (Sanshi
       // Fund I's Class E and A2, ₹204.48 Cr between them, the book's largest),
       // and two keys that share an ISIN are one (Helios Flexi Cap's statement
       // line and its depository units). Ranked on `securityKey` alone this page
@@ -866,7 +866,7 @@ export function costedSetLabel(
  */
 export type BookReturnOnCost = { set: CostedBookSet; fifo: FifoTotals; pct: number | null };
 /**
- * ── SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fx) ─────────────────────────
+ * ── SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fz) ─────────────────────────
  *
  * The rows and the value are the CURRENT holdings — `costedBookSet` over
  * `currentHoldings` (idempotent, so a caller that already filtered loses
@@ -890,7 +890,7 @@ export function bookReturnOnCost(current: readonly Position[], opts: FifoOptions
 /**
  * The rows any of `sets` carries that a current-holdings surface drops —
  * redeemed to nil, or under the ₹1,000 floor (`droppedHoldings`) — each
- * duplicated holding once. What `fifoTotals`' `exited` takes (Stage 10fx).
+ * duplicated holding once. What `fifoTotals`' `exited` takes (Stage 10fz).
  */
 export function exitedRows(...sets: readonly (readonly Position[] | undefined)[]): Position[] {
   const out: Position[] = [];
@@ -931,7 +931,7 @@ export type BookMoneyWeighted = {
   bookAccounts: number;
   gaps: { accountId: string; accountNo: string; asOf: string; reason: string }[];
   /**
-   * The fund-of-funds model's lines LEFT OUT of the pool, and why (Stage 10fx).
+   * The fund-of-funds model's lines LEFT OUT of the pool, and why (Stage 10fz).
    * Empty on this book, whose model carries none.
    */
   privateExcluded: { name: string; reason: string }[];
@@ -943,7 +943,7 @@ export type BookMoneyWeighted = {
   reason: string | null;
 };
 /**
- * WHY THE FUND-OF-FUNDS MODEL'S LINES ARE NOT POOLED (Stage 10fx). They were:
+ * WHY THE FUND-OF-FUNDS MODEL'S LINES ARE NOT POOLED (Stage 10fz). They were:
  * each one's first drawdown, then its value dated `today` — the page's clock,
  * not the date the fund marked itself — and pooled into accounts whose flows
  * open on a statement's OPENING value. Both halves are wrong: a value is struck

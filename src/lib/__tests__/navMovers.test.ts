@@ -75,7 +75,7 @@ ok("the scope is not empty", m.scopeNames > 0, `${m.scopeNames} names`);
 // `move ÷ priorValue` must be the printed percentage, exactly. This is what makes it
 // safe to show the three figures side by side: a reader dividing one printed
 // cell by another gets the third.
-// Over the value BEFORE the move (Stage 10fx): `value × c` on a value struck at
+// Over the value BEFORE the move (Stage 10fz): `value × c` on a value struck at
 // today's NAV overstated the rupee move by (1 + c).
 ok("every row's move ÷ prior value is its printed percentage",
   m.rows.every((r) => Math.abs((r.move / r.priorValue) * 100 - r.changePct) < 1e-9));

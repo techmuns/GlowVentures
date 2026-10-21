@@ -653,7 +653,7 @@ const NEGLIGIBLE_FLOOR = 1000;
 /**
  * ── NO SURVIVORSHIP: WHAT THE FAMILY HAS LEFT, IN A SINCE-INCEPTION RETURN ──
  *
- * Stage 10fx. A return struck over what is still held is a survivor's return:
+ * Stage 10fz. A return struck over what is still held is a survivor's return:
  * 3P's class B3, ASK Absolute Return's folios, the redeemed arbitrage schemes
  * and ASK's two closed PMS mandates earned the family money and were in no
  * aggregate. GIPS keeps a terminated holding's result in since-inception
@@ -3090,7 +3090,7 @@ const DIST_BOOK = (() => {
     }
     /*
      * ── A LINE THE REVIEW VALUES AND DATES IS PAID BACK BY THE REVIEW'S ROWS
-     *    (Stage 10fx) ─────────────────────────────────────────────────────────
+     *    (Stage 10fz) ─────────────────────────────────────────────────────────
      *
      * The distribution is the cash the line's XIRR counts (ILPA): the review's
      * income and sale rows dated on or before the line's own valuation — not
@@ -3218,7 +3218,7 @@ const DIST_BOOK = (() => {
       reportedOf: once.filter((r) => r.amount != null).length,
       accountsOf: once.filter((r) => r.basis === "capital-account" || r.basis === "review" || r.amount != null).length,
       letters: letters.map((l) => ({ accountNo: l.accountNo, amount: l.amount, counted: l.counted, countedAs: l.countedAs, onReview: !!l.onReview })),
-      /** What the tile read before Stage 10fx — every capital account and every letter — which the figure must no longer be. */
+      /** What the tile read before Stage 10fz — every capital account and every letter — which the figure must no longer be. */
       beforeReview: sumOf(countedBefore),
       /** Every counted part, by basis — what the hover must name. */
       parts: once.filter((r) => r.amount != null).map((r) => ({ basis: r.basis, amount: r.amount, accountNo: r.accountNo ?? null })),
@@ -3228,7 +3228,7 @@ const DIST_BOOK = (() => {
 })();
 
 /**
- * ── UNITS A LATER STATEMENT HOLDS THAT A CAPITAL ACCOUNT DOES NOT (Stage 10fx) ─
+ * ── UNITS A LATER STATEMENT HOLDS THAT A CAPITAL ACCOUNT DOES NOT (Stage 10fz) ─
  *
  * A capital account's still-to-call is as of its own statement, and a drawdown
  * fund issues units against what it calls. Where a statement of the SAME owner,
@@ -3418,7 +3418,7 @@ const PM_C_BOOK = (() => {
     }
     const cg = new Map(gains.filter((e) => e.accountId).map((e) => [e.accountId, e]));
     // …AND A LINE THE REVIEW DATES REDEEMS ON THE REVIEW'S OWN SALE ROWS (Stage
-    // 10fx): its FIFO cost sold and realised are struck off them, so they are
+    // 10fz): its FIFO cost sold and realised are struck off them, so they are
     // its redemption — 360 ONE's 5,751.296 units on 30 Apr 2024.
     const reviewFlows = bookArray(src, "BOOK_REVIEW_FLOWS") ?? [];
     const redeemed = (p) => [
@@ -3437,7 +3437,7 @@ const PM_C_BOOK = (() => {
     const keptAtCost = kept.filter((p) => p.valuedAtCost === true);
     const withRz = keptValued.filter((p) => p.realizedPnL != null);
     /*
-     * ── DPI, RVPI AND TVPI OVER THE VALUED PRIVATE FUNDS (Stage 10fx, ILPA) ──
+     * ── DPI, RVPI AND TVPI OVER THE VALUED PRIVATE FUNDS (Stage 10fz, ILPA) ──
      *
      * Re-expressed off the book, never through `privateMultiples`: over the
      * valued holdings counted once (the same set the realised tile counts),
@@ -3809,7 +3809,7 @@ const PM_RETURN_BOOK = (() => {
     const bookSold = costed.reduce((t, p) => t + fifoOf(p.costOfUnitsSold), 0);
     const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis), 0);
     const bookRealised = costed.reduce((t, p) => t + fifoOf(p.realizedPnL), 0);
-    // …AND THE INCOME THE HOLDINGS PAID (Stage 10fx), gross of TDS — in the gain, never the cost.
+    // …AND THE INCOME THE HOLDINGS PAID (Stage 10fz), gross of TDS — in the gain, never the cost.
     const bookIncome = costed.reduce((t, p) => t + fifoOf(p.dividendReceived), 0);
     // THE POOL'S RECORDS HELD UNDER A YEAR, and the pool without them (PM-D3):
     // each record's own window is its first call to its own valuation.
@@ -4814,7 +4814,7 @@ const CAPITAL_GROUPS = (() => {
         .map((m) => ({ t: Date.parse(m.date), a: m.direction === "in" ? -m.amount : m.amount }));
       /*
        * ── …AND A MONEY-WEIGHTED RETURN CLOSES ON THE NEWEST VERIFIED RECORD
-       *    (Stage 10fx, the standing rule) ──────────────────────────────────
+       *    (Stage 10fz, the standing rule) ──────────────────────────────────
        *
        * A statement account's record closes on its verified return record's
        * valuation (`BOOK_ACCOUNT_RETURN_RECORDS`) where that is newer than the
@@ -5037,7 +5037,7 @@ const DATED_CAPITAL_BOOK = (() => {
     for (const g of CAPITAL_GROUPS.groups) {
       if (!g.rated) continue;
       // ON THE CLOSE THE RATE IS STRUCK ON — the newest verified record where
-      // it reconciles across the gap (Stage 10fx), else the holdings statement.
+      // it reconciles across the gap (Stage 10fz), else the holdings statement.
       rated.set(g.key, { flows: g.datedFlows, value: g.closeValue, asOf: g.closeAsOf });
     }
     /** The accounts a set of units belongs to — what the page's own `accountIds` names. */
@@ -9204,7 +9204,7 @@ const XA_BOOK = (() => {
     const per = strike(yearOf);
     const taxOn = (st, lt) => Math.max(0, st) * 0.2 + Math.max(0, lt) * 0.125;
     const offOf = (e) => (e.oneYear && e.st < 0 && e.lt > 0 ? Math.min(-e.st, e.lt) : 0);
-    // THE s.112A EXEMPTION, ₹1.25 L per person per year (Stage 10fx), on the
+    // THE s.112A EXEMPTION, ₹1.25 L per person per year (Stage 10fz), on the
     // long-term gain left after the set-off — withheld where a person's figures
     // span more than one year, as the page withholds it.
     const exemptOf = (e) => (e.oneYear ? 125000 : 0);
@@ -9367,7 +9367,7 @@ const XA_BOOK = (() => {
         gain += struck.filter((x) => x.accountId === acct).reduce((a, x) => a + x.marketValue, 0) + cap.withdrawn - cap.contributed;
         deployed += cap.contributed;
       }
-      // NO SURVIVORSHIP (Stage 10fx): the exits' gain and capital deployed.
+      // NO SURVIVORSHIP (Stage 10fz): the exits' gain and capital deployed.
       const ex = exitsInto(struck, exits, whole, accById, heldIn);
       gain += ex.gain; deployed += ex.deployed;
       // `costCoversSet` over the struck set, whose every member reports a cost,
@@ -9376,7 +9376,7 @@ const XA_BOOK = (() => {
       const covers = marketValue > 0 || (marketValue === 0 && deployed > 0);
       return covers && deployed > 0 ? (gain / deployed) * 100 : null;
     };
-    // …AND SINCE INCEPTION (Stage 10fx): the current struck set, with what the
+    // …AND SINCE INCEPTION (Stage 10fz): the current struck set, with what the
     // family has left in the gain and the capital deployed (`exitsInto`) — the
     // figure Morning CIO, the Monitor footer and /holdings print.
     const fifo = { current: fifoOver(held, held), consolidated: fifoOver(deduped, held),
@@ -9463,7 +9463,7 @@ const XA_BOOK = (() => {
       })),
       turned: harvestAll.filter(turnedOf).length,
       // A holding carries purchase dates where its lots split its cost (Stage
-      // 10fx) — one whose lots are all long-term has no days to go, but is dated.
+      // 10fz) — one whose lots are all long-term has no days to go, but is dated.
       dated: rawPositions.filter((x) => x.stCostBasis != null || x.ltCostBasis != null).length,
     };
     // ── Return & Drawdown's maximum drawdown (XA-17), chained here on each
@@ -13038,7 +13038,7 @@ const FIFO_BOOK = (() => {
       if (survivors !== null && (!worst || Math.abs(capitalRet - survivors) > Math.abs(worst.capitalRet - worst.survivors))) worst = row;
     }
     /*
-     * ── A MANDATE WITH NO CAPITAL RECORD TO ITS DATE IS LOT FIFO (Stage 10fx, B1)
+     * ── A MANDATE WITH NO CAPITAL RECORD TO ITS DATE IS LOT FIFO (Stage 10fz, B1)
      *
      * A capital record that stops before the account's holdings statement
      * (SVAN 8710067's runs to 31 Jul, its holdings to 30 Sep) no longer stamps
@@ -13336,7 +13336,7 @@ const MONITOR_BASIS_BOOK = (() => {
     });
     const costed = (p) => num(p.costBasis) && !p.costUnavailable;
     // THE ROWS THE FAMILY HAS LEFT — redeemed to nil or under the ₹1,000 floor
-    // — each duplicated holding once, for a since-inception return (Stage 10fx).
+    // — each duplicated holding once, for a since-inception return (Stage 10fz).
     const exitedAll = exitedRowsOf(positions);
     const fifo = (set, exits = []) => {
       const inSet = new Map();
@@ -13370,7 +13370,7 @@ const MONITOR_BASIS_BOOK = (() => {
         deployed += cap.contributed;
         realised = (realised ?? 0) + (mcost.get(id) ?? 0) + cap.withdrawn - cap.contributed;
       }
-      // NO SURVIVORSHIP (Stage 10fx): what the family has left enters the gain
+      // NO SURVIVORSHIP (Stage 10fz): what the family has left enters the gain
       // and the capital deployed, never the realised cell (which names itself
       // as excluding exited names) — `exitsInto`, the rule written out once.
       const x = exitsInto(set, exits, whole, acc, current);
@@ -13531,7 +13531,7 @@ const footBasisChecks = (setKey) => [
     const f = ctx?.monitorFoot;
     if (!b || b.ret === null || !f?.returnText) return false;
     const pct = signedPctOf(f.returnText);
-    // SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fx): where the book's exits
+    // SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fz): where the book's exits
     // move the figure, the survivors' return is the defect and must not be it.
     const exitsMove = b.survivorsRet != null && Math.abs(b.survivorsRet - b.ret) > 0.01;
     return Number.isFinite(pct) && Math.abs(pct - b.ret) <= 0.006
@@ -13831,7 +13831,7 @@ const ROW_REASONS_C = [
     const tt = sec.titles.find((x) => /Return on capital|FIFO:/.test(x ?? "")) ?? "";
     /*
      * A SECTION WITH A MANDATE WHOSE CAPITAL RECORD STOPS SHORT OF ITS DATE
-     * (Stage 10fx, B1 — SVAN 8710067) is not whole mandates alone: that one is
+     * (Stage 10fz, B1 — SVAN 8710067) is not whole mandates alone: that one is
      * lot FIFO, so the section's return is FIFO with every other mandate
      * entering on its capital. Held to the book's own halves: the capital
      * deployed is the mandates' paid in plus that account's cost held and
@@ -16032,7 +16032,7 @@ const DROPPED_BOOK = (() => {
     });
     const current = ded.filter((p) => !nil(p) && !small.has(p.securityKey));
     // The two derived sets, over what is held NOW, as the page decides them.
-    /* THE TOP TEN ARE INVESTMENTS, NOT KEYS (Stage 10fx): two unit classes of a
+    /* THE TOP TEN ARE INVESTMENTS, NOT KEYS (Stage 10fz): two unit classes of a
        fund the book holds in two or more classes are one name, and so are two
        keys that carry one ISIN. Re-expressed here — the class parse is the
        shared one, the grouping is written out rather than imported. */
@@ -17228,7 +17228,7 @@ const PM_REALISED_RUPEES_CHECK = ["the realised hover reconciles each redemption
   const rupees = figs.map((x) => Number(x[2].replace(/,/g, "")));
   // Each HOLDING that redeemed units: the cost FIFO books them at, to the
   // rupee (paise where the hover prints them). Per holding, not per fund: two
-  // investments in one fund (360 ONE's CRN37702 and CRN60117, Stage 10fx's
+  // investments in one fund (360 ONE's CRN37702 and CRN60117, Stage 10fz's
   // review FIFO) each reconcile their own sale, and a fund's sum is printed
   // nowhere. Load-bearing: every one of them must be named.
   const lines = B.soldLines ?? [];
@@ -18072,7 +18072,7 @@ const PM_RETURN_ROUTE_CHECKS = [
   ["the HPR footer is FIFO over the whole private book — the gain on units held and redeemed, over the capital deployed in both", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
     if (!foot || !PM_RETURN_BOOK || PM_RETURN_BOOK.footHpr == null) return false;
-    // A RETURN COUNTS EVERYTHING THE MONEY EARNED (Stage 10fx): the private
+    // A RETURN COUNTS EVERYTHING THE MONEY EARNED (Stage 10fz): the private
     // funds' income — the review's dated income rows and the statements' own
     // payouts, gross of TDS — is in the gain. Where the book carries any, the
     // footer must not be the gain on units alone, which it printed before.
@@ -18671,7 +18671,7 @@ const VALUE_WINDOW_BOOK = (() => {
       const e = byKey.get(p.securityKey) ?? { dates: new Set(), since: [], single: true };
       e.dates.add(d);
       if (p.heldSince) e.since.push(p.heldSince);
-      // ONE PURCHASE HELD THROUGHOUT (Stage 10fx): the only holding a CAGR may
+      // ONE PURCHASE HELD THROUGHOUT (Stage 10fz): the only holding a CAGR may
       // annualise — staggered lots or units sold since leave it on HPR.
       if (!(p.purchaseDates === 1 && !(Number(p.costOfUnitsSold) > 0))) e.single = false;
       byKey.set(p.securityKey, e);
@@ -19516,7 +19516,7 @@ const CIO_ALLOC = [
      * page reads ₹64.2 L. Struck against `DIST_BOOK.once`, derived off the book
      * by a second path, at the figure's own printing precision — and the
      * capital accounts alone must genuinely differ from it, or a tile that
-     * ignored the letters would pass. Since Stage 10fx a line the review
+     * ignored the letters would pass. Since Stage 10fz a line the review
      * values and dates is paid back by the review's own income and sale rows
      * (the cash its XIRR counts), its view's letters counted there once:
      * ₹94.5 L over 17 of 17 accounts, where capital accounts and letters
@@ -19545,7 +19545,7 @@ const CIO_ALLOC = [
       const capsAlone = DIST_BOOK.parts.filter((x) => x.basis === "capital-account").reduce((a, x) => a + x.amount, 0);
       const cardFig = /Distributions received\s*(₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?)/i.exec(card.text ?? "")?.[1];
       // …AND A LINE THE REVIEW VALUES IS PAID BACK BY THE REVIEW'S OWN ROWS
-      // (Stage 10fx): where the book has one, the figure must not be what the
+      // (Stage 10fz): where the book has one, the figure must not be what the
       // capital accounts and letters alone add to (₹64.2 L on this book), or a
       // tile still on the old basis would pass.
       const reviewIn = !DIST_BOOK.parts.some((x) => x.basis === "review")
@@ -19566,7 +19566,7 @@ const CIO_ALLOC = [
       if (!h) return false;
       const cov = /(\d+) of the (\d+) private-market accounts that could report one do/i.exec(h);
       // A letter the review's rows on its valued line already carry is that
-      // line's cash (Stage 10fx) — counted once, there, and never a pair.
+      // line's cash (Stage 10fz) — counted once, there, and never a pair.
       const also = DIST_BOOK.letters.filter((l) => !l.counted && !l.onReview);
       return !!cov && Number(cov[1]) === DIST_BOOK.reportedOf && Number(cov[2]) === DIST_BOOK.accountsOf
         // The review's rows are a basis the hover names where it counts them.
@@ -20414,7 +20414,7 @@ const CIO_RETURNS_LIVE = [
       const d = (Date.parse(b.to) - Date.parse(b.from)) / 86400000;
       const want = r.basis === "annual" && d >= 365 ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
       /*
-       * THE GAP IS LIKE FOR LIKE (Stage 10fx, P5). The portfolio is money-
+       * THE GAP IS LIKE FOR LIKE (Stage 10fz, P5). The portfolio is money-
        * weighted, so its gap is struck against the index on the SAME dated
        * flows (Long–Nickels PME, the "Same flows in index" column), never
        * against the index's close-to-close move, which stays in its own column.
@@ -28852,7 +28852,7 @@ const INVARIANTS = {
       const bound = 0.5 * 10 ** -(m[2]?.length ?? 0) * scale;
       const capsAlone = DIST_BOOK.parts.filter((x) => x.basis === "capital-account").reduce((a, x) => a + x.amount, 0);
       // …and what is not a capital account's total is really in it — the
-      // letters, or since Stage 10fx the review's dated income and sale rows on
+      // letters, or since Stage 10fz the review's dated income and sale rows on
       // a line it values (which carry the 360 ONE letters' cash once) — or a
       // tile summing the capital accounts alone would pass as one that counted
       // them. Where the review basis is in it, the tile must not read what
@@ -28877,7 +28877,7 @@ const INVARIANTS = {
       const letters = DIST_BOOK.parts.filter((x) => x.basis === "letter");
       const caps = DIST_BOOK.parts.filter((x) => x.basis === "capital-account");
       /*
-       * THE REVIEW'S OWN ROWS ARE A BASIS TOO (Stage 10fx): each line the
+       * THE REVIEW'S OWN ROWS ARE A BASIS TOO (Stage 10fz): each line the
        * review pays back with cash is named on that basis, the ones whose rows
        * date none are counted as a measured nil, and a letter the review's
        * income row already carries is named as that same payment, counted
@@ -28950,7 +28950,7 @@ const INVARIANTS = {
      * tile counts — the same N of M, from the book, never a second count.
      */
     /*
-     * …AND SINCE STAGE 10fx THE MULTIPLE IS STRUCK WHERE EVERY VALUED HOLDING
+     * …AND SINCE STAGE 10fz THE MULTIPLE IS STRUCK WHERE EVERY VALUED HOLDING
      * CAN SAY WHAT WENT IN AND CAME BACK BY ITS OWN VALUE DATE (ILPA): DPI =
      * paid back ÷ paid in, RVPI = value ÷ paid in, TVPI = DPI + RVPI, held to
      * `PM_C_BOOK.multiples`. Where a holding cannot say, the refusal counts
@@ -29523,7 +29523,7 @@ const INVARIANTS = {
       const totalHover = ctx?.pmView?.totals?.find((x) => x.key === "private")?.cells?.uncalled?.title ?? "";
       if (!UNITS_SINCE_CAPITAL) return false; // the checker could not state its own expectation
       /*
-       * …UNLESS A LATER STATEMENT SHOWS A CALL SINCE (Stage 10fx). Where the
+       * …UNLESS A LATER STATEMENT SHOWS A CALL SINCE (Stage 10fz). Where the
        * book holds a same-owner statement dated after a counted capital
        * account's that records more units than that account carries, the
        * fund's still-to-call is lower than printed, so the total is NOT a
@@ -31590,7 +31590,7 @@ const INVARIANTS = {
         }
         onFifo++;
         // A strategy row may pool an account struck on its capital with one
-        // whose capital record stops short of its date (Stage 10fx, B1), which
+        // whose capital record stops short of its date (Stage 10fz, B1), which
         // is lot FIFO: its gain and its capital deployed join the pool.
         const lots = r.mandateAccounts.map((id) => FIFO_BOOK.lotByAccountId.get(id)).filter(Boolean);
         const contributed = book.reduce((n, b) => n + b.contributed, 0) + lots.reduce((n, l) => n + l.deployed, 0);
@@ -31621,7 +31621,7 @@ const INVARIANTS = {
       return rows.every((r, i) => {
         const got = moneyCell(r.cells?.[COL.invested]);
         /*
-         * AN ACCOUNT WHOSE CAPITAL RECORD STOPS SHORT OF ITS DATE (Stage 10fx,
+         * AN ACCOUNT WHOSE CAPITAL RECORD STOPS SHORT OF ITS DATE (Stage 10fz,
          * B1) has no capital paid in to its date, so it is invested what every
          * lot-FIFO holding is: the cost of the units it holds. The rest of the
          * row is each account's capital, as before — never its cost held.
@@ -33330,7 +33330,7 @@ const INVARIANTS = {
         return !!end && c.valuedAt === end && !!m && m[3] === end
           && Number(m[1]) === Math.round((Date.parse(m[3]) - Date.parse(m[2])) / 86400000);
       }) && (cells.some((c) => B.endOf(c.key) !== B.newest)
-        // Load-bearing only where the book holds such a row (Stage 10fx): a
+        // Load-bearing only where the book holds such a row (Stage 10fz): a
         // one-purchase, year-old holding valued before the book's newest date.
         || !B.yearOld.some((k) => B.endOf(k) !== B.newest));
     }],
@@ -33422,7 +33422,7 @@ const INVARIANTS = {
       // a different reason from a holding with no date (Stage 10cf) and is
       // counted in its own sentence — which is still part of the partition.
       const staggered = Number(/(\d+) rows? (?:is a whole account|are whole accounts) funded over several dated payments/.exec(why)?.[1] ?? 0);
-      // A HOLDING BOUGHT IN SEVERAL LOTS, OR PARTLY SOLD (Stage 10fx, R1), is
+      // A HOLDING BOUGHT IN SEVERAL LOTS, OR PARTLY SOLD (Stage 10fz, R1), is
       // refused a CAGR too — the oldest unit's date starts no one purchase — and
       // is counted in its own sentence, still part of the partition.
       const lots = Number(/(\d+) holdings? (?:was|were) bought on several dates or partly sold/.exec(why)?.[1] ?? 0);
@@ -34850,7 +34850,7 @@ const INVARIANTS = {
         const shown = Number(/([+\-−]?\d+(?:\.\d+)?)%/.exec(r.returnText ?? "")?.[1]?.replace("−", "-"));
         const t4 = familyRupees(w);
         // "(A − B + R + I) ÷ D" where the entity was paid income (Stage 10fb /
-        // 10fx: a worked line carries every term its figure does — dividends
+        // 10fz: a worked line carries every term its figure does — dividends
         // gross, and since inception the exits' realised and capital too),
         // "(A − B + R) ÷ D" where anything was sold or realised, "(A − B) ÷ B" otherwise.
         const zero = { v: 0, half: 0 };
@@ -37131,7 +37131,7 @@ const INVARIANTS = {
       const f = XA_BOOK?.fifo;
       if (!f || f.current == null || f.sinceInception == null) return { notChecked: "the book's FIFO return could not be re-derived from glowData.ts" };
       /*
-       * SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fx). The rows are the
+       * SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fz). The rows are the
        * current costed holdings, as DL-3 settled — never a redeemed row's cost
        * in the set — but what the family LEFT (3P's B3, ASK Absolute Return,
        * ASK's two closed mandates) is in the gain and the capital deployed.
@@ -40506,7 +40506,7 @@ for (const theme of THEMES) {
             key: tr.getAttribute("data-returns-bench"),
             pct: tr.getAttribute("data-bench-pct") ?? "",
             gap: tr.getAttribute("data-bench-gap") ?? "",
-            // The index on the portfolio's own flows (Stage 10fx, PME).
+            // The index on the portfolio's own flows (Stage 10fz, PME).
             pme: tr.getAttribute("data-bench-pme"),
             from: tr.getAttribute("data-bench-from") ?? "",
             to: tr.getAttribute("data-bench-to") ?? "",

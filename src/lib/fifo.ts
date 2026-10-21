@@ -124,7 +124,7 @@ export type FifoTotals = {
   /** The mandates struck whole on their capital, by accountId. */
   wholeMandates: string[];
   /**
-   * ── WHAT WAS EXITED, IN THE GAIN AND NOT IN THE ROWS (Stage 10fx) ──────────
+   * ── WHAT WAS EXITED, IN THE GAIN AND NOT IN THE ROWS (Stage 10fz) ──────────
    *
    * The holdings and mandates the family has left — redeemed to nil, sold out,
    * a closed mandate's residue under the ₹1,000 floor — that `opts.exited`
@@ -162,7 +162,7 @@ export type FifoOptions = {
    */
   universe?: readonly Position[];
   /**
-   * ── THE EXITS, FOR A SINCE-INCEPTION RETURN (Stage 10fx) ──────────────────
+   * ── THE EXITS, FOR A SINCE-INCEPTION RETURN (Stage 10fz) ──────────────────
    *
    * Rows the current-holdings set drops (`droppedHoldings`: redeemed to nil,
    * under the ₹1,000 floor) whose record carries what they EARNED. A return
@@ -227,7 +227,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
        * shares a security with it, such as one cash line held in two accounts.
        */
       //
-      // WHOLE WHEREVER EVERY ROW OF IT IS IN THE SET (Stage 10fx), no longer
+      // WHOLE WHEREVER EVERY ROW OF IT IS IN THE SET (Stage 10fz), no longer
       // only where the set is that account alone: a book-wide set that carries
       // a closed mandate's every row carries the whole account, and its capital
       // is what that account earned. Every row, never one shared security: the
@@ -289,7 +289,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     const cap = accountOf(accounts!, acct)!.capital!;
     const mv = mandateMV.get(acct) ?? 0;
     const gain = mv + cap.withdrawn - cap.contributed;
-    // THE UNREALISED HALF IS THE COSTED ROWS' OWN (Stage 10fx, B8). It was
+    // THE UNREALISED HALF IS THE COSTED ROWS' OWN (Stage 10fz, B8). It was
     // `mv − cost` with `mv` over EVERY row and the cost over the costed ones,
     // so a row with no cost had its value added to the unrealised here and
     // never to the unrealised above — and it vanished from the mandate's gain.
@@ -304,7 +304,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     wholeWithdrawn += cap.withdrawn;
   }
 
-  // ── THE EXITS (Stage 10fx): in the gain and the capital deployed, nowhere else.
+  // ── THE EXITS (Stage 10fz): in the gain and the capital deployed, nowhere else.
   let exitedHoldings = 0, exitedGain = 0, exitedDeployed = 0;
   const exitedMandates: string[] = [];
   if (opts.exited?.length) {
@@ -405,7 +405,7 @@ export function fifoBasisNote(t: FifoTotals, money: (n: number) => string): stri
 }
 
 /**
- * The words for the exits a since-inception total carries (Stage 10fx): how
+ * The words for the exits a since-inception total carries (Stage 10fz): how
  * many exited holdings and mandates, and what they put in the gain and the
  * capital deployed — "in the gain and capital deployed, not in the rows".
  * Empty where none is in the set.

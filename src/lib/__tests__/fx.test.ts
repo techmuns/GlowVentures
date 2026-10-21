@@ -1,4 +1,4 @@
-// THE DISPLAY RATE IS A PUBLISHED ONE, OR THERE IS NO USD (Stage 10fx).
+// THE DISPLAY RATE IS A PUBLISHED ONE, OR THERE IS NO USD (Stage 10fz).
 //   npm run test:family
 //
 // `DEFAULT_INR_PER_USD = 83.5` divided every USD figure in the cockpit whenever

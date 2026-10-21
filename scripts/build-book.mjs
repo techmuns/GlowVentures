@@ -1780,7 +1780,7 @@ const SALE_AUTHORITY = ["transaction-statement", "investor-report"];
 const settledOf = (t) => t.printed?.settlementAmount ?? t.net ?? t.gross ?? null;
 
 function lotGain(l) {
-  // A ZERO COST WITH NO PURCHASE DATE IS AN UNPRINTED COST (Stage 10fx). LKP
+  // A ZERO COST WITH NO PURCHASE DATE IS AN UNPRINTED COST (Stage 10fz). LKP
   // prints its 24 Jul 2026 Liquid BeES lot with no buy date and a Purchase
   // Amount of 0.00, and sale − 0 booked the whole ₹1,000 sold as gain where its
   // own ST and LT columns print nil. A zero cost ON a dated purchase is a
@@ -2540,7 +2540,7 @@ function build(archived, archiveCount = archived.length) {
   // Asset class per security, from the reports that DO print one. Same kind of
   // join as the ISIN above: this drop's own paperwork, never inferred from text.
   const classByKey = new Map();
-  /** The class an APPRAISAL prints for a key — what a realised lot falls back to before any other report (Stage 10fx). */
+  /** The class an APPRAISAL prints for a key — what a realised lot falls back to before any other report (Stage 10fz). */
   const appraisalClassByKey = new Map();
   for (const d of docs) {
     if (d.reportType !== "appraisal") continue;
@@ -3275,7 +3275,7 @@ function build(archived, archiveCount = archived.length) {
     // KIND, and a cash event listed by both is deduped on (date, security,
     // amount) with the dividend statement winning.
     //
-    // A FUND'S DISTRIBUTION IS CASH TOO (Stage 10fx). 360 ONE Alternates'
+    // A FUND'S DISTRIBUTION IS CASH TOO (Stage 10fz). 360 ONE Alternates'
     // distribution notices print kind `distribution`, and `^dividend$` read
     // ₹7,15,619 of money paid out as if it were a bonus issue — never income.
     // It is income of the holding on its own account (where the same notice
@@ -3300,7 +3300,7 @@ function build(archived, archiveCount = archived.length) {
     const datedIncomeByKey = new Map();
     const corporateActions = [];
     /**
-     * WHICH WINDOW EACH HOLDING'S INCOME COVERS (Stage 10fx) — `Position.dividendFrom`.
+     * WHICH WINDOW EACH HOLDING'S INCOME COVERS (Stage 10fz) — `Position.dividendFrom`.
      *
      * A dividend statement covers ONE window (Goldstandard's runs from 1 April),
      * so its sum is the income of that window and not since purchase; a page
@@ -3312,7 +3312,7 @@ function build(archived, archiveCount = archived.length) {
      */
     const dividendFromByKey = new Map();
     // Every rupee of income is added with its day (Stage 10fw's dated record,
-    // Stage 10fx's sources): the FIFO total and a money-weighted return over
+    // Stage 10fz's sources): the FIFO total and a money-weighted return over
     // the holding's dated money must count the same dividends.
     const addIncome = (key, amount, from, dated = [{ date: null, amount }]) => {
       dividendByKey.set(key, r2((dividendByKey.get(key) ?? 0) + amount));
@@ -3323,7 +3323,7 @@ function build(archived, archiveCount = archived.length) {
     };
     const docOf = new Map(allIssues.map((d) => [d.docKey, d]));
     /**
-     * GROSS OF TDS (Stage 10fx). The TDS a company or a fund deducts is the
+     * GROSS OF TDS (Stage 10fz). The TDS a company or a fund deducts is the
      * family's tax credit, not a cost of the holding, so income is what was
      * DECLARED: Goldstandard 100022's HDFC AMC dividend of 30 Jun 2026 prints
      * ₹59,400 receivable, ₹5,940 TDS and ₹53,460 net, and the book carried
@@ -3340,7 +3340,7 @@ function build(archived, archiveCount = archived.length) {
     const cashCounted = [];
     let netOnly = 0;
     let lateIncome = 0;
-    // A REPEAT WITHIN ONE DOCUMENT IS DATA (Stage 10fx), as `datedRowsAcross`
+    // A REPEAT WITHIN ONE DOCUMENT IS DATA (Stage 10fz), as `datedRowsAcross`
     // rules for every dated row: two identical dividend rows on ONE statement
     // are two payments. Each row is keyed with its ordinal among identical rows
     // of its own document, so a second report's copy dedupes against the first
@@ -3406,7 +3406,7 @@ function build(archived, archiveCount = archived.length) {
      * income the same way. Neither is a capital move; both are what the holding
      * earned, so both go where a demat's cash dividends go.
      *
-     * THREE GUARDS (Stage 10fx). A row is an IDCW reinvestment by what its OWN
+     * THREE GUARDS (Stage 10fz). A row is an IDCW reinvestment by what its OWN
      * description says it is — "IDCW Reinvest…", "Dividend Reinvest…" — and not
      * because the word appears somewhere in it: a switch into a "Dividend Yield"
      * scheme is a purchase. A row dated after the holding's statement date is
@@ -3440,7 +3440,7 @@ function build(archived, archiveCount = archived.length) {
       addIncome(c.securityKey, gross, recordFrom(c), [{ date: c.date ?? null, amount: gross }]);
     }
     /**
-     * A GAIN DISTRIBUTION REINVESTED INTO AN ALLOTMENT IS INCOME TOO (Stage 10fx).
+     * A GAIN DISTRIBUTION REINVESTED INTO AN ALLOTMENT IS INCOME TOO (Stage 10fz).
      * Buoyant 103473's 1 Apr 2026 deposit of ₹1 Cr bought units worth
      * ₹1,00,58,861.66 because the ₹58,861.66 Gain Distr. of that day was
      * reinvested in it: the reader prints the deposit's gross and its net and
@@ -3457,7 +3457,7 @@ function build(archived, archiveCount = archived.length) {
       addIncome(c.securityKey, r2(c.netAmount - c.amount), recordFrom(c), [{ date: c.date ?? null, amount: r2(c.netAmount - c.amount) }]);
     }
     /**
-     * INCOME FOLLOWS A WHOLE-CLASS SWITCH (Stage 10fx). Buoyant's Gain Distr. was
+     * INCOME FOLLOWS A WHOLE-CLASS SWITCH (Stage 10fz). Buoyant's Gain Distr. was
      * reinvested in Class A1, and every A1 unit was switched into A4 on 1 Jun
      * 2026: the A4 holding's carried cost holds that allotment, so its income
      * does too. Moved only where the class it was earned in is no longer held on
@@ -3470,12 +3470,18 @@ function build(archived, archiveCount = archived.length) {
       const switchesOut = (key) => (dated.cashFlows ?? []).filter((o) => o.kind === "reclassification" && o.securityKey === key && isNum(o.units) && o.units < 0)
         .map((o) => (dated.cashFlows ?? []).filter((i) => i.kind === "reclassification" && i.date === o.date && i.securityKey && i.securityKey !== key
           && isNum(i.units) && i.units > 0 && isNum(i.amount) && isNum(o.amount) && Math.abs(Math.abs(i.amount) - Math.abs(o.amount)) <= 1))
-        .filter((ins) => ins.length === 1).map((ins) => ins[0].securityKey);
+        // EVERY leg out must pair with exactly one leg in, or the class did not
+        // move as a whole to a place this book can name: an ambiguous leg is a
+        // stop, never dropped — dropping it let HDFC 15725046's Liquid IDCW
+        // income (₹16.75 L, its units split between Arbitrage and Liquid Growth)
+        // all follow the one leg that paired, on to Overnight (5.12% → 10.95%).
+        .map((ins) => (ins.length === 1 ? ins[0].securityKey : null));
       for (const key of [...dividendByKey.keys()]) {
         let to = key;
         for (let hop = 0; hop < 5 && !heldNow.has(to); hop++) {
-          const next = [...new Set(switchesOut(to))];
-          if (next.length !== 1) break;
+          const legs = switchesOut(to);
+          const next = [...new Set(legs)];
+          if (!legs.length || next.length !== 1 || next[0] === null) break;
           to = next[0];
         }
         if (to === key || !heldNow.has(to)) continue;
@@ -3490,7 +3496,7 @@ function build(archived, archiveCount = archived.length) {
       }
     }
     /**
-     * A DRAWDOWN FUND'S DISTRIBUTIONS (Stage 10fx). An AIF that values its own
+     * A DRAWDOWN FUND'S DISTRIBUTIONS (Stage 10fz). An AIF that values its own
      * units prints what it paid back in its commitment block (`payouts`), each
      * reconciled by its reader, and none of it reached the holding: Neo Infra
      * 9039920536 read +13.83% while its statement prints ₹28.19 L of interest,
@@ -3864,7 +3870,7 @@ function build(archived, archiveCount = archived.length) {
         });
       }
       /**
-       * HOW MANY DATES THE UNITS STILL HELD WERE BOUGHT ON (Stage 10fx) — under
+       * HOW MANY DATES THE UNITS STILL HELD WERE BOUGHT ON (Stage 10fz) — under
        * exactly the gate `heldSince` is, because it answers the same question
        * one step further: a single purchase date with nothing sold is a holding
        * a compound annual rate can be struck on from `heldSince`; staggered
@@ -3873,7 +3879,7 @@ function build(archived, archiveCount = archived.length) {
       let purchaseDates;
       if (lotsCoverPosition && asOf) {
         // s.2(42A), by the asset's own period in calendar months — not 365 days
-        // for everything (`scripts/lib/holdingPeriod.mjs`, Stage 10fx).
+        // for everything (`scripts/lib/holdingPeriod.mjs`, Stage 10fz).
         const split = termSplit(dated, asOf, {
           assetClass: h.assetClass, isin: h.isin ?? isinByKey.get(h.securityKey) ?? null,
           marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security, securityKey: h.securityKey }, acctForPositions),
@@ -3921,7 +3927,7 @@ function build(archived, archiveCount = archived.length) {
          */
         marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security, securityKey: h.securityKey }, acctForPositions),
         quantity: h.quantity,
-        // A FIFO cost restates what one unit cost too (Stage 10fx): the statement's
+        // A FIFO cost restates what one unit cost too (Stage 10fz): the statement's
         // own unit cost is of the cost it printed, not of the units still held.
         avgCost: costBasisSource === "fifo" && isNum(costBasis) && h.quantity > 0
           ? Math.round((costBasis / h.quantity) * 1e4) / 1e4 : h.unitCost,
@@ -4261,7 +4267,7 @@ function build(archived, archiveCount = archived.length) {
       // security neither carries is left `null` and NAMED. "Mutual Fund" in a
       // printed name is not a classification any statement made.
       //
-      // THE HOLDING'S OWN CLASS FIRST (Stage 10fx). The first report that printed
+      // THE HOLDING'S OWN CLASS FIRST (Stage 10fz). The first report that printed
       // a class used to win, and Green Lantern's investor report files its Axis
       // Liquid Fund trades under "Equity" while the appraisal the position is
       // read from says Cash — so ₹8.6 L of liquid-fund gains sat in the equity
@@ -4472,7 +4478,7 @@ function build(archived, archiveCount = archived.length) {
         };
       } else if (ins.length && inception && firstIn <= inception
         && mine.every((m) => m.date <= asOf)
-        // …AND REACHES IT (Stage 10fx). A record that starts at inception but
+        // …AND REACHES IT (Stage 10fz). A record that starts at inception but
         // ends before the holdings' date has not seen what moved in between:
         // SVAN 8710067's ends 31 Jul against holdings of 30 Sep, and the
         // ₹37,099.80 of TDS paid out of the mandate in August and September was

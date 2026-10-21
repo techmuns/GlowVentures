@@ -78,7 +78,7 @@ const near = (name: string, got: number | null | undefined, want: number | null 
 
 // ── THE PAGE'S OWN INPUTS, BUILT THE WAY THE PAGE BUILDS THEM ───────────────
 const accIdx = accountIndex(BOOK_ACCOUNTS);
-/** Where a holding's value is struck — its own date, else its account's (re-expressed here, Stage 10fx). */
+/** Where a holding's value is struck — its own date, else its account's (re-expressed here, Stage 10fz). */
 const valuedAtOf = (p: Position) => p.priceAsOf ?? BOOK_ACCOUNTS.find((a) => a.accountId === p.accountId)?.asOf ?? null;
 /** The review's dated income and sale on a line, on or before that date — re-expressed, never through the module. */
 const reviewAmtOf = (p: Position) => BOOK_REVIEW_FLOWS
@@ -543,14 +543,14 @@ console.log("\n── the two sections ──");
 }
 
 function paidBack({ label, b, overlap }: Run) {
-  console.log(`\n── what the funds paid back (${label}): each distribution once, on its own paper's basis (B-10, Stage 10fx) ──`);
+  console.log(`\n── what the funds paid back (${label}): each distribution once, on its own paper's basis (B-10, Stage 10fz) ──`);
   const { current, folios, byFund } = b;
   /**
    * DERIVED BY A SECOND PATH. A capital account's distribution is its printed
    * `distributed`, else its non-equalisation payouts, gross — re-expressed here,
    * never read through `distributionOf`. A letter's is `BOOK_CORPORATE_ACTIONS`'
    * own amount. A line the family's consolidated review values AND dates is
-   * paid back by the review's own rows (Stage 10fx): its income and sale rows on
+   * paid back by the review's own rows (Stage 10fz): its income and sale rows on
    * or before the review's value date — and then its capital account's figure
    * and its income-only views' letters are that same cash and count nowhere.
    * "Once" is struck the way every consolidated figure is: of a dedupe group's
@@ -651,7 +651,7 @@ function paidBack({ label, b, overlap }: Run) {
 }
 for (const run of RUNS) paidBack(run);
 
-console.log("\n── the funds the audit named (Stage 10fx): before → after ──");
+console.log("\n── the funds the audit named (Stage 10fz): before → after ──");
 {
   const by = (acct: string) => folios.find((f) => f.accountId === acct && f.position);
   const one = ["360-one-private-wealth-37702", "360-one-private-wealth-60117"].map(by);
@@ -722,7 +722,7 @@ console.log("\n── the funds the audit named (Stage 10fx): before → after �
     refused.missing.map((x) => x.folio.accountId).join(", "));
 }
 
-console.log("\n── the review's write-offs are named wherever the private book is summed (Stage 10fx) ──");
+console.log("\n── the review's write-offs are named wherever the private book is summed (Stage 10fz) ──");
 {
   const note = writtenOffNote(BOOK_REVIEW_WRITTEN_OFF, false);
   ok("the review writes off investments on this book", BOOK_REVIEW_WRITTEN_OFF.length > 0, `${BOOK_REVIEW_WRITTEN_OFF.length}`);
@@ -809,7 +809,7 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
   near("the band's deployed is the cost held plus what the redeemed units cost", priv.deployed, costHeld + sold);
   near("…and the total's is the same", byFund.privateTotal.deployed, costHeld + sold);
   ok("…and it is NOT the Cost column", priv.deployed != null && priv.cost != null && Math.abs(priv.deployed - priv.cost) > 1);
-  // …AND THE INCOME EACH HOLDING CARRIES (Stage 10fx): FIFO's gain is the
+  // …AND THE INCOME EACH HOLDING CARRIES (Stage 10fz): FIFO's gain is the
   // unrealised and realised gain plus `dividendReceived`, gross of TDS, over the
   // window its record covers.
   const gain = held.reduce((t, f) => t + (f.position!.marketValue - (f.cost ?? 0)) + (f.position!.realizedPnL ?? 0)

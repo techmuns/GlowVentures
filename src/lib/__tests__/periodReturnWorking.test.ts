@@ -26,7 +26,7 @@ for (const type of methods) {
   assert.ok(m.shown && w);
   near(w.opening, 100); near(w.capitalIn, 100); near(w.closing, row.closeValue); near(w.gain, row.gain);
   assert.equal(w.days, 365); assert.equal(w.flows.length, 3);
-  // Stage 10fx: a dated window's Absolute return is Modified Dietz — the same
+  // Stage 10fz: a dated window's Absolute return is Modified Dietz — the same
   // day-weighted money at work CAGR strikes — never gain ÷ (V₀ + capital in).
   if (type === "absolute") {
     const expected = 100 + 100 * daysBetween("2025-07-03", "2026-01-01") / 365;
@@ -79,7 +79,7 @@ const ytd = [
 const tiny = measureWindow(ytd, "absolute", money);
 near(tiny.working!.gain, -26208.70);
 // Every account opens at nil, so the Modified Dietz period starts on the first
-// day money is at work (Stage 10fx) — never a one-day loss over 219 days'
+// day money is at work (Stage 10fz) — never a one-day loss over 219 days'
 // share of the money, which would read −1.85%.
 assert.equal(tiny.working!.from, "2026-08-06");
 assert.equal(tiny.working!.days, 1);
@@ -94,7 +94,7 @@ assert.equal(window.included.length, 1);
 assert.equal(window.excluded[0].reason, "missing dated capital record");
 near(measureWindow(window.included, "absolute", money).pct!, 10);
 
-// ── D4 (Stage 10fx): an opening mark more than a week old is not this window's opening.
+// ── D4 (Stage 10fz): an opening mark more than a week old is not this window's opening.
 {
   const acct = (id: string, mark: string) => ({ accountId: id, label: id, owner: "Owner",
     valuations: [{ date: mark, value: 100 }, { date: "2026-10-07", value: 101 }], flows: [], knownFrom: null, knownTo: null, flowsUnknown: null, undated: [] });
@@ -104,7 +104,7 @@ near(measureWindow(window.included, "absolute", money).pct!, 10);
   assert.equal(OPENING_MARK_TOLERANCE_DAYS, 7);
 }
 
-// ── D1 (Stage 10fx): the Returns tab reads the verified return record — one record, every surface.
+// ── D1 (Stage 10fz): the Returns tab reads the verified return record — one record, every surface.
 {
   const statement = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS,
     accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} } as unknown as Portfolio;
@@ -127,7 +127,13 @@ near(measureWindow(window.included, "absolute", money).pct!, 10);
   const x = measureWindow(fytd.included, "xirr", money);
   // The only difference is the opening's date — the close of 31 Mar here, the
   // record's 1 Apr row on the tile — one day over 189.
-  assert.ok(Math.abs(x.pct! - tile.toDatePct!) < 0.05, `FYTD ${x.pct} vs tile ${tile.toDatePct}`);
+  // Whole or absent (Stage 10fc): the book-level rate is withheld while any
+  // account holding value lacks a record, so the tab is held to the pooled
+  // rate over exactly the accounts both read.
+  if (!tile.whole) assert.equal(tile.toDatePct, null, "a partial pool strikes no book-level rate");
+  const measuredSet = { ...statement, accounts: BOOK_ACCOUNTS.filter((a) => tile.parts.some((p) => p.accountId === a.accountId)) } as unknown as Portfolio;
+  const pooled = measuredAccountsReturn(measuredSet, measuredSet.accounts);
+  assert.ok(Math.abs(x.pct! - pooled.toDatePct!) < 0.05, `FYTD ${x.pct} vs the same accounts pooled ${pooled.toDatePct}`);
   const gl = fytd.included.find((r) => r.accountId === "green-lantern-capital-llp-510854")!;
   assert.equal(gl.closeDate, BOOK_ACCOUNT_RETURN_RECORDS[gl.accountId].record!.asOf, "Green Lantern closes on its verified record, not its 27 Jul holdings");
   const am = fytd.excluded.find((e) => e.accountId === "motilal-oswal-active-momentum-fund-904168868444")!;
@@ -151,7 +157,7 @@ near(measureWindow(window.included, "absolute", money).pct!, 10);
   assert.ok(mtd.excluded.some((e) => e.accountId === "goldstandard-wealth-private-limited-100022" && /dated 2026-08-11/.test(e.reason)));
 }
 
-// ── D5 (Stage 10fx): the index on the portfolio's own flows (PME).
+// ── D5 (Stage 10fz): the index on the portfolio's own flows (PME).
 {
   const acct: AccountWindow = { accountId: "p", label: "P", owner: "O", openDate: "2026-01-01", openValue: 100, openedInWindow: false,
     closeDate: "2026-07-01", closeValue: 0, flows: [{ date: "2026-04-01", amount: -100 }], capitalIn: 100, capitalOut: 0, gain: 0 };

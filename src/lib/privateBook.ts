@@ -262,7 +262,7 @@ export type BookFolio = {
    * letter prints its ₹7,15,619 NET of expenses and TDS and no gross figure, so
    * that is the figure, and `distributedBasis` says so. A line the family's
    * consolidated review values and dates is paid back by the review's own rows
-   * instead — the rows its XIRR counts (`ReviewDistribution`, Stage 10fx).
+   * instead — the rows its XIRR counts (`ReviewDistribution`, Stage 10fz).
    * NULL where nothing this book reads reports one — never 0, which would say
    * the fund returned nothing.
    */
@@ -270,7 +270,7 @@ export type BookFolio = {
   distributedBasis: DistributionBasis | null;
   /**
    * WHETHER THIS FOLIO IS ONE THAT COULD REPORT A DISTRIBUTION — the "of" of
-   * every distribution coverage count (Stage 10fx). A capital account, an
+   * every distribution coverage count (Stage 10fz). A capital account, an
    * income-only folio's letters, or the review's dated rows for a line the
    * review values. False on an income-only view whose letters the review's rows
    * on the valued line already carry (`letterOnReview`): counting it in the
@@ -279,7 +279,7 @@ export type BookFolio = {
    */
   reportsDistribution: boolean;
   /**
-   * THE REVIEW'S OWN RECORD BEHIND A "review" DISTRIBUTION (Stage 10fx), and
+   * THE REVIEW'S OWN RECORD BEHIND A "review" DISTRIBUTION (Stage 10fz), and
    * what the same account's capital account says beside it — so a hover can
    * name a statement that disagrees. Null on every other basis.
    */
@@ -291,7 +291,7 @@ export type BookFolio = {
    */
   letterOnReview: number | null;
   /**
-   * WHAT WENT IN AND CAME BACK BY THE DATE THE VALUE IS STRUCK ON (Stage 10fx)
+   * WHAT WENT IN AND CAME BACK BY THE DATE THE VALUE IS STRUCK ON (Stage 10fz)
    * — what a multiple divides, each on the same day as the value: paid in (the
    * dated calls or purchases on or before it), the distribution paid on or
    * before it (a payout AFTER the valuation is inside that value and is never
@@ -338,7 +338,7 @@ export type DistributionBasis = "capital-account" | "letter" | "review";
 /**
  * ── A LINE THE REVIEW VALUES IS PAID BACK BY THE REVIEW'S OWN ROWS ─────────
  *
- * Stage 10fx. A holding the family's consolidated review values is DATED by
+ * Stage 10fz. A holding the family's consolidated review values is DATED by
  * the review (Stage 10dh): its XIRR reads the review's Transactions rows —
  * every purchase, every sale, every income row — and nothing else
  * (`fundDatedRecords`). The distribution figure read the capital account
@@ -629,7 +629,7 @@ export function bookFolios(args: {
   distributions?: DistributionRecord[];
   /**
    * The review's dated rows (`BOOK_REVIEW_FLOWS`) — what a line the review
-   * values is paid back by (Stage 10fx). Absent reads as none, and every folio
+   * values is paid back by (Stage 10fz). Absent reads as none, and every folio
    * keeps its capital account's or its letters' figure.
    */
   reviewFlows?: readonly ReviewFlow[];
@@ -685,7 +685,7 @@ export function bookFolios(args: {
     };
   };
   /**
-   * THE REVIEW'S ROWS FOR A LINE IT VALUES, where it dates any (Stage 10fx) —
+   * THE REVIEW'S ROWS FOR A LINE IT VALUES, where it dates any (Stage 10fz) —
    * null otherwise, and the folio keeps its capital account's figure. The
    * capital account's own figure rides along so a disagreement is named.
    */
@@ -721,7 +721,7 @@ export function bookFolios(args: {
     const statementCap = capitalOf(p.accountId, valuedAt);
     /**
      * A LINE THE REVIEW VALUES AND DATES IS PAID BACK BY THE REVIEW'S ROWS
-     * (Stage 10fx) — the same rows its XIRR counts — and counted with its
+     * (Stage 10fz) — the same rows its XIRR counts — and counted with its
      * HOLDING, as the capital account is: once per dedupe group, on the member
      * a consolidated figure keeps. The capital stays the capital account's.
      */
@@ -847,7 +847,7 @@ export function bookFolios(args: {
   /**
    * ── A LETTER THE REVIEW'S ROWS ALREADY CARRY IS COUNTED ONCE, THERE ──────
    *
-   * Stage 10fx. 360 ONE Alternates' letters to 1000632 and 1000633 report the
+   * Stage 10fz. 360 ONE Alternates' letters to 1000632 and 1000633 report the
    * ₹7,15,619 the fund paid on 18 May 2026 — the payment the family's review
    * dates as an income row on CRN37702 and CRN60117, the valued lines those
    * folios are views of. Once a valued line is paid back by the review's rows,
@@ -944,7 +944,7 @@ export function investmentIdentities(folios: readonly Pick<BookFolio, "fundKey" 
  * ₹50 L (B-10). So the inputs are assembled here and nowhere else: the current
  * holdings, the capital accounts counted once with their holdings
  * (`privateCapital`), their dated calls, the funds' own letters — and the
- * review's dated rows (Stage 10fx), DEFAULTED HERE to the book's own, so a
+ * review's dated rows (Stage 10fz), DEFAULTED HERE to the book's own, so a
  * caller that passes two arguments (Morning CIO) counts a review line's
  * distribution exactly as Private Market does. Rows are joined on the account
  * and the line, so a member-scoped book reaches only its own.
@@ -970,7 +970,7 @@ export function privateBookFolios(
 
 /**
  * WHAT A CAPITAL ACCOUNT HAD PAID IN AND PAID BACK BY ONE DATE — the date its
- * holding's value is struck on (Stage 10fx). Paid in is its dated calls on or
+ * holding's value is struck on (Stage 10fz). Paid in is its dated calls on or
  * before that date where the calls reproduce its printed paid-in, else its
  * printed paid-in where its statement is dated that very day; the distribution
  * is its dated payouts on or before it, never equalisation (printed apart, and
@@ -992,7 +992,7 @@ function capitalToValuation(c: Commitment, valuedAt: string | null): BookFolio["
 }
 
 /**
- * ── DPI, RVPI AND TVPI OVER THE PRIVATE FUNDS BAND (Stage 10fx) ───────────
+ * ── DPI, RVPI AND TVPI OVER THE PRIVATE FUNDS BAND (Stage 10fz) ───────────
  *
  * The ILPA multiples, each over ONE set and each figure on its holding's own
  * valuation date:
@@ -1075,7 +1075,7 @@ export function privateMultiples(folios: readonly BookFolio[]): PrivateMultiples
 /**
  * ── THE INVESTMENTS NO RETURN HERE SEES: WHAT THE REVIEW WRITES OFF ────────
  *
- * Stage 10fx. The family's consolidated review lists its written-off private
+ * Stage 10fz. The family's consolidated review lists its written-off private
  * investments (`BOOK_REVIEW_WRITTEN_OFF`) with a remark and no cost and no
  * value, so the book carries them as no position at all — rightly: there is no
  * figure to carry. But a return or a count over the private book is then over
@@ -1175,7 +1175,7 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
   const of = (g: (c: SchemeCall) => number | null) => caps.filter((c) => g(c) != null).length;
   // THE FOLIOS THAT COULD REPORT A DISTRIBUTION — a capital account, an
   // income-only folio's letters, or the review's dated rows on a line it values
-  // (Stage 10fx) — each once on a consolidated row (B-10).
+  // (Stage 10fz) — each once on a consolidated row (B-10).
   const dists = folios.filter((f) => f.reportsDistribution && (!consolidated || f.distributionCounted));
   const cost = sumOrNull(held.map((f) => f.cost));
   const value = held.length ? sum(held.map((f) => f.value ?? 0)) : null;

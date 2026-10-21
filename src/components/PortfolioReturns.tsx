@@ -22,13 +22,13 @@
  * moved inside the window is a dated flow (`periodReturns.ts`). The opening,
  * the flows, the close date and value are the account's VERIFIED RETURN
  * RECORD — the one Morning CIO's tile and NAV & Performance close on
- * (`accountInputs`, Stage 10fx) — so FYTD here is the tile's figure over the
+ * (`accountInputs`, Stage 10fz) — so FYTD here is the tile's figure over the
  * tile's accounts. Since investment is struck on the capital paid in
  * (`capitalRollup`, the Transactions card's own record, closing on the newest
  * verified record whose flows reconcile). An account that cannot be measured
  * is NAMED with its reason, never blended in as zero.
  *
- * THE BENCHMARK GAP IS LIKE WITH LIKE (Stage 10fx): beside each index's own
+ * THE BENCHMARK GAP IS LIKE WITH LIKE (Stage 10fz): beside each index's own
  * close-to-close move, the index is struck on the portfolio's own dated flows
  * (PME, `pmeWindowRows`) by the measure the reader picked, and the gap is the
  * portfolio less THAT.
@@ -221,7 +221,7 @@ export default function PortfolioReturns() {
   const measuredDates = measuredFrom && measuredTo ? `${fmtDate(measuredFrom)} → ${fmtDate(measuredTo)} · ${days} days` : DASH;
   const needsYear = rtype === "cagr" && !!measured?.reason?.includes("at least 365 days");
   /**
-   * THE INDEX ON THE PORTFOLIO'S OWN FLOWS (Stage 10fx). Each account's every
+   * THE INDEX ON THE PORTFOLIO'S OWN FLOWS (Stage 10fz). Each account's every
    * dated rupee buys or sells the index instead, each closes on its own date,
    * and the measure the reader picked is struck over that — `pmeWindowRows`.
    * The gap is the portfolio less this, never less the index's close-to-close
@@ -445,7 +445,7 @@ export default function PortfolioReturns() {
                       ? <span className={changeColor(r.pct)} title={`${fmtDate(r.span.from)} close ${r.span.v0.toFixed(2)} → ${fmtDate(r.span.to)} close ${r.span.v1.toFixed(2)} · ${r.span.days} days`}>{pctText(r.pct)}</span>
                       : <AbsentCell reason={r.reason ?? "not measured"} />}
                   </div>
-                  {/* LIKE WITH LIKE (Stage 10fx): the portfolio's money-weighted
+                  {/* LIKE WITH LIKE (Stage 10fz): the portfolio's money-weighted
                       figure is compared with the same dated flows run through
                       the index (PME, Long–Nickels), never with the index's
                       time-weighted close-to-close move above. */}

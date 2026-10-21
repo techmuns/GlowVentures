@@ -45,7 +45,7 @@ export type PrivateClass = {
    * RVPI — current mark ÷ invested: the part of the capital still inside, the
    * mark-only reading. It was labelled MOIC, which is (mark + cash returned) ÷
    * invested; for a fund that has paid cash back the two differ by its DPI
-   * (Stage 10fx). Null where nothing was invested.
+   * (Stage 10fz). Null where nothing was invested.
    */
   rvpi: number | null;
   /** Cash returned — null where the class's source carries no distribution figure (the startup book). */
@@ -100,7 +100,7 @@ function fundClass(
 export function privateClasses(portfolio: Portfolio): PrivateClass[] {
   const f = taggedFunds(portfolio);
   const st = startupTotals(portfolio.privateMarkets.startups);
-  // THE STARTUP BOOK CARRIES NO DISTRIBUTION FIELD (Stage 10fx). It read
+  // THE STARTUP BOOK CARRIES NO DISTRIBUTION FIELD (Stage 10fz). It read
   // `distributed: 0` and a net multiple equal to its mark ÷ invested — a nil
   // nobody measured, dressed as a MOIC. A startup that returned nothing and one
   // whose returns the source does not carry look the same at 0, so the
@@ -143,7 +143,7 @@ export const BUCKET_ORDER: BucketKey[] = ["value-driver", "on-track", "at-cost",
 
 // Effective money-multiple for a startup: the stored MOIC, or fair value ÷
 // invested when the source doesn't carry one. NULL where neither can be struck
-// (Stage 10fx) — it fell back to 1.0×, a made-up "at cost" for a startup with
+// (Stage 10fz) — it fell back to 1.0×, a made-up "at cost" for a startup with
 // nothing recorded as invested.
 export function startupMoic(s: { moic: number | null; invested: number; fairValue: number }): number | null {
   return s.moic ?? (s.invested > 0 ? s.fairValue / s.invested : null);
@@ -162,7 +162,7 @@ export type RankedStartup = StartupInvestment & { markup: number; moicEff: numbe
 export type BucketAgg = { key: BucketKey; count: number; invested: number; fairValue: number; moic: number | null };
 
 /**
- * Stage 10fx: every multiple here is null, never 0, where its denominator is
+ * Stage 10fz: every multiple here is null, never 0, where its denominator is
  * nil; `rvpi` is the mark-only reading the model called MOIC; `moic` is the
  * MOIC proper — (mark + cash returned) ÷ invested over the classes still held
  * that carry what they returned.
@@ -186,7 +186,7 @@ export type PrivateValueModel = {
 //
 //   • The mark-only multiple is RVPI — current marks ÷ capital still deployed.
 //     It answers "what is the money I'm holding worth now?", so exited funds
-//     sit outside both sides of the ratio. It was called MOIC until Stage 10fx;
+//     sit outside both sides of the ratio. It was called MOIC until Stage 10fz;
 //     MOIC adds the cash those same classes returned, and is `moic`.
 //   • TVPI is kept as a labelled secondary — it adds realised cash back in and
 //     divides by everything ever drawn, so it answers the lifecycle question.
@@ -207,7 +207,7 @@ export function privateValueModel(portfolio: Portfolio): PrivateValueModel {
   const markup = current - invested;
   const rvpi = invested > 0 ? current / invested : null;
   // Distributions & dry powder are lifecycle figures — include closed funds.
-  // The startup class carries no distribution figure (Stage 10fx), so it adds
+  // The startup class carries no distribution figure (Stage 10fz), so it adds
   // none here — and its capital is in no distribution-based multiple's
   // denominator either, or it would read as capital that returned nothing.
   const fundClasses = classes.filter((c) => c.distributed != null);

@@ -1,4 +1,4 @@
-// WHEN A LOT TURNS LONG-TERM, AND THE HOLD-TO-LTCG PLANNER LOT BY LOT (Stage 10fx).
+// WHEN A LOT TURNS LONG-TERM, AND THE HOLD-TO-LTCG PLANNER LOT BY LOT (Stage 10fz).
 //   npm run test:family
 //
 // Struck on constructed dates for the calendar rule and on the committed

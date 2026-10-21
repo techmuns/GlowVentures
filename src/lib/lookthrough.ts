@@ -687,7 +687,7 @@ export type CompanyExposure = {
   /** `measured + derived` — the figure the family asked to be ranked on. */
   total: number;
   /**
-   * ── THE DERIVED HALF THAT IS AN EQUITY POSITION (Stage 10fx) ──────────────
+   * ── THE DERIVED HALF THAT IS AN EQUITY POSITION (Stage 10fz) ──────────────
    *
    * Of `derived`: the EQUITY lines of the funds that hold this issuer net of
    * nothing — what an equity index can be weighed against. Left out of it, and
@@ -762,7 +762,7 @@ export const companySymbol = (e: Pick<CompanyExposure, "key" | "positions">): st
 
 /**
  * WHETHER A FUND'S DISCLOSED LINES ARE AN EQUITY POSITION OF THE FAMILY'S, for
- * an index comparison (Stage 10fx): `cash` for a cash-equivalent scheme (the
+ * an index comparison (Stage 10fz): `cash` for a cash-equivalent scheme (the
  * family's own map, then a liquid / overnight / money-market SEBI category),
  * `gross` for one that hedges with derivatives it does not disclose (dynamic
  * asset allocation / balanced advantage, equity savings — by SEBI category,
@@ -815,7 +815,7 @@ export function companyExposure(
         sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
       };
       e.derived += x.total;
-      // The equity half, line by line, and the gross half apart (Stage 10fx).
+      // The equity half, line by line, and the gross half apart (Stage 10fz).
       for (const r of x.rows ?? []) {
         const basis = fundLineBasis(r.fundKey, r.fundName);
         if (basis === "cash") continue;

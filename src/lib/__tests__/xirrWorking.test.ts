@@ -55,7 +55,7 @@ const actual = xirrWorking(measured.parts.flatMap((p) => [...p.flows, { date: p.
 near(actual.pct, measured.toDatePct!);
 assert.ok(Math.abs(actual.paidAtStart - actual.returnedAtStart) < 0.01);
 near(actual.growthFactor, 1 + measured.toDatePct! / 100);
-// ── Stage 10fx: a set of flows with more than one rate yields none, and says why.
+// ── Stage 10fz: a set of flows with more than one rate yields none, and says why.
 {
   // −100, +230, −132: NPV is nil near both +10% and +20% a year.
   const two = [flow("2024-01-01", -100), flow("2025-01-01", 230), flow("2026-01-01", -132)];
@@ -69,7 +69,7 @@ near(actual.growthFactor, 1 + measured.toDatePct! / 100);
   assert.equal(xirr([flow("2026-08-06", -310), flow("2026-08-06", 310)]), null);
 }
 
-// ── Stage 10fx: bucketXirr's pooled and private-market rates.
+// ── Stage 10fz: bucketXirr's pooled and private-market rates.
 {
   // D11: a redeemed part (terminal ₹0) keeps its calls and paybacks in the pool.
   const live = { flows: [flow("2025-01-01", -100)], terminalValue: 110, asOf: new Date("2026-01-01") };

@@ -77,7 +77,7 @@ export function PeriodReturnCalculation({ measured, type, inception, result, con
             : "This return is unavailable for the selected dates. The missing records are listed under Show more."}</li>
         </> : <>
           <li>Gain / loss: <span className="block tabular">{stepMoney(w.closing)} − {stepMoney(w.opening)} − {stepMoney(w.capitalIn)} + {stepMoney(w.capitalOut)} = <strong>{stepMoney(w.gain)}</strong>.</span></li>
-          {/* A dated window's Absolute return is Modified Dietz (Stage 10fx), so it
+          {/* A dated window's Absolute return is Modified Dietz (Stage 10fz), so it
               carries the same day-weighted money at work as CAGR; only since
               investment is it the simple gain over what was paid in. */}
           <li>{type === "absolute" && !w.weighted ? <>Money invested: <span className="block tabular">{stepMoney(w.opening)} + {stepMoney(w.capitalIn)} = <strong>{stepMoney(w.base)}</strong>.</span></>

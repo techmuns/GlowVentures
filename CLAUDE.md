@@ -93,7 +93,7 @@ every one takes the reason as a required argument.
 ## Calculation standards
 
 *"logical calculations need to be correct as per the industry standards"* — the
-family, 21 Oct 2026, after a full audit (Stage 10fx, `docs/CALCULATION-AUDIT.md`).
+family, 21 Oct 2026, after a full audit (Stage 10fz, `docs/CALCULATION-AUDIT.md`).
 Before adding or changing any figure, hold it to these; a page that cannot meet
 one renders `—` with the reason.
 
@@ -149,7 +149,7 @@ One line per area; the history files explain each in depth.
   mandate is struck on its capital (`fifoTotals`).
 - `shared/holdingPeriod.mjs` (+ `src/lib/ltDate.ts`) — the one s.2(42A) holding-period rule
   for build and browser; `src/lib/concentration.ts` — concentration by fund / ISIN
-  (`concentrationNames`), never by share-class key (Stage 10fx).
+  (`concentrationNames`), never by share-class key (Stage 10fz).
 - `src/lib/accounts.ts` (registry), `securityKey.ts` (join key), `securityLabel.ts`
   (one name per key), `schemeLabel.ts` (AMFI scheme names by ISIN), `sectors.ts`
   (three sector tiers: statement → fund filing by ISIN → screener.in by symbol;

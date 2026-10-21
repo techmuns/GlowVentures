@@ -1151,7 +1151,7 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
         // see WHOLE mandates strikes them on their capital instead
         // (`src/lib/fifo.ts`); this roll-up has no account registry to do so.
         //
-        // AND ONLY WHERE COST COVERS THE BUCKET (Stage 10fx) — `costCoversSet`,
+        // AND ONLY WHERE COST COVERS THE BUCKET (Stage 10fz) — `costCoversSet`,
         // the gate `fifoTotals` applies: a bucket whose value is mostly
         // depository rows (no cost) or review lines held at cost would print a
         // return over a sliver of it under the whole bucket's name.
@@ -1347,14 +1347,14 @@ export type Holdable = {
    * (`Position.purchaseDates`), and what the units already sold cost
    * (`Position.costOfUnitsSold`) — the two facts that say whether `heldSince`
    * is the start of ONE purchase held throughout, which is the only thing a
-   * single-start compound rate measures (Stage 10fx; `singlePurchaseGap`).
+   * single-start compound rate measures (Stage 10fz; `singlePurchaseGap`).
    */
   purchaseDates?: number;
   costOfUnitsSold?: number | null;
 };
 
 /**
- * ── A CAGR IS ONE PURCHASE, HELD THROUGHOUT (Stage 10fx) ────────────────────
+ * ── A CAGR IS ONE PURCHASE, HELD THROUGHOUT (Stage 10fz) ────────────────────
  *
  * `heldSince` is the OLDEST unit still held. Compounding the whole holding's
  * return on cost from that date treats every rupee as invested on it — the
@@ -1652,7 +1652,7 @@ export type ReturnInput = {
   marketValue?: number;
   /** See `Holdable.valuedAt`. */
   valuedAt?: string | null;
-  /** See `Holdable.purchaseDates` / `singlePurchaseGap` (Stage 10fx). */
+  /** See `Holdable.purchaseDates` / `singlePurchaseGap` (Stage 10fz). */
   purchaseDates?: number;
   costOfUnitsSold?: number | null;
   /** See `Holdable.opened`. */
@@ -1743,7 +1743,7 @@ const wholeAccountsOf = (n: number): string => n === 1 ? "This row is one whole 
 const DERIVED_ONLY_RETURN =
   "no statement in this book reports this company as a holding — the family reaches it only through funds whose filings name it — so there is no cost or value of the family's own to strike a return on";
 /**
- * WHY A HOLDING INSIDE AN ACCOUNT HAS NO XIRR (Stage 10fx). It used to say the
+ * WHY A HOLDING INSIDE AN ACCOUNT HAS NO XIRR (Stage 10fz). It used to say the
  * statements "cover the current period only", which is false of every
  * lot-dated row — a lot register dates each purchase. What is true is narrower:
  * a money-weighted rate needs the holding's every purchase, sale and payout as
@@ -1856,7 +1856,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   if (measure === "cagr") {
     const r = holdingReturn(p, "cagr", asOf);
     if (r.kind === "absent") return { shown: false, tag: "CAGR", reason: r.reason };
-    // NOT ONE PURCHASE (Stage 10fx): refused on the CAGR measure whatever the
+    // NOT ONE PURCHASE (Stage 10fz): refused on the CAGR measure whatever the
     // window, exactly as an account funded over several dated payments is
     // (`cap.flows > 1` above). The gate is HERE, on the holding's own measure,
     // and not in `holdingReturn`: that is the arithmetic of one dated purchase,
@@ -1934,7 +1934,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   // Equity and the pooled vehicles: annualise a measured year, otherwise the
   // total return on cost, tagged so the two bases never read as one.
   // A holding bought in lots, or partly sold, is held a year by its OLDEST
-  // unit only: its return stays the HPR, with the cause (Stage 10fx).
+  // unit only: its return stays the HPR, with the cause (Stage 10fz).
   const gap = heldDays !== null && heldDays >= YEAR_DAYS && end !== null ? singlePurchaseGap(p) : null;
   if (gap) {
     return { shown: true, pct: p.returnPct as number, tag: "HPR",
@@ -1971,7 +1971,7 @@ export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf
     // those rows' annual rate is rather than filing them under "no date".
     if (r.capital?.dated && r.capital.flows > 1) staggered++;
     const m = measuredReturn(r, measure, asOf);
-    // A dated holding bought in lots or partly sold (Stage 10fx): refused by
+    // A dated holding bought in lots or partly sold (Stage 10fz): refused by
     // CAGR for a cause of its own, so a header does not file it under "no date".
     if (!m.shown) { absent++; if (notOnePurchase.has(m.reason)) lotted++; continue; }
     shown++;

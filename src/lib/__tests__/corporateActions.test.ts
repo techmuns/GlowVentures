@@ -184,7 +184,7 @@ for (const x of held) {
 }
 assert.equal(JSON.stringify(rolled), rolledSnapshot, "the statement rows are not mutated");
 
-// THE ROLLED WINDOW OPENS ON THE MARK'S DATE (Stage 10fx). The opening is
+// THE ROLLED WINDOW OPENS ON THE MARK'S DATE (Stage 10fz). The opening is
 // valued at the statement's price, so the window and the events' filing open
 // on the statement's date, never on the roll's `through`.
 const rRet = applyCorporateActionQuotes(rolled, BOOK_ACCOUNTS, rFeed, { ...saved, verifiedThrough: rDay }).returns;

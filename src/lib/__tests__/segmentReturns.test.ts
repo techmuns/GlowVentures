@@ -23,7 +23,7 @@ const near = (a: number, b: number, tol = 1) => Math.abs(a - b) <= tol;
 
 const consolidated = dedupedPositions(BOOK_POSITIONS as Position[]);
 const current = currentHoldings(consolidated);
-// SINCE INCEPTION (Stage 10fx): the tile takes the exits from the whole deduped
+// SINCE INCEPTION (Stage 10fz): the tile takes the exits from the whole deduped
 // book, and the section is handed the same rows (`exitedRows`).
 const tile = bookReturnOnCost(current, { accounts: BOOK_ACCOUNTS, universe: consolidated });
 const exited = exitedRows(consolidated);
@@ -55,7 +55,7 @@ for (const axis of SEGMENT_AXES) {
       && near(r.children.reduce((s, c) => s + (c.gain ?? 0), 0) + (r.childRemainder?.gain ?? 0), r.gain ?? 0)));
   ok("a segment that strikes no gain shows none, never ₹0",
     // A segment with no struck holding still has a gain where an EXIT filed
-    // under it earned one (Stage 10fx) — the redeemed arbitrage schemes under Cash.
+    // under it earned one (Stage 10fz) — the redeemed arbitrage schemes under Cash.
     a.rows.every((r) => (r.struck === 0 && r.exitedHoldings + r.exitedMandates === 0) === (r.gain === null))
     && a.rows.every((r) => r.children.filter((c) => c.key !== EXITED_KEY).every((c) => (c.struck === 0) === (c.gain === null))));
   if (axis === "category" || axis === "side") {

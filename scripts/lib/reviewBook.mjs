@@ -64,7 +64,7 @@ const INVESTOR = {
 };
 
 /**
- * WHAT A VALUED LINE'S OWN DATED ROWS MEASURE (Stage 10fx) — its income, and its
+ * WHAT A VALUED LINE'S OWN DATED ROWS MEASURE (Stage 10fz) — its income, and its
  * cost first-in, first-out. Pure: one holder's dated rows (`flowsOf(...).dated`)
  * and the date the line is valued on, in; `{ fifo, income, why }` out.
  *
@@ -252,7 +252,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     return r;
   };
   // `fifo` and `income` are what the review's own dated rows measure for a valued
-  // line (`measuredFromRows`, Stage 10fx); absent, the line carries the review's
+  // line (`measuredFromRows`, Stage 10fz); absent, the line carries the review's
   // figures exactly as before.
   const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row, listed, dates, fifo = null, income = null }) => {
     if (key !== securityKeyOf(security) && !statementKeys.has(key)) {

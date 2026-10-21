@@ -280,7 +280,7 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
 }
 
 /**
- * ── A DAY MOVE IS STRUCK OVER THE LINES THAT HAVE ONE (Stage 10fx) ─────────
+ * ── A DAY MOVE IS STRUCK OVER THE LINES THAT HAVE ONE (Stage 10fz) ─────────
  *
  * The Monitor's mandate rows summed `dayChange ?? 0` over every live
  * constituent and divided by the market value of every live constituent. A

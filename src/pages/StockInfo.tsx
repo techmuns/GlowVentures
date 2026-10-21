@@ -710,7 +710,7 @@ export function StockInfo() {
   })();
   const weight = bookMV > 0 ? (mv / bookMV) * 100 : 0;
   /**
-   * ── THE TERM SPLIT, OVER THE ROWS THAT CARRY ONE, AS OF TODAY (Stage 10fx) ──
+   * ── THE TERM SPLIT, OVER THE ROWS THAT CARRY ONE, AS OF TODAY (Stage 10fz) ──
    *
    * Two faults, both on screen. The bar divided the long-term cost of the rows
    * WITH a lot register by the cost of EVERY row and called the remainder
@@ -1086,7 +1086,7 @@ export function StockInfo() {
   const lastAdded = buys.length ? buys[0].date : null;
   // Null when the long-term cost is unknown — the bar is hidden rather than
   // drawn at zero, which would read as "none of this is long-term".
-  // OVER THE ROWS THAT CARRY A SPLIT ONLY (Stage 10fx) — never over `cost`,
+  // OVER THE ROWS THAT CARRY A SPLIT ONLY (Stage 10fz) — never over `cost`,
   // which includes accounts no register dates, whose lots are unknown.
   const splitCost = stCost !== null && ltCost !== null ? stCost + ltCost : null;
   const ltPct = ltCost !== null && splitCost !== null && splitCost > 0 ? (ltCost / splitCost) * 100 : null;
@@ -2165,7 +2165,7 @@ export function StockInfo() {
                   {([
                     /* EACH FIGURE OVER THE ACCOUNTS WHOSE REGISTER DATES ITS LOTS,
                        and the count on its face where that is not every account
-                       (Stage 10fx); the hover names the others and their cost. */
+                       (Stage 10fz); the hover names the others and their cost. */
                     ["Long-term cost", ltCost === null ? <AbsentCell reason={noSplitReason} /> : <>{money(ltCost)}{splitCoverage}</>],
                     ["Short-term cost", stCost === null ? <AbsentCell reason={noSplitReason} /> : <>{money(stCost)}{splitCoverage}</>],
                     /* A purchase date only exists where the statements' window

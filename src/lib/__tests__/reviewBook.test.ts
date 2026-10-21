@@ -259,7 +259,7 @@ for (const b of BLOCKS) {
     if (!rows.length) { bad.push(`${product}: not carried`); continue; }
     const tol = 1 + 0.01 * rows.length;
     // THE REVIEW'S OWN COST is the line's `printedCostBasis` where FIFO restated
-    // it (Stage 10fx: 360 ONE's sale is matched first-in, first-out), and its
+    // it (Stage 10fz: 360 ONE's sale is matched first-in, first-out), and its
     // `costBasis` everywhere else. A FIFO cost must undo to the review's figure:
     // held cost less the realised gain is purchases less sale proceeds.
     const bv = sum(rows.map((p) => p.marketValue)), bc = sum(rows.map((p) => p.printedCostBasis ?? p.costBasis ?? 0));

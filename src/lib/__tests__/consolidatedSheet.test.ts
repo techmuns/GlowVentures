@@ -88,7 +88,7 @@ const dateCol = sheet("Holdings").columns.findIndex(c => c.key === "stmt") + 1;
 assert.ok(hs.getCell(6, dateCol).value instanceof Date, "Excel dates remain typed dates");
 assert.equal(typeof hs.getCell(6, 18).value, "number", "holding market values remain typed INR numbers");
 assert.match((hs.getCell(6, 2).value as ExcelJS.CellHyperlinkValue).hyperlink, /^#'Accounts'!A\d+$/);
-// STAGE 10fx — TVPI counts only the distributions paid by the valuation date.
+// STAGE 10fz — TVPI counts only the distributions paid by the valuation date.
 // Neo's printed distributed includes a payout dated after the 30 Jun NAV it is
 // added to; re-derived off the commitment's own dated payouts.
 for (const c of BOOK_COMMITMENTS.filter(c => (c.distributed ?? 0) > 0 && c.payouts)) {
@@ -101,7 +101,7 @@ for (const c of BOOK_COMMITMENTS.filter(c => (c.distributed ?? 0) > 0 && c.payou
   if (after.length) assert.ok(Math.abs((get("tvpi") as number) - (value + c.distributed!) / c.paid!) > 0.005, `${c.name}: TVPI leaves out the payouts dated after ${c.asOf}`);
   if (after.length) assert.match(String(get("notes")), /not the \d+ paid after it/);
 }
-// STAGE 10fx — the XIRR column is ONE pooled money-weighted rate, never an
+// STAGE 10fz — the XIRR column is ONE pooled money-weighted rate, never an
 // average of the rows' rates: it lies between the rates it pools, and on a row
 // that pools rates which differ it is not their value-weighted mean.
 {

@@ -377,7 +377,7 @@ export function MorningCIO() {
     const distFig = figuresOf(pbook.folios, true);
     const fundDeploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
     /**
-     * ABSENT STAYS ABSENT (Stage 10fx). These were `sumOrNull([...]) ?? 0`, with
+     * ABSENT STAYS ABSENT (Stage 10fz). These were `sumOrNull([...]) ?? 0`, with
      * the fund model's own totals always among the inputs — and `fundTotals`
      * of an EMPTY model is 0, not null. So a book whose capital accounts print
      * no undrawn figure read a measured "₹0 uncalled" built from a model that
@@ -482,14 +482,14 @@ export function MorningCIO() {
      */
     // THE SET IS `costedBookSet`'s (B-07): the tile, the allocation Total row
     // and the page the tile opens all name it on their face from this object.
-    // THE UNIVERSE IS THE WHOLE DEDUPED BOOK (Stage 10fx), not `p`: the exits
+    // THE UNIVERSE IS THE WHOLE DEDUPED BOOK (Stage 10fz), not `p`: the exits
     // `bookReturnOnCost` adds back are the rows `currentHoldings` dropped from
     // it, and `p` has none — the tile read 22.03% against /holdings' 21.20%.
     const { set: costedSet, fifo: bookFifo } = bookReturnOnCost(p, { accounts: portfolio.accounts, universe: consolidated });
     // The private funds' leg carries the cash they have already returned —
     // distributions are booked gain, not a mark (Stage 10fb).
     //
-    // AND IT IS THE FUND-OF-FUNDS MODEL'S LEG ALONE (Stage 10fx, measured). The
+    // AND IT IS THE FUND-OF-FUNDS MODEL'S LEG ALONE (Stage 10fz, measured). The
     // private funds this book holds are POSITIONS — the review's private blocks
     // (Stage 10dh) — so `bookFifo` above already strikes them, and their
     // distributions reach it as `Position.dividendReceived`. `privateTotalGain`
@@ -711,7 +711,7 @@ export function MorningCIO() {
       /** The bucket's only costed lines are nil balances beside uncosted value — `costedFigures` (A-14). */
       vacuous?: boolean;
       current: number;
-      // NO MONEY MULTIPLE (Stage 10fx). `kind` / `metric` carried a MOIC — on a
+      // NO MONEY MULTIPLE (Stage 10fz). `kind` / `metric` carried a MOIC — on a
       // position bucket the costed mark over its cost, which leaves out what was
       // realised and withdrawn — and nothing rendered it once the popover went.
       // A figure no surface shows is one nobody checks, so it is gone from the
@@ -905,7 +905,7 @@ export function MorningCIO() {
     }
     const crossHeld = [...ownersByKey.values()].filter((s) => s.size >= 2).length;
     /**
-     * THE RANKING IS BY INVESTMENT, NOT BY SHARE CLASS (Stage 10fx) —
+     * THE RANKING IS BY INVESTMENT, NOT BY SHARE CLASS (Stage 10fz) —
      * `concentrationNames`. On `securityKey` Sanshi Fund I's Class E and Class
      * A2 were two names, so the Largest holding read 20.9% where the fund is
      * 24.4% (₹204.48 Cr), and Helios Flexi Cap's AMC folio and its depository
@@ -947,7 +947,7 @@ export function MorningCIO() {
     // has no year-end series until periodic valuation reports are ingested.
     const navSeries = portfolio.navHistory.map((n) => ({ period: n.period, value: convertFromBase(n.nav) }));
     const navFirst = portfolio.navHistory[0] ?? null;
-    // NO "NAV GROWTH" (Stage 10fx): last ÷ first − 1 across the history compared
+    // NO "NAV GROWTH" (Stage 10fz): last ÷ first − 1 across the history compared
     // two different account panels with no flow adjustment, and no surface
     // rendered it. A growth figure that ignores the capital paid in is not a
     // return, and one nobody reads is one nobody checks.
@@ -1042,7 +1042,7 @@ export function MorningCIO() {
   // A commitment schedule exists if ANY source reports one — a drawdown AIF's
   // capital account counts, not only a fund-of-funds block.
   const hasCommitments = (m.fundCount > 0 || m.commitments.length > 0) && m.deploy.committed > 0;
-  // Absent where no capital account prints what was called (Stage 10fx) — never 0%.
+  // Absent where no capital account prints what was called (Stage 10fz) — never 0%.
   const calledPct = hasCommitments && m.deploy.drawn !== null ? (m.deploy.drawn / m.deploy.committed) * 100 : null;
 
   /**
@@ -1252,7 +1252,7 @@ export function MorningCIO() {
       // opens with its own Distributions tile, the same once-per-fund count (B-10).
       href: hasCommitments ? "/private-market?tiles=distributed,value,cost,uncalled" : undefined,
       hrefTitle: "Open the capital accounts behind it, with Private Market's own Distributions tile on the strip. Cash a fund has already returned is a movement on a capital account, not a position, so it lives with those accounts on the Private Market page."
-        + ` Counted as that page counts it: each fund's distribution once — from its capital account (income and principal, before TDS) or from the fund's own distribution letter (the cash remitted, after expenses and TDS), or, on a line the family's consolidated review values, from the review's dated income and sale rows up to its valuation (Stage 10fx) — ${m.distReported} of the ${m.distAccounts} private-market accounts that could report one do, and the rest are skipped, never counted as nil.`
+        + ` Counted as that page counts it: each fund's distribution once — from its capital account (income and principal, before TDS) or from the fund's own distribution letter (the cash remitted, after expenses and TDS), or, on a line the family's consolidated review values, from the review's dated income and sale rows up to its valuation (Stage 10fz) — ${m.distReported} of the ${m.distAccounts} private-market accounts that could report one do, and the rest are skipped, never counted as nil.`
         + (distAlso ? ` ${distAlso}` : ""),
       value: hasCommitments && !m.distAbsent && m.deploy.distributed !== null ? fmtFromBase(m.deploy.distributed, { compact: true }) : <AbsentValue />,
       sub: !hasCommitments ? absentWhy("no fund has distributed, because none is held")
@@ -1915,7 +1915,7 @@ export function MorningCIO() {
                       <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100" title={m.distAbsent || m.deploy.distributed === null ? "No private-market fund's papers report a distribution" : undefined}>{m.distAbsent || m.deploy.distributed === null ? DASH : money(m.deploy.distributed)}</span></li>
                     </ul>
                   </Link>
-                  {/* THE BAR ONLY WHERE THE CALLED SHARE IS MEASURED (Stage 10fx):
+                  {/* THE BAR ONLY WHERE THE CALLED SHARE IS MEASURED (Stage 10fz):
                       `calledPct ?? 0` drew "Called 0.0%" over a book whose capital
                       accounts print no call at all. */}
                   {calledPct !== null && <>

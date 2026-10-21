@@ -18,7 +18,7 @@
 //
 //   • Funds          — a fund is rated only on its OWN dated calls and dated
 //                      distributions, closed on its own valuation date. Stage
-//                      10fx retired the old basis — every rupee drawn put on
+//                      10fz retired the old basis — every rupee drawn put on
 //                      the first-investment date and value + distributions on
 //                      `new Date()` — which is a rate for flows nobody made: a
 //                      call drawn in year three earned nothing in years one and
@@ -154,7 +154,7 @@ export function xirrWithTerminal(flows: DatedFlow[], terminalValue: number, asOf
  * `/performance`, which names each excluded account. This function will not
  * invent a stake it was not given.
  *
- * A REDEEMED PART STAYS (Stage 10fx). A part whose terminal value is a measured
+ * A REDEEMED PART STAYS (Stage 10fz). A part whose terminal value is a measured
  * ₹0 — a folio redeemed to nil — kept its calls and paybacks out of the pool
  * along with the zero, so a fund that returned its money vanished from the rate
  * that should carry its realised gain or loss. It now contributes its flows and
@@ -200,7 +200,7 @@ const tiesTo = (rows: readonly { date: string; amount: number }[], total: number
  * whose calls or distributions are not dated, do not reproduce its printed
  * totals, or whose value carries no date is not rated (`dated` counts the
  * rated ones). `_asOf` is kept for callers and no longer read: "today" is not
- * the date anything here was valued (Stage 10fx).
+ * the date anything here was valued (Stage 10fz).
  */
 export function fundXirr(funds: DatedFundInvestment[], _asOf?: Date): XirrResult {
   if (!funds.length) return NONE;
@@ -246,7 +246,7 @@ export type DatedStartupInvestment = StartupInvestment & { valueAsOf?: string | 
  * multi-flow XIRR. Without one it falls back to one dated cheque per company.
  * Either way the terminal is the fair value on the date it was struck —
  * `schedule.valueAsOf`, or every line's own `valueAsOf` where they agree —
- * and never `new Date()` (Stage 10fx): a fair value from the last workbook is
+ * and never `new Date()` (Stage 10fz): a fair value from the last workbook is
  * not today's, and closing it today credits the months since with standing
  * still. With no valuation date the book is not rated. `_asOf` is kept for
  * callers and no longer read. (Latent: this book carries no startups.)

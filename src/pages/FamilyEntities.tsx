@@ -384,7 +384,7 @@ export function FamilyEntities() {
   const entities = byEntity(p, portfolio.accounts).map((e) => {
     const own = p.filter((x) => ownerOf(accIdx, x) === e.key);
     const struckSet = own.filter(strikesGain);
-    // NO SURVIVORSHIP (Stage 10fx): the entity's own exited holdings and closed
+    // NO SURVIVORSHIP (Stage 10fz): the entity's own exited holdings and closed
     // mandates stay in its gain and capital deployed, as they do in the book's.
     const exited = exitedRows(portfolio.positions).filter((x) => ownerOf(accIdx, x) === e.key);
     const fifo = fifoTotals(struckSet, { accounts: accIdx, universe: p, exited });
@@ -1294,7 +1294,7 @@ export function FamilyEntities() {
                                 ? "no statement behind this entity's holdings reports a cost, so there is no return to strike"
                                 : "the capital behind this entity's costed holdings is not positive, so a return on it has nothing to divide")} />
                             : <><Auditable formula={rf}>{fmtPct(e.returnPct, { sign: true })}</Auditable>
-                              {/* WHAT THE FIGURE IS STRUCK ON, ON ITS FACE (Stage 10fx).
+                              {/* WHAT THE FIGURE IS STRUCK ON, ON ITS FACE (Stage 10fz).
                                   The return is FIFO over the holdings a gain can be
                                   struck on, and that set was named only in the
                                   popover — on the live basis it is 54% of Ajay's

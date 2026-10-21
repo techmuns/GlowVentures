@@ -27,7 +27,7 @@ function npvDeriv(rate: number, flows: DatedFlow[], t0: number): number {
 }
 
 /**
- * ── WHEN ONE SET OF FLOWS HAS MORE THAN ONE RATE (Stage 10fx) ──────────────
+ * ── WHEN ONE SET OF FLOWS HAS MORE THAN ONE RATE (Stage 10fz) ──────────────
  *
  * Newton's method returns the root nearest its guess and says nothing of any
  * other. A set of flows whose RUNNING SUM changes sign once has exactly one

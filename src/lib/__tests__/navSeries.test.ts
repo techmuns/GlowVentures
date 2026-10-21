@@ -240,7 +240,7 @@ eq("one point produces no index", navIndexSeries([{ period: "x", date: "2026-01-
 }
 {
   // MODIFIED DIETZ INSIDE THE LINK WHERE THE FLOW'S WEIGHT IS CARRIED (Stage
-  // 10fx) — 128005, 6 Jul → 13 Aug: ₹9.244 Cr → ₹20.288 Cr with ₹11.24 Cr in on
+  // 10fz) — 128005, 6 Jul → 13 Aug: ₹9.244 Cr → ₹20.288 Cr with ₹11.24 Cr in on
   // 28–29 Jul, 16 of the 38 days. End-weighted that reads −2.06%; Modified
   // Dietz −1.36%. Without the weight the chain is the end-of-interval one, to
   // the bit, so a book that does not carry it is unchanged.

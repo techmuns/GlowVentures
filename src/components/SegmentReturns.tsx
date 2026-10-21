@@ -18,7 +18,7 @@
  * FIFO as the Gain / Loss tile, so the Total row IS that tile's gain and
  * return, and the contributions add to it — exits included: what the family
  * has since left is in the gains (an "Exited" line under its segment, or one of
- * its own), in no segment's value (Stage 10fx). Since investment, never a window:
+ * its own), in no segment's value (Stage 10fz). Since investment, never a window:
  * no holding carries a dated value, so a sector or a basket cannot be struck
  * over FYTD the way an account is. The section says so on its face, because it
  * sits under a period selector it does not follow.
@@ -60,7 +60,7 @@ export default function SegmentReturns() {
     [axis, consolidated, exposure],
   );
   const current = useMemo(() => currentHoldings(consolidated), [consolidated]);
-  // What the family has left, for the since-inception gains (Stage 10fx) —
+  // What the family has left, for the since-inception gains (Stage 10fz) —
   // the same rows `bookReturnOnCost` takes from the whole deduped book.
   const exited = useMemo(() => exitedRows(consolidated), [consolidated]);
   const a = useMemo(
@@ -88,7 +88,7 @@ export default function SegmentReturns() {
     if (l.uncostedValue > 0.5) parts.push(`${money(l.uncostedValue)} reports no cost and is in the value, in no gain`);
     if (l.atCostValue > 0.5) parts.push(`${money(l.atCostValue)} is held at cost and is in the value, in no gain`);
     if (l.wholeMandates) parts.push(`${l.wholeMandates === 1 ? "1 PMS mandate is" : `${l.wholeMandates} PMS mandates are`} struck whole on the capital paid in`);
-    // THE EXITS (Stage 10fx): in this gain and its capital deployed, in no row.
+    // THE EXITS (Stage 10fz): in this gain and its capital deployed, in no row.
     const ex = [
       l.exitedHoldings ? `${l.exitedHoldings} exited ${l.exitedHoldings === 1 ? "holding" : "holdings"}` : "",
       l.exitedMandates ? `${l.exitedMandates} closed ${l.exitedMandates === 1 ? "mandate" : "mandates"}` : "",

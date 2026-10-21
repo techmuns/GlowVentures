@@ -1,4 +1,4 @@
-// The calculation audit's book-side fixes, each pinned (Stage 10fx).
+// The calculation audit's book-side fixes, each pinned (Stage 10fz).
 // Run: node scripts/ingest/__tests__/calcAudit.test.mjs
 //
 // Two halves. The RULES on constructed inputs, because a rule the real book
