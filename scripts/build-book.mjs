@@ -61,6 +61,7 @@ const DEPOSITORY_PROVIDERS = new Set([CDSL_DEMAT_PROVIDER, NSDL_DEMAT_PROVIDER])
 const CUSTODY_PROVIDERS = new Set([...DEPOSITORY_PROVIDERS, HDFC_NSDL_PROVIDER]);
 
 import { reviewBookLayer } from "./lib/reviewBook.mjs";
+import { termSplit } from "./lib/holdingPeriod.mjs";
 import { NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME } from "../shared/reviewHolders.mjs";
 import { REVIEW_AS_OF } from "./lib/reviewPrivateRead.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -1779,10 +1780,16 @@ const SALE_AUTHORITY = ["transaction-statement", "investor-report"];
 const settledOf = (t) => t.printed?.settlementAmount ?? t.net ?? t.gross ?? null;
 
 function lotGain(l) {
-  if (isNum(l.saleAmount) && isNum(l.purchaseAmount)) return { gain: l.saleAmount - l.purchaseAmount, cost: l.purchaseAmount };
+  // A ZERO COST WITH NO PURCHASE DATE IS AN UNPRINTED COST (Stage 10fz). LKP
+  // prints its 24 Jul 2026 Liquid BeES lot with no buy date and a Purchase
+  // Amount of 0.00, and sale − 0 booked the whole ₹1,000 sold as gain where its
+  // own ST and LT columns print nil. A zero cost ON a dated purchase is a
+  // measurement (ASK's demerger shares) and stands.
+  const purchase = isNum(l.purchaseAmount) && !(l.purchaseAmount === 0 && !l.purchaseDate) ? l.purchaseAmount : null;
+  if (isNum(l.saleAmount) && isNum(purchase)) return { gain: l.saleAmount - purchase, cost: purchase };
   const g = (isNum(l.shortTerm) ? l.shortTerm : 0) + (isNum(l.longTerm) ? l.longTerm : 0);
   if (!isNum(l.shortTerm) && !isNum(l.longTerm)) return null;
-  if (isNum(l.purchaseAmount)) return { gain: g, cost: l.purchaseAmount };
+  if (isNum(purchase)) return { gain: g, cost: purchase };
   if (isNum(l.saleAmount)) return { gain: g, cost: l.saleAmount - g };
   return null;
 }
@@ -2533,6 +2540,14 @@ function build(archived, archiveCount = archived.length) {
   // Asset class per security, from the reports that DO print one. Same kind of
   // join as the ISIN above: this drop's own paperwork, never inferred from text.
   const classByKey = new Map();
+  /** The class an APPRAISAL prints for a key — what a realised lot falls back to before any other report (Stage 10fz). */
+  const appraisalClassByKey = new Map();
+  for (const d of docs) {
+    if (d.reportType !== "appraisal") continue;
+    for (const x of d.holdings ?? []) {
+      if (x?.securityKey && x.assetClass && !appraisalClassByKey.has(x.securityKey)) appraisalClassByKey.set(x.securityKey, x.assetClass);
+    }
+  }
   for (const d of docs) {
     for (const arr of [d.holdings, d.transactions]) {
       for (const x of arr ?? []) {
@@ -3259,7 +3274,20 @@ function build(archived, archiveCount = archived.length) {
     // and split in the book. So each event goes to the reader that owns its
     // KIND, and a cash event listed by both is deduped on (date, security,
     // amount) with the dividend statement winning.
-    const CASH_KIND = /^dividend$/i;
+    //
+    // A FUND'S DISTRIBUTION IS CASH TOO (Stage 10fz). 360 ONE Alternates'
+    // distribution notices print kind `distribution`, and `^dividend$` read
+    // ₹7,15,619 of money paid out as if it were a bonus issue — never income.
+    // It is income of the holding on its own account (where the same notice
+    // also prints it as a dated cash flow, the 10fb loop below counts it once),
+    // AND it stays in `BOOK_CORPORATE_ACTIONS` exactly as before: that list is
+    // where the Private Market book reads a fund's dated distribution letters
+    // to an income-only folio (`privateBookFolios`), and it sums nothing into a
+    // holding's income. On this book neither folio carries a position, so the
+    // income reaches nothing — which is right: 360 ONE Private Wealth's review
+    // line counts the same payout (`measuredFromRows`).
+    const CASH_KIND = /^(dividend|distribution)$/i;
+    const LETTER_KIND = /^distribution$/i;
     const cashSeen = new Set();
     const dividendByKey = new Map();
     /**
@@ -3271,6 +3299,53 @@ function build(archived, archiveCount = archived.length) {
      */
     const datedIncomeByKey = new Map();
     const corporateActions = [];
+    /**
+     * WHICH WINDOW EACH HOLDING'S INCOME COVERS (Stage 10fz) — `Position.dividendFrom`.
+     *
+     * A dividend statement covers ONE window (Goldstandard's runs from 1 April),
+     * so its sum is the income of that window and not since purchase; a page
+     * reading it as the second overstates nothing but describes the wrong
+     * period. Each source names the first date it covers — a statement its
+     * printed `periodFrom`, a fund's own unit record the first date it prints —
+     * and a holding's window opens on the earliest of them. One source that
+     * does not say makes the window unknown (null), never the others' start.
+     */
+    const dividendFromByKey = new Map();
+    // Every rupee of income is added with its day (Stage 10fw's dated record,
+    // Stage 10fz's sources): the FIFO total and a money-weighted return over
+    // the holding's dated money must count the same dividends.
+    const addIncome = (key, amount, from, dated = [{ date: null, amount }]) => {
+      dividendByKey.set(key, r2((dividendByKey.get(key) ?? 0) + amount));
+      datedIncomeByKey.set(key, [...(datedIncomeByKey.get(key) ?? []), ...dated.map((d) => ({ date: d.date ?? null, amount: r2(d.amount) }))]);
+      const was = dividendFromByKey.get(key);
+      dividendFromByKey.set(key, was === undefined ? from ?? null
+        : was === null || !from ? null : from < was ? from : was);
+    };
+    const docOf = new Map(allIssues.map((d) => [d.docKey, d]));
+    /**
+     * GROSS OF TDS (Stage 10fz). The TDS a company or a fund deducts is the
+     * family's tax credit, not a cost of the holding, so income is what was
+     * DECLARED: Goldstandard 100022's HDFC AMC dividend of 30 Jun 2026 prints
+     * ₹59,400 receivable, ₹5,940 TDS and ₹53,460 net, and the book carried
+     * ₹53,460. The receivable where the statement prints it, else net plus the
+     * TDS it prints, else the net as printed — a row that prints neither the
+     * gross nor its TDS (a corporate-benefits entitlement, 360 ONE's notice
+     * "net of expenses and TDS") cannot be grossed up, and is carried as printed.
+     * The dedupe key is the same gross, so a dividend statement's TDS-bearing
+     * row and a corporate-benefits entitlement for the same event meet.
+     */
+    const grossOf = (ev) => (isNum(ev.receivable) ? ev.receivable
+      : isNum(ev.netAmount) && isNum(ev.tds) ? r2(ev.netAmount + ev.tds) : ev.netAmount);
+    /** The cash events counted, for the unit-record loop below to count each payout once. */
+    const cashCounted = [];
+    let netOnly = 0;
+    let lateIncome = 0;
+    // A REPEAT WITHIN ONE DOCUMENT IS DATA (Stage 10fz), as `datedRowsAcross`
+    // rules for every dated row: two identical dividend rows on ONE statement
+    // are two payments. Each row is keyed with its ordinal among identical rows
+    // of its own document, so a second report's copy dedupes against the first
+    // report's same-numbered copy and never collapses a statement's own pair.
+    const ordinalOf = new Map();
     // The DIVIDEND STATEMENT wins a cash event listed by both reports, so its
     // rows come first — `datedRowsAcross` has already deduped identical rows
     // across issues, and this orders what remains.
@@ -3282,14 +3357,28 @@ function build(archived, archiveCount = archived.length) {
       for (const ev of d.income ?? []) {
         if (!ev.securityKey) continue;
         const isCash = CASH_KIND.test(ev.kind ?? "");
+        if (LETTER_KIND.test(ev.kind ?? "")) {
+          corporateActions.push({
+            security: ev.security, securityKey: ev.securityKey, accountId, kind: ev.kind, exDate: ev.exDate,
+            quantity: ev.quantity, entitlement: ev.entitlement, amount: ev.netAmount, source: ev.source,
+          });
+        }
         if (isCash) {
-          if (!isNum(ev.netAmount)) continue;
-          const k = `${ev.exDate ?? ""}|${ev.securityKey}|${ev.netAmount}`;
+          const gross = grossOf(ev);
+          if (!isNum(gross)) continue;
+          const base = `${ev.exDate ?? ""}|${ev.securityKey}|${gross}`;
+          const ord = `${ev.source ?? ""}\u0001${base}`;
+          const n = (ordinalOf.get(ord) ?? 0) + 1;
+          ordinalOf.set(ord, n);
+          const k = `${base}#${n}`;
           if (cashSeen.has(k)) continue;         // same event, both reports
           cashSeen.add(k);
-          dividendByKey.set(ev.securityKey, r2((dividendByKey.get(ev.securityKey) ?? 0) + ev.netAmount));
-          datedIncomeByKey.set(ev.securityKey, [...(datedIncomeByKey.get(ev.securityKey) ?? []),
-            { date: ev.receivedDate ?? ev.exDate ?? null, amount: r2(ev.netAmount) }]);
+          // Declared after the holding's own statement date, it is inside that
+          // date's price, not income the holding had paid by then.
+          if (asOf && ev.exDate && ev.exDate > asOf) { lateIncome += 1; continue; }
+          if (!isNum(ev.receivable) && !isNum(ev.tds)) netOnly += 1;
+          cashCounted.push({ securityKey: ev.securityKey, dates: [ev.exDate, ev.receivedDate].filter(Boolean), net: ev.netAmount, gross });
+          addIncome(ev.securityKey, gross, docOf.get(ev.source)?.periodFrom ?? null, [{ date: ev.receivedDate ?? ev.exDate ?? null, amount: gross }]);
         } else {
           // Non-cash: a bonus prints Amount 0.00, and that zero is REAL — the
           // entitlement is the substance. Carried as an action, never summed
@@ -3316,13 +3405,151 @@ function build(archived, archiveCount = archived.length) {
      * ₹21.8 L reinvested) read 0.00%. A distribution the fund paid out is
      * income the same way. Neither is a capital move; both are what the holding
      * earned, so both go where a demat's cash dividends go.
+     *
+     * THREE GUARDS (Stage 10fz). A row is an IDCW reinvestment by what its OWN
+     * description says it is — "IDCW Reinvest…", "Dividend Reinvest…" — and not
+     * because the word appears somewhere in it: a switch into a "Dividend Yield"
+     * scheme is a purchase. A row dated after the holding's statement date is
+     * inside that date's NAV. A payout the account's income record already
+     * counted (the same security, amount and date — 360 ONE's distribution
+     * notice prints its payout both ways) is counted once. And the income is
+     * GROSS: the MF readers carry the TDS deducted from a reinvestment in
+     * `expenses` and say so in `notes`, and the reinvested amount is net of it.
      */
+    const firstRowOf = new Map();
+    for (const c of dated.cashFlows ?? []) {
+      if (c.securityKey && c.date && (!firstRowOf.has(c.securityKey) || c.date < firstRowOf.get(c.securityKey))) firstRowOf.set(c.securityKey, c.date);
+    }
+    const rowDoc = new Map();
+    for (const d of allIssues) for (const c of d.cashFlows ?? []) rowDoc.set(c, d);
+    /** The first date a fund record covers: its statement's window, else its own first row. */
+    const recordFrom = (c) => rowDoc.get(c)?.periodFrom ?? firstRowOf.get(c.securityKey) ?? null;
+    const IDCW_REINVEST = /\b(?:IDCW|dividend)\b[^;]*\breinvest|\breinvest\w*\b[^;]*\b(?:IDCW|dividend)\b/i;
+    let lateFundIncome = 0;
+    let countedTwice = 0;
     for (const c of dated.cashFlows ?? []) {
       if (!c.securityKey || !isNum(c.amount) || !(c.amount > 0)) continue;
-      const reinvested = c.kind === "allotment" && /\bIDCW\b|dividend/i.test(c.description ?? "");
+      const reinvested = c.kind === "allotment" && IDCW_REINVEST.test(c.description ?? "") && !/\bswitch/i.test(c.description ?? "");
       if (!reinvested && c.kind !== "distribution") continue;
-      dividendByKey.set(c.securityKey, r2((dividendByKey.get(c.securityKey) ?? 0) + c.amount));
+      if (asOf && c.date && c.date > asOf) { lateFundIncome += 1; continue; }
+      const tds = reinvested && isNum(c.expenses) && /\bTDS\b/.test(c.notes ?? "") ? c.expenses : 0;
+      const gross = r2(c.amount + tds);
+      const same = cashCounted.findIndex((e) => e.securityKey === c.securityKey && e.dates.includes(c.date)
+        && (Math.abs((e.net ?? NaN) - c.amount) <= 0.01 || Math.abs(e.gross - gross) <= 0.01));
+      if (same >= 0) { cashCounted.splice(same, 1); countedTwice += 1; continue; }
+      addIncome(c.securityKey, gross, recordFrom(c), [{ date: c.date ?? null, amount: gross }]);
     }
+    /**
+     * A GAIN DISTRIBUTION REINVESTED INTO AN ALLOTMENT IS INCOME TOO (Stage 10fz).
+     * Buoyant 103473's 1 Apr 2026 deposit of ₹1 Cr bought units worth
+     * ₹1,00,58,861.66 because the ₹58,861.66 Gain Distr. of that day was
+     * reinvested in it: the reader prints the deposit's gross and its net and
+     * says so in the row's notes, and FIFO books the units at the net. The
+     * difference is in the cost, so it belongs in the income term too, or the
+     * return counts the rupees as capital the family paid. Read only where the
+     * row prints no charge (a charge would make net LESS than gross) and its
+     * notes name the reinvested distribution.
+     */
+    for (const c of dated.cashFlows ?? []) {
+      if (c.kind !== "contribution" || !c.securityKey || !isNum(c.amount) || !isNum(c.netAmount) || isNum(c.expenses)) continue;
+      if (!(c.netAmount > c.amount) || !/Gain Distr[^;]*reinvested/i.test(c.notes ?? "")) continue;
+      if (asOf && c.date && c.date > asOf) { lateFundIncome += 1; continue; }
+      addIncome(c.securityKey, r2(c.netAmount - c.amount), recordFrom(c), [{ date: c.date ?? null, amount: r2(c.netAmount - c.amount) }]);
+    }
+    /**
+     * INCOME FOLLOWS A WHOLE-CLASS SWITCH (Stage 10fz). Buoyant's Gain Distr. was
+     * reinvested in Class A1, and every A1 unit was switched into A4 on 1 Jun
+     * 2026: the A4 holding's carried cost holds that allotment, so its income
+     * does too. Moved only where the class it was earned in is no longer held on
+     * this account's statement and exactly one same-day switch (units out, the
+     * same rupees in, ±₹1 — `fifoFromCashFlows`'s pairing) takes it elsewhere;
+     * anywhere else it stays on the key it was earned on.
+     */
+    {
+      const heldNow = new Set((holdingsDoc?.holdings ?? []).filter((h) => isNum(h.quantity) && h.quantity > 0).map((h) => h.securityKey));
+      const switchesOut = (key) => (dated.cashFlows ?? []).filter((o) => o.kind === "reclassification" && o.securityKey === key && isNum(o.units) && o.units < 0)
+        .map((o) => (dated.cashFlows ?? []).filter((i) => i.kind === "reclassification" && i.date === o.date && i.securityKey && i.securityKey !== key
+          && isNum(i.units) && i.units > 0 && isNum(i.amount) && isNum(o.amount) && Math.abs(Math.abs(i.amount) - Math.abs(o.amount)) <= 1))
+        // EVERY leg out must pair with exactly one leg in, or the class did not
+        // move as a whole to a place this book can name: an ambiguous leg is a
+        // stop, never dropped — dropping it let HDFC 15725046's Liquid IDCW
+        // income (₹16.75 L, its units split between Arbitrage and Liquid Growth)
+        // all follow the one leg that paired, on to Overnight (5.12% → 10.95%).
+        .map((ins) => (ins.length === 1 ? ins[0].securityKey : null));
+      for (const key of [...dividendByKey.keys()]) {
+        let to = key;
+        for (let hop = 0; hop < 5 && !heldNow.has(to); hop++) {
+          const legs = switchesOut(to);
+          const next = [...new Set(legs)];
+          if (!legs.length || next.length !== 1 || next[0] === null) break;
+          to = next[0];
+        }
+        if (to === key || !heldNow.has(to)) continue;
+        const amount = dividendByKey.get(key);
+        const from = dividendFromByKey.get(key) ?? null;
+        const datedHere = datedIncomeByKey.get(key) ?? [{ date: null, amount }];
+        dividendByKey.delete(key);
+        dividendFromByKey.delete(key);
+        datedIncomeByKey.delete(key);
+        addIncome(to, amount, from, datedHere);
+        notes.push(`account ${accountNo}: ${amount.toLocaleString("en-IN")} of income earned on ${key} follows its units through the class switch to ${to}, which holds them`);
+      }
+    }
+    /**
+     * A DRAWDOWN FUND'S DISTRIBUTIONS (Stage 10fz). An AIF that values its own
+     * units prints what it paid back in its commitment block (`payouts`), each
+     * reconciled by its reader, and none of it reached the holding: Neo Infra
+     * 9039920536 read +13.83% while its statement prints ₹28.19 L of interest,
+     * gains and other income distributed since its first drawdown. Taken by the
+     * payout's KIND, gross of TDS:
+     *   income        — a distribution of the fund's income or gains: income;
+     *   equalisation  — "Equalisation received", what later investors paid the
+     *                   earlier ones for the use of their capital: income-like,
+     *                   and counted as income — it is money the holding paid the
+     *                   family, not capital returned, and the review counts
+     *                   Baring's "Compensating contribution" the same way;
+     *   capital       — a capital redemption or return of capital: NOT income.
+     *                   It is a withdrawal, already inside FIFO's cost.
+     * Only payouts dated on or before the holding's statement date (one after it
+     * is inside the NAV), only where the account holds exactly one valued
+     * holding for them to belong to, and never where the fund's own dated cash
+     * flows already carry its distributions (one source per payout).
+     */
+    {
+      const commitment = commitments.filter((c) => c.accountId === accountId && Array.isArray(c.payouts))
+        .sort((a, b) => String(b.asOf ?? "").localeCompare(String(a.asOf ?? "")))[0] ?? null;
+      const valued = (holdingsDoc?.holdings ?? []).filter((h) => h.securityKey && isNum(h.marketValue) && h.marketValue !== 0 && h.assetClass !== "Cash");
+      // Equalisation RECEIVED only: its column is headed "(paid)/received", and a
+      // negative figure is money the family paid in a later close — not income.
+      const paid = (commitment?.payouts ?? []).filter((k) => (k.kind === "income" || (k.kind === "equalisation" && k.gross > 0))
+        && k.date && (!asOf || k.date <= asOf));
+      const equalisationPaid = (commitment?.payouts ?? []).filter((k) => k.kind === "equalisation" && !(k.gross > 0)).length;
+      if (equalisationPaid) notes.push(`account ${accountNo}: ${equalisationPaid} equalisation payment(s) the family MADE are not income and are not added`);
+      const late = (commitment?.payouts ?? []).filter((k) => k.kind !== "capital" && k.date && asOf && k.date > asOf);
+      if (paid.length && valued.length !== 1) {
+        notes.push(`account ${accountNo}: ${paid.length} distribution(s) on its commitment block reach no holding — the account holds ${valued.length} valued holdings, not one`);
+      } else if (paid.length && (dated.cashFlows ?? []).some((c) => c.kind === "distribution" && c.securityKey === valued[0].securityKey)) {
+        notes.push(`account ${accountNo}: its commitment block's distributions are not added — the fund's own dated cash flows already carry them`);
+      } else if (paid.length) {
+        const key = valued[0].securityKey;
+        const gross = (k) => (isNum(k.gross) ? k.gross : isNum(k.net) && isNum(k.tds) ? k.net + k.tds : k.net);
+        if (paid.some((k) => !isNum(gross(k)))) {
+          notes.push(`account ${accountNo}: a distribution on its commitment block prints no amount, so none is added`);
+        } else {
+          const calls = (commitment.calls ?? []).map((k) => k.date).filter(Boolean).sort();
+          const opens = inception ?? calls[0] ?? paid.map((k) => k.date).sort()[0];
+          const sumOf = (kind) => r2(sum(paid.filter((k) => k.kind === kind).map(gross)));
+          addIncome(key, r2(sum(paid.map(gross))), opens, paid.map((k) => ({ date: k.date, amount: gross(k) })));
+          notes.push(`account ${accountNo}: ${paid.length} distribution(s) its commitment block prints through ${asOf} are this holding's income, gross of TDS — `
+            + `${sumOf("income").toLocaleString("en-IN")} distributed income and ${sumOf("equalisation").toLocaleString("en-IN")} equalisation received; `
+            + "a capital redemption is a withdrawal and is not income"
+            + (late.length ? `; ${late.length} paid after ${asOf} are inside the value` : ""));
+        }
+      }
+    }
+    if (netOnly) notes.push(`account ${accountNo}: ${netOnly} income row(s) print neither a gross nor a TDS figure, so they are carried as printed — any TDS on them is not on the page`);
+    if (lateIncome || lateFundIncome) notes.push(`account ${accountNo}: ${lateIncome + lateFundIncome} income row(s) dated after the ${asOf} statement are inside its value and are not counted as income`);
+    if (countedTwice) notes.push(`account ${accountNo}: ${countedTwice} fund cash-flow payout(s) are the same payment its income record lists, and are counted once`);
 
     /**
      * A HOLDING ITS FUND HAS NOT VALUED DOES NOT BECOME A POSITION.
@@ -3642,25 +3869,29 @@ function build(archived, archiveCount = archived.length) {
           security: h.security, accountId, held: h.quantity, lotQty: Number.isFinite(lotQty) ? lotQty : null,
         });
       }
+      /**
+       * HOW MANY DATES THE UNITS STILL HELD WERE BOUGHT ON (Stage 10fz) — under
+       * exactly the gate `heldSince` is, because it answers the same question
+       * one step further: a single purchase date with nothing sold is a holding
+       * a compound annual rate can be struck on from `heldSince`; staggered
+       * purchases have a money-weighted rate and never a CAGR from the oldest.
+       */
+      let purchaseDates;
       if (lotsCoverPosition && asOf) {
-        const asOfMs = Date.parse(asOf);
-        const LT_DAYS = 365;
-        stCostBasis = 0;
-        ltCostBasis = 0;
-        let soonest = null;
-        for (const l of dated) {
-          const held = Math.round((asOfMs - Date.parse(l.purchaseDate)) / 86400000);
-          if (held >= LT_DAYS) ltCostBasis = r2(ltCostBasis + l.totalCost);
-          else {
-            stCostBasis = r2(stCostBasis + l.totalCost);
-            const toGo = LT_DAYS - held;
-            if (soonest === null || toGo < soonest) soonest = toGo;
-          }
-        }
-        daysToLT = soonest;
+        // s.2(42A), by the asset's own period in calendar months — not 365 days
+        // for everything (`scripts/lib/holdingPeriod.mjs`, Stage 10fz).
+        const split = termSplit(dated, asOf, {
+          assetClass: h.assetClass, isin: h.isin ?? isinByKey.get(h.securityKey) ?? null,
+          marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security, securityKey: h.securityKey }, acctForPositions),
+        });
+        stCostBasis = split.stCostBasis;
+        ltCostBasis = split.ltCostBasis;
+        daysToLT = split.daysToLT;
+        if (split.why) notes.push(`account ${accountNo}: ${h.security} — ${split.stCostBasis === null ? "no short/long-term split: " : ""}${split.why}`);
         // The OLDEST lot, not the newest: the holding has existed since its
         // first surviving unit was bought.
         for (const l of dated) if (heldSince === null || l.purchaseDate < heldSince) heldSince = l.purchaseDate;
+        purchaseDates = new Set(dated.map((l) => l.purchaseDate)).size;
         // EACH LOT ON ITS OWN DATE (Stage 10fw): a holding bought in two lots
         // was not all bought on the oldest one's day, and a rate compounded from
         // it says it was. The lots go to the book so a money-weighted return can
@@ -3696,7 +3927,10 @@ function build(archived, archiveCount = archived.length) {
          */
         marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security, securityKey: h.securityKey }, acctForPositions),
         quantity: h.quantity,
-        avgCost: h.unitCost,
+        // A FIFO cost restates what one unit cost too (Stage 10fz): the statement's
+        // own unit cost is of the cost it printed, not of the units still held.
+        avgCost: costBasisSource === "fifo" && isNum(costBasis) && h.quantity > 0
+          ? Math.round((costBasis / h.quantity) * 1e4) / 1e4 : h.unitCost,
         currentPrice: h.marketPrice,
         costBasis,
         /**
@@ -3737,6 +3971,7 @@ function build(archived, archiveCount = archived.length) {
         ltCostBasis,
         daysToLT,
         heldSince,
+        ...(purchaseDates !== undefined ? { purchaseDates } : {}),
         /** What the account's own dated trades say about when these units were bought — see `holdingTradeRecord`. */
         tradeRecord: tradeRecordOf(h) ?? undefined,
         ...((income) => {
@@ -3753,6 +3988,7 @@ function build(archived, archiveCount = archived.length) {
         priceAsOf: h.priceAsOn ?? undefined,
         accruedIncome: h.accruedIncome ?? cp?.accruedIncome ?? null,
         dividendReceived: dividendByKey.get(h.securityKey) ?? null,
+        ...(dividendByKey.has(h.securityKey) ? { dividendFrom: dividendFromByKey.get(h.securityKey) ?? null } : {}),
         positionIrrPct: cp?.positionIrrPct ?? null,
         // Falls back to the tag any OTHER issue of this account carried for this
         // security — see `dedupeByAcctSec`. A snapshot supersedes; the fact that
@@ -4030,8 +4266,18 @@ function build(archived, archiveCount = archived.length) {
       // transaction statement — the capital gain statement prints none — and a
       // security neither carries is left `null` and NAMED. "Mutual Fund" in a
       // printed name is not a classification any statement made.
+      //
+      // THE HOLDING'S OWN CLASS FIRST (Stage 10fz). The first report that printed
+      // a class used to win, and Green Lantern's investor report files its Axis
+      // Liquid Fund trades under "Equity" while the appraisal the position is
+      // read from says Cash — so ₹8.6 L of liquid-fund gains sat in the equity
+      // row. A lot that settles a holding of this account takes that position's
+      // class; else the class an APPRAISAL prints for the key; else any report's.
+      const positionClass = new Map(positions.filter((p) => p.accountId === accountId && p.assetClass)
+        .map((p) => [p.securityKey, p.assetClass]));
       for (const l of lots) {
-        const cls = classByKey.get(l.securityKey) ?? null;
+        const cls = positionClass.get(lotHoldingKey(l)) ?? positionClass.get(l.securityKey)
+          ?? appraisalClassByKey.get(l.securityKey) ?? classByKey.get(l.securityKey) ?? null;
         const k = `${accountId}|${cls ?? ""}`;
         const e = realisedByClass.get(k) ?? {
           accountId, entity: `${ownerById(ownerId)?.displayName ?? accountNo} · ${provider.split(" ")[0]} ${accountNo}`,
@@ -4231,7 +4477,14 @@ function build(archived, archiveCount = archived.length) {
           to: b.periodTo, source: b.source,
         };
       } else if (ins.length && inception && firstIn <= inception
-        && mine.every((m) => m.date <= asOf)) {
+        && mine.every((m) => m.date <= asOf)
+        // …AND REACHES IT (Stage 10fz). A record that starts at inception but
+        // ends before the holdings' date has not seen what moved in between:
+        // SVAN 8710067's ends 31 Jul against holdings of 30 Sep, and the
+        // ₹37,099.80 of TDS paid out of the mandate in August and September was
+        // in no withdrawal — capital stamped "to 30 Sep" over a record that
+        // stops two months short.
+        && !!capitalRecordTo && capitalRecordTo >= asOf) {
         acctForPositions.capital = {
           contributed: r2(sum(ins.map((m) => m.amount))),
           withdrawn: r2(sum(mine.filter((m) => m.direction === "out" && isNum(m.amount)).map((m) => m.amount))),
@@ -4240,6 +4493,9 @@ function build(archived, archiveCount = archived.length) {
       } else {
         acctForPositions.capital = null;
         notes.push(`account ${accountNo}: no statement states this mandate's capital since inception as at ${asOf}, `
+          + (ins.length && inception && firstIn <= inception && capitalRecordTo && capitalRecordTo < asOf
+            ? `and its dated capital record runs from inception only to ${capitalRecordTo}, `
+            : "")
           + "so its return is struck holding by holding and carries only the realised gain its capital gain statement's window reports");
       }
     }

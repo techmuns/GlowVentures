@@ -28,7 +28,7 @@ import type { Txn, TxnData } from "./ledger";
 import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
 import { displaySecurity, fmtCr, fmtCurrency, DASH } from "./format";
 import {
-  valueDateOf, commonValueDate, measuredReturn, isFixedIncome,
+  valueDateOf, commonValueDate, measuredReturn, isFixedIncome, clubbedPurchase,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
   totalQuantity, AT_COST_PNL, NO_UNIT_COUNT, AT_COST_MARK, REVIEW_NO_MARK,
 } from "./analytics";
@@ -280,10 +280,15 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
        * lot as if all of it were a year old.
        */
       const fifo = fifoTotals(ps, fifoOpts);
-      const fifoRet = costNA || (cost as number) <= 0 ? null : fifo.returnPct;
-      const since = ps.every((x) => x.heldSince)
-        ? ps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), ps[0].heldSince!)
-        : null;
+      // NO `cost > 0` GUARD (Stage 10fz, after 10df): a holding whose units
+      // are all sold holds a cost of ₹0 and its whole gain is realised —
+      // `fifoTotals` divides by the capital deployed (cost held + cost of
+      // units sold) and refuses only where that is not above zero.
+      const fifoRet = costNA ? null : fifo.returnPct;
+      // The row's start, and whether it is ONE purchase held throughout — the
+      // only thing a CAGR measures (Stage 10fz, `clubbedPurchase`).
+      const purchase = clubbedPurchase(ps);
+      const since = purchase.heldSince;
       const valuedAt = commonValueDate(ps.map(valueDate));
       /**
        * THE DATED CAPITAL, WHERE THIS ROW IS WHOLE ACCOUNTS — `behind`, against
@@ -293,7 +298,8 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
        * carries none (`null`), and every rule below it is unchanged.
        */
       const capital = dated.behind(ps, held) ?? undefined;
-      const input = { returnPct: fifoRet, heldSince: since, valuedAt, assetClass: ps[0].assetClass, costNA, capital, valuedAtCost: allAtCost };
+      const input = { returnPct: fifoRet, heldSince: since, purchaseDates: purchase.purchaseDates, costOfUnitsSold: purchase.costOfUnitsSold,
+        valuedAt, assetClass: ps[0].assetClass, costNA, capital, valuedAtCost: allAtCost };
       const ret = measuredReturn(input, "auto", bookAsOf);
 
       // How each line was priced and on what date, oldest first.

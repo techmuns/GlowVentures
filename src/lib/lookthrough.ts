@@ -36,8 +36,8 @@ import type { Position } from "./types";
 import { securityKeyOf } from "./securityKey";
 import { resolveSector, UNCLASSIFIED } from "./sectors";
 import { displayFiledName, stripFilingMarks } from "./format";
-import { currentHoldings, isCompanyShare, isFundVehicle } from "./analytics";
-import { isArbitrageFund } from "./fundNavs";
+import { currentHoldings, isCashEquivalent, isCompanyShare, isFundVehicle } from "./analytics";
+import { fundNavFor, isArbitrageFund } from "./fundNavs";
 import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 import nseSymbols from "@/data/nseSymbols.json";
 import screenerSectors from "@/data/screenerSectors.json";
@@ -686,6 +686,28 @@ export type CompanyExposure = {
   derived: number;
   /** `measured + derived` — the figure the family asked to be ranked on. */
   total: number;
+  /**
+   * ── THE DERIVED HALF THAT IS AN EQUITY POSITION (Stage 10fz) ──────────────
+   *
+   * Of `derived`: the EQUITY lines of the funds that hold this issuer net of
+   * nothing — what an equity index can be weighed against. Left out of it, and
+   * so out of every vs-index weight: debt paper of any kind (a filing's `Debt`
+   * class, and any CD or commercial paper by its ISIN type code, `16` / `14`,
+   * however it is classed — ~₹6.5 Cr of HDFC Bank's CDs reach the HDFC Bank
+   * row through its issuer prefix), every line of a cash-equivalent fund (a
+   * liquid or overnight scheme's paper is cash to this family), and the
+   * balanced-advantage / equity-savings funds' equity, which their filings
+   * disclose GROSS of the hedges they run (`derivedGross`).
+   */
+  derivedEquity: number;
+  /**
+   * Of `derived`: the equity lines of funds that disclose equity GROSS of
+   * their derivative hedges — dynamic asset allocation / balanced advantage and
+   * equity savings schemes, which file no derivative lines — so the net equity
+   * they carry is not known. In `derived` (it is what the filings print), and
+   * in no index comparison.
+   */
+  derivedGross: number;
   /** GICS. Three tiers, strongest first — see `sectorFrom`. */
   sector: string;
   /**
@@ -738,6 +760,32 @@ function symbolFor(key: string, positions: Position[]): string | null {
 export const companySymbol = (e: Pick<CompanyExposure, "key" | "positions">): string | null =>
   symbolFor(e.key, e.positions);
 
+/**
+ * WHETHER A FUND'S DISCLOSED LINES ARE AN EQUITY POSITION OF THE FAMILY'S, for
+ * an index comparison (Stage 10fz): `cash` for a cash-equivalent scheme (the
+ * family's own map, then a liquid / overnight / money-market SEBI category),
+ * `gross` for one that hedges with derivatives it does not disclose (dynamic
+ * asset allocation / balanced advantage, equity savings — by SEBI category,
+ * then by the scheme's own name), `equity` otherwise. An arbitrage fund is
+ * not looked through at all (`heldFundVehicles`).
+ */
+const CASH_CATEGORY = /^(liquid fund|overnight fund|money market fund)$/i;
+const GROSS_CATEGORY = /^(dynamic asset allocation or balanced advantage|equity savings)$/i;
+const GROSS_NAME = /(balanceds*advantage|bal[s-]*adv|baf|dynamics+assets+allocation|equitys+savings)/i;
+export function fundLineBasis(fundKey: string, fundName = ""): "equity" | "cash" | "gross" {
+  if (isCashEquivalent({ securityKey: fundKey })) return "cash";
+  const cat = fundNavFor({ securityKey: fundKey })?.sebiCategory ?? null;
+  if (cat && CASH_CATEGORY.test(cat)) return "cash";
+  if (cat && GROSS_CATEGORY.test(cat)) return "gross";
+  if (GROSS_NAME.test(fundKey.replace(/-/g, " ")) || GROSS_NAME.test(fundName)) return "gross";
+  return "equity";
+}
+/** A CD (`16`) or commercial paper (`14`) by its ISIN's type code — never equity, whatever its line says. */
+const isMoneyMarketPaper = (isin: string | null): boolean => !!isin && /^IN[EF][A-Z0-9]{4}(14|16)/.test(isin.toUpperCase());
+/** An instrument line that is the company's equity: classed so, and not money-market paper by its ISIN. */
+const isEquityLine = (i: { assetClass: string | null; isin: string | null }): boolean =>
+  i.assetClass === "Equity" && !isMoneyMarketPaper(i.isin);
+
 export function companyExposure(
   /** Consolidated COMPANY SHARES — a sector is a property of a company. */
   positions: Position[],
@@ -747,7 +795,7 @@ export function companyExposure(
   for (const p of positions) {
     const e = byKey.get(p.securityKey) ?? {
       key: p.securityKey, name: p.security, isin: p.isin ?? null,
-      measured: 0, derived: 0, total: 0,
+      measured: 0, derived: 0, total: 0, derivedEquity: 0, derivedGross: 0,
       sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
     };
     e.measured += p.marketValue;
@@ -763,10 +811,17 @@ export function companyExposure(
     for (const x of exposure.byKey.values()) {
       const e = byKey.get(x.key) ?? {
         key: x.key, name: x.name, isin: x.isin,
-        measured: 0, derived: 0, total: 0,
+        measured: 0, derived: 0, total: 0, derivedEquity: 0, derivedGross: 0,
         sector: UNCLASSIFIED, sectorFrom: null, positions: [] as Position[], classes: [] as string[],
       };
       e.derived += x.total;
+      // The equity half, line by line, and the gross half apart (Stage 10fz).
+      for (const r of x.rows ?? []) {
+        const basis = fundLineBasis(r.fundKey, r.fundName);
+        if (basis === "cash") continue;
+        const eq = (r.instruments ?? []).filter(isEquityLine).reduce((s, i) => s + i.value, 0);
+        if (basis === "gross") e.derivedGross += eq; else e.derivedEquity += eq;
+      }
       for (const c of x.classes) if (!e.classes.includes(c)) e.classes.push(c);
       if (!e.isin && x.isin) e.isin = x.isin;
       if (e.sectorFrom === null && x.sector) { e.sector = x.sector; e.sectorFrom = "disclosure"; }

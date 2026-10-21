@@ -38,8 +38,45 @@
 - Removed the Portfolio return card, its window/coverage chips, calculation popup and five amount tiles from Morning CIO's Returns view. The toolbar now leads directly into Return attribution and Benchmarks. The benchmark portfolio comparison retains the same calculations and whole-account coverage gate.
 - Removed unused card-only presentation code. Existing browser checks now assert that the summary stays absent, the subtabs follow the toolbar, and benchmark window/return checks still use the comparison tile. The period/type selection matrix follows the remaining controls instead of the removed popup.
 
-### Stage 10fy — ONE INVESTMENT DATE COLUMN, WITH SOURCE COVERAGE
+### Stage 10fy — PRIVATE MARKET PROFILE FIELDS STAY OPEN FOR EDITING
 
-- Portfolio Monitor had two date columns: the review product's range and Invested on. The latter omitted the original FIFO dates behind 44 recovered costs. Those source-backed acquisition dates now reach all holding layers. The merged Investment date / range column retains source precision; exact product-review context is visibly labelled review where current custody lots do not reconcile. Its saved placement, visibility and sorting migrate; Excel shares the same dates and qualifier.
-- The dated audit separates 446/474 costed account holdings from displayed-security date/HPR counts. It itemises the remaining direct and Cash date gaps and 163 undated non-cash PMS account/security lines. Known PMS funding dates do not date the manager's underlying shares. Client requests name original lots or unit/transfer bridges rather than requesting recorded costs again.
-- The published source-rebuilt FIFO acquisition dates are retained; independent comparison confirms this follow-up changes no generated book figures. FIFO tests exclude sold lots and split dates, preserve known dates despite unknown proceeds, and reject mismatched identities. Browser checks cover the retired column's saved preferences and category switching. Automated review was unavailable due the account's code-review usage limit; the diff was reviewed locally.
+- The family clarified that “live by default” means open text fields, rather than automatic public-source enrichment. Strategy and Description now start visible and editable within each investment row. Save/Cancel appears for a draft; failed saves retain it. Saved overrides can still be removed to reveal supplied text.
+- Brand edits retain the existing exact investment keys and shared save endpoint. Aggregate rows keep their existing read-only resolution. Explicit column visibility choices, calculations, scrolling and sticky headers remain supported.
+- Inline saves are serialized because each response carries its starting store snapshot plus the edit; overlapping replies must not hide another successful field. Focus reads wait for pending saves and cannot replace a newer edit.
+- Existing profile/store suites verify identity and persistence contracts. The browser regression checks the default inputs, overlapping field saves and reopening the page, cancellation, a failed save and retry, removal, and a brand edit spanning several investments.
+
+### Stage 10fz — A FULL CALCULATION AUDIT AGAINST INDUSTRY STANDARDS
+
+*"logical calculations need to be correct as per the industry standards."*
+
+- **Scope:** six areas were audited against GIPS/CFA, ILPA and the Income-tax
+  Act, each finding reproduced on the book. Every finding and its fix is in
+  `docs/CALCULATION-AUDIT.md`. The rules now bind every session in `CLAUDE.md`
+  § Calculation standards.
+- **Headlines:**
+  - CAGR only for one purchase (`Position.purchaseDates`).
+  - Exits and closed mandates stay in since-inception returns: book FIFO
+    22.03% → 21.20%.
+  - The Returns tab reads the verified records, so FYTD now agrees with the tile.
+  - Period "Absolute" return is Modified Dietz; the benchmark comparison is PME.
+- **Private:**
+  - Distributions are the same cash the XIRR counts: ₹64.17 L → ₹94.53 L.
+  - Private funds' returns include their income: Neo 13.83% → 21.21%, 360 ONE
+    46.96% → 65.59%.
+  - TVPI/DPI/RVPI are struck.
+- **Tax:**
+  - Long-term from the anniversary + 1 day in calendar months
+    (`shared/holdingPeriod.mjs`).
+  - The planner works per lot.
+  - Dividends are gross of TDS.
+  - The ₹1.25 L exemption is applied per person.
+  - The headline is FY-scoped, superseding Stage 10da's windows headline.
+- **Exposure:**
+  - Entity-scoped look-through.
+  - Active weights over the classified equity sleeve.
+  - Concentration by fund (`concentrationNames`).
+  - The day move never blends a missing line in as ₹0.
+  - No constant FX rate.
+- **Tests:** new suites `calcAudit` (ingest), plus display FX rate, day move,
+  concentration and lot terms (family). The `check-pages` re-derivations follow
+  each rule.

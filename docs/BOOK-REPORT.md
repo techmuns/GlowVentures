@@ -347,9 +347,13 @@ never guessed into the nearest plausible bucket.
 - 18 spreadsheet export(s) are witnesses of the PDF beside each (`twinOf`) and are not documents of this book — ASK Investment Managers Limited 10, Marathon Trends Advisory Pvt Ltd 8. Each carries no facts; every figure in it was checked against its PDF at extraction (docs/EXTRACTION-REPORT.md).
 - identity: 12 ISIN(s) are held under TWO OR MORE securityKeys — one security keyed twice, so its rows never add up. Each is a name one issuer CLIPS and another spells out, which no rule here bridges: the depository strip only ever REMOVES furniture and never supplies a name the statement did not print. Closing them needs a hand-checked alias, not another statement: INF179K01830 (hdfc-balanced-advantage-fund-regular-plan-growth / hdfc-baf-r-grow); INF0R8701046 (helios-flexi-cap-fund-direct-growth / helios-fcf-d-grow); INF0VGG22429 (blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability / bavf-series-20-class-c6); INE647U01026 (clean-max-enviro-energy-solutions / clean-max-env); INE0LTR03090 (everest-fleet-private-limited-0-001-series-b-new-pref-18ap43 / efpl-pref-18042043); INF0XAZ22055 (india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability / india-sme-investments-fund-ii-class-a2); INE721I01024 (national-stock-exchange-of-india / national-stock-ex); INF1ISW22079 (sanshi-trust-fd-i-cl-e-restricted-transferability / sanshi-fund-i-class-e); INF1V9N22050 (sky-capital-rising-titans-fund-i-skycrtf-oncarea3-restricted-transferability / sky-capital-rising-titans-fund-oncare-class-a3); INF205K01KR8 (invesco-india-arbitrage-fund-direct-plan-growth-af-d1 / inves-arbf-d-grow); INF174K01LT0 (kotak-midcap-fund-direct-plan-growth-erstwhile-kotak-emerging-equity-scheme / kotak-mid-cap-fund-direct-growth); INF174K01LS2 (kotak-flexicap-fund-direct-growth-erstwhile-kotak-standard-multicap-fund-dir-gr / kotak-flexi-cap-fund-direct-growth)
 - identity: 0 securityKey(s) carry two different ISINs — no key in this archive names two securities.
+- account 1000632: 1 income row(s) print neither a gross nor a TDS figure, so they are carried as printed — any TDS on them is not on the page
+- account 1000632: 1 fund cash-flow payout(s) are the same payment its income record lists, and are counted once
 - account 1000632: no time-weighted return series in any statement
 - account 1000632: no flow block in any statement, so no value bridge
 - account 1000632: no external capital movements found, so no money-weighted return series
+- account 1000633: 1 income row(s) print neither a gross nor a TDS figure, so they are carried as printed — any TDS on them is not on the page
+- account 1000633: 1 fund cash-flow payout(s) are the same payment its income record lists, and are counted once
 - account 1000633: no time-weighted return series in any statement
 - account 1000633: no flow block in any statement, so no value bridge
 - account 1000633: no external capital movements found, so no money-weighted return series
@@ -403,6 +407,7 @@ never guessed into the nearest plausible bucket.
 - account 1038104611: no time-weighted return series in any statement
 - account 1038104611: no flow block in any statement, so no value bridge
 - account 1038104611: no external capital movements found, so no money-weighted return series
+- account AIFM_BPEPF6_0584: 2 distribution(s) its commitment block prints through 2026-03-31 are this holding's income, gross of TDS — 37,252 distributed income and 18,909 equalisation received; a capital redemption is a withdrawal and is not income
 - account AIFM_BPEPF6_0584: no time-weighted return series in any statement
 - account AIFM_BPEPF6_0584: no flow block in any statement, so no value bridge
 - account AIFM_BPEPF6_0584: no external capital movements found, so no money-weighted return series
@@ -412,6 +417,7 @@ never guessed into the nearest plausible bucket.
 - account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `buoyant-capital-103473-2026-07-31-holdings`; its dated rows are still counted
 - account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `buoyant-capital-103473-2026-07-31-holdings-2`; its dated rows are still counted
 - account Buoyant Capital::103473: holdings 2026-09-29 superseded for SNAPSHOT facts by 2026-09-30 — `buoyant-capital-103473-2026-09-29-holdings`; its dated rows are still counted
+- account 103473: 58,861.66 of income earned on buoyant-opportunities-strategy-category-iii-class-a1 follows its units through the class switch to buoyant-opportunities-strategy-category-iii-class-a4, which holds them
 - account 103473: 2 capital-register row(s) (Security in, Security out) are the legs of a class switch the fund's own reclassification record prints on the same date for the same rupees — not money moving, so not listed
 - account 103473: 2 cash-flow row(s) are the legs of a class switch the fund's own reclassification record prints on the same date for the same rupees — not money moving, so not a flow
 - account 103473: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
@@ -711,6 +717,7 @@ never guessed into the nearest plausible bucket.
 - account 90414963315: no time-weighted return series in any statement
 - account 90414963315: no flow block in any statement, so no value bridge
 - account 90414963315: no external capital movements found, so no money-weighted return series
+- account 9039920536: 30 distribution(s) its commitment block prints through 2026-06-30 are this holding's income, gross of TDS — 28,18,763 distributed income and 8,69,355 equalisation received; a capital redemption is a withdrawal and is not income; 2 paid after 2026-06-30 are inside the value
 - account 9039920536: no time-weighted return series in any statement
 - account 9039920536: no flow block in any statement, so no value bridge
 - account 9039920536: no external capital movements found, so no money-weighted return series
@@ -718,6 +725,7 @@ never guessed into the nearest plausible bucket.
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-06-30-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: 13 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 8710067: its bank book prints 12 dated deposit or withdrawal move(s) its dated capital record does not carry (0 in, 37099.8 out), but no profit-and-loss account states the capital the account received and paid back, so nothing witnesses those rows and none is listed as dated capital
+- account 8710067: no statement states this mandate's capital since inception as at 2026-09-30, and its dated capital record runs from inception only to 2026-07-31, so its return is struck holding by holding and carries only the realised gain its capital gain statement's window reports
 - account 8710067: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
 - account SVAN Investment Managers LLP::8710090: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-09-30 — `svan-investment-managers-llp-8710090-2026-05-31-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710090: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-09-30 — `svan-investment-managers-llp-8710090-2026-06-30-investor-report`; its dated rows are still counted
@@ -825,7 +833,9 @@ never guessed into the nearest plausible bucket.
 - 2 depository row(s) for Sanshi Fund are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
 - identity: 0 NSE symbol(s) are carried by two securityKeys among the positions — no listed company is keyed twice.
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Ajay Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
+- review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Ajay Jaisinghani's cost is FIFO over the review's dated rows: ₹99,41,987.06 held, ₹57,512.96 of cost sold for a realised ₹20,807.04; the review's purchases less sale proceeds (₹99,21,180.02) is kept as the check
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Bharat Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
+- review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Bharat Jaisinghani's cost is FIFO over the review's dated rows: ₹99,41,987.06 held, ₹57,512.96 of cost sold for a realised ₹20,807.04; the review's purchases less sale proceeds (₹99,21,180.02) is kept as the check
 - review: 89 private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — 50 statement rows superseded, 22 written-off lines named
 - review: 65 dated rows (purchases, sales, income) behind 16 valued holdings
 - review: 15 account(s) carry the review's dated rows, and every holding with money on them is the review's own
@@ -988,7 +998,7 @@ never guessed into the nearest plausible bucket.
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2 in sanshi-fund-9039671912 is what was paid in, 25,00,00,000: the statement prints 24,99,87,500.62 — what bought units after 12,499.38 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class E in sanshi-fund-9069671554 is what was paid in, 22,00,00,000: the statement prints 21,99,89,000.54 — what bought units after 10,999.46 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class E in sanshi-fund-9069671634 is what was paid in, 20,50,00,000: the statement prints 20,49,89,750.51 — what bought units after 10,249.49 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
-- avg cost: 30 position(s) print a total cost and a unit count and no per-unit cost — their Avg cost is that cost over those units (`avgCostDerived`)
+- avg cost: 28 position(s) print a total cost and a unit count and no per-unit cost — their Avg cost is that cost over those units (`avgCostDerived`)
 - FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103472): both hold 24,85,00,000 of cost in the units still held, and the unit record shows none sold.
 - FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103473): both hold 46,00,58,861.66 of cost in the units still held, and the unit record shows none sold.
 - FIFO and the class-switch carry disagree on HDFC Balanced Advantage Fund - Regular Plan - Growth (hdfc-mutual-fund-15644806): FIFO over the unit record holds 25000000 of cost, and the switch carry did not restate the statement's 25000000. The statement's cost stands; see the switch notes above for why it was not carried.

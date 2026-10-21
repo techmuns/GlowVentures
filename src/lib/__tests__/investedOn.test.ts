@@ -179,4 +179,10 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   }
 }
 
+{
+  const p=BOOK_POSITIONS.find(p=>p.accountId==='lkp-securities-98245'&&p.securityKey==='crompton-greaves-consumer-electrical')!;
+  const d=investedOnOf([p]);
+  ok('the 5,000-share Crompton balance keeps both dated lots, not only its oldest date',p.quantity===5000&&d?.first==='2025-03-04'&&d.last==='2025-11-12'&&d.payments===2);
+}
+
 if (fails) { console.log(`\n${fails} failed`); process.exit(1); }

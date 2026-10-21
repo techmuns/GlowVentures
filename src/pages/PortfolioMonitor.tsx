@@ -13,14 +13,15 @@ import { useStockExposure } from "@/lib/useStockExposure";
 import { companySectorIndex, type FundExposureRow } from "@/lib/lookthrough";
 import { heldRouteOf, measuredSplit, HELD_ROUTE_NOTE, type MeasuredSplit } from "@/lib/heldThrough";
 import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
-import { symbolFor, symbolForKey, quoteSymbolFor } from "@/lib/quotes";
+import { symbolFor, symbolForKey, quoteSymbolFor, holdingQuoteSymbolFor, dayMoveOf, dayMoveLeftNote, type DayMoveLeft } from "@/lib/quotes";
+import { latestQuoteSession, quoteSession } from "@/lib/dailyMovers";
 import { liveWithheldReason } from "@/lib/corporateActions";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
-  measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate,
+  measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate, clubbedPurchase,
   type ReturnMeasure, type ReturnInput, type RowCapital,
   costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
   AT_COST_MARK, REVIEW_NO_MARK, AT_COST_BUCKET,
@@ -28,11 +29,12 @@ import {
 } from "@/lib/analytics";
 import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
+import { exitedRows } from "@/lib/drilldown";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, type Txn, type TxnData } from "@/lib/ledger";
 import { inScopeAccount, inScopeOwner, scopeTxnData } from "@/lib/memberScope";
-import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, realisedWindowNote, atCostNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
+import { fifoTotals, fifoBasisNote, exitedNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, realisedWindowNote, atCostNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
 import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
 import {
@@ -175,6 +177,8 @@ type Venue = {
   depositoryWhy: string | null;
   live: boolean; dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
+  /** The line's purchase facts for the CAGR gate (Stage 10fz, `clubbedPurchase`). */
+  purchaseDates?: number; costOfUnitsSold?: number | null;
   /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
   opened?: HoldingPeriod | null;
   investedOn: InvestedOn | null;
@@ -192,6 +196,8 @@ type MandateHolding = {
   /** For the row's own Day, Invested on and return cells — see `Venue`. */
   dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
+  /** The share's purchase facts for the CAGR gate (Stage 10fz, `singlePurchaseGap`). */
+  purchaseDates?: number; costOfUnitsSold?: number | null;
   /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
   opened?: HoldingPeriod | null;
   /** The date this share's value is struck at — where its return window ends. */
@@ -344,6 +350,15 @@ type Row = {
   /** When the units held now began, where every line's dated trades prove it (`holdingPeriodOf`, Stage 10fw). */
   opened?: HoldingPeriod | null;
   /**
+   * WHETHER `heldSince` STARTS ONE PURCHASE HELD THROUGHOUT (Stage 10fz) — the
+   * distinct purchase dates behind the units held and the cost of units sold,
+   * which `measuredReturn`'s CAGR gate (`singlePurchaseGap`) reads. A clubbed
+   * row carries `clubbedPurchase` of its lines; a mandate row carries neither,
+   * and its `heldSince` is null anyway.
+   */
+  purchaseDates?: number;
+  costOfUnitsSold?: number | null;
+  /**
    * The ONE date this row's value is struck at (`commonValueDate`), where its
    * return window ends; null where its holdings are valued on different dates,
    * which refuses an annualised figure rather than picking one of the dates.
@@ -399,6 +414,17 @@ type Row = {
    * leaves the book's day move exactly where it was.
    */
   liveMV: number;
+  /**
+   * WHAT THE DAY FIGURE IS ACTUALLY STRUCK OVER, AND WHAT IT LEFT OUT (Stage
+   * 10fz) — `dayMoveOf`. `liveMV` above is every live-priced line, which is the
+   * right figure for "how much of this mandate is repriced"; the day move is
+   * struck over the live lines that HAVE a measurable move on the session the
+   * rest are on, and a live line with none is named in `dayLeft` rather than
+   * counted as a ₹0 move on its whole value. Absent on the derived rows, which
+   * hold nothing to move.
+   */
+  dayBase?: number;
+  dayLeft?: DayMoveLeft[];
   /**
    * The securityKeys this row stands for, for the realised-gain lookup — one for
    * a security, its constituents' for a mandate. The footer sums over the UNION
@@ -1037,6 +1063,28 @@ export function PortfolioMonitor() {
   const accIdx = useMemo(() => accountIndex(portfolio.accounts), [portfolio.accounts]);
   const owner = (p: Position) => ownerOf(accIdx, p);
   /**
+   * ── THE LOOK-THROUGH UNDER AN ENTITY FILTER IS THAT ENTITY'S FUNDS (Stage 10fz) ──
+   *
+   * `exposure` above is struck over every fund the scope holds, and the rows
+   * below used to add it to an entity-filtered measured half and divide by an
+   * entity-filtered weight base. With Entity = Ankita her ICICI Bank row read
+   * ₹0.27 Cr own + ₹1.21 Cr "via funds" — every rupee of the derived half was
+   * Helios Flexi Cap, a folio in Ajay's name — weighted against her ₹161.6 Cr.
+   *
+   * So the rows, their fund lines, the derived header note and the Via funds
+   * footer read `rowExposure`: the whole scope's look-through when Entity is
+   * All, and one struck over that entity's own funds (deduped exactly as the
+   * weight base is) when it is not. `exposure` itself keeps serving what does
+   * not depend on whose fund it is — the sector index, the pick-list names,
+   * the quote registration and the whole-book partition.
+   */
+  const entityHoldings = useMemo(
+    () => (entity === "All" ? consolidated : dedupedPositions(positions.filter((p) => ownerOf(accIdx, p) === entity))),
+    [entity, consolidated, positions, accIdx]);
+  const entityExposure = useStockExposure(consolidated, bySecurity && entity !== "All",
+    { vehiclesFrom: entityHoldings, scopeKey: entity });
+  const rowExposure = entity === "All" ? exposure : entityExposure;
+  /**
    * WHERE EVERY RETURN WINDOW ON THIS PAGE ENDS — the date the holding's value
    * is struck: a live quote's own day, AMFI's NAV date, or the account's own
    * statement date. It used to be `portfolio.asOf`, the book's NEWEST date
@@ -1242,6 +1290,23 @@ export function PortfolioMonitor() {
     // are struck over what the family actually holds.
     let base = currentHoldings(positions);
     /**
+     * ONE TRADING SESSION FOR EVERY DAY FIGURE ON THIS TABLE (Stage 10fz).
+     *
+     * A quote stamped on an older session than the rest — an illiquid share
+     * that last traded yesterday — carries yesterday's move, and adding it into
+     * a mandate's or the book's "today" sums two days. Daily Movers already
+     * refuses such a quote (`symbolMove`); the day figures here are held to the
+     * same session, struck over the whole live book so a filter cannot move
+     * it. A quote with no trade stamp is not refused, exactly as there.
+     */
+    const daySession = latestQuoteSession(quoteFeed, base.filter((p) => p.live).map(holdingQuoteSymbolFor));
+    const inDaySession = (p: Position) => {
+      const s = holdingQuoteSymbolFor(p);
+      if (!s || !quoteFeed?.quotes[s]?.tradedAt) return true;
+      const own = quoteSession(quoteFeed, s);
+      return !!own && own === daySession;
+    };
+    /**
      * WHAT "EVERY HOLDING OF A MANDATE" IS MEASURED AGAINST — the unfiltered
      * book. A filter that drops one share of a mandate drops the mandate back
      * to holding-by-holding, because its capital cannot be divided among the
@@ -1396,7 +1461,8 @@ export function PortfolioMonitor() {
       const costNA = cf.cost === null || (cf.cost === 0 && mv > 0);
       const livePs = ps.filter((x) => x.live);
       const liveMV = sum(livePs.map((x) => x.marketValue));
-      const dayChange = sum(livePs.map((x) => x.dayChange ?? 0));
+      // Struck over the live lines that HAVE a move (Stage 10fz) — `dayMoveOf`.
+      const dm = dayMoveOf(ps, inDaySession);
       const whole = mandateTotals.get(accountId);
       const fifo = fifoTotals(ps, fifoOpts);
       return {
@@ -1409,7 +1475,7 @@ export function PortfolioMonitor() {
         fifo,
         capital: datedCap?.behind(ps, fifoOpts.universe) ?? undefined,
         live: livePs.length > 0, liveMV,
-        dayChangePct: livePs.length && liveMV - dayChange !== 0 ? (dayChange / (liveMV - dayChange)) * 100 : null,
+        dayChangePct: dm.pct,
         valuedAt: commonValueDate(ps.map(valueDate)),
         holdings: ps.length, accountMV: whole?.mv ?? mv, accountCount: whole?.count ?? ps.length,
       };
@@ -1433,7 +1499,12 @@ export function PortfolioMonitor() {
       // quoted must not divide its move by the half that never moved.
       const livePs = ps.filter((x) => x.live);
       const liveMV = sum(livePs.map((x) => x.marketValue));
-      const dayChange = sum(livePs.map((x) => x.dayChange ?? 0));
+      // …AND OVER THE LIVE CONSTITUENTS THAT HAVE A MOVE (Stage 10fz). This was
+      // `Σ (dayChange ?? 0)` over every live share, divided by every live
+      // share's value: a share on its split's ex-date added ₹0 to the move and
+      // its whole value to the base. `dayMoveOf` strikes both over one set and
+      // names the rest for the cell's hover.
+      const dm = dayMoveOf(ps, inDaySession);
       // FIFO OVER EVERY ACCOUNT ON THE ROW: each account that is whole is struck
       // on its own capital since inception and the row pools them, so the row's
       // return is (Σ value + Σ withdrawn − Σ paid in) ÷ Σ paid in — never an
@@ -1490,9 +1561,11 @@ export function PortfolioMonitor() {
         // none of its own.
         capital: datedCap?.behind(ps, fifoOpts.universe) ?? undefined,
         live: livePs.length > 0,
-        dayChange,
-        dayChangePct: livePs.length && liveMV - dayChange !== 0 ? (dayChange / (liveMV - dayChange)) * 100 : null,
+        dayChange: dm.change ?? 0,
+        dayChangePct: dm.pct,
         liveMV,
+        dayBase: dm.base,
+        dayLeft: dm.left,
         realizedKeys: [...new Set(ps.map((x) => x.securityKey))],
         mandate: {
           accounts: lines,
@@ -1505,6 +1578,7 @@ export function PortfolioMonitor() {
             returnPct: x.returnPct, costNA: !!x.costUnavailable || x.costBasis === null, live: !!x.live,
             dayChangePct: x.dayChangePct ?? null,
             heldSince: x.heldSince, assetClass: x.assetClass, investedOn: investedOnOf([x]), position: x, opened: holdingPeriodOf([x]),
+            purchaseDates: x.purchaseDates, costOfUnitsSold: x.costOfUnitsSold ?? null,
             valuedAt: valueDate(x),
             accountId: x.accountId,
             realised: typeof x.realizedPnL === "number" ? x.realizedPnL : null,
@@ -1635,9 +1709,12 @@ export function PortfolioMonitor() {
         // consolidated holding whose second account reports no purchase date
         // has no measurable start, and dating it from the account that does
         // would annualise over a window the other half never occupied.
-        const heldSince = dps.every((x) => x.heldSince)
-          ? dps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), dps[0].heldSince!)
-          : null;
+        // `clubbedPurchase` (Stage 10fz) is that rule plus the CAGR gate's two
+        // facts: the row is ONE purchase only where every line is one, on one
+        // date, and the cost of units sold is summed over the lines reporting it.
+        // Over `dps`, the deduped set every other figure on this row sums.
+        const purchase = clubbedPurchase(dps);
+        const heldSince = purchase.heldSince;
         /**
          * A CLUBBED FUND ROW HAS NO SINGLE UNIT, so its per-unit columns behave
          * exactly as a MANDATE row's do — and for the same reason.
@@ -1677,7 +1754,7 @@ export function PortfolioMonitor() {
           costNA,
           // Every line the review's, held at cost — no gain to strike (Stage 10dh).
           valuedAtCost: dps.every((x) => x.valuedAtCost === true),
-          heldSince,
+          heldSince, purchaseDates: purchase.purchaseDates, costOfUnitsSold: purchase.costOfUnitsSold,
           opened: holdingPeriodOf(dps),
           // The deduped set's ONE value date, or null where its lines are marked
           // on different dates — that row refuses to annualise rather than pick.
@@ -1694,8 +1771,14 @@ export function PortfolioMonitor() {
           // The DEDUPED set, which is what every other figure on this row sums.
           trancheSet: dps,
           live,
-          dayChange: sum(dps.map((x) => x.dayChange ?? 0)),
-          dayChangePct: ps[0].dayChangePct ?? null,
+          // ONE SET FOR THE MOVE AND ITS BASE (Stage 10fz): the deduped lines
+          // with a measurable move on the book's session. For one quote this is
+          // that quote's own percentage; for clubbed classes it is their move
+          // over their prior value, rather than the first class's percentage.
+          ...(() => {
+            const dm = dayMoveOf(dps, inDaySession);
+            return { dayChange: dm.change ?? 0, dayChangePct: live ? dm.pct : null, dayBase: dm.base, dayLeft: dm.left };
+          })(),
           liveMV: live ? mv : 0,
           // EVERY KEY THE ROW CLUBS. A realised gain is reported per SECURITY, so
           // a row standing for three classes claims all three or none — one key
@@ -1749,14 +1832,18 @@ export function PortfolioMonitor() {
         fifo: fifoTotals([p], fifoOpts),
         costNA: !!p.costUnavailable || p.costBasis === null,
         valuedAtCost: p.valuedAtCost === true,
-        heldSince: p.heldSince,
+        heldSince: p.heldSince, purchaseDates: p.purchaseDates, costOfUnitsSold: p.costOfUnitsSold ?? null,
         opened: holdingPeriodOf([p]),
         valuedAt: valueDate(p),
         // One statement line that is the whole folio IS the account.
         capital: datedCap?.behind([p], fifoOpts.universe) ?? undefined,
         investedOn: investedOnOf([p]),
         trancheSet: [p],
-        live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
+        live: !!p.live,
+        ...(() => {
+          const dm = dayMoveOf([p], inDaySession);
+          return { dayChange: dm.change ?? 0, dayChangePct: dm.pct, dayBase: dm.base, dayLeft: dm.left };
+        })(),
         liveMV: p.live ? p.marketValue : 0,
         realizedKeys: [p.securityKey],
         dedupeGroup: p.dedupeGroup,
@@ -1800,7 +1887,7 @@ export function PortfolioMonitor() {
      * what it dropped.
      */
     if (bySecurity) {
-      const ex = exposure.status === "ok" ? exposure : null;
+      const ex = rowExposure.status === "ok" ? rowExposure : null;
       const matched = new Set<string>();
       out = out.map((r) => {
         const hit = ex?.byKey.get(r.securityKey);
@@ -2092,14 +2179,23 @@ export function PortfolioMonitor() {
       // Over the holdings a gain is struck on (`strikesGain`): a review line
       // HELD AT COST reports a cost and no valuation, so it is in Invested and
       // in no return (Stage 10dh) — Morning CIO's Consolidated return does the same.
-      totFifoCosted: fifoTotals(db.filter(strikesGain), fifoOpts),
+      //
+      // SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fz): the holdings and
+      // mandates the family has LEFT — redeemed to nil, or under the ₹1,000
+      // floor — enter the gain and the capital deployed through `exited`,
+      // exactly as `bookReturnOnCost` passes them for Morning CIO's tile and
+      // /holdings, so the three print one figure. Through the table's own
+      // filters (`inScope`), so a Direct Equity footer is not credited a
+      // redeemed AIF. The Realised cell keeps `totFifo`, which says it
+      // excludes exited names.
+      totFifoCosted: fifoTotals(db.filter(strikesGain), { ...fifoOpts, exited: exitedRows(positions).filter(inScope) }),
       rawMV: sum(out.map((r) => r.marketValue)),
       costedMV: sum(costed.map((x) => x.marketValue)),
       costedCount: costed.length,
       heldCount: db.length,
       weightBase, weightCount, bucketTotals, smallDropped,
     };
-  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, quoteFeed, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap, sectorOfPos, companySectors, memberScope.accountIds]);
+  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, rowExposure, quoteFeed, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap, sectorOfPos, companySectors, memberScope.accountIds]);
   /**
    * Rows grouped by BUCKET, not by asset class — the fix the family asked for
    * three times. Direct Equity is what they bought themselves; PMS mandates is
@@ -2193,7 +2289,9 @@ export function PortfolioMonitor() {
          */
         const live = rs.filter((r) => r.live && r.dayChangePct != null);
         const day = sum(live.map((r) => r.dayChange));
-        const dayBase = sum(live.map((r) => r.liveMV));
+        const dayBase = sum(live.map((r) => r.dayBase ?? r.liveMV));
+        // The live lines no move could be struck for, named on the subtotal's hover (Stage 10fz).
+        const dayLeft = rs.flatMap((r) => r.dayLeft ?? []);
         /**
          * HOW MUCH OF THIS SECTION THE FAMILY PLACED BY RULE RATHER THAN BY
          * NAMING IT. On the same deduped basis as the subtotal above, so the
@@ -2219,7 +2317,7 @@ export function PortfolioMonitor() {
         }
         return {
           key, rows: rs, subtotal, collapsed, holdings, names, lines, ruleMV, cashRuleMV,
-          day, dayBase, liveRows: live.length,
+          day, dayBase, dayLeft, liveRows: live.length,
           dayPct: live.length && dayBase - day !== 0 ? (day / (dayBase - day)) * 100 : null,
           totals,
         };
@@ -2489,9 +2587,9 @@ export function PortfolioMonitor() {
    * hover too. Empty wherever the look-through has not answered.
    */
   const aifOpaque = (() => {
-    if (exposure.status !== "ok") return [];
+    if (rowExposure.status !== "ok") return [];
     const by = new Map<string, { name: string; key: string; value: number }>();
-    for (const sk of exposure.skipped) {
+    for (const sk of rowExposure.skipped) {
       if (!/^an AIF files/.test(sk.reason)) continue;
       const name = splitFundClass(sk.fundName)?.fund ?? sk.fundName;
       const e = by.get(name) ?? { name, key: sk.fundKey, value: 0 };
@@ -2501,19 +2599,19 @@ export function PortfolioMonitor() {
     return [...by.values()].sort((a, b) => b.value - a.value);
   })();
   const derivedNote = (() => {
-    if (exposure.status !== "ok") return DERIVED_NOTE;
-    const other = exposure.skipped.filter((sk) => !/^an AIF files/.test(sk.reason));
+    if (rowExposure.status !== "ok") return DERIVED_NOTE;
+    const other = rowExposure.skipped.filter((sk) => !/^an AIF files/.test(sk.reason));
     // MSX-14: the funds whose lines actually reached a company, and those read
     // from an aggregator's copy of the equity section alone — for them "every
     // asset class the filing carries" is not what was read.
     const read = new Set<string>(), agg = new Set<string>();
-    for (const e of exposure.byKey.values()) {
+    for (const e of rowExposure.byKey.values()) {
       for (const r of e.rows) {
         read.add(r.fundKey);
         if (r.sourceKind === "aggregator") agg.add(r.fundName);
       }
     }
-    return `${DERIVED_NOTE} Read from the monthly filings of ${read.size} of your ${exposure.considered} fund holdings.`
+    return `${DERIVED_NOTE} Read from the monthly filings of ${read.size} of your ${rowExposure.considered} fund holdings.`
       + (agg.size ? ` ${agg.size === 1 ? "One of them" : `${agg.size} of them`} — ${[...agg].join(" · ")} — ${agg.size === 1 ? "is" : "are"} read from an aggregator's copy of the equity section alone, so what ${agg.size === 1 ? "it holds" : "they hold"} outside equity is in no line here.` : "")
       + (other.length ? ` Not read: ${other.map((sk) => sk.fundName).join(", ")}.` : "")
       + (aifOpaque.length
@@ -2548,7 +2646,9 @@ export function PortfolioMonitor() {
   const feedLive = rows.some((r) => r.live);
   const liveRows = rows.filter((r) => r.live && r.dayChangePct != null);
   const totDay = sum(liveRows.map((r) => r.dayChange));
-  const liveMV = sum(liveRows.map((r) => r.liveMV));
+  // Each row's own day base — the lines its move was struck over (Stage 10fz).
+  const liveMV = sum(liveRows.map((r) => r.dayBase ?? r.liveMV));
+  const totDayLeft = rows.flatMap((r) => r.dayLeft ?? []);
   const totDayPct = liveRows.length && liveMV - totDay !== 0 ? (totDay / (liveMV - totDay)) * 100 : null;
   const toggleRow = (key: string) => setExpanded((prev) => {
     const next = new Set(prev);
@@ -2898,7 +2998,10 @@ export function PortfolioMonitor() {
         // so it is the one place a CAGR is genuinely strikable — through the same
         // guard, so a four-month contribution still reads as its holding-period
         // return and says so.
-        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false }, measure),
+        // ONE PAYMENT BY CONSTRUCTION (Stage 10fz): a contribution is a single
+        // dated purchase with nothing sold out of it, which is what the CAGR gate
+        // asks a row to prove — so it says so rather than reading "not counted".
+        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false, purchaseDates: 1, costOfUnitsSold: null }, measure),
       }, {
         "data-tranche-row": parentKey, "data-tranche-folio": folioKey, "data-tranche-class": cls ?? "",
         // THE HOLDING-PERIOD RETURN, whatever the cell shows: "cheaper entry,
@@ -2947,8 +3050,8 @@ export function PortfolioMonitor() {
    * fund lines, exactly as it had no card.
    */
   const fundLinesOf = (r: Row): FundExposureRow[] => {
-    if (!r.venues || !r.securityKey || !canLookThrough(r) || exposure.status !== "ok") return [];
-    return [...(exposure.byKey.get(r.securityKey)?.rows ?? [])].sort((a, b) => b.value - a.value);
+    if (!r.venues || !r.securityKey || !canLookThrough(r) || rowExposure.status !== "ok") return [];
+    return [...(rowExposure.byKey.get(r.securityKey)?.rows ?? [])].sort((a, b) => b.value - a.value);
   };
   /**
    * ONE FUND'S SHARE OF THIS ISSUER — a line of the table, and the
@@ -3006,7 +3109,7 @@ export function PortfolioMonitor() {
     return rows;
   };
   /** Whether this row's fund look-through has answered — the gate the fund lines and the AIF line share. */
-  const lookedThrough = (r: Row) => !!r.venues && !!r.securityKey && canLookThrough(r) && exposure.status === "ok";
+  const lookedThrough = (r: Row) => !!r.venues && !!r.securityKey && canLookThrough(r) && rowExposure.status === "ok";
   /**
    * THE AIFs, AS ONE LINE OF THE TABLE — "Inside your N AIF funds · not
    * visible" — that opens into one line per fund, each linking to its own
@@ -3166,6 +3269,7 @@ export function PortfolioMonitor() {
             : <span className={changeColor(h.realised)} title={realisedWindowOf([{ accountId: h.accountId, realizedPnL: h.realised }])}
                 data-child-realised={h.realised}>{fmtFromBase(h.realised, { compact: true, sign: true })}</span>,
           ret: (measure) => childReturn({ hprUnavailableReason: h.position.hprUnavailableReason, returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA, costBasis: h.costBasis, marketValue: h.marketValue,
+            purchaseDates: h.purchaseDates, costOfUnitsSold: h.costOfUnitsSold,
             // ITS OWN DATED MONEY, where its trades or lots date every unit (Stage 10fw).
             capital: datedCap?.behind([h.position], holdingsUniverse) ?? undefined, opened: h.opened }, measure),
           sector: isFundVehicle(h) ? <AbsentCell reason={fundSectorWhy(h.assetClass)} /> : sectorCell(h.sector, h.securityKey, [], true),
@@ -3379,6 +3483,7 @@ export function PortfolioMonitor() {
         // record's money-weighted rate — Buoyant's two folios under the row
         // pooling both, each at the rate its own fact sheet prints.
         ret: (measure) => childReturn({ hprUnavailableReason: v.positions.find(p => p.hprUnavailableReason)?.hprUnavailableReason, returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA, costBasis: v.costBasis, marketValue: v.marketValue, opened: v.opened,
+          purchaseDates: v.purchaseDates, costOfUnitsSold: v.costOfUnitsSold,
           valuedAtCost: v.valuedAtCost, capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure),
         entity: v.owner,
       }, {
@@ -3548,8 +3653,13 @@ export function PortfolioMonitor() {
           are added back. */}
       <div className="mb-3 text-xs">
         <Link to="/corporate-actions" className="text-champagne-400 hover:underline"
-          title="Individual-share HPR / CAGR here exclude separate dividend income. The Corporate actions page adds the dividends declared and the share adjustments.">
-          Dividend-inclusive returns &amp; share adjustments →
+          /* THE HOVER SAYS WHAT THE RETURNS INCLUDE (Stage 10fz). It said they
+             exclude dividend income, which Stage 10fb made false: FIFO adds
+             `Position.dividendReceived`, gross of TDS, over the window each
+             holding's income record covers (`dividendFrom`) — VEC 128004's
+             Navneet Education HPR of −17.03% carries ₹25,189.50 of it. */
+          title="Each holding's HPR / CAGR here includes the dividends and distributions it paid, gross of TDS, over the window its income record covers — which need not run from purchase — and a whole PMS mandate's are inside its capital. The Corporate actions page lists the dividends declared on the corporate-action record and the share adjustments.">
+          Dividends declared &amp; share adjustments →
         </Link>
       </div>
       {/*
@@ -3755,7 +3865,7 @@ export function PortfolioMonitor() {
                 the card that used to carry its three states is rows now. Present
                 on the security axis only, the one axis the store is asked on. */}
             <table className="min-w-full text-xs" data-monitor-table="holdings"
-              data-lookthrough={bySecurity ? exposure.status : undefined}>
+              data-lookthrough={bySecurity ? rowExposure.status : undefined}>
               <thead className="sticky top-0 z-10 bg-ink-800">
                 <Tr view={holdView} className="border-b border-ink-700">
                   <SortHeader col="security" view={holdView} align="left" pad="px-2 py-1.5">Security</SortHeader>
@@ -4190,9 +4300,11 @@ export function PortfolioMonitor() {
                               sleeve that has no quote and no previous close. */}
                           <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${grp.dayPct == null ? "text-slate-600" : changeColor(grp.dayPct)}`}
                             title={grp.dayPct == null ? undefined
-                              : `${fmtFromBase(grp.day, { compact: true, sign: true })} since previous close, across the ${fmtFromBase(grp.dayBase, { compact: true })} of ${label} the feed prices.`}>
+                              : `${fmtFromBase(grp.day, { compact: true, sign: true })} since previous close, across the ${fmtFromBase(grp.dayBase, { compact: true })} of ${label} the feed prices with a measurable move.${dayMoveLeftNote(grp.dayLeft)}`}>
                             {grp.dayPct == null
-                              ? <AbsentCell reason={`no holding in ${label} carries a live quote, so there is no previous close to move from`} />
+                              ? <AbsentCell reason={grp.dayLeft.length
+                                  ? `no live-priced holding in ${label} has a move that can be counted today.${dayMoveLeftNote(grp.dayLeft)}`
+                                  : `no holding in ${label} carries a live quote, so there is no previous close to move from`} />
                               : `${grp.dayPct >= 0 ? "+" : ""}${grp.dayPct.toFixed(2)}%`}
                           </td>
                           {/* `grp.subtotal` IS `tot.mv` — the heading prints the
@@ -4642,12 +4754,17 @@ export function PortfolioMonitor() {
                         </td>
                         <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
                           title={r.live && r.dayChangePct != null
-                            ? `${fmtFromBase(r.dayChange, { compact: true, sign: true })} since previous close${m ? `, across the ${fmtFromBase(r.liveMV, { compact: true })} of this mandate the feed prices` : " on the position"}`
+                            ? `${fmtFromBase(r.dayChange, { compact: true, sign: true })} since previous close${m ? `, across the ${fmtFromBase(r.dayBase ?? r.liveMV, { compact: true })} of this mandate the feed prices with a measurable move` : " on the position"}.${dayMoveLeftNote(r.dayLeft ?? [])}`
                             : undefined}>
                           {r.live && r.dayChangePct != null
                             ? `${r.dayChangePct >= 0 ? "+" : ""}${r.dayChangePct.toFixed(2)}%`
                             : <AbsentCell reason={r.measuredNA
                                 ? DERIVED_ONLY_WHY
+                                // A LIVE ROW WITH NO MOVE TO COUNT (Stage 10fz) — every
+                                // live line's quote lacks a usable previous close or
+                                // sits on another session; named, not a 0.00%.
+                                : r.live && (r.dayLeft?.length ?? 0) > 0
+                                ? `no live-priced line here has a move that can be counted today.${dayMoveLeftNote(r.dayLeft ?? [])}`
                                 : m
                                 ? (rowWithheld
                                   ? `no share inside this mandate is on a live price: the corporate-action check held back the quotes that arrived for ${rowWithheld.held} of its ${rowWithheld.of} shares — ${rowWithheld.reason} — so there is no previous close to move from`
@@ -4688,8 +4805,8 @@ export function PortfolioMonitor() {
                         </td>
                         {bySecurity && (
                           <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
-                            {exposure.status !== "ok"
-                              ? <AbsentCell reason={exposure.status === "loading"
+                            {rowExposure.status !== "ok"
+                              ? <AbsentCell reason={rowExposure.status === "loading"
                                   ? "the fund look-through is still loading"
                                   : "the fund look-through store did not answer — a fact about the fetch, not about the holding"} />
                               : (r.viaFunds ?? 0) > 0
@@ -5000,7 +5117,8 @@ export function PortfolioMonitor() {
                     ),
                     day: (
                     <td key="day" data-footer-day="" className={`px-2 py-1.5 text-right mono whitespace-nowrap ${totDayPct == null ? "text-slate-600" : changeColor(totDayPct)}`}
-                      title={totDayPct == null ? undefined : `${money(totDay, true)} across the live-priced book since previous close`}>
+                      title={totDayPct == null ? (totDayLeft.length ? `No live-priced line in view has a move that can be counted today.${dayMoveLeftNote(totDayLeft)}` : undefined)
+                        : `${money(totDay, true)} since previous close, across the ${money(liveMV)} of the live-priced book with a measurable move.${dayMoveLeftNote(totDayLeft)}`}>
                       {totDayPct == null
                         ? <AbsentCell reason="no row in view carries a live price with a previous close, so there is no day move to add up" />
                         : `${totDayPct >= 0 ? "+" : ""}${totDayPct.toFixed(2)}%`}
@@ -5036,9 +5154,9 @@ export function PortfolioMonitor() {
                         page's PM-1). */
                     viaFunds: (
                       <td key="viaFunds" className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap" data-footer-viafunds>
-                        {exposure.status === "ok"
+                        {rowExposure.status === "ok"
                           ? fmtFromBase(sum(rows.map((r) => r.viaFunds ?? 0)), { compact: true })
-                          : <AbsentCell reason={exposure.status === "loading"
+                          : <AbsentCell reason={rowExposure.status === "loading"
                               ? "the fund look-through is still loading"
                               : "the fund look-through store did not answer"} />}
                       </td>
@@ -5059,8 +5177,17 @@ export function PortfolioMonitor() {
                          a column belongs. The share itself stays on the face of the
                          table, in the Weight footer beside it. */
                       <td key="totalExposure" className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap" data-footer-exposure
-                        title={exposure.status !== "ok"
-                          ? `${money(stockCoverage.measured)} of companies the statements report directly. The fund look-through ${exposure.status === "loading" ? "is still loading" : "store did not answer"}, so what is held inside the funds is not in this figure — that is a fact about the fetch, not about the book.`
+                        title={rowExposure.status !== "ok"
+                          ? `${entity === "All" ? money(stockCoverage.measured) : `${entity}'s ${money(totMV)}`} of companies the statements report directly. The fund look-through ${rowExposure.status === "loading" ? "is still loading" : "store did not answer"}, so what is held inside the funds is not in this figure — that is a fact about the fetch, not about the book.`
+                          /* UNDER AN ENTITY FILTER THE PARTITION BELOW IS NOT THIS
+                             FIGURE'S (Stage 10fz). It is struck over the whole
+                             scope, and the cell now sums that entity's own rows and
+                             the look-through of that entity's own funds — so the
+                             hover says what the figure is and leaves the whole-book
+                             partition to the unfiltered table rather than widening
+                             the cell it sits on. */
+                          : entity !== "All"
+                          ? `${entity}'s companies alone: ${money(totMV)} the statements report directly, and ${money(sum(rows.map((r) => r.viaFunds ?? 0)))} DERIVED from what ${entity}'s own fund holdings disclose line by line — a fund in another member's name adds nothing here. Clear the Entity filter for where the rest of the book sits.`
                           : `This table covers ${money(stockCoverage.total)} of the ${money(stockCoverage.nav)} book`
                             + ` — ${money(stockCoverage.measured)} the statements report directly, and ${money(stockCoverage.derived)} DERIVED`
                             + ` from what ${stockCoverage.fundsRead} of your ${stockCoverage.considered} fund holdings disclose line by line`
@@ -5192,7 +5319,9 @@ export function PortfolioMonitor() {
                             so the check reads it without a visible sentence. */
                         <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${onCost ? changeColor(totalRet) : "text-slate-500"}`}
                           title={onCost && totalRet !== null
-                            ? [returnSetLine, feedLive ? LIVE_CELL : ""].filter(Boolean).join(" ")
+                            // THE BASIS, EXITS INCLUDED (Stage 10fz): `fifoBasisNote` names
+                            // what the exited holdings and mandates put in the figure.
+                            ? [returnSetLine, fifoBasisNote(totFifoCosted, money) ? `${fifoBasisNote(totFifoCosted, money)}.` : "", feedLive ? LIVE_CELL : ""].filter(Boolean).join(" ")
                             : onCost && feedLive ? LIVE_CELL : undefined}
                           {...(onCost && totalRet !== null
                             ? { "data-footer-return-set": `${footStruckLines}/${footCover.lines}`, "data-footer-return-set-text": returnSetLine }
@@ -5204,7 +5333,7 @@ export function PortfolioMonitor() {
                                 ? `every holding in this table that reports a cost is ${AT_COST_RETURN}`
                                 : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row")} />
                             : feedLive ? fmtPct(totalRet, { sign: true })
-                            : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                            : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}${totFifoCosted.income !== null ? ` + ${money(totFifoCosted.income, true)} dividends` : ""}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${exitedNote(totFifoCosted, money) ? ` · ${exitedNote(totFifoCosted, money)}` : ""}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                         </td>
                       )];
                     })),
@@ -5500,9 +5629,9 @@ function venuesOf(ps: Position[], accIdx: AccountIndex, valueDate: (p: Position)
         : xs.some((x) => x.depositoryUnits) ? depositoryUnitsGist(xs) : null,
       live: xs.every((x) => x.live),
       dayChangePct: xs[0].dayChangePct ?? null,
-      heldSince: xs.every((x) => x.heldSince)
-        ? xs.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), xs[0].heldSince!)
-        : null,
+      // The oldest start where every line has one, and the CAGR gate's purchase
+      // facts — one rule with the row above (`clubbedPurchase`, Stage 10fz).
+      ...clubbedPurchase(xs),
       valuedAt: commonValueDate(xs.map(valueDate)),
       assetClass: xs[0].assetClass,
       investedOn: investedOnOf(xs),

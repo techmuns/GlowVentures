@@ -35,7 +35,7 @@
  * that record starts there (`accountInvestedOn`). That date is never lent to
  * the shares inside it — those are the manager's purchases, dated by its trades.
  */
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS, BOOK_POSITION_TRANCHES } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_HOLDING_TRADES, BOOK_HOLDING_LOTS, BOOK_POSITIONS, BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import { callDatesByHolding, trancheKey } from "./tranches";
 import { fmtDate } from "./format";
 import type { Account, HoldingTrade, Position } from "./types";
@@ -110,7 +110,13 @@ function lineDates(p: Position): LineDates | null {
   const own = BOOK_POSITION_TRANCHES[trancheKey(p.accountId, p.securityKey)];
   const ins = own?.moves.filter((m) => m.direction === "in").map((m) => m.date) ?? [];
   if (ins.length) return { dates: ins, source: "allotments" };
-  if (p.heldSince) return { dates: [p.heldSince], source: "lots" };
+  if (p.heldSince) {
+    const lots = BOOK_HOLDING_LOTS[trancheKey(p.accountId,p.securityKey)];
+    if (lots?.length && p.quantity != null && lots.every(l=>l.quantity != null)
+      && Math.abs(lots.reduce((n,l)=>n+l.quantity!,0)-p.quantity)<=.0005)
+      return {dates:lots.map(l=>l.date),source:"lots"};
+    return { dates: [p.heldSince], source: "lots" };
+  }
   // The surviving buys' own dates are on BOOK_HOLDING_TRADES; the record keeps
   // their first, last and count, which is all a cell needs.
   const held = p.tradeRecord?.held;
