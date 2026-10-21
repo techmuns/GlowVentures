@@ -9507,6 +9507,7 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_15644806 (1).pdf",
   "pages": 9,
   "sections": [
+   "schemeLots",
    "holdings",
    "pages"
   ],
@@ -9517,6 +9518,12 @@
   "fy": "2026-10-01",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_15644806 (1).pdf",
   "sheets": [
+   {
+    "key": "schemeLots",
+    "name": "Scheme-level unit ledger",
+    "rows": 2,
+    "cols": 11
+   },
    {
     "key": "holdings",
     "name": "holdings",
@@ -9544,6 +9551,7 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_15725046 (1).pdf",
   "pages": 6,
   "sections": [
+   "schemeLots",
    "holdings",
    "pages"
   ],
@@ -9554,6 +9562,12 @@
   "fy": "2026-10-01",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_15725046 (1).pdf",
   "sheets": [
+   {
+    "key": "schemeLots",
+    "name": "Scheme-level unit ledger",
+    "rows": 4,
+    "cols": 11
+   },
    {
     "key": "holdings",
     "name": "holdings",
@@ -9581,6 +9595,7 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_16002141 (1).pdf",
   "pages": 8,
   "sections": [
+   "schemeLots",
    "holdings",
    "pages"
   ],
@@ -9591,6 +9606,12 @@
   "fy": "2026-10-01",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_16002141 (1).pdf",
   "sheets": [
+   {
+    "key": "schemeLots",
+    "name": "Scheme-level unit ledger",
+    "rows": 2,
+    "cols": 11
+   },
    {
     "key": "holdings",
     "name": "holdings",
@@ -9618,6 +9639,7 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_K_7125255 (20).pdf",
   "pages": 3,
   "sections": [
+   "schemeLots",
    "holdings",
    "pages"
   ],
@@ -9628,6 +9650,12 @@
   "fy": "2026-10-05",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_K_7125255 (20).pdf",
   "sheets": [
+   {
+    "key": "schemeLots",
+    "name": "Scheme-level unit ledger",
+    "rows": 20,
+    "cols": 11
+   },
    {
     "key": "holdings",
     "name": "holdings",

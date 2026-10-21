@@ -1,0 +1,70 @@
+import assert from "node:assert/strict";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_RECOVERED_COSTS } from "../../data/glowData";
+import { shareCandidates, depositoryShareHoldings } from "../depositoryShares";
+import { quoteSymbolFor, type QuoteFeed } from "../quotes";
+import type { ActionFeed } from "../corporateActions";
+import { fifoReturnPct } from "../../../shared/fifo.mjs";
+
+const near = (got: number | null | undefined, want: number) =>
+  assert.ok(typeof got === "number" && Math.abs(got - want) < .02, `${got} != ${want}`);
+assert.equal(BOOK_RECOVERED_COSTS.length, 20, "only exact owner/ISIN/quantity matches are recoverable");
+const icici = BOOK_POSITIONS.filter(p => p.accountId === "icici-bank-nsdl-demat-49794950");
+const recovered = icici.filter(p => p.recoveredCost);
+assert.equal(recovered.length, 9);
+const expected: Record<string, [number, number]> = {
+  INE647U01026: [94967, 93857991], INE212S01015: [180185, 176878881],
+  INE12E301017: [262125, 16277250], INE0LGX01024: [212000, 69684400],
+  INE00YJ01010: [116979, 75000350], INE1H7V01011: [59000, 10030000],
+  INE0NAZ01010: [187778, 84500100], INE00GK01023: [138462, 10000120],
+  INE0ZOL01023: [44643, 4642872],
+};
+for (const p of recovered) {
+  const [units, cost] = expected[p.isin!];
+  assert.equal(p.quantity, units); near(p.costBasis, cost); near(p.avgCost, cost / units);
+  near(p.marketValue, p.currentPrice! * units);
+  assert.equal(p.costBasisSource, "supplementary-record");
+  assert.ok(p.recoveredCost!.evidence.every(e => e.rows.length > 0 && e.sheet && e.path.startsWith("source/")));
+  near(p.returnPct, fifoReturnPct(p.marketValue, cost, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived)!);
+}
+assert.equal(BOOK_ACCOUNTS.find(a => a.accountId === recovered[0].accountId)!.asOf, "2026-03-31");
+const ema = recovered.find(p => p.isin === "INE0ZOL01023")!;
+assert.equal(ema.realizedPnL, null, "a payment register does not establish realised income");
+assert.equal(ema.dividendReceived, null);
+const yash = recovered.find(p => p.isin === "INE00GK01023")!;
+assert.equal(yash.quantity, 138462, "unverified June disposals never advance the March snapshot");
+
+const candidates = shareCandidates();
+assert.equal(candidates.filter(p => p.recoveredCost).length, 11);
+const infinium = candidates.find(p => p.isin === "INE0MRE01011")!;
+assert.equal(infinium.quantity, 8000); near(infinium.costBasis, 2646660);
+near(infinium.realizedPnL, -88917.69); near(infinium.costOfUnitsSold, 330630);
+for (const isin of ["INE918Z01012", "INE0LGX01024", "INE531F01023", "INE1CDF01017"]) {
+  const p = candidates.find(p => p.isin === isin)!;
+  assert.ok(p, `unresolved ${isin} stays recorded`);
+  assert.equal(p.costBasis, null, "later receipts or different quantities need original lots");
+}
+// Prove the recovered lots reach the live table, survive pricing and still
+// include realised FIFO gain. This feed is a test fixture, not a market quote.
+const symbol = quoteSymbolFor(infinium)!;
+const feed: QuoteFeed = { asOf: "2026-10-21T08:00:00Z", missing: [], pending: [], fresh: 1, stale: 0,
+  quotes: { [symbol]: { price: 400, prevClose: 390, ageS: 0, source: "upstox", open: null,
+    dayLow: null, dayHigh: null, low52: null, high52: null, marketCap: null, volume: null, yearChangePct: null } } };
+const actions: ActionFeed = { version: 1, capturedAt: feed.asOf, requestedFrom: "2020-01-01",
+  requestedTo: "2026-10-21", verifiedThrough: "2026-10-21", symbols: [symbol], isins: [infinium.isin!], sourceUrl: "test", rows: [] };
+const live = depositoryShareHoldings(feed, actions, [infinium])[0];
+assert.ok(live?.live); assert.equal(live.quantity, 8000); near(live.avgCost, 2646660 / 8000);
+near(live.returnPct, ((3200000 - 2646660 - 88917.69) / 2977290) * 100);
+
+const fund = (account: string, key: string) => BOOK_POSITIONS.find(p => p.accountId.endsWith(account) && p.securityKey.includes(key))!;
+near(fund("15644806", "balanced").costBasis, 25000000);
+near(fund("16002141", "balanced").costBasis, 15000000);
+near(fund("7125255", "large").costBasis, 3360937);
+const overnight = fund("15725046", "overnight");
+near(overnight.costBasis, 142843.07); near(overnight.realizedPnL, 869249.95);
+near(overnight.costOfUnitsSold, 59130750.05);
+near(overnight.returnPct, fifoReturnPct(overnight.marketValue, overnight.costBasis, overnight.realizedPnL,
+  overnight.costOfUnitsSold, overnight.dividendReceived)!);
+assert.ok(overnight.returnPct! < 2, "HPR includes the redeemed lots rather than dividing all gain by the tiny remaining cost");
+for (const p of BOOK_POSITIONS.filter(p => p.costBasis != null && p.quantity! > 0 && !p.valuedAtCost))
+  assert.ok(p.avgCost != null, `${p.security} has a derivable per-unit cost`);
+console.log("Recovered costs: exact quantities, March cutoff, FIFO sales, live overlay, four folios and honest unresolved balances passed");

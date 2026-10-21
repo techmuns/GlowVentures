@@ -133,7 +133,7 @@ const MIRAE_VALUE = /Current Value\s*:?\s*\(?[`₹]?\)?\s*([\d,]+\.?\d*)/i;
 const MIRAE_COST = /Investment Value\s*:?\s*\(?[`₹]?\)?\s*([\d,]+\.?\d*)/i;
 const MIRAE_NAV = /NAV\s*:?\s*\(?[`₹]?\)?\s*([\d,]+\.?\d*)\s*\(as on\s*(\d{2}\/\d{2}\/\d{4})\)/i;
 
-function readBlockLayout(lines, source) {
+function readBlockLayout(lines, source, warnings) {
   const out = [];
   const heads = lines.map((l, i) => (BLOCK_HEAD.test(l) ? i : -1)).filter((i) => i >= 0);
   const seen = new Set();
@@ -175,6 +175,78 @@ function readBlockLayout(lines, source) {
       priceAsOn: toIso(v[2]),
       source,
     }));
+  }
+  // The block supplies the ISIN; the Account Summary supplies its cost. Join
+  // only when units, NAV, NAV date and value all identify exactly one block.
+  const summaryStart = lines.findIndex((l) => /^Account Summary as on/i.test(l));
+  const summaryEnd = heads.find((i) => i > summaryStart);
+  if (summaryStart >= 0 && summaryEnd !== undefined) {
+    const summary = lines.slice(summaryStart, summaryEnd).join(" ");
+    const tail = /(\d{2}-[A-Za-z]{3}-\d{4})\s+([\d,]+\.\d+)\s+(?:NA\s+)?([\d,]+\.\d{3})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})/g;
+    for (const m of summary.matchAll(tail)) {
+      const [date, nav, units, cost, value] = [toIso(m[1]), num(m[2]), num(m[3]), num(m[4]), num(m[5])];
+      const hits = out.filter((h) => h.priceAsOn === date && h.quantity === units
+        && h.marketPrice === nav && Math.abs(h.printed.marketValue - value) <= .01);
+      if (hits.length !== 1) {
+        warn(warnings, "block-summary-cost-not-joined", `Account Summary cost ${cost}: ${units} units at ${nav} on ${date}, value ${value}, matches ${hits.length} scheme blocks`);
+        continue;
+      }
+      hits[0].totalCost = cost;
+    }
+  }
+  return out;
+}
+
+/** Full purchase/redemption ledger for the costed CAMS scheme blocks. */
+function costedBlockFlows(lines, holdings, warnings) {
+  const blocks = new Map(); let current = null;
+  for (const line of lines) {
+    const head = BLOCK_HEAD.exec(line);
+    if (head) { current = head[2]; if (!blocks.has(current)) blocks.set(current, []); }
+    else if (current) blocks.get(current).push(line);
+  }
+  const out = [];
+  for (const h of holdings.filter((h) => h.totalCost > 0 && h.quantity > 0)) {
+    const rows = blocks.get(h.isin);
+    if (!rows) continue;
+    const opening = /Opening (?:Unit )?Balance as on (\d{2}\/\d{2}\/\d{4})\s+([\d,]+\.\d{3})/.exec(rows.join("\n"));
+    if (!opening || num(opening[2]) !== 0) continue; // no invented opening cost
+    const flows = []; let balance = 0, failed = null;
+    for (let i = 0; i < rows.length; i++) {
+      const line = rows[i];
+      const dated = /^(\d{2}\/\d{2}\/\d{4})\s+(.*)$/.exec(line);
+      if (!dated) continue;
+      const description = dated[2];
+      if (/^\*{3}(?:KYC|Address|Power of Attorney|Change of Broker|Registration)/i.test(description)) continue;
+      const tail = /([\d,]+\.\d+)\s+(\(?[\d,]+\.\d+\)?)\s+([\d,]+\.\d+)\s+(\(?[\d,]+\.\d{3}\)?)\s+([\d,]+\.\d{3})\s*$/.exec(description);
+      if (!tail) { failed = `unread dated row ${line}`; break; }
+      const label = description.slice(0, tail.index).trim();
+      const buy = /^(?:Net Purchase|Purchase|Switch[- ]In)\b/i.test(label);
+      const sell = /^\*?(?:Redemption|Switch[- ]Out)\b/i.test(label);
+      if (!buy && !sell) { failed = `unsupported movement ${label}`; break; }
+      const amount = num(tail[2]), units = num(tail[4]), after = num(tail[5]), nav = num(tail[3]);
+      if (![amount, units, after, nav].every(Number.isFinite) || (buy ? units <= 0 || amount <= 0 : units >= 0 || amount >= 0)
+        || Math.abs(balance + units - after) > .0005
+        || Math.abs(Math.abs(amount) - Math.abs(units) * nav) > .0005 * nav + .005 * Math.abs(units) + .02) {
+        failed = `amount/NAV or running units do not tie on ${dated[1]}`; break;
+      }
+      // Net Purchase prints gross/stamp BEFORE it; switch-ins print stamp AFTER.
+      const nearby = /^Net Purchase/i.test(label) ? rows.slice(Math.max(0, i - 2), i) : rows.slice(i + 1, i + 2);
+      const stamp = /Less:\s*Stamp Duty\s+([\d,]+\.\d{2})/.exec(nearby.join(" "));
+      const charge = buy && stamp ? num(stamp[1]) : null;
+      const gross = /Gross Purchase(?: Physical)?\s+([\d,]+\.\d{2})/.exec(nearby.join(" "));
+      const paid = buy ? Math.round((amount + (charge ?? 0)) * 100) / 100 : amount;
+      if (gross && Math.abs(num(gross[1]) - paid) > .01) { failed = `gross/net/stamp do not tie on ${dated[1]}`; break; }
+      flows.push(makeCashFlow({ date: toIso(dated[1]), security: h.security, isin: h.isin,
+        kind: buy ? "contribution" : "withdrawal", description: label, amount: paid,
+        netAmount: amount, expenses: charge, units, balance: after, notes: "Full scheme ledger from nil opening; fund switches are scheme-level purchases/sales, not fresh external family capital" }));
+      balance = after;
+    }
+    if (failed || Math.abs(balance - h.quantity) > .0005) {
+      warn(warnings, "block-ledger-not-reconciled", `${h.security}: ${failed ?? `ledger closes at ${balance}, holding ${h.quantity}`}`);
+      continue;
+    }
+    out.push(...flows);
   }
   return out;
 }
@@ -855,7 +927,7 @@ export function extract({ grid, meta }) {
 
   // ── the holdings, whichever layout this AMC uses ──────────────────────────
   const holdings = [
-    ...readBlockLayout(lines, source),
+    ...readBlockLayout(lines, source, warnings),
     ...readAbslLayout(lines, source),
     ...readMiraeLayout(lines, source, warnings),
     ...readIciciLayout(lines, source),
@@ -870,6 +942,7 @@ export function extract({ grid, meta }) {
   // dated, with its amount, NAV, units and running balance (and the gross and
   // stamp duty, or STT, beside it) — published only where all of them tie. The
   // CAMS listing prints its daily IDCW reinvestments the same way.
+  const blockFlows = costedBlockFlows(lines, holdings, warnings);
   const cashFlows = [
     ...iciciLedgerFlows(lines, holdings, warnings),
     ...camsListingFlows(lines, holdings, warnings),
@@ -932,6 +1005,11 @@ export function extract({ grid, meta }) {
     ...(cashFlows.length ? { cashFlows } : {}),
     excludedFromBook,
     sections: {
+      // Kept as a scheme ledger, apart from account capital. A switch from
+      // another scheme is not new external money into this family folio.
+      ...(blockFlows.length ? { schemeLots: { name: "Scheme-level unit ledger",
+        rows: [["date", "security", "securityKey", "isin", "kind", "description", "amount", "netAmount", "expenses", "units", "balance"],
+          ...blockFlows.map((f) => [f.date, f.security, f.securityKey, f.isin, f.kind, f.description, f.amount, f.netAmount, f.expenses, f.units, f.balance])] } } : {}),
       holdings: {
         name: "holdings",
         rows: [["isin", "scheme", "units", "nav", "navDate", "invested", "currentValue"],

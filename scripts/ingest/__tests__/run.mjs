@@ -30,6 +30,8 @@ const SUITES = [
   { name: "nsdlPriceDate", file: "nsdlPriceDate.test.mjs", required: true },
   { name: "neoFlows", file: "neoFlows.test.mjs", required: true },
   { name: "mfPurchase", file: "mfPurchase.test.mjs", required: true },
+  { name: "blockCosts", file: "blockCosts.test.mjs", required: true },
+  { name: "costRecovery", file: "holdingCostRecovery.test.mjs", required: true },
   { name: "iciciFolio", file: "iciciFolio.test.mjs", required: true },
   { name: "pmsReaders", file: "pmsReaders.test.mjs", required: true },
   { name: "pmsOctober", file: "pmsOctober.test.mjs", required: true },

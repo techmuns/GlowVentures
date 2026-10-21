@@ -1,0 +1,57 @@
+{
+ "name": "Scheme-level unit ledger",
+ "rows": [
+  [
+   "date",
+   "security",
+   "securityKey",
+   "isin",
+   "kind",
+   "description",
+   "amount",
+   "netAmount",
+   "expenses",
+   "units",
+   "balance"
+  ],
+  [
+   "2020-03-12",
+   "HDFC Overnight Fund - Direct Plan - Growth Option",
+   "hdfc-overnight-fund-direct-plan-growth-option",
+   "INF179KB1HT1",
+   "contribution",
+   "Switch-In - From HDFCLiquid- DP - Growthoption",
+   59273593.12,
+   59273593.12,
+   null,
+   19993.827,
+   19993.827
+  ],
+  [
+   "2020-06-11",
+   "HDFC Overnight Fund - Direct Plan - Growth Option",
+   "hdfc-overnight-fund-direct-plan-growth-option",
+   "INF179KB1HT1",
+   "withdrawal",
+   "Switch-Out - To HDFC Arbitrage Fund - WP-DP-Growth",
+   -30000000,
+   -30000000,
+   null,
+   -10047.265,
+   9946.562
+  ],
+  [
+   "2020-12-13",
+   "HDFC Overnight Fund - Direct Plan - Growth Option",
+   "hdfc-overnight-fund-direct-plan-growth-option",
+   "INF179KB1HT1",
+   "withdrawal",
+   "Redemption - Direct Credit - HDFC",
+   -30000000,
+   -30000000,
+   null,
+   -9898.379,
+   48.183
+  ]
+ ]
+}

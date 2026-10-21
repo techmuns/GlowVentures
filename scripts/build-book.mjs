@@ -34,6 +34,8 @@ import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
 import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
 import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
+import { recoverHoldingCosts, recoveryReport } from "./lib/recoverHoldingCosts.mjs";
+import { applyRecoveredCost } from "../shared/recoveredCosts.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -159,7 +161,12 @@ function loadArchive() {
   return fs.readdirSync(AUDIT_DIR).sort()
     .map((dir) => path.join(AUDIT_DIR, dir, "document.json"))
     .filter((f) => fs.existsSync(f))
-    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")))
+    .map((f) => {
+      const doc = JSON.parse(fs.readFileSync(f, "utf8"));
+      const lots = path.join(path.dirname(f), "schemeLots.json");
+      if (fs.existsSync(lots)) doc.sections = { schemeLots: JSON.parse(fs.readFileSync(lots, "utf8")) };
+      return doc;
+    })
     .filter((d) => d.status !== "failed");
 }
 
@@ -3158,8 +3165,18 @@ function build(archived) {
     };
 
     /** FIFO over the fund's own unit record, where anything was sold or switched. */
-    const fundFifo = fifoFromCashFlows(dated.cashFlows);
-    const unitRecord = dated.cashFlows;
+    const schemeRows = allIssues.filter((d) => !asOf || !d.asOf || d.asOf <= asOf).flatMap((d) => {
+      const rows = d.sections?.schemeLots?.rows ?? [];
+      return rows.slice(1).map((r) => Object.fromEntries(rows[0].map((k, i) => [k, r[i]])));
+    });
+    const schemeSeen = new Set();
+    const schemeUnits = schemeRows.filter((r) => {
+      const key = JSON.stringify([r.securityKey, r.date, r.kind, r.units, r.amount, r.balance]);
+      if (schemeSeen.has(key)) return false;
+      schemeSeen.add(key); return true;
+    });
+    const unitRecord = [...dated.cashFlows, ...schemeUnits];
+    const fundFifo = fifoFromCashFlows(unitRecord);
     if (fundFifo?.reason) notes.push(`account ${accountNo}: FIFO not run over the fund's unit record — ${fundFifo.reason}; the statement's own cost stands`);
 
     const costFor = (key, quantity) => {
@@ -3461,7 +3478,8 @@ function build(archived) {
            */
           realizedPnL = 0;
           costOfUnitsSold = 0;
-          fifoSwitchOnly.push({ accountId, securityKey: h.securityKey, fifoCost: r2(fifoCls.costHeld) });
+          if (fifoCls.lots.some((l) => l.carriedFrom))
+            fifoSwitchOnly.push({ accountId, securityKey: h.securityKey, fifoCost: r2(fifoCls.costHeld) });
         } else if (!short.length && ties) {
           const fifoCost = r2(fifoCls.costHeld);
           if (!isNum(costBasis) || Math.abs(fifoCost - costBasis) > 1) {
@@ -3601,7 +3619,7 @@ function build(archived) {
          */
         marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security, securityKey: h.securityKey }, acctForPositions),
         quantity: h.quantity,
-        avgCost: h.unitCost,
+        avgCost: h.unitCost ?? (isNum(costBasis) && h.quantity > 0 ? costBasis / h.quantity : null),
         currentPrice: h.marketPrice,
         costBasis,
         /**
@@ -4834,11 +4852,17 @@ function build(archived) {
     delete shareMovements[keys[0]];
   }
 
+  const holdingCostRecovery = recoverHoldingCosts({ root: ROOT, accounts, positions,
+    unvalued: unvaluedHoldings, shareMovements, docs });
+  for (const p of positions) Object.assign(p, applyRecoveredCost(p, holdingCostRecovery.records));
+  notes.push(`cost recovery: ${holdingCostRecovery.records.length} exact account/ISIN/quantity records from the saved workbooks; `
+    + `${holdingCostRecovery.unresolved.length} recorded equity balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.`);
+
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
       historicalNavs: JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
-    capitalMoves, positionTranches, shareMovements,
+    capitalMoves, positionTranches, shareMovements, holdingCostRecovery,
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
     excludedAccounts, bankAccounts, unvaluedHoldings, separateInvestments,
@@ -4919,7 +4943,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
+  L.push("  RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -4934,6 +4958,9 @@ function emit(book) {
   L.push(`export const BOOK_OWNERS = ${j(book.owners)};`);
   L.push("");
   L.push(`export const BOOK_POSITIONS: Position[] = ${j(book.positions)};`);
+  L.push("");
+  L.push("/** Supplementary source costs, accepted only for the exact account, ISIN, date and unit balance. No valuation or quantity overrides. */");
+  L.push(`export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = ${j(book.holdingCostRecovery.records)};`);
   L.push("");
   L.push("/**");
   L.push(" * HELD, AND VALUED BY NO STATEMENT — a QUANTITY, never a value, and in no total.");
@@ -5631,6 +5658,7 @@ fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, emit(book));
 fs.mkdirSync(path.dirname(REPORT), { recursive: true });
 fs.writeFileSync(REPORT, report(book));
+fs.writeFileSync(path.join(path.dirname(REPORT), 'COST-RECOVERY.md'), recoveryReport(book.holdingCostRecovery, book.accounts));
 const returnCoverage = returnCoverageReport(book, docs);
 fs.writeFileSync(path.join(path.dirname(REPORT), 'RETURN-COVERAGE.md'), returnCoverage.markdown);
 
