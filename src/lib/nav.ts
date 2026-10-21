@@ -1,6 +1,6 @@
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
-  Activity, History, Table2, Calculator, Gauge, Handshake, Cable, Library,
+  Activity, Table2, Calculator, Gauge, Handshake, Cable, Library,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -56,12 +56,14 @@ export const NAV: readonly NavEntry[] = [
   // twice.
   { to: "/audit", label: "Data Audit", icon: Table2, group: "Admin" },
   // THE SOURCE STATEMENTS, ONE FOLDER PER PROVIDER. Where Data Audit opens one
-  // document's cells and Upload History charts the dated NAVs, this names every
-  // statement the book is built from and the file type each provider sends — the
-  // family's own request for a place to see, and later drop, each provider's
-  // statements. It reads the same `public/audit/manifest.json` as Data Audit.
+  // document's cells, this names every statement the book is built from and the
+  // file type each provider sends — and is where a new one is uploaded, files or
+  // whole folders, each filed in its provider's folder by the intake run. It
+  // reads the same `public/audit/manifest.json` as Data Audit.
+  //
+  // UPLOAD HISTORY WAS REMOVED at the family's request (21 Oct 2026); its
+  // address forwards here (App.tsx).
   { to: "/statements", label: "Statement Library", icon: Library, group: "Admin" },
-  { to: "/history", label: "Upload History", icon: History, group: "Admin" },
 ];
 
 export const EXTRAS_GROUP = EXTRAS;

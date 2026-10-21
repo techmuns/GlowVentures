@@ -42,7 +42,7 @@ async function scrollToEnd(table) {
 }
 try {
   await assertTableHeaderFixture(browser,base);
-  for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/history']) {
+  for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/statements']) {
     const page = await browser.newPage({ viewport: { width:1440, height:1000 } });
     const requests=[], errors=[];
     page.on('request', r => requests.push(new URL(r.url()).pathname));

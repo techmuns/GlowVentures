@@ -204,6 +204,11 @@ for (const { acc, e, rows } of missing.values()) {
 }
 
 // ── Report ───────────────────────────────────────────────────────────────────
+// The statement intake (`scripts/ingest/intake-uploads.mjs`) asks for the
+// findings as data, so it can hold back exactly the uploaded file each names.
+if (process.env.GLOW_CHECK_READS_JSON) {
+  fs.writeFileSync(process.env.GLOW_CHECK_READS_JSON, JSON.stringify({ problems }, null, 1) + "\n");
+}
 const counts = manifest.reduce((c, e) => ({ ...c, [e.status]: (c[e.status] ?? 0) + 1 }), {});
 const accepted = Object.keys(ACCEPTED_UNREAD).length;
 console.log(`check:reads — ${manifest.length} document(s): ${counts.ok ?? 0} read, ${counts.partial ?? 0} partial, `
