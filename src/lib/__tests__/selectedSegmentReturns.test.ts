@@ -69,3 +69,8 @@ for (const period of ['fytd', 'mtd', 'ytd', 'y1', 'y2', 'y3'] as const) {
 assert.ok(new Set(snapshots.map(s => s.gain)).size >= 3, 'actual archive changes with the selected period');
 console.log(snapshots);
 console.log('Selected attribution periods, measures, covered totals, exits, gaps and unsplit accounts passed.');
+
+// Quotes change display values, never a historical return or its closing date.
+const quoted = selectedSegmentReturns([pos({ marketValue: 999 }), noCost], [], [acct('a')], 'security', { ...sel, inception: true }, () => null, [pos()]);
+near(quoted.total.value, 1119); near(quoted.total.gain, 20); near(quoted.total.returnPct, 20);
+assert.equal(quoted.total.missing.length, 1); near(quoted.closingValue, 120);

@@ -51,11 +51,18 @@ export function sinceInvestmentUnits(current: readonly Position[], exited: reado
 }
 
 export function selectedSegmentReturns(current: readonly Position[], exited: readonly Position[], accounts: Account[],
-  axis: SegmentAxis, selection: ReturnSelection, sectorOf: SectorLookup = () => null) {
+  axis: SegmentAxis, selection: ReturnSelection, sectorOf: SectorLookup = () => null, calculationCurrent: readonly Position[] = current) {
   const idx = accountIndex(accounts), seg = segmentOf(axis, idx, sectorOf);
   const absoluteInception = selection.inception && selection.type === 'absolute';
   let units: ReturnUnit[], missing: ReturnGap[];
-  if (absoluteInception) ({ units, missing } = sinceInvestmentUnits(current, exited, accounts));
+  if (absoluteInception) {
+    ({ units, missing } = sinceInvestmentUnits(calculationCurrent, exited, accounts));
+    const recorded = new Set(calculationCurrent.map(holdingKey));
+    for (const p of current.filter(p => !recorded.has(holdingKey(p)))) missing.push({ accountId: p.accountId,
+      securityKey: p.securityKey, label: `${p.security} · ${sourceLabel(idx.get(p.accountId))}`, value: p.marketValue,
+      reason: p.costBasis == null || p.costUnavailable ? 'The purchase cost is missing or has not been verified. A purchase record or broker cost report is needed.'
+        : p.hprUnavailableReason ?? 'A live price is available, but a verified purchase-cost and statement valuation record is needed to calculate this holding’s gain.' });
+  }
   else {
     missing = selection.excluded;
     units = selection.inception ? selection.inceptionRows.map(r => {

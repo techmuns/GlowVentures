@@ -22,18 +22,20 @@ const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset class', basket: 'Basket', sector: 'Sector / class', side: 'Side', security: 'Security' };
 
 export default function SegmentReturns({ selection, period }: { selection: ReturnSelection; period: PeriodKey }) {
-  const { statementPortfolio, fmtFromBase } = usePortfolio();
+  const { statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
   const view = useTableView('cio-attribution', COLS), exp = useExpanded();
   const money = (n: number, sign = false) => fmtFromBase(n, { compact: true, sign });
   // Dated returns close at statement values. Today's quote must never be backdated.
-  const positions = useMemo(() => dedupedPositions(statementPortfolio?.positions ?? []), [statementPortfolio]);
+  const positions = consolidated;
+  const statementPositions = useMemo(() => dedupedPositions(statementPortfolio?.positions ?? []), [statementPortfolio]);
+  const calculationCurrent = useMemo(() => currentHoldings(statementPositions), [statementPositions]);
   const exposure = useStockExposure(positions, axis === 'sector');
   const sectors = useMemo(() => axis === 'sector' ? companySectorIndex(positions.filter(isCompanyShare), exposure) : null, [positions, exposure, axis]);
   const current = useMemo(() => currentHoldings(positions), [positions]);
-  const exited = useMemo(() => exitedRows(positions), [positions]);
+  const exited = useMemo(() => exitedRows(statementPositions), [statementPositions]);
   const a = useMemo(() => statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
-    k => sectors?.get(k)?.sector || null) : null, [current, exited, statementPortfolio, axis, selection, sectors]);
+    k => sectors?.get(k)?.sector || null, calculationCurrent) : null, [current, exited, statementPortfolio, axis, selection, sectors, calculationCurrent]);
   if (!a) return null;
   const type = RETURN_TYPES.find(t => t.key === selection.type)!;
   const periodLabel = PERIODS.find(p => p.key === period)!.label;
@@ -48,8 +50,8 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
 
   const info = (l: SelectedLine, field: 'gain' | 'return') => {
     const total = l.key === 'total';
-    const coveredPositions = new Set(l.units.flatMap(u => u.positions));
-    const coveredValue = total ? a.coveredValue : l.positions.filter(p => coveredPositions.has(p)).reduce((s, p) => s + p.marketValue, 0);
+    const coveredPositions = new Set(l.units.flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
+    const coveredValue = total ? a.coveredValue : l.positions.filter(p => coveredPositions.has(`${p.accountId}|${p.securityKey}`)).reduce((s, p) => s + p.marketValue, 0);
     const closing = l.units.reduce((s, u) => s + u.close, 0);
     const count = new Set(l.units.map(u => u.accountId)).size;
     const value = field === 'gain' ? l.gain == null ? '—' : money(l.gain, true) : l.returnPct == null ? '—' : pct(l.returnPct);
@@ -61,7 +63,7 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
         <p>{selection.inception ? 'Since the first investment' : `Selected period: ${dates}`} · {type.label}{l.measured?.basis === 'annual' ? ' · per year' : ' · not annualised'}</p>
         {l.units.length > 0 && <>
           <p>{l.positions.length > 0 && <>The covered holdings in this row are worth <strong>{money(coveredValue)}</strong> out of {money(l.value)} in this row. </>}
-            The statement values used to close the calculation total <strong>{money(closing)}</strong>. Each statement is used on its own date.</p>
+            The dated statement values used to close the calculation total <strong>{money(closing)}</strong>. Each statement is used on its own date.</p>
           <p>{field === 'gain' ? 'Gain is the change in value after allowing for money added and taken out. For a purchase-cost record, it includes recorded sale gains and income.'
             : selection.type === 'xirr' ? 'The return allows for when money went in and came back. A period shorter than a year is shown as a return for that period.'
             : selection.type === 'cagr' ? 'This is a yearly growth rate. It needs at least a year of measured history; since investment it also needs one purchase.'
@@ -118,7 +120,7 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
     data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ''}
     data-status={axis === 'sector' && exposure.status === 'loading' ? 'loading' : 'ready'}>
     <Card pad={false} title={<>Return attribution · <span className="font-normal text-slate-400" data-seg-basis>{periodLabel} · {type.label} · {dates}</span></>}
-      subtitle="Gain and return cover the available records only. Open the info button for the amount covered and the missing records. Statement value is the full holding value; returns use the selected dates."
+      subtitle="Gain and return cover the available records only. Open the info button for the amount covered and the missing records. Value now is the full holding value, including available live prices; return calculations use dated statement values."
       right={<div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">
         <div role="tablist" aria-label="Attribute the return by" className="inline-flex flex-wrap items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
           {SEGMENT_VIEWS.map(v => <button key={v.key} type="button" role="tab" aria-selected={axis === v.key} title={v.title} data-seg-axis-option={v.key} onClick={() => setAxis(v.key)} className={btn(axis === v.key)}>{v.label}</button>)}
@@ -129,7 +131,7 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
         <thead className="border-b border-ink-700 bg-ink-800"><Tr view={view}>
           <SortHeader col="seg" view={view} align="left" pad="px-4 py-2">{HEAD[axis]}</SortHeader>
           <SortHeader col="holdings" view={view} pad="px-4 py-2">Holdings</SortHeader>
-          <SortHeader col="value" view={view} pad="px-4 py-2" title="Full holding value from the latest statements. The return calculation's own dated values are in its info card.">Statement value</SortHeader>
+          <SortHeader col="value" view={view} pad="px-4 py-2" title="Full holding value, including available live prices. The return calculation's own dated values are in its info card.">Value now</SortHeader>
           <SortHeader col="weight" view={view} pad="px-4 py-2">Weight</SortHeader>
           <SortHeader col="deployed" view={view} pad="px-4 py-2" title={selection.inception ? 'Purchase cost or money paid in, for the measured portion only' : 'Opening value plus money added during the selected period, for the measured portion only'}>{selection.inception ? 'Invested' : 'Opening + added'}</SortHeader>
           <SortHeader col="gain" view={view} pad="px-4 py-2">Gain</SortHeader>
