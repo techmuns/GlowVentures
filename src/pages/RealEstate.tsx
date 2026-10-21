@@ -84,7 +84,7 @@ export function RealEstate() {
     const f = propertyFigures(p, scope.owners);
     if (["cost", "value", "rent", "debt", "equity", "netRent"].includes(key)) return f[key as "cost"] === null ? <span title={key === "equity" ? "Needs current value and loan outstanding" : key === "netRent" ? "Needs monthly rent and monthly costs" : "Not entered"}><AbsentValue /></span> : <span title={`${shareTitle}${p.valuationDate && key === "value" ? ` Valued ${date(p.valuationDate)}.` : ""}`}>{money(f[key as "cost"])}</span>;
     switch (key) {
-      case "name": return <button type="button" onClick={() => open(p)} className="text-left font-medium text-slate-100 hover:text-champagne-400 underline decoration-ink-600 underline-offset-4">{p.name}</button>;
+      case "name": return <div className="flex items-center gap-2"><button type="button" onClick={() => open(p)} className="text-left font-medium text-slate-100 hover:text-champagne-400 underline decoration-ink-600 underline-offset-4">{p.name}</button><button type="button" aria-label={`Edit ${p.name}`} title="Edit property" className="shrink-0 text-slate-500 hover:text-champagne-400" onClick={() => { open(p); setEditing(true); }}><Pencil className="h-3 w-3" /></button></div>;
       case "location": return <span title={[p.address, p.pincode].filter(Boolean).join(", ")}>{location(p)}</span>;
       case "owners": return <span title={ownerNames(p)}>{ownerNames(p)}</span>;
       case "type": return <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ background: TYPES_COLOR[p.type] }} />{p.type}</span>;

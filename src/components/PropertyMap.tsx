@@ -42,7 +42,7 @@ export default function PropertyMap({ properties = [], onSelect, point, onPick }
       const p = group[0];
       const marker = L.marker([p.latitude!, p.longitude!], { title: group.map(p => p.name).join(", "),
         icon: L.divIcon({ className: "property-pin-wrapper", iconSize: [30, 36], iconAnchor: [15, 34],
-          html: `<span class="property-pin" style="background:${PROPERTY_COLORS[p.type] ?? PROPERTY_COLORS.Other}">${group.length > 1 ? group.length : ""}</span>` }) }).addTo(layer);
+          html: `<span class="property-pin" style="background:${PROPERTY_COLORS[p.type] ?? PROPERTY_COLORS.Other}"><span>${group.length > 1 ? group.length : ""}</span></span>` }) }).addTo(layer);
       if (group.length === 1) marker.on("click", () => callbacks.current.onSelect?.(p));
       else {
         const list = document.createElement("div"); list.className = "property-pin-list";

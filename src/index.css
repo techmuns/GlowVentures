@@ -6,6 +6,7 @@
 .property-map-picker { height: 340px; cursor: crosshair; }
 .property-pin-wrapper { background: transparent; border: 0; }
 .property-pin { display: grid; place-items: center; width: 28px; height: 28px; border: 3px solid white; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 6px #0005; color: white; font: bold 12px sans-serif; }
+.property-pin > span { transform: rotate(45deg); }
 .property-pin-list { display: grid; gap: 6px; }
 .property-pin-list button { text-align: left; text-decoration: underline; color: #43391e; padding: 3px; }
 .property-dialog { margin: auto; background: var(--chart-tooltip-bg); }
