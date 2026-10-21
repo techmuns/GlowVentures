@@ -5,19 +5,22 @@ import ExcelJS from 'exceljs';
 
 const output = path.resolve('.cache/table-export-check', String(Date.now()));
 let sequence = 0;
-export async function downloadTableWorkbook(table, label) {
+async function downloadWorkbook(button, label) {
   await fs.mkdir(output, {recursive:true});
-  const button = table.locator(':scope > caption [data-export-excel]');
-  const downloadPromise = table.page().waitForEvent('download');
+  const downloadPromise = button.page().waitForEvent('download');
   await button.click();
   const download = await downloadPromise;
   assert.match(download.suggestedFilename(), /\.xlsx$/);
   const destination = path.join(output, `${++sequence}-${label.replace(/[^a-z0-9]+/gi,'-')}.xlsx`);
   await download.saveAs(destination);
   await button.page().waitForFunction(element => !element.disabled, await button.elementHandle());
-  assert.equal(await table.locator(':scope > caption [role=alert]').count(),0);
   const book = new ExcelJS.Workbook();
   await book.xlsx.readFile(destination);
+  return book;
+}
+export async function downloadTableWorkbook(table, label) {
+  const book = await downloadWorkbook(table.locator(':scope > caption [data-export-excel]'), label);
+  assert.equal(await table.locator(':scope > caption [role=alert]').count(),0);
   assert.ok(book.getWorksheet('About'));
   return book.getWorksheet('Table');
 }
@@ -224,4 +227,23 @@ export async function assertTransactionFilterExport(page, base) {
   assert.equal(await page.locator('[data-side-filter]').getAttribute('data-side-filter'),'out');
   assert.equal(await table.locator(':scope > tbody > tr').count(),rows);
   console.log('PASS: transaction exports ignore date, side and entity filters while keeping them on screen');
+}
+
+
+/** Exercise the real page action rather than matching its variable names. */
+export async function assertPortfolioPageExport(page, base) {
+  await page.goto(base+'/monitor?members=');
+  await page.waitForLoadState('networkidle');
+  const complete = await downloadWorkbook(page.locator('button.btn-excel'),'portfolio-whole-family');
+  const target = base+'/monitor?members=ankita-jaisinghani&sector=no-such-sector';
+  await page.goto(target);
+  await page.waitForLoadState('networkidle');
+  const filtered = await downloadWorkbook(page.locator('button.btn-excel'),'portfolio-filtered');
+  for (const name of ['Holdings','Transactions']) {
+    const left = complete.getWorksheet(name), right = filtered.getWorksheet(name);
+    assert.ok(left && right, `${name} is included`);
+    assert.deepEqual(right.getSheetValues(),left.getSheetValues(),`${name}: the whole-book export ignores member and table filters`);
+  }
+  assert.equal(page.url(), target);
+  console.log('PASS: the full-portfolio action exports identical Holdings and Transactions under active filters');
 }

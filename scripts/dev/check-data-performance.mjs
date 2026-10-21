@@ -6,7 +6,7 @@ import { chromium } from 'playwright-core';
 import { installReadModelRoutes } from './read-model-api.mjs';
 import { assertStickyTableHeaders, assertTableHeaderFixture } from './table-headers.mjs';
 import { installProfileStoreFixture, assertInlineProfileEditing } from './private-profile-inputs.mjs';
-import { assertTableExportControls, assertInfiniteTableExport, assertPrivateProfileExport, assertExportRetry, assertCompleteColumnExport, assertCollapsedSectionExport, assertUnfilteredSearchExport, assertPrivateMarketFilterExport, assertMemberFilterExport, assertTransactionFilterExport, downloadTableWorkbook } from './table-excel.mjs';
+import { assertTableExportControls, assertInfiniteTableExport, assertPrivateProfileExport, assertExportRetry, assertCompleteColumnExport, assertCollapsedSectionExport, assertUnfilteredSearchExport, assertPrivateMarketFilterExport, assertMemberFilterExport, assertTransactionFilterExport, assertPortfolioPageExport, downloadTableWorkbook } from './table-excel.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const capture = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
@@ -169,6 +169,7 @@ try {
     await assertMemberFilterExport(filterPage,base,route,selector);
   }
   await assertTransactionFilterExport(filterPage,base);
+  await assertPortfolioPageExport(filterPage,base);
   await filterPage.close();
   // A feed larger than both old insider cutoffs (40 UI / 150 client rows).
   assert.ok(insiderPath, 'the Monitor resolves a company with a known symbol');

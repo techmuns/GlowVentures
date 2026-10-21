@@ -12,7 +12,7 @@
 //
 // ── THE SHEET IS THE SCREEN IT EXPORTS (B-08, A-03, MSX-9/10/17/18/19/22) ───
 //
-// The page hands the export `portfolio.positions` — the book with the published
+// The page hands the export `wholePortfolio.positions` — the book with the published
 // NAV overlaid (`applyFundNavs`) and every row, closed ones included. This suite
 // builds the workbook from EXACTLY that input (the context's own pipeline, with
 // no quote feed), and holds what it writes to expectations RE-EXPRESSED here
@@ -973,24 +973,9 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   ok("...and more than one family asset class", new Set(cCells.map(String)).size > 1);
 }
 
-// ── 11. …AND THE PAGE HANDS THE SHEET THE LOADER'S WHOLE ANSWER (MSX-19) ────
-// Sections 8 and 9 hold the builder to both cases, and neither can see what the
-// page passes it. Handed `data?.txns ?? []`, the sheet loses the window and the
-// accounts it states, and an archive that did not answer exports as "no trades
-// were handed to this export" rather than as the failure it is. A source check,
-// crude on purpose: the download is not on any screen a sweep can read.
-{
-  const ROOT = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures", "../../../..");
-  const page = readFileSync(path.join(ROOT, "src/pages/PortfolioMonitor.tsx"), "utf8");
-  const call = /exportPortfolioExcel\(\s*positions\s*,\s*portfolio\.accounts\s*,\s*([^)]*)\)/.exec(page);
-  // A member scope (Stage 10di) narrows the answer to the chosen members'
-  // dealing — still the loader's whole answer for them, and still `data`
-  // itself, null included, wherever the loader answered null.
-  const arg = call?.[1].trim();
-  const scopedIsData = /const scoped = data && [^;]*: data;/.test(page);
-  ok("the Portfolio Monitor's Export hands the sheet the loader's whole answer, null included",
-     !!call && (arg === "data" || (arg === "scoped" && scopedIsData)), call ? `${arg}${arg === "scoped" ? ` (null passes through: ${scopedIsData})` : ""}` : "no exportPortfolioExcel call found");
-}
+// The page's complete-family payload and transaction metadata are checked by
+// actual downloads in scripts/dev/table-excel.mjs (assertPortfolioPageExport).
+// Keep these builder checks independent of the page's local variable names.
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");
 process.exit(fails ? 1 : 0);
