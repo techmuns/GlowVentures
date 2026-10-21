@@ -21,7 +21,7 @@ assert.equal(part.terminalValue, 116019848);
 assert.equal(part.asOf.toISOString().slice(0, 10), '2026-09-22');
 assert(part.flows.some(f => f.date.toISOString().slice(0, 10) === '2026-09-17'));
 assert(current.gaps.some(g => g.accountId === id && g.asOf === '2026-10-06' && /2026-09-22/.test(g.reason)));
-// Stage 10fb — NEVER A PARTIAL POOL. Accounts holding value without a verified
+// Stage 10fc — NEVER A PARTIAL POOL. Accounts holding value without a verified
 // record leave the book's rate absent, named; those with nothing of their own to
 // measure are outside it, not gaps in it.
 assert.equal(current.whole, false);

@@ -123,7 +123,7 @@ const empty = book();
 empty.accounts = [];
 empty.positions = [];
 assert.equal(investorPeriodReturn(empty, today, "fytd").pct, null);
-// Stage 10fb — an account the book values nowhere has nothing of its own to
+// Stage 10fc — an account the book values nowhere has nothing of its own to
 // measure, so it neither blocks nor joins the whole; one holding value without
 // a record leaves the annual rate absent and named, never a partial pool.
 const custody = book();

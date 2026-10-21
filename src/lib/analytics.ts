@@ -1062,7 +1062,7 @@ export type Bucket = {
   count: number; returnPct: number | null; weight: number;
   /** How many of `count` positions reported no cost — the rest of the bucket is still real. */
   withoutCost: number;
-  /** FIFO: the realised gain on units already sold, over the costed holdings. */
+  /** FIFO: the realised gain on units already sold and the dividends paid (Stage 10fb), over the costed holdings. */
   realised: number;
   /** FIFO: the capital behind `returnPct` — cost of units held plus cost of units sold. */
   deployed: number | null;
@@ -1101,6 +1101,8 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
     // the capital deployed too: in it, it would blend a 0% nobody measured.
     if (strikesGain(p)) {
       if (typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL)) c.realised += p.realizedPnL;
+      // …and the dividends it paid, which are what it earned too (Stage 10fb).
+      if (typeof p.dividendReceived === "number" && Number.isFinite(p.dividendReceived)) c.realised += p.dividendReceived;
       c.deployed.push((p.costBasis as number) + (typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0));
     }
     m.set(k, c);
@@ -1121,7 +1123,7 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
         realised: v.realised,
         deployed,
         // FIFO's one return, summed before it is divided: (unrealised +
-        // realised) ÷ (cost held + cost sold). Null when either side is absent
+        // realised + dividends) ÷ (cost held + cost sold). Null when either side is absent
         // — not 0, which reads as "this bucket broke even". A caller that can
         // see WHOLE mandates strikes them on their capital instead
         // (`src/lib/fifo.ts`); this roll-up has no account registry to do so.

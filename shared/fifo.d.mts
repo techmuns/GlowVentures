@@ -37,14 +37,15 @@ export declare function fifoLedger(events: FifoEvent[], opts?: { tie?: number })
 export declare function fifoForClass(ledger: FifoLedger, cls: string | null): Omit<FifoLedger, "shortfalls">;
 
 /**
- * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
- * percent. Null wherever the cost is unknown or not positive — never 0.
+ * (unrealised + realised + income) ÷ (cost of units held + cost of units sold),
+ * in percent. Null wherever the cost is unknown or not positive — never 0.
  */
 export declare function fifoReturnPct(
   marketValue: number,
   costHeld: number | null | undefined,
   realised: number | null | undefined,
   costSold: number | null | undefined,
+  income?: number | null | undefined,
 ): number | null;
 
 /**

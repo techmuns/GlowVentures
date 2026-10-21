@@ -4790,7 +4790,42 @@ cells just like the capital call cells."*
 - One split, `measuredSplit` in `src/lib/heldThrough.ts`, over the deduped set the measured cell already sums. The route is the account's engagement through `holdingRoute`/`heldRouteOf`. An account that is neither own nor PMS gets an "Other accounts" column on both pages, drawn only when the book has one (none today).
 - `check:pages`: `COL_STOCK` moves two places for the new columns. New invariants check that Direct and PMS add to Direct + PMS on the footer and every row, and that each route's footer matches the book's own figure off account engagement. A new `sectorSplit` probe opens the largest sector and checks each issuer's routes add to its Total, and that the footer ties to its rows.
 
-### Stage 10fb — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
+### Stage 10fb — EVERY RETURN CARRIES REALISED GAINS AND DIVIDENDS
+
+*"Include realized gains/losses and dividends wherever we are showing returns …
+Do not calculate returns of investments and portfolio performance solely from
+current unrealized P&L."*
+
+- **One formula:** `fifoReturnPct` (`shared/fifo.mjs`) is now (unrealised +
+  realised + income) ÷ (cost held + cost sold). Income is `Position.dividendReceived`.
+  It is passed at every call: `build-book`, `classSwitch.mjs`, the quote, NAV and
+  roll-forward overlays, and the tranche footer.
+- **Per-holding cause:** a PMS holding's cash dividends were in no per-holding
+  or partial-set return (about 165 positions moved, for example +13.66% → +15.89%).
+  An IDCW reinvestment buys units that FIFO books at the reinvested amount, so
+  the dividend was in no gain at all. ICICI's redeemed arbitrage IDCW folio moves
+  1.65% → 2.02%.
+- **Fund records:** `build-book` now reads income off the fund's own unit
+  record: an IDCW/dividend `allotment` and a `distribution`, per security in the
+  account.
+- **Aggregates:** `fifoTotals` carries `income` and puts it in `gain` and `returnPct`.
+  A whole mandate's capital bridge already holds its income, so it is never added
+  twice. `fifoBasisNote` and the `returnFormula` popover name the dividends.
+- **Hand-rolled returns now on the same basis:**
+  - `bucketBy`
+  - Return & Drawdown: tile, contributors, sectors
+  - the consolidated sheet. Per-holding "Absolute return" is the holding's FIFO
+    `returnPct`, never unrealised ÷ cost. The portfolio row is FIFO over the
+    costed rows. "Gain incl. redeemed & income" ties to it.
+- **Morning CIO's return on capital:** the private-funds leg adds the
+  distributions already paid back (`privateTotalGain`).
+- **Unchanged:** money-weighted rates already close on account values that hold
+  the dividend cash and use external flows only.
+- **Checks:** the `check-pages` re-derivations add the dividends. The
+  `corporateActions` and `heldThrough` assertions follow the new rule; a recorded
+  ₹23 dividend on ₹1,000 is +2.3%.
+
+### Stage 10fc — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
 
 *"not all accounts are being read into the dashboard. It says partial return, 2 out of 76 accounts … We do not need to show partial return anywhere on the dashboard"* — the family, 21 Oct 2026.
 

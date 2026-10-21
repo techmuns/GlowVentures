@@ -474,7 +474,9 @@ export function MorningCIO() {
     // THE SET IS `costedBookSet`'s (B-07): the tile, the allocation Total row
     // and the page the tile opens all name it on their face from this object.
     const { set: costedSet, fifo: bookFifo } = bookReturnOnCost(p, { accounts: portfolio.accounts, universe: p });
-    const embeddedGain = sumOrNull([bookFifo.gain, privateCount ? privateGain : null]);
+    // The private funds' leg carries the cash they have already returned —
+    // distributions are booked gain, not a mark (Stage 10fc).
+    const embeddedGain = sumOrNull([bookFifo.gain, privateCount ? privateTotalGain : null]);
     const deployedCapital = sumOrNull([bookFifo.deployed, privateCount ? privateInvested : null]);
     const gainPct = deployedCapital !== null && embeddedGain !== null && deployedCapital > 0
       ? (embeddedGain / deployedCapital) * 100

@@ -263,7 +263,7 @@ function withRolledForward(rows) {
       avgCost: cost === null || !(rf.quantity > 0) ? null : cost / rf.quantity,
       unrealizedPnL: unreal, realizedPnL: rf.realizedPnL, costOfUnitsSold: rf.costOfUnitsSold,
       realizedLotsAfter: 0,
-      returnPct: cost === null || !(cost > 0) || !(denom > 0) ? null : ((unreal + (rf.realizedPnL ?? 0)) / denom) * 100,
+      returnPct: cost === null || !(cost > 0) || !(denom > 0) ? null : ((unreal + (rf.realizedPnL ?? 0) + (p.dividendReceived ?? 0)) / denom) * 100,
     }];
   });
 }
@@ -1309,7 +1309,7 @@ const HELD_BOOK = (() => {
       const fin = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
       const usable = costed.filter((p) => !p.costUnavailable);
       const deployed = usable.reduce((a, p) => a + p.costBasis + fin(p.costOfUnitsSold), 0);
-      const gain = usable.reduce((a, p) => a + (Number(p.marketValue) || 0) - p.costBasis + fin(p.realizedPnL), 0);
+      const gain = usable.reduce((a, p) => a + (Number(p.marketValue) || 0) - p.costBasis + fin(p.realizedPnL) + fin(p.dividendReceived), 0);
       const fifoRet = cost !== null && pnl !== null && cost > 0 && usable.length && deployed > 0 ? (gain / deployed) * 100 : null;
       return {
         fifoRet,
@@ -3480,7 +3480,7 @@ const PM_RETURN_BOOK = (() => {
       // FIFO: the gain on the units held plus the gain on the units redeemed,
       // over what both cost — every rupee deployed into the holding.
       const soldCost = g.reduce((t, p) => t + fifoOf(p.costOfUnitsSold), 0);
-      const realised = g.reduce((t, p) => t + fifoOf(p.realizedPnL), 0);
+      const realised = g.reduce((t, p) => t + fifoOf(p.realizedPnL) + fifoOf(p.dividendReceived), 0);
       const deployed = cost == null ? null : cost + soldCost;
       const hpr = deployed != null && deployed > 0 && costCoversAll ? ((mv - cost + realised) / deployed) * 100 : null;
       // What the page printed before FIFO — value against the cost of the units
@@ -5397,6 +5397,7 @@ const FAMILY_BOOK = (() => {
         }
         deployed += p.costBasis + (isNumber(p.costOfUnitsSold) ? p.costOfUnitsSold : 0);
         if (isNumber(p.realizedPnL)) realised += p.realizedPnL;
+        if (isNumber(p.dividendReceived)) realised += p.dividendReceived;
       }
       for (const id of whole) {
         const cap = acc.get(id).capital;
@@ -5475,7 +5476,7 @@ const FAMILY_MWR = (() => {
     const latest = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS") ?? {};
     const DAY_MS = 86400000;
     const byOwner = new Map();
-    // Stage 10fb — an owner with any account holding value and no verified
+    // Stage 10fc — an owner with any account holding value and no verified
     // record has no rate at all: `{ missing }` names those accounts.
     const missingBy = new Map();
     for (const a of accounts) {
@@ -6611,7 +6612,7 @@ const FIFO_STOCK = (() => {
       if (!rows.some((r) => Number(r.quantity) > 0)) continue;
       let gain = 0, deployed = 0, unrealised = 0, cost = 0;
       for (const r of rows) {
-        gain += r.marketValue - r.costBasis + (num(r.realizedPnL) ? r.realizedPnL : 0);
+        gain += r.marketValue - r.costBasis + (num(r.realizedPnL) ? r.realizedPnL : 0) + (num(r.dividendReceived) ? r.dividendReceived : 0);
         deployed += r.costBasis + (num(r.costOfUnitsSold) ? r.costOfUnitsSold : 0);
         unrealised += r.marketValue - r.costBasis;
         cost += r.costBasis;
@@ -8976,7 +8977,8 @@ const XA_BOOK = (() => {
       for (const x of struck) {
         marketValue += x.marketValue;
         if (whole.has(x.accountId)) continue;
-        gain += x.marketValue - x.costBasis + (typeof x.realizedPnL === "number" ? x.realizedPnL : 0);
+        gain += x.marketValue - x.costBasis + (typeof x.realizedPnL === "number" ? x.realizedPnL : 0)
+          + (typeof x.dividendReceived === "number" ? x.dividendReceived : 0);
         deployed += x.costBasis + (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
       }
       for (const acct of whole) {
@@ -9178,7 +9180,9 @@ const XA_BOOK = (() => {
         // rounded: a cash sleeve's ₹0.01 of P&L is a 0.00% return, which is not
         // a gain). A NAV-priced row's is FIFO's, struck here from its fields —
         // never this file's overlaid `returnPct`, which divides by cost alone.
-        const realisedOf = (x) => (typeof x.realizedPnL === "number" ? x.realizedPnL : 0);
+        // Realised and the dividends a holding paid: the page's FIFO gain (Stage 10fc).
+        const realisedOf = (x) => (typeof x.realizedPnL === "number" ? x.realizedPnL : 0)
+          + (typeof x.dividendReceived === "number" ? x.dividendReceived : 0);
         const soldOf = (x) => (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
         const retOf = (x) => (x.navPriced
           ? ((x.marketValue - x.costBasis + realisedOf(x)) / (x.costBasis + soldOf(x))) * 100
@@ -9438,7 +9442,7 @@ const PERF_BOOK = (() => {
     }]));
     const measured = [...perAccount].filter(([, x]) => (x.stmtMV > 0 || (x.stmtMV === 0 && x.sourced)) && x.flows.length
       && x.flows.some((f) => /^opening portfolio value/i.test(f.description ?? ""))).map(([id]) => id);
-    // Stage 10fb — an account not measured is outside the whole only with nothing
+    // Stage 10fc — an account not measured is outside the whole only with nothing
     // of its own to measure: a verified nil, or no record, no statement row and
     // no opening value. Any other leaves the consolidated rate absent.
     const missing = [...perAccount].filter(([id, x]) => !measured.includes(id)
@@ -12055,7 +12059,7 @@ const COSTED_BOOK = (() => {
     let gain = 0, deployed = 0, invested = 0;
     for (const q of struck) {
       if (whole.has(q.accountId)) continue;
-      gain += q.marketValue - q.costBasis + fin(q.realizedPnL);
+      gain += q.marketValue - q.costBasis + fin(q.realizedPnL) + fin(q.dividendReceived);
       deployed += q.costBasis + fin(q.costOfUnitsSold);
       invested += q.costBasis;
     }
@@ -12837,7 +12841,7 @@ const MONITOR_BASIS_BOOK = (() => {
           continue;
         }
         if (!costed(p)) continue;
-        gain += p.marketValue - p.costBasis + (num(p.realizedPnL) ? p.realizedPnL : 0);
+        gain += p.marketValue - p.costBasis + (num(p.realizedPnL) ? p.realizedPnL : 0) + (num(p.dividendReceived) ? p.dividendReceived : 0);
         deployed += p.costBasis + (num(p.costOfUnitsSold) ? p.costOfUnitsSold : 0);
         if (num(p.realizedPnL)) realised = (realised ?? 0) + p.realizedPnL;
       }
@@ -14093,7 +14097,7 @@ const MWR_BOOK = (() => {
     let lastClose = "";
     let pooled = 0;
     const accountIds = new Set();
-    // Stage 10fb — WHOLE OR ABSENT. An account not pooled is outside the whole
+    // Stage 10fc — WHOLE OR ABSENT. An account not pooled is outside the whole
     // only if it has nothing of its own to measure: a verified nil, or no
     // record, no statement row and no opening value. Every other one is missing,
     // and any missing account leaves the book's rate absent.
@@ -34003,7 +34007,7 @@ const INVARIANTS = {
         const want = FAMILY_MWR.get(o.owner) ?? null;
         const shown = Number(/([+\-−]?\d+(?:\.\d+)?)%/.exec(r.toDateText ?? "")?.[1]?.replace("−", "-"));
         if (!want) return !Number.isFinite(shown) && !r.mwrAccounts;
-        // Never a partial pool (Stage 10fb): a dash naming every unmeasured account.
+        // Never a partial pool (Stage 10fc): a dash naming every unmeasured account.
         if (want.missing) {
           incomplete += 1;
           const got = (r.mwrAccounts ?? "").split(",").filter(Boolean).sort();

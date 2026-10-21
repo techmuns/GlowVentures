@@ -122,7 +122,7 @@ const isoOf = (d: Date) => d.toISOString().slice(0, 10);
  * account the book values nowhere — no verified record, no position and no
  * opening value — which the book's total leaves out the same way. Every other
  * account without a verified record is one a pooled return cannot cover.
- * One rule for every return surface (Stage 10fb).
+ * One rule for every return surface (Stage 10fc).
  */
 export function nothingToMeasure(statement: Portfolio, account: Portfolio["accounts"][number],
   input = accountReturnInputs(statement, account)): string | null {

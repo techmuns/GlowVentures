@@ -17,7 +17,7 @@
  * (`capitalRollup`, the Transactions card's own record). An account that cannot
  * be measured is NAMED with its reason, never blended in as zero.
  *
- * ONE RECORD, AND NEVER A PARTIAL RETURN (Stage 10fb). A dated window reads the
+ * ONE RECORD, AND NEVER A PARTIAL RETURN (Stage 10fc). A dated window reads the
  * same verified account records every other return surface reads
  * (`accountReturnRecords`) — the tab once built its own from NAV history and
  * cash-flow rows and measured 9 accounts over FYTD where 17 are verified. The

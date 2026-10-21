@@ -1310,7 +1310,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                               {h.costUnavailable || h.costBasis == null
                                                 ? <AbsentCell reason="this holding's statement reports no cost — a depository holds the shares, it did not buy them" />
                                                 : h.live ? fmtPct(h.returnPct, { sign: true })
-                                                : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
+                                                : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold, income: h.dividendReceived })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
                                             </td>
                                           </Tr>
                                         ))}
