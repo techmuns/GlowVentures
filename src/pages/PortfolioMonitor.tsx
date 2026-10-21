@@ -3987,7 +3987,7 @@ export function PortfolioMonitor() {
                   // A section closes on its band's chevron (or anywhere on the
                   // band). Where the table draws no band there is nothing to close.
                   const secKey = `${groupAxis}|${grp.key}`;
-                  const secOpen = !showBucketSections || !closedSections.has(secKey);
+                  const secOpen = allRows || !showBucketSections || !closedSections.has(secKey);
                   const visibleRows = secOpen ? sortRows(grp.rows, holdView.sort, holdAccessors).filter((r) => allRows || visibleHoldings.has(r)) : [];
                   if (secOpen && !visibleRows.length) return null;
                   return (

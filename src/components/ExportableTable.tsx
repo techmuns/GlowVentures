@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { FileSpreadsheet } from "lucide-react";
 import { readTableExport } from "@/lib/tableExport";
 
-/** Scoped to one table: exporting never grows any other table on the page. */
+/** Include every row and available column in this table's export snapshot. */
 export const TableExportAllRows = createContext(false);
 
 export function ExportableTable({ children, exportName, ...props }: Omit<TableHTMLAttributes<HTMLTableElement>, "children"> & {
@@ -51,7 +51,7 @@ export function ExportableTable({ children, exportName, ...props }: Omit<TableHT
       <div className="sticky left-0 flex w-fit flex-wrap items-center gap-2">
         <button type="button" onClick={() => { void download(); }} disabled={busy}
           data-export-excel aria-describedby={error ? errorId : undefined}
-          title="Export all matching rows with the current sort and columns, including rows not yet loaded by scrolling"
+          title="Export all matching rows and every column, including hidden columns and rows not yet loaded by scrolling"
           className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-600/30 bg-emerald-500/5 px-2.5 py-1.5 text-xs font-medium text-emerald-600 ring-focus hover:bg-emerald-500/10 disabled:opacity-50">
           <FileSpreadsheet className="h-3.5 w-3.5" />{busy ? "Exporting…" : "Export Excel"}
         </button>

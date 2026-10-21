@@ -125,7 +125,18 @@
 - **On the card:** the return is solid from 31 Jul 2026, when every valued investment is in it. Before that it is a lighter line, and no return is stated over it (Stage 10fc). The book reads −0.43% over 31 Jul → 7 Oct net of ₹49 Cr of capital (+5.81% with it). Only material capital is circled. The fold lists what joined later, what is held at cost, what has not been revalued since 31 Mar and what carries no value. The NAV ties to the statement book plus ₹61.4 L of valuations newer than the book's holdings statements. Return & Drawdown strikes its drawdown on the same series' whole-book segment. The statement series stays for its own uses, its per-step proofs now emitted (`BOOK_NAV_COVERAGE.covered[].steps`).
 - **Checks:** `test:family` suite `whole-book NAV series` (constructed books for each rule, and the real book's coverage, tie-out, capital dates and chain). `check:pages` builds the series with esbuild and re-derives the chain, the coverage partition and the NAV tie-out off `glowData.ts`. On the NAV routes its findings equal main's.
 
-### Stage 10gf — VERIFIED STATEMENT PUBLICATION AND EXACT SOURCE ROWS
+### Stage 10gf — EXCEL INCLUDES HIDDEN COLUMNS AND COLLAPSED SECTIONS
+
+- Table exports include every available column in its saved arrangement,
+  including fields hidden through Edit Columns. Headers, values and totals
+  share the complete order without changing screen preferences.
+- All matching scroll rows remain included. Closed Portfolio Monitor and
+  Private Market sections also contribute their investment rows.
+- Browser checks hide columns, reopen the workbook, compare its complete
+  schema and verify that visibility and scroll state stay intact; a collapsed
+  Private Market section is exported without opening it on screen.
+
+### Stage 10gg — VERIFIED STATEMENT PUBLICATION AND EXACT SOURCE ROWS
 
 - Added the backend contract for the upload worker: isolate extraction/builds, verify owner/account/security and format/field coverage, compare individual reconciliation findings with the verified base, retain source receipts, seal artifacts and publish an atomic Git tree through a codex PR. CI/review and deployment verification remain explicit gates; intake never directly mutates production or clears staged files.
 - The generated book retains the actual selected normalized holding pointer. Audit source links use it, and canonical data, per-field evidence and all reporting projections share one content-addressed revision. Quotes/NAVs retain independent instrument/value/time evidence. No dashboard layout changes.
