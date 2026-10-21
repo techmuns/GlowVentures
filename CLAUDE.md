@@ -127,7 +127,10 @@ One line per area; the history files explain each in depth.
   from `public/audit/`), `capitalCalls.ts`, `fundReturns.ts`, `privateBook.ts`
   (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`),
   `investmentProfiles.ts` (supplied strategy/description, matched by identity —
-  security key → ISIN → name → brand → folio; Stage 10eo).
+  security key → ISIN → name → brand → folio; Stage 10eo),
+  `investedOn.ts` (a holding's Invested on and its dated trades, every holdings
+  table; built off `Position.tradeRecord` / `BOOK_HOLDING_TRADES` from
+  `scripts/lib/holdingTrades.mjs`; Stage 10fm).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`

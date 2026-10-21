@@ -412,6 +412,31 @@ export type Position = {
    */
   heldSince: string | null;
   /**
+   * WHAT THE ACCOUNT'S OWN DATED TRADES SAY ABOUT WHEN THESE UNITS WERE BOUGHT
+   * (Stage 10fm) — present wherever the account's transaction statements reach
+   * the holding's own date, absent where they do not.
+   *
+   * `from`/`to` is that window, cut at the holding's date; `buys`/`sells` count
+   * its trades in it. `held` is the buys whose units are still held, matched
+   * first-in, first-out, and is set ONLY where the window accounts for every
+   * unit (`unaccounted === 0`); `unaccounted` is the units held before the
+   * window opened or moved in without a trade, and null where the arithmetic
+   * cannot be struck. `reason` says why `held` is null. Every trade is in
+   * `BOOK_HOLDING_TRADES`; built by `scripts/lib/holdingTrades.mjs`.
+   *
+   * Deliberately NOT `heldSince`: that field licenses an annualised return and
+   * the ST/LT split, and is set off a lot register alone.
+   */
+  tradeRecord?: {
+    from: string;
+    to: string;
+    buys: number;
+    sells: number;
+    unaccounted: number | null;
+    held: { first: string; last: string; lots: number } | null;
+    reason: string | null;
+  };
+  /**
    * ISO date the STATEMENT says its price or value is struck at — which need
    * not be its account's `asOf`: ICICI's NSDL balance is at 31 Mar 2026 and its
    * values are "Prices as on 30-Mar-2026". Present only where the statement
@@ -963,6 +988,24 @@ export type ShareMovement = {
   reason: string | null;
   /** The document this came from, for the archive. */
   source: string | null;
+};
+
+/**
+ * ONE DATED BUY OR SELL of a holding, as its account's transaction statement
+ * prints it (Stage 10fm) — `BOOK_HOLDING_TRADES`. A manager's dealing in a
+ * mandate, or the family's own in a broking account; never a fund's allotment,
+ * which is the holding's tranche record. `price`/`amount` are null where the row
+ * prints none; `amount` is the statement's own settlement figure. `boughtOn` is
+ * on a SALE only: when the units it sold were bought, from the capital gain
+ * statement's lots for that day, where they account for every unit sold.
+ */
+export type HoldingTrade = {
+  date: string;
+  side: "buy" | "sell";
+  quantity: number | null;
+  price: number | null;
+  amount: number | null;
+  boughtOn?: string[];
 };
 
 /**
