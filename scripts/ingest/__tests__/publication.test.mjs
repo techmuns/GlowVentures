@@ -10,6 +10,7 @@ import { sourceFiles, duplicateBytes } from '../prepare-delivery.mjs';
 import { checkSeal, commitDelivery } from '../publish-delivery.mjs';
 import { finalizationGate } from '../finalize-delivery.mjs';
 import { completedBotReview, deploymentContains, monitorPublication } from '../lib/intakePublication.mjs';
+import { git as repositoryGit } from '../verify-publication.mjs';
 import { extractLayout } from '../lib/layout.mjs';
 import { findTable, readRows } from '../lib/table.mjs';
 import { parseNum } from '../lib/parseNum.mjs';
@@ -167,6 +168,10 @@ test('no extracted document is never treated as proof that new uploaded bytes we
   assert.equal(duplicateBytes(files, 'base', fakeGit), false);
   const knownGit = args => args[0] === 'ls-tree' || args[0] === 'hash-object' ? 'same-blob\n' : Buffer.from('new statement');
   assert.equal(duplicateBytes(files, 'base', knownGit), true);
+});
+test('binary Git reads preserve source bytes on the CI Node runtime', () => {
+  const bytes = repositoryGit(['show', 'HEAD:.gitignore'], { encoding: null });
+  assert.ok(Buffer.isBuffer(bytes)); assert.ok(bytes.includes(Buffer.from('.cache/')));
 });
 test('upload requests reject paths outside source, missing digests and symbolic links', () => {
   const directory = fs.mkdtempSync(path.join(ROOT, '.cache/publication-test-'));

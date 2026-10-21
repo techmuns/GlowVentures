@@ -30,7 +30,7 @@ export function duplicateBytes(files, baseCommit, runGit = git) {
   const known = new Set(runGit(['ls-tree', '-r', '--format=%(objectname)', baseCommit, '--', 'source']).trim().split('\n'));
   return files.every(file => {
     const blob = runGit(['hash-object', '--no-filters', '--', file.absolute]).trim();
-    return known.has(blob) && digest(runGit(['cat-file', 'blob', blob], { encoding: 'buffer' })) === file.sha256;
+    return known.has(blob) && digest(runGit(['cat-file', 'blob', blob], { encoding: null })) === file.sha256;
   });
 }
 export function listFiles(directory) {

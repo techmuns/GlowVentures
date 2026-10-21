@@ -31,7 +31,7 @@ export function readBaseline(ref, runGit = git) {
   const manifest = JSON.parse(runGit(['show', `${commit}:public/audit/manifest.json`]));
   if (!Array.isArray(manifest) || !manifest.length || manifest.some(d => !safeKey(d.docKey))) throw new Error('Invalid baseline archive');
   const names = manifest.map(d => `${commit}:public/audit/${d.docKey}/document.json`);
-  const data = runGit(['cat-file', '--batch'], { input: names.join('\n') + '\n', encoding: 'buffer' });
+  const data = runGit(['cat-file', '--batch'], { input: names.join('\n') + '\n', encoding: null });
   const bytes = Buffer.isBuffer(data) ? data : Buffer.from(data);
   let offset = 0;
   const documents = [];
