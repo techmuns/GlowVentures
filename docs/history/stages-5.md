@@ -4825,7 +4825,7 @@ current unrealized P&L."*
   `corporateActions` and `heldThrough` assertions follow the new rule; a recorded
   ₹23 dividend on ₹1,000 is +2.3%.
 
-### Stage 10fc — RETURN ATTRIBUTION IS A SECTION OF THE RETURNS TAB, NOT A TAB
+### Stage 10fd — RETURN ATTRIBUTION IS A SECTION OF THE RETURNS TAB, NOT A TAB
 
 *"We did not have to make a return attribution as a separate tab. It is supposed to be a section inside the returns page only … also give option to select sector as a segment."*
 

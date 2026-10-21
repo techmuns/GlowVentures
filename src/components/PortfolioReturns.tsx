@@ -10,7 +10,7 @@
  * ONE COLUMN: the portfolio's card first, the benchmarks under it (Stage 10dy,
  * at the family's request), and under those the return ATTRIBUTION — which
  * category, asset class, basket, sector, side or security earned the return
- * (`SegmentReturns`, Stage 10fc: *"a section inside the returns page only"*).
+ * (`SegmentReturns`, Stage 10fd: *"a section inside the returns page only"*).
  * The panel scrolls inside itself; the page does not.
  *
  * A DATED WINDOW OPENS ON A MARKET VALUE, NEVER A COST. Each account opens on

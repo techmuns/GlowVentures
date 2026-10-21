@@ -7642,7 +7642,7 @@ const ROUTES = [
   ["cio-returns-cagr", "/cio?tab=returns&rp=inception&rtype=cagr"],
   ["cio-returns-retired", "/cio?tab=returns&rtype=twr"],
   /**
-   * Stages 10ez, 10fc — the Returns tab's attribution section, on the two axes
+   * Stages 10ez, 10fd — the Returns tab's attribution section, on the two axes
    * that split a PMS mandate across segments (and so draw the mandate
    * remainder): Sector, whose companies are placed by the exposure fetch, and
    * All Securities. Every `cio-returns` route draws it on its default axis.
@@ -19736,9 +19736,9 @@ const CIO_RETURNS_LIVE = [
 ];
 
 /**
- * Stages 10ez, 10fc — RETURN ATTRIBUTION. *"select any such segment and see how
+ * Stages 10ez, 10fd — RETURN ATTRIBUTION. *"select any such segment and see how
  * the subcategories are performing and contributing to the portfolio returns."*
- * A section of the Returns tab, never a tab of its own (10fc: *"it is supposed
+ * A section of the Returns tab, never a tab of its own (10fd: *"it is supposed
  * to be a section inside the returns page only"*). Struck on the section's own
  * `data-seg-*` handles: the axis control, and the
  * arithmetic a reader does by adding — the segments' values to the book's, the
@@ -19827,7 +19827,7 @@ const CIO_TAB_CONTROL = [
     // the order is asserted, not just the membership. The three panels the
     // family arranged (allocation, nav) and All alerts keep their places after it.
     // RETURNS SITS SECOND since Stage 10dq, as asked: "add a new tab after daily movers".
-    // RETURN ATTRIBUTION IS NOT A TAB (Stage 10fc): it was one for one release
+    // RETURN ATTRIBUTION IS NOT A TAB (Stage 10fd): it was one for one release
     // (10ez) and the family put it inside Returns as a section.
     return tabs.length === 6
       && tabs.map((x) => x.key).join(",") === "movers,returns,sectors,allocation,nav,alerts"
@@ -39460,7 +39460,7 @@ for (const theme of THEMES) {
           coverage: root.querySelector("[data-returns-coverage]")?.textContent ?? "",
         };
       });
-      // Stages 10ez, 10fc — the Returns tab's attribution section, off its own handles.
+      // Stages 10ez, 10fd — the Returns tab's attribution section, off its own handles.
       if (name === "cio-returns-sector") {
         await page.waitForSelector('[data-segment-returns]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
       }

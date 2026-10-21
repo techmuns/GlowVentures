@@ -242,7 +242,7 @@ export function MorningCIO() {
   // why the choice lives in the URL.
   /**
    * `?tab=attribution` WAS A TAB OF ITS OWN for one release (Stage 10ez); the
-   * family put the attribution inside Returns (Stage 10fc), so a link to it
+   * family put the attribution inside Returns (Stage 10fd), so a link to it
    * lands there rather than on the movers panel.
    */
   const [tab, setTab] = useViewParam(CIO_TABS, { attribution: "returns" }, "tab");
