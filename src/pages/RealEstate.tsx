@@ -70,7 +70,7 @@ export function RealEstate() {
   const sum = (key: Exclude<keyof PropertyFigures, "share">) => propertyTotal(filtered, key, scope.owners);
   const metric = (id: Exclude<keyof PropertyFigures, "share">, label: string, icon: ReactNode): TileMetric => {
     const total = sum(id);
-    return { id, label, value: money(total.value, { compact: true }), sub: coverage(total), icon,
+    return { id: id === "netRent" ? "net-rent" : id, label, value: money(total.value, { compact: true }), sub: coverage(total), icon,
       detail: `${shareTitle}${total.known < total.count ? ` Missing: ${filtered.filter(p => propertyFigures(p, scope.owners)[id] === null).map(p => p.name).join(", ")}.` : ""}` };
   };
   const metrics = [metric("value", "Property value", <Building2 className="h-4 w-4" />), metric("cost", "Total cost", <Wallet className="h-4 w-4" />), metric("rent", "Monthly rent", <Banknote className="h-4 w-4" />), metric("equity", "Net equity", <Landmark className="h-4 w-4" />), metric("debt", "Loan outstanding", <Landmark className="h-4 w-4" />), metric("netRent", "Net monthly rent", <Banknote className="h-4 w-4" />)];
