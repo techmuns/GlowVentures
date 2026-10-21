@@ -7642,14 +7642,16 @@ const ROUTES = [
   ["cio-returns-cagr", "/cio?tab=returns&rp=inception&rtype=cagr"],
   ["cio-returns-retired", "/cio?tab=returns&rtype=twr"],
   /**
-   * Stage 10ez — the Return Attribution tab, on its default axis and on the two
+   * Stages 10ez, 10fd — the Returns tab's attribution section, on the two axes
    * that split a PMS mandate across segments (and so draw the mandate
    * remainder): Sector, whose companies are placed by the exposure fetch, and
-   * All Securities.
+   * All Securities. Every `cio-returns` route draws it on its default axis.
+   * `?tab=attribution` was a tab of its own for one release; the old link must
+   * land on Returns.
    */
-  ["cio-attribution", "/cio?tab=attribution"],
-  ["cio-attribution-sector", "/cio?tab=attribution&seg=sector"],
-  ["cio-attribution-security", "/cio?tab=attribution&seg=security"],
+  ["cio-returns-sector", "/cio?tab=returns&seg=sector"],
+  ["cio-returns-security", "/cio?tab=returns&seg=security"],
+  ["cio-attribution-legacy", "/cio?tab=attribution"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -19686,7 +19688,7 @@ const CIO_RETURNS_LAYOUT = [
     if (!o) return false;
     return o.portBottom <= o.benchTop + 1;
   }],
-  ["...the Returns tab shows the whole portfolio, never a table of its accounts or holdings", (t, ctx) => {
+  ["...the Returns tab's return is the whole portfolio's, never a table of its accounts", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
     return r.rows === 0 && r.portfolioCard;
@@ -19734,9 +19736,11 @@ const CIO_RETURNS_LIVE = [
 ];
 
 /**
- * Stage 10ez — RETURN ATTRIBUTION. *"select any such segment and see how the
- * subcategories are performing and contributing to the portfolio returns."*
- * Struck on the tab's own `data-seg-*` handles: the axis control, and the
+ * Stages 10ez, 10fd — RETURN ATTRIBUTION. *"select any such segment and see how
+ * the subcategories are performing and contributing to the portfolio returns."*
+ * A section of the Returns tab, never a tab of its own (10fd: *"it is supposed
+ * to be a section inside the returns page only"*). Struck on the section's own
+ * `data-seg-*` handles: the axis control, and the
  * arithmetic a reader does by adding — the segments' values to the book's, the
  * gains (with the one mandate remainder) to the total, each contribution its
  * gain over the book's capital deployed, the contributions to the book's
@@ -19744,7 +19748,12 @@ const CIO_RETURNS_LIVE = [
  */
 const SEG_AXES = ["category", "assetClass", "basket", "sector", "side", "security"];
 const CIO_SEGMENTS = [
-  ["the Return Attribution tab offers every axis in order, and the one its address asked for is active", (t, ctx) => {
+  ["the Returns tab carries the attribution section under the benchmarks", (t, ctx) => {
+    const o = ctx?.returnsDom?.stackOrder;
+    if (!ctx?.segDom || !o) return false;
+    return o.attribTop != null && o.benchBottom <= o.attribTop + 1;
+  }],
+  ["...it offers every segment axis in order — sector among them — and the one its address asked for is active", (t, ctx) => {
     const r = ctx?.segDom;
     if (!r) return false;
     const want = /[?&]seg=([a-zA-Z]+)/.exec(ctx.path ?? "")?.[1] ?? "category";
@@ -19793,6 +19802,17 @@ const CIO_SEGMENTS = [
   }],
 ];
 
+/** The one release's own address, `?tab=attribution`, lands on Returns and its section. */
+const CIO_SEGMENTS_LEGACY = [
+  ["the retired attribution tab's address lands on the Returns panel, with the attribution section drawn", (t, ctx) => {
+    const tabs = ctx?.cioTabs;
+    const g = ctx?.cioLayout;
+    if (tabs == null || !g) return notChecked("the tab probe did not run on this pass");
+    return g.panel === "returns" && tabs.find((x) => x.active)?.key === "returns"
+      && !tabs.some((x) => x.key === "attribution") && !!ctx?.segDom;
+  }],
+];
+
 const CIO_TAB_CONTROL = [
   /**
    * FOUR SINCE Stage 10cq: *"in morning CIO can you make an ALL alerts tab."* It
@@ -19800,16 +19820,17 @@ const CIO_TAB_CONTROL = [
    * default is still the movers panel — which is why the order is asserted
    * rather than the membership alone.
    */
-  ["Morning CIO offers exactly the seven panels — Daily Movers, Returns, Return Attribution, Sector Composition, the two the family arranged and then All alerts", (t, ctx) => {
+  ["Morning CIO offers exactly the six panels — Daily Movers, Returns, Sector Composition, the two the family arranged and then All alerts", (t, ctx) => {
     const tabs = ctx?.cioTabs;
     if (tabs == null) return notChecked("the tab probe did not run on this pass");
     // SECTOR COMPOSITION SITS SECOND, right after Daily Movers, as asked — so
     // the order is asserted, not just the membership. The three panels the
     // family arranged (allocation, nav) and All alerts keep their places after it.
     // RETURNS SITS SECOND since Stage 10dq, as asked: "add a new tab after daily movers".
-    // RETURN ATTRIBUTION SITS RIGHT AFTER RETURNS since Stage 10ez.
-    return tabs.length === 7
-      && tabs.map((x) => x.key).join(",") === "movers,returns,attribution,sectors,allocation,nav,alerts"
+    // RETURN ATTRIBUTION IS NOT A TAB (Stage 10fd): it was one for one release
+    // (10ez) and the family put it inside Returns as a section.
+    return tabs.length === 6
+      && tabs.map((x) => x.key).join(",") === "movers,returns,sectors,allocation,nav,alerts"
       // EXACTLY ONE ACTIVE. Two would mean two panels are drawn at once, which
       // is the state this split exists to end; none would mean the route landed
       // somewhere the control does not describe.
@@ -26092,14 +26113,14 @@ const INVARIANTS = {
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC.filter(([description]) => !CIO_OPTIONAL_CAPITAL_CHECKS.has(description)), ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
-  "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
-  "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
-  "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
-  "cio-returns-retired": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
+  "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
+  "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
+  "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
+  "cio-returns-retired": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
-  "cio-attribution": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SEGMENTS],
-  "cio-attribution-sector": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SEGMENTS],
-  "cio-attribution-security": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SEGMENTS],
+  "cio-returns-sector": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
+  "cio-returns-security": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
+  "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-return-metrics": [...CIO_MWR, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
@@ -39422,7 +39443,7 @@ for (const theme of THEMES) {
           benchCard: !!root.querySelector("[data-returns-benchmarks]"),
           typeSelect: !!root.querySelector("select[data-returns-type-select]"),
           typeButtons: root.querySelectorAll("button[data-returns-type]").length,
-          stackOrder: (() => { const pc = root.querySelector("[data-returns-portfolio]")?.getBoundingClientRect(); const bc = root.querySelector("[data-returns-benchmarks]")?.getBoundingClientRect(); return pc && bc ? { portBottom: pc.bottom, benchTop: bc.top } : null; })(),
+          stackOrder: (() => { const pc = root.querySelector("[data-returns-portfolio]")?.getBoundingClientRect(); const bc = root.querySelector("[data-returns-benchmarks]")?.getBoundingClientRect(); const ac = root.querySelector("[data-returns-attribution]")?.getBoundingClientRect(); return pc && bc ? { portBottom: pc.bottom, benchTop: bc.top, benchBottom: bc.bottom, attribTop: ac ? ac.top : null } : null; })(),
           calculationInfo: root.querySelector("[data-returns-portfolio] [data-return-info]")?.getAttribute("aria-haspopup") === "dialog",
           infoInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-return-info]"),
           windowInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-window]"),
@@ -39440,12 +39461,12 @@ for (const theme of THEMES) {
           coverage: root.querySelector("[data-returns-coverage]")?.textContent ?? "",
         };
       });
-      // Stage 10ez — the Return Attribution tab, read off its own handles.
-      if (name === "cio-attribution-sector") {
+      // Stages 10ez, 10fd — the Returns tab's attribution section, off its own handles.
+      if (name === "cio-returns-sector") {
         await page.waitForSelector('[data-segment-returns]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
       }
       const segDom = FAST ? null : await page.evaluate(() => {
-        const root = document.querySelector("main [data-cio-section=attribution] [data-segment-returns]");
+        const root = document.querySelector("main [data-cio-section=returns] [data-segment-returns]");
         if (!root) return null;
         const num = (el, a) => { const v = el?.getAttribute(a); return v == null || v === "" ? null : Number(v); };
         const rem = root.querySelector("tr[data-seg-remainder]");
