@@ -25,7 +25,7 @@ The baseline was read from production. The repaired date counts below reconcile 
 - The cost recovery retained 44 exact owner/account/ISIN/quantity matches but omitted acquisition-date metadata. Its original FIFO lots now carry the first/last dates and surviving lot count. Fully consumed purchases and bonus/split dates do not become dates of the units still held. Wrong-sign sale proceeds do not erase known acquisition dates, and do not become verified HPR.
 - One **Investment date / range** column replaces the separate review and Invested on columns in Portfolio Monitor. It reads folio allotments, lot dates, complete manager trade records, eligible capital calls and the position's own reviewed investment dates. If those cannot date the current balance, an exact family-product review range may appear with the visible **review** qualifier and source cell in its explanation. A month-only date stays a month.
 - The saved column order, visibility and sort migrate to the merged column. The Excel export reads the same derivation and retains the review qualifier.
-- An independent generated-file comparison found acquisition-date metadata was the only book change from this repair: no cost, quantity, mark, account or return changes. The existing cost recovery remains 44 records.
+- The source-rebuilt acquisition dates are retained from the published date recovery. This unified-column follow-up leaves the generated book byte-identical to current main: no cost, quantity, mark, account or return changes. The existing cost recovery remains 44 records.
 
 ## Remaining date gaps
 

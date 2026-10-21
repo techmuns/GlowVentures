@@ -98,9 +98,10 @@ export function replayReviewRows(rows, { isin, asOf, quantity, allowUnpricedSale
   const closing = rows.filter((r) => r.txn === 'Closing' && r.date && r.date <= asOf).at(-1);
   if (closing && Math.abs(closing.qty-ledger.unitsHeld)>UNIT_TIE)
     return { reason:`review closing ${closing.qty} disagrees with the FIFO unit balance` };
-  const heldDates = [...new Set(ledger.lots.map(l => l.date))].sort();
+  const held = ledger.lots.filter(l => l.units > UNIT_TIE);
+  const heldDates = held.map(l => l.date).sort();
   return { costBasis:r2(ledger.costHeld), realizedPnL:unpricedSales.length?null:r2(ledger.realisedGain), costOfUnitsSold:r2(ledger.costSold),
-    acquisitionDates:{first:heldDates[0],last:heldDates.at(-1),lots:ledger.lots.length},
+    ...(heldDates.length ? {heldPurchases:{first:heldDates[0],last:heldDates.at(-1),lots:held.length}} : {}),
     dividendReceived:sawIncome?r2(income):null, rows:selected.map((r)=>r.row), notes,
     ...(unpricedSales.length?{hprUnavailableReason:`Sale proceeds are unverified on review row(s) ${unpricedSales.join(', ')}; original lots establish remaining cost only`}:{}) };
 }
@@ -161,8 +162,8 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
     if(!name||!sourceRows.length) {
       if(t.isin===ema.isin&&a.ownerId===ema.ownerId&&t.asOf>=ema.date&&Math.abs(t.quantity-ema.quantity)<=UNIT_TIE) {
         records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:r2(ema.costBasis),
-          realizedPnL:null,costOfUnitsSold:null,dividendReceived:null,
-          acquisitionDates:{first:ema.date,last:ema.date,lots:1},evidence:[ema.evidence],
+          heldPurchases:{first:ema.date,last:ema.date,lots:1},
+          realizedPnL:null,costOfUnitsSold:null,dividendReceived:null,evidence:[ema.evidence],
           notes:['Payment register matches owner and every unit; no complete separate sales/income record is claimed']});
       } else unresolved.push({...t,owner:a.owner,reason:'No quantity-matched owner-specific acquisition record in the saved workbooks'});
       continue;
@@ -176,8 +177,8 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
     const result=(fund?replayReviewFundGroups:replayReviewRows)(sourceRows,{isin:t.isin,asOf:cutoff,quantity:t.quantity});
     if(result.reason) {unresolved.push({...t,owner:a.owner,reason:result.reason});continue;}
     records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:result.costBasis,
+      ...(result.heldPurchases?{heldPurchases:result.heldPurchases}:{}),
       realizedPnL:result.realizedPnL,costOfUnitsSold:result.costOfUnitsSold,dividendReceived:result.dividendReceived,
-      acquisitionDates:result.acquisitionDates,
       ...(result.hprUnavailableReason?{hprUnavailableReason:result.hprUnavailableReason}:{}),
       ...(sourceRows.some((r)=>r.txn==='Sale'&&r.date>t.asOf)
         ? {salesAfter:sourceRows.filter((r)=>r.txn==='Sale'&&r.date>t.asOf).length} : {}),

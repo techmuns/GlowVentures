@@ -85,7 +85,7 @@ import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
 import { allRecordedLines, recordedLabel, recordedLineFor } from "@/lib/recordedHoldings";
 import type { Position } from "@/lib/types";
-import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, INVESTMENT_DATE_COLUMN_ALIASES, type InvestedOn } from "@/lib/investedOn";
+import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, type InvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { holdingPeriodOf, type HoldingPeriod } from "@/lib/holdingFlows";
 import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
@@ -991,7 +991,7 @@ export function PortfolioMonitor() {
   const holdCols = useMemo(
     () => withReturnCols(bySecurity ? (otherRouteHeld ? MONITOR_STOCK_COLS_OTHER : MONITOR_STOCK_COLS) : MONITOR_COLS, returnMeasures),
     [bySecurity, otherRouteHeld, returnMeasures]);
-  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true, aliases: INVESTMENT_DATE_COLUMN_ALIASES });
+  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true });
   /**
    * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
    * figure it prints rather than on `returnPct` for all of them.

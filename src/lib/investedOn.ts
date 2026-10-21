@@ -13,12 +13,14 @@
  * Monitor's holdings and the mandate drill-down alike, so the two cannot date
  * one holding two ways.
  *
- * FIVE SOURCES, ALL THE HOLDING'S OWN, strongest first:
+ * SIX SOURCES, ALL THE HOLDING'S OWN, strongest first:
  *
  *   • the fund's dated allotments against this very folio (`BOOK_POSITION_TRANCHES`);
  *   • a lot register's acquisition date (`Position.heldSince`);
  *   • the account's own dated trades, where they account for every unit held
  *     (`Position.tradeRecord.held`, matched first-in, first-out in build-book);
+ *   • reconciled surviving purchase lots in supplementary records
+ *     (`Position.recoveredCost.heldPurchases`, exact account, ISIN and units);
  *   • a drawdown fund's dated calls, where the account holds that fund alone
  *     and its paid-in covers every call (`callDatesByHolding`);
  *   • the family's review's "Date investment range" (`Position.investedDates`),
@@ -39,8 +41,7 @@ import { fmtDate } from "./format";
 import type { Account, HoldingTrade, Position } from "./types";
 import { reviewField } from "./reviewColumns";
 
-export type InvestedOnSource = "allotments" | "lots" | "recovered-lots" | "trades" | "calls" | "review" | "account";
-export const INVESTMENT_DATE_COLUMN_ALIASES = { "review:investmentRange": "investedOn" } as const;
+export type InvestedOnSource = "allotments" | "lots" | "trades" | "recovered-lots" | "calls" | "review" | "account";
 
 /**
  * The first and last date the money went in, and how many dated payments that
@@ -48,6 +49,28 @@ export const INVESTMENT_DATE_COLUMN_ALIASES = { "review:investmentRange": "inves
  * range, an account's inception date alone).
  */
 export type InvestedOn = { first: string; last: string; payments: number | null; sources: InvestedOnSource[]; reviewSource?: string };
+
+export type InvestmentDateScope = {
+  positions?: readonly Position[]; accountId?: string; accountIds?: readonly string[]; isMandate?: boolean;
+};
+
+/** The same row scope supplies both the displayed date and its sort value. */
+export function investmentDateOf(scope?: InvestmentDateScope): InvestedOn | null {
+  if (scope?.isMandate) {
+    return accountInvestedOn(scope.accountIds ?? (scope.accountId ? [scope.accountId] : []));
+  }
+  return investedOnOf(scope?.positions ?? []);
+}
+
+export function investmentDateMissingReason(scope?: InvestmentDateScope): string {
+  if (scope?.isMandate) return "The statements do not establish an inception date for every account in this row.";
+  const ps = scope?.positions ?? [];
+  if (!ps.length) return "No purchase record dates this row. A derived exposure is not a purchase by the family.";
+  const undated = ps.filter((p) => investedOnOf([p]) === null);
+  const reasons = [...new Set(undated.map(lineUndatedReason).filter(Boolean))];
+  return reasons.length ? reasons.join("; ")
+    : "The available records do not establish a purchase date for every holding in this row.";
+}
 
 const CALL_DATES = callDatesByHolding(BOOK_COMMITMENTS, BOOK_POSITIONS);
 
@@ -57,12 +80,17 @@ function lineDates(p: Position): { dates: string[]; source: InvestedOnSource } |
   const ins = own?.moves.filter((m) => m.direction === "in").map((m) => m.date) ?? [];
   if (ins.length) return { dates: ins, source: "allotments" };
   if (p.heldSince) return { dates: [p.heldSince], source: "lots" };
-  const recovered = p.recoveredCost?.acquisitionDates;
-  if (recovered) return { dates: [recovered.first, recovered.last], source: "recovered-lots" };
   // The surviving buys' own dates are on BOOK_HOLDING_TRADES; the record keeps
   // their first, last and count, which is all a cell needs.
   const held = p.tradeRecord?.held;
   if (held) return { dates: [held.first, held.last], source: "trades" };
+  const recovered = p.recoveredCost;
+  // The recovery is specific to an account, ISIN, closing date and exact unit
+  // balance. Never lend a source record's dates to another position or balance.
+  if (recovered?.heldPurchases && recovered.accountId === p.accountId && recovered.isin === p.isin
+    && p.quantity != null && Math.abs(recovered.quantity - p.quantity) <= .0005) {
+    return { dates: [recovered.heldPurchases.first, recovered.heldPurchases.last], source: "recovered-lots" };
+  }
   const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
   if (called?.length) return { dates: called, source: "calls" };
   if (p.investedDates) return { dates: [p.investedDates.from, p.investedDates.to], source: "review" };
@@ -71,8 +99,8 @@ function lineDates(p: Position): { dates: string[]; source: InvestedOnSource } |
 
 /** How many dated payments a line is — null where its source dates a span. */
 function linePayments(p: Position, d: { dates: string[]; source: InvestedOnSource }): number | null {
-  if (d.source === "recovered-lots") return p.recoveredCost?.acquisitionDates?.lots ?? null;
   if (d.source === "trades") return p.tradeRecord?.held?.lots ?? null;
+  if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? null;
   if (d.source === "review") return d.dates[0] === d.dates[1] && /^\d{4}-\d{2}-\d{2}$/.test(d.dates[0]) ? 1 : null;
   return d.dates.length;
 }
@@ -96,28 +124,30 @@ export function investedOnOf(ps: readonly Position[]): InvestedOn | null {
   return { first: dates[0], last: dates[dates.length - 1], payments, sources: [...sources] };
 }
 
-/** A product's printed review range is useful, but does not verify every current custody lot. */
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** Product context is labelled separately from fully matched custody acquisition dates. */
 function reviewedInvestmentDates(ps: readonly Position[]): InvestedOn | null {
-  if (!ps.length) return null;
-  // A family's direct investment in a company cannot date a manager's own
-  // purchases of that company, including a company row mixing both routes.
-  if (ps.some(p => ACCOUNTS.get(p.accountId)?.engagement === "PMS")) return null;
+  if (!ps.length || ps.some(p => ACCOUNTS.get(p.accountId)?.engagement === "PMS")) return null;
+  if (ps.some(p => p.recoveredCost && (p.recoveredCost.accountId !== p.accountId
+    || p.recoveredCost.isin !== p.isin || p.quantity == null
+    || Math.abs(p.recoveredCost.quantity - p.quantity) > .0005))) return null;
   const field = reviewField({ positions: ps }, "investmentRange");
   return field.value != null && field.from && field.to
     ? { first: field.from, last: field.to, payments: null, sources: ["review"], reviewSource: field.source }
     : null;
 }
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 /** A date as its source prints it: a day, or a month (`YYYY-MM`) never widened to a day. */
 export const fmtInvestedDate = (d: string) =>
-  /^\d{4}-\d{2}$/.test(d) ? `${MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : fmtDate(d);
+  /^\d{4}-\d{2}$/.test(d) ? `${MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}`
+    // These are calendar dates, not instants. Parsing UTC midnight into the
+    // viewer's timezone can turn a 3 August purchase into 2 August.
+    : /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${Number(d.slice(8, 10))} ${MONTHS[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : fmtDate(d);
 
 const SOURCE_WORDS: Record<InvestedOnSource, string> = {
   allotments: "the fund's own dated allotments",
   lots: "the lot register's acquisition dates",
-  "recovered-lots": "the reconciled original acquisition lots still held after FIFO, matched to this owner, account, ISIN and quantity",
   trades: "the account's own dated trades, every unit held matched to the buy that bought it, first-in, first-out",
+  "recovered-lots": "the original purchase lots in the supplementary records, reconciled to this account, ISIN and every unit still held, first-in, first-out",
   calls: "the fund's dated capital calls",
   review: "the family's review's investment dates",
   account: "the inception date and capital record the statements print",

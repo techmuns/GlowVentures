@@ -193,10 +193,10 @@ export type AccountCapital = {
 // One current position: a security held within one account.
 export type RecoveredHoldingCost = {
   accountId: string; isin: string; quantity: number; asOf: string;
+  /** Original acquisition dates of the FIFO lots still held, after the exact unit reconciliation. */
+  heldPurchases?: { first: string; last: string; lots: number };
   costBasis: number; realizedPnL: number | null; costOfUnitsSold: number | null;
   dividendReceived: number | null;
-  /** Acquisition dates of the original FIFO lots still held, not sold lots or custody receipt dates. */
-  acquisitionDates?: { first: string; last: string; lots: number };
   /** Later review sale rows invalidate live pricing of the old snapshot. */
   salesAfter?: number;
   /** Purchase lots reconcile, but a recorded sale has no verified proceeds. */

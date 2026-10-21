@@ -22,7 +22,7 @@
 //     loops on anything else), tells every reader of a key when it changes, and
 //     re-reads a key another browser tab wrote.
 import {
-  arrangeColumns, visibleOrder, moveColumn, nudgeColumn, parseStoredView, visibleSort, storedView, selectedColumns, mergeColumnAliases,
+  arrangeColumns, visibleOrder, moveColumn, nudgeColumn, parseStoredView, visibleSort, storedView, selectedColumns, investmentDateColumns, mergeColumnAliases,
 } from "../tableView";
 import {
   DEFAULT_RETURN_MEASURES, normaliseMeasures, resolveReturnMeasures, parseSavedMeasures, returnMeasuresKey,
@@ -44,6 +44,17 @@ const same = (a: readonly unknown[], b: readonly unknown[]) => JSON.stringify(a)
     {'review:investmentRange':'investedOn'});
   ok('merged investment dates keep their earlier placement, one column only',same(merged.order,['security','investedOn','mv']));
   ok('legacy date sort and visible review range carry to the unified column',merged.sort?.col==='investedOn'&&merged.visibility?.investedOn===true&&merged.visibility?.['review:investmentRange']===undefined);
+}
+
+{
+  const old = ["entity", "qty", "invested", "current", "return"];
+  const declared = investmentDateColumns(old, true);
+  ok("holdings dates appear beside invested capital", same(declared, ["entity", "qty", "invested", "investedOn", "current", "return"]));
+  ok("a saved arrangement from before purchase dates acquires the column", visibleOrder(["entity", "return", "invested", "qty", "current"], declared).includes("investedOn"));
+  ok("the optional review date being hidden cannot hide the purchase date", selectedColumns(declared, { "review:investmentRange": false }, ["review:investmentRange"]).includes("investedOn"));
+  ok("existing date columns are never duplicated", same(investmentDateColumns(declared, true), declared));
+  ok("the private-market table keeps its own investment date", same(investmentDateColumns(old, false), old));
+  ok("holdings without an invested amount put dates beside the name", same(investmentDateColumns(["security", "value"], true), ["security", "investedOn", "value"]));
 }
 
 // The Portfolio Monitor's own two column lists, one per axis kind.
