@@ -19804,7 +19804,7 @@ const CIO_RETURNS = [
     // date asked for, so the measured window may start earlier — never later
     // than the close asked for, and never after its own close.
     const inside = (!to || r.measuredTo <= to) && (!from || r.measuredFrom <= from) && (!to || r.measuredFrom < to);
-    const annualised = /p\.a\./i.test(r.pctText);
+    const annualised = r.basis === "annual";
     return r.measuredFrom < r.measuredTo && days > 0 && inside && !(days < 365 && annualised);
   }],
 ];
