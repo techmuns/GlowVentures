@@ -155,7 +155,7 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
     if(!a) continue;
     const fund=t.isin.startsWith('INF'), name=REVIEW_EQUITIES[t.isin]??REVIEW_FUNDS[t.isin];
     const sourceRows=rows.filter((r)=>r.product===name&&ownerIdFor(r.investor)===a.ownerId
-      && (t.isin==='INF179K01830'?/\breg\b/i.test(r.advisor):t.isin==='INF179K01WA6'?/\bdir\b/i.test(r.advisor):true));
+      && (t.isin==='INF179K01830'?/\breg\b/i.test(r.advisor):['INF179K01WA6','INF109K012B0'].includes(t.isin)?/\bdir\b/i.test(r.advisor):true));
     if(!name||!sourceRows.length) {
       if(t.isin===ema.isin&&a.ownerId===ema.ownerId&&t.asOf>=ema.date&&Math.abs(t.quantity-ema.quantity)<=UNIT_TIE) {
         records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:r2(ema.costBasis),

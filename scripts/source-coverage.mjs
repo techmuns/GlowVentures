@@ -185,9 +185,10 @@ for (const f of files) {
     if (alt) docs = bySource.get(alt) ?? [];
   }
   if (docs.length) {
-    // THE REVIEW IS THE BOOK'S PRIVATE-MARKET SOURCE (Stage 10dh). The archive
+    // Both supplementary workbooks now supply strictly reconciled costs, and the
+    // review remains the private-market source (Stage 10dh). The archive
     // still records it held out — it is no statement, and `extract.mjs` reads no
-    // fact from it — and `build-book` reads its private-market lines straight from
+    // fact from them — and `build-book` reads the licensed rows straight from
     // this path. Named by the path the builder reads, never by a provider match,
     // so a second copy of the workbook is not mistaken for the one it reads.
     const reviewSource = f === REVIEW_WORKBOOK || f === REGISTER;

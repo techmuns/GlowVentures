@@ -50,3 +50,5 @@ Four further Bharat/Motilal residues are below the dashboard's ₹1,000 holdings
 - **Bharat's four-page HDFC NSDL scan was visually checked:** it prints holdings/ISINs/quantities and no acquisition-cost column. A text PDF/spreadsheet would enable automatic ingestion, but resending the same holdings report will not supply costs; send the acquisition/transfer history where cost is required.
 
 Private investments carried at purchase cost need a manager's dated valuation to support HPR; records without a share/unit count also need that count to support a per-unit purchase price. These are separate from the listed-share cost recoveries above. Annualised returns additionally require complete dated cash flows; recovering a purchase cost alone does not establish an XIRR.
+
+The All Securities table also includes companies held **only inside funds**. Those rows show derived exposure, not shares bought in a family account. The family's purchase cost belongs to the fund units; neither a fund's NAV nor its constituent weight supplies that underlying company's acquisition lots or HPR. Those blanks are separate from the missing direct holding costs listed above.
