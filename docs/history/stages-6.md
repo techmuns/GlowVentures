@@ -157,3 +157,17 @@
 - Added format-mutation, identity, duplicate, reconciliation, stale-artifact, atomic Git/retry and merge-gate tests, plus an actual-book/source-row contract. See `docs/STATEMENT-PUBLICATION.md` for the teammate's handoff and the precise evidence/format limitations.
 - Integrated the teammate's actual intake runner: source identity/reconciliation gates and checksum receipts now precede PR publication. It starts on codex branches, retains inbox bytes while checks/review/deployment are pending, monitors exact document versions with authenticated GETs and requeues a stale candidate. Main is never committed/pushed/reset by intake; a failing baseline cannot waive required gates. Existing status/reason controls carry the lifecycle without a UI change.
 - A version listener replaces the whole browser application when a verified publication changes, retaining its URL/member scope. Uploads, folder reading and edits defer refresh, and a persisted guard stops reload loops. Controller tests and a built-app browser regression cover drafts, navigation and exact URL retention; no controls or layout were added.
+
+
+### Stage 10gj — EXCEL EXPORTS IGNORE DISPLAY FILTERS
+
+- Excel snapshots read the complete family dataset and bypass table search,
+  category, entity, side and date filters. Private Market includes funds and
+  companies regardless of its selector; consolidated/source searches also do
+  not constrain downloads. The Monitor's whole-book export follows the same rule.
+- Filters and saved preferences are never written by export. The synchronous
+  snapshot restores loaded row batches and scroll positions; scope-dependent
+  look-through and lot records are prepared before the snapshot.
+- Regression checks compare complete workbooks under no-match search, member,
+  sector, property location/type and Private Market type filters, and retain hidden-column, profile
+  draft, scroll, retry and source-precision coverage.

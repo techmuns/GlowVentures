@@ -6,7 +6,7 @@ import { chromium } from 'playwright-core';
 import { installReadModelRoutes } from './read-model-api.mjs';
 import { assertStickyTableHeaders, assertTableHeaderFixture } from './table-headers.mjs';
 import { installProfileStoreFixture, assertInlineProfileEditing } from './private-profile-inputs.mjs';
-import { assertTableExportControls, assertInfiniteTableExport, assertPrivateProfileExport, assertExportRetry, assertCompleteColumnExport, assertCollapsedSectionExport, downloadTableWorkbook } from './table-excel.mjs';
+import { assertTableExportControls, assertInfiniteTableExport, assertPrivateProfileExport, assertExportRetry, assertCompleteColumnExport, assertCollapsedSectionExport, assertUnfilteredSearchExport, assertPrivateMarketFilterExport, assertMemberFilterExport, assertTransactionFilterExport, assertPortfolioPageExport, downloadTableWorkbook } from './table-excel.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const capture = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
@@ -42,7 +42,7 @@ async function scrollToEnd(table) {
 }
 try {
   await assertTableHeaderFixture(browser,base);
-  for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/statements']) {
+  for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings?of=book','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/statements']) {
     const page = await browser.newPage({ viewport: { width:1440, height:1000 } });
     const requests=[], errors=[];
     page.on('request', r => requests.push(new URL(r.url()).pathname));
@@ -66,12 +66,14 @@ try {
     await assertTableExportControls(page, route);
     if (['/monitor','/monitor?show=transactions','/ledger','/corporate-actions','/capital-gains','/audit?consolidated=Transactions',sourceRoute].includes(route)) await assertInfiniteTableExport(page, route, route === sourceRoute);
     if (['/monitor','/ledger','/private-market'].includes(route)) await assertCompleteColumnExport(page,page.locator('table[data-table-view]').first(),route);
-    if (route === '/private-market') await assertCollapsedSectionExport(page);
+    if (route === '/private-market') { await assertCollapsedSectionExport(page); await assertPrivateMarketFilterExport(page); }
     if (route === '/ledger') await assertExportRetry(page);
+    if (route === '/holdings?of=book') await assertUnfilteredSearchExport(page,page.locator('table[data-table-view="holdings-behind"]'),page.getByPlaceholder('Filter by name or ISIN…'),'holdings-behind');
     if (route !== '/audit') assert.equal(requests.filter(p => /^\/audit\/[^/]+\/document.json$/.test(p)).length,0,`${route}: no browser archive fan-out`);
     assert.equal(requests.filter(p=>/^\/lookthrough\/\d+\.json$/.test(p)).length,0,`${route}: no browser fund fan-out`);
     if (route === '/corporate-actions') {
       const table=page.locator('[data-corporate-return-table]');
+      await assertUnfilteredSearchExport(page,table,page.getByRole('textbox',{name:'Search corporate action holdings'}),'corporate-actions');
       const rows=page.locator('[data-corporate-return-row]');
       assert.equal(await rows.count(),50);
       const first=await rows.first().getAttribute('data-corporate-return-row');
@@ -142,7 +144,9 @@ try {
       await page.getByRole('textbox', {name:'Search consolidated sheet'}).fill('no-such-row-in-workbook');
       assert.equal(await table.locator('[data-consolidated-row]').count(), 0);
       const emptyExport = await downloadTableWorkbook(table,'filtered-empty-consolidated-sheet');
-      assert.equal(emptyExport.rowCount,1,'an empty filtered export has headings without unrelated rows');
+      assert.equal(emptyExport.rowCount,total+1,'a no-match filter still exports the complete workbook tab');
+      assert.equal(await table.locator('[data-consolidated-row]').count(),0,'export keeps the empty filtered screen');
+      assert.equal(await page.getByRole('textbox', {name:'Search consolidated sheet'}).inputValue(),'no-such-row-in-workbook');
       await page.getByRole('textbox', {name:'Search consolidated sheet'}).fill('');
       assert.equal(await table.locator('[data-consolidated-row]').count(), 50, 'clearing workbook search resets row loading');
     }
@@ -158,6 +162,15 @@ try {
     assert.deepEqual(errors, [], `${route}: no runtime errors after interactions`);
     console.log(JSON.stringify(results.at(-1))); await page.close();
   }
+  const filterPage = await browser.newPage({viewport:{width:1440,height:1000}});
+  await filterPage.route('**/api/**',r=>r.fulfill({json:{ok:false,reason:'local export fixture'}}));
+  await installReadModelRoutes(filterPage);
+  for(const [route,selector] of [['/monitor','[data-monitor-table="holdings"]'],['/private-market?view=brands','table[data-pm-table="brands"]'],['/ledger','table[data-table-view]']]) {
+    await assertMemberFilterExport(filterPage,base,route,selector);
+  }
+  await assertTransactionFilterExport(filterPage,base);
+  await assertPortfolioPageExport(filterPage,base);
+  await filterPage.close();
   // A feed larger than both old insider cutoffs (40 UI / 150 client rows).
   assert.ok(insiderPath, 'the Monitor resolves a company with a known symbol');
   const insiderPage = await browser.newPage({viewport:{width:1440,height:1000}});

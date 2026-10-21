@@ -1,3 +1,4 @@
+import { useTableExporting } from "@/lib/tableExportSnapshot";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Building2, MapPin, Table2, Map as MapIcon, Plus, Pencil, X, Wallet, Landmark, Banknote, Trash2 } from "lucide-react";
@@ -29,6 +30,7 @@ const distinct = (values: string[]) => [...new Set(values.filter(Boolean))].sort
 const shareTitle = "Money follows the selected owners' recorded shares. Area and rent agreements describe the whole property.";
 
 export function RealEstate() {
+  const exportingTable = useTableExporting();
   const { scope, fmtFromBase: money } = usePortfolio();
   const store = useProperties();
   const [params, setParams] = useSearchParams();
@@ -49,8 +51,8 @@ export function RealEstate() {
     setParams(next, { replace: true });
   };
   const scoped = useMemo(() => store.properties.filter(p => propertyShare(p, scope.owners) > 0), [store.properties, scope.owners]);
-  const filtered = useMemo(() => scoped.filter(p => (!country || p.country === country) && (!state || p.state === state) && (!city || p.city === city) && (!type || p.type === type) && (!status || p.status === status)
-    && (!q.trim() || [p.name, p.address, p.city, p.state, p.country, p.pincode, p.type, p.tenant, ...p.owners.map(o => o.name)].join(" ").toLowerCase().includes(q.trim().toLowerCase()))), [scoped, country, state, city, type, status, q]);
+  const filtered = useMemo(() => exportingTable ? scoped : scoped.filter(p => (!country || p.country === country) && (!state || p.state === state) && (!city || p.city === city) && (!type || p.type === type) && (!status || p.status === status)
+    && (!q.trim() || [p.name, p.address, p.city, p.state, p.country, p.pincode, p.type, p.tenant, ...p.owners.map(o => o.name)].join(" ").toLowerCase().includes(q.trim().toLowerCase()))), [exportingTable, scoped, country, state, city, type, status, q]);
   const accessors = useMemo<Record<string, Accessor<Property>>>(() => Object.fromEntries(COLS.map(key => [key, (p: Property) => {
     const figures = propertyFigures(p, scope.owners);
     if (key in figures) return figures[key as keyof PropertyFigures];

@@ -1,3 +1,4 @@
+import { useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight } from "lucide-react";
@@ -458,13 +459,15 @@ export function PrivateMarket() {
    */
   const { statementPortfolio: portfolio, portfolio: live, fmtFromBase, scope: memberScope } = usePortfolio();
   const [q, setQ] = useState("");
+  const exportingTable = useTableExporting();
   /**
    * WHICH TAB. In the URL like every other view in this app, so a tab is a link
    * a reader can send and the sweep can hold each one to the light rather than
    * guessing at a click. `useViewParam` keeps the default param-free.
    */
   const [view, setView] = useViewParam(BOOK_VIEWS, {}, "view");
-  const [show, setShow] = useViewParam(BOOK_SHOW, {}, "show");
+  const [showFilter, setShow] = useViewParam(BOOK_SHOW, {}, "show");
+  const show = useTableExportFilter(showFilter, "both");
   const shown = SHOW_SECTIONS[show];
   /** Open fund / member rows, keyed `<grouping>:<key>` so the two tabs keep their own. */
   const rows = useExpanded();
@@ -1273,7 +1276,7 @@ export function PrivateMarket() {
    * supplied line that went nowhere is named rather than dropped.
    */
   const profileMatch = matchProfiles(investmentIdentities(book.folios));
-  const groupMatches = (g: BookGroup) => !needle || g.label.toLowerCase().includes(needle)
+  const groupMatches = (g: BookGroup) => exportingTable || !needle || g.label.toLowerCase().includes(needle)
     || !!g.brand?.legal.some((l) => l.toLowerCase().includes(needle))
     || !!g.brand?.brands.some((b) => b.toLowerCase().includes(needle)) || g.folios.some((f) => folioText(f).includes(needle));
   const rowKey = (g: BookGroup) => `${grouping}:${g.key}`;
@@ -2217,7 +2220,7 @@ export function PrivateMarket() {
 
   // ── THE TRANSACTIONS TAB ─────────────────────────────────────────────────────
   const callsShown = sortRows(
-    m.history.filter((c) => !needle || [c.fund, c.owner ?? "", c.label ?? ""].join(" ").toLowerCase().includes(needle)),
+    m.history.filter((c) => exportingTable || !needle || [c.fund, c.owner ?? "", c.label ?? ""].join(" ").toLowerCase().includes(needle)),
     callView.sort,
     {
       date: (c) => c.date,
@@ -2432,7 +2435,7 @@ export function PrivateMarket() {
               </tbody>
               <tfoot>
                 <TrFoot view={callView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
-                  label={<>Total · {callsShown.length} calls{needle ? ` of ${m.history.length}` : ""}</>}
+                  label={<>Total · {callsShown.length} calls{needle && !exportingTable ? ` of ${m.history.length}` : ""}</>}
                   cells={{
                     amount: <td key="amount" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{moneyFull(sum(callsShown.map((c) => c.amount)))}</td>,
                   }} />

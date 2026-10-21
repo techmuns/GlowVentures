@@ -5,6 +5,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { chromium } from "playwright-core";
 import { onRequest } from "../../functions/api/real-estate.js";
+import { assertUnfilteredSearchExport, downloadTableWorkbook } from "./table-excel.mjs";
 import { property, memoryStore } from "./real-estate-fixtures.mjs";
 const base = process.env.BASE || "http://127.0.0.1:4173";
 if (!/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(base)) throw new Error("This check writes local test records; use a localhost BASE.");
@@ -63,7 +64,13 @@ try {
     await store.put(`real-estate:${p.id}`, JSON.stringify(p));
   }
   await page.reload(); await page.getByRole("button", { name: "Test land", exact: true }).waitFor();
+  const exportTable = page.locator('[data-real-estate-table]');
+  const completeExport = await downloadTableWorkbook(exportTable,'properties-all');
   await page.getByLabel("All states", { exact: true }).selectOption("Karnataka");
+  const stateExport = await downloadTableWorkbook(exportTable,'properties-state-filter');
+  assert.deepEqual(stateExport.getSheetValues(),completeExport.getSheetValues(),'Property location filters cannot narrow Excel');
+  assert.equal(await page.getByLabel("All states",{exact:true}).inputValue(),'Karnataka');
+  await assertUnfilteredSearchExport(page,exportTable,page.getByPlaceholder('Search properties…'),'properties-search');
   assert.equal(await page.locator("tbody [data-property]").count(), 1);
   await page.getByRole("tab", { name: "Map", exact: true }).click();
   await visible("1 pinned · 0 need a pin");

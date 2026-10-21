@@ -1,3 +1,4 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -41,7 +42,8 @@ function leadIssue(issues: readonly string[]): string | null {
 
 export function CorporateActionReturns({ securityKey }: { securityKey?: string }) {
   const { statementPortfolio, corporateActions, corporateActionsStatus, corporateActionReturns, fmtFromBase, scope } = usePortfolio();
-  const [search, setSearch] = useState("");
+  const [searchFilter, setSearch] = useState("");
+  const search = useTableExportFilter(searchFilter, "");
   const view = useTableView("corporate-actions-returns", COLS);
   const rows = useMemo(() => {
     // CURRENT HOLDINGS, like every allocation surface: a closed position and a

@@ -13,7 +13,7 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
     row.cells.forEach(source => {
       while (occupied.has(`${r + 1}:${c}`)) c++;
       const width = source.colSpan ?? 1, height = source.rowSpan ?? 1;
-      if (r + height > 1048576 || c + width - 1 > 16384) throw new Error("This table exceeds Excel's sheet size limit. Narrow the filters and try again.");
+      if (r + height > 1048576 || c + width - 1 > 16384) throw new Error("This table exceeds Excel's sheet size limit.");
       const cell = sheet.getCell(r + 1, c);
       const { value, format } = excelCellValue(source);
       // A string beginning with =, +, - or @ is still a literal, never a formula.
@@ -45,7 +45,7 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   about.columns = [{ width: 22 }, { width: 105 }];
   about.addRows([
     ["Table", snapshot.title], ["Dashboard", snapshot.url], ["Exported at", new Date().toISOString()],
-    ["View", "All matching rows, including rows not yet loaded by scrolling, and every available column, including columns hidden in Edit Columns. Active filters, sort and column arrangement apply."],
+    ["View", "All rows regardless of search, member and table filters, including rows not yet loaded by scrolling, and every available column, including columns hidden in Edit Columns. The selected table, sort and column arrangement are retained. Display filters do not limit this export."],
     ["Numbers", "Source values are used where available; other numbers follow the displayed precision. Abbreviated amounts are expanded to currency units. A dash stays a dash; it does not become zero."],
     ["Editable text", "Strategy and Description include saved text. Unsaved drafts are not included."],
   ]);

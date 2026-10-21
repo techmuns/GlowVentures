@@ -1,3 +1,4 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
 import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
@@ -8,7 +9,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
 import { Pill } from "@/components/Pill";
-import { usePortfolio } from "@/context/PortfolioContext";
+import { usePortfolio, useWholePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { companySectorIndex, type FundExposureRow } from "@/lib/lookthrough";
@@ -34,7 +35,7 @@ import { exitedRows } from "@/lib/drilldown";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, type Txn, type TxnData } from "@/lib/ledger";
-import { inScopeAccount, inScopeOwner, scopeTxnData } from "@/lib/memberScope";
+import { inScopeAccount, inScopeOwner } from "@/lib/memberScope";
 import { fifoTotals, fifoBasisNote, exitedNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, realisedWindowNote, atCostNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
 import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
@@ -739,7 +740,10 @@ const CG_WINDOW = new Map<string, { from: string | null; to: string | null }>(BO
 const DERIVED_ONLY_WHY = "no statement in this book reports this company as a holding — the family reaches it only through funds whose filings name it — so there is no quantity, cost, price, date or return of the family's own to show here; Via funds carries the derived figure";
 const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund holds and this is your units' share of it, across every asset class the filing carries — shares, bonds, NCDs and commercial paper alike. It is no part of the book's NAV — the fund's own value already stands for it there — so this column is never summed into a book total.";
 
+const EMPTY_EXPORT_SELECTION = new Set<string>();
+
 export function PortfolioMonitor() {
+  const wholePortfolio = useWholePortfolio();
   const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns, quoteFeed, quotesStatus, requestSymbols, scope: memberScope } = usePortfolio();
   /**
    * WHY THE LIVE QUOTE ON THESE LINES WAS HELD BACK, OR NULL (DL-9).
@@ -838,7 +842,8 @@ export function PortfolioMonitor() {
   const activeAxis: MonitorAxis = view === "holdings" ? groupAxis : txnAxis;
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedFilter, setSelected] = useState<Set<string>>(new Set());
+  const selected = useTableExportFilter(selectedFilter, EMPTY_EXPORT_SELECTION);
   /**
    * THE SECTOR DROPDOWN IS GONE AND THE SECTOR FILTER IS NOT — the same
    * treatment the Holdings basis switch got when it was removed (Stage 10q).
@@ -855,15 +860,17 @@ export function PortfolioMonitor() {
    * that analyses the book by sector; only the picker left this row.
    */
   const [sectorParams] = useSearchParams();
-  const sector = sectorParams.get("sector") ?? "All";
-  const [entity, setEntity] = useState("All");
+  const sector = useTableExportFilter(sectorParams.get("sector") ?? "All", "All");
+  const [entityFilter, setEntity] = useState("All");
+  const entity = useTableExportFilter(entityFilter, "All");
   // Category filter — Direct Equity / PMS mandates / AIF / Mutual Fund / ETF /
   // Cash were shown in one flat list, so a ₹176 Cr AIF folio sat between two
   // equity lines as if it were the same kind of thing. It filters to one BUCKET
   // (`holdingBucket`), not to an asset class: what a reader is choosing between
   // here is shares the family bought and mandates it handed to a manager, and
   // those are the same asset class.
-  const [bucket, setBucket] = useState("All");
+  const [bucketFilter, setBucket] = useState("All");
+  const bucket = useTableExportFilter(bucketFilter, "All");
   /**
    * SWITCHING AXIS CLEARS THE SECTION FILTER, and that is a correctness fix
    * rather than a courtesy. The filter is an equality test on the section key,
@@ -3602,13 +3609,9 @@ export function PortfolioMonitor() {
         import("@/lib/exportPortfolioExcel"),
         loadTransactions(),
       ]);
-      // The sheet is the chosen members' too (Stage 10di): their holdings
-      // come scoped from the context, and their dealing is narrowed here, on
-      // the canonical owner each row carries. The lots no trade settles are a
-      // whole-tape figure, so a scoped sheet does not carry them.
-      const owners = memberScope.owners;
-      const scoped = data && owners ? scopeTxnData(data, owners, portfolio.accounts) : data;
-      await exportPortfolioExcel(positions, portfolio.accounts, scoped);
+      // Excel always carries the full family book, regardless of display filters.
+      if (!wholePortfolio) throw new Error("The full portfolio is unavailable");
+      await exportPortfolioExcel(wholePortfolio.positions, wholePortfolio.accounts, data);
     } catch (e) {
       console.error("Excel export failed", e);
     } finally {
@@ -6142,7 +6145,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * LABELS are Buys and Sells, which the family asked for, and the tape maps
    * the direction to `Buy`/`Sell` at the point it filters.
    */
-  const [side, setSide] = useState<CapitalSide>("all");
+  const [sideFilter, setSide] = useState<CapitalSide>("all");
+  const side = useTableExportFilter<CapitalSide>(sideFilter, "all");
   /**
    * HOW THE ROWS ARE ORDERED — recent first, and the reader can change it.
    *
@@ -6157,8 +6161,10 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   const [openInstrument, setOpenInstrument] = useState<Set<string>>(new Set());
   const toggle = (set: (f: (s: Set<string>) => Set<string>) => void, key: string) =>
     set((prev) => { const nx = new Set(prev); if (nx.has(key)) nx.delete(key); else nx.add(key); return nx; });
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [fromFilter, setFrom] = useState("");
+  const from = useTableExportFilter(fromFilter, "");
+  const [toFilter, setTo] = useState("");
+  const to = useTableExportFilter(toFilter, "");
   const [preset, setPreset] = useState("all");
 
   useEffect(() => {

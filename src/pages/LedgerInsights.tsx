@@ -1,4 +1,5 @@
 import { ExportableTable } from "@/components/ExportableTable";
+import { useTableExportIdentity } from "@/lib/tableExportSnapshot";
 import { InfiniteTableBody } from "@/components/InfiniteTableBody";
 import { useEffect, useMemo, useState } from "react";
 import { TrendingUp, Coins, ShieldAlert, ArrowLeftRight, Scissors, LogOut, Receipt, Gift } from "lucide-react";
@@ -63,6 +64,7 @@ export function LedgerInsights() {
   const [income, setIncome] = useState<IncomeData | null>(null);
   const [sales, setSales] = useState<SalesData | null>(null);
   const { portfolio, scope } = usePortfolio();
+  const scopeKey = useTableExportIdentity(JSON.stringify(scope.owners ? [...scope.owners].sort() : null));
 
   useEffect(() => {
     let alive = true;
@@ -160,11 +162,11 @@ export function LedgerInsights() {
       <div className="min-h-0 flex-1 overflow-auto">
         {status === "loading" && <div className="grid h-40 place-items-center text-sm text-slate-500">Reading the archive…</div>}
         {tab === "transactions" && viewTxn && (
-          <TransactionsView key={JSON.stringify(scope.owners ? [...scope.owners].sort() : null)} data={viewTxn} sales={scope.owners ? null : sales}
+          <TransactionsView key={scopeKey} data={viewTxn} sales={scope.owners ? null : sales}
             scoped={scope.owners ? { label: scope.label, lots: viewLots } : null} />
         )}
-        {tab === "gains" && <GainsView key={JSON.stringify(scope.owners ? [...scope.owners].sort() : null)} data={viewLots} />}
-        {tab === "income" && <IncomeView key={JSON.stringify(scope.owners ? [...scope.owners].sort() : null)} data={viewIncome} />}
+        {tab === "gains" && <GainsView key={scopeKey} data={viewLots} />}
+        {tab === "income" && <IncomeView key={scopeKey} data={viewIncome} />}
       </div>
     </div>
   );

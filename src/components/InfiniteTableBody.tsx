@@ -1,11 +1,12 @@
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { TableExportAllRows } from "./ExportableTable";
+import { isTableExporting } from "@/lib/tableExportSnapshot";
 
 /** Sorting, totals and exports use the full collection; scrolling only appends rows. */
 export function useInfiniteTable(total: number, resetKey: string, batchSize = 50) {
   const [state, setState] = useState({ key: resetKey, limit: batchSize });
-  if (state.key !== resetKey) setState({ key: resetKey, limit: batchSize });
-  const limit = state.key === resetKey ? state.limit : batchSize;
+  if (!isTableExporting() && state.key !== resetKey) setState({ key: resetKey, limit: batchSize });
+  const limit = isTableExporting() || state.key === resetKey ? state.limit : batchSize;
   const shown = Math.min(total, limit);
   const loadMore = useCallback(() => {
     setState(current => current.key === resetKey
@@ -23,6 +24,7 @@ export function InfiniteTableEnd({ scroll, columns }: { scroll: ReturnType<typeo
   const { total, shown, hasMore, loadMore, resetKey } = scroll;
 
   useLayoutEffect(() => {
+    if (isTableExporting()) return;
     if (previousKey.current === resetKey) return;
     previousKey.current = resetKey;
     // Reset only this table's vertical scroll, keeping its horizontal position.

@@ -5,19 +5,22 @@ import ExcelJS from 'exceljs';
 
 const output = path.resolve('.cache/table-export-check', String(Date.now()));
 let sequence = 0;
-export async function downloadTableWorkbook(table, label) {
+async function downloadWorkbook(button, label) {
   await fs.mkdir(output, {recursive:true});
-  const button = table.locator(':scope > caption [data-export-excel]');
-  const downloadPromise = table.page().waitForEvent('download');
+  const downloadPromise = button.page().waitForEvent('download');
   await button.click();
   const download = await downloadPromise;
   assert.match(download.suggestedFilename(), /\.xlsx$/);
   const destination = path.join(output, `${++sequence}-${label.replace(/[^a-z0-9]+/gi,'-')}.xlsx`);
   await download.saveAs(destination);
   await button.page().waitForFunction(element => !element.disabled, await button.elementHandle());
-  assert.equal(await table.locator(':scope > caption [role=alert]').count(),0);
   const book = new ExcelJS.Workbook();
   await book.xlsx.readFile(destination);
+  return book;
+}
+export async function downloadTableWorkbook(table, label) {
+  const book = await downloadWorkbook(table.locator(':scope > caption [data-export-excel]'), label);
+  assert.equal(await table.locator(':scope > caption [role=alert]').count(),0);
   assert.ok(book.getWorksheet('About'));
   return book.getWorksheet('Table');
 }
@@ -27,6 +30,38 @@ export async function assertTableExportControls(page, label) {
   for (const table of await tables.all()) {
     assert.equal(await table.locator(':scope > caption [data-export-excel]').count(),1,`${label}: every table has its own Excel control`);
   }
+}
+
+/** A no-match search must still download exactly the complete table. */
+export async function assertUnfilteredSearchExport(page, table, input, label) {
+  const original = await input.inputValue();
+  const complete = await downloadTableWorkbook(table, `${label}-unfiltered`);
+  await input.fill('no-such-row-in-this-table-938472');
+  const rows = await table.locator(':scope > tbody > tr').count();
+  const address = page.url();
+  const filtered = await downloadTableWorkbook(table, `${label}-no-matches`);
+  assert.deepEqual(filtered.getSheetValues(), complete.getSheetValues(), `${label}: filters cannot remove Excel rows or change their values`);
+  assert.equal(await input.inputValue(), 'no-such-row-in-this-table-938472');
+  assert.equal(page.url(), address, `${label}: export preserves URL filters`);
+  assert.equal(await table.locator(':scope > tbody > tr').count(), rows, `${label}: the filtered screen remains intact`);
+  await input.fill(original);
+  console.log(`PASS: ${label} exports the same ${complete.rowCount} rows under a no-match search`);
+}
+
+export async function assertPrivateMarketFilterExport(page) {
+  await page.getByRole('tab',{name:'By brand',exact:true}).click();
+  const table = page.locator('table[data-pm-table="brands"]');
+  const picker = page.getByRole('combobox', {name:'Show funds, companies or both', exact:true});
+  const selection = await picker.inputValue();
+  const complete = await downloadTableWorkbook(table, 'private-complete');
+  await picker.selectOption('funds');
+  const visible = await table.locator('[data-pm-group]').count();
+  const filtered = await downloadTableWorkbook(table, 'private-funds-filter');
+  assert.deepEqual(filtered.getSheetValues(), complete.getSheetValues(), 'Companies/Funds cannot narrow Excel');
+  assert.equal(await picker.inputValue(), 'funds');
+  assert.equal(await table.locator('[data-pm-group]').count(), visible);
+  await assertUnfilteredSearchExport(page,table,page.getByPlaceholder('Search brands, funds or entities…'),'private-market');
+  await picker.selectOption(selection);
 }
 
 /** Export before scrolling so a DOM-only/first-batch implementation fails. */
@@ -148,4 +183,67 @@ export async function assertExportRetry(page) {
   await table.locator(':scope > caption [role=alert]').waitFor();
   await downloadTableWorkbook(table,'retry-after-export-failure');
   console.log('PASS: Excel export failure is visible and retry succeeds');
+}
+
+/** Scope selectors and URL filters cannot constrain the downloadable dataset. */
+export async function assertMemberFilterExport(page, base, route, selector) {
+  await page.goto(base+route);
+  await page.waitForLoadState('networkidle');
+  const table = page.locator(selector).first();
+  await table.waitFor();
+  const complete = await downloadTableWorkbook(table, `${route}-whole-family`);
+  const target = new URL(base+route);
+  target.searchParams.set('members','ankita-jaisinghani');
+  if(route==='/monitor') target.searchParams.set('sector','no-such-sector-in-the-book');
+  await page.goto(target.href);
+  await page.waitForLoadState('networkidle');
+  const scopedTable = page.locator(selector).first();
+  await scopedTable.waitFor();
+  const displayed = await scopedTable.locator(':scope > tbody > tr').count();
+  const scoped = await downloadTableWorkbook(scopedTable, `${route}-member-filter`);
+  assert.deepEqual(scoped.getSheetValues(),complete.getSheetValues(),`${route}: member/sector filters cannot narrow the workbook`);
+  assert.equal(page.url(),target.href,`${route}: member selection remains on screen`);
+  assert.equal(await scopedTable.locator(':scope > tbody > tr').count(),displayed);
+  console.log(`PASS: ${route} exports the complete family dataset with member filters applied`);
+}
+
+export async function assertTransactionFilterExport(page, base) {
+  await page.goto(base+'/monitor?show=transactions');
+  await page.waitForLoadState('networkidle');
+  const table = page.locator('table[data-dated-table]');
+  await table.waitFor();
+  const complete = await downloadTableWorkbook(table,'transactions-all-dates');
+  const from = page.locator('input[type=date][title="From date"]');
+  await from.fill('2099-01-01');
+  await page.locator('[data-side-option="out"]').click();
+  const entity = page.locator('[data-entity-filter]');
+  const option = await entity.locator('option').nth(1).getAttribute('value');
+  await entity.selectOption(option);
+  const rows = await table.locator(':scope > tbody > tr').count();
+  const filtered = await downloadTableWorkbook(table,'transactions-filtered');
+  assert.deepEqual(filtered.getSheetValues(),complete.getSheetValues(),'date, side and entity filters cannot narrow Excel');
+  assert.equal(await from.inputValue(),'2099-01-01');
+  assert.equal(await entity.inputValue(),option);
+  assert.equal(await page.locator('[data-side-filter]').getAttribute('data-side-filter'),'out');
+  assert.equal(await table.locator(':scope > tbody > tr').count(),rows);
+  console.log('PASS: transaction exports ignore date, side and entity filters while keeping them on screen');
+}
+
+
+/** Exercise the real page action rather than matching its variable names. */
+export async function assertPortfolioPageExport(page, base) {
+  await page.goto(base+'/monitor?members=');
+  await page.waitForLoadState('networkidle');
+  const complete = await downloadWorkbook(page.locator('button.btn-excel'),'portfolio-whole-family');
+  const target = base+'/monitor?members=ankita-jaisinghani&sector=no-such-sector';
+  await page.goto(target);
+  await page.waitForLoadState('networkidle');
+  const filtered = await downloadWorkbook(page.locator('button.btn-excel'),'portfolio-filtered');
+  for (const name of ['Holdings','Transactions']) {
+    const left = complete.getWorksheet(name), right = filtered.getWorksheet(name);
+    assert.ok(left && right, `${name} is included`);
+    assert.deepEqual(right.getSheetValues(),left.getSheetValues(),`${name}: the whole-book export ignores member and table filters`);
+  }
+  assert.equal(page.url(), target);
+  console.log('PASS: the full-portfolio action exports identical Holdings and Transactions under active filters');
 }

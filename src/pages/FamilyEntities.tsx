@@ -1,3 +1,4 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState } from "react";
 import {
@@ -177,7 +178,8 @@ const overlapWording = (groups: { owners: string[]; rows: number }[], names: str
 export function FamilyEntities() {
   const { portfolio, statementPortfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase, scope: memberScope } = usePortfolio();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [holdingsQ, setHoldingsQ] = useState("");
+  const [holdingsQFilter, setHoldingsQ] = useState("");
+  const holdingsQ = useTableExportFilter(holdingsQFilter, "");
   const entityView = useTableView("family-entities", ENTITY_COLS, { reviewKind: "entity" });
   const holdView = useTableView("family-holdings", FE_HOLDING_COLS, { reviewKind: "holding" });
   /**
