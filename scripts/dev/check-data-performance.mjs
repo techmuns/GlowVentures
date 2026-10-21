@@ -48,6 +48,12 @@ try {
     await page.route('**/api/**', r => r.fulfill({ json: new URL(r.request().url()).pathname === '/api/corporate-actions'
       ? { ok:true, retained:true, feed:capture } : { ok:false, reason:'local audit fixture' } }));
     await installReadModelRoutes(page);
+    if (route === '/monitor?group=category') await page.addInitScript(() => {
+      localStorage.setItem('glow:tableView:monitor:v1', JSON.stringify({
+        order:['security','review:investmentRange','mv','investedOn'], sort:{col:'review:investmentRange',dir:'asc'},
+        visibility:{'review:investmentRange':true,investedOn:false},
+      }));
+    });
     await page.addInitScript(() => { window.__long=[]; new PerformanceObserver(l => window.__long.push(...l.getEntries().map(e=>e.duration))).observe({type:'longtask',buffered:true}); });
     const started = Date.now(); await page.goto(base+route); await page.waitForLoadState('networkidle');
     const metrics = await page.evaluate(() => ({ rows:document.querySelectorAll('main tbody tr').length, longTasks:window.__long.length,
@@ -106,6 +112,19 @@ try {
       await page.screenshot({ path: `.cache/table-scroll-check/monitor-${new URL(base+route).searchParams.get('group') || 'security'}.png` });
       await table.locator('[data-col-button="security"]').click();
       assert.equal(await holdings.count(), 50, 'sorting resets the Monitor to its first batch');
+      if (route === '/monitor?group=category') {
+        assert.equal(await table.locator('[data-col-button="review:investmentRange"]').count(),0,'the retired review date column cannot reappear from saved preferences');
+        assert.equal(await table.locator('[data-col-button="investedOn"]').count(),1,'one merged investment date column remains visible');
+        for (const [category, oldDated] of [['Direct Equity',4],['Mutual Fund',4],['Cash',1]]) {
+          await page.getByRole('tab',{name:category,exact:true}).click();
+          const count = Number(await table.locator('[data-invested-on-coverage]').getAttribute('data-invested-on-coverage'));
+          assert.ok(count>oldDated,`${category} includes the original dates behind recovered costs`);
+          assert.equal(await table.locator('[data-col-button="investedOn"]').count(),1,'date column stays merged when switching categories');
+        }
+        await page.getByRole('tab',{name:'Direct Equity',exact:true}).click();
+        const esds = table.locator('tbody tr[data-bucket]').filter({hasText:'ESDS Software'});
+        assert.match(await esds.locator('[data-invested-on]').innerText(),/review/,'unreconciled custody dates retain a visible product-review qualifier');
+      }
     }
     assert.equal(await page.getByLabel('Rows per page').count(), 0, 'no page size selector');
     assert.equal(await page.getByRole('button', {name:'Next table page',exact:true}).count(), 0, 'no next page');

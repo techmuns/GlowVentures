@@ -8077,6 +8077,11 @@ export const BOOK_POSITIONS: Position[] = [
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
+      "acquisitionDates": {
+        "first": "2026-01-30",
+        "last": "2026-01-30",
+        "lots": 1
+      },
       "evidence": [
         {
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -8129,6 +8134,11 @@ export const BOOK_POSITIONS: Position[] = [
       "realizedPnL": null,
       "costOfUnitsSold": null,
       "dividendReceived": null,
+      "acquisitionDates": {
+        "first": "2024-08-30",
+        "last": "2024-08-30",
+        "lots": 1
+      },
       "evidence": [
         {
           "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
@@ -8183,6 +8193,11 @@ export const BOOK_POSITIONS: Position[] = [
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
+      "acquisitionDates": {
+        "first": "2025-07-07",
+        "last": "2025-07-07",
+        "lots": 1
+      },
       "evidence": [
         {
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -8236,6 +8251,11 @@ export const BOOK_POSITIONS: Position[] = [
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
+      "acquisitionDates": {
+        "first": "2024-02-14",
+        "last": "2024-03-27",
+        "lots": 2
+      },
       "evidence": [
         {
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -8292,6 +8312,11 @@ export const BOOK_POSITIONS: Position[] = [
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
+      "acquisitionDates": {
+        "first": "2024-12-11",
+        "last": "2024-12-11",
+        "lots": 1
+      },
       "evidence": [
         {
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -8345,6 +8370,11 @@ export const BOOK_POSITIONS: Position[] = [
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
+      "acquisitionDates": {
+        "first": "2024-05-29",
+        "last": "2025-08-21",
+        "lots": 2
+      },
       "evidence": [
         {
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -8398,6 +8428,11 @@ export const BOOK_POSITIONS: Position[] = [
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
+      "acquisitionDates": {
+        "first": "2025-04-16",
+        "last": "2025-04-16",
+        "lots": 1
+      },
       "evidence": [
         {
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -8450,6 +8485,11 @@ export const BOOK_POSITIONS: Position[] = [
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
+      "acquisitionDates": {
+        "first": "2024-09-20",
+        "last": "2024-09-20",
+        "lots": 1
+      },
       "evidence": [
         {
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -8503,6 +8543,11 @@ export const BOOK_POSITIONS: Position[] = [
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
+      "acquisitionDates": {
+        "first": "2024-04-15",
+        "last": "2024-04-15",
+        "lots": 1
+      },
       "salesAfter": 3,
       "evidence": [
         {
@@ -18985,6 +19030,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-04-15",
+      "last": "2024-04-15",
+      "lots": 1
+    },
     "salesAfter": 3,
     "evidence": [
       {
@@ -19006,6 +19056,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-05-29",
+      "last": "2025-08-21",
+      "lots": 2
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19027,6 +19082,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-12-11",
+      "last": "2024-12-11",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19048,6 +19108,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-09-20",
+      "last": "2024-09-20",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19068,6 +19133,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": null,
     "costOfUnitsSold": null,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-08-30",
+      "last": "2024-08-30",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
@@ -19090,6 +19160,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-02-14",
+      "last": "2024-03-27",
+      "lots": 2
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19114,6 +19189,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-04-16",
+      "last": "2025-04-16",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19134,6 +19214,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-07-07",
+      "last": "2025-07-07",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19155,6 +19240,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-01-30",
+      "last": "2026-01-30",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19175,6 +19265,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 23795397.75,
     "costOfUnitsSold": 62939610,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-11-13",
+      "last": "2024-11-13",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19198,6 +19293,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": -22586920.91,
     "costOfUnitsSold": 73027344.39,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-09-11",
+      "last": "2025-09-11",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19230,6 +19330,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-06-17",
+      "last": "2026-06-17",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19251,6 +19356,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-06-17",
+      "last": "2026-06-18",
+      "lots": 2
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19273,6 +19383,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": null,
     "costOfUnitsSold": 43190188.98,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-11-27",
+      "last": "2025-11-27",
+      "lots": 1
+    },
     "hprUnavailableReason": "Sale proceeds are unverified on review row(s) 474; original lots establish remaining cost only",
     "evidence": [
       {
@@ -19296,6 +19411,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 4463855.58,
     "costOfUnitsSold": 32498362.8,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-03-06",
+      "last": "2026-03-23",
+      "lots": 4
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19321,6 +19441,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-04-02",
+      "last": "2026-04-02",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19342,6 +19467,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-04-17",
+      "last": "2026-05-29",
+      "lots": 7
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19369,6 +19499,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-06-05",
+      "last": "2026-06-05",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19390,6 +19525,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-11-06",
+      "last": "2024-11-06",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19411,6 +19551,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": -88917.69,
     "costOfUnitsSold": 330630,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-11-06",
+      "last": "2024-11-14",
+      "lots": 6
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19438,6 +19583,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 1135.05,
     "costOfUnitsSold": 22569.75,
     "dividendReceived": 603,
+    "acquisitionDates": {
+      "first": "2024-11-06",
+      "last": "2024-11-14",
+      "lots": 4
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19464,6 +19614,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-01-30",
+      "last": "2026-01-30",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19485,6 +19640,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-11-06",
+      "last": "2025-11-06",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19506,6 +19666,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2023-06-05",
+      "last": "2023-09-26",
+      "lots": 3
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19529,6 +19694,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-08-07",
+      "last": "2025-06-04",
+      "lots": 5
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19554,6 +19724,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-11-06",
+      "last": "2025-11-06",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19575,6 +19750,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-04-17",
+      "last": "2026-04-17",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19596,6 +19776,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 14667670.15,
     "costOfUnitsSold": 14981798.27,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-09-30",
+      "last": "2025-09-30",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19618,6 +19803,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-01-22",
+      "last": "2026-01-22",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19639,6 +19829,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 5405142.15,
     "costOfUnitsSold": 16304849,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-11-13",
+      "last": "2024-11-13",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19661,6 +19856,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": -299952,
     "costOfUnitsSold": 1107082,
     "dividendReceived": 70125,
+    "acquisitionDates": {
+      "first": "2023-08-11",
+      "last": "2023-08-11",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19687,6 +19887,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-07-24",
+      "last": "2024-07-24",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19708,6 +19913,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2023-10-25",
+      "last": "2023-10-25",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19729,6 +19939,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-10-16",
+      "last": "2025-10-10",
+      "lots": 7
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19756,6 +19971,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 1223545.74,
     "costOfUnitsSold": 8812304.83,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2024-07-24",
+      "last": "2024-07-24",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19778,6 +19998,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-07-11",
+      "last": "2025-07-11",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19799,6 +20024,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-03-17",
+      "last": "2026-03-24",
+      "lots": 2
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19821,6 +20051,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2023-08-01",
+      "last": "2023-08-01",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19842,6 +20077,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 22966.05,
     "costOfUnitsSold": 12706355.62,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-04-09",
+      "last": "2026-04-09",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19864,6 +20104,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-04-17",
+      "last": "2026-04-17",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19885,6 +20130,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-04-17",
+      "last": "2026-04-17",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19906,6 +20156,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2026-01-29",
+      "last": "2026-01-30",
+      "lots": 2
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19928,6 +20183,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 128261.98,
     "costOfUnitsSold": 11783198.53,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-07-01",
+      "last": "2025-07-01",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -19950,6 +20210,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
+    "acquisitionDates": {
+      "first": "2025-07-01",
+      "last": "2025-07-01",
+      "lots": 1
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
