@@ -98,6 +98,9 @@ export function investedOnOf(ps: readonly Position[]): InvestedOn | null {
 /** A product's printed review range is useful, but does not verify every current custody lot. */
 function reviewedInvestmentDates(ps: readonly Position[]): InvestedOn | null {
   if (!ps.length) return null;
+  // A family's direct investment in a company cannot date a manager's own
+  // purchases of that company, including a company row mixing both routes.
+  if (ps.some(p => ACCOUNTS.get(p.accountId)?.engagement === "PMS")) return null;
   const field = reviewField({ positions: ps }, "investmentRange");
   return field.value != null && field.from && field.to
     ? { first: field.from, last: field.to, payments: null, sources: ["review"], reviewSource: field.source }

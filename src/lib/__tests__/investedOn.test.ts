@@ -106,6 +106,10 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   ok("a different instrument cannot inherit that review date", investedOnOf([unknown]) === null);
   const changedUnits = { ...esds, quantity:esds.quantity! + 42 };
   ok("a review date is labelled as product context independently of a custody quantity", !!investedOnOf([changedUnits])?.reviewSource);
+  const managerMps = BOOK_POSITIONS.find(p=>p.accountId.endsWith('100022')&&p.securityKey==='mps')!;
+  ok("a direct MPS investment's review date cannot date the PMS manager's MPS purchases", !!managerMps && investedOnOf([managerMps])===null);
+  const directMps = all.find(p=>p.recoveredCost&&p.securityKey==='mps')!;
+  ok("nor can a mixed direct/PMS company row borrow that direct review date", !!directMps&&investedOnOf([directMps,managerMps])===null);
 }
 
 // ── 4. THE REVIEW'S RANGE, AS THE REVIEW PRINTS IT ──────────────────────────

@@ -43,24 +43,26 @@ The baseline was read from production. The repaired date counts below reconcile 
 
 The two additional Cash review-context ranges cover the separately keyed ABSL Liquid Direct and Liquid BeES products; they do not resolve missing owner/folio lots.
 
-**PMS:** all six strategy rows have the family's inception/contribution dates. Those dates must not be lent to the manager's underlying securities. Across the ten active account statements, 112 of 271 non-cash position lines have complete holding-date support; **159 do not**. The source trade windows often begin after the opening shares were acquired. Cash balances themselves have no purchase date.
+**PMS:** all six strategy rows have the family's inception/contribution dates. Those dates must not be lent to the manager's underlying securities. Across the ten active account statements, 106 of 271 non-cash position lines have complete holding-date support; **165 do not**. The source trade windows often begin after the opening shares were acquired. Cash balances themselves have no purchase date.
 
 | PMS account | Holder | Dated non-cash positions | Remaining date evidence |
 | --- | --- | ---: | --- |
 | Carnelian 3517383 | Ajay | 6 / 12 | Original lots for opening shares; saved trades cover 1 Apr–30 Sep 2026. |
-| Goldstandard 100022 | Ankita | 9 / 32 | Original lots for opening shares; saved trades cover 1 Apr–6 Oct 2026. |
-| Goldstandard 100023 | Ajay | 9 / 32 | Same window; separate owner/account lots required. |
-| Green Lantern 510854 | Ankita | 30 / 31 | Reconcile the one unmatched security's opening units/corporate actions; window begins 13 Jan 2025. |
-| Green Lantern 510861 | Ajay | 27 / 31 | Reconcile four unmatched securities' opening units/corporate actions; window begins 16 Jan 2025. |
+| Goldstandard 100022 | Ankita | 8 / 32 | Original lots for opening shares; saved trades cover 1 Apr–6 Oct 2026. |
+| Goldstandard 100023 | Ajay | 8 / 32 | Same window; separate owner/account lots required. |
+| Green Lantern 510854 | Ankita | 29 / 31 | Reconcile the two unmatched securities's opening units/corporate actions; window begins 13 Jan 2025. |
+| Green Lantern 510861 | Ajay | 26 / 31 | Reconcile five unmatched securities' opening units/corporate actions; window begins 16 Jan 2025. |
 | Molecule 7810404 | Ajay | 1 / 9 | Original lots for opening shares; saved trades cover 1 Apr–31 Jul 2026. |
-| SVAN 8710067 | Ajay | 7 / 47 | Original lots for opening shares; saved trades cover 1 Apr–30 Sep 2026. |
-| SVAN 8710090 | Bharat | 6 / 46 | Same window; separate owner/account lots required. |
+| SVAN 8710067 | Ajay | 6 / 47 | Original lots for opening shares; saved trades cover 1 Apr–30 Sep 2026. |
+| SVAN 8710090 | Bharat | 5 / 46 | Same window; separate owner/account lots required. |
 | V.E.C 128004 | Ankita | 14 / 14 | No remaining holding-date gap in this source account. |
 | V.E.C 128005 | Ajay | 3 / 17 | Original lots for opening shares; saved trades cover 1 Apr–13 Aug 2026. |
 
-Request the managers' since-inception security transaction/lot exports, including opening acquisition dates, cost, units, transfers and corporate actions. No repeat request is needed for the mandates' funding/inception dates already present. The account/security details behind the 159 positions are listed below; costs being known does not establish their dates.
+Request the managers' since-inception security transaction/lot exports, including opening acquisition dates, cost, units, transfers and corporate actions. No repeat request is needed for the mandates' funding/inception dates already present. The account/security details behind the 165 positions are listed below; costs being known does not establish their dates.
 
 For remaining cost, HPR and balance discrepancies, use [the account-by-account client request](client/PURCHASE-COST-RECORDS-NEEDED.md). Companies held only inside funds have no family-account stock acquisition date: the family's dated purchase is of fund units.
+
+The June review's direct-family purchases of MPS, Vedanta and Borosil do not date those companies' shares in PMS accounts. These six manager-held lines remain undated rather than borrowing another route's investment range.
 
 ## Undated PMS account/security lines
 
@@ -86,6 +88,7 @@ For remaining cost, HPR and balance discrepancies, use [the account-by-account c
 | Ankita Jaisinghani / 100022 | Life Insurance Corp. of India | 6000 | none of its 6000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ankita Jaisinghani / 100022 | Mahindra & Mahindra Ltd. | 800 | none of its 800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ankita Jaisinghani / 100022 | Motilal Oswal Financial Services Ltd. | 2250 | none of its 2250 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
+| Ankita Jaisinghani / 100022 | MPS Ltd | 1250 | none of its 1250 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ankita Jaisinghani / 100022 | Oberoi Realty Ltd. | 1000 | none of its 1000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ankita Jaisinghani / 100022 | Sagility Ltd. | 45000 | none of its 45000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ankita Jaisinghani / 100022 | Sharda Motor Industries Ltd | 1250 | none of its 1250 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
@@ -109,6 +112,7 @@ For remaining cost, HPR and balance discrepancies, use [the account-by-account c
 | Ajay Jaisinghani / 100023 | Life Insurance Corp. of India | 16400 | none of its 16400 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ajay Jaisinghani / 100023 | Mahindra & Mahindra Ltd. | 1800 | none of its 1800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ajay Jaisinghani / 100023 | Motilal Oswal Financial Services Ltd. | 5000 | none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
+| Ajay Jaisinghani / 100023 | MPS Ltd | 3300 | none of its 3300 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ajay Jaisinghani / 100023 | Oberoi Realty Ltd. | 2200 | none of its 2200 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ajay Jaisinghani / 100023 | Sagility Ltd. | 100000 | none of its 100000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ajay Jaisinghani / 100023 | Sharda Motor Industries Ltd | 3000 | none of its 3000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
@@ -118,10 +122,12 @@ For remaining cost, HPR and balance discrepancies, use [the account-by-account c
 | Ajay Jaisinghani / 100023 | Tenneco Clean Air India Ltd. | 10000 | none of its 10000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ajay Jaisinghani / 100023 | Transport Corp. of India Ltd. | 8500 | none of its 8500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ajay Jaisinghani / 100023 | Zydus Lifesciences Ltd. | 6000 | none of its 6000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
+| Ankita Jaisinghani / 510854 | Vedanta Aluminium Metal Limited | 4340 | none of its 4340 units is on a dated trade: the transaction statements in this drop run from 2025-01-13 to 2026-07-27 and record no buy or sell of it |
 | Ankita Jaisinghani / 510854 | ZF Commercial Vehicle Control Systems India Ltd | 516 | the transaction statements from 2025-01-13 to 2026-07-27 buy 86 and sell 0 units of it against 516 held, so 430 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 510861 | Ingersollrand India Ltd | 445 | the transaction statements from 2025-01-16 to 2026-07-27 buy 275 and sell 0 units of it against 445 held, so 170 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 510861 | Ratnamani Metals & Tubes Ltd | 586 | the transaction statements from 2025-01-16 to 2026-07-27 buy 799 and sell 370 units of it against 586 held, so 157 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 510861 | The Anup Engineering Ltd | 1258 | the transaction statements from 2025-01-16 to 2026-07-27 buy 1217 and sell 0 units of it against 1258 held, so 41 of them are on no dated trade in this drop |
+| Ajay Jaisinghani / 510861 | Vedanta Aluminium Metal Limited | 8569 | none of its 8569 units is on a dated trade: the transaction statements in this drop run from 2025-01-16 to 2026-07-27 and record no buy or sell of it |
 | Ajay Jaisinghani / 510861 | ZF Commercial Vehicle Control Systems India Ltd | 1032 | the transaction statements from 2025-01-16 to 2026-07-27 buy 172 and sell 0 units of it against 1032 held, so 860 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 7810404 | ARVIND FASHIONS LIMITED | 4000 | none of its 4000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it |
 | Ajay Jaisinghani / 7810404 | CHEMFAB ALKALIS LIMITED | 1000 | none of its 1000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it |
@@ -133,6 +139,7 @@ For remaining cost, HPR and balance discrepancies, use [the account-by-account c
 | Ajay Jaisinghani / 7810404 | SANSERA ENGINEERING LIMITED | 800 | none of its 800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it |
 | Ajay Jaisinghani / 8710067 | Arvind Fashions Ltd | 9360 | none of its 9360 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
 | Ajay Jaisinghani / 8710067 | Birlasoft Ltd | 10110 | none of its 10110 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
+| Ajay Jaisinghani / 8710067 | BOROSIL RENEWABLES LTD | 6965 | none of its 6965 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
 | Ajay Jaisinghani / 8710067 | Caplin Point Laboratories Ltd | 2465 | the transaction statements from 2026-04-01 to 2026-09-30 buy 535 and sell 0 units of it against 2465 held, so 1930 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 8710067 | Ceat Ltd | 1590 | none of its 1590 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
 | Ajay Jaisinghani / 8710067 | Cosmo First Limited | 5190 | none of its 5190 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
@@ -173,6 +180,7 @@ For remaining cost, HPR and balance discrepancies, use [the account-by-account c
 | Ajay Jaisinghani / 8710067 | Zensar Technologies Ltd | 5090 | none of its 5090 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
 | Bharat Jaisinghani / 8710090 | Arvind Fashions Ltd | 6660 | none of its 6660 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
 | Bharat Jaisinghani / 8710090 | Birlasoft Ltd | 6560 | none of its 6560 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
+| Bharat Jaisinghani / 8710090 | BOROSIL RENEWABLES LTD | 4530 | none of its 4530 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
 | Bharat Jaisinghani / 8710090 | Caplin Point Laboratories Ltd | 1600 | the transaction statements from 2026-04-01 to 2026-09-30 buy 340 and sell 0 units of it against 1600 held, so 1260 of them are on no dated trade in this drop |
 | Bharat Jaisinghani / 8710090 | Ceat Ltd | 1040 | none of its 1040 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |
 | Bharat Jaisinghani / 8710090 | Cosmo First Limited | 3370 | none of its 3370 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it |

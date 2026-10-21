@@ -39,7 +39,7 @@ Four further Bharat/Motilal residues are below the dashboard's ₹1,000 holdings
 
 ## Additional records needed for investment dates
 
-Purchase-cost coverage is separate from acquisition-date coverage. The [date audit](../INVESTMENT-DATE-AUDIT.md) lists every category and all 159 undated non-cash PMS account/security lines.
+Purchase-cost coverage is separate from acquisition-date coverage. The [date audit](../INVESTMENT-DATE-AUDIT.md) lists every category and all 165 undated non-cash PMS account/security lines.
 
 - **Bharat — LKP 98245, Belrise 12,500 shares:** the ₹1,773,625 cost is already recorded. Supply the original acquisition dates/lots for the 31 March 2026 holding. The saved dated trades start on 25 June 2026 and cannot date that earlier balance.
 - **Hope India Trust — ABSL 1019265797 (7,756.542 units), ABSL 1038104611 (1,752.565 units), Mirae 70413280453 (316.190 units):** costs are already recorded. Supply the AMC/RTA since-inception purchase/lot history. The ABSL files supply monthly reinvestments or opening units; Mirae's 11 July 2019 entry is an opening balance, not an acquisition confirmation.
