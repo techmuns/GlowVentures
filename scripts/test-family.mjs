@@ -115,6 +115,7 @@ const SUITES = [
   ["member scope", "src/lib/__tests__/memberScope.test.ts"],
   ["statement library", "src/lib/__tests__/statementLibrary.test.ts"],
   ["statement uploads", "src/lib/__tests__/statementUploads.test.ts"],
+  ["statement preview", "src/lib/__tests__/statementPreview.test.ts"],
   ["display FX rate", "src/lib/__tests__/fx.test.ts"],
   ["day move", "src/lib/__tests__/dayMove.test.ts"],
   ["concentration by investment", "src/lib/__tests__/concentration.test.ts"],
