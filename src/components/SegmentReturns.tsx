@@ -1,5 +1,11 @@
 /**
- * ── MORNING CIO → RETURN ATTRIBUTION (Stage 10ez) ───────────────────────────
+ * ── MORNING CIO → RETURNS → RETURN ATTRIBUTION (Stages 10ez, 10fc) ──────────
+ *
+ * *"It is supposed to be a section inside the returns page only. Just give
+ * options to select the attribution and see how different categories and
+ * segments offer attribution to the return profile."* So it is the Returns
+ * tab's third section, under the portfolio's card and the benchmarks — never a
+ * tab of its own (Stage 10ez drew one, and the family took it back).
  *
  * Which part of the book earned its return: pick an axis — Category, Asset
  * class, Basket, Sector, Listed / Private, All Securities — and every segment
@@ -10,8 +16,10 @@
  *
  * The model is `segmentAttribution`: the same current holdings and the same
  * FIFO as the Gain / Loss tile, so the Total row IS that tile's gain and
- * return, and the contributions add to it. Since investment, never a window —
- * the Returns tab measures windows, on whole accounts.
+ * return, and the contributions add to it. Since investment, never a window:
+ * no holding carries a dated value, so a sector or a basket cannot be struck
+ * over FYTD the way an account is. The section says so on its face, because it
+ * sits under a period selector it does not follow.
  */
 import { Fragment, useMemo } from "react";
 import { Card } from "@/components/Card";
@@ -67,7 +75,7 @@ export default function SegmentReturns() {
   const drag = best.length > 1 && best.at(-1)!.contribPct! < 0 ? best.at(-1)! : null;
 
   const gainHint = (l: SegmentLine) => {
-    const parts = [`FIFO since investment: unrealised + realised over ${l.struck} of ${l.holdings} holdings (${money(l.struckValue)} of ${money(l.value)})`];
+    const parts = [`FIFO since investment: unrealised + realised + dividends over ${l.struck} of ${l.holdings} holdings (${money(l.struckValue)} of ${money(l.value)})`];
     if (l.gain != null && Math.abs(l.gain) < 0.5) parts.unshift("A measured zero: value less cost, plus anything realised, nets to nothing here — as for cash carried at its cost");
     if (l.uncostedValue > 0.5) parts.push(`${money(l.uncostedValue)} reports no cost and is in the value, in no gain`);
     if (l.atCostValue > 0.5) parts.push(`${money(l.atCostValue)} is held at cost and is in the value, in no gain`);
@@ -103,32 +111,32 @@ export default function SegmentReturns() {
 
   const btn = (on: boolean) => `rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${on ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`;
 
+  const axisLabel = (SEGMENT_VIEWS.find((v) => v.key === axis)?.label ?? "").toLowerCase();
+
   return (
-    <div className="flex h-auto min-h-0 flex-col gap-3 lg:h-full" data-segment-returns data-seg-axis={axis}
+    <div className="shrink-0" data-segment-returns data-returns-attribution data-seg-axis={axis}
       data-seg-total-gain={a.total.gain ?? ""} data-seg-total-deployed={a.total.deployed ?? ""}
       data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ""}
       data-status={axis === "sector" && exposure.status === "loading" ? "loading" : "ready"}>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div role="tablist" aria-label="Attribute the return by" className="inline-flex flex-wrap items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
-          {SEGMENT_VIEWS.map((v) => (
-            <button key={v.key} type="button" role="tab" aria-selected={axis === v.key} title={v.title} data-seg-axis-option={v.key}
-              onClick={() => setAxis(v.key)} className={btn(axis === v.key)}>{v.label}</button>
-          ))}
-        </div>
-        <div className="ml-auto flex flex-wrap items-center gap-2 text-[12px]">
-          {top && (
-            <Pill tone="info"><span data-seg-top={top.key} title={`Largest contribution to the book's return on this axis: ${money(top.gain ?? 0, true)}`}>Top {top.label} {pp(top.contribPct!)}</span></Pill>
-          )}
-          {drag && (
-            <Pill tone="info"><span data-seg-drag={drag.key} title={`Largest drag on the book's return on this axis: ${money(drag.gain ?? 0, true)}`}>Drag {drag.label} {pp(drag.contribPct!)}</span></Pill>
-          )}
-          {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable.map((r) => r.key), !allOpen)} />}
-        </div>
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-auto">
-        <Card pad={false} title={`Return by ${(SEGMENT_VIEWS.find((v) => v.key === axis)?.label ?? "").toLowerCase()} · since investment`}
-          subtitle="FIFO on cost, as the Gain / Loss tile: each segment's unrealised plus realised gain over the capital it deployed. Contribution is that gain over the whole book's capital deployed, so the segments add to the book's return. A holding with no cost, or held at cost, is in the value and in no gain.">
+        <Card pad={false} title={<>Return attribution · <span className="font-normal text-slate-400" data-seg-basis>by {axisLabel}, since investment</span></>}
+          subtitle="Which part of the book earned its return. FIFO on cost, as the Gain / Loss tile: each segment's unrealised and realised gain plus dividends, over the capital it deployed. Contribution is that gain over the whole book's capital deployed, so the segments add to the book's return. Since investment, not the period selected above: no holding carries a dated value to open a window on. A holding with no cost, or held at cost, is in the value and in no gain."
+          right={
+            <div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">
+              {top && (
+                <Pill tone="info"><span data-seg-top={top.key} title={`Largest contribution to the book's return on this axis: ${money(top.gain ?? 0, true)}`}>Top {top.label} {pp(top.contribPct!)}</span></Pill>
+              )}
+              {drag && (
+                <Pill tone="info"><span data-seg-drag={drag.key} title={`Largest drag on the book's return on this axis: ${money(drag.gain ?? 0, true)}`}>Drag {drag.label} {pp(drag.contribPct!)}</span></Pill>
+              )}
+              <div role="tablist" aria-label="Attribute the return by" className="inline-flex flex-wrap items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
+                {SEGMENT_VIEWS.map((v) => (
+                  <button key={v.key} type="button" role="tab" aria-selected={axis === v.key} title={v.title} data-seg-axis-option={v.key}
+                    onClick={() => setAxis(v.key)} className={btn(axis === v.key)}>{v.label}</button>
+                ))}
+              </div>
+              {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable.map((r) => r.key), !allOpen)} />}
+            </div>
+          }>
           <div className="overflow-x-auto">
             <table className="min-w-full whitespace-nowrap text-[12.5px]" data-seg-table>
               <thead className="border-b border-ink-700 bg-ink-800">
@@ -138,7 +146,7 @@ export default function SegmentReturns() {
                   <SortHeader col="value" view={view} pad="px-4 py-2">Value</SortHeader>
                   <SortHeader col="weight" view={view} pad="px-4 py-2" title="Share of the book's value">Weight</SortHeader>
                   <SortHeader col="deployed" view={view} pad="px-4 py-2" title="Cost of the units held plus the cost of the units sold; a whole PMS mandate enters on the capital paid in">Deployed</SortHeader>
-                  <SortHeader col="gain" view={view} pad="px-4 py-2" title="Unrealised plus realised, FIFO">Gain</SortHeader>
+                  <SortHeader col="gain" view={view} pad="px-4 py-2" title="Unrealised plus realised plus dividends, FIFO">Gain</SortHeader>
                   <SortHeader col="ret" view={view} pad="px-4 py-2" title="Gain ÷ deployed, since investment, not annualised">Return</SortHeader>
                   <SortHeader col="contrib" view={view} pad="px-4 py-2" title="Gain ÷ the whole book's capital deployed, in percentage points — the segments add to the book's return">Contribution</SortHeader>
                 </Tr>
@@ -167,7 +175,7 @@ export default function SegmentReturns() {
                       {open && r.childRemainder && (
                         <Tr view={view} className={TREE_ROW.adjust} data-seg-child={r.key} data-seg-child-remainder={r.childRemainder.gain}>
                           <TreeNameCell depth={1} last title="Mandate capital beyond its holdings"
-                            hint="A whole PMS mandate is struck on its capital since inception — income less fees and sales before its capital-gain statement's window. Split across these lines, each holding enters on its own lots, and the rest of the mandate's gain is here, so the lines add to the segment." />
+                            hint="A whole PMS mandate is struck on its capital since inception — its fees, and the sales and income outside its holdings' own records. Split across these lines, each holding enters on its own lots, and the rest of the mandate's gain is here, so the lines add to the segment." />
                           <td className={TREE_CELL.child} />
                           <td className={TREE_CELL.child} />
                           <td className={TREE_CELL.child} />
@@ -183,7 +191,7 @@ export default function SegmentReturns() {
                 {a.mandateRemainder && (
                   <Tr view={view} className={TREE_ROW.adjust} data-seg-remainder={a.mandateRemainder.gain} data-seg-contrib={a.mandateRemainder.contribPct ?? ""}>
                     <TreeNameCell depth={0} title="PMS mandate capital not held by one segment"
-                      hint={`${a.mandateRemainder.mandates} PMS mandate${a.mandateRemainder.mandates === 1 ? " is" : "s are"} struck whole on the capital paid in — the income less fees and the sales before each capital-gain statement's window belong to no single holding. This axis splits ${a.mandateRemainder.mandates === 1 ? "it" : "them"} across segments, so each holding enters on its own lots and the remainder is this line; it is never spread across segments it was not reported against.`} />
+                      hint={`${a.mandateRemainder.mandates} PMS mandate${a.mandateRemainder.mandates === 1 ? " is" : "s are"} struck whole on the capital paid in — its fees, and the sales and income outside its holdings' own records, belong to no single holding. This axis splits ${a.mandateRemainder.mandates === 1 ? "it" : "them"} across segments, so each holding enters on its own lots and the remainder is this line; it is never spread across segments it was not reported against.`} />
                     <td className={TREE_CELL.parent} />
                     <td className={TREE_CELL.parent} />
                     <td className={TREE_CELL.parent} />
@@ -212,7 +220,6 @@ export default function SegmentReturns() {
             </table>
           </div>
         </Card>
-      </div>
     </div>
   );
 }

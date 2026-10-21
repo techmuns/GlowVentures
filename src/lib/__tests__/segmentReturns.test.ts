@@ -1,6 +1,6 @@
 // WHICH PART OF THE BOOK EARNED ITS RETURN (Stage 10ez).   npm run test:family
 //
-// Morning CIO's Return Attribution tab files the current holdings under one
+// Morning CIO's Returns tab, in its attribution section (10fc), files the current holdings under one
 // axis and strikes each segment with FIFO. The claims a reader makes by adding
 // are asserted on the COMMITTED book, on every axis: the values add to the
 // book's value, the gains (with the one named mandate remainder) add to the
