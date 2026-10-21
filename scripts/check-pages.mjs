@@ -7656,6 +7656,8 @@ const ROUTES = [
    */
   ["cio-sectors-vs", "/cio?tab=sectors&vs=nifty-500"],
   ["cio-sectors-vs-direct", "/cio?tab=sectors&view=direct&vs=nifty-50"],
+  // Stage 10fo: Sensex is no longer offered, so its old link opens the panel Off.
+  ["cio-sectors-vs-retired", "/cio?tab=sectors&vs=sensex"],
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
   ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
@@ -20182,19 +20184,16 @@ function cioSectorsVs(key, set) {
   return [
     ["the index data derived — the factsheet file is committed and the NAV chart declares its indices", () =>
       INDEX_SECTORS != null && BENCH_KEYS.length >= 2 && want() != null],
-    ["the control offers Off and then the NAV chart's indices in the NAV chart's order, with the one in the address picked", (t, ctx) => {
-      const V = ctx?.sectorVs;
-      if (V === undefined) return notChecked("the index probe did not run on this pass");
-      if (!V) return false;
-      return V.picks.map((p) => p.key).join() === ["off", ...BENCH_KEYS].join()
-        && V.picks.filter((p) => p.active).map((p) => p.key).join() === key;
-    }],
-    ["an index with no factsheet read is offered and marked absent, with its reason on the hover — every index read is not", (t, ctx) => {
+    /* Stage 10fo: only the NAV chart's indices whose factsheet is read are
+       offered — "Sensex and BSE500 … you can remove them as options". The
+       expected list is the NAV chart's order filtered on the committed file, so
+       an index read later joins it, and one with no weights can never be a pill. */
+    ["the control offers Off and then the NAV chart's indices that carry sector weights, in its order, with the one in the address picked", (t, ctx) => {
       const V = ctx?.sectorVs;
       if (V === undefined) return notChecked("the index probe did not run on this pass");
       if (!V || !INDEX_SECTORS) return false;
-      return V.picks.filter((p) => p.key !== "off").every((p) =>
-        INDEX_SECTORS[p.key] ? !p.absent : p.absent && (p.title ?? "").length > 40);
+      return V.picks.map((p) => p.key).join() === ["off", ...BENCH_KEYS.filter((k) => INDEX_SECTORS[k])].join()
+        && V.picks.filter((p) => p.active).map((p) => p.key).join() === key;
     }],
     [`the ${set} set is the one weighed`, (t, ctx) => {
       const L = ctx?.sectorLayout;
@@ -26369,6 +26368,7 @@ const INVARIANTS = {
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS, ...CIO_SECTORS_VS_OFF],
   "cio-sectors-vs": [...CIO_SHARED, ...CIO_TAB_CONTROL, CIO_SECTORS[0], ...cioSectorsVs("nifty-500", "consolidated")],
   "cio-sectors-vs-direct": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...cioSectorsVs("nifty-50", "direct")],
+  "cio-sectors-vs-retired": [...CIO_SHARED, ...CIO_TAB_CONTROL, CIO_SECTORS[0], ...CIO_SECTORS_VS_OFF],
   "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
@@ -42995,7 +42995,7 @@ for (const theme of THEMES) {
         return {
           picks: [...picker.querySelectorAll("[data-sector-vs-pick]")].map((b) => ({
             key: b.getAttribute("data-sector-vs-pick"), active: b.getAttribute("aria-selected") === "true",
-            absent: b.getAttribute("data-vs-absent") === "true", title: b.getAttribute("title") })),
+            title: b.getAttribute("title") })),
           chart: chart ? {
             index: chart.getAttribute("data-vs-index"), asOf: chart.getAttribute("data-vs-asof"),
             rows: [...chart.querySelectorAll("[data-vs-row]")].map((r) => ({

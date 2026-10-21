@@ -4933,3 +4933,12 @@ current unrealized P&L."*
 - **Hope India Trust consolidated** by the family's decision as its own entity (`shared/owners.mjs`, no PAN by the password rule); the folio reader excludes a non-individual holder only when the registry does not know it.
 - **Sealed statements get reader improvements without the password**: every carried single document is re-read from its archived page text and kept only if it is the same document, keeps every archived holding unchanged and publishes no fewer facts. Control: with the readers unchanged, all 15 re-reads reproduced the archive byte for byte.
 - **The gate checks facts, not just statuses** (`check:reads` 5 and 6): printed dated transactions with none carried, and a dated external flow with no capital move that day, both fail. LKP's demat balances (roll-forward witnesses) and 360 ONE's 18 May distributions (carried via 360 ONE Alternates' notices) were confirmed fed.
+
+### Stage 10fo — ONLY INDICES WITH SECTOR WEIGHTS ARE OFFERED
+
+*"Sensex and BSE500 not showing any sector allocation information so you can remove them as options."*
+
+- Sector Composition's Vs index control now offers only the NAV chart's indices whose factsheet `build-index-sectors` reads. Today that is the five Nifty indices. The list is filtered on `src/data/indexSectors.json`, so an index read later joins it with no code change.
+- The muted pills and the "No sector weights" absent state are gone. `indexSectors()` still answers the BSE keys with the reason, and the NAV chart keeps all seven.
+- An old `?vs=sensex` / `?vs=bse-500` link falls back to Off.
+- `check:pages`: the control's expected keys are the NAV chart's order filtered on the JSON. New route `cio-sectors-vs-retired` asserts `?vs=sensex` opens Off.
