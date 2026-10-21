@@ -56,7 +56,7 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
         <SelectField label="Area basis" value={draft.areaBasis} options={options(["Plot", "Carpet", "Built-up", "Super built-up"])} onChange={v => set("areaBasis", v)} />
       </div>
       <div className="border-t border-ink-700 pt-4">
-        <div className="mb-3 flex items-center gap-3"><h3 className="h-section">Ownership</h3><button type="button" className="btn-ghost text-xs" onClick={() => { set("owners", [...draft.owners, { ownerId: null, name: "", share: 0 }]); setShares(s => [...s, ""]); }}><Plus className="h-3 w-3" />Add owner</button></div>
+        <div className="mb-3 flex items-center gap-3"><h3 className="h-section">Family ownership</h3><button type="button" className="btn-ghost text-xs" onClick={() => { set("owners", [...draft.owners, { ownerId: null, name: "", share: 0 }]); setShares(s => [...s, ""]); }}><Plus className="h-3 w-3" />Add owner</button></div>
         <datalist id="property-owner-options">{members.map(m => <option key={m.ownerId} value={m.label} />)}</datalist>
         <div className="space-y-2">{draft.owners.map((o, i) => <div className="flex items-end gap-3" key={i}>
           <label className="block flex-1"><span className="label-xs">Owner / entity *</span><input className="property-input mt-1" aria-label={`Owner ${i + 1}`} list="property-owner-options" value={o.name} onChange={e => ownerChange(i, { name: e.target.value, ownerId: members.find(m => m.label.toLowerCase() === e.target.value.trim().toLowerCase())?.ownerId ?? null })} /></label>
