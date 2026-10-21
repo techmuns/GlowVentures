@@ -1,4 +1,7 @@
 import { Fragment, useMemo } from 'react';
+import { useMarketHistories } from '@/lib/useMarketReturns';
+import { marketReturns, marketReturnSummary, marketHoldingKey } from '@/lib/marketReturns';
+import { MarketReturnInfo } from './MarketReturnInfo';
 import { AvailableReturnCoverage } from '@/components/AvailableReturnCoverage';
 import { Card } from '@/components/Card';
 import { ExportableTable } from '@/components/ExportableTable';
@@ -18,7 +21,7 @@ import { exitedRows } from '@/lib/drilldown';
 import { PERIODS, RETURN_TYPES, type PeriodKey } from '@/lib/periodReturns';
 import { selectedSegmentReturns, returnGapText, UNSPLIT_RETURNS, type ReturnSelection, type SelectedLine } from '@/lib/selectedSegmentReturns';
 
-const COLS = ['seg', 'holdings', 'value', 'weight', 'deployed', 'gain', 'ret', 'contrib'] as const;
+const COLS = ['seg', 'holdings', 'value', 'weight', 'deployed', 'gain', 'market', 'ret', 'contrib'] as const;
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset class', basket: 'Basket', sector: 'Sector / class', side: 'Side', security: 'Security' };
 
@@ -37,6 +40,22 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
   const exited = useMemo(() => exitedRows(statementPositions), [statementPositions]);
   const a = useMemo(() => statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
     k => sectors?.get(k)?.sector || null, calculationCurrent) : null, [current, exited, statementPortfolio, axis, selection, sectors, calculationCurrent]);
+  const marketFeed = useMarketHistories(current);
+  const market = useMemo(() => marketReturns(current, marketFeed.instruments, marketFeed.histories, selection.start,
+    selection.end ?? new Date().toISOString().slice(0, 10), selection.type, selection.inception), [current, marketFeed.instruments, marketFeed.histories, selection]);
+  const marketOf = (ps: readonly typeof current[number][]) => {
+    const keys = new Set(ps.map(marketHoldingKey));
+    const units = market.units.filter(u => keys.has(marketHoldingKey(u.position)));
+    const gaps = market.gaps.filter(g => keys.has(marketHoldingKey(g.position)));
+    const summary = marketReturnSummary(units, selection.type, market.from, market.to);
+    const pending = ps.filter(p => { const i = marketFeed.instruments.get(p.securityKey); return p.marketValue > 0 && i && !marketFeed.histories[i.key]; }).length;
+    return { ...summary, units, gaps, pending };
+  };
+  const marketInfo = (label: string, ps: readonly typeof current[number][]) => {
+    const m = marketOf(ps);
+    return <MarketReturnInfo label={label} value={m.pct == null ? '—' : pct(m.pct)} units={m.units} gaps={m.gaps} accounts={statementPortfolio?.accounts ?? []}
+      totalValue={ps.reduce((s, p) => s + p.marketValue, 0)} from={m.from} to={m.to} annual={m.annual} pending={m.pending} inception={selection.inception} money={money} />;
+  };
   if (!a) return null;
   const type = RETURN_TYPES.find(t => t.key === selection.type)!;
   const periodLabel = PERIODS.find(p => p.key === period)!.label;
@@ -44,7 +63,7 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
   const reason = (l: SelectedLine) => l.measured?.reason ?? (l.missing.length ? returnGapText(l.missing[0].reason, selection.start)
     : 'No complete value and money record is available for these dates.');
   const rows = sortRows(a.rows, view.sort, { seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
-    weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, ret: r => r.returnPct, contrib: r => r.contribution });
+    weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, market: r => marketOf(r.positions).pct, ret: r => r.returnPct, contrib: r => r.contribution });
   const openable = a.rows.filter(r => r.children.length > 0);
   const allOpen = openable.length > 0 && openable.every(r => exp.isOpen(r.key));
   const totalCaption = `${a.coveredHoldings} of ${current.length} holdings · ${money(a.coveredValue)} covered`;
@@ -59,7 +78,7 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
   };
   const contributionReason = selection.type !== 'absolute' ? 'XIRR and CAGR are calculated separately for each row. Adding these percentages would give a misleading total.' : reason(a.total);
   const cells = (l: SelectedLine, kind: 'parent' | 'child') => {
-    const pad = TREE_CELL[kind];
+    const pad = TREE_CELL[kind], m = marketOf(l.positions);
     return [
       <td key="holdings" className={`${pad} text-right mono text-slate-400`}>{l.positions.length || (l.units.length ? '—' : 0)}</td>,
       <td key="value" className={`${pad} text-right mono text-slate-100`}>{l.key === UNSPLIT_RETURNS || (!l.positions.length && l.units.length) ? <AbsentCell reason="This row has no separate current holding value. Its recorded gain is included in the total." /> : money(l.value)}</td>,
@@ -67,6 +86,9 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
       <td key="deployed" className={`${pad} text-right mono text-slate-300`}>{l.invested != null ? money(l.invested) : <AbsentCell reason={reason(l)} />}</td>,
       <td key="gain" data-seg-cell="gain" className={`${pad} text-right mono ${changeColor(l.gain)}`}><span className="inline-flex items-center justify-end gap-1">
         {l.gain != null ? money(l.gain, true) : <AbsentCell reason={reason(l)} />}{info(l, 'gain')}</span></td>,
+      <td key="market" data-seg-cell="market" data-market-return={m.pct ?? ''} className={`${pad} text-right mono ${changeColor(m.pct)}`}><span className="inline-flex items-center justify-end gap-1">
+        {m.pct != null ? <>{pct(m.pct)}{m.annual && <span className="text-[10px]">p.a.</span>}</> : m.pending ? <span className="text-slate-400">Loading…</span> : <AbsentCell reason={m.gaps[0]?.reason ?? 'This row has no separately priced current holdings.'} />}
+        {l.positions.length > 0 && marketInfo(l.key === 'total' ? 'Total' : l.label, l.positions)}</span></td>,
       <td key="ret" data-seg-cell="ret" className={`${pad} text-right mono ${changeColor(l.returnPct)}`}><span className="inline-flex items-center justify-end gap-1">
         {l.returnPct != null ? pct(l.returnPct) : <AbsentCell reason={reason(l)} />}{info(l, 'return')}</span></td>,
       <td key="contrib" className={`${pad} text-right mono ${changeColor(l.contribution)}`}>{l.contribution != null ? `${l.contribution >= 0 ? '+' : ''}${l.contribution.toFixed(2)} pp` : <AbsentCell reason={contributionReason} />}</td>,
@@ -79,8 +101,14 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
     data-seg-total-gain={a.total.gain ?? ''} data-seg-total-deployed={a.denominator ?? a.total.invested ?? ''}
     data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ''}
     data-status={axis === 'sector' && exposure.status === 'loading' ? 'loading' : 'ready'}>
+    <div className="card mb-2 flex flex-wrap items-center justify-between gap-3 px-4 py-3" data-market-summary data-market-total={market.pct ?? ''} data-market-covered={market.count} data-market-pending={market.pending}>
+      <div><p className="text-[11px] text-slate-400">Portfolio-weighted market return · current holdings</p>
+        <div className="mt-1 flex items-center gap-2"><strong className={`text-xl tabular ${changeColor(market.pct)}`}>{market.pct == null ? market.pending ? 'Loading historical prices…' : 'History unavailable' : `${pct(market.pct)}${market.annual ? ' p.a.' : ''}`}</strong>{marketInfo('Total', current)}</div>
+        <p className="mt-1 text-xs text-slate-400">{market.count} of {current.length} holdings · {money(market.value)} covered{market.pending > 0 && ` · ${market.pending} loading`}{market.from && market.to && ` · ${fmtDate(market.from)} → ${fmtDate(market.to)}`}</p>
+      </div><button type="button" className="btn-secondary text-xs" onClick={marketFeed.retry} data-market-retry>Retry missing histories</button>
+    </div>
     <Card pad={false} title={<>Return attribution · <span className="font-normal text-slate-400" data-seg-basis>{periodLabel} · {type.label} · {dates}</span></>}
-      subtitle="Gain and return cover the available records only. Open the info button for the amount covered and the missing records. Value now is the full holding value, including available live prices; return calculations use dated statement values."
+      subtitle="Historical market returns use current portfolio weights. Recorded gain and return cover the available investment records only. Open the info button for the amount covered and the missing records. Value now is the full holding value, including available live prices; return calculations use dated statement values."
       right={<div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">
         <div role="tablist" aria-label="Attribute the return by" className="inline-flex flex-wrap items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
           {SEGMENT_VIEWS.map(v => <button key={v.key} type="button" role="tab" aria-selected={axis === v.key} title={v.title} data-seg-axis-option={v.key} onClick={() => setAxis(v.key)} className={btn(axis === v.key)}>{v.label}</button>)}
@@ -92,10 +120,11 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
           <SortHeader col="seg" view={view} align="left" pad="px-4 py-2">{HEAD[axis]}</SortHeader>
           <SortHeader col="holdings" view={view} pad="px-4 py-2">Holdings</SortHeader>
           <SortHeader col="value" view={view} pad="px-4 py-2" title="Full holding value, including available live prices. The return calculation's own dated values are in its info card.">Value now</SortHeader>
-          <SortHeader col="weight" view={view} pad="px-4 py-2">Weight</SortHeader>
+          <SortHeader col="weight" view={view} pad="px-4 py-2">Current weight</SortHeader>
           <SortHeader col="deployed" view={view} pad="px-4 py-2" title={selection.inception ? 'Purchase cost or money paid in, for the measured portion only' : 'Opening value plus money added during the selected period, for the measured portion only'}>{selection.inception ? 'Invested' : 'Opening + added'}</SortHeader>
-          <SortHeader col="gain" view={view} pad="px-4 py-2">Gain</SortHeader>
-          <SortHeader col="ret" view={view} pad="px-4 py-2">Return · {type.label}</SortHeader>
+          <SortHeader col="gain" view={view} pad="px-4 py-2">Recorded gain</SortHeader>
+          <SortHeader col="market" view={view} pad="px-4 py-2" title="Historical price/NAV performance weighted by current holding values. The info button lists dates, weights, sources and exclusions.">Market return</SortHeader>
+          <SortHeader col="ret" view={view} pad="px-4 py-2">Recorded return · {type.label}</SortHeader>
           <SortHeader col="contrib" view={view} pad="px-4 py-2" title="For Absolute return only: row gain divided by the total's shared money base, so these contributions add to the total return.">Contribution</SortHeader>
         </Tr></thead>
         <tbody className="divide-y divide-ink-700/60">{rows.map(r => <Fragment key={r.key}>
