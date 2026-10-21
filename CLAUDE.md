@@ -122,7 +122,8 @@ One line per area; the history files explain each in depth.
   `insideMovers.ts` / `fundDisclosures.ts` — companies inside AIFs and mandates.
 - `src/lib/tranches.ts` (the family's dated capital, `capitalRollup`,
   `capitalReturn`), `datedCapital.ts` (money-weighted rate where a row is whole
-  accounts), `txnLedger.ts` (capital and trades as one row set — never added),
+  accounts, or holdings whose trades or lots date every unit — `holdingFlows.ts`,
+  Stage 10fw), `txnLedger.ts` (capital and trades as one row set — never added),
   `txnAxis.ts`, `txnSort.ts`, `txnRollup.ts`, `ledger.ts` (runtime dated record
   from `public/audit/`), `capitalCalls.ts`, `fundReturns.ts`, `privateBook.ts`
   (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`),

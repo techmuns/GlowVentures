@@ -31,8 +31,10 @@
  * An account's dated record describes the WHOLE account, so it stands behind a
  * row only where the row carries every holding of it — a mandate row, a fund's
  * row over its folios, one statement line that is the whole folio. A row holding
- * part of an account (one share of a mandate, a sector's slice) has no dated
- * record of its own and keeps the per-holding refusal. Measured over the
+ * part of an account (one share of a mandate, a sector's slice) never takes the
+ * account's record: it is dated by its holdings' own trades or lots where they
+ * date every unit (`holdingsBehind`, Stage 10fw), and keeps the per-holding
+ * refusal where they do not. Measured over the
  * positions that CARRY some of the account's money: each Buoyant folio prints a
  * ₹0 Cash line beside its units, and the category axis files that line apart,
  * so counted over every position both folios would be "split" and lose a rate
@@ -59,6 +61,7 @@ import type { RowCapital } from "./analytics";
 import { capitalMovesWithCalls, capitalRollup, type CapitalGroup } from "./tranches";
 import { xirrPct } from "./bucketXirr";
 import type { DatedFlow } from "./xirr";
+import { holdingFlowsOf } from "./holdingFlows";
 
 export type DatedCapital = {
   /**
@@ -134,7 +137,53 @@ export function buildDatedCapital(input: {
   const labelOf = new Map(input.accounts.map((a) => [a.accountId, a.strategy || `${a.provider} ${a.accountNo}`]));
   const unitLabel = (u: string) => byKey.get(u)?.label ?? labelOf.get(u.split("|")[0]) ?? u;
 
-  const behind = (set: readonly Position[], universe: readonly Position[]): RowCapital | null => {
+  /**
+   * ── …AND A ROW OF HOLDINGS, WHERE EVERY ONE IS DATED IN FULL (Stage 10fw) ──
+   *
+   * A share inside a mandate is not an account, and for a long time that ended
+   * the question. It does not any more: where its account's dated trades — or
+   * its lot register — account for every unit it holds, its money in and out is
+   * as dated as an account's (`holdingFlows.ts`). Pooled the same way, each
+   * line closing on its own statement's value and date. EVERY LINE OR NONE: one
+   * line no record dates leaves the row on the per-holding answer, and one whose
+   * record is short of a figure says which.
+   */
+  const stmt = new Map(input.positions.map((p) => [`${p.accountId}|${p.securityKey}`, p]));
+  const asOfOf = new Map(input.accounts.map((a) => [a.accountId, a.asOf ?? null]));
+  const holdingsBehind = (set: readonly Position[]): RowCapital | null => {
+    const lines = set.filter(carries);
+    if (!lines.length) return null;
+    const accts = [...new Set(lines.map((p) => p.accountId))].sort();
+    const fl = lines.map((p) => holdingFlowsOf(stmt.get(`${p.accountId}|${p.securityKey}`) ?? p, asOfOf.get(p.accountId) ?? null));
+    if (fl.some((x) => x === null)) return null;
+    const short = fl.find((x) => x && !x.dated);
+    if (short && !short.dated) {
+      return { dated: false, accountIds: accts,
+        reason: lines.length === 1 ? short.reason : `one of the ${lines.length} holdings behind this row is not dated in full — ${short.reason}` };
+    }
+    const flows: DatedFlow[] = [];
+    let since: string | null = null, to: string | null = null, n = 0, trades = 0, lots = 0;
+    for (const x of fl) {
+      if (!x || !x.dated) continue;
+      for (const f of x.flows) flows.push({ date: new Date(f.date), amount: f.amount });
+      n += x.payments;
+      if (x.basis === "trades") trades++; else lots++;
+      if (since === null || x.since < since) since = x.since;
+      const close = x.close?.date ?? x.flows.at(-1)!.date;
+      if (x.close) flows.push({ date: new Date(x.close.date), amount: x.close.value });
+      if (to === null || close > to) to = close;
+    }
+    if (since === null || to === null) return null;
+    return {
+      dated: true, accountIds: accts, accounts: lines.length, flows: n, since, to,
+      days: dayDiff(since, to), annualPct: xirrPct(flows), holdings: { trades, lots },
+    };
+  };
+
+  const behind = (set: readonly Position[], universe: readonly Position[]): RowCapital | null =>
+    wholeAccountsBehind(set, universe) ?? holdingsBehind(set);
+
+  const wholeAccountsBehind = (set: readonly Position[], universe: readonly Position[]): RowCapital | null => {
     const keysIn = new Map<string, Set<string>>();
     for (const p of set) {
       const u = unitOf(p, holders);
