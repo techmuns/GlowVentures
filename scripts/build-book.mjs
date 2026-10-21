@@ -4916,7 +4916,7 @@ function build(archived) {
     unvalued: unvaluedHoldings, shareMovements, docs });
   for (const p of positions) Object.assign(p, applyRecoveredCost(p, holdingCostRecovery.records));
   notes.push(`cost recovery: ${holdingCostRecovery.records.length} exact account/ISIN/quantity records from the saved workbooks; `
-    + `${holdingCostRecovery.unresolved.length} recorded equity balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.`);
+    + `${holdingCostRecovery.unresolved.length} recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.`);
 
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,

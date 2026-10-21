@@ -46,13 +46,15 @@
  * family asked to see.
  */
 import { BOOK_FUND_NAVS, FUND_NAV_AS_OF, type FundNav } from "@/data/fundNavs";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { isCashEquivalent } from "./analytics";
 import { composeSchemeLabel, holdingLabel, schemeNameFor } from "./schemeLabel";
 import { securityLabel } from "./securityLabel";
 import { symbolForKey } from "./quotes";
 import type { Account, CapitalMove, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
+
+import { applyRecoveredCost } from "../../shared/recoveredCosts.mjs";
 
 export { FUND_NAV_AS_OF };
 export type { FundNav };
@@ -103,7 +105,7 @@ export function applyFundNavs(positions: Position[]): Position[] {
       // FIFO's one return: a live price moves the unrealised half and nothing
       // else, so the realised gain on units already sold and the income the
       // holding paid stay in it (§6).
-      returnPct: costNA || unrealizedPnL === null ? p.returnPct
+      returnPct: p.hprUnavailableReason ? null : costNA || unrealizedPnL === null ? p.returnPct
         : fifoReturnPct(marketValue, cost as number, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived),
       navPriced: true,
       navDate: e.date,
@@ -294,7 +296,7 @@ export function depositoryFundHoldings(
       depositoryUnits: { asOf: w.periodTo ?? null, source: w.source ?? null },
     });
   }
-  return out.sort((a, b) => b.marketValue - a.marketValue);
+  return out.map(p => applyRecoveredCost(p, BOOK_RECOVERED_COSTS)).sort((a, b) => b.marketValue - a.marketValue);
 }
 
 /**
@@ -468,7 +470,7 @@ export function unpricedStatementUnits(
         : { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId },
     });
   }
-  return out.sort((a, b) => b.marketValue - a.marketValue);
+  return out.map(p => applyRecoveredCost(p, BOOK_RECOVERED_COSTS)).sort((a, b) => b.marketValue - a.marketValue);
 }
 
 /**

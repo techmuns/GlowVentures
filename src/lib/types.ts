@@ -197,6 +197,8 @@ export type RecoveredHoldingCost = {
   dividendReceived: number | null;
   /** Later review sale rows invalidate live pricing of the old snapshot. */
   salesAfter?: number;
+  /** Purchase lots reconcile, but a recorded sale has no verified proceeds. */
+  hprUnavailableReason?: string;
   evidence: { path: string; sheet: string; rows: number[] }[];
   notes: string[];
 };
@@ -324,6 +326,8 @@ export type Position = {
   costBasisSource?: "opening-position" | "carried-through-switch" | "fifo" | "gross-paid" | "review" | "supplementary-record";
   /** Source rows reconciled to this exact owner/account/ISIN/unit balance. */
   recoveredCost?: RecoveredHoldingCost;
+  /** Cost is known, but full realised gain and HPR cannot be measured. */
+  hprUnavailableReason?: string;
   /**
    * The cost the statement's own cost column prints, kept ONLY where the book's
    * cost differs from it (`costBasisSource`) — a CHECK beside the figure, never

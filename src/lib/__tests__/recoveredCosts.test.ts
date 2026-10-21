@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { depositoryFundHoldings, unpricedStatementUnits, applyFundNavs } from "../fundNavs";
+import { fifoTotals, positionFifoReturn } from "../fifo";
+import { bucketBy } from "../analytics";
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_RECOVERED_COSTS } from "../../data/glowData";
 import { shareCandidates, depositoryShareHoldings } from "../depositoryShares";
 import { quoteSymbolFor, type QuoteFeed } from "../quotes";
@@ -7,7 +10,7 @@ import { fifoReturnPct } from "../../../shared/fifo.mjs";
 
 const near = (got: number | null | undefined, want: number) =>
   assert.ok(typeof got === "number" && Math.abs(got - want) < .02, `${got} != ${want}`);
-assert.equal(BOOK_RECOVERED_COSTS.length, 20, "only exact owner/ISIN/quantity matches are recoverable");
+assert.equal(BOOK_RECOVERED_COSTS.length, 41, "only exact owner/ISIN/quantity matches are recoverable");
 const icici = BOOK_POSITIONS.filter(p => p.accountId === "icici-bank-nsdl-demat-49794950");
 const recovered = icici.filter(p => p.recoveredCost);
 assert.equal(recovered.length, 9);
@@ -71,3 +74,27 @@ assert.ok(overnight.returnPct! > 5 && overnight.returnPct! < 6,
 for (const p of BOOK_POSITIONS.filter(p => p.costBasis != null && p.quantity! > 0 && !p.valuedAtCost))
   assert.ok(p.avgCost != null, `${p.security} has a derivable per-unit cost`);
 console.log("Recovered costs: exact quantities, March cutoff, FIFO sales, live overlay, four folios and honest unresolved balances passed");
+
+// The live-only fund layers need the same lot recovery as the baked holdings.
+const funds=[...depositoryFundHoldings(),...unpricedStatementUnits()];
+assert.equal(funds.filter(p=>p.recoveredCost).length,21);
+const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
+near(fp('12838316','INF0R8701046').costBasis,72403187.18);
+const largeMid=fp('12539150','INF174K01LF9');
+assert.equal(largeMid.quantity,34045.997);near(largeMid.costBasis,12499374.97);
+assert.notEqual(largeMid.quantity,27900.484,'the separate AMC folio must not be pooled into demat lots');
+const liquid=fp('32387399','INF109K01Q49');
+near(liquid.costBasis,18215301.46);near(liquid.costOfUnitsSold,11783198.53);near(liquid.realizedPnL,128261.98);
+near(liquid.returnPct,fifoReturnPct(liquid.marketValue,liquid.costBasis,liquid.realizedPnL,liquid.costOfUnitsSold,liquid.dividendReceived)!);
+const savings=fp('12539150','INF109KA11J9');
+near(savings.costBasis,9320249.865*24.98);
+assert.equal(savings.realizedPnL,null);assert.equal(savings.returnPct,null);assert.ok(savings.hprUnavailableReason);
+assert.equal(positionFifoReturn(savings),null);
+for(const set of [[savings],[liquid,savings]]) {
+  const total=fifoTotals(set);assert.equal(total.returnPct,null);assert.equal(total.gain,null);assert.equal(total.realised,null);
+  assert.ok(total.costHeld!>0);assert.notEqual(total.unrealised,null);
+  assert.equal(bucketBy(set,()=>"all")[0].returnPct,null);
+}
+assert.equal(applyFundNavs([savings])[0].returnPct,null,'a fresh NAV cannot invent missing sale proceeds');
+assert.equal(fp('12539150','INF247L01ED1').costBasis,null,'0.066 units still need a reconciliation');
+assert.equal(fp('12838316','INF179K01830').costBasis,null,'a different folio balance cannot supply cost');

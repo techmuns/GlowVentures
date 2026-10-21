@@ -113,8 +113,9 @@ const motilalHolding = new Set(BOOK_ACCOUNTS.filter((a) => /motilal oswal/i.test
 ok("...and the funds of the three Motilal holding statements, whose printed rate is a last movement's price",
   got.filter((p) => motilalHolding.has(p.accountId) && p.depositoryUnits?.kind === "last-movement").length > 2,
   `${got.length} row(s), ₹${(got.reduce((s, p) => s + p.marketValue, 0) / 1e7).toFixed(4)} Cr, ${got.filter((p) => p.depositoryUnits?.kind === "last-movement").length} on their own rate`);
-ok("no cost, never zero — a depository holds units and did not buy them",
-  got.every((p) => p.costBasis === null && p.costUnavailable === true && p.unrealizedPnL === null && p.returnPct === null));
+ok("cost is absent unless exact owner, scheme and units reconcile to original lots",
+  got.every((p) => p.recoveredCost ? p.costBasis === p.recoveredCost.costBasis && !p.costUnavailable
+    : p.costBasis === null && p.costUnavailable === true && p.unrealizedPnL === null && p.returnPct === null));
 ok("each is NAV-priced, carries the NAV's own date, and says which witness put its units on the NAV's basis",
   got.every((p) => {
     const w = want.find((x) => sig(x) === sig(p));

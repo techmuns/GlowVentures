@@ -1,0 +1,26 @@
+name: Prepare recovery data
+on:
+  pull_request:
+jobs:
+  prepare:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build-book
+      - uses: actions/upload-artifact@v4
+        with:
+          name: recovered-data
+          path: |
+            src/data/glowData.ts
+            src/data/reviewColumns.ts
+            src/data/investmentProfiles.ts
+            docs/BOOK-REPORT.md
+            docs/COST-RECOVERY.md
+      - run: npm run build
+      - run: npm run test:ingest
+      - run: npm run test:family

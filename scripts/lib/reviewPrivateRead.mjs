@@ -6,7 +6,7 @@
 // own. `scripts/lib/reviewBook.mjs` turns what is read here into book rows, and
 // `build-book` splices them in. For everything else the review is still only a
 // cross-check (`npm run reconcile:review`). The 21 Oct 2026 instruction also
-// licenses exact equity cost recovery from readTransactions; see
+// licenses exact equity and fund cost recovery from readTransactions; see
 // recoverHoldingCosts.mjs. Listed quantities and valuations remain statements'.
 // Private investments are carried AT COST, as the review carries them.
 //

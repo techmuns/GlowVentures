@@ -1100,11 +1100,11 @@ export type Bucket = {
 export function bucketBy(positions: Position[], keyFn: (p: Position) => string): Bucket[] {
   const m = new Map<string, {
     mv: number; costs: (number | null)[]; pnls: (number | null)[]; count: number; withoutCost: number;
-    realised: number; deployed: (number | null)[];
+    realised: number; deployed: (number | null)[]; unverifiedReturn: boolean;
   }>();
   for (const p of positions) {
     const k = keyFn(p);
-    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0, realised: 0, deployed: [] };
+    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0, realised: 0, deployed: [], unverifiedReturn: false };
     c.mv += p.marketValue;
     c.costs.push(p.costBasis);
     c.pnls.push(p.unrealizedPnL);
@@ -1115,6 +1115,7 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
     // either, so leaving its realised out keeps the two on one set. A line HELD
     // AT COST (Stage 10dh) is in the cost and in no gain, so it stays out of
     // the capital deployed too: in it, it would blend a 0% nobody measured.
+    if (p.hprUnavailableReason) c.unverifiedReturn = true;
     if (strikesGain(p)) {
       if (typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL)) c.realised += p.realizedPnL;
       // …and the dividends it paid, which are what it earned too (Stage 10fb).
@@ -1143,7 +1144,7 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
         // — not 0, which reads as "this bucket broke even". A caller that can
         // see WHOLE mandates strikes them on their capital instead
         // (`src/lib/fifo.ts`); this roll-up has no account registry to do so.
-        returnPct: deployed !== null && pnl !== null && deployed > 0 ? ((pnl + v.realised) / deployed) * 100 : null,
+        returnPct: !v.unverifiedReturn && deployed !== null && pnl !== null && deployed > 0 ? ((pnl + v.realised) / deployed) * 100 : null,
         weight: total > 0 ? v.mv / total : 0,
       };
     })
