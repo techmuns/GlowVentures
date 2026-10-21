@@ -471,7 +471,8 @@ export function MorningCIO() {
     const { set: costedSet, fifo: bookFifo } = bookReturnOnCost(p, { accounts: portfolio.accounts, universe: p });
     // The private funds' leg carries the cash they have already returned —
     // distributions are booked gain, not a mark (Stage 10fb).
-    const embeddedGain = sumOrNull([bookFifo.gain, privateCount ? privateTotalGain : null]);
+    const gainUnavailableReason = bookFifo.hprUnavailableReason;
+    const embeddedGain = gainUnavailableReason ? null : sumOrNull([bookFifo.gain, privateCount ? privateTotalGain : null]);
     const deployedCapital = sumOrNull([bookFifo.deployed, privateCount ? privateInvested : null]);
     const gainPct = deployedCapital !== null && embeddedGain !== null && deployedCapital > 0
       ? (embeddedGain / deployedCapital) * 100
@@ -923,7 +924,7 @@ export function MorningCIO() {
       rawLines: currentHoldings(portfolio.positions).length,
       accountCount: portfolio.accounts.length,
       ownerCount: new Set(portfolio.accounts.map((a) => a.owner)).size,
-      totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, deployedCapital, gainPct,
+      totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, deployedCapital, gainPct, gainUnavailableReason,
       footerPct, costedMV, costCoversBook, costedSet, capCoverage,
       sides,
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
@@ -1057,7 +1058,7 @@ export function MorningCIO() {
   const calculationMoney = (n: number | null | undefined) => fmtFromBase(n);
   const capitalCalculation = <CapitalReturnCalculation gain={m.embeddedGain} capital={m.deployedCapital}
     result={pct1(m.gainPct)} money={calculationMoney} shortMoney={money}
-    coverage={<>Covers {fmtNum(m.costedSet.struckCount)} of {fmtNum(m.costedSet.holdings)} holdings with both a cost and a valuation.
+    coverage={m.gainUnavailableReason ?? <>Covers {fmtNum(m.costedSet.struckCount)} of {fmtNum(m.costedSet.holdings)} holdings with both a cost and a valuation.
       {m.privateCount > 0 && <> Separately modelled private investments also contribute their recorded gain and invested capital.</>}
       {m.costedSet.atCost > 0 && <> Investments held at cost have no measured gain and are excluded.</>}</>} />;
   const cioTiles: TileMetric[] = [
@@ -1104,7 +1105,7 @@ export function MorningCIO() {
     {
       id: "gain", label: "Gain / loss", icon: <TrendingUp className="h-4 w-4" />,
       href: drilldownHref("book", undefined, "costed"),
-      hrefTitle: `Open the holdings whose statement reports a cost. The gain is struck over the ${fmtNum(m.costedSet.struckCount)} of them that also carry a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })}. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). Return on recorded capital is this gain over the capital deployed. This is the recorded gain, not a complete since-inception total return: separate dividends and fund distributions and sales outside the available statements are not included, except within a whole PMS mandate.${
+      hrefTitle: m.gainUnavailableReason ?? `Open the holdings whose statement reports a cost. The gain is struck over the ${fmtNum(m.costedSet.struckCount)} of them that also carry a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })}. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). Return on recorded capital is this gain over the capital deployed. This is the recorded gain, not a complete since-inception total return: separate dividends and fund distributions and sales outside the available statements are not included, except within a whole PMS mandate.${
         m.costedSet.atCost > 0
           ? ` The ${fmtNum(m.costedSet.atCost)} private investments the family's consolidated review holds at cost, ${fmtFromBase(m.costedSet.atCostValue, { compact: true })}, are in Recorded invested and in no gain: their value is what was paid.`
           : ""}`,
@@ -1114,7 +1115,7 @@ export function MorningCIO() {
       calculation: capitalCalculation,
       calculationLabel: "Return on capital",
       calculationValue: pct1(m.gainPct),
-      sub: m.embeddedGain == null ? absentWhy("No recorded cost or gain")
+      sub: m.embeddedGain == null ? absentWhy(m.gainUnavailableReason ? "Sale proceeds need verification" : "No recorded cost or gain")
         : <>Recorded · {fmtNum(m.costedSet.struckCount)} of {fmtNum(m.costedSet.holdings)} holdings<br />Separate income excluded</>,
     },
     {
