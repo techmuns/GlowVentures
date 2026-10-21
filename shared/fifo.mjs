@@ -253,7 +253,11 @@ export function fifoFromCashFlows(cashFlows) {
       if (!isNum(c.amount)) return { ledger: null, reason: `the ${c.date} allotment prints no amount` };
       events.push({ order: 0, date: c.date, kind: "buy", cls: c.securityKey, units: c.units, amount: c.amount, label: c.description });
     } else if (c.kind === "withdrawal" && c.units < 0) {
-      events.push({ order: 2, date: c.date, kind: "sell", cls: c.securityKey, units: -c.units, amount: Math.abs(c.amount ?? 0) });
+      // A SALE WITH NO PROCEEDS IS REFUSED, like an allotment with no amount
+      // (Stage 10fz). Booked at 0 it would be the units given away — a realised
+      // loss of their whole cost that no statement printed.
+      if (!isNum(c.amount)) return { ledger: null, reason: `the ${c.date} redemption of ${-c.units} unit(s) prints no amount` };
+      events.push({ order: 2, date: c.date, kind: "sell", cls: c.securityKey, units: -c.units, amount: Math.abs(c.amount) });
     }
   }
   // A SWITCH IS A PAIR: units out of one class and into another on one date for

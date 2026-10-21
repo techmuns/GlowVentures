@@ -56,9 +56,9 @@
  * date. A live quote moves a mandate row's value today, and closing today's
  * value on a month-old date would credit the rate with days nobody measured.
  */
-import type { Account, CapitalMove, Commitment, Position, PositionTranches, ReviewFlow } from "./types";
+import type { Account, AccountReturnCoverage, CapitalMove, Commitment, Position, PositionTranches, ReviewFlow } from "./types";
 import type { RowCapital } from "./analytics";
-import { capitalMovesWithCalls, capitalRollup, type CapitalGroup } from "./tranches";
+import { capitalClose, capitalMovesWithCalls, capitalRollup, type CapitalGroup } from "./tranches";
 import { xirrPct } from "./bucketXirr";
 import type { DatedFlow } from "./xirr";
 import { holdingFlowsOf } from "./holdingFlows";
@@ -125,10 +125,18 @@ export function buildDatedCapital(input: {
   fromInception: readonly string[];
   /** The review's dated rows (`BOOK_REVIEW_FLOWS`) — they date the accounts the review values. */
   reviewFlows: readonly ReviewFlow[];
+  /**
+   * The verified return records (`Portfolio.accountReturnRecords`). Omitted,
+   * `capitalRollup` reads the book's own — so a row's rate closes on the
+   * newest verified valuation whose dated capital reconciles, the record every
+   * other return surface closes on (Stage 10fz): Carnelian 3517383 on 7 Oct at
+   * ₹38.55 Cr, not its 30 Sep holdings statement.
+   */
+  returnRecords?: Record<string, AccountReturnCoverage> | null;
 }): DatedCapital {
   const record = capitalMovesWithCalls([...input.moves], [...input.commitments], input.accounts, input.reviewFlows);
   const groups = capitalRollup(record, [...input.accounts], [...input.positions], input.tranches, "all", "recent", {
-    commitments: [...input.commitments], fromInception: input.fromInception,
+    commitments: [...input.commitments], fromInception: input.fromInception, returnRecords: input.returnRecords,
   });
   const byKey = new Map(groups.map((g) => [g.key, g]));
   const holders = new Set(input.accounts.filter((a) => a.reviewHolder).map((a) => a.accountId));
@@ -221,9 +229,11 @@ export function buildDatedCapital(input: {
         n += 1;
         if (f.amount < 0 && (since === null || f.date < since)) since = f.date;
       }
+      // Closing on the row's newest verified valuation (`capitalClose`, Stage 10fz).
       const lastFlow = g.flows!.map((f) => f.date).sort().at(-1)!;
-      const close = g.value === 0 ? lastFlow : (g.valueAsOf ?? lastFlow);
-      if (g.value! > 0) flows.push({ date: new Date(close), amount: g.value! });
+      const c = capitalClose(g);
+      const close = c.value === 0 ? lastFlow : (c.asOf ?? lastFlow);
+      if ((c.value ?? 0) > 0) flows.push({ date: new Date(close), amount: c.value! });
       if (to === null || close > to) to = close;
     }
     if (since === null || to === null) {

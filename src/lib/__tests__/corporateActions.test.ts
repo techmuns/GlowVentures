@@ -183,4 +183,43 @@ for (const x of held) {
   assert.equal(o.live, true, `${x.security}: the quote is not held back for sales the roll accounts for`);
 }
 assert.equal(JSON.stringify(rolled), rolledSnapshot, "the statement rows are not mutated");
+
+// THE ROLLED WINDOW OPENS ON THE MARK'S DATE (Stage 10fz). The opening is
+// valued at the statement's price, so the window and the events' filing open
+// on the statement's date, never on the roll's `through`.
+const rRet = applyCorporateActionQuotes(rolled, BOOK_ACCOUNTS, rFeed, { ...saved, verifiedThrough: rDay }).returns;
+for (const x of held) {
+  const r = rRet.get(positionActionKey(x))!;
+  const asOf = BOOK_ACCOUNTS.find((a) => a.accountId === x.accountId)!.asOf;
+  assert.equal(r.statementDate, asOf, `${x.security}: the window opens on the statement's date (${asOf}), not ${x.rolledForward!.through}`);
+  assert.equal(r.openingValue, x.rolledForward!.quantity * (x.currentPrice as number), `${x.security}: the opening is the rolled units at that date's mark`);
+}
+// Constructed: a dividend going ex between the statement and the roll's last
+// trade is the rolled units' income — it was filed "in-statement" and lost
+// while the price fall it causes stayed in the price return.
+{
+  const stmt = "2026-03-31", rolledThrough = "2026-08-04";
+  const base: Position = { ...p, accountId: "roll", securityKey: "roll", quantity: 1000, marketValue: 10_000, currentPrice: 10, costBasis: 8000,
+    rolledForward: { through: rolledThrough, quantity: 600, costBasis: 4800, realizedPnL: 900, costOfUnitsSold: 3200, trades: 1 } };
+  const rAccounts: Account[] = [{ ...BOOK_ACCOUNTS[0], accountId: "roll", asOf: stmt }];
+  const rFeed2 = { ...feed([raw("dividend", "2026-06-15", "Dividend - Rs 2 Per Share")]), verifiedThrough: "2026-09-23" };
+  const out = applyCorporateActionQuotes([base], rAccounts, quotes(11), rFeed2);
+  const r = out.returns.get(positionActionKey(base))!;
+  assert.equal(r.statementDate, stmt, "the rolled window opens on the statement date");
+  assert.equal(r.lines[0].status, "declared", "a dividend ex between the statement and the roll is in the window, not 'in-statement'");
+  assert.equal(r.dividendEntitlement, 1200, "…on the rolled units: 600 × ₹2");
+  assert.ok(Math.abs((r.totalReturnPct as number) - ((600 * 11 + 1200) / 6000 - 1) * 100) < 1e-9, "…and in the total return");
+  // A share event inside the roll cannot be projected on a tape quantity that may already carry it.
+  const bonusInRoll = applyCorporateActionQuotes([base], rAccounts, quotes(11), { ...feed([raw("bonus", "2026-06-15", "Bonus 1:1")]), verifiedThrough: "2026-09-23" });
+  assert.equal(bonusInRoll.positions[0].live, false, "a bonus between the statement and the roll's last trade holds the live price back");
+  // A roll that BOUGHT has units with no mark on the statement date: no period return.
+  const bought = applyCorporateActionQuotes([{ ...base, rolledForward: { ...base.rolledForward!, quantity: 1500, costBasis: 13_000 } }], rAccounts, quotes(11), rFeed2);
+  const br = bought.returns.get(positionActionKey(base))!;
+  assert.ok(br.priceReturnPct === null && br.totalReturnPct === null && br.dividendEntitlement === null, "units bought after the statement strike no period return");
+  // C9: a holding whose remaining units cost nothing still has a FIFO return on what was deployed.
+  const zeroCost: Position = { ...base, rolledForward: { ...base.rolledForward!, costBasis: 0, realizedPnL: 5000, costOfUnitsSold: 8000 } };
+  const zc = applyCorporateActionQuotes([zeroCost], rAccounts, null, rFeed2).positions[0];
+  assert.ok(typeof zc.returnPct === "number" && Math.abs(zc.returnPct - ((6000 + 5000 + (base.dividendReceived ?? 0)) / 8000) * 100) < 1e-9,
+    `a zero-cost remainder keeps its return on the capital deployed: ${zc.returnPct}`);
+}
 console.log("PASS corporate-action identity, split/bonus invariance, dividend timing, coverage, replay and source-fixture checks");

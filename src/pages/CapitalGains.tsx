@@ -1,5 +1,5 @@
 import { InfiniteTableBody } from "@/components/InfiniteTableBody";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Receipt, Landmark, Timer, Percent } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -10,13 +10,15 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { sumOrNull, sum, isPriced, holdingBucket, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "@/lib/analytics";
 import { accountIndex, ownerOf } from "@/lib/accounts";
-import { fmtPct, changeColor, fmtDate } from "@/lib/format";
+import { fmtPct, changeColor, fmtDate, fmtNum } from "@/lib/format";
 import { Auditable } from "@/components/Auditable";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { sumFormula } from "@/lib/auditFormulas";
 import { BOOK_REALISED_BY_CLASS } from "@/data/glowData";
 import { inScopeAccount } from "@/lib/memberScope";
-import { estimateRealisedTax, financialYearStart, STCG_RATE, LTCG_RATE } from "@/lib/taxEstimate";
+import { estimateRealisedTax, financialYearStart, realisedInYear, LTCG_EXEMPTION } from "@/lib/taxEstimate";
+import { istToday, lotsForPosition, plannerLots, termSplitOn, type OpenLot } from "@/lib/ltDate";
+import { loadStockLedger, type StockLedger } from "@/lib/ledger";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { TreeSectionCell, TREE_ROW } from "@/components/TreeTable";
 import { Pill } from "@/components/Pill";
@@ -47,19 +49,20 @@ import type { Position } from "@/lib/types";
 // long term — so the table lists the losses and says the tax effect is
 // unavailable, rather than quoting a saving it cannot support.
 
-// Illustrative Indian equity rates: STCG u/s 111A = 20%; LTCG u/s 112A = 12.5%
-// (beyond the ₹1.25L annual exemption, which is not applied here). ONE
-// definition, in `taxEstimate.ts`, because the tax tile and the hold-to-LTCG
-// planner both apply them and two copies would be two chances to disagree.
+// (HOLE 2 has since narrowed: two accounts — LKP 98245 and V.E.C 128004 —
+// issue a LOT REGISTER, and the planner revived on them. It now works lot by
+// lot, Stage 10fz; see `src/lib/ltDate.ts`.)
 
+// Illustrative Indian equity rates: STCG u/s 111A = 20%; LTCG u/s 112A = 12.5%,
+// with the ₹1.25 L s.112A exemption applied once per taxpayer to the tax
+// estimate (Stage 10fz). ONE definition, in `taxEstimate.ts`, because the tax
+// tile and the hold-to-LTCG planner both apply them and two copies would be
+// two chances to disagree.
+
+/** `iso` plus `days`, in UTC so no browser time zone can move the date. */
 function addDays(iso: string, days: number): string {
-  const d = new Date(iso);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return new Date(Date.parse(iso.slice(0, 10)) + days * 864e5).toISOString().slice(0, 10);
 }
-const DAY_MS = 864e5;
-const daysBetween = (fromIso: string, toIso: string) =>
-  Math.round((Date.parse(toIso) - Date.parse(fromIso)) / DAY_MS);
 
 /**
  * The four tables' columns in DECLARED order — the order their cells are
@@ -82,7 +85,10 @@ export function CapitalGains() {
   // The "no capital gain statement" band opens here; above the early return,
   // as every hook must be.
   const [missingOpen, setMissingOpen] = useState(false);
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // INDIA'S DATE, NOT UTC'S (Stage 10fz). `toISOString()` is the UTC date, a
+  // day behind from 00:00 to 05:30 IST — and on the morning a lot turns
+  // long-term the planner would still have called it short-term.
+  const today = useMemo(() => istToday(), []);
 
   const p = portfolio?.positions ?? [];
   const asOf = portfolio?.asOf ?? today;
@@ -90,8 +96,12 @@ export function CapitalGains() {
   /**
    * `daysToLT` IS COUNTED FROM ITS OWN ACCOUNT'S REPORT DATE, NOT THE BOOK'S.
    *
-   * `build-book` derives it as `365 − (days held at THAT DOCUMENT's as-of)`, so
-   * the date a lot turns long-term is `account.asOf + daysToLT`. This anchored
+   * `build-book` derives it as the days from THAT DOCUMENT's as-of to the first
+   * day its soonest short-term lot is long-term — the purchase anniversary + 1
+   * day under `shared/holdingPeriod.mjs` (Stage 10fz; it was `365 − days held`,
+   * one day early) — so the date that lot turns long-term is
+   * `account.asOf + daysToLT`, which the harvest table's fallback still uses
+   * where a register's lots are not in hand. This anchored
    * every candidate to `portfolio.asOf` — the NEWEST date in the book — and the
    * only account that publishes a lot register is LKP, which reports on
    * 2026-03-31 against a book as-of of 2026-07-10.
@@ -112,34 +122,73 @@ export function CapitalGains() {
     return m;
   }, [portfolio]);
 
-  const { holdCandidates, crossed } = useMemo(() => {
-    const all = p.filter((x) => x.daysToLT != null && isPriced(x) && x.unrealizedPnL > 0)
-      .map((x) => {
-        const from = accountAsOf.get(x.accountId) ?? asOf;
-        return {
-          ...x,
-          // `isPriced` above narrows unrealizedPnL to a number, so this is a real
-          // saving on a real gain rather than a rate applied to nothing.
-          saving: (x.unrealizedPnL as number) * (STCG_RATE - LTCG_RATE),
-          ltDate: addDays(from, x.daysToLT!),
-          daysLeft: x.daysToLT! - daysBetween(from, today),
-        };
-      });
-    const done = all.filter((x) => x.daysLeft <= 0);
-    return {
-      holdCandidates: all.filter((x) => x.daysLeft > 0).sort((a, b) => a.daysLeft - b.daysLeft),
-      crossed: done.length,
-    };
-  }, [p, asOf, today, accountAsOf]);
+  // Which positions the planner can see at all, and whose. Stated on the card,
+  // because a planner covering 7 of 301 positions that does not say so reads as
+  // a planner covering the book. A position is DATED where its lot register
+  // reconciled — it carries a short/long cost split — which includes a holding
+  // whose every lot is already long-term (`daysToLT` is null on those, and
+  // counting on it left eight of V.E.C 128004's fourteen dated holdings out
+  // of the count, Stage 10fz).
+  const datedLots = useMemo(() => p.filter((x) => x.stCostBasis != null || x.ltCostBasis != null), [p]);
+
+  /**
+   * THE LOTS THEMSELVES (Stage 10fz). The book carries only each dated
+   * position's cost split; which LOT is at a gain needs the register's lots,
+   * which the per-security ledger view publishes (`StockLedger.openLots`). One
+   * read per dated security, shared with the company page's cache. `undefined`
+   * while they load; a security whose view failed maps to null.
+   */
+  // Keyed on the joined STRING, so a render that rebuilds an equal list (an
+  // empty book's `[]` is a new array every time) does not re-run the reads.
+  const datedKeyList = useMemo(() => [...new Set(datedLots.map((x) => x.securityKey))].sort().join(","), [datedLots]);
+  const [registers, setRegisters] = useState<Map<string, StockLedger["openLots"] | null> | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    const keys = datedKeyList ? datedKeyList.split(",") : [];
+    if (!keys.length) { setRegisters(new Map()); return; }
+    setRegisters(undefined);
+    Promise.all(keys.map((k) => loadStockLedger(k).then((l) => [k, l?.openLots ?? null] as const)))
+      .then((pairs) => { if (alive) setRegisters(new Map(pairs)); });
+    return () => { alive = false; };
+  }, [datedKeyList]);
+
+  /** Each dated position's own lots, under `build-book`'s gate (`lotsForPosition`); null where they do not reconcile. */
+  const lotsOf = useMemo(() => {
+    const accounts = new Map((portfolio?.accounts ?? []).map((a) => [a.accountId, a]));
+    const m = new Map<string, OpenLot[] | null>();
+    if (!registers) return m;
+    for (const x of datedLots) {
+      m.set(`${x.accountId}|${x.securityKey}`, lotsForPosition(x, accounts.get(x.accountId), registers.get(x.securityKey)));
+    }
+    return m;
+  }, [datedLots, registers, portfolio]);
+
+  /**
+   * THE PLANNER, LOT BY LOT (Stage 10fz). It filtered POSITIONS at a net gain
+   * and applied the rate difference to the position's whole unrealised gain —
+   * so V.E.C's Greaves Cotton (a long-term lot under water, a short-term lot
+   * +₹5.81 L) was credited ₹34,127 for ₹43,555 of saving, and Shoppers Stop and
+   * Tejas Networks, net losers whose short-term lots are winners, were not on
+   * it at all. Each lot is now its own units at the statement's mark less its
+   * own cost, aged from its own purchase date to its own long-term date
+   * (anniversary + 1 day), counted to today in IST. `ltDate` is no longer
+   * `account.asOf + daysToLT`: the lot's date is the primitive.
+   */
+  const planner = useMemo(() => {
+    if (!registers) return null;
+    const rows = datedLots.flatMap((x) => {
+      const lots = lotsOf.get(`${x.accountId}|${x.securityKey}`);
+      return lots ? [{ position: x, statementDate: accountAsOf.get(x.accountId) ?? asOf, lots }] : [];
+    });
+    return { ...plannerLots(rows, today), joined: rows.length };
+  }, [registers, datedLots, lotsOf, accountAsOf, asOf, today]);
+  const holdCandidates = planner?.candidates ?? [];
+  const crossed = planner?.crossed.length ?? 0;
 
   const harvest = useMemo(() =>
     p.filter((x) => isPriced(x) && x.unrealizedPnL < 0)
       .sort((a, b) => (a.unrealizedPnL ?? 0) - (b.unrealizedPnL ?? 0)), [p]);
 
-  // Which positions the planner can see at all, and whose. Stated on the card,
-  // because a planner covering 7 of 301 positions that does not say so reads as
-  // a planner covering the book.
-  const datedLots = useMemo(() => p.filter((x) => x.daysToLT != null), [p]);
   const datedAtLoss = useMemo(() => datedLots.filter((x) => isPriced(x) && x.unrealizedPnL < 0), [datedLots]);
   const datedAccounts = useMemo(() => {
     const byId = new Map((portfolio?.accounts ?? []).map((a) => [a.accountId, a]));
@@ -202,18 +251,55 @@ export function CapitalGains() {
   // two years' sales into one "current" estimate.
   const fyStart = financialYearStart(reported);
   const priorYear = fyStart ? reported.filter((c) => c.periodFrom && c.periodFrom < fyStart).map((c) => c.entity) : [];
+  /**
+   * EACH ACCOUNT'S YEAR ENDS AT ITS OWN STATEMENT (C4, Stage 10fz). The hover
+   * said "the sales made in FY 2026-27 only", and no account's statement covers
+   * the year — Molecule's closes 30 Jun, Green Lantern's 27 Jul, LKP's 31 Jul,
+   * V.E.C 128005's 13 Aug. So it names every account's covered stretch, and
+   * every taxpayer whose accounts close before the newest close is flagged
+   * with the date through which all of theirs are covered.
+   */
+  const spanLine = (s: { entity: string; from: string | null; to: string | null }) =>
+    `${s.entity} ${s.from ? fmtDate(s.from) : "?"} → ${s.to ? fmtDate(s.to) : "?"}`;
+  const coverageLine = taxEst.byTaxpayer.length && fyLabel
+    ? `The sales made in ${fyLabel} only — from ${fmtDate(taxEst.year)} to each account's own statement close, never the whole year: ${taxEst.byTaxpayer.flatMap((t) => t.spans).map(spanLine).join("; ")}.`
+    : "";
+  const shortLine = taxEst.byTaxpayer.filter((t) => t.shortOfNewest && t.coveredThrough).length
+    ? `Covered to different dates — ${taxEst.byTaxpayer.filter((t) => t.shortOfNewest && t.coveredThrough)
+      .map((t) => `${t.owner}'s accounts are all covered only through ${fmtDate(t.coveredThrough!)}`).join("; ")}, against ${fmtDate(taxEst.newestClose)} for the newest statement; a sale after an account's close is in no part of this figure.`
+    : "";
+  const exemptionLine = taxEst.byTaxpayer.some((t) => t.exemption > 0 || t.exemptionWithheld)
+    ? `The ₹1.25 L s.112A exemption is taken once per person off their long-term gain after the set-off (${taxEst.byTaxpayer
+      .filter((t) => t.exemption > 0).map((t) => `${t.owner} ${money(t.exemption)}`).join(", ") || "none to take"})${taxEst.byTaxpayer.some((t) => t.exemptionWithheld)
+      ? `; ${taxEst.byTaxpayer.filter((t) => t.exemptionWithheld).map((t) => t.owner).join(", ")} get none, their windows spanning financial years` : ""} — it is shared with any long-term gain the person made on accounts outside this book, which this page cannot see.`
+    : "";
+  /**
+   * THE HEADLINE IS THE YEAR'S REALISED (C5, Stage 10fz). It summed every
+   * account's WINDOW — "Realised gains (period)", ₹16.17 Cr on this book, of
+   * which ASK's and Marathon's windows from 2019 and 2024 carry seven financial
+   * years of sales — beside a tax tile struck on FY 2026-27's ₹3.35 Cr. Stage
+   * 10da moved the TAX to one year and left the headline on the windows, so the
+   * statements' own totals stayed on the page's first figure; on a tax page the
+   * two tiles side by side then read as one year's gain and its tax, and they
+   * were seven years and one. The year's realised (each account to its own
+   * close) is the headline now; the windows' total is its secondary figure,
+   * labelled with its window, and stays the canonical total the two tables
+   * below tie to the PDFs on.
+   */
+  const yearReal = realisedInYear(cg);
 
   const totalSaving = sum(holdCandidates.map((x) => x.saving));
   const harvestRows = harvestQ.trim()
     ? harvest.filter((h) => h.security.toLowerCase().includes(harvestQ.trim().toLowerCase()))
     : harvest;
   const holdShown = sortRows(holdCandidates, holdView.sort, {
-    investedOn: (h) => investedOnOf([h])?.first ?? null,
+    investedOn: (h) => h.purchaseDate,
     security: (h) => h.security,
-    gain: (h) => h.unrealizedPnL,
+    gain: (h) => h.gain,
     turns: (h) => h.daysLeft,
     saved: (h) => h.saving,
   });
+  const candidateNames = new Set(holdCandidates.map((x) => `${x.accountId}|${x.securityKey}`)).size;
   const harvestShown = sortRows(harvestRows, harvestView.sort, {
     investedOn: (h) => investedOnOf([h])?.first ?? null,
     security: (h) => h.security,
@@ -254,13 +340,26 @@ export function CapitalGains() {
    * their first short-term lot needs to turn long-term, counted from THEIR
    * account's report date. That is a term, and it is shown; a row with no
    * dated lot keeps its reason.
+   *
+   * RE-AGED TO TODAY WHERE THE LOTS ARE IN HAND (Stage 10fz). The split is
+   * struck at the account's statement date, and LKP's is 31 Mar 2026: both
+   * Transrail Lighting lots (10 and 17 Sep 2025) went long-term on 11 and
+   * 18 Sep 2026, and the cell still read ST. With the lots it is aged from each
+   * lot's purchase date to today (IST); without them it is the statement's
+   * split, and says the date it is struck at. `data-st` / `data-lt` stay the
+   * statement's figures; `data-st-now` / `data-lt-now` are today's.
    */
   const termOf = (h: Position) => {
     if (h.stCostBasis == null && h.ltCostBasis == null) return null;
-    const hasST = (h.stCostBasis ?? 0) > 0, hasLT = (h.ltCostBasis ?? 0) > 0;
     const from = accountAsOf.get(h.accountId) ?? asOf;
+    const lots = lotsOf.get(`${h.accountId}|${h.securityKey}`);
+    const now = lots ? termSplitOn(lots, today, h) : null;
+    if (now) {
+      return { hasST: now.st > 0, hasLT: now.lt > 0, from, turns: now.nextLT, now, aged: true as const };
+    }
+    const hasST = (h.stCostBasis ?? 0) > 0, hasLT = (h.ltCostBasis ?? 0) > 0;
     const turns = hasST && h.daysToLT != null ? addDays(from, h.daysToLT) : null;
-    return { hasST, hasLT, from, turns };
+    return { hasST, hasLT, from, turns, now: null, aged: false as const };
   };
   /**
    * REALISED GAINS, SPLIT BY HOW THE HOLDING WAS RUN — not by what it WAS.
@@ -408,7 +507,7 @@ export function CapitalGains() {
     <div>
       <PageHeader eyebrow="Tax &amp; Income" title="Capital Gains &amp; Tax"
         right={<BasisPill statement liveText="Statement marks"
-          hint="Realised gains come from each account's capital gain statement, each over its own window; unrealised figures are on the same statement marks so both halves of this page are one measurement." />} />
+          hint="Realised gains come from each account's capital gain statement — the headline is the current financial year's sales, each account to its own statement's close; the tables below are each statement's whole window. Unrealised figures are on the same statement marks so both halves of this page are one measurement." />} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {realisedTotal === null ? (
@@ -416,18 +515,42 @@ export function CapitalGains() {
             {...absentTile("no capital gain statement in this book",
               "Realised gains come from the manager's capital gain statement. No account in this book has one.")}
             icon={<Receipt className="h-4 w-4" />} />
-        ) : (
-          <StatTile label="Realised gains (period)"
-            value={<Auditable formula={sumFormula("Realised gains (period)",
-              "The short- and long-term gains booked over each account's own window, added together.",
-              [{ label: "Realised ST", value: totRealST ?? 0 }, { label: "Realised LT", value: totRealLT ?? 0 }],
-              realisedTotal, money)}>
-              <span className={changeColor(realisedTotal)}>{fmtFromBase(realisedTotal, { compact: true, sign: true })}</span>
-            </Auditable>}
+        ) : yearReal.total === null || !fyLabel ? (
+          // No account's figure can be placed in a year — the windows' total is
+          // the only measurement, and it is labelled as its windows.
+          <StatTile label="Realised gains · statement windows"
+            value={<span className={changeColor(realisedTotal)}>{fmtFromBase(realisedTotal, { compact: true, sign: true })}</span>}
             sub={<>ST {fmtFromBase(totRealST ?? 0, { compact: true, sign: true })} · LT {fmtFromBase(totRealLT ?? 0, { compact: true, sign: true })}</>}
-            hint={unreported.length
-              ? `From ${reported.length} of ${cg.length} accounts. The other ${unreported.length} publish no capital gain statement and are excluded, not counted as zero.`
-              : `All ${cg.length} accounts.`}
+            hint={`Over each account's own statement window; no window can be placed in one financial year${yearReal.unplaced.length ? ` (${yearReal.unplaced.join(", ")} print no sale dates and open before the year)` : ""}.`}
+            icon={<Receipt className="h-4 w-4" />} />
+        ) : (
+          <StatTile label={`Realised gains · ${fyLabel}`}
+            value={<span data-xa="cg-realised-year" data-value={yearReal.total} data-windows={realisedTotal}
+                data-year={yearReal.year} data-earliest-close={yearReal.earliestClose} data-newest-close={yearReal.newestClose}>
+              <Auditable formula={sumFormula(`Realised gains · ${fyLabel}`,
+                `The short- and long-term gains on the sales made from ${fmtDate(yearReal.year)}, read off each lot's sale date, over each account's statement to its own close — ${fmtDate(yearReal.earliestClose)} to ${fmtDate(yearReal.newestClose)}, never the whole year.`,
+                [{ label: "Realised ST", value: yearReal.st ?? 0 }, { label: "Realised LT", value: yearReal.lt ?? 0 }],
+                yearReal.total, money)}>
+                <span className={changeColor(yearReal.total)}>{fmtFromBase(yearReal.total, { compact: true, sign: true })}</span>
+              </Auditable>
+            </span>}
+            sub={<>
+              ST {fmtFromBase(yearReal.st ?? 0, { compact: true, sign: true })} · LT {fmtFromBase(yearReal.lt ?? 0, { compact: true, sign: true })}
+              {" · "}
+              {/* THE WINDOWS' TOTAL, SECOND AND LABELLED (C5): the canonical
+                  figure both tables below tie to the PDFs on. */}
+              <span className="text-slate-500" data-cg-windows-total={realisedTotal}
+                title={`Every sale each capital gain statement reports, over its own window — from ${fmtDate(reported.map((c) => c.periodFrom).filter((d): d is string => !!d).sort()[0] ?? "")}, ASK's and Marathon's from inception — ST ${money(totRealST ?? 0, true)} · LT ${money(totRealLT ?? 0, true)}. The canonical total the tables below tie to the statements on.`}>
+                statement windows {fmtFromBase(realisedTotal, { compact: true, sign: true })}
+              </span>
+            </>}
+            hint={[
+              `${fyLabel} to each statement's close: ${yearReal.spans.map((s) => `${s.entity} to ${s.to ? fmtDate(s.to) : "?"}`).join("; ")}.`,
+              yearReal.unplaced.length ? `${yearReal.unplaced.join(", ")} print no sale dates and open before the year, so they are in no part of the year's figure.` : "",
+              unreported.length
+                ? `From ${reported.length} of ${cg.length} accounts. The other ${unreported.length} publish no capital gain statement and are excluded, not counted as zero.`
+                : `All ${cg.length} accounts.`,
+            ].filter(Boolean).join(" — ")}
             icon={<Receipt className="h-4 w-4" />} />
         )}
 
@@ -458,12 +581,15 @@ export function CapitalGains() {
                 data-taxpayers={taxEst.byTaxpayer.length}>
               <Auditable formula={{
                 title: "Est. tax on realised",
-                excel: "= Σ over each taxpayer of ( max(0, their Realised ST + set-off) × 20% + max(0, their Realised LT − set-off) × 12.5% ), set-off = the short-term loss that absorbs their own long-term gain",
-                plain: "Illustrative tax on the gains actually booked, struck PER TAXPAYER — tax is assessed per person, so one member's loss never reduces another member's tax. Within one person the accounts net inside a head, and a short-term loss is then set off against that person's own long-term gain within one financial year (s.70(2)); a long-term loss is never set off against a short-term gain (s.70(3)).",
+                excel: "= Σ over each taxpayer of ( max(0, their Realised ST + set-off) × 20% + max(0, their Realised LT − set-off − exemption) × 12.5% ), set-off = the short-term loss that absorbs their own long-term gain, exemption = min(₹1.25 L, what long-term gain is left)",
+                plain: "Illustrative tax on the gains actually booked, struck PER TAXPAYER — tax is assessed per person, so one member's loss never reduces another member's tax. Within one person the accounts net inside a head, and a short-term loss is then set off against that person's own long-term gain within one financial year (s.70(2)); a long-term loss is never set off against a short-term gain (s.70(3)). The first ₹1.25 L of what long-term gain is left is exempt, once per person (s.112A).",
                 worked: [
-                  ...taxEst.byTaxpayer.map((t) => t.setOff > 0
-                    ? `${t.owner}: ST ${money(t.st ?? 0, true)} sets off ${money(t.setOff)} of LT ${money(t.lt ?? 0, true)} → max(0, ${money((t.st ?? 0) + t.setOff, true)}) × 20% + max(0, ${money((t.lt ?? 0) - t.setOff, true)}) × 12.5% = ${money(t.tax)}`
-                    : `${t.owner}: max(0, ${money(t.st ?? 0, true)}) × 20% + max(0, ${money(t.lt ?? 0, true)}) × 12.5% = ${money(t.tax)}${t.setOffWithheld ? " (no set-off struck: their windows span financial years)" : ""}`),
+                  ...taxEst.byTaxpayer.map((t) => {
+                    const ex = t.exemption > 0 ? ` − ${money(t.exemption)} exempt` : "";
+                    return t.setOff > 0
+                      ? `${t.owner}: ST ${money(t.st ?? 0, true)} sets off ${money(t.setOff)} of LT ${money(t.lt ?? 0, true)} → max(0, ${money((t.st ?? 0) + t.setOff, true)}) × 20% + max(0, ${money((t.lt ?? 0) - t.setOff, true)}${ex}) × 12.5% = ${money(t.tax)}`
+                      : `${t.owner}: max(0, ${money(t.st ?? 0, true)}) × 20% + max(0, ${money(t.lt ?? 0, true)}${ex}) × 12.5% = ${money(t.tax)}${t.setOffWithheld ? " (no set-off struck: their windows span financial years)" : ""}${t.exemptionWithheld ? " (no exemption applied: their windows span financial years)" : ""}`;
+                  }),
                   `Σ = ${money(estTaxRealised)}`,
                   ...(earlierLine ? [earlierLine] : []),
                 ].join("  ·  "),
@@ -474,30 +600,40 @@ export function CapitalGains() {
               : `per taxpayer${fyLabel ? ` · ${fyLabel}` : ""} · STCG 20% · LTCG 12.5% · illustrative`}
             hint={[
               taxEst.byTaxpayer.map((t) => `${t.owner} ${money(t.tax)}`).join(" · "),
-              fyLabel ? `The sales made in ${fyLabel} only, from ${fmtDate(taxEst.year)}, read off each lot's sale date.` : "",
+              coverageLine,
+              shortLine,
+              exemptionLine,
               earlierLine,
               undatedLine,
               taxEst.unattributed.length
                 ? `${taxEst.unattributed.map((c) => c.entity).join(", ")} ${taxEst.unattributed.length === 1 ? "carries" : "carry"} no canonical owner and ${taxEst.unattributed.length === 1 ? "is" : "are"} not in this figure.`
                 : "",
             ].filter(Boolean).join(" — ")}
-            title="Each person's realised gains in one financial year are the sum over their own accounts' sales in that year, read off each lot's sale date, and a short-term loss is set off against that person's own long-term gain within the year. Illustrative only: equity rates, no ₹1.25 L exemption, no surcharge or cess."
+            title="Each person's realised gains in one financial year are the sum over their own accounts' sales in that year, read off each lot's sale date, each account only to its own statement's close, and a short-term loss is set off against that person's own long-term gain within the year; the ₹1.25 L s.112A exemption is then taken once per person off what long-term gain is left. Illustrative only: equity rates, no surcharge or cess."
             icon={<Percent className="h-4 w-4" />} />
         )}
 
         <StatTile label="Hold-to-LTCG saving"
           {...(holdCandidates.length
             ? {
-              value: fmtFromBase(totalSaving, { compact: true }),
-              sub: `${holdCandidates.length} still short-term${crossed ? ` · ${crossed} already crossed` : ""}`,
+              value: <span data-xa="cg-hold" data-value={totalSaving} data-lots={holdCandidates.length}
+                data-names={candidateNames} data-crossed={crossed}>{fmtFromBase(totalSaving, { compact: true })}</span>,
+              // LOTS, NOT POSITIONS (Stage 10fz): "4 lots still short-term · 3
+              // holdings" — a holding with a crossed lot and a short-term one is
+              // on both sides of the count, never "crossed" while it holds one.
+              sub: `${holdCandidates.length} lot${holdCandidates.length === 1 ? "" : "s"} still short-term · ${candidateNames} holding${candidateNames === 1 ? "" : "s"}${crossed ? ` · ${crossed} crossed since the statement` : ""}`,
+              hint: `${datedLots.length} holding${datedLots.length === 1 ? " carries" : "s carry"} a purchase date (${datedAccounts.join(", ")}); ${holdCandidates.length} of their lots are short-term today at a gain on the statement's mark${planner && planner.shortTermAtLoss ? `, ${planner.shortTermAtLoss} more short-term at a loss` : ""}${planner && planner.joined < datedLots.length ? `; ${datedLots.length - planner.joined} whose register lots could not be joined to the holding are not in it` : ""}. Each lot's saving is its own gain × (20% − 12.5%), the rate difference — where the holder's long-term gains for the year stay inside the ₹${(LTCG_EXEMPTION / 1e5).toFixed(2)} L s.112A exemption, part of a deferred gain is taxed at nil and the saving is larger; how much of each person's exemption is left is not measured here.`,
             }
-            : datedLots.length
-              ? absentTile("no short-term winner to defer",
-                `${datedLots.length} holding${datedLots.length === 1 ? " carries" : "s carry"} a purchase date (${datedAccounts.join(", ")}); ${datedAtLoss.length === datedLots.length
-                  ? (datedLots.length === 1 ? "it is at a loss" : `all ${datedLots.length} are at a loss`)
-                  : `${datedAtLoss.length} at a loss${crossed ? `, ${crossed} already past one year` : ""}`} — so there is no short-term gain to carry past its one-year mark.`)
-              : absentTile("needs lot acquisition dates",
-                "The planner defers short-term winners past their one-year mark. Without a lot date there is no mark to count to."))}
+            : datedLots.length && registers === undefined
+              // WAITING, AND IT LOOKS LIKE WAITING: the lots are one read away.
+              ? absentTile("reading the lot registers", "The planner ages each dated lot from its own purchase date; the registers' lots are loading.")
+              : datedLots.length
+                ? absentTile("no short-term winner to defer",
+                  `${datedLots.length} holding${datedLots.length === 1 ? " carries" : "s carry"} a purchase date (${datedAccounts.join(", ")}); ${planner && planner.joined
+                    ? `none of their lots is short-term today at a gain${planner.shortTermAtLoss ? ` — ${planner.shortTermAtLoss} short-term lot${planner.shortTermAtLoss === 1 ? " is" : "s are"} at a loss` : ""}${crossed ? `, ${crossed} crossed to long-term since the statement` : ""}`
+                    : `${datedAtLoss.length} at a loss, and their register lots could not be read`} — so there is no short-term gain to carry past its one-year mark.`)
+                : absentTile("needs lot acquisition dates",
+                  "The planner defers short-term winners past their one-year mark. Without a lot date there is no mark to count to."))}
           icon={<Timer className="h-4 w-4" />} />
       </div>
 
@@ -509,7 +645,7 @@ export function CapitalGains() {
           rather than on what was sold — see `byBucket` above. */}
       {byBucket.length > 1 && (
         <Card className="mt-5" title="Realised, by how the holding was run"
-          subtitle="The same canonical total, split — the headline above nets these together" pad={false}>
+          subtitle="The statement windows' total, split — the canonical figure the headline names second" pad={false}>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
@@ -662,15 +798,18 @@ export function CapitalGains() {
         {/* ── Hold-to-LTCG planner: dormant, with its reason ── */}
         <Card title="Hold-to-LTCG planner"
           subtitle={holdCandidates.length
-            ? `Short-term winners nearing their 1-year mark. Counted to today, ${fmtDate(today)}.`
+            ? `Short-term lots at a gain, nearing their 1-year mark. Counted to today, ${fmtDate(today)} IST.`
             : "Deferring a short-term winner past one year moves its gain from 20% to 12.5%"}>
-          {holdCandidates.length === 0 ? (
+          {holdCandidates.length === 0 && datedLots.length > 0 && registers === undefined ? (
+            <AbsentSection what="Reading the lot registers"
+              needs="Each dated lot is aged from its own purchase date; the registers' lots are loading." />
+          ) : holdCandidates.length === 0 ? (
             <AbsentSection
               what={datedLots.length ? "No short-term winner to defer" : "No lot acquisition dates in this book"}
               needs={datedLots.length
                 ? `Nothing left to defer on the ${datedAccounts.length === 1 ? "one account" : `${datedAccounts.length} accounts`} that publish lot dates. The planner covers ${datedLots.length} position(s) on ${datedAccounts.join(", ")} — the only
-                  account(s) here whose broker publishes a LOT REGISTER with dated acquisitions. None of them is
-                  currently a short-term holding at a gain, so there is nothing to defer. No other account's
+                  account(s) here whose broker publishes a LOT REGISTER with dated acquisitions. None of their lots is
+                  short-term today at a gain, so there is nothing to defer. No other account's
                   statements date the lots still held: a managed account's capital register is a capital-account
                   ledger — contributions, withdrawals, TDS transfers — and a depository, fund or folio statement
                   reports what is held, not when each unit was bought, so those lots cannot be aged at all.`
@@ -691,12 +830,25 @@ export function CapitalGains() {
                   </Tr>
                 </thead>
                 <InfiniteTableBody rows={holdShown} columns={holdView.order.length} resetKey={JSON.stringify([holdView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70">
+                  {/* ONE ROW PER SHORT-TERM LOT (Stage 10fz): a holding's lots
+                      turn long-term on their own dates, and each one's gain is
+                      its own units at the mark less its own cost. */}
                   {(h) => (
-                    <Tr view={holdView} reviewScope={{ positions: [h] }} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
-                      <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
-                      <td className="px-4 py-2.5 text-right mono text-gain">{money(h.unrealizedPnL)}</td>
+                    <Tr view={holdView} reviewScope={{ positions: p.filter((x) => x.accountId === h.accountId && x.securityKey === h.securityKey) }} key={`${h.securityKey}@${h.accountId}@${h.purchaseDate}`} className="hover:bg-ink-700/40">
+                      <td className="px-4 py-2.5 text-slate-100" data-xa="cg-hold-lot" data-key={h.securityKey} data-account={h.accountId}
+                        data-bought={h.purchaseDate} data-gain={h.gain} data-lt={h.ltDate}>
+                        <StockLink securityKey={h.securityKey} name={h.security} />
+                        <span className="ml-1.5 text-[10.5px] text-slate-500"
+                          title={`${fmtNum(h.quantity)} units bought ${fmtDate(h.purchaseDate)} for ${money(h.cost)}, valued at the statement's mark of ${fmtDate(h.statementDate)}. Long-term from ${fmtDate(h.ltDate)} — the day after its first anniversary (held not more than twelve months is short-term, s.2(42A)).`}>
+                          lot of {fmtDate(h.purchaseDate)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right mono text-gain">{money(h.gain)}</td>
                       <td className="px-4 py-2.5 text-right text-[11px] text-slate-400">{fmtDate(h.ltDate)} · {h.daysLeft}d</td>
-                      <td className="px-4 py-2.5 text-right mono text-champagne-400">{money(h.saving)}</td>
+                      <td className="px-4 py-2.5 text-right mono text-champagne-400"
+                        title={`${money(h.gain)} × (20% − 12.5%) = ${money(h.saving)} — the rate difference. Where the holder's long-term gains for the year stay inside the ₹1.25 L s.112A exemption, part of it is taxed at nil and the saving is larger; how much of each person's exemption is left is not measured here.`}>
+                        {money(h.saving)}
+                      </td>
                     </Tr>
                   )}
                 </InfiniteTableBody>
@@ -783,18 +935,26 @@ export function CapitalGains() {
                           const turnsNote = term.turns
                             ? term.turns <= today
                               ? ` Its first short-term lot turned long-term on ${fmtDate(term.turns)}, so some or all of it is long-term now.`
-                              : ` Its first short-term lot turns long-term on ${fmtDate(term.turns)}.`
+                              : ` Its next short-term lot turns long-term on ${fmtDate(term.turns)}.`
                             : "";
+                          // TODAY'S TERM where the lots are in hand, the
+                          // statement's split (and its date) where they are not.
+                          const basisNote = term.now
+                            ? `From the broker's lot register, each lot aged from its own purchase date to today (${fmtDate(today)} IST): short-term cost ${money(term.now.st)}, long-term cost ${money(term.now.lt)}. At the statement date (${fmtDate(term.from)}) the split was short-term ${money(h.stCostBasis ?? 0)}, long-term ${money(h.ltCostBasis ?? 0)}.`
+                            : `From the broker's lot register, at the statement date (${fmtDate(term.from)}): short-term cost ${money(h.stCostBasis ?? 0)}, long-term cost ${money(h.ltCostBasis ?? 0)}.`;
                           return (
                             <td className="px-4 py-2.5 text-right mono whitespace-nowrap" data-xa="cg-term" data-key={h.securityKey}
                               data-account={h.accountId} data-st={h.stCostBasis ?? ""} data-lt={h.ltCostBasis ?? ""}
+                              data-st-now={term.now?.st ?? ""} data-lt-now={term.now?.lt ?? ""}
                               data-turns={term.turns ?? ""}
-                              title={`From the broker's lot register, at the statement date (${fmtDate(term.from)}): short-term cost ${money(h.stCostBasis ?? 0)}, long-term cost ${money(h.ltCostBasis ?? 0)}.${turnsNote}`}>
+                              title={`${basisNote}${turnsNote}`}>
                               {label}
-                              {term.turns && (
+                              {term.turns ? (
                                 <span className="text-[10.5px] text-slate-500">
                                   {term.turns <= today ? ` → LT ${fmtDate(term.turns)}` : ` until ${fmtDate(term.turns)}`}
                                 </span>
+                              ) : !term.aged && (
+                                <span className="text-[10.5px] text-slate-500">{` at ${fmtDate(term.from)}`}</span>
                               )}
                             </td>
                           );
@@ -817,7 +977,7 @@ export function CapitalGains() {
           absence could do — a tax figure read without it is read as advice
           (Stage 10ci) — and so the one line the no-explainer sweep excuses. */}
       <p className="mt-4 text-[11px] text-slate-500" data-prose-ok="tax caveat"
-        title={`Current Indian equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A), struck per taxpayer — each person over their own accounts, so one member's loss never reduces another member's tax. A short-term loss is set off against the same person's long-term gain within one financial year (s.70(2)) and a long-term loss against a long-term gain only (s.70(3)); they do not apply the ₹1.25L LTCG exemption, carry a loss across years, or add surcharge and cess. The realised figure also includes the managers' liquid-fund redemptions (Ledger Insights' Realised tab names them), which s.50AA taxes at the holder's slab rate rather than these equity rates — this estimate does not separate them. It counts only the sales made in the financial year from ${fmtDate(fyStart)}, read off each lot's sale date${priorYear.length > 0
+        title={`Current Indian equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A), struck per taxpayer — each person over their own accounts, so one member's loss never reduces another member's tax. A short-term loss is set off against the same person's long-term gain within one financial year (s.70(2)) and a long-term loss against a long-term gain only (s.70(3)); the ₹1.25 L s.112A exemption is taken once per person off what long-term gain is left (shared with any long-term gain outside this book, which the page cannot see), and they do not carry a loss across years or add surcharge and cess. The realised figure also includes the managers' liquid-fund redemptions (Ledger Insights' Realised tab names them), which s.50AA taxes at the holder's slab rate rather than these equity rates — this estimate does not separate them. It counts only the sales made in the financial year from ${fmtDate(fyStart)} to each account's own statement close, read off each lot's sale date${priorYear.length > 0
           ? `; ${priorYear.join(", ")} ${priorYear.length === 1 ? "reports a window" : "report windows"} reaching back before it, and the sales in earlier years are in no part of the estimate`
           : ""}. This page is on a statement basis so every figure ties to the source PDF: realised figures are as each manager's capital gain statement reports them, each over its own window, and unrealised figures are at the statement mark — the live feed does not move them here.`}>
         Tax figures are <span className="font-medium text-slate-400">illustrative</span> · per taxpayer · statement basis · not tax advice

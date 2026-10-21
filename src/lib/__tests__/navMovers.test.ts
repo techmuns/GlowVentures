@@ -72,13 +72,42 @@ ok("the store prices something in scope", m.rows.length > 0, `${m.rows.length} s
 ok("the scope is not empty", m.scopeNames > 0, `${m.scopeNames} names`);
 
 // ── EVERY ROW TIES TO ITS OWN COLUMNS ───────────────────────────────────────
-// `move ÷ value` must be the printed percentage, exactly. This is what makes it
+// `move ÷ priorValue` must be the printed percentage, exactly. This is what makes it
 // safe to show the three figures side by side: a reader dividing one printed
 // cell by another gets the third.
-ok("every row's move ÷ value is its printed percentage",
-  m.rows.every((r) => Math.abs((r.move / r.value) * 100 - r.changePct) < 1e-9));
+// Over the value BEFORE the move (Stage 10fz): `value × c` on a value struck at
+// today's NAV overstated the rupee move by (1 + c).
+ok("every row's move ÷ prior value is its printed percentage",
+  m.rows.every((r) => Math.abs((r.move / r.priorValue) * 100 - r.changePct) < 1e-9));
 near("the aggregate percentage is value-weighted, not an average",
-  (m.move / m.coveredValue) * 100, m.changePct!, 1e-9);
+  (m.move / m.coveredPriorValue) * 100, m.changePct!, 1e-9);
+// THE NAV-PRICED PART MOVES BY units × (NAV − previous NAV). Re-derived from
+// each row's units and its two published NAVs, on rows whose units are on the
+// NAV's basis (the ones `unitRatio` passes) and that are wholly on the NAV.
+{
+  const navRows = m.rows.filter((r) => r.valueBasis === "nav" && !unitBasisDiffers(r));
+  const wrong = navRows.filter((r) => {
+    const unitsMove = r.quantity * (r.nav - r.prevNav);
+    return Math.abs(unitsMove - r.move) > Math.max(1, Math.abs(r.move) * 1e-3);
+  });
+  ok("a NAV-priced row's move is units × (NAV − previous NAV)", navRows.length > 0 && wrong.length === 0,
+    wrong.length ? wrong.map((r) => `${r.security}: ${r.move.toFixed(0)} vs ${(r.quantity * (r.nav - r.prevNav)).toFixed(0)}`).join("; ") : `${navRows.length} rows`);
+}
+// A statement-marked part is moved from its mark; a NAV-priced one from the
+// value it had on the previous NAV. Constructed, so the (1 + c) is visible.
+{
+  const top = rows.find((p) => m.rows.some((r) => r.securityKey === p.securityKey && r.inDayFigure));
+  if (top) {
+    const amfi = (k: string) => (k === top.securityKey
+      ? { schemecode: "T", scheme: "Test", plan: "Direct", nav: 110, date: "2026-10-20", prev: 100, prevDate: "2026-10-19", changePct: 10 }
+      : null);
+    const st = navMoverModel([{ ...top, navPriced: false, marketValue: 1000 }], accts, null, amfi);
+    const nv = navMoverModel([{ ...top, navPriced: true, marketValue: 1100 }], accts, null, amfi);
+    near("a statement mark of ₹1,000 moved 10% moves ₹100", st.move, 100, 1e-9);
+    near("a NAV-priced ₹1,100 that moved 10% moved ₹100, not ₹110", nv.move, 100, 1e-9);
+    near("…and its percentage is 10% over the prior ₹1,000", nv.changePct, 10, 1e-9);
+  } else ok("a holding in the day's figure to construct from", false);
+}
 
 // AND IT IS NOT THE MEAN OF THE ROWS' PERCENTAGES, which is the wrong figure a
 // naive aggregate produces — it weights a ₹107 residual the same as a ₹42 Cr

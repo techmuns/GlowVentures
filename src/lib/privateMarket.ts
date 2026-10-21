@@ -661,6 +661,60 @@ export function privateCapital(
 }
 
 /**
+ * ── A LATER STATEMENT THAT HOLDS MORE UNITS THAN A CAPITAL ACCOUNT KNOWS OF ──
+ *
+ * Stage 10fz. A capital account's still-to-call is as of its own statement,
+ * and a drawdown fund issues units against the capital it calls. Baring's
+ * capital account of 31 Mar 2026 carries 202.5 units and ₹2.98 Cr still to
+ * call; Ankita's Motilal Oswal demat records 252.5 units of the same class on
+ * 31 Jul 2026 — 50 more, which the capital account cannot hold. Where that is
+ * a call since the statement, the fund's still-to-call is lower than the
+ * statement prints, and a total over it is no longer a floor of what the funds
+ * can call. Nothing here guesses the call's amount or date: the page names the
+ * later units and the statement they outrun, and stops calling the total a
+ * floor.
+ *
+ * Read off the statement rows the family's consolidated review stands for
+ * (`BOOK_REVIEW_SUPERSEDED`) — a depository's copy of the units — for the SAME
+ * owner, on a statement dated after the capital account's.
+ */
+export type UnitsSinceCapital = {
+  commitment: Commitment;
+  security: string;
+  /** The units the capital account's holding carries. */
+  units: number;
+  /** The units the later statement records. */
+  laterUnits: number;
+  laterAccountId: string;
+  laterAsOf: string;
+};
+
+export function unitsSinceCapital(
+  commitments: readonly Commitment[],
+  positions: readonly Position[],
+  laterRows: readonly { accountId: string; securityKey: string; quantity: number | null }[],
+  accounts: readonly Account[],
+): UnitsSinceCapital[] {
+  const acc = new Map(accounts.map((a) => [a.accountId, a]));
+  const out: UnitsSinceCapital[] = [];
+  for (const c of commitments) {
+    const owner = c.ownerId ?? acc.get(c.accountId)?.ownerId;
+    if (!c.asOf || !owner) continue;
+    for (const p of positions.filter((x) => x.accountId === c.accountId && x.quantity != null)) {
+      for (const r of laterRows) {
+        const ra = acc.get(r.accountId);
+        if (r.accountId === c.accountId || r.securityKey !== p.securityKey || r.quantity == null) continue;
+        if (ra?.ownerId !== owner || !ra.asOf || ra.asOf <= c.asOf) continue;
+        if (r.quantity - p.quantity! > 0.0005) {
+          out.push({ commitment: c, security: p.security, units: p.quantity!, laterUnits: r.quantity, laterAccountId: r.accountId, laterAsOf: ra.asOf });
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * THE SENTENCE A CAPITAL FIGURE COUNTED ONCE OWES ITS READER, written once for
  * every page that prints one: which statements' capital is left out, whose it
  * is counted with, that the pair is pending the family's answer (§4c, PM-A1),

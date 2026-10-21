@@ -116,9 +116,12 @@ console.log("── the record is built over the row's own folios ──");
     ok("…built over the RAW rows it would carry the calls twice", rawCalls > rowCalls * 1.9,
       `raw ${money(rawCalls)} vs row ${money(rowCalls)}`);
     // A LINE THE REVIEW DATES (Stage 10dh) sets its sale proceeds against its
-    // cost, so its purchases are the cost PLUS what the sales returned.
-    const proceeds = tDated.get(doubled.securityKey)!.saleProceeds;
-    ok("…and over the row's own folios its calls tie to the one holding's cost, plus any sale proceeds the review set against it",
+    // cost, so its purchases are the cost PLUS what the sales returned — or,
+    // where its rows print their units, carries FIFO's cost held with the cost
+    // of the units sold beside it (Stage 10fz), so its purchases are the two.
+    const rec = tDated.get(doubled.securityKey)!;
+    const proceeds = rec.saleProceeds + rec.redeemedAtCost;
+    ok("…and over the row's own folios its calls tie to the one holding's cost, plus what its sales took out of it",
       doubled.cost != null && Math.abs(rowCalls - (doubled.cost + proceeds)) <= 1,
       `${money(rowCalls)} vs ${doubled.cost == null ? "—" : money(doubled.cost + proceeds)}`);
   }
@@ -291,10 +294,18 @@ console.log("── the money-weighted return counts the cash paid back ──")
     const x = fundMeasuredReturn(f, d, "xirr", money, date);
     ok(`${d.securityKey.slice(0, 32)}: the XIRR column shows it, tagged XIRR`, x.shown && x.tag === "XIRR",
       x.shown ? x.tag : x.reason);
-    // AND THE HPR BESIDE IT SAYS WHAT IT CANNOT SEE.
+    // AND THE HPR BESIDE IT SAYS WHAT OF THAT CASH IT COUNTS — read off the
+    // positions (Stage 10fz): income a position carries is IN the FIFO figure
+    // and named as in; only what remains outside is handed to XIRR.
     const h = fundMeasuredReturn(f, d, "absolute", money, date);
-    ok(`${d.securityKey.slice(0, 32)}: the HPR cell names the cash it leaves out`,
-      h.shown && /paid back/.test(h.note ?? "") && /XIRR counts it/.test(h.note ?? ""), h.shown ? h.note : h.reason);
+    const ps = scope.dedupedRows.filter((p) => p.securityKey === d.securityKey);
+    const income = ps.reduce((t, p) => t + (p.dividendReceived ?? 0), 0);
+    const principal = d.paidOutByKind.capital;
+    const outside = d.paidOut - principal - Math.min(income, Math.max(d.paidOut - principal, 0));
+    ok(`${d.securityKey.slice(0, 32)}: the HPR cell says which of the cash paid back it counts`,
+      h.shown && (income === 0 || /(of income its record carries|its record carries as income)[^]*? is in it too/.test(h.note ?? ""))
+        && (outside > 1 ? /XIRR counts it/.test(h.note ?? "") : !/is not( in this figure)? — XIRR counts it/.test(h.note ?? "")),
+      h.shown ? h.note : h.reason);
   }
 }
 
@@ -314,9 +325,12 @@ for (const f of funds) {
   const sold = ps.reduce((t, p) => t + (p.costOfUnitsSold ?? 0), 0);
   const realised = ps.reduce((t, p) => t + (p.realizedPnL ?? 0), 0);
   const mv = ps.reduce((t, p) => t + p.marketValue, 0);
+  // …PLUS THE INCOME EACH POSITION CARRIES (Stage 10fz): FIFO's one return is
+  // (unrealised + realised + income) ÷ (cost held + cost of units sold).
+  const income = ps.reduce((t, p) => t + (p.dividendReceived ?? 0), 0);
   if (sold > 0) redeemedFunds++;
-  const want = ((mv - held + realised) / (held + sold)) * 100;
-  ok(`${f.security.slice(0, 32)}: HPR = (unrealised + realised) ÷ (cost held + cost redeemed)`,
+  const want = ((mv - held + realised + income) / (held + sold)) * 100;
+  ok(`${f.security.slice(0, 32)}: HPR = (unrealised + realised + income) ÷ (cost held + cost redeemed)`,
     h.shown && Math.abs((h.pct ?? NaN) - want) < 1e-9, `${h.shown ? h.pct : "—"} vs ${want}`);
 }
 // THE BOOK HAS A FUND THAT REDEEMED UNITS, or the FIFO half of that formula
@@ -452,6 +466,43 @@ console.log("── the header note ──");
   ok("the methodology column carries no count", fundReturnColumnMeta("auto", cells, "hint.") === null);
   const x = fundReturnColumnMeta("xirr", [{ shown: true, pct: 5, tag: "XIRR" }], "hint.");
   ok("a single fund reads in the singular", /Shown on 1 of 1 fund\./.test(x?.title ?? ""), x?.title);
+}
+
+// ── Stage 10fz: A FIFO REVIEW LINE, THE INCOME IN THE HPR, THE UNITS NO ROW MOVES ──
+console.log("── a review line on FIFO's cost, and the income its HPR counts (Stage 10fz) ──");
+{
+  const key = "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii";
+  const d = dated.get(key);
+  const ps = scope.dedupedRows.filter((p) => p.securityKey === key);
+  ok("360 ONE's lines carry FIFO's cost — cost held plus cost of units sold — on this book",
+    ps.length > 0 && ps.every((p) => (p.costOfUnitsSold ?? 0) > 0 && p.costBasis != null), ps.map((p) => `${p.costBasis}+${p.costOfUnitsSold}`).join(", "));
+  // THE REGRESSION: read against "purchases less sale proceeds" alone, a FIFO
+  // cost fell out of the XIRR as a gap. Its purchases are cost held + cost sold.
+  const bought = BOOK_REVIEW_FLOWS.filter((r) => r.securityKey === key && r.kind === "purchase").reduce((t, r) => t + r.amount, 0);
+  ok("…and its dated purchases tie to cost held + cost sold, to the rupee",
+    Math.abs(bought - ps.reduce((t, p) => t + (p.costBasis ?? 0) + (p.costOfUnitsSold ?? 0), 0)) <= 1);
+  ok("…so its record carries no gap and the sale is booked at its cost, not netted", !!d && !d.gap && d.reviewFifo && d.saleProceeds === 0 && d.redeemedAtCost > 1,
+    d?.gap ?? "");
+  const x = resolve(key, "xirr");
+  ok("…and its XIRR is struck", x.shown && x.tag === "XIRR", x.shown ? x.tag : x.reason);
+  ok("…naming the units the review's rows do not move", x.shown && /units no dated row moves/.test(x.note ?? ""), x.shown ? x.note : "");
+  const h = resolve(key, "absolute");
+  ok("its HPR says the sale is booked by FIFO, not netted against cost",
+    h.shown && /FIFO books the units sold at their cost/.test(h.note ?? "") && !/nets it against the cost/.test(h.note ?? ""), h.shown ? h.note : h.reason);
+  // INCOME IS IN THE FIGURE EXACTLY WHERE A POSITION CARRIES IT.
+  for (const [k, rec] of dated) {
+    const inc = scope.dedupedRows.filter((p) => p.securityKey === k && !isValuedAtCost(p)).reduce((t, p) => t + (p.dividendReceived ?? 0), 0);
+    if (Math.abs(rec.incomeInHpr - inc) > 0.01) ok(`${k.slice(0, 32)}: incomeInHpr is its positions' dividendReceived`, false, `${rec.incomeInHpr} vs ${inc}`);
+  }
+  ok("every record's incomeInHpr is its positions' own dividendReceived", true);
+  ok("…and the picker's hint no longer says income is out of the HPR", !/Income paid out is not in it/.test(PM_RETURN_HINTS.absolute ?? ""));
+  // A CONSTRUCTED RECORD: nothing carried as income, so every payout is outside.
+  const neo = [...dated.values()].find((r) => r.paidOutByKind.income > 0 && r.source === "statement");
+  if (neo) {
+    const f0 = funds.find((q) => q.securityKey === neo.securityKey)!;
+    const bare = fundMeasuredReturn(f0, { ...neo, incomeInHpr: 0 }, "absolute", money, date);
+    ok("with no income on the positions the HPR hands every income payout to XIRR", bare.shown && /XIRR counts it/.test(bare.note ?? "") && !/is in it too/.test(bare.note ?? ""), bare.shown ? bare.note : "");
+  }
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall fund-return checks passed");

@@ -443,15 +443,19 @@ Causes named:
 - printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (76,320.5).
 - printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (6,400).
 
-## Consolidated position
+## Every statement row, summed — not a portfolio value
 
-Each `dedupeGroup` is counted ONCE. The naive sum is shown beside it so the
-difference is never invisible — see section (c).
+The holding rows of every archived statement added together: each monthly issue of an
+account adds that account again, and the ring-fenced block, the depository's copy of
+fund units and every superseded issue are inside it. It measures the archive, never the
+family's worth — the consolidated value is the book's (`BOOK_SUMMARY` in
+`src/data/glowData.ts`, docs/BOOK-REPORT.md). The second line counts each `dedupeGroup`
+once, so the difference a duplicate pair makes is never invisible — see section (c).
 
 | | |
 | --- | ---: |
-| Sum of every reported holding | 1,37,79,65,24,532.59 |
-| **Consolidated (duplicates counted once)** | **1,37,79,65,24,532.59** |
+| Sum of every statement row, every issue | 1,37,79,65,24,532.59 |
+| The same, each dedupeGroup counted once | 1,37,79,65,24,532.59 |
 | Removed as double-counted | 0 |
 
 ## a2) Derived vs printed

@@ -42,7 +42,7 @@ import { BOOK_POLYCAB } from "@/data/glowData";
 import { LIVE_POSITIONS, liveBookTotal } from "./liveBook";
 import { NEGLIGIBLE_VALUE_FLOOR, dedupedPositions, droppedHoldings, isCompanyShare, isFundVehicle, sum } from "@/lib/analytics";
 import { isArbitrageFund } from "@/lib/fundNavs";
-import { bookIsinBridge, heldFundVehicles, issuerKeyOf, issuerNameOf, issuerOf, loadStockExposure, type StockExposureState } from "@/lib/lookthrough";
+import { bookIsinBridge, heldFundVehicles, issuerKeyOf, issuerNameOf, issuerOf, loadStockExposure, companyExposure, fundLineBasis, type StockExposureState } from "@/lib/lookthrough";
 import { securityKeyOf } from "@/lib/securityKey";
 import { securityLabel } from "@/lib/securityLabel";
 import { lookthroughCompanies } from "@/lib/recordedHoldings";
@@ -637,5 +637,33 @@ ok("every skipped vehicle carries its own value, so a caller can state the size"
 // neither an ISIN nor a usable name, and the disclosure's own rounding.
 near("what no disclosed line accounted for is exactly the disclosed value the rows do not reach",
   ex.unaccountedValue, ex.disclosedValue - ex.total - ex.fencedValue, 0.01);
+
+// ── Stage 10fz: what an EQUITY index is weighed against ──────────────────────
+// `derivedEquity` is the derived half's equity lines, re-struck here line by
+// line off the rows the store returns: no Debt line, no CD (`16`) or commercial
+// paper (`14`) by its ISIN type code, nothing from a cash-equivalent scheme,
+// and the balanced-advantage / equity-savings schemes' equity apart, as gross.
+console.log("\n── the equity sleeve an index is weighed against ──");
+{
+  const cos = companyExposure(stocks, ex);
+  let want = 0, wantGross = 0, debtDropped = 0;
+  for (const x of ex.byKey.values()) for (const r of x.rows) {
+    const basis = fundLineBasis(r.fundKey, r.fundName);
+    for (const i of r.instruments) {
+      const eq = i.assetClass === "Equity" && !/^IN[EF][A-Z0-9]{4}(14|16)/.test(i.isin ?? "");
+      if (!eq) { debtDropped += i.value; continue; }
+      if (basis === "gross") wantGross += i.value; else if (basis === "equity") want += i.value;
+    }
+  }
+  near("the derived equity sleeve is the equity lines of the equity funds", cos.reduce((s, e) => s + e.derivedEquity, 0), want, 1);
+  near("...and the gross-disclosed hedged funds' equity is its own term", cos.reduce((s, e) => s + e.derivedGross, 0), wantGross, 1);
+  ok("no company's sleeve exceeds its derived exposure", cos.every((e) => e.derivedEquity + e.derivedGross <= e.derived + 0.01));
+  ok("the store carries debt paper the sleeve leaves out (load-bearing)", debtDropped > 1e7, CR(debtDropped));
+  const hdfc = cos.find((e) => e.key === "hdfc-bank");
+  ok("HDFC Bank's CDs, filed under its equity key through its issuer prefix, are in its exposure and not its equity",
+    !!hdfc && hdfc.derived - hdfc.derivedEquity - hdfc.derivedGross > 1e6, hdfc ? `${CR(hdfc.derived)} derived, ${CR(hdfc.derivedEquity)} equity` : "no row");
+  ok("a liquid fund is cash and a balanced-advantage fund is gross",
+    fundLineBasis("absl-liqf-d-growth") === "cash" && fundLineBasis("hdfc-baf-d-grow") === "gross" && fundLineBasis("kotak-flexi-cap-fund-direct-growth") === "equity");
+}
 
 process.exit(fails ? 1 : 0);
