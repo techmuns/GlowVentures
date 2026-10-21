@@ -49,8 +49,10 @@ export async function monitorPublication(file, { gh, currentBase, credential, ba
     fs.writeFileSync(body, `Resume a verified statement publication. Required source/identity, CI and review gates apply.\n\nArchive revision: ${file.archiveRevision}\n`);
     metadata.pullRequest = previous[0]?.url ?? gh(['pr', 'create', '--base', 'main', '--head', file.branch, '--title', 'Publish verified statement delivery', '--body-file', body]);
   }
-  const pending = reason => ({ ...metadata, status: 'processing', hold: null, reason });
-  const held = reason => ({ ...metadata, status: 'held', hold: 'check-failed', reason });
+  const pending = detail => ({ ...metadata, status: 'processing', hold: null,
+    reason: 'Your statement is verified and waiting to appear on the dashboard.', publicationDetail: detail });
+  const held = detail => ({ ...metadata, status: 'held', hold: 'check-failed',
+    reason: 'This statement needs an administrator’s review before it can update the dashboard.', publicationDetail: detail });
   const url = metadata.pullRequest;
   const pr = JSON.parse(gh(['pr', 'view', metadata.pullRequest, '--json', 'number,state,headRefOid,mergeCommit,reviewDecision,statusCheckRollup,reviews,comments']));
   if (pr.state === 'MERGED') {
@@ -62,7 +64,7 @@ export async function monitorPublication(file, { gh, currentBase, credential, ba
   if (pr.headRefOid !== file.commit) return held(`The publication branch changed after validation; inspect ${url}.`);
   if (currentBase !== file.baseCommit) {
     gh(['pr', 'close', metadata.pullRequest]);
-    return { status: 'queued', hold: null, reason: 'The verified book changed; preparing against its latest version.', pullRequest: null, branch: null, ciDispatched: null,
+    return { status: 'queued', hold: null, reason: 'The dashboard changed while processing this statement. It is being checked again.', pullRequest: null, branch: null, ciDispatched: null,
       commit: null, baseCommit: null, archiveRevision: null, documentVersions: null, landedAs: null, providers: null, docKeys: null };
   }
   if (file.branch && !metadata.ciDispatched) {

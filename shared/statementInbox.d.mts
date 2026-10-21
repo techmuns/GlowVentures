@@ -27,6 +27,7 @@ export type InboxFile = {
   pullRequest?: string | null;
   branch?: string | null;
   ciDispatched?: boolean | null;
+  publicationDetail?: string | null;
   baseCommit?: string | null;
   archiveRevision?: string | null;
   documentVersions?: { document: string; revision: string }[] | null;

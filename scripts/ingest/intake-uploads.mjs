@@ -488,7 +488,7 @@ function land(live, verdicts, already) {
   } else if (!git(['push', '--quiet', REMOTE, `HEAD:refs/heads/${branch}`], { allowFail: true }).ok) return null;
   const body = path.join(WORK, 'publication-pr.md');
   fs.writeFileSync(body, `${message}\n\nOwner/account/security, changed-format field coverage and reconciliation publication checks passed. Exact source records and upload checksums are retained. Required CI and review must finish before merge.\n\nArchive revision: ${assessment.candidateRevision}\n`);
-  const metadata = { status: 'processing', hold: null, reason: 'Verified branch saved; opening its publication PR.', commit: sha, branch,
+  const metadata = { status: 'processing', hold: null, reason: 'Your statement is verified and waiting to appear on the dashboard.', commit: sha, branch,
     pullRequest: null, baseCommit: assessment.baseCommit, archiveRevision: assessment.candidateRevision, ciDispatched: false,
     documentVersions: versions.map(({ document, revision }) => ({ document, revision })) };
   // Persist the handoff before PR creation/dispatch: a worker dying between
@@ -498,13 +498,13 @@ function land(live, verdicts, already) {
   const existingPR = JSON.parse(gh(['pr', 'list', '--head', branch, '--state', 'all', '--json', 'url']));
   let url;
   try { url = existingPR[0]?.url ?? gh(['pr', 'create', '--base', MAIN, '--head', branch, '--title', `Publish ${live.length} verified statement upload(s)`, '--body-file', body]); }
-  catch (error) { return { ...metadata, reason: `PR creation will resume from the saved branch: ${clip(error.message)}` }; }
+  catch (error) { return { ...metadata, publicationDetail: `PR creation will resume from the saved branch: ${clip(error.message)}` }; }
   // GITHUB_TOKEN may leave PR-triggered CI waiting for approval. Explicit CI
   // dispatch is a documented GitHub exception and runs against this codex ref.
   let ciDispatched = false;
   try { gh(['workflow', 'run', 'ci.yml', '--ref', branch, '-f', `baseline=${assessment.baseCommit}`]); ciDispatched = true; }
   catch { /* preserve PR metadata; the next monitor retries dispatch */ }
-  return { ...metadata, ciDispatched, reason: `Awaiting required CI and review: ${url}`, pullRequest: url };
+  return { ...metadata, ciDispatched, publicationDetail: `Awaiting required CI and review: ${url}`, pullRequest: url };
 }
 
 // ── the run ───────────────────────────────────────────────────────────────────
@@ -645,7 +645,8 @@ async function main() {
         results.set(keyOf(item), await monitorPublication(item.publication, { gh,
           currentBase: git(['rev-parse', `${REMOTE}/${MAIN}`]).out, credential: process.env.GLOW_DASHBOARD_PASSWORD,
           baseURL: process.env.GLOW_BASE_URL }));
-      } catch (error) { results.set(keyOf(item), { ...item.publication, status: 'processing', hold: null, reason: `Publication check will retry: ${clip(error.message)}` }); }
+      } catch (error) { results.set(keyOf(item), { ...item.publication, status: 'processing', hold: null,
+        reason: 'Your statement is saved. Processing will continue automatically.', publicationDetail: `Publication check will retry: ${clip(error.message)}` }); }
     }
     for (const [key, result] of await intake(items.filter(i => !i.publication))) results.set(key, result);
   } catch (e) {
