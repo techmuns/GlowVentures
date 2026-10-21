@@ -85,7 +85,7 @@ import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
 import { allRecordedLines, recordedLabel, recordedLineFor } from "@/lib/recordedHoldings";
 import type { Position } from "@/lib/types";
-import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, type InvestedOn } from "@/lib/investedOn";
+import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, INVESTMENT_DATE_COLUMN_ALIASES, type InvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { holdingPeriodOf, type HoldingPeriod } from "@/lib/holdingFlows";
 import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
@@ -554,7 +554,6 @@ const MONITOR_STOCK_COLS = ["security", "qty", "avgCost", "invested", "investedO
 const MONITOR_STOCK_COLS_OTHER = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "direct", "pms", "otherRoute", "mv",
   "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"] as const;
 const MONITOR_LEGACY_KEYS = ["monitor-stock"] as const;
-const MONITOR_COLUMN_ALIASES = { "review:investmentRange": "investedOn" } as const;
 /** Why a company's route cell is empty while a statement does report it — through another route. */
 const ROUTE_ABSENT_ROW: Record<keyof MeasuredSplit, string> = {
   direct: "no own demat or broking statement reports this company — the statements that do are the other accounts on this row",
@@ -992,7 +991,7 @@ export function PortfolioMonitor() {
   const holdCols = useMemo(
     () => withReturnCols(bySecurity ? (otherRouteHeld ? MONITOR_STOCK_COLS_OTHER : MONITOR_STOCK_COLS) : MONITOR_COLS, returnMeasures),
     [bySecurity, otherRouteHeld, returnMeasures]);
-  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true, aliases: MONITOR_COLUMN_ALIASES });
+  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true, aliases: INVESTMENT_DATE_COLUMN_ALIASES });
   /**
    * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
    * figure it prints rather than on `returnPct` for all of them.

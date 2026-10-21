@@ -40,6 +40,7 @@ import type { Account, HoldingTrade, Position } from "./types";
 import { reviewField } from "./reviewColumns";
 
 export type InvestedOnSource = "allotments" | "lots" | "recovered-lots" | "trades" | "calls" | "review" | "account";
+export const INVESTMENT_DATE_COLUMN_ALIASES = { "review:investmentRange": "investedOn" } as const;
 
 /**
  * The first and last date the money went in, and how many dated payments that

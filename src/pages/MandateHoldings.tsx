@@ -27,7 +27,7 @@ import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPI
 const DATED_ACCOUNTS = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId)).size;
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
-import { investedOnOf, lineUndatedReason } from "@/lib/investedOn";
+import { investedOnOf, lineUndatedReason, INVESTMENT_DATE_COLUMN_ALIASES } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
@@ -302,7 +302,7 @@ export function MandateHoldings() {
   // ABOVE THE EARLY RETURNS — this page has three (no account, not a mandate,
   // no rows), and a hook that runs on some of them and not others is a
   // hooks-order error rather than a conditional table.
-  const holdingsView = useTableView("mandate-holdings", MANDATE_COLS, { reviewKind: "holding" });
+  const holdingsView = useTableView("mandate-holdings", MANDATE_COLS, { reviewKind: "holding", aliases: INVESTMENT_DATE_COLUMN_ALIASES });
   /**
    * ONE SECTOR PER COMPANY, THE ONE SECTOR COMPOSITION GIVES IT (DSM-C9).
    *
@@ -902,7 +902,7 @@ export function MandateHoldings() {
                 <SortHeader col="avgCost" view={holdingsView}>Avg cost</SortHeader>
                 <SortHeader col="invested" view={holdingsView}>Invested</SortHeader>
                 <SortHeader col="investedOn" view={holdingsView} align="left"
-                  title="When the units this share holds were bought: the account's own dated trades where they account for every unit held, matched first-in, first-out, or a lot register's acquisition dates. The Portfolio Monitor's holdings open each share into its dated trades.">Invested on</SortHeader>
+                  title="When the units this share holds were bought: the account's own dated trades where they account for every unit held, matched first-in, first-out, or a lot register's acquisition dates. The Portfolio Monitor's holdings open each share into its dated trades.">Investment date / range</SortHeader>
                 <SortHeader col="cmp" view={holdingsView}>CMP</SortHeader>
                 <SortHeader col="mv" view={holdingsView}>Market value</SortHeader>
                 <SortHeader col="weight" view={holdingsView}>Weight</SortHeader>
@@ -1123,7 +1123,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
   const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, scope } = usePortfolio();
   const [q, setQ] = useState("");
   const holdersView = useTableView("strategy-holders", HOLDER_COLS);
-  const holdingsView = useTableView("strategy-holdings", GROUP_COLS, { reviewKind: "holding" });
+  const holdingsView = useTableView("strategy-holdings", GROUP_COLS, { reviewKind: "holding", aliases: INVESTMENT_DATE_COLUMN_ALIASES });
   const sources = useHoldingsSources(kind === "mandate" ? accounts : []);
   const exposure = useStockExposure(consolidated, false);
   const companySectors = useMemo(
@@ -1416,7 +1416,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
                 <SortHeader col="avgCost" view={holdingsView}>Avg cost</SortHeader>
                 <SortHeader col="invested" view={holdingsView}>Invested</SortHeader>
                 <SortHeader col="investedOn" view={holdingsView} align="left"
-                  title="When the units this line holds were bought: its account's own dated trades where they account for every unit held, matched first-in, first-out, a lot register's acquisition dates, or a fund's own dated allotments. The Portfolio Monitor's holdings open each line into its dated trades.">Invested on</SortHeader>
+                  title="When the units this line holds were bought: its account's own dated trades where they account for every unit held, matched first-in, first-out, a lot register's acquisition dates, or a fund's own dated allotments. The Portfolio Monitor's holdings open each line into its dated trades.">Investment date / range</SortHeader>
                 <SortHeader col="cmp" view={holdingsView}>CMP</SortHeader>
                 <SortHeader col="mv" view={holdingsView}>Market value</SortHeader>
                 <SortHeader col="weight" view={holdingsView}>Weight</SortHeader>
