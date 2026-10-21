@@ -7756,8 +7756,9 @@ const ROUTES = [
   // Stage 10fo: Sensex is no longer offered, so its old link opens the panel Off.
   ["cio-sectors-vs-retired", "/cio?tab=sectors&vs=sensex"],
   ["cio-returns", "/cio?tab=returns"],
+  ["cio-returns-benchmarks", "/cio?tab=returns&rview=benchmarks"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
-  ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
+  ["cio-returns-live", "/cio?tab=returns&rview=benchmarks&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
   ["cio-returns-cagr", "/cio?tab=returns&rp=inception&rtype=cagr"],
   ["cio-returns-retired", "/cio?tab=returns&rtype=twr"],
   /**
@@ -19945,10 +19946,19 @@ const CIO_RETURNS_LAYOUT = [
     if (!r) return false;
     return r.typeSelect === true && r.typeButtons === 0;
   }],
-  ["the portfolio section is above the benchmark section", (t, ctx) => {
+  ["the portfolio section stays above the selected return details subtab", (t, ctx) => {
     const o = ctx?.returnsDom?.stackOrder;
     if (!o) return false;
-    return o.portBottom <= o.benchTop + 1;
+    return o.portBottom <= o.panelTop + 1;
+  }],
+  ["return attribution and benchmarks are separate subtabs, with only the requested panel visible", (t, ctx) => {
+    const r = ctx?.returnsDom;
+    if (!r) return false;
+    const want = /[?&]rview=benchmarks(?:&|$)/.test(ctx.path ?? "") ? "benchmarks" : "attribution";
+    return r.subtabs.map((x) => x.key).join() === "attribution,benchmarks"
+      && r.subtabs.filter((x) => x.active).map((x) => x.key).join() === want
+      && r.panels.filter((x) => x.visible).map((x) => x.key).join() === want
+      && r.subtabs.every((x) => x.linked && x.tabIndex === (x.active ? 0 : -1));
   }],
   ["...the Returns tab's return is the whole portfolio's, never a table of its accounts", (t, ctx) => {
     const r = ctx?.returnsDom;
@@ -20010,10 +20020,8 @@ const CIO_RETURNS_LIVE = [
  */
 const SEG_AXES = ["category", "assetClass", "basket", "sector", "side", "security"];
 const CIO_SEGMENTS = [
-  ["the Returns tab carries the attribution section under the benchmarks", (t, ctx) => {
-    const o = ctx?.returnsDom?.stackOrder;
-    if (!ctx?.segDom || !o) return false;
-    return o.attribTop != null && o.benchBottom <= o.attribTop + 1;
+  ["the Returns tab carries attribution inside its own subtab panel", (t, ctx) => {
+    return !!ctx?.segDom && ctx?.returnsDom?.attributionInPanel === true;
   }],
   ["...it offers every segment axis in order — sector among them — and the one its address asked for is active", (t, ctx) => {
     const r = ctx?.segDom;
@@ -26479,6 +26487,7 @@ const INVARIANTS = {
   "cio-sectors-vs-direct": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...cioSectorsVs("nifty-50", "direct")],
   "cio-sectors-vs-retired": [...CIO_SHARED, ...CIO_TAB_CONTROL, CIO_SECTORS[0], ...CIO_SECTORS_VS_OFF],
   "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
+  "cio-returns-benchmarks": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-retired": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
@@ -39955,9 +39964,18 @@ for (const theme of THEMES) {
           rows: root.querySelectorAll("[data-returns-account]").length,
           portfolioCard: !!root.querySelector("[data-returns-portfolio]"),
           benchCard: !!root.querySelector("[data-returns-benchmarks]"),
+          subtabs: [...root.querySelectorAll("[data-returns-tab]")].map((b) => {
+            const panel = document.getElementById(b.getAttribute("aria-controls"));
+            return { key: b.getAttribute("data-returns-tab"), active: b.getAttribute("aria-selected") === "true",
+              tabIndex: b.tabIndex, linked: panel?.getAttribute("aria-labelledby") === b.id };
+          }),
+          panels: [...root.querySelectorAll("[data-returns-panel]")].map((p) => ({
+            key: p.getAttribute("data-returns-panel"), visible: p.getClientRects().length > 0,
+          })),
+          attributionInPanel: !!root.querySelector('[data-returns-panel="attribution"] [data-returns-attribution]'),
           typeSelect: !!root.querySelector("select[data-returns-type-select]"),
           typeButtons: root.querySelectorAll("button[data-returns-type]").length,
-          stackOrder: (() => { const pc = root.querySelector("[data-returns-portfolio]")?.getBoundingClientRect(); const bc = root.querySelector("[data-returns-benchmarks]")?.getBoundingClientRect(); const ac = root.querySelector("[data-returns-attribution]")?.getBoundingClientRect(); return pc && bc ? { portBottom: pc.bottom, benchTop: bc.top, benchBottom: bc.bottom, attribTop: ac ? ac.top : null } : null; })(),
+          stackOrder: (() => { const pc = root.querySelector("[data-returns-portfolio]")?.getBoundingClientRect(); const panel = root.querySelector("[data-returns-panel]:not([hidden])")?.getBoundingClientRect(); return pc && panel ? { portBottom: pc.bottom, panelTop: panel.top } : null; })(),
           calculationInfo: root.querySelector("[data-returns-portfolio] [data-return-info]")?.getAttribute("aria-haspopup") === "dialog",
           infoInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-return-info]"),
           windowInPortfolio: !!root.querySelector("[data-returns-portfolio] [data-returns-window]"),
