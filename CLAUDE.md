@@ -81,7 +81,7 @@ every one takes the reason as a required argument.
 - **Never blend a missing value into a total as zero** — `sumOrNull` in
   `src/lib/analytics.ts`.
 - **A figure that exists for SOME accounts is shown for those and the rest are
-  named**, including in the total's own caption. **The Returns attribution table shows the covered subset**, as requested in Stage 10gg: the total is labelled “available data” and its info cards name what is missing. Other whole-portfolio pooled figures are struck over every account holding value or shown as `—`
+  named**, including in the total's own caption. **The Returns attribution table shows the covered subset**, as requested in Stage 10gh: the total is labelled “available data” and its info cards name what is missing. Other whole-portfolio pooled figures are struck over every account holding value or shown as `—`
   with the unmeasured accounts named (`nothingToMeasure`, `measuredAccountsReturn`
   in `src/lib/returns.ts`; Stage 10fc).
 - **A COMPUTED zero is legitimate and stays**, with its reason on the face.

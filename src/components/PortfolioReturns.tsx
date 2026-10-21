@@ -12,7 +12,7 @@
  *
  * Dated windows read the shared verified account record, including nil
  * origins, opening statement values and dated capital. Attribution measures
- * the available subset and names gaps in its info cards (Stage 10gg).
+ * the available subset and names gaps in its info cards (Stage 10gh).
  * Benchmarks retain their whole-portfolio gate and same-flow index comparison.
  *
  * No line on the face reads as a sentence (Stage 10cp): every explanation is a

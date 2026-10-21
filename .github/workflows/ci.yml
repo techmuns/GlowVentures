@@ -56,6 +56,9 @@ jobs:
       - name: Financial calculations and feed contracts
         run: npm run test:family
 
+      - name: Real estate records and ownership calculations
+        run: npm run test:real-estate
+
       - name: Asset response contracts
         run: node scripts/dev/check-asset-middleware.mjs
 
@@ -70,6 +73,7 @@ jobs:
             sleep 1
           done
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-real-estate.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-sector-return-details.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
@@ -83,6 +87,14 @@ jobs:
           path: |
             .cache/returns-period/*.png
             .cache/returns-period/browser-results.json
+          if-no-files-found: ignore
+
+      - name: Preserve real estate browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-estate-browser-check
+          path: .cache/real-estate-check
           if-no-files-found: ignore
 
   # EVERY STATEMENT IN source/ IS READ IN FULL AND REACHES THE BOOK (Stage 10ep).
