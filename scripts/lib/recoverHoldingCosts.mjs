@@ -22,6 +22,8 @@ export const REVIEW_EQUITIES = Object.freeze({
   INE800A01015: 'Birla Cable Ltd.', INE013P01021: 'Onesource Specialty Pharma', INE457L01029: 'PG Electro.',
 });
 export const REVIEW_FUNDS = Object.freeze({
+  INF740KA1RE3: 'DSP Silver ETF',
+  INF740KA1SW3: 'DSP Gold ETF',
   INF109KC1RH9: 'ICICI Pru India Opportunities Fund',
   INF174KA1HV3: 'Kotak Multicap Fund-Direct Plan-Growth',
   INF179KB1HP9: 'HDFC Liquid Fund -Direct(G)',

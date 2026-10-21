@@ -10,7 +10,7 @@ import { fifoReturnPct } from "../../../shared/fifo.mjs";
 
 const near = (got: number | null | undefined, want: number) =>
   assert.ok(typeof got === "number" && Math.abs(got - want) < .02, `${got} != ${want}`);
-assert.equal(BOOK_RECOVERED_COSTS.length, 41, "only exact owner/ISIN/quantity matches are recoverable");
+assert.equal(BOOK_RECOVERED_COSTS.length, 44, "only exact owner/ISIN/quantity matches are recoverable");
 const icici = BOOK_POSITIONS.filter(p => p.accountId === "icici-bank-nsdl-demat-49794950");
 const recovered = icici.filter(p => p.recoveredCost);
 assert.equal(recovered.length, 9);
@@ -98,3 +98,9 @@ for(const set of [[savings],[liquid,savings]]) {
 assert.equal(applyFundNavs([savings])[0].returnPct,null,'a fresh NAV cannot invent missing sale proceeds');
 assert.equal(fp('12539150','INF247L01ED1').costBasis,null,'0.066 units still need a reconciliation');
 assert.equal(fp('12838316','INF179K01830').costBasis,null,'a different folio balance cannot supply cost');
+
+// Costs can be known while a holding's current unit/price basis is unverified.
+const silver=BOOK_RECOVERED_COSTS.find(r=>r.accountId.endsWith('12838316')&&r.isin==='INF740KA1RE3')!;
+near(silver.costBasis,17222067.17);near(silver.realizedPnL,14667670.15);near(silver.costOfUnitsSold,14981798.27);
+assert.equal(silver.quantity,123000);
+assert.ok(!funds.some(p=>p.accountId===silver.accountId&&p.isin===silver.isin),'recovering cost must not bypass the valuation/unit-basis gate');

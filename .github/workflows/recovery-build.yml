@@ -11,6 +11,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run inventory
+      - run: npm run coverage:source
       - run: npm run build-book
       - uses: actions/upload-artifact@v4
         with:
@@ -21,6 +23,7 @@ jobs:
             src/data/investmentProfiles.ts
             docs/BOOK-REPORT.md
             docs/COST-RECOVERY.md
+            docs/SOURCE-COVERAGE.md
       - run: npm run build
       - run: npm run test:ingest
       - run: npm run test:family

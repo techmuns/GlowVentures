@@ -18,7 +18,7 @@ Please send the broker's transaction/capital-gains export with ISIN, trade and s
 
 ## Fund and ETF balances
 
-The saved review supplies **21 additional fund/account purchase costs** after exact-unit and FIFO reconciliation; 20 also support HPR. They do not need new purchase statements. For the balances below, please provide the **AMC/RTA since-inception transaction and capital-gains statement**, naming holder, folio, full scheme/plan/option and ISIN, with original lots, redemptions, switches, reinvestments, cash distributions and charges through the custody statement date. Keep separate folios separate.
+The saved review supplies **21 additional valued fund/account purchase costs**, plus the costs of **three recorded DSP gold/silver ETF balances** after exact-unit and FIFO reconciliation; 20 also support HPR. They do not need new purchase statements. For the balances below, please provide the **AMC/RTA since-inception transaction and capital-gains statement**, naming holder, folio, full scheme/plan/option and ISIN, with original lots, redemptions, switches, reinvestments, cash distributions and charges through the custody statement date. Keep separate folios separate.
 
 | Holder and account | Balance still needing evidence | Specific gap in the saved records |
 | --- | --- | --- |
@@ -34,6 +34,8 @@ The saved review supplies **21 additional fund/account purchase costs** after ex
 Four further Bharat/Motilal residues are below the dashboard's ₹1,000 holdings floor: ICICI Nifty 50 Direct **0.430**, Invesco Contra Regular **0.390**, ICICI Nifty Next 50 Regular **0.629**, and ICICI Nifty Next 50 Direct **0.048**. Include them in the same AMC/RTA export; no separate document request is necessary.
 
 **Cost recovered; HPR still disputed:** Ajay's ICICI Equity Savings Direct has **9,320,249.865 units** after a **1,728,990.752-unit sale on 24 June 2026**. The original purchase establishes remaining cost, but the sale cash is recorded as **−₹43,103,739.44736**, inconsistent with a receipt. Please confirm actual net sale proceeds and charges. HPR and realised gain remain blank until confirmed.
+
+**DSP ETF costs are recovered:** Ankita gold 205,000, Ankita silver 123,000, and Aarti gold 1,195,000 units. They remain recorded without a current valuation because the saved custody unit basis does not reconcile to the current NAV unit. Supply the latest split-adjusted holding/corporate-action bridge and a matching dated valuation; the original purchase costs do not need to be resent.
 
 ## Later holdings and disputed rows
 
