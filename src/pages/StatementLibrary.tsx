@@ -158,7 +158,8 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
   // token give the one-time set-up steps rather than a drop zone that drops.
   if (state.status === "unavailable") {
     return (
-      <Card className="mb-5" data-xa="statement-upload" data-upload-state={state.cause}>
+      <div data-xa="statement-upload" data-upload-state={state.cause}>
+      <Card className="mb-5">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400"><UploadCloud className="h-5 w-5" /></div>
           <div className="min-w-0">
@@ -172,12 +173,14 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
           </div>
         </div>
       </Card>
+      </div>
     );
   }
 
   const busy = !!progress || state.status === "loading";
   return (
-    <Card className="mb-5" data-xa="statement-upload" data-upload-state={state.status}>
+    <div data-xa="statement-upload" data-upload-state={state.status}>
+    <Card className="mb-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <UploadCloud className="h-4 w-4 text-champagne-400" />
         <span className="text-sm font-semibold text-slate-200">Upload statements</span>
@@ -224,6 +227,7 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
           data-prose-ok="the result of an upload">{msg.text}</p>
       )}
     </Card>
+    </div>
   );
 }
 
@@ -256,7 +260,8 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
   };
 
   return (
-    <Card className="mb-5" data-xa="statement-upload-log" data-upload-rows={rows.length}>
+    <div data-xa="statement-upload-log" data-upload-rows={rows.length}>
+    <Card className="mb-5">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Uploads</span>
         {tally("reading") + tally("queued") > 0 && <Pill tone="info">{tally("reading") + tally("queued")} reading</Pill>}
@@ -282,10 +287,10 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
               const id = `${b.id}/${f.name}`;
               return (
                 <tr key={id} className="hover:bg-ink-700/40" data-upload-status={v.key}>
-                  <td className="px-4 py-3 text-slate-200">
+                  <td className="min-w-[220px] px-4 py-3 text-slate-200">
                     <span className="inline-flex items-center gap-1.5" title={f.name}>
                       {fileIcon((f.name.split(".").pop() ?? "").toUpperCase())}
-                      <span className="break-all">{f.name.split("/").pop()}</span>
+                      <span className="break-words">{f.name.split("/").pop()}</span>
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-400">{fmtDateTime(b.uploadedAt)}</td>
@@ -306,36 +311,35 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
                       ))
                       : <span className="text-slate-600">{DASH}</span>}
                   </td>
-                  <td className="max-w-[360px] px-4 py-3 text-xs text-slate-500">
+                  <td className="min-w-[200px] max-w-[320px] px-4 py-3 text-xs text-slate-500">
                     {f.status === "held" || f.status === "duplicate"
                       ? <span className="line-clamp-2" title={f.reason ?? undefined}>{f.reason}</span>
                       : f.status === "landed" && f.landedAs?.length
                         ? <span className="mono line-clamp-2 break-all" title={f.landedAs.join("\n")}>{f.landedAs.join(", ")}</span>
                         : <span className="text-slate-600">{DASH}</span>}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right">
-                    <span className="inline-flex items-center gap-1.5">
+                  <td className="whitespace-nowrap px-3 py-3 text-right">
+                    <span className="inline-flex items-center gap-1">
                       {f.run && (
-                        <a href={f.run} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-accent-400" title="Open the intake run's log on GitHub">
+                        <a href={f.run} target="_blank" rel="noreferrer" aria-label="Intake run log"
+                          className="grid h-6 w-6 place-items-center rounded text-slate-500 hover:bg-ink-700 hover:text-accent-400" title="Open the intake run's log on GitHub">
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       )}
                       {f.status === "held" && (
-                        <button type="button" disabled={busy !== null} data-upload-retry
+                        <button type="button" disabled={busy !== null} data-upload-retry aria-label="Retry"
                           onClick={() => act(id, () => inbox.retry(b.id))}
-                          className="inline-flex items-center gap-1 rounded border border-ink-600 px-2 py-1 text-[11px] text-slate-400 hover:bg-ink-700 hover:text-slate-200 disabled:opacity-50"
-                          title="Read this upload's held files again — after their reader is written or the password is set">
+                          className="grid h-6 w-6 place-items-center rounded border border-ink-600 text-slate-400 hover:bg-ink-700 hover:text-slate-200 disabled:opacity-50"
+                          title="Retry — read this upload's held files again, after their reader is written or the password is set">
                           {busy === id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
-                          Retry
                         </button>
                       )}
                       {(f.status === "held" || f.status === "queued") && (
-                        <button type="button" disabled={busy !== null}
+                        <button type="button" disabled={busy !== null} aria-label="Remove"
                           onClick={() => act(`${id}#rm`, () => inbox.remove(b.id, f.name))}
-                          className="inline-flex items-center gap-1 rounded border border-ink-600 px-2 py-1 text-[11px] text-slate-400 hover:bg-ink-700 hover:text-loss disabled:opacity-50"
-                          title="Take this file out of the inbox">
+                          className="grid h-6 w-6 place-items-center rounded border border-ink-600 text-slate-400 hover:bg-ink-700 hover:text-loss disabled:opacity-50"
+                          title="Remove — take this file out of the inbox">
                           {busy === `${id}#rm` ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                          Remove
                         </button>
                       )}
                     </span>
@@ -352,6 +356,7 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
         </button>
       )}
     </Card>
+    </div>
   );
 }
 
