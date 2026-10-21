@@ -129,7 +129,8 @@ One line per area; the history files explain each in depth.
   `investmentProfiles.ts` (supplied strategy/description, matched by identity —
   security key → ISIN → name → brand → folio; Stage 10eo).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
-  `benchmarks.ts` (seven indices, name-checked), `indices.ts`, `periodReturns.ts`
+  `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
+  weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
   (Morning CIO Returns tab), `segmentReturns.ts` (its attribution section:
   FIFO gain and contribution by any axis, tied to the Gain / Loss tile),
   `returnMeasures.ts`, `returnColumns.ts`.
@@ -454,7 +455,8 @@ And:
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,
   `replay:movements`, `replay:flows`, `replay:flow-lines`,
   `replay:demat-holdings`.
-- Reference data: `build-symbols`, `build-sectors`, `build-fund-navs`,
+- Reference data: `build-symbols`, `build-sectors`, `build-index-sectors`
+  (monthly; index sector weights), `build-fund-navs`,
   `build-upstox-instruments`, `build-scheme-names`, `build-lookthrough`
   (`-- --reindex` needs no AmfiBeas checkout), `build-polycab`, `harvest`,
   `probe:sources`.

@@ -10,7 +10,8 @@ import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { OutOfScope } from "@/components/MemberScopeSelect";
-import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare, NO_UNIT_COUNT } from "@/lib/analytics";
+import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare, NO_UNIT_COUNT, currentHoldings, mandateLabel } from "@/lib/analytics";
+import { splitFundClass } from "../../shared/securityKey.mjs";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
@@ -126,7 +127,12 @@ const fin = (n: unknown): number | null => (typeof n === "number" && Number.isFi
  */
 const firstClause = (s: string) => s.split(/; |, so | — /)[0];
 
-function useHoldingsSource(account: Account | undefined): HoldingsSource {
+/**
+ * EACH ACCOUNT'S HOLDINGS DOCUMENT AND ITS OWN TOTALS — one account on its own
+ * page, or every account of a strategy run for several members on the
+ * strategy's page, each resolved and read exactly as the one was.
+ */
+function useHoldingsSources(accounts: readonly Account[]): Map<string, HoldingsSource> {
   const [rows, setRows] = useState<ManifestRow[] | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
@@ -137,49 +143,102 @@ function useHoldingsSource(account: Account | undefined): HoldingsSource {
     return () => { alive = false; };
   }, []);
 
-  const docKey = useMemo(() => {
-    if (rows === undefined || rows === null || !account) return rows === undefined ? undefined : null;
-    const mine = rows.filter((d) => d.provider === account.provider && d.accountNo === account.accountNo);
-    const type = HOLDINGS_REPORTS.find((t) => mine.some((d) => d.reportType === t));
-    if (!type) return "";
-    // A SNAPSHOT SUPERSEDES: the newest issue of the winning type is the one the
-    // book was built from, so it is the one to link at.
-    const best = mine.filter((d) => d.reportType === type).reduce((a, d) => (d.asOf > a.asOf ? d : a));
-    return best.docKey;
-  }, [rows, account]);
+  const ids = accounts.map((a) => `${a.accountId}\u0000${a.provider}\u0000${a.accountNo}`).join("\u0001");
+  const docKeys = useMemo(() => {
+    const out = new Map<string, string | null | undefined>();
+    for (const account of accounts) {
+      if (rows === undefined || rows === null) { out.set(account.accountId, rows === undefined ? undefined : null); continue; }
+      const mine = rows.filter((d) => d.provider === account.provider && d.accountNo === account.accountNo);
+      const type = HOLDINGS_REPORTS.find((t) => mine.some((d) => d.reportType === t));
+      if (!type) { out.set(account.accountId, ""); continue; }
+      // A SNAPSHOT SUPERSEDES: the newest issue of the winning type is the one the
+      // book was built from, so it is the one to link at.
+      const best = mine.filter((d) => d.reportType === type).reduce((a, d) => (d.asOf > a.asOf ? d : a));
+      out.set(account.accountId, best.docKey);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, ids]);
 
-  const [doc, setDoc] = useState<DocTotals | null | undefined>(undefined);
+  const wanted = [...new Set([...docKeys.values()].filter((k): k is string => !!k))].sort().join("\u0001");
+  const [docs, setDocs] = useState<Map<string, DocTotals | null>>(() => new Map());
   useEffect(() => {
-    if (!docKey) { setDoc(undefined); return; }
+    const keys = wanted ? wanted.split("\u0001") : [];
+    if (!keys.length) return;
     let alive = true;
-    setDoc(undefined);
-    fetch(`${import.meta.env.BASE_URL}audit/${docKey}/document.json`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((d: { totals?: { totalMarketValue?: number | null } | null;
-                  derivedPortfolioTotal?: number | null;
-                  holdings?: { accruedIncome?: number | null }[] | null }) => {
-        if (!alive) return;
-        setDoc({
-          printedTotal: fin(d?.totals?.totalMarketValue),
-          derivedTotal: fin(d?.derivedPortfolioTotal),
-          // sumOrNull, never sum: a document whose rows report no accrued income
-          // must leave this `null`, so the difference below stays unattributed
-          // rather than being explained by a zero nobody measured.
-          accruedIncome: sumOrNull((d?.holdings ?? []).map((h) => fin(h?.accruedIncome))),
-        });
-      })
-      .catch(() => { if (alive) setDoc(null); });
+    for (const docKey of keys) {
+      fetch(`${import.meta.env.BASE_URL}audit/${docKey}/document.json`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((d: { totals?: { totalMarketValue?: number | null } | null;
+                    derivedPortfolioTotal?: number | null;
+                    holdings?: { accruedIncome?: number | null }[] | null }) => {
+          if (!alive) return;
+          setDocs((prev) => new Map(prev).set(docKey, {
+            printedTotal: fin(d?.totals?.totalMarketValue),
+            derivedTotal: fin(d?.derivedPortfolioTotal),
+            // sumOrNull, never sum: a document whose rows report no accrued income
+            // must leave this `null`, so the difference below stays unattributed
+            // rather than being explained by a zero nobody measured.
+            accruedIncome: sumOrNull((d?.holdings ?? []).map((h) => fin(h?.accruedIncome))),
+          }));
+        })
+        .catch(() => { if (alive) setDocs((prev) => new Map(prev).set(docKey, null)); });
+    }
     return () => { alive = false; };
-  }, [docKey]);
+  }, [wanted]);
 
-  return {
-    docKey,
-    printedTotal: doc?.printedTotal ?? null,
-    derivedTotal: doc?.derivedTotal ?? null,
-    accruedIncome: doc?.accruedIncome ?? null,
-    docUnreadable: doc === null,
-    docLoading: !!docKey && doc === undefined,
-  };
+  return useMemo(() => {
+    const out = new Map<string, HoldingsSource>();
+    for (const [accountId, docKey] of docKeys) {
+      const doc = docKey ? docs.get(docKey) : undefined;
+      out.set(accountId, {
+        docKey,
+        printedTotal: doc?.printedTotal ?? null,
+        derivedTotal: doc?.derivedTotal ?? null,
+        accruedIncome: doc?.accruedIncome ?? null,
+        docUnreadable: doc === null,
+        docLoading: !!docKey && doc === undefined,
+      });
+    }
+    return out;
+  }, [docKeys, docs]);
+}
+
+const NO_SOURCE: HoldingsSource = {
+  docKey: undefined, printedTotal: null, derivedTotal: null, accruedIncome: null, docUnreadable: false, docLoading: false,
+};
+
+function useHoldingsSource(account: Account | undefined): HoldingsSource {
+  const one = useMemo(() => (account ? [account] : []), [account]);
+  const all = useHoldingsSources(one);
+  return (account && all.get(account.accountId)) || NO_SOURCE;
+}
+
+/**
+ * THE MANAGER'S OWN PRINTED TOTAL BESIDE THE BOOK'S SUM, in words — the hover
+ * on a Statement total. One account's sentences, so a strategy's page can name
+ * each of its accounts' in turn.
+ */
+function printedTotalNotes(source: HoldingsSource, stmtMV: number | null, full: (n: number | null | undefined) => string, who = "this account"): string[] {
+  const printedTotal = source.printedTotal;
+  const printedGap = printedTotal !== null && stmtMV !== null ? printedTotal - stmtMV : null;
+  const gapIsAccrual = printedGap !== null && source.accruedIncome !== null
+    && Math.abs(printedGap - source.accruedIncome) <= 1;
+  return [
+    printedGap !== null
+      ? Math.abs(printedGap) < 1
+        ? `That document prints ${full(printedTotal)} as ${who}'s portfolio total, which is the same figure to the rupee.`
+        : `That document prints ${full(printedTotal)} as ${who}'s portfolio total — ${full(Math.abs(printedGap))} ${printedGap > 0 ? "higher" : "lower"}${gapIsAccrual
+          ? ", because the manager totals an income-inclusive basis: the accrued income that document's rows carry in a column of their own is folded into that figure and not into this one. Reproduced from that same accrued column to the rupee, not assumed."
+          : ". What separates the two bases is not derivable from that document here, so this page does not name it — the extraction reconciliation is where that difference is classified."}`
+      : "",
+    source.docLoading ? "The manager's own printed total is still being read from the archive." : "",
+    source.docUnreadable ? "The archive answered with the manifest but not with that document, so the manager's own printed total is not shown here — the figure is the book's sum of the rows above either way." : "",
+    !source.docLoading && !source.docUnreadable && !!source.docKey && printedTotal === null
+      ? "That document prints no portfolio total of its own, so there is nothing on it to check this sum against but the rows, which are the rows above." : "",
+    source.docKey === null ? "The archive did not respond, so the manager's own printed total could not be read." : "",
+    source.docKey === "" ? `No holdings document for ${who} is in the archive manifest.` : "",
+  ].filter(Boolean);
 }
 
 /**
@@ -326,6 +385,26 @@ export function MandateHoldings() {
   const full = (n: number | null | undefined) => fmtFromBase(n, { compact: false });
   const price = (n: number | null | undefined) =>
     (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : null);
+  /**
+   * ONE STRATEGY, ONE PAGE, WHOEVER HOLDS IT.
+   *
+   *   *"VEC main heading needs to have hyperlink that will open a single drill
+   *    down page for all the transactions and different family entities as
+   *    well, we do not need to make separate drill down page for separate
+   *    entities."*
+   *
+   * The accounts the Portfolio Monitor draws as this strategy's one row (Stage
+   * 10dn): the same manager and the same strategy, each holding something
+   * today. Two or more of them and the address of any one opens the page for
+   * all of them; an account alone keeps the page below.
+   */
+  const strategy = useMemo<Account[]>(() => {
+    if (!portfolio || !account || holdingRoute(account.engagement) !== "mandate") return [];
+    const held = new Set(currentHoldings(portfolio.positions).map((p) => p.accountId));
+    if (!held.has(account.accountId)) return [];
+    return portfolio.accounts.filter((a) => held.has(a.accountId) && holdingRoute(a.engagement) === "mandate"
+      && a.provider === account.provider && mandateLabel(a) === mandateLabel(account));
+  }, [portfolio, account]);
 
   if (!portfolio) return null;
 
@@ -372,6 +451,8 @@ export function MandateHoldings() {
       </div>
     );
   }
+
+  if (strategy.length > 1) return <HeldByMany kind="mandate" name={mandateLabel(account)} provider={account.provider} accounts={strategy} />;
 
   const route = holdingRoute(account.engagement);
   const ownerName = account.ownerId ? ownerDisplayName(account.ownerId) : account.owner;
@@ -627,10 +708,6 @@ export function MandateHoldings() {
    * ₹20.29 Cr total and Molecule's ₹21,451.35 misses its accrued column by
    * ₹75,968, so the first is named and the second explicitly is not.
    */
-  const printedTotal = source.printedTotal;
-  const printedGap = printedTotal !== null && stmtMV !== null ? printedTotal - stmtMV : null;
-  const gapIsAccrual = printedGap !== null && source.accruedIncome !== null
-    && Math.abs(printedGap - source.accruedIncome) <= 1;
   /**
    * AND THE DOCUMENT'S OWN DERIVED TOTAL IS THE CHECK ON THE ROWS THEMSELVES.
    * The book is built from this document, so the two must agree; if they ever
@@ -919,19 +996,7 @@ export function MandateHoldings() {
               // IT. This sentence used to attribute the figure above to the
               // manager, and a reader who followed the link to check found a
               // larger number with nothing explaining it.
-              printedGap !== null
-                ? Math.abs(printedGap) < 1
-                  ? `That document prints ${full(printedTotal)} as this account's portfolio total, which is the same figure to the rupee.`
-                  : `That document prints ${full(printedTotal)} as this account's portfolio total — ${full(Math.abs(printedGap))} ${printedGap > 0 ? "higher" : "lower"}${gapIsAccrual
-                    ? ", because the manager totals an income-inclusive basis: the accrued income that document's rows carry in a column of their own is folded into that figure and not into this one. Reproduced from that same accrued column to the rupee, not assumed."
-                    : ". What separates the two bases is not derivable from that document here, so this page does not name it — the extraction reconciliation is where that difference is classified."}`
-                : "",
-              source.docLoading ? "The manager's own printed total is still being read from the archive." : "",
-              source.docUnreadable ? "The archive answered with the manifest but not with that document, so the manager's own printed total is not shown here — the figure is the book's sum of the rows above either way." : "",
-              !source.docLoading && !source.docUnreadable && !!source.docKey && printedTotal === null
-                ? "That document prints no portfolio total of its own, so there is nothing on it to check this sum against but the rows, which are the rows above." : "",
-              source.docKey === null ? "The archive did not respond, so the manager's own printed total could not be read." : "",
-              source.docKey === "" ? "No holdings document for this account is in the archive manifest." : "",
+              ...printedTotalNotes(source, stmtMV, full),
               (zeroValue.length > 0 || zeroPnlCash.length > 0 || zeroPnlHeld.length > 0)
                 ? `Every ₹0 above is a measured figure and keeps its zero: ${[
                     zeroPnlCash.length > 0 ? `${zeroPnlCash.length} ${zeroPnlCash.length === 1 ? "row carries" : "rows carry"} no unrealised P&L because a cash balance has none — the arithmetic, not a missing number` : "",
@@ -966,6 +1031,487 @@ export function MandateHoldings() {
       <CapitalIn account={account} />
 
       <ManagerTrades account={account} />
+    </div>
+  );
+}
+
+/**
+ * ── ONE CLUBBED FUND, EVERY CLASS AND EVERY MEMBER WHO HOLDS IT ─────────────
+ *
+ * The Portfolio Monitor draws a fund whose units sit under several classes as
+ * one row (Sanshi's A2 and E; 3P's B1, B2 and B3). `/stock/:securityKey` serves
+ * ONE class, so that row's name had no page to open and each class line under
+ * it opened its own. This is the row's page: every class, in every member's
+ * folio, on one screen. Keyed by the fund's name as `splitFundClass` reads it —
+ * the same key the row is clubbed on.
+ */
+export function FundHoldings() {
+  const { fund = "" } = useParams();
+  const { portfolio } = usePortfolio();
+  // THE NAME AS THE ROW PRINTS IT, matched without regard to case: a label
+  // may set "CAT-III" as "Cat-III", and it is the same fund.
+  const name = useMemo(() => {
+    const want = fund.trim().toLowerCase();
+    return (portfolio?.positions ?? []).map((p) => splitFundClass(p.security)?.fund)
+      .find((f) => !!f && f.toLowerCase() === want) ?? null;
+  }, [portfolio, fund]);
+  const accounts = useMemo<Account[]>(() => {
+    if (!portfolio || !name) return [];
+    const ids = new Set(portfolio.positions.filter((p) => splitFundClass(p.security)?.fund === name).map((p) => p.accountId));
+    return portfolio.accounts.filter((a) => ids.has(a.accountId));
+  }, [portfolio, name]);
+  if (!portfolio) return null;
+  if (!name || !accounts.length) {
+    return (
+      <div>
+        <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: "Fund not found" }]} />
+        <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-slate-100">Fund not found</h1>
+        <Card>
+          <AbsentSection what={`No fund "${fund}" is held in the members in view`}
+            needs="This address names a fund by the name its statements print before the unit class. No holding in the current book, under the members chosen at the top of the page, carries that name." />
+        </Card>
+      </div>
+    );
+  }
+  const providers = [...new Set(accounts.map((a) => a.provider))];
+  return <HeldByMany kind="fund" name={name} provider={providers.length === 1 ? providers[0] : null} accounts={accounts} fund={name} />;
+}
+
+/** The two tables of a page run for several accounts — whose each account is, and what is in them. */
+const HOLDER_COLS = ["entity", "account", "asOf", "holdings", "invested", "mv", "share", "pnl", "realised", "ret"] as const;
+const GROUP_COLS = [...MANDATE_COLS, "heldBy"] as const;
+
+/** "A", "A and B", "A, B and C". */
+const andList = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+
+/**
+ * ── ONE STRATEGY OR ONE FUND, HELD BY SEVERAL OF THE FAMILY'S ACCOUNTS ──────
+ *
+ *   *"Inside the main VEC drill down page show the different entities who hold
+ *    them and at what value at what price and all of that information needs to
+ *    be in the same drill down page. There will be no need to keep separate
+ *    drill down pages for separate entities."*
+ *
+ * Three things, top to bottom:
+ *
+ *  - WHO HOLDS IT — one line per account, each struck over its own rows and
+ *    nothing else (two members' accounts are two investments, so nothing is
+ *    deduped), and a total that is the column sums; the return beneath it is
+ *    FIFO over every account at once, never an average of the lines.
+ *  - WHAT IS IN IT — every holding of every account, the member's name on the
+ *    line, each one's own quantity, cost and price. One company in two
+ *    accounts is two lines, kept next to each other.
+ *  - EACH ACCOUNT'S OWN RECORD — what the family put in, and on a mandate what
+ *    the manager traded, card by card, each naming whose account it is.
+ *
+ * The tiles are the strategy's — the same figures as the Portfolio Monitor row
+ * that links here.
+ */
+function HeldByMany({ kind, name, provider, accounts, fund }: {
+  kind: "mandate" | "fund"; name: string; provider: string | null; accounts: Account[]; fund?: string;
+}) {
+  const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, scope } = usePortfolio();
+  const [q, setQ] = useState("");
+  const holdersView = useTableView("strategy-holders", HOLDER_COLS);
+  const holdingsView = useTableView("strategy-holdings", GROUP_COLS, { reviewKind: "holding" });
+  const sources = useHoldingsSources(kind === "mandate" ? accounts : []);
+  const exposure = useStockExposure(consolidated, false);
+  const companySectors = useMemo(
+    () => companySectorIndex(consolidated.filter(isCompanyShare), exposure),
+    [consolidated, exposure],
+  );
+  const sectorOf = (r: Position) =>
+    isCompanyShare(r) ? companySectors.get(r.securityKey)?.sector || UNCLASSIFIED_SECTOR : r.sector;
+
+  const idKey = accounts.map((a) => a.accountId).join(" ");
+  const inSet = useMemo(() => {
+    const ids = new Set(idKey.split(" "));
+    return (p: Position) => ids.has(p.accountId) && (!fund || splitFundClass(p.security)?.fund === fund);
+  }, [idKey, fund]);
+  // PER ACCOUNT, NEVER DEDUPED — the single account's page's rule, for the
+  // same reason: each line answers what ITS statement carries.
+  const rows = useMemo(() => (portfolio ? portfolio.positions.filter(inSet) : []), [portfolio, inSet]);
+  const stmtRows = useMemo(() => (statementPortfolio ? statementPortfolio.positions.filter(inSet) : null), [statementPortfolio, inSet]);
+  const fifoOpts = useMemo(() => ({ accounts: portfolio?.accounts ?? [], universe: rows }), [portfolio, rows]);
+  const fifo = useMemo(() => fifoTotals(rows, fifoOpts), [rows, fifoOpts]);
+  const lines = useMemo(() => accounts.map((a) => {
+    const rs = rows.filter((p) => p.accountId === a.accountId);
+    const f = fifoTotals(rs, fifoOpts);
+    return {
+      account: a,
+      owner: a.ownerId ? ownerDisplayName(a.ownerId) : a.owner,
+      rows: rs,
+      mv: sum(rs.map((p) => p.marketValue)),
+      stmtMV: stmtRows ? sum(stmtRows.filter((p) => p.accountId === a.accountId).map((p) => p.marketValue)) : null,
+      pnl: sumOrNull(rs.map((p) => p.unrealizedPnL)),
+      fifo: f,
+    };
+  }).sort((x, y) => y.mv - x.mv), [accounts, rows, stmtRows, fifoOpts]);
+
+  if (!portfolio) return null;
+
+  const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  const full = (n: number | null | undefined) => fmtFromBase(n, { compact: false });
+  const price = (n: number | null | undefined) =>
+    (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : null);
+  const lineOf = new Map(lines.map((l) => [l.account.accountId, l]));
+  const owners = [...new Set(lines.map((l) => l.owner))];
+  const n = lines.length;
+
+  const mv = sum(rows.map((r) => r.marketValue));
+  const cost = sumOrNull(rows.map((r) => r.costBasis));
+  const pnl = sumOrNull(rows.map((r) => r.unrealizedPnL));
+  const noCost = rows.filter((r) => r.costBasis === null).length;
+  const ret = fifo.returnPct;
+  const stmtMV = stmtRows ? sum(stmtRows.map((p) => p.marketValue)) : null;
+  // THE CAPITAL OF EVERY ACCOUNT OR NONE: a strategy whose one account
+  // publishes no capital record has no "paid in" to name for the whole.
+  const capitals = accounts.map((a) => a.capital);
+  const capital = capitals.every((c) => !!c)
+    ? {
+      contributed: sum(capitals.map((c) => c!.contributed)),
+      withdrawn: sum(capitals.map((c) => c!.withdrawn)),
+      from: capitals.map((c) => c!.from).filter(Boolean).sort()[0] ?? null,
+    }
+    : null;
+  const reconcile = investedReconciliation({
+    costHeld: cost, uncostedRows: noCost, capital,
+    realised: fifo.realised ?? null, wholeMandate: fifo.wholeMandates.length > 0,
+  });
+  const ids = new Set(accounts.map((a) => a.accountId));
+  const firstContribution = CAPITAL_RECORD
+    .filter((m) => ids.has(m.accountId) && m.direction === "in")
+    .map((m) => m.date).sort()[0] ?? null;
+  const firstOpened = accounts.map((a) => a.inceptionDate).filter((d): d is string => !!d).sort()[0] ?? null;
+  const fundedNote = firstContribution ? `funded from ${fmtDate(firstContribution)}`
+    : firstOpened ? `account opened ${fmtDate(firstOpened)}` : null;
+  const fundedWhy = firstContribution
+    ? `The earliest payment any of the ${n} accounts' statements date. Each account's own payments are listed in full below.`
+    : firstOpened
+      ? `The earliest inception date the ${n} accounts' statements print. They do not date the individual payments, so this is when the first account opened rather than when money arrived in it.`
+      : `No statement in this drop dates what was paid into these accounts, or when they opened.`;
+
+  const dates = [...new Set(accounts.map((a) => a.asOf))].sort();
+  const liveN = rows.filter((r) => r.live).length;
+  const datesText = dates.length === 1 ? fmtDate(dates[0]) : `${fmtDate(dates[0])} – ${fmtDate(dates[dates.length - 1])}`;
+  const datesTip = lines.map((l) => `${l.owner} (a/c ${l.account.accountNo}) as of ${fmtDate(l.account.asOf)}`).join("; ");
+  const shares = rows.filter((r) => r.assetClass === "Equity");
+  const sleeve = rows.filter((r) => readerClassOf(r) === "Cash");
+  const other = rows.length - shares.length - sleeve.length;
+  const classes = fund ? [...new Set(rows.map((r) => splitFundClass(r.security)?.cls).filter((c): c is string => !!c))].sort() : [];
+  const whole = kind === "mandate" ? "whole mandate" : "whole fund";
+
+  // ONE COMPANY'S LINES SIT TOGETHER: largest holding first, and within it the
+  // largest account's line first. A reader's own ranking replaces it.
+  const secMV = new Map<string, number>();
+  for (const r of rows) secMV.set(r.securityKey, (secMV.get(r.securityKey) ?? 0) + r.marketValue);
+  const term = q.trim().toLowerCase();
+  const shown = term
+    ? rows.filter((r) => r.security.toLowerCase().includes(term) || (r.isin ?? "").toLowerCase().includes(term)
+      || (lineOf.get(r.accountId)?.owner ?? "").toLowerCase().includes(term))
+    : rows;
+  const sorted = sortRows([...shown].sort((a, b) => ((secMV.get(b.securityKey) ?? 0) - (secMV.get(a.securityKey) ?? 0))
+    || a.securityKey.localeCompare(b.securityKey) || b.marketValue - a.marketValue), holdingsView.sort, withReviewAccessors<Position>({
+    security: (r) => r.security,
+    sector: (r) => (readerClassOf(r) === "Cash" ? null : sectorOf(r)),
+    qty: (r) => r.quantity,
+    avgCost: (r) => r.avgCost,
+    invested: (r) => r.costBasis,
+    cmp: (r) => r.currentPrice,
+    mv: (r) => r.marketValue,
+    weight: (r) => (mv > 0 ? r.marketValue : null),
+    pnl: (r) => r.unrealizedPnL,
+    heldBy: (r) => lineOf.get(r.accountId)?.owner ?? null,
+  }, (r) => ({ positions: [r] }), scope.owners !== null));
+  const hidden = rows.length - shown.length;
+  const holderRows = sortRows(lines, holdersView.sort, {
+    entity: (l) => l.owner,
+    account: (l) => l.account.accountNo,
+    asOf: (l) => l.account.asOf,
+    holdings: (l) => l.rows.length,
+    invested: (l) => l.fifo.invested,
+    mv: (l) => l.mv,
+    share: (l) => (mv > 0 ? l.mv : null),
+    pnl: (l) => l.pnl,
+    realised: (l) => l.fifo.realised,
+    ret: (l) => l.fifo.returnPct,
+  });
+  const investedSum = sumOrNull(lines.map((l) => l.fifo.invested));
+  const pnlSum = sumOrNull(lines.map((l) => l.pnl));
+  const realisedSum = sumOrNull(lines.map((l) => l.fifo.realised));
+  const defects = kind === "mandate" ? lines.filter((l) => {
+    const d = sources.get(l.account.accountId)?.derivedTotal ?? null;
+    return d !== null && l.stmtMV !== null && Math.abs(d - l.stmtMV) >= 1;
+  }) : [];
+
+  return (
+    <div data-strategy-page={kind} data-strategy-accounts={lines.map((l) => l.account.accountId).join(" ")}>
+      <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: name }]} />
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{name}</h1>
+          <div className="mt-1 text-[13px] text-slate-400">
+            {kind === "mandate"
+              ? <>Run by <span className="font-medium text-slate-300">{provider}</span> for{" "}</>
+              : <>Held by{" "}</>}
+            <span className="font-medium text-slate-300">{andList(owners)}</span> · accounts {lines.map((l) => l.account.accountNo).join(", ")}
+            {kind === "fund" && provider && <span className="text-slate-500"> · {provider}</span>}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {kind === "mandate"
+              ? <Pill tone="core"><span title={ROUTE_NOTE.mandate}>{ROUTE_LABEL.mandate}</span></Pill>
+              : <Pill>{classes.length} unit class{classes.length === 1 ? "" : "es"}{classes.length ? ` · ${classes.join(", ")}` : ""}</Pill>}
+            <Pill tone="info">
+              <span data-mandate-asof={dates.join(" ")} data-mandate-basis={liveN ? "live" : "statement"}
+                title={liveN
+                  ? `LIVE basis: ${liveN} of ${rows.length} holdings are marked to a live quote now and the rest keep their statement's mark. Each account is dated by its own statement — ${datesTip}.`
+                  : `Every figure on this page is as each statement printed it — ${datesTip}${quotesStatus === "loading" ? " — live prices are still being fetched" : ""}.`}>
+                {liveN ? `LIVE · ${liveN} of ${rows.length} marked now · statements ${datesText}` : `${dates.length === 1 ? "STATEMENT" : "STATEMENTS"} · as of ${datesText}`}
+              </span>
+            </Pill>
+            <Pill>{n} accounts</Pill>
+          </div>
+        </div>
+        <div className="text-right" data-mandate-headline={String(mv)}>
+          <div className="font-display text-2xl font-bold tabular text-slate-100">{money(mv)}</div>
+          <div className="mt-0.5 text-[10.5px] text-slate-500">
+            {rows.length} holdings {kind === "mandate" ? "the manager runs" : "of the fund"} across {n} accounts
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <Kpi label="Market value" value={money(mv)}
+          sub={kind === "mandate"
+            ? `${shares.length} company shares · ${sleeve.length} cash ${sleeve.length === 1 ? "line" : "lines"}${other ? ` · ${other} other` : ""}`
+            : `${rows.length} ${rows.length === 1 ? "line" : "lines"} · ${n} accounts`}
+          icon={<Wallet className="h-4 w-4" />} />
+        <Kpi label="Invested"
+          value={cost === null ? <AbsentValue /> : money(cost)}
+          sub={<span>
+            {cost === null
+              ? <span className="text-slate-500">no row on these statements reports a cost</span>
+              : noCost
+                ? <span className="text-slate-500">cost in · {noCost} of {rows.length} rows report none and are skipped</span>
+                : <span>cost of holdings</span>}
+            <span className="text-slate-500" title={fundedWhy}>{" · "}{fundedNote ?? "no statement dates what was paid in"}</span>
+            {reconcile && (
+              <span className="block text-slate-500" data-mandate-invested-reconcile
+                data-paid-in={reconcile.paidIn} data-taken-out={reconcile.takenOut} data-realised={reconcile.realised}
+                title={`What the ${n} accounts hold now cost ${money(reconcile.costHeld)}: the ${money(reconcile.paidIn)} paid in, less the ${money(reconcile.takenOut)} taken out, plus the ${money(reconcile.realised, true)} realised and kept invested.`}>
+                = {money(reconcile.paidIn)} paid in{reconcile.takenOut ? <> − {money(reconcile.takenOut)} out</> : null} {reconcile.realised < 0 ? "−" : "+"} {money(Math.abs(reconcile.realised))} realised
+              </span>
+            )}
+          </span>}
+          icon={<Coins className="h-4 w-4" />} />
+        <Kpi label="Unrealised P&L"
+          value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{money(pnl, true)}</span>}
+          sub={pnl === null ? <span className="text-slate-500">needs a cost these statements do not print</span> : "on the holdings held now"}
+          icon={<TrendingUp className="h-4 w-4" />} />
+        <Kpi label="Return · FIFO"
+          value={ret === null ? <AbsentValue /> : <span className={changeColor(ret)} data-mandate-fifo-return={ret}>{fmtPct(ret, { sign: true })}</span>}
+          sub={ret === null
+            ? <span className="text-slate-500">no cost or capital on these statements to measure against</span>
+            : <span title={`${fifoBasisNote(fifo, (v) => money(v))} Struck over all ${n} accounts at once — never an average of their own returns.`}>
+                {/* NOTHING REALISED ON RECORD IS NOT A REALISED ₹0. */}
+                {fifo.realised === null ? <>no sale on record</> : <>realised {money(fifo.realised, true)}</>}
+                {fifo.wholeMandates.length === n && capital?.from
+                  ? <> · on {money(capital.contributed)} paid in since {fmtDate(capital.from)}</>
+                  : <> · on {money(fifo.deployed)} deployed</>}
+              </span>}
+          icon={<Percent className="h-4 w-4" />} />
+        <Kpi label="Holdings" value={fmtNum(rows.length)}
+          sub={`across ${n} accounts · ${kind === "mandate" ? MANDATE_BUCKET : "one fund"}`}
+          icon={<Layers className="h-4 w-4" />} />
+      </div>
+
+      <Card className="mt-5" pad={false} title="Who holds it"
+        subtitle="One line per family account, each struck over its own statement. The Total is the sum of the lines; its return is FIFO over every account at once.">
+        <div className="overflow-x-auto">
+          <table className="min-w-full whitespace-nowrap text-sm" data-strategy-holders>
+            <thead className="border-b border-ink-700">
+              <Tr view={holdersView}>
+                <SortHeader col="entity" view={holdersView} align="left">Entity</SortHeader>
+                <SortHeader col="account" view={holdersView} align="left">Account</SortHeader>
+                <SortHeader col="asOf" view={holdersView} align="left">As of</SortHeader>
+                <SortHeader col="holdings" view={holdersView}>Holdings</SortHeader>
+                <SortHeader col="invested" view={holdersView}
+                  title="What FIFO divides by: a whole mandate's capital paid in, otherwise the cost of what is held.">Invested</SortHeader>
+                <SortHeader col="mv" view={holdersView}>Market value</SortHeader>
+                <SortHeader col="share" view={holdersView}>Share</SortHeader>
+                <SortHeader col="pnl" view={holdersView}>Unreal. P&L</SortHeader>
+                <SortHeader col="realised" view={holdersView}>Realised</SortHeader>
+                <SortHeader col="ret" view={holdersView}>Return · FIFO</SortHeader>
+              </Tr>
+            </thead>
+            <tbody className="divide-y divide-ink-700/60">
+              {holderRows.map((l) => (
+                <Tr view={holdersView} key={l.account.accountId} className="hover:bg-ink-700/40"
+                  data-holder-line={l.account.accountId} data-holder-owner={l.owner} data-holder-mv={l.mv}
+                  data-holder-holdings={l.rows.length} data-holder-return={l.fifo.returnPct ?? undefined}>
+                  <td className="px-4 py-2.5 font-medium text-slate-100">{l.owner}</td>
+                  <td className="px-4 py-2.5 mono text-slate-400">{l.account.accountNo}</td>
+                  <td className="px-4 py-2.5 mono text-slate-400">{fmtDate(l.account.asOf)}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(l.rows.length)}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-400">
+                    {l.fifo.invested === null ? <AbsentCell reason={`no statement for account ${l.account.accountNo} reports a cost or the capital paid in`} /> : money(l.fifo.invested)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-200">{money(l.mv)}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-400">
+                    {mv > 0 ? fmtPct((l.mv / mv) * 100, { decimals: 1 }) : <AbsentCell reason="these accounts report no market value, so a share of it cannot be struck" />}
+                  </td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(l.pnl)}`}>
+                    {l.pnl === null ? <AbsentCell reason={`needs a cost account ${l.account.accountNo}'s statement does not print`} /> : money(l.pnl, true)}
+                  </td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(l.fifo.realised)}`}>
+                    {l.fifo.realised === null ? <AbsentCell reason={`no capital gain statement or dated unit record covers account ${l.account.accountNo}, so what its sales realised is not reported`} /> : money(l.fifo.realised, true)}
+                  </td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(l.fifo.returnPct)}`}>
+                    {l.fifo.returnPct === null ? <AbsentCell reason={`no cost or capital on account ${l.account.accountNo}'s statement to measure against`} />
+                      : <span title={fifoBasisNote(l.fifo, (v) => money(v))}>{fmtPct(l.fifo.returnPct, { sign: true })}</span>}
+                  </td>
+                </Tr>
+              ))}
+            </tbody>
+            <tfoot className="border-t-2 border-ink-600 font-semibold">
+              <TrFoot view={holdersView} className="px-4 py-2.5 text-left text-slate-200" data-holder-total
+                label={<>Total · {n} accounts</>}
+                cells={{
+                  holdings: <td key="holdings" className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(rows.length)}</td>,
+                  invested: <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300">{investedSum === null ? <AbsentCell reason="an account on this page reports neither a cost nor its capital paid in, so the column cannot be summed" /> : money(investedSum)}</td>,
+                  mv: <td key="mv" className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>,
+                  share: <td key="share" className="px-4 py-2.5 text-right mono text-slate-300">{mv > 0 ? fmtPct(100, { decimals: 1 }) : <AbsentValue />}</td>,
+                  pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnlSum)}`}>{pnlSum === null ? <AbsentCell reason="an account on this page prints no cost, so its gain cannot be added in" /> : money(pnlSum, true)}</td>,
+                  realised: <td key="realised" className={`px-4 py-2.5 text-right mono ${changeColor(realisedSum)}`}>{realisedSum === null ? <AbsentCell reason="no account on this page reports what its sales realised" /> : money(realisedSum, true)}</td>,
+                  ret: <td key="ret" className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}>{ret === null ? <AbsentValue /> : <span title="FIFO over every account at once — (value + withdrawn − paid in) ÷ paid in for the whole — never an average of the lines.">{fmtPct(ret, { sign: true })}</span>}</td>,
+                }} />
+            </tfoot>
+          </table>
+        </div>
+      </Card>
+
+      <Card className="mt-5" pad={false}
+        title={kind === "mandate" ? "What the manager holds" : "What the family holds"}
+        subtitle={`Every holding of all ${n} accounts, each on its own member's line with its own quantity, cost and price. Weight is within this ${kind === "mandate" ? "mandate" : "fund"}, not within the book.`}
+        right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name, ISIN or member…" className="w-56"
+          suggestions={[...new Set(rows.map((r) => r.security))]} />}>
+        <div className="overflow-x-auto">
+          <table className="min-w-full whitespace-nowrap text-sm" data-strategy-holdings>
+            <thead className="border-b border-ink-700">
+              <Tr view={holdingsView}>
+                <SortHeader col="security" view={holdingsView} align="left">Security</SortHeader>
+                <SortHeader col="sector" view={holdingsView} align="left">Sector</SortHeader>
+                <SortHeader col="qty" view={holdingsView}>Qty</SortHeader>
+                <SortHeader col="avgCost" view={holdingsView}>Avg cost</SortHeader>
+                <SortHeader col="invested" view={holdingsView}>Invested</SortHeader>
+                <SortHeader col="cmp" view={holdingsView}>CMP</SortHeader>
+                <SortHeader col="mv" view={holdingsView}>Market value</SortHeader>
+                <SortHeader col="weight" view={holdingsView}>Weight</SortHeader>
+                <SortHeader col="pnl" view={holdingsView}>Unreal. P&L</SortHeader>
+                <SortHeader col="heldBy" view={holdingsView} align="left">Held by</SortHeader>
+              </Tr>
+            </thead>
+            <tbody className="divide-y divide-ink-700/60">
+              {sorted.map((r) => {
+                const isCash = readerClassOf(r) === "Cash";
+                const isBalance = r.assetClass === "Cash";
+                const l = lineOf.get(r.accountId);
+                return (
+                  <Tr view={holdingsView} reviewScope={{ positions: [r] }} key={`${r.accountId}-${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40"
+                    data-strategy-holding={r.securityKey} data-strategy-holding-account={r.accountId}>
+                    <td className="px-4 py-2.5">
+                      <Link to={stockHref(r.securityKey)} className="font-medium text-slate-100 hover:text-champagne-400">
+                        {r.security}
+                      </Link>
+                      {isCash && kind === "mandate" && (
+                        <span className="ml-2 text-[10.5px] text-slate-500"
+                          title={isBalance
+                            ? "The manager's cash sleeve. It is part of what this account is worth, which is why the total below ties to the statements."
+                            : "The manager's cash sleeve, parked in a liquid or arbitrage fund — which the family counts as cash and nothing else."}>
+                          cash sleeve
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-[12px] text-slate-400">
+                      {isCash
+                        ? <span className="text-slate-500" title={isBalance
+                            ? "A balance, not a share in a company — no sector applies."
+                            : "A cash-equivalent fund, not a share in a company — no sector applies."}>—</span>
+                        : !isCompanyShare(r)
+                        ? <AbsentCell reason="units of a fund, not a share in a company — the fund spreads them across sectors, so no one sector applies" />
+                        : <span data-mandate-sector={sectorOf(r)} data-mandate-sector-key={r.securityKey}>{sectorOf(r)}</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-300">{r.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(r.quantity)}</td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-400">
+                      {price(r.avgCost) ?? <AbsentCell reason="this statement prints no per-unit cost for the holding" />}
+                    </td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-400">
+                      {r.costBasis === null ? <AbsentCell reason="this statement reports no cost for the holding" /> : money(r.costBasis)}
+                    </td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-400"
+                      title={r.live || !l ? undefined : `${l.owner}'s statement mark of ${fmtDate(l.account.asOf)}`}>
+                      {price(r.currentPrice) ?? <AbsentCell reason="the book carries this holding's value as a total, with no price per unit" />}
+                    </td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-400">
+                      {mv > 0 ? fmtPct((r.marketValue / mv) * 100, { decimals: 1 })
+                        : <AbsentCell reason="these accounts report no market value, so a share of it cannot be struck" />}
+                    </td>
+                    <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>
+                      {r.unrealizedPnL === null ? <AbsentCell reason="needs a cost this statement does not print" /> : money(r.unrealizedPnL, true)}
+                    </td>
+                    <td className="px-4 py-2.5 text-[12px] text-slate-300" data-strategy-held-by={l?.owner}>
+                      {l?.owner ?? <AbsentCell reason="this account is not in the registry" />}{" "}
+                      <span className="ml-1 text-[10.5px] text-slate-500">a/c {l?.account.accountNo}</span>
+                    </td>
+                  </Tr>
+                );
+              })}
+            </tbody>
+            <tfoot className="border-t-2 border-ink-600 font-semibold">
+              <TrFoot view={holdingsView} className="px-4 py-2.5 text-left text-slate-200"
+                label={<>Total{hidden ? ` (${whole})` : ""}</>}
+                cells={{
+                  invested: <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300">{cost === null ? <AbsentValue /> : money(cost)}</td>,
+                  mv: <td key="mv" className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>,
+                  weight: <td key="weight" className="px-4 py-2.5 text-right mono text-slate-300">{mv > 0 ? fmtPct(100, { decimals: 1 }) : <AbsentValue />}</td>,
+                  pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{pnl === null ? <AbsentValue /> : money(pnl, true)}</td>,
+                  heldBy: <td key="heldBy" className="px-4 py-2.5 text-[12px] text-slate-300">{n} accounts</td>,
+                }} />
+            </tfoot>
+          </table>
+        </div>
+        <div className="border-t border-ink-700/60 px-4 py-2 text-[11px] text-slate-500">
+          {hidden > 0 && (
+            <span title={`The Total is the ${whole} either way, because it is the figure that must tie to the statements.`}>
+              Showing {shown.length} of {rows.length} rows · {hidden} hidden by the filter{stmtMV !== null ? " · " : ""}
+            </span>
+          )}
+          {stmtMV !== null && (
+            <span title={[
+              `This is the sum of every row above${basis === "LIVE" ? " at its statement mark" : ""}, on the basis this book derives — each account's rows add to its own statement's figure, and those add to this.`,
+              ...lines.flatMap((l) => [
+                `${l.owner}, account ${l.account.accountNo}: ${full(l.stmtMV)}.`,
+                ...(kind === "mandate" ? printedTotalNotes(sources.get(l.account.accountId) ?? NO_SOURCE, l.stmtMV, full, `account ${l.account.accountNo}`) : []),
+              ]),
+              basis === "LIVE" && Math.abs(mv - stmtMV) >= 1
+                ? `The Total shown is ${money(mv)} because live prices are applied; the statement figures are unchanged.` : "",
+            ].filter(Boolean).join(" ")}>
+              Statement total {money(stmtMV)}
+              {basis === "LIVE" && Math.abs(mv - stmtMV) >= 1 && <> · Total at live prices {money(mv)}</>}
+            </span>
+          )}
+          {defects.map((l) => (
+            <div key={l.account.accountId} className="mt-1 text-amber-400/90">
+              Account {l.account.accountNo}&rsquo;s document derives {full(sources.get(l.account.accountId)?.derivedTotal)}, which its rows here
+              ({full(l.stmtMV)}) do not match — that difference is a defect rather than a basis.
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {lines.map((l) => <CapitalIn key={l.account.accountId} account={l.account} owner={l.owner} />)}
+      {kind === "mandate" && lines.map((l) => <ManagerTrades key={l.account.accountId} account={l.account} owner={l.owner} />)}
     </div>
   );
 }
@@ -1015,7 +1561,7 @@ export function MandateHoldings() {
  * there would read as a feed that failed, which is this book's founding rule —
  * so it states which of the two it is and what would fill it.
  */
-function CapitalIn({ account }: { account: Account }) {
+function CapitalIn({ account, owner }: { account: Account; owner?: string }) {
   const capitalView = useTableView("mandate-capital", CAPITAL_COLS);
   const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
   const money = (n: number | null | undefined) => fmtFromBase(n, { compact: true });
@@ -1028,7 +1574,8 @@ function CapitalIn({ account }: { account: Account }) {
     })[0] ?? null;
   }, [account, portfolio?.positions]);
 
-  const title = "What the family put in";
+  // ON A PAGE OF SEVERAL ACCOUNTS each card names whose money it is.
+  const title = owner ? `What the family put in · ${owner} · a/c ${account.accountNo}` : "What the family put in";
   // NEWEST FIRST IS THE DEFAULT AND A READER'S RANKING REPLACES IT — the order
   // `capitalRollup` returns, which is the record's own rather than a ranking
   // this card chose. A movement whose statement prints only a running balance
@@ -1159,7 +1706,8 @@ function CapitalIn({ account }: { account: Account }) {
             ? <> — appreciation <span className={`mono ${changeColor(group.appreciation)}`}>{fmtFromBase(group.appreciation, { compact: true, sign: true })}</span>
                 {group.realised != null && group.unrealised != null && <>{" "}(<span className="mono">{fmtFromBase(group.realised, { compact: true, sign: true })}</span> realised,{" "}
                   <span className="mono">{fmtFromBase(group.unrealised, { compact: true, sign: true })}</span> unrealised)</>}.</>
-            : <> — no appreciation or return is struck.</>}
+            : <> — <span className="cursor-help underline decoration-dotted decoration-slate-500/40 underline-offset-[3px]" data-capital-no-return
+                title={`Why: ${group.appreciationReason ?? "this account's reported capital does not support one"}`}>no appreciation or return is struck</span>.</>}
         </div>
         {group.appreciation != null
           ? (() => {
@@ -1178,10 +1726,10 @@ function CapitalIn({ account }: { account: Account }) {
                 </div>
               );
             })()
-          : (() => {
-              const why = group.appreciationReason ?? "this account's reported capital does not support one";
-              return <div className="text-slate-500" title={why}>Why: {firstClause(why)}.</div>;
-            })()}
+          // THE REASON IS THE HOVER ON THE WORDS ABOVE, which already say no
+          // return is struck — a second line spelling it out was the run-on
+          // note the family asked to be rid of (Stage 10cp).
+          : null}
       </div>
     </Card>
   );
@@ -1212,7 +1760,7 @@ function CapitalIn({ account }: { account: Account }) {
  * that was never broken. The words for the fund case are recorded in that note
  * rather than left standing here as code nothing runs.
  */
-function ManagerTrades({ account }: { account: Account }) {
+function ManagerTrades({ account, owner }: { account: Account; owner?: string }) {
   const tradeView = useTableView("mandate-trades", TRADE_COLS);
   const { fmtFromBase } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -1250,7 +1798,7 @@ function ManagerTrades({ account }: { account: Account }) {
   });
 
   return (
-    <Card title="What the manager traded"
+    <Card className={owner ? "mt-5" : undefined} title={owner ? `What the manager traded · ${owner}` : "What the manager traded"}
       subtitle={`${account.provider} · account ${account.accountNo}`}>
       {status === "loading" ? (
         <p className="text-sm text-slate-500">Loading the manager&rsquo;s dated trades…</p>
