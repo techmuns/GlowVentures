@@ -10,6 +10,13 @@ removal notices and contain no workbook data. Parser failures and incomplete
 reports remain visible in the extraction report; this delivery is not a claim
 that every account's current return can be measured.
 
+On 21 October the client re-sent `Svan - Bharat.zip`, `Svan _ Ajay.zip`,
+`Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf` and `Svan - Bharat.eml`. The
+three files are byte-identical to the copies here. The email is Nuvama FA's
+8 October "Monthly Performance Report … BHARAT JAISINGHANI - 30/09/2026",
+forwarded by Bharat on 9 October. Its one attachment is that same Z660 PDF, so it
+is recorded here and not added (Stage 10ew).
+
 **These files never reach the browser.** `source/` sits at the repo root, outside
 `public/`, so nothing here is copied into the build or served by the site. Only
 the derived, reviewed extracts under `public/audit/` ship, and those sit behind

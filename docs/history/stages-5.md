@@ -4750,3 +4750,13 @@ cells just like the capital call cells."*
 - `enteredProfiles.test.ts` drives the Function on an in-memory KV and the
   precedence. Checked in the browser with the store mocked: save, remove, the
   four-line Waterwala row. `check:pages ONLY=private-market`: no new finding.
+
+### Stage 10ew — THE SEBI INVESTOR REPORT'S SINCE-INCEPTION TWRR AND ITS LOWER-CASE WINDOW
+
+*"we need to integrate these files into the dashboard data … Make sure no information is missed"* — the family, 21 Oct 2026, re-sending `Svan - Bharat.zip`, `Svan _ Ajay.zip`, the Z660 report and `Svan - Bharat.eml`.
+
+- **Nothing new by bytes.** The three files are already in `source/october-2026-c/`, and the email's one attachment is the same Z660 PDF. Its provenance (Nuvama FA, 8 Oct, forwarded by Bharat on 9 Oct) is recorded in `source/README.md`. All 15 documents behind them read `ok`.
+- **The since-inception TWRR reached the book nowhere.** `pmsInvestorReport.mjs` mapped figures by their position on the flattened line, and blank 3Y/5Y/10Y cells vanish there. So `Returns of Client Portfolio 10.72 3.31` filed 3.31 as a 3-year return, on all nine investor reports, for accounts under two years old. `build-book` carries no 3-year field, so the figure was dropped. Each figure is now placed under the heading whose right edge it shares. Missing geometry raises `return-columns-not-read` and places nothing. `ReturnSeries` and `build-book` now carry `y3`/`y5`/`y10`.
+- **`From 01/09/2026 to 30/09/2026` read as no window.** The period pattern required "To". Bharat's SVAN 8710090 September report and Carnelian's 7 Oct report print "to", so both bridges were undated and dropped. 8710090 now has its September bridge on `/performance`, and its printed 31 Aug opening (₹11.12 Cr) joins the NAV series. Carnelian's 7 Oct bridge is WITHHELD, ₹2,85,231.78 short of its closing, the gap Stage 10eu names.
+- **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
+- `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.

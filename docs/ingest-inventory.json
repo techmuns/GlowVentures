@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-15T11:45:55.489Z",
+  "generatedAt": "2026-10-21T02:05:39.013Z",
   "sourceDir": "source",
   "counts": {
-    "files": 461,
-    "pdfs": 451,
+    "files": 460,
+    "pdfs": 450,
     "nonPdf": 10,
-    "classified": 395,
-    "unclassified": 66,
+    "classified": 393,
+    "unclassified": 67,
     "encrypted": 33,
-    "fromArchives": 400,
+    "fromArchives": 399,
     "archivesExpanded": 50,
-    "pages": 1970
+    "pages": 1965
   },
   "reportTypes": [
     "holdings",
@@ -38,72 +38,12 @@
     "income-expense",
     "portfolio-snap",
     "bank-statement",
+    "performance-by-security",
+    "trial-balance",
+    "open-lots",
     "unknown"
   ],
   "archives": [
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
     {
       "archive": "source/ARISTOS - AJAY.zip",
       "extractedTo": "source/_extracted/ARISTOS - AJAY",
@@ -388,6 +328,69 @@
       "archive": "source/VEC - ANKITA JAISINGHANI .zip",
       "extractedTo": "source/_extracted/VEC - ANKITA JAISINGHANI ",
       "files": 11,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
+      "files": 1,
       "skipped": 0,
       "failed": 0
     }
@@ -2157,7 +2160,7 @@
       "fromArchive": true,
       "encrypted": false,
       "readError": null,
-      "provider": "Motilal Oswal Mutual Fund",
+      "provider": "Motilal Oswal Financial Services (demat)",
       "ownerName": "AJAY JAISINGHANI",
       "accountNo": null,
       "asOfDate": null,
@@ -5933,12 +5936,14 @@
       "ownerName": "AJAY T JAISINGHANI",
       "accountNo": "3517383",
       "asOfDate": "2026-10-07",
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "performance-by-security",
+      "sections": [
+        "performance-by-security"
+      ],
       "familyGroup": null,
       "strategy": "Carnelian Bespoke Portfolio",
-      "confidence": "medium",
-      "matchedBy": "Goldstandard signature"
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
     },
     {
       "path": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ReportTrialBalance1733OT.pdf",
@@ -5953,12 +5958,14 @@
       "ownerName": "AJAY T JAISINGHANI",
       "accountNo": "3517383",
       "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "trial-balance",
+      "sections": [
+        "trial-balance"
+      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "medium",
-      "matchedBy": "Goldstandard signature"
+      "matchedBy": "Goldstandard filename"
     },
     {
       "path": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_TransactionStatement_India94OT (3).pdf",
@@ -7761,12 +7768,14 @@
       "ownerName": "ANKITA BHARAT JAISINGHANI",
       "accountNo": "128004",
       "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "open-lots",
+      "sections": [
+        "open-lots"
+      ],
       "familyGroup": null,
       "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
       "confidence": "medium",
-      "matchedBy": "Goldstandard signature"
+      "matchedBy": "Goldstandard filename"
     },
     {
       "path": "source/_extracted/october-2026-c/VEC - ANKITA/G128004_145038_PortfolioAppraisal675OT (2).pdf",
@@ -7965,28 +7974,6 @@
       "strategy": "GLC Growth Fund",
       "confidence": "medium",
       "matchedBy": "Goldstandard filename"
-    },
-    {
-      "path": "source/_extracted/october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf",
-      "fileName": "Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf",
-      "bytes": 165514,
-      "size": "161.6 KB",
-      "pages": 5,
-      "fromArchive": true,
-      "encrypted": false,
-      "readError": null,
-      "provider": "SVAN Investment Managers LLP",
-      "ownerName": "BHARAT JAISINGHANI",
-      "accountNo": "8710090",
-      "asOfDate": "2026-09-30",
-      "reportType": "investor-report",
-      "sections": [
-        "investor-report"
-      ],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "high",
-      "matchedBy": "Goldstandard signature + content keywords"
     },
     {
       "path": "source/_extracted/SANSHI FUND/9039671821_08072026183813966197.pdf",
@@ -9061,7 +9048,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "Invesco Mutual Fund",
+      "provider": "Consolidated family review (not a statement)",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
@@ -9069,8 +9056,8 @@
       "sections": [],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "generic keywords"
+      "confidence": "high",
+      "matchedBy": "non-statement signature"
     },
     {
       "path": "source/august-2026-e/Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf",
@@ -9125,17 +9112,17 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "HDFC Bank (NSDL demat)",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "67786547",
-      "asOfDate": "2026-08-29",
+      "accountNo": null,
+      "asOfDate": null,
       "reportType": "holdings",
       "sections": [
         "holdings"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
+      "confidence": "low",
       "matchedBy": "generic keywords"
     },
     {
@@ -9147,17 +9134,17 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "HDFC Bank (NSDL demat)",
+      "provider": null,
       "ownerName": null,
-      "accountNo": "67786137",
-      "asOfDate": "2026-08-29",
+      "accountNo": null,
+      "asOfDate": null,
       "reportType": "holdings",
       "sections": [
         "holdings"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "high",
+      "confidence": "low",
       "matchedBy": "generic keywords"
     },
     {
@@ -9169,18 +9156,16 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "Invesco Mutual Fund",
+      "provider": "Family investment register (not a statement)",
       "ownerName": null,
-      "accountNo": "GoldStandard",
+      "accountNo": null,
       "asOfDate": null,
-      "reportType": "capital-call",
-      "sections": [
-        "capital-call"
-      ],
+      "reportType": "unknown",
+      "sections": [],
       "familyGroup": null,
       "strategy": null,
       "confidence": "high",
-      "matchedBy": "generic keywords"
+      "matchedBy": "non-statement signature"
     },
     {
       "path": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
@@ -9191,7 +9176,7 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "Motilal Oswal Mutual Fund",
+      "provider": "Motilal Oswal Active Momentum Fund",
       "ownerName": null,
       "accountNo": "Transaction",
       "asOfDate": "2026-08-06",
@@ -10119,18 +10104,18 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "ICICI Prudential Mutual Fund",
+      "provider": "Scheme portfolio disclosure",
       "ownerName": null,
       "accountNo": null,
       "asOfDate": "2026-06-30",
-      "reportType": "holdings",
+      "reportType": "scheme-portfolio",
       "sections": [
-        "holdings"
+        "scheme-portfolio"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "medium",
-      "matchedBy": "ICICI Prudential Mutual Fund statement of account"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/_extracted/august-2026/LKP 1/pASSWORD.docx",
@@ -11665,13 +11650,15 @@
                     ]
                   }
                 ],
-                "unknown": [
+                "open-lots": [
                   {
                     "path": "source/_extracted/october-2026-c/VEC - ANKITA/G128004_145038_OpenLots_India471OT (1).pdf",
                     "pages": 3,
                     "size": "68.5 KB",
                     "confidence": "medium",
-                    "sections": []
+                    "sections": [
+                      "open-lots"
+                    ]
                   }
                 ]
               },
@@ -12685,6 +12672,15 @@
               "reportTypes": {
                 "demat-statement": [
                   {
+                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf",
+                    "pages": 9,
+                    "size": "47.7 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "demat-statement"
+                    ]
+                  },
+                  {
                     "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H46082_Aarti Ajay Jaisinghani_Transation 1.pdf",
                     "pages": 2,
                     "size": "20.8 KB",
@@ -12695,10 +12691,10 @@
                   }
                 ]
               },
-              "fileCount": 1
+              "fileCount": 2
             }
           },
-          "fileCount": 2
+          "fileCount": 3
         },
         "BHARAT JAISINGHANI (no account no.)": {
           "owner": "BHARAT JAISINGHANI",
@@ -12835,58 +12831,7 @@
           "fileCount": 4
         }
       },
-      "fileCount": 11
-    },
-    "Motilal Oswal Mutual Fund": {
-      "accounts": {
-        "AJAY JAISINGHANI (no account no.)": {
-          "owner": "AJAY JAISINGHANI",
-          "strategy": null,
-          "asOfDates": {
-            "(unidentified)": {
-              "reportTypes": {
-                "demat-statement": [
-                  {
-                    "path": "source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Transation.pdf",
-                    "pages": 9,
-                    "size": "47.7 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "demat-statement"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        },
-        "Transaction": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-08-06": {
-              "reportTypes": {
-                "transaction-statement": [
-                  {
-                    "path": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
-                    "pages": 2,
-                    "size": "171.8 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "transaction-statement"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
-        }
-      },
-      "fileCount": 2
+      "fileCount": 12
     },
     "Neo Infra Income Opportunities Fund": {
       "accounts": {
@@ -13105,13 +13050,15 @@
                     ]
                   }
                 ],
-                "unknown": [
+                "trial-balance": [
                   {
                     "path": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ReportTrialBalance1733OT.pdf",
                     "pages": 2,
                     "size": "87.1 KB",
                     "confidence": "medium",
-                    "sections": []
+                    "sections": [
+                      "trial-balance"
+                    ]
                   }
                 ]
               },
@@ -13251,13 +13198,15 @@
                     ]
                   }
                 ],
-                "unknown": [
+                "performance-by-security": [
                   {
                     "path": "source/_extracted/october-2026-c/CARNELIAN - AJAY/G3517383_40212_ReportPerformancebySecurityInception6077OT.pdf",
                     "pages": 2,
                     "size": "109.0 KB",
-                    "confidence": "medium",
-                    "sections": []
+                    "confidence": "high",
+                    "sections": [
+                      "performance-by-security"
+                    ]
                   }
                 ]
               },
@@ -14798,15 +14747,6 @@
                 ],
                 "investor-report": [
                   {
-                    "path": "source/_extracted/october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf",
-                    "pages": 5,
-                    "size": "161.6 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "investor-report"
-                    ]
-                  },
-                  {
                     "path": "source/october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf",
                     "pages": 5,
                     "size": "161.6 KB",
@@ -14817,7 +14757,7 @@
                   }
                 ]
               },
-              "fileCount": 3
+              "fileCount": 2
             },
             "2026-07-31": {
               "reportTypes": {
@@ -14868,10 +14808,10 @@
               "fileCount": 1
             }
           },
-          "fileCount": 12
+          "fileCount": 11
         }
       },
-      "fileCount": 22
+      "fileCount": 21
     },
     "ICICI Prudential Mutual Fund": {
       "accounts": {
@@ -14997,32 +14937,9 @@
             }
           },
           "fileCount": 3
-        },
-        "(unidentified)": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "2026-06-30": {
-              "reportTypes": {
-                "holdings": [
-                  {
-                    "path": "source/White Oak - Ajay.xlsx",
-                    "pages": 1,
-                    "size": "164.2 KB",
-                    "confidence": "medium",
-                    "sections": [
-                      "holdings"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
         }
       },
-      "fileCount": 10
+      "fileCount": 9
     },
     "(unidentified)": {
       "accounts": {
@@ -15181,32 +15098,9 @@
             }
           },
           "fileCount": 3
-        },
-        "GoldStandard": {
-          "owner": null,
-          "strategy": null,
-          "asOfDates": {
-            "(unidentified)": {
-              "reportTypes": {
-                "capital-call": [
-                  {
-                    "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
-                    "pages": 8,
-                    "size": "78.2 KB",
-                    "confidence": "high",
-                    "sections": [
-                      "capital-call"
-                    ]
-                  }
-                ]
-              },
-              "fileCount": 1
-            }
-          },
-          "fileCount": 1
         }
       },
-      "fileCount": 4
+      "fileCount": 3
     },
     "Sanshi Fund": {
       "accounts": {
@@ -15472,6 +15366,32 @@
       },
       "fileCount": 2
     },
+    "Consolidated family review (not a statement)": {
+      "accounts": {
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+                    "pages": 25,
+                    "size": "255.8 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
     "ICICI Bank (NSDL demat)": {
       "accounts": {
         "(unidentified)": {
@@ -15500,23 +15420,21 @@
       },
       "fileCount": 1
     },
-    "HDFC Bank (NSDL demat)": {
+    "Family investment register (not a statement)": {
       "accounts": {
-        "67786137": {
+        "(unidentified)": {
           "owner": null,
           "strategy": null,
           "asOfDates": {
-            "2026-08-29": {
+            "(unidentified)": {
               "reportTypes": {
-                "holdings": [
+                "unknown": [
                   {
-                    "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
-                    "pages": 1,
-                    "size": "104.9 KB",
+                    "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+                    "pages": 8,
+                    "size": "78.2 KB",
                     "confidence": "high",
-                    "sections": [
-                      "holdings"
-                    ]
+                    "sections": []
                   }
                 ]
               },
@@ -15524,21 +15442,26 @@
             }
           },
           "fileCount": 1
-        },
-        "67786547": {
+        }
+      },
+      "fileCount": 1
+    },
+    "Motilal Oswal Active Momentum Fund": {
+      "accounts": {
+        "Transaction": {
           "owner": null,
           "strategy": null,
           "asOfDates": {
-            "2026-08-29": {
+            "2026-08-06": {
               "reportTypes": {
-                "holdings": [
+                "transaction-statement": [
                   {
-                    "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
-                    "pages": 1,
-                    "size": "106.0 KB",
+                    "path": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
+                    "pages": 2,
+                    "size": "171.8 KB",
                     "confidence": "high",
                     "sections": [
-                      "holdings"
+                      "transaction-statement"
                     ]
                   }
                 ]
@@ -15549,7 +15472,7 @@
           "fileCount": 1
         }
       },
-      "fileCount": 2
+      "fileCount": 1
     },
     "Helios Mutual Fund": {
       "accounts": {
@@ -15928,6 +15851,34 @@
         }
       },
       "fileCount": 2
+    },
+    "Scheme portfolio disclosure": {
+      "accounts": {
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-06-30": {
+              "reportTypes": {
+                "scheme-portfolio": [
+                  {
+                    "path": "source/White Oak - Ajay.xlsx",
+                    "pages": 1,
+                    "size": "164.2 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "scheme-portfolio"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
     }
   },
   "overlaps": [
@@ -15945,7 +15896,7 @@
         "performance-benchmark",
         "transaction-statement",
         "corporate-benefits",
-        "unknown"
+        "open-lots"
       ],
       "duplicateTypes": [
         "bank-book",
@@ -16040,7 +15991,7 @@
         "capital-register",
         "corporate-benefits",
         "expense-statement",
-        "unknown"
+        "trial-balance"
       ],
       "duplicateTypes": [
         "capital-gain",
@@ -16424,7 +16375,7 @@
       "reportTypes": [
         "investor-report",
         "performance-history",
-        "unknown"
+        "performance-by-security"
       ],
       "duplicateTypes": []
     },
@@ -16438,19 +16389,6 @@
       ],
       "duplicateTypes": [
         "performance-history"
-      ]
-    },
-    {
-      "provider": "SVAN Investment Managers LLP",
-      "account": "8710090",
-      "asOf": "2026-09-30",
-      "fileCount": 3,
-      "reportTypes": [
-        "appraisal",
-        "investor-report"
-      ],
-      "duplicateTypes": [
-        "investor-report"
       ]
     },
     {
@@ -16642,6 +16580,18 @@
     },
     {
       "provider": "Motilal Oswal Financial Services (demat)",
+      "account": "AJAY JAISINGHANI (no account no.)",
+      "asOf": "(unidentified)",
+      "fileCount": 2,
+      "reportTypes": [
+        "demat-statement"
+      ],
+      "duplicateTypes": [
+        "demat-statement"
+      ]
+    },
+    {
+      "provider": "Motilal Oswal Financial Services (demat)",
       "account": "BHARAT JAISINGHANI (no account no.)",
       "asOf": "2026-07-31",
       "fileCount": 2,
@@ -16786,6 +16736,17 @@
       "reportTypes": [
         "capital-gain",
         "transaction-statement"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "SVAN Investment Managers LLP",
+      "account": "8710090",
+      "asOf": "2026-09-30",
+      "fileCount": 2,
+      "reportTypes": [
+        "appraisal",
+        "investor-report"
       ],
       "duplicateTypes": []
     },
@@ -17838,31 +17799,55 @@
       "matchedBy": "generic keywords"
     },
     {
-      "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-      "fileName": "Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-      "bytes": 261983,
-      "size": "255.8 KB",
-      "pages": 25,
+      "path": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
+      "fileName": "HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
+      "bytes": 1469198,
+      "size": "1.4 MB",
+      "pages": 4,
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": "Invesco Mutual Fund",
+      "provider": null,
       "ownerName": null,
       "accountNo": null,
       "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
       "confidence": "low",
       "matchedBy": "generic keywords"
     },
     {
-      "path": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
-      "fileName": "HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
-      "bytes": 1469198,
-      "size": "1.4 MB",
-      "pages": 4,
+      "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+      "fileName": "HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+      "bytes": 108560,
+      "size": "106.0 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+      "fileName": "HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+      "bytes": 107457,
+      "size": "104.9 KB",
+      "pages": 1,
       "fromArchive": false,
       "encrypted": false,
       "readError": null,

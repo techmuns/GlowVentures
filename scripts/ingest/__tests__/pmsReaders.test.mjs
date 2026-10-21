@@ -401,6 +401,39 @@ for (const [docKey, name, qty] of [
   }
 }
 
+// 2c'. THE RETURN TABLE IS READ BY COLUMN (Stage 10ew). Bharat's SVAN account
+// opened 03/12/2024 and prints a 1 Year and a Since Inception TWRR with the three
+// columns between them blank. Read off the flattened line, the since-inception
+// figure landed under 3 Years and never reached the book. The report also prints
+// "From 01/09/2026 to 30/09/2026" in lower case, which left its value bridge
+// undated. The mutation moves the since-inception figure under 3 Years by
+// geometry and expects the reader to follow it there.
+{
+  const file = path.join(ROOT, "source", "october-2026-c", "Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf");
+  const { pages, error } = await extractLayout(new Uint8Array(fs.readFileSync(file)));
+  if (error) ok("Z660: the report opens", false, error);
+  else {
+    const d = extractInvestorReport({ grid: { pages }, meta: { docKey: "z660" } });
+    const of = (name) => d.returns.find((s) => s.series === name) ?? {};
+    const client = of("Client portfolio");
+    ok("Z660: client TWRR — 1 Year 10.72, Since Inception 3.31, no 3-year figure",
+      client.y1 === 10.72 && client.si === 3.31 && client.y3 === null, JSON.stringify(client));
+    ok("Z660: approach and benchmark since inception read too",
+      of("Investment approach").si === 2.24 && d.returns.find((s) => s.isBenchmark)?.si === -0.77);
+    ok("Z660: the lower-case period dates the value bridge",
+      d.flows.periodFrom === "2026-09-01" && d.flows.periodTo === "2026-09-30", `${d.flows.periodFrom} → ${d.flows.periodTo}`);
+    const perf = d.sections.performance.rows.slice(1);
+    ok("Z660: the performance section archives all four XIRR lines",
+      ["Client portfolio", "Investment approach, maximum", "Investment approach, minimum", "Investment approach, median"]
+        .every((w, i) => perf.some((r) => r[0] === "XIRR" && r[1] === w && r[3] === [7.83, 24.84, -5.09, 8.54][i])), JSON.stringify(perf));
+    const head = pages.flatMap((p) => p.rows).flatMap((r) => r.items).find((i) => /^3\s*Years$/.test(i.text.trim()));
+    const moved = pages.map((p) => ({ ...p, rows: p.rows.map((r) => ({ ...r, items: r.items.map((i) =>
+      i.text.trim() === "3.31" ? { ...i, x: head.x + head.width - i.width } : i) })) }));
+    const m = extractInvestorReport({ grid: { pages: moved }, meta: { docKey: "z660" } }).returns.find((s) => s.series === "Client portfolio");
+    ok("Z660: a figure moved under 3 Years reads as 3 Years", m?.y3 === 3.31 && m?.si === null, JSON.stringify(m));
+  }
+}
+
 // 2d. THE COMMITTED ARCHIVE, HELD TO THE SAME RULE. Every performance summary,
 // performance appraisal and investor report ties from its own lines; every
 // since-inception appraisal carries no opening; every Sanshi folio closes at its

@@ -1,0 +1,71 @@
+{
+ "name": "performance",
+ "rows": [
+  [
+   "measure",
+   "series",
+   "period",
+   "pct"
+  ],
+  [
+   "TWRR",
+   "Client portfolio",
+   "1 Year",
+   7.94
+  ],
+  [
+   "TWRR",
+   "Client portfolio",
+   "Since Inception",
+   3.6
+  ],
+  [
+   "TWRR",
+   "Investment approach",
+   "1 Year",
+   6.57
+  ],
+  [
+   "TWRR",
+   "Investment approach",
+   "Since Inception",
+   2.84
+  ],
+  [
+   "TWRR",
+   "S&P BSE 500 Total Return Index",
+   "1 Year",
+   2.98
+  ],
+  [
+   "TWRR",
+   "S&P BSE 500 Total Return Index",
+   "Since Inception",
+   2.7
+  ],
+  [
+   "XIRR",
+   "Client portfolio",
+   "",
+   8.7
+  ],
+  [
+   "XIRR",
+   "Investment approach, maximum",
+   "",
+   26.63
+  ],
+  [
+   "XIRR",
+   "Investment approach, minimum",
+   "",
+   -0.77
+  ],
+  [
+   "XIRR",
+   "Investment approach, median",
+   "",
+   11.28
+  ]
+ ]
+}
