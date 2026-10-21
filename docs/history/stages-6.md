@@ -193,3 +193,9 @@
   - `sectorReturnCoverage.test` used the fenced row as a Position.
   - The store (`build-polycab`) carries the book's 1,90,10,140 shares. The corporate-action capture was re-imported for Bharat's 21 new symbols, so the depository-share gate can rule on each.
 - **Checks.** `test:ingest` adds suite `scanRead` (ISIN repair, the two printings, bytes, refusals) and golden case HDFC 22025655 (ten quantities read off the page). `checkReads` gains never-arrived and scan-not-verified cases; `statementUploads` refuses a notice and a sign-in page saved as `.pdf`. `test:statements` adds the three publication cases.
+
+### Stage 10gl — ADDRESS LOOKUP AND DRAGGABLE PROPERTY PINS
+
+- Property entry removes latitude/longitude fields. Find on map locates the entered address with Google Geocoding, fills missing location fields, offers ambiguous matches, flags approximate results and lets the user drag/click the pin. Old searches cannot replace a newer address or manually positioned pin; reopening never geocodes an existing pin.
+- Google Maps supports the same property overview and details, including co-located properties and satellite view. Runtime configuration exposes only a browser-restricted key and production map ID behind authentication. Existing OpenStreetMap maps remain usable without Google configuration, with draggable pins.
+- Google activation needs an authorized billing-enabled project; none is configured. No billing, environment or production data was changed. `docs/PROPERTY-MAPS.md` records activation and verification steps. CI covers manual entry and a mocked Google boundary; actual Google-service verification requires activation.

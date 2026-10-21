@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { validateProperty, propertyFigures, propertyTotal, hasPin, propertyShare } from "../../shared/realEstate.mjs";
 import { onRequest } from "../../functions/api/real-estate.js";
 import { property, memoryStore } from "./real-estate-fixtures.mjs";
+import { onRequest as mapsConfig } from "../../functions/api/property-map-config.js";
 const store = memoryStore();
 const site = "https://local.example";
 let checks = 0;
@@ -55,4 +56,10 @@ assert.equal((await call({ op: "save", property: property({ value: -1 }) })).sta
 assert.equal((await call()).headers.get("cache-control"), "no-store");
 const broken = { ...store, flush: async () => { throw new Error("offline"); } };
 assert.equal((await call({ op: "save", property: property() }, { env: { DASHBOARD_STORE: broken } })).status, 502);
+const mapSettings = (env, method = "GET") => mapsConfig({ request: new Request(`${site}/api/property-map-config`, { method }), env });
+assert.deepEqual(await mapSettings({}).json(), { enabled: false });
+assert.deepEqual(await mapSettings({ GOOGLE_MAPS_BROWSER_KEY: "browser-test-key" }).json(), { enabled: false }, "Both a browser key and a production map ID are required.");
+assert.deepEqual(await mapSettings({ GOOGLE_MAPS_BROWSER_KEY: " browser-test-key ", GOOGLE_MAPS_MAP_ID: " test-map ", GLOW_GITHUB_TOKEN: "must-never-be-returned" }).json(), { enabled: true, apiKey: "browser-test-key", mapId: "test-map" });
+assert.equal(mapSettings({}).headers.get("cache-control"), "no-store");
+assert.equal(mapSettings({}, "POST").status, 405);
 console.log(`${checks} real-estate checks passed, plus CRUD and failure contracts.`);

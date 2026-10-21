@@ -18,6 +18,7 @@ const page = await context.newPage();
 const errors = []; page.on("pageerror", error => errors.push(error.stack || error.message));
 await page.route("**/api/**", async route => {
   const r = route.request();
+  if (new URL(r.url()).pathname === "/api/property-map-config") return route.fulfill({ json: { enabled: false } });
   if (new URL(r.url()).pathname === "/api/real-estate") {
     if (failing) return route.fulfill({ status: 502, contentType: "application/json", body: JSON.stringify({ ok: false, message: "Test storage outage" }) });
     const response = await onRequest({ request: new Request(r.url(), { method: r.method(), headers: { ...r.headers(), origin: new URL(base).origin }, ...(r.method() === "POST" ? { body: r.postData() } : {}) }), env: { DASHBOARD_STORE: store } });
@@ -39,7 +40,15 @@ try {
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await visible("Add the valuation date for the current value.");
   await fill("Valuation date", "2026-10-01");
   await page.getByRole("dialog").getByLabel(/^Status/).selectOption("Rented"); await fill("Monthly rent (₹)", "50000"); await fill("Monthly costs (₹)", "5000"); await fill("Loan outstanding (₹)", "3000000");
-  await fill("Latitude", "19.076"); await fill("Longitude", "72.8777");
+  assert.equal(await page.getByLabel("Latitude", { exact: true }).count(), 0);
+  assert.equal(await page.getByLabel("Longitude", { exact: true }).count(), 0);
+  await page.getByRole("button", { name: "Find on map", exact: true }).click();
+  await page.getByText("Google Maps address search is not connected yet.", { exact: false }).waitFor();
+  const picker = page.getByLabel("Click map or drag pin to set property location", { exact: true });
+  await picker.click({ position: { x: 210, y: 140 } });
+  await page.getByText("Pin set. Drag it to adjust the exact spot.", { exact: true }).waitFor();
+  // Co-location below uses this exact test pin, chosen through the UI.
+  let placedPoint;
   failing = true;
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await visible("Test storage outage");
   assert.equal(await page.getByLabel("Property name *", { exact: true }).inputValue(), "Test apartment");
@@ -47,6 +56,7 @@ try {
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor();
   assert.equal(store.data.size, 1);
   const createdKey = [...store.data.keys()][0];
+  const createdProperty = JSON.parse(store.data.get(createdKey)); placedPoint = { latitude: createdProperty.latitude, longitude: createdProperty.longitude };
   await close();
   await page.reload(); await page.getByRole("button", { name: "Test apartment", exact: true }).waitFor();
   await page.getByRole("button", { name: "Test apartment", exact: true }).click();
@@ -60,7 +70,7 @@ try {
   // Several types, locations and the exact same coordinates; one record is unpinned.
   for (const p of [property({ id: "test-land", name: "Test land", type: "Land", areaBasis: "Plot", area: 2, areaUnit: "acre", city: "Pune", status: "Vacant", monthlyRent: 0, latitude: null, longitude: null }),
     property({ id: "test-office", name: "Test office", type: "Office", city: "Bengaluru", state: "Karnataka", latitude: 12.9716, longitude: 77.5946 }),
-    property({ id: "test-apartment-two", name: "Test second apartment" })]) {
+    property({ id: "test-apartment-two", name: "Test second apartment", ...placedPoint })]) {
     await store.put(`real-estate:${p.id}`, JSON.stringify(p));
   }
   await page.reload(); await page.getByRole("button", { name: "Test land", exact: true }).waitFor();
@@ -84,9 +94,9 @@ try {
   await page.screenshot({ path: path.join(out, "map.png"), fullPage: true });
   await page.getByRole("button").filter({ hasText: "Test land" }).click();
   await page.getByRole("button", { name: "Set map pin", exact: true }).click();
-  const picker = page.getByLabel("Click map to set property pin", { exact: true });
+  await page.getByRole("button", { name: "Place pin on map", exact: true }).click();
   await picker.click({ position: { x: 210, y: 140 } });
-  assert.ok(await page.getByLabel("Latitude", { exact: true }).inputValue());
+  await page.getByText("Pin set. Drag it to adjust the exact spot.", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor(); await close();
   await page.getByRole("tab", { name: "Table", exact: true }).click();
   await page.screenshot({ path: path.join(out, "table.png"), fullPage: true });
