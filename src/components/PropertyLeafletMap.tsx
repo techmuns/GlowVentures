@@ -3,7 +3,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { hasPin, type Property } from "@/lib/realEstate";
 import { PROPERTY_COLORS, type PropertyMapProps } from "@/lib/propertyMaps";
-export default function PropertyLeafletMap({ properties = [], onSelect, point, onPick }: PropertyMapProps) {
+const NO_PROPERTIES: readonly Property[] = [];
+export default function PropertyLeafletMap({ properties = NO_PROPERTIES, onSelect, point, onPick }: PropertyMapProps) {
   const root = useRef<HTMLDivElement>(null);
   const instance = useRef<L.Map | null>(null);
   const pins = useRef<L.LayerGroup>();

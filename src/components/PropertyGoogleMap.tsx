@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { hasPin, type Property } from "@/lib/realEstate";
 import { loadPropertyGoogleMaps, PROPERTY_COLORS, type PropertyMapProps } from "@/lib/propertyMaps";
-export default function PropertyGoogleMap({ properties = [], onSelect, point, onPick }: PropertyMapProps) {
+const NO_PROPERTIES: readonly Property[] = [];
+export default function PropertyGoogleMap({ properties = NO_PROPERTIES, onSelect, point, onPick }: PropertyMapProps) {
   const root = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onSelect, onPick }); callbacks.current = { onSelect, onPick };
   const [ready, setReady] = useState<{ map: google.maps.Map; maps: typeof google.maps }>();
@@ -79,7 +80,7 @@ export default function PropertyGoogleMap({ properties = [], onSelect, point, on
       if (markers.length === 1) { map.setCenter(bounds.getCenter()); map.setZoom(17); }
       else { map.fitBounds(bounds, 45); idleListener = maps.event.addListenerOnce(map, "idle", () => { if ((map.getZoom() ?? 0) > 17) map.setZoom(17); }); }
     }
-    fitted.current = signature;
+    fitted.current = markers.length ? signature : "";
     return () => { idleListener?.remove(); popup.close(); markers.forEach(marker => { maps.event.clearInstanceListeners(marker); marker.map = null; }); };
   }, [ready, properties, point]);
   return <div className="relative">

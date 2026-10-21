@@ -49,6 +49,7 @@ try {
   assert.equal(await page.getByLabel("State", { exact: true }).inputValue(), "Maharashtra");
   assert.equal(await page.getByLabel("PIN / postal code", { exact: true }).inputValue(), "400001");
   await marker().waitFor();
+  assert.equal(await page.locator("[data-google-map-fixture]").getAttribute("data-map-zoom"), "17", "The first address result must zoom to the property, even when it lies inside the initial India view.");
   const rect = await marker().boundingBox(); assert.ok(rect);
   await page.mouse.move(rect.x + 14, rect.y + 14); await page.mouse.down();
   await page.mouse.move(rect.x + 64, rect.y - 16, { steps: 6 }); await page.mouse.up();

@@ -23,6 +23,7 @@ export function installGoogleMapsFixture() {
   class Map extends Events {
     constructor(root, options) {
       super(); this.root = root; this.center = options.center; this.zoom = options.zoom;
+      root.dataset.mapZoom = String(this.zoom);
       root.replaceChildren(); root.style.position = "relative";
       root.dataset.googleMapFixture = "true";
       const label = document.createElement("div"); label.textContent = "Google Maps test fixture"; root.append(label);
@@ -34,7 +35,7 @@ export function installGoogleMapsFixture() {
     }
     getBounds() { return new LatLngBounds(); }
     setCenter(p) { this.center = p; }
-    getZoom() { return this.zoom; } setZoom(z) { this.zoom = z; }
+    getZoom() { return this.zoom; } setZoom(z) { this.zoom = z; this.root.dataset.mapZoom = String(z); }
     fitBounds(b) { this.center = b.getCenter(); }
   }
   class AdvancedMarkerElement extends Events {
@@ -56,7 +57,7 @@ export function installGoogleMapsFixture() {
         document.addEventListener("pointerup", up);
       });
     }
-    set map(map) { this.currentMap = map; if (map) map.root.append(this.content); else this.content?.remove(); }
+    set map(map) { this.currentMap = map; if (map && this.content) map.root.append(this.content); else this.content?.remove(); }
     get map() { return this.currentMap; }
   }
   const result = (approximate = false, label = "Test address, Mumbai, Maharashtra, India") => ({
