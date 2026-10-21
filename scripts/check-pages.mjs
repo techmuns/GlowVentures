@@ -18196,7 +18196,7 @@ let CIO_TILE_COUNT = 0;
 const CIO_TILE_PICKER = [
   ...tilePickerChecks({
     defaults: ["value", "gain", "annualised", "fytd"],
-    mustOffer: ["value", "gain", "annualised", "fytd", "ytd", "mwr", "return", "uncalled", "distributions", "invested", "committed",
+    mustOffer: ["value", "gain", "annualised", "fytd", "ytd", "return", "uncalled", "distributions", "invested", "committed",
       "positions", "names", "top-10", "cross-held", "winners", "losers", "accrued"],
     minMenu: 15,
   }),
@@ -18429,7 +18429,7 @@ const CIO_SHARED = [
    * the feature — so the destinations are asserted too, by the figure they
    * belong to rather than by a count.
    */
-  ["the value, consolidated-return and money-weighted tiles each open their own set", (t, ctx) => {
+  ["the value, gain and remaining return tiles each open their own set", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const at = (re) => ctx.kpiTiles.find((x) => re.test(x.label))?.links?.[0] ?? "";
     return at(/portfolio value/i) === "/holdings?of=book"
@@ -18568,21 +18568,8 @@ const CIO_SHARED = [
     return headlineMatches(tile, r) && (tile.hover ?? '').includes(r.to)
       && (r.total.measured?.basis === 'annual' ? /p.a./.test(tile.value ?? '') : /not annualised/.test(tile.second ?? ''));
   }],
-  /**
-   * ...AND THE RATE AND ITS WINDOW ARE THE BOOK'S, ON STATEMENT VALUES, TO THE
-   * POOL'S OWN LAST CLOSE. Two claims the hover check above cannot see: it
-   * reads the window's words, not whether the window is the right one. Run on
-   * `cio` AND `cio-live`: the live walk prices every symbol at its mark x 1.10,
-   * so a tile that closed an account on its LIVE value dated to its statement
-   * reads a different rate there and fails — the half that only a live walk
-   * can reach.
-   */
-  ["the money-weighted tile is the statement-basis rate, de-annualised to the pool's last close", (t, ctx) => {
-    const tile = ctx?.kpiTiles?.find(x => x.slot === 'mwr');
-    if (!tile) return notChecked('this strip does not show the money-weighted card');
-    return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.history)
-      && (tile.hover ?? '').includes(AVAILABLE_CARDS_BOOK.history.to);
-  }],
+  ["the retired money-weighted card stays absent, including legacy layouts", (t, ctx) =>
+    Array.isArray(ctx?.kpiTiles) && !ctx.kpiTiles.some(x => x.slot === 'mwr')],
   // A newer book date exercises the distinction here. When every selected
   // close reaches it, the synthetic account-return test still proves that a
   // later unrelated valuation cannot advance the measured window.
@@ -18782,9 +18769,9 @@ const shortDayRe = (iso) => {
   return `${d} ${mon}`;
 };
 
-/** The two money-weighted checks, also run on the LIVE walk (see the first). */
-const CIO_MWR = CIO_SHARED.filter(([d]) =>
-  /money-weighted tile is the statement-basis rate|book's newest date lies after that close/.test(d));
+/** Retired-card and statement-window checks, also run on the LIVE walk. */
+const CIO_RETURN_RETIREMENT = CIO_SHARED.filter(([d]) =>
+  /retired money-weighted card stays absent|book's newest date lies after that close/.test(d));
 
 const CIO_MOVERS = [
   ["with no quote feed, Today's movers states the cause and prints no day change",
@@ -26093,11 +26080,11 @@ const INVARIANTS = {
      * A FIGURE RESULT OPENS A PAGE THAT SHOWS THE FIGURE (SC-C6), struck on the
      * page it LANDS on: the tile that carries the figure is drawn there.
      */
-    ["the money-weighted return and Distributions each open a page whose tiles show that figure", () => {
+    ["search drops the retired return card and Distributions still opens its own tile", () => {
       const f = SEARCH?.figureLanded;
       if (!f) return false;
       const x = f["fig:xirr"], d = f["fig:distributions"];
-      return !!x && x.path?.startsWith("/cio") && x.slots.some((s) => s.id === "mwr" && /\d|—/.test(s.text))
+      return x === null
         && !!d && d.path?.startsWith("/private-market") && d.slots.some((s) => s.id === "distributed" && /₹|—/.test(s.text));
     }],
     /**
@@ -26982,7 +26969,7 @@ const INVARIANTS = {
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
-  "cio-return-metrics": [...CIO_MWR, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
+  "cio-return-metrics": [...CIO_RETURN_RETIREMENT, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
   ...Object.fromEntries(["annualised", "fytd", "ytd"].map((kind) => [`performance-${kind}`, [
     ["the tile's address opens its own return, period and coverage", (t, ctx) =>
       ctx?.investorReturn?.kind === kind && !!ctx.investorReturn.value
@@ -28290,24 +28277,19 @@ const INVARIANTS = {
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     /**
-     * THE RATE THE READER CLICKED IS ON THE PAGE IT OPENS (B-06). The tile prints
-     * a money-weighted rate over the accounts carrying an opening value; this
-     * page listed their holdings and printed only a return on cost — two
-     * measures of two things. The rate, its window and its accounts are the
-     * book's, re-solved here by bisection, and the tile's to the decimal.
+     * The dedicated KPI was retired in Stage 10gn. An existing measured-set
+     * bookmark still resolves, so its rate, dates and accounts are checked
+     * independently against the source book, without a removed tile.
      */
-    ["the money-weighted rate is the tile's, over the same accounts and window (B-06)", (t, ctx) => {
+    ["the legacy measured bookmark still uses its own verified accounts and window (B-06)", (t, ctx) => {
       if (!MWR_BOOK) return false;
       const w = ctx?.drilldown?.mwr;
       if (!w) return false;
-      if (!MWR_BOOK.whole) return w.pct == null && w.accounts === MWR_BOOK.accounts && !Number.isFinite(CIO_FIGURES.get("mwrPct"))
+      if (!MWR_BOOK.whole) return w.pct == null && w.accounts === MWR_BOOK.accounts
         && /—/.test(w.text) && !/not annualised|annual rate/.test(w.text);
       if (w.pct == null) return false;
-      const tile = CIO_FIGURES.get("mwrPct");
-      if (!Number.isFinite(tile)) return false;
       return Math.abs(w.pct - MWR_BOOK.toDate) <= 0.05
         && w.days === MWR_BOOK.windowDays && w.to === MWR_BOOK.lastClose && w.accounts === MWR_BOOK.accounts
-        && Math.abs(Math.round(w.pct * 10) / 10 - tile) < 1e-9
         && (MWR_BOOK.windowDays >= 365 || /not annualised/.test(w.text));
     }],
     /**
@@ -31130,7 +31112,7 @@ const INVARIANTS = {
      */
     ["the movers card shows the total number of stocks once it ranks too",
       (t, ctx) => Number.isFinite(ctx?.movers?.total) && ctx.movers.total > 0],
-    ...CIO_MWR,
+    ...CIO_RETURN_RETIREMENT,
     /**
      * THE SCOPE IS NAMED AS `priority`, WHICH IS A CLAIM ABOUT THE REQUEST.
      *
@@ -44316,8 +44298,6 @@ for (const theme of THEMES) {
           CIO_FIGURES.set("bookReturnPct", pctOf(retTile.value));
           CIO_FIGURES.set("bookReturnLabel", retTile.second ?? "");
         }
-        const mwTile = (kpiTiles ?? []).find((x) => /^money-weighted return$/i.test(x.label));
-        if (mwTile && Number.isFinite(pctOf(mwTile.value))) CIO_FIGURES.set("mwrPct", pctOf(mwTile.value));
       }
       const zeros = !FAST && theme === "light" && width === WIDTHS[0]
         ? [...text.matchAll(ZEROISH)].map((m) => {

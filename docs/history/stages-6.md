@@ -207,3 +207,9 @@
 - FYTD/YTD use the same selected account inputs and dated-window measure as attribution. The history and money-weighted choices pool each usable account's own recorded window; under one year the former is labelled “Return over available history”, with “not annualised” and actual dates.
 - Every card names covered holdings/value/accounts. The shared info body explains amounts, includes account and statement names, lists the records needed for exclusions, and keeps newer incomplete source records visible beside the older verified record in use. Other strict whole-portfolio measures retain their existing gates.
 - Tests cover partial gain/capital arithmetic, exits, true zero versus absence, dated periods, a liquidated account, live-price isolation and the actual archive. Built-app browser checks cover default and saved card choices, info dialogs, focus restoration and FYTD card/table agreement.
+
+### Stage 10gn — REMOVE THE STANDALONE MONEY-WEIGHTED RETURN CARD
+
+- Removed the dedicated money-weighted metric from Morning CIO, its tile menus and search. Existing saved layouts and old `tiles=mwr` links discard the retired metric; an all-retired layout falls back to the standard cards.
+- Remaining gain and return cards retain their available figures and coverage info. Their hover text uses plain “return” wording.
+- Browser regressions check both menus, legacy links and local/shared saved layouts, including a layout containing only the retired card. The legacy measured-holdings bookmark keeps its independently verified calculation rather than depending on a removed card.

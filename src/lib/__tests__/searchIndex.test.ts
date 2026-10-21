@@ -277,7 +277,7 @@ console.log("── the words people use ──");
   ok("'dry powder' reaches uncalled capital", top("dry powder")?.id === "fig:uncalled");
   ok("'tax' opens Capital Gains", top("tax")?.href === "/capital-gains");
   ok("'banks' finds the Financials sector first", top("banks")?.id === "sector:Financials", top("banks")?.label);
-  ok("'xirr' finds the money-weighted return", topN("xirr", 2).some((e) => e.id === "fig:xirr"));
+  ok("search does not offer the retired money-weighted card", !index.some((e) => e.id === "fig:xirr"));
   // THE LARGEST HOLDING BY ITS FIRST WORD, and by a ONE-EDIT typo of it.
   const largest = index.filter((e) => e.kind === "holding" && !e.closed).sort((a, b) => b.weight - a.weight)[0];
   const word = normSearch(largest.label).split(" ").find((w) => w.length >= 6 && /^[a-z]+$/.test(w))!;
@@ -500,8 +500,7 @@ console.log("── what a row says about its figure is true of the figure (SC-C
 
   // SC-C6 — a figure result opens a page that SHOWS the figure.
   const fig = (id: string) => index.find((e) => e.id === id)?.href ?? "";
-  ok("the money-weighted return opens Morning CIO with its own tile on screen",
-    /^\/cio\?(.*&)?tiles=([^&]*,)?mwr(,|&|$)/.test(fig("fig:xirr")), fig("fig:xirr"));
+  ok("no search result opens the retired card", !index.some((e) => /[?&]tiles=([^&]*,)?mwr(,|&|$)/.test(e.href)));
   ok("…and Distributions opens Private Market with the Distributions tile on screen",
     /^\/private-market\?(.*&)?tiles=([^&]*,)?distributed(,|&|$)/.test(fig("fig:distributions")), fig("fig:distributions"));
 
