@@ -2148,6 +2148,34 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
 }
 
 /**
+ * ── A PER-UNIT COST WHERE THE STATEMENT PRINTS ONLY THE TOTAL ────────────────
+ *
+ * *"a lot of holdings are missing purchase prices"* — the family, 21 Oct 2026.
+ *
+ * Stage 10bm left this open for them: the Avg cost COLUMN printed the
+ * statement's per-unit cost and showed `—` wherever a statement prints a total
+ * cost and a unit count but no per-unit figure (every AMC folio, every AIF
+ * capital statement), while the consolidated row beside it and the live
+ * roll-forward already divide cost by units. Their answer is the figure: the
+ * cost over the units it bought, both primitives the statement prints. A
+ * printed per-unit cost is never replaced; `avgCostDerived` says which
+ * figures are the division. A row with no cost, no units, or a value that IS
+ * its cost (`valuedAtCost`) keeps its absence.
+ */
+function avgCostOverUnits(positions, notes) {
+  let derived = 0;
+  for (const p of positions) {
+    if (p.avgCost !== null || !isNum(p.costBasis) || !(p.costBasis > 0) || !(p.quantity > 0)) continue;
+    if (p.valuedAtCost || p.costUnavailable) continue;
+    p.avgCost = Math.round((p.costBasis / p.quantity) * 1e4) / 1e4;
+    p.avgCostDerived = true;
+    derived += 1;
+  }
+  notes.push(`avg cost: ${derived} position(s) print a total cost and a unit count and no per-unit cost — `
+    + "their Avg cost is that cost over those units (`avgCostDerived`)");
+}
+
+/**
  * ── A COST IS EVERY RUPEE PAID IN (VD-24) ────────────────────────────────────
  *
  * Stamp duty was treated two ways: netted out of Sanshi's cost, carried inside
@@ -4784,6 +4812,8 @@ function build(archived) {
   // from it, on the positions a switch restated and nowhere else.
   carryCostThroughSwitches(positions, positionTranches, reclassifications, accountBridges, notes);
   grossPaidCost(positions, positionTranches, notes);
+  // Last, so the per-unit figure is struck on the cost every pass above settled.
+  avgCostOverUnits(positions, notes);
   // TWO PATHS TO ONE COST, AND THEY MUST AGREE. A class switch with no sale is
   // carried above by `carryCostThroughSwitches`; FIFO ran over the same unit
   // record and reached its own answer independently. They are different code

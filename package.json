@@ -37,6 +37,7 @@
     "replay:movements": "node scripts/replay-demat-movements.mjs",
     "replay:flows": "node scripts/replay-fund-flows.mjs",
     "replay:demat-holdings": "node scripts/replay-demat-holdings.mjs",
+    "replay:folio-cost": "node scripts/replay-folio-cost.mjs",
     "replay:flow-lines": "node scripts/replay-flow-lines.mjs",
     "report:extraction": "node scripts/report-from-archive.mjs",
     "accounts-table": "node scripts/dev/accounts-table.mjs",
