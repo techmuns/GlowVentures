@@ -52,8 +52,8 @@ export function fitExcelWorksheet(sheet: ExcelJS.Worksheet, headerRows: number, 
     const span = merged.get(cell.address) ?? { right: Number(cell.col), bottom: Number(cell.row) };
     const text = displayedText(cell);
     cells.push({ cell, text, ...span });
-    if (span.right !== cell.col) return; // A merged title must not widen only column A.
-    const padding = 3 + (sheet.autoFilter && cell.row === headerRows ? 2 : 0) + (cell.alignment?.indent ?? 0) * 3;
+    if (span.right !== Number(cell.col)) return; // A merged title must not widen only column A.
+    const padding = 3 + (sheet.autoFilter && Number(cell.row) === headerRows ? 2 : 0) + (cell.alignment?.indent ?? 0) * 3;
     const longest = Math.max(0, ...text.split(/\r?\n/).map(line => textWidth(line, cell)));
     widths[Number(cell.col) - 1] = Math.max(widths[Number(cell.col) - 1], Math.min(maxWidth, longest + padding));
   }));
