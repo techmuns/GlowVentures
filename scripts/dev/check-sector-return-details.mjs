@@ -9,9 +9,10 @@ const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/sector-return-details';
 await fs.mkdir(out, { recursive: true });
-const bundle = await build({ stdin: { contents: 'export { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB } from "./src/data/glowData.ts";', resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
+const bundle = await build({ stdin: { contents: 'export { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB } from "./src/data/glowData.ts"; export { CAPTURE, stubShareFeed, PRICED_SHARES } from "./src/lib/__tests__/liveBook.ts";', resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
 const book = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
-const positions = [...book.BOOK_POSITIONS, ...book.BOOK_POLYCAB];
+const positions = [...book.BOOK_POSITIONS, ...book.BOOK_POLYCAB, ...book.PRICED_SHARES];
+const quotes = book.stubShareFeed();
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 const checked = [];
 try {
@@ -27,6 +28,12 @@ try {
     await page.route('**/api/**', route => route.fulfill({ status: 503, json: { status: 'unreachable' } }));
     await page.route(/fonts\.(googleapis|gstatic)\.com/, route => route.abort());
     await installReadModelRoutes(page);
+    // Quote-only depository shares are the source of this complaint. A feed
+    // outage hides them entirely, so test a priced day using the existing
+    // committed-capture fixture. Prices are test-only; no production request.
+    await page.route('**/api/quotes', route => route.fulfill({ json: { ok: true, ...quotes } }));
+    await page.route('**/api/corporate-actions?*', route => route.fulfill({ json: { ok: true, feed: book.CAPTURE } }));
+    await page.route('**/data/corporate-actions.json', route => route.fulfill({ json: book.CAPTURE }));
     await page.goto(base + route);
     await page.locator('[data-sector-row]').first().waitFor();
     const row = page.locator('[data-sector-row]').filter({ has: page.locator('[data-return-coverage]') }).first();
