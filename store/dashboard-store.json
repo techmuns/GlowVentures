@@ -13,6 +13,18 @@
     ],
     "updatedAt": "2026-10-21T10:19:36.844Z"
    }
+  },
+  "tile-set:private-market": {
+   "value": "{\"page\":\"private-market\",\"ids\":[\"value\",\"uncalled\",\"cost\"],\"updatedAt\":\"2026-10-21T11:27:37.941Z\"}",
+   "metadata": {
+    "page": "private-market",
+    "ids": [
+     "value",
+     "uncalled",
+     "cost"
+    ],
+    "updatedAt": "2026-10-21T11:27:37.941Z"
+   }
   }
  }
 }
