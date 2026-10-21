@@ -11,7 +11,7 @@ import { checkSeal, commitDelivery } from '../publish-delivery.mjs';
 import { finalizationGate } from '../finalize-delivery.mjs';
 import { completedBotReview, deploymentContains, monitorPublication } from '../lib/intakePublication.mjs';
 import { git as repositoryGit } from '../verify-publication.mjs';
-import { refreshForPublication, startPublicationRefresh } from '../../../shared/publicationRefresh.mjs';
+import { refreshForPublication, startPublicationRefresh, publicationRefreshBlocked } from '../../../shared/publicationRefresh.mjs';
 import { extractLayout } from '../lib/layout.mjs';
 import { findTable, readRows } from '../lib/table.mjs';
 import { parseNum } from '../lib/parseNum.mjs';
@@ -305,10 +305,11 @@ test('draft edits defer data replacement until navigation; controllers clean up'
   const controller = startPublicationRefresh({ revision: published.revision, browser });
   await new Promise(resolve => setTimeout(resolve, 0));
   listeners.get('input')({ target: { tagName: 'TEXTAREA' } });
+  assert.equal(publicationRefreshBlocked(browser), true, 'The existing version-mismatch screen must not unmount a draft');
   published = { schemaVersion: 1, revision: 'b'.repeat(20) };
   await controller.check(); assert.equal(loads.length, 0);
   browser.location.pathname = '/monitor'; await controller.check(); assert.deepEqual(loads, ['/monitor']);
-  controller.stop(); assert.equal(listeners.size, 0);
+  controller.stop(); assert.equal(listeners.size, 0); assert.equal(publicationRefreshBlocked(browser), false);
   await controller.check(); assert.equal(loads.length, 1);
 });
 test('upload activity defers refresh, and file selection does not leave a permanent dirty flag', async () => {

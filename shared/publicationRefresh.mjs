@@ -3,6 +3,8 @@
 const KEY = 'glow:publication-refresh';
 const RETRY_MS = 300_000;
 const isRevision = value => typeof value === 'string' && /^[a-f0-9]{20}$/.test(value);
+const blockers = new WeakMap();
+export const publicationRefreshBlocked = (browser = globalThis.window) => !!(browser && blockers.get(browser)?.());
 
 export function refreshForPublication({ revision, published, browser, blocked = false, now = Date.now() }) {
   if (blocked || browser.navigator?.onLine === false || published?.schemaVersion !== 1 || !isRevision(published.revision) || published.revision === revision) return false;
@@ -33,11 +35,13 @@ export function startPublicationRefresh({ revision, path = '/publication.json', 
     if (target?.type !== 'file' && (/^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName ?? '') || target?.isContentEditable)) dirty = true;
   };
   const blocked = () => {
+    syncRoute();
     const target = doc.activeElement;
     return dirty || doc.visibilityState === 'hidden' || (typeof doc.hasFocus === 'function' && !doc.hasFocus())
       || (target?.type !== 'file' && (/^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName ?? '') || !!target?.isContentEditable))
       || !!doc.querySelector('[data-publication-busy="true"], [data-publication-dirty="true"], [role="dialog"]');
   };
+  blockers.set(browser, blocked);
   const check = async () => {
     syncRoute();
     if (!active || checking || doc.visibilityState === 'hidden' || browser.navigator?.onLine === false) return;
@@ -65,5 +69,6 @@ export function startPublicationRefresh({ revision, path = '/publication.json', 
     active = false; request?.abort(); browser.clearInterval(timer);
     browser.removeEventListener('focus', wake); doc.removeEventListener('visibilitychange', wake);
     doc.removeEventListener('input', edited, true); doc.removeEventListener('change', edited, true);
+    if (blockers.get(browser) === blocked) blockers.delete(browser);
   } };
 }

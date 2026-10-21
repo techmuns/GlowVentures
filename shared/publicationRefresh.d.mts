@@ -1,4 +1,5 @@
 export type PublicationPointer = { schemaVersion: number; revision: string };
+export declare function publicationRefreshBlocked(browser?: Window): boolean;
 export declare function refreshForPublication(options: {
   revision: string; published: unknown;
   browser: Pick<Window, "sessionStorage" | "location" | "navigator">;
