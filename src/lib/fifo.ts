@@ -16,7 +16,7 @@
  *
  * where, per holding, capital deployed is the cost of the units held plus the
  * cost of the units sold, and income is the dividends and distributions it paid
- * (`Position.dividendReceived`; Stage 10ez — *"include realized gains/losses
+ * (`Position.dividendReceived`; Stage 10fa — *"include realized gains/losses
  * and dividends wherever we are showing returns"*). It is the same formula `fifoReturnPct` strikes per
  * holding, summed before it is divided — never an average of the holdings'
  * percentages, which would weight a ₹50,000 position like a ₹50 Cr one.
@@ -77,7 +77,7 @@ export type FifoTotals = {
   realised: number | null;
   /**
    * Dividends and distributions the holdings paid, paid out or reinvested
-   * (Stage 10ez) — over the holdings struck holding by holding. A WHOLE
+   * (Stage 10fa) — over the holdings struck holding by holding. A WHOLE
    * mandate's income is already inside its capital bridge (`realised` above),
    * so it is never added twice. NULL where no holding in the set records any.
    */

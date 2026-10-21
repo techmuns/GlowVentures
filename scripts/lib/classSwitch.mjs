@@ -207,7 +207,7 @@ export function carryCostThroughSwitches(positions, positionTranches, reclassifi
     p.avgCost = Math.round((paid / p.quantity) * 1e4) / 1e4;
     p.unrealizedPnL = r2(p.marketValue - paid);
     // FIFO's one return on the carried cost — what was already sold, and what
-    // the holding paid, stay in it (Stage 10ez).
+    // the holding paid, stay in it (Stage 10fa).
     p.returnPct = r2(fifoReturnPct(p.marketValue, paid, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived));
     notes.push(`cost carried through the class switch for ${label}: ${paid} was paid for these units, against the `
       + `${p.printedCostBasis} the statement's cost column prints, which restarts cost at the switch-day NAV. The `

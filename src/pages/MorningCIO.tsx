@@ -51,6 +51,7 @@ import { valuationDates, valuationNote, dateSpan } from "@/components/BasisPill"
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import { DailyMovers } from "@/components/DailyMovers";
 import PortfolioReturns from "@/components/PortfolioReturns";
+import SegmentReturns from "@/components/SegmentReturns";
 import { SectorComposition } from "@/pages/SectorComposition";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { INVESTOR_DEFAULT_TILES, investorPeriodReturn, investorAnnualReturn } from "@/lib/investorSummary";
@@ -194,6 +195,15 @@ const CIO_TABS = [
   // the last session the quote feed priced. Each card dates its own figure.
   { key: "movers", label: "Daily Movers", title: "The latest move — the family's own direct equity on its last priced session, and their funds' last published NAV, each dated on its own card" },
   { key: "returns", label: "Returns", title: "Portfolio returns over a period you pick — the measured window, the type of return and its formula" },
+  /**
+   * ...AND RIGHT AFTER IT, WHICH PART OF THE BOOK EARNED THAT RETURN (Stage
+   * 10ez): *"select any such segment and see how the subcategories are
+   * performing and contributing to the portfolio returns."* Its own tab, not a
+   * third card on Returns, which shows the whole portfolio only (Stage 10dt).
+   * Not the NAV bridge removed below — that decomposed the NAV line by flow;
+   * this files the holdings by segment, on the Gain / Loss tile's FIFO.
+   */
+  { key: "attribution", label: "Return Attribution", title: "Which part of the book earned its return — by category, asset class, basket, sector, listed or private, or security — each segment's FIFO gain and return and its contribution to the book's" },
   /**
    * ...AND SECTOR COMPOSITION, NEXT TO DAILY MOVERS. *"next to daily movers add
    * a new tab sector composition … give option to select either consolidated
@@ -465,7 +475,7 @@ export function MorningCIO() {
     // and the page the tile opens all name it on their face from this object.
     const { set: costedSet, fifo: bookFifo } = bookReturnOnCost(p, { accounts: portfolio.accounts, universe: p });
     // The private funds' leg carries the cash they have already returned —
-    // distributions are booked gain, not a mark (Stage 10ez).
+    // distributions are booked gain, not a mark (Stage 10fa).
     const embeddedGain = sumOrNull([bookFifo.gain, privateCount ? privateTotalGain : null]);
     const deployedCapital = sumOrNull([bookFifo.deployed, privateCount ? privateInvested : null]);
     const gainPct = deployedCapital !== null && embeddedGain !== null && deployedCapital > 0
@@ -1516,6 +1526,12 @@ export function MorningCIO() {
         {tab === "returns" && (
           <div className="h-auto lg:h-full" data-cio-section="returns">
             <PortfolioReturns />
+          </div>
+        )}
+
+        {tab === "attribution" && (
+          <div className="h-auto lg:h-full" data-cio-section="attribution">
+            <SegmentReturns />
           </div>
         )}
 

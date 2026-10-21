@@ -51,7 +51,7 @@ assert.equal(first.positions[0].quantity, 400, "split and bonus compound once in
 assert.equal(first.positions[0].avgCost, 2.5);
 assert.equal(first.positions[0].costBasis, 1000, "corporate actions do not create cost or cash");
 assert.equal(first.positions[0].marketValue, 1000, "split/bonus are value-neutral");
-// The share ratio is not profit; the ₹23 dividend the position recorded is (Stage 10ez).
+// The share ratio is not profit; the ₹23 dividend the position recorded is (Stage 10fa).
 assert.ok(Math.abs((first.positions[0].returnPct as number) - 2.3) < 1e-9, "the share ratio is not profit; the recorded dividend is");
 assert.equal(result.dividendEntitlement, 400, "dividend uses shares on its ex-date after earlier actions");
 assert.equal(result.totalReturnPct, 39.99999999999999);

@@ -278,7 +278,7 @@ console.log("\n── a holding redeemed to nil: all of its gain is realised ─
   for (const key of keys) {
     const rs = dedupedPositions(rowsOf(key));
     const sold = sum(rs.map((p) => p.costOfUnitsSold ?? 0));
-    // …and the dividends it paid stay in it (Stage 10ez).
+    // …and the dividends it paid stay in it (Stage 10fa).
     const realised = sum(rs.map((p) => (p.realizedPnL ?? 0) + (p.dividendReceived ?? 0)));
     const want = sold > 0 ? (realised / sold) * 100 : null;
     const got = measuredTotals(rowsOf(key)).costedReturn;

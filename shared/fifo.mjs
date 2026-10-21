@@ -165,7 +165,7 @@ export function fifoForClass(ledger, cls) {
  * unrealised ÷ cost; where units WERE sold, the gain on them stays in the
  * return instead of silently leaving it.
  *
- * INCOME is what the holding paid the family (Stage 10ez): a demat's cash
+ * INCOME is what the holding paid the family (Stage 10fa): a demat's cash
  * dividends (`Position.dividendReceived`), a fund's distributions, and an IDCW
  * reinvestment — whose units FIFO books at the reinvested amount, so without
  * the income term a daily-IDCW liquid fund reads 0.00% however much it paid.
