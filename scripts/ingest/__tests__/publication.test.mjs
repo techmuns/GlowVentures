@@ -20,7 +20,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 fs.mkdirSync(path.join(ROOT, '.cache'), { recursive: true });
 const doc = (overrides = {}) => deriveDocument(makeDocument({ docKey: 'hdfc-123-2026-10-01', provider: 'HDFC Mutual Fund',
   accountNo: '123', owner: 'Ajay Jaisinghani', ownerId: 'ajay-jaisinghani', asOf: '2026-10-01', reportType: 'holdings', status: 'ok',
-  sourcePath: 'source/test.pdf', holdings: [makeHolding({ security: 'Example Fund', isin: 'INF000000001', quantity: 10, totalCost: 90, marketPrice: 12, source: 'hdfc-123-2026-10-01' })], ...overrides }));
+  sourcePath: 'source/test.pdf', holdings: [makeHolding({ security: 'Example Fund', isin: 'INF000000001', quantity: 10, totalCost: 90, marketPrice: 12, source: overrides.docKey ?? 'hdfc-123-2026-10-01' })], ...overrides }));
 const later = (overrides = {}) => doc({ docKey: 'hdfc-123-2026-10-21', asOf: '2026-10-21', ...overrides });
 const assess = (documents, baseline = [doc()], extra = {}) => assessPublication({ baseline, documents, ...extra });
 const has = (r, code) => r.issues.some(i => i.code === code);
@@ -49,6 +49,11 @@ test('new formats cannot borrow the only known account when no identifier was pr
 test('an issuer/account may have several securities and the same security may belong to several owners', () => {
   const next = later({ accountNo: '456', owner: 'Ankita Jaisinghani', ownerId: 'ankita-jaisinghani' });
   assert.equal(assess([doc(), next]).decision, 'verified');
+});
+test('an equal-valued row cannot borrow another account’s source document or dates', () => {
+  const next = later({ accountNo: '456', owner: 'Ankita Jaisinghani', ownerId: 'ankita-jaisinghani' });
+  next.holdings[0].source = doc().docKey;
+  assert.ok(has(assess([doc(), next]), 'CROSS_ACCOUNT_SOURCE'));
 });
 test('a new ISIN cannot quietly reuse an existing security key', () => {
   const next = later(); next.holdings[0].isin = 'INF999999999';

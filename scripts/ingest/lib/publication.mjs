@@ -109,6 +109,9 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
       }
       for (const [i, r] of rows.entries()) {
         const ptr = `/${section}/${i}`;
+        const referenced = typeof r.source === 'string' ? byKey.get(r.source) : null;
+        if (referenced && accountKey(referenced) !== accountKey(d)) add('CROSS_ACCOUNT_SOURCE', d,
+          'A financial row points to a different provider/account. It cannot supply this account’s figures or dates.', ptr);
         walk(r, (v, p) => {
           const field = p.split('/').at(-1);
           if (v != null && numericFields.has(field) && (typeof v !== 'number' || !Number.isFinite(v))) add('INVALID_NUMBER', d, 'A numeric field is not a finite number or null.', ptr + p);
