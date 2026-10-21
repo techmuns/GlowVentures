@@ -143,8 +143,15 @@
 - `functions/api/real-estate.js` uses the existing authenticated GitHub dashboard store, one key per property, with bounded requests and same-origin writes. Saves are acknowledged after the store commits; a failed save retains the editor. Only confirmed coordinates are plotted. Co-located properties share a selectable pin; unpinned properties remain listed. Leaflet and attributed OpenStreetMap tiles need no paid API or new credentials.
 - `test:real-estate` covers ownership arithmetic, missing values, validation, CRUD and endpoint failure contracts. The localhost-only browser check uses the real handler and an in-memory store for creation, editing, persistence, filters, map/details parity, coincident pins, deletion, themes and mobile layout; CI runs it with the existing browser checks.
 
+### Stage 10gh — RETURN ATTRIBUTION FOLLOWS THE PERIOD AND SHOWS COVERED TOTALS
 
-### Stage 10gh — EXCEL EXPORTS IGNORE DISPLAY FILTERS
+- The period and return-type toolbar now drives the attribution table. Dated windows use the shared verified account inputs (including proven nil origins), opening market values and dated capital; Absolute uses Modified Dietz, XIRR uses dated flows, and CAGR keeps its history requirements. Since-investment Absolute includes all usable purchase-cost records and exits while excluding incomplete sales and missing valuations individually.
+- Total gain and return show the measurable subset, labelled “available data”, with the covered holding count and value. Separate i buttons beside gain and return explain the amount covered, actual statement dates, accounts used and the records still needed in plain English. Missing data is never zero. This is the family's explicit exception to the older whole-portfolio refusal on this table.
+- Whole-account returns that cannot be assigned to a stock/sector without inventing historical holding values stay in a named “Account returns without a holding split” row. Values, gains and Absolute contributions tie out across axes; XIRR/CAGR percentages are never added. Statement values keep live prices out of historical calculations. Account children identify the return's source.
+- Arithmetic regressions cover every period and axis on the real archive, distinct return measures, valid partial totals, missing costs/sales/valuations, whole mandates, exited holdings and unsplit accounts. Browser regression changes the actual toolbar and checks totals, info cards and narrow layouts.
+
+
+### Stage 10gi — EXCEL EXPORTS IGNORE DISPLAY FILTERS
 
 - Excel snapshots read the complete family dataset and bypass table search,
   category, entity, side and date filters. Private Market includes funds and
