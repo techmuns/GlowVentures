@@ -68,6 +68,14 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
             : selection.inception ? 'The gain is divided by the purchase cost of the holdings and units sold, or the money paid into a whole managed account.'
             : 'The gain is divided by the money at work. Money added later counts only for the days it was invested.'}</p>
         </>}
+        {l.units.length > 0 && <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm" data-attribution-amounts>
+          {(l.measured?.working ? [
+            ['Starting value', l.measured.working.opening], ['Money added', l.measured.working.capitalIn],
+            ['Money taken out', l.measured.working.capitalOut], ['Closing value', l.measured.working.closing],
+          ] : [['Purchase cost / money paid in', l.invested], ['Closing value', closing]]).map(([label, amount]) =>
+            <div className="contents" key={String(label)}><dt className="text-slate-400">{label}</dt><dd className="text-right tabular text-slate-100">{money(amount as number)}</dd></div>)}
+          <dt className="text-slate-400">Gain / loss</dt><dd className="text-right tabular text-slate-100">{money(l.gain!, true)}</dd>
+        </dl>}
         {field === 'return' && l.returnPct == null && <p className="rounded-lg bg-ink-900 p-3">{reason(l)}</p>}
         <div data-attribution-missing>
           <p className="font-semibold text-slate-100">What is missing?</p>
