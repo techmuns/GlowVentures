@@ -350,6 +350,14 @@ export type Position = {
    */
   reviewSource?: { sheet: "Private Investments" | "Alternate" | "Equity" | "Debt"; block: "Private Investments" | "PE Funds" | "Direct Equity - Unlisted" | "Debt"; row: number };
   /**
+   * WHEN THE MONEY WENT IN, as the review's "Date investment range" column
+   * prints it (Stage 10ey): the first and the last date, each a day
+   * (`YYYY-MM-DD`) or, where the review prints only a month ("Feb 20 - Jul 23"),
+   * a month (`YYYY-MM`) — never widened to a day it does not name. One date is
+   * `from === to`. Null on a review line whose cell is blank or not a date.
+   */
+  investedDates?: { from: string; to: string; text: string } | null;
+  /**
    * PER-UNIT figures, and NULLABLE — not every provider prints them.
    *
    * The four PMS appraisals print a Unit Cost and a Market Price on every row.
