@@ -4847,3 +4847,14 @@ current unrealized P&L."*
 - A sector the index holds and the set does not is a "₹0 none held" row: a computed zero.
 - Two bars per sector, family and index, replace the donut, in the NAV chart's book and index colours. The factsheet date shows under the title.
 - `check:pages`: new `cio-sectors-vs` (Consolidated vs Nifty 500) and `cio-sectors-vs-direct` (Direct Equity vs Nifty 50) routes. The index column is re-derived from the JSON. The `cio-sectors` route asserts the control opens Off. `test:family` gains `index sectors`.
+
+### Stage 10ff — ONE DRILL-DOWN PAGE PER PMS STRATEGY AND CLUBBED FUND, EVERY MEMBER ON IT
+
+*"VEC main heading needs to have hyperlink that will open a single drill down page for all the transactions and different family entities as well, we do not need to make separate drill down page for separate entities … Remove the hyperlink from the Ajay and Ankita Jaisinghani account number … Follow this across all the PMS and AIFs funds."*
+
+- **Monitor.** A strategy run for several members (V.E.C, Goldstandard, SVAN, Green Lantern) now links from its NAME to `/mandate/<first account id>`; the per-account lines under it are plain text. A fund clubbed across unit classes (Sanshi A2/E) links from its name to the new `/fund/:fund`; its class lines are plain text. Single-class AIFs keep their `/stock/` page, which already lists every holder.
+- **`/mandate/:accountId`** serves the WHOLE strategy when the account is one of several with current holdings (same provider and `mandateLabel`), at any of their addresses: tiles over all accounts (FIFO pooled, never an average), a "Who holds it" table (one line per account: as-of, holdings, invested, value, share, P&L, realised, return; total = column sums), every holding with a Held-by column (one company's lines kept together), then each account's capital card and dealing card, titled with the member. A lone account keeps the old page; a member scope that leaves one account shows that account's page.
+- **`/fund/:fund`** is the same page for a clubbed fund (case-blind name match), without dealing cards.
+- `useHoldingsSources` reads each account's document totals so the strategy's Statement total hover names every account's printed total.
+- The capital card's long "Why:" line is now the hover on "no appreciation or return is struck" (this also fixes main's `mandate-sector` prose finding).
+- **Checks:** the two Monitor link invariants now require the name link on every row and no link on any account line. The `mandate-fifo` date, Invested and FIFO checks are struck over the strategy (`strategyIdsOf`). New routes `mandate-strategy` and `fund-clubbed` assert one line per holding account, holdings that add to the headline, and no per-account page link. A Monitor invariant checks the clubbed fund's `/fund/` link.
