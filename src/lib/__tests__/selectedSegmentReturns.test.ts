@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { selectedSegmentReturns, sinceInvestmentUnits, UNSPLIT_RETURNS, type ReturnSelection } from '../selectedSegmentReturns';
+import { selectedSegmentReturns, sinceInvestmentUnits, returnGapText, UNSPLIT_RETURNS, type ReturnSelection } from '../selectedSegmentReturns';
 import { accountInputs, windowReturns, periodStart, measureWindow, type AccountWindow } from '../periodReturns';
 import { currentHoldings, dedupedPositions } from '../analytics';
 import { exitedRows } from '../drilldown';
@@ -74,3 +74,6 @@ console.log('Selected attribution periods, measures, covered totals, exits, gaps
 const quoted = selectedSegmentReturns([pos({ marketValue: 999 }), noCost], [], [acct('a')], 'security', { ...sel, inception: true }, () => null, [pos()]);
 near(quoted.total.value, 1119); near(quoted.total.gain, 20); near(quoted.total.returnPct, 20);
 assert.equal(quoted.total.missing.length, 1); near(quoted.closingValue, 120);
+
+assert.match(returnGapText('Opening valuation and complete dated cash flows are missing', '2026-03-31'), /worth at the start.*money added and taken out/);
+assert.match(returnGapText("the family's review values its lines on one date, so no window can be struck over it", '2026-03-31'), /value at the start and end/);

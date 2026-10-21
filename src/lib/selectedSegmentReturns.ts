@@ -136,7 +136,8 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
 export function returnGapText(reason: string, start: string | null): string {
   if (/purchase or sale/.test(reason)) return 'The purchase or sale record is incomplete. We need all purchase costs and sale amounts before this holding can be included.';
   if (/Only the purchase|purchase cost/.test(reason)) return reason;
-  if (/no statement values it on or before|record opens on|days earlier|no.*opening|opening value/i.test(reason))
+  if (/review values.*one date/i.test(reason)) return 'The review shows a value for only one day. We need its value at the start and end of this period, plus dated money added or taken out.';
+  if (/no statement values it on or before|record opens on|days earlier|no.*opening|opening value|opening valuation/i.test(reason))
     return `We need a statement showing what this account was worth at the start${start ? ` (${start})` : ''}, plus dated money added and taken out through a later statement.`;
   if (/no statement values it after|before any statement values it after|no statement.*values|no valuation|held at.*cost/i.test(reason))
     return `We need a later statement showing what this investment is worth.`;
