@@ -91,7 +91,6 @@ jobs:
           done
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-real-estate.mjs
-          CHROME="$(command -v google-chrome)" node scripts/dev/check-real-estate-google.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-sector-return-details.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-publication-refresh.mjs

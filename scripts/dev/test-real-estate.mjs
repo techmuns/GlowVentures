@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { validateProperty, propertyFigures, propertyTotal, hasPin, propertyShare } from "../../shared/realEstate.mjs";
 import { onRequest } from "../../functions/api/real-estate.js";
 import { property, memoryStore } from "./real-estate-fixtures.mjs";
-import { onRequest as mapsConfig } from "../../functions/api/property-map-config.js";
+import { handlePropertyGeocode } from "../../functions/api/property-geocode.js";
 const store = memoryStore();
 const site = "https://local.example";
 let checks = 0;
@@ -56,10 +56,30 @@ assert.equal((await call({ op: "save", property: property({ value: -1 }) })).sta
 assert.equal((await call()).headers.get("cache-control"), "no-store");
 const broken = { ...store, flush: async () => { throw new Error("offline"); } };
 assert.equal((await call({ op: "save", property: property() }, { env: { DASHBOARD_STORE: broken } })).status, 502);
-const mapSettings = (env, method = "GET") => mapsConfig({ request: new Request(`${site}/api/property-map-config`, { method }), env });
-assert.deepEqual(await mapSettings({}).json(), { enabled: false });
-assert.deepEqual(await mapSettings({ GOOGLE_MAPS_BROWSER_KEY: "browser-test-key" }).json(), { enabled: false }, "Both a browser key and a production map ID are required.");
-assert.deepEqual(await mapSettings({ GOOGLE_MAPS_BROWSER_KEY: " browser-test-key ", GOOGLE_MAPS_MAP_ID: " test-map ", GLOW_GITHUB_TOKEN: "must-never-be-returned" }).json(), { enabled: true, apiKey: "browser-test-key", mapId: "test-map" });
-assert.equal(mapSettings({}).headers.get("cache-control"), "no-store");
-assert.equal(mapSettings({}, "POST").status, 405);
+const feature = (coordinates, properties = {}) => ({ type: "Feature", geometry: { type: "Point", coordinates }, properties: { name: "Test address", city: "Mumbai", state: "Maharashtra", country: "India", type: "house", ...properties } });
+let externalCalls = 0;
+const cacheData = new Map();
+const cache = { match: async key => cacheData.get(key.url)?.clone(), put: async (key, response) => cacheData.set(key.url, response) };
+const geocode = (address = "Test address, Mumbai", { fetcher = async url => { externalCalls++; assert.equal(new URL(url).hostname, "photon.komoot.io"); return Response.json({ features: [feature([72.8777, 19.076]), feature([72.8777, 19.076]), feature([200, 95]), feature([0, 0], { name: "Test zero", housenumber: "1" })] }); }, method = "GET", env = {}, crossSite = false } = {}) => handlePropertyGeocode({ request: new Request(`${site}/api/property-geocode?${new URLSearchParams({ address })}`, { method, headers: crossSite ? { "sec-fetch-site": "cross-site" } : {} }), env }, { fetcher, cache });
+const found = await geocode();
+assert.equal(found.headers.get("cache-control"), "no-store");
+const located = (await found.json()).matches;
+assert.equal(located.length, 2, "Duplicate/invalid points are removed.");
+assert.deepEqual(located[0].point, [19.076, 72.8777], "GeoJSON longitude/latitude is converted correctly.");
+assert.equal(located[0].approximate, true);
+assert.equal(located[1].approximate, false);
+assert.deepEqual(located[1].point, [0, 0]);
+await geocode(" Test   address, Mumbai "); assert.equal(externalCalls, 1, "Repeated searches reuse the normalized edge cache.");
+assert.equal((await geocode("ab")).status, 400);
+assert.equal((await geocode("x".repeat(501))).status, 400);
+assert.equal((await geocode("a valid address", { method: "POST" })).status, 405);
+assert.equal((await geocode("a valid address", { crossSite: true })).status, 403);
+assert.equal((await geocode("a valid address", { env: { PROPERTY_GEOCODER_URL: "http://unsafe.invalid" } })).status, 503);
+for (const [name, fetcher, status] of [
+  ["no match", async () => Response.json({ features: [] }), 200],
+  ["rate limited", async () => new Response("", { status: 429 }), 429],
+  ["offline", async () => { throw new Error("offline"); }, 502],
+  ["invalid body", async () => Response.json({ other: [] }), 502],
+  ["oversized", async () => new Response("x".repeat(262145)), 502],
+]) { const reply = await geocode(`Test ${name}`, { fetcher }); assert.equal(reply.status, status); if (name === "no match") assert.deepEqual(await reply.json(), { matches: [] }); }
 console.log(`${checks} real-estate checks passed, plus CRUD and failure contracts.`);

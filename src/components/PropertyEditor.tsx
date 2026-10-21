@@ -108,6 +108,7 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
           <span className="text-xs text-slate-400">{point ? "Pin set" : "No pin set"}</span>
         </div>
         {locationMessage && <p className="mt-2 text-xs text-slate-400" role="status">{locationMessage}</p>}
+        {(mapOpen || matches.length > 0) && <p className="mt-1 text-xs text-slate-400">Address search: <a className="underline" href="https://photon.komoot.io" target="_blank" rel="noopener noreferrer">Photon</a> · © <a className="underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a></p>}
         {matches.length > 0 && <div className="mt-2 grid gap-2" aria-label="Matching addresses">{matches.map((match, i) => <button type="button" key={i} className="rounded-md border border-ink-600 p-3 text-left text-sm hover:bg-ink-800" onClick={() => locate(match)}>{match.label}{match.approximate && <span className="ml-2 text-xs text-slate-400">Approximate</span>}</button>)}</div>}
         {mapOpen && <div className="mt-3"><p className="mb-2 text-xs text-slate-400">Find the address, then drag the pin to the exact spot. You can also click the map to place it.</p><Suspense fallback={<div className="p-8 text-sm text-slate-400">Loading map…</div>}><PropertyMap point={point} onPick={pick} /></Suspense></div>}
       </div>
