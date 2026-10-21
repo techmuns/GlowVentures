@@ -151,7 +151,11 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
 
 /** Source-specific, plain wording for the table's missing-record cards. */
 export function returnGapText(reason: string, start: string | null): string {
+  if (/sale proceeds|sale amounts?.*unverified|unverified.*sale/i.test(reason))
+    return 'The amount received from selling units has not been verified. We need the sale statement showing what was sold and how much money came back.';
   if (/purchase or sale/.test(reason)) return 'The purchase or sale record is incomplete. We need all purchase costs and sale amounts before this holding can be included.';
+  if (/live price.*purchase.cost.*statement valuation/i.test(reason))
+    return 'We have a current price. We still need a verified purchase-cost record and a statement value to calculate this holding’s gain.';
   if (/Only the purchase|purchase cost/.test(reason)) return reason;
   if (/nil throughout|held nothing|no invested capital|balance is nil/i.test(reason)) return 'This account had no money invested during the selected dates. Its current holdings are outside this period.';
   if (/review values.*one date/i.test(reason)) return 'The review shows a value for only one day. We need its value at the start and end of this period, plus dated money added or taken out.';

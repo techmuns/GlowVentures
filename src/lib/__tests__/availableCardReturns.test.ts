@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { availableCardReturns, statementReturnInputs } from '../availableCardReturns';
 import { currentHoldings, dedupedPositions } from '../analytics';
+import { returnGapText } from '../selectedSegmentReturns';
 import type { Account, Portfolio, Position } from '../types';
 import type { AccountInput } from '../periodReturns';
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from '../../data/glowData';
@@ -33,6 +34,9 @@ near(r.gain.total.units.reduce((s, u) => s + Object.values(u.gainParts!).reduce<
 assert.equal(r.gain.coveredHoldings, 1); near(r.gain.coveredValue, 12000);
 assert.ok(r.gain.total.missing.some(g => /Missing purchase/.test(g.label) && /purchase cost/.test(g.reason)));
 assert.ok(r.gain.total.missing.some(g => /Unchecked sale/.test(g.label) && /sale record/.test(g.reason)));
+const saleExplanation = returnGapText('Sale proceeds are unverified on review row(s) 474; original lots establish remaining cost only', null);
+assert.match(saleExplanation, /sale statement showing what was sold/);
+assert.doesNotMatch(saleExplanation, /review row|original lots/);
 near(r.fytd.total.gain, 12); near(r.history.total.gain, 12);
 assert.equal(r.history.to, '2026-09-30'); // Never advanced to today / a live mark.
 assert.equal(r.history.total.measured?.basis, 'window');
