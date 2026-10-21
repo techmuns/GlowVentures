@@ -1206,7 +1206,7 @@ const CAPITAL_KINDS = new Set(["contribution", "withdrawal"]);
 function capitalRecordFromInception(cashFlows) {
   const all = cashFlows ?? [];
   /**
-   * A CLASS CAN BEGIN WITH A SWITCH (Stage 10fc). Motilal Oswal's Hedged Equity
+   * A CLASS CAN BEGIN WITH A SWITCH (Stage 10ff). Motilal Oswal's Hedged Equity
    * moved its whole B2 holding into F1 on 31 Jul 2024, and Buoyant's A4 class
    * was born of A1 the same way: the new class's first row is the switch's
    * INCOMING leg, not a contribution. It is the class's origin exactly as a

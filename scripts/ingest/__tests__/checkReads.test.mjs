@@ -136,7 +136,7 @@ const accepted = [
   ok("…nor a newer report whose own value bridge misses its total — the last verified record stands", r.code === 0, r.out);
 }
 
-// ── Stage 10fc: a redeemed investment's history is read and reaches the book ──
+// ── Stage 10ff: a redeemed investment's history is read and reaches the book ──
 const PRINTED = "Transaction Details : Class B2\n29-07-2024 Contribution - - 13,00,00,000.00\n31-07-2025 Unit Redemption-Payout 8.5353 (1,31,09,904.680) (11,18,96,969.42)";
 {
   const redeemed = holdingsDoc("hedged", "2026-09-30", { pageText: PRINTED, holdings: [{ securityKey: "x", marketValue: 0 }] });

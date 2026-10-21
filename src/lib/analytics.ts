@@ -793,7 +793,7 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
   "invesco-india-arbitrage-fund-regular-plan-growth-af-gp": "Invesco September folio statement (INF205K01122) — Arbitrage Fund; the family's cash-equivalent rule",
   "motilal-oswal-liquid-fund-direct-plan-growth": "Motilal folio statement (INF247L01734) — Liquid Fund; the family's cash-equivalent rule",
   /**
-   * HOPE INDIA TRUST'S FOLIOS (Stage 10fc) — in the book as its own entity since
+   * HOPE INDIA TRUST'S FOLIOS (Stage 10ff) — in the book as its own entity since
    * the family's decision of 21 Oct 2026 (shared/owners.mjs). Every scheme it
    * holds is a liquid fund by the name its own statement prints; two Kotak
    * schemes on the same folio are the same fund's Direct and Regular plans.

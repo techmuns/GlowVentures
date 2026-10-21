@@ -196,7 +196,7 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
   ["Bandhan Large & Mid Cap Fund - Direct Plan - Growth", ["INF194K01V89"]],
   ["ICICI Pru India Opportunities Fund", ["INF109KC1RH9"]],
   ["ICICI Prudential Equity Savings Fund - Direct Plan", ["INF109KA11J9"]],
-  // Kotak Large & Midcap left this table at Stage 10fc: Ajay's Kotak folio
+  // Kotak Large & Midcap left this table at Stage 10ff: Ajay's Kotak folio
   // 7125255 holds the scheme under a spelling the name tier reaches, so the
   // line is no longer a gap for this tier to withhold.
   ["Kotak Multicap Fund-Direct Plan-Growth", ["INF174KA1HV3"]],
@@ -209,7 +209,7 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
   // Aarti's demat walks to 5,169.754 Liquid BeES units on 30 June and Bharat's
   // to 3,816.251, the review's two closings.
   ["Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW", ["INF732E01037"]],
-  // HDFC Balanced Advantage Fund left this table at Stage 10fc: Ajay's
+  // HDFC Balanced Advantage Fund left this table at Stage 10ff: Ajay's
   // 83,001.863 and Ankita's 49,917.632 units, once "on no statement", are the
   // closing balances of their HDFC folios 15644806 and 16002141, whose scheme
   // name the name tier reaches — so the line is no longer a gap. (Section H of
@@ -239,7 +239,7 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
  *
  * The review files four Cash-tab lines under HOPE INDIA TRUST. That trust's
  * own AMC folio statements are in the drop and report each of them. Until
- * Stage 10fc the book kept the trust out as a separate taxpayer; since the
+ * Stage 10ff the book kept the trust out as a separate taxpayer; since the
  * family's decision of 21 Oct 2026 it is in the book as its own entity
  * (`shared/owners.mjs`), and each folio is an account here. Either way the
  * sentence "no statement reports it" is false, and its ask ("AMC folio

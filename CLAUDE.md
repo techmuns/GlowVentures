@@ -127,7 +127,8 @@ One line per area; the history files explain each in depth.
   security key → ISIN → name → brand → folio; Stage 10eo), `enteredProfiles.ts`
   (the same cells typed on the table, shown over a file's; Stage 10ev).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
-  `benchmarks.ts` (seven indices, name-checked), `indices.ts`, `periodReturns.ts`
+  `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
+  weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
   (Morning CIO Returns tab), `segmentReturns.ts` (its attribution section:
   FIFO gain and contribution by any axis, tied to the Gain / Loss tile),
   `returnMeasures.ts`, `returnColumns.ts`.
@@ -366,7 +367,7 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   carries nor excludes by name, a book date older than the newest statement
   read, a statement that PRINTS dated transactions while its reading carries
   none (opening-unit markers do not count), and a dated contribution or
-  withdrawal with no capital move in the book that day (Stage 10fc — a fully
+  withdrawal with no capital move in the book that day (Stage 10ff — a fully
   redeemed investment's history is data). Never silence it by widening the note
   list or the accepted list for a file a reader could read: write the reader.
 - **Every file feeds the dashboard** (the family, 21 Oct 2026), except the held-
@@ -463,7 +464,8 @@ And:
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,
   `replay:movements`, `replay:flows`, `replay:flow-lines`,
   `replay:demat-holdings`.
-- Reference data: `build-symbols`, `build-sectors`, `build-fund-navs`,
+- Reference data: `build-symbols`, `build-sectors`, `build-index-sectors`
+  (monthly; index sector weights), `build-fund-navs`,
   `build-upstox-instruments`, `build-scheme-names`, `build-lookthrough`
   (`-- --reindex` needs no AmfiBeas checkout), `build-polycab`, `harvest`,
   `probe:sources`.
