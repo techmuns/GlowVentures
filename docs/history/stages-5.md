@@ -4769,3 +4769,12 @@ cells just like the capital call cells."*
 - **`BookFolio.invested`** (`investedSpanOf`) takes the review line's dates first, then the capital account's first and last dated call. An income-only view carries none: its units are the valued line's. `figuresOf` spans the earliest to the latest over the same folios `asOf` reads, and counts how many of them carry a date (`investedOf` of `investedAcross`).
 - **Private Market gains a "Date of investment" column** after the name (`data-col-cell="invested"`, `data-invested`). It shows one date, or a "first → last" range. A row where only some folios carry a date says "N of M folios". A row with no dated folio renders `—` with the reason. The column sorts by first date.
 - `privateBook.test.ts` checks the span on constructed folios and checks that every review line on the table is dated by the review.
+
+### Stage 10fa — DIRECT, PMS AND FUND EXPOSURE APART IN THE SECTOR AND SECURITY DRILL-DOWNS
+
+*"we need to show the clear distinction in holdings as well. Make direct, PMS and fund exposure clear in sector drill-downs."*
+
+- **Sector Composition's issuer drill-down** (Consolidated, a sector opened) printed one `Direct + PMS` figure per issuer. It now has Direct, PMS, Via funds · derived and Total exposure. A route that holds none of an issuer is an `AbsentCell` with its reason, never ₹0. A footer sums each column from its rows, so Total = Direct + PMS + Via funds.
+- **The Portfolio Monitor's All Securities axis** gains Direct and PMS columns before `Direct + PMS`, which stays as their subtotal: Invested, P&L and Return are struck on it. Each account line under a company puts its value in its own route's column, and the "Counted once" line subtracts the overlap there too. The footer totals both columns.
+- One split, `measuredSplit` in `src/lib/heldThrough.ts`, over the deduped set the measured cell already sums. The route is the account's engagement through `holdingRoute`/`heldRouteOf`. An account that is neither own nor PMS gets an "Other accounts" column on both pages, drawn only when the book has one (none today).
+- `check:pages`: `COL_STOCK` moves two places for the new columns. New invariants check that Direct and PMS add to Direct + PMS on the footer and every row, and that each route's footer matches the book's own figure off account engagement. A new `sectorSplit` probe opens the largest sector and checks each issuer's routes add to its Total, and that the footer ties to its rows.

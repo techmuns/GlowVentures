@@ -18,16 +18,34 @@ import { isArbitrageFund } from "@/lib/fundNavs";
 import { UNCLASSIFIED } from "@/lib/sectors";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { fmtPct, fmtCurrency, changeColor, fmtDate } from "@/lib/format";
-import { SortHeader, Tr } from "@/components/SortHeader";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { heldRouteOf, measuredSplit, HELD_ROUTE_NOTE, type MeasuredSplit } from "@/lib/heldThrough";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { withReviewAccessors } from "@/lib/reviewColumns";
 import type { Position } from "@/lib/types";
 
 /** The sector table's columns, in the order its rows write their cells. */
 const SECTOR_COLS = ["sector", "value", "weight", "count", "return", "top"] as const;
-/** ...and the two breakouts a sector row opens into. */
-const SECTOR_COMPANY_COLS = ["company", "measured", "derived", "total", "share"] as const;
+/**
+ * ...and the two breakouts a sector row opens into. An issuer row carries its
+ * measured half split by who chose the shares — the family's own account, a
+ * PMS manager — beside the derived fund half, so the three never read as one.
+ */
+const SECTOR_COMPANY_COLS = ["company", "direct", "pms", "derived", "total", "share"] as const;
+const SECTOR_COMPANY_COLS_OTHER = ["company", "direct", "pms", "other", "derived", "total", "share"] as const;
 const SECTOR_HOLDING_COLS = ["security", "entity", "heldVia", "value", "share", "return"] as const;
+/** Why an issuer's route cell is empty when a statement does report it — through the other route. */
+const ROUTE_ABSENT: Record<"direct" | "manager" | "other", string> = {
+  direct: "No own demat or broking statement reports this issuer — the statements that do are the other accounts on this row.",
+  manager: "No PMS mandate's statement reports this issuer — the statements that do are the other accounts on this row.",
+  other: "Every statement reporting this issuer is the family's own account or a PMS mandate.",
+};
+/** ...and the sector's footer, where no issuer in it takes the route. */
+const ROUTE_ABSENT_SECTOR: Record<"direct" | "manager" | "other", string> = {
+  direct: "no own demat or broking statement reports any issuer in this sector",
+  manager: "no PMS mandate's statement reports any issuer in this sector",
+  other: "no issuer in this sector is reported by an account other than the family's own or a PMS mandate",
+};
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
 import { returnFormula, weightFormula } from "@/lib/auditFormulas";
@@ -289,7 +307,19 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const sectorView = useTableView("sectors", SECTOR_COLS, { reviewKind: "sector" });
-  const companyView = useTableView("sector-companies", SECTOR_COMPANY_COLS);
+  /**
+   * AN "OTHER ACCOUNTS" COLUMN ONLY WHERE THE BOOK HAS ONE. A company share in
+   * an account that is neither the family's own nor a PMS mandate is named in
+   * its own column rather than folded into Direct — and none is in this drop,
+   * so a column of dashes is not drawn for it.
+   */
+  const otherRouteHeld = useMemo(() => {
+    if (!portfolio) return false;
+    const idx = accountIndex(portfolio.accounts);
+    return currentHoldings(consolidated)
+      .some((x) => isCompanyShare(x) && heldRouteOf(holdingRoute(engagementOf(idx, x) || null)) === "other");
+  }, [portfolio, consolidated]);
+  const companyView = useTableView("sector-companies", otherRouteHeld ? SECTOR_COMPANY_COLS_OTHER : SECTOR_COMPANY_COLS);
   const holdingView = useTableView("sector-holdings", SECTOR_HOLDING_COLS, { reviewKind: "holding" });
   /**
    * THE SECTORS BEING COMPARED. `null` until the reader picks, which reads as
@@ -330,6 +360,8 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
    * ACCOUNT (`engagementOf`), never from the position.
    */
   const routeOf = (x: Position) => holdingRoute(engagementOf(accIdx, x) || null);
+  /** One issuer's measured half by route — the Direct / PMS cells of the drill-down. */
+  const splitOf = (e: CompanyExposure): MeasuredSplit => measuredSplit(e.positions, routeOf);
   const mandateRows = p.filter((x) => routeOf(x) === "mandate");
   const ownRows = p.filter((x) => routeOf(x) === "own");
   // `unknown` is never defaulted, so this is empty in this drop and must still
@@ -1088,7 +1120,9 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                     }, (h) => ({ positions: [h] }), memberScope.owners !== null));
                     const companies = sortRows(companiesBySector[s.key] ?? [], companyView.sort, {
                       company: (e) => e.name,
-                      measured: (e) => (e.positions.length ? e.measured : null),
+                      direct: (e) => splitOf(e).direct,
+                      pms: (e) => splitOf(e).manager,
+                      other: (e) => splitOf(e).other,
                       derived: (e) => (e.derived > 0 ? e.derived : null),
                       total: (e) => e.total,
                       share: (e) => e.total,
@@ -1156,15 +1190,38 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                               <div className="overflow-hidden rounded-lg border border-ink-700 bg-ink-800">
                                 <div className="max-h-[320px] overflow-auto">
                                   {consolidatedView ? (
-                                    /* ONE ROW PER COMPANY, BOTH HALVES APART. A company only a
-                                       fund discloses has no position, no quantity and no cost,
-                                       and every measured cell on such a row is ABSENT WITH ITS
-                                       REASON rather than ₹0. */
+                                    /* ONE ROW PER COMPANY, EVERY ROUTE APART. Direct and PMS are
+                                       what the statements report, split by who chose the shares;
+                                       Via funds is DERIVED from the funds' filings. A route that
+                                       holds none of a company is ABSENT WITH ITS REASON rather
+                                       than ₹0, and the sector's own split is the footer. */
+                                    (() => {
+                                      const splits = new Map(companies.map((e) => [e.key, splitOf(e)]));
+                                      const routeCell = (e: CompanyExposure, k: keyof MeasuredSplit) => {
+                                        const v = splits.get(e.key)![k];
+                                        if (v !== null) return fmtFromBase(v, { compact: true });
+                                        return <AbsentCell reason={e.positions.length === 0
+                                          ? "No statement in this book reports this issuer as a holding — the family owns it only through a fund, and what a fund holds is disclosed by the AMC rather than reported about this family."
+                                          : ROUTE_ABSENT[k]} />;
+                                      };
+                                      const footSum = (k: keyof MeasuredSplit) => sumOrNull(companies.map((e) => splits.get(e.key)![k]));
+                                      const foot = { direct: footSum("direct"), manager: footSum("manager"), other: footSum("other") };
+                                      const footDerived = sum(companies.map((e) => e.derived));
+                                      const footTotal = sum(companies.map((e) => e.total));
+                                      const footCls = "border-t border-ink-700 bg-ink-900/40 px-3 py-1.5 text-right mono whitespace-nowrap";
+                                      const footRoute = (k: keyof MeasuredSplit, col: string) => (
+                                        <td key={col} className={`${footCls} text-slate-100`} data-sector-foot={col}>
+                                          {foot[k] === null ? <AbsentCell reason={ROUTE_ABSENT_SECTOR[k]} /> : fmtFromBase(foot[k], { compact: true })}
+                                        </td>
+                                      );
+                                      return (
                                     <table className="min-w-full text-[12px]" data-sector-companies>
                                       <thead className="sticky top-0 bg-ink-800">
                                         <Tr view={companyView} className="border-b border-ink-700/70">
                                           <SortHeader col="company" view={companyView} align="left" pad="px-3 py-1.5">Issuer</SortHeader>
-                                          <SortHeader col="measured" view={companyView} pad="px-3 py-1.5">Direct + PMS</SortHeader>
+                                          <SortHeader col="direct" view={companyView} pad="px-3 py-1.5" title={HELD_ROUTE_NOTE.direct}>Direct</SortHeader>
+                                          <SortHeader col="pms" view={companyView} pad="px-3 py-1.5" title={HELD_ROUTE_NOTE.manager}>PMS</SortHeader>
+                                          {otherRouteHeld && <SortHeader col="other" view={companyView} pad="px-3 py-1.5" title={HELD_ROUTE_NOTE.other}>Other accounts</SortHeader>}
                                           <SortHeader col="derived" view={companyView} pad="px-3 py-1.5"
                                             title="DERIVED, not a position: the AMC disclosed what the fund holds and this is the family's units' share of it. It is no part of the book's NAV — the fund's own value already stands for it there.">Via funds · derived</SortHeader>
                                           <SortHeader col="total" view={companyView} pad="px-3 py-1.5">Total exposure</SortHeader>
@@ -1172,18 +1229,20 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                         </Tr>
                                       </thead>
                                       <tbody className="divide-y divide-ink-700/50">
-                                        {companies.map((e) => (
-                                          <Tr view={companyView} key={e.key} className="hover:bg-ink-700/30" data-sector-company={e.key}>
+                                        {companies.map((e) => {
+                                          const sp = splits.get(e.key)!;
+                                          return (
+                                          <Tr view={companyView} key={e.key} className="hover:bg-ink-700/30" data-sector-company={e.key}
+                                            data-split-direct={sp.direct ?? ""} data-split-pms={sp.manager ?? ""} data-split-other={sp.other ?? ""}
+                                            data-split-derived={e.derived} data-split-total={e.total}>
                                             <td className="px-3 py-1.5 text-slate-200">
                                               {e.positions.length > 0
                                                 ? <StockLink securityKey={e.key} name={e.name} />
                                                 : <span title={`The family holds this issuer only inside a fund${e.classes.includes("Equity") ? "" : ", through its debt paper rather than a share"}, so the book carries no position for it and it has no page of its own.`}>{e.name}</span>}
                                             </td>
-                                            <td className="px-3 py-1.5 text-right mono text-slate-100">
-                                              {e.positions.length > 0
-                                                ? fmtFromBase(e.measured, { compact: true })
-                                                : <AbsentCell reason="No statement in this book reports this issuer as a holding — the family owns it only through a fund, and what a fund holds is disclosed by the AMC rather than reported about this family." />}
-                                            </td>
+                                            <td className="px-3 py-1.5 text-right mono text-slate-100">{routeCell(e, "direct")}</td>
+                                            <td className="px-3 py-1.5 text-right mono text-slate-100">{routeCell(e, "manager")}</td>
+                                            {otherRouteHeld && <td className="px-3 py-1.5 text-right mono text-slate-100">{routeCell(e, "other")}</td>}
                                             <td className="px-3 py-1.5 text-right mono text-champagne-400/90">
                                               {e.derived > 0
                                                 ? fmtFromBase(e.derived, { compact: true })
@@ -1194,9 +1253,30 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                               {s.mv > 0 ? ((e.total / s.mv) * 100).toFixed(1) : "0.0"}%
                                             </td>
                                           </Tr>
-                                        ))}
+                                          );
+                                        })}
                                       </tbody>
+                                      {/* THE SECTOR'S OWN SPLIT — each column summed from the rows
+                                          above it, so the footer ties to its columns and Total is
+                                          Direct + PMS + Via funds on the face of the table. */}
+                                      <tfoot className="sticky bottom-0">
+                                        <TrFoot view={companyView} className="border-t border-ink-700 bg-ink-900/40 px-3 py-1.5 text-left text-slate-400" data-sector-companies-foot
+                                          label={<span className="label-xs">Sector · {companies.length} issuers</span>}
+                                          cells={{
+                                            direct: footRoute("direct", "direct"),
+                                            pms: footRoute("manager", "pms"),
+                                            ...(otherRouteHeld ? { other: footRoute("other", "other") } : {}),
+                                            derived: <td key="derived" className={`${footCls} text-champagne-400/90`} data-sector-foot="derived">
+                                              {footDerived > 0 ? fmtFromBase(footDerived, { compact: true })
+                                                : <AbsentCell reason="no fund this store can read discloses any issuer in this sector at a value" />}
+                                            </td>,
+                                            total: <td key="total" className={`${footCls} font-medium text-slate-100`} data-sector-foot="total">{fmtFromBase(footTotal, { compact: true })}</td>,
+                                            share: <td key="share" className={`${footCls} text-slate-400`} data-sector-foot="share">{s.mv > 0 ? ((footTotal / s.mv) * 100).toFixed(1) : "0.0"}%</td>,
+                                          }} />
+                                      </tfoot>
                                     </table>
+                                      );
+                                    })()
                                   ) : (
                                     <table className="min-w-full text-[12px]">
                                       <thead className="sticky top-0 bg-ink-800">

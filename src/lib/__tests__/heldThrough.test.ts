@@ -35,7 +35,7 @@ import {
 } from "@/lib/analytics";
 import { fifoTotals } from "@/lib/fifo";
 import {
-  fundLinesFor, heldRouteOf, heldThrough, measuredTotals, HELD_ROUTES,
+  fundLinesFor, heldRouteOf, heldThrough, measuredSplit, measuredTotals, HELD_ROUTES,
 } from "@/lib/heldThrough";
 import { bookIsinBridge, familyValue, heldFundVehicles, loadStockExposure, type StockExposureState } from "@/lib/lookthrough";
 import type { Position } from "@/lib/types";
@@ -316,6 +316,23 @@ console.log("\n── the funds that disclose nothing are named, not dropped ─
       fl.covered + fl.aif.length + fl.unread.length === fl.considered,
       `${fl.covered} + ${fl.aif.length} + ${fl.unread.length} vs ${fl.considered}`);
   } else ok("the fund lines answer", false, fl.status);
+}
+
+console.log("\n── the measured half split by route (Stage 10fa) ──");
+{
+  let off = 0, both = 0, absentAsZero = 0;
+  for (const key of companyKeys) {
+    const rows = dedupedPositions(rowsOf(key));
+    const sp = measuredSplit(rows, routeOf);
+    if (!near((sp.direct ?? 0) + (sp.manager ?? 0) + (sp.other ?? 0), sum(rows.map((p) => p.marketValue)), 1)) off++;
+    if (sp.direct !== null && sp.manager !== null) both++;
+    for (const k of ["direct", "manager", "other"] as const) {
+      if (sp[k] === 0 && !rows.some((p) => heldRouteOf(routeOf(p)) === k)) absentAsZero++;
+    }
+  }
+  ok("Direct + PMS + Other is each company's measured value", off === 0, `${off} of ${companyKeys.length} off`);
+  ok("a route no row takes is null, never ₹0", absentAsZero === 0);
+  ok("some company is held both directly and in a mandate, so the split is exercised", both > 0, `${both} companies`);
 }
 
 console.log("\n── the states before the store answers ──");
