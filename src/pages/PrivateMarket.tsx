@@ -13,8 +13,8 @@ import { SearchInput } from "@/components/SearchInput";
 import { useViewParam } from "@/components/ViewToggle";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { CallCell, CallEditor } from "@/components/EnteredCalls";
-import { ProfileCellButton, ProfileEditor, profileTitle } from "@/components/EnteredProfiles";
-import { useEnteredProfiles, withEntered } from "@/lib/enteredProfiles";
+import { ProfileCellInput, profileTitle } from "@/components/EnteredProfiles";
+import { useEnteredProfiles, withEntered, enteredOf } from "@/lib/enteredProfiles";
 import {
   TREE_ROW, TREE_CELL, useExpanded, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
 } from "@/components/TreeTable";
@@ -73,9 +73,8 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
  */
 const BOOK_COLS = ["name", "strategy", "description", "invested", "committed", "called", "paid", "uncalled", "units", "cost", "value", "return", "weight", "asOf", "call"] as const;
 /**
- * STRATEGY AND DESCRIPTION ARE THE READER'S TO SWITCH ON (Edit Columns) — text
- * the family supplies, never a statement figure, so they start hidden and sit
- * beside the name they describe when shown (`investmentProfiles.ts`).
+ * Strategy and Description start visible beside the name, with their editable
+ * fields open. Explicit column visibility choices still belong to the reader.
  */
 const PROFILE_COLS: readonly ProfileFieldId[] = PROFILE_FIELDS;
 /**
@@ -469,7 +468,7 @@ export function PrivateMarket() {
   const measureKey = returnMeasures.join(",");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const bookCols = useMemo(() => withReturnCols(BOOK_COLS, returnMeasures), [measureKey]);
-  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", manualEditor: true, optional: PROFILE_COLS });
+  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", manualEditor: true });
   const callView = useTableView("pm-calls", CALL_COLS, { manualEditor: true });
   /**
    * THE CALLS THE FAMILY HAS ENTERED, and which row's editor is open. Called up
@@ -484,12 +483,12 @@ export function PrivateMarket() {
    *
    * *"give the option to edit and write information in the strategy and
    *  description cells just like the capital call cells."* The same shared
-   * store, keyed on the capital calls' own fund key, and the same editor-under-
-   * the-row. Typed text is laid over a supplied file's (`withEntered`), so every
+   * store, keyed on the capital calls' own fund key. The editor-under-
+   * the-row has been replaced by always-open inline fields. Typed text is laid
+   * over a supplied file's (`withEntered`), so every
    * cell, sort and search below reads ONE resolution.
    */
   const typedProfiles = useEnteredProfiles();
-  const [openProfile, setOpenProfile] = useState<{ row: string; field: ProfileFieldId } | null>(null);
   const typedList = typedProfiles.state.status === "ready" ? typedProfiles.state.profiles : [];
   const profileKeyOf = (f: BookFolio) => callKeyOf(f.fundKey, f.securityKey);
   const effFolio = (f: BookFolio): InvestmentProfile => withEntered(f.profile, typedList, profileKeyOf(f));
@@ -1213,17 +1212,6 @@ export function PrivateMarket() {
         onToggle={() => setOpenCall((cur) => (cur === rowId ? null : rowId))} />
     </td>
   );
-  /** The strategy/description editor, under its row, like the call editor below. */
-  const profileEditorRow = (edit: { rowId: string; keys: string[]; name: string } | undefined, profile: InvestmentProfile) =>
-    edit && openProfile?.row === edit.rowId && (
-      <tr key={`${edit.rowId}-profile`} className="bg-ink-900/60" data-pm-profile-editor={edit.rowId}>
-        <td colSpan={bookView.order.length} className="px-3 pb-3 pt-1">
-          <ProfileEditor keys={edit.keys} name={edit.name} profile={profile} entered={typedList}
-            state={typedProfiles.state} focus={openProfile.field}
-            onSave={typedProfiles.save} onRemove={typedProfiles.remove} onClose={() => setOpenProfile(null)} />
-        </td>
-      </tr>
-    );
   /** The editor, as a row under the one that opened it — never a floating panel the table's scroll could clip. */
   const callEditorRow = (rowId: string, fund: string, fundName: string) => openCall === rowId && (
     <tr key={`${rowId}-editor`} className="bg-ink-900/60" data-pm-call-editor={fund}>
@@ -1482,11 +1470,11 @@ export function PrivateMarket() {
      */
     capAlso?: { id: string; title: string };
     /**
-     * WHERE THE STRATEGY AND DESCRIPTION CELLS OPEN AN EDITOR: the row's id,
-     * the investments a save writes to, and the name the editor shows. Absent
+     * WHERE THE STRATEGY AND DESCRIPTION CELLS EDIT INLINE: the investments
+     * a save writes to, and the name used to label their fields. Absent
      * on a row that is not one investment (a family member), whose cells only read.
      */
-    profileEdit?: { rowId: string; keys: string[]; name: string };
+    profileEdit?: { keys: string[]; name: string };
   }): Cells => {
     const p = pad(k);
     const t = tone(k);
@@ -1639,11 +1627,12 @@ export function PrivateMarket() {
           <td key={col} data-col-cell={col} data-pm-profile={col} data-pm-profile-source={c.source ?? undefined}
             data-pm-profile-match={c.matchedOn ?? undefined} className={`${p} min-w-[14rem] max-w-[24rem] text-left ${k === "folio" ? "text-slate-400" : "text-slate-300"}`}>
             {edit
-              ? <ProfileCellButton cell={c} field={col} rowName={edit.name} state={typedProfiles.state}
-                  open={openProfile?.row === edit.rowId}
-                  onOpen={() => setOpenProfile((cur) => (cur?.row === edit.rowId && cur.field === col ? null : { row: edit.rowId, field: col }))} />
+              ? <ProfileCellInput cell={c} field={col} rowName={edit.name} funds={edit.keys} state={typedProfiles.state}
+                  entered={edit.keys.some((key) => !!enteredOf(typedList, key, col))}
+                  onSave={(text) => typedProfiles.save(edit.keys, col, edit.name, text)}
+                  onRemove={() => typedProfiles.remove(edit.keys, col)} />
               : c.value != null
-                ? <span className="line-clamp-3 whitespace-pre-line" title={profileTitle(c, false)}>{c.value}</span>
+                ? <span className="line-clamp-3 whitespace-pre-line" title={profileTitle(c)}>{c.value}</span>
                 : <AbsentCell reason={c.reason} />}
           </td>
         );
@@ -1748,7 +1737,7 @@ export function PrivateMarket() {
     // family member is not an investment: its folio lines edit instead.
     const groupProfile = effGroup(g);
     const groupEdit = g.kind === "owner" ? undefined
-      : { rowId: `fund:${g.key}`, keys: [...new Set(g.folios.map(profileKeyOf))], name: g.label };
+      : { keys: [...new Set(g.folios.map(profileKeyOf))], name: g.label };
     const rowSpansFunds = g.kind !== "owner" && spansFunds(g);
     const fundRowId = `fund:${g.key}`;
     return (
@@ -1793,7 +1782,6 @@ export function PrivateMarket() {
           }, "group")}
         </Tr>
         {fundCall && callEditorRow(fundRowId, fundCall, g.label)}
-        {profileEditorRow(groupEdit, groupProfile)}
         {open && kids.map(({ f, fig }, i) => {
           const s = scheme(f);
           // BY OWNER the folio is the fund level, so the call cell is here — on
@@ -1802,7 +1790,7 @@ export function PrivateMarket() {
           const folioCall = folioCallOn(g, f);
           const folioRowId = `owner:${g.key}:${f.key}`;
           const folioEdit = g.kind === "owner" && !f.viewOf
-            ? { rowId: `profile:${folioRowId}`, keys: [profileKeyOf(f)], name: f.fundName } : undefined;
+            ? { keys: [profileKeyOf(f)], name: f.fundName } : undefined;
           const viewOfLine = f.viewOf ? accName(f.viewOf) : null;
           return (
             <Fragment key={f.key}>
@@ -1884,7 +1872,6 @@ export function PrivateMarket() {
               }, "folio")}
             </Tr>
             {folioCall && callEditorRow(folioRowId, folioCall, f.fundName)}
-            {profileEditorRow(folioEdit, fig.profile)}
             </Fragment>
           );
         })}
