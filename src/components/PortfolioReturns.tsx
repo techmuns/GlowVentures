@@ -53,17 +53,16 @@ import { mandateLabel } from "@/lib/analytics";
 import { inScopeAccount } from "@/lib/memberScope";
 import { capitalClose, capitalMovesWithCalls, capitalRollup, capitalWindow } from "@/lib/tranches";
 import {
-  BOOK_ACCOUNT_NAV_HISTORY, BOOK_CAPITAL_FROM_INCEPTION, BOOK_CAPITAL_MOVES,
+  BOOK_ACCOUNT_NAV_HISTORY, BOOK_ACCOUNT_CASH_FLOWS, BOOK_NAV_COVERAGE, BOOK_CAPITAL_FROM_INCEPTION, BOOK_CAPITAL_MOVES,
   BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_REVIEW_FLOWS, BOOK_UNDATED_CAPITAL,
 } from "@/data/glowData";
 import { nothingToMeasure } from "@/lib/returns";
 import {
   PERIODS, RETURN_TYPES, FORMULAS, INCEPTION_FORMULAS, periodStart, windowReturns, measureWindow,
-  measureInception, daysBetween, pmeWindowRows, pmeInceptionRows,
+  measureInception, daysBetween, pmeWindowRows, pmeInceptionRows, accountInputs,
   type AccountInput, type InceptionRow, type PeriodKey, type ReturnType, type Measured,
 } from "@/lib/periodReturns";
 
-const OPENING_ROW = /^opening portfolio value/i;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const pctText = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 const RETURN_VIEWS = [
@@ -89,42 +88,14 @@ export default function PortfolioReturns() {
   // ── Every account's valuations and dated flows ───────────────────────────
   const inputs = useMemo<AccountInput[]>(() => {
     if (!statementPortfolio) return [];
-    const out: AccountInput[] = [];
-    for (const a of statementPortfolio.accounts) {
-      const label = mandateLabel(a) || a.provider;
-      const base = { accountId: a.accountId, label: `${label} · ${a.accountNo}`, owner: a.owner };
-      const undated = BOOK_UNDATED_CAPITAL.filter((u) => u.accountId === a.accountId)
-        .map((u) => ({ from: u.from, to: u.to, amount: u.undated }));
-      const coverage = statementPortfolio.accountReturnRecords?.[a.accountId];
-      const record = coverage?.record;
-      const opening = record?.flows.find((f) => OPENING_ROW.test(f.description ?? ""));
-      if (!record || !opening) {
-        out.push({ ...base, valuations: [], flows: [], knownFrom: null, knownTo: null, undated,
-          outside: nothingToMeasure(statementPortfolio, a),
-          flowsUnknown: a.reviewHolder
-            ? "the family's review values its lines on one date and dates no capital, so no window can be struck over it"
-            : coverage?.gap ?? "no verified opening value and dated capital record" });
-        continue;
-      }
-      // The verified record: its opening value at the close of the day before
-      // its first dated flow, its dated capital, and its closing valuation. A
-      // statement valuation between the two is a mark a window may open or
-      // close on, because the capital between them is complete.
-      const d = new Date(`${opening.date}T00:00:00Z`);
-      d.setUTCDate(d.getUTCDate() - 1);
-      const openDate = d.toISOString().slice(0, 10);
-      const vals = new Map<string, number>();
-      for (const p of BOOK_ACCOUNT_NAV_HISTORY[a.accountId] ?? []) if (p.date > openDate && p.date < record.asOf) vals.set(p.date, p.nav);
-      vals.set(openDate, -opening.amount);
-      vals.set(record.asOf, record.value);
-      out.push({ ...base, valuations: [...vals].map(([date, value]) => ({ date, value })),
-        flows: record.flows.filter((f) => f !== opening).map((f) => ({ date: f.date, amount: f.amount })),
-        knownFrom: openDate, knownTo: record.capitalRecordTo ?? record.asOf, flowsUnknown: null, undated });
-    }
-    return out;
+    return accountInputs({ accounts: statementPortfolio.accounts, positions: statementPortfolio.positions,
+      returnRecords: statementPortfolio.accountReturnRecords, navHistory: BOOK_ACCOUNT_NAV_HISTORY,
+      cashFlows: BOOK_ACCOUNT_CASH_FLOWS, groups: [], coverage: BOOK_NAV_COVERAGE.covered,
+      undated: BOOK_UNDATED_CAPITAL, fromInception: BOOK_CAPITAL_FROM_INCEPTION, labelOf: a => mandateLabel(a) || a.provider,
+    }).map(input => ({ ...input, outside: nothingToMeasure(statementPortfolio, statementPortfolio.accounts.find(a => a.accountId === input.accountId)!) }));
   }, [statementPortfolio]);
 
-  const inception = useMemo<{ rows: InceptionRow[]; skipped: { label: string; reason: string }[] }>(() => {
+  const inception = useMemo<{ rows: InceptionRow[]; skipped: { accountId: string; label: string; owner: string; reason: string }[] }>(() => {
     if (!statementPortfolio) return { rows: [], skipped: [] };
     const moves = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, statementPortfolio.accounts, BOOK_REVIEW_FLOWS)
       .filter((m) => inScopeAccount(scope.accountIds, m.accountId));
@@ -132,15 +103,15 @@ export default function PortfolioReturns() {
       { commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION, returnRecords: statementPortfolio.accountReturnRecords });
     const outside = new Set(statementPortfolio.accounts.filter((a) => nothingToMeasure(statementPortfolio, a)).map((a) => a.accountId));
     const rows: InceptionRow[] = [];
-    const skipped: { label: string; reason: string }[] = [];
+    const skipped: { accountId: string; label: string; owner: string; reason: string }[] = [];
     for (const g of groups) {
       const w = capitalWindow(g);
       const label = `${g.label} · ${g.accountNo}`;
       const complete = !g.atCost && w && g.flows && g.value != null && g.appreciation != null;
       if (!complete && outside.has(g.accountId)) continue;
-      if (g.atCost) { skipped.push({ label, reason: "held at its cost: no valuation states its gain" }); continue; }
+      if (g.atCost) { skipped.push({ accountId: g.accountId, owner: g.owner, label, reason: "held at its cost: no valuation states its gain" }); continue; }
       if (!w || !g.flows || g.value == null || g.appreciation == null) {
-        skipped.push({ label, reason: g.incompleteReason ?? "its dated capital record or its value is incomplete" });
+        skipped.push({ accountId: g.accountId, owner: g.owner, label, reason: g.incompleteReason ?? "its dated capital record or its value is incomplete" });
         continue;
       }
       rows.push({ accountId: g.key, label, owner: g.owner, first: w.from, valueAsOf: w.to,
@@ -151,7 +122,7 @@ export default function PortfolioReturns() {
     // whole too, not an account the period never heard of.
     for (const a of statementPortfolio.accounts) {
       if (outside.has(a.accountId) || groups.some((g) => g.accountId === a.accountId)) continue;
-      skipped.push({ label: `${mandateLabel(a) || a.provider} · ${a.accountNo}`, reason: "no statement dates the capital put in or taken out since its first purchase" });
+      skipped.push({ accountId: a.accountId, owner: a.owner, label: `${mandateLabel(a) || a.provider} · ${a.accountNo}`, reason: "no statement dates the capital put in or taken out since its first purchase" });
     }
     return { rows, skipped };
   }, [statementPortfolio, scope.accountIds]);
@@ -327,7 +298,10 @@ export default function PortfolioReturns() {
 
         <div role="tabpanel" id={`${tabsId}-panel-attribution`} aria-labelledby={`${tabsId}-tab-attribution`}
           hidden={view !== "attribution"} tabIndex={0} className="shrink-0" data-returns-panel="attribution">
-          <SegmentReturns />
+          <SegmentReturns period={period} selection={{ inception: period === "inception", type: rtype, start, end,
+            windows: win?.included ?? [], inceptionRows: inception.rows,
+            excluded: period === "inception" ? inception.skipped : win?.excluded ?? (inputs.filter(i => !i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: "Choose an opening date before the closing date." }))),
+          }} />
         </div>
 
         {/* ── BENCHMARKS AS TILES, ONE BAR SCALE (Stage 10fp). Three columns

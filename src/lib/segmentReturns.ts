@@ -144,7 +144,7 @@ const NOT_PLACED = "Not placed on either side";
 const CLASS_PREFIX = "class:";
 
 /** The section key and its words, per axis. */
-function segmentOf(axis: SegmentAxis, idx: AccountIndex, sectorOf: SectorLookup): {
+export function segmentOf(axis: SegmentAxis, idx: AccountIndex, sectorOf: SectorLookup): {
   key: (p: Position) => string; label: (k: string, sample: Position) => string; ord: (k: string) => number; unplaced: (k: string) => boolean;
 } {
   if (axis === "category" || axis === "assetClass" || axis === "basket") {
