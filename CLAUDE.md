@@ -124,7 +124,8 @@ One line per area; the history files explain each in depth.
   from `public/audit/`), `capitalCalls.ts`, `fundReturns.ts`, `privateBook.ts`
   (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`),
   `investmentProfiles.ts` (supplied strategy/description, matched by identity —
-  security key → ISIN → name → brand → folio; Stage 10eo).
+  security key → ISIN → name → brand → folio; Stage 10eo), `enteredProfiles.ts`
+  (the same cells typed on the table, shown over a file's; Stage 10ev).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indices.ts`, `periodReturns.ts`
   (Morning CIO Returns tab), `returnMeasures.ts`, `returnColumns.ts`.
@@ -136,7 +137,8 @@ One line per area; the history files explain each in depth.
   `viewMemory.ts` — every table sorts, every column but the first drags, the
   arrangement is remembered. `components/TreeTable.tsx` — rows open into rows of
   the same table, never a table in a cell.
-- `src/lib/enteredCalls.ts` + `functions/api/capital-calls.js`, `tileSets.ts` +
+- `src/lib/enteredCalls.ts` + `functions/api/capital-calls.js`, `enteredProfiles.ts` +
+  `functions/api/investment-profiles.js`, `tileSets.ts` +
   `functions/api/tile-sets.js` — shared KV store (`GLOW_STORE`, not yet bound).
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.

@@ -45,11 +45,13 @@ export type SuppliedProfiles = { files: { file: string; md5: string; records: nu
 export const SUPPLIED_PROFILES = SUPPLIED as SuppliedProfiles;
 
 export type MatchBasis = "security key" | "ISIN" | "name" | "brand" | "folio";
+/** How a cell's text reached it: matched off a supplied file, or typed on the dashboard (`enteredProfiles.ts`). */
+export type CellBasis = MatchBasis | "entered";
 const TIER: readonly MatchBasis[] = ["security key", "ISIN", "name", "brand", "folio"];
 
 /** A cell of the Strategy or Description column: the text and where it came from, or why there is none. */
 export type ProfileCell =
-  | { value: string; source: string; matchedOn: MatchBasis; reason: null }
+  | { value: string; source: string; matchedOn: CellBasis; reason: null }
   | { value: null; source: null; matchedOn: null; reason: string };
 export type InvestmentProfile = Record<ProfileFieldId, ProfileCell>;
 
@@ -175,8 +177,9 @@ export function combineProfiles(ps: readonly InvestmentProfile[]): InvestmentPro
 /** What a column's header hover says about the supplied records. */
 export function profileSupplyNote(field: ProfileFieldId, m: ReturnType<typeof matchProfiles>): string {
   const what = field === "strategy" ? "A fund's investment strategy" : "What the company does";
-  if (!m.files) return `${what}, as the family supplies it. No statement prints one, and no profile file has been supplied yet: add a sheet, CSV or JSON to the statement drop that names each investment (by name, ISIN or folio) beside a ${PROFILE_LABEL[field]} column.`;
+  const type = ` Click a cell to type it in, saved for everyone; typed text shows over a file's.`;
+  if (!m.files) return `${what}, as the family supplies it. No statement prints one.${type} A sheet, CSV or JSON in the statement drop that names each investment (by name, ISIN or folio) beside a ${PROFILE_LABEL[field]} column fills it too.`;
   const used = m.unmatched.filter((u) => u.record[field]);
-  return `${what}, as supplied in ${m.files} ${m.files === 1 ? "file" : "files"} (${m.records} records), matched to each investment by ISIN, name, brand or folio.`
+  return `${what}, as supplied in ${m.files} ${m.files === 1 ? "file" : "files"} (${m.records} records), matched to each investment by ISIN, name, brand or folio.${type}`
     + (used.length ? ` ${used.length} supplied ${used.length === 1 ? "record matches" : "records match"} no investment on this view: ${used.slice(0, 6).map((u) => `${u.record.identity.name ?? u.record.identity.isin ?? u.record.identity.folio} (${u.reason})`).join("; ")}${used.length > 6 ? "; …" : ""}.` : "");
 }
