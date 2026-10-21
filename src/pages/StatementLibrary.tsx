@@ -132,6 +132,7 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
   const folderRef = useRef<HTMLInputElement | null>(null);
   const [drag, setDrag] = useState(false);
   const [progress, setProgress] = useState<{ done: number; of: number } | null>(null);
+  const [collecting, setCollecting] = useState(false);
   const [msg, setMsg] = useState<{ tone: "err" | "ok"; text: string; title?: string } | null>(null);
 
   const send = async (picked: PickedFile[]) => {
@@ -188,9 +189,9 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
     );
   }
 
-  const busy = !!progress || state.status === "loading";
+  const busy = !!progress || collecting || state.status === "loading";
   return (
-    <div data-xa="statement-upload" data-upload-state={state.status}>
+    <div data-xa="statement-upload" data-upload-state={state.status} data-publication-busy={!!progress || collecting ? "true" : undefined}>
     <Card className="mb-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <UploadCloud className="h-4 w-4 text-champagne-400" />
@@ -211,7 +212,10 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
         onClick={() => filesRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
-        onDrop={(e) => { e.preventDefault(); setDrag(false); void fromDrop(e.dataTransfer).then(send); }}
+        onDrop={(e) => {
+          e.preventDefault(); setDrag(false); if (busy) return; setCollecting(true);
+          void fromDrop(e.dataTransfer).then(send).finally(() => setCollecting(false));
+        }}
         data-upload-drop
         className={`flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-4 py-7 text-center transition-colors disabled:cursor-wait
           ${drag ? "border-champagne-500/60 bg-champagne-500/10" : "border-ink-600 hover:border-ink-500 hover:bg-ink-700/30"}`}>

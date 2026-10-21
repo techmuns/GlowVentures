@@ -9,6 +9,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      baseline:
+        description: Verified main commit before this statement delivery
+        required: true
+        type: string
 
 jobs:
   build:
@@ -21,15 +27,21 @@ jobs:
           cache: npm
       - run: npm ci
 
-      # 1. The app type-checks and builds.
-      - name: Build
-        run: npm run build
+      - name: Statement identity, format and publication contracts
+        env:
+          GLOW_PUBLICATION_BASE: ${{ inputs.baseline || github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          npm run test:statements
+          git fetch --no-tags origin "$GLOW_PUBLICATION_BASE"
+          npm run statements:verify -- --base-ref "$GLOW_PUBLICATION_BASE"
 
       # 2. The book regenerates BYTE-IDENTICALLY from the committed audit archive.
       #    build-book reads public/audit/ (committed) — no source PDFs or
       #    passwords needed — so a non-empty diff means glowData.ts was hand-edited
       #    or drifted from its archive, which must never happen.
       - name: Book is byte-identical to its archive
+        id: book_snapshot
+        continue-on-error: true
         run: |
           npm run build-book
           if ! git diff --quiet -- src/data/glowData.ts src/data/reviewColumns.ts docs/BOOK-REPORT.md; then
@@ -39,7 +51,7 @@ jobs:
           fi
 
       - name: Preserve generated book on a regeneration mismatch
-        if: failure()
+        if: steps.book_snapshot.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: regenerated-book
@@ -47,6 +59,11 @@ jobs:
             src/data/glowData.ts
             src/data/reviewColumns.ts
             docs/BOOK-REPORT.md
+
+      # Build only after checking the source/book contract. The audit revision
+      # must never be prepared from a book that needs regeneration.
+      - name: Build
+        run: npm run build
 
       # 3. The ingest & reconciliation test suites pass (parseNum, layout,
       #    pipeline, and the golden figures a human read off the real statements).
@@ -76,6 +93,7 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-real-estate.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-sector-return-details.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-publication-refresh.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs
 
@@ -96,6 +114,14 @@ jobs:
           name: real-estate-browser-check
           path: .cache/real-estate-check
           if-no-files-found: ignore
+
+      # A regeneration mismatch must fail this required job even though the
+      # generated candidate is also built/tested to expose independent defects.
+      - name: Require the generated book to be committed
+        if: always() && steps.book_snapshot.outcome == 'failure'
+        run: |
+          echo "::error::Commit the verified generated book before merging."
+          exit 1
 
   # EVERY STATEMENT IN source/ IS READ IN FULL AND REACHES THE BOOK (Stage 10ep).
   # The job above trusts the committed archive; this one re-reads every file in

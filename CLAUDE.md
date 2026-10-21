@@ -197,8 +197,15 @@ One line per area; the history files explain each in depth.
 - `src/lib/statementUploads.ts` + `functions/api/statement-uploads.js` — the
   Statement Library's one upload (files or folders): each file a blob on the
   repo's `statement-inbox` branch (`shared/statementInbox.mjs`), read into the
-  book by `scripts/ingest/intake-uploads.mjs` and landed on main only if every
-  gate passes; a file it cannot read is held with the reason (Stage 10ga).
+  book by `scripts/ingest/intake-uploads.mjs`, verified against the Git baseline
+  and published through a codex PR after CI/review. Exact document versions must
+  be verified live before its inbox bytes are cleared. Never push/reset main or
+  waive a failing baseline gate. See `docs/STATEMENT-PUBLICATION.md` (Stage 10gg).
+- `scripts/ingest/lib/publication.mjs` — the matching, format/field coverage and
+  provenance boundary. Preserve the builder's `statementRecord` pointers for
+  valued and unpriced holdings; never infer source by equal amounts. Canonical
+  data, normalized documents and audit/ledger projections share the revision
+  discovered at `/publication.json`. Unknown layouts/identity conflicts stay held.
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.

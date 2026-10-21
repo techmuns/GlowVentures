@@ -11,8 +11,9 @@ name: Statement intake
 # uploads.js), which then STARTS this run through GitHub's repository-dispatch
 # event. `scripts/ingest/intake-uploads.mjs` files each new statement under
 # source/uploads-<date>/<provider>/, runs inventory → extract → build-symbols →
-# build-book and every gate CI runs on a PR, and lands on main only what passes
-# all of them — in one commit, from which the site redeploys. A statement the
+# build-book and every required gate, then opens a codex PR. Later runs monitor
+# CI/reviewer feedback and the automatic deployment; only verified live files
+# leave the inbox. A statement the
 # pipeline cannot read in full stays in the inbox, held, with the reason; the
 # Statement Library shows it and offers Retry.
 #
@@ -34,6 +35,8 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
 
 # One intake at a time: each reads everything waiting, so a queued run that a
 # newer one replaces loses nothing.
@@ -49,6 +52,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+          token: ${{ secrets.GLOW_INTAKE_TOKEN || github.token }}
 
       - uses: actions/setup-node@v4
         with:
@@ -65,5 +69,7 @@ jobs:
       - name: Read the uploads into the book, and land what passes
         if: steps.inbox.outputs.waiting != '0'
         env:
+          GH_TOKEN: ${{ secrets.GLOW_INTAKE_TOKEN || github.token }}
           GLOW_PDF_PASSWORDS: ${{ secrets.GLOW_PDF_PASSWORDS }}
+          GLOW_DASHBOARD_PASSWORD: ${{ secrets.GLOW_DASHBOARD_PASSWORD }}
         run: node scripts/ingest/intake-uploads.mjs
