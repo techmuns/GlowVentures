@@ -625,7 +625,7 @@ export type NavPoint = {
    */
   panelComplete?: boolean;
   /**
-   * The whole-book series (`bookNav.ts`, Stage 10gd): true from the date every
+   * The whole-book series (`bookNav.ts`, Stage 10ge): true from the date every
    * investment holding value at the end is in the NAV level — the date the
    * level is the whole book rather than part of it.
    */

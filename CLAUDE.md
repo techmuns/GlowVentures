@@ -175,7 +175,7 @@ One line per area; the history files explain each in depth.
   `scripts/lib/holdingTrades.mjs`; Stage 10fm).
 - `src/lib/bookNav.ts` + `bookNavBook.ts` — the whole book's NAV series (every
   investment, its latest valuation plus capital since; the NAV card and the
-  drawdown read it as `navHistory`; Stage 10gd).
+  drawdown read it as `navHistory`; Stage 10ge).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`

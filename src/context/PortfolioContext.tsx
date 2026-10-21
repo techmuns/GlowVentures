@@ -104,7 +104,7 @@ function defaultPortfolio(): Portfolio {
     // spellings they printed, so it is one option in a pick-list and one name
     // in every table — see `src/lib/securityLabel.ts` for the rule.
     positions: labelledPositions(BOOK_POSITIONS),
-    // THE WHOLE BOOK'S SERIES (Stage 10gd), not the statement-only panel
+    // THE WHOLE BOOK'S SERIES (Stage 10ge), not the statement-only panel
     // `BOOK_NAV_HISTORY` is struck over — see `bookNav.ts`.
     navHistory: WHOLE_BOOK_NAV.points,
     capitalGains: BOOK_CAPITAL_GAINS,

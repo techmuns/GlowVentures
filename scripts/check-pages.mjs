@@ -51,7 +51,7 @@ import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registe
 import * as XLSX from "xlsx";
 
 /**
- * ── THE WHOLE BOOK'S NAV SERIES, AS THE CARD DRAWS IT (Stage 10gd) ──────────
+ * ── THE WHOLE BOOK'S NAV SERIES, AS THE CARD DRAWS IT (Stage 10ge) ──────────
  *
  * The series is struck at runtime off the book (`src/lib/bookNavBook.ts`), not
  * emitted into `glowData.ts`, so its points are read the way `build:views`
@@ -9501,7 +9501,7 @@ const XA_BOOK = (() => {
     // ── Return & Drawdown's maximum drawdown (XA-17), chained here on each
     // point's own link — (close − capital in) ÷ open — never through
     // `navIndexSeries` or `maxDrawdown`, which is what the page calls.
-    // WHOLE BOOK ONLY since Stage 10gd: the page strikes its drawdown from the
+    // WHOLE BOOK ONLY since Stage 10ge: the page strikes its drawdown from the
     // day every valued investment is in the series, so this does too.
     const ddNav = (WHOLE_BOOK_NAV?.points ?? []).filter((n) => n.panelComplete !== false);
     const ddIdx = [];
@@ -19837,7 +19837,7 @@ const NAV_RECON = [
     const dep = /(₹[\d,.]+\s*(?:Cr|L|K)?) of \d+ cash-equivalent funds?/.exec(h)?.[1];
     const steps = [nav, dep].filter(Boolean);
     const tie = steps.reduce((a, x) => a + compactTieCr(Math.abs(money2cr(x))), 0) + 1e-6;
-    // THE SERIES' OWN NAV, from the same book in named steps (Stage 10gd): the
+    // THE SERIES' OWN NAV, from the same book in named steps (Stage 10ge): the
     // level at its last point, and the newer valuations re-derived here off the
     // records and the statement series rather than read off the series.
     const lv = /The series' NAV at \d{4}-\d{2}-\d{2}, (₹[\d,.]+), is that book(?: plus ([+−-]?₹[\d,.]+\s*(?:Cr|L|K)?) from valuations newer than the holdings statement the book carries)?/.exec(h);
@@ -20105,7 +20105,7 @@ const CIO_NAV = [
       if (!book || !raw) return false;
       const named = (ctx?.titles ?? []).some((x) =>
         /BOTH FIGURES ARE OVER THAT SEGMENT/.test(x) && /Over \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(x));
-      // …and since Stage 10gd both are struck over the whole-book segment the
+      // …and since Stage 10ge both are struck over the whole-book segment the
       // hover's own return is, so the adjusted half must BE that figure.
       return named && Math.abs(Number(raw[1]) - Number(raw[2])) > 1
         && Math.abs(Number(raw[2]) - Number(book[1])) <= 0.011;
@@ -20312,7 +20312,7 @@ const CIO_NAV = [
    * the partition catches it.
    */
   /**
-   * ── EVERY INVESTMENT IS NAMED, AND THE LISTS PARTITION THE BOOK (Stage 10gd)
+   * ── EVERY INVESTMENT IS NAMED, AND THE LISTS PARTITION THE BOOK (Stage 10ge)
    *
    * The whole-book series holds every investment carrying value: in the return,
    * or held at cost and in the NAV only. The hover's count, the summary's, the
@@ -21223,7 +21223,7 @@ const NAV_BENCH_LIVE = [
     const head = navBasis(ctx);
     if (head == null) return navBasisMissing(ctx);
     const want = wantedBench(ctx);
-    // The whole-book segment since Stage 10gd — the only window the book's
+    // The whole-book segment since Stage 10ge — the only window the book's
     // return is stated over.
     const win = /Over the whole book, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}):/.exec(head);
     const got = new RegExp(String.raw`${reEsc(want[1])} ([+-]\d+\.\d+)% over the same dates`).exec(head);
@@ -40668,7 +40668,7 @@ for (const theme of THEMES) {
       const navListRows = FAST ? null : await page.evaluate(() => ({
         single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
-        // The whole-book series' lists (Stage 10gd).
+        // The whole-book series' lists (Stage 10ge).
         joined: document.querySelectorAll('[data-testid="nav-joined-list"] li').length,
         atCost: document.querySelectorAll('[data-testid="nav-atcost-list"] li').length,
         stale: document.querySelectorAll('[data-testid="nav-stale-list"] li').length,

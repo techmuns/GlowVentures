@@ -1,5 +1,5 @@
 /**
- * The whole-book NAV series over THIS book (`bookNav.ts`, Stage 10gd), struck
+ * The whole-book NAV series over THIS book (`bookNav.ts`, Stage 10ge), struck
  * once: every input is committed data, and the statement book is the basis.
  * `PortfolioContext` hands its points to every page as `navHistory`, so the NAV
  * card and the drawdown read one series.

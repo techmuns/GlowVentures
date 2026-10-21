@@ -108,7 +108,7 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
    * undefined before it — the one thing a chain-link cannot rescue, because it
    * is a LEVEL rather than a return.
    */
-  // The whole-book series (Stage 10gd) says separately when its LEVEL is whole
+  // The whole-book series (Stage 10ge) says separately when its LEVEL is whole
   // (`levelComplete`); the statement series only ever said it of its panel.
   const levelWhole = (p: NavPoint) => (p.levelComplete ?? p.panelComplete) !== false;
   const firstComplete = history.find(levelWhole);
@@ -147,7 +147,7 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
       const fw = (p as WeightedNavPoint).flowWeighted;
       const weighted = typeof fw === "number" && Number.isFinite(fw) ? fw : 0;
       // A LINK WHOSE ONLY MOVE IS ROUNDING MEASURED NOTHING. The whole-book
-      // series has a point on every date capital moved (Stage 10gd), and three
+      // series has a point on every date capital moved (Stage 10ge), and three
       // figures each rounded to the paisa would otherwise print a −0.00% there.
       const moved = Math.abs(close - flow - open) > open * 1e-10;
       // Weight 0 is computed in the end-of-interval form itself, so a book

@@ -331,7 +331,7 @@ export function ReturnAnalysis() {
     statementPortfolio ? dedupedPositions(statementPortfolio.positions) : undefined);
   // THE BOOK'S OWN DATED SERIES, chained on the link — the one `/history`
   // and Morning CIO's NAV chart are drawn from, so the three cannot disagree.
-  // WHOLE BOOK ONLY (Stage 10fc, 10gd): the drawdown is struck from the day
+  // WHOLE BOOK ONLY (Stage 10fc, 10ge): the drawdown is struck from the day
   // every valued investment is in the series — before it the index is a
   // composite still being joined, and a fall over part of the book is not the
   // book's fall.

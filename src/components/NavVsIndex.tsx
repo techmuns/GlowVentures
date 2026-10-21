@@ -154,7 +154,7 @@ export function NavVsIndex() {
   const model = useMemo(() => {
     if (!portfolio) return null;
     const book = navIndexSeries(portfolio.navHistory);
-    // THE WHOLE BOOK'S COVERAGE (Stage 10gd), counted off the units the series
+    // THE WHOLE BOOK'S COVERAGE (Stage 10ge), counted off the units the series
     // chained — see `bookNav.ts`. The statement book is still the basis the
     // level is struck on (MNT-25).
     const cov = WHOLE_BOOK_NAV.coverage;
@@ -425,7 +425,7 @@ export function NavVsIndex() {
    * *"remove the highlighted texts from the dashboard UI"* — pointed at this
    * card's basis line AND at the four headline pills. Every claim was audited
    * before anything went, and all of it is this hover, on the heading that
-   * names the comparison. Since Stage 10gd it describes the WHOLE book's
+   * names the comparison. Since Stage 10ge it describes the WHOLE book's
    * series: what the return is struck over and from when, what joins it later,
    * what the review holds at cost, and how the level ties to the statements.
    */
@@ -813,7 +813,7 @@ function reportedTwiceOf(positions: { dedupeGroup?: string | null; securityKey: 
 type Why = { nil: boolean; reason: string | null };
 
 /**
- * ── WHAT THE SERIES HOLDS, WHAT IT CANNOT, AND HOW IT TIES (Stage 10gd) ──────
+ * ── WHAT THE SERIES HOLDS, WHAT IT CANNOT, AND HOW IT TIES (Stage 10ge) ──────
  *
  * The family's own ask ("or state the accounts that cannot supply one") is
  * answered by name, now over the whole book's investments rather than over the

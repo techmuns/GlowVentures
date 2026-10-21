@@ -1,5 +1,5 @@
 /**
- * ── THE WHOLE BOOK'S NAV, STRUCK FROM THE DATED RECORD (Stage 10gd) ─────────
+ * ── THE WHOLE BOOK'S NAV, STRUCK FROM THE DATED RECORD (Stage 10ge) ─────────
  *
  *   *"now that we have a lot more holdings invested and purchase dates in the
  *    dashboard holdings data we should be able to fill this NAV completely and
