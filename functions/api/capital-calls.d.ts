@@ -6,7 +6,7 @@
 // bundles with esbuild and does not typecheck. That has broken this build twice
 // (see `indices.d.ts`), so the declaration lands in the same commit as the test.
 
-/** The slice of Cloudflare's KV binding this function uses. */
+/** The key–value calls the function makes on the shared store (`shared/dashboardStore.mjs`). */
 export type KvLike = {
   list(opts: { prefix: string; cursor?: string }): Promise<{
     keys: { name: string; metadata?: unknown }[];
@@ -16,11 +16,12 @@ export type KvLike = {
   get(key: string, type: "json"): Promise<unknown>;
   put(key: string, value: string, opts?: { metadata?: unknown }): Promise<void>;
   delete(key: string): Promise<void>;
+  flush?(): Promise<void>;
 };
 
 export type CapitalCallsContext = {
-  /** `GLOW_STORE` is the KV namespace binding; absent until it is connected. */
-  env: { GLOW_STORE?: KvLike } & Record<string, unknown>;
+  /** `GLOW_GITHUB_TOKEN` writes the repository's store; `DASHBOARD_STORE` is a store a test hands in. */
+  env: { DASHBOARD_STORE?: KvLike; GLOW_GITHUB_TOKEN?: string } & Record<string, unknown>;
   request: Request;
 };
 

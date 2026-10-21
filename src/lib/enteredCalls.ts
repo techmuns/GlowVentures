@@ -84,7 +84,7 @@ const isCall = (c: unknown): c is EnteredCall => {
 export const REASONS = {
   signedOut: "You have been signed out. Sign in again to see and save capital calls.",
   noFunction: "The shared capital-call store is not running here, so calls cannot be shown or saved.",
-  notConfigured: "Saving is not switched on yet — the site's shared store has not been connected.",
+  notConfigured: "Saving is not switched on yet — the site has not been given its GitHub token to save to the repository with.",
   noAnswer: "The shared capital-call store did not answer. Nothing was lost; try again in a moment.",
 } as const;
 
@@ -110,16 +110,17 @@ export const CAUSE_WORD: Record<StoreCause, string> = {
 /**
  * ── HOW TO SWITCH IT ON, ONCE ───────────────────────────────────────────────
  *
- * The store is one Cloudflare KV namespace bound to the Pages project as
- * `GLOW_STORE`. Nothing in this repository can create it — it lives in the
- * Cloudflare account — so the editor names the steps rather than leaving the
- * next reader to find them in a code comment. Shown ONLY for `not-configured`.
- * Menu names as Cloudflare's own documentation gives them (checked 2026-09-23).
+ * The store is one JSON file in this GitHub repository, on its own
+ * `dashboard-store` branch (`shared/dashboardStore.mjs`, Stage 10ew). The site
+ * writes it with a GitHub token, which nothing in the repository can hold — a
+ * token committed here would be a token anyone with the code could use — so
+ * the editor names the steps rather than leaving the next reader to find them
+ * in a code comment. Shown ONLY for `not-configured`.
  */
 export const SWITCH_ON_STEPS = [
-  "In the Cloudflare dashboard, open Storage & databases → Workers KV → Create instance, and create a namespace (any name, e.g. glow-store).",
-  "Open Workers & Pages → this site's Pages project → Settings → Bindings → Add → KV namespace. Variable name: GLOW_STORE; KV namespace: the one just created. Add it for Production, and for Preview too if preview links are used.",
-  "Redeploy the site (Deployments → latest deployment → Retry deployment). Once it is live, reload this page: every cell turns into an Add button.",
+  "On GitHub, open Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. Resource owner: techmuns; Repository access: Only select repositories → GlowVentures; Repository permissions → Contents: Read and write. Nothing else.",
+  "In the site's hosting settings (Workers & Pages → this site's Pages project → Settings → Variables and Secrets → Add), add a Secret named GLOW_GITHUB_TOKEN with that token, for Production, and for Preview too if preview links are used. Only the token is held there; everything saved goes to the repository.",
+  "Redeploy the site (Deployments → latest deployment → Retry deployment). Once it is live, reload this page: every cell turns into an Add button, and each save is a commit on the repository's dashboard-store branch.",
 ] as const;
 
 type Reply = { ok: true; calls: EnteredCall[] } | { ok: false; reason: string; cause: StoreCause };

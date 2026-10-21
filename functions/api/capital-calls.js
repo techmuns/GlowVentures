@@ -13,23 +13,20 @@
 // Everything else a reader types on this site — a target price, a tile set, a
 // thesis — is a per-browser convenience kept in `localStorage`. "It stays same
 // for all" rules that out in five words: a call entered on one laptop has to be
-// on every screen that opens the dashboard. So it lives in Cloudflare KV, behind
-// the same edge password gate as every other `/api/*` route — `_middleware.js`
+// on every screen that opens the dashboard. So it lives in the dashboard's shared
+// store — one JSON file in the GitHub repository (`shared/dashboardStore.mjs`,
+// Stage 10ew) — written through this function, behind the same edge password gate as every other `/api/*` route — `_middleware.js`
 // answers any request without the session cookie with the login page, POSTs
 // included, before this file ever runs.
 //
 // ── ONE KEY PER CALL, SO TWO PEOPLE SAVING AT ONCE CANNOT LOSE EACH OTHER'S ──
 //
-// One JSON document would be read-modify-write, and KV has no transactions: two
-// saves landing together would each write back a copy missing the other's call,
-// and nothing would say so. Each call is its own key (`capital-call:<id>`) and
-// carries itself as KV METADATA, so one `list` returns every call without a
-// read per key. Two edits to the SAME call still resolve last-write-wins, which
-// is the honest outcome for one row two people changed.
-//
-// KV is eventually consistent. A save is visible AT ONCE to whoever made it —
-// the response carries the list with the change applied — and to everyone else
-// within about a minute. That is stated rather than hidden.
+// Each call is its own key (`capital-call:<id>`) carrying itself as METADATA, so
+// one `list` returns every call. Two saves landing together cannot lose each
+// other's call: the store commits against the file's sha and, refused, re-reads
+// the other save and lays its own over it. Two edits to the SAME call still
+// resolve last-write-wins, the honest outcome for one row two people changed.
+// A save is visible at once, to whoever made it and to everyone else.
 //
 // ── NOT A STATEMENT FIGURE, AND IT MUST NEVER BECOME ONE ────────────────────
 //
@@ -41,14 +38,15 @@
 //
 // ── SET-UP, ONCE ────────────────────────────────────────────────────────────
 //
-// Cloudflare dashboard → Storage & databases → Workers KV → Create instance
-// (any name) → Workers & Pages → the Pages project → Settings → Bindings → Add
-// → KV namespace, variable name `GLOW_STORE` (for Production, and Preview if
-// preview links are used) → redeploy. Until that is done every request answers
+// A fine-grained GitHub token with Contents read and write on this repository,
+// set as the site's secret `GLOW_GITHUB_TOKEN` → redeploy (the steps are
+// `SWITCH_ON_STEPS`). Until that is done every request answers
 // 503 `NOT_CONFIGURED`, and every cell of the column says "Not set up" and
 // opens an editor that gives these same steps (`SWITCH_ON_STEPS` in
 // `src/lib/enteredCalls.ts`) — never an empty column that would read as "no
 // calls are coming".
+
+import { storeFor } from "../../shared/dashboardStore.mjs";
 
 const PREFIX = "capital-call:";
 /** A fund row's own `securityKey` — the join to the table on the page. */
@@ -150,10 +148,10 @@ export function validateDraft(d, now = new Date()) {
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const kv = env?.GLOW_STORE;
-  if (!kv || typeof kv.list !== "function") {
+  const kv = storeFor(env);
+  if (!kv) {
     return fail(503, "NOT_CONFIGURED",
-      "Saving capital calls is not switched on yet: the site's shared store (a Cloudflare KV binding named GLOW_STORE) has not been connected.");
+      "Saving capital calls is not switched on yet: the site has no GitHub token (GLOW_GITHUB_TOKEN) to save them to the repository with.");
   }
 
   if (request.method === "GET") {
@@ -189,6 +187,7 @@ export async function onRequest(context) {
       const id = String(body.id ?? "");
       if (!ID.test(id)) return fail(400, "INVALID", "This call's id is not one the store issued.");
       await kv.delete(PREFIX + id);
+      await kv.flush?.();
       // The list is eventually consistent, so the answer applies the delete
       // itself: whoever deleted it must never see it come back.
       const calls = (await listCalls(kv)).filter((c) => c.id !== id);
@@ -204,6 +203,7 @@ export async function onRequest(context) {
         return fail(409, "FULL", `The store holds ${MAX_CALLS} calls, which is its limit. Delete old ones first.`);
       }
       await kv.put(PREFIX + v.call.id, JSON.stringify(v.call), { metadata: v.call });
+      await kv.flush?.();
       const calls = [...current.filter((c) => c.id !== v.call.id), v.call].sort(byDate);
       return json(200, { ok: true, calls, id: v.call.id });
     }

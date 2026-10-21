@@ -4750,3 +4750,30 @@ cells just like the capital call cells."*
 - `enteredProfiles.test.ts` drives the Function on an in-memory KV and the
   precedence. Checked in the browser with the store mocked: save, remove, the
   four-line Waterwala row. `check:pages ONLY=private-market`: no new finding.
+
+### Stage 10ew — THE SHARED STORE MOVES FROM CLOUDFLARE KV TO THE GITHUB REPOSITORY
+
+*"We will not store in Cloudflare. Instead, we should try to store it in GitHub."*
+— and, told the repository is public, *"it is ok to store in github still"*.
+
+- **`shared/dashboardStore.mjs`**: everything typed on the dashboard (capital
+  calls, strategy / description, tile layouts) is one JSON file,
+  `store/dashboard-store.json`, on its own `dashboard-store` branch. It is created
+  on the first save as one parentless commit, so it never carries a copy of the
+  site. Every save is one commit marked `[skip ci]` (no CI, no site build) and
+  never touches `main`. The server reads the file through GitHub's API on every
+  request, so a save is visible to everyone at once.
+- **Same calls, new backend**: `list/get/put/delete` plus `flush()`, which commits a
+  request's changes once (a four-line legal-name row is one commit). A stale-sha
+  refusal (409/422) re-reads the file and lays this request's changes over the
+  other person's, so two saves at once both land.
+- **Switch-on**: a fine-grained token (Contents read/write on this repo only) as
+  the site secret `GLOW_GITHUB_TOKEN`; `GLOW_GITHUB_REPO` / `_BRANCH` / `_PATH`
+  override the defaults. `SWITCH_ON_STEPS` and the `private-market-calls-off`
+  probe name the secret; `GLOW_STORE` is gone from code.
+- **Public**: the repository is public, so everything saved there can be read by
+  anyone, whatever the dashboard password.
+- `dashboardStore.test.ts` drives a fake GitHub: branch creation, one commit per
+  request, two concurrent saves, read-after-write, the Functions end to end.
+  `private-market-calls` fails 7 walk checks identically on main before 10ev
+  (pre-existing, not this change).
