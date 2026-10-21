@@ -23,13 +23,17 @@ the derived, reviewed extracts under `public/audit/` ship, and those sit behind
 the password gate.
 
 **Two ways a statement gets here.** Either drop it in a delivery folder by hand,
-or upload it from the dashboard's **Statement Library** drop box (one per
-provider). An uploaded file is staged in the site's own R2 store, raw and
-unread — it is NOT a book figure until a rebuild reads it. Pull the staged files
-down into their own delivery folder with
-`node scripts/ingest/pull-uploads.mjs` (set `GLOW_BASE_URL` and
-`GLOW_DASHBOARD_PASSWORD`; `--clear` empties the inbox once they are safely on
-disk), then run the pipeline below exactly as for a hand-dropped delivery.
+or upload it — files or whole folders — on the dashboard's **Statement Library**.
+An upload is saved to this repository's `statement-inbox` branch and starts the
+**Statement intake** workflow (`.github/workflows/statement-intake.yml` →
+`scripts/ingest/intake-uploads.mjs`), which does everything below by itself: it
+skips a file byte-identical to one already here, files each new one under
+`uploads-<date>/<provider>/` (the provider read off the statement), runs the
+pipeline and every CI gate, and lands on `main` only what passes. A file it
+cannot read in full stays in the inbox, held, with the gate's reason on the
+Statement Library — the fix is the same as for a hand-dropped delivery (write
+the reader, or set the `GLOW_PDF_PASSWORDS` Actions secret for a sealed PDF),
+then Retry on the page.
 
 **Every delivery, start to finish** — no passwords or OCR tools needed (a sealed
 statement keeps the reading a password-holding run archived):

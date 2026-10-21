@@ -192,9 +192,36 @@ export function applyCorporateActionQuotes(
     if (p.assetClass !== "Equity" || !isCounted(p)) return applyQuotes([p], quotes)[0];
     const sym = quoteSymbolFor(p);
     const q = quotes?.quotes[sym || ""];
-    const start = rf?.through ?? (dates.get(p.accountId) || "");
+    /**
+     * THE WINDOW OPENS ON THE MARK'S OWN DATE, ROLLED OR NOT (Stage 10fz). It
+     * opened on `rf.through` for a rolled holding, while `rolledPosition`
+     * values the opening at the STATEMENT's price: Belrise Industries on LKP
+     * 98245 read "from 4 Aug 2026" over an opening of 6,500 × ₹186, the
+     * 31 Mar mark. And every event between was filed "in-statement" — so a
+     * dividend going ex in (31 Mar, 4 Aug] was dropped from the total return
+     * while the price fall it causes stayed in the price return. The price base
+     * and the event classification now share one date, the statement's. The
+     * units are the roll's: a roll that only SOLD leaves units that were held
+     * from the statement date, and one that BOUGHT has units with no mark on
+     * that date, so it strikes no period return (below).
+     */
+    const start = dates.get(p.accountId) || "";
     const end = q ? marketDay(q.tradedAt || quotes!.asOf) : start;
     const plan = projectActions(p, start, end, feed);
+    if (rf) {
+      // A SHARE EVENT INSIDE THE ROLL cannot be projected: the tape's quantity
+      // may already carry it (a bonus credited to the demat) while the opening
+      // mark is pre-event, so neither applying its factor nor omitting it is safe.
+      if (plan.lines.some((l) => (l.action.type === "split" || l.action.type === "bonus")
+        && !!l.action.exDate && l.action.exDate > start && l.action.exDate <= rf.through)) {
+        plan.quantityIssues.push("A share adjustment falls between the statement and the account's later trades; a newer holding balance is required");
+      }
+    }
+    const boughtSince = !!rf && typeof stated.quantity === "number" && rf.quantity > stated.quantity;
+    if (boughtSince) {
+      plan.incomeIssues.push("Units bought after the statement have no mark on its date, so no period return is struck");
+      plan.dividendEntitlement = null;
+    }
     // A quote without a trade timestamp cannot prove it is post-action on
     // the ex-date itself (weekends, pre-open and cached prices matter).
     if (q && !q.tradedAt && plan.lines.some((l) => l.status === "adjusted")) {
@@ -204,7 +231,10 @@ export function applyCorporateActionQuotes(
       plan.incomeIssues.push("A dated post-dividend quote is required for total return");
       plan.dividendEntitlement = null;
     }
-    if (q && end < start) plan.quantityIssues.push("Quote predates the holding statement");
+    // A quote older than the roll's last trade prices a quantity the account
+    // did not yet hold — the roll's date is the floor for the QUOTE, while the
+    // window still opens on the statement's.
+    if (q && end < (rf?.through ?? start)) plan.quantityIssues.push("Quote predates the holding statement");
     if (!feed) plan.quantityIssues.push("Waiting for corporate-action evidence before marking shares live");
     const blocked = plan.quantityIssues.length > 0;
     // THE GATE'S OWN REASON, kept where the price is decided. A quote that
@@ -235,7 +265,7 @@ export function applyCorporateActionQuotes(
       }
     } else {
       plan.closingValue = priced.marketValue;
-      if (p.marketValue > 0 && end >= start) {
+      if (p.marketValue > 0 && end >= start && !boughtSince) {
         plan.priceReturnPct = (priced.marketValue / p.marketValue - 1) * 100;
         if (plan.dividendEntitlement !== null) plan.totalReturnPct = ((priced.marketValue + plan.dividendEntitlement) / p.marketValue - 1) * 100;
       }
@@ -271,7 +301,12 @@ function rolledPosition(p: Position, rf: NonNullable<Position["rolledForward"]>)
     realizedPnL: rf.realizedPnL,
     costOfUnitsSold: rf.costOfUnitsSold,
     realizedLotsAfter: 0,
-    returnPct: cost === null || unrealizedPnL === null || !(cost > 0) ? null
+    // NO `cost > 0` GATE (Stage 10fz). It refused a holding whose remaining
+    // units cost nothing — bonus shares left after every bought one was sold,
+    // the whole gain realised — though its return on what was deployed is a
+    // measurement: `fifoReturnPct` abstains exactly where the cost held plus
+    // the cost of the units sold is not positive.
+    returnPct: cost === null || unrealizedPnL === null ? null
       : fifoReturnPct(marketValue, cost, rf.realizedPnL, rf.costOfUnitsSold, p.dividendReceived),
   };
 }

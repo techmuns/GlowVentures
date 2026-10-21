@@ -10,7 +10,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
-import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
+import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, type FxRate, type FxState, fetchInrPerUsd, readSavedRate, saveRate, resolveFx, rateOf, effectiveCurrency } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, quoteSymbolsFor, quoteSymbolFor, holdingQuoteSymbolFor, applyQuotes, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
 import { applyFundNavs, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
 import { depositoryShareHoldings, depositoryShareIsins, depositoryShareSymbols, shareCandidates } from "@/lib/depositoryShares";
@@ -207,16 +207,32 @@ type Ctx = {
   basis: Basis;
   /** No statements ingested yet — pages show an empty state rather than zeros. */
   bookIsEmpty: boolean;
+  /**
+   * The currency every figure is ACTUALLY rendered in — `requestedCurrency`
+   * when a published rate is in hand, INR when none is (Stage 10fz,
+   * `effectiveCurrency`). Pages label money by this, so a label never says USD
+   * over a figure that could not be converted.
+   */
   displayCurrency: DisplayCurrency;
+  /** What the reader picked on the currency control (and is remembered). */
+  requestedCurrency: DisplayCurrency;
   setDisplayCurrency: (c: DisplayCurrency) => void;
   convertFromBase: (n: number) => number;
   /** Money in the display currency, or `—` when the book carries no figure. */
   fmtFromBase: (n: number | null | undefined, opts?: { compact?: boolean; sign?: boolean }) => string;
   clearPortfolio: () => void;
-  inrPerUsd: number;      // USD→INR rate (₹ per $1) — see fxIsLive
-  fxAsOf: string | null;  // date of the live rate, if the feed supplied one
+  /** USD→INR rate (₹ per $1), or null when no published rate is in hand — see `fxState`. */
+  inrPerUsd: number | null;
+  fxAsOf: string | null;  // the publication date of the rate in use, if its source supplied one
   /**
-   * Whether `inrPerUsd` came from the feed or from the static fallback.
+   * Where the rate in use came from: this load's feed, the last rate this
+   * browser fetched (with its date), or none (Stage 10fz). There is no static
+   * fallback rate any more — `DEFAULT_INR_PER_USD = 83.5` was a figure nobody
+   * published, and every USD figure was divided by it whenever the feed missed.
+   */
+  fxState: FxState;
+  /**
+   * Whether `inrPerUsd` came from this load's feed.
    *
    * EVERY USD FIGURE IN THE COCKPIT IS THIS ONE NUMBER'S DIVISOR, so a stale one
    * is not a cosmetic problem — it is wrong by its own drift, everywhere at
@@ -416,22 +432,30 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     void tick();
     return () => { controller.abort(); window.clearTimeout(timer); };
   }, []);
-  const [displayCurrency, setCcy] = useState<DisplayCurrency>(() => readDisplayCurrency() ?? "INR");
-  // Live daily USD→INR rate (₹ per $1), fetched once on load; falls back to a
-  // static rate so conversions never block on the network.
-  const [inrPerUsd, setInrPerUsd] = useState<number>(DEFAULT_INR_PER_USD);
-  const [fxAsOf, setFxAsOf] = useState<string | null>(null);
-  const [fxIsLive, setFxIsLive] = useState(false);
+  const [requestedCurrency, setCcy] = useState<DisplayCurrency>(() => readDisplayCurrency() ?? "INR");
+  // Live daily USD→INR rate (₹ per $1), fetched once on load. NO STATIC
+  // FALLBACK (Stage 10fz): until and unless the feed answers, the rate in use
+  // is the last one this browser fetched, dated; with neither, the cockpit
+  // renders in INR and the currency control says why. `undefined` = the fetch
+  // has not settled, `null` = it failed.
+  const [savedFx] = useState<FxRate | null>(() => readSavedRate());
+  const [liveFx, setLiveFx] = useState<FxRate | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
     fetchInrPerUsd().then((r) => {
-      if (!alive || !r) return;
-      setInrPerUsd(r.inrPerUsd);
-      setFxAsOf(r.date);
-      setFxIsLive(true);
+      if (!alive) return;
+      if (!r) { setLiveFx(null); return; }
+      const rate: FxRate = { inrPerUsd: r.inrPerUsd, date: r.date, fetchedAt: new Date().toISOString() };
+      saveRate(rate);
+      setLiveFx(rate);
     });
     return () => { alive = false; };
   }, []);
+  const fxState = useMemo(() => resolveFx(liveFx, savedFx), [liveFx, savedFx]);
+  const inrPerUsd = rateOf(fxState);
+  const fxAsOf = "rate" in fxState ? fxState.rate.date : null;
+  const fxIsLive = fxState.status === "live";
+  const displayCurrency = effectiveCurrency(requestedCurrency, fxState);
   // ── Live intraday quotes ────────────────────────────────────────────────────
   // Fetched once on load and then on a timer, and merged into the book here so
   // every page that reads `portfolio.positions` gets live prices without knowing
@@ -731,7 +755,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const basis: Basis = livePriced > 0 ? "LIVE" : "STATEMENT";
 
   const setDisplayCurrency = useCallback((c: DisplayCurrency) => { setCcy(c); writeDisplayCurrency(c); }, []);
-  const convertFromBase = useCallback((n: number) => (displayCurrency === "USD" ? n / inrPerUsd : n), [displayCurrency, inrPerUsd]);
+  const convertFromBase = useCallback((n: number) => (displayCurrency === "USD" && inrPerUsd !== null ? n / inrPerUsd : n), [displayCurrency, inrPerUsd]);
   const fmtFromBase = useCallback(
     (n: number | null | undefined, opts?: { compact?: boolean; sign?: boolean }) =>
       (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency, opts) : "—"),
@@ -747,10 +771,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const pendingFor = useCallback((symbols: readonly string[]) => pendingAmong(quotes, symbols), [quotes]);
   const quoteFeeds = useMemo(() => quoteFeedNames(quotes), [quotes]);
   const shared = useMemo(() => ({
-    bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
+    bookIsEmpty, displayCurrency, requestedCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, fxState,
     quotesStatus, quoteFeed: quotes, quotesAsOf: quotes?.asOf ?? null, quoteFeeds, quotesPending, pendingFor, requestSymbols, refreshQuotes,
     corporateActions, corporateActionsStatus, corporateActionReturns: corporateActionLayer.returns,
-  }), [bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
+  }), [bookIsEmpty, displayCurrency, requestedCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, fxState,
     quotesStatus, quotes, quoteFeeds, quotesPending, pendingFor, requestSymbols, refreshQuotes, corporateActions, corporateActionsStatus, corporateActionLayer]);
   const value = useMemo<Ctx>(
     () => ({

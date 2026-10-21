@@ -45,7 +45,49 @@
 - Inline saves are serialized because each response carries its starting store snapshot plus the edit; overlapping replies must not hide another successful field. Focus reads wait for pending saves and cannot replace a newer edit.
 - Existing profile/store suites verify identity and persistence contracts. The browser regression checks the default inputs, overlapping field saves and reopening the page, cancellation, a failed save and retry, removal, and a brand edit spanning several investments.
 
-### Stage 10fz — SHOW WHICH SECTOR HOLDINGS HAVE NO PURCHASE COST
+### Stage 10fz — A FULL CALCULATION AUDIT AGAINST INDUSTRY STANDARDS
+
+*"logical calculations need to be correct as per the industry standards."*
+
+- **Scope:** six areas were audited against GIPS/CFA, ILPA and the Income-tax
+  Act, each finding reproduced on the book. Every finding and its fix is in
+  `docs/CALCULATION-AUDIT.md`. The rules now bind every session in `CLAUDE.md`
+  § Calculation standards.
+- **Headlines:**
+  - CAGR only for one purchase (`Position.purchaseDates`).
+  - Exits and closed mandates stay in since-inception returns: book FIFO
+    22.03% → 21.20%.
+  - The Returns tab reads the verified records, so FYTD now agrees with the tile.
+  - Period "Absolute" return is Modified Dietz; the benchmark comparison is PME.
+- **Private:**
+  - Distributions are the same cash the XIRR counts: ₹64.17 L → ₹94.53 L.
+  - Private funds' returns include their income: Neo 13.83% → 21.21%, 360 ONE
+    46.96% → 65.59%.
+  - TVPI/DPI/RVPI are struck.
+- **Tax:**
+  - Long-term from the anniversary + 1 day in calendar months
+    (`shared/holdingPeriod.mjs`).
+  - The planner works per lot.
+  - Dividends are gross of TDS.
+  - The ₹1.25 L exemption is applied per person.
+  - The headline is FY-scoped, superseding Stage 10da's windows headline.
+- **Exposure:**
+  - Entity-scoped look-through.
+  - Active weights over the classified equity sleeve.
+  - Concentration by fund (`concentrationNames`).
+  - The day move never blends a missing line in as ₹0.
+  - No constant FX rate.
+- **Tests:** new suites `calcAudit` (ingest), plus display FX rate, day move,
+  concentration and lot terms (family). The `check-pages` re-derivations follow
+  each rule.
+
+### Stage 10ga — ONE UPLOAD FOR THE STATEMENT LIBRARY, WIRED END TO END; UPLOAD HISTORY REMOVED
+
+- *"give a universal file/folder upload option on the main statement library page … automatically be saved in github … wired into the dashboard end to end … arranged in its correct respective folder"* — the per-folder R2 drop box (never switched on) is gone. One panel on the library's main page takes files, a folder, or a drop of either; each file is a git blob on the `statement-inbox` branch, the upload one `[skip ci]` commit (`shared/statementInbox.mjs`, `functions/api/statement-uploads.js`, same `GLOW_GITHUB_TOKEN` as the dashboard store), and it dispatches `statement-intake.yml`.
+- `scripts/ingest/intake-uploads.mjs` drops byte-identical files (ZIP members too), files each new one under `source/uploads-<IST date>/<provider>/` by the classifier's issuer, runs inventory → extract → build-symbols (additions only) → build-book, coverage:source and check:reads (now `GLOW_CHECK_READS_JSON`), holds back exactly the file each finding names and reads again, then accounts-table, build, test:ingest and test:family (a gate failing on main too is not the upload's). Only what passes lands on main, in one commit; the outcome goes back to the inbox log. Held files show the gate's reason with Retry/Remove; a landed file reads Publishing until the redeployed manifest carries its documents.
+- Upload History is removed from the nav, search and routes; `/history` forwards to `/statements`, asserted in check:pages, which also strikes the one upload control (folder button) on the grid and none inside a folder. The library is open on an empty book. `pull-uploads.mjs` is retired.
+
+### Stage 10gb — SHOW WHICH SECTOR HOLDINGS HAVE NO PURCHASE COST
 
 - The sector return percentage and its N-of-M count open one readable card. It names every excluded stock, owner, provider, statement date and account, says whether the purchase cost is missing or unverified, and names the record needed. Holdings inside funds are explained separately from the account-holding count. The formula and included-holding list stay under an optional expansion.
 - The same card works on both sector views, the Morning CIO panel and Compare. It remains usable with live prices and on narrow screens; opening it does not also expand the sector row. The existing FIFO calculation and cost gate are unchanged.

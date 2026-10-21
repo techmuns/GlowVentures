@@ -258,12 +258,29 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     // commitment. Keep the value, but never combine it into an invented multiple.
     const value = ps.length ? sum(ps.map(p => p.marketValue)) : null;
     const sameBasis = ps.length > 0 && ps.every(p => !p.review && (p.priceAsOf ?? a?.asOf) === c.asOf);
+    // TVPI ADDS DISTRIBUTIONS TO A VALUE STRUCK ON ONE DATE, so only the ones
+    // paid by that date (Stage 10fz). Neo's printed ₹49,48,221 includes
+    // ₹7,13,178 paid 9 Jul 2026, after the 30 Jun NAV it was added to — which
+    // counts that money twice (in the NAV it left and in the payout) and read
+    // 1.209× where 1.195× is the multiple on 30 Jun. The printed total is the
+    // income and capital payouts in the statement's own total, so the later
+    // ones come off it by date; with no dated payout record a distribution
+    // cannot be placed before the value, and the multiple is withheld.
+    const after = (c.payouts ?? []).filter(x => x.inPrintedTotal && x.kind !== "equalisation" && c.asOf != null && x.date > c.asOf);
+    const distToValue = c.distributed == null ? null
+      : c.distributed === 0 ? 0
+      : c.payouts == null ? null
+      : c.distributed - after.reduce((s, x) => s + x.gross, 0);
+    const tvpiWhy = !sameBasis ? "current book value has a different basis or date; TVPI withheld"
+      : c.distributed != null && c.distributed !== 0 && c.payouts == null ? "value on the same basis; the distributions carry no dated record to place them before the valuation, so TVPI is withheld"
+      : after.length ? `value on the same basis; TVPI counts the distributions paid by ${c.asOf}, not the ${after.length} paid after it (${after.map(x => x.date).join(", ")})`
+      : "value on the same basis";
     return { cid: `C${i + 1}`, acct: c.accountId, sec: ps.length === 1 ? ps[0].securityKey : null,
       ent: ownerDisplayName(c.ownerId), fund: c.name, cdate: null, comm: c.committed, called: c.called, paid: c.paid,
       dist: c.distributed, uncalled: c.undrawn, unpaid: c.pending, pct: ratio(c.called, c.committed), value,
-      tvpi: sameBasis && value != null && c.distributed != null ? ratio(value + c.distributed, c.paid) : null,
+      tvpi: sameBasis && value != null && distToValue != null ? ratio(value + distToValue, c.paid) : null,
       dpi: ratio(c.distributed, c.paid), ncdate: null, ncamt: null,
-      notes: `Commitment statement ${c.asOf ?? "undated"}; ${sameBasis ? "value on the same basis" : "current book value has a different basis or date; TVPI withheld"}. Next call not confirmed.`,
+      notes: `Commitment statement ${c.asOf ?? "undated"}; ${tvpiWhy}. Next call not confirmed.`,
       check: c.arithmeticHolds === false ? "Statement commitment arithmetic differs" : "OK" };
   }), defaultNote, registerLinks);
 
@@ -282,9 +299,18 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const cost = sum(ps.map(p => p.costBasis)), value = completeSum(ps.map(p => p.marketValue));
     const costed = ps.filter(p => !p.valuedAtCost && p.costBasis != null && p.unrealizedPnL != null);
     const unrealised = sum(costed.map(p => p.unrealizedPnL));
-    const irrRows = hs.filter(h => h.xirr != null && typeof h.mv === "number");
-    const covered = sum(irrRows.map(h => h.mv as number));
-    const xirr = covered != null && covered > 0 ? irrRows.reduce((s, h) => s + (h.mv as number) * (h.xirr as number), 0) / covered : null;
+    // ONE POOLED XIRR, NOT AN AVERAGE OF THEM (Stage 10fz). This was
+    // Σ(value × XIRR) ÷ Σ value under "Annualised return — XIRR": a value-
+    // weighted mean of rates solved over different windows is no rate of
+    // anything. The rows that carry an XIRR are each whole accounts on a dated
+    // record, so their union is too, and `dated.behind` pools every one of
+    // their dated flows — each account closing on its own statement's value and
+    // date — into the one money-weighted rate those accounts earned, under the
+    // same one-year guard the rows carry. Coverage is still the value it spans.
+    const irrPs = ps.filter(p => { const h = holdingByPosition.get(p); return h?.xirr != null && typeof h.mv === "number"; });
+    const covered = sum(irrPs.map(p => p.marketValue));
+    const pooled = irrPs.length ? dated.behind(irrPs, positions) : null;
+    const xirr = covered != null && covered > 0 && pooled?.dated && pooled.days >= 365 && pooled.annualPct != null ? pooled.annualPct / 100 : null;
     const ds = dates(hs.flatMap(h => [h.first as string | null, h.last as string | null]));
     const realisedGain = completeSum(ps.map(p => p.realizedPnL));
     const income = sum(ps.map(p => p.dividendReceived));
@@ -296,7 +322,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       absolute: fifo?.returnPct == null ? null : fifo.returnPct / 100, income,
       xirr, coverage: ratio(covered, value) };
   }
-  const overviewNote = "Figures in ₹ Crore; statement and review marks on each account's own date. Costs and gains name their coverage: absolute return is FIFO over costed, valued rows: unrealised, realised and dividends over the capital deployed. XIRR is the template's value-weighted blend of supported holding XIRRs, not a pooled portfolio XIRR. Benchmark returns are not available.";
+  const overviewNote = "Figures in ₹ Crore; statement and review marks on each account's own date. Costs and gains name their coverage: absolute return is FIFO over costed, valued rows: unrealised, realised and dividends over the capital deployed. XIRR is pooled: one money-weighted rate over every dated flow of the rows that carry one (each a whole account, closing on its own statement's value and date), over the share of value named in coverage — never an average of the rows' rates. Benchmark returns are not available.";
   add("Portfolio Allocation", [col("category", "Category"), col("range", "Investment date range"), money("cost", "Investment at cost"), money("value", "Market value"),
     pct("weight", "Allocation (% of portfolio)"), pct("classWeight", "Allocation (% of asset class)"), money("income", "Dividend / interest"), money("fullGain", "Gain / (loss) incl. redeemed & income"),
     money("unrealised", "Gain / (loss) on what is held"), pct("absolute", "Absolute return — Portfolio (%)"), pct("babs", "Absolute return — Blended index (%)"),

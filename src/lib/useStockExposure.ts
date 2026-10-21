@@ -29,7 +29,30 @@ import { lookthroughCompanies } from "@/lib/recordedHoldings";
  * caller that is not asking rather than a fabricated empty answer; no caller
  * renders it while disabled.
  */
-export function useStockExposure(consolidated: Position[], enabled: boolean): StockExposureState {
+const LOADING: StockExposureState = { status: "loading" };
+
+export function useStockExposure(
+  consolidated: Position[],
+  enabled: boolean,
+  /**
+   * ── WHOSE FUNDS ARE LOOKED THROUGH (Stage 10fz) ─────────────────────────
+   *
+   * By default the vehicles are struck over `consolidated` — every fund the
+   * scope holds. A view filtered to ONE member must strike them over that
+   * member's funds only: the Monitor's Security view with Entity = Ankita
+   * printed ₹1.21 Cr of ICICI Bank "via funds" beside her own ₹0.27 Cr, and
+   * every rupee of it was Helios Flexi Cap — a folio in Ajay's name — weighted
+   * against Ankita's book. `vehiclesFrom` narrows the FUNDS only; the ISIN
+   * bridge and the company keys stay on `consolidated`, because which company
+   * a fund's line names does not depend on who holds the fund.
+   *
+   * `scopeKey` tags the answer with the scope it was struck for. The state
+   * outlives a change of inputs until the new fetch lands, and for a member
+   * filter that would print the previous member's look-through under the new
+   * member's name for a tick; a mismatched tag reads `loading` instead.
+   */
+  scope?: { vehiclesFrom?: Position[]; scopeKey?: string },
+): StockExposureState {
   // Struck over the DEDUPED set — a fund two members' statements both report is
   // one fund at the value the book carries for both, because this feeds a
   // DERIVED exposure and a fund counted twice would double the share derived
@@ -49,7 +72,8 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
   // `heldFundVehicles` in `lookthrough.ts` is that set, shared with the suite so
   // the two cannot load different funds — which they did, and which hid a join
   // only the page depended on.
-  const heldVehicles = useMemo<HeldFund[]>(() => heldFundVehicles(consolidated), [consolidated]);
+  const vehicleSet = scope?.vehiclesFrom ?? consolidated;
+  const heldVehicles = useMemo<HeldFund[]>(() => heldFundVehicles(vehicleSet), [vehicleSet]);
   //
   // AND AN ARBITRAGE FUND IS NOT A VEHICLE TO LOOK THROUGH — that rule lives in
   // `heldFundVehicles` too, so the suite and this page cannot disagree on it.
@@ -77,12 +101,14 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
     () => new Set(companies.filter(isCompanyShare).map((p) => p.securityKey)), [companies]);
 
   // The server applies the canonical promoter ring-fence before returning rows.
-  const [exposure, setExposure] = useState<StockExposureState>({ status: "loading" });
+  const scopeKey = scope?.scopeKey;
+  const [exposure, setExposure] = useState<{ scopeKey: string | undefined; state: StockExposureState }>(
+    { scopeKey: undefined, state: LOADING });
   useEffect(() => {
     if (!enabled) return;
     let live = true;
-    fetchStockExposure(heldVehicles, isinToBookKey, bookCompanyKeys).then((s) => { if (live) setExposure(s); });
+    fetchStockExposure(heldVehicles, isinToBookKey, bookCompanyKeys).then((s) => { if (live) setExposure({ scopeKey, state: s }); });
     return () => { live = false; };
-  }, [enabled, heldVehicles, isinToBookKey, bookCompanyKeys]);
-  return exposure;
+  }, [enabled, heldVehicles, isinToBookKey, bookCompanyKeys, scopeKey]);
+  return exposure.scopeKey === scopeKey ? exposure.state : LOADING;
 }

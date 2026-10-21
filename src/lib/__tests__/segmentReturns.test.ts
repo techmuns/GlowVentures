@@ -10,8 +10,8 @@
 // helper under test.
 import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "@/data/glowData";
 import { currentHoldings, dedupedPositions } from "@/lib/analytics";
-import { bookReturnOnCost } from "@/lib/drilldown";
-import { segmentAttribution, SEGMENT_AXES, SEGMENT_VIEWS } from "@/lib/segmentReturns";
+import { bookReturnOnCost, exitedRows } from "@/lib/drilldown";
+import { segmentAttribution, SEGMENT_AXES, SEGMENT_VIEWS, EXITED_KEY } from "@/lib/segmentReturns";
 import type { Position } from "@/lib/types";
 
 let fails = 0;
@@ -21,8 +21,15 @@ const ok = (name: string, pass: boolean, detail = "") => {
 };
 const near = (a: number, b: number, tol = 1) => Math.abs(a - b) <= tol;
 
-const current = currentHoldings(dedupedPositions(BOOK_POSITIONS as Position[]));
-const tile = bookReturnOnCost(current, { accounts: BOOK_ACCOUNTS, universe: current });
+const consolidated = dedupedPositions(BOOK_POSITIONS as Position[]);
+const current = currentHoldings(consolidated);
+// SINCE INCEPTION (Stage 10fz): the tile takes the exits from the whole deduped
+// book, and the section is handed the same rows (`exitedRows`).
+const tile = bookReturnOnCost(current, { accounts: BOOK_ACCOUNTS, universe: consolidated });
+const exited = exitedRows(consolidated);
+const survivors = bookReturnOnCost(current, { accounts: BOOK_ACCOUNTS, universe: current });
+ok("the book carries exits that move its gain (load-bearing)", exited.length > 0 && Math.abs((tile.fifo.gain ?? 0) - (survivors.fifo.gain ?? 0)) > 1e5,
+  `${exited.length} exited rows, ${(((tile.fifo.gain ?? 0) - (survivors.fifo.gain ?? 0)) / 1e7).toFixed(2)} Cr`);
 const bookValue = current.reduce((s, p) => s + p.marketValue, 0);
 
 ok("the control offers every axis, in order", SEGMENT_VIEWS.map((v) => v.key).join() === SEGMENT_AXES.join());
@@ -30,11 +37,13 @@ ok("the control offers every axis, in order", SEGMENT_VIEWS.map((v) => v.key).jo
 for (const axis of SEGMENT_AXES) {
   console.log(`── ${axis} ──`);
   // A fixed sector for every company, so the sector axis runs off the book alone.
-  const a = segmentAttribution(current, BOOK_ACCOUNTS, axis, (k) => (k.charCodeAt(0) % 2 ? "Odd sector" : "Even sector"));
-  const value = a.rows.reduce((s, r) => s + r.value, 0);
-  const gain = a.rows.reduce((s, r) => s + (r.gain ?? 0), 0) + (a.mandateRemainder?.gain ?? 0);
-  const dep = a.rows.reduce((s, r) => s + (r.deployed ?? 0), 0) + (a.mandateRemainder?.deployed ?? 0);
-  const contrib = a.rows.reduce((s, r) => s + (r.contribPct ?? 0), 0) + (a.mandateRemainder?.contribPct ?? 0);
+  const a = segmentAttribution(current, BOOK_ACCOUNTS, axis, (k) => (k.charCodeAt(0) % 2 ? "Odd sector" : "Even sector"), exited);
+  const value = a.rows.reduce((s, r) => s + r.value, 0) + (a.exited?.value ?? 0);
+  const gain = a.rows.reduce((s, r) => s + (r.gain ?? 0), 0) + (a.mandateRemainder?.gain ?? 0) + (a.exited?.gain ?? 0);
+  const dep = a.rows.reduce((s, r) => s + (r.deployed ?? 0), 0) + (a.mandateRemainder?.deployed ?? 0) + (a.exited?.deployed ?? 0);
+  const contrib = a.rows.reduce((s, r) => s + (r.contribPct ?? 0), 0) + (a.mandateRemainder?.contribPct ?? 0) + (a.exited?.contribPct ?? 0);
+  ok("an exit is in a gain and in no value — the Exited lines hold nothing",
+    (a.exited?.value ?? 0) === 0 && a.rows.every((r) => r.children.filter((c) => c.key === EXITED_KEY).every((c) => c.value === 0 && c.holdings === 0)));
   ok("the total is the Gain / Loss tile's gain and return", near(a.total.gain ?? NaN, tile.fifo.gain ?? NaN) && near(a.total.returnPct ?? NaN, tile.fifo.returnPct ?? NaN, 1e-9),
     `${((a.total.gain ?? 0) / 1e7).toFixed(2)} Cr, ${(a.total.returnPct ?? 0).toFixed(2)}%`);
   ok("the segments' values add to the book's value", near(value, bookValue) && near(a.total.value, bookValue));
@@ -45,7 +54,10 @@ for (const axis of SEGMENT_AXES) {
     a.rows.every((r) => near(r.children.reduce((s, c) => s + c.value, 0), r.value)
       && near(r.children.reduce((s, c) => s + (c.gain ?? 0), 0) + (r.childRemainder?.gain ?? 0), r.gain ?? 0)));
   ok("a segment that strikes no gain shows none, never ₹0",
-    a.rows.every((r) => (r.struck === 0) === (r.gain === null)) && a.rows.every((r) => r.children.every((c) => (c.struck === 0) === (c.gain === null))));
+    // A segment with no struck holding still has a gain where an EXIT filed
+    // under it earned one (Stage 10fz) — the redeemed arbitrage schemes under Cash.
+    a.rows.every((r) => (r.struck === 0 && r.exitedHoldings + r.exitedMandates === 0) === (r.gain === null))
+    && a.rows.every((r) => r.children.filter((c) => c.key !== EXITED_KEY).every((c) => (c.struck === 0) === (c.gain === null))));
   if (axis === "category" || axis === "side") {
     ok("an axis that keeps each mandate in one segment needs no remainder", a.mandateRemainder === null);
   }

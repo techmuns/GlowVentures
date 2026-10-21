@@ -27,10 +27,10 @@
 import {
   BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS, BOOK_POSITIONS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
-  BOOK_REVIEW_FLOWS, BOOK_REVIEW_SUPERSEDED,
+  BOOK_REVIEW_FLOWS, BOOK_REVIEW_SUPERSEDED, BOOK_ACCOUNT_RETURN_RECORDS,
 } from "@/data/glowData";
 import {
-  capitalRollup, capitalMovesWithCalls, capitalReturn, capitalXirr, capitalTotals, type CapitalGroup,
+  capitalRollup, capitalMovesWithCalls, capitalReturn, capitalXirr, capitalTotals, capitalWindow, type CapitalGroup,
 } from "@/lib/tranches";
 import type { Account, CapitalMove, Commitment, Position } from "@/lib/types";
 import { privateScope } from "@/lib/privateMarket";
@@ -189,6 +189,45 @@ console.log("\n── PMS mandates ──");
   }
 }
 
+// ── 7b. THE NEWEST VERIFIED CLOSE (Stage 10fz) ─────────────────────────────
+// A since-inception return closes on the account's verified return record
+// where that is newer than the holdings statement and the two dated records
+// agree across the gap — and only there. Value today, appreciation and its
+// split stay on the holdings statement (the PMS split above still ties to the
+// Holdings page); only the money-weighted close moves.
+console.log("\n── the newest verified close ──");
+{
+  const carn = byId.get("carnelian-asset-management-and-advisors-pvt-ltd-3517383")!;
+  const old = capitalRollup(RECORD, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, "all", "recent", {
+    commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION, returnRecords: null,
+  }).find((g) => g.key === carn.key)!;
+  ok("Carnelian 3517383's return closes on its 7 Oct verified record, not the 30 Sep holdings statement",
+    carn.closeAsOf === "2026-10-07" && old.closeAsOf === "2026-09-30", `${old.closeAsOf} → ${carn.closeAsOf}`);
+  near("…at the record's own value", carn.closeValue, BOOK_ACCOUNT_RETURN_RECORDS[carn.accountId].record!.value, 1);
+  ok("…while Value today and appreciation stay on the holdings statement", carn.valueAsOf === "2026-09-30" && carn.value === old.value && carn.appreciation === old.appreciation);
+  ok("…and the window the XIRR is struck over ends on the record's date", capitalWindow(carn)?.to === "2026-10-07");
+  ok("…and its money-weighted rate moves with the close", capitalXirr(carn) != null && Math.abs(capitalXirr(carn)! - capitalXirr(old)!) > 0.1,
+    `${capitalXirr(old)?.toFixed(3)} → ${capitalXirr(carn)?.toFixed(3)}`);
+  const gl = byId.get("green-lantern-capital-llp-510861")!;
+  ok("Green Lantern 510861 stays on its holdings date: its record's later TDS payouts are not in the rollup",
+    gl.closeAsOf === BOOK_ACCOUNTS.find((a) => a.accountId === gl.accountId)!.asOf, String(gl.closeAsOf));
+  const helios = byId.get("helios-mutual-fund-10355977")!;
+  ok("an OLDER record never pulls the close back (Helios: record 6 Aug, holdings 7 Aug)", helios.closeAsOf === "2026-08-07", String(helios.closeAsOf));
+}
+
+// ── 7c. YEAR TO DATE IS TODAY'S YEAR (Stage 10fz) ──────────────────────────
+console.log("\n── year to date is the current year ──");
+{
+  const inYear = G.find((g) => g.appreciation != null && g.valueAsOf != null && capitalReturn(g, "ytd", `${g.valueAsOf.slice(0, 4)}-12-31`).shown);
+  ok("a row first funded inside its value's year shows YTD in that year (LOAD-BEARING)", !!inYear, inYear?.key ?? "none");
+  if (inYear) {
+    const next = `${Number(inYear.valueAsOf!.slice(0, 4)) + 1}-10-21`;
+    const r = capitalReturn(inYear, "ytd", next);
+    ok("…and the next year it is refused, naming the value's date — never last year's return under this year's label",
+      !r.shown && /before/.test((r as { reason: string }).reason), (r as { reason?: string }).reason ?? "");
+  }
+}
+
 // ── 8. A FUND THAT PAID BACK, DATED AND TYPED, AND IS STILL HELD ───────────
 // Stage 10bw read Neo Infra's and Baring's payouts — every row dated and typed
 // by the fund (income, principal, equalisation) and reconciled against the
@@ -295,9 +334,23 @@ console.log("\n── the review's dated payouts ──");
     if (!g) continue;
     near(`${id}: purchase is the review's dated purchases`, g.paidIn, reviewSum(id, ["purchase"]));
     near(`${id}: redemption is the review's sales and Div / Int`, g.redemption, reviewSum(id, ["sale", "income"]));
-    near(`${id}: realised is the Div / Int the review prints`, g.realised, reviewSum(id, ["income"]));
-    near(`${id}: unrealised is value less the purchase net of sale proceeds`, g.unrealised,
-      (g.value ?? NaN) - (g.paidIn - reviewSum(id, ["sale"])));
+    // A line on FIFO's cost (Stage 10fz, 360 ONE 37702 / 60117) books its sale
+    // against the cost of the units sold: realised is the Div / Int plus the
+    // sale over that cost, unrealised is value less the cost of the units held.
+    const held = BOOK_POSITIONS.filter((p) => p.accountId === id && keys.includes(p.securityKey));
+    const costSold = held.reduce((t, p) => t + (p.costOfUnitsSold ?? 0), 0);
+    const costHeld = held.reduce((t, p) => t + (p.costBasis ?? NaN), 0);
+    const fifo = costSold > 0 && reviewSum(id, ["sale"]) > 0 && Math.abs(g.paidIn - (costHeld + costSold)) <= 1;
+    if (fifo) {
+      near(`${id}: realised is the Div / Int plus the sale over the FIFO cost of the units sold`, g.realised,
+        reviewSum(id, ["income"]) + reviewSum(id, ["sale"]) - costSold);
+      near(`${id}: unrealised is value less the FIFO cost of the units held`, g.unrealised, (g.value ?? NaN) - costHeld);
+      ok(`${id}: …and the words say FIFO`, /FIFO/.test(g.realisedNote ?? "") && /FIFO/.test(g.unrealisedNote ?? ""));
+    } else {
+      near(`${id}: realised is the Div / Int the review prints`, g.realised, reviewSum(id, ["income"]));
+      near(`${id}: unrealised is value less the purchase net of sale proceeds`, g.unrealised,
+        (g.value ?? NaN) - (g.paidIn - reviewSum(id, ["sale"])));
+    }
     const statementPayouts = BOOK_COMMITMENTS.find((c) => c.accountId === id)?.payouts ?? [];
     ok(`${id}: no payout its statement prints is counted beside the review's`,
       statementPayouts.every((r) => !RECORD.some((m) => m.accountId === id && !m.fromReview && m.date === r.date)),

@@ -187,7 +187,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
     // MNT-10: the value is units × AMFI's NAV wherever the overlay priced the
     // holding — not "its own statement's" mark, which is true of the few AMFI
     // does not price.
-    "The rupee figure is derived: the scheme's move applied to what this book values the holding at — units × AMFI's published NAV where AMFI publishes one, and the statement's own mark where it does not.",
+    "The rupee figure is derived: the scheme's move applied to what the holding was worth before it — units at AMFI's previous published NAV where AMFI publishes one, and the statement's own mark where it does not.",
     "Each scheme's NAV is AMFI's own daily file — the same NAV the rest of the dashboard values the fund at. A scheme that file does not carry is on the look-through store's NAV, and its row says so.",
     ...(model.olderRows ? [`${model.olderRows} scheme${model.olderRows === 1 ? "" : "s"} last published on an earlier day ${model.olderRows === 1 ? "is" : "are"} listed with ${model.olderRows === 1 ? "its" : "their"} own date and kept out of the figure above, which is one day's move.`] : []),
     "AIF folios are not here — no alternative fund publishes a daily NAV.",
@@ -301,7 +301,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
               <SortHeader col="nav" view={view} pad="py-1.5 pr-3">NAV</SortHeader>
               <SortHeader col="move" view={view} pad="py-1.5 pr-3"
                 title={`The scheme's own published move, NAV against the one before it. Every scheme with a published move is listed; a move of ${DRASTIC_PCT}% or more in one published day is chipped drastic.`}>Move</SortHeader>
-              <SortHeader col="impact" view={view} pad="py-1.5 pr-3" title="The scheme's move applied to what this book values the holding at. Derived — the two sides are dated differently.">&#8377; on holding</SortHeader>
+              <SortHeader col="impact" view={view} pad="py-1.5 pr-3" title="The scheme's move applied to what the holding was worth before it (a NAV-priced holding at the previous published NAV). Derived — the two sides are dated differently.">&#8377; on holding</SortHeader>
               <SortHeader col="held" view={view} pad="py-1.5" title="What this book values these holdings at: units × AMFI's published NAV where AMFI publishes one, else the statement's own mark. Each cell's hover says which.">Held</SortHeader>
             </Tr>
           </thead>
