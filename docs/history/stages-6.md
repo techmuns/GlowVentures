@@ -217,7 +217,14 @@
 - Freeze the complete header band explicitly: all table header rows, four rows in the Portfolio Monitor workbook and five in the consolidated workbook. The first scrollable cell opens immediately below the header.
 - Serialized-workbook tests cover long values at the end of the data, expanded currency, multi-line descriptions, merged headers and all three export paths. Browser downloads check frozen panes and fitted columns as part of existing table coverage.
 
-### Stage 10go — UPLOAD REHEARSAL AND COMPLETE CUSTODY AUDIT DATES
+### Stage 10go — REMOVE THE STANDALONE MONEY-WEIGHTED RETURN CARD
+
+- Removed the dedicated money-weighted metric from Morning CIO, its tile menus and search. Existing saved layouts and old `tiles=mwr` links discard the retired metric; an all-retired layout falls back to the standard cards.
+- Remaining gain and return cards retain their available figures and coverage info. Their hover text uses plain “return” wording.
+- Browser regressions check both menus, legacy links and local/shared saved layouts, including a layout containing only the retired card and conflicting local/shared preferences. The legacy measured-holdings bookmark keeps its independently verified calculation rather than depending on a removed card.
+- Review follow-up: an explicitly all-retired URL now selects defaults even when valid local/shared preferences exist. The older return-dialog and latest-record browser commands target the remaining history card and current coverage UI, and run in required CI.
+
+### Stage 10gp — UPLOAD REHEARSAL AND COMPLETE CUSTODY AUDIT DATES
 
 - Added a full local browser drop → real upload handler → Git inbox → actual intake/extraction/build → reviewed publication → version refresh rehearsal. Seven original source PDFs supply the two HDFC folios and three ICICI demat rows; financial facts are never fabricated for the test. GitHub/reviewer/deployment service boundaries are explicitly emulated locally.
 - A read-only production check found two ICICI custody rows without their reconciled dates and one transaction-derived balance absent from Data Audit. The audit now retains verified custody closing balances and their exact account/ISIN/unit/snapshot purchase evidence. Missing statement valuations stay absent and outside summary totals. Source links and the promoter ring fence are preserved.

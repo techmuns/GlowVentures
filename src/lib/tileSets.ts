@@ -166,7 +166,9 @@ export function writeLocalTileSet(key: string, ids: string[], synced: boolean) {
  *   a `?tiles=` address  >  an unsynced change made in this browser
  *                        >  the shared store's set  >  this browser's copy.
  *
- * `null` means "nothing chosen" and the strip draws its default.
+ * Presence survives catalogue filtering: if the winning source contains only
+ * retired metrics, select defaults instead of falling through to an older source.
+ * Returned `ids: null` tells the strip to draw its default; never push an empty set.
  */
 export function chooseTileSet(opts: {
   fromParam: string[] | null;
@@ -175,9 +177,10 @@ export function chooseTileSet(opts: {
   sharedLoaded: boolean;
 }): { ids: string[] | null; push: boolean } {
   const { fromParam, local, shared, sharedLoaded } = opts;
-  if (fromParam?.length) return { ids: fromParam, push: false };
-  if (local && !local.synced && !local.legacy) return { ids: local.ids, push: sharedLoaded };
-  if (shared?.length) return { ids: shared, push: false };
-  if (local) return { ids: local.ids, push: sharedLoaded && !local.synced };
+  // A present URL with no surviving metric still overrides saved preferences.
+  if (fromParam !== null) return { ids: fromParam.length ? fromParam : null, push: false };
+  if (local && !local.synced && !local.legacy) return { ids: local.ids.length ? local.ids : null, push: sharedLoaded && local.ids.length > 0 };
+  if (shared !== null) return { ids: shared.length ? shared : null, push: false };
+  if (local) return { ids: local.ids.length ? local.ids : null, push: sharedLoaded && !local.synced && local.ids.length > 0 };
   return { ids: null, push: false };
 }

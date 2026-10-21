@@ -491,12 +491,6 @@ const FIGURES: { id: string; label: string; href: string; words: string[]; detai
   { id: "fig:no-cost", label: "Holdings with no cost reported", href: drilldownHref("book", undefined, "no-cost"),
     words: ["no cost", "missing cost", "cost not reported"],
     detail: "The positions whose statement prints a value and no cost — and why" },
-  // Morning CIO with its own tile on screen (SC-C6): `/holdings?of=measured`
-  // lists the accounts behind the rate and deliberately does not state it, so a
-  // result promising "the rate" there opened a page without one.
-  { id: "fig:xirr", label: "Money-weighted return (XIRR)", href: "/cio?tiles=mwr",
-    words: ["xirr", "irr", "money weighted", "money-weighted return"],
-    detail: "Morning CIO · the money-weighted rate across the accounts that carry dated flows and an opening value" },
   { id: "fig:top", label: "Top 10 names", href: drilldownHref("top-names"),
     words: ["top 10", "top ten", "largest holdings", "biggest holdings", "top holdings", "concentration"],
     detail: "The ten largest names in the book" },

@@ -57,7 +57,7 @@ try {
  assert.ok(Math.abs(Number(await fytdCard.getAttribute('data-card-return')) - Number(await table.getAttribute('data-seg-total-ret'))) < 1e-8);
  await page.screenshot({ path: `${out}/headline-cards.png` });
  // Saved choices use the same covered inputs as the default cards.
- for (const id of ['mwr', 'return']) {
+ for (const id of ['return']) {
   await page.locator('[data-tile-select="2"]').click();
   await page.locator(`[data-tile-option="${id}"]`).click();
   const card = page.locator(`[data-tile-slot="${id}"]`);
@@ -127,6 +127,72 @@ try {
  assert.ok(await dialog.evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth+1 && r.top >= 0 && r.bottom <= innerHeight+1 && el.scrollWidth <= el.clientWidth+1; }));
  await page.screenshot({ path: `${out}/mobile-info.png` });
  await page.keyboard.press('Escape');
+ // Retired metrics cannot return through a picker, an old link or a saved layout.
+ await page.setViewportSize({ width: 1440, height: 1000 });
+ await page.goto(base + '/cio?tab=returns&tiles=value,gain,fytd,mwr');
+ await page.locator('[data-tile-slot="fytd"]').waitFor();
+ assert.deepEqual(await page.locator('[data-tile-slot]').evaluateAll(els => els.map(el => el.dataset.tileSlot)), ['value', 'gain', 'fytd']);
+ await page.locator('[data-tile-select]').first().click();
+ assert.equal(await page.locator('[data-tile-option="mwr"]').count(), 0);
+ assert.doesNotMatch(await page.locator('[data-tile-menu]').innerText(), /money.weighted/i);
+ await page.keyboard.press('Escape');
+ await page.locator('[data-tile-add]').click();
+ assert.equal(await page.locator('[data-tile-add-option="mwr"]').count(), 0);
+ assert.doesNotMatch(await page.locator('[data-tile-add-menu]').innerText(), /money.weighted/i);
+ await page.keyboard.press('Escape');
+ for (const source of ['local', 'shared']) {
+  for (const ids of [['value', 'mwr', 'gain'], ['mwr']]) {
+   const context = await browser.newContext();
+   try {
+    const saved = await context.newPage();
+    saved.on('pageerror', e => errors.push(e.message));
+    await saved.route('**/api/**', r => r.fulfill({ status: 503, json: { status: 'unreachable' } }));
+    await saved.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+    await installReadModelRoutes(saved);
+    if (source === 'local') await saved.addInitScript(ids => localStorage.setItem('glow:cioTiles:v1', JSON.stringify({ ids, synced: true })), ids);
+    else await saved.route('**/api/tile-sets', r => r.fulfill({ json: { ok: true, sets: { cio: { ids } } } }));
+    await saved.goto(base + '/cio?tab=returns');
+    await saved.locator('[data-segment-returns]').waitFor();
+    const expected = ids.length === 1 ? ['value', 'gain', 'annualised', 'fytd'] : ['value', 'gain'];
+    await saved.waitForFunction(expected => JSON.stringify([...document.querySelectorAll('[data-tile-slot]')].map(el => el.dataset.tileSlot)) === JSON.stringify(expected), expected);
+    assert.equal(await saved.locator('[data-tile-slot="mwr"]').count(), 0);
+    await saved.goto(base + '/cio?tab=returns&tiles=mwr');
+    await saved.locator('[data-segment-returns]').waitFor();
+    assert.deepEqual(await saved.locator('[data-tile-slot]').evaluateAll(els => els.map(el => el.dataset.tileSlot)), ['value', 'gain', 'annualised', 'fytd']);
+   } finally { await context.close(); }
+  }
+ }
+ for (const scenario of [
+  { local: { ids: ['mwr'], synced: false }, shared: ['value', 'gain'], expected: ['value', 'gain', 'annualised', 'fytd'] },
+  { local: { ids: ['value', 'gain'], synced: true }, shared: ['mwr'], expected: ['value', 'gain', 'annualised', 'fytd'] },
+  { local: { ids: ['mwr'], synced: true }, shared: ['value', 'gain'], expected: ['value', 'gain'] },
+ ]) {
+  const context = await browser.newContext();
+  try {
+   const saved = await context.newPage();
+   saved.on('pageerror', e => errors.push(e.message));
+   await saved.addInitScript(local => localStorage.setItem('glow:cioTiles:v1', JSON.stringify(local)), scenario.local);
+   await saved.route('**/api/**', r => r.fulfill({ status: 503, json: { status: 'unreachable' } }));
+   const writes = [];
+   await saved.route('**/api/tile-sets', r => {
+    if (r.request().method() !== 'GET') writes.push(r.request().method());
+    return r.fulfill({ json: { ok: true, sets: { cio: { ids: scenario.shared } } } });
+   });
+   await installReadModelRoutes(saved);
+   const loaded = saved.waitForResponse('**/api/tile-sets');
+   await saved.goto(base + '/cio?tab=returns');
+   await loaded;
+   await saved.locator('[data-segment-returns]').waitFor();
+   await saved.waitForFunction(expected => JSON.stringify([...document.querySelectorAll('[data-tile-slot]')].map(el => el.dataset.tileSlot)) === JSON.stringify(expected), scenario.expected);
+   assert.deepEqual(writes, [], 'retiring a saved metric must not write an empty shared layout');
+   if (!scenario.local.synced) assert.deepEqual(await saved.evaluate(() => JSON.parse(localStorage.getItem('glow:cioTiles:v1'))), scenario.local, 'an older shared layout cannot overwrite the pending retired selection');
+  } finally { await context.close(); }
+ }
+ await page.goto(base + '/cio?tab=returns&tiles=mwr');
+ await page.locator('[data-segment-returns]').waitFor();
+ assert.ok(await page.locator('[data-tile-slot]').count() > 0);
+ assert.equal(await page.locator('[data-tile-slot="mwr"]').count(), 0);
+ await page.screenshot({ path: `${out}/retired-return-card.png` });
  assert.deepEqual(errors, []);
  await fs.writeFile(`${out}/browser-results.json`, JSON.stringify(results, null, 2));
  console.log('Attribution toolbar, covered totals, source cards and mobile layout passed:', results);
