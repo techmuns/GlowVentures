@@ -36,6 +36,12 @@ function datesText(d) {
   if (d.precision === "month") return d.from === d.to ? monthText(d.from) : `${monthText(d.from)} – ${monthText(d.to)}`;
   return d.text ?? null;
 }
+// The line's investment dates as data (Stage 10ey): a day or a month at each
+// end, as printed. A cell no rule reads carries none — never a guessed date.
+function investedDatesOf(d) {
+  if (!d || (d.precision !== "day" && d.precision !== "month")) return null;
+  return { from: d.from, to: d.to, text: datesText(d) };
+}
 
 export const REVIEW_PROVIDER = "Consolidated review (MOPWM)";
 const r2 = (x) => (x === null || x === undefined ? null : Math.round(x * 100) / 100);
@@ -203,7 +209,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     if (r === UNCLASSIFIED) fail(`${security}: listed sector label ${listed.providerSector} resolves to no GICS sector`);
     return r;
   };
-  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row, listed }) => {
+  const push = ({ key, security, owner, account, assetClass, qty, cost, value, atCost, asOf, note, tab, row, listed, dates }) => {
     if (key !== securityKeyOf(security) && !statementKeys.has(key)) {
       fail(`${security}: key ${key} is neither its name's own (${securityKeyOf(security)}) nor a statement row's`);
     }
@@ -227,6 +233,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
       priceAsOf: asOf ?? REVIEW_AS_OF, accruedIncome: null, dividendReceived: null, positionIrrPct: null,
       dedupeGroup: undefined, alsoReportedUnder: undefined,
       review: true, valuedAtCost: atCost ? true : undefined, reviewTaxonomy: taxonomyOf(tab, key), reviewSource: sourceOf(tab, row),
+      investedDates: investedDatesOf(dates),
       reviewNote: `${note}${listed ? ` Now a listed company: ${listed.why} (confirmed ${listed.since}).` : ""}${fresher.length ? ` A statement says otherwise: ${fresher.join("; ")}.` : ""}`,
     });
   };
@@ -263,7 +270,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
     const parts = e.split.map((s) => ({ ...s, cost: s.cost ?? l.cost - fixed }));
     if (!near(sum(parts.map((s) => s.cost)), l.cost)) fail(`${name}: the split adds to ${sum(parts.map((s) => s.cost))}, not the line's ${l.cost}`);
     for (const s of parts) {
-      push({ key, security: name, owner: s.owner, assetClass: e.assetClass, qty: null, cost: s.cost, atCost: true, tab: "privateInvestments", row: l.row,
+      push({ key, security: name, owner: s.owner, assetClass: e.assetClass, qty: null, cost: s.cost, atCost: true, tab: "privateInvestments", row: l.row, dates: l.dates,
         note: `Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row ${l.row}${parts.length > 1 ? ` — ${ownerName(s.owner)}'s ₹${s.cost.toLocaleString("en-IN")} of the line` : ""}. ${cap(e.why)}.` });
     }
   }
@@ -308,7 +315,7 @@ export function reviewBookLayer({ root = ".", positions, unvalued }) {
           notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s Transactions rows walk to ${walked.toLocaleString("en-IN", { maximumFractionDigits: 3 })} units; the closing holds ${s.qty.toLocaleString("en-IN", { maximumFractionDigits: 3 })}, so ${(walked - s.qty).toLocaleString("en-IN", { maximumFractionDigits: 3 })} units are on no dated row`);
         }
       }
-      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab, row: l.row, listed: e.listed,
+      push({ key: e.key, security: e.name, owner: s.owner, account: s.account, assetClass: e.assetClass, qty: s.qty, tab: e.tab, row: l.row, listed: e.listed, dates: l.dates,
         cost: s.cost, value: s.value, atCost: !!e.atCost, asOf: e.atCost ? REVIEW_AS_OF : f.closingDate ?? REVIEW_AS_OF,
         note: `${e.atCost ? "Held at cost" : `Valued at ₹${s.value.toLocaleString("en-IN")}`} on the family's consolidated review (MOPWM, 30 Jun 2026), ${tabName} row ${l.row}${f.closingDate && !e.atCost ? `, its closing of ${dayText(f.closingDate)}` : ""}. ${cap(e.why)}.` });
     }
