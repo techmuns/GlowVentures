@@ -52,6 +52,8 @@ try {
   await page.getByRole("button", { name: "Test apartment", exact: true }).click();
   await page.getByRole("button", { name: "Edit property", exact: true }).click();
   await fill("Monthly rent (₹)", "60000");
+  await page.getByRole("dialog").getByLabel(/^Status/).selectOption("For sale");
+  assert.equal(await page.getByLabel("Monthly rent (₹)", { exact: true }).inputValue(), "60000", "Offering a rented property for sale must retain its entered rent.");
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor();
   assert.equal(JSON.parse(store.data.values().next().value).monthlyRent, 60000);
   await close();
