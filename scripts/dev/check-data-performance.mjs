@@ -5,6 +5,7 @@ import fs from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import { installReadModelRoutes } from './read-model-api.mjs';
 import { assertStickyTableHeaders, assertTableHeaderFixture } from './table-headers.mjs';
+import { installProfileStoreFixture, assertInlineProfileEditing } from './private-profile-inputs.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const capture = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
@@ -48,6 +49,7 @@ try {
     await page.route('**/api/**', r => r.fulfill({ json: new URL(r.request().url()).pathname === '/api/corporate-actions'
       ? { ok:true, retained:true, feed:capture } : { ok:false, reason:'local audit fixture' } }));
     await installReadModelRoutes(page);
+    const profileStore = route === '/private-market' ? await installProfileStoreFixture(page) : null;
     await page.addInitScript(() => { window.__long=[]; new PerformanceObserver(l => window.__long.push(...l.getEntries().map(e=>e.duration))).observe({type:'longtask',buffered:true}); });
     const started = Date.now(); await page.goto(base+route); await page.waitForLoadState('networkidle');
     const metrics = await page.evaluate(() => ({ rows:document.querySelectorAll('main tbody tr').length, longTasks:window.__long.length,
@@ -127,6 +129,7 @@ try {
       assert.equal(await table.locator('tbody > tr:not([data-table-scroll-end])').count(), total);
       assert.equal(await page.getByRole('button', {name:/Load all/}).count(), 0);
     }
+    if (profileStore) await assertInlineProfileEditing(page, profileStore);
     Object.assign(results.at(-1), await assertStickyTableHeaders(page, route));
     assert.deepEqual(errors, [], `${route}: no runtime errors after interactions`);
     console.log(JSON.stringify(results.at(-1))); await page.close();
