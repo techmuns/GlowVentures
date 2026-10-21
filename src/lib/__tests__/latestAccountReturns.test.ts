@@ -21,11 +21,31 @@ assert.equal(part.terminalValue, 116019848);
 assert.equal(part.asOf.toISOString().slice(0, 10), '2026-09-22');
 assert(part.flows.some(f => f.date.toISOString().slice(0, 10) === '2026-09-17'));
 assert(current.gaps.some(g => g.accountId === id && g.asOf === '2026-10-06' && /2026-09-22/.test(g.reason)));
-const tile = bookMoneyWeighted(statement, statement, new Date('2026-10-15'));
+// Stage 10fc — NEVER A PARTIAL POOL. Accounts holding value without a verified
+// record leave the book's rate absent, named; those with nothing of their own to
+// measure are outside it, not gaps in it.
+assert.equal(current.whole, false);
+assert.equal(current.annPct, null);
+assert.equal(current.toDatePct, null);
+assert(current.reason && /no whole return/.test(current.reason));
+for (const no of ['9039671821', '103473', '49794950']) assert(current.missing.some(m => m.accountNo === no), `${no} holds value without a verified record`);
+for (const no of ['3041491081', '67786137', '1000632']) assert(current.outside.some(m => m.accountNo === no), `${no} has nothing of its own to measure`);
+assert(!current.missing.some(m => current.parts.some(p => p.accountId === m.accountId)));
+assert.equal(current.parts.length + current.missing.length + current.outside.length, statement.accounts.length, 'every account is accounted for once');
+const blocked = bookMoneyWeighted(statement, statement, new Date('2026-10-15'));
+assert.equal(blocked.result.pct, null);
+assert.equal(blocked.flows.length, 0, 'no rate, no partial inputs');
+assert.equal(blocked.bookAccounts, current.parts.length + current.missing.length);
+assert.equal(blocked.reason, current.reason);
+// Over the accounts that ARE wholly measured, the tile and the pool agree.
+const recorded = { ...statement, accounts: statement.accounts.filter(a => current.parts.some(p => p.accountId === a.accountId)) };
+const pooled = measuredAccountsReturn(recorded, recorded.accounts);
+assert.equal(pooled.whole, true);
+const tile = bookMoneyWeighted(recorded, recorded, new Date('2026-10-15'));
 assert.equal(tile.lastClose, current.lastClose);
 assert.equal(tile.measuredValue, current.measuredMV);
-assert(Math.abs(tile.result.pct! - current.toDatePct!) < 1e-9);
-assert.equal(tile.flows.length, current.parts.reduce((n, p) => n + p.flows.length + 1, 0));
+assert(Math.abs(tile.result.pct! - pooled.toDatePct!) < 1e-9);
+assert.equal(tile.flows.length, pooled.parts.reduce((n, p) => n + p.flows.length + 1, 0));
 
 // Whole-portfolio FYTD still requires all accounts and one closing date.
 assert.equal(investorPeriodReturn(statement, new Date(2026, 9, 15), 'fytd').pct, null);
@@ -56,4 +76,4 @@ const redeemedReturn = measuredAccountsReturn(redeemed, redeemed.accounts);
 assert.equal(redeemedReturn.parts.length, 1);
 assert(Math.abs(redeemedReturn.toDatePct! - 10) < 1e-7, 'a verified closing zero still includes redemption proceeds');
 assert.equal(bookMoneyWeighted(redeemed, redeemed, new Date('2026-10-15')).result.pct, redeemedReturn.toDatePct);
-console.log(`PASS current corpus returns: ${current.toDatePct?.toFixed(1)}%, through ${current.lastClose}; latest source and named gaps shared across return surfaces`);
+console.log(`PASS ${current.parts.length} verified accounts (${pooled.toDatePct?.toFixed(1)}% over them alone), ${current.missing.length} holding value without a record, ${current.outside.length} with nothing to measure; the book's rate is absent until every account is measured`);
