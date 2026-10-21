@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { excelCellValue, type TableExport } from "./tableExport";
+import { fitExcelWorksheet } from "./excelLayout";
 
 export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   const book = new ExcelJS.Workbook();
@@ -28,28 +29,25 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
         sheet.mergeCells(r + 1, c, r + height, c + width - 1);
         for (let rr = r + 1; rr < r + 1 + height; rr++) for (let cc = c; cc < c + width; cc++) occupied.add(`${rr}:${cc}`);
       }
-      const column = sheet.getColumn(c);
-      column.width = Math.max(column.width ?? 12, Math.min(55, Math.max(...source.text.split("\n").map(line => line.length)) / width + 3));
       columns = Math.max(columns, c + width - 1);
       c += width;
     });
-    sheet.getRow(r + 1).height = Math.min(150, Math.max(24, ...row.cells.map(cell => 15 * cell.text.split("\n").reduce((lines, line) => lines + Math.max(1, Math.ceil(line.length / 45)), 0) + 6)));
   });
   const headers = snapshot.rows.findIndex(row => row.kind !== "header");
   const headerCount = headers < 0 ? snapshot.rows.length : headers;
-  sheet.views = [{ state: "frozen", ySplit: headerCount, xSplit: columns > 1 ? 1 : 0 }];
   if (headerCount === 1 && snapshot.rows[0].cells.every(cell => (cell.colSpan ?? 1) === 1 && (cell.rowSpan ?? 1) === 1)) {
     sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(1, snapshot.rows.findIndex(row => row.kind === "footer") < 0 ? snapshot.rows.length : snapshot.rows.findIndex(row => row.kind === "footer")), column: columns } };
   }
+  fitExcelWorksheet(sheet, headerCount, columns > 1 ? 1 : 0);
   const about = book.addWorksheet("About");
-  about.columns = [{ width: 22 }, { width: 105 }];
   about.addRows([
     ["Table", snapshot.title], ["Dashboard", snapshot.url], ["Exported at", new Date().toISOString()],
     ["View", "All rows regardless of search, member and table filters, including rows not yet loaded by scrolling, and every available column, including columns hidden in Edit Columns. The selected table, sort and column arrangement are retained. Display filters do not limit this export."],
     ["Numbers", "Source values are used where available; other numbers follow the displayed precision. Abbreviated amounts are expanded to currency units. A dash stays a dash; it does not become zero."],
     ["Editable text", "Strategy and Description include saved text. Unsaved drafts are not included."],
   ]);
-  about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.height = 42; row.getCell(1).font = { bold: true }; });
+  about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });
+  fitExcelWorksheet(about, 0);
   return book;
 }
 

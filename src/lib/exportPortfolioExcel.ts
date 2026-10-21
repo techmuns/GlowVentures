@@ -23,6 +23,7 @@
 //   • WHICH DATE     — `valueDateOf`, per row, and a line under the title naming
 //     the blend of statement dates, published NAVs and live quotes.
 import ExcelJS from "exceljs";
+import { fitExcelWorksheet } from "./excelLayout";
 import type { Account, Position } from "./types";
 import type { Txn, TxnData } from "./ledger";
 import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
@@ -1046,6 +1047,7 @@ export function buildPortfolioWorkbook(
   wb.created = new Date(nowMs);
   buildHoldings(wb, positions, accounts, nowMs);
   buildTransactions(wb, txns, nowMs);
+  wb.eachSheet(sheet => fitExcelWorksheet(sheet, HEADER_ROW));
   return wb;
 }
 

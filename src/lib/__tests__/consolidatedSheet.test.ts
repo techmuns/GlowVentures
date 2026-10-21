@@ -75,7 +75,10 @@ for (const t of book.tabs) {
   assert.equal(s.rowCount, t.rows.length + 5);
   assert.equal(s.getCell(5, 1).value, t.columns[0].label);
   assert.equal((s.getCell(4, 1).value as ExcelJS.CellHyperlinkValue).hyperlink, "#'Start Here'!A1");
-  assert.equal(s.views[0].state, "frozen");
+  assert.ok(s.views[0].state === "frozen");
+  assert.equal(s.views[0].ySplit, 5, `${t.name}: the header below the title block stays frozen`);
+  assert.equal(s.views[0].topLeftCell, "B6");
+  for (let c = 1; c <= t.columns.length; c++) assert.ok(s.getColumn(c).width! >= 12, `${t.name}: column ${c} has a fitted width`);
 }
 const pa = reopened.getWorksheet("Portfolio Allocation")!;
 near(pa.getCell(sheet("Portfolio Allocation").rows.length + 5, 4).value as number * 1e7, BOOK_SUMMARY.totalValue);

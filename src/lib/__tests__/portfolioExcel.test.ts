@@ -40,6 +40,7 @@
 // asserted. A test that read the order off the file it is checking could not
 // fail — this repo's own recurring lesson.
 import ExcelJS from "exceljs";
+import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
@@ -307,6 +308,17 @@ const TXNS: Txn[] = [
 const wb = buildPortfolioWorkbook(PAGE, PAGE_ACCOUNTS, TXNS, NOW);
 const holdings = wb.getWorksheet("Holdings")!;
 const txnSheet = wb.getWorksheet("Transactions")!;
+const savedLayout = new ExcelJS.Workbook();
+await savedLayout.xlsx.load(await wb.xlsx.writeBuffer());
+for (const name of ["Holdings", "Transactions"]) {
+  const sheet = savedLayout.getWorksheet(name)!;
+  const pane = sheet.views[0];
+  assert.ok(pane.state === "frozen");
+  assert.equal(pane.ySplit, 4, `${name}: the header below the title block stays frozen`);
+  assert.equal(pane.topLeftCell, "A5");
+  assert.ok(sheet.getColumn(2).width! >= 12);
+  assert.equal(sheet.getCell(5, 2).alignment.wrapText, true);
+}
 
 /** The header row, found by its first label — never assumed to sit on a fixed row. */
 const headerRowOf = (ws: ExcelJS.Worksheet): number => {
