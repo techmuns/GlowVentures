@@ -40,6 +40,7 @@
 //                                which the closing-balance total must not claim
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const it = (x, width, text) => ({ x, width, height: 7, text });
 const row = (y, ...items) => ({ y, items: items.map((i) => ({ ...i, y })) });
@@ -232,7 +233,9 @@ export const BANK_FIXTURE = Object.freeze([
  * @returns one summary row per statement
  */
 export async function installBankFixture({ root, archive }) {
-  const mod = await import(path.join(root, "scripts/ingest/providers/bankStatement.mjs"));
+  // A file URL, not a path: on Windows `import("C:\\…")` is read as a URL with
+  // the scheme `c:` and refused, so this suite never ran there.
+  const mod = await import(pathToFileURL(path.join(root, "scripts/ingest/providers/bankStatement.mjs")).href);
   const manifestPath = path.join(archive, "manifest.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   const written = [];
