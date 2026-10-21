@@ -4760,3 +4760,14 @@ cells just like the capital call cells."*
 - **`From 01/09/2026 to 30/09/2026` read as no window.** The period pattern required "To". Bharat's SVAN 8710090 September report and Carnelian's 7 Oct report print "to", so both bridges were undated and dropped. 8710090 now has its September bridge on `/performance`, and its printed 31 Aug opening (₹11.12 Cr) joins the NAV series. Carnelian's 7 Oct bridge is WITHHELD, ₹2,85,231.78 short of its closing, the gap Stage 10eu names.
 - **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
 - `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.
+
+### Stage 10ex — MORNING CIO: RETURN ATTRIBUTION BY ANY SEGMENT
+
+*"Select any such segment and see how the subcategories are performing and contributing to the portfolio returns."*
+
+- **A new Morning CIO tab, Return Attribution, right after Returns** (`?tab=attribution`, axis in `?seg=`). Axes: Category, Asset class, Basket, Sector, Listed / Private, All Securities. Each segment shows holdings, value, weight, capital deployed, FIFO gain, return and **contribution in pp** (its gain over the whole book's capital deployed). A row opens into its securities. For a security, and for the PMS mandates category, it opens into the accounts that hold it.
+- **One model, `src/lib/segmentReturns.ts`**: the current deduped holdings and the same `fifoTotals` as the Gain / Loss tile. The Total row is that tile's gain and return, and the contributions add to it. Since investment, never a window: no holding carries a dated value. The Returns tab's windows stay whole-account, and that tab still shows the whole portfolio only (Stage 10dt).
+- **A PMS mandate split across segments** (Sector, All Securities) enters holding by holding. The rest of its capital gain (income less fees, sales before the CG window) is **one named line**, never spread. The same remainder line sits under an opened segment, so its children add up. Category and Listed / Private keep each mandate whole and draw none.
+- A holding with no cost, or held at cost, is in the value and in no gain. A segment with no struck holding shows `—` with its reason.
+- This is not the NAV bridge removed earlier: that probe still counts `[data-attrib-row]` on `cio`. The new handles are `data-seg-*`.
+- `segmentReturns.test.ts` (test:family) checks the tie on the committed book on every axis (₹112.51 Cr, 21.98% on the statement basis). `check:pages` adds `cio-attribution{,-sector,-security}` with `CIO_SEGMENTS`, and the tab-list check now expects seven panels.
