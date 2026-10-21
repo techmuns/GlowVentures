@@ -937,7 +937,7 @@ export function HoldingsBehind() {
             title="The holdings behind it"
             right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-72 shrink-0"
               suggestions={[...new Set(rows.map((r) => r.security))].sort()} />}>
-            {shown.length === 0 ? (
+            {shown.length === 0 && (
               <div className="px-5 pb-5 pt-4">
                 <AbsentSection what="Nothing matches that filter"
                   needs={`The set holds ${fmtNum(rows.length)} holdings; none of their names or ISINs contains "${q.trim()}". Clear the filter to see them all.`} />
@@ -946,7 +946,7 @@ export function HoldingsBehind() {
                     difference between a gap and an apparent defect. */}
                 <AbsentFromBook query={q} className="mx-auto mt-3 max-w-2xl" />
               </div>
-            ) : (
+            )}
               <div className="overflow-x-auto">
                 <ExportableTable className="min-w-full whitespace-nowrap text-sm">
                   <thead className="border-b border-ink-700">
@@ -1203,7 +1203,7 @@ export function HoldingsBehind() {
                       to the cell it is about. `holdings` and `noCost` are the
                       SET's, not the grouped rows' — the coverage is a fact about
                       statements and a row can club four of them. */}
-                  <Foot view={view} label={`${fmtNum(groups.length)} ${groups.length === 1 ? unitWord : unitWord + "s"}`}
+                  {shown.length > 0 && <Foot view={view} label={`${fmtNum(groups.length)} ${groups.length === 1 ? unitWord : unitWord + "s"}`}
                     hidden={hidden} money={money}
                     mv={sum(groups.map((g) => g.mv))}
                     cost={setCost.vacuous ? null : sumOrNull(groups.map((g) => g.invested))}
@@ -1227,10 +1227,9 @@ export function HoldingsBehind() {
                     // totals the whole of that set: under a search it totals the
                     // rows that matched, and its return is theirs.
                     bookReturn={hidden === 0 && bookReturn?.pct != null ? { pct: bookReturn.pct, label: bookReturnLabel, fifo: bookReturn.fifo } : null}
-                    closedExcluded={d.closedExcluded} negligible={d.negligibleExcluded} />
+                    closedExcluded={d.closedExcluded} negligible={d.negligibleExcluded} />}
                 </ExportableTable>
               </div>
-            )}
             {/* ── THE FOLIOS THAT VALUE NOTHING, NAMED UNDER THE TABLE ──────
                 Every Category I AIF this family owns is an angel fund that
                 publishes no NAV, so a holdings table can never draw one. A

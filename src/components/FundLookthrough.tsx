@@ -414,10 +414,9 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
           needs={sr.refused > 0
             ? `No monthly portfolio disclosure for this scheme is in the store. Its NAV is on the Price & returns tab; ${sr.refused} of ${periods.length} of its returns there are refused — each spans a change in the unit.`
             : "No monthly portfolio disclosure for this scheme is in the store; its NAV, change and returns are complete on the Price & returns tab."} />
-      ) : shown.length === 0 ? (
-        <AbsentSection what="Nothing matches that filter"
-          needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />
-      ) : (
+      ) : (<>
+        {shown.length === 0 && <AbsentSection what="Nothing matches that filter"
+          needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />}
         <div className="overflow-x-auto">
           <ExportableTable className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
@@ -460,7 +459,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                 </Tr>
               ))}
             </tbody>
-            <tfoot>
+            {shown.length > 0 && <tfoot>
               <TrFoot view={view} className="border-t-2 border-ink-600 px-3 py-2 font-semibold text-slate-200"
                 label={<>{fmtNum(shown.length)} of {fmtNum(rows.length)} disclosed holdings shown</>}
                 cells={{
@@ -470,10 +469,10 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                     : money(shown.reduce((a, h) => a + familyValue(holdingValue, h.pctAum), 0))}</td>,
                   shares: <td key="shares" className="border-t-2 border-ink-600 px-3 py-2" />,
                 }} />
-            </tfoot>
+            </tfoot>}
           </ExportableTable>
         </div>
-      )}
+      </>)}
 
       {/* ONE LINE, the rest in its hover (main's Stage 10ci). What must stay
           on screen is that none of this is in any total: a derived exposure

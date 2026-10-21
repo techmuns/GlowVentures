@@ -68,6 +68,7 @@ try {
     if (['/monitor','/ledger','/private-market'].includes(route)) await assertCompleteColumnExport(page,page.locator('table[data-table-view]').first(),route);
     if (route === '/private-market') { await assertCollapsedSectionExport(page); await assertPrivateMarketFilterExport(page); }
     if (route === '/ledger') await assertExportRetry(page);
+    if (route === '/holdings') await assertUnfilteredSearchExport(page,page.locator('table[data-table-view="holdings-behind"]'),page.getByPlaceholder('Filter by name or ISIN…'),'holdings-behind');
     if (route !== '/audit') assert.equal(requests.filter(p => /^\/audit\/[^/]+\/document.json$/.test(p)).length,0,`${route}: no browser archive fan-out`);
     assert.equal(requests.filter(p=>/^\/lookthrough\/\d+\.json$/.test(p)).length,0,`${route}: no browser fund fan-out`);
     if (route === '/corporate-actions') {
