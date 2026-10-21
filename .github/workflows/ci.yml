@@ -72,6 +72,7 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-sector-return-details.mjs
 
   # EVERY STATEMENT IN source/ IS READ IN FULL AND REACHES THE BOOK (Stage 10ep).
   # The job above trusts the committed archive; this one re-reads every file in

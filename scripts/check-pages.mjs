@@ -22129,10 +22129,9 @@ const sectorReturnChecks = (view) => [
       if (![costed, holdings, uncosted, mv, costedMv].every(Number.isFinite)) return false;
       if (costed > holdings || uncosted < 0 || costedMv < 0 || costedMv + uncosted > mv + 1) return false;
       if (view === "direct" && holdings !== count) return false;
-      if (costed === 0) return r.text === "—" && r.figure === null
-        && /reports? a cost|only through their funds/i.test(r.title ?? "");
+      if (costed === 0) return r.text.startsWith("—") && r.figure === null && r.details;
       if (!SIGNED_PCT.test(r.figure ?? "")) return false;
-      if (!(r.title ?? "").includes(`FIFO over the ${costed} of ${holdings} holding`)) return false;
+      if (!r.details || !(r.title ?? "").includes(`return and missing holding details`)) return false;
       return costed < holdings ? r.coverage === `${costed} of ${holdings}` : r.coverage === null;
     });
   }],
@@ -43240,6 +43239,7 @@ for (const theme of THEMES) {
             const n = (k) => (c?.hasAttribute(k) ? Number(c.getAttribute(k)) : null);
             return {
               key: r.getAttribute("data-sector-row"), text: (c?.innerText ?? "").trim(), title: tip(c),
+              details: !!c?.querySelector('button[aria-haspopup="dialog"]'),
               costed: n("data-costed"), holdings: n("data-holdings"), uncosted: n("data-uncosted-mv"), mv: n("data-mv"),
               costedMv: n("data-costed-mv"),
               figure: (c?.querySelector("[data-return-figure]")?.innerText ?? "").trim() || null,
