@@ -1,3 +1,4 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -206,7 +207,8 @@ const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "costShare", "
 export function HoldingsBehind() {
   const { portfolio, consolidated, statementPortfolio, fmtFromBase, scope: memberScope } = usePortfolio();
   const [params] = useSearchParams();
-  const [q, setQ] = useState("");
+  const [qFilter, setQ] = useState("");
+  const q = useTableExportFilter(qFilter, "");
   /** Which grouped rows are expanded to their statement lines. */
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   // A HOOK, so it sits above this page's early returns.

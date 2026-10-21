@@ -1,3 +1,4 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/Card";
@@ -94,7 +95,8 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
 }) {
   const { fmtFromBase } = usePortfolio();
   const [state, setState] = useState<LookthroughState>({ status: "loading" });
-  const [q, setQ] = useState("");
+  const [qFilter, setQ] = useState("");
+  const q = useTableExportFilter(qFilter, "");
 
   useEffect(() => {
     let alive = true;

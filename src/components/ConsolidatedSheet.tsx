@@ -1,3 +1,4 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableBody } from "./InfiniteTableBody";
 import { useEffect, useMemo, useState } from "react";
@@ -6,6 +7,8 @@ import { Download, Search, FileSpreadsheet } from "lucide-react";
 import { readModel } from "@/lib/readModel";
 import type { ConsolidatedBook, ConsolidatedColumn, ConsolidatedCell, ConsolidatedLink } from "@/lib/consolidatedSheet";
 import { Card } from "./Card";
+
+const EMPTY_SCOPE: Record<string, string> = {};
 
 function display(value: ConsolidatedCell, column: ConsolidatedColumn) {
   if (value === null || value === "") return "—";
@@ -29,12 +32,13 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
     return () => { alive = false; };
   }, [retry, onLoaded]);
   const sheet = book?.tabs.find(t => t.name === params.get("consolidated")) ?? book?.tabs.find(t => t.name === "Portfolio Allocation");
-  const query = params.get("q") ?? "";
-  const scope = useMemo(() => {
+  const query = useTableExportFilter(params.get("q") ?? "", "");
+  const scopeFilter = useMemo(() => {
     try { const parsed = JSON.parse(params.get("scope") ?? "{}"); return parsed && typeof parsed === "object" && !Array.isArray(parsed)
       ? Object.fromEntries(Object.entries(parsed).filter(([k, v]) => typeof v === "string" && sheet?.columns.some(c => c.key === k))) as Record<string, string> : {}; }
     catch { return {}; }
   }, [params, sheet]);
+  const scope = useTableExportFilter(scopeFilter, EMPTY_SCOPE);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return sheet?.rows.map((row, index) => ({ row, index })).filter(({ row }) => Object.entries(scope).every(([key, v]) => row.values[sheet.columns.findIndex(c => c.key === key)] === v)

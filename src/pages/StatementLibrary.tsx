@@ -1,3 +1,4 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -259,8 +260,9 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const rows = useMemo(() => batches.flatMap((b) => b.files.map((f) => ({ b, f, v: fileView(f, served) }))), [batches, served]);
+  const exportAll = useTableExportFilter(all, true);
+  const shown = exportAll ? rows : rows.slice(0, LOG_ROWS);
   if (!rows.length) return null;
-  const shown = all ? rows : rows.slice(0, LOG_ROWS);
   const tally = (k: string) => rows.filter((r) => r.v.key === k).length;
   const act = async (id: string, run: () => Promise<{ ok: true } | { ok: false; reason: string }>) => {
     setBusy(id); setErr(null);

@@ -45,6 +45,7 @@ assert.equal(sheet.getCell("A177").master.address, sheet.getCell("C177").master.
 assert.equal(sheet.getCell("A2").hyperlink, "https://example.test/holding/0");
 assert.equal(sheet.views[0].state, "frozen");
 assert.ok(reopened.getWorksheet("About")!.getCell("B2").text.includes("view=brands"));
+assert.match(reopened.getWorksheet("About")!.getCell("B4").text, /All rows regardless of search, member and table filters/);
 
 const multi = createTableWorkbook({ title: "Multi-row header", url: snapshot.url, rows: [
   { kind: "header", cells: [{ text: "Name", rowSpan: 2 }, { text: "Capital", colSpan: 2 }] },

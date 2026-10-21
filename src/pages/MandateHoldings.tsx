@@ -1,3 +1,4 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -282,7 +283,8 @@ const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"
 export function MandateHoldings() {
   const { accountId = "" } = useParams();
   const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, scope } = usePortfolio();
-  const [q, setQ] = useState("");
+  const [qFilter, setQ] = useState("");
+  const q = useTableExportFilter(qFilter, "");
 
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
   const account = accIdx.get(accountId);
@@ -1122,7 +1124,8 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
   kind: "mandate" | "fund"; name: string; provider: string | null; accounts: Account[]; fund?: string;
 }) {
   const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, scope } = usePortfolio();
-  const [q, setQ] = useState("");
+  const [qFilter, setQ] = useState("");
+  const q = useTableExportFilter(qFilter, "");
   const holdersView = useTableView("strategy-holders", HOLDER_COLS, { investmentDates: true });
   const holdingsView = useTableView("strategy-holdings", GROUP_COLS, { reviewKind: "holding" });
   const sources = useHoldingsSources(kind === "mandate" ? accounts : []);

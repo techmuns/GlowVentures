@@ -135,3 +135,17 @@
 - Browser checks hide columns, reopen the workbook, compare its complete
   schema and verify that visibility and scroll state stay intact; a collapsed
   Private Market section is exported without opening it on screen.
+
+
+### Stage 10gg — EXCEL EXPORTS IGNORE DISPLAY FILTERS
+
+- Excel snapshots read the complete family dataset and bypass table search,
+  category, entity, side and date filters. Private Market includes funds and
+  companies regardless of its selector; consolidated/source searches also do
+  not constrain downloads. The Monitor's whole-book export follows the same rule.
+- Filters and saved preferences are never written by export. The synchronous
+  snapshot restores loaded row batches and scroll positions; scope-dependent
+  look-through and lot records are prepared before the snapshot.
+- Regression checks compare complete workbooks under no-match search, member,
+  sector and Private Market type filters, and retain hidden-column, profile
+  draft, scroll, retry and source-precision coverage.

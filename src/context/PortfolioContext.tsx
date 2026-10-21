@@ -1,3 +1,4 @@
+import { useTableExporting } from "@/lib/tableExportSnapshot";
 // Portfolio state hub. Loads the ingested book as the default portfolio so the
 // dashboard is live on open. Display-currency toggle converts all aggregates
 // from the INR base at the display layer.
@@ -814,7 +815,8 @@ export function WholeFamily({ children }: { children: React.ReactNode }) {
 /**
  * The whole family's book, whatever the selector holds. Only for saying WHOSE
  * something is when the scope leaves it out — "another member holds this" is
- * true where "nobody holds this" would be false. Never for a figure.
+ * true where "nobody holds this" would be false. Also supplies the complete
+ * read-only Excel snapshot; screen figures always keep the selected scope.
  */
 export function useWholePortfolio(): Portfolio | null {
   return useContext(WholeFamilyContext)?.portfolio ?? null;
@@ -827,6 +829,8 @@ export function useMemberScope(): MemberScope {
 
 export function usePortfolio() {
   const ctx = useContext(PortfolioContext);
+  const whole = useContext(WholeFamilyContext);
+  const exporting = useTableExporting();
   if (!ctx) throw new Error("usePortfolio must be used within PortfolioProvider");
-  return ctx;
+  return exporting && whole ? whole : ctx;
 }

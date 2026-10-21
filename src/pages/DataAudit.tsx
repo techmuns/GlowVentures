@@ -1,3 +1,4 @@
+import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -109,7 +110,8 @@ function SourceArchive() {
   const [sheetKey, setSheetKey] = useState("");
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [sheetLoading, setSheetLoading] = useState(false);
-  const [query, setQuery] = useState("");
+  const [queryFilter, setQuery] = useState("");
+  const query = useTableExportFilter(queryFilter, "");
   const [exact, setExact] = useState(false); // deep-link `eq` → whole-cell match instead of substring
   const [formats, setFormats] = useState<SheetFormats | null>(null);
   const cache = useRef<Record<string, Sheet>>({});
