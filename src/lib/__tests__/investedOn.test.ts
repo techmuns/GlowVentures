@@ -21,6 +21,12 @@ import { BOOK_ACCOUNTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS } from "@/data/glowD
 import { accountInvestedOn, holdingTradesOf, investedOnOf, lineUndatedReason, investmentDateOf, investmentDateMissingReason, fmtInvestedDate } from "@/lib/investedOn";
 import { withReviewAccessors } from "@/lib/reviewColumns";
 import type { Position } from "@/lib/types";
+import { depositoryFundHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
+import { shareCandidates } from "@/lib/depositoryShares";
+import { investedOnTitle } from "@/lib/investedOn";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { InvestedOnCell } from "@/components/InvestedOnCell";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -90,8 +96,11 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   const partial = BOOK_POSITIONS.filter((p) => p.tradeRecord && !p.tradeRecord.held && (p.tradeRecord.unaccounted ?? 0) > 0
     && !p.heldSince && !p.investedDates && !p.recoveredCost?.heldPurchases);
   ok("the book carries holdings the trades only partly account for", partial.length > 0, `${partial.length} holdings`);
-  ok("none of them is dated", partial.every((p) => investedOnOf([p]) === null));
+  ok("incomplete trades date a holding only with an exact saved bonus bridge", partial.every((p) => {
+    const d=investedOnOf([p]);return !d || d.sources.includes("bonus-trades");
+  }));
   ok("each says why, in the window's own terms", partial.every((p) => {
+    if (investedOnOf([p])) return true;
     const why = lineUndatedReason(p) ?? "";
     return why.includes(p.tradeRecord!.from) && /dated trade/.test(why);
   }));
@@ -143,6 +152,37 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   ok("each list runs oldest first", unordered.length === 0);
   const lotDates = Object.values(BOOK_HOLDING_TRADES).flat().filter((t) => t.boughtOn);
   ok("only a sale carries the dates its units were bought", lotDates.every((t) => t.side === "sell" && t.boughtOn!.every((d) => d <= t.date)));
+}
+
+{
+  const all = [...BOOK_POSITIONS, ...shareCandidates(), ...depositoryFundHoldings(), ...unpricedStatementUnits()];
+  const esds = all.find(p=>p.isin==='INE0DRI01029')!;
+  const review = investedOnOf([esds]);
+  ok('ESDS retains reviewed context without claiming its disputed custody lots reconcile',review?.first==='2024-09-09'&&!!review.reviewSource&&/not reconciled/.test(investedOnTitle(review)));
+  const markup=renderToStaticMarkup(createElement(InvestedOnCell,{d:review,why:'No purchase date'}));
+  ok('review context is visibly qualified and explains the source limit',/review<\/span>/.test(markup)&&/not reconciled/.test(markup));
+  ok('an unmatched security cannot inherit a product date',investedOnOf([{...esds,securityKey:'unmatched',reviewSource:undefined}])===null);
+  const managerMps=BOOK_POSITIONS.find(p=>p.accountId.endsWith('100022')&&p.securityKey==='mps')!;
+  const directMps=all.find(p=>p.recoveredCost&&p.securityKey==='mps')!;
+  ok('direct product dates never date a manager-held stock',!!managerMps&&investedOnOf([managerMps])===null);
+  ok('a mixed direct/PMS company cannot borrow the direct review range',!!directMps&&investedOnOf([directMps,managerMps])===null);
+}
+
+{
+  for (const [account, units] of [['510854',516],['510861',1032]] as const) {
+    const p=BOOK_POSITIONS.find(p=>p.accountId.endsWith(account)&&p.securityKey==='zf-commercial-vehicle-control-systems-india')!;
+    const before=JSON.stringify(p), d=investedOnOf([p]);
+    ok(`ZF ${account}: the six original purchases survive the saved 5:1 bonus`,p.quantity===units&&d?.first==='2025-05-30'&&d.last==='2026-03-18'&&d.payments===6&&d.sources.includes('bonus-trades')&&d.adjustments?.some(a=>a.includes('2026-06-24'))===true);
+    ok('a bonus date never replaces the purchase dates or changes financial data',d?.first!<'2026-06-24'&&before===JSON.stringify(p));
+    ok('a bonus bridge cannot date a different quantity',investedOnOf([{...p,quantity:units+1}])===null);
+    ok('a bonus after the holding date cannot date that holding',investedOnOf([{...p,tradeRecord:{...p.tradeRecord!,to:'2026-06-23'}}])===null);
+  }
+}
+
+{
+  const p=BOOK_POSITIONS.find(p=>p.accountId==='lkp-securities-98245'&&p.securityKey==='crompton-greaves-consumer-electrical')!;
+  const d=investedOnOf([p]);
+  ok('the 5,000-share Crompton balance keeps both dated lots, not only its oldest date',p.quantity===5000&&d?.first==='2025-03-04'&&d.last==='2025-11-12'&&d.payments===2);
 }
 
 if (fails) { console.log(`\n${fails} failed`); process.exit(1); }

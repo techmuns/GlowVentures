@@ -38,7 +38,7 @@ import { costedFigures, commonMark, markKey, VACUOUS_COST_REASON } from "./clubb
 import { buildDatedCapital, type DatedCapital } from "./datedCapital";
 import { labelledAccounts, labelledPositions } from "./securityLabel";
 import { describeDepositoryUnits } from "./fundNavs";
-import { investedOnOf, lineUndatedReason } from "./investedOn";
+import { investedOnOf, investedOnTitle, lineUndatedReason } from "./investedOn";
 import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
@@ -318,7 +318,9 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
       const notes: string[] = [];
       const inv = investedOnOf(ps);
       const investedOn = inv && (inv.first === inv.last ? inv.first : `${inv.first} → ${inv.last}`)
-        + (inv.payments !== null && inv.payments > 1 ? ` (${inv.payments} payments)` : "");
+        + (inv.payments !== null && inv.payments > 1 ? ` (${inv.payments} payments)` : "")
+        + (inv.reviewSource ? " (review)" : "");
+      if (inv?.reviewSource) notes.push(investedOnTitle(inv));
       if (!inv) {
         const why = ps.filter((x) => !investedOnOf([x])).map(lineUndatedReason).find((x): x is string => !!x);
         if (why) notes.push(`Invested on — ${why}`);
@@ -682,7 +684,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     { key: "qty", header: "Qty", width: 14, numFmt: QTY, numFmtFor: qtyFormat, align: "right" },
     { key: "avgCost", header: "Avg Cost (₹)", width: 13, numFmt: PRICE, align: "right" },
     // BESIDE THE COST, AS ON THE TAB — the date is the other half of what was paid.
-    { key: "investedOn", header: "Invested on", width: 26, align: "left" },
+    { key: "investedOn", header: "Investment date / range", width: 26, align: "left" },
     { key: "cmp", header: "CMP (₹)", width: 12, numFmt: PRICE, align: "right" },
     { key: "marketValue", header: "Market Value (₹)", width: 18, numFmt: MONEY, align: "right" },
     // Named on the header rather than left to be assumed: the denominator is the

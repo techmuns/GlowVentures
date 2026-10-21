@@ -22,7 +22,7 @@
 //     loops on anything else), tells every reader of a key when it changes, and
 //     re-reads a key another browser tab wrote.
 import {
-  arrangeColumns, visibleOrder, moveColumn, nudgeColumn, parseStoredView, visibleSort, storedView, selectedColumns, investmentDateColumns,
+  arrangeColumns, visibleOrder, moveColumn, nudgeColumn, parseStoredView, visibleSort, storedView, selectedColumns, investmentDateColumns, mergeColumnAliases,
 } from "../tableView";
 import {
   DEFAULT_RETURN_MEASURES, normaliseMeasures, resolveReturnMeasures, parseSavedMeasures, returnMeasuresKey,
@@ -37,6 +37,14 @@ const ok = (name: string, pass: boolean, detail = "") => {
   else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
 };
 const same = (a: readonly unknown[], b: readonly unknown[]) => JSON.stringify(a) === JSON.stringify(b);
+
+{
+  const merged = mergeColumnAliases({ order: ['security','review:investmentRange','mv','investedOn'],
+    sort:{col:'review:investmentRange',dir:'asc'},visibility:{investedOn:false,'review:investmentRange':true,mv:true} },
+    {'review:investmentRange':'investedOn'});
+  ok('merged investment dates keep their earlier placement, one column only',same(merged.order,['security','investedOn','mv']));
+  ok('legacy date sort and visible review range carry to the unified column',merged.sort?.col==='investedOn'&&merged.visibility?.investedOn===true&&merged.visibility?.['review:investmentRange']===undefined);
+}
 
 {
   const old = ["entity", "qty", "invested", "current", "return"];

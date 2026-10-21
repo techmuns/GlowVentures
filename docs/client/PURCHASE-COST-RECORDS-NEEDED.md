@@ -37,6 +37,14 @@ Four further Bharat/Motilal residues are below the dashboard's ₹1,000 holdings
 
 **DSP ETF costs are recovered:** Ankita gold 205,000, Ankita silver 123,000, and Aarti gold 1,195,000 units. They remain recorded without a current valuation because the saved custody unit basis does not reconcile to the current NAV unit. Supply the latest split-adjusted holding/corporate-action bridge and a matching dated valuation; the original purchase costs do not need to be resent.
 
+## Additional records needed for investment dates
+
+Purchase-cost coverage is separate from acquisition-date coverage. The [date audit](../INVESTMENT-DATE-AUDIT.md) lists every category and all 163 undated non-cash PMS account/security lines.
+
+- **Bharat — LKP 98245, Belrise 12,500 shares:** the ₹1,773,625 cost is already recorded. Supply the original acquisition dates/lots for the 31 March 2026 holding. The saved dated trades start on 25 June 2026 and cannot date that earlier balance.
+- **Hope India Trust — ABSL 1019265797 (7,756.542 units), ABSL 1038104611 (1,752.565 units), Mirae 70413280453 (316.190 units):** costs are already recorded. Supply the AMC/RTA since-inception purchase/lot history. The ABSL files supply monthly reinvestments or opening units; Mirae's 11 July 2019 entry is an opening balance, not an acquisition confirmation.
+- **PMS underlying holdings:** supply each manager's original security-lot and since-inception transaction export for the accounts in the date audit, including opening acquisition dates, units, transfers and corporate actions. The six mandates' family funding/inception dates are already present and need not be resent. An account funding date cannot date its manager's individual stock purchases.
+
 ## Later holdings and disputed rows
 
 - **Ajay — Yash High Voltage:** the saved ICICI holding is 138,462 shares in March; the June review records three sales totalling 22,000 shares and a balance of 116,462. Supply the three sale confirmations dated 24, 25 and 30 June 2026, with actual proceeds and charges, plus the latest broker holding. The workbook's sale amounts have purchase-direction signs. March cost can be recovered; that does not establish a current holding or validate those later proceeds.
