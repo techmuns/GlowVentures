@@ -187,6 +187,13 @@ body {
      variant washed the pill out to a near-invisible smudge on the page. This
      carries explicit colours for each theme so neither can drift. */
   .ret-tag { @apply rounded px-1 text-[9px] font-semibold tracking-wide; background-color: rgba(148, 163, 184, 0.22); color: #cbd5e1; }
+  /* THE RETURNS TAB'S OWN SURFACES (Stage 10fp) — a segmented control's well,
+     a figure's tile, a window chip and a benchmark's bar track. Explicit colours
+     for each theme, as `.ret-tag` carries, so none needs an opacity remap. */
+  .ret-well { @apply rounded-lg p-0.5; background-color: rgba(148, 163, 184, 0.10); }
+  .ret-stat { @apply rounded-lg border border-ink-700 px-3 py-2.5; background-color: rgba(148, 163, 184, 0.06); }
+  .ret-chip { @apply inline-flex items-center gap-1.5 rounded-full border border-ink-700 px-2.5 py-1 text-[11.5px] text-slate-400; background-color: rgba(148, 163, 184, 0.06); }
+  .ret-bar { @apply relative inline-block h-1.5 min-w-0 flex-1 overflow-hidden rounded-full align-middle; background-color: rgba(148, 163, 184, 0.18); }
 }
 
 /* ---------------------------------------------------------------------------
@@ -420,6 +427,9 @@ html:not(.dark) .text-slate-500 { color: #6b6880; }
 /* The return tag, on the ivory page: a warm tan chip with near-ink text, so the
    short form reads clearly instead of washing into the background. */
 html:not(.dark) .ret-tag { background-color: #e4ddc9; color: #2c2840; }
+html:not(.dark) .ret-well { background-color: #ece6d6; }
+html:not(.dark) .ret-stat, html:not(.dark) .ret-chip { background-color: #faf8f2; }
+html:not(.dark) .ret-bar { background-color: #e6dfcd; }
 html:not(.dark) .text-slate-600 { color: #7c7891; }
 html:not(.dark) input::placeholder, html:not(.dark) textarea::placeholder { color: #9995ad; }
 
