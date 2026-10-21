@@ -37,7 +37,7 @@ try {
   await fill("Owner 1", "Test owner A"); await fill("Total cost (₹)", "10000000"); await fill("Current value (₹)", "15000000");
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await visible("Add the valuation date for the current value.");
   await fill("Valuation date", "2026-10-01");
-  await page.getByLabel("Status", { exact: true }).selectOption("Rented"); await fill("Monthly rent (₹)", "50000"); await fill("Monthly costs (₹)", "5000"); await fill("Loan outstanding (₹)", "3000000");
+  await page.getByRole("dialog").getByLabel(/^Status\b/).selectOption("Rented"); await fill("Monthly rent (₹)", "50000"); await fill("Monthly costs (₹)", "5000"); await fill("Loan outstanding (₹)", "3000000");
   await fill("Latitude", "19.076"); await fill("Longitude", "72.8777");
   failing = true;
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await visible("Test storage outage");
@@ -96,4 +96,8 @@ try {
   assert.equal(store.data.size, 3);
   assert.deepEqual(errors, []);
   console.log("Real estate browser check passed: create, validate, save failure/retry, persist, edit, filter, co-located pins, map editing, table/map detail parity, delete, light/dark and mobile.");
+} catch (error) {
+  await page.screenshot({ path: path.join(out, "failure.png"), fullPage: true }).catch(() => {});
+  await fs.writeFile(path.join(out, "failure.txt"), `${error.stack ?? error}\n\n${await page.locator("body").innerText().catch(() => "")}`);
+  throw error;
 } finally { await browser.close(); }
