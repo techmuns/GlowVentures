@@ -4761,6 +4761,33 @@ cells just like the capital call cells."*
 - **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
 - `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.
 
+### Stage 10ex — THE SHARED STORE MOVES FROM CLOUDFLARE KV TO THE GITHUB REPOSITORY
+
+*"We will not store in Cloudflare. Instead, we should try to store it in GitHub."*
+— and, told the repository is public, *"it is ok to store in github still"*.
+
+- **`shared/dashboardStore.mjs`**: everything typed on the dashboard (capital
+  calls, strategy / description, tile layouts) is one JSON file,
+  `store/dashboard-store.json`, on its own `dashboard-store` branch. It is created
+  on the first save as one parentless commit, so it never carries a copy of the
+  site. Every save is one commit marked `[skip ci]` (no CI, no site build) and
+  never touches `main`. The server reads the file through GitHub's API on every
+  request, so a save is visible to everyone at once.
+- **Same calls, new backend**: `list/get/put/delete` plus `flush()`, which commits a
+  request's changes once (a four-line legal-name row is one commit). A stale-sha
+  refusal (409/422) re-reads the file and lays this request's changes over the
+  other person's, so two saves at once both land.
+- **Switch-on**: a fine-grained token (Contents read/write on this repo only) as
+  the site secret `GLOW_GITHUB_TOKEN`; `GLOW_GITHUB_REPO` / `_BRANCH` / `_PATH`
+  override the defaults. `SWITCH_ON_STEPS` and the `private-market-calls-off`
+  probe name the secret; `GLOW_STORE` is gone from code.
+- **Public**: the repository is public, so everything saved there can be read by
+  anyone, whatever the dashboard password.
+- `dashboardStore.test.ts` drives a fake GitHub: branch creation, one commit per
+  request, two concurrent saves, read-after-write, the Functions end to end.
+  `private-market-calls` fails 7 walk checks identically on main before 10ev
+  (pre-existing, not this change).
+
 ### Stage 10ey — PRIVATE MARKET: DATE OF INVESTMENT
 
 *"date of investment is missing from the table in private markets page, add column to show that"*
@@ -4858,6 +4885,23 @@ current unrealized P&L."*
 - `useHoldingsSources` reads each account's document totals so the strategy's Statement total hover names every account's printed total.
 - The capital card's long "Why:" line is now the hover on "no appreciation or return is struck" (this also fixes main's `mandate-sector` prose finding).
 - **Checks:** the two Monitor link invariants now require the name link on every row and no link on any account line. The `mandate-fifo` date, Invested and FIFO checks are struck over the strategy (`strategyIdsOf`). New routes `mandate-strategy` and `fund-clubbed` assert one line per holding account, holdings that add to the headline, and no per-account page link. A Monitor invariant checks the clubbed fund's `/fund/` link.
+
+### Stage 10fl — INDEX SECTOR WEIGHTS REFRESH THEMSELVES EACH MONTH
+
+- `.github/workflows/index-sectors.yml` runs `npm run build-index-sectors` at 04:00 UTC on days 1–15 of each month, and on demand. NSE publishes the month-end factsheets on no fixed day, so the window catches them whenever they land. Runs before and after the new sheets appear change nothing.
+- It commits `src/data/indexSectors.json` and `docs/INDEX-SECTORS.md` to main only when a weight moved, after `npm run build` passes against them. This is the `fund-navs.yml` pattern, with the build moved ahead of the commit.
+- A factsheet that names the wrong index, or whose table is missing or does not tie to 100, fails the run before anything is written. A partial table is never committed.
+
+### Stage 10fk — PURCHASE PRICES: THE COST TWO AMCs PRINT, AND COST OVER UNITS
+
+*"a lot of holdings are missing purchase prices in the dashboard holdings … make sure that it is not the case that the statements and files have purchase prices and we are not showing them."*
+
+- **Audit (Monitor, Category axis, all rows):** 105 Avg-cost dashes. 15 are by design (8 section totals, 6 mandate roll-ups, Sanshi's clubbed classes), 60 are review private lines (an amount paid, no unit count), and 30 had no cost on any statement.
+- **The statements did print one, for 4 of the 30.** The HDFC (15644806, 15725046, 16002141) and Kotak (7125255) account statements print `Cost (INR)` in their Account Summary, and `readBlockLayout` read only the scheme blocks. `summaryCost` takes the summary rows on the block's own NAV and NAV date (Kotak splits a scheme into Lump sum and IDCW rows) and publishes the cost only where their units AND value tie to the block. Hope India Trust's Kotak liquid folio does not tie on 3 of 4 statements and keeps no cost.
+- **`npm run replay:folio-cost`** lands the reader on the archive without `GLOW_PDF_PASSWORDS` (these PDFs are encrypted, and `extract` carries them forward unread). It runs the real `extract()` over `pages.json` and only adds a cost where the archive held null. Its `--check` was a no-op against the old reader.
+- **Stage 10bm's open question, answered by the family:** where a statement prints a total cost and units but no per-unit cost, `Position.avgCost` is now cost ÷ units, marked `avgCostDerived` (27 positions: Sanshi, Helios, Active Momentum, Founders, Delphi, Amritkaal, Neo Infra, ICICI Pru, LKP, the HDFC/Kotak folios). A printed per-unit cost is never replaced. The stock page's per-account cell says "Invested ÷ units" in its hover.
+- **Still absent, and correctly by the statements:** ICICI NSDL's 9 shares (₹63.76 Cr) and the Motilal CDSL demat lines are depository statements, quantity and value only, and LKP's liquid BeES is on no ledger. **The family's consolidated review does carry their cost:** its `Transactions since inception` sheet has per-holder purchases (date, units, rate) that reach the statement's units exactly on 8 of the 9 ICICI shares (≈₹54.6 Cr of cost) and on most demat fund lines. Since Stage 10dh the review is a source for the private book only, so this stays a decision for the family.
+- `clubbedFigures` A-14's constructed case is built on the Cash section's uncosted lines, because the section now holds one costed line (HDFC Overnight).
 
 ### Stage 10fj — A REDEEMED INVESTMENT'S HISTORY IS DATA: EVERY STATEMENT FEEDS THE BOOK
 

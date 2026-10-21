@@ -374,6 +374,13 @@ export type Position = {
    * behaves — it has no NSE listing.
    */
   avgCost: number | null;
+  /**
+   * TRUE WHERE `avgCost` IS `costBasis ÷ quantity` because the statement prints
+   * a total cost and a unit count but no per-unit cost (every AMC folio, every
+   * AIF capital statement). Absent where the statement printed the per-unit
+   * figure itself. See `avgCostOverUnits` in `scripts/build-book.mjs`.
+   */
+  avgCostDerived?: true;
   currentPrice: number | null;
   /**
    * Cost of lots held under / over a year, on India's 12-month threshold for

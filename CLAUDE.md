@@ -142,7 +142,9 @@ One line per area; the history files explain each in depth.
   the same table, never a table in a cell.
 - `src/lib/enteredCalls.ts` + `functions/api/capital-calls.js`, `enteredProfiles.ts` +
   `functions/api/investment-profiles.js`, `tileSets.ts` +
-  `functions/api/tile-sets.js` — shared KV store (`GLOW_STORE`, not yet bound).
+  `functions/api/tile-sets.js` — the shared store: one JSON file on the repo's
+  `dashboard-store` branch, written with `GLOW_GITHUB_TOKEN` (`shared/dashboardStore.mjs`,
+  Stage 10ex; the repo is public, so everything saved there is public).
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.
@@ -382,11 +384,12 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
 - `indices.js`, `prices.js` — Yahoo, keyless, every symbol checked by the name
   the upstream reports. `fx.js` — ECB, keyless. `research`, `insider`,
   `announcements`, `ratios`, `news` — muns. `polycab.js` — BSE, keyless.
-  `capital-calls.js`, `tile-sets.js` — the `GLOW_STORE` KV binding (until it is
-  bound, they say so). `corporate-actions.js` — the Glow Central Research
+  `capital-calls.js`, `tile-sets.js`, `investment-profiles.js` — the repo's store
+  file via `GLOW_GITHUB_TOKEN` (until it is set, they say so). `corporate-actions.js` — the Glow Central Research
   capture. `stock-exposure.ts` — the look-through read model.
 - Workflows: `harvest.yml` (macro series store), `fund-navs.yml` (AMFI NAVs),
-  `polycab.yml` (Polycab exchange data).
+  `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
+  sector weights, days 1–15 monthly).
 - With no token and no network every page renders on statement marks.
 
 ## Conventions
@@ -463,7 +466,7 @@ And:
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,
   `replay:movements`, `replay:flows`, `replay:flow-lines`,
-  `replay:demat-holdings`.
+  `replay:demat-holdings`, `replay:folio-cost`.
 - Reference data: `build-symbols`, `build-sectors`, `build-index-sectors`
   (monthly; index sector weights), `build-fund-navs`,
   `build-upstox-instruments`, `build-scheme-names`, `build-lookthrough`

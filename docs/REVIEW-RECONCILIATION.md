@@ -323,8 +323,8 @@ most actionable thing here, because the two halves need different documents.
 | | |
 | --- | ---: |
 | Review, invested at cost (its own tab totals) | **₹1,076.01 Cr** |
-| Book, invested at cost | **₹656.00 Cr** |
-| **Shortfall** | **₹420.01 Cr** |
+| Book, invested at cost | **₹660.34 Cr** |
+| **Shortfall** | **₹415.68 Cr** |
 
 Per tab, so the shortfall can be attributed rather than asserted:
 
@@ -348,23 +348,21 @@ does not hold in general. Split on exactly that line:
 
 | Cause | Invested | NAV | Size |
 | --- | :---: | :---: | ---: |
-| **A. Held, valued, and no cost reported** — 29 of 459 positions | understated | **not affected** | ₹71.92 Cr of market value already in NAV |
+| **A. Held, valued, and no cost reported** — 26 of 459 positions | understated | **not affected** | ₹63.84 Cr of market value already in NAV |
 | **B. On no statement in `source/`** — section D | understated | understated | ₹160.88 Cr at the review's marks |
 | **B2. On a statement as a quantity this book does not value** — section D, and ESDS (C0) | understated | understated | ₹174.40 Cr at the review's marks |
 
 **CAUSE A IS THE WHOLE OF WHY INVESTED CAPITAL LOOKS WRONG WITHOUT NAV LOOKING WRONG.**
-14 of those 29 positions carry a value; by account:
+11 of those 26 positions carry a value; by account:
 
 | Account | Costless rows | Their market value |
 | --- | ---: | ---: |
 | ICICI Bank (NSDL demat) 49794950 | 9 | ₹63.76 Cr |
-| HDFC Mutual Fund 15644806 | 1 | ₹4.36 Cr |
-| HDFC Mutual Fund 16002141 | 2 | ₹2.62 Cr |
-| Kotak Mahindra Mutual Fund 7125255 | 1 | ₹1.08 Cr |
 | Kotak Mahindra Mutual Fund 4295974 | 6 | ₹0.08 Cr |
 | LKP Securities 98245 | 1 | ₹0.00 Cr |
 | 3P Investment Managers 3000048 | 2 | ₹0.00 Cr |
 | HDFC Mutual Fund 15725046 | 1 | ₹0.00 Cr |
+| HDFC Mutual Fund 16002141 | 1 | ₹0.00 Cr |
 | HDFC Mutual Fund 16180583 | 2 | ₹0.00 Cr |
 | Motilal Oswal Hedged Equity Multi Factor Strategy 90410014574 | 1 | ₹0.00 Cr |
 | Motilal Oswal Mutual Fund 90414963315 | 3 | ₹0.00 Cr |
@@ -375,7 +373,7 @@ across the WHOLE audit archive not one of those (account, security) pairs carrie
 any record type. The dashboard renders `—` there, with the custodian named, and that is the
 honest answer until a contract note arrives.
 
-**WHAT WOULD CLOSE CAUSE A:** a transaction statement or contract note from **HDFC Mutual Fund** and **ICICI Bank (NSDL demat)** and **Kotak Mahindra Mutual Fund** and **LKP Securities**
+**WHAT WOULD CLOSE CAUSE A:** a transaction statement or contract note from **ICICI Bank (NSDL demat)** and **Kotak Mahindra Mutual Fund** and **LKP Securities**
 for those accounts — the buy prices, not another holding statement.
 The family's own investment register already covers part of it: `npm run reconcile:register`
 measures which, in `docs/REGISTER-RECONCILIATION.md`.

@@ -1669,7 +1669,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 7756.542,
-    "avgCost": null,
+    "avgCost": 100.2974,
     "currentPrice": 100.195,
     "costBasis": 777961.25,
     "marketValue": 777166.73,
@@ -1684,7 +1684,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-05",
     "accruedIncome": null,
     "dividendReceived": 3364.98,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "absl-liquid-fund-direct-growth",
@@ -1697,7 +1698,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 1752.565,
-    "avgCost": null,
+    "avgCost": 306.4915,
     "currentPrice": 455.6544,
     "costBasis": 537146.28,
     "marketValue": 798563.95,
@@ -1712,7 +1713,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025",
@@ -2298,7 +2300,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 12993094.825,
-    "avgCost": null,
+    "avgCost": 11.5448,
     "currentPrice": 12.554,
     "costBasis": 150002925.1,
     "marketValue": 163115312.43,
@@ -2312,7 +2314,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "banco-products-india",
@@ -5992,14 +5995,14 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 83001.863,
-    "avgCost": null,
+    "avgCost": 301.1981,
     "currentPrice": 525.843,
-    "costBasis": null,
+    "costBasis": 25000000,
     "marketValue": 43645948.65,
-    "unrealizedPnL": null,
+    "unrealizedPnL": 18645948.65,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": null,
+    "returnPct": 74.58,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6007,7 +6010,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest",
@@ -6230,10 +6234,11 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 48.183,
-    "avgCost": null,
+    "avgCost": 2888.2276,
     "currentPrice": 4094.7017,
     "costBasis": 139163.47,
     "costBasisSource": "fifo",
+    "printedCostBasis": 142847.57,
     "marketValue": 197295.01,
     "unrealizedPnL": 58131.54,
     "realizedPnL": 1411596.13,
@@ -6246,7 +6251,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth",
@@ -6260,14 +6266,14 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 49917.632,
-    "avgCost": null,
+    "avgCost": 300.495,
     "currentPrice": 525.843,
-    "costBasis": null,
+    "costBasis": 15000000,
     "marketValue": 26248837.36,
-    "unrealizedPnL": null,
+    "unrealizedPnL": 11248837.36,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": null,
+    "returnPct": 74.99,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6275,7 +6281,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest",
@@ -6436,7 +6443,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 19123041.38,
-    "avgCost": null,
+    "avgCost": 16.2108,
     "currentPrice": 16.21,
     "costBasis": 310000000,
     "marketValue": 309984500.77,
@@ -6451,7 +6458,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-06",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "clean-max-enviro-energy-solutions",
@@ -6814,7 +6822,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 327918.76,
-    "avgCost": null,
+    "avgCost": 18.2972,
     "currentPrice": 17.1686,
     "costBasis": 6000000,
     "marketValue": 5629906.02,
@@ -6829,7 +6837,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-01",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth",
@@ -6843,7 +6852,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 218612.507,
-    "avgCost": null,
+    "avgCost": 18.2972,
     "currentPrice": 17.1686,
     "costBasis": 4000000,
     "marketValue": 3753270.69,
@@ -6858,7 +6867,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-01",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "india-sme-investments-fund-ii-class-a2",
@@ -7334,14 +7344,14 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 27900.484,
-    "avgCost": null,
+    "avgCost": 120.4616,
     "currentPrice": 388.839,
-    "costBasis": null,
+    "costBasis": 3360937,
     "marketValue": 10848796.3,
-    "unrealizedPnL": null,
+    "unrealizedPnL": 7487859.3,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": null,
+    "returnPct": 222.79,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -7349,7 +7359,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "belrise-industries",
@@ -7363,7 +7374,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 12500,
-    "avgCost": null,
+    "avgCost": 141.89,
     "currentPrice": 186,
     "costBasis": 1773625,
     "costBasisSource": "opening-position",
@@ -7387,7 +7398,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "capri-global-capital",
@@ -7401,7 +7413,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 7000,
-    "avgCost": null,
+    "avgCost": 177.6573,
     "currentPrice": 165.85,
     "costBasis": 1243601.1,
     "costBasisSource": "opening-position",
@@ -7425,7 +7437,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "crompton-greaves-consumer-electrical",
@@ -7439,7 +7452,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 5000,
-    "avgCost": null,
+    "avgCost": 309.4036,
     "currentPrice": 223.45,
     "costBasis": 1547017.8,
     "costBasisSource": "opening-position",
@@ -7454,7 +7467,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": "2025-03-04",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "electronics-mart-india",
@@ -7468,7 +7482,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 10000,
-    "avgCost": null,
+    "avgCost": 105.6112,
     "currentPrice": 88.15,
     "costBasis": 1056112,
     "costBasisSource": "opening-position",
@@ -7492,7 +7506,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "jyothy-labs",
@@ -7506,7 +7521,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 4000,
-    "avgCost": null,
+    "avgCost": 352.0537,
     "currentPrice": 197.1,
     "costBasis": 1408214.6,
     "costBasisSource": "opening-position",
@@ -7530,7 +7545,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "mrs-bectors-food-specialities",
@@ -7544,7 +7560,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 6000,
-    "avgCost": null,
+    "avgCost": 250.5825,
     "currentPrice": 179.05,
     "costBasis": 1503495.2,
     "costBasisSource": "opening-position",
@@ -7559,7 +7575,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": "2025-11-12",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "nip-etnf1d-rtliqbees",
@@ -7602,7 +7619,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 650,
-    "avgCost": null,
+    "avgCost": 582.6625,
     "currentPrice": 513.55,
     "costBasis": 378730.63,
     "costBasisSource": "opening-position",
@@ -7625,7 +7642,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "transrail-lighting",
@@ -7639,7 +7657,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 2525,
-    "avgCost": null,
+    "avgCost": 790.4262,
     "currentPrice": 451.85,
     "costBasis": 1995826.25,
     "costBasisSource": "opening-position",
@@ -7654,7 +7672,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": "2025-09-10",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "varun-beverages",
@@ -7668,7 +7687,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 2700,
-    "avgCost": null,
+    "avgCost": 461.9193,
     "currentPrice": 384.05,
     "costBasis": 1247182.11,
     "costBasisSource": "opening-position",
@@ -7692,7 +7711,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth",
@@ -7706,7 +7726,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 316.19,
-    "avgCost": null,
+    "avgCost": 2010.5785,
     "currentPrice": 3007.0915,
     "costBasis": 635724.81,
     "marketValue": 950812.26,
@@ -7721,7 +7741,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "arvind-fashions",
@@ -8032,7 +8053,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 15245765.959,
-    "avgCost": null,
+    "avgCost": 14.0498,
     "currentPrice": 14.0491,
     "costBasis": 214200000,
     "marketValue": 214189290.53,
@@ -8046,7 +8067,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "motilal-oswal-wealth-delphi-equity-fund",
@@ -8059,7 +8081,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 99995,
-    "avgCost": null,
+    "avgCost": 1000.05,
     "currentPrice": 1112.931,
     "costBasis": 100000000,
     "marketValue": 111287535.35,
@@ -8074,7 +8096,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-06-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
@@ -8088,7 +8111,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 9514997.798,
-    "avgCost": null,
+    "avgCost": 10.5097,
     "currentPrice": 11.6809,
     "costBasis": 100000000,
     "marketValue": 111143737.78,
@@ -8103,7 +8126,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
@@ -8117,7 +8141,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 18895852.36,
-    "avgCost": null,
+    "avgCost": 10.5843,
     "currentPrice": 11.6809,
     "costBasis": 200000000,
     "marketValue": 220720561.83,
@@ -8132,7 +8156,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "motilal-oswal-hedged-equity-multi-factor-strategy-class-b2",
@@ -8286,7 +8311,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "private",
     "quantity": 485837,
-    "avgCost": null,
+    "avgCost": 100,
     "currentPrice": null,
     "costBasis": 48583720,
     "costBasisSource": "fifo",
@@ -8302,7 +8327,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "assetgro-fintech-private-limited-1-series-b-pref-25nv44",
@@ -11884,7 +11910,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 6045934.485,
-    "avgCost": null,
+    "avgCost": 124.0503,
     "currentPrice": 161.5675,
     "costBasis": 750000000,
     "costBasisSource": "gross-paid",
@@ -11900,7 +11926,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -11913,7 +11940,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 1211186.597,
-    "avgCost": null,
+    "avgCost": 123.8455,
     "currentPrice": 161.5675,
     "costBasis": 150000000,
     "costBasisSource": "gross-paid",
@@ -11929,7 +11956,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2",
@@ -11942,7 +11970,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 2341480.851,
-    "avgCost": null,
+    "avgCost": 106.77,
     "currentPrice": 125.3582,
     "costBasis": 250000000,
     "costBasisSource": "gross-paid",
@@ -11958,7 +11986,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -11971,7 +12000,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 1820926.864,
-    "avgCost": null,
+    "avgCost": 120.8176,
     "currentPrice": 161.5675,
     "costBasis": 220000000,
     "costBasisSource": "gross-paid",
@@ -11987,7 +12016,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -12000,7 +12030,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 1761264.629,
-    "avgCost": null,
+    "avgCost": 116.3936,
     "currentPrice": 161.5675,
     "costBasis": 205000000,
     "costBasisSource": "gross-paid",
@@ -12016,7 +12046,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",

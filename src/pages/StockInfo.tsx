@@ -1208,8 +1208,11 @@ export function StockInfo() {
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-300">{r.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(r.quantity)}</td>
         <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason={r.review && r.quantity === null ? NO_UNIT_COUNT
+          : r.costBasis === null ? "this statement reports no cost for the holding, so there is nothing to divide by its units"
           : r.review ? "the family's consolidated review prints no per-unit cost for this holding"
-          : "this provider prints no per-unit cost for the holding"} /> : price(r.avgCost)}</td>
+          : "this provider prints no per-unit cost for the holding"} />
+          : r.avgCostDerived ? <span title="Invested ÷ units — the statement prints the total cost and the units, and no per-unit cost" data-avg-cost-derived>{price(r.avgCost)}</span>
+          : price(r.avgCost)}</td>
         {/* THE MARK, PER STATEMENT, WITH THE DATE IT WAS STRUCK. The date is
             the cell's own hover rather than a second column. Guarded before
             `price()`, which returns a BARE dash — an absence names its cause. */}
