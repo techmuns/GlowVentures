@@ -5472,7 +5472,7 @@ const FAMILY_MWR = (() => {
     const latest = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS") ?? {};
     const DAY_MS = 86400000;
     const byOwner = new Map();
-    // Stage 10ez — an owner with any account holding value and no verified
+    // Stage 10fb — an owner with any account holding value and no verified
     // record has no rate at all: `{ missing }` names those accounts.
     const missingBy = new Map();
     for (const a of accounts) {
@@ -9426,7 +9426,7 @@ const PERF_BOOK = (() => {
     }]));
     const measured = [...perAccount].filter(([, x]) => (x.stmtMV > 0 || (x.stmtMV === 0 && x.sourced)) && x.flows.length
       && x.flows.some((f) => /^opening portfolio value/i.test(f.description ?? ""))).map(([id]) => id);
-    // Stage 10ez — an account not measured is outside the whole only with nothing
+    // Stage 10fb — an account not measured is outside the whole only with nothing
     // of its own to measure: a verified nil, or no record, no statement row and
     // no opening value. Any other leaves the consolidated rate absent.
     const missing = [...perAccount].filter(([id, x]) => !measured.includes(id)
@@ -14081,7 +14081,7 @@ const MWR_BOOK = (() => {
     let lastClose = "";
     let pooled = 0;
     const accountIds = new Set();
-    // Stage 10ez — WHOLE OR ABSENT. An account not pooled is outside the whole
+    // Stage 10fb — WHOLE OR ABSENT. An account not pooled is outside the whole
     // only if it has nothing of its own to measure: a verified nil, or no
     // record, no statement row and no opening value. Every other one is missing,
     // and any missing account leaves the book's rate absent.
@@ -33879,7 +33879,7 @@ const INVARIANTS = {
         const want = FAMILY_MWR.get(o.owner) ?? null;
         const shown = Number(/([+\-−]?\d+(?:\.\d+)?)%/.exec(r.toDateText ?? "")?.[1]?.replace("−", "-"));
         if (!want) return !Number.isFinite(shown) && !r.mwrAccounts;
-        // Never a partial pool (Stage 10ez): a dash naming every unmeasured account.
+        // Never a partial pool (Stage 10fb): a dash naming every unmeasured account.
         if (want.missing) {
           incomplete += 1;
           const got = (r.mwrAccounts ?? "").split(",").filter(Boolean).sort();

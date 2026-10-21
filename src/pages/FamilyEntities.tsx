@@ -1147,7 +1147,7 @@ export function FamilyEntities() {
                     // Money-weighted return over ALL this owner's accounts, or
                     // none — closing the whole entity MV against partial openings
                     // returned +147%/+353% here for real family members, and a
-                    // rate over some of them is not the member's (Stage 10ez).
+                    // rate over some of them is not the member's (Stage 10fb).
                     const mwr = ownerMeasuredReturn(statementPortfolio ?? portfolio, p, e.key);
                     const xirrPct = mwr.toDatePct;
                     // Stated on the STATEMENT basis the rate is struck on: the

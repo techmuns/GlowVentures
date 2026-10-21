@@ -4770,7 +4770,7 @@ cells just like the capital call cells."*
 - **Private Market gains a "Date of investment" column** after the name (`data-col-cell="invested"`, `data-invested`). It shows one date, or a "first → last" range. A row where only some folios carry a date says "N of M folios". A row with no dated folio renders `—` with the reason. The column sorts by first date.
 - `privateBook.test.ts` checks the span on constructed folios and checks that every review line on the table is dated by the review.
 
-### Stage 10ez — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
+### Stage 10fb — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
 
 *"not all accounts are being read into the dashboard. It says partial return, 2 out of 76 accounts … We do not need to show partial return anywhere on the dashboard"* — the family, 21 Oct 2026.
 

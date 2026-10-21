@@ -84,7 +84,7 @@ every one takes the reason as a required argument.
   named**, including in the total's own caption. **A pooled return is the exception: never
   partial.** It is struck over every account holding value or shown as `—`
   with the unmeasured accounts named (`nothingToMeasure`, `measuredAccountsReturn`
-  in `src/lib/returns.ts`; Stage 10ez).
+  in `src/lib/returns.ts`; Stage 10fb).
 - **A COMPUTED zero is legitimate and stays**, with its reason on the face.
 - **A caption must neither narrow nor widen the figure it describes.**
 - **A total must tie to its own columns.**
