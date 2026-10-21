@@ -98,7 +98,8 @@
 // of the valued row now (`incomeOnlyViewOf`, a committed join checked against
 // the book's own unit count), carrying no holding figure of their own: their
 // units are already counted on the line above.
-import type { Account, Commitment, Position } from "./types";
+import type { Account, Commitment, Position, ReviewFlow, ReviewWrittenOff } from "./types";
+import { BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings, isValuedAtCost } from "./analytics";
 import { type AccountIndex, accountIndex, ownerOf, providerOf } from "./accounts";
 import { aifSectionOf, categoriesNamedIn, readsAsPrivateEquity, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION } from "./aifCategory";
@@ -108,6 +109,7 @@ import {
 import { schemeCalls, type SchemeCall } from "./capitalCalls";
 import { fifoTotals } from "./fifo";
 import { splitFundClass } from "../../shared/securityKey.mjs";
+import { investedOnOf } from "./investedOn";
 import { brandNameOf, type BrandBasis, type BrandName } from "./brandNames";
 import { matchProfiles, combineProfiles, type InvestmentIdentity, type InvestmentProfile, type SuppliedProfiles } from "./investmentProfiles";
 
@@ -259,11 +261,45 @@ export type BookFolio = {
    * principal, gross of TDS, never equalisation), or an income-only folio's own
    * distribution letters, summed exactly as each prints the cash: 360 ONE's
    * letter prints its ₹7,15,619 NET of expenses and TDS and no gross figure, so
-   * that is the figure, and `distributedBasis` says so. NULL where nothing this
-   * book reads reports one — never 0, which would say the fund returned nothing.
+   * that is the figure, and `distributedBasis` says so. A line the family's
+   * consolidated review values and dates is paid back by the review's own rows
+   * instead — the rows its XIRR counts (`ReviewDistribution`, Stage 10fz).
+   * NULL where nothing this book reads reports one — never 0, which would say
+   * the fund returned nothing.
    */
   distributed: number | null;
   distributedBasis: DistributionBasis | null;
+  /**
+   * WHETHER THIS FOLIO IS ONE THAT COULD REPORT A DISTRIBUTION — the "of" of
+   * every distribution coverage count (Stage 10fz). A capital account, an
+   * income-only folio's letters, or the review's dated rows for a line the
+   * review values. False on an income-only view whose letters the review's rows
+   * on the valued line already carry (`letterOnReview`): counting it in the
+   * "of" would name an account that reports nothing when its payment is on the
+   * line above.
+   */
+  reportsDistribution: boolean;
+  /**
+   * THE REVIEW'S OWN RECORD BEHIND A "review" DISTRIBUTION (Stage 10fz), and
+   * what the same account's capital account says beside it — so a hover can
+   * name a statement that disagrees. Null on every other basis.
+   */
+  reviewDistribution: ReviewDistribution | null;
+  /**
+   * AN INCOME-ONLY VIEW'S LETTERS THAT THE REVIEW'S ROWS ON THE VALUED LINE
+   * ALREADY CARRY — the amount, for the hover to say where it is counted. Null
+   * on every folio whose letters (if any) are its own distribution figure.
+   */
+  letterOnReview: number | null;
+  /**
+   * WHAT WENT IN AND CAME BACK BY THE DATE THE VALUE IS STRUCK ON (Stage 10fz)
+   * — what a multiple divides, each on the same day as the value: paid in (the
+   * dated calls or purchases on or before it), the distribution paid on or
+   * before it (a payout AFTER the valuation is inside that value and is never
+   * added to it), and the equalisation a capital account prints apart. Null
+   * where the folio carries no capital account and no dated review record.
+   */
+  toValuation: { paidIn: number | null; distributed: number | null; equalisation: number } | null;
   /**
    * WHETHER A CONSOLIDATED TOTAL COUNTS IT. The same rule as the capital
    * account: a capital account's distribution goes with `capitalCounted`, and
@@ -298,16 +334,63 @@ export type BookFolio = {
  * distribution letter to an income-only folio (the cash, as the letter prints
  * it). Said on the page, because the two are different bases added together.
  */
-export type DistributionBasis = "capital-account" | "letter";
+export type DistributionBasis = "capital-account" | "letter" | "review";
+
+/**
+ * ── A LINE THE REVIEW VALUES IS PAID BACK BY THE REVIEW'S OWN ROWS ─────────
+ *
+ * Stage 10fz. A holding the family's consolidated review values is DATED by
+ * the review (Stage 10dh): its XIRR reads the review's Transactions rows —
+ * every purchase, every sale, every income row — and nothing else
+ * (`fundDatedRecords`). The distribution figure read the capital account
+ * alone, or an income-only folio's letters, so one fund paid back two
+ * different sums one click apart: 360 ONE Special Opportunities' figure was
+ * ₹14.31 L (the two 18 May 2026 letters) while its own XIRR counted ₹39.56 L,
+ * India SME Fund II read "—" where the review dates ₹4,05,880 of income, and
+ * Baring read its capital account's ₹37,252 where its XIRR counted the
+ * review's ₹1,42,867. A distribution to date must be the cash the
+ * money-weighted return counts (ILPA), so a line the review values AND dates
+ * is paid back by the same rows: income and sale proceeds dated on or before
+ * the review's value date. What the capital account says is kept beside it
+ * (`statement`), so a statement that disagrees is named, never silently
+ * replaced. A line the review values and dates NOTHING for keeps its capital
+ * account's figure, as before.
+ */
+export type ReviewDistribution = {
+  /** Income rows on or before the valuation. */
+  income: number;
+  /** Sale proceeds on or before the valuation — capital returned. */
+  sale: number;
+  /** Purchases on or before the valuation — what the review says went in. */
+  purchased: number;
+  /** Income and sale rows dated AFTER the valuation: inside that value, in no figure here. */
+  afterValuation: number;
+  valuedAt: string;
+  /** The same account's capital account's distribution total, where it prints one. */
+  statement: number | null;
+  /** …and the equalisation it prints apart from that total. */
+  statementEqualisation: number | null;
+  statementAsOf: string | null;
+  /**
+   * The units the review's dated rows buy and sell, against the units the line
+   * carries — null where a row prints no units. A gap is named, never closed:
+   * no dated row moves those units, and no row moves cash for them.
+   */
+  units: { bought: number; sold: number; held: number } | null;
+  /** Letters on an income-only view of this line that match no income row here. */
+  lettersNotOnReview: number;
+};
 
 /** First and last investment date — `YYYY-MM-DD`, or `YYYY-MM` where only a month is printed. */
-export type InvestedSpan = { from: string; to: string; source: "review" | "capital-account" };
+export type InvestedSpan = { from: string; to: string; source: "review" | "capital-account" | "holding-record" };
 
 /** A folio's investment dates: the review line's own, else its capital account's dated calls. */
 export function investedSpanOf(position: Position | null, capital: SchemeCall | null): InvestedSpan | null {
   const d = position?.investedDates;
   if (d) return { from: d.from, to: d.to, source: "review" };
   if (capital?.firstCall) return { from: capital.firstCall, to: capital.lastCall ?? capital.firstCall, source: "capital-account" };
+  const own = position ? investedOnOf([position]) : null;
+  if (own) return { from: own.first, to: own.last, source: "holding-record" };
   return null;
 }
 
@@ -547,6 +630,12 @@ export function bookFolios(args: {
   schemes: SchemeCall[];
   /** The funds' own distribution letters (`BOOK_CORPORATE_ACTIONS`); absent reads as none. */
   distributions?: DistributionRecord[];
+  /**
+   * The review's dated rows (`BOOK_REVIEW_FLOWS`) — what a line the review
+   * values is paid back by (Stage 10fz). Absent reads as none, and every folio
+   * keeps its capital account's or its letters' figure.
+   */
+  reviewFlows?: readonly ReviewFlow[];
   /** The supplied profile records; absent reads the ones the build read from `source/`. */
   profiles?: SuppliedProfiles;
 }): BookFolio[] {
@@ -558,6 +647,14 @@ export function bookFolios(args: {
   const counted = new Set(dedupedPositions(inScope));
   const groupSize = new Map<string, number>();
   for (const p of inScope) if (p.dedupeGroup) groupSize.set(p.dedupeGroup, (groupSize.get(p.dedupeGroup) ?? 0) + 1);
+  /** The account whose holding a consolidated figure keeps, per dedupe group — `dedupedPositions`' choice. */
+  const keptAs = new Map<string, string>();
+  for (const p of inScope) if (p.dedupeGroup && counted.has(p) && !keptAs.has(p.dedupeGroup)) keptAs.set(p.dedupeGroup, p.accountId);
+  const reviewBy = new Map<string, ReviewFlow[]>();
+  for (const r of args.reviewFlows ?? []) {
+    const k = `${r.accountId}|${r.securityKey}`;
+    reviewBy.set(k, [...(reviewBy.get(k) ?? []), r]);
+  }
   /**
    * WHICH CAPITAL ACCOUNTS A CONSOLIDATED FIGURE COUNTS — struck over the same
    * holdings, in the same book order, as `counted` above, so the capital that
@@ -568,7 +665,7 @@ export function bookFolios(args: {
 
   const out: Omit<BookFolio, "profile">[] = [];
   const attached = new Set<string>();
-  const capitalOf = (accountId: string) => {
+  const capitalOf = (accountId: string, valuedAt: string | null) => {
     const cap = !attached.has(accountId) ? schemeOf.get(accountId) ?? null : null;
     if (cap) attached.add(accountId);
     const capCounted = !!cap && !alsoCapital.has(accountId);
@@ -584,6 +681,38 @@ export function bookFolios(args: {
       distributedBasis: distributed != null ? ("capital-account" as const) : null,
       distributionCounted: capCounted,
       distributionCountedAs: capCountedAs,
+      reportsDistribution: !!cap,
+      reviewDistribution: null,
+      letterOnReview: null,
+      toValuation: c ? capitalToValuation(c, valuedAt) : null,
+    };
+  };
+  /**
+   * THE REVIEW'S ROWS FOR A LINE IT VALUES, where it dates any (Stage 10fz) —
+   * null otherwise, and the folio keeps its capital account's figure. The
+   * capital account's own figure rides along so a disagreement is named.
+   */
+  const reviewPaidBack = (p: Position, valuedAt: string | null, capital: SchemeCall | null): ReviewDistribution | null => {
+    const rf = p.review ? reviewBy.get(`${p.accountId}|${p.securityKey}`) ?? [] : [];
+    if (!rf.length || !valuedAt) return null;
+    const upTo = rf.filter((r) => r.date <= valuedAt);
+    const of = (k: ReviewFlow["kind"], xs: ReviewFlow[]) => sum(xs.filter((r) => r.kind === k).map((r) => r.amount));
+    const c = capital ? commitmentOf.get(p.accountId) : undefined;
+    const moves = rf.filter((r) => r.kind !== "income");
+    return {
+      income: of("income", upTo),
+      sale: of("sale", upTo),
+      purchased: of("purchase", upTo),
+      afterValuation: sum(rf.filter((r) => r.date > valuedAt && r.kind !== "purchase").map((r) => r.amount)),
+      valuedAt,
+      statement: c ? distributionOf(c) : null,
+      statementEqualisation: c?.payouts ? sum(c.payouts.filter((x) => x.kind === "equalisation").map((x) => x.gross)) : null,
+      statementAsOf: c?.asOf ?? null,
+      units: p.quantity != null && moves.length && moves.every((r) => r.units != null)
+        ? { bought: sum(moves.filter((r) => r.kind === "purchase").map((r) => r.units!)),
+          sold: sum(moves.filter((r) => r.kind === "sale").map((r) => r.units!)), held: p.quantity }
+        : null,
+      lettersNotOnReview: 0,
     };
   };
   // Largest first, so an account holding two funds hands its capital account to
@@ -591,7 +720,27 @@ export function bookFolios(args: {
   // left to array order.
   for (const p of [...inScope].sort((a, b) => b.marketValue - a.marketValue)) {
     const a = accIdx.get(p.accountId);
-    const cap = capitalOf(p.accountId);
+    const valuedAt = p.priceAsOf ?? a?.asOf ?? null;
+    const statementCap = capitalOf(p.accountId, valuedAt);
+    /**
+     * A LINE THE REVIEW VALUES AND DATES IS PAID BACK BY THE REVIEW'S ROWS
+     * (Stage 10fz) — the same rows its XIRR counts — and counted with its
+     * HOLDING, as the capital account is: once per dedupe group, on the member
+     * a consolidated figure keeps. The capital stays the capital account's.
+     */
+    const rev = reviewPaidBack(p, valuedAt, statementCap.capital);
+    const cap = rev
+      ? {
+        ...statementCap,
+        distributed: rev.income + rev.sale,
+        distributedBasis: "review" as const,
+        distributionCounted: counted.has(p),
+        distributionCountedAs: counted.has(p) || !p.dedupeGroup ? null : keptAs.get(p.dedupeGroup) ?? null,
+        reportsDistribution: true,
+        reviewDistribution: rev,
+        toValuation: { paidIn: rev.purchased, distributed: rev.income + rev.sale, equalisation: 0 },
+      }
+      : statementCap;
     out.push({
       key: `${p.accountId}|${p.securityKey}`,
       section: sectionOf(p)!,
@@ -604,7 +753,7 @@ export function bookFolios(args: {
       // statement: a line the family's consolidated review values carries the
       // review's own date for it (TVC at 28 Feb under trusts whose statement is
       // 31 Mar; 360 ONE at 30 Jun under a CRN whose own statement runs to 31 Jul).
-      asOf: p.priceAsOf ?? a?.asOf ?? null,
+      asOf: valuedAt,
       fundKey: p.securityKey,
       fundName: p.security,
       securityKey: p.securityKey,
@@ -671,7 +820,7 @@ export function bookFolios(args: {
         counted: false,
         alsoCount: 1,
         alsoReportedUnder: [],
-        ...capitalOf(a.accountId),
+        ...capitalOf(a.accountId, a.asOf ?? null),
         // Its units — and when they were bought — are the valued line's.
         invested: null,
         viewOf: p.accountId,
@@ -681,19 +830,50 @@ export function bookFolios(args: {
         // stands for the distribution its letters all report.
         distributionCounted: paid != null,
         distributionCountedAs: null,
+        reportsDistribution: true,
+        // A letter carries no paid-in of its own: the units are the valued line's.
+        toValuation: null,
         reason: u.reason,
       });
       continue;
     }
     const c = commitmentOf.get(a.accountId);
     const name = c?.name || a.strategy || a.provider;
-    out.push(unvaluedFolio(a, name, u.kind, u.reason, capitalOf(a.accountId), accIdx));
+    out.push(unvaluedFolio(a, name, u.kind, u.reason, capitalOf(a.accountId, a.asOf ?? null), accIdx));
   }
   for (const s of schemes) {
     if (attached.has(s.accountId)) continue;
     const a = accIdx.get(s.accountId);
     out.push(unvaluedFolio(a, s.fund, "other",
-      a?.noPositionsReason ?? "this capital account's statement carries no current holding", capitalOf(s.accountId), accIdx, s));
+      a?.noPositionsReason ?? "this capital account's statement carries no current holding", capitalOf(s.accountId, a?.asOf ?? s.asOf), accIdx, s));
+  }
+  /**
+   * ── A LETTER THE REVIEW'S ROWS ALREADY CARRY IS COUNTED ONCE, THERE ──────
+   *
+   * Stage 10fz. 360 ONE Alternates' letters to 1000632 and 1000633 report the
+   * ₹7,15,619 the fund paid on 18 May 2026 — the payment the family's review
+   * dates as an income row on CRN37702 and CRN60117, the valued lines those
+   * folios are views of. Once a valued line is paid back by the review's rows,
+   * its view's letters are that same cash: counted again they would add the
+   * 18 May payment twice. So the view keeps its line and says where its letter
+   * is counted, and reports no figure of its own. A letter that matches NO
+   * income row on the valued line is not dropped in silence: it is named on
+   * that line (`lettersNotOnReview`).
+   */
+  for (const f of out) {
+    if (!f.viewOf || f.distributedBasis !== "letter") continue;
+    const valued = out.find((v) => v.accountId === f.viewOf && v.fundKey === f.fundKey && v.position);
+    const rd = valued?.reviewDistribution;
+    if (!valued || !rd) continue;
+    const incomeRows = (reviewBy.get(`${valued.accountId}|${valued.fundKey}`) ?? []).filter((r) => r.kind === "income");
+    const mine = letters.filter((d) => d.accountId === f.accountId);
+    rd.lettersNotOnReview += sum(mine.filter((d) => !incomeRows.some((r) => Math.abs(r.amount - d.amount!) <= 1)).map((d) => d.amount!));
+    f.letterOnReview = f.distributed;
+    f.distributed = null;
+    f.distributedBasis = null;
+    f.reportsDistribution = false;
+    f.distributionCounted = false;
+    f.distributionCountedAs = valued.accountId;
   }
   /**
    * ── ONE DISTRIBUTION, HOWEVER MANY VIEWS OF THE HOLDING REPORT IT ────────
@@ -766,7 +946,11 @@ export function investmentIdentities(folios: readonly Pick<BookFolio, "fundKey" 
  * ₹57 L while the tile, summing the capital accounts alone, went on reading
  * ₹50 L (B-10). So the inputs are assembled here and nowhere else: the current
  * holdings, the capital accounts counted once with their holdings
- * (`privateCapital`), their dated calls, and the funds' own letters.
+ * (`privateCapital`), their dated calls, the funds' own letters — and the
+ * review's dated rows (Stage 10fz), DEFAULTED HERE to the book's own, so a
+ * caller that passes two arguments (Morning CIO) counts a review line's
+ * distribution exactly as Private Market does. Rows are joined on the account
+ * and the line, so a member-scoped book reaches only its own.
  *
  * `ownerName` labels a scheme row for the call history and moves no figure.
  */
@@ -774,6 +958,7 @@ export function privateBookFolios(
   book: { positions: Position[]; accounts: Account[]; commitments?: Commitment[] | null },
   distributions: readonly DistributionRecord[],
   ownerName: (ownerId: string) => string | null = () => null,
+  reviewFlows: readonly ReviewFlow[] = BOOK_REVIEW_FLOWS,
 ) {
   const accIdx = accountIndex(book.accounts);
   const current = currentHoldings(book.positions);
@@ -781,9 +966,140 @@ export function privateBookFolios(
   const schemes = schemeCalls(cap.onPage, (c) => c.name, (c) => (c.ownerId ? ownerName(c.ownerId) : null));
   const folios = bookFolios({
     positions: current, allPositions: book.positions, accounts: book.accounts,
-    commitments: cap.onPage, accIdx, schemes, distributions: [...distributions],
+    commitments: cap.onPage, accIdx, schemes, distributions: [...distributions], reviewFlows,
   });
   return { accIdx, current, cap, schemes, folios };
+}
+
+/**
+ * WHAT A CAPITAL ACCOUNT HAD PAID IN AND PAID BACK BY ONE DATE — the date its
+ * holding's value is struck on (Stage 10fz). Paid in is its dated calls on or
+ * before that date where the calls reproduce its printed paid-in, else its
+ * printed paid-in where its statement is dated that very day; the distribution
+ * is its dated payouts on or before it, never equalisation (printed apart, and
+ * not a distribution — `distributionOf`), else its printed total where the
+ * statement is that day's. A payout after the date is inside the value struck
+ * on it, so it is in no figure here.
+ */
+function capitalToValuation(c: Commitment, valuedAt: string | null): BookFolio["toValuation"] {
+  if (!valuedAt) return { paidIn: null, distributed: null, equalisation: 0 };
+  const calls = c.calls ?? [];
+  const callsTie = calls.length > 0 && c.paid != null && Math.abs(sum(calls.map((k) => k.amount)) - c.paid) <= 1;
+  const paidIn = callsTie ? sum(calls.filter((k) => k.date <= valuedAt).map((k) => k.amount))
+    : c.asOf === valuedAt ? c.paid : null;
+  const upTo = (c.payouts ?? []).filter((x) => x.date <= valuedAt);
+  const distributed = c.payouts
+    ? sum(upTo.filter((x) => x.kind !== "equalisation").map((x) => x.gross))
+    : c.asOf === valuedAt ? distributionOf(c) : null;
+  return { paidIn, distributed, equalisation: sum(upTo.filter((x) => x.kind === "equalisation").map((x) => x.gross)) };
+}
+
+/**
+ * ── DPI, RVPI AND TVPI OVER THE PRIVATE FUNDS BAND (Stage 10fz) ───────────
+ *
+ * The ILPA multiples, each over ONE set and each figure on its holding's own
+ * valuation date:
+ *
+ *   DPI  = distributions ÷ paid in      RVPI = value ÷ paid in
+ *   TVPI = DPI + RVPI = (distributions + value) ÷ paid in
+ *
+ * Struck over the holdings the "Private funds" band values, each counted once —
+ * never over a line held at cost, whose value IS what was paid, so its RVPI
+ * would be 1.0× by construction rather than by measurement (counted apart in
+ * `atCost`). A distribution is counted only to the date the value is struck
+ * on: a payout after it is inside that value, and adding it would count it
+ * twice (`afterValuation` says how much is left out for that reason).
+ *
+ * REFUSED, with every holding that stops it named, wherever one holding of the
+ * band cannot say what went in or what came back by its value date: a multiple
+ * over the rest would be a figure over a set nobody chose.
+ */
+export type PrivateMultiples = {
+  parts: { folio: BookFolio; paidIn: number; distributed: number; equalisation: number; value: number }[];
+  missing: { folio: BookFolio; why: string }[];
+  atCost: { holdings: number; value: number };
+  paidIn: number | null;
+  distributed: number | null;
+  value: number | null;
+  dpi: number | null;
+  rvpi: number | null;
+  tvpi: number | null;
+  /** Equalisation received by the value dates — cash the XIRR counts, and not a distribution. */
+  equalisation: number;
+  /** Distributions reported, but paid after their holding's value date — inside that value. */
+  afterValuation: number;
+};
+
+export function privateMultiples(folios: readonly BookFolio[]): PrivateMultiples {
+  const held = folios.filter((f) => f.position && f.counted && f.section !== "unvalued");
+  const atCostHeld = held.filter((f) => f.section === "atCost" || isValuedAtCost(f.position!));
+  const band = held.filter((f) => !atCostHeld.includes(f));
+  const parts: PrivateMultiples["parts"] = [];
+  const missing: PrivateMultiples["missing"] = [];
+  let afterValuation = 0;
+  for (const f of band) {
+    const t = f.toValuation;
+    const why = !f.reportsDistribution || !t
+      ? "no capital account and no dated row of the family's consolidated review says what went into it or came back"
+      : !f.distributionCounted
+        ? "its distribution is counted with another statement's"
+        : t.paidIn == null
+          ? "its capital account's dated calls do not reproduce the paid-in it prints, and its statement is not dated the day its value is struck"
+          : t.distributed == null
+            ? (f.distributed == null
+              ? "its capital account prints no distribution line"
+              : "its capital account prints a distribution total and no dated payouts, so what it paid after the value date — inside that value — cannot be taken out")
+            : f.value == null ? "it carries no value" : null;
+    if (why || !t || t.paidIn == null || t.distributed == null || f.value == null) {
+      missing.push({ folio: f, why: why ?? "it carries no value" });
+      continue;
+    }
+    parts.push({ folio: f, paidIn: t.paidIn, distributed: t.distributed, equalisation: t.equalisation, value: f.value });
+    if (f.distributed != null && f.distributed - t.distributed > 1) afterValuation += f.distributed - t.distributed;
+    if (f.reviewDistribution) afterValuation += f.reviewDistribution.afterValuation;
+  }
+  const struck = parts.length > 0 && !missing.length;
+  const paidIn = struck ? sum(parts.map((x) => x.paidIn)) : null;
+  const distributed = struck ? sum(parts.map((x) => x.distributed)) : null;
+  const value = struck ? sum(parts.map((x) => x.value)) : null;
+  const ok = paidIn != null && paidIn > 0;
+  const dpi = ok ? distributed! / paidIn : null;
+  const rvpi = ok ? value! / paidIn : null;
+  return {
+    parts, missing,
+    atCost: { holdings: atCostHeld.length, value: sum(atCostHeld.map((f) => f.value ?? 0)) },
+    paidIn, distributed, value,
+    dpi, rvpi, tvpi: dpi != null && rvpi != null ? dpi + rvpi : null,
+    equalisation: sum(parts.map((x) => x.equalisation)),
+    afterValuation,
+  };
+}
+
+/**
+ * ── THE INVESTMENTS NO RETURN HERE SEES: WHAT THE REVIEW WRITES OFF ────────
+ *
+ * Stage 10fz. The family's consolidated review lists its written-off private
+ * investments (`BOOK_REVIEW_WRITTEN_OFF`) with a remark and no cost and no
+ * value, so the book carries them as no position at all — rightly: there is no
+ * figure to carry. But a return or a count over the private book is then over
+ * the investments that SURVIVE, and a caption saying "the whole private book"
+ * widens it: the capital that went into these is in no return on this page,
+ * and with it each return would read lower by an amount the review does not
+ * print. So every surface that sums the private book names them — never as a
+ * ₹0 position, never as a number.
+ *
+ * The review names no holder for these lines, so a member-scoped page cannot
+ * say which are that member's; it says so rather than listing the family's.
+ */
+export function writtenOffNote(writtenOff: readonly ReviewWrittenOff[], scoped: boolean): string {
+  if (!writtenOff.length) return "";
+  const n = writtenOff.length;
+  const names = [...new Set(writtenOff.map((w) => w.security.trim()))];
+  const them = n === 1 ? "it" : "them";
+  if (scoped) {
+    return `The family's consolidated review also writes off ${n} private ${n === 1 ? "investment" : "investments"}, naming no holder for ${them}, so none can be placed in this view — and printing no cost or value, so the capital that went into ${them} is in no return or count here.`;
+  }
+  return `The family's consolidated review also writes off ${n} private ${n === 1 ? "investment" : "investments"} — ${names.join(", ")} — and prints no cost or value for ${n === 1 ? "it" : "any of them"}, so the capital that went into ${them} is in no return or count here: this is over the investments that survive.`;
 }
 
 /**
@@ -805,7 +1121,8 @@ export function distributionLeftOutNote(
 
 function unvaluedFolio(
   a: Account | undefined, name: string, status: UnvaluedKind, reason: string | null,
-  capital: Pick<BookFolio, "capital" | "capitalCounted" | "capitalCountedAs" | "distributed" | "distributedBasis" | "distributionCounted" | "distributionCountedAs">,
+  capital: Pick<BookFolio, "capital" | "capitalCounted" | "capitalCountedAs" | "distributed" | "distributedBasis" | "distributionCounted" | "distributionCountedAs"
+    | "reportsDistribution" | "reviewDistribution" | "letterOnReview" | "toValuation">,
   accIdx: AccountIndex, s?: SchemeCall,
 ): Omit<BookFolio, "profile"> {
   const accountId = a?.accountId ?? s?.accountId ?? "";
@@ -859,9 +1176,10 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     .map((f) => f.capital!);
   const capitalAlso = consolidated ? folios.filter((f) => f.capital && !f.capitalCounted).length : 0;
   const of = (g: (c: SchemeCall) => number | null) => caps.filter((c) => g(c) != null).length;
-  // THE FOLIOS THAT COULD REPORT A DISTRIBUTION — a capital account, or an
-  // income-only folio's letters — each once on a consolidated row (B-10).
-  const dists = folios.filter((f) => (f.capital || f.viewOf) && (!consolidated || f.distributionCounted));
+  // THE FOLIOS THAT COULD REPORT A DISTRIBUTION — a capital account, an
+  // income-only folio's letters, or the review's dated rows on a line it values
+  // (Stage 10fz) — each once on a consolidated row (B-10).
+  const dists = folios.filter((f) => f.reportsDistribution && (!consolidated || f.distributionCounted));
   const cost = sumOrNull(held.map((f) => f.cost));
   const value = held.length ? sum(held.map((f) => f.value ?? 0)) : null;
   const pnl = sumOrNull(held.map((f) => f.pnl));

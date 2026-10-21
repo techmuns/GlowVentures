@@ -13,19 +13,18 @@
 //                      this is a full XIRR closed against today's LIVE price.
 //
 //   • Startups       — the workbook dates the first cheque AND each follow-on
-//                      round, so this is a genuine multi-flow XIRR. Where a row's
-//                      dated cheques don't add up to its stated total investment,
-//                      the shortfall is placed at the first-investment date —
-//                      the earliest it could have gone in, which lowers the
-//                      resulting rate rather than flattering it.
+//                      round, so this is a genuine multi-flow XIRR — closed on
+//                      the fair value's OWN valuation date, never today.
 //
-//   • Funds          — the workbook dates the first investment but not the
-//                      drawdowns or the distributions. Each fund therefore
-//                      contributes two dated flows: capital called at first
-//                      investment, and (distributions + NAV) today. That is a
-//                      valid XIRR of those flows and a CONSERVATIVE one, since
-//                      cash that actually came back earlier is credited late.
-//                      Funds with no date are left out rather than guessed at.
+//   • Funds          — a fund is rated only on its OWN dated calls and dated
+//                      distributions, closed on its own valuation date. Stage
+//                      10fz retired the old basis — every rupee drawn put on
+//                      the first-investment date and value + distributions on
+//                      `new Date()` — which is a rate for flows nobody made: a
+//                      call drawn in year three earned nothing in years one and
+//                      two, and "today" is not the date anything was valued.
+//                      A fund that does not carry those dates is not rated.
+//                      (Latent: this book's `privateMarkets` is empty.)
 import { xirr, type DatedFlow } from "./xirr";
 import type { FundInvestment, StartupInvestment } from "./types";
 
@@ -151,35 +150,76 @@ export function xirrWithTerminal(flows: DatedFlow[], terminalValue: number, asOf
  * value was actually measured, and the solver sees the whole set at once. That is
  * what a money-weighted return means: every cash flow at the date it happened.
  *
- * Accounts with no flows or no positive terminal value are skipped by the CALLER,
- * not silently here — see `/performance`, which names each excluded account. This
- * function will not invent a stake it was not given.
+ * Accounts with no flows are skipped by the CALLER, not silently here — see
+ * `/performance`, which names each excluded account. This function will not
+ * invent a stake it was not given.
+ *
+ * A REDEEMED PART STAYS (Stage 10fz). A part whose terminal value is a measured
+ * ₹0 — a folio redeemed to nil — kept its calls and paybacks out of the pool
+ * along with the zero, so a fund that returned its money vanished from the rate
+ * that should carry its realised gain or loss. It now contributes its flows and
+ * no terminal flow, as `measuredAccountsReturn` treats a sourced closing zero.
+ * Only a NEGATIVE or non-finite terminal value — which no statement prints — is
+ * left out.
  */
 export function pooledXirr(
   parts: { flows: DatedFlow[]; terminalValue: number; asOf: Date }[],
 ): number | null {
-  const usable = parts.filter((p) => p.flows.length && p.terminalValue > 0);
+  const usable = parts.filter((p) => p.flows.length && Number.isFinite(p.terminalValue) && p.terminalValue >= 0);
   if (!usable.length) return null;
   const all: DatedFlow[] = [];
   for (const p of usable) {
     all.push(...p.flows);
-    all.push({ date: p.asOf, amount: p.terminalValue });
+    if (p.terminalValue > 0) all.push({ date: p.asOf, amount: p.terminalValue });
   }
   return xirrPct(all);
 }
 
-/** Pooled XIRR across fund commitments: capital called at first investment → value today. */
-export function fundXirr(funds: FundInvestment[], asOf: Date): XirrResult {
+/**
+ * A fund's own dated record, where the source carries one. `FundInvestment`
+ * itself carries only a first-investment date and totals, so a fund rated
+ * here must supply these alongside — and none in this book does yet.
+ */
+export type DatedFundInvestment = FundInvestment & {
+  /** Each call the family paid, dated — Σ must reproduce `drawn` within ₹1. */
+  calls?: readonly { date: string; amount: number }[] | null;
+  /** Each distribution, dated — Σ must reproduce `distributed` within ₹1. */
+  distributions?: readonly { date: string; amount: number }[] | null;
+  /** The date `currentValue` is struck on. */
+  valueAsOf?: string | null;
+};
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}/;
+const tiesTo = (rows: readonly { date: string; amount: number }[], total: number) =>
+  rows.every((r) => ISO_DAY.test(r.date) && Number.isFinite(r.amount))
+  && Math.abs(rows.reduce((s, r) => s + r.amount, 0) - total) <= 1;
+
+/**
+ * Pooled XIRR across funds, each on its OWN dated calls and distributions and
+ * closed on its own valuation date (`pooledXirr`) — never on today. A fund
+ * whose calls or distributions are not dated, do not reproduce its printed
+ * totals, or whose value carries no date is not rated (`dated` counts the
+ * rated ones). `_asOf` is kept for callers and no longer read: "today" is not
+ * the date anything here was valued (Stage 10fz).
+ */
+export function fundXirr(funds: DatedFundInvestment[], _asOf?: Date): XirrResult {
   if (!funds.length) return NONE;
-  const flows: DatedFlow[] = [];
-  let dated = 0;
+  const parts: { flows: DatedFlow[]; terminalValue: number; asOf: Date }[] = [];
   for (const f of funds) {
-    if (!f.firstInvest || !(f.drawn > 0)) continue;
-    dated++;
-    flows.push({ date: new Date(f.firstInvest), amount: -f.drawn });
-    flows.push({ date: asOf, amount: f.distributed + f.currentValue });
+    if (!(f.drawn > 0) || !f.calls?.length || !f.valueAsOf || !ISO_DAY.test(f.valueAsOf)) continue;
+    const dists = f.distributions ?? (f.distributed === 0 ? [] : null);
+    if (!dists || !tiesTo(f.calls, f.drawn) || !tiesTo(dists, f.distributed)) continue;
+    if (!Number.isFinite(f.currentValue) || f.currentValue < 0) continue;
+    parts.push({
+      flows: [
+        ...f.calls.map((c) => ({ date: new Date(c.date), amount: -c.amount })),
+        ...dists.map((d) => ({ date: new Date(d.date), amount: d.amount })),
+      ],
+      terminalValue: f.currentValue,
+      asOf: new Date(f.valueAsOf),
+    });
   }
-  return { pct: dated ? xirrPct(flows) : null, dated, total: funds.length };
+  return { pct: parts.length ? pooledXirr(parts) : null, dated: parts.length, total: funds.length };
 }
 
 /**
@@ -192,26 +232,40 @@ export type StartupSchedule = {
   companies: number;       // companies contributing flows
   followOns: number;       // follow-on cheques carrying their own date
   undatedCapital: number;  // INR the sheet records without a date, placed at first investment
+  /** The date the fair values are struck on. Without it the schedule is not rated. */
+  valueAsOf?: string | null;
 };
 
+/** A startup line with the date its fair value is struck on, where the source carries one. */
+export type DatedStartupInvestment = StartupInvestment & { valueAsOf?: string | null };
+
 /**
- * Pooled XIRR across the startup book.
+ * Pooled XIRR across the startup book, closed on the fair value's OWN date.
  *
  * With a schedule (from the workbook's follow-on columns) this is a true
- * multi-flow XIRR. Without one — the audit sheet isn't reachable — it falls back
- * to one dated cheque per company, which is the same calculation over coarser
- * dates rather than a different one.
+ * multi-flow XIRR. Without one it falls back to one dated cheque per company.
+ * Either way the terminal is the fair value on the date it was struck —
+ * `schedule.valueAsOf`, or every line's own `valueAsOf` where they agree —
+ * and never `new Date()` (Stage 10fz): a fair value from the last workbook is
+ * not today's, and closing it today credits the months since with standing
+ * still. With no valuation date the book is not rated. `_asOf` is kept for
+ * callers and no longer read. (Latent: this book carries no startups.)
  */
-export function startupXirr(startups: StartupInvestment[], asOf: Date, schedule?: StartupSchedule | null): XirrResult {
+export function startupXirr(startups: DatedStartupInvestment[], _asOf?: Date, schedule?: StartupSchedule | null): XirrResult {
   if (!startups.length) return NONE;
   const fairValue = startups.reduce((s, x) => s + x.fairValue, 0);
+  const lineDates = new Set(startups.map((s) => s.valueAsOf ?? null));
+  const linesDate = lineDates.size === 1 ? [...lineDates][0] : null;
   if (schedule && schedule.outflows.length) {
+    const at = schedule.valueAsOf ?? linesDate;
+    if (!at || !ISO_DAY.test(at)) return { pct: null, dated: 0, total: startups.length };
     return {
-      pct: xirrWithTerminal(schedule.outflows, fairValue, asOf),
+      pct: xirrWithTerminal(schedule.outflows, fairValue, new Date(at)),
       dated: schedule.companies,
       total: startups.length,
     };
   }
+  if (!linesDate || !ISO_DAY.test(linesDate)) return { pct: null, dated: 0, total: startups.length };
   const flows: DatedFlow[] = [];
   let dated = 0;
   for (const s of startups) {
@@ -219,5 +273,5 @@ export function startupXirr(startups: StartupInvestment[], asOf: Date, schedule?
     dated++;
     flows.push({ date: new Date(s.investDate), amount: -s.invested });
   }
-  return { pct: dated ? xirrWithTerminal(flows, fairValue, asOf) : null, dated, total: startups.length };
+  return { pct: dated ? xirrWithTerminal(flows, fairValue, new Date(linesDate)) : null, dated, total: startups.length };
 }

@@ -1333,13 +1333,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "capitalRecordTo": "2026-07-31",
     "custodian": "SVAN Investment Managers LLP",
     "noPositionsReason": null,
-    "capital": {
-      "contributed": 145000000,
-      "withdrawn": 114206.85,
-      "from": "2024-09-03",
-      "to": "2026-09-30",
-      "source": "capital-record"
-    }
+    "capital": null
   },
   {
     "accountId": "svan-investment-managers-llp-8710090",
@@ -1496,22 +1490,24 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "private",
     "quantity": 990429.68,
-    "avgCost": 10.02,
+    "avgCost": 10.04,
     "currentPrice": null,
-    "costBasis": 9921180.02,
+    "costBasis": 9941987.06,
     "costBasisSource": "review",
+    "printedCostBasis": 9921180.02,
     "marketValue": 14580413,
-    "unrealizedPnL": 4659232.98,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": 46.96,
+    "unrealizedPnL": 4638425.94,
+    "realizedPnL": 20807.04,
+    "costOfUnitsSold": 57512.96,
+    "returnPct": 65.59,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-06-30",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 1899476,
+    "dividendFrom": "2021-04-22",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -1541,22 +1537,24 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "private",
     "quantity": 990429.68,
-    "avgCost": 10.02,
+    "avgCost": 10.04,
     "currentPrice": null,
-    "costBasis": 9921180.02,
+    "costBasis": 9941987.06,
     "costBasisSource": "review",
+    "printedCostBasis": 9921180.02,
     "marketValue": 14580412.51,
-    "unrealizedPnL": 4659232.49,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": 46.96,
+    "unrealizedPnL": 4638425.45,
+    "realizedPnL": 20807.04,
+    "costOfUnitsSold": 57512.96,
+    "returnPct": 65.59,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-06-30",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 1899476,
+    "dividendFrom": "2021-04-22",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -1676,14 +1674,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -794.52,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 0.33,
+    "returnPct": 0.38,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-10-05",
     "accruedIncome": null,
-    "dividendReceived": 3364.98,
+    "dividendReceived": 3739.98,
+    "dividendFrom": "2026-09-01",
     "positionIrrPct": null,
     "avgCostDerived": true
   },
@@ -1850,14 +1849,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -1407791.26,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -6.95,
+    "returnPct": -6.25,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 142867,
+    "dividendFrom": "2024-10-03",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -1926,14 +1926,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 20618370.33,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 4.48,
+    "returnPct": 4.49,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 58861.66,
+    "dividendFrom": "2024-06-01",
     "positionIrrPct": null
   },
   {
@@ -2007,6 +2008,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 95958,
     "dividendReceived": 62750,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -2154,6 +2156,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 165040,
     "dividendReceived": 165040,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -2226,6 +2229,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 495063,
     "dividendReceived": 306900,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -2266,6 +2270,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 146000,
     "dividendReceived": 146000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -2419,6 +2424,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 2788,
     "dividendReceived": 2787.6,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -2483,6 +2489,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 16000,
     "dividendReceived": 16000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 27.18
   },
   {
@@ -2519,6 +2526,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 3000,
     "dividendReceived": 3000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.08
   },
   {
@@ -2555,6 +2563,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 7200,
     "dividendReceived": 7200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 41.74
   },
   {
@@ -2575,7 +2584,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -587853.3,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -20.5,
+    "returnPct": -20.42,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -2590,7 +2599,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 3000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 24000,
-    "dividendReceived": 21600,
+    "dividendReceived": 24000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -25.72
   },
   {
@@ -2627,6 +2637,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 3600,
     "dividendReceived": 7200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 117.67
   },
   {
@@ -2694,6 +2705,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 8000,
     "dividendReceived": 8000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 822.66
   },
   {
@@ -2734,6 +2746,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1600,
     "dividendReceived": 1600,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 179.89
   },
   {
@@ -2754,7 +2767,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -572477.6,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -16.43,
+    "returnPct": -16.39,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -2769,7 +2782,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 9500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 14250,
-    "dividendReceived": 12825,
+    "dividendReceived": 14250,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -21.16
   },
   {
@@ -2790,7 +2804,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 250845.64,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 9.65,
+    "returnPct": 9.75,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -2809,7 +2823,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": null
     },
     "accruedIncome": 28800,
-    "dividendReceived": 25920,
+    "dividendReceived": 28800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 71.99
   },
   {
@@ -2830,7 +2845,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -199177,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -5.24,
+    "returnPct": -5.03,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -2845,7 +2860,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 1100 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 59400,
-    "dividendReceived": 53460,
+    "dividendReceived": 59400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -6.86
   },
   {
@@ -2867,7 +2883,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -28660,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -0.26,
+    "returnPct": -0.17,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -2882,7 +2898,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 2000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 24000,
-    "dividendReceived": 21600,
+    "dividendReceived": 24000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -0.23
   },
   {
@@ -2903,7 +2920,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -358323.43,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -17.23,
+    "returnPct": -17.08,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -2922,7 +2939,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": null
     },
     "accruedIncome": 30000,
-    "dividendReceived": 27000,
+    "dividendReceived": 30000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.16
   },
   {
@@ -2959,6 +2977,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 31000,
     "dividendReceived": 31000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -28.68
   },
   {
@@ -2999,6 +3018,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 9750,
     "dividendReceived": 9750,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -7.27
   },
   {
@@ -3020,7 +3040,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 582052.8,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 27.64,
+    "returnPct": 27.74,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3035,7 +3055,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 8500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 22100,
-    "dividendReceived": 19890,
+    "dividendReceived": 22100,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 37.52
   },
   {
@@ -3072,6 +3093,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 7500,
     "dividendReceived": 7500,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 4.19
   },
   {
@@ -3092,7 +3114,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -191044.65,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -5.43,
+    "returnPct": -5.19,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3107,7 +3129,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 6000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 60000,
-    "dividendReceived": 54000,
+    "dividendReceived": 60000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -6.86
   },
   {
@@ -3128,7 +3151,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -222350.3,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -10.22,
+    "returnPct": -10.14,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3147,7 +3170,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": null
     },
     "accruedIncome": 16200,
-    "dividendReceived": 14580,
+    "dividendReceived": 16200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -26.43
   },
   {
@@ -3168,7 +3192,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -267488.29,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -9.54,
+    "returnPct": -9.44,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3183,7 +3207,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 26400,
-    "dividendReceived": 23760,
+    "dividendReceived": 26400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -15.87
   },
   {
@@ -3292,6 +3317,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 6000,
     "dividendReceived": 4000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 27.34
   },
   {
@@ -3368,6 +3394,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 4500,
     "dividendReceived": 4500,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -19.61
   },
   {
@@ -3388,7 +3415,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 138006.26,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 15.89,
+    "returnPct": 16.14,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3403,7 +3430,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 1250 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 25000,
-    "dividendReceived": 22500,
+    "dividendReceived": 25000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 29.71
   },
   {
@@ -3424,7 +3452,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -838217.39,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -25.43,
+    "returnPct": -25.27,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3439,7 +3467,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 9000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 59850,
-    "dividendReceived": 43740,
+    "dividendReceived": 48600,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.48
   },
   {
@@ -3461,7 +3490,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -11701.12,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 1.08,
+    "returnPct": 1.26,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3476,7 +3505,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 2250 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 39038,
-    "dividendReceived": 35133.5,
+    "dividendReceived": 39037.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 1.65
   },
   {
@@ -3497,7 +3527,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 108157.87,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 4.47,
+    "returnPct": 4.52,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3512,7 +3542,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "the transaction statements from 2026-04-01 to 2026-10-06 buy 2300 and sell 2800 units of it against 6000 held, so 6500 of them are on no dated trade in this drop"
     },
     "accruedIncome": 17550,
-    "dividendReceived": 10800,
+    "dividendReceived": 12000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 6.66
   },
   {
@@ -3585,6 +3616,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 37500,
     "dividendReceived": 3750,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -21.2
   },
   {
@@ -3625,6 +3657,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1000,
     "dividendReceived": 1000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -55.48
   },
   {
@@ -3661,6 +3694,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 2800,
     "dividendReceived": 2800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 34.88
   },
   {
@@ -3697,6 +3731,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 40000,
     "dividendReceived": 40000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 27.18
   },
   {
@@ -3733,6 +3768,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 6250,
     "dividendReceived": 6250,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.08
   },
   {
@@ -3753,7 +3789,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1631552.51,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 25.99,
+    "returnPct": 26.01,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3768,7 +3804,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 15000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 18000,
-    "dividendReceived": 16200,
+    "dividendReceived": 18000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 43.41
   },
   {
@@ -3789,7 +3826,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -1371657.7,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -20.5,
+    "returnPct": -20.42,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3804,7 +3841,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 7000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 56000,
-    "dividendReceived": 50400,
+    "dividendReceived": 56000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -25.72
   },
   {
@@ -3825,7 +3863,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1854877.78,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 55.77,
+    "returnPct": 55.8,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3840,7 +3878,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 2000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 8000,
-    "dividendReceived": 15200,
+    "dividendReceived": 16000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 117.67
   },
   {
@@ -3888,7 +3927,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 2690725,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 56.76,
+    "returnPct": 56.82,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3907,7 +3946,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": null
     },
     "accruedIncome": 25000,
-    "dividendReceived": 22500,
+    "dividendReceived": 25000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 822.66
   },
   {
@@ -3948,6 +3988,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 3600,
     "dividendReceived": 3600,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 179.89
   },
   {
@@ -3968,7 +4009,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -1214561,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -16.54,
+    "returnPct": -16.5,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -3983,7 +4024,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 20000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 30000,
-    "dividendReceived": 27000,
+    "dividendReceived": 30000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -21.27
   },
   {
@@ -4004,7 +4046,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 627114.24,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 9.65,
+    "returnPct": 9.75,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4023,7 +4065,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": null
     },
     "accruedIncome": 72000,
-    "dividendReceived": 64800,
+    "dividendReceived": 72000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 71.99
   },
   {
@@ -4044,7 +4087,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -461320,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -5.37,
+    "returnPct": -5.16,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4059,7 +4102,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 2500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 135000,
-    "dividendReceived": 121500,
+    "dividendReceived": 135000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -7.04
   },
   {
@@ -4081,7 +4125,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -71650,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -0.26,
+    "returnPct": -0.17,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4096,7 +4140,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 60000,
-    "dividendReceived": 54000,
+    "dividendReceived": 60000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -0.23
   },
   {
@@ -4117,7 +4162,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -720274.92,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -17.31,
+    "returnPct": -17.15,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4136,7 +4181,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": null
     },
     "accruedIncome": 60000,
-    "dividendReceived": 54000,
+    "dividendReceived": 60000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.21
   },
   {
@@ -4173,6 +4219,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 70000,
     "dividendReceived": 70000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -29.33
   },
   {
@@ -4193,7 +4240,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -187376,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -3.13,
+    "returnPct": -3.09,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4212,7 +4259,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": null
     },
     "accruedIncome": 21000,
-    "dividendReceived": 18900,
+    "dividendReceived": 21000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -7.27
   },
   {
@@ -4234,7 +4282,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1369536,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 27.64,
+    "returnPct": 27.74,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4249,7 +4297,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 20000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 52000,
-    "dividendReceived": 46800,
+    "dividendReceived": 52000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 37.52
   },
   {
@@ -4270,7 +4319,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 207119.4,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 3.21,
+    "returnPct": 3.24,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4285,7 +4334,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 1200 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 18000,
-    "dividendReceived": 16200,
+    "dividendReceived": 18000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 4.23
   },
   {
@@ -4306,7 +4356,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -519554.43,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -5.4,
+    "returnPct": -5.16,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4321,7 +4371,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 16400 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 164000,
-    "dividendReceived": 147600,
+    "dividendReceived": 164000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -6.87
   },
   {
@@ -4342,7 +4393,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -494106.84,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -10.22,
+    "returnPct": -10.14,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4361,7 +4412,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": null
     },
     "accruedIncome": 36000,
-    "dividendReceived": 32400,
+    "dividendReceived": 36000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -26.43
   },
   {
@@ -4382,7 +4434,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -603962.88,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -9.58,
+    "returnPct": -9.47,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4397,7 +4449,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 1800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 59400,
-    "dividendReceived": 53460,
+    "dividendReceived": 59400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -15.92
   },
   {
@@ -4506,6 +4559,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 13200,
     "dividendReceived": 8800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 27.34
   },
   {
@@ -4566,7 +4620,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -697940,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -13.9,
+    "returnPct": -13.88,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4581,7 +4635,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 100000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 10000,
-    "dividendReceived": 9000,
+    "dividendReceived": 10000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -19.61
   },
   {
@@ -4602,7 +4657,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 315887.21,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 15.16,
+    "returnPct": 15.41,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4617,7 +4672,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 3000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 60000,
-    "dividendReceived": 54000,
+    "dividendReceived": 60000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 28.2
   },
   {
@@ -4638,7 +4694,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -1946408.86,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -25.33,
+    "returnPct": -25.18,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4653,7 +4709,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 21000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 139650,
-    "dividendReceived": 102060,
+    "dividendReceived": 113400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -32.37
   },
   {
@@ -4675,7 +4732,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -26002.5,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 1.08,
+    "returnPct": 1.26,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4690,7 +4747,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
     },
     "accruedIncome": 86750,
-    "dividendReceived": 78075,
+    "dividendReceived": 86750,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 1.65
   },
   {
@@ -4711,7 +4769,7 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 347571.27,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 5.7,
+    "returnPct": 5.74,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4726,7 +4784,8 @@ export const BOOK_POSITIONS: Position[] = [
       "reason": "the transaction statements from 2026-04-01 to 2026-10-06 buy 6500 and sell 7500 units of it against 15000 held, so 16000 of them are on no dated trade in this drop"
     },
     "accruedIncome": 41250,
-    "dividendReceived": 27000,
+    "dividendReceived": 30000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 8.27
   },
   {
@@ -4799,6 +4858,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 85000,
     "dividendReceived": 8500,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -21.28
   },
   {
@@ -4839,6 +4899,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 3000,
     "dividendReceived": 3000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": -55.48
   },
   {
@@ -4875,6 +4936,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 6000,
     "dividendReceived": 6000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": 34.88
   },
   {
@@ -5077,6 +5139,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 17850,
     "dividendReceived": 17850,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5117,6 +5180,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 10763.2,
     "dividendReceived": 10763.2,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5251,6 +5315,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 14234,
     "dividendReceived": 14234,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5371,6 +5436,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 12040,
     "dividendReceived": 12040,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5492,6 +5558,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 4360,
     "dividendReceived": 4360,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5532,6 +5599,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 15302,
     "dividendReceived": 15302,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5694,6 +5762,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 11673,
     "dividendReceived": 11673.2,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5814,6 +5883,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 12567,
     "dividendReceived": 12567,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5935,6 +6005,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 66228,
     "dividendReceived": 44763,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -5975,6 +6046,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 27792,
     "dividendReceived": 27792,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -6055,6 +6127,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 5680,
     "dividendReceived": 5680,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -6207,6 +6280,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 2064,
     "dividendReceived": 2064,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -6409,6 +6483,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 35400,
     "dividendReceived": 35400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -6449,6 +6524,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 21270.2,
     "dividendReceived": 21270.2,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -6583,6 +6659,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 28100,
     "dividendReceived": 28100,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -6703,6 +6780,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 23758,
     "dividendReceived": 23758,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -6820,6 +6898,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 8900,
     "dividendReceived": 8900,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -6860,6 +6939,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 30275,
     "dividendReceived": 30275,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -7022,6 +7102,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 23052,
     "dividendReceived": 23051.6,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -7142,6 +7223,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 24813,
     "dividendReceived": 24813,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -7259,6 +7341,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 129334,
     "dividendReceived": 88311.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -7299,6 +7382,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 55800,
     "dividendReceived": 55800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -7375,6 +7459,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 11280,
     "dividendReceived": 11280,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -7527,6 +7612,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 4128,
     "dividendReceived": 4128,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -7617,6 +7703,7 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": 2184195.27,
+    "dividendFrom": "2019-04-17",
     "positionIrrPct": null
   },
   {
@@ -7737,6 +7824,7 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": 807873.77,
+    "dividendFrom": "2019-05-08",
     "positionIrrPct": null
   },
   {
@@ -7796,6 +7884,7 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": 1675096.28,
+    "dividendFrom": "2019-05-08",
     "positionIrrPct": null
   },
   {
@@ -7827,8 +7916,7 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null,
-    "avgCostDerived": true
+    "positionIrrPct": null
   },
   {
     "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth",
@@ -7887,6 +7975,7 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": 112557.52,
+    "dividendFrom": "2019-07-10",
     "positionIrrPct": null
   },
   {
@@ -8074,6 +8163,11 @@ export const BOOK_POSITIONS: Position[] = [
       "quantity": 94967,
       "asOf": "2026-03-31",
       "costBasis": 93857991,
+      "heldPurchases": {
+        "first": "2026-01-30",
+        "last": "2026-01-30",
+        "lots": 1
+      },
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -8126,6 +8220,11 @@ export const BOOK_POSITIONS: Position[] = [
       "quantity": 44643,
       "asOf": "2026-03-31",
       "costBasis": 4642872,
+      "heldPurchases": {
+        "first": "2024-08-30",
+        "last": "2024-08-30",
+        "lots": 1
+      },
       "realizedPnL": null,
       "costOfUnitsSold": null,
       "dividendReceived": null,
@@ -8180,6 +8279,11 @@ export const BOOK_POSITIONS: Position[] = [
       "quantity": 180185,
       "asOf": "2026-03-31",
       "costBasis": 176878881,
+      "heldPurchases": {
+        "first": "2025-07-07",
+        "last": "2025-07-07",
+        "lots": 1
+      },
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -8233,6 +8337,11 @@ export const BOOK_POSITIONS: Position[] = [
       "quantity": 262125,
       "asOf": "2026-03-31",
       "costBasis": 16277250,
+      "heldPurchases": {
+        "first": "2024-02-14",
+        "last": "2024-03-27",
+        "lots": 2
+      },
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -8289,6 +8398,11 @@ export const BOOK_POSITIONS: Position[] = [
       "quantity": 212000,
       "asOf": "2026-03-31",
       "costBasis": 69684400,
+      "heldPurchases": {
+        "first": "2024-12-11",
+        "last": "2024-12-11",
+        "lots": 1
+      },
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -8342,6 +8456,11 @@ export const BOOK_POSITIONS: Position[] = [
       "quantity": 116979,
       "asOf": "2026-03-31",
       "costBasis": 75000350,
+      "heldPurchases": {
+        "first": "2024-05-29",
+        "last": "2025-08-21",
+        "lots": 2
+      },
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -8395,6 +8514,11 @@ export const BOOK_POSITIONS: Position[] = [
       "quantity": 59000,
       "asOf": "2026-03-31",
       "costBasis": 10030000,
+      "heldPurchases": {
+        "first": "2025-04-16",
+        "last": "2025-04-16",
+        "lots": 1
+      },
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -8447,6 +8571,11 @@ export const BOOK_POSITIONS: Position[] = [
       "quantity": 187778,
       "asOf": "2026-03-31",
       "costBasis": 84500100,
+      "heldPurchases": {
+        "first": "2024-09-20",
+        "last": "2024-09-20",
+        "lots": 1
+      },
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -8500,6 +8629,11 @@ export const BOOK_POSITIONS: Position[] = [
       "quantity": 138462,
       "asOf": "2026-03-31",
       "costBasis": 10000120,
+      "heldPurchases": {
+        "first": "2024-04-15",
+        "last": "2024-04-15",
+        "lots": 1
+      },
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -8602,6 +8736,7 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2020-02-28",
     "accruedIncome": null,
     "dividendReceived": 54587.92,
+    "dividendFrom": "2019-11-04",
     "positionIrrPct": null
   },
   {
@@ -8684,14 +8819,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 14580000,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 18,
+    "returnPct": 18.35,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 284007,
+    "dividendFrom": "2024-09-11",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -8730,14 +8866,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 4860000,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 18,
+    "returnPct": 18.3,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 81176,
+    "dividendFrom": "2024-09-11",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -8776,14 +8913,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 4860000,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 18,
+    "returnPct": 18.15,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-03-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 40697,
+    "dividendFrom": "2024-10-17",
     "positionIrrPct": null,
     "review": true,
     "reviewTaxonomy": {
@@ -9036,7 +9174,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
-    "dividendReceived": 10882.62,
+    "dividendReceived": 12216.17,
+    "dividendFrom": "2026-06-01",
     "positionIrrPct": null
   },
   {
@@ -9257,8 +9396,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -27.78,
     "stCostBasis": 558963,
     "ltCostBasis": 988054.8,
-    "daysToLT": 226,
+    "daysToLT": 227,
     "heldSince": "2025-03-04",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -9365,8 +9505,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -28.55,
     "stCostBasis": 1503495.2,
     "ltCostBasis": 0,
-    "daysToLT": 226,
+    "daysToLT": 227,
     "heldSince": "2025-11-12",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -9462,8 +9603,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -42.83,
     "stCostBasis": 1995826.25,
     "ltCostBasis": 0,
-    "daysToLT": 163,
+    "daysToLT": 164,
     "heldSince": "2025-09-10",
+    "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -9707,6 +9849,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 48750,
     "dividendReceived": 11250,
+    "dividendFrom": "2026-07-01",
     "positionIrrPct": 72.06
   },
   {
@@ -9779,6 +9922,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 34120,
     "dividendReceived": 8901,
+    "dividendFrom": "2026-07-01",
     "positionIrrPct": -11.61
   },
   {
@@ -9891,6 +10035,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1300,
     "dividendReceived": 1300,
+    "dividendFrom": "2026-07-01",
     "positionIrrPct": -89.48
   },
   {
@@ -10199,15 +10344,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 6914583.25,
     "realizedPnL": 0,
     "costOfUnitsSold": 1416280,
-    "returnPct": 13.83,
+    "returnPct": 21.21,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "accruedIncome": null,
-    "dividendReceived": null,
-    "positionIrrPct": null,
-    "avgCostDerived": true
+    "dividendReceived": 3688118,
+    "dividendFrom": "2023-10-04",
+    "positionIrrPct": null
   },
   {
     "securityKey": "assetgro-fintech-private-limited-1-series-b-pref-25nv44",
@@ -14186,6 +14331,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 14976,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14222,6 +14368,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 40440,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14294,6 +14441,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 9860,
     "dividendReceived": 19720,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14384,6 +14532,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 55650,
     "dividendReceived": 55650,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14420,6 +14569,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 20760,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14456,6 +14606,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1927.5,
     "dividendReceived": 1927.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14528,6 +14679,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 6460,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14564,6 +14716,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 44782.5,
     "dividendReceived": 44782.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14600,6 +14753,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 7772.5,
     "dividendReceived": 7772.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14672,6 +14826,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 73020,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14708,6 +14863,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 11910,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14748,6 +14904,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 26000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14824,6 +14981,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 27948,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -14932,6 +15090,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 24150,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15044,6 +15203,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 7200,
     "dividendReceived": 7200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15080,6 +15240,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 32080,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15116,6 +15277,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 10200,
     "dividendReceived": 10200,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15152,6 +15314,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 28740,
     "dividendReceived": 28740,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15192,6 +15355,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 2430,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15228,6 +15392,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 2502,
     "dividendReceived": 2502,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15264,6 +15429,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 2515,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15300,6 +15466,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 8745,
     "dividendReceived": 8745,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15409,6 +15576,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1350,
     "dividendReceived": 1350,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15446,6 +15614,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 18300,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15482,6 +15651,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 17280,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15518,6 +15688,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 67000,
     "dividendReceived": 67000,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15554,6 +15725,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 13772.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15590,6 +15762,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 3825,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15626,6 +15799,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 16350,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15698,6 +15872,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 13800,
     "dividendReceived": 27600,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15734,6 +15909,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 8895,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15846,6 +16022,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 8490,
     "dividendReceived": 8490,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15882,6 +16059,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 64134,
     "dividendReceived": 64134,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15958,6 +16136,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 10656,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -15994,6 +16173,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 26240,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16066,6 +16246,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 6400,
     "dividendReceived": 12800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16129,6 +16310,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 36400,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16165,6 +16347,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 13480,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16201,6 +16384,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 1252.5,
     "dividendReceived": 1252.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16273,6 +16457,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 4215,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16309,6 +16494,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 29122.5,
     "dividendReceived": 29122.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16345,6 +16531,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 4921.25,
     "dividendReceived": 4921.25,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16417,6 +16604,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 47640,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16453,6 +16641,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 7773,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16493,6 +16682,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 16900,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16569,6 +16759,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 18241,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16677,6 +16868,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 15757.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16749,6 +16941,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 4698,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16785,6 +16978,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 20960,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16821,6 +17015,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 6630,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16857,6 +17052,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 18720,
     "dividendReceived": 18720,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16897,6 +17093,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 1575,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16933,6 +17130,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 1731,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -16969,6 +17167,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 1640,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17005,6 +17204,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 6225,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17114,6 +17314,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 980,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17151,6 +17352,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 11900,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17187,6 +17389,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 11205,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17223,6 +17426,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 47800,
     "dividendReceived": 47800,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17259,6 +17463,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 8995,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17295,6 +17500,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 2482.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17331,6 +17537,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 11640,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17403,6 +17610,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 18015,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17439,6 +17647,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 6465,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17551,6 +17760,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 6180,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17587,6 +17797,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 41832,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17702,8 +17913,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -18.61,
     "stCostBasis": 1000931.02,
     "ltCostBasis": 2501700.43,
-    "daysToLT": 230,
+    "daysToLT": 231,
     "heldSince": "2025-08-05",
+    "purchaseDates": 2,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -17719,6 +17931,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 15764.4,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17745,6 +17958,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 1042548.6,
     "daysToLT": null,
     "heldSince": "2025-07-31",
+    "purchaseDates": 1,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -17837,8 +18051,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -29.48,
     "stCostBasis": 3998947.25,
     "ltCostBasis": 2501694.2,
-    "daysToLT": 251,
+    "daysToLT": 252,
     "heldSince": "2025-07-31",
+    "purchaseDates": 3,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -17879,6 +18094,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 5003894.1,
     "daysToLT": null,
     "heldSince": "2025-07-31",
+    "purchaseDates": 2,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -17894,6 +18110,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 91032.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17917,8 +18134,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": 10.31,
     "stCostBasis": 2501965.17,
     "ltCostBasis": 2401948.5,
-    "daysToLT": 230,
+    "daysToLT": 231,
     "heldSince": "2025-09-19",
+    "purchaseDates": 2,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -17934,6 +18152,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 50556,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -17959,6 +18178,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 6004702.73,
     "daysToLT": null,
     "heldSince": "2025-07-31",
+    "purchaseDates": 3,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -17997,8 +18217,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -17.03,
     "stCostBasis": 1964440.74,
     "ltCostBasis": 2501952.13,
-    "daysToLT": 281,
+    "daysToLT": 282,
     "heldSince": "2025-08-05",
+    "purchaseDates": 2,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -18014,6 +18235,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 25189.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -18039,6 +18261,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 2496705.74,
     "daysToLT": null,
     "heldSince": "2025-08-05",
+    "purchaseDates": 1,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -18050,6 +18273,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 24710,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -18075,6 +18299,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 2499788.82,
     "daysToLT": null,
     "heldSince": "2025-08-05",
+    "purchaseDates": 2,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -18115,6 +18340,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 5003919.78,
     "daysToLT": null,
     "heldSince": "2025-08-05",
+    "purchaseDates": 1,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -18153,8 +18379,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -4.77,
     "stCostBasis": 3002632.34,
     "ltCostBasis": 2501575.54,
-    "daysToLT": 114,
+    "daysToLT": 115,
     "heldSince": "2025-07-31",
+    "purchaseDates": 3,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -18195,6 +18422,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 2501933.73,
     "daysToLT": null,
     "heldSince": "2025-07-31",
+    "purchaseDates": 1,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -18210,6 +18438,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 29511,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -18233,8 +18462,9 @@ export const BOOK_POSITIONS: Position[] = [
     "returnPct": -2.47,
     "stCostBasis": 1000850.76,
     "ltCostBasis": 2502034.79,
-    "daysToLT": 114,
+    "daysToLT": 115,
     "heldSince": "2025-08-05",
+    "purchaseDates": 2,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -18275,6 +18505,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": 5003393.36,
     "daysToLT": null,
     "heldSince": "2025-08-05",
+    "purchaseDates": 1,
     "tradeRecord": {
       "from": "2025-07-29",
       "to": "2026-10-07",
@@ -18454,6 +18685,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 66573,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -18526,6 +18758,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 200920,
     "dividendReceived": 200920,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -18562,6 +18795,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": 77208,
     "dividendReceived": 77208,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -18634,6 +18868,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "accruedIncome": null,
     "dividendReceived": 25036.5,
+    "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
@@ -18982,6 +19217,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 138462,
     "asOf": "2026-03-31",
     "costBasis": 10000120,
+    "heldPurchases": {
+      "first": "2024-04-15",
+      "last": "2024-04-15",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19003,6 +19243,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 116979,
     "asOf": "2026-03-31",
     "costBasis": 75000350,
+    "heldPurchases": {
+      "first": "2024-05-29",
+      "last": "2025-08-21",
+      "lots": 2
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19024,6 +19269,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 212000,
     "asOf": "2026-03-31",
     "costBasis": 69684400,
+    "heldPurchases": {
+      "first": "2024-12-11",
+      "last": "2024-12-11",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19045,6 +19295,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 187778,
     "asOf": "2026-03-31",
     "costBasis": 84500100,
+    "heldPurchases": {
+      "first": "2024-09-20",
+      "last": "2024-09-20",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19065,6 +19320,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 44643,
     "asOf": "2026-03-31",
     "costBasis": 4642872,
+    "heldPurchases": {
+      "first": "2024-08-30",
+      "last": "2024-08-30",
+      "lots": 1
+    },
     "realizedPnL": null,
     "costOfUnitsSold": null,
     "dividendReceived": null,
@@ -19087,6 +19347,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 262125,
     "asOf": "2026-03-31",
     "costBasis": 16277250,
+    "heldPurchases": {
+      "first": "2024-02-14",
+      "last": "2024-03-27",
+      "lots": 2
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19111,6 +19376,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 59000,
     "asOf": "2026-03-31",
     "costBasis": 10030000,
+    "heldPurchases": {
+      "first": "2025-04-16",
+      "last": "2025-04-16",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19131,6 +19401,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 180185,
     "asOf": "2026-03-31",
     "costBasis": 176878881,
+    "heldPurchases": {
+      "first": "2025-07-07",
+      "last": "2025-07-07",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19152,6 +19427,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 94967,
     "asOf": "2026-03-31",
     "costBasis": 93857991,
+    "heldPurchases": {
+      "first": "2026-01-30",
+      "last": "2026-01-30",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19172,6 +19452,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 43000,
     "asOf": "2026-07-31",
     "costBasis": 57061000,
+    "heldPurchases": {
+      "first": "2024-11-13",
+      "last": "2024-11-13",
+      "lots": 1
+    },
     "realizedPnL": 23795397.75,
     "costOfUnitsSold": 62939610,
     "dividendReceived": null,
@@ -19195,6 +19480,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 15772,
     "asOf": "2026-07-31",
     "costBasis": 23865639.84,
+    "heldPurchases": {
+      "first": "2025-09-11",
+      "last": "2025-09-11",
+      "lots": 1
+    },
     "realizedPnL": -22586920.91,
     "costOfUnitsSold": 73027344.39,
     "dividendReceived": null,
@@ -19227,6 +19517,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 32000,
     "asOf": "2026-07-31",
     "costBasis": 10034018.55,
+    "heldPurchases": {
+      "first": "2026-06-17",
+      "last": "2026-06-17",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19248,6 +19543,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 4878,
     "asOf": "2026-07-31",
     "costBasis": 8860617.08,
+    "heldPurchases": {
+      "first": "2026-06-17",
+      "last": "2026-06-18",
+      "lots": 2
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19270,6 +19570,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 9320249.865,
     "asOf": "2026-07-31",
     "costBasis": 232819841.63,
+    "heldPurchases": {
+      "first": "2025-11-27",
+      "last": "2025-11-27",
+      "lots": 1
+    },
     "realizedPnL": null,
     "costOfUnitsSold": 43190188.98,
     "dividendReceived": null,
@@ -19293,6 +19598,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 4850206.378,
     "asOf": "2026-07-31",
     "costBasis": 184990762.71,
+    "heldPurchases": {
+      "first": "2025-03-06",
+      "last": "2026-03-23",
+      "lots": 4
+    },
     "realizedPnL": 4463855.58,
     "costOfUnitsSold": 32498362.8,
     "dividendReceived": null,
@@ -19318,6 +19628,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 34045.997,
     "asOf": "2026-07-31",
     "costBasis": 12499374.97,
+    "heldPurchases": {
+      "first": "2026-04-02",
+      "last": "2026-04-02",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19339,6 +19654,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 4183009.836,
     "asOf": "2026-07-31",
     "costBasis": 87270636.48,
+    "heldPurchases": {
+      "first": "2026-04-17",
+      "last": "2026-05-29",
+      "lots": 7
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19366,6 +19686,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 2282.178,
     "asOf": "2026-07-31",
     "costBasis": 12499375.94,
+    "heldPurchases": {
+      "first": "2026-06-05",
+      "last": "2026-06-05",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19387,6 +19712,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 12000,
     "asOf": "2026-07-31",
     "costBasis": 5017440,
+    "heldPurchases": {
+      "first": "2024-11-06",
+      "last": "2024-11-06",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19408,6 +19738,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 8000,
     "asOf": "2026-07-31",
     "costBasis": 2646660,
+    "heldPurchases": {
+      "first": "2024-11-06",
+      "last": "2024-11-14",
+      "lots": 6
+    },
     "realizedPnL": -88917.69,
     "costOfUnitsSold": 330630,
     "dividendReceived": null,
@@ -19435,6 +19770,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 603,
     "asOf": "2026-07-31",
     "costBasis": 907450.32,
+    "heldPurchases": {
+      "first": "2024-11-06",
+      "last": "2024-11-14",
+      "lots": 4
+    },
     "realizedPnL": 1135.05,
     "costOfUnitsSold": 22569.75,
     "dividendReceived": 603,
@@ -19461,6 +19801,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 94967,
     "asOf": "2026-07-31",
     "costBasis": 93857991,
+    "heldPurchases": {
+      "first": "2026-01-30",
+      "last": "2026-01-30",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19482,6 +19827,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 3915742.08,
     "asOf": "2026-07-31",
     "costBasis": 59989168.67,
+    "heldPurchases": {
+      "first": "2025-11-06",
+      "last": "2025-11-06",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19503,6 +19853,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 393095.951,
     "asOf": "2026-07-31",
     "costBasis": 31654413.89,
+    "heldPurchases": {
+      "first": "2023-06-05",
+      "last": "2023-09-26",
+      "lots": 3
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19526,6 +19881,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 5100984.835,
     "asOf": "2026-07-31",
     "costBasis": 72403187.18,
+    "heldPurchases": {
+      "first": "2024-08-07",
+      "last": "2025-06-04",
+      "lots": 5
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19551,6 +19911,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 993739.133,
     "asOf": "2026-07-31",
     "costBasis": 39998000.1,
+    "heldPurchases": {
+      "first": "2025-11-06",
+      "last": "2025-11-06",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19572,6 +19937,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 24406.691,
     "asOf": "2026-07-31",
     "costBasis": 3926402.01,
+    "heldPurchases": {
+      "first": "2026-04-17",
+      "last": "2026-04-17",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19593,6 +19963,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 123000,
     "asOf": "2026-07-31",
     "costBasis": 17222067.17,
+    "heldPurchases": {
+      "first": "2025-09-30",
+      "last": "2025-09-30",
+      "lots": 1
+    },
     "realizedPnL": 14667670.15,
     "costOfUnitsSold": 14981798.27,
     "dividendReceived": null,
@@ -19615,6 +19990,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 205000,
     "asOf": "2026-07-31",
     "costBasis": 30193698.9,
+    "heldPurchases": {
+      "first": "2026-01-22",
+      "last": "2026-01-22",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19636,6 +20016,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 48000,
     "asOf": "2026-07-31",
     "costBasis": 63696000,
+    "heldPurchases": {
+      "first": "2024-11-13",
+      "last": "2024-11-13",
+      "lots": 1
+    },
     "realizedPnL": 5405142.15,
     "costOfUnitsSold": 16304849,
     "dividendReceived": null,
@@ -19658,6 +20043,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 11900,
     "asOf": "2026-07-31",
     "costBasis": 2863973,
+    "heldPurchases": {
+      "first": "2023-08-11",
+      "last": "2023-08-11",
+      "lots": 1
+    },
     "realizedPnL": -299952,
     "costOfUnitsSold": 1107082,
     "dividendReceived": 70125,
@@ -19684,6 +20074,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 1366820.78,
     "asOf": "2026-07-31",
     "costBasis": 16999150.04,
+    "heldPurchases": {
+      "first": "2024-07-24",
+      "last": "2024-07-24",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19705,6 +20100,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 183499.511,
     "asOf": "2026-07-31",
     "costBasis": 14999250.03,
+    "heldPurchases": {
+      "first": "2023-10-25",
+      "last": "2023-10-25",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19726,6 +20126,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 2407981.455,
     "asOf": "2026-07-31",
     "costBasis": 34788260.57,
+    "heldPurchases": {
+      "first": "2024-10-16",
+      "last": "2025-10-10",
+      "lots": 7
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19753,6 +20158,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 146856.943,
     "asOf": "2026-07-31",
     "costBasis": 11190499.06,
+    "heldPurchases": {
+      "first": "2024-07-24",
+      "last": "2024-07-24",
+      "lots": 1
+    },
     "realizedPnL": 1223545.74,
     "costOfUnitsSold": 8812304.83,
     "dividendReceived": null,
@@ -19775,6 +20185,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 602441.424,
     "asOf": "2026-07-31",
     "costBasis": 23555459.68,
+    "heldPurchases": {
+      "first": "2025-07-11",
+      "last": "2025-07-11",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19796,6 +20211,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 180000,
     "asOf": "2026-07-31",
     "costBasis": 94396845.22,
+    "heldPurchases": {
+      "first": "2026-03-17",
+      "last": "2026-03-24",
+      "lots": 2
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19818,6 +20238,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 242412.122,
     "asOf": "2026-07-31",
     "costBasis": 19999000.07,
+    "heldPurchases": {
+      "first": "2023-08-01",
+      "last": "2023-08-01",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19839,6 +20264,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 21012.887,
     "asOf": "2026-07-31",
     "costBasis": 8592579.25,
+    "heldPurchases": {
+      "first": "2026-04-09",
+      "last": "2026-04-09",
+      "lots": 1
+    },
     "realizedPnL": 22966.05,
     "costOfUnitsSold": 12706355.62,
     "dividendReceived": null,
@@ -19861,6 +20291,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 612631.862,
     "asOf": "2026-07-31",
     "costBasis": 12724363.77,
+    "heldPurchases": {
+      "first": "2026-04-17",
+      "last": "2026-04-17",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19882,6 +20317,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 132634.709,
     "asOf": "2026-07-31",
     "costBasis": 21337476.18,
+    "heldPurchases": {
+      "first": "2026-04-17",
+      "last": "2026-04-17",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19903,6 +20343,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 1195000,
     "asOf": "2026-07-31",
     "costBasis": 203682805.64,
+    "heldPurchases": {
+      "first": "2026-01-29",
+      "last": "2026-01-30",
+      "lots": 2
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -19925,6 +20370,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 46654.378,
     "asOf": "2026-07-31",
     "costBasis": 18215301.46,
+    "heldPurchases": {
+      "first": "2025-07-01",
+      "last": "2025-07-01",
+      "lots": 1
+    },
     "realizedPnL": 128261.98,
     "costOfUnitsSold": 11783198.53,
     "dividendReceived": null,
@@ -19947,6 +20397,11 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "quantity": 1092470.994,
     "asOf": "2026-07-31",
     "costBasis": 37698115.08,
+    "heldPurchases": {
+      "first": "2025-07-01",
+      "last": "2025-07-01",
+      "lots": 1
+    },
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -31339,6 +31794,28 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
 /** The canonical realised total, split by asset class — the headline nets these. */
 export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
   {
+    "accountId": "green-lantern-capital-llp-510861",
+    "entity": "Ajay Jaisinghani · Green 510861",
+    "assetClass": "Cash",
+    "lots": 8,
+    "realisedST": 578366.03,
+    "realisedLT": 0,
+    "securities": [
+      "Axis Liquid Fund - Direct Plan - Growth"
+    ]
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510854",
+    "entity": "Ankita Jaisinghani · Green 510854",
+    "assetClass": "Cash",
+    "lots": 10,
+    "realisedST": 283865.6,
+    "realisedLT": 0,
+    "securities": [
+      "Axis Liquid Fund - Direct Plan - Growth"
+    ]
+  },
+  {
     "accountId": "ask-investment-managers-limited-10034025",
     "entity": "Ajay Jaisinghani · ASK 10034025",
     "assetClass": "Equity",
@@ -31401,12 +31878,11 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "accountId": "green-lantern-capital-llp-510861",
     "entity": "Ajay Jaisinghani · Green 510861",
     "assetClass": "Equity",
-    "lots": 83,
-    "realisedST": -1382686.39,
+    "lots": 75,
+    "realisedST": -1961052.42,
     "realisedLT": 202985.8,
     "securities": [
       "Aurobindo Pharma Ltd",
-      "Axis Liquid Fund - Direct Plan - Growth",
       "Bajaj Auto Ltd",
       "Gujarat Ambuja Exports Ltd",
       "Jamna Auto Ind Ltd",
@@ -31551,12 +32027,11 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "accountId": "green-lantern-capital-llp-510854",
     "entity": "Ankita Jaisinghani · Green 510854",
     "assetClass": "Equity",
-    "lots": 84,
-    "realisedST": -710831.73,
+    "lots": 74,
+    "realisedST": -994697.33,
     "realisedLT": 147393.06,
     "securities": [
       "Aurobindo Pharma Ltd",
-      "Axis Liquid Fund - Direct Plan - Growth",
       "Bajaj Auto Ltd",
       "Gujarat Ambuja Exports Ltd",
       "Jamna Auto Ind Ltd",
@@ -31631,7 +32106,7 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "accountId": "lkp-securities-98245",
     "entity": "Bharat Jaisinghani · LKP 98245",
     "assetClass": "Equity",
-    "lots": 10,
+    "lots": 9,
     "realisedST": 1241115.44,
     "realisedLT": -539913.5,
     "securities": [
@@ -31639,7 +32114,6 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
       "CAPRI GLOBAL CAPITAL LIMITED",
       "Electronics Mart India Limited",
       "JYOTHY LABS LIMITED",
-      "NIPPON INDIA ETF LIQUID BEES",
       "Varun Beverages Limited"
     ]
   },
@@ -31661,6 +32135,17 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
       "Sterlite Technologies Ltd",
       "Surya Roshni Ltd",
       "Syrma SGS Technology Limited"
+    ]
+  },
+  {
+    "accountId": "lkp-securities-98245",
+    "entity": "Bharat Jaisinghani · LKP 98245",
+    "assetClass": "Mutual Fund",
+    "lots": 1,
+    "realisedST": 0,
+    "realisedLT": 0,
+    "securities": [
+      "NIPPON INDIA ETF LIQUID BEES"
     ]
   },
   {
@@ -48394,6 +48879,120 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
  * holding's own dated trades adds on each day.
  */
 export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number }[]> = {
+  "aditya-birla-sun-life-mutual-fund-1019265797|aditya-birla-sun-life-liquid-fund-daily-idcw-direct-plan": [
+    {
+      "date": "2026-09-01",
+      "amount": 199.95
+    },
+    {
+      "date": "2026-09-02",
+      "amount": 249.69
+    },
+    {
+      "date": "2026-09-03",
+      "amount": 277.24
+    },
+    {
+      "date": "2026-09-04",
+      "amount": 169.82
+    },
+    {
+      "date": "2026-09-06",
+      "amount": 236.55
+    },
+    {
+      "date": "2026-09-07",
+      "amount": 105.33
+    },
+    {
+      "date": "2026-09-08",
+      "amount": 97.93
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 143.32
+    },
+    {
+      "date": "2026-09-10",
+      "amount": 136.75
+    },
+    {
+      "date": "2026-09-11",
+      "amount": 62.15
+    },
+    {
+      "date": "2026-09-14",
+      "amount": 360.25
+    },
+    {
+      "date": "2026-09-15",
+      "amount": 29.66
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 96.66
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 112.11
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 110.61
+    },
+    {
+      "date": "2026-09-20",
+      "amount": 251.31
+    },
+    {
+      "date": "2026-09-21",
+      "amount": 169.22
+    },
+    {
+      "date": "2026-09-22",
+      "amount": 191.75
+    },
+    {
+      "date": "2026-09-23",
+      "amount": 115.05
+    },
+    {
+      "date": "2026-09-24",
+      "amount": 49.3
+    },
+    {
+      "date": "2026-09-27",
+      "amount": 199.2
+    },
+    {
+      "date": "2026-09-28",
+      "amount": 93.19
+    },
+    {
+      "date": "2026-09-29",
+      "amount": 109.94
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 173
+    }
+  ],
+  "baring-private-equity-india-fund-AIFM_BPEPF6_0584|baring-private-equity-india-fund-6-class-a1": [
+    {
+      "date": "2025-09-30",
+      "amount": 18909
+    },
+    {
+      "date": "2026-03-31",
+      "amount": 37252
+    }
+  ],
+  "buoyant-capital-103473|buoyant-opportunities-strategy-category-iii-class-a4": [
+    {
+      "date": "2026-04-01",
+      "amount": 58861.66
+    }
+  ],
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|biocon": [
     {
       "date": "2026-08-14",
@@ -48461,7 +49060,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-04",
-      "amount": 21600
+      "amount": 24000
     }
   ],
   "goldstandard-wealth-private-limited-100022|caplin-point-laboratories": [
@@ -48521,7 +49120,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-13",
-      "amount": 12825
+      "amount": 14250
     }
   ],
   "goldstandard-wealth-private-limited-100022|great-eastern-shipping": [
@@ -48535,7 +49134,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-28",
-      "amount": 25920
+      "amount": 28800
     }
   ],
   "goldstandard-wealth-private-limited-100022|hdfc-asset-management": [
@@ -48549,7 +49148,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-06-30",
-      "amount": 53460
+      "amount": 59400
     }
   ],
   "goldstandard-wealth-private-limited-100022|icici-bank": [
@@ -48563,7 +49162,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-27",
-      "amount": 21600
+      "amount": 24000
     }
   ],
   "goldstandard-wealth-private-limited-100022|indian-energy-exchange": [
@@ -48577,7 +49176,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-17",
-      "amount": 27000
+      "amount": 30000
     }
   ],
   "goldstandard-wealth-private-limited-100022|indraprastha-medical": [
@@ -48611,7 +49210,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-07",
-      "amount": 19890
+      "amount": 22100
     }
   ],
   "goldstandard-wealth-private-limited-100022|kovai-medical-center-and-hospital": [
@@ -48639,7 +49238,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-07-30",
-      "amount": 54000
+      "amount": 60000
     }
   ],
   "goldstandard-wealth-private-limited-100022|lupin": [
@@ -48653,7 +49252,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-07",
-      "amount": 14580
+      "amount": 16200
     }
   ],
   "goldstandard-wealth-private-limited-100022|mahindra-and-mahindra": [
@@ -48667,7 +49266,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-05",
-      "amount": 23760
+      "amount": 26400
     }
   ],
   "goldstandard-wealth-private-limited-100022|oberoi-realty": [
@@ -48721,7 +49320,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-30",
-      "amount": 22500
+      "amount": 25000
     }
   ],
   "goldstandard-wealth-private-limited-100022|sonata-software": [
@@ -48735,7 +49334,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-12",
-      "amount": 33615
+      "amount": 37350
     },
     {
       "date": "2026-08-14",
@@ -48747,7 +49346,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-28",
-      "amount": 10125
+      "amount": 11250
     }
   ],
   "goldstandard-wealth-private-limited-100022|state-bank-of-india": [
@@ -48761,7 +49360,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-06-05",
-      "amount": 35133.5
+      "amount": 39037.5
     }
   ],
   "goldstandard-wealth-private-limited-100022|suprajit-engineering": [
@@ -48775,7 +49374,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-17",
-      "amount": 10800
+      "amount": 12000
     }
   ],
   "goldstandard-wealth-private-limited-100022|transport-corp-of-india": [
@@ -48835,7 +49434,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-30",
-      "amount": 16200
+      "amount": 18000
     }
   ],
   "goldstandard-wealth-private-limited-100023|can-fin-homes": [
@@ -48849,7 +49448,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-04",
-      "amount": 50400
+      "amount": 56000
     }
   ],
   "goldstandard-wealth-private-limited-100023|caplin-point-laboratories": [
@@ -48863,7 +49462,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-06-09",
-      "amount": 7200
+      "amount": 8000
     },
     {
       "date": "2026-09-18",
@@ -48881,7 +49480,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-09",
-      "amount": 22500
+      "amount": 25000
     }
   ],
   "goldstandard-wealth-private-limited-100023|eclerx-services": [
@@ -48909,7 +49508,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-13",
-      "amount": 27000
+      "amount": 30000
     }
   ],
   "goldstandard-wealth-private-limited-100023|great-eastern-shipping": [
@@ -48923,7 +49522,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-28",
-      "amount": 64800
+      "amount": 72000
     }
   ],
   "goldstandard-wealth-private-limited-100023|hdfc-asset-management": [
@@ -48937,7 +49536,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-06-30",
-      "amount": 121500
+      "amount": 135000
     }
   ],
   "goldstandard-wealth-private-limited-100023|icici-bank": [
@@ -48951,7 +49550,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-27",
-      "amount": 54000
+      "amount": 60000
     }
   ],
   "goldstandard-wealth-private-limited-100023|indian-energy-exchange": [
@@ -48965,7 +49564,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-17",
-      "amount": 54000
+      "amount": 60000
     }
   ],
   "goldstandard-wealth-private-limited-100023|indraprastha-medical": [
@@ -48985,7 +49584,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-16",
-      "amount": 18900
+      "amount": 21000
     }
   ],
   "goldstandard-wealth-private-limited-100023|karur-vysya-bank": [
@@ -48999,7 +49598,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-07",
-      "amount": 46800
+      "amount": 52000
     }
   ],
   "goldstandard-wealth-private-limited-100023|kovai-medical-center-and-hospital": [
@@ -49013,7 +49612,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-16",
-      "amount": 16200
+      "amount": 18000
     }
   ],
   "goldstandard-wealth-private-limited-100023|life-insurance-corp-of-india": [
@@ -49027,7 +49626,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-07-30",
-      "amount": 147600
+      "amount": 164000
     }
   ],
   "goldstandard-wealth-private-limited-100023|lupin": [
@@ -49041,7 +49640,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-07",
-      "amount": 32400
+      "amount": 36000
     }
   ],
   "goldstandard-wealth-private-limited-100023|mahindra-and-mahindra": [
@@ -49055,7 +49654,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-05",
-      "amount": 53460
+      "amount": 59400
     }
   ],
   "goldstandard-wealth-private-limited-100023|oberoi-realty": [
@@ -49095,7 +49694,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-16",
-      "amount": 9000
+      "amount": 10000
     }
   ],
   "goldstandard-wealth-private-limited-100023|sharda-motor-industries": [
@@ -49109,7 +49708,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-30",
-      "amount": 54000
+      "amount": 60000
     }
   ],
   "goldstandard-wealth-private-limited-100023|sonata-software": [
@@ -49123,7 +49722,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-12",
-      "amount": 78435
+      "amount": 87150
     },
     {
       "date": "2026-08-14",
@@ -49135,7 +49734,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-08-28",
-      "amount": 23625
+      "amount": 26250
     }
   ],
   "goldstandard-wealth-private-limited-100023|state-bank-of-india": [
@@ -49149,7 +49748,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-06-05",
-      "amount": 78075
+      "amount": 86750
     }
   ],
   "goldstandard-wealth-private-limited-100023|suprajit-engineering": [
@@ -49163,7 +49762,7 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     },
     {
       "date": "2026-09-17",
-      "amount": 27000
+      "amount": 30000
     }
   ],
   "goldstandard-wealth-private-limited-100023|transport-corp-of-india": [
@@ -49344,6 +49943,2666 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
       "amount": 4128
     }
   ],
+  "hdfc-mutual-fund-15644806|hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": [
+    {
+      "date": "2019-04-18",
+      "amount": 24226.85
+    },
+    {
+      "date": "2019-04-21",
+      "amount": 74904.28
+    },
+    {
+      "date": "2019-04-22",
+      "amount": 23063.91
+    },
+    {
+      "date": "2019-04-23",
+      "amount": 22322.83
+    },
+    {
+      "date": "2019-04-24",
+      "amount": 23173.68
+    },
+    {
+      "date": "2019-04-25",
+      "amount": 24578.76
+    },
+    {
+      "date": "2019-04-26",
+      "amount": 8991.69
+    },
+    {
+      "date": "2019-04-29",
+      "amount": 28277.4
+    },
+    {
+      "date": "2019-04-30",
+      "amount": 8520.12
+    },
+    {
+      "date": "2019-05-01",
+      "amount": 9415.78
+    },
+    {
+      "date": "2019-05-02",
+      "amount": 8489.77
+    },
+    {
+      "date": "2019-05-03",
+      "amount": 9091.74
+    },
+    {
+      "date": "2019-05-05",
+      "amount": 18793.46
+    },
+    {
+      "date": "2019-05-06",
+      "amount": 9500.66
+    },
+    {
+      "date": "2019-05-07",
+      "amount": 10129.38
+    },
+    {
+      "date": "2019-05-08",
+      "amount": 9934.84
+    },
+    {
+      "date": "2019-05-09",
+      "amount": 9622.54
+    },
+    {
+      "date": "2019-05-10",
+      "amount": 9264.34
+    },
+    {
+      "date": "2019-05-12",
+      "amount": 18688.19
+    },
+    {
+      "date": "2019-05-13",
+      "amount": 9811.11
+    },
+    {
+      "date": "2019-05-14",
+      "amount": 10466.72
+    },
+    {
+      "date": "2019-05-15",
+      "amount": 10402.94
+    },
+    {
+      "date": "2019-05-16",
+      "amount": 11307.6
+    },
+    {
+      "date": "2019-05-17",
+      "amount": 9836.92
+    },
+    {
+      "date": "2019-05-19",
+      "amount": 18570.49
+    },
+    {
+      "date": "2019-05-20",
+      "amount": 9834.56
+    },
+    {
+      "date": "2019-05-21",
+      "amount": 9855.65
+    },
+    {
+      "date": "2019-05-22",
+      "amount": 10322.13
+    },
+    {
+      "date": "2019-05-23",
+      "amount": 11633.84
+    },
+    {
+      "date": "2019-05-24",
+      "amount": 10096.21
+    },
+    {
+      "date": "2019-05-26",
+      "amount": 18190.34
+    },
+    {
+      "date": "2019-05-27",
+      "amount": 9071.43
+    },
+    {
+      "date": "2019-05-28",
+      "amount": 10088.74
+    },
+    {
+      "date": "2019-05-29",
+      "amount": 9618.21
+    },
+    {
+      "date": "2019-05-30",
+      "amount": 9245.82
+    },
+    {
+      "date": "2019-05-31",
+      "amount": 2783.26
+    },
+    {
+      "date": "2019-06-02",
+      "amount": 4272.8
+    },
+    {
+      "date": "2019-06-03",
+      "amount": 2416.05
+    },
+    {
+      "date": "2019-06-04",
+      "amount": 2234.51
+    },
+    {
+      "date": "2019-06-05",
+      "amount": 2244.24
+    },
+    {
+      "date": "2019-06-06",
+      "amount": 2724.52
+    },
+    {
+      "date": "2019-06-07",
+      "amount": 2147.67
+    },
+    {
+      "date": "2019-06-09",
+      "amount": 4179.81
+    },
+    {
+      "date": "2019-06-10",
+      "amount": 2092.02
+    },
+    {
+      "date": "2019-06-11",
+      "amount": 2010.67
+    },
+    {
+      "date": "2019-06-12",
+      "amount": 2095.69
+    },
+    {
+      "date": "2019-06-13",
+      "amount": 2084.98
+    },
+    {
+      "date": "2019-06-14",
+      "amount": 2060.13
+    },
+    {
+      "date": "2019-06-16",
+      "amount": 4178.89
+    },
+    {
+      "date": "2019-06-17",
+      "amount": 2089.2
+    },
+    {
+      "date": "2019-06-18",
+      "amount": 2037.63
+    },
+    {
+      "date": "2019-06-19",
+      "amount": 2061.46
+    },
+    {
+      "date": "2019-06-20",
+      "amount": 2946.44
+    },
+    {
+      "date": "2019-06-21",
+      "amount": 1705.32
+    },
+    {
+      "date": "2019-06-23",
+      "amount": 4008.33
+    },
+    {
+      "date": "2019-06-24",
+      "amount": 1915.04
+    },
+    {
+      "date": "2019-06-25",
+      "amount": 1946.72
+    },
+    {
+      "date": "2019-06-26",
+      "amount": 1942.24
+    },
+    {
+      "date": "2019-06-27",
+      "amount": 2143.8
+    },
+    {
+      "date": "2019-06-28",
+      "amount": 2048.13
+    },
+    {
+      "date": "2019-06-30",
+      "amount": 4027.56
+    },
+    {
+      "date": "2019-07-01",
+      "amount": 2273.94
+    },
+    {
+      "date": "2019-07-02",
+      "amount": 2261.67
+    },
+    {
+      "date": "2019-07-03",
+      "amount": 2515.42
+    },
+    {
+      "date": "2019-07-04",
+      "amount": 2353.66
+    },
+    {
+      "date": "2019-07-11",
+      "amount": 686.4
+    },
+    {
+      "date": "2019-07-12",
+      "amount": 647.75
+    },
+    {
+      "date": "2019-07-14",
+      "amount": 1158.27
+    },
+    {
+      "date": "2019-07-15",
+      "amount": 637.44
+    },
+    {
+      "date": "2019-07-16",
+      "amount": 787.92
+    },
+    {
+      "date": "2019-07-17",
+      "amount": 763.92
+    },
+    {
+      "date": "2019-07-18",
+      "amount": 563.45
+    },
+    {
+      "date": "2019-07-19",
+      "amount": 610.36
+    },
+    {
+      "date": "2019-07-21",
+      "amount": 1124.34
+    },
+    {
+      "date": "2019-07-22",
+      "amount": 536.74
+    },
+    {
+      "date": "2019-07-23",
+      "amount": 546.27
+    },
+    {
+      "date": "2019-07-24",
+      "amount": 601.25
+    },
+    {
+      "date": "2019-07-25",
+      "amount": 567.23
+    },
+    {
+      "date": "2019-07-26",
+      "amount": 599.5
+    },
+    {
+      "date": "2019-07-28",
+      "amount": 1122.9
+    },
+    {
+      "date": "2019-07-29",
+      "amount": 725.72
+    },
+    {
+      "date": "2019-07-30",
+      "amount": 7965.53
+    },
+    {
+      "date": "2019-07-31",
+      "amount": 9708.59
+    },
+    {
+      "date": "2019-08-01",
+      "amount": 9480.66
+    },
+    {
+      "date": "2019-08-02",
+      "amount": 8351.57
+    },
+    {
+      "date": "2019-08-04",
+      "amount": 14679.07
+    },
+    {
+      "date": "2019-08-05",
+      "amount": 7814.52
+    },
+    {
+      "date": "2019-08-06",
+      "amount": 8597.75
+    },
+    {
+      "date": "2019-08-07",
+      "amount": 11962.3
+    },
+    {
+      "date": "2019-08-08",
+      "amount": 9361.81
+    },
+    {
+      "date": "2019-08-09",
+      "amount": 9806.92
+    },
+    {
+      "date": "2019-08-12",
+      "amount": 21379.41
+    },
+    {
+      "date": "2019-08-13",
+      "amount": 5365.65
+    },
+    {
+      "date": "2019-08-14",
+      "amount": 4998.2
+    },
+    {
+      "date": "2019-08-15",
+      "amount": 7180.72
+    },
+    {
+      "date": "2019-08-16",
+      "amount": 7968.18
+    },
+    {
+      "date": "2019-08-18",
+      "amount": 14320.38
+    },
+    {
+      "date": "2019-08-19",
+      "amount": 7894.77
+    },
+    {
+      "date": "2019-08-20",
+      "amount": 8397.15
+    },
+    {
+      "date": "2019-08-21",
+      "amount": 8633.79
+    },
+    {
+      "date": "2019-08-22",
+      "amount": 7424.02
+    },
+    {
+      "date": "2019-08-23",
+      "amount": 7215.63
+    },
+    {
+      "date": "2019-08-25",
+      "amount": 14153.86
+    },
+    {
+      "date": "2019-08-26",
+      "amount": 7459.04
+    },
+    {
+      "date": "2019-08-27",
+      "amount": 7758.04
+    },
+    {
+      "date": "2019-08-28",
+      "amount": 7746.28
+    },
+    {
+      "date": "2019-08-29",
+      "amount": 7290.37
+    },
+    {
+      "date": "2019-08-30",
+      "amount": 7113.52
+    },
+    {
+      "date": "2019-09-02",
+      "amount": 21127.12
+    },
+    {
+      "date": "2019-09-03",
+      "amount": 7275.33
+    },
+    {
+      "date": "2019-09-04",
+      "amount": 8058.58
+    },
+    {
+      "date": "2019-09-05",
+      "amount": 8547.85
+    },
+    {
+      "date": "2019-09-06",
+      "amount": 8124.07
+    },
+    {
+      "date": "2019-09-08",
+      "amount": 13846.27
+    },
+    {
+      "date": "2019-09-09",
+      "amount": 7524.14
+    },
+    {
+      "date": "2019-09-10",
+      "amount": 6896.87
+    },
+    {
+      "date": "2019-09-11",
+      "amount": 8147.68
+    },
+    {
+      "date": "2019-09-12",
+      "amount": 7971
+    },
+    {
+      "date": "2019-09-13",
+      "amount": 6880.28
+    },
+    {
+      "date": "2019-09-15",
+      "amount": 13698.55
+    },
+    {
+      "date": "2019-09-16",
+      "amount": 7187.23
+    },
+    {
+      "date": "2019-09-17",
+      "amount": 6182.49
+    },
+    {
+      "date": "2019-09-18",
+      "amount": 6810.91
+    },
+    {
+      "date": "2019-09-19",
+      "amount": 7223.87
+    },
+    {
+      "date": "2019-09-20",
+      "amount": 3545.74
+    },
+    {
+      "date": "2019-09-22",
+      "amount": 12902.37
+    },
+    {
+      "date": "2019-09-23",
+      "amount": 3140.58
+    },
+    {
+      "date": "2019-09-24",
+      "amount": 5304.36
+    },
+    {
+      "date": "2019-09-25",
+      "amount": 6757.9
+    },
+    {
+      "date": "2019-09-26",
+      "amount": 8123.02
+    },
+    {
+      "date": "2019-09-27",
+      "amount": 8396.95
+    },
+    {
+      "date": "2019-09-29",
+      "amount": 14180.82
+    },
+    {
+      "date": "2019-09-30",
+      "amount": 10914.13
+    },
+    {
+      "date": "2019-10-01",
+      "amount": 10134.9
+    },
+    {
+      "date": "2019-10-02",
+      "amount": 6886.24
+    },
+    {
+      "date": "2019-10-03",
+      "amount": 7496.33
+    },
+    {
+      "date": "2019-10-04",
+      "amount": 9217.56
+    },
+    {
+      "date": "2019-10-06",
+      "amount": 13853.7
+    },
+    {
+      "date": "2019-10-07",
+      "amount": 8141.26
+    },
+    {
+      "date": "2019-10-08",
+      "amount": 6903.8
+    },
+    {
+      "date": "2019-10-09",
+      "amount": 7164.96
+    },
+    {
+      "date": "2019-10-10",
+      "amount": 7205.21
+    },
+    {
+      "date": "2019-10-11",
+      "amount": 8691.66
+    },
+    {
+      "date": "2019-10-13",
+      "amount": 13582.15
+    },
+    {
+      "date": "2019-10-14",
+      "amount": 8218.32
+    },
+    {
+      "date": "2019-10-15",
+      "amount": 8302.52
+    },
+    {
+      "date": "2019-10-16",
+      "amount": 7249.76
+    },
+    {
+      "date": "2019-10-17",
+      "amount": 6837.89
+    },
+    {
+      "date": "2019-10-18",
+      "amount": 6597.32
+    },
+    {
+      "date": "2019-10-21",
+      "amount": 20041.65
+    },
+    {
+      "date": "2019-10-22",
+      "amount": 5056.43
+    },
+    {
+      "date": "2019-10-23",
+      "amount": 6532.48
+    },
+    {
+      "date": "2019-10-24",
+      "amount": 7218.84
+    },
+    {
+      "date": "2019-10-25",
+      "amount": 6895.81
+    },
+    {
+      "date": "2019-10-28",
+      "amount": 19883.12
+    },
+    {
+      "date": "2019-10-29",
+      "amount": 6924.07
+    },
+    {
+      "date": "2019-10-30",
+      "amount": 8151.63
+    },
+    {
+      "date": "2019-10-31",
+      "amount": 8990.78
+    },
+    {
+      "date": "2019-11-01",
+      "amount": 6769.42
+    },
+    {
+      "date": "2019-11-03",
+      "amount": 12905.16
+    },
+    {
+      "date": "2019-11-04",
+      "amount": 5952.04
+    },
+    {
+      "date": "2019-11-05",
+      "amount": 5453.28
+    },
+    {
+      "date": "2019-11-06",
+      "amount": 4012.53
+    },
+    {
+      "date": "2019-11-07",
+      "amount": 5479.47
+    },
+    {
+      "date": "2019-11-08",
+      "amount": 5645.03
+    },
+    {
+      "date": "2019-11-10",
+      "amount": 13183.48
+    },
+    {
+      "date": "2019-11-11",
+      "amount": 7514.08
+    },
+    {
+      "date": "2019-11-12",
+      "amount": 6557.52
+    },
+    {
+      "date": "2019-11-13",
+      "amount": 8608.81
+    },
+    {
+      "date": "2019-11-14",
+      "amount": 7568.64
+    },
+    {
+      "date": "2019-11-15",
+      "amount": 6128.01
+    },
+    {
+      "date": "2019-11-17",
+      "amount": 13266.97
+    },
+    {
+      "date": "2019-11-18",
+      "amount": 6701.54
+    },
+    {
+      "date": "2019-11-19",
+      "amount": 7351.46
+    },
+    {
+      "date": "2019-11-20",
+      "amount": 8425.3
+    },
+    {
+      "date": "2019-11-21",
+      "amount": 6216.61
+    },
+    {
+      "date": "2019-11-22",
+      "amount": 6522.04
+    },
+    {
+      "date": "2019-11-24",
+      "amount": 12912.01
+    },
+    {
+      "date": "2019-11-25",
+      "amount": 6479.53
+    },
+    {
+      "date": "2019-11-26",
+      "amount": 6615.35
+    },
+    {
+      "date": "2019-11-27",
+      "amount": 7625.57
+    },
+    {
+      "date": "2019-11-28",
+      "amount": 7924.92
+    },
+    {
+      "date": "2019-11-29",
+      "amount": 9691.43
+    },
+    {
+      "date": "2019-12-01",
+      "amount": 12411.46
+    },
+    {
+      "date": "2019-12-02",
+      "amount": 6321.28
+    },
+    {
+      "date": "2019-12-03",
+      "amount": 6400.04
+    },
+    {
+      "date": "2019-12-04",
+      "amount": 6781.67
+    },
+    {
+      "date": "2019-12-06",
+      "amount": 6020.31
+    },
+    {
+      "date": "2019-12-08",
+      "amount": 12911.85
+    },
+    {
+      "date": "2019-12-09",
+      "amount": 7699.11
+    },
+    {
+      "date": "2019-12-10",
+      "amount": 7142.33
+    },
+    {
+      "date": "2019-12-11",
+      "amount": 6914.54
+    },
+    {
+      "date": "2019-12-12",
+      "amount": 6597.77
+    },
+    {
+      "date": "2019-12-13",
+      "amount": 5537.87
+    },
+    {
+      "date": "2019-12-15",
+      "amount": 12816.94
+    },
+    {
+      "date": "2019-12-16",
+      "amount": 6530.44
+    },
+    {
+      "date": "2019-12-17",
+      "amount": 6501.16
+    },
+    {
+      "date": "2019-12-18",
+      "amount": 6666.9
+    },
+    {
+      "date": "2019-12-19",
+      "amount": 6832.69
+    },
+    {
+      "date": "2019-12-20",
+      "amount": 5607.72
+    },
+    {
+      "date": "2019-12-22",
+      "amount": 12785.17
+    },
+    {
+      "date": "2019-12-23",
+      "amount": 6485.96
+    },
+    {
+      "date": "2019-12-24",
+      "amount": 6171.01
+    },
+    {
+      "date": "2019-12-25",
+      "amount": 6463.67
+    },
+    {
+      "date": "2019-12-26",
+      "amount": 6419.87
+    },
+    {
+      "date": "2019-12-27",
+      "amount": 7646.18
+    },
+    {
+      "date": "2019-12-29",
+      "amount": 12804.42
+    },
+    {
+      "date": "2019-12-30",
+      "amount": 6060.43
+    },
+    {
+      "date": "2019-12-31",
+      "amount": 6209.16
+    },
+    {
+      "date": "2020-01-01",
+      "amount": 7143.13
+    },
+    {
+      "date": "2020-01-02",
+      "amount": 9283.91
+    },
+    {
+      "date": "2020-01-03",
+      "amount": 7024.27
+    },
+    {
+      "date": "2020-01-05",
+      "amount": 12487.53
+    },
+    {
+      "date": "2020-01-06",
+      "amount": 5457.2
+    },
+    {
+      "date": "2020-01-07",
+      "amount": 6190.36
+    },
+    {
+      "date": "2020-01-08",
+      "amount": 6057.61
+    },
+    {
+      "date": "2020-01-09",
+      "amount": 6305.84
+    },
+    {
+      "date": "2020-01-10",
+      "amount": 4883.85
+    },
+    {
+      "date": "2020-01-12",
+      "amount": 12683.73
+    },
+    {
+      "date": "2020-01-13",
+      "amount": 4097.45
+    },
+    {
+      "date": "2020-01-14",
+      "amount": 5421.72
+    },
+    {
+      "date": "2020-01-15",
+      "amount": 6279.31
+    },
+    {
+      "date": "2020-01-16",
+      "amount": 6597.41
+    },
+    {
+      "date": "2020-01-17",
+      "amount": 6344.07
+    },
+    {
+      "date": "2020-01-19",
+      "amount": 12898.96
+    },
+    {
+      "date": "2020-01-20",
+      "amount": 6015.63
+    },
+    {
+      "date": "2020-01-21",
+      "amount": 6710.34
+    },
+    {
+      "date": "2020-01-22",
+      "amount": 6387.23
+    },
+    {
+      "date": "2020-01-23",
+      "amount": 6229.12
+    },
+    {
+      "date": "2020-01-24",
+      "amount": 6356.73
+    },
+    {
+      "date": "2020-01-26",
+      "amount": 12892.53
+    },
+    {
+      "date": "2020-01-27",
+      "amount": 6320.5
+    },
+    {
+      "date": "2020-01-28",
+      "amount": 6608.76
+    },
+    {
+      "date": "2020-01-29",
+      "amount": 6399.91
+    },
+    {
+      "date": "2020-01-30",
+      "amount": 6972.02
+    },
+    {
+      "date": "2020-01-31",
+      "amount": 6267.88
+    },
+    {
+      "date": "2020-02-02",
+      "amount": 13057.75
+    },
+    {
+      "date": "2020-02-03",
+      "amount": 6282.45
+    },
+    {
+      "date": "2020-02-04",
+      "amount": 6951.64
+    },
+    {
+      "date": "2020-02-05",
+      "amount": 6450.8
+    },
+    {
+      "date": "2020-02-06",
+      "amount": 7149.92
+    },
+    {
+      "date": "2020-02-07",
+      "amount": 7074.51
+    },
+    {
+      "date": "2020-02-09",
+      "amount": 13051.79
+    },
+    {
+      "date": "2020-02-10",
+      "amount": 6632.03
+    },
+    {
+      "date": "2020-02-11",
+      "amount": 8589.87
+    },
+    {
+      "date": "2020-02-12",
+      "amount": 7263.94
+    },
+    {
+      "date": "2020-02-13",
+      "amount": 7302.86
+    },
+    {
+      "date": "2020-02-14",
+      "amount": 6274.81
+    },
+    {
+      "date": "2020-02-16",
+      "amount": 12982.76
+    },
+    {
+      "date": "2020-02-17",
+      "amount": 6861.15
+    },
+    {
+      "date": "2020-02-18",
+      "amount": 6482.51
+    },
+    {
+      "date": "2020-02-19",
+      "amount": 6502.21
+    },
+    {
+      "date": "2020-02-20",
+      "amount": 5937.67
+    },
+    {
+      "date": "2020-02-23",
+      "amount": 19535.77
+    },
+    {
+      "date": "2020-02-24",
+      "amount": 6410.12
+    },
+    {
+      "date": "2020-02-25",
+      "amount": 6126.94
+    },
+    {
+      "date": "2020-02-26",
+      "amount": 6432.31
+    },
+    {
+      "date": "2020-02-27",
+      "amount": 3892.79
+    },
+    {
+      "date": "2020-02-28",
+      "amount": 6446.04
+    },
+    {
+      "date": "2020-03-01",
+      "amount": 13204.58
+    },
+    {
+      "date": "2020-03-02",
+      "amount": 6060.48
+    },
+    {
+      "date": "2020-03-03",
+      "amount": 8056.73
+    },
+    {
+      "date": "2020-03-04",
+      "amount": 13778.79
+    },
+    {
+      "date": "2020-03-05",
+      "amount": 8846.98
+    },
+    {
+      "date": "2020-03-06",
+      "amount": 8390.85
+    },
+    {
+      "date": "2020-03-08",
+      "amount": 15144.87
+    },
+    {
+      "date": "2020-03-09",
+      "amount": 8679.84
+    },
+    {
+      "date": "2020-03-10",
+      "amount": 7843.04
+    },
+    {
+      "date": "2020-03-11",
+      "amount": 3979.13
+    },
+    {
+      "date": "2020-03-12",
+      "amount": 2151.77
+    }
+  ],
+  "hdfc-mutual-fund-15725046|hdfc-arbitrage-fund-direct-plan-monthly-idcw-payout-option": [
+    {
+      "date": "2019-09-20",
+      "amount": 142666.92
+    },
+    {
+      "date": "2019-10-25",
+      "amount": 143347.78
+    },
+    {
+      "date": "2019-11-22",
+      "amount": 144031.82
+    },
+    {
+      "date": "2019-12-20",
+      "amount": 130247.15
+    },
+    {
+      "date": "2020-01-24",
+      "amount": 116273.13
+    },
+    {
+      "date": "2020-02-21",
+      "amount": 131306.97
+    }
+  ],
+  "hdfc-mutual-fund-15725046|hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": [
+    {
+      "date": "2019-05-09",
+      "amount": 14433.92
+    },
+    {
+      "date": "2019-05-10",
+      "amount": 13896.61
+    },
+    {
+      "date": "2019-05-12",
+      "amount": 28032.49
+    },
+    {
+      "date": "2019-05-13",
+      "amount": 14716.77
+    },
+    {
+      "date": "2019-05-14",
+      "amount": 15700.2
+    },
+    {
+      "date": "2019-05-15",
+      "amount": 15604.52
+    },
+    {
+      "date": "2019-05-16",
+      "amount": 16961.51
+    },
+    {
+      "date": "2019-05-17",
+      "amount": 14755.48
+    },
+    {
+      "date": "2019-05-19",
+      "amount": 27855.94
+    },
+    {
+      "date": "2019-05-20",
+      "amount": 14751.94
+    },
+    {
+      "date": "2019-05-21",
+      "amount": 14783.58
+    },
+    {
+      "date": "2019-05-22",
+      "amount": 15483.3
+    },
+    {
+      "date": "2019-05-23",
+      "amount": 17450.88
+    },
+    {
+      "date": "2019-05-24",
+      "amount": 15144.42
+    },
+    {
+      "date": "2019-05-26",
+      "amount": 27285.7
+    },
+    {
+      "date": "2019-05-27",
+      "amount": 13607.24
+    },
+    {
+      "date": "2019-05-28",
+      "amount": 15133.22
+    },
+    {
+      "date": "2019-05-29",
+      "amount": 14427.41
+    },
+    {
+      "date": "2019-05-30",
+      "amount": 13868.83
+    },
+    {
+      "date": "2019-05-31",
+      "amount": 17471.24
+    },
+    {
+      "date": "2019-06-02",
+      "amount": 26821.46
+    },
+    {
+      "date": "2019-06-03",
+      "amount": 15166.14
+    },
+    {
+      "date": "2019-06-04",
+      "amount": 14026.62
+    },
+    {
+      "date": "2019-06-05",
+      "amount": 14087.65
+    },
+    {
+      "date": "2019-06-06",
+      "amount": 17102.5
+    },
+    {
+      "date": "2019-06-07",
+      "amount": 13481.47
+    },
+    {
+      "date": "2019-06-09",
+      "amount": 26237.73
+    },
+    {
+      "date": "2019-06-10",
+      "amount": 13132.14
+    },
+    {
+      "date": "2019-06-11",
+      "amount": 12621.51
+    },
+    {
+      "date": "2019-06-12",
+      "amount": 13155.22
+    },
+    {
+      "date": "2019-06-13",
+      "amount": 13087.95
+    },
+    {
+      "date": "2019-06-14",
+      "amount": 12931.95
+    },
+    {
+      "date": "2019-06-16",
+      "amount": 26231.97
+    },
+    {
+      "date": "2019-06-17",
+      "amount": 13114.48
+    },
+    {
+      "date": "2019-06-18",
+      "amount": 12790.75
+    },
+    {
+      "date": "2019-06-19",
+      "amount": 12940.32
+    },
+    {
+      "date": "2019-06-20",
+      "amount": 18495.6
+    },
+    {
+      "date": "2019-06-21",
+      "amount": 10704.75
+    },
+    {
+      "date": "2019-06-23",
+      "amount": 25161.31
+    },
+    {
+      "date": "2019-06-24",
+      "amount": 12021.23
+    },
+    {
+      "date": "2019-06-25",
+      "amount": 12220.09
+    },
+    {
+      "date": "2019-06-26",
+      "amount": 12191.95
+    },
+    {
+      "date": "2019-06-27",
+      "amount": 13457.2
+    },
+    {
+      "date": "2019-06-28",
+      "amount": 12856.65
+    },
+    {
+      "date": "2019-06-30",
+      "amount": 25282.05
+    },
+    {
+      "date": "2019-07-01",
+      "amount": 14274.12
+    },
+    {
+      "date": "2019-07-02",
+      "amount": 14197.1
+    },
+    {
+      "date": "2019-07-03",
+      "amount": 15789.95
+    },
+    {
+      "date": "2019-07-04",
+      "amount": 14774.52
+    },
+    {
+      "date": "2019-07-05",
+      "amount": 14895.29
+    },
+    {
+      "date": "2019-07-07",
+      "amount": 24634.74
+    },
+    {
+      "date": "2019-07-08",
+      "amount": 12953.21
+    },
+    {
+      "date": "2019-07-09",
+      "amount": 13152.66
+    },
+    {
+      "date": "2019-07-10",
+      "amount": 14133.53
+    },
+    {
+      "date": "2019-07-11",
+      "amount": 13848.65
+    },
+    {
+      "date": "2019-07-12",
+      "amount": 13068.98
+    },
+    {
+      "date": "2019-07-14",
+      "amount": 24241.6
+    },
+    {
+      "date": "2019-07-15",
+      "amount": 13341.03
+    },
+    {
+      "date": "2019-07-16",
+      "amount": 16490.43
+    },
+    {
+      "date": "2019-07-17",
+      "amount": 15988.23
+    },
+    {
+      "date": "2019-07-18",
+      "amount": 11792.57
+    },
+    {
+      "date": "2019-07-19",
+      "amount": 12774.3
+    },
+    {
+      "date": "2019-07-21",
+      "amount": 23531.45
+    },
+    {
+      "date": "2019-07-22",
+      "amount": 11233.54
+    },
+    {
+      "date": "2019-07-23",
+      "amount": 11432.93
+    },
+    {
+      "date": "2019-07-24",
+      "amount": 12583.59
+    },
+    {
+      "date": "2019-07-25",
+      "amount": 11871.67
+    },
+    {
+      "date": "2019-07-26",
+      "amount": 12546.99
+    },
+    {
+      "date": "2019-07-28",
+      "amount": 23501.28
+    },
+    {
+      "date": "2019-07-29",
+      "amount": 15188.67
+    },
+    {
+      "date": "2019-07-30",
+      "amount": 12424.45
+    },
+    {
+      "date": "2019-07-31",
+      "amount": 15143.23
+    },
+    {
+      "date": "2019-08-01",
+      "amount": 14808.27
+    },
+    {
+      "date": "2019-08-02",
+      "amount": 13044.69
+    },
+    {
+      "date": "2019-08-04",
+      "amount": 22927.89
+    },
+    {
+      "date": "2019-08-05",
+      "amount": 12205.84
+    },
+    {
+      "date": "2019-08-06",
+      "amount": 13447.89
+    },
+    {
+      "date": "2019-08-07",
+      "amount": 18710.44
+    },
+    {
+      "date": "2019-08-08",
+      "amount": 14663.35
+    },
+    {
+      "date": "2019-08-09",
+      "amount": 15360.52
+    },
+    {
+      "date": "2019-08-12",
+      "amount": 33486.45
+    },
+    {
+      "date": "2019-08-13",
+      "amount": 8404.18
+    },
+    {
+      "date": "2019-08-14",
+      "amount": 7828.66
+    },
+    {
+      "date": "2019-08-15",
+      "amount": 11247.12
+    },
+    {
+      "date": "2019-08-16",
+      "amount": 12480.52
+    },
+    {
+      "date": "2019-08-18",
+      "amount": 22429.93
+    },
+    {
+      "date": "2019-08-19",
+      "amount": 12365.54
+    },
+    {
+      "date": "2019-08-20",
+      "amount": 13152.41
+    },
+    {
+      "date": "2019-08-21",
+      "amount": 13541.88
+    },
+    {
+      "date": "2019-08-22",
+      "amount": 11644.39
+    },
+    {
+      "date": "2019-08-23",
+      "amount": 11317.54
+    },
+    {
+      "date": "2019-08-25",
+      "amount": 22199.97
+    },
+    {
+      "date": "2019-08-26",
+      "amount": 11699.32
+    },
+    {
+      "date": "2019-08-27",
+      "amount": 12168.3
+    },
+    {
+      "date": "2019-08-28",
+      "amount": 12149.85
+    },
+    {
+      "date": "2019-08-29",
+      "amount": 11434.77
+    },
+    {
+      "date": "2019-08-30",
+      "amount": 11157.37
+    },
+    {
+      "date": "2019-09-02",
+      "amount": 33137.35
+    },
+    {
+      "date": "2019-09-03",
+      "amount": 11411.18
+    },
+    {
+      "date": "2019-09-04",
+      "amount": 12657.27
+    },
+    {
+      "date": "2019-09-05",
+      "amount": 13425.75
+    },
+    {
+      "date": "2019-09-06",
+      "amount": 12760.13
+    },
+    {
+      "date": "2019-09-08",
+      "amount": 21747.75
+    },
+    {
+      "date": "2019-09-09",
+      "amount": 11817.84
+    },
+    {
+      "date": "2019-09-10",
+      "amount": 10832.62
+    },
+    {
+      "date": "2019-09-11",
+      "amount": 12797.21
+    },
+    {
+      "date": "2019-09-12",
+      "amount": 12519.72
+    },
+    {
+      "date": "2019-09-13",
+      "amount": 7617.77
+    }
+  ],
+  "hdfc-mutual-fund-16002141|hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": [
+    {
+      "date": "2019-07-11",
+      "amount": 686.4
+    },
+    {
+      "date": "2019-07-12",
+      "amount": 647.75
+    },
+    {
+      "date": "2019-07-14",
+      "amount": 1167.88
+    },
+    {
+      "date": "2019-07-15",
+      "amount": 642.73
+    },
+    {
+      "date": "2019-07-16",
+      "amount": 794.45
+    },
+    {
+      "date": "2019-07-17",
+      "amount": 770.26
+    },
+    {
+      "date": "2019-07-18",
+      "amount": 568.13
+    },
+    {
+      "date": "2019-07-19",
+      "amount": 615.42
+    },
+    {
+      "date": "2019-07-21",
+      "amount": 1133.67
+    },
+    {
+      "date": "2019-07-22",
+      "amount": 541.19
+    },
+    {
+      "date": "2019-07-23",
+      "amount": 550.8
+    },
+    {
+      "date": "2019-07-24",
+      "amount": 606.24
+    },
+    {
+      "date": "2019-07-25",
+      "amount": 571.94
+    },
+    {
+      "date": "2019-07-26",
+      "amount": 604.47
+    },
+    {
+      "date": "2019-07-28",
+      "amount": 1132.21
+    },
+    {
+      "date": "2019-07-29",
+      "amount": 731.74
+    },
+    {
+      "date": "2019-07-30",
+      "amount": 598.57
+    },
+    {
+      "date": "2019-07-31",
+      "amount": 729.55
+    },
+    {
+      "date": "2019-08-01",
+      "amount": 703.16
+    },
+    {
+      "date": "2019-08-02",
+      "amount": 619.42
+    },
+    {
+      "date": "2019-08-04",
+      "amount": 1088.72
+    },
+    {
+      "date": "2019-08-05",
+      "amount": 579.59
+    },
+    {
+      "date": "2019-08-06",
+      "amount": 629.27
+    },
+    {
+      "date": "2019-08-07",
+      "amount": 875.52
+    },
+    {
+      "date": "2019-08-08",
+      "amount": 681.8
+    },
+    {
+      "date": "2019-08-09",
+      "amount": 714.21
+    },
+    {
+      "date": "2019-08-12",
+      "amount": 1557.01
+    },
+    {
+      "date": "2019-08-13",
+      "amount": 390.77
+    },
+    {
+      "date": "2019-08-14",
+      "amount": 364.01
+    },
+    {
+      "date": "2019-08-15",
+      "amount": 522.95
+    },
+    {
+      "date": "2019-08-16",
+      "amount": 580.3
+    },
+    {
+      "date": "2019-08-18",
+      "amount": 1042.92
+    },
+    {
+      "date": "2019-08-19",
+      "amount": 574.96
+    },
+    {
+      "date": "2019-08-20",
+      "amount": 611.54
+    },
+    {
+      "date": "2019-08-21",
+      "amount": 625.65
+    },
+    {
+      "date": "2019-08-22",
+      "amount": 537.98
+    },
+    {
+      "date": "2019-08-23",
+      "amount": 522.88
+    },
+    {
+      "date": "2019-08-25",
+      "amount": 1025.66
+    },
+    {
+      "date": "2019-08-26",
+      "amount": 540.52
+    },
+    {
+      "date": "2019-08-27",
+      "amount": 562.19
+    },
+    {
+      "date": "2019-08-28",
+      "amount": 561.33
+    },
+    {
+      "date": "2019-08-29",
+      "amount": 528.3
+    },
+    {
+      "date": "2019-08-30",
+      "amount": 515.48
+    },
+    {
+      "date": "2019-09-02",
+      "amount": 1530.97
+    },
+    {
+      "date": "2019-09-03",
+      "amount": 527.21
+    },
+    {
+      "date": "2019-09-04",
+      "amount": 572.31
+    },
+    {
+      "date": "2019-09-05",
+      "amount": 607.06
+    },
+    {
+      "date": "2019-09-06",
+      "amount": 576.96
+    },
+    {
+      "date": "2019-09-08",
+      "amount": 983.35
+    },
+    {
+      "date": "2019-09-09",
+      "amount": 534.36
+    },
+    {
+      "date": "2019-09-10",
+      "amount": 489.81
+    },
+    {
+      "date": "2019-09-11",
+      "amount": 578.64
+    },
+    {
+      "date": "2019-09-12",
+      "amount": 566.09
+    },
+    {
+      "date": "2019-09-13",
+      "amount": 488.63
+    },
+    {
+      "date": "2019-09-15",
+      "amount": 972.86
+    },
+    {
+      "date": "2019-09-16",
+      "amount": 510.43
+    },
+    {
+      "date": "2019-09-17",
+      "amount": 430.13
+    },
+    {
+      "date": "2019-09-18",
+      "amount": 473.85
+    },
+    {
+      "date": "2019-09-19",
+      "amount": 502.58
+    },
+    {
+      "date": "2019-09-20",
+      "amount": 246.68
+    },
+    {
+      "date": "2019-09-22",
+      "amount": 897.64
+    },
+    {
+      "date": "2019-09-23",
+      "amount": 218.5
+    },
+    {
+      "date": "2019-09-24",
+      "amount": 369.03
+    },
+    {
+      "date": "2019-09-25",
+      "amount": 470.16
+    },
+    {
+      "date": "2019-09-26",
+      "amount": 565.13
+    },
+    {
+      "date": "2019-09-27",
+      "amount": 584.19
+    },
+    {
+      "date": "2019-09-29",
+      "amount": 986.58
+    },
+    {
+      "date": "2019-09-30",
+      "amount": 759.31
+    },
+    {
+      "date": "2019-10-01",
+      "amount": 705.1
+    },
+    {
+      "date": "2019-10-02",
+      "amount": 474.1
+    },
+    {
+      "date": "2019-10-03",
+      "amount": 516.1
+    },
+    {
+      "date": "2019-10-04",
+      "amount": 634.61
+    },
+    {
+      "date": "2019-10-06",
+      "amount": 953.79
+    },
+    {
+      "date": "2019-10-07",
+      "amount": 560.51
+    },
+    {
+      "date": "2019-10-08",
+      "amount": 475.31
+    },
+    {
+      "date": "2019-10-09",
+      "amount": 493.29
+    },
+    {
+      "date": "2019-10-10",
+      "amount": 490.84
+    },
+    {
+      "date": "2019-10-11",
+      "amount": 592.1
+    },
+    {
+      "date": "2019-10-13",
+      "amount": 925.26
+    },
+    {
+      "date": "2019-10-14",
+      "amount": 559.86
+    },
+    {
+      "date": "2019-10-15",
+      "amount": 559.57
+    },
+    {
+      "date": "2019-10-16",
+      "amount": 488.62
+    },
+    {
+      "date": "2019-10-17",
+      "amount": 460.86
+    },
+    {
+      "date": "2019-10-18",
+      "amount": 444.65
+    },
+    {
+      "date": "2019-10-21",
+      "amount": 1350.77
+    },
+    {
+      "date": "2019-10-22",
+      "amount": 340.79
+    },
+    {
+      "date": "2019-10-23",
+      "amount": 435.54
+    },
+    {
+      "date": "2019-10-24",
+      "amount": 481.3
+    },
+    {
+      "date": "2019-10-25",
+      "amount": 459.76
+    },
+    {
+      "date": "2019-10-28",
+      "amount": 1325.66
+    },
+    {
+      "date": "2019-10-29",
+      "amount": 461.65
+    },
+    {
+      "date": "2019-10-30",
+      "amount": 537.57
+    },
+    {
+      "date": "2019-10-31",
+      "amount": 592.91
+    },
+    {
+      "date": "2019-11-01",
+      "amount": 446.42
+    },
+    {
+      "date": "2019-11-03",
+      "amount": 851.05
+    },
+    {
+      "date": "2019-11-04",
+      "amount": 392.52
+    },
+    {
+      "date": "2019-11-05",
+      "amount": 355.66
+    },
+    {
+      "date": "2019-11-06",
+      "amount": 261.7
+    },
+    {
+      "date": "2019-11-07",
+      "amount": 357.37
+    },
+    {
+      "date": "2019-11-08",
+      "amount": 368.17
+    },
+    {
+      "date": "2019-11-10",
+      "amount": 859.83
+    },
+    {
+      "date": "2019-11-11",
+      "amount": 490.07
+    },
+    {
+      "date": "2019-11-12",
+      "amount": 422.92
+    },
+    {
+      "date": "2019-11-13",
+      "amount": 555.21
+    },
+    {
+      "date": "2019-11-14",
+      "amount": 488.13
+    },
+    {
+      "date": "2019-11-15",
+      "amount": 395.21
+    },
+    {
+      "date": "2019-11-17",
+      "amount": 855.63
+    },
+    {
+      "date": "2019-11-18",
+      "amount": 432.2
+    },
+    {
+      "date": "2019-11-19",
+      "amount": 468.77
+    },
+    {
+      "date": "2019-11-20",
+      "amount": 537.25
+    },
+    {
+      "date": "2019-11-21",
+      "amount": 396.41
+    },
+    {
+      "date": "2019-11-22",
+      "amount": 415.88
+    },
+    {
+      "date": "2019-11-24",
+      "amount": 823.34
+    },
+    {
+      "date": "2019-11-25",
+      "amount": 413.17
+    },
+    {
+      "date": "2019-11-26",
+      "amount": 417.02
+    },
+    {
+      "date": "2019-11-27",
+      "amount": 480.7
+    },
+    {
+      "date": "2019-11-28",
+      "amount": 499.57
+    },
+    {
+      "date": "2019-11-29",
+      "amount": 610.93
+    },
+    {
+      "date": "2019-12-01",
+      "amount": 782.39
+    },
+    {
+      "date": "2019-12-02",
+      "amount": 398.48
+    },
+    {
+      "date": "2019-12-03",
+      "amount": 398.78
+    },
+    {
+      "date": "2019-12-04",
+      "amount": 422.56
+    },
+    {
+      "date": "2019-12-06",
+      "amount": 375.12
+    },
+    {
+      "date": "2019-12-08",
+      "amount": 804.53
+    },
+    {
+      "date": "2019-12-09",
+      "amount": 479.73
+    },
+    {
+      "date": "2019-12-10",
+      "amount": 439.83
+    },
+    {
+      "date": "2019-12-11",
+      "amount": 425.8
+    },
+    {
+      "date": "2019-12-12",
+      "amount": 406.29
+    },
+    {
+      "date": "2019-12-13",
+      "amount": 341.02
+    },
+    {
+      "date": "2019-12-15",
+      "amount": 789.27
+    },
+    {
+      "date": "2019-12-16",
+      "amount": 402.15
+    },
+    {
+      "date": "2019-12-17",
+      "amount": 395.6
+    },
+    {
+      "date": "2019-12-18",
+      "amount": 405.69
+    },
+    {
+      "date": "2019-12-19",
+      "amount": 415.78
+    },
+    {
+      "date": "2019-12-20",
+      "amount": 341.24
+    },
+    {
+      "date": "2019-12-22",
+      "amount": 777.99
+    },
+    {
+      "date": "2019-12-23",
+      "amount": 394.68
+    },
+    {
+      "date": "2019-12-24",
+      "amount": 371.01
+    },
+    {
+      "date": "2019-12-25",
+      "amount": 388.6
+    },
+    {
+      "date": "2019-12-26",
+      "amount": 385.97
+    },
+    {
+      "date": "2019-12-27",
+      "amount": 459.7
+    },
+    {
+      "date": "2019-12-29",
+      "amount": 769.82
+    },
+    {
+      "date": "2019-12-30",
+      "amount": 364.36
+    },
+    {
+      "date": "2019-12-31",
+      "amount": 368.77
+    },
+    {
+      "date": "2020-01-01",
+      "amount": 424.23
+    },
+    {
+      "date": "2020-01-02",
+      "amount": 551.38
+    },
+    {
+      "date": "2020-01-03",
+      "amount": 417.18
+    },
+    {
+      "date": "2020-01-05",
+      "amount": 741.64
+    },
+    {
+      "date": "2020-01-06",
+      "amount": 324.11
+    },
+    {
+      "date": "2020-01-07",
+      "amount": 363.13
+    },
+    {
+      "date": "2020-01-08",
+      "amount": 355.34
+    },
+    {
+      "date": "2020-01-09",
+      "amount": 369.9
+    },
+    {
+      "date": "2020-01-10",
+      "amount": 286.49
+    },
+    {
+      "date": "2020-01-12",
+      "amount": 744.02
+    },
+    {
+      "date": "2020-01-13",
+      "amount": 240.36
+    },
+    {
+      "date": "2020-01-14",
+      "amount": 314.07
+    },
+    {
+      "date": "2020-01-15",
+      "amount": 363.75
+    },
+    {
+      "date": "2020-01-16",
+      "amount": 382.18
+    },
+    {
+      "date": "2020-01-17",
+      "amount": 367.5
+    },
+    {
+      "date": "2020-01-19",
+      "amount": 747.21
+    },
+    {
+      "date": "2020-01-20",
+      "amount": 348.47
+    },
+    {
+      "date": "2020-01-21",
+      "amount": 383.81
+    },
+    {
+      "date": "2020-01-22",
+      "amount": 365.33
+    },
+    {
+      "date": "2020-01-23",
+      "amount": 356.28
+    },
+    {
+      "date": "2020-01-24",
+      "amount": 363.58
+    },
+    {
+      "date": "2020-01-26",
+      "amount": 737.4
+    },
+    {
+      "date": "2020-01-27",
+      "amount": 361.51
+    },
+    {
+      "date": "2020-01-28",
+      "amount": 373.15
+    },
+    {
+      "date": "2020-01-29",
+      "amount": 361.36
+    },
+    {
+      "date": "2020-01-30",
+      "amount": 393.67
+    },
+    {
+      "date": "2020-01-31",
+      "amount": 353.91
+    },
+    {
+      "date": "2020-02-02",
+      "amount": 737.29
+    },
+    {
+      "date": "2020-02-03",
+      "amount": 354.73
+    },
+    {
+      "date": "2020-02-04",
+      "amount": 387.42
+    },
+    {
+      "date": "2020-02-05",
+      "amount": 359.51
+    },
+    {
+      "date": "2020-02-06",
+      "amount": 398.47
+    },
+    {
+      "date": "2020-02-07",
+      "amount": 394.27
+    },
+    {
+      "date": "2020-02-09",
+      "amount": 727.39
+    },
+    {
+      "date": "2020-02-10",
+      "amount": 369.61
+    },
+    {
+      "date": "2020-02-11",
+      "amount": 472.42
+    },
+    {
+      "date": "2020-02-12",
+      "amount": 399.5
+    },
+    {
+      "date": "2020-02-13",
+      "amount": 401.64
+    },
+    {
+      "date": "2020-02-14",
+      "amount": 345.1
+    },
+    {
+      "date": "2020-02-16",
+      "amount": 714.01
+    },
+    {
+      "date": "2020-02-17",
+      "amount": 377.34
+    },
+    {
+      "date": "2020-02-18",
+      "amount": 351.76
+    },
+    {
+      "date": "2020-02-19",
+      "amount": 352.83
+    },
+    {
+      "date": "2020-02-20",
+      "amount": 322.2
+    },
+    {
+      "date": "2020-02-23",
+      "amount": 1060.07
+    },
+    {
+      "date": "2020-02-24",
+      "amount": 347.83
+    },
+    {
+      "date": "2020-02-25",
+      "amount": 327.97
+    },
+    {
+      "date": "2020-02-26",
+      "amount": 344.31
+    },
+    {
+      "date": "2020-02-27",
+      "amount": 208.38
+    },
+    {
+      "date": "2020-02-28",
+      "amount": 345.05
+    },
+    {
+      "date": "2020-03-01",
+      "amount": 706.82
+    },
+    {
+      "date": "2020-03-02",
+      "amount": 324.41
+    },
+    {
+      "date": "2020-03-03",
+      "amount": 425.34
+    },
+    {
+      "date": "2020-03-04",
+      "amount": 727.43
+    },
+    {
+      "date": "2020-03-05",
+      "amount": 467.06
+    },
+    {
+      "date": "2020-03-06",
+      "amount": 442.98
+    },
+    {
+      "date": "2020-03-08",
+      "amount": 799.55
+    },
+    {
+      "date": "2020-03-09",
+      "amount": 458.24
+    },
+    {
+      "date": "2020-03-10",
+      "amount": 408.3
+    },
+    {
+      "date": "2020-03-11",
+      "amount": 385.86
+    },
+    {
+      "date": "2020-03-12",
+      "amount": 208.66
+    }
+  ],
+  "icici-prudential-mutual-fund-14320536|icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment": [
+    {
+      "date": "2020-02-06",
+      "amount": 18174.23
+    },
+    {
+      "date": "2020-02-17",
+      "amount": 18195.96
+    },
+    {
+      "date": "2020-02-25",
+      "amount": 18217.73
+    }
+  ],
+  "kotak-mahindra-mutual-fund-4295974|kotak-liquid-fund-direct-plan-daily-idcw": [
+    {
+      "date": "2026-06-05",
+      "amount": 225.55
+    },
+    {
+      "date": "2026-06-07",
+      "amount": 276.87
+    },
+    {
+      "date": "2026-06-08",
+      "amount": 182.82
+    },
+    {
+      "date": "2026-06-09",
+      "amount": 282.82
+    },
+    {
+      "date": "2026-06-10",
+      "amount": 167.62
+    },
+    {
+      "date": "2026-06-11",
+      "amount": 143.62
+    },
+    {
+      "date": "2026-06-12",
+      "amount": 181.22
+    },
+    {
+      "date": "2026-06-14",
+      "amount": 269.27
+    },
+    {
+      "date": "2026-06-15",
+      "amount": 281.02
+    },
+    {
+      "date": "2026-06-16",
+      "amount": 276.11
+    },
+    {
+      "date": "2026-06-17",
+      "amount": 108.71
+    },
+    {
+      "date": "2026-06-18",
+      "amount": 153.59
+    },
+    {
+      "date": "2026-06-19",
+      "amount": 132.57
+    },
+    {
+      "date": "2026-06-21",
+      "amount": 261.83
+    },
+    {
+      "date": "2026-06-22",
+      "amount": 106.88
+    },
+    {
+      "date": "2026-06-23",
+      "amount": 111.35
+    },
+    {
+      "date": "2026-06-24",
+      "amount": 154.09
+    },
+    {
+      "date": "2026-06-25",
+      "amount": 178.03
+    },
+    {
+      "date": "2026-06-28",
+      "amount": 398.2
+    },
+    {
+      "date": "2026-06-29",
+      "amount": 74.53
+    },
+    {
+      "date": "2026-06-30",
+      "amount": 520.41
+    },
+    {
+      "date": "2026-07-01",
+      "amount": 345.33
+    },
+    {
+      "date": "2026-07-02",
+      "amount": 156.58
+    },
+    {
+      "date": "2026-07-03",
+      "amount": 122.84
+    },
+    {
+      "date": "2026-07-05",
+      "amount": 247.65
+    },
+    {
+      "date": "2026-07-08",
+      "amount": 29.67
+    },
+    {
+      "date": "2026-07-09",
+      "amount": 181.72
+    },
+    {
+      "date": "2026-07-10",
+      "amount": 240.64
+    },
+    {
+      "date": "2026-07-12",
+      "amount": 254.24
+    },
+    {
+      "date": "2026-07-13",
+      "amount": 115.92
+    },
+    {
+      "date": "2026-07-14",
+      "amount": 6.23
+    },
+    {
+      "date": "2026-07-15",
+      "amount": 90.29
+    },
+    {
+      "date": "2026-07-16",
+      "amount": 164.17
+    },
+    {
+      "date": "2026-07-17",
+      "amount": 222.18
+    },
+    {
+      "date": "2026-07-19",
+      "amount": 259.03
+    },
+    {
+      "date": "2026-07-20",
+      "amount": 94.35
+    },
+    {
+      "date": "2026-07-21",
+      "amount": 128.02
+    },
+    {
+      "date": "2026-07-22",
+      "amount": 63.56
+    },
+    {
+      "date": "2026-07-23",
+      "amount": 156.25
+    },
+    {
+      "date": "2026-07-24",
+      "amount": 186.08
+    },
+    {
+      "date": "2026-07-26",
+      "amount": 262.11
+    },
+    {
+      "date": "2026-07-27",
+      "amount": 110.82
+    },
+    {
+      "date": "2026-07-28",
+      "amount": 96.53
+    },
+    {
+      "date": "2026-07-29",
+      "amount": 136.68
+    },
+    {
+      "date": "2026-07-30",
+      "amount": 134.5
+    },
+    {
+      "date": "2026-07-31",
+      "amount": 189.29
+    },
+    {
+      "date": "2026-09-01",
+      "amount": 198.63
+    },
+    {
+      "date": "2026-09-02",
+      "amount": 250.2
+    },
+    {
+      "date": "2026-09-03",
+      "amount": 298.84
+    },
+    {
+      "date": "2026-09-04",
+      "amount": 158.7
+    },
+    {
+      "date": "2026-09-06",
+      "amount": 228.87
+    },
+    {
+      "date": "2026-09-07",
+      "amount": 92.9
+    },
+    {
+      "date": "2026-09-08",
+      "amount": 102.66
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 142.95
+    },
+    {
+      "date": "2026-09-10",
+      "amount": 120.82
+    },
+    {
+      "date": "2026-09-11",
+      "amount": 73.65
+    },
+    {
+      "date": "2026-09-14",
+      "amount": 349.18
+    },
+    {
+      "date": "2026-09-15",
+      "amount": 48.83
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 95.35
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 105.74
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 118.51
+    },
+    {
+      "date": "2026-09-20",
+      "amount": 249.79
+    },
+    {
+      "date": "2026-09-21",
+      "amount": 160.67
+    },
+    {
+      "date": "2026-09-22",
+      "amount": 181.64
+    },
+    {
+      "date": "2026-09-23",
+      "amount": 114.83
+    },
+    {
+      "date": "2026-09-24",
+      "amount": 53.93
+    },
+    {
+      "date": "2026-09-27",
+      "amount": 202.17
+    },
+    {
+      "date": "2026-09-28",
+      "amount": 87
+    },
+    {
+      "date": "2026-09-29",
+      "amount": 126.33
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 172.19
+    }
+  ],
   "molecule-ventures-llp-7810404|indian-metals-and-ferro-alloys": [
     {
       "date": "2026-07-31",
@@ -49360,6 +52619,128 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     {
       "date": "2026-07-24",
       "amount": 1300
+    }
+  ],
+  "neo-infra-income-opportunities-fund-9039920536|neo-infra-income-opportunities-fund-i-class-a5": [
+    {
+      "date": "2024-06-13",
+      "amount": 120149
+    },
+    {
+      "date": "2024-06-13",
+      "amount": 123033
+    },
+    {
+      "date": "2024-08-30",
+      "amount": 733
+    },
+    {
+      "date": "2024-08-30",
+      "amount": 186952
+    },
+    {
+      "date": "2024-08-30",
+      "amount": 242079
+    },
+    {
+      "date": "2024-11-29",
+      "amount": 1937
+    },
+    {
+      "date": "2024-11-29",
+      "amount": 139843
+    },
+    {
+      "date": "2024-11-29",
+      "amount": 180447
+    },
+    {
+      "date": "2025-03-25",
+      "amount": 4
+    },
+    {
+      "date": "2025-03-25",
+      "amount": 15921
+    },
+    {
+      "date": "2025-03-25",
+      "amount": 204822
+    },
+    {
+      "date": "2025-03-25",
+      "amount": 409033
+    },
+    {
+      "date": "2025-06-09",
+      "amount": 62
+    },
+    {
+      "date": "2025-06-09",
+      "amount": 14748
+    },
+    {
+      "date": "2025-06-09",
+      "amount": 139870
+    },
+    {
+      "date": "2025-06-09",
+      "amount": 160511
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 2193
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 3406
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 16554
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 29777
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 63144
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 106194
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 182570
+    },
+    {
+      "date": "2026-01-05",
+      "amount": 545
+    },
+    {
+      "date": "2026-01-05",
+      "amount": 15298
+    },
+    {
+      "date": "2026-01-05",
+      "amount": 68787
+    },
+    {
+      "date": "2026-01-05",
+      "amount": 903365
+    },
+    {
+      "date": "2026-03-30",
+      "amount": 628
+    },
+    {
+      "date": "2026-03-30",
+      "amount": 24282
+    },
+    {
+      "date": "2026-03-30",
+      "amount": 331231
     }
   ],
   "svan-investment-managers-llp-8710067|arvind-fashions": [

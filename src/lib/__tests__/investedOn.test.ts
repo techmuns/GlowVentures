@@ -18,7 +18,8 @@
 //
 // and each refusal is made to refuse on the real book.
 import { BOOK_ACCOUNTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS } from "@/data/glowData";
-import { accountInvestedOn, holdingTradesOf, investedOnOf, lineUndatedReason } from "@/lib/investedOn";
+import { accountInvestedOn, holdingTradesOf, investedOnOf, lineUndatedReason, investmentDateOf, investmentDateMissingReason, fmtInvestedDate } from "@/lib/investedOn";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 import type { Position } from "@/lib/types";
 
 let fails = 0;
@@ -27,6 +28,34 @@ const ok = (name: string, pass: boolean, detail = "") => {
   else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
 };
 const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
+
+{
+  const tz = process.env.TZ;
+  try {
+    process.env.TZ = "America/Los_Angeles";
+    ok("a purchase keeps its calendar day west of UTC", fmtInvestedDate("2022-08-03") === "3 Aug 2022");
+    ok("month-only dates retain their precision", fmtInvestedDate("2025-03") === "Mar 2025");
+  } finally {
+    if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz;
+  }
+}
+
+{
+  const key = "hdfc-balanced-advantage-fund-regular-plan-growth";
+  const hdfc = BOOK_POSITIONS.filter((p) => p.securityKey === key);
+  const expected: Record<string, string> = { "hdfc-mutual-fund-15644806": "2022-08-03", "hdfc-mutual-fund-16002141": "2022-08-05" };
+  ok("the reported MF has both folios in the book", hdfc.length === 2);
+  for (const p of hdfc) {
+    const scope = { positions: [p] };
+    ok(`MF ${p.accountId}: its own allotment dates the row`, investmentDateOf(scope)?.first === expected[p.accountId]);
+    const accessors = withReviewAccessors<Position>({}, (p) => ({ positions: [p] }), true);
+    ok("member-scoped date sorting uses the same date as its cell", accessors.investedOn(p) === expected[p.accountId]);
+  }
+  ok("the combined MF row uses both folios", investmentDateOf({ positions: hdfc })?.first === "2022-08-03" && investmentDateOf({ positions: hdfc })?.last === "2022-08-05");
+  ok("a derived exposure never borrows a fund's purchase date", investmentDateOf() === null && investmentDateMissingReason().includes("derived exposure"));
+  const account = BOOK_ACCOUNTS.find((a) => a.engagement === "PMS" && a.inceptionDate)!;
+  ok("a mandate row uses the family's inception date", investmentDateOf({ accountId: account.accountId, isMandate: true })?.first === account.inceptionDate);
+}
 
 // ── 1. A TRADE-DATED HOLDING: THE WINDOW ACCOUNTS FOR EVERY UNIT ────────────
 {
@@ -59,7 +88,7 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
 // ── 2. ...AND ONE THEY DO NOT ACCOUNT FOR IS NOT DATED BY THEM ──────────────
 {
   const partial = BOOK_POSITIONS.filter((p) => p.tradeRecord && !p.tradeRecord.held && (p.tradeRecord.unaccounted ?? 0) > 0
-    && !p.heldSince && !p.investedDates);
+    && !p.heldSince && !p.investedDates && !p.recoveredCost?.heldPurchases);
   ok("the book carries holdings the trades only partly account for", partial.length > 0, `${partial.length} holdings`);
   ok("none of them is dated", partial.every((p) => investedOnOf([p]) === null));
   ok("each says why, in the window's own terms", partial.every((p) => {
@@ -71,7 +100,7 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
 // ── 3. A ROW IS DATED ONLY WHERE EVERY LINE IS ──────────────────────────────
 {
   const dated = BOOK_POSITIONS.find((p) => p.tradeRecord?.held)!;
-  const undated = BOOK_POSITIONS.find((p) => p.tradeRecord && !p.tradeRecord.held && !p.heldSince && !p.investedDates)!;
+  const undated = BOOK_POSITIONS.find((p) => p.tradeRecord && !p.tradeRecord.held && !p.heldSince && !p.investedDates && !p.recoveredCost?.heldPurchases)!;
   ok("one undated line leaves the row undated, never dated by the rest", investedOnOf([dated, undated]) === null);
   const two = BOOK_POSITIONS.filter((p) => p.tradeRecord?.held).slice(0, 2);
   const both = investedOnOf(two)!;

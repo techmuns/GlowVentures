@@ -27,8 +27,19 @@
 // per point and named on screen. It said "₹28.3 Cr of that move is unproven"
 // here for as long as the builder read one table for proof: that was the VALUE
 // of four accounts, ten times what they moved, and their own statements settle
-// every step (A-10). On this archive no step is unproven.
+// every step (A-10). It then said "on this archive no step is unproven", which
+// stopped being true (Stage 10fz): the 31 Aug 2026 point carries
+// `unreportedFlowValue` ₹57.8 L — Buoyant 103472, whose coverage `flowBasis` is
+// "unreported" — and that point is the drawdown's PEAK, so Return & Drawdown's
+// tile names it in its hover rather than this file asserting otherwise.
 import type { NavPoint, NavCoverage, Portfolio } from "./types";
+
+/**
+ * A point that also carries its link's DAY-WEIGHTED flow — Σ flowᵢ × (days from
+ * flowᵢ to this point ÷ days in the link), each weight held to [0, 1] — which
+ * the generator does not emit yet. Read where present; see `navIndexSeries`.
+ */
+type WeightedNavPoint = NavPoint & { flowWeighted?: number | null };
 import type { Point } from "./series";
 
 export type NavIndexPoint = {
@@ -69,6 +80,19 @@ export type NavIndexPoint = {
  * An interval whose starting NAV is not positive yields no return rather than a
  * division: an index cannot be chained through zero, and inventing 0% there
  * would be a measurement nothing made.
+ *
+ * ── MODIFIED DIETZ INSIDE THE LINK, WHERE THE FLOW'S DATE IS CARRIED (Stage 10fz) ──
+ *
+ *   r = (linkClose − linkOpen − flowIn) ÷ (linkOpen + flowWeighted)
+ *
+ * `(close − flow) ÷ open` treats every rupee as arriving at the link's END: it
+ * never earned or lost anything inside the link. 128005's ₹11.24 Cr deposit on
+ * 28–29 Jul sat in the account for 16 of the 38 days from 6 Jul to 13 Aug, and
+ * end-weighted the link reads −2.06% where Modified Dietz reads −1.36%. With
+ * `flowWeighted` on the point the denominator carries each flow for the share
+ * of the link it was invested. Without it — the generator does not emit it yet
+ * — the weight is 0, which IS the end-of-interval formula, so a book without
+ * the field chains exactly as before rather than on a weight nobody measured.
  */
 export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
   if (history.length < 2) return [];
@@ -120,10 +144,16 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
       const open = p.linkOpen ?? history[i - 1].nav;
       const close = p.linkClose ?? p.nav;
       const flow = p.flowIn ?? 0;
+      const fw = (p as WeightedNavPoint).flowWeighted;
+      const weighted = typeof fw === "number" && Number.isFinite(fw) ? fw : 0;
       // A LINK WHOSE ONLY MOVE IS ROUNDING MEASURED NOTHING. The whole-book
       // series has a point on every date capital moved (Stage 10gd), and three
       // figures each rounded to the paisa would otherwise print a −0.00% there.
-      if (open > 0 && Math.abs(close - flow - open) > open * 1e-10) idx *= (close - flow) / open;
+      const moved = Math.abs(close - flow - open) > open * 1e-10;
+      // Weight 0 is computed in the end-of-interval form itself, so a book
+      // without the field chains to the same bit as it always did.
+      if (open > 0 && weighted === 0) { if (moved) idx *= (close - flow) / open; }
+      else if (open > 0 && open + weighted > 0) idx *= 1 + (close - open - flow) / (open + weighted);
     }
     if (p === firstComplete) anchor = idx;
     out.push({

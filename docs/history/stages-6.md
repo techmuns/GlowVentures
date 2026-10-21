@@ -37,3 +37,61 @@
 
 - Removed the Portfolio return card, its window/coverage chips, calculation popup and five amount tiles from Morning CIO's Returns view. The toolbar now leads directly into Return attribution and Benchmarks. The benchmark portfolio comparison retains the same calculations and whole-account coverage gate.
 - Removed unused card-only presentation code. Existing browser checks now assert that the summary stays absent, the subtabs follow the toolbar, and benchmark window/return checks still use the comparison tile. The period/type selection matrix follows the remaining controls instead of the removed popup.
+
+### Stage 10fy — PRIVATE MARKET PROFILE FIELDS STAY OPEN FOR EDITING
+
+- The family clarified that “live by default” means open text fields, rather than automatic public-source enrichment. Strategy and Description now start visible and editable within each investment row. Save/Cancel appears for a draft; failed saves retain it. Saved overrides can still be removed to reveal supplied text.
+- Brand edits retain the existing exact investment keys and shared save endpoint. Aggregate rows keep their existing read-only resolution. Explicit column visibility choices, calculations, scrolling and sticky headers remain supported.
+- Inline saves are serialized because each response carries its starting store snapshot plus the edit; overlapping replies must not hide another successful field. Focus reads wait for pending saves and cannot replace a newer edit.
+- Existing profile/store suites verify identity and persistence contracts. The browser regression checks the default inputs, overlapping field saves and reopening the page, cancellation, a failed save and retry, removal, and a brand edit spanning several investments.
+
+### Stage 10fz — A FULL CALCULATION AUDIT AGAINST INDUSTRY STANDARDS
+
+*"logical calculations need to be correct as per the industry standards."*
+
+- **Scope:** six areas were audited against GIPS/CFA, ILPA and the Income-tax
+  Act, each finding reproduced on the book. Every finding and its fix is in
+  `docs/CALCULATION-AUDIT.md`. The rules now bind every session in `CLAUDE.md`
+  § Calculation standards.
+- **Headlines:**
+  - CAGR only for one purchase (`Position.purchaseDates`).
+  - Exits and closed mandates stay in since-inception returns: book FIFO
+    22.03% → 21.20%.
+  - The Returns tab reads the verified records, so FYTD now agrees with the tile.
+  - Period "Absolute" return is Modified Dietz; the benchmark comparison is PME.
+- **Private:**
+  - Distributions are the same cash the XIRR counts: ₹64.17 L → ₹94.53 L.
+  - Private funds' returns include their income: Neo 13.83% → 21.21%, 360 ONE
+    46.96% → 65.59%.
+  - TVPI/DPI/RVPI are struck.
+- **Tax:**
+  - Long-term from the anniversary + 1 day in calendar months
+    (`shared/holdingPeriod.mjs`).
+  - The planner works per lot.
+  - Dividends are gross of TDS.
+  - The ₹1.25 L exemption is applied per person.
+  - The headline is FY-scoped, superseding Stage 10da's windows headline.
+- **Exposure:**
+  - Entity-scoped look-through.
+  - Active weights over the classified equity sleeve.
+  - Concentration by fund (`concentrationNames`).
+  - The day move never blends a missing line in as ₹0.
+  - No constant FX rate.
+- **Tests:** new suites `calcAudit` (ingest), plus display FX rate, day move,
+  concentration and lot terms (family). The `check-pages` re-derivations follow
+  each rule.
+
+### Stage 10ga — ONE UPLOAD FOR THE STATEMENT LIBRARY, WIRED END TO END; UPLOAD HISTORY REMOVED
+
+- *"give a universal file/folder upload option on the main statement library page … automatically be saved in github … wired into the dashboard end to end … arranged in its correct respective folder"* — the per-folder R2 drop box (never switched on) is gone. One panel on the library's main page takes files, a folder, or a drop of either; each file is a git blob on the `statement-inbox` branch, the upload one `[skip ci]` commit (`shared/statementInbox.mjs`, `functions/api/statement-uploads.js`, same `GLOW_GITHUB_TOKEN` as the dashboard store), and it dispatches `statement-intake.yml`.
+- `scripts/ingest/intake-uploads.mjs` drops byte-identical files (ZIP members too), files each new one under `source/uploads-<IST date>/<provider>/` by the classifier's issuer, runs inventory → extract → build-symbols (additions only) → build-book, coverage:source and check:reads (now `GLOW_CHECK_READS_JSON`), holds back exactly the file each finding names and reads again, then accounts-table, build, test:ingest and test:family (a gate failing on main too is not the upload's). Only what passes lands on main, in one commit; the outcome goes back to the inbox log. Held files show the gate's reason with Retry/Remove; a landed file reads Publishing until the redeployed manifest carries its documents.
+- Upload History is removed from the nav, search and routes; `/history` forwards to `/statements`, asserted in check:pages, which also strikes the one upload control (folder button) on the grid and none inside a folder. The library is open on an empty book. `pull-uploads.mjs` is retired.
+
+### Stage 10gc — EVERY FILE IN THE STATEMENT LIBRARY OPENS IN A PREVIEW WINDOW
+
+*"we should be able to open and see contents of every file in the dashboard itself, irrespective of the type of file it is … a small preview window"* — the family, 21 Oct 2026.
+
+- A row in an open folder opens `StatementPreview` (`src/components/StatementPreview.tsx`) over the page: a PDF's pages one after another, a spreadsheet's (XLS/XLSX/CSV) sheets as a lettered grid with a tab per sheet. The open file is `?file=<docKey>`, so a preview is linkable and Back or Esc closes it.
+- It reads `public/audit/<docKey>/pages.json`, the text the pipeline read and the archive already serves behind the gate, labelled "Text as read". No original file is published: copying `source/` into the build was considered and not done, pending the family's decision. `src/lib/statementPreview.ts` turns a sheet's tab-separated rows into cells and shows a stored double at 15 significant digits (`12.085000000000001` → `12.085`, stored text on hover). Whole numbers are never touched, because a 16-digit demat number would round into an account that does not exist.
+- A document with no text (the HDFC scan, the LKP mail-server removal notice) shows its own `document.json` warning through `AbsentSection`, never an empty window. Opened deliberately, a preview may name the ring-fenced holding (the family's email domain is on many statements), as Data Audit's raw page text does; no route opens one by default.
+- `test:family` suite `statement preview`: all 424 documents have `pages.json`, each with text or a stated reason, every spreadsheet lays out across columns, and the number clean-up leaves account numbers alone.
