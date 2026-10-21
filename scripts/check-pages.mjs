@@ -28277,7 +28277,7 @@ const INVARIANTS = {
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     /**
-     * The dedicated KPI was retired in Stage 10gn. An existing measured-set
+     * The dedicated KPI was retired in Stage 10go. An existing measured-set
      * bookmark still resolves, so its rate, dates and accounts are checked
      * independently against the source book, without a removed tile.
      */

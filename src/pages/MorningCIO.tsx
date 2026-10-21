@@ -1936,7 +1936,7 @@ export function MorningCIO() {
             return and money-weighted return, and the same for the private (AIF)
             half. Invested and current value per bucket remain in the allocation
             table; Concentration & risk links each side to its holdings. The
-            standalone money-weighted KPI has since been retired (Stage 10gn).
+            standalone money-weighted KPI has since been retired (Stage 10go).
             `marketSides` in the model above still feeds the allocation row.
 
             `listedBook` and `privateBook` were named here too and fed NOTHING —

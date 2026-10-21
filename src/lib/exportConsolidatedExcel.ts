@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import type { ConsolidatedBook, ConsolidatedLink } from "./consolidatedSheet";
+import { fitExcelWorksheet } from "./excelLayout";
 
 export function consolidatedExcelTarget(book: ConsolidatedBook, link: ConsolidatedLink): string | null {
   if (!link.sheet) return null;
@@ -37,7 +38,6 @@ export function createConsolidatedWorkbook(book: ConsolidatedBook, dashboardUrl:
     sheet.getRow(4).font = { color: { argb: "FF175C99" }, underline: true };
     for (let c = 0; c < tab.columns.length; c++) {
       const column = tab.columns[c];
-      sheet.getColumn(c + 1).width = Math.min(65, Math.max(column.width, 15));
       const cell = sheet.getCell(5, c + 1);
       cell.value = column.label;
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF17304C" } };
@@ -66,10 +66,9 @@ export function createConsolidatedWorkbook(book: ConsolidatedBook, dashboardUrl:
           cell.font = { ...cell.font, bold: true };
         } else if (r % 2 === 1) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFAF9F5" } };
       });
-      excelRow.height = row.values.some(v => typeof v === "string" && v.length > 100) ? 56 : 30;
     });
-    sheet.views = [{ state: "frozen", xSplit: 1, ySplit: 5 }];
     if (tab.rows.length) sheet.autoFilter = { from: { row: 5, column: 1 }, to: { row: tab.rows.length + 5, column: tab.columns.length } };
+    fitExcelWorksheet(sheet, 5, 1);
   }
   return workbook;
 }
