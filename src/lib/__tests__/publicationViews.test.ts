@@ -33,6 +33,14 @@ for (const [account, first] of [['hdfc-mutual-fund-15644806', '2022-08-03'], ['h
   const index = book.BOOK_POSITIONS.findIndex(p => p.accountId === account);
   assert.ok(index >= 0); assert.equal(evidence[index].investmentDate.value.first, first);
 }
+for (const holding of book.BOOK_UNVALUED_HOLDINGS) {
+  assert.ok(holding.statementRecord, 'Unpriced custody units retain their own statement row');
+  const d = read(`canonical/documents/${holding.statementRecord.document}.json`);
+  const row = d.holdings[Number(holding.statementRecord.pointer.split('/').at(-1))];
+  const account = book.BOOK_ACCOUNTS.find(a => a.accountId === holding.accountId)!;
+  assert.equal(d.provider, account.provider); assert.equal(d.accountNo, account.accountNo);
+  assert.equal(row.securityKey, holding.securityKey); assert.equal(row.quantity, holding.quantity);
+}
 for (const [suffix, first] of [['12539150', '2025-03-06'], ['12838316', '2025-11-06'], ['12838320', '2025-07-11']]) {
   const index = book.BOOK_POSITIONS.findIndex(p => p.accountId.endsWith(suffix) && p.isin === 'INF109KC1RH9');
   assert.ok(index >= 0); assert.equal(evidence[index].investmentDate.value.first, first);

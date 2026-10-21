@@ -435,6 +435,7 @@ export function unpricedStatementUnits(
     const book = positions.find((p) => p.securityKey === u.securityKey);
     out.push({
       securityKey: u.securityKey,
+      statementRecord: u.statementRecord,
       // The book's ONE name for the key (#76's rule, `securityLabel`), which
       // reads the book's quantity rows as well as its positions.
       security: securityLabel(u.securityKey, u.security),
@@ -468,10 +469,10 @@ export function unpricedStatementUnits(
       navDate: nav.date,
       depositoryUnits: ownRate !== null
         ? {
-          asOf: u.asOf, source: null, kind: "last-movement",
+          asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "last-movement",
           lastMovementRate: ownRate, lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null,
         }
-        : { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId },
+        : { asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "no-rate", witnessAccountId },
     });
   }
   return out.map(p => applyRecoveredCost(p, BOOK_RECOVERED_COSTS)).sort((a, b) => b.marketValue - a.marketValue);

@@ -3647,6 +3647,7 @@ function build(archived, archiveCount = archived.length) {
           + `of the ${unitsHeld} unit(s) held, so they carry a quantity and no value`
         : `the ${provider} statement of ${holdingsDoc.asOf} prints no rate for this holding, so it carries a quantity and no value`;
       unvaluedHoldings.push({
+        statementRecord: { document: holdingsDoc.docKey, pointer: `/holdings/${holdingsDoc.holdings.indexOf(h)}` },
         accountId, ownerId, securityKey: h.securityKey, security: h.security, isin: h.isin || null,
         assetClass: h.assetClass ?? null, quantity: qty, faceValue: fv,
         lastMovementRate: moved?.rate ?? null, lastMovementValue: moved?.value ?? null,

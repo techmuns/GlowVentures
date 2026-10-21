@@ -1383,6 +1383,7 @@ export type RealisedByClass = {
  * its units — inside an account that may carry positions besides.
  */
 export type UnvaluedStatementHolding = {
+  statementRecord?: { document: string; pointer: string };
   accountId: string;
   ownerId: string;
   securityKey: string;
