@@ -1,13 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Folder, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileSpreadsheet, UploadCloud, Trash2, Loader2 } from "lucide-react";
+import {
+  Folder, FolderUp, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileSpreadsheet, UploadCloud, Trash2,
+  Loader2, RotateCcw,
+} from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { buildLibrary, type ManifestEntry, type ProviderFolder, type LibraryDoc } from "@/lib/statementLibrary";
-import { useStatementUploads, uploadsOf, fmtSize, SWITCH_ON_STEPS, CAUSE_WORD } from "@/lib/statementUploads";
+import {
+  useStatementInbox, fromDrop, fromInput, planUpload, fileView, SWITCH_ON_STEPS, CAUSE_WORD,
+  type PickedFile, type InboxBatch,
+} from "@/lib/statementUploads";
+import { MAX_FILE_BYTES } from "../../shared/statementInbox.mjs";
 
 // The library reads the SAME archive index the Data Audit viewer does —
 // public/audit/manifest.json, written by the ingest pipeline and served at
@@ -96,147 +103,263 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
   );
 }
 
-const ACCEPT = ".pdf,.xlsx,.xlsm,.xls,.csv,.zip";
-const ALLOWED_UPLOAD = new Set(["pdf", "xlsx", "xlsm", "xls", "csv", "zip"]);
-const uploadExt = (name: string) => {
-  const base = name.split(/[\\/]/).pop() ?? "";
-  const dot = base.lastIndexOf(".");
-  return dot > 0 ? base.slice(dot + 1).toLowerCase() : "";
-};
+/** What the file chooser offers — the types the ingest pipeline reads. */
+const ACCEPT = ".pdf,.xlsx,.xls,.zip";
+const MAX_MB = Math.round(MAX_FILE_BYTES / (1024 * 1024));
 
-/** The drop box behind a folder: upload new statements for this provider, and
- *  see the ones already staged for the next rebuild. */
-function DropBox({ provider }: { provider: string }) {
-  const { state, upload, remove } = useStatementUploads();
-  const inputRef = useRef<HTMLInputElement>(null);
+/**
+ * ONE UPLOAD FOR THE WHOLE LIBRARY. *"instead of giving file upload option
+ * inside each folder, give a universal file/folder upload option on the main
+ * statement library page"* — the family, 21 Oct 2026. Files, a folder, or a
+ * drop of either: each statement is saved to GitHub and the intake run reads
+ * it into the book and files it under the provider it is FROM, so nobody has
+ * to know which folder a statement belongs in before uploading it.
+ */
+function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> }) {
+  const { state, upload } = inbox;
+  const filesRef = useRef<HTMLInputElement>(null);
+  const folderRef = useRef<HTMLInputElement | null>(null);
   const [drag, setDrag] = useState(false);
-  const [busy, setBusy] = useState(0);
-  const [msg, setMsg] = useState<{ tone: "err" | "ok"; text: string } | null>(null);
-  const [removing, setRemoving] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ done: number; of: number } | null>(null);
+  const [msg, setMsg] = useState<{ tone: "err" | "ok"; text: string; title?: string } | null>(null);
 
-  const staged = state.status === "ready" ? uploadsOf(state.uploads, provider) : [];
-
-  const send = async (files: FileList | File[]) => {
-    const list = [...files];
-    if (!list.length) return;
-    const good = list.filter((f) => ALLOWED_UPLOAD.has(uploadExt(f.name)));
-    const bad = list.length - good.length;
+  const send = async (picked: PickedFile[]) => {
+    if (!picked.length || progress) return;
+    const plan = planUpload(picked);
+    const skippedTitle = plan.skipped.map((s) => `${s.path}: ${s.why}`).join("\n") || undefined;
     setMsg(null);
-    let ok = 0; let failure = "";
-    setBusy((n) => n + good.length);
-    for (const f of good) {
-      const r = await upload(provider, f);
-      if (r.ok) ok++; else failure = r.reason;
-      setBusy((n) => Math.max(0, n - 1));
+    if (!plan.accepted.length) {
+      setMsg({
+        tone: "err", title: skippedTitle,
+        text: plan.skipped.length
+          ? `Nothing to upload — ${plan.skipped.length === 1 ? plan.skipped[0].why : `none of the ${plan.skipped.length} files is a statement file (PDF, Excel or ZIP).`}`
+          : "Nothing to upload — the folder holds only system files.",
+      });
+      return;
     }
-    if (failure) setMsg({ tone: "err", text: failure });
-    else if (ok) setMsg({ tone: "ok", text: `${ok} file${ok === 1 ? "" : "s"} staged — ${ok === 1 ? "it" : "they"} will reach the dashboard at the next rebuild.` });
-    else if (bad) setMsg({ tone: "err", text: `Not a statement file — only PDF, Excel (xlsx/xls), CSV or a ZIP of them can be uploaded.` });
+    setProgress({ done: 0, of: plan.accepted.length });
+    const r = await upload(plan.accepted, (done, of) => setProgress({ done, of }));
+    setProgress(null);
+    if (!r.ok) { setMsg({ tone: "err", text: r.reason }); return; }
+    const notSent = [...plan.skipped, ...r.failed.map((f) => ({ path: f.name, why: f.why }))];
+    const tail = notSent.length ? ` ${notSent.length} not uploaded — hover for why.` : "";
+    const title = notSent.map((s) => `${s.path}: ${s.why}`).join("\n") || undefined;
+    if (!r.saved) { setMsg({ tone: "err", text: `Nothing was saved.${tail}`, title }); return; }
+    const n = `${r.saved} statement file${r.saved === 1 ? "" : "s"}`;
+    setMsg({
+      tone: notSent.length ? "err" : "ok", title,
+      text: r.started
+        ? `${n} saved to GitHub — being read into the dashboard now.${tail}`
+        : `${n} saved to GitHub — the next scheduled intake run reads ${r.saved === 1 ? "it" : "them"} in, within about 20 minutes.${tail}`,
+    });
   };
 
-  // The store is not reachable — say which cause, and for a store nobody has
-  // connected give the one-time set-up steps rather than a dead drop zone.
+  // The service is not reachable — say which cause, and for a site with no
+  // token give the one-time set-up steps rather than a drop zone that drops.
   if (state.status === "unavailable") {
-    const notConfigured = state.cause === "not-configured";
     return (
-      <Card className="mb-5" data-upload-box data-upload-state={state.cause}>
+      <div data-xa="statement-upload" data-upload-state={state.cause}>
+      <Card className="mb-5">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400"><UploadCloud className="h-5 w-5" /></div>
           <div className="min-w-0">
             <div className="text-sm font-medium text-slate-200">Uploading statements — {CAUSE_WORD[state.cause]}</div>
-            <p className="mt-1 text-xs text-slate-400" data-prose-ok="why the drop box is not available">{state.reason}</p>
-            {notConfigured && (
-              <ol className="mt-2 list-decimal space-y-1 pl-4 text-[11.5px] text-slate-500" data-prose-ok="the one-time steps to switch the drop box on">
+            <p className="mt-1 text-xs text-slate-400" data-prose-ok="why uploading is not available">{state.reason}</p>
+            {state.cause === "not-configured" && (
+              <ol className="mt-2 list-decimal space-y-1 pl-4 text-[11.5px] text-slate-500" data-prose-ok="the one-time steps to switch uploading on">
                 {SWITCH_ON_STEPS.map((s, i) => <li key={i}>{s}</li>)}
               </ol>
             )}
           </div>
         </div>
       </Card>
+      </div>
     );
   }
 
-  const disabled = busy > 0;
+  const busy = !!progress || state.status === "loading";
   return (
-    <Card className="mb-5" data-upload-box data-upload-state="ready">
-      <div className="mb-2 flex items-center gap-2">
+    <div data-xa="statement-upload" data-upload-state={state.status}>
+    <Card className="mb-5">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <UploadCloud className="h-4 w-4 text-champagne-400" />
-        <span className="text-sm font-semibold text-slate-200">Add statements to {provider}</span>
+        <span className="text-sm font-semibold text-slate-200">Upload statements</span>
+        <div className="ml-auto flex items-center gap-2">
+          <button type="button" disabled={busy} onClick={() => filesRef.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 bg-ink-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700 disabled:opacity-50">
+            <FileText className="h-3.5 w-3.5" /> Files
+          </button>
+          <button type="button" disabled={busy} onClick={() => folderRef.current?.click()} data-upload-folder
+            className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 bg-ink-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700 disabled:opacity-50">
+            <FolderUp className="h-3.5 w-3.5" /> Folder
+          </button>
+        </div>
       </div>
-      {/* HOW A DROPPED FILE REACHES THE BOOK — on the face, because a staged file
-          is NOT a holding until a rebuild reads it (the no-fabrication rule). */}
-      <p className="mb-3 text-[11.5px] text-slate-500" data-prose-ok="what happens to an uploaded statement">
-        A file you add here is held for this provider and read into the dashboard at the next book rebuild — it is not
-        a live figure until then.
-      </p>
 
-      <button type="button"
-        onClick={() => inputRef.current?.click()}
+      <button type="button" disabled={busy}
+        onClick={() => filesRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
-        onDrop={(e) => { e.preventDefault(); setDrag(false); void send(e.dataTransfer.files); }}
-        className={`flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-4 py-7 text-center transition-colors
+        onDrop={(e) => { e.preventDefault(); setDrag(false); void fromDrop(e.dataTransfer).then(send); }}
+        data-upload-drop
+        className={`flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-4 py-7 text-center transition-colors disabled:cursor-wait
           ${drag ? "border-champagne-500/60 bg-champagne-500/10" : "border-ink-600 hover:border-ink-500 hover:bg-ink-700/30"}`}>
-        {disabled
+        {progress
           ? <Loader2 className="h-6 w-6 animate-spin text-champagne-400" />
           : <UploadCloud className="h-6 w-6 text-slate-500" />}
-        <span className="text-sm text-slate-300">{disabled ? "Uploading…" : "Drop statements here, or click to choose"}</span>
-        <span className="text-[11px] text-slate-500">PDF, Excel, CSV or a ZIP · up to 50 MB each</span>
-        <input ref={inputRef} type="file" multiple accept={ACCEPT} className="hidden"
-          onChange={(e) => { void send(e.target.files ?? []); e.target.value = ""; }} />
+        <span className="text-sm text-slate-300">
+          {progress ? `Uploading ${progress.done} of ${progress.of}…` : "Drop statements or whole folders here"}
+        </span>
+        <span className="text-[11px] text-slate-500"
+          title="Each statement is saved to GitHub, read into the dashboard, and filed in the folder of the provider that issued it.">
+          PDF, Excel or ZIP · up to {MAX_MB} MB each
+        </span>
       </button>
+      <input ref={filesRef} type="file" multiple accept={ACCEPT} className="hidden"
+        onChange={(e) => { void send(fromInput(e.target.files ?? [])); e.target.value = ""; }} />
+      {/* `webkitdirectory` is not in React's attribute types; set on the element. */}
+      <input ref={(el) => { folderRef.current = el; el?.setAttribute("webkitdirectory", ""); el?.setAttribute("directory", ""); }}
+        type="file" multiple className="hidden"
+        onChange={(e) => { void send(fromInput(e.target.files ?? [])); e.target.value = ""; }} />
 
       {msg && (
-        <p className={`mt-2 text-xs ${msg.tone === "err" ? "text-loss" : "text-gain"}`} role="status"
+        <p className={`mt-2 text-xs ${msg.tone === "err" ? "text-loss" : "text-gain"}`} role="status" title={msg.title}
           data-prose-ok="the result of an upload">{msg.text}</p>
       )}
-
-      {staged.length > 0 && (
-        <div className="mt-4">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Waiting for the next rebuild</span>
-            <Pill tone="warn">{staged.length}</Pill>
-          </div>
-          <div className="overflow-x-auto rounded-lg border border-ink-700">
-            <table className="min-w-full text-sm" data-table-static="statements staged for this provider, newest first — they are read into the book at the next rebuild">
-              <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-2.5 font-medium">File</th>
-                  <th className="px-4 py-2.5 font-medium">Size</th>
-                  <th className="px-4 py-2.5 font-medium">Uploaded</th>
-                  <th className="px-4 py-2.5 font-medium" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-700/70">
-                {staged.map((u) => (
-                  <tr key={u.key} className="hover:bg-ink-700/40">
-                    <td className="px-4 py-3 text-slate-200">
-                      <span className="inline-flex items-center gap-1.5">
-                        {fileIcon((uploadExt(u.fileName) || "").toUpperCase())}
-                        <span className="break-all">{u.fileName}</span>
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 mono text-slate-400">{fmtSize(u.size)}</td>
-                    <td className="px-4 py-3 text-slate-400">{u.uploadedAt ? fmtDateTime(u.uploadedAt) : DASH}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button type="button" disabled={removing === u.key}
-                        onClick={async () => { setRemoving(u.key); await remove(u.key); setRemoving(null); }}
-                        className="inline-flex items-center gap-1 rounded border border-ink-600 px-2 py-1 text-[11px] text-slate-400 hover:bg-ink-700 hover:text-loss disabled:opacity-50"
-                        title="Remove this staged file">
-                        {removing === u.key ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </Card>
+    </div>
   );
 }
+
+const LOG_ROWS = 25;
+
+/**
+ * EVERY UPLOAD AND WHAT BECAME OF IT — queued, being read, in its folder,
+ * already here, or held with the reason the pipeline gave. A held file is not
+ * a holding: it feeds nothing until a reader exists and it is retried.
+ */
+function UploadLog({ inbox, batches, served, folders, onOpen }: {
+  inbox: ReturnType<typeof useStatementInbox>;
+  batches: InboxBatch[];
+  served: ReadonlySet<string>;
+  folders: ReadonlySet<string>;
+  onOpen: (provider: string) => void;
+}) {
+  const [all, setAll] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const rows = useMemo(() => batches.flatMap((b) => b.files.map((f) => ({ b, f, v: fileView(f, served) }))), [batches, served]);
+  if (!rows.length) return null;
+  const shown = all ? rows : rows.slice(0, LOG_ROWS);
+  const tally = (k: string) => rows.filter((r) => r.v.key === k).length;
+  const act = async (id: string, run: () => Promise<{ ok: true } | { ok: false; reason: string }>) => {
+    setBusy(id); setErr(null);
+    const r = await run();
+    if (!r.ok) setErr(r.reason);
+    setBusy(null);
+  };
+
+  return (
+    <div data-xa="statement-upload-log" data-upload-rows={rows.length}>
+    <Card className="mb-5">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Uploads</span>
+        {tally("reading") + tally("queued") > 0 && <Pill tone="info">{tally("reading") + tally("queued")} reading</Pill>}
+        {tally("publishing") > 0 && <Pill tone="info">{tally("publishing")} publishing</Pill>}
+        {tally("held") > 0 && <Pill tone="warn">{tally("held")} held</Pill>}
+      </div>
+      {err && <p className="mb-2 text-xs text-loss" role="status" data-prose-ok="why a retry or removal did not go through">{err}</p>}
+      <div className="overflow-x-auto rounded-lg border border-ink-700">
+        <table className="min-w-full text-sm"
+          data-table-static="the inbox's own log, newest upload first — each file's status as the intake run left it">
+          <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-2.5 font-medium">File</th>
+              <th className="px-4 py-2.5 font-medium">Uploaded</th>
+              <th className="px-4 py-2.5 font-medium">Status</th>
+              <th className="px-4 py-2.5 font-medium">Folder</th>
+              <th className="px-4 py-2.5 font-medium">Detail</th>
+              <th className="px-4 py-2.5 font-medium" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-ink-700/70">
+            {shown.map(({ b, f, v }) => {
+              const id = `${b.id}/${f.name}`;
+              return (
+                <tr key={id} className="hover:bg-ink-700/40" data-upload-status={v.key}>
+                  <td className="min-w-[220px] px-4 py-3 text-slate-200">
+                    <span className="inline-flex items-center gap-1.5" title={f.name}>
+                      {fileIcon((f.name.split(".").pop() ?? "").toUpperCase())}
+                      <span className="break-words">{f.name.split("/").pop()}</span>
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-400">{fmtDateTime(b.uploadedAt)}</td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <Pill tone={v.tone} icon={v.key === "reading" || v.key === "publishing" ? <Loader2 className="h-3 w-3 animate-spin" /> : undefined}>
+                      <span title={v.title}>{v.label}</span>
+                    </Pill>
+                  </td>
+                  <td className="px-4 py-3 text-slate-400">
+                    {f.status === "landed" && f.providers?.length
+                      ? f.providers.map((p, i) => (
+                        <span key={p}>
+                          {i > 0 && ", "}
+                          {folders.has(p) && v.key === "in-library"
+                            ? <button type="button" onClick={() => onOpen(p)} className="text-left text-accent-400 hover:underline">{p}</button>
+                            : p}
+                        </span>
+                      ))
+                      : <span className="text-slate-600">{DASH}</span>}
+                  </td>
+                  <td className="min-w-[200px] max-w-[320px] px-4 py-3 text-xs text-slate-500">
+                    {f.status === "held" || f.status === "duplicate"
+                      ? <span className="line-clamp-2" title={f.reason ?? undefined}>{f.reason}</span>
+                      : f.status === "landed" && f.landedAs?.length
+                        ? <span className="mono line-clamp-2 break-all" title={f.landedAs.join("\n")}>{f.landedAs.join(", ")}</span>
+                        : <span className="text-slate-600">{DASH}</span>}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-right">
+                    <span className="inline-flex items-center gap-1">
+                      {f.run && (
+                        <a href={f.run} target="_blank" rel="noreferrer" aria-label="Intake run log"
+                          className="grid h-6 w-6 place-items-center rounded text-slate-500 hover:bg-ink-700 hover:text-accent-400" title="Open the intake run's log on GitHub">
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                      {f.status === "held" && (
+                        <button type="button" disabled={busy !== null} data-upload-retry aria-label="Retry"
+                          onClick={() => act(id, () => inbox.retry(b.id))}
+                          className="grid h-6 w-6 place-items-center rounded border border-ink-600 text-slate-400 hover:bg-ink-700 hover:text-slate-200 disabled:opacity-50"
+                          title="Retry — read this upload's held files again, after their reader is written or the password is set">
+                          {busy === id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
+                        </button>
+                      )}
+                      {(f.status === "held" || f.status === "queued") && (
+                        <button type="button" disabled={busy !== null} aria-label="Remove"
+                          onClick={() => act(`${id}#rm`, () => inbox.remove(b.id, f.name))}
+                          className="grid h-6 w-6 place-items-center rounded border border-ink-600 text-slate-400 hover:bg-ink-700 hover:text-loss disabled:opacity-50"
+                          title="Remove — take this file out of the inbox">
+                          {busy === `${id}#rm` ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                        </button>
+                      )}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {rows.length > LOG_ROWS && (
+        <button type="button" onClick={() => setAll((x) => !x)} className="mt-2 text-xs text-accent-400 hover:underline">
+          {all ? "Show the latest only" : `Show all ${rows.length}`}
+        </button>
+      )}
+    </Card>
+    </div>
+  );
+}
+
 
 /** The opened folder: a header strip naming the provider, then one block per
  *  file format it holds. */
@@ -295,8 +418,6 @@ function OpenFolder({ folder, onBack }: { folder: ProviderFolder; onBack: () => 
         </div>
       </Card>
 
-      <DropBox provider={folder.provider} />
-
       <div className="space-y-5">
         {byFormat.map(([format, docs]) => <FormatBlock key={format} format={format} docs={docs} />)}
       </div>
@@ -344,21 +465,42 @@ export function StatementLibrary() {
   const [selected, setSelected] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const openProvider = searchParams.get(PROVIDER_PARAM);
+  const inbox = useStatementInbox();
 
-  useEffect(() => {
-    let alive = true;
-    fetch(`${BASE}audit/manifest.json`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((m: ManifestEntry[]) => {
-        if (!alive) return;
-        setManifest(m);
-        setStatus("ready");
-      })
-      .catch(() => alive && setStatus("restricted"));
-    return () => { alive = false; };
+  const alive = useRef(true);
+  const loadManifest = useCallback(async (first: boolean) => {
+    try {
+      const r = await fetch(`${BASE}audit/manifest.json`, { cache: "no-store" });
+      if (!r.ok) throw new Error(String(r.status));
+      const m: ManifestEntry[] = await r.json();
+      if (!alive.current) return;
+      setManifest(m);
+      setStatus("ready");
+    } catch {
+      // A refresh that fails keeps the library already on screen.
+      if (alive.current && first) setStatus("restricted");
+    }
   }, []);
+  useEffect(() => {
+    alive.current = true;
+    void loadManifest(true);
+    return () => { alive.current = false; };
+  }, [loadManifest]);
 
   const library = useMemo(() => buildLibrary(manifest), [manifest]);
+  /** The documents this copy of the site serves — a landed upload is in its folder once its are here. */
+  const served = useMemo(() => new Set(manifest.map((e) => e.docKey)), [manifest]);
+  const folderNames = useMemo(() => new Set(library.folders.map((f) => f.provider)), [library]);
+  const batches = inbox.state.status === "ready" ? inbox.state.batches : [];
+  // A landed upload is live once the redeploy from its commit is: until then
+  // the archive is read again every so often, so it appears in its folder
+  // without a reload.
+  const publishing = batches.some((b) => b.files.some((f) => f.status === "landed" && fileView(f, served).key === "publishing"));
+  useEffect(() => {
+    if (!publishing) return;
+    const t = window.setInterval(() => { void loadManifest(false); }, 30_000);
+    return () => window.clearInterval(t);
+  }, [publishing, loadManifest]);
   const folders = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return library.folders;
@@ -380,7 +522,7 @@ export function StatementLibrary() {
   return (
     <div className="mx-auto max-w-5xl" data-statement-library>
       <PageHeader eyebrow="Admin" title="Statement Library" trail={trail}
-        subtitle="The source statements that feed this book, in a folder per provider — double-click a folder to open it, see its files grouped by type, and drop new statements into it. An uploaded file is staged under its provider and read into the book at the next rebuild."
+        subtitle="The source statements that feed this book, in a folder per provider. Upload files or whole folders here: each statement is saved to GitHub, read into the book and filed in its provider's folder."
         right={status === "ready" && !openProvider ? (
           <div className="flex items-center gap-2">
             <Pill>{library.totalProviders} providers</Pill>
@@ -424,15 +566,8 @@ export function StatementLibrary() {
           ))
         : (
           <>
-            {/* HOW A NEW STATEMENT IS ADDED — the family's reason for this page.
-                A direct upload that rebuilds the book is not wired yet; until it
-                is, a new drop goes through the offline ingest. Tagged so the
-                no-explainer sweep allows this one actionable line. */}
-            <p className="mb-4 text-xs text-slate-500" data-prose-ok="how a new statement reaches the dashboard">
-              Each folder is a provider the family receives statements from — double-click to open it. Open a folder to
-              drop new statements straight into it; they are staged under that provider and read into the dashboard at
-              the next book rebuild.
-            </p>
+            <UploadPanel inbox={inbox} />
+            <UploadLog inbox={inbox} batches={batches} served={served} folders={folderNames} onOpen={open} />
 
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[220px]">

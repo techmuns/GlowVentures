@@ -154,15 +154,19 @@ function formatOf(sourcePath: string): string {
  * the first segment after `_extracted` names the delivery. A file that was not
  * zipped keeps its own path: one inside a dated drop folder (`source/
  * september-2026/…`) names that folder; one sitting directly in `source/` came
- * in the original drop.
+ * in the original drop. A statement uploaded on this page is filed by the
+ * intake run under `source/uploads-<YYYY-MM-DD>/<provider>/`, and says so.
  */
 function deliveryOf(sourcePath: string): string {
   const rest = sourcePath.replace(/^source\//, "");
   const segments = rest.split("/");
-  if (segments[0] === "_extracted") return segments[1] ?? "(unknown delivery)";
-  if (segments.length > 1) return segments[0];
-  return "(initial drop)";
+  const folder = segments[0] === "_extracted" ? segments[1] : segments.length > 1 ? segments[0] : null;
+  if (folder === undefined) return "(unknown delivery)";
+  if (folder === null) return "(initial drop)";
+  const up = /^uploads-(\d{4})-(\d{2})-(\d{2})$/.exec(folder);
+  return up ? `Uploaded ${Number(up[3])} ${MONTHS[Number(up[2]) - 1] ?? up[2]} ${up[1]}` : folder;
 }
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const basenameOf = (sourcePath: string): string => sourcePath.split("/").pop() ?? sourcePath;
 

@@ -419,7 +419,7 @@ const PAGE_WORDS: Record<string, string[]> = {
   "/corporate-actions": ["corporate actions", "stock split", "bonus", "dividend adjustment", "dividend-inclusive return", "entitlements", "total return"],
   "/ledger": ["ledger", "dividends", "dividend", "income", "lots", "realised by trade"],
   "/audit": ["audit", "statements", "documents", "source", "pdf", "archive", "extraction"],
-  "/history": ["upload history", "history", "uploads"],
+  "/statements": ["statement library", "upload", "uploads", "upload statements", "add statements", "folders", "providers"],
 };
 
 /** Tabs and views INSIDE a page — each reachable by its own address. */

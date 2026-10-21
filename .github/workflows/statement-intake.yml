@@ -1,0 +1,69 @@
+name: Statement intake
+
+# Statements uploaded on the dashboard's Statement Library, read into the book.
+#
+# *"After uploading the file/folder it will automatically be saved in github and
+# all the data will be processed to be wired into the dashboard end to end
+# without any errors, and also the file will automatically be arranged in its
+# correct respective folder in statement library."* — the family, 21 Oct 2026.
+#
+# An upload lands on the `statement-inbox` branch (functions/api/statement-
+# uploads.js), which then STARTS this run through GitHub's repository-dispatch
+# event. `scripts/ingest/intake-uploads.mjs` files each new statement under
+# source/uploads-<date>/<provider>/, runs inventory → extract → build-symbols →
+# build-book and every gate CI runs on a PR, and lands on main only what passes
+# all of them — in one commit, from which the site redeploys. A statement the
+# pipeline cannot read in full stays in the inbox, held, with the reason; the
+# Statement Library shows it and offers Retry.
+#
+# THE SCHEDULE IS A BACKSTOP. A dispatch GitHub refuses (a token without the
+# right) or a run that died leaves files waiting; the next scheduled run reads
+# them. It costs one `git fetch` when nothing is waiting.
+#
+# SEALED STATEMENTS. Mutual-fund folios and several others are PDFs encrypted
+# with the holder's PAN. The run reads them only with the repository secret
+# GLOW_PDF_PASSWORDS (Settings → Secrets and variables → Actions) — never a
+# committed file. Without it such an upload is held as "needs password", not
+# landed unread.
+on:
+  repository_dispatch:
+    types: [statement-intake]
+  workflow_dispatch:
+  schedule:
+    - cron: "*/20 * * * *"
+
+permissions:
+  contents: write
+
+# One intake at a time: each reads everything waiting, so a queued run that a
+# newer one replaces loses nothing.
+concurrency:
+  group: statement-intake
+  cancel-in-progress: false
+
+jobs:
+  intake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Anything waiting?
+        id: inbox
+        run: node scripts/ingest/intake-uploads.mjs --check
+
+      - if: steps.inbox.outputs.waiting != '0'
+        run: npm ci
+
+      - name: Read the uploads into the book, and land what passes
+        if: steps.inbox.outputs.waiting != '0'
+        env:
+          GLOW_PDF_PASSWORDS: ${{ secrets.GLOW_PDF_PASSWORDS }}
+        run: node scripts/ingest/intake-uploads.mjs

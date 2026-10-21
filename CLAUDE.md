@@ -192,6 +192,11 @@ One line per area; the history files explain each in depth.
   `functions/api/tile-sets.js` — the shared store: one JSON file on the repo's
   `dashboard-store` branch, written with `GLOW_GITHUB_TOKEN` (`shared/dashboardStore.mjs`,
   Stage 10ex; the repo is public, so everything saved there is public).
+- `src/lib/statementUploads.ts` + `functions/api/statement-uploads.js` — the
+  Statement Library's one upload (files or folders): each file a blob on the
+  repo's `statement-inbox` branch (`shared/statementInbox.mjs`), read into the
+  book by `scripts/ingest/intake-uploads.mjs` and landed on main only if every
+  gate passes; a file it cannot read is held with the reason (Stage 10ga).
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.
@@ -439,11 +444,14 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   the upstream reports. `fx.js` — ECB, keyless. `research`, `insider`,
   `announcements`, `ratios`, `news` — muns. `polycab.js` — BSE, keyless.
   `capital-calls.js`, `tile-sets.js`, `investment-profiles.js` — the repo's store
-  file via `GLOW_GITHUB_TOKEN` (until it is set, they say so). `corporate-actions.js` — the Glow Central Research
+  file via `GLOW_GITHUB_TOKEN` (until it is set, they say so); `statement-uploads.js`
+  the statement inbox, same token. `corporate-actions.js` — the Glow Central Research
   capture. `stock-exposure.ts` — the look-through read model.
 - Workflows: `harvest.yml` (macro series store), `fund-navs.yml` (AMFI NAVs),
   `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
-  sector weights, days 1–15 monthly).
+  sector weights, days 1–15 monthly), `statement-intake.yml` (dashboard uploads
+  → the book; dispatched by each upload, every 20 min as a backstop; sealed
+  PDFs need the `GLOW_PDF_PASSWORDS` Actions secret).
 - With no token and no network every page renders on statement marks.
 
 ## Conventions
