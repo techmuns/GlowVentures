@@ -21,6 +21,7 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
   const [shares, setShares] = useState(() => property.owners.map(o => String(o.share)));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mapOpen, setMapOpen] = useState(property.latitude === null);
   const set = <K extends keyof Property>(key: K, value: Property[K]) => setDraft(p => ({ ...p, [key]: value }));
   const point = useMemo<[number, number] | null>(() => {
     const lat = optionalNumber(numbers.latitude), lng = optionalNumber(numbers.longitude);
@@ -83,7 +84,7 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
           <TextField label="Notes" value={draft.notes} onChange={v => set("notes", v)} wide mono={false} />
         </div>
       </details>
-      <details className="border-t border-ink-700 pt-4" open={!point || undefined}>
+      <details className="border-t border-ink-700 pt-4" open={mapOpen} onToggle={e => setMapOpen(e.currentTarget.open)}>
         <summary className="h-section cursor-pointer">Map pin {point ? "· set" : "· not set"}</summary>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {numberField("latitude", "Latitude")}{numberField("longitude", "Longitude")}
