@@ -18287,9 +18287,10 @@ const AVAILABLE_CARDS_BOOK = await (async () => {
       import { dedupedPositions } from './src/lib/analytics';
       import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from './src/data/glowData';
       const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
-      export const cards = availableCardReturns(book, dedupedPositions(BOOK_POSITIONS), statementReturnInputs(book), new Date());
+      export const cards = (display) => availableCardReturns(book, dedupedPositions(display), statementReturnInputs(book), new Date());
     `, resolveDir: rootPath }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': rootPath + '/src' }, logLevel: 'error' });
-    return (await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`)).cards;
+    const mod = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
+    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'));
   } catch (e) { console.error('Headline coverage inputs unavailable:', e.message); return null; }
 })();
 const headlineMatches = (tile, expected, field = 'return') => {
@@ -18300,7 +18301,8 @@ const headlineMatches = (tile, expected, field = 'return') => {
     && Math.abs(Number(raw.cardGain) - expected.total.gain) < .001
     && Math.abs(Number(raw.cardReturn) - expected.total.returnPct) < 1e-8
     && Number(raw.cardCovered) === expected.coveredHoldings
-    && Number(raw.cardHoldings) === expected.totalHoldings
+    // A quote feed can add custody shares to this no-feed display baseline.
+    && Number(raw.cardHoldings) >= expected.totalHoldings
     && Number(raw.cardAccounts) === expected.coveredAccounts
     && /Available data/.test(tile.sub ?? '');
 };
