@@ -74,6 +74,7 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
           {(l.measured?.working ? [
             ['Starting value', l.measured.working.opening], ['Money added', l.measured.working.capitalIn],
             ['Money taken out', l.measured.working.capitalOut], ['Closing value', l.measured.working.closing],
+            ...(l.measured.working.base != null ? [['Money at work', l.measured.working.base]] : []),
           ] : [['Purchase cost / money paid in', l.invested], ['Closing value', closing]]).map(([label, amount]) =>
             <div className="contents" key={String(label)}><dt className="text-slate-400">{label}</dt><dd className="text-right tabular text-slate-100">{money(amount as number)}</dd></div>)}
           <dt className="text-slate-400">Gain / loss</dt><dd className="text-right tabular text-slate-100">{money(l.gain!, true)}</dd>

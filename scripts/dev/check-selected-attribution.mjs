@@ -16,8 +16,9 @@ const inputs = b.accountInputs({ accounts: b.BOOK_ACCOUNTS, positions: b.BOOK_PO
  .map(i => ({ ...i, outside: b.nothingToMeasure(statement, b.BOOK_ACCOUNTS.find(a => a.accountId === i.accountId)) }));
 const end = inputs.flatMap(i => i.valuations.map(v => v.date)).sort().at(-1);
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+let page;
 try {
- const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+ page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
  const errors = []; page.on('pageerror', e => errors.push(e.message));
  await page.route('**/api/**', r => r.fulfill({ status: 503, json: { status: 'unreachable' } }));
  await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
@@ -36,8 +37,9 @@ try {
    const expectedGain = win.included.length ? win.gain : null;
    const expectedReturn = measured.shown ? measured.pct : null;
    const rawGain = await table.getAttribute('data-seg-total-gain'), rawReturn = await table.getAttribute('data-seg-total-ret');
-   assert.equal(rawGain, expectedGain == null ? '' : String(expectedGain), `${period}/${type} gain`);
-   assert.equal(rawReturn, expectedReturn == null ? '' : String(expectedReturn), `${period}/${type} return`);
+   assert.ok(expectedGain == null ? rawGain === '' : rawGain !== '' && Math.abs(Number(rawGain) - expectedGain) < 0.001, `${period}/${type} gain: ${rawGain} vs ${expectedGain}`);
+   // Chromium and Node can round the XIRR root a few binary digits apart.
+   assert.ok(expectedReturn == null ? rawReturn === '' : rawReturn !== '' && Math.abs(Number(rawReturn) - expectedReturn) < 1e-8, `${period}/${type} return: ${rawReturn} vs ${expectedReturn}`);
    assert.equal(await table.getAttribute('data-seg-start'), start);
    results.push({ period, type, gain: rawGain, return: rawReturn });
   }
@@ -85,4 +87,4 @@ try {
  assert.deepEqual(errors, []);
  await fs.writeFile(`${out}/browser-results.json`, JSON.stringify(results, null, 2));
  console.log('Attribution toolbar, covered totals, source cards and mobile layout passed:', results);
-} finally { await browser.close(); }
+} catch (error) { await page?.screenshot({ path: `${out}/failure.png` }).catch(() => {}); throw error; } finally { await browser.close(); }
