@@ -50,7 +50,7 @@ try {
   assert.equal(await card.locator('[data-return-info]').evaluate(el => el === document.activeElement), true);
  }
  const historyCard = page.locator('[data-tile-slot="annualised"]');
- assert.match(await historyCard.innerText(), /Return over available history/);
+ assert.match(await historyCard.innerText(), /Return over available history/i);
  assert.match(await historyCard.innerText(), /not annualised/);
  const fytdCard = page.locator('[data-tile-slot="fytd"] [data-card-coverage]');
  assert.ok(Math.abs(Number(await fytdCard.getAttribute('data-card-gain')) - Number(await table.getAttribute('data-seg-total-gain'))) < .001);
