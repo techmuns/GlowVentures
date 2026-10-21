@@ -9,10 +9,19 @@ const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/sector-return-details';
 await fs.mkdir(out, { recursive: true });
-const bundle = await build({ stdin: { contents: 'export { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB } from "./src/data/glowData.ts"; export { CAPTURE, stubShareFeed, PRICED_SHARES } from "./src/lib/__tests__/liveBook.ts";', resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
+const bundle = await build({ stdin: { contents: 'export { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB } from "./src/data/glowData.ts"; export { CAPTURE, stubShareFeed } from "./src/lib/__tests__/liveBook.ts"; export { shareCandidates, depositoryShareHoldings } from "./src/lib/depositoryShares.ts"; export { quoteSymbolFor } from "./src/lib/quotes.ts";', resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
 const book = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
-const positions = [...book.BOOK_POSITIONS, ...book.BOOK_POLYCAB, ...book.PRICED_SHARES];
 const quotes = book.stubShareFeed();
+// The API now keys quotes by exchange instrument where one is mapped. Preserve
+// the fixture's price/date, but answer on the same identity the client requests.
+for (const p of book.shareCandidates()) {
+  const quote = quotes.quotes[p.symbol];
+  const key = book.quoteSymbolFor(p);
+  if (quote && key) quotes.quotes[key] = { ...quote, tradedAt: quotes.asOf };
+}
+const pricedShares = book.depositoryShareHoldings(quotes, book.CAPTURE);
+assert.ok(pricedShares.some(p => p.costBasis === null || p.costUnavailable), 'fixture must price actual missing-cost depository holdings');
+const positions = [...book.BOOK_POSITIONS, ...book.BOOK_POLYCAB, ...pricedShares];
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 const checked = [];
 try {
