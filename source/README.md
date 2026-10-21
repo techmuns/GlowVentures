@@ -29,11 +29,18 @@ An upload is saved to this repository's `statement-inbox` branch and starts the
 `scripts/ingest/intake-uploads.mjs`), which does everything below by itself: it
 skips a file byte-identical to one already here, files each new one under
 `uploads-<date>/<provider>/` (the provider read off the statement), runs the
-pipeline and every CI gate, and lands on `main` only what passes. A file it
+pipeline and every required gate, and opens a `codex/*` PR for the complete
+verified version. CI and review precede merge; the existing deployment must
+contain the exact document versions before inbox bytes are cleared. A file it
 cannot read in full stays in the inbox, held, with the gate's reason on the
 Statement Library — the fix is the same as for a hand-dropped delivery (write
 the reader, or set the `GLOW_PDF_PASSWORDS` Actions secret for a sealed PDF),
 then Retry on the page.
+
+Matching, changed-format validation, source receipts and resumable publication
+are described in `docs/STATEMENT-PUBLICATION.md`. No new upload is a dashboard
+figure merely because its file was stored. A new layout that drops dates or
+misidentifies an account cannot replace the last verified book.
 
 **Every delivery, start to finish** — no passwords or OCR tools needed (a sealed
 statement keeps the reading a password-holding run archived):
