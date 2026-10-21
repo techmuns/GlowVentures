@@ -446,9 +446,22 @@ ok("a fund's dated calls are not copied into BOOK_CAPITAL_MOVES", callOnly.lengt
 // A call-only account the family's review dates is dated by the review's rows
 // (held above), so the call mark is asked only of the ones a statement dates.
 const callDated = callOnly.filter((a) => !REVIEWED.has(a));
-ok("…and on the record every purchase of a call-only account a statement dates is marked as a call",
-  callDated.length > 0 && callDated.every((a) => RECORD.filter((m) => m.accountId === a && m.direction === "in" && m.payoutKind == null).every((m) => m.fromCall === true)),
-  `${callDated.length}: ${callDated.join(", ")}`);
+if (callDated.length) {
+  ok("…and on the record every purchase of a call-only account a statement dates is marked as a call",
+    callDated.every((a) => RECORD.filter((m) => m.accountId === a && m.direction === "in" && m.payoutKind == null).every((m) => m.fromCall === true)),
+    `${callDated.length}: ${callDated.join(", ")}`);
+} else {
+  // EVIDENCED, NEVER SILENT. The statement-dated call-only folios — Founders ×2,
+  // Delphi, Carnelian Amritkaal — publish a typed record of their own since their
+  // Transaction Details are read, so the call-only accounts left are the review's
+  // (held on the next line). Every fund printing calls is then on a typed record
+  // or the review, and the call mark itself is held on the constructed fund above.
+  const withCalls = [...archive].filter(([, a]) => a.calls.length).map(([id]) => id);
+  ok("…and no call-only account a statement dates is left: every fund printing calls is on its own typed record or dated by the review",
+    withCalls.length > 0 && withCalls.every((a) => callOnly.includes(a) ? REVIEWED.has(a) : archive.get(a)!.typed.length > 0 || REVIEWED.has(a)),
+    withCalls.join(", "));
+  console.log("NOT CHECKED the call mark on a statement-dated call-only account, on this book: none is left — the constructed fund above holds it");
+}
 ok("…and every purchase of a call-only account the review dates is the review's",
   callOnly.filter((a) => REVIEWED.has(a)).every((a) => RECORD.filter((m) => m.accountId === a && m.direction === "in").every((m) => m.fromReview === true)),
   `${callOnly.filter((a) => REVIEWED.has(a)).length} account(s)`);

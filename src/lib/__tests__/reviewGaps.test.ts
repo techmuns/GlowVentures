@@ -374,16 +374,18 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   ok("…and the live book values some", live.length > 0, `${live.length}`);
 }
 
-// ── 6d. …NOR ONE A STATEMENT REPORTS FOR AN ENTITY THIS BOOK KEEPS OUT ─────
+// ── 6d. …NOR ONE THE HOPE INDIA TRUST'S OWN FOLIO STATEMENTS REPORT ───────
 //
 // The review files four Cash-tab lines under HOPE INDIA TRUST, and that
 // trust's own AMC folio statements are in the drop and report each of them.
-// The book keeps them out by decision — the trust is a separate taxpayer — so
-// no position carries them and no ISIN tier can see them: two of the four
-// print no ISIN at all. `REVIEW_LINES_KEPT_OUT` names each line's folio, and
-// what licenses it is the folio's own statement: held by the trust, kept out of
-// the book, and printing a holding at exactly the NAV the review prices the
-// line at on the same days.
+// Until Stage 10ev the book kept the trust out as a separate taxpayer; the
+// family consolidated it on 21 Oct 2026 as its own entity, so each folio is
+// now the trust's account in the book. No ISIN tier can see the lines — two
+// of the four print no ISIN at all — and no name tier reaches the AMC's
+// spellings. `REVIEW_LINES_KEPT_OUT` names each line's folio, and what
+// licenses it is the folio's own statement: held by the trust, the trust's
+// account in the book (never folded into a person's), and printing a holding
+// at exactly the NAV the review prices the line at on the same days.
 {
   const manifest = JSON.parse(readFileSync(path.join(process.cwd(), "public", "audit", "manifest.json"), "utf8")) as
     { docKey: string; accountNo?: string | null; owner?: string | null; reportType?: string | null }[];
@@ -421,7 +423,13 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
     const issues = manifest.filter((d) => d.accountNo === folio && d.reportType === "holdings");
     ok(`${name}: folio ${folio}'s statements are in the archive, held by the trust`,
       issues.length > 0 && issues.every((d) => trust.test(d.owner ?? "")), `${issues.length} issue(s)`);
-    ok(`${name}: …and kept out of the book by decision`, !accounts.has(folio));
+    // The family's decision of 21 Oct 2026: the folio is in the book, under the
+    // trust as its own entity — an account of anyone else's would mean the line
+    // had been folded into a person's net worth.
+    const inBook = BOOK_ACCOUNTS.filter((a) => a.accountNo === folio);
+    ok(`${name}: …and folio ${folio} is the trust's own account in the book`,
+      accounts.has(folio) && inBook.length > 0 && inBook.every((a) => a.ownerId === "hope-india-trust"),
+      inBook.map((a) => `${a.accountId} → ${a.ownerId}`).join("; ") || "(no account)");
     const navs = issues.flatMap((d) => {
       const f = path.join(process.cwd(), "public", "audit", d.docKey, "document.json");
       const h = existsSync(f) ? (JSON.parse(readFileSync(f, "utf8")).holdings ?? []) as { marketPrice?: number | null }[] : [];
@@ -619,17 +627,29 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   // also stop calling it "quantities only", and a check over that empty list
   // passes by asserting nothing — which is exactly what reintroducing the old
   // rule showed it doing.
-  const namesIn = (list: string) => list.split("; ")
+  // Since Stage 10ev every review holder has an account — the Hope India Trust,
+  // the last one without, was consolidated — and the report says so in words
+  // ("none" in the step, "no holder" in section D). Those words are the EMPTY
+  // list, read as such and asserted below, never a holder called "none".
+  const EMPTY_LIST = /^(?:none|no holder)$/;
+  const namesIn = (list: string) => (EMPTY_LIST.test(list.replace(/`/g, "").trim()) ? [] : list.split("; ")
     .map((s) => s.replace(/`/g, "").replace(/^the /, "").replace(/, a separate taxpayer.*$/, "").trim())
-    .filter(Boolean);
-  const stepNames = namesIn((step.match(/section B — (.*?)\. A holder with an account/) ?? [])[1] ?? "");
+    .filter(Boolean));
+  const stepList = (step.match(/section B — (.*?)\. A holder with an account/) ?? [])[1];
+  const stepNames = namesIn(stepList ?? "");
   const withAccount = rows.filter((r) => owners.has(r.bookAs));
+  // An empty list must be SAID, not inferred from a sentence that went missing.
+  ok("the bridge's holder step prints its list, or says it is empty", stepList !== undefined
+    && (absent.length > 0 || EMPTY_LIST.test(stepList.replace(/`/g, "").trim())), stepList ?? "(step text not found)");
   ok("…and it names each of them, and no one else", stepNames.length === absent.length
     && absent.every((r) => stepNames.includes(r.holder)), stepNames.join("; ") || "(none named)");
   ok("…and no holder the registry has an account for", withAccount.every((r) => !stepNames.includes(r.holder)),
     withAccount.filter((r) => stepNames.includes(r.holder)).map((r) => r.holder).join("; "));
   const D = REPORT.slice(REPORT.indexOf("## D. "), REPORT.indexOf("### D1."));
-  const dNames = namesIn((D.replace(/\s+/g, " ").match(/belongs to holders with no account in this book \((.*?)\), which the bridge/) ?? [])[1] ?? "");
+  const dList = (D.replace(/\s+/g, " ").match(/belongs to holders with no account in this book \((.*?)\), which the bridge/) ?? [])[1];
+  const dNames = namesIn(dList ?? "");
+  ok("section D prints its list of holders with no account, or says it is empty", dList !== undefined
+    && (absent.length > 0 || EMPTY_LIST.test(dList.replace(/`/g, "").trim())), dList ?? "(sentence not found)");
   ok("section D names the same holders as the bridge, and none the registry has an account for",
     dNames.length === stepNames.length && stepNames.every((n) => dNames.includes(n))
     && withAccount.every((r) => !dNames.includes(r.holder)), dNames.join("; ") || "(none named)");

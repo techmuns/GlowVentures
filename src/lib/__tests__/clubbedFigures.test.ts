@@ -125,9 +125,14 @@ console.log("\n── a section whose only costed lines are nil balances has no 
     valued.length > 0, `${valued.length} holdings`);
   const sleeve = { ...cash[0], securityKey: "cash", security: "Cash", assetClass: "Cash",
     costBasis: 0, costUnavailable: false, marketValue: 0, quantity: 0 } as Position;
-  const c = costedFigures([...cash, sleeve]);
+  // Built on the section's VALUED, UNCOSTED lines — the shape's other half. The
+  // whole Cash section is no longer that shape: since the mutual-fund folio
+  // ledgers are read, some of its liquid funds report a cost of their own
+  // (ABSL, HDFC Overnight, Mirae Liquid), and a costed line with value beside
+  // the sleeve is a real cost total, not a vacuous one.
+  const c = costedFigures([...valued, sleeve]);
   ok("a nil costed sleeve beside them gives a cost total that is absent, never ₹0",
-    vacuousShape([...cash, sleeve]) && c.vacuous && c.cost === null && c.unrealised === null,
+    vacuousShape([...valued, sleeve]) && c.vacuous && c.cost === null && c.unrealised === null,
     `₹${Math.round(c.uncosted.value).toLocaleString("en-IN")} uncosted`);
   // …and the book's own Cash section totals exactly what its lines report: no
   // cost where no line reports one, never a ₹0 standing in for that absence.

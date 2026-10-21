@@ -79,7 +79,7 @@
 // to ₹193.09 Cr. The guard below holds the move load-bearing.
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
-import { sum, sumOrNull, isValuedAtCost } from "@/lib/analytics";
+import { sum, sumOrNull, isValuedAtCost, isRedeemedToNil } from "@/lib/analytics";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals,
   unvaluedAccounts, unvaluedDrawn, COST_COVERAGE_MIN, capitalScope, distributionOf,
@@ -393,14 +393,29 @@ eq("the seven folios that publish no NAV", noNavFolios.length, 7);
 ok("…each carries the review's line in its own account",
   noNavFolios.every((c) => BOOK_POSITIONS.some((p) => p.accountId === c.accountId && p.review)),
   noNavFolios.map((c) => c.accountId).join(", "));
-eq("AIF accounts holding nothing", unvalued.length, 3);
-// The page lists the private-market ones: Motilal Oswal's Hedged Equity
-// strategy holds nothing too, and no statement or family placing puts it there.
+eq("AIF accounts holding nothing", unvalued.length, 2);
+// The page lists the private-market ones.
 eq("…of which are private-market funds", unvalued.filter((u) => u.side === "private").length, 2);
 eq("drawn against no valuation — no account holding nothing has drawn", unvaluedDrawn(unvalued), null);
 eq("of which publish no NAV", unvalued.filter((u) => u.kind === "no-nav").length, 0);
 eq("income-only folios", unvalued.filter((u) => u.kind === "income-only").length, 2);
-eq("redeemed to nil", unvalued.filter((u) => u.kind === "redeemed").length, 1);
+/**
+ * A FUND REDEEMED TO NIL IS NOT AN ACCOUNT HOLDING NOTHING ANY MORE. Motilal
+ * Oswal's Hedged Equity strategy was the one `redeemed` account here while its
+ * reader carried no holding. Its own Transaction Details run both classes' units
+ * to exactly nil, so it now carries them as MEASURED zeros — the way 3P's three
+ * classes and ASK's series are — and is listed with the closed positions, never
+ * with the accounts no statement values. The kinds stay unconflated: asserted on
+ * the account itself, so neither list can absorb it unnoticed.
+ */
+eq("redeemed to nil", unvalued.filter((u) => u.kind === "redeemed").length, 0);
+{
+  const hedged = BOOK_POSITIONS.filter((p) => p.accountId === "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574");
+  ok("…Hedged Equity carries both its classes as measured zeros, each redeemed to nil, and is no account holding nothing",
+    hedged.length === 2 && hedged.every((p) => isRedeemedToNil(p) && p.marketValue === 0)
+      && !unvalued.some((u) => u.account.accountId === "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574"),
+    hedged.map((p) => `${p.security} ${p.quantity} @ ${p.currentPrice}`).join("; "));
+}
 ok("every one carries the book's own reason verbatim", unvalued.every((u) => !!u.reason && u.reason.length > 20));
 // WHAT IS IN THE TOTAL FOR THOSE FUNDS IS THE REVIEW'S OWN FIGURE — at its
 // closing where the review values the line, at cost where it holds it at

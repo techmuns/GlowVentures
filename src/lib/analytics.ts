@@ -792,6 +792,22 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
   "invesco-india-arbitrage-fund-direct-plan-growth-af-d1": "Invesco September folio statements (INF205K01KR8) — Arbitrage Fund; the family's cash-equivalent rule",
   "invesco-india-arbitrage-fund-regular-plan-growth-af-gp": "Invesco September folio statement (INF205K01122) — Arbitrage Fund; the family's cash-equivalent rule",
   "motilal-oswal-liquid-fund-direct-plan-growth": "Motilal folio statement (INF247L01734) — Liquid Fund; the family's cash-equivalent rule",
+  /**
+   * HOPE INDIA TRUST'S FOLIOS (Stage 10ev) — in the book as its own entity since
+   * the family's decision of 21 Oct 2026 (shared/owners.mjs). Every scheme it
+   * holds is a liquid fund by the name its own statement prints; two Kotak
+   * schemes on the same folio are the same fund's Direct and Regular plans.
+   */
+  "aditya-birla-sun-life-liquid-fund-daily-idcw-direct-plan":
+    "ABSL folio 1019265797, CAMS listing of 6 Oct 2026 — \"Aditya Birla Sun Life Liquid Fund - Daily IDCW-Direct Plan\"; the family's cash-equivalent rule",
+  "absl-liquid-fund-direct-growth":
+    "ABSL folio 1038104611 — \"Aditya Birla Sun Life Liquid Fund - Growth-Direct Plan\" (portfolio summary: ABSL Liquid Fund - Direct-Growth); the family's cash-equivalent rule",
+  "kotak-liquid-fund-direct-plan-daily-idcw":
+    "Kotak folio 4295974 (INF174K01NH1) — Kotak Liquid Fund Direct Plan Daily IDCW; the family's cash-equivalent rule",
+  "kotak-liquid-fund-regular-plan-daily-idcw":
+    "Kotak folio 4295974 (INF174K01NL3) — Kotak Liquid Fund Regular Plan Daily IDCW, redeemed to nil; the family's cash-equivalent rule",
+  "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth":
+    "Mirae folio 70413280453 (INF769K01CM1) — Mirae Asset Liquid Fund (formerly Cash Management Fund) - Direct Growth; the family's cash-equivalent rule",
 };
 
 /**

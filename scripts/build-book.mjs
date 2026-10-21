@@ -1204,7 +1204,20 @@ const CAPITAL_KINDS = new Set(["contribution", "withdrawal"]);
  * other two tests, and failing those, withholds the return with the reason.
  */
 function capitalRecordFromInception(cashFlows) {
-  const rows = (cashFlows ?? []).filter((c) => c.date && CAPITAL_KINDS.has(c.kind));
+  const all = cashFlows ?? [];
+  /**
+   * A CLASS CAN BEGIN WITH A SWITCH (Stage 10ev). Motilal Oswal's Hedged Equity
+   * moved its whole B2 holding into F1 on 31 Jul 2024, and Buoyant's A4 class
+   * was born of A1 the same way: the new class's first row is the switch's
+   * INCOMING leg, not a contribution. It is the class's origin exactly as a
+   * first purchase is — provided the same day carries the equal and opposite
+   * outgoing leg of another class, so the money demonstrably came from inside
+   * the account and not from a purchase this record lacks.
+   */
+  const legIn = (c) => c.kind === "reclassification" && isNum(c.amount) && c.amount > 0 && !!c.securityKey
+    && all.some((o) => o.kind === "reclassification" && o.date === c.date && o.securityKey && o.securityKey !== c.securityKey
+      && isNum(o.amount) && Math.abs(o.amount + c.amount) <= 1);
+  const rows = all.filter((c) => c.date && (CAPITAL_KINDS.has(c.kind) || legIn(c)));
   const ins = rows.filter((c) => c.kind === "contribution");
   if (!ins.length) return false;
   const evidenced = (c) => isNum(c.balance) || !!c.seriesIssued;
@@ -1213,7 +1226,7 @@ function capitalRecordFromInception(cashFlows) {
   for (const c of [...rows].filter((r) => r.securityKey && isNum(r.units) && evidenced(r)).sort((a, b) => a.date.localeCompare(b.date))) {
     if (!first.has(c.securityKey)) first.set(c.securityKey, c);
   }
-  return [...first.values()].every((c) => c.kind === "contribution" && (isNum(c.balance)
+  return [...first.values()].every((c) => (c.kind === "contribution" || legIn(c)) && (isNum(c.balance)
     ? Math.abs(Math.abs(c.balance) - Math.abs(c.units)) <= UNIT_TIE
     : c.date === c.seriesIssued));
 }

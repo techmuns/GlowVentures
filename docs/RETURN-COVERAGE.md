@@ -1,6 +1,6 @@
 # Return source coverage
 
-17 of 76 accounts have verified opening values, dated external capital and a closing valuation.
+17 of 80 accounts have verified opening values, dated external capital and a closing valuation.
 
 Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.
 
@@ -16,6 +16,8 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | 360 ONE Private Wealth | 60066 | Ajay Jaisinghani | 2026-09-30 | — | this account's holdings statement of 2026-09-30 prints a nil portfolio — no holding rows and a total of nil. That is a measurement, not a missing statement |
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | 2026-07-31 | Complete through the selected date |
+| Aditya Birla Sun Life Mutual Fund | 1019265797 | Hope India Trust | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
+| Aditya Birla Sun Life Mutual Fund | 1038104611 | Hope India Trust | 2026-07-31 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Absolute Return Fund | 9039917111 | Ajay Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Absolute Return Fund | 9039917144 | Ankita Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | — | Opening valuation and complete dated cash flows are missing |
@@ -46,10 +48,12 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | Invesco Mutual Fund | 3041491081 | Bharat Jaisinghani | 2026-09-30 | — | Nil throughout the verified period through 2026-09-30; no invested capital to measure |
 | Invesco Mutual Fund | 3041491145 | Ajay Jaisinghani | 2026-09-30 | 2026-09-30 | Complete through the selected date |
 | Invesco Mutual Fund | 3041794916 | Ankita Jaisinghani | 2026-09-30 | — | Nil throughout the verified period through 2026-09-30; no invested capital to measure |
+| Kotak Mahindra Mutual Fund | 4295974 | Hope India Trust | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Kotak Mahindra Mutual Fund | 7125255 | Ajay Jaisinghani | 2026-09-30 | 2026-09-30 | Complete through the selected date |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-08-04 | — | Opening valuation and complete dated cash flows are missing |
 | Marathon Trends Advisory Pvt Ltd | 5110758 | Ankita Jaisinghani | 2026-09-09 | — | this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-22. What would fill it is the manager's own holding statement for this account |
 | Marathon Trends Advisory Pvt Ltd | 5110837 | Ajay Jaisinghani | 2026-09-09 | — | this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-23. What would fill it is the manager's own holding statement for this account |
+| Mirae Asset Mutual Fund | 70413280453 | Hope India Trust | 2026-10-06 | — | Opening valuation and complete dated cash flows are missing |
 | Molecule Ventures LLP | 7810404 | Ajay Jaisinghani | 2026-10-08 | — | Opening valuation and complete dated cash flows are missing |
 | Motilal Oswal Active Momentum Fund | 904168868444 | Ankita Jaisinghani | 2026-08-06 | — | Opening valuation and complete dated cash flows are missing |
 | Motilal Oswal Delphi Equity Fund | 9049241536 | Ajay Jaisinghani | 2026-06-30 | — | Opening valuation and complete dated cash flows are missing |
@@ -62,7 +66,7 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | Motilal Oswal Financial Services (demat) | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | — | every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement |
 | Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
-| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | — | every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement |
+| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | — | Nil throughout the verified period through 2026-07-31; no invested capital to measure |
 | Motilal Oswal Mutual Fund | 90414963315 | Ajay Jaisinghani | 2026-09-30 | 2026-09-30 | Complete through the selected date |
 | Neo Infra Income Opportunities Fund | 9039920536 | Ajay Jaisinghani | 2026-06-30 | — | Opening valuation and complete dated cash flows are missing |
 | Consolidated review (MOPWM) | MOPWM | Ajay Jaisinghani | — | — | Opening valuation and complete dated cash flows are missing |

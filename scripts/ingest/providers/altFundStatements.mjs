@@ -1772,6 +1772,8 @@ const LAYOUTS = [
     // realised gains only, nothing for unrealised. Recorded rather than
     // adjusted — we do not know the unrealised position or the rate.
     capitalFrom: moCapitalFrom,
+    /** Every Contribution, its Stamp Duty and the allotment it bought — see `moFlows`. */
+    flowsFrom: (text, warn) => moFlows(text, warn, (cls) => `Motilal Oswal Founders Fund Series II — Class ${cls}`),
     note: "the NAV on this statement is POST-TAX on REALISED gains only; the fund states that tax on unrealised gains is not in it and appears only in the redemption NAV",
   },
   {
@@ -2280,10 +2282,10 @@ const LAYOUTS = [
       }];
     },
     read: (r) => r,
-    security: (text) => {
-      const k = (/Class of Units\s*\/[\s\S]{0,40}?Class\s+([A-Z]\d?)\s*\//i.exec(text) ?? [])[1];
-      return k ? `Baring Private Equity India Fund 6 — Class ${k}` : "Baring Private Equity India Fund 6";
-    },
+    // One name for the holding and for every drawdown that bought it (`baringFlows`).
+    security: (text) => baringSecurity(text),
+    /** The drawdowns as the units they bought — see `baringFlows`. */
+    flowsFrom: baringFlows,
     folio: (text) => (/Folio\s*#\s*([A-Za-z0-9_]+)\s*:/i.exec(text) ?? [])[1] ?? null,
     holder: (text) => (/Folio\s*#\s*[A-Za-z0-9_]+\s*:\s*([^\n]+)/i.exec(text) ?? [])[1]?.trim() ?? null,
     asOf: (text) => toIso((/Statement of Account as on\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1]),
@@ -2353,6 +2355,8 @@ const LAYOUTS = [
     },
     read: (r) => r,
     security: "Carnelian Bharat Amritkaal Fund",
+    /** Each contribution, its stamp duty and the allotment it bought — see `amritkaalFlows`. */
+    flowsFrom: amritkaalFlows,
     folio: (text) => (/Folio No\s*:\s*(\d+)/i.exec(text) ?? [])[1] ?? null,
     /**
      * The holder sits on the line under the Personal Information header, with
@@ -2414,7 +2418,10 @@ const LAYOUTS = [
     provider: PROVIDERS.hedgedEquity,
     match: /Motilal\s+Oswal\s+Hedged\s+Equity\s+Multi\s+Factor/i,
     security: "Motilal Oswal Hedged Equity Multi Factor Strategy",
-    note: "both classes are REDEEMED TO NIL: Class B2's units were switched out on 31-07-2024 and Class F1's were paid out on 31-07-2025, and the Account Summary prints a dash for units and for valuation on each. The account is carried with no holding rather than a zero-valued one, and the family's consolidated review — struck 30 June 2026 — does not list this fund at all, which agrees",
+    // Two classes, so two names: B2 and F1 are different holdings and the dated
+    // record moves money between them (`moFlows`).
+    classSecurity: (cls) => `Motilal Oswal Hedged Equity Multi Factor Strategy — Class ${cls}`,
+    note: "both classes are REDEEMED TO NIL: Class B2's units were switched out into Class F1 on 31-07-2024 and Class F1's were paid out on 31-07-2025, and the Account Summary prints a dash for units and for valuation on each. Each class is carried as a measured zero only because its own Transaction Details run its units to exactly nil; the family's consolidated review — struck 30 June 2026 — does not list this fund at all, which agrees",
   }),
   {
     /**
@@ -2489,6 +2496,11 @@ const LAYOUTS = [
  * publishes no valuation does not get one invented, and a redeemed position
  * carried at its CONTRIBUTION with a zero value would book a ₹13 Cr unrealised
  * loss against money the fund has already paid back.
+ *
+ * ONE EXCEPTION, AND IT IS THE STATEMENT'S OWN: where the class's
+ * `Transaction Details` table ties row by row and runs its units to exactly nil
+ * (`moFlows`), the dash is a measured nil and the class is carried at quantity 0
+ * and its printed post-tax NAV, with no cost — see `nilRows` below.
  */
 const MO_DASH = String.raw`(?:-|[\d,]+(?:\.\d+)?)`;
 const MO_SUMMARY_ROW = new RegExp(
@@ -2559,13 +2571,339 @@ function moCapitalFrom(text, warn) {
   };
 }
 
-function motilalAccountSummary({ key, provider, match, security, note }) {
+// ── MOTILAL OSWAL'S `Transaction Details` — THE DATED RECORD UNDER THE SUMMARY ─
+//
+// Founders, Delphi and Hedged Equity print, under the Account Summary, one
+// `Transaction Details : <CLASS>` table per class: every Contribution, the Stamp
+// Duty taken from it and the Units Allotment it bought — and, on Hedged Equity,
+// a class SWITCH (B2's `Switch Out` funding F1's `Contribution` / `Switch in` on
+// 31-07-2024) and F1's `Unit Redemption-Payout` on 31-07-2025. The readers took
+// the summary row above them and the Contribution amounts as CALLS, and nothing
+// else: Hedged Equity, ₹13 Cr in and ₹11.19 Cr back, came out of this archive
+// with no holding and no dated row at all.
+//
+// THE `threePFlows` LICENCE, ON THIS LAYOUT. Nothing is published unless every
+// check passes, each struck on figures the statement prints:
+//
+//   1. Contribution − Stamp Duty = the allotment's Amount, TO THE PAISA, on every
+//      purchase (`Units Allotment` or `Switch in`);
+//   2. Units × Allotment NAV = Amount on every allotment, switch and redemption,
+//      within the precision the two are printed to;
+//   3. per class, the units allotted less the units switched out and redeemed
+//      reach the Account Summary's Unit — and where that Unit is a DASH, they
+//      reach exactly nil (the only reading under which a dash is a zero);
+//   4. per class, the Contribution rows sum to the Account Summary's own
+//      Contribution column, to the paisa;
+//   5. a `Switch Out` pairs with a `Switch in` purchase of ANOTHER class on the
+//      same day whose Contribution is the same rupees, and every `Switch in` is
+//      so paired: that pair is a RECLASSIFICATION — no money came in or went
+//      out — and is carried as both legs, outside `CAPITAL_KINDS`.
+//
+// A dated line of a type not declared here, or any line of the table nothing
+// claimed, withholds the whole record: a record with a row missing reads on
+// screen exactly like a complete one. A `Contribution - - -` row prints no
+// figure at all (B2's side of the switch) and is read as the nil it prints.
+//
+// WHAT IS EMITTED, row for row the conventions of this reader: one CONTRIBUTION
+// per external purchase (the gross as the amount, the allotment as `netAmount`,
+// the Stamp Duty as `expenses`); for a switch, a RECLASSIFICATION out (the Switch
+// Out's amount and units, negative) and a RECLASSIFICATION in (the switched-in
+// Contribution, its net and the Stamp Duty the transfer paid); one WITHDRAWAL per
+// payout, signed as the statement prints it. `balance` is the class's running
+// units after the row — computed, as `buoyantFlows` computes it, and licensed by
+// check 3, which ties the last of them to the Account Summary.
+const MO_TXN_HEAD = /^Transaction Details\s*:\s*(?:CLASS|Class)\s+([A-Z]\d?)\s*$/;
+const MO_TXN_COLS = /^Date\s+Transactions\s+Allotment\s+NAV\s+Units\s+Allotted\s+Amount\s+\(INR\)$/i;
+const MO_TXN_DATED = /^\d{2}-\d{2}-\d{4}\s+\S/;
+/** `06-08-2024 Contribution - - 10,00,00,000.00` · `31-07-2024 Contribution - - -` */
+const MO_TXN_CONTRIB = /^(\d{2}-\d{2}-\d{4}) (Contribution(?: Amount)?) - - (-|[\d,]+\.\d{2})$/i;
+/** `06-08-2024 Stamp Duty as per SEBI circular dated 30th June 2020 @ [0.005%] - - (4,999.75)` */
+const MO_TXN_STAMP = /^(\d{2}-\d{2}-\d{4}) (Stamp Duty as per SEBI circular dated 30th June 2020 @(?: [\d.]+%)?) - - \(([\d,]+\.\d{2})\)$/i;
+/** The rate a stamp-duty label wraps onto its own line: `0.005%`. */
+const MO_TXN_RATE_WRAP = /^[\d.]+%$/;
+/** `06-08-2024 Units Allotment 10.0000 99,99,500.025 9,99,95,000.25` · `Switch in` · `Switch Out` */
+const MO_TXN_UNITS = /^(\d{2}-\d{2}-\d{4}) (Units Allotment|Switch in|Switch Out) ([\d,]+\.\d+) ([\d,]+\.\d+) ([\d,]+\.\d{2})$/i;
+/** `31-07-2025 Unit Redemption-Payout 8.5353 (1,31,09,904.680) (11,18,96,969.42)` */
+const MO_TXN_PAYOUT = /^(\d{2}-\d{2}-\d{4}) (Unit Redemption-Payout) ([\d,]+\.\d+) \(([\d,]+\.\d+)\) \(([\d,]+\.\d{2})\)$/i;
+const moIso = (d) => toIso(d.replace(/-/g, "/"));
+const moMoney = (v) => Math.round((v ?? 0) * 100) / 100;
+const moUnits = (v) => Math.round((v ?? 0) * 1e3) / 1e3;
+
+/**
+ * The `Transaction Details` tables, line by line. Returns `{ rows, undeclared,
+ * unread }`: every dated line of a declared type as a row, every dated line of
+ * any other type by its date, and every other line of the tables that is not
+ * page furniture — the header block each page reprints, the column heading, or
+ * the rate a stamp-duty label wraps onto the next line.
+ */
+export function moTransactionDetails(text) {
+  const lines = text.split("\n").map((l) => l.trim());
+  const start = lines.findIndex((l) => MO_TXN_HEAD.test(l));
+  if (start < 0) return null;
+  let end = lines.findIndex((l, i) => i > start && /^Disclaimer\b/i.test(l));
+  if (end < 0) end = lines.length;
+  // THE PAGE HEADER, reprinted where a table runs onto the next page: a line
+  // printed in the table that the statement ALSO prints above its Account
+  // Summary is that header, never a row's label.
+  const head = text.slice(0, Math.max(0, text.search(/^Account Summary\b/im)));
+  const furniture = new Set(head.split("\n").map((l) => l.trim()).filter(Boolean));
+  const rows = [], undeclared = [], unread = [];
+  let cls = null;
+  let wrapOk = false;
+  for (const line of lines.slice(start, end)) {
+    if (!line) continue;
+    const h = MO_TXN_HEAD.exec(line);
+    if (h) { cls = h[1].toUpperCase(); wrapOk = false; continue; }
+    if (MO_TXN_COLS.test(line) || (furniture.has(line) && !MO_TXN_DATED.test(line))) continue;
+    if (MO_TXN_RATE_WRAP.test(line) && wrapOk) { wrapOk = false; continue; }
+    wrapOk = false;
+    if (!MO_TXN_DATED.test(line)) { unread.push(line); continue; }
+    let m;
+    if ((m = MO_TXN_CONTRIB.exec(line))) {
+      rows.push({ cls, date: moIso(m[1]), type: "contribution", label: m[2], amount: moDash(m[3]) });
+    } else if ((m = MO_TXN_STAMP.exec(line))) {
+      rows.push({ cls, date: moIso(m[1]), type: "stamp", label: "Stamp Duty", amount: n(m[3]) });
+      wrapOk = /@$/.test(m[2]);
+    } else if ((m = MO_TXN_UNITS.exec(line))) {
+      const type = /^Switch Out$/i.test(m[2]) ? "switch-out" : /^Switch in$/i.test(m[2]) ? "switch-in" : "allotment";
+      rows.push({ cls, date: moIso(m[1]), type, label: m[2], nav: n(m[3]), navPrinted: m[3], units: n(m[4]), amount: n(m[5]) });
+    } else if ((m = MO_TXN_PAYOUT.exec(line))) {
+      rows.push({ cls, date: moIso(m[1]), type: "payout", label: m[2], nav: n(m[3]), navPrinted: m[3], units: n(m[4]), amount: n(m[5]) });
+    } else {
+      undeclared.push(line.slice(0, 60));
+    }
+  }
+  return { rows, undeclared, unread };
+}
+
+/**
+ * The dated record, published only where every check above ties.
+ *
+ * @param securityOf  the holding's name for a class code — the same name the
+ *                    summary row is carried under, so a flow and its holding
+ *                    land on one securityKey.
+ */
+export function moFlows(text, warn, securityOf) {
+  const T = moTransactionDetails(text);
+  if (!T) return [];
+  if (T.undeclared.length) {
+    warn("transaction-type-not-declared",
+      `${T.undeclared.length} dated row(s) in Transaction Details carry a type this reader does not declare `
+      + `(${T.undeclared.join("; ")}); the dated record is withheld rather than published with rows missing from it`);
+    return [];
+  }
+  if (T.unread.length) {
+    warn("transaction-line-not-read",
+      `${T.unread.length} line(s) of Transaction Details belong to no row this reader read (${T.unread.map((l) => l.slice(0, 40)).join("; ")}); `
+      + "the dated record is withheld rather than published with something on the page walked past");
+    return [];
+  }
+  if (!T.rows.length) return [];
+
+  const fails = [];
+  // The Account Summary, per class: units (a dash is null) and Contribution.
+  const summary = new Map([...text.matchAll(MO_SUMMARY_ROW)].map((m) => [
+    m[1].replace(/^(?:CLASS|Class)\s+/, "").toUpperCase(),
+    { unitsPrinted: m[4].trim(), units: moDash(m[4]), contribution: n(m[6]), value: moDash(m[7]) },
+  ]));
+  const classes = [...new Set(T.rows.map((r) => r.cls))];
+  const names = new Map(classes.map((c) => [c, securityOf(c)]));
+  if (new Set(names.values()).size !== classes.length) {
+    fails.push(`the statement prints ${classes.length} classes (${classes.join(", ")}) and this layout carries them under `
+      + `${new Set(names.values()).size} name(s), so their records would merge`);
+  }
+  for (const c of summary.keys()) {
+    if (!classes.includes(c)) fails.push(`the Account Summary prints Class ${c} and Transaction Details prints no table for it`);
+  }
+
+  // Purchases: a Contribution, the Stamp Duty beside it, and what it bought.
+  const purchases = [];
+  const outs = [];
+  const payouts = [];
+  for (const cls of classes) {
+    const mine = T.rows.filter((r) => r.cls === cls);
+    let open = null;
+    const close = () => {
+      if (open) fails.push(`${open.contribution.date} Class ${cls}: a Contribution of ${open.contribution.amount} that buys no allotment`);
+      open = null;
+    };
+    for (const r of mine) {
+      if (r.type === "contribution") {
+        close();
+        if (r.amount !== null) open = { cls, date: r.date, contribution: r, stamps: [] };
+        continue;
+      }
+      if (r.type === "stamp") {
+        if (!open || open.date !== r.date) fails.push(`${r.date} Class ${cls}: a Stamp Duty with no Contribution beside it`);
+        else open.stamps.push(r);
+        continue;
+      }
+      if (r.type === "allotment" || r.type === "switch-in") {
+        if (!open || open.date !== r.date) {
+          fails.push(`${r.date} Class ${cls}: a ${r.label} that no Contribution on its day pays for`);
+          continue;
+        }
+        purchases.push({ ...open, allot: r });
+        open = null;
+        continue;
+      }
+      close();
+      (r.type === "switch-out" ? outs : payouts).push(r);
+    }
+    close();
+  }
+
+  // (1) and (2): each row's own arithmetic.
+  const bound = (r) => Math.abs(r.units) * 5e-5 + r.nav * 5e-4 + 0.01;
+  for (const p of purchases) {
+    const stamp = moMoney(p.stamps.reduce((t, s) => t + (s.amount ?? 0), 0));
+    const derived = moMoney(p.contribution.amount - stamp);
+    if (Math.abs(derived - moMoney(p.allot.amount)) > 0.005) {
+      fails.push(`${p.date} Class ${p.cls}: Contribution ${p.contribution.amount} less Stamp Duty ${stamp} is ${derived}, `
+        + `against the ${p.allot.label} of ${p.allot.amount}`);
+    }
+  }
+  for (const r of [...purchases.map((p) => p.allot), ...outs, ...payouts]) {
+    if (![r.nav, r.units, r.amount].every(isNumLocal)) {
+      fails.push(`${r.date} ${r.label} (Class ${r.cls}) does not print a NAV, a unit count and an amount`);
+    } else if (Math.abs(r.units * r.nav - r.amount) > bound(r)) {
+      fails.push(`${r.date} ${r.label} (Class ${r.cls}): ${r.units} units at ${r.nav} is not the printed ${r.amount}`);
+    }
+  }
+
+  // (5) a switch is two legs: out of one class, into another, same day, same rupees.
+  const switchIns = purchases.filter((p) => p.allot.type === "switch-in").map((p) => ({ ...p, used: false }));
+  const pairs = [];
+  for (const o of outs) {
+    const i = switchIns.find((p) => !p.used && p.date === o.date && p.cls !== o.cls
+      && Math.abs(moMoney(p.contribution.amount) - moMoney(o.amount)) <= 0.005);
+    if (!i) {
+      fails.push(`the ${o.date} Switch Out of Class ${o.cls} (${o.amount}) funds no Switch in of another class that day `
+        + "for the same rupees, so where the money went is not on this statement");
+      continue;
+    }
+    i.used = true;
+    pairs.push({ out: o, in: i });
+  }
+  for (const i of switchIns.filter((p) => !p.used)) {
+    fails.push(`the ${i.date} Switch in to Class ${i.cls} (${i.contribution.amount}) is funded by no Switch Out of another `
+      + "class that day for the same rupees, so what paid for it is not on this statement");
+  }
+
+  // (3) and (4): per class, against the Account Summary.
+  for (const cls of classes) {
+    const s = summary.get(cls);
+    if (!s) { fails.push(`Transaction Details prints Class ${cls} and the Account Summary prints no row for it`); continue; }
+    const run = moUnits(
+      purchases.filter((p) => p.cls === cls).reduce((t, p) => t + p.allot.units, 0)
+      - [...outs, ...payouts].filter((r) => r.cls === cls).reduce((t, r) => t + r.units, 0));
+    if (s.units === null) {
+      if (s.value !== null || Math.abs(run) > 0.0005) {
+        fails.push(`Class ${cls}: the Account Summary prints a dash for Unit` + (s.value !== null ? ` beside a valuation of ${s.value}` : "")
+          + `, and the table's units run to ${run} — a dash is nil only where the record reaches nil`);
+      }
+    } else if (Math.abs(run - s.units) > 0.0005) {
+      fails.push(`Class ${cls}: the table's units run to ${run} against the Account Summary's ${s.unitsPrinted}`);
+    }
+    const paid = moMoney(purchases.filter((p) => p.cls === cls).reduce((t, p) => t + p.contribution.amount, 0));
+    if (s.contribution === null || Math.abs(paid - s.contribution) > 0.005) {
+      fails.push(`Class ${cls}: the Contribution rows sum to ${paid} against the Account Summary's Contribution of ${s.contribution}`);
+    }
+  }
+
+  if (fails.length) {
+    warn("dated-table-does-not-tie", "Transaction Details is not published for this account: " + fails.join("; "));
+    return [];
+  }
+
+  // In date order; on a switch day the units leave one class before they arrive
+  // in the other, and within a class the statement's own order stands.
+  const order = new Map(T.rows.map((r, i) => [r, i]));
+  const events = [
+    ...purchases.map((p) => ({ date: p.date, leg: p.allot.type === "switch-in" ? 1 : 2, at: order.get(p.allot), p })),
+    ...outs.map((r) => ({ date: r.date, leg: 0, at: order.get(r), r })),
+    ...payouts.map((r) => ({ date: r.date, leg: 3, at: order.get(r), r })),
+  ].sort((a, b) => a.date.localeCompare(b.date) || a.leg - b.leg || a.at - b.at);
+  const run = new Map();
+  const after = (cls, du) => { const v = moUnits((run.get(cls) ?? 0) + du); run.set(cls, v); return v; };
+  return events.map((e) => {
+    if (e.p) {
+      const p = e.p;
+      const stamp = moMoney(p.stamps.reduce((t, s) => t + (s.amount ?? 0), 0));
+      const sw = p.allot.type === "switch-in" ? pairs.find((x) => x.in.allot === p.allot) : null;
+      return makeCashFlow({
+        date: p.date,
+        // The statement's own word for the row: what the family paid in is its
+        // Contribution; what a switch delivered is its Switch in.
+        description: sw ? p.allot.label : p.contribution.label,
+        security: names.get(p.cls),
+        kind: sw ? "reclassification" : "contribution",
+        amount: p.contribution.amount,
+        netAmount: p.allot.amount,
+        expenses: stamp,
+        units: p.allot.units,
+        balance: after(p.cls, p.allot.units),
+        notes: sw
+          ? `Switch in at NAV ${p.allot.navPrinted}, funded by the Switch Out of Class ${sw.out.cls} the same day for the same `
+            + `rupees (printed as a Contribution of ${p.contribution.amount} on this class); Stamp Duty ${stamp} on the transfer`
+          : `${p.allot.label} at NAV ${p.allot.navPrinted}; Stamp Duty ${stamp} as printed beside it`,
+      });
+    }
+    const r = e.r;
+    if (r.type === "switch-out") {
+      const sw = pairs.find((x) => x.out === r);
+      return makeCashFlow({
+        date: r.date, description: r.label, security: names.get(r.cls), kind: "reclassification",
+        amount: -r.amount, units: -r.units, balance: after(r.cls, -r.units),
+        notes: `Switch Out at NAV ${r.navPrinted}; switched into Class ${sw.in.cls} the same day for the same rupees`,
+      });
+    }
+    return makeCashFlow({
+      date: r.date, description: r.label, security: names.get(r.cls), kind: "withdrawal",
+      amount: -r.amount, units: -r.units, balance: after(r.cls, -r.units),
+      notes: `redemption NAV ${r.navPrinted}; the statement prints the units and the amount in parentheses`,
+    });
+  });
+}
+
+/** The classes whose Account Summary prints a dash and whose own dated record ties and reaches nil. */
+function moClassesWitnessedNil(text, securityOf) {
+  const flows = moFlows(text, () => {}, securityOf);
+  const nil = new Set();
+  for (const m of text.matchAll(MO_SUMMARY_ROW)) {
+    const cls = m[1].replace(/^(?:CLASS|Class)\s+/, "").toUpperCase();
+    if (moDash(m[4]) != null || moDash(m[7]) != null) continue;
+    const mine = flows.filter((f) => f.security === securityOf(cls) && f.balance !== null);
+    if (mine.length && mine.at(-1).balance === 0) nil.add(cls);
+  }
+  return nil;
+}
+
+function motilalAccountSummary({ key, provider, match, security, classSecurity = null, note }) {
   const rows = (text) => [...text.matchAll(MO_SUMMARY_ROW)];
+  const codeOf = (m) => m[1].replace(/^(?:CLASS|Class)\s+/, "").toUpperCase();
+  /** One name per class where the layout names classes; otherwise the fund's one name. */
+  const securityOf = (cls) => (classSecurity ? classSecurity(cls) : security);
   // A class with neither units nor a valuation is CLOSED and contributes
   // nothing — not a holding, not a commitment. A dash is null, never zero.
   const liveRows = (text) => rows(text).filter((m) => moDash(m[4]) != null || moDash(m[7]) != null);
+  /**
+   * …UNLESS THE STATEMENT'S OWN DATED RECORD TAKES IT TO NIL. A dash beside a
+   * dash is not a measurement; a dash beside a Transaction Details table whose
+   * units, tied row by row (`moFlows`), run to exactly nothing IS one — the
+   * case ASK's dash beside three printed 0.00 valuations makes. Such a class is
+   * carried as a MEASURED zero at the post-tax NAV the summary prints for it,
+   * with no cost (its Contribution against a zero value would book the whole of
+   * it as a loss against money already paid back), which is what
+   * `isRedeemedToNil` reads as a closed position.
+   */
+  const nilRows = (text) => {
+    const nil = moClassesWitnessedNil(text, securityOf);
+    return rows(text).filter((m) => moDash(m[4]) == null && moDash(m[7]) == null && nil.has(codeOf(m)));
+  };
   return {
-    key, provider, match, security,
+    key, provider, match,
+    security: classSecurity ? (_t, r) => classSecurity(r.code) : security,
     engagement: "AIF",
     providerEngagement: "AIF — the statement prints a commitment, a called/received split and a post-tax NAV per class",
     assetClass: "AIF",
@@ -2576,17 +2914,39 @@ function motilalAccountSummary({ key, provider, match, security, note }) {
      * statement actually states.
      */
     capitalFrom: moCapitalFrom,
-    rowsFrom: (text) => liveRows(text)
-      .map((m) => ({
-        unitClass: m[1].replace(/\s+/g, " ").trim(),
-        navDate: toIso(m[2]),
-        marketPrice: n(m[3]),
-        quantity: moDash(m[4]),
-        commitmentAmount: n(m[5]),
-        totalCost: n(m[6]),
-        printedValue: moDash(m[7]),
-      })),
+    rowsFrom: (text) => {
+      // Each call matches afresh, so rows are joined on their CLASS, never on
+      // the match object.
+      const live = new Set(liveRows(text).map(codeOf));
+      const nil = new Set(nilRows(text).map(codeOf));
+      return rows(text).filter((m) => live.has(codeOf(m)) || nil.has(codeOf(m))).map((m) => (live.has(codeOf(m))
+        ? {
+          code: codeOf(m),
+          unitClass: m[1].replace(/\s+/g, " ").trim(),
+          navDate: toIso(m[2]),
+          marketPrice: n(m[3]),
+          quantity: moDash(m[4]),
+          commitmentAmount: n(m[5]),
+          totalCost: n(m[6]),
+          printedValue: moDash(m[7]),
+        }
+        // A MEASURED nil (see `nilRows`): no units, the post-tax NAV and its
+        // date as printed, and no cost and no printed value — the summary
+        // prints a dash in both, and a dash is never written as a figure.
+        : {
+          code: codeOf(m),
+          unitClass: m[1].replace(/\s+/g, " ").trim(),
+          navDate: toIso(m[2]),
+          marketPrice: n(m[3]),
+          quantity: 0,
+        }));
+    },
     read: (r) => r,
+    /** The dated record under the summary — see `moFlows`. */
+    flowsFrom: (text, warn) => moFlows(text, warn, securityOf),
+    infoFrom: (holdings) => holdings.some((h) => h.quantity === 0)
+      ? ["redeemed-to-nil", "a class this statement prints with a dash for Unit and for Valuation is carried as a MEASURED zero at the post-tax NAV it prints, because its own Transaction Details — tied row by row — run its units to exactly nil; what the family received is the dated payout, not a value, and no cost is carried against the zero"]
+      : null,
     /**
      * WHY THE ACCOUNT IS EMPTY, in the statement's own terms. Without this the
      * driver reports `summary-row-not-matched` — "the columns did not line up" —
@@ -2625,7 +2985,10 @@ function motilalAccountSummary({ key, provider, match, security, note }) {
       return { committed, drawn, undrawn: committed != null && drawn != null ? Math.round((committed - drawn) * 100) / 100 : null };
     },
     verify: (text, holdings, warn) => {
-      const closed = rows(text).filter((m) => moDash(m[4]) == null && moDash(m[7]) == null);
+      // A closed class carried as a measured nil is the `redeemed-to-nil` note,
+      // not this: only a dash the dated record does NOT take to nil is named here.
+      const nil = new Set(nilRows(text).map(codeOf));
+      const closed = rows(text).filter((m) => moDash(m[4]) == null && moDash(m[7]) == null && !nil.has(codeOf(m)));
       if (closed.length) {
         warn("class-redeemed-to-nil",
           `${closed.map((m) => m[1].trim()).join(", ")} print no units and no valuation — the class holds nothing. Its contribution is NOT carried as a cost against a zero value, which would book the whole of it as a loss against money the fund has already returned.`);
@@ -2790,6 +3153,231 @@ function baringPayouts(text, warn) {
     { kind: "income", total: E - redemption, what: "Distribution (E)" },
     { kind: "equalisation", total: null, what: "compensating-contribution total", rowsWitness: true },
   ], warn);
+}
+
+// ── BARING'S `CAPITAL TRANSACTIONS` — THE DRAWDOWNS AS THE UNITS THEY BOUGHT ──
+//
+// `DRAWDOWN 1 03/10/2024 09/10/2024 1,00,000 65.00 65,00,000` — the call's
+// transaction date, the date units were allotted against it, the face value,
+// the units and the rupees. The calls were read (`capitalFrom`) and the units
+// were not, so the fund's 202.50 units had no dated contribution behind them.
+//
+// Published only where the statement's own algebra ties every row: each row's
+// units × the face value are its rupees; the rows' units are `Balance Units I`;
+// their rupees are `Capital Contribution C` and `Balance Capital H`; and no
+// capital has been distributed (`E` and `F` print a dash) — a redemption would
+// take units out on a row this table does not declare. A dated line in the table
+// of any other shape, or a line nothing claimed, withholds the record.
+const BARING_DRAWDOWN = /^DRAWDOWN (\d+) (\d{2}\/\d{2}\/\d{4}) (\d{2}\/\d{2}\/\d{4}) ([\d,]+(?:\.\d+)?) ([\d,]+(?:\.\d+)?) ([\d,]+(?:\.\d+)?)$/;
+const baringSecurity = (text) => {
+  const k = (/Class of Units\s*\/[\s\S]{0,40}?Class\s+([A-Z]\d?)\s*\//i.exec(text) ?? [])[1];
+  return k ? `Baring Private Equity India Fund 6 — Class ${k}` : "Baring Private Equity India Fund 6";
+};
+const baringIsin = (text) => (/Class\s+[A-Z]\d?\s*\/\s*(INF[A-Z0-9]{9})/i.exec(text) ?? [])[1] ?? null;
+
+export function baringFlows(text, warn) {
+  const lines = text.split("\n").map((l) => l.trim());
+  const start = lines.findIndex((l) => /^CAPITAL TRANSACTIONS\b/.test(l));
+  if (start < 0) return [];
+  let end = lines.findIndex((l, i) => i > start && /^INCOME TRANSACTIONS\b/.test(l));
+  if (end < 0) end = lines.length;
+  const rows = [], undeclared = [], unread = [];
+  for (const line of lines.slice(start + 1, end)) {
+    if (!line || /^DATE REDEMPTION DATE NAV \(INR\)$/i.test(line)) continue;
+    const m = BARING_DRAWDOWN.exec(line);
+    if (m) {
+      rows.push({ k: m[1], date: toIso(m[2]), allotted: toIso(m[3]), facePrinted: m[4], face: n(m[4]), units: n(m[5]), amount: n(m[6]) });
+    } else if (/\d{2}\/\d{2}\/\d{4}/.test(line)) undeclared.push(line.slice(0, 50));
+    else unread.push(line.slice(0, 50));
+  }
+  if (undeclared.length || unread.length) {
+    warn(undeclared.length ? "transaction-type-not-declared" : "transaction-line-not-read",
+      `the Capital Transactions table carries ${undeclared.length ? `dated row(s) of a type this reader does not declare (${undeclared.join("; ")})` : `line(s) no row claimed (${unread.join("; ")})`}; `
+      + "the dated record is withheld rather than published with rows missing from it");
+    return [];
+  }
+  if (!rows.length) return [];
+  const fig = (re) => { const m = re.exec(text); return m ? n(m[1]) : null; };
+  const C = fig(/Capital Contribution C\s+([\d,]+)/i);
+  const H = fig(/Balance Capital H = C - E - F\s+([\d,]+)/i);
+  const I = n((/Balance Units I = H \/ Face Value\s*-\s*([\d,]+\.?\d*)/i.exec(text) ?? [])[1]);
+  const fails = [];
+  for (const r of rows) {
+    if (![r.face, r.units, r.amount].every(isNumLocal)) fails.push(`Drawdown ${r.k} does not print a face value, units and an amount`);
+    else if (Math.abs(r.units * r.face - r.amount) > 0.5) fails.push(`Drawdown ${r.k}: ${r.units} units at face value ${r.face} is not the printed ${r.amount}`);
+  }
+  const units = Math.round(rows.reduce((t, r) => t + (r.units ?? 0), 0) * 1e4) / 1e4;
+  const paid = rows.reduce((t, r) => t + (r.amount ?? 0), 0);
+  if (I === null || Math.abs(units - I) > 0.005) fails.push(`the drawdowns allot ${units} units against Balance Units I of ${I ?? "—"}`);
+  if (C === null || Math.abs(paid - C) > 1) fails.push(`the drawdowns sum to ${paid} against Capital Contribution C of ${C ?? "—"}`);
+  if (H !== null && Math.abs(paid - H) > 1) fails.push(`the drawdowns sum to ${paid} against Balance Capital H of ${H}`);
+  for (const [label, re] of [["E", /Capital Distribution \(Re-callable\)\s*\d?\s*E\s+(\S+)/i], ["F", /Capital Distribution \(Not Re-callable\)\s*\d?\s*F\s+(\S+)/i]]) {
+    const v = (re.exec(text) ?? [])[1];
+    if (v !== "-") fails.push(`Capital Distribution ${label} prints ${v ?? "nothing readable"} — capital has left the fund on a row this table does not declare`);
+  }
+  if (fails.length) {
+    warn("dated-table-does-not-tie", "the Capital Transactions table is not published for this folio: " + fails.join("; "));
+    return [];
+  }
+  const security = baringSecurity(text), isin = baringIsin(text);
+  let run = 0;
+  return rows.sort((a, b) => a.date.localeCompare(b.date)).map((r) => {
+    run = Math.round((run + r.units) * 1e4) / 1e4;
+    return makeCashFlow({
+      date: r.date,
+      description: `Drawdown ${r.k}`,
+      security, isin,
+      kind: "contribution",
+      amount: r.amount,
+      // ONE ROW, ITS OWN NET (Neo Infra's reading): its units at the face value
+      // ARE its rupees, so every rupee of it bought units. No charge is printed.
+      netAmount: r.amount,
+      units: r.units,
+      balance: run,
+      notes: `transaction date as printed; units allotted ${r.allotted} at face value ${r.facePrinted}; the statement prints no charge on the row`,
+    });
+  });
+}
+
+// ── CARNELIAN AMRITKAAL'S `Transaction Details` ─────────────────────────────
+//
+//   31-Aug-2025 Contribution Amount CLASS A2 - 10,00,00,000.00 - - -
+//   31-Aug-2025 Stamp Duty @ 0.005% CLASS A2 - (4,999.75) - - -
+//   31-Aug-2025 Unit Allotment CLASS A2 - - 11.3953 87,75,109.058 9,99,95,000.25
+//
+// Date, description, class, Gross Distribution, Contribution, Allotment NAV,
+// Units, Net Contribution. The 31-Dec-2025 allotment was bought by a ₹5 Cr
+// DRAWDOWN plus ₹2,925.10 of `Net Income Earned From MF Investments` the fund
+// reinvested (its label wraps above and below the figures), less the stamp duty
+// — and that income row reprints the SAME allotment's NAV and units, which are
+// therefore not counted twice. Published only where, per date, the money in
+// less the stamp duty is the allotment's Net Contribution to the paisa, units ×
+// NAV is that net, and the statement's own summary agrees: the allotments' units
+// are the Closing Unit Balance, the external rows are Capital Called, the
+// external rows plus the reinvested income are Amount Contributed, and the nets
+// are Net Contribution. A Gross Distribution would be money OUT, which this
+// reader has no declared row for, so it refuses.
+const AK_ROW = /^(\d{1,2}-[A-Za-z]{3}-\d{4}) (?:(.+?) )?CLASS (\S+) (-|[\d,]+\.\d{2}) (-|\(?[\d,]+\.\d{2}\)?) (-|[\d,]+\.\d+) (-|[\d,]+\.\d+) (-|[\d,]+\.\d{2})$/;
+const AK_TYPES = [
+  [/^Contribution Amount$/i, "contribution"],
+  [/^DRAWDOWN Transaction$/i, "contribution"],
+  [/^Stamp Duty @ [\d.]+%$/i, "stamp"],
+  [/^Unit Allotment$/i, "allotment"],
+  [/^Net Income Earned From MF Investments$/i, "income"],
+];
+const AK_FURNITURE = [
+  /^Carnelian Bharat Amritkaal Fund$/i,
+  /^Transaction Gross Allotment$/i,
+  /^Transaction Description Class Distribution \(INR\) Units Allotted Net Contribution$/i,
+  /^Date Contribution \(INR\) NAV \(INR\)$/i,
+];
+const akDash = (v) => (String(v).trim() === "-" ? null : n(v));
+
+export function amritkaalFlows(text, warn) {
+  const lines = text.split("\n").map((l) => l.trim());
+  const start = lines.findIndex((l) => /^Transaction Details$/i.test(l));
+  if (start < 0) return [];
+  let end = lines.findIndex((l, i) => i > start && /^Closing Unit Balance\b/i.test(l));
+  if (end < 0) end = lines.length;
+  const body = lines.slice(start + 1, end).filter((l) => l && !AK_FURNITURE.some((re) => re.test(l)));
+  const dated = (l) => /^\d{1,2}-[A-Za-z]{3}-\d{4}\s/.test(l);
+  const used = new Set();
+  const rows = [], undeclared = [];
+  body.forEach((line, i) => {
+    if (!dated(line)) return;
+    used.add(i);
+    const m = AK_ROW.exec(line);
+    if (!m) { undeclared.push(line.slice(0, 50)); return; }
+    let label = (m[2] ?? "").trim();
+    if (!label) {
+      // A label too long for its column prints above and below the figures.
+      const near = [i - 1, i + 1].filter((j) => j >= 0 && j < body.length && !dated(body[j]) && !used.has(j));
+      near.forEach((j) => used.add(j));
+      label = near.map((j) => body[j]).join(" ").replace(/\s+/g, " ").trim();
+    }
+    const type = AK_TYPES.find(([re]) => re.test(label))?.[1] ?? null;
+    if (!type) { undeclared.push(`${m[1]} ${label || "(no label)"}`); return; }
+    rows.push({ date: toIso(m[1]), label, type, cls: m[3], distribution: akDash(m[4]), contribution: akDash(m[5]),
+      nav: akDash(m[6]), navPrinted: m[6], units: akDash(m[7]), net: akDash(m[8]) });
+  });
+  const unread = body.filter((l, i) => !used.has(i));
+  if (undeclared.length || unread.length) {
+    warn(undeclared.length ? "transaction-type-not-declared" : "transaction-line-not-read",
+      `Transaction Details carries ${undeclared.length ? `dated row(s) of a type this reader does not declare (${undeclared.join("; ")})` : `line(s) no row claimed (${unread.map((l) => l.slice(0, 40)).join("; ")})`}; `
+      + "the dated record is withheld rather than published with rows missing from it");
+    return [];
+  }
+  if (!rows.length) return [];
+
+  const fails = [];
+  const money = (v) => Math.round((v ?? 0) * 100) / 100;
+  if (new Set(rows.map((r) => r.cls)).size !== 1) fails.push(`the table prints ${new Set(rows.map((r) => r.cls)).size} classes and the holding is carried under one name`);
+  for (const r of rows.filter((x) => x.distribution !== null)) fails.push(`${r.date} ${r.label} prints a Gross Distribution of ${r.distribution} — money out, on a row this reader does not declare`);
+  const byDate = new Map();
+  for (const r of rows) byDate.set(r.date, [...(byDate.get(r.date) ?? []), r]);
+  const buys = [];
+  for (const [date, day] of [...byDate.entries()].sort()) {
+    const of = (t) => day.filter((r) => r.type === t);
+    const [ins, stamps, incomes, allots] = ["contribution", "stamp", "income", "allotment"].map(of);
+    if (allots.length !== 1 || !ins.length) {
+      fails.push(`${date}: ${allots.length} Unit Allotment(s) against ${ins.length} contribution row(s) — which money bought which units is not printed`);
+      continue;
+    }
+    const a = allots[0];
+    const gross = money(ins.reduce((t, r) => t + (r.contribution ?? NaN), 0));
+    const stamp = money(stamps.reduce((t, r) => t + Math.abs(r.contribution ?? NaN), 0));
+    const income = money(incomes.reduce((t, r) => t + (r.contribution ?? NaN), 0));
+    if (![gross, stamp, income, a.net, a.nav, a.units].every(isNumLocal)) { fails.push(`${date}: a figure did not read as a number`); continue; }
+    if (Math.abs(money(gross + income - stamp) - money(a.net)) > 0.005) {
+      fails.push(`${date}: ${gross} in plus ${income} reinvested less ${stamp} stamp duty is ${money(gross + income - stamp)}, against a Net Contribution of ${a.net}`);
+    }
+    if (Math.abs(a.units * a.nav - a.net) > a.units * 5e-5 + a.nav * 5e-4 + 0.01) {
+      fails.push(`${date}: ${a.units} units at ${a.nav} is not the printed ${a.net}`);
+    }
+    for (const r of incomes) {
+      if (r.units !== a.units || r.nav !== a.nav || r.net !== r.contribution) {
+        fails.push(`${date}: the reinvested income row prints ${r.units} units at ${r.nav} and a net of ${r.net} — not the same-day allotment reprinted, so what it bought is not printed`);
+      }
+    }
+    buys.push({ date, ins, gross, stamp, income, a });
+  }
+  const summary = /Capital Commitment \(INR\)[\s\S]{0,140}?\n\s*([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})/i.exec(text);
+  const closing = n((/Closing Unit Balance\s*:[\s\S]{0,200}?\n\s*([\d,]+\.\d+)/i.exec(text) ?? [])[1]);
+  const [called, contributed, netContribution] = summary ? [n(summary[2]), n(summary[3]), n(summary[4])] : [null, null, null];
+  const tot = (f) => money(buys.reduce((t, b) => t + f(b), 0));
+  const checks = [
+    ["Closing Unit Balance", closing, Math.round(buys.reduce((t, b) => t + b.a.units, 0) * 1e3) / 1e3, 0.0005],
+    ["Capital Called", called, tot((b) => b.gross), 0.005],
+    ["Amount Contributed", contributed, tot((b) => b.gross + b.income), 0.005],
+    ["Net Contribution", netContribution, tot((b) => b.a.net), 0.005],
+  ];
+  for (const [what, printed, got, tie] of checks) {
+    if (printed === null || Math.abs(printed - got) > tie) fails.push(`the rows reach ${got} against the ${what} of ${printed ?? "—"} the statement prints`);
+  }
+  if (fails.length) {
+    warn("dated-table-does-not-tie", "Transaction Details is not published for this folio: " + fails.join("; "));
+    return [];
+  }
+  let run = 0;
+  return buys.map((b) => {
+    run = Math.round((run + b.a.units) * 1e3) / 1e3;
+    return makeCashFlow({
+      date: b.date,
+      description: b.ins.map((r) => r.label).join(" · "),
+      security: "Carnelian Bharat Amritkaal Fund",
+      kind: "contribution",
+      // What left the family's bank, beside what bought units — they differ by
+      // the stamp duty and, on 31-Dec-2025, by income the fund reinvested
+      // (`buoyantFlows`' reading of a reinvested Gain Distr.).
+      amount: b.gross,
+      netAmount: b.a.net,
+      expenses: b.stamp,
+      units: b.a.units,
+      balance: run,
+      notes: `Unit Allotment at NAV ${b.a.navPrinted}; Stamp Duty ${b.stamp} as printed`
+        + (b.income ? `; includes the ${b.income} Net Income Earned From MF Investments the fund reinvested in the same allotment` : ""),
+    });
+  });
 }
 
 /**

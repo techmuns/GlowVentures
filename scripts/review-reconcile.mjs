@@ -753,9 +753,15 @@ say();
 say("Every book figure here is ex-promoter by construction: Polycab is ring-fenced into");
 say("`BOOK_POLYCAB` and reaches no per-owner total. Section A states it once, on its own.");
 say();
-say("`Hope India Trust` is a review column and deliberately NOT in this book: its four");
-say("mutual-fund folios are filed by each AMC as `Status : Trust`, a separate taxpayer. One");
-say("entry in `shared/owners.mjs` reverses that if the family says it belongs here.");
+if (OWNERS_WITH_ACCOUNT.has("Hope India Trust")) {
+  say("`Hope India Trust` is in this book as its own entity, by the family's decision of 21 Oct 2026");
+  say("(`shared/owners.mjs`): its four mutual-fund folios are filed by each AMC as `Status : Trust`, a");
+  say("separate taxpayer, and are carried under the trust, never folded into a person.");
+} else {
+  say("`Hope India Trust` is a review column with no account in this book: its mutual-fund folios");
+  say("are filed by each AMC as `Status : Trust`, a separate taxpayer, and `shared/owners.mjs` does not");
+  say("register it.");
+}
 say();
 for (const q of quantityOnlyHolders) {
   const accts = q.accounts.map((a) => `${a.provider} ${a.accountNo}`).join(", ");
@@ -821,6 +827,10 @@ const H_OWNER = new Map([
   ["Bharat Jaisinghani Family Trust II", "bharat-jaisinghani-family-trust-2"],
   ["Bharat Jaisinghani Family Trust III", "bharat-jaisinghani-family-trust-3"],
   ["Bharat Jaisinghani Family Trust", "bharat-jaisinghani-family-trust"],
+  // In the book as its own entity since the family's decision of 21 Oct 2026
+  // (shared/owners.mjs, Stage 10ev): its closings are read on its own folio
+  // statements like every other holder's, no longer filed "kept out".
+  ["HOPE INDIA TRUST", "hope-india-trust"], ["Hope India Trust", "hope-india-trust"],
 ]);
 /**
  * Mirror of `REVIEW_LINE_ISINS` in src/lib/reviewGaps.ts — kept in step by hand,
@@ -946,13 +956,31 @@ const hMovesText = (roll) => roll.between.map((m) => `${m.units < 0 ? "−" : "+
 const hSame = (a, b, dp = 3) => Math.abs(a - b) < Math.max(0.001, 0.5 * 10 ** -Math.min(dp, 3) + 1e-9);
 const hDays = (a, b) => Math.round(Math.abs(Date.parse(a) - Date.parse(b)) / 864e5);
 /** Keys and ISINs one review product names, widened through each other. */
+/**
+ * Mirror of `REVIEW_LINES_KEPT_OUT` in src/lib/reviewGaps.ts (kept in step by
+ * hand, like H_LINE_ISINS): Hope India Trust's four Cash-tab lines, keyed on the
+ * FOLIO because two of their statements print no ISIN. Since Stage 10ev the
+ * trust is in the book, so its closings are read on these folios' own holdings
+ * — the scheme each folio holds units of — rather than filed "kept out".
+ */
+const H_LINE_FOLIOS = new Map([
+  ["Aditya Birla SL Liquid Fund-(DD)-Direct", "1019265797"],
+  ["Aditya Birla SL Liquid Fund-Direct (G)", "1038104611"],
+  ["Kotak Liquid-Direct (DD)", "4295974"],
+  ["Mirae Asset Cash Management Fund-Direct(G)", "70413280453"],
+]);
 function hIdentity(product) {
   const keys = new Set(), isins = new Set(H_LINE_ISINS.get(product) ?? []);
   for (const m of [matchInArchive(product), matchSecurity(product)]) if (m.key) keys.add(m.key);
+  const folio = H_LINE_FOLIOS.get(product);
+  const folioAccount = folio ? ACCOUNTS.find((a) => a.accountNo === folio)?.accountId ?? null : null;
+  if (folioAccount) {
+    for (const r of H_ROWS_ARCHIVE) if (r.account === folioAccount && r.units > 0 && r.key) keys.add(r.key);
+  }
   for (const r of H_ROWS_ARCHIVE) if (keys.has(r.key) && r.isin) isins.add(r.isin);
   for (const w of H_WINDOWS) if (keys.has(w.securityKey) && w.isin) isins.add(hUp(w.isin));
   for (const r of H_ROWS_ARCHIVE) if (r.isin && isins.has(r.isin) && r.key) keys.add(r.key);
-  return { keys, isins };
+  return { keys, isins, folioAccount };
 }
 const hInd = (x, dp) => { const [i, f] = Math.abs(x).toFixed(dp).split("."); const a = i.length > 3 ? i.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + i.slice(-3) : i; return a + (f ? "." + f : ""); };
 const hWest = (x, dp) => { const [i, f] = Math.abs(x).toFixed(dp).split("."); return i.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (f ? "." + f : ""); };
@@ -984,7 +1012,10 @@ for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
    * manager's book figure is a holding the review could not carry (Stage 10de).
    */
   const put = (verdict, statement, rows = [], later = []) => hResults.push({ c, verdict, statement, rows: rows.map((r) => ({ account: r.account, key: r.key, units: r.units })), later });
-  if (/hope india/i.test(c.investor)) { if (pass === "rest") put("kept out", "HOPE INDIA TRUST is a separate taxpayer this book keeps out by decision; its folio statements are read and named in `docs/BOOK-REPORT.md`"); continue; }
+  // A holder the registry names but no account in the book is its: filed with
+  // the holder, which the bridge takes out once (section F). Hope India Trust
+  // was the case until Stage 10ev; it is now read like every other holder.
+  if (ownerId && !ACCOUNTS.some((a) => a.ownerId === ownerId)) { if (pass === "rest") put("kept out", `${c.investor} has no account in this book; its closings leave the bridge with the holder`); continue; }
   if (!ownerId) { if (pass === "rest") put("unresolved holder", `"${c.investor}" names no member of this book`); continue; }
   if (!c.qty && !c.value) { if (pass === "rest") put("nil", "the review carries nil — nothing to reconcile"); continue; }
   if (!c.qty) {
@@ -1002,7 +1033,7 @@ for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
     } else put("no statement", "a value-only line no manager or statement in this book is matched to — the review carries it at a figure only");
     continue;
   }
-  const { keys, isins } = hIdentity(c.product);
+  const { keys, isins, folioAccount } = hIdentity(c.product);
   const reviewKey = securityKeyOf(c.product);
   /** Two names the review clips its own way, checked by hand against LKP's statement (same holder, same units). */
   const aliasKey = SECURITY_ALIASES.get(reviewKey)
@@ -1019,7 +1050,8 @@ for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
   const otherDepository = /ICICI Bank \(NSDL|HDFC Bank \(NSDL|LKP Securities/;
   const rows = [...H_ROWS_ARCHIVE, ...hBalancesOn(c.date)]
     .filter((r) => r.ownerId === ownerId && hEngagement.get(r.account) !== "PMS")
-    .filter((r) => (depository ? depository.test(r.provider) : !otherDepository.test(r.provider)))
+    // The line's own folio (H_LINE_FOLIOS) is its statement whoever the review files it under.
+    .filter((r) => r.account === folioAccount || (depository ? depository.test(r.provider) : !otherDepository.test(r.provider)))
     .filter((r) => (r.key && keys.has(r.key)) || (r.isin && isins.has(r.isin))
       || (r.nameKey && (r.nameKey === reviewKey || r.nameKey === aliasKey))
       || (fundHouse && (r.provider === fundHouse || (r.nameKey ?? "").startsWith(`${reviewKey}-`))));
@@ -1085,7 +1117,8 @@ hResults.sort((a, b) => a.c.row - b.c.row);
  * closings add to the line exactly, so a line is read on the holders' OWN
  * statements rather than on a name: `reported` — a statement of the holder's
  * carries it, tied, carried or at another quantity; `absent` — no statement in
- * `source/` reports it; `kept` — the Hope India Trust, kept out by decision.
+ * `source/` reports it; `kept` — a holder with no account in this book (the Hope
+ * India Trust until Stage 10ev, when the family consolidated it).
  */
 const hClass = (v) => (/^(ties|differs)/.test(v) || v === "not on a statement of that date" ? "reported"
   : v === "kept out" ? "kept" : v === "nil" ? "nil" : "absent");
@@ -1522,7 +1555,7 @@ if (!notInBook.length && !trulyAbsent.length) {
   say(`this book under a spelling no name tier reaches; ₹${cr(gapReportedUnvalued)} Cr is on a statement that carries it`);
   {
     // Named off section B's own list, so the sentence cannot name a holder the bridge's step 2 did not take.
-    const who = noAccountHolders.map((h) => (/hope india/i.test(h) ? `the ${h}, a separate taxpayer kept out by decision` : `\`${h}\``)).join("; ") || "no holder";
+    const who = noAccountHolders.map((h) => `\`${h}\``).join("; ") || "no holder";
     say(`as a quantity this book does not value; and ₹${cr(gapKept)} Cr belongs to holders with no account in this book (${who}),`);
     say("which the bridge in section F takes out once, with the holder.");
   }
@@ -1766,7 +1799,7 @@ say();
 const steps = [
   ["Review portfolio total, 30 June 2026", reviewTotal, null],
   ["less: holders with no account in this book", -absentHolders,
-    `the review's holders the account registry has no account for, section B — ${noAccountHolders.map((h) => (/hope india/i.test(h) ? `the ${h}, a separate taxpayer kept out by decision` : h)).join("; ") || "none"}. A holder with an account and no valued position is not one: its lines are in the steps below, once`],
+    `the review's holders the account registry has no account for, section B — ${noAccountHolders.join("; ") || "none"}. A holder with an account and no valued position is not one: its lines are in the steps below, once`],
   ...(aggregateTotal > 0 ? [["less: aggregate blocks itemised only on another tab", -aggregateTotal,
     `${aggregateLines.map((l) => "`" + l.product + "`").join(", ") || "—"} — reported on the \`Alternate\` tab as a total and itemised on the review's own \`Private Investments\` tab, which the book carries line by line when \`PRIVATE_MARKET_FROM_REVIEW\` is on (Stage 10dh). Not a missing statement: see \`docs/REGISTER-RECONCILIATION.md\`, which measures the family's own record of this money`],
   ] : []),

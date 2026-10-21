@@ -1113,16 +1113,32 @@ function carriedForward(file, how) {
   }
   if (!carried.length) return [];
 
-  const facts = (d) => (d.holdings?.length ?? 0) + (d.cashFlows?.length ?? 0) + (d.transactions?.length ?? 0);
+  const facts = (d) => ["holdings", "cashFlows", "transactions", "income", "capitalGains", "expenses"]
+    .reduce((n, k) => n + (d[k]?.length ?? 0), 0);
   const single = carried.length === 1 && !carried[0].doc.sourcePages;
-  if (single && carried[0].doc.status === "failed") {
-    const [{ doc: before, grid }] = carried;
-    const reread = extractDocuments(file, grid);
-    if (reread.length === 1 && reread[0].doc.status !== "failed" && facts(reread[0].doc) > facts(before)) {
-      return [{ ...reread[0], reread: true }];
-    }
+  if (!single) return carried;
+  const [{ doc: before, grid }] = carried;
+  const produced = extractDocuments(file, grid);
+  if (produced.length !== 1 || produced[0].doc.status === "failed") return carried;
+  const after = produced[0].doc;
+  if (before.status === "failed") {
+    return facts(after) > facts(before) ? [{ ...produced[0], reread: true }] : carried;
   }
-  return carried;
+  /**
+   * A DOCUMENT THAT READ IS RE-READ TOO (Stage 10ev), so a reader taught to read
+   * more of a sealed statement — a folio's full ledger, a holder the registry now
+   * knows — reaches it without the password. The re-read replaces the archived
+   * reading only when it is provably no worse: the same document (issuer,
+   * account, date, report type), no fewer facts, and every archived holding
+   * still there with the same units and value. A reader that needs coordinates
+   * gets none from archived text, reads less, and the archived reading stands.
+   * With the readers unchanged the re-read IS the archived reading, byte for
+   * byte, so carrying it changes nothing.
+   */
+  const same = ["provider", "accountNo", "asOf", "reportType"].every((k) => (after[k] ?? null) === (before[k] ?? null));
+  const kept = (before.holdings ?? []).every((h) => (after.holdings ?? []).some((x) =>
+    x.securityKey === h.securityKey && x.quantity === h.quantity && x.marketValue === h.marketValue));
+  return same && kept && facts(after) >= facts(before) ? [{ ...produced[0], reread: true }] : carried;
 }
 
 function writeArchive(docs, grids) {

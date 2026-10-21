@@ -28,20 +28,22 @@ const holdingsDoc = (docKey, asOf, extra = {}) => ({
 });
 
 /** Write a synthetic archive + book + report, run the gate, return { code, out }. */
-function run({ docs, accounts, report = "" }) {
+function run({ docs, accounts, report = "", moves = [] }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "glow-check-reads-"));
   try {
     const audit = path.join(dir, "audit");
     fs.mkdirSync(audit);
-    for (const d of docs) {
+    for (const { pageText, ...d } of docs) {
       fs.mkdirSync(path.join(audit, d.docKey));
       fs.writeFileSync(path.join(audit, d.docKey, "document.json"), JSON.stringify(d));
+      if (pageText) fs.writeFileSync(path.join(audit, d.docKey, "pages.json"), JSON.stringify({ pages: [{ page: 1, text: pageText }] }));
     }
     fs.writeFileSync(path.join(audit, "manifest.json"), JSON.stringify(docs.map((d) => ({
       docKey: d.docKey, provider: d.provider, status: d.status, sourcePath: d.sourcePath,
     }))));
     const book = path.join(dir, "glowData.ts");
-    fs.writeFileSync(book, `export const BOOK_ACCOUNTS: Account[] = ${JSON.stringify(accounts, null, 1)};\n`);
+    fs.writeFileSync(book, `export const BOOK_ACCOUNTS: Account[] = ${JSON.stringify(accounts, null, 1)};\n`
+      + `export const BOOK_CAPITAL_MOVES: CapitalMove[] = ${JSON.stringify(moves)};\n`);
     const rep = path.join(dir, "BOOK-REPORT.md");
     fs.writeFileSync(rep, report);
     const r = spawnSync(process.execPath, [SCRIPT], {
@@ -132,6 +134,34 @@ const accepted = [
     warnings: [{ code: "value-bridge-mismatch", detail: "lines reach 1, not the stated closing 2" }] });
   const r = run({ docs: [...accepted, holdingsDoc("a", "2026-09-30"), unreconciled], accounts: account("2026-09-30") });
   ok("…nor a newer report whose own value bridge misses its total — the last verified record stands", r.code === 0, r.out);
+}
+
+// ── Stage 10ev: a redeemed investment's history is read and reaches the book ──
+const PRINTED = "Transaction Details : Class B2\n29-07-2024 Contribution - - 13,00,00,000.00\n31-07-2025 Unit Redemption-Payout 8.5353 (1,31,09,904.680) (11,18,96,969.42)";
+{
+  const redeemed = holdingsDoc("hedged", "2026-09-30", { pageText: PRINTED, holdings: [{ securityKey: "x", marketValue: 0 }] });
+  const r = run({ docs: [...accepted, redeemed], accounts: account("2026-09-30") });
+  ok("a statement that prints dated transactions and carries none fails, quoting the line",
+    r.code === 1 && /\[history not read\]/.test(r.out) && /13,00,00,000\.00/.test(r.out), r.out);
+}
+{
+  const markersOnly = holdingsDoc("hdfc", "2026-09-30", { pageText: PRINTED,
+    cashFlows: [{ date: "2024-07-29", kind: "opening-units", amount: null, units: 0 }] });
+  const r = run({ docs: [...accepted, markersOnly], accounts: account("2026-09-30") });
+  ok("…and opening-unit markers alone do not count as its history", r.code === 1 && /\[history not read\]/.test(r.out), r.out);
+}
+const flows = [{ date: "2024-07-29", kind: "contribution", amount: 130000000 }, { date: "2025-07-31", kind: "withdrawal", amount: -111896969.42 }];
+{
+  const read = holdingsDoc("hedged", "2026-09-30", { pageText: PRINTED, cashFlows: flows });
+  const r = run({ docs: [...accepted, read], accounts: account("2026-09-30") });
+  ok("a read history with no capital move in the book fails, naming the dates",
+    r.code === 1 && /\[history not in the book\]/.test(r.out) && /2024-07-29/.test(r.out), r.out);
+}
+{
+  const read = holdingsDoc("hedged", "2026-09-30", { pageText: PRINTED, cashFlows: flows });
+  const moves = [{ accountId: "carnelian-1", date: "2024-07-29" }, { accountId: "carnelian-1", date: "2025-07-31" }];
+  const r = run({ docs: [...accepted, read], accounts: account("2026-09-30"), moves });
+  ok("…and passes once every printed date is a capital move in the book", r.code === 0, r.out);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

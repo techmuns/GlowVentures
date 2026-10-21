@@ -204,6 +204,26 @@ export const OWNERS = [
     pans: [],
     aliases: ["Bharat Jaisinghani Family Trust"],
   },
+  {
+    /**
+     * HOPE INDIA TRUST — consolidated by the family's decision of 21 Oct 2026
+     * ("every single file is feeding data into the dashboard"), as its OWN
+     * entity, never folded into a person. Its four folios (ABSL 1019265797 and
+     * 1038104611, Kotak 4295974, Mirae 70413280453) print `Status : Trust` /
+     * `TRUST`, and every one was read and held out as a separate taxpayer until
+     * this entry (`excludedFromBook` in providers/mutualFundFolio.mjs).
+     *
+     * NO PAN, by the rule at the head of this file: the trust's ABSL and Kotak
+     * statements are encrypted, and the AMCs' password is the holder's PAN, so
+     * it does not go in a tracked file. The two spellings the statements print
+     * are the aliases; the name is distinctive and names no family member.
+     */
+    ownerId: "hope-india-trust",
+    displayName: "Hope India Trust",
+    kind: "trust",
+    pans: [],
+    aliases: ["Hope India Trust"],
+  },
 ];
 
 // Honorifics and suffixes that carry no identity. Stripped from both ends.

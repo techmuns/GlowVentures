@@ -196,7 +196,9 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
   ["Bandhan Large & Mid Cap Fund - Direct Plan - Growth", ["INF194K01V89"]],
   ["ICICI Pru India Opportunities Fund", ["INF109KC1RH9"]],
   ["ICICI Prudential Equity Savings Fund - Direct Plan", ["INF109KA11J9"]],
-  ["Kotak Large & Midcap Fund - Direct- Growth", ["INF174K01LF9"]],
+  // Kotak Large & Midcap left this table at Stage 10ev: Ajay's Kotak folio
+  // 7125255 holds the scheme under a spelling the name tier reaches, so the
+  // line is no longer a gap for this tier to withhold.
   ["Kotak Multicap Fund-Direct Plan-Growth", ["INF174KA1HV3"]],
   // Stage 10cy — lines a statement reports, valued or not. Each review closing
   // on 30 June 2026 is the statement's own balance that day, to the unit:
@@ -207,10 +209,11 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
   // Aarti's demat walks to 5,169.754 Liquid BeES units on 30 June and Bharat's
   // to 3,816.251, the review's two closings.
   ["Nippon India ETF Nifty 1D Rate Liquid Bees-IDCW", ["INF732E01037"]],
-  // Both plans. Ankita's demat walks to 46,162.731 Regular units on 30 June and
-  // Bharat's to 27,779.278 Direct units, two of the review's four closings.
-  // Ajay's 83,001.863 and Ankita's other 49,917.632 are on no statement.
-  ["HDFC Balanced Advantage Fund", ["INF179K01830", "INF179K01WA6"]],
+  // HDFC Balanced Advantage Fund left this table at Stage 10ev: Ajay's
+  // 83,001.863 and Ankita's 49,917.632 units, once "on no statement", are the
+  // closing balances of their HDFC folios 15644806 and 16002141, whose scheme
+  // name the name tier reaches — so the line is no longer a gap. (Section H of
+  // the reconciliation still joins it by both plans' ISINs.)
   // Bharat's demat walks to 1,46,856.943 Direct units on 30 June, the review's
   // closing for him. Ajay's 21,70,488.137 are on no statement.
   ["ICICI Pru Balanced Advantage Fund", ["INF109K012B0"]],
@@ -232,21 +235,23 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
 ]);
 
 /**
- * ── …NOR ONE A STATEMENT REPORTS FOR AN ENTITY THIS BOOK KEEPS OUT ─────────
+ * ── …NOR ONE THE HOPE INDIA TRUST'S OWN FOLIO STATEMENTS REPORT ────────────
  *
  * The review files four Cash-tab lines under HOPE INDIA TRUST. That trust's
- * own AMC folio statements are in the drop and report each of them. This book
- * keeps them out by decision: the trust is a separate taxpayer
- * (`shared/owners.mjs`, `docs/BOOK-REPORT.md`). So the sentence is false here
- * too, and its ask ("AMC folio statements") names statements the family
- * already sent.
+ * own AMC folio statements are in the drop and report each of them. Until
+ * Stage 10ev the book kept the trust out as a separate taxpayer; since the
+ * family's decision of 21 Oct 2026 it is in the book as its own entity
+ * (`shared/owners.mjs`), and each folio is an account here. Either way the
+ * sentence "no statement reports it" is false, and its ask ("AMC folio
+ * statements") names statements the family already sent.
  *
- * Keyed on the FOLIO, because two of the four print no ISIN. The folios are
- * in the audit archive and not in the book, so the runtime cannot check this
- * table. `reviewGaps.test.ts` holds every entry to the folio's own statement:
- * the trust holds it, and it prints a holding at exactly the NAV the review
- * prices the line at. HSBC Liquid, the review's fifth line for the trust, has
- * no folio in the drop and stays claimable.
+ * Keyed on the FOLIO, because two of the four print no ISIN and the trust's
+ * positions spell each scheme the AMC's way, which no name tier reaches (the
+ * name `REVIEW_LINES_KEPT_OUT` is kept for its callers). `reviewGaps.test.ts`
+ * holds every entry to the folio's own statement: the trust holds it, the
+ * folio is the trust's account in the book, and it prints a holding at exactly
+ * the NAV the review prices the line at. HSBC Liquid, the review's fifth line
+ * for the trust, has no folio in the drop and stays claimable.
  */
 export const REVIEW_LINES_KEPT_OUT: ReadonlyMap<string, string> = new Map([
   ["Aditya Birla SL Liquid Fund-(DD)-Direct", "1019265797"],
@@ -277,8 +282,8 @@ const STATEMENT_REPORTED = new Set(
 
 /**
  * Whether a statement reports this review line: its hand-checked ISINs are on
- * a statement this dashboard reads, or a folio this book keeps out by decision
- * reports it.
+ * a statement this dashboard reads, or the Hope India Trust folio it is filed
+ * under reports it (`REVIEW_LINES_KEPT_OUT`).
  */
 export const reportedByStatement = (g: ReviewGap) =>
   (REVIEW_LINE_ISINS.get(g.name) ?? []).some((i) => STATEMENT_REPORTED.has(i))

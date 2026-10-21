@@ -2,11 +2,11 @@
  "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
  "provider": "Aditya Birla Sun Life Mutual Fund",
  "accountNo": "1038104611",
- "ownerSource": null,
+ "ownerSource": "printed",
  "accountNoSource": "printed",
  "clientCode": null,
  "owner": "HOPE INDIA TRUST",
- "ownerId": null,
+ "ownerId": "hope-india-trust",
  "familyGroup": null,
  "strategy": null,
  "engagement": "Direct",
@@ -22,10 +22,6 @@
   {
    "code": "pdf-encrypted",
    "detail": "opened with GLOW_PDF_PASSWORDS entry #1"
-  },
-  {
-   "code": "owner-unresolved",
-   "detail": "\"HOPE INDIA TRUST\" / PAN XXXXX4894A matches no canonical owner — add the PAN to shared/owners.mjs, which is evidence rather than a spelling"
   }
  ],
  "holdings": [
@@ -106,7 +102,7 @@
  "positionsAsOf": null,
  "dematBalances": [],
  "securityNameSource": null,
- "excludedFromBook": "holder HOPE INDIA TRUST is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book.",
+ "excludedFromBook": null,
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [

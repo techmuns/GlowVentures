@@ -26,16 +26,21 @@ export function unitLedgerReturnRecord(doc, start, historicalNavs = [], allowDor
   // A scheme that redeemed to nil still belongs in the walk: its proceeds are
   // cash out. Refuse a truncated ledger or an unrecognised cash movement.
   for (const row of doc.cashFlows) {
-    if (!['contribution', 'withdrawal', 'reclassification', 'opening-units'].includes(row.kind)
-      || !date(row.date) || !number(row.units) || !number(row.balance)
+    // An IDCW reinvestment (`allotment`) moves units, never external cash; one
+    // wholly withheld as TDS prints no amount and no units and moves nothing.
+    const nilAllotment = row.kind === 'allotment' && row.units === null && row.amount === null;
+    if (!['contribution', 'withdrawal', 'reclassification', 'opening-units', 'allotment'].includes(row.kind)
+      || !date(row.date) || (!nilAllotment && (!number(row.units) || !number(row.balance)))
       || !bySecurity.has(row.securityKey)) return null;
     bySecurity.get(row.securityKey).rows.push(row);
   }
   const switches = new Map();
   for (const row of doc.cashFlows.filter(r => r.kind === 'reclassification')) {
     if (!number(row.amount)) return null;
-    const group = switches.get(row.date) ?? [];
-    group.push(row); switches.set(row.date, group);
+    // The out-leg's settlementDate is the day its in-leg was credited.
+    const day = row.amount < 0 ? (row.settlementDate ?? row.date) : row.date;
+    const group = switches.get(day) ?? [];
+    group.push(row); switches.set(day, group);
   }
   for (const rows of switches.values()) {
     if (!rows.some(r => r.amount < 0) || !rows.some(r => r.amount > 0)
@@ -61,6 +66,8 @@ export function unitLedgerReturnRecord(doc, start, historicalNavs = [], allowDor
         if (row !== first) return null;
         continue;
       }
+      if (row.kind === 'allotment' && row.units === null && row.amount === null) continue;
+      if (row.kind === 'allotment' && (!number(row.amount) || row.amount <= 0 || row.units <= 0)) return null;
       if (!number(row.amount) || (row.kind === 'contribution' && (row.amount <= 0 || row.units <= 0))
         || (row.kind === 'withdrawal' && (row.amount >= 0 || row.units >= 0))) return null;
       balance += row.units;
