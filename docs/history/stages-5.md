@@ -4976,9 +4976,3 @@ current unrealized P&L."*
 - Table wrappers that previously scrolled only horizontally now also scroll vertically at a bounded height. Existing panels retain their own scroll height; Snapshot History gains the same table wrapper. Print keeps normal repeating table headers.
 - The browser regression measures actual body movement and header position in both themes on every visited table, and checks that multi-row headers retain their row spacing. Existing infinite scrolling and full-data checks still run.
 
-
-### Stage 10fs — RECOVER WHEN AN OPEN TAB REQUESTS AN OLD PAGE FILE
-
-- An older company-page asset was gone from the current deployment; Pages returned the app HTML with HTTP 200 at its JavaScript URL. The preload handler and error boundary now share one guarded reload per minute, preserving the address and saved preferences. Offline and storage-restricted tabs offer manual recovery; persistent failures stop at a clear retry screen. Actual runtime errors retain their existing boundary.
-- Authenticated HTML revalidates privately, missing `/assets/` files return 404 instead of SPA HTML, and signed-out asset requests return 401 so a recovery reload opens sign-in at the original page.
-- Unit and middleware contracts cover classification, reload limits, blocked storage, cache policy and asset/auth responses. The built-app browser regression injects transient 404, persistent HTML/401, runtime exceptions and offline failures, and checks successful retry and address retention. CI runs these alongside the financial and table suites.
