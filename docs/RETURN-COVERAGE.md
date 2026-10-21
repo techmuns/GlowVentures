@@ -1,6 +1,6 @@
 # Return source coverage
 
-17 of 80 accounts have verified opening values, dated external capital and a closing valuation.
+17 of 81 accounts have verified opening values, dated external capital and a closing valuation.
 
 Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.
 
@@ -31,6 +31,7 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | 2026-10-06 | 2026-10-06 | Complete through the selected date |
 | Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | 2026-10-06 | 2026-09-22 | Verified cash-flow coverage ends 2026-09-23; closing valuation is 2026-10-06 |
 | Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | 2026-10-06 | 2026-09-22 | Verified cash-flow coverage ends 2026-09-22; closing valuation is 2026-10-06 |
+| HDFC Bank (NSDL demat) | 22025655 | Bharat Jaisinghani | 2026-03-31 | — | this fund publishes no NAV: its statement of 2026-03-31 carries 38 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth |
 | HDFC Bank (NSDL demat) | 67786137 | Bharat Jaisinghani Family Trust 3 | 2026-08-29 | — | the private-market holding this statement records is counted under the family's consolidated review (MOPWM, 30 Jun 2026), the source for private-market holdings; the statement's units stay in the archive |
 | HDFC Bank (NSDL demat) | 67786547 | Bharat Jaisinghani Family Trust 2 | 2026-08-29 | — | the private-market holding this statement records is counted under the family's consolidated review (MOPWM, 30 Jun 2026), the source for private-market holdings; the statement's units stay in the archive |
 | HDFC Mutual Fund | 15644806 | Ajay Jaisinghani | 2026-08-31 | 2026-08-31 | Complete through the selected date |

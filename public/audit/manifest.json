@@ -9086,10 +9086,42 @@
   ],
   "status": "failed",
   "warnings": 1,
+  "failedBecause": "attachment-removed",
   "fileKey": "unknown-unknown-2026-10-06-unknown",
   "label": "(unidentified) · unknown",
   "fy": "2026-10-06",
   "source": "source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 0,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "unknown-unknown-2026-10-06-unknown-2",
+  "provider": "(unidentified)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-06",
+  "reportType": "unknown",
+  "sourcePath": "source/_extracted/october-2026-c/LKP EQUITY/666125807_06102026125819.xls",
+  "pages": 0,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "failedBecause": "attachment-removed",
+  "fileKey": "unknown-unknown-2026-10-06-unknown-2",
+  "label": "(unidentified) · unknown",
+  "fy": "2026-10-06",
+  "source": "source/_extracted/october-2026-c/LKP EQUITY/666125807_06102026125819.xls",
   "sheets": [
    {
     "key": "pages",
@@ -13096,6 +13128,7 @@
   ],
   "status": "failed",
   "warnings": 1,
+  "failedBecause": "held-out-by-decision",
   "fileKey": "consolidated-family-review-not-a-statement-unknown-unknown-unknown",
   "label": "Consolidated family review (not a statement) · unknown",
   "fy": "",
@@ -13140,25 +13173,25 @@
   ]
  },
  {
-  "docKey": "unknown-unknown-unknown-holdings",
-  "provider": "(unidentified)",
-  "accountNo": null,
-  "owner": null,
-  "ownerId": null,
+  "docKey": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+  "provider": "HDFC Bank (NSDL demat)",
+  "accountNo": "22025655",
+  "owner": "BHARAT JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
   "familyGroup": null,
   "strategy": null,
-  "asOf": null,
+  "asOf": "2026-03-31",
   "reportType": "holdings",
   "sourcePath": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
   "pages": 4,
   "sections": [
    "pages"
   ],
-  "status": "failed",
-  "warnings": 1,
-  "fileKey": "unknown-unknown-unknown-holdings",
-  "label": "(unidentified) · holdings",
-  "fy": "",
+  "status": "ok",
+  "warnings": 6,
+  "fileKey": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+  "label": "HDFC Bank (NSDL demat) · 22025655 · holdings",
+  "fy": "2026-03-31",
   "source": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
   "sheets": [
    {
@@ -13246,6 +13279,7 @@
   ],
   "status": "failed",
   "warnings": 1,
+  "failedBecause": "held-out-by-decision",
   "fileKey": "family-investment-register-not-a-statement-unknown-unknown-unknown",
   "label": "Family investment register (not a statement) · unknown",
   "fy": "",
