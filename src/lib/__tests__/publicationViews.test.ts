@@ -4,7 +4,7 @@ import * as book from '../../data/glowData';
 import manifest from '../../data/readModels.json';
 import { applyQuotes, quoteSymbolFor } from '../quotes';
 import type { QuoteFeed } from '../quotes';
-import { unpricedStatementUnits } from '../fundNavs';
+import { depositoryFundHoldings, unpricedStatementUnits } from '../fundNavs';
 import { investedOnOf } from '../investedOn';
 const read = (name: string) => JSON.parse(readFileSync(`public/views/${manifest.revision}/${name}`, 'utf8'));
 const publication = read('publication.json');
@@ -43,13 +43,21 @@ for (const holding of book.BOOK_UNVALUED_HOLDINGS) {
   assert.equal(d.provider, account.provider); assert.equal(d.accountNo, account.accountNo);
   assert.equal(row.securityKey, holding.securityKey); assert.equal(row.quantity, holding.quantity);
 }
-const custodyFunds = unpricedStatementUnits();
+const custodyFunds = [...depositoryFundHoldings(), ...unpricedStatementUnits()];
 for (const [suffix, first] of [['12539150', '2025-03-06'], ['12838316', '2025-11-06'], ['12838320', '2025-07-11']]) {
   const holding = custodyFunds.find(p => p.accountId.endsWith(suffix) && p.isin === 'INF109KC1RH9');
   assert.ok(holding); assert.equal(investedOnOf([holding])?.first, first);
-  const raw = book.BOOK_UNVALUED_HOLDINGS.find(p => p.accountId === holding.accountId && p.isin === holding.isin);
-  assert.ok(raw); assert.deepEqual(holding.statementRecord, raw.statementRecord);
-  assert.equal(holding.quantity, raw.quantity, 'The date belongs to the exact custody unit balance');
+  const movement = book.BOOK_SHARE_MOVEMENTS[`${holding.accountId}|${holding.securityKey}`];
+  if (movement) {
+    assert.equal(holding.depositoryUnits?.source, movement.source);
+    assert.equal(holding.quantity, movement.closing);
+  } else {
+    const raw = book.BOOK_UNVALUED_HOLDINGS.find(p => p.accountId === holding.accountId && p.isin === holding.isin);
+    assert.ok(raw); assert.deepEqual(holding.statementRecord, raw.statementRecord);
+    assert.equal(holding.quantity, raw.quantity);
+  }
+  assert.equal(holding.recoveredCost?.accountId, holding.accountId);
+  assert.equal(holding.recoveredCost?.isin, holding.isin);
   assert.equal(holding.priceEvidence?.instrument, holding.isin);
 }
 const p = book.BOOK_POSITIONS.find(p => p.quantity != null && p.currentPrice && quoteSymbolFor(p) && !p.review && p.assetClass === 'Equity')!;
