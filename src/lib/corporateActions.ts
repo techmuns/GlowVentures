@@ -272,7 +272,7 @@ function rolledPosition(p: Position, rf: NonNullable<Position["rolledForward"]>)
     costOfUnitsSold: rf.costOfUnitsSold,
     realizedLotsAfter: 0,
     returnPct: cost === null || unrealizedPnL === null || !(cost > 0) ? null
-      : fifoReturnPct(marketValue, cost, rf.realizedPnL, rf.costOfUnitsSold),
+      : fifoReturnPct(marketValue, cost, rf.realizedPnL, rf.costOfUnitsSold, p.dividendReceived),
   };
 }
 

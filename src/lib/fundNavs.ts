@@ -101,9 +101,10 @@ export function applyFundNavs(positions: Position[]): Position[] {
       marketValue,
       unrealizedPnL,
       // FIFO's one return: a live price moves the unrealised half and nothing
-      // else, so the realised gain on units already sold stays in it (§6).
+      // else, so the realised gain on units already sold and the income the
+      // holding paid stay in it (§6).
       returnPct: costNA || unrealizedPnL === null ? p.returnPct
-        : fifoReturnPct(marketValue, cost as number, p.realizedPnL, p.costOfUnitsSold),
+        : fifoReturnPct(marketValue, cost as number, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived),
       navPriced: true,
       navDate: e.date,
       // INTRADAY FIELDS UNTOUCHED — see the header. A NAV is not a day move.

@@ -12,6 +12,7 @@ import { ownerDisplayName, ownerById } from "./owners";
 import { securityLabel } from "./securityLabel";
 import { buildDatedCapital } from "./datedCapital";
 import { capitalMovesWithCalls } from "./tranches";
+import { fifoTotals } from "./fifo";
 import { deriveTransactions, deriveRealisedLots, deriveIncome, type ArchiveDoc } from "./ledgerModel";
 import type { Account, Position } from "./types";
 
@@ -112,9 +113,11 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       first: p.heldSince ?? purchaseDates[0] ?? null, last: purchaseDates.at(-1) ?? null,
       qty: p.quantity, cost: p.costBasis, avg: p.avgCost, price: p.currentPrice,
       basis: p.valuedAtCost ? "At cost" : p.review ? "Review value" : "Statement value", mvov: null, mv: p.marketValue,
-      ugain: p.valuedAtCost ? null : p.unrealizedPnL, absret: p.valuedAtCost ? null : ratio(p.unrealizedPnL, p.costBasis),
+      // The holding's FIFO return — unrealised, realised and the income it paid,
+      // over every rupee that bought a unit (Stage 10fb) — never unrealised ÷ cost.
+      ugain: p.valuedAtCost ? null : p.unrealizedPnL, absret: p.valuedAtCost || p.returnPct == null ? null : p.returnPct / 100,
       income: p.dividendReceived, rgain: p.realizedPnL ?? null, xirr, bench: null, babs: null, bxirr: null, alpha: null,
-      shown: xirr != null ? "XIRR" : p.unrealizedPnL != null && p.costBasis != null && p.costBasis > 0 ? "Absolute" : null,
+      shown: xirr != null ? "XIRR" : !p.valuedAtCost && p.returnPct != null ? "Absolute" : null,
       alloc: counted ? ratio(p.marketValue, totalValue) : null, prevmv: null, stmt: p.priceAsOf ?? a?.asOf ?? null,
       src: notes, lotqty: tranche?.units ?? null, check, _source: source?.docKey ?? null, _counted: counted ? "Y" : "N" };
   });
@@ -280,14 +283,18 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const xirr = covered != null && covered > 0 ? irrRows.reduce((s, h) => s + (h.mv as number) * (h.xirr as number), 0) / covered : null;
     const ds = dates(hs.flatMap(h => [h.first as string | null, h.last as string | null]));
     const realisedGain = completeSum(ps.map(p => p.realizedPnL));
+    const income = sum(ps.map(p => p.dividendReceived));
+    // ONE RETURN: FIFO over the costed, valued rows — unrealised + realised +
+    // dividends over capital deployed, a whole mandate on its capital (Stage 10fb).
+    const fifo = costed.length ? fifoTotals(costed, { accounts, universe: rows }) : null;
     return { range: ds.length ? `${ds[0]} – ${ds.at(-1)}` : null, cost, value, unrealised,
-      fullGain: realisedGain != null && unrealised != null && costed.length === ps.length ? realisedGain + unrealised : null,
-      absolute: ratio(unrealised, sum(costed.map(p => p.costBasis))), income: sum(ps.map(p => p.dividendReceived)),
+      fullGain: realisedGain != null && unrealised != null && costed.length === ps.length ? fifo?.gain ?? null : null,
+      absolute: fifo?.returnPct == null ? null : fifo.returnPct / 100, income,
       xirr, coverage: ratio(covered, value) };
   }
-  const overviewNote = "Figures in ₹ Crore; statement and review marks on each account's own date. Costs and gains name their coverage: absolute return uses costed, valued rows only. XIRR is the template's value-weighted blend of supported holding XIRRs, not a pooled portfolio XIRR. Benchmark returns are not available.";
+  const overviewNote = "Figures in ₹ Crore; statement and review marks on each account's own date. Costs and gains name their coverage: absolute return is FIFO over costed, valued rows: unrealised, realised and dividends over the capital deployed. XIRR is the template's value-weighted blend of supported holding XIRRs, not a pooled portfolio XIRR. Benchmark returns are not available.";
   add("Portfolio Allocation", [col("category", "Category"), col("range", "Investment date range"), money("cost", "Investment at cost"), money("value", "Market value"),
-    pct("weight", "Allocation (% of portfolio)"), pct("classWeight", "Allocation (% of asset class)"), money("income", "Dividend / interest"), money("fullGain", "Gain / (loss) including redeemed"),
+    pct("weight", "Allocation (% of portfolio)"), pct("classWeight", "Allocation (% of asset class)"), money("income", "Dividend / interest"), money("fullGain", "Gain / (loss) incl. redeemed & income"),
     money("unrealised", "Gain / (loss) on what is held"), pct("absolute", "Absolute return — Portfolio (%)"), pct("babs", "Absolute return — Blended index (%)"),
     pct("xirr", "Annualised return — XIRR (%)"), pct("bxirr", "XIRR — Blended index (%)"), pct("coverage", "Share of value covered"), col("notes", "Coverage / notes", "", 48)],
     groups.map(g => {

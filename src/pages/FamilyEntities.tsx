@@ -1018,7 +1018,7 @@ export function FamilyEntities() {
         <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(h.marketValue, { compact: true })}</td>
         <td className={`px-4 py-2.5 text-right mono ${noCost || atCost ? "text-slate-500" : changeColor(h.returnPct)}`} data-fe-return-atcost={atCost ? "1" : ""}>{atCost
           ? <AbsentCell reason={AT_COST_RETURN} />
-          : noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
+          : noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold, income: h.dividendReceived })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
       </Tr>
     );
   };
@@ -1222,7 +1222,7 @@ export function FamilyEntities() {
                       ...pnlFormula(e.fifo.marketValue, e.fifo.costHeld, e.pnl, money),
                       ...(unstruck > 0 ? { plain: `What the ${e.struck} of ${e.count} holdings a gain can be struck on are worth today (${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}), minus what they cost. The other ${leftOut} — never counted at zero.` } : {}),
                     };
-                    const rfBase = returnFormula(e.fifo.marketValue, e.fifo.costHeld, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed });
+                    const rfBase = returnFormula(e.fifo.marketValue, e.fifo.costHeld, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed, income: e.fifo.income });
                     // THE RETURN SAYS WHICH HOLDINGS IT IS STRUCK OVER, as the P&L
                     // beside it already does: over the costed holdings alone,
                     // which on four of these rows are a fifth to a half short of
