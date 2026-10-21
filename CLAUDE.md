@@ -458,7 +458,7 @@ And:
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,
   `replay:movements`, `replay:flows`, `replay:flow-lines`,
-  `replay:demat-holdings`.
+  `replay:demat-holdings`, `replay:folio-cost`.
 - Reference data: `build-symbols`, `build-sectors`, `build-index-sectors`
   (monthly; index sector weights), `build-fund-navs`,
   `build-upstox-instruments`, `build-scheme-names`, `build-lookthrough`

@@ -4892,6 +4892,17 @@ current unrealized P&L."*
 - It commits `src/data/indexSectors.json` and `docs/INDEX-SECTORS.md` to main only when a weight moved, after `npm run build` passes against them. This is the `fund-navs.yml` pattern, with the build moved ahead of the commit.
 - A factsheet that names the wrong index, or whose table is missing or does not tie to 100, fails the run before anything is written. A partial table is never committed.
 
+### Stage 10fk — PURCHASE PRICES: THE COST TWO AMCs PRINT, AND COST OVER UNITS
+
+*"a lot of holdings are missing purchase prices in the dashboard holdings … make sure that it is not the case that the statements and files have purchase prices and we are not showing them."*
+
+- **Audit (Monitor, Category axis, all rows):** 105 Avg-cost dashes. 15 are by design (8 section totals, 6 mandate roll-ups, Sanshi's clubbed classes), 60 are review private lines (an amount paid, no unit count), and 30 had no cost on any statement.
+- **The statements did print one, for 4 of the 30.** The HDFC (15644806, 15725046, 16002141) and Kotak (7125255) account statements print `Cost (INR)` in their Account Summary, and `readBlockLayout` read only the scheme blocks. `summaryCost` takes the summary rows on the block's own NAV and NAV date (Kotak splits a scheme into Lump sum and IDCW rows) and publishes the cost only where their units AND value tie to the block. Hope India Trust's Kotak liquid folio does not tie on 3 of 4 statements and keeps no cost.
+- **`npm run replay:folio-cost`** lands the reader on the archive without `GLOW_PDF_PASSWORDS` (these PDFs are encrypted, and `extract` carries them forward unread). It runs the real `extract()` over `pages.json` and only adds a cost where the archive held null. Its `--check` was a no-op against the old reader.
+- **Stage 10bm's open question, answered by the family:** where a statement prints a total cost and units but no per-unit cost, `Position.avgCost` is now cost ÷ units, marked `avgCostDerived` (27 positions: Sanshi, Helios, Active Momentum, Founders, Delphi, Amritkaal, Neo Infra, ICICI Pru, LKP, the HDFC/Kotak folios). A printed per-unit cost is never replaced. The stock page's per-account cell says "Invested ÷ units" in its hover.
+- **Still absent, and correctly by the statements:** ICICI NSDL's 9 shares (₹63.76 Cr) and the Motilal CDSL demat lines are depository statements, quantity and value only, and LKP's liquid BeES is on no ledger. **The family's consolidated review does carry their cost:** its `Transactions since inception` sheet has per-holder purchases (date, units, rate) that reach the statement's units exactly on 8 of the 9 ICICI shares (≈₹54.6 Cr of cost) and on most demat fund lines. Since Stage 10dh the review is a source for the private book only, so this stays a decision for the family.
+- `clubbedFigures` A-14's constructed case is built on the Cash section's uncosted lines, because the section now holds one costed line (HDFC Overnight).
+
 ### Stage 10fc — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
 
 *"not all accounts are being read into the dashboard. It says partial return, 2 out of 76 accounts … We do not need to show partial return anywhere on the dashboard"* — the family, 21 Oct 2026.
