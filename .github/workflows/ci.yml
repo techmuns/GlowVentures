@@ -89,12 +89,23 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-real-estate.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-sector-return-details.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-publication-refresh.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs
+
+      - name: Preserve return attribution browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: return-attribution-browser
+          path: |
+            .cache/returns-period/*.png
+            .cache/returns-period/browser-results.json
+          if-no-files-found: ignore
 
       - name: Preserve real estate browser diagnostics
         if: failure()

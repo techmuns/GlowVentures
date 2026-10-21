@@ -23,6 +23,12 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
   const [busy, setBusy] = useState(false);
   const [mapOpen, setMapOpen] = useState(property.latitude === null);
   const set = <K extends keyof Property>(key: K, value: Property[K]) => setDraft(p => ({ ...p, [key]: value }));
+  const changeStatus = (status: string) => {
+    const hadRent = ["Rented", "For sale"].includes(draft.status);
+    set("status", status);
+    setNumbers(n => ({ ...n, monthlyRent: ["Rented", "For sale"].includes(status)
+      ? hadRent ? n.monthlyRent : "" : "0" }));
+  };
   const point = useMemo<[number, number] | null>(() => {
     const lat = optionalNumber(numbers.latitude), lng = optionalNumber(numbers.longitude);
     return lat !== null && lng !== null && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? [lat, lng] : null;
@@ -44,7 +50,7 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <TextField label="Property name *" value={draft.name} onChange={v => set("name", v)} mono={false} />
         <SelectField label="Property type" value={draft.type} options={options(PROPERTY_TYPES)} onChange={v => { setDraft(p => ({ ...p, type: v, areaBasis: v === "Land" || v === "Farmhouse" ? "Plot" : p.areaBasis })); }} />
-        <SelectField label="Status" value={draft.status} options={options(PROPERTY_STATUSES)} onChange={v => { set("status", v); setNumbers(n => ({ ...n, monthlyRent: ["Rented", "For sale"].includes(v) ? "" : "0" })); }} />
+        <SelectField label="Status" value={draft.status} options={options(PROPERTY_STATUSES)} onChange={changeStatus} />
         <TextField label="Address / survey no. *" value={draft.address} onChange={v => set("address", v)} mono={false} />
         <TextField label="City / district *" value={draft.city} onChange={v => set("city", v)} mono={false} />
         <TextField label="State" value={draft.state} onChange={v => set("state", v)} mono={false} />
