@@ -984,9 +984,21 @@ export function capitalRollup(
      * LESS (Sanshi's stamp duty), and those stay in what the units cost.
      * Filed under unrealised, the row read ₹58,861 above the Holdings page's
      * unrealised P&L for the same fund — two figures for one thing a click apart.
+     *
+     * WORTH MORE THAN EVERYTHING THE ROW SAYS WAS PAID, ITS PRINTED CHARGES
+     * INCLUDED. Carnelian Amritkaal's 31 Dec 2025 allotment is a ₹5 Cr drawdown
+     * plus ₹2,925.10 of fund income reinvested, less ₹2,500.02 of stamp duty:
+     * invested ₹5,00,00,425.08. `invested − amount` read the reinvested income
+     * as ₹425.08 and pushed the duty into unrealised; what the family PAID is
+     * `invested + charges` (the CapitalMove's own contract), so the distribution
+     * is what the allotment carries beyond that. On a row with no charges
+     * (Buoyant) the two readings are the same figure.
      */
-    const reinvested = allIn.reduce((s, m) =>
-      s + (m.amount != null && m.invested != null && m.invested > m.amount ? m.invested - m.amount : 0), 0);
+    const reinvested = allIn.reduce((s, m) => {
+      if (m.amount == null || m.invested == null) return s;
+      const beyond = Math.round((m.invested + (m.charges ?? 0) - m.amount) * 100) / 100;
+      return s + (beyond > 0 ? beyond : 0);
+    }, 0);
     if (appreciation != null && source === "review") {
       /**
        * A LINE THE FAMILY'S REVIEW VALUES — split on the review's own rows. The

@@ -4224,15 +4224,15 @@ const REVIEW_GAP_BOOK = (() => {
       }
       reportedAll = gaps.map((g) => g.name).filter((n) => reported.has(n));
       /**
-       * …AND A LINE A FOLIO THIS BOOK KEEPS OUT REPORTS. The review files Cash
-       * lines under HOPE INDIA TRUST, whose own folio statements are in the
-       * archive and out of the book by decision. Joined on the NAV: the review
-       * prices the line at exactly the rate one of those statements prints.
+       * …AND A LINE THE HOPE INDIA TRUST'S OWN FOLIO REPORTS. The review files
+       * Cash lines under HOPE INDIA TRUST, whose own folio statements are in the
+       * archive — out of the book until Stage 10fj, the trust's own accounts in
+       * it since (shared/owners.mjs). Either way the statement reports the line.
+       * Joined on the NAV: the review prices the line at exactly the rate one of
+       * those statements prints.
        */
       const manifest = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
-      const inBook = new Set(accounts.map((a) => String(a.accountNo)));
-      const trustDocs = manifest.filter((m) => /hope india trust/i.test(String(m.owner ?? "")) && m.reportType === "holdings"
-        && !inBook.has(String(m.accountNo)));
+      const trustDocs = manifest.filter((m) => /hope india trust/i.test(String(m.owner ?? "")) && m.reportType === "holdings");
       const navs = trustDocs.flatMap((m) => (doc(m.docKey).holdings ?? []).map((h) => h.marketPrice).filter((x) => typeof x === "number"));
       const kept = new Set(closings.filter((c) => gapNames.has(c.product) && /hope india trust/i.test(c.holder)
         && navs.some((p) => Math.abs(p - c.rate) < 0.00005)).map((c) => c.product));
@@ -24077,9 +24077,10 @@ const INVARIANTS = {
     }],
     /**
      * …NOR ONE A FOLIO THIS BOOK KEEPS OUT REPORTS. HOPE INDIA TRUST's own folio
-     * statements are in the drop, out of the book by decision, and report four
-     * of the review's Cash lines — so "no statement reports it … ask for AMC
-     * folio statements" asks for statements the family already sent.
+     * statements are in the drop — out of the book by decision until Stage 10fj,
+     * the trust's own accounts since — and report four of the review's Cash
+     * lines, so "no statement reports it … ask for AMC folio statements" asks
+     * for statements the family already sent. (The probe keeps its name.)
      */
     ["…nor one a folio this book keeps out reports", (t, ctx) => {
       const B = REVIEW_GAP_BOOK;

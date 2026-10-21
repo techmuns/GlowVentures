@@ -43,11 +43,12 @@ const manifest = JSON.parse(fs.readFileSync(path.join(AUDIT, "manifest.json"), "
 const docOf = (e) => JSON.parse(fs.readFileSync(path.join(AUDIT, e.docKey, "document.json"), "utf8"));
 const docs = manifest.map((e) => ({ e, d: docOf(e) }));
 
-/** `BOOK_ACCOUNTS` — a JSON array literal in the generated book. */
-function bookAccounts() {
-  const ts = fs.readFileSync(BOOK, "utf8");
-  const at = ts.indexOf("export const BOOK_ACCOUNTS");
-  if (at < 0) throw new Error(`no BOOK_ACCOUNTS in ${BOOK}`);
+/** A `BOOK_*` array export of the generated book — a JSON array literal. */
+const bookTs = fs.readFileSync(BOOK, "utf8");
+function bookArray(name) {
+  const ts = bookTs;
+  const at = ts.indexOf(`export const ${name}:`);
+  if (at < 0) throw new Error(`no ${name} in ${BOOK}`);
   // Bracket-matched over the literal (strings skipped), so an empty `[]` and a
   // multi-line array both parse — the generator writes both.
   const open = ts.indexOf("= [", at) + 2;
@@ -90,7 +91,7 @@ for (const [file, entry] of Object.entries(ACCEPTED_UNREAD)) {
 }
 
 // ── 3 & 4. Every read statement reaches the book ──────────────────────────────
-const accounts = bookAccounts();
+const accounts = bookArray("BOOK_ACCOUNTS");
 const report = fs.readFileSync(REPORT, "utf8");
 const held = new Map();
 for (const { e, d } of docs) {
@@ -137,6 +138,69 @@ for (const [k, ds] of [...held.entries()].sort()) {
         : `${provider}'s holdings rule in scripts/ingest/precedence.mjs does not name \`${n.reportType}\`. If it is a `
           + "snapshot of the same holdings, name it (with `newestWins`); then `npm run build-book`.");
   }
+}
+
+// ── 5. A statement that prints dated transactions carries them ────────────────
+//
+// *"a few statements were not being read because they were showing all the
+// redeemed units … they are also meant to be read and fed into the dashboard
+// because they provide historical returns values and give transactions
+// context"* — the family, 21 Oct 2026 (Stage 10fj). Motilal Oswal's Hedged
+// Equity statement printed ₹13 Cr in and ₹11.19 Cr out and its document carried
+// neither; it read "status ok" because a summary row of dashes is a fine
+// summary. A line that prints a date, a transaction word and a rupee amount is
+// a dated row; a document whose page prints one and whose reading carries no
+// dated fact at all has dropped its history.
+const DATED_LINE = /(^|\s)\d{1,2}[-/.](\d{1,2}|[A-Za-z]{3})[-/.]\d{2,4}(\s|$)/;
+const TXN_WORD = /\b(redemption|redeem|purchase|contribution|allot|switch|payout|dividend|idcw|distribution|withdraw|subscription|drawdown|capital call|sip)\b/i;
+const AMOUNT = /\d[\d,]*\.\d{2}\b/;
+const DATED_FACTS = ["cashFlows", "transactions", "income", "capitalGains", "expenses", "openLots", "dematBalances", "capitalAccount"];
+for (const { e, d } of docs) {
+  if (e.status === "failed" || d.twinOf) continue;
+  // An `opening-units` marker is a balance, not a movement: HDFC's folios carried
+  // only those while printing six years of purchases and redemptions.
+  const rowsOf = (k) => (d[k] ?? []).filter((r) => k !== "cashFlows" || r.kind !== "opening-units");
+  if (DATED_FACTS.some((k) => rowsOf(k).length > 0)) continue;
+  let pages;
+  try { pages = JSON.parse(fs.readFileSync(path.join(AUDIT, e.docKey, "pages.json"), "utf8")).pages ?? []; } catch { continue; }
+  const lines = pages.flatMap((p) => String(p.text ?? "").split("\n"))
+    .filter((l) => DATED_LINE.test(l) && TXN_WORD.test(l) && AMOUNT.test(l));
+  if (!lines.length) continue;
+  problem("history not read", e.sourcePath,
+    `${e.docKey} prints ${lines.length} dated transaction line(s) — e.g. "${lines[0].trim().slice(0, 90)}" — and its reading carries no dated row`,
+    "Teach its reader the statement's transaction table (contributions, allotments, switches, redemptions, payouts), "
+    + "in the kinds the book already consumes; then `npm run extract` and `npm run build-book`.");
+}
+
+// ── 6. Every dated external flow a statement prints is in the capital record ──
+//
+// Matched by account and DATE, not amount: the book sums same-day legs (Invesco's
+// Direct and Regular "Lateral shift in") and Sanshi prints a running balance on
+// its allotment rows, so amounts legitimately differ row by row — but a date on
+// which a statement says money went in or out, with no capital move in the book
+// that day, is history the dashboard does not show.
+const moves = bookArray("BOOK_CAPITAL_MOVES");
+const moveDays = new Set(moves.map((m) => `${m.accountId}|${m.date}`));
+const idOf = (provider, accountNo) =>
+  `${provider.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${accountNo}`;
+const missing = new Map();
+for (const { e, d } of docs) {
+  if (e.status !== "ok" || d.twinOf || d.excludedFromBook || !d.accountNo) continue;
+  const acc = accounts.find((a) => a.provider === d.provider && String(a.accountNo) === String(d.accountNo));
+  if (!acc) continue;                                    // check 3 owns an account missing from the book
+  for (const f of d.cashFlows ?? []) {
+    if ((f.kind !== "contribution" && f.kind !== "withdrawal") || !f.date) continue;
+    if (moveDays.has(`${acc.accountId}|${f.date}`)) continue;
+    const k = `${acc.accountId}|${e.sourcePath}`;
+    (missing.get(k) ?? missing.set(k, { acc, e, rows: [] }).get(k)).rows.push(`${f.date} ${f.kind} ${f.amount ?? "—"}`);
+  }
+}
+void idOf;
+for (const { acc, e, rows } of missing.values()) {
+  problem("history not in the book", e.sourcePath,
+    `${acc.accountId}: ${rows.length} dated ${rows.length === 1 ? "flow" : "flows"} the statement prints have no capital move in the book — ${rows.slice(0, 4).join("; ")}`,
+    "Name this report type for `cashFlows` in the provider's block in scripts/ingest/precedence.mjs (or teach build-book "
+    + "its kind), then `npm run build-book`.");
 }
 
 // ── Report ───────────────────────────────────────────────────────────────────

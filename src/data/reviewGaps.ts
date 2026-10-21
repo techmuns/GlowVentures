@@ -82,13 +82,6 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
-    "name": "HDFC Balanced Advantage Fund",
-    "aliases": [],
-    "custodian": "MOPWM Dir / MOPWM Reg",
-    "why": "held at Motilal Oswal; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat",
-    "ask": "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
-  },
-  {
     "name": "HDFC Liquid Fund -Direct(G)",
     "aliases": [],
     "custodian": "Cash tab",
@@ -185,13 +178,6 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "custodian": "Debt tab",
     "why": "a fund line on the Debt tab. What carries it is the AMC's own folio statement or a consolidated account statement (CAS) — not a demat holding statement, which moves units without a price",
     "ask": "AMC folio statements or a CAS for the mutual-fund and liquid holdings on the Debt / Cash / Alternate tabs"
-  },
-  {
-    "name": "Kotak Large & Midcap Fund - Direct- Growth",
-    "aliases": [],
-    "custodian": "MOPWM Dir",
-    "why": "held at Motilal Oswal; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat",
-    "ask": "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
   },
   {
     "name": "Kotak Liquid-Direct (DD)",

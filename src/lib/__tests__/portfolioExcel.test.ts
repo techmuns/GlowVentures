@@ -462,7 +462,16 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   // LOAD-BEARING: the book must carry a holding the rule annualises, or a sheet
   // printing the plain return on cost everywhere would pass the check above.
   ok("...and the book carries one the rule annualises, so the guard can fail", annualised > 0, `${annualised} annualised`);
-  const sheetCagr = ROWS.filter((r) => r["Measure"] === "CAGR" && r["Mandate"] === DASH).length;
+  // A row that is whole accounts on a dated record of ONE payment held a year or
+  // more is annualised too — by 5b's rule, on that payment ("One payment on …"),
+  // and 5b holds it to its own rate. Delphi's single ₹10 Cr contribution of
+  // 29-11-2024 is the first such row the book carries (its Transaction Details
+  // are read since the fund statements' dated tables were). Every OTHER direct
+  // CAGR row must be one this rule annualised from its own lot register.
+  const datedRowNames = new Set([...DIRECT_ROWS].filter(([key]) => capitalOf(key)?.dated)
+    .flatMap(([, ps]) => ps.map((p) => displaySecurity(p.security))));
+  const sheetCagr = ROWS.filter((r) => r["Measure"] === "CAGR" && r["Mandate"] === DASH
+    && !datedRowNames.has(r["Security"] as string)).length;
   eq("exactly those direct rows are annualised, and no other", sheetCagr, annualised);
   // INSIDE A MANDATE the same rule binds, and only on the mandate's OWN lot
   // register: V.E.C 128004's open-lots report (Stage 10ep) dates its lines, and
@@ -474,10 +483,13 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     mandateCagr.every((r) => pmsDated.has(r["Security"] as string)),
     mandateCagr.filter((r) => !pmsDated.has(r["Security"] as string)).map((r) => r["Security"]).join(", ") || `${mandateCagr.length} lot-dated mandate row(s)`);
   // THE WINDOW IS THE ROW'S OWN, never the book's newest date (2026-08-29): an
-  // annualised row names both ends of it.
+  // annualised row names both ends of it — from the oldest unit still held, or,
+  // on a dated whole-account row of one payment (5b), from that payment.
   const cagrRows = ROWS.filter((r) => r["Measure"] === "CAGR");
   ok("an annualised row states its window in Notes", cagrRows.length > 0
-     && cagrRows.every((r) => /Annualised over the \d+ days from \d{4}-\d\d-\d\d, the oldest unit still held, to its valuation on \d{4}-\d\d-\d\d/.test(String(r["Notes"]))));
+     && cagrRows.every((r) => /Annualised over the \d+ days from \d{4}-\d\d-\d\d, the oldest unit still held, to its valuation on \d{4}-\d\d-\d\d/.test(String(r["Notes"]))
+       || (datedRowNames.has(r["Security"] as string) && /One payment on \d{4}-\d\d-\d\d, compounded over the \d+ days to \d{4}-\d\d-\d\d/.test(String(r["Notes"])))),
+     cagrRows.filter((r) => datedRowNames.has(r["Security"] as string)).map((r) => `${r["Security"]}: ${String(r["Notes"]).slice(0, 100)}`).join(" | "));
 }
 
 // ── 5b. A ROW THAT IS WHOLE ACCOUNTS TAKES THE RULE ON ITS PAYMENTS (MSX-10) ─
