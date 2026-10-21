@@ -7637,6 +7637,15 @@ const ROUTES = [
   ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
   ["cio-returns-cagr", "/cio?tab=returns&rp=inception&rtype=cagr"],
   ["cio-returns-retired", "/cio?tab=returns&rtype=twr"],
+  /**
+   * Stage 10ez — the Return Attribution tab, on its default axis and on the two
+   * that split a PMS mandate across segments (and so draw the mandate
+   * remainder): Sector, whose companies are placed by the exposure fetch, and
+   * All Securities.
+   */
+  ["cio-attribution", "/cio?tab=attribution"],
+  ["cio-attribution-sector", "/cio?tab=attribution&seg=sector"],
+  ["cio-attribution-security", "/cio?tab=attribution&seg=security"],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -19716,6 +19725,66 @@ const CIO_RETURNS_LIVE = [
   }],
 ];
 
+/**
+ * Stage 10ez — RETURN ATTRIBUTION. *"select any such segment and see how the
+ * subcategories are performing and contributing to the portfolio returns."*
+ * Struck on the tab's own `data-seg-*` handles: the axis control, and the
+ * arithmetic a reader does by adding — the segments' values to the book's, the
+ * gains (with the one mandate remainder) to the total, each contribution its
+ * gain over the book's capital deployed, the contributions to the book's
+ * return, and the total to the Gain / Loss tile on the same page.
+ */
+const SEG_AXES = ["category", "assetClass", "basket", "sector", "side", "security"];
+const CIO_SEGMENTS = [
+  ["the Return Attribution tab offers every axis in order, and the one its address asked for is active", (t, ctx) => {
+    const r = ctx?.segDom;
+    if (!r) return false;
+    const want = /[?&]seg=([a-zA-Z]+)/.exec(ctx.path ?? "")?.[1] ?? "category";
+    return r.options.map((o) => o.key).join() === SEG_AXES.join()
+      && r.options.filter((o) => o.active).map((o) => o.key).join() === want && r.axis === want;
+  }],
+  ["...every segment is a row, and their values add to the book's value", (t, ctx) => {
+    const r = ctx?.segDom;
+    if (!r) return false;
+    if (r.total.value == null || !r.rows.length) return false;
+    const sum = r.rows.reduce((s, x) => s + x.value, 0);
+    return Math.abs(sum - r.total.value) <= 1;
+  }],
+  ["...the segments' gains and the mandate remainder add to the total, and each contribution is its gain over the book's capital deployed", (t, ctx) => {
+    const r = ctx?.segDom;
+    if (!r) return false;
+    if (r.total.gain == null || r.total.deployed == null) return notChecked("the book strikes no gain on this run");
+    const gain = r.rows.reduce((s, x) => s + (x.gain ?? 0), 0) + (r.remainder?.gain ?? 0);
+    const each = [...r.rows, ...(r.remainder ? [r.remainder] : [])]
+      .every((x) => x.gain == null ? x.contrib == null : Math.abs(x.contrib - (x.gain / r.total.deployed) * 100) < 1e-6);
+    const contrib = r.rows.reduce((s, x) => s + (x.contrib ?? 0), 0) + (r.remainder?.contrib ?? 0);
+    return Math.abs(gain - r.total.gain) <= 1 && each && Math.abs(contrib - r.total.ret) < 1e-6;
+  }],
+  ["...a segment that strikes no gain shows a dash with its reason, never ₹0", (t, ctx) => {
+    const r = ctx?.segDom;
+    if (!r) return false;
+    return r.rows.filter((x) => x.gain == null).every((x) => x.gainText === "—" && x.gainReason.length > 0);
+  }],
+  ["...an axis that keeps each PMS mandate in one segment draws no mandate remainder", (t, ctx) => {
+    const r = ctx?.segDom;
+    if (!r) return false;
+    if (r.axis !== "category" && r.axis !== "side") return notChecked("this axis may split a mandate across segments");
+    return r.remainder == null;
+  }],
+  ["...the Total is the Gain / Loss tile's gain on the same page", (t, ctx) => {
+    const r = ctx?.segDom;
+    const tile = (ctx?.kpiTiles ?? []).find((x) => /^gain/i.test(x.label));
+    if (!r || r.total.gain == null) return false;
+    if (!tile?.value) return notChecked("no Gain / Loss tile in the strip on this run");
+    const m = /([+−-])?₹\s*([\d,.]+)\s*(Cr|L)/.exec(tile.value);
+    if (!m) return notChecked(`the tile reads "${tile.value}", not a rupee figure`);
+    // The tile prints one decimal of its unit, so it ties to within half of one.
+    const unit = m[3] === "Cr" ? 1e7 : 1e5;
+    const v = Number(m[2].replace(/,/g, "")) * unit * (m[1] === "−" || m[1] === "-" ? -1 : 1);
+    return Math.abs(v - r.total.gain) <= 0.051 * unit;
+  }],
+];
+
 const CIO_TAB_CONTROL = [
   /**
    * FOUR SINCE Stage 10cq: *"in morning CIO can you make an ALL alerts tab."* It
@@ -19723,15 +19792,16 @@ const CIO_TAB_CONTROL = [
    * default is still the movers panel — which is why the order is asserted
    * rather than the membership alone.
    */
-  ["Morning CIO offers exactly the six panels — Daily Movers, Returns, Sector Composition, the two the family arranged and then All alerts", (t, ctx) => {
+  ["Morning CIO offers exactly the seven panels — Daily Movers, Returns, Return Attribution, Sector Composition, the two the family arranged and then All alerts", (t, ctx) => {
     const tabs = ctx?.cioTabs;
     if (tabs == null) return notChecked("the tab probe did not run on this pass");
     // SECTOR COMPOSITION SITS SECOND, right after Daily Movers, as asked — so
     // the order is asserted, not just the membership. The three panels the
     // family arranged (allocation, nav) and All alerts keep their places after it.
     // RETURNS SITS SECOND since Stage 10dq, as asked: "add a new tab after daily movers".
-    return tabs.length === 6
-      && tabs.map((x) => x.key).join(",") === "movers,returns,sectors,allocation,nav,alerts"
+    // RETURN ATTRIBUTION SITS RIGHT AFTER RETURNS since Stage 10ez.
+    return tabs.length === 7
+      && tabs.map((x) => x.key).join(",") === "movers,returns,attribution,sectors,allocation,nav,alerts"
       // EXACTLY ONE ACTIVE. Two would mean two panels are drawn at once, which
       // is the state this split exists to end; none would mean the route landed
       // somewhere the control does not describe.
@@ -26018,6 +26088,9 @@ const INVARIANTS = {
   "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-retired": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT],
   "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
+  "cio-attribution": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SEGMENTS],
+  "cio-attribution-sector": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SEGMENTS],
+  "cio-attribution-security": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SEGMENTS],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-return-metrics": [...CIO_MWR, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
@@ -39311,6 +39384,29 @@ for (const theme of THEMES) {
           coverage: root.querySelector("[data-returns-coverage]")?.textContent ?? "",
         };
       });
+      // Stage 10ez — the Return Attribution tab, read off its own handles.
+      if (name === "cio-attribution-sector") {
+        await page.waitForSelector('[data-segment-returns]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
+      }
+      const segDom = FAST ? null : await page.evaluate(() => {
+        const root = document.querySelector("main [data-cio-section=attribution] [data-segment-returns]");
+        if (!root) return null;
+        const num = (el, a) => { const v = el?.getAttribute(a); return v == null || v === "" ? null : Number(v); };
+        const rem = root.querySelector("tr[data-seg-remainder]");
+        return {
+          axis: root.getAttribute("data-seg-axis"),
+          options: [...root.querySelectorAll("[data-seg-axis-option]")].map((b) => ({ key: b.getAttribute("data-seg-axis-option"), active: b.getAttribute("aria-selected") === "true" })),
+          total: { value: num(root, "data-seg-total-value"), gain: num(root, "data-seg-total-gain"), deployed: num(root, "data-seg-total-deployed"), ret: num(root, "data-seg-total-ret") },
+          rows: [...root.querySelectorAll("tr[data-seg-row]")].map((tr) => {
+            const g = tr.querySelector('[data-seg-cell="gain"]');
+            return {
+              key: tr.getAttribute("data-seg-row"), value: num(tr, "data-seg-value"), gain: num(tr, "data-seg-gain"), contrib: num(tr, "data-seg-contrib"),
+              gainText: (g?.textContent ?? "").trim(), gainReason: g?.querySelector("[title]")?.getAttribute("title") ?? "",
+            };
+          }),
+          remainder: rem ? { gain: num(rem, "data-seg-remainder"), contrib: num(rem, "data-seg-contrib") } : null,
+        };
+      });
       const cioLayout = FAST ? null : await page.evaluate(() => {
         const panel = document.querySelector("main [data-cio-panel]");
         if (!panel) return null;
@@ -44006,7 +44102,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
