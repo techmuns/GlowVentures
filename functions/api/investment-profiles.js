@@ -10,11 +10,12 @@
 //                                  → { ok: true, profiles: EnteredProfile[] }
 //
 // The same store, the same gate and the same rules as `/api/capital-calls`
-// (read that file's header): Cloudflare KV under the `GLOW_STORE` binding, behind
-// the edge password; a write only from this site's own page; one KEY PER
-// investment and field (`investment-profile:<field>:<fund>`) so two people
-// saving different cells never lose each other's text; a save visible at once
-// to whoever made it, to everyone else within about a minute.
+// (read that file's header): the dashboard's store file in the GitHub repository
+// (`shared/dashboardStore.mjs`), behind the edge password; a write only from
+// this site's own page; one KEY PER investment and field
+// (`investment-profile:<field>:<fund>`) so two people saving different cells
+// never lose each other's text; a save visible to everyone at once, and one
+// commit per save, so the repository's history records every edit.
 //
 // ONE SAVE MAY NAME SEVERAL INVESTMENTS: a legal-name or brand row on the page
 // spans every fund line of that company, and what the company does is the same
@@ -22,6 +23,8 @@
 // still its own key.
 //
 // TEXT, NEVER A FIGURE. Nothing here reaches `glowData.ts` or any total.
+
+import { storeFor } from "../../shared/dashboardStore.mjs";
 
 const PREFIX = "investment-profile:";
 const FIELDS = new Set(["strategy", "description"]);
@@ -32,7 +35,7 @@ const MAX_NAME = 160;
 const MAX_FUNDS = 40;
 const MAX_RECORDS = 4000;
 const MAX_BODY = 16384;
-/** KV metadata is capped at 1,024 bytes; a longer record is kept in the value and read from there. */
+/** Metadata rides on `list` up to 1,024 bytes (the store's old limit, kept); a longer record is read from its value. */
 const MAX_META = 1000;
 
 const json = (status, body) =>
@@ -108,10 +111,10 @@ export function validateSave(body, now = new Date()) {
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const kv = env?.GLOW_STORE;
-  if (!kv || typeof kv.list !== "function") {
+  const kv = storeFor(env);
+  if (!kv) {
     return fail(503, "NOT_CONFIGURED",
-      "Saving strategies and descriptions is not switched on yet: the site's shared store (a Cloudflare KV binding named GLOW_STORE) has not been connected.");
+      "Saving strategies and descriptions is not switched on yet: the site has no GitHub token (GLOW_GITHUB_TOKEN) to save them to the repository with.");
   }
 
   if (request.method === "GET") {
@@ -142,6 +145,7 @@ export async function onRequest(context) {
       const f = fundsOf(body);
       if (f.error) return fail(400, "INVALID", f.error);
       for (const fund of f.funds) await kv.delete(keyOf(f.field, fund));
+      await kv.flush?.();
       // The list is eventually consistent, so the answer applies the delete itself.
       const gone = new Set(f.funds.map((fund) => keyOf(f.field, fund)));
       const profiles = (await listProfiles(kv)).filter((p) => !gone.has(keyOf(p.field, p.fund)));
@@ -161,6 +165,7 @@ export async function onRequest(context) {
         const fits = new TextEncoder().encode(value).length <= MAX_META;
         await kv.put(keyOf(r.field, r.fund), value, fits ? { metadata: r } : undefined);
       }
+      await kv.flush?.();
       const written = new Set(v.records.map((r) => keyOf(r.field, r.fund)));
       const profiles = [...current.filter((p) => !written.has(keyOf(p.field, p.fund))), ...v.records].sort(order);
       return json(200, { ok: true, profiles });

@@ -142,8 +142,11 @@ One line per area; the history files explain each in depth.
   `viewMemory.ts` — every table sorts, every column but the first drags, the
   arrangement is remembered. `components/TreeTable.tsx` — rows open into rows of
   the same table, never a table in a cell.
-- `src/lib/enteredCalls.ts` + `functions/api/capital-calls.js`, `tileSets.ts` +
-  `functions/api/tile-sets.js` — shared KV store (`GLOW_STORE`, not yet bound).
+- `src/lib/enteredCalls.ts` + `functions/api/capital-calls.js`, `enteredProfiles.ts` +
+  `functions/api/investment-profiles.js`, `tileSets.ts` +
+  `functions/api/tile-sets.js` — the shared store: one JSON file on the repo's
+  `dashboard-store` branch, written with `GLOW_GITHUB_TOKEN` (`shared/dashboardStore.mjs`,
+  Stage 10ex; the repo is public, so everything saved there is public).
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.
@@ -373,8 +376,8 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
 - `indices.js`, `prices.js` — Yahoo, keyless, every symbol checked by the name
   the upstream reports. `fx.js` — ECB, keyless. `research`, `insider`,
   `announcements`, `ratios`, `news` — muns. `polycab.js` — BSE, keyless.
-  `capital-calls.js`, `tile-sets.js` — the `GLOW_STORE` KV binding (until it is
-  bound, they say so). `corporate-actions.js` — the Glow Central Research
+  `capital-calls.js`, `tile-sets.js`, `investment-profiles.js` — the repo's store
+  file via `GLOW_GITHUB_TOKEN` (until it is set, they say so). `corporate-actions.js` — the Glow Central Research
   capture. `stock-exposure.ts` — the look-through read model.
 - Workflows: `harvest.yml` (macro series store), `fund-navs.yml` (AMFI NAVs),
   `polycab.yml` (Polycab exchange data).

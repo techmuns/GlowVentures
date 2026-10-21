@@ -7,7 +7,7 @@
 //
 // `/api/capital-calls` is a Cloudflare Pages Function over a KV namespace, and
 // the deployment gates every `/api/*` path behind the edge password — so the
-// live store cannot be exercised from here, and until the `GLOW_STORE` binding
+// live store cannot be exercised from here, and until the `GLOW_GITHUB_TOKEN` secret
 // is connected it would answer 503 anyway. Every branch AROUND the store is
 // reachable against an in-memory KV, and they are the branches that decide
 // whether a call the family typed is kept, refused, or silently lost:
@@ -95,7 +95,7 @@ async function call(
     headers,
     body: method === "POST" ? (init.raw ?? JSON.stringify(init.body)) : undefined,
   });
-  const res = await onRequest({ request, env: kv ? { GLOW_STORE: kv } : {} });
+  const res = await onRequest({ request, env: kv ? { DASHBOARD_STORE: kv } : {} });
   const text = await res.text();
   let body: Body | null = null;
   try { body = JSON.parse(text); } catch { body = null; }
@@ -115,7 +115,7 @@ const draft = (over: Record<string, unknown> = {}) => ({
 console.log("── an unconnected store says so, on every method ──");
 {
   const g = await call(undefined);
-  ok("GET with no GLOW_STORE binding answers 503 NOT_CONFIGURED", g.status === 503 && g.body?.code === "NOT_CONFIGURED", `${g.status} ${g.body?.code}`);
+  ok("GET with no GitHub token answers 503 NOT_CONFIGURED", g.status === 503 && g.body?.code === "NOT_CONFIGURED", `${g.status} ${g.body?.code}`);
   const p = await call(undefined, { body: { op: "save", call: draft() } });
   ok("…and so does a save — nothing is claimed saved", p.status === 503 && p.body?.ok === false && p.body?.code === "NOT_CONFIGURED");
   // THE TWO HALVES AGREE: the page's reading of the function's OWN 503.
@@ -128,29 +128,32 @@ console.log("── an unconnected store says so, on every method ──");
   ok("…with the cause the cells name it by", r.ok === false && r.cause === "not-configured" && CAUSE_WORD[r.cause] === "Not set up");
 }
 
-console.log("── the set-up steps name the binding the function actually reads ──");
+console.log("── the set-up steps name the secret the function actually reads ──");
 {
   /**
    * TWO COPIES OF ONE FACT. The editor tells whoever manages the site which
-   * binding to add, and the function reads one — so the name in the STEPS is
-   * taken out of their own words and handed to the function as the binding,
-   * and the function must then answer. A rename on either side alone fails
-   * here, rather than on the day somebody follows the steps and the column
-   * stays "Not set up".
+   * secret to add, and the function reads one — so the name in the STEPS is
+   * taken out of their own words and handed to the function as the secret,
+   * and the function must then answer (against a stubbed GitHub that holds no
+   * store yet). A rename on either side alone fails here, rather than on the
+   * day somebody follows the steps and the column stays "Not set up".
    */
   const text = SWITCH_ON_STEPS.join(" ");
-  const named = /Variable name:\s*([A-Z0-9_]+)/.exec(text)?.[1] ?? null;
-  ok("the steps name one variable", named !== null, String(named));
+  const named = /Secret named ([A-Z0-9_]+)/.exec(text)?.[1] ?? null;
+  ok("the steps name one secret", named !== null, String(named));
   if (named) {
-    const kv = memoryKv();
-    const res = await onRequest({ request: new Request(`${SITE}/api/capital-calls`), env: { [named]: kv } });
-    const body = await res.json() as Body;
-    ok("…and a binding under that name switches the store on", res.status === 200 && body.ok === true && Array.isArray(body.calls),
-      `${res.status} ${body.code ?? ""}`);
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async () => new Response('{"message":"Not Found"}', { status: 404, headers: { "content-type": "application/json" } })) as typeof fetch;
+    try {
+      const res = await onRequest({ request: new Request(`${SITE}/api/capital-calls`), env: { [named]: "test-token" } });
+      const body = await res.json() as Body;
+      ok("…and a secret under that name switches the store on", res.status === 200 && body.ok === true && Array.isArray(body.calls),
+        `${res.status} ${body.code ?? ""}`);
+    } finally { globalThis.fetch = realFetch; }
   }
-  ok("the steps say to redeploy — a binding takes effect only on a new deployment", /redeploy/i.test(text));
-  ok("…and say where the namespace is created and where it is bound",
-    /Workers KV/.test(text) && /Settings → Bindings/.test(text) && /KV namespace/.test(text));
+  ok("the steps say to redeploy — a secret takes effect only on a new deployment", /redeploy/i.test(text));
+  ok("…and say what the token may do and where it is set",
+    /Contents: Read and write/.test(text) && /Only select repositories/.test(text) && /Variables and Secrets/.test(text));
 }
 
 console.log("── a save is kept, visible at once, and one key per call ──");

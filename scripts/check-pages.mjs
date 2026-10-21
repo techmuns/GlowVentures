@@ -7815,7 +7815,7 @@ const ROUTES = [
    *  all."* The walk ADDS a call, EDITS one and DELETES one against a faked
    * store, and the invariants hold both what the page SENT and what it then
    * DREW to the store's own answer. The second route is the store before it is
-   * connected — the state production is in until the KV binding exists.
+   * connected — the state production is in until the site has its GitHub token.
    */
   ["private-market-calls", "/private-market?show=both"],
   ["private-market-calls-off", "/private-market?show=both"],
@@ -13755,7 +13755,7 @@ async function installCallStore(page) {
 
 /**
  * THE STORE BEFORE ITS BINDING EXISTS — the production state until somebody
- * with the Cloudflare account connects `GLOW_STORE`. The function's own 503.
+ * gives the site its `GLOW_GITHUB_TOKEN` secret (Stage 10ex). The function's own 503.
  */
 /**
  * A READER THE EDGE GATE HAS SIGNED OUT. The gate answers every `/api/*` path
@@ -29712,7 +29712,7 @@ const INVARIANTS = {
   /**
    * ── THE STORE BEFORE IT IS CONNECTED ──────────────────────────────────────
    *
-   * The state production is in until the KV binding exists. The column must say
+   * The state production is in until the site has its GitHub token. The column must say
    * saving is not switched on — in the reader's words, on every cell and once
    * on the header — and must not offer an Add that cannot save.
    */
@@ -29726,10 +29726,10 @@ const INVARIANTS = {
     /**
      * ── STAGE 10cl: "NOT SET UP", ON EVERY CELL, AND A CLICK SAYS WHAT TO DO ──
      *
-     * The state production is in until the KV binding exists. Every cell is a
+     * The state production is in until the site has its GitHub token. Every cell is a
      * button reading "Not set up", the header note says it once, and clicking
      * one opens the editor — which states the reason, gives the one-time
-     * Cloudflare steps naming the binding the function reads, and keeps Save
+     * steps naming the GitHub token secret the function reads (Stage 10ex), and keeps Save
      * off. "Saved for everyone" is not printed, because nothing here is.
      */
     ["every cell is a button reading Not set up, and the header says it once", (t, ctx) => {
@@ -29744,7 +29744,7 @@ const INVARIANTS = {
       const steps = (o.steps ?? []).join(" ");
       return o.editors === 1 && o.cause === "not-configured" && /not switched on yet/i.test(o.reason ?? "")
         && (o.steps ?? []).length === 3
-        && /Variable name:\s*GLOW_STORE\b/.test(steps) && /Workers KV/.test(steps) && /Settings → Bindings/.test(steps) && /redeploy/i.test(steps)
+        && /Secret named GLOW_GITHUB_TOKEN\b/.test(steps) && /Contents: Read and write/.test(steps) && /Variables and Secrets/.test(steps) && /redeploy/i.test(steps)
         && o.saveDisabled && o.inputs >= 3 && o.inputsDisabled && !o.savedForEveryone;
     }],
   ],
