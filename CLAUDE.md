@@ -128,7 +128,7 @@ One line per area; the history files explain each in depth.
   (the same cells typed on the table, shown over a file's; Stage 10ev).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indices.ts`, `periodReturns.ts`
-  (Morning CIO Returns tab), `segmentReturns.ts` (the Return Attribution tab:
+  (Morning CIO Returns tab), `segmentReturns.ts` (its attribution section:
   FIFO gain and contribution by any axis, tied to the Gain / Loss tile),
   `returnMeasures.ts`, `returnColumns.ts`.
 - `src/lib/fundNavs.ts` (AMFI NAV overlay; never sets `live`; depository cash and
