@@ -30,6 +30,7 @@
     "check:reads": "node scripts/check-reads.mjs",
     "test:statements": "node --test scripts/ingest/__tests__/publication.test.mjs",
     "statements:verify": "node scripts/ingest/verify-publication.mjs",
+    "statements:verify-book": "node scripts/ingest/verify-book.mjs",
     "statements:prepare": "node scripts/ingest/prepare-delivery.mjs",
     "statements:publish": "node scripts/ingest/publish-delivery.mjs",
     "statements:finalize": "node scripts/ingest/finalize-delivery.mjs",

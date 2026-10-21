@@ -23,6 +23,11 @@ export type InboxFile = {
   docKeys: string[] | null;
   /** Landed: the commit on main that carries it. */
   commit: string | null;
+  /** Backend publication state; the existing status/reason UI remains usable. */
+  pullRequest?: string | null;
+  baseCommit?: string | null;
+  archiveRevision?: string | null;
+  documentVersions?: { document: string; revision: string }[] | null;
   /** The intake run that last touched it. */
   run: string | null;
   updatedAt: string;

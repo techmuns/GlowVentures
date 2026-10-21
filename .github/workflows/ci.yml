@@ -9,6 +9,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      baseline:
+        description: Verified main commit before this statement delivery
+        required: true
+        type: string
 
 jobs:
   build:
@@ -23,7 +29,7 @@ jobs:
 
       - name: Statement identity, format and publication contracts
         env:
-          GLOW_PUBLICATION_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          GLOW_PUBLICATION_BASE: ${{ inputs.baseline || github.event.pull_request.base.sha || github.event.before }}
         run: |
           npm run test:statements
           git fetch --no-tags origin "$GLOW_PUBLICATION_BASE"

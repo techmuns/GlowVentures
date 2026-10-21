@@ -71,6 +71,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     try { assertNormalized(d); stable(d); } catch (error) { add('INVALID_DOCUMENT', d, error.message); continue; }
     if (d.status !== 'ok' || readGaps(d).length) add('READ_GAP', d, 'The reader must account for the whole statement before publication.');
     if (d.reportType === 'unknown') add('UNKNOWN_FORMAT', d, 'No verified reader recognizes this statement format.');
+    if (typeof d.sourcePath !== 'string' || !d.sourcePath.startsWith('source/') || d.sourcePath.split('/').some(p => !p || p === '..' || p === '.') || /[\\\r\n\0]/.test(d.sourcePath)) add('UNSAFE_SOURCE_PATH', d, 'Statement evidence must refer to a source file inside the repository.');
     if (d.asOf && !validDate(d.asOf)) add('INVALID_DATE', d, 'Statement date is not an actual ISO calendar day.', '/asOf');
     if (expected.provider && d.provider !== expected.provider) add('FOLDER_MISMATCH', d, 'The statement issuer does not match the selected provider folder.');
     if (expected.ownerId && d.ownerId !== expected.ownerId) add('OWNER_MISMATCH', d, 'The statement holder does not match the supplied owner.');

@@ -29,6 +29,14 @@ for (const [i, p] of book.BOOK_POSITIONS.entries()) {
   assert.equal(fieldEvidence.fields[`${e.record.pointer}/quantity`].value, p.quantity);
   assert.equal(fieldEvidence.fields[`${e.record.pointer}/marketValue`].value, sourceRow.marketValue);
 }
+for (const [account, first] of [['hdfc-mutual-fund-15644806', '2022-08-03'], ['hdfc-mutual-fund-16002141', '2022-08-05']]) {
+  const index = book.BOOK_POSITIONS.findIndex(p => p.accountId === account);
+  assert.ok(index >= 0); assert.equal(evidence[index].investmentDate.value.first, first);
+}
+for (const [suffix, first] of [['12539150', '2025-03-06'], ['12838316', '2025-11-06'], ['12838320', '2025-07-11']]) {
+  const index = book.BOOK_POSITIONS.findIndex(p => p.accountId.endsWith(suffix) && p.isin === 'INF109KC1RH9');
+  assert.ok(index >= 0); assert.equal(evidence[index].investmentDate.value.first, first);
+}
 const p = book.BOOK_POSITIONS.find(p => p.quantity != null && p.currentPrice && quoteSymbolFor(p) && !p.review && p.assetClass === 'Equity')!;
 const symbol = quoteSymbolFor(p)!;
 const feed = { asOf: '2026-10-21T10:00:00Z', quotes: { [symbol]: { price: p.currentPrice! * 1.01, prevClose: p.currentPrice!, source: 'upstox', ageS: 0,

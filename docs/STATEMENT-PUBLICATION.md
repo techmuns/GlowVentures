@@ -4,6 +4,21 @@ The upload service owns receiving files, durable job scheduling and customer job
 This backend owns matching, validation, source evidence and preparing a complete publication.
 No dashboard layout or input control changes are required for this contract.
 
+The deployed teammate intake path (`intake-uploads.mjs` / `statement-intake.yml`) calls
+this publication validator, source-row verification and required tests directly. It now
+opens codex PRs rather than pushing to main, saves durable checksum receipts, resumes
+pending PRs without rereading their bytes and clears files only after the live version
+check. A stale base closes the obsolete candidate and requeues it for regeneration.
+The existing status/reason fields carry these outcomes; no UI layout change is needed.
+
+The workflow uses `GLOW_INTAKE_TOKEN` if configured, otherwise its repository Actions
+token. Actions-created PRs can require workflow approval; explicit dispatch runs CI
+against the codex ref, while any remaining approval/review gate is respected. Configure
+a dedicated repository-scoped app/token for unattended PR CI if the account requires it.
+`GLOW_DASHBOARD_PASSWORD` is used only for authenticated GETs verifying the live revision.
+Without that check the job stays processing and retains its source bytes. If Codex
+review is unavailable, the PR waits for a local review rather than claiming approval.
+
 ## Handoff from the upload service
 
 Save the original bytes under `source/` in an isolated worker checkout based on current

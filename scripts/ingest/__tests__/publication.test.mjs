@@ -9,6 +9,7 @@ import { assessPublication, digest, stable, archiveRevision, documentEvidence, p
 import { sourceFiles } from '../prepare-delivery.mjs';
 import { checkSeal, commitDelivery } from '../publish-delivery.mjs';
 import { finalizationGate } from '../finalize-delivery.mjs';
+import { completedBotReview, deploymentContains, monitorPublication } from '../lib/intakePublication.mjs';
 import { extractLayout } from '../lib/layout.mjs';
 import { findTable, readRows } from '../lib/table.mjs';
 import { parseNum } from '../lib/parseNum.mjs';
@@ -197,4 +198,39 @@ test('merge finalization requires green CI, reviewed exact head and all protecte
   assert.throws(() => finalizationGate({ ...pr, statusCheckRollup: [{ name: 'build', status: 'IN_PROGRESS' }] }, review, publication), /still running/);
   assert.throws(() => finalizationGate(pr, { ...review, automatedUnavailableReason: null }, publication), /unavailable/);
   assert.throws(() => finalizationGate({ ...pr, unresolvedThreads: true }, review, publication), /feedback/);
+});
+test('a bot summary must name the exact head and have no unresolved findings', () => {
+  const comment = (sha, author = 'chatgpt-codex-connector') => ({ author: { login: author }, body: `<!-- codex-review-state:v1 ${JSON.stringify({ code_review: {
+    commit_sha: sha, status: 'completed', has_any_findings: false, has_unresolved_findings: false } })} -->` });
+  assert.ok(completedBotReview({ headRefOid: 'abc', comments: [comment('abc')] }));
+  assert.equal(completedBotReview({ headRefOid: 'changed', comments: [comment('abc')] }), null);
+  assert.equal(completedBotReview({ headRefOid: 'abc', comments: [comment('abc', 'untrusted-user')] }), null);
+  const finding = comment('abc'); finding.body = finding.body.replace('"has_unresolved_findings":false', '"has_unresolved_findings":true');
+  assert.equal(completedBotReview({ headRefOid: 'abc', comments: [comment('abc'), finding] }), null);
+});
+test('deployment verification requires exact document versions, not just document names or a successful merge', async () => {
+  const file = { pullRequest: 'https://github.com/example/repo/pull/1', commit: 'head', baseCommit: 'base',
+    documentVersions: [{ document: 'doc-a', revision: 'correct-row-version' }], docKeys: ['doc-a'] };
+  assert.equal(deploymentContains({ statementDocuments: [{ document: 'doc-a', revision: 'wrong' }] }, file.documentVersions), false);
+  const merged = JSON.stringify({ state: 'MERGED', mergeCommit: { oid: 'merged-sha' } });
+  const mockFetch = good => async url => Response.json(url.endsWith('/publication.json') && !url.includes('/views/')
+    ? { manifest: `/views/${'a'.repeat(20)}/publication.json` }
+    : { statementDocuments: [{ document: 'doc-a', revision: good ? 'correct-row-version' : 'wrong' }] });
+  const pending = await monitorPublication(file, { gh: () => merged, credential: 'test-only-credential', fetchImpl: mockFetch(false) });
+  assert.equal(pending.status, 'processing');
+  const live = await monitorPublication(file, { gh: () => merged, credential: 'test-only-credential', fetchImpl: mockFetch(true) });
+  assert.equal(live.status, 'landed'); assert.equal(live.commit, 'merged-sha');
+});
+test('pending uploads keep their PR and raw-file lifecycle separate from CI/review', async () => {
+  const file = { pullRequest: 'pr1', commit: 'head', baseCommit: 'base', documentVersions: [{ document: 'd', revision: 'r' }] };
+  const pr = { state: 'OPEN', headRefOid: 'head', statusCheckRollup: [{ name: 'build', status: 'IN_PROGRESS' }] };
+  const commands = [];
+  const gh = args => { commands.push(args); return JSON.stringify(pr); };
+  assert.equal((await monitorPublication(file, { gh, currentBase: 'base' })).status, 'processing');
+  pr.statusCheckRollup = [{ name: 'build', status: 'COMPLETED', conclusion: 'SUCCESS' }];
+  assert.equal((await monitorPublication(file, { gh, currentBase: 'base' })).status, 'held', 'Green CI cannot bypass review');
+  assert.ok(!commands.some(a => a[0] === 'pr' && a[1] === 'merge'));
+  const stale = await monitorPublication(file, { gh, currentBase: 'newer' });
+  assert.equal(stale.status, 'queued'); assert.equal(stale.pullRequest, null);
+  assert.ok(commands.some(a => a[1] === 'close'));
 });
