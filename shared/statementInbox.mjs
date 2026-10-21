@@ -65,7 +65,7 @@ const MAX_PATH = 240;
 const MAX_DEPTH = 8;
 
 export const STATUSES = Object.freeze(["queued", "processing", "landed", "duplicate", "held"]);
-export const HOLDS = Object.freeze(["needs-reader", "needs-password", "unreadable", "check-failed", "intake-error"]);
+export const HOLDS = Object.freeze(["needs-reader", "needs-password", "unreadable", "not-a-statement", "check-failed", "intake-error"]);
 const OPEN = new Set(["queued", "processing", "held"]);
 
 /** The file's extension, lower-cased and without the dot — or "" when there is none. */

@@ -12,7 +12,12 @@ import { investedSpanOf } from "../privateBook";
 
 const near = (got: number | null | undefined, want: number) =>
   assert.ok(typeof got === "number" && Math.abs(got - want) < .02, `${got} != ${want}`);
-assert.equal(BOOK_RECOVERED_COSTS.length, 44, "only exact owner/ISIN/quantity matches are recoverable");
+assert.equal(BOOK_RECOVERED_COSTS.length, 45, "only exact owner/ISIN/quantity matches are recoverable");
+// Bharat's scanned HDFC Bank NSDL statement (Stage 10gk) prints the 1,01,111
+// Smartworks shares his saved purchase record bought — an exact match, and the
+// only one the scan adds. The row stays quantity-only: a cost values nothing.
+const bharat = BOOK_RECOVERED_COSTS.filter(r => r.accountId === "hdfc-bank-nsdl-demat-22025655");
+assert.deepEqual(bharat.map(r => [r.isin, r.quantity, r.costBasis]), [["INE0NAZ01010", 101111, 45499950]]);
 const icici = BOOK_POSITIONS.filter(p => p.accountId === "icici-bank-nsdl-demat-49794950");
 const recovered = icici.filter(p => p.recoveredCost);
 assert.equal(recovered.length, 9);
@@ -41,7 +46,9 @@ assert.equal(yash.quantity, 138462, "unverified June disposals never advance the
 assert.equal(yash.realizedLotsAfter, 3, "known later disposals block live pricing of the old units");
 
 const candidates = shareCandidates();
-assert.equal(candidates.filter(p => p.recoveredCost).length, 11);
+// Twelve: Bharat's Smartworks shares on his HDFC Bank NSDL statement (Stage 10gk) are the twelfth.
+assert.equal(candidates.filter(p => p.recoveredCost).length, 12);
+assert.ok(candidates.some(p => p.accountId === "hdfc-bank-nsdl-demat-22025655" && p.isin === "INE0NAZ01010" && p.recoveredCost));
 const infinium = candidates.find(p => p.isin === "INE0MRE01011")!;
 assert.equal(infinium.quantity, 8000); near(infinium.costBasis, 2646660);
 near(infinium.realizedPnL, -88917.69); near(infinium.costOfUnitsSold, 330630);

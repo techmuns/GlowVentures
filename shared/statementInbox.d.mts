@@ -3,7 +3,7 @@
 // intake run (Node) and the browser's tests share one implementation.
 
 export type InboxStatus = "queued" | "processing" | "landed" | "duplicate" | "held";
-export type InboxHold = "needs-reader" | "needs-password" | "unreadable" | "check-failed" | "intake-error";
+export type InboxHold = "needs-reader" | "needs-password" | "unreadable" | "not-a-statement" | "check-failed" | "intake-error";
 
 export type InboxFile = {
   /** The path as uploaded — a folder upload keeps its folders — cleaned. */
@@ -31,6 +31,8 @@ export type InboxFile = {
   baseCommit?: string | null;
   archiveRevision?: string | null;
   documentVersions?: { document: string; revision: string }[] | null;
+  /** Files inside a ZIP a mail server removed (their notices landed as never arrived). */
+  neverArrived?: string[] | null;
   /** The intake run that last touched it. */
   run: string | null;
   updatedAt: string;

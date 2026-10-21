@@ -6448,6 +6448,9 @@ const FENCED = (() => {
       balances: fenced.map((p) => ({
         accountId: p.accountId,
         shares: Number.isFinite(p.quantity) ? p.quantity : null,
+        // A custody statement that prints quantities only values none of its
+        // shares (Bharat's scanned HDFC statement, Stage 10gk).
+        valued: Number.isFinite(p.marketValue),
         asOf: byId.get(p.accountId)?.asOf ?? null,
         // The date the row's statement PRINTS its values at — `build-book`'s
         // field, held below against the statement's own text in the archive.
@@ -22799,12 +22802,26 @@ const INVARIANTS = {
     }],
     /**
      * THE SECOND-STATEMENT CARD IS GONE, AND THIS ASSERTS THE REMOVAL RATHER
-     * THAN DISAPPEARING WITH IT. That scan is still unread, so any share count
-     * from it appearing here would be a figure recovered from a document nobody
-     * could machine-read.
+     * THAN DISAPPEARING WITH IT. Bharat's scanned HDFC statement is read since
+     * Stage 10gk, every row checked by the page, so its share count is a figure
+     * the BOOK carries. What the page may never claim from a statement that
+     * prints quantities only is a VALUE. So each fenced row the book carries
+     * unvalued is struck off the book: its demat row shows the book's own share
+     * count, and its value cell is the dash with its reason.
      */
-    ["the removed second-statement card stays removed, and no figure is claimed from the scan",
-      (t) => !/could not be read/i.test(t) && !/no text layer/i.test(t) && !/51,?08,?911/.test(t)],
+    ["the removed second-statement card stays removed, and an unvalued demat claims its shares and no value",
+      (t, ctx) => {
+        if (/could not be read/i.test(t) || /no text layer/i.test(t)) return false;
+        const unvalued = (FENCED?.balances ?? []).filter((b) => !b.valued);
+        if (!unvalued.length) return true;
+        const rows = ctx?.polycabDom?.holdingRows;
+        if (!rows) return { notChecked: "the DOM probe did not run" };
+        return unvalued.every((b) => {
+          const r = rows.find((x) => x.account === b.accountId);
+          return !!r && (r.shares ?? "").replace(/[^\d]/g, "") === String(b.shares)
+            && r.value === "—" && /prints quantities only/i.test(r.valueTitle ?? "");
+        });
+      }],
     ["the per-demat prose stays removed",
       (t) => !/One row per (?:depository|demat) account/i.test(t)
         && !/Cost is absent because a depository holds the shares/i.test(t)
@@ -43491,6 +43508,8 @@ for (const theme of THEMES) {
             holder: cellOf(tr, "holder")?.innerText.trim() ?? null,
             accountText: cellOf(tr, "account")?.innerText.replace(/\s+/g, " ").trim() ?? null,
             shares: cellOf(tr, "shares")?.innerText.trim() ?? null,
+            value: cellOf(tr, "value")?.innerText.trim() ?? null,
+            valueTitle: tipOf(cellOf(tr, "value")),
             cost: cellOf(tr, "cost")?.innerText.trim() ?? null,
             costTitle: tipOf(cellOf(tr, "cost")),
             pledge: cellOf(tr, "pledge")?.innerText.trim() ?? null,

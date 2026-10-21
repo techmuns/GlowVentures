@@ -19,6 +19,16 @@ export function completedBotReview(pr) {
   }
   return null;
 }
+/**
+ * A ZIP that lands with files a mail server removed says which, at every stage
+ * of its publication — the PR, the wait for the deployment, and landed — so
+ * somebody asks the sender for them (Stage 10gk). `neverArrived` rides on the
+ * inbox file; each stage's own reason comes first.
+ */
+export const neverArrivedNote = names => names?.length
+  ? `${names.length} file(s) inside never arrived — a mail server removed them and left a notice: ${names.join(', ')}. Ask the sender to re-send ${names.length === 1 ? 'it' : 'them'}.`
+  : null;
+export const withNotice = (reason, file) => [reason, neverArrivedNote(file?.neverArrived)].filter(Boolean).join(' ') || null;
 export function deploymentContains(manifest, versions) {
   return Array.isArray(versions) && versions.length > 0 && versions.every(v => manifest.statementDocuments?.some(d => d.document === v.document && d.revision === v.revision));
 }
@@ -39,7 +49,7 @@ export async function readDeployedPublication({ credential, baseURL = 'https://g
   return get(pointer.manifest);
 }
 export async function monitorPublication(file, { gh, currentBase, credential, baseURL, fetchImpl } = {}) {
-  const metadata = Object.fromEntries(['pullRequest', 'branch', 'ciDispatched', 'commit', 'baseCommit', 'archiveRevision', 'documentVersions', 'landedAs', 'providers', 'docKeys'].map(k => [k, file[k] ?? null]));
+  const metadata = Object.fromEntries(['pullRequest', 'branch', 'ciDispatched', 'commit', 'baseCommit', 'archiveRevision', 'documentVersions', 'landedAs', 'providers', 'docKeys', 'neverArrived'].map(k => [k, file[k] ?? null]));
   if (!metadata.pullRequest) {
     if (!/^codex\/statement-delivery-[a-f0-9]{16}$/.test(file.branch)) throw new Error('Invalid saved publication branch.');
     const previous = JSON.parse(gh(['pr', 'list', '--head', file.branch, '--state', 'all', '--json', 'url']));
@@ -50,7 +60,7 @@ export async function monitorPublication(file, { gh, currentBase, credential, ba
     metadata.pullRequest = previous[0]?.url ?? gh(['pr', 'create', '--base', 'main', '--head', file.branch, '--title', 'Publish verified statement delivery', '--body-file', body]);
   }
   const pending = detail => ({ ...metadata, status: 'processing', hold: null,
-    reason: 'Your statement is verified and waiting to appear on the dashboard.', publicationDetail: detail });
+    reason: withNotice('Your statement is verified and waiting to appear on the dashboard.', metadata), publicationDetail: detail });
   const held = detail => ({ ...metadata, status: 'held', hold: 'check-failed',
     reason: 'This statement needs an administrator’s review before it can update the dashboard.', publicationDetail: detail });
   const url = metadata.pullRequest;
@@ -58,7 +68,7 @@ export async function monitorPublication(file, { gh, currentBase, credential, ba
   if (pr.state === 'MERGED') {
     const manifest = await readDeployedPublication({ credential, baseURL, fetchImpl });
     if (!manifest || !deploymentContains(manifest, file.documentVersions)) return pending('Merged; waiting for the live publication to contain the verified document versions.');
-    return { ...metadata, status: 'landed', hold: null, reason: null, commit: pr.mergeCommit?.oid ?? file.commit };
+    return { ...metadata, status: 'landed', hold: null, reason: withNotice(null, metadata), commit: pr.mergeCommit?.oid ?? file.commit };
   }
   if (pr.state !== 'OPEN') return held(`The publication PR is closed without merging: ${url}`);
   if (pr.headRefOid !== file.commit) return held(`The publication branch changed after validation; inspect ${url}.`);

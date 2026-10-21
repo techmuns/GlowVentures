@@ -83,6 +83,15 @@ It compares individual reconciliation findings with the baseline, not just error
 an old resolved error cannot hide a different new error. A mixed duplicate/new delivery
 is held rather than silently discarding its new statements.
 
+Three cases are not losses or conflicts (Stage 10gk):
+
+- A failed reading that published nothing may give way to a reading of the same source
+  file, such as a scan its reader now checks.
+- A mail server's removal notice where a statement should be (`attachment-removed`)
+  publishes no facts and is listed as never arrived.
+- A row filed under a key/ISIN pairing the verified book already carries is not a new
+  split. A delivery still may not add a pairing.
+
 A new header meaning or unreadable layout is held for review. Extend its adapter and
 verified aliases with a fixture, then rerun the same checks. No system can safely infer
 every arbitrary format change. Accuracy means unfamiliar semantics cannot become the

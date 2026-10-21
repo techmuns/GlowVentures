@@ -16,8 +16,8 @@ or a name, so a security reaches the APIs if and only if a symbol resolved:
 | `/api/research` — `/financials` | `<SYMBOL>.NS` | NSE symbol |
 | `/api/ratios` | `tickers` | NSE symbol |
 
-**201 reachable · 92 not reachable · 8 not securities at all**
-(cash and receivables) — 201 + 92 + 8 = 301, every distinct
+**222 reachable · 129 not reachable · 12 not securities at all**
+(cash and receivables) — 222 + 129 + 12 = 363, every distinct
 security the archive carries.
 
 Of those, **31 are companies no statement of this family's reports** —
@@ -32,6 +32,7 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | Aditya Birla Capital Ltd | `ABCAPITAL` | — | name | statement |
 | Alivus Life Sciences Ltd | `ALIVUS` | — | override | statement |
 | Amrutanjan Health Care Ltd | `AMRUTANJAN` | — | name | statement |
+| APOLLO PIPES LIMITED | `APOLLOPIPE` | — | name | statement |
 | ARVIND FASHIONS LIMITED | `ARVINDFASN` | — | name | statement |
 | Ather Energy Ltd | `ATHERENERG` | — | name | statement |
 | Aurobindo Pharma Ltd | `AUROPHARMA` | — | name | statement |
@@ -43,6 +44,7 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | Banco Products India Ltd. | `BANCOINDIA` | — | override | statement |
 | Bandhan Bank Ltd | `BANDHANBNK` | — | name | statement |
 | BELRISE INDUSTRIES LIMITED | `BELRISE` | `INE894V01022` | ISIN (mainboard) | statement |
+| BHAGYANAGAR INDIA LIMITED EQ NEW RV | `BHAGYANGR` | `INE458B01036` | ISIN (mainboard) | statement |
 | Bharat Heavy Electricals Ltd | `BHEL` | — | override | statement |
 | BHARAT PARENTERAL | `BPLPHARMA` | `INE365Y01019` | ISIN (mainboard) | statement |
 | BHARTI AIRTEL LTD | `BHARTIARTL` | — | name | fund disclosure |
@@ -63,16 +65,21 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | CITY UNION | `CUB` | `INE491A01021` | ISIN (mainboard) | statement |
 | CLEAN MAX ENV | `CLEANMAX` | `INE647U01026` | ISIN (mainboard) | statement |
 | CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED | `CLEANMAX` | `INE647U01026` | ISIN (mainboard) | statement |
+| Cosmo First Limited | `COSMOFIRST` | — | name | statement |
 | CREATIVE NEWTECH LIMITED | `CNL` | — | name | statement |
 | CRIZAC LIMITED | `CRIZAC` | — | name | statement |
 | Crompton Greaves Consumer Elec | `CROMPTON` | `INE299U01018` | override | statement |
+| Cyient Ltd | `CYIENT` | — | name | statement |
 | DCW LIMITED | `DCW` | — | name | statement |
 | Deep Industries Ltd. | `DEEPINDS` | — | name | statement |
+| Diffusion Engineers Ltd | `DIFFNKG` | — | name | statement |
 | Dilip Buildcon Ltd | `DBL` | — | name | statement |
 | eClerx Services Ltd. | `ECLERX` | — | name | statement |
 | Edelweiss Financial Services Ltd | `EDELWEISS` | — | name | statement |
 | EIH Ltd. | `EIHOTEL` | — | override | statement |
+| Elecon Engineering Company Limited | `ELECON` | — | name | statement |
 | Electronics Mart India Limited | `EMIL` | `INE02YR01019` | ISIN (mainboard) | statement |
+| Elgi Equipments Ltd | `ELGIEQUIP` | — | name | statement |
 | EMA PARTNERS INDIA LIMITED | `EMAPARTNER` | `INE0ZOL01023` | ISIN (sme) | statement |
 | Engineers India Ltd | `ENGINERSIN` | — | override | statement |
 | ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/ | `ESDS` | `INE0DRI01029` | ISIN (mainboard) | statement |
@@ -81,6 +88,7 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | Eureka Forbes Ltd | `EUREKAFORB` | — | name | statement |
 | Exide Industries Ltd | `EXIDEIND` | — | name | statement |
 | FEDERAL BANK | `FEDERALBNK` | `INE171A01029` | ISIN (mainboard) | statement |
+| FINOLEX CABLES LIMITED NEW 2/ | `FINCABLES` | `INE235A01022` | ISIN (mainboard) | statement |
 | FRACTAL ANALYTICS LIMITED | `FRACTAL` | `INE212S01015` | ISIN (mainboard) | statement |
 | Fusion Finance Limited | `FUSION` | — | name | statement |
 | Gateway Distriparks Ltd | `GATEWAY` | — | name | statement |
@@ -97,8 +105,10 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | Great Eastern Shipping Co. Ltd. | `GESHIP` | — | name | statement |
 | GREAVES COTTON LTD. | `GREAVESCOT` | — | name | statement |
 | Gujarat Ambuja Exports Ltd | `GAEL` | — | override | statement |
+| HAVELLS INDIA LTD | `HAVELLS` | `INE176B01034` | ISIN (mainboard) | statement |
 | HDFC Asset Management Co. Ltd. | `HDFCAMC` | — | override | statement |
 | HDFC BANK LTD | `HDFCBANK` | — | name | fund disclosure |
+| HEG Advanced Materials Limited | `HEGAM` | — | name | statement |
 | HEG Ltd | `HEGAM` | — | override | statement |
 | Hindustan Aeronautics Ltd | `HAL` | — | override | statement |
 | HINDUSTAN UNILEVER LTD | `HINDUNILVR` | — | name | fund disclosure |
@@ -127,12 +137,14 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | JAYASWAL NECO INDUSTRIES LTD. | `JAYNECOIND` | — | name | statement |
 | Jindal Stainless Ltd | `JSL` | — | override | statement |
 | JYOTHY LABS LIMITED | `JYOTHYLAB` | `INE668F01031` | ISIN (mainboard) | statement |
+| Kajaria Ceramics Ltd | `KAJARIACER` | — | name | statement |
 | Kalpataru Projects International Ltd | `KPIL` | — | override | statement |
 | KALYAN JEWELLERS INDIA LIMITED | `KALYANKJIL` | — | name | statement |
 | Karur Vysya Bank Ltd. | `KARURVYSYA` | `INE036D01028` | override | statement |
 | Kaveri Seed Company Ltd | `KSCL` | — | override | statement |
 | KAYNES TECHNOLOGY INDIA LTD | `KAYNES` | — | name | fund disclosure |
 | KAYNES TECHNOLOGY | `KAYNES` | `INE918Z01012` | ISIN (mainboard) | statement |
+| KEI INDUSTRIES LTD. | `KEI` | `INE878B01027` | ISIN (mainboard) | statement |
 | KIRLOSKAR FERROUS INDUSTRIES LTD. | `KIRLFER` | — | name | statement |
 | Kovai Medical Center & Hospital Ltd. | `KOVAI` | — | override | statement |
 | KPIT Technologies Ltd | `KPITTECH` | — | name | statement |
@@ -162,6 +174,7 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | ONE 97 COMMUNICATIONS LTD | `PAYTM` | — | name | fund disclosure |
 | ONESOURCE SPECIAL | `ONESOURCE` | `INE013P01021` | ISIN (mainboard) | statement |
 | Panacea Biotec Ltd | `PANACEABIO` | — | name | statement |
+| PARAMOUNT COMMUNICATIONS LIMITED | `PARACABLES` | `INE074B01023` | ISIN (mainboard) | statement |
 | Paras Defence and Space Technologies | `PARAS` | — | name | statement |
 | PARTH ELECTRICALS & ENGINEERING LIMITED | `PARTH` | `INE1H7V01011` | ISIN (sme) | statement |
 | PG ELECTRO | `PGEL` | `INE457L01029` | ISIN (mainboard) | statement |
@@ -169,6 +182,7 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | POLYCAB INDIA LIMITED | `POLYCAB` | `INE455K01017` | ISIN (mainboard) | statement |
 | Polyplex Corporation Ltd | `POLYPLEX` | — | name | statement |
 | Power Finance Corporation Ltd | `PFC` | — | name | statement |
+| POWER GRID CORPORATION OF INDIA LIMITED | `POWERGRID` | `INE752E01010` | ISIN (mainboard) | statement |
 | Praj Industries Limited | `PRAJIND` | — | name | statement |
 | PRICOL LIMITED | `PRICOLLTD` | `INE726V01018` | ISIN (mainboard) | statement |
 | Punjab National Bank | `PNB` | — | override | statement |
@@ -177,6 +191,7 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | RAMKRISHNA FORGINGS LTD | `RKFORGE` | — | name | fund disclosure |
 | Ratnamani Metals & Tubes Ltd | `RATNAMANI` | — | override | statement |
 | RBL BNK | `RBLBANK` | `INE976G01028` | ISIN (mainboard) | statement |
+| RELIANCE POWER LIMITED EQ. | `RPOWER` | `INE614G01033` | ISIN (mainboard) | statement |
 | Rural Electrification Corporation Ltd | `RECLTD` | — | override | statement |
 | Sagility Ltd. | `SAGILITY` | — | name | statement |
 | SANSERA ENGINEERING LIMITED | `SANSERA` | — | name | statement |
@@ -194,11 +209,13 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | Sonata Software Ltd. | `SONATSOFTW` | — | name | statement |
 | Star Health and Allied Insurance Company Limited | `STARHEALTH` | — | name | statement |
 | State Bank of India | `SBIN` | `INE062A01020` | override | statement |
-| Sterlite Technologies Ltd | `STLTECH` | — | name | statement |
+| Sterlite Technologies Ltd | `STLTECH` | `INE089C01029` | ISIN (mainboard) | statement |
+| STL NETWORKS LIMITED | `STLNETWORK` | `INE1VXE01018` | ISIN (mainboard) | statement |
 | Stove Kraft Limited | `STOVEKRAFT` | — | name | statement |
 | Sundaram Finance Ltd. | `SUNDARMFIN` | — | name | statement |
 | Suprajit Engineering Ltd. | `SUPRAJIT` | — | name | statement |
 | SUPREME INDUSTRIES LTD | `SUPREMEIND` | — | name | fund disclosure |
+| SURANA TELECOM AND POWER LIMITED EQ NEW FV | `SURANAT&P` | `INE130B01031` | ISIN (mainboard) | statement |
 | Surya Roshni Ltd | `SURYAROSNI` | — | name | statement |
 | Syrma SGS Technology Limited | `SYRMA` | — | name | statement |
 | TATA TECHNOLOGIES LIMITED | `TATATECH` | — | name | statement |
@@ -214,13 +231,17 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | Triveni Turbine Ltd | `TRITURBINE` | — | name | statement |
 | ULTRATECH CEMENT LTD | `ULTRACEMCO` | — | name | fund disclosure |
 | UNITED BREWERIES LTD | `UBL` | — | name | fund disclosure |
+| UNIVERSAL CABLES LIMITED . | `UNIVCABLES` | `INE279A01012` | ISIN (mainboard) | statement |
+| V MART RETAIL LIMITED | `VMART` | — | name | statement |
 | V2 Retail Ltd | `V2RETAIL` | — | name | statement |
 | Vaibhav Global Ltd | `VAIBHAVGBL` | — | name | statement |
 | Varroc Engineering Limited | `VARROC` | — | name | statement |
 | Varun Beverages Limited | `VBL` | `INE200M01039` | ISIN (mainboard) | statement |
 | Vedanta Aluminium Metal Limited | `VAML` | — | name | statement |
 | Vedanta Ltd | `VEDL` | — | name | statement |
+| VINDHYA TELELINKS LIMITED | `VINDHYATEL` | `INE707A01012` | ISIN (mainboard) | statement |
 | VIP Industries Ltd | `VIPIND` | — | name | statement |
+| VISHNU CHEMICALS LIMITED | `VISHNU` | — | name | statement |
 | Viyash Scientific Limited | `VIYASH` | — | name | statement |
 | Waaree Energies Ltd. | `WAAREEENER` | — | name | statement |
 | Wockhardt Ltd | `WOCKPHARMA` | — | name | statement |
@@ -234,14 +255,18 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 
 | Security | ISIN printed | From | Why not, and what would fix it |
 | --- | --- | --- | --- |
+| 360 ONE PRIVATE EQUITY FUND SPL OPP FD SR 8 CL A3 - - Restricted Transferability | `INF0RO522964` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | 360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II) | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | 3P India Equity Fund 1 - Class B1 | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | 3P India Equity Fund 1 - Class B2 | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | 3P India Equity Fund 1 - Class B3 | `INF0R4I22066` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | ABSL BAL ADV-GROWTH | `INF084M01AB8` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| AL TRUST Forbidden Foods - Restricted Transferability | `INF0RLL22CH4` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| AL TRUST Tamasha -FC - Restricted Transferability | `INF0RLL22PC7` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | ASK Absolute Return Fund — Class A6 Series 31/01/2025 | `INF0V6R22JL5` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | ASSETGRO FINTECH PRIVATE LIMITED - 1% SERIES B PREF 25NV44 | `INE1BZY03142` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Balanced Advantage Fund Growth | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | BANK | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
 | Baring Private Equity India Fund 6 — Class A1 | `INF15Q422013` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | BAVF Series 20 — Class C6 | `INF0VGG22429` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
@@ -262,9 +287,15 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | ELECTROMECH INFRAPROJECTS LIMITED | `INE1B3701036` | statement | **ISIN `INE1B3701036` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43 | `INE0LTR03090` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | EVEREST FLEET PRIVATE LIMITED | `INE0LTR01029` | statement | **ISIN `INE0LTR01029` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
+| HDFC Arbitrage Fund - Direct Plan - Growth Option | `INF179KA1KT6` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option | `INF179KA1KS8` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | HDFC BAF D-GROW | `INF179K01WA6` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | HDFC BAF R-GROW | `INF179K01830` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| HDFC Balanced Advantage Fund - Regular Plan - Growth | `INF179K01830` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| HDFC Overnight Fund - Direct Plan - Growth Option | `INF179KB1HT1` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | HDFC Small Cap Fund - Direct Growth Plan | `INF179KA1RW5` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| HEAD DIGITAL WORKS PRIVATE LIMITED | `INE07LN01014` | statement | **ISIN `INE07LN01014` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
+| HEG Graphite Limited | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
 | HELIOS FCF D-GROW | `INF0R8701046` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Helios Flexi Cap Fund - Direct Growth | `INF0R8701046` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | ICICI IOPPF D-GRW | `INF109KC1RH9` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
@@ -273,6 +304,9 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | ICICI NFT NX 50 R GR | `INF109K01IF1` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | ICICI NIFT50IND DP G | `INF109K012M7` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | ICICI PRU BAF DP GRW | `INF109K012B0` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| ICICI Prudential Arbitrage Fund - Direct Plan - Growth | `INF109K016O4` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| ICICI Prudential Arbitrage Fund - Direct Plan - IDCW # IDCW Reinvestment | `INF109K015O6` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth | `INF109KC1P81` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability | `INF0XAZ22055` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | India SME Investments Fund II — Class A2 | `INF0XAZ22055` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | INFOBAY AI LIMITED - 0.01% PREF 18AG44 | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
@@ -280,9 +314,16 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | INTEGRIS MEDTECH LIMITED | `INE05GT01023` | statement | **ISIN `INE05GT01023` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | INVES ARBF D-GROW | `INF205K01KR8` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | INVES CON R GROWTH | `INF205K01189` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1) | `INF205K01KR8` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP) | `INF205K01122` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | ITF — Class A | `INF0RW922016` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | KOTAK ARBFD DP GROW | `INF174K01LC6` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Kotak Flexi Cap Fund Direct Growth | `INF174K01LS2` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Kotak Flexi Cap Fund Regular Growth | `INF174K01336` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Kotak Flexicap Fund - Direct Growth (Erstwhile Kotak Standard Multicap Fund - Dir Gr) | `INF174K01LS2` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Kotak Large & Mid Cap Fund - Direct Growth | `INF174K01LF9` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Kotak Mid Cap Fund Direct Growth | `INF174K01LT0` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Kotak Mid Cap Fund Regular Growth | `INF174K01DS9` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Kotak Midcap Fund- Direct Plan - Growth (Erstwhile Kotak Emerging Equity Scheme) | `INF174K01LT0` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | KOTAK MTCF D-GROW | `INF174KA1HV3` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | KRISHCA STRAPPING SOLUTIONS | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
@@ -290,18 +331,27 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | MANALI PETROCHEMICAL LTD. | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
 | MATRIX GAS AND RENEWABLES LIMITED | `INE0PO201010` | statement | **ISIN `INE0PO201010` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | MIRAE LCF D-GROW | `INF769K01AX2` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
-| Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | `INF247L01EP5` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Motilal Oswal Arbitrage Fund - Direct Plan Growth | `INF247L01ED1` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Motilal Oswal Founders Fund Series II — Class G1 | `INF0RRH22DW6` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2 | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1 | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Motilal Oswal Midcap Fund - Direct Plan Growth | `INF247L01445` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Motilal Oswal Wealth Delphi Equity Fund | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | NATIONAL STOCK EX | `INE721I01024` | statement | **ISIN `INE721I01024` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | NATIONAL STOCK EXCHANGE OF INDIA LTD | `INE721I01024` | statement | **ISIN `INE721I01024` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | Neo Infra Income Opportunities Fund I — Class A5 | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| NICCO CORPORATION LIMITED | `INE241C01026` | statement | **ISIN `INE241C01026` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | OILMAX ENERGY PRIVATE LIMITED | `INE069601016` | statement | **ISIN `INE069601016` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | ONIX RENEWABLE LIMITED | `INE0TG701015` | statement | **ISIN `INE0TG701015` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
+| ORBIT AGRITECH PRIVATE LIMITED 0.001% SERIES SEED PREF 28MY43 | `INE2KRU03039` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| Poojaa Precision Engineering Limited | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
+| PROCYON STAR PRIVATE LIMITED | `INE29A501017` | statement | **ISIN `INE29A501017` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | PUNJAB CHEM & CROP PROT L | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
 | PVC-II — Class A1 | `INF0UXX22017` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | RADIANT INNOVATIVE MANUFACTURING LIMITED | `INE007Z01022` | statement | **ISIN `INE007Z01022` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | RAYS POWER EXPERTS PRIVATE LIMITED | `INE0WSH01011` | statement | **ISIN `INE0WSH01011` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
+| Restricted Transferability | `INF1ISW22079` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Sanshi Fund-I — Class E | `INF1ISW22079` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2 | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Sanshi Fund-I (Open Ended AIF CAT-III) — Class E | — | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
@@ -313,11 +363,16 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | Sky Capital Rising Titans Fund — Oncare — Class A3 | `INF1V9N22050` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Sky Capital Rising Titans Fund — TED — Class A2 | `INF1V9N22043` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | SKY CAPITAL RISING TITANS FUND I - SKYCRTF ONCAREA3 - Restricted Transferability | `INF1V9N22050` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| SME INVESTMENTS AIF TRUST II CL A2 Restricted - Transferability | `INF0XAZ22055` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | SOTEFIN BHARAT LIMITED | `INE12Z301012` | statement | **ISIN `INE12Z301012` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | SPRAY ENGINEERING DEVICES LIMITED | `INE528I01015` | statement | **ISIN `INE528I01015` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
+| STAY VISTA PRIVATE LIMITED 0.001% SERIES 2 PREF 02NV36 | `INE0GD403024` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| STERLITE ELECTRIC LIMITED | `INE110V01015` | statement | **ISIN `INE110V01015` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
+| STERLITE GRID LIMITED | `INE03QT01027` | statement | **ISIN `INE03QT01027` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | SWAPECO SOLUTIONS PRIVATE LIMITED | `INE2DT103015` | statement | **ISIN `INE2DT103015` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | TOCF-I — Class A2 | `INF0RSB22019` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | Transition Venture Capital Fund I — Class A1 | `INF0VIS22016` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| TRUST Karban Envirotech (RUV) Restricted Transferability | `INF0RLLH2YN9` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | URB VENTURES PRIVATE LIMITED - 0.001% PREF 07JL42 | `INE0Q8703029` | statement | **ISIN `INE0Q8703029` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | URB VENTURES PRIVATE LIMITED | `INE0Q8701015` | statement | **ISIN `INE0Q8701015` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | VOF I — Class A2 | `INF2O4Z22020` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
@@ -326,3 +381,6 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | YASH HIGHVOLTAGE LIMITED | `INE00GK01023` | statement | **ISIN `INE00GK01023` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | ZENITH LEISURE HOLIDAYS LIMITED | `INE0ETS01014` | statement | **ISIN `INE0ETS01014` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | ZF Commercial Vehicle Control | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
+| ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 2 PREF | `INE0X3603063` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 4 PREF 27AG44 | `INE0X3603022` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
+| ZIPPMAT PRIVATE LIMITED | `INE0X3601018` | statement | **ISIN `INE0X3601018` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |

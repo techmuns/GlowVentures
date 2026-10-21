@@ -205,6 +205,13 @@ export type RecoveredHoldingCost = {
   notes: string[];
 };
 
+/**
+ * A ring-fenced promoter holding (`BOOK_POLYCAB`, the `/polycab` route alone): a
+ * Position, except that a custody statement printing quantities only carries no
+ * value — `null`, never a zero (Bharat's scanned HDFC statement, Stage 10gk).
+ */
+export type PolycabHolding = Omit<Position, "marketValue"> & { marketValue: number | null };
+
 export type Position = {
   /** Exact normalized record selected by the builder, before any live overlay. */
   statementRecord?: { document: string; pointer: string };

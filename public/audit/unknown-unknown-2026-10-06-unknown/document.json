@@ -20,8 +20,8 @@
  "status": "failed",
  "warnings": [
   {
-   "code": "pdf-read-failed",
-   "detail": "not a workbook: the file is a mail server's removal notice in its place — \"This attachment was removed because it contains data that could pose a security risk.\" The statement itself never arrived and must be re-sent; there is nothing here to read."
+   "code": "attachment-removed",
+   "detail": "519_06102026124925.xls NEVER ARRIVED: a mail server removed the attachment in transit and left this 85-byte notice under its name — \"This attachment was removed because it contains data that could pose a security risk.\". There is no statement here to read; ask the sender to re-send it another way (a download link, or zipped), and upload it on the Statement Library."
   }
  ],
  "holdings": [],

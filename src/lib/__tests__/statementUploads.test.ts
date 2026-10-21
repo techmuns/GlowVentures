@@ -179,13 +179,22 @@ async function run() {
   const gh = fakeGitHub();
   const empty = await jsonBody(await call(gh));
   ok("an inbox nobody has uploaded to lists nothing", empty.ok === true && Array.isArray(empty.batches) && empty.batches.length === 0);
-  // Past 3 × 32 KiB, so the base64 encoder's chunk seams are crossed.
+  // Past 3 × 32 KiB, so the base64 encoder's chunk seams are crossed — behind a
+  // real PDF header, because the upload checks a file's bytes against its type.
   const big = new Uint8Array(200_003).map((_, i) => (i * 7919 + 13) % 256);
+  big.set(new TextEncoder().encode("%PDF-1.4\n"), 0);
   const s1 = await jsonBody(await postFile(gh, "Ajay/September/Buoyant 103473.pdf", big));
   ok("a file is stored as a blob", s1.ok === true && /^[0-9a-f]{40}$/.test(s1.staged?.blob) && s1.staged?.name === "Ajay/September/Buoyant 103473.pdf");
   const s2 = await jsonBody(await postFile(gh, "Ajay/September/SVAN.zip", new Uint8Array([80, 75, 5, 6, 0, 0])));
   const bad = await postFile(gh, "notes.docx", new Uint8Array([1, 2, 3]));
   ok("a file the pipeline cannot read is refused with the reason", bad.status === 400 && /PDF, Excel/.test((await jsonBody(bad)).message));
+  // LKP's October workbooks, as the mail server left them.
+  const notice = await postFile(gh, "LKP/519_06102026124925.xls", new TextEncoder().encode("This attachment was removed because it contains data that could pose a security risk."));
+  const noticeBody = await jsonBody(notice);
+  ok("a mail server's removal notice is refused at the door, saying the statement never arrived",
+    notice.status === 400 && noticeBody.code === "NOT_A_STATEMENT" && /never arrived/i.test(noticeBody.message));
+  const htmlPdf = await postFile(gh, "statement.pdf", new TextEncoder().encode("<!DOCTYPE html><html><body>Sign in</body></html>"));
+  ok("a web page saved as .pdf is refused for what it is", htmlPdf.status === 400 && /web page/i.test((await jsonBody(htmlPdf)).message));
   const cross = await onRequest({ env: ENV, request: new Request(`${SITE}/api/statement-uploads`, { method: "POST", headers: { origin: "https://evil.example", "content-type": "application/json" }, body: "{}" }) }, gh.fetchImpl);
   ok("a cross-site write is refused", cross.status === 403);
 
@@ -203,7 +212,7 @@ async function run() {
   ok("a file that was not stored first cannot be filed", forged.status === 400);
 
   // ── 5. TWO UPLOADS AT ONCE BOTH LAND ──────────────────────────────────────
-  const s3 = await jsonBody(await postFile(gh, "HDFC.pdf", new Uint8Array([37, 80, 68, 70])));
+  const s3 = await jsonBody(await postFile(gh, "HDFC.pdf", new TextEncoder().encode("%PDF-1.4\n")));
   gh.interlope("20261021T090000Z-theirs1");
   const c2 = await jsonBody(await postJson(gh, { op: "commit", files: [s3.staged] }));
   const ids = gh.log().batches.map((b) => b.id);

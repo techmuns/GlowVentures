@@ -64,6 +64,15 @@ test('a renamed security with the same ISIN needs a verified alias instead of a 
   const next = later(); next.holdings[0].securityKey = 'a-second-name';
   assert.ok(has(assess([doc(), next]), 'SECURITY_SPLIT'));
 });
+test('a pairing the verified book already carries does not block a row filed under it; a new key still does', () => {
+  // The depository's name and the fund's own for one ISIN, both in the verified book.
+  const fund = doc({ docKey: 'fund-789-2026-10-01', accountNo: '789' });
+  fund.holdings[0].securityKey = 'example-fund-class-a';
+  const baseline = [doc(), fund];
+  assert.equal(assess([...baseline, later()], baseline).decision, 'verified');
+  const third = later(); third.holdings[0].securityKey = 'a-third-name';
+  assert.ok(has(assess([...baseline, third], baseline), 'SECURITY_SPLIT'));
+});
 test('a layout silently dropping a previously populated field is quarantined', () => {
   const next = later(); next.holdings[0].totalCost = null;
   assert.ok(has(assess([doc(), next]), 'FIELD_COVERAGE_LOSS'));
@@ -124,6 +133,22 @@ test('two rows targeting one holding cannot accidentally overwrite each other', 
 test('archive loss and document path traversal both block publication', () => {
   assert.ok(has(assess([later()]), 'ARCHIVE_LOSS'));
   assert.ok(has(assess([doc(), later({ docKey: '../wrong' })]), 'UNSAFE_DOCUMENT_KEY'));
+});
+test('a failed reading gives way to a reading of the same file; dropped without one it is still an archive loss', () => {
+  const unread = doc({ docKey: 'unknown-unknown-unknown-holdings', provider: '(unidentified)', accountNo: null, owner: null, ownerId: null,
+    asOf: null, reportType: 'unknown', status: 'failed', sourcePath: 'source/scan.pdf', holdings: [] });
+  const read = later({ accountNo: '456', owner: 'Ankita Jaisinghani', ownerId: 'ankita-jaisinghani', sourcePath: 'source/scan.pdf' });
+  assert.equal(assess([doc(), read], [doc(), unread]).decision, 'verified');
+  assert.ok(has(assess([doc(), later()], [doc(), unread]), 'ARCHIVE_LOSS'));
+});
+test('a removal notice where a statement should be publishes nothing, and is not a read gap', () => {
+  const notice = (n) => doc({ docKey: `notice-${n}`, provider: '(unidentified)', accountNo: null, owner: null, ownerId: null,
+    reportType: 'unknown', status: 'failed', sourcePath: `source/lkp/${n}.xls`, holdings: [],
+    warnings: [{ code: 'attachment-removed', detail: `${n}.xls NEVER ARRIVED` }] });
+  const result = assess([doc(), notice(1), notice(2)]);
+  assert.equal(result.decision, 'verified'); assert.deepEqual(result.issues, []);
+  const unreadable = notice(3); unreadable.warnings = [{ code: 'no-extractor', detail: 'no reader' }];
+  assert.ok(has(assess([doc(), unreadable]), 'READ_GAP'));
 });
 test('invalid days cannot date a transaction or investment', () => {
   const next = later(); next.transactions = [{ date: '2026-02-30' }];

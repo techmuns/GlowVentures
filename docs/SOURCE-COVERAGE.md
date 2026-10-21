@@ -9,17 +9,26 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 
 | Outcome | Files | What it means |
 | --- | ---: | --- |
-| Read | 394 | one or more documents in `public/audit/` |
-| Read via a byte-identical twin | 44 | the pipeline reads each md5 once; the data IS in the archive |
+| Read | 393 | one or more documents in `public/audit/` |
+| Read via a byte-identical twin | 43 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
 | Read by `build-book` | 2 | the review supplies private lines and exact lot costs; the register supplies verified payment evidence |
 | Held out by decision | 0 | read perfectly and deliberately not a source |
 | Not a document | 156 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
+| **Never arrived** | **2** | **a mail server's removal notice in place of the statement — ask the sender to re-send it** |
 | **Unread** | **0** | **must be zero** |
 | **Total leaf files** | **616** | |
 
-Those files produce **424 documents** in the archive.
+Those files produce **425 documents** in the archive.
+
+## ⚠ Statements that never arrived
+
+A mail server removed each of these attachments in transit and left a short notice under its name.
+There is nothing in the file to read; the statement has to be re-sent another way and uploaded.
+
+- `source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls`
+- `source/_extracted/october-2026-c/LKP EQUITY/666125807_06102026125819.xls`
 
 ## Read by `build-book`
 
@@ -75,7 +84,6 @@ twice. `extract.mjs` reads each md5 once, so these carry no data the archive lac
 | `_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Factsheet.pdf` |
 | `_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani/Ankita Jaisinghani/Ankita Jaisinghani - Green Lantern - Performance Appraisal.pdf` |
 | `_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf` | `_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf` |
-| `_extracted/october-2026-c/LKP EQUITY/666125807_06102026125819.xls` | `_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls` |
 | `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports (2)/CRN37702_07Oct2026_1552871.pdf` | `_extracted/october-2026-b/360 ONE WEALTH/CRN37702_07Oct2026_1552871.pdf` |
 | `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports (2)/CRN60066_07Oct2026_1552871.pdf` | `_extracted/october-2026-b/360 ONE WEALTH/CRN60066_07Oct2026_1552871.pdf` |
 | `_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports (2)/CRN60117_07Oct2026_1552871.pdf` | `_extracted/october-2026-b/360 ONE WEALTH/CRN60117_07Oct2026_1552871.pdf` |

@@ -183,6 +183,7 @@ const HOLD_LABEL: Record<string, string> = {
   "needs-reader": "Needs a reader",
   "needs-password": "Needs password",
   unreadable: "Unreadable",
+  "not-a-statement": "Not a statement",
   "check-failed": "Check failed",
   "intake-error": "Not read",
 };

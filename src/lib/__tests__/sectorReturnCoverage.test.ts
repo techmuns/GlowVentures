@@ -33,8 +33,9 @@ assert.equal(unknown.accountNo, "unregistered");
 assert.equal(unknown.provider, "Statement provider not recorded");
 
 // The book's unresolved Polycab holding names the actual custody statement.
-const polycab = BOOK_POLYCAB.find(p => p.accountId === "icici-bank-nsdl-demat-49794950")!;
-assert.ok(polycab);
+const fenced = BOOK_POLYCAB.find(p => p.accountId === "icici-bank-nsdl-demat-49794950")!;
+assert.ok(fenced && typeof fenced.marketValue === "number", "the ICICI statement values its Polycab block");
+const polycab: Position = { ...fenced, marketValue: fenced.marketValue };
 const source = sectorReturnHolding(polycab, accountIndex(BOOK_ACCOUNTS));
 assert.equal(source.owner, "Ajay Jaisinghani");
 assert.equal(source.provider, "ICICI Bank (NSDL demat)");

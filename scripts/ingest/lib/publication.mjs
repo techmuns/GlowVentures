@@ -43,6 +43,17 @@ const content = d => {
   return digest(replace(copy));
 };
 
+const carriesFacts = d => RECORD_SECTIONS.some(k => d[k]?.length) || d.flows || d.commitment;
+const unsafeSource = p => typeof p !== 'string' || !p.startsWith('source/') || p.split('/').some(x => !x || x === '..' || x === '.') || /[\\\r\n\0]/.test(p);
+/**
+ * A STATEMENT THAT NEVER ARRIVED (Stage 10gk): a mail server's removal notice
+ * where the attachment was (`attachment-removed`). Its record carries no facts
+ * and says only that — it is listed as never arrived, not read and not failed —
+ * so publishing it publishes nothing to check.
+ */
+export const neverArrived = d => d.status === 'failed' && !carriesFacts(d)
+  && (d.warnings ?? []).some(w => w?.code === 'attachment-removed');
+
 /** No fuzzy owner, account or security matching is allowed at this boundary. */
 export function assessPublication({ baseline, documents, baselineReport = {}, report = {}, expected = {} }) {
   const issues = [], duplicates = [];
@@ -56,7 +67,13 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   }
   const changed = documents.filter(d => !old.has(d.docKey) || documentRevision(old.get(d.docKey)) !== documentRevision(d));
   const touched = new Set(changed.map(d => d.docKey));
-  for (const d of baseline) if (!byKey.has(d.docKey)) add('ARCHIVE_LOSS', d, 'A delivery cannot remove an earlier statement.');
+  // A failed reading that published nothing may give way to another reading of
+  // the SAME source file — a reader that now reads it (Stage 10gk). The
+  // statement is not removed; only the reading that could not read it is.
+  const sources = new Set(documents.map(d => d.sourcePath));
+  for (const d of baseline) if (!byKey.has(d.docKey) && !(d.status === 'failed' && !carriesFacts(d) && sources.has(d.sourcePath))) {
+    add('ARCHIVE_LOSS', d, 'A delivery cannot remove an earlier statement.');
+  }
 
   const ownerByAccount = new Map(), isinByKey = new Map(), keyByIsin = new Map();
   const remember = (map, key, value) => { if (nonempty(value)) (map.get(key) ?? map.set(key, new Set()).get(key)).add(value); };
@@ -69,14 +86,15 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   const seenContent = new Map(baseline.map(d => [content(d), d.docKey]));
   for (const d of changed) {
     try { assertNormalized(d); stable(d); } catch (error) { add('INVALID_DOCUMENT', d, error.message); continue; }
+    if (unsafeSource(d.sourcePath)) add('UNSAFE_SOURCE_PATH', d, 'Statement evidence must refer to a source file inside the repository.');
+    if (neverArrived(d)) continue;
     if (d.status !== 'ok' || readGaps(d).length) add('READ_GAP', d, 'The reader must account for the whole statement before publication.');
     if (d.reportType === 'unknown') add('UNKNOWN_FORMAT', d, 'No verified reader recognizes this statement format.');
-    if (typeof d.sourcePath !== 'string' || !d.sourcePath.startsWith('source/') || d.sourcePath.split('/').some(p => !p || p === '..' || p === '.') || /[\\\r\n\0]/.test(d.sourcePath)) add('UNSAFE_SOURCE_PATH', d, 'Statement evidence must refer to a source file inside the repository.');
     if (d.asOf && !validDate(d.asOf)) add('INVALID_DATE', d, 'Statement date is not an actual ISO calendar day.', '/asOf');
     if (expected.provider && d.provider !== expected.provider) add('FOLDER_MISMATCH', d, 'The statement issuer does not match the selected provider folder.');
     if (expected.ownerId && d.ownerId !== expected.ownerId) add('OWNER_MISMATCH', d, 'The statement holder does not match the supplied owner.');
     if (expected.accountNo && String(d.accountNo) !== String(expected.accountNo)) add('ACCOUNT_MISMATCH', d, 'The printed account does not match the supplied account.');
-    const hasFacts = RECORD_SECTIONS.some(k => d[k]?.length) || d.flows || d.commitment;
+    const hasFacts = carriesFacts(d);
     if (!d.twinOf && !d.excludedFromBook && hasFacts) {
       if (!d.accountNo || !d.ownerId) add('MISSING_IDENTITY', d, 'Financial records require an identified account and canonical owner.');
       if (d.accountNoSource && d.accountNoSource !== 'printed') {
@@ -118,9 +136,14 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
           if (nonempty(v) && /^(date|purchaseDate|saleDate|settlementDate|priceAsOn)$/.test(field) && !validDate(v)) add('INVALID_DATE', d, 'A dated record contains an invalid or ambiguous date.', ptr + p);
         });
         if (r.isin && r.securityKey) {
+          // A delivery may not ADD a pairing the verified book does not carry. One
+          // it already carries — an AIF's units under the depository's name and
+          // under the fund's own (`sanshi-trust-fd-i-cl-e-…` and
+          // `sanshi-fund-i-class-e`) — is the reviewed state, and a row filed
+          // under one of its keys is not a new split (Stage 10gk).
           const isins = isinByKey.get(r.securityKey), keys = keyByIsin.get(r.isin);
-          if (isins?.size && (!isins.has(r.isin) || isins.size !== 1)) add('SECURITY_CONFLICT', d, 'One security key carries conflicting ISINs.', ptr);
-          if (keys?.size && (!keys.has(r.securityKey) || keys.size !== 1)) add('SECURITY_SPLIT', d, 'One ISIN is being filed under different security keys.', ptr);
+          if (isins?.size && !isins.has(r.isin)) add('SECURITY_CONFLICT', d, 'One security key carries conflicting ISINs.', ptr);
+          if (keys?.size && !keys.has(r.securityKey)) add('SECURITY_SPLIT', d, 'One ISIN is being filed under different security keys.', ptr);
           remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey);
         }
         if (section === 'holdings') {

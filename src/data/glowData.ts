@@ -10,7 +10,7 @@
 import type {
   Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
-  RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
+  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -25,7 +25,7 @@ export const BOOK_SUMMARY: BookSummary = {
   "positionsCount": 459,
   "entitiesCount": 9,
   "startupsCount": 0,
-  "accountsCount": 80
+  "accountsCount": 81
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -453,6 +453,22 @@ export const BOOK_ACCOUNTS: Account[] = [
       "to": "2026-07-27",
       "source": "green-lantern-capital-llp-510861-2026-07-27-fact-sheet"
     }
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "provider": "HDFC Bank (NSDL demat)",
+    "accountNo": "22025655",
+    "ownerId": "bharat-jaisinghani",
+    "owner": "Bharat Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "NSDL depository account at IN301151 — scanned Statement of Holdings",
+    "members": [],
+    "asOf": "2026-03-31",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "HDFC Bank (NSDL demat)",
+    "noPositionsReason": "this custody account's statement of 2026-03-31 values nothing: it prints 38 holding(s) as quantities and carries no rate or value column at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as the depository's Consolidated Account Statement. 12 of these are private-market holdings, counted under the family's consolidated review (MOPWM, 30 Jun 2026) instead"
   },
   {
     "accountId": "hdfc-bank-nsdl-demat-67786137",
@@ -2145,7 +2161,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "cyient",
     "security": "Cyient Ltd",
-    "symbol": null,
+    "symbol": "CYIENT",
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
     "memberId": null,
     "sector": "Information Technology",
@@ -2485,7 +2501,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "vishnu-chemicals",
     "security": "VISHNU CHEMICALS LIMITED",
-    "symbol": null,
+    "symbol": "VISHNU",
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
     "memberId": null,
     "sector": "Unclassified",
@@ -15220,7 +15236,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "apollo-pipes",
     "security": "APOLLO PIPES LIMITED",
-    "symbol": null,
+    "symbol": "APOLLOPIPE",
     "accountId": "svan-investment-managers-llp-8710067",
     "memberId": null,
     "sector": "Unclassified",
@@ -15530,7 +15546,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "cosmo-first",
     "security": "Cosmo First Limited",
-    "symbol": null,
+    "symbol": "COSMOFIRST",
     "accountId": "svan-investment-managers-llp-8710067",
     "memberId": null,
     "sector": "Unclassified",
@@ -15986,7 +16002,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "heg-advanced-materials",
     "security": "HEG Advanced Materials Limited",
-    "symbol": null,
+    "symbol": "HEGAM",
     "accountId": "svan-investment-managers-llp-8710067",
     "memberId": null,
     "sector": "Unclassified",
@@ -16148,7 +16164,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "kajaria-ceramics",
     "security": "Kajaria Ceramics Ltd",
-    "symbol": null,
+    "symbol": "KAJARIACER",
     "accountId": "svan-investment-managers-llp-8710067",
     "memberId": null,
     "sector": "Unclassified",
@@ -17221,7 +17237,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "apollo-pipes",
     "security": "APOLLO PIPES LIMITED",
-    "symbol": null,
+    "symbol": "APOLLOPIPE",
     "accountId": "svan-investment-managers-llp-8710090",
     "memberId": null,
     "sector": "Unclassified",
@@ -17500,7 +17516,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "cosmo-first",
     "security": "Cosmo First Limited",
-    "symbol": null,
+    "symbol": "COSMOFIRST",
     "accountId": "svan-investment-managers-llp-8710090",
     "memberId": null,
     "sector": "Unclassified",
@@ -17956,7 +17972,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "heg-advanced-materials",
     "security": "HEG Advanced Materials Limited",
-    "symbol": null,
+    "symbol": "HEGAM",
     "accountId": "svan-investment-managers-llp-8710090",
     "memberId": null,
     "sector": "Unclassified",
@@ -20692,6 +20708,31 @@ export const BOOK_POSITIONS: Position[] = [
 /** Supplementary source costs, accepted only for the exact account, ISIN, date and unit balance. No valuation or quantity overrides. */
 export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "isin": "INE0NAZ01010",
+    "quantity": 101111,
+    "asOf": "2026-03-31",
+    "costBasis": 45499950,
+    "heldPurchases": {
+      "first": "2024-09-20",
+      "last": "2024-09-20",
+      "lots": 1
+    },
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          381
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
     "accountId": "icici-bank-nsdl-demat-49794950",
     "isin": "INE00GK01023",
     "quantity": 138462,
@@ -21908,6 +21949,531 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
  * names the same owner's fund account whose own statement reports the identical units.
  */
 export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/1"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "al-trust-forbidden-foods-restricted-transferability",
+    "security": "AL TRUST Forbidden Foods - Restricted Transferability",
+    "isin": "INF0RLL22CH4",
+    "assetClass": "AIF",
+    "quantity": 5000,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/3"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "al-trust-tamasha-fc-restricted-transferability",
+    "security": "AL TRUST Tamasha -FC - Restricted Transferability",
+    "isin": "INF0RLL22PC7",
+    "assetClass": "AIF",
+    "quantity": 7500,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/4"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "bhagyanagar-india-limited-eq-new-rv",
+    "security": "BHAGYANAGAR INDIA LIMITED EQ NEW RV RS. 2/",
+    "isin": "INE458B01036",
+    "assetClass": "Equity",
+    "quantity": 2,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/8"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "finolex-cables-limited-new",
+    "security": "FINOLEX CABLES LIMITED NEW EQ RS. 2/",
+    "isin": "INE235A01022",
+    "assetClass": "Equity",
+    "quantity": 5,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/9"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "havells-india",
+    "security": "HAVELLS INDIA LTD",
+    "isin": "INE176B01034",
+    "assetClass": "Equity",
+    "quantity": 20,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/10"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "head-digital-works",
+    "security": "HEAD DIGITAL WORKS PRIVATE LIMITED EQ",
+    "isin": "INE07LN01014",
+    "assetClass": "Unlisted",
+    "quantity": 59458,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/11"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "higher-orbit-agritech-private-limited-0-001-series-seed-pref-28my43",
+    "security": "HIGHER ORBIT AGRITECH PRIVATE LIMITED 0.001% SERIES SEED PREF 28MY43",
+    "isin": "INE2KRU03039",
+    "assetClass": "Unlisted",
+    "quantity": 814,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/13"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "innoviti-technologies",
+    "security": "INNOVITI TECHNOLOGIES PRIVATE LIMITED - EQ",
+    "isin": "INE0NV501016",
+    "assetClass": "Unlisted",
+    "quantity": 10673,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/14"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "insolation-energy",
+    "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
+    "isin": "INE0LGX01024",
+    "assetClass": "Equity",
+    "quantity": 91000,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/16"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "kei-industries",
+    "security": "KEI INDUSTRIES LTD.",
+    "isin": "INE878B01027",
+    "assetClass": "Equity",
+    "quantity": 5,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/18"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "nicco",
+    "security": "NICCO CORPORATION LIMITED EQ NEW FV RS. 2/",
+    "isin": "INE241C01026",
+    "assetClass": "Equity",
+    "quantity": 10,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/19"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "paramount-communications-limited-neweqrs",
+    "security": "PARAMOUNT COMMUNICATIONS LIMITED NEWEQRS.",
+    "isin": "INE074B01023",
+    "assetClass": "Equity",
+    "quantity": 5,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/21"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "power-grid-corporation-of-india",
+    "security": "POWER GRID CORPORATION OF INDIA LIMITED EQ",
+    "isin": "INE752E01010",
+    "assetClass": "Equity",
+    "quantity": 177,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/22"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "procyon-star",
+    "security": "PROCYON STAR PRIVATE LIMITED EQ",
+    "isin": "INE29A501017",
+    "assetClass": "Unlisted",
+    "quantity": 7250,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/23"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "reliance-power-limited-eq",
+    "security": "RELIANCE POWER LIMITED EQ. NEW RS. 10",
+    "isin": "INE614G01033",
+    "assetClass": "Equity",
+    "quantity": 27,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/24"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "sanshi-trust-fd-i-cl-e-restricted-transferability",
+    "security": "SANSHI TRUST - FD I CL E - Restricted Transferability",
+    "isin": "INF1ISW22079",
+    "assetClass": "AIF",
+    "quantity": 1211186.597,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": "sanshi-fund-9039671854",
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/26"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "smartworks-coworking-spaces",
+    "security": "SMARTWORKS COWORKING SPACES LIMITED - EQ",
+    "isin": "INE0NAZ01010",
+    "assetClass": "Equity",
+    "quantity": 101111,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/27"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "stay-vista-private-limited-0-001-series-2-pref-02nv36",
+    "security": "STAY VISTA PRIVATE LIMITED 0.001% SERIES 2 PREF 02NV36",
+    "isin": "INE0GD403024",
+    "assetClass": "Unlisted",
+    "quantity": 2699,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/28"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "sterlite-electric",
+    "security": "STERLITE ELECTRIC LIMITED EQ",
+    "isin": "INE110V01015",
+    "assetClass": "Equity",
+    "quantity": 10,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/29"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "sterlite-grid",
+    "security": "STERLITE GRID LIMITED EQ NEW FV RS 2/",
+    "isin": "INE03QT01027",
+    "assetClass": "Equity",
+    "quantity": 10,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/30"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "sterlite-technologies",
+    "security": "Sterlite Technologies Ltd",
+    "isin": "INE089C01029",
+    "assetClass": "Equity",
+    "quantity": 25,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/31"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "stl-networks",
+    "security": "STL NETWORKS LIMITED EQ",
+    "isin": "INE1VXE01018",
+    "assetClass": "Equity",
+    "quantity": 25,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/32"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "surana-telecom-and-power-limited-eq-new-fv",
+    "security": "SURANA TELECOM AND POWER LIMITED EQ NEW FV",
+    "isin": "INE130B01031",
+    "assetClass": "Equity",
+    "quantity": 3,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/33"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "universal-cables",
+    "security": "UNIVERSAL CABLES LIMITED .",
+    "isin": "INE279A01012",
+    "assetClass": "Equity",
+    "quantity": 5,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/34"
+    },
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "vindhya-telelinks",
+    "security": "VINDHYA TELELINKS LIMITED EQ",
+    "isin": "INE707A01012",
+    "assetClass": "Equity",
+    "quantity": 5,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-03-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
   {
     "statementRecord": {
       "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
@@ -23696,6 +24262,114 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
       "reason": null,
       "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
     }
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "everest-fleet",
+    "kind": "unvalued",
+    "reviewLine": "Everest Fleet Private Ltd - SIDDHARTH LADSARIYA",
+    "security": "EVEREST FLEET PRIVATE LIMITED - EQ NEW FV RS. 1/",
+    "quantity": 130,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "everest-fleet-private-limited-0-001-series-b-new-pref-18ap43",
+    "kind": "unvalued",
+    "reviewLine": "Everest Fleet Private Ltd - SIDDHARTH LADSARIYA",
+    "security": "EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43",
+    "quantity": 10,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "integris-medtech",
+    "kind": "unvalued",
+    "reviewLine": "Integris",
+    "security": "INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/",
+    "quantity": 53394,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "matrix-gas-and-renewables",
+    "kind": "unvalued",
+    "reviewLine": "Matrix Gas And Renewables Limited",
+    "security": "MATRIX GAS AND RENEWABLES LIMITED - EQ",
+    "quantity": 37500,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "big-bang-boom-solutions-private-limited-0-001-pref-12sp44",
+    "kind": "unvalued",
+    "reviewLine": "BIG BANG BOOM",
+    "security": "BIG BANG BOOM SOLUTIONS PRIVATE LIMITED - 0.001% PREF 12SP44",
+    "quantity": 16,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability",
+    "kind": "unvalued",
+    "reviewLine": "India SME",
+    "security": "INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability",
+    "quantity": 22500,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "sky-capital-rising-titans-fund-hudle-class-a1",
+    "kind": "unvalued",
+    "reviewLine": "Sky Capital Titan Rising Funds 1",
+    "security": "Sky Capital Rising Titans Fund — Hudle — Class A1",
+    "quantity": 17000,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "360-one-private-equity-fund-spl-opp-fd-sr-8-cl-a3-restricted-transferability",
+    "kind": "unvalued",
+    "reviewLine": "360 One Special Opportunities Fund - Series 8 - Class A3 (AIF Category II)",
+    "security": "360 ONE PRIVATE EQUITY FUND SPL OPP FD - SR 8 CL A3 - Restricted Transferability",
+    "quantity": 990429.684,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "al-trust-karban-envirotech-ruv-restricted-transferability",
+    "kind": "unvalued",
+    "reviewLine": "AL Trust - Karban Envirotech (RUV) - Nilesh Angelist",
+    "security": "AL TRUST Karban Envirotech (RUV) - Restricted Transferability",
+    "quantity": 10000,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "zippmat",
+    "kind": "unvalued",
+    "reviewLine": "Zippmat Private Ltd - ABHIJEET KUDVA",
+    "security": "ZIPPMAT PRIVATE LIMITED EQ",
+    "quantity": 1,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "zippmat-private-limited-0-01-series-seed-2-pref",
+    "kind": "unvalued",
+    "reviewLine": "Zippmat Private Ltd - ABHIJEET KUDVA",
+    "security": "ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 2 PREF",
+    "quantity": 34,
+    "marketValue": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "securityKey": "zippmat-private-limited-0-01-series-seed-4-pref-27ag44",
+    "kind": "unvalued",
+    "reviewLine": "Zippmat Private Ltd - ABHIJEET KUDVA",
+    "security": "ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 4 PREF 27AG44",
+    "quantity": 7,
+    "marketValue": null
   }
 ];
 
@@ -24567,7 +25241,40 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
  * reader. See RINGFENCED_SECURITY_KEYS in scripts/build-book.mjs and
  * docs/BOOK-REPORT.md. Folding it back into the book is a one-line change.
  */
-export const BOOK_POLYCAB: Position[] = [
+export const BOOK_POLYCAB: PolycabHolding[] = [
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "pointer": "/holdings/20"
+    },
+    "securityKey": "polycab-india",
+    "security": "POLYCAB INDIA LIMITED - EQ",
+    "symbol": "POLYCAB",
+    "isin": "INE455K01017",
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 5108911,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": null,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
   {
     "statementRecord": {
       "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
@@ -26217,6 +26924,12 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "accountId": "360-one-private-wealth-60066",
       "provider": "360 ONE Private Wealth",
       "accountNo": "60066",
+      "bookValue": 0
+    },
+    {
+      "accountId": "hdfc-bank-nsdl-demat-22025655",
+      "provider": "HDFC Bank (NSDL demat)",
+      "accountNo": "22025655",
       "bookValue": 0
     },
     {
@@ -32708,6 +33421,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "source": "green-lantern-capital-llp-510861-2026-07-27-capital-gain"
   },
   {
+    "entity": "Bharat Jaisinghani · HDFC 22025655",
+    "accountId": "hdfc-bank-nsdl-demat-22025655",
+    "ownerId": "bharat-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Bharat Jaisinghani Family Trust 3 · HDFC 67786137",
     "accountId": "hdfc-bank-nsdl-demat-67786137",
     "ownerId": "bharat-jaisinghani-family-trust-3",
@@ -35193,6 +35920,11 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
       "capitalRecordTo": "2026-09-22"
     },
     "gap": "Verified cash-flow coverage ends 2026-09-22; closing valuation is 2026-10-06"
+  },
+  "hdfc-bank-nsdl-demat-22025655": {
+    "latestValuationDate": "2026-03-31",
+    "record": null,
+    "gap": "No complete valued portfolio for a return"
   },
   "hdfc-bank-nsdl-demat-67786137": {
     "latestValuationDate": "2026-08-29",

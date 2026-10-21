@@ -437,9 +437,14 @@ ok("the context is a non-empty set of named blocks",
   const w = block<{ ringFenced: { valueCr: number; security: string | null; shares: number | null; statementAsOf: unknown;
     heldIn: { accountNo: string; statementAsOf: string | null }[]; valueBasis: string; note: string } }>("what_this_book_does_not_carry");
   const f = w.ringFenced;
-  near("the ring-fenced holding's value is the book's own", f.valueCr, add(BOOK_POLYCAB.map((p) => p.marketValue)) / CR, 0.05);
+  const fencedValues = BOOK_POLYCAB.map((p) => p.marketValue).filter((v): v is number => typeof v === "number");
+  near("the ring-fenced holding's value is the book's own", f.valueCr, add(fencedValues) / CR, 0.05);
   ok("...named, so the model can recognise a question about it", !!f.security, String(f.security));
   const fencedAccts = [...new Set(BOOK_POLYCAB.map((p) => p.accountId))].map((id) => acct.get(id)!);
+  const unvaluedAccts = fencedAccts.filter((a) => !BOOK_POLYCAB.some((p) => p.accountId === a.accountId && typeof p.marketValue === "number"));
+  ok("...and a demat that prints quantities only is named as outside the value, not counted in it at zero",
+    unvaluedAccts.every((a) => f.valueBasis.includes(a.accountNo)) && (unvaluedAccts.length === 0 || /prints quantities only/.test(f.valueBasis)),
+    f.valueBasis);
   ok("...with its share count, its statement's date and the account it covers",
     f.shares === add(BOOK_POLYCAB.map((p) => p.quantity!))
       && f.heldIn.length === fencedAccts.length && f.heldIn.every((h, i) => h.accountNo === fencedAccts[i].accountNo && h.statementAsOf === fencedAccts[i].asOf)

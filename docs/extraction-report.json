@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-10-21T07:42:19.986Z",
+  "generatedAt": "2026-10-21T18:24:31.932Z",
   "summary": {
-    "documents": 424,
-    "parsed": 420,
+    "documents": 425,
+    "parsed": 421,
     "partial": 0,
     "failed": 4,
     "rowSumChecks": 381,
@@ -20,15 +20,15 @@
     "datedRounding": 329,
     "crossReportDeltas": 32,
     "suspectedDuplicates": 0,
-    "quantityOnlyMatches": 3,
+    "quantityOnlyMatches": 4,
     "confirmedSeparateByFamily": 4,
     "suspectedDuplicateEarnings": 1,
-    "securitiesWithoutSymbol": 39,
+    "securitiesWithoutSymbol": 34,
     "ownerNamesUnmatched": 0,
-    "stitchesApplied": 133
+    "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 414,
+    "pdfsFound": 415,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -109,11 +109,6 @@
         "path": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf",
         "sameAs": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani/Bharat Jaisinghani/Bharat Jaisinghani - ICICI - SOA.pdf",
         "sha256": "c3542b123e51757c091298b2f068b2732db8b5ec0e617def961aeef9747ae4fb"
-      },
-      {
-        "path": "source/_extracted/october-2026-c/LKP EQUITY/666125807_06102026125819.xls",
-        "sameAs": "source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls",
-        "sha256": "f6d13c52f28d8756f3446b0635b2575531788f54a25e5b83bff4c144cd59ecb0"
       },
       {
         "path": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports (2)/CRN37702_07Oct2026_1552871.pdf",
@@ -251,7 +246,7 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 420,
+    "parsed": 421,
     "partial": 0,
     "failed": 4,
     "byProvider": {
@@ -765,12 +760,7 @@
         "unknown": {
           "ok": 0,
           "partial": 0,
-          "failed": 1
-        },
-        "holdings": {
-          "ok": 0,
-          "partial": 0,
-          "failed": 1
+          "failed": 2
         }
       },
       "Molecule Ventures LLP": {
@@ -886,7 +876,7 @@
       },
       "HDFC Bank (NSDL demat)": {
         "holdings": {
-          "ok": 2,
+          "ok": 3,
           "partial": 0,
           "failed": 0
         }
@@ -980,7 +970,17 @@
         "provider": "(unidentified)",
         "reportType": "unknown",
         "reasons": [
-          "pdf-read-failed: not a workbook: the file is a mail server's removal notice in its place — \"This attachment was removed because it contains data that could pose a security risk.\" The statement itself never arrived and must be re-sent; there is nothing here to read."
+          "attachment-removed: 519_06102026124925.xls NEVER ARRIVED: a mail server removed the attachment in transit and left this 85-byte notice under its name — \"This attachment was removed because it contains data that could pose a security risk.\". There is no statement here to read; ask the sender to re-send it another way (a download link, or zipped), and upload it on the Statement Library."
+        ]
+      },
+      {
+        "docKey": "unknown-unknown-2026-10-06-unknown-2",
+        "sourcePath": "source/_extracted/october-2026-c/LKP EQUITY/666125807_06102026125819.xls",
+        "provider": "(unidentified)",
+        "reportType": "unknown",
+        "reasons": [
+          "attachment-removed: 666125807_06102026125819.xls NEVER ARRIVED: a mail server removed the attachment in transit and left this 85-byte notice under its name — \"This attachment was removed because it contains data that could pose a security risk.\". There is no statement here to read; ask the sender to re-send it another way (a download link, or zipped), and upload it on the Statement Library.",
+          "duplicate-doc-key: unknown-unknown-2026-10-06-unknown was already claimed by source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls; filed as unknown-unknown-2026-10-06-unknown-2. The identity fields (provider, account, as-of, report type) do not distinguish these two statements."
         ]
       },
       {
@@ -990,15 +990,6 @@
         "reportType": "unknown",
         "reasons": [
           "held-out-by-decision: Consolidated family review (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
-        ]
-      },
-      {
-        "docKey": "unknown-unknown-unknown-holdings",
-        "sourcePath": "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
-        "provider": "(unidentified)",
-        "reportType": "holdings",
-        "reasons": [
-          "no-text-layer: the file is 4 page(s) of SCANNED IMAGE (4 raster image(s)) and carries no text layer, so no reader can be written against it and nothing is extracted. This is not a missing reader: pdfjs returns zero text items on every page. It needs the issuer to re-send the statement as a text PDF — an OCR'd figure cannot be traced back to what the document printed, which is the guarantee every other figure here keeps."
         ]
       },
       {
@@ -226834,6 +226825,69 @@
       "resolution": "NOT a dedupe group. The only figure these rows share is the quantity, and no statement here values them, so there is nothing to double-count and nothing to collapse. Treat as two real holdings unless a statement says otherwise — a shared unit count alone is not evidence of one."
     },
     {
+      "security": "Sky Capital Rising Titans Fund — Hudle — Class A1",
+      "securityKey": "sky-capital-rising-titans-fund-hudle-class-a1",
+      "quantity": 17000,
+      "owners": [
+        "bharat-jaisinghani"
+      ],
+      "accounts": [
+        "SKY003",
+        "22025655"
+      ],
+      "occurrences": [
+        {
+          "docKey": "sky-capital-rising-titans-fund-sky003-2026-04-30-holdings",
+          "owner": "Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "SKY003",
+          "asOf": "2026-04-30",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "sky-capital-rising-titans-fund-sky003-2026-07-31-holdings",
+          "owner": "Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "SKY003",
+          "asOf": "2026-07-31",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "sky-capital-rising-titans-fund-sky003-2026-06-30-holdings",
+          "owner": "Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "SKY003",
+          "asOf": "2026-06-30",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "sky-capital-rising-titans-fund-sky003-2026-05-31-holdings",
+          "owner": "Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "SKY003",
+          "asOf": "2026-05-31",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "sky-capital-rising-titans-fund-sky003-2026-08-31-holdings",
+          "owner": "Bharat Jaisinghani",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "SKY003",
+          "asOf": "2026-08-31",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+          "owner": "BHARAT JAISINGHANI",
+          "ownerId": "bharat-jaisinghani",
+          "accountNo": "22025655",
+          "asOf": "2026-03-31",
+          "reportType": "holdings"
+        }
+      ],
+      "resolution": "NOT a dedupe group. The only figure these rows share is the quantity, and no statement here values them, so there is nothing to double-count and nothing to collapse. Treat as two real holdings unless a statement says otherwise — a shared unit count alone is not evidence of one."
+    },
+    {
       "security": "Sky Capital Rising Titans Fund — Oncare — Class A3",
       "securityKey": "sky-capital-rising-titans-fund-oncare-class-a3",
       "quantity": 7500,
@@ -227270,25 +227324,6 @@
         ]
       },
       {
-        "security": "Elgi Equipments Ltd",
-        "securityKey": "elgi-equipments",
-        "docs": [
-          "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
-          "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
-        ]
-      },
-      {
-        "security": "HEG Advanced Materials Limited",
-        "securityKey": "heg-advanced-materials",
-        "docs": [
-          "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
-          "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
-          "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-investor-report"
-        ]
-      },
-      {
         "security": "Poojaa Precision Engineering Limited",
         "securityKey": "poojaa-precision-engineering",
         "docs": [
@@ -227301,40 +227336,6 @@
           "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
           "goldstandard-wealth-private-limited-100022-2026-10-06-fact-sheet",
           "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal-2"
-        ]
-      },
-      {
-        "security": "Cyient Ltd",
-        "securityKey": "cyient",
-        "docs": [
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-fact-sheet",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-holdings"
-        ]
-      },
-      {
-        "security": "VISHNU CHEMICALS LIMITED",
-        "securityKey": "vishnu-chemicals",
-        "docs": [
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-fact-sheet",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-holdings"
-        ]
-      },
-      {
-        "security": "V MART RETAIL LIMITED",
-        "securityKey": "v-mart-retail",
-        "docs": [
-          "molecule-ventures-llp-7810404-2026-09-30-fact-sheet"
-        ]
-      },
-      {
-        "security": "Elecon Engineering Company Limited",
-        "securityKey": "elecon-engineering",
-        "docs": [
-          "molecule-ventures-llp-7810404-2026-09-30-fact-sheet"
         ]
       },
       {
@@ -227360,38 +227361,6 @@
         ]
       },
       {
-        "security": "Diffusion Engineers Ltd",
-        "securityKey": "diffusion-engineers",
-        "docs": [
-          "v-e-c-assago-capital-management-llp-128005-2026-09-30-fact-sheet"
-        ]
-      },
-      {
-        "security": "Cosmo First Limited",
-        "securityKey": "cosmo-first",
-        "docs": [
-          "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-investor-report"
-        ]
-      },
-      {
-        "security": "APOLLO PIPES LIMITED",
-        "securityKey": "apollo-pipes",
-        "docs": [
-          "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-investor-report"
-        ]
-      },
-      {
-        "security": "Kajaria Ceramics Ltd",
-        "securityKey": "kajaria-ceramics",
-        "docs": [
-          "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
-        ]
-      },
-      {
         "security": "BOROSIL RENEWABLES LIMITED - WARRANTS 13AG26",
         "securityKey": "borosil-renewables-limited-warrants-13ag26",
         "docs": [
@@ -227409,14 +227378,16 @@
         "security": "INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/",
         "securityKey": "integris-medtech",
         "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
         ]
       },
       {
         "security": "MATRIX GAS AND RENEWABLES LIMITED - EQ",
         "securityKey": "matrix-gas-and-renewables",
         "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
         ]
       },
       {
@@ -227473,6 +227444,41 @@
         "securityKey": "zenith-leisure-holidays",
         "docs": [
           "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "FINOLEX CABLES LIMITED NEW EQ RS. 2/",
+        "securityKey": "finolex-cables-limited-new",
+        "docs": [
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "NICCO CORPORATION LIMITED EQ NEW FV RS. 2/",
+        "securityKey": "nicco",
+        "docs": [
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "PARAMOUNT COMMUNICATIONS LIMITED NEWEQRS.",
+        "securityKey": "paramount-communications-limited-neweqrs",
+        "docs": [
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "STERLITE ELECTRIC LIMITED EQ",
+        "securityKey": "sterlite-electric",
+        "docs": [
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "STERLITE GRID LIMITED EQ NEW FV RS 2/",
+        "securityKey": "sterlite-grid",
+        "docs": [
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
         ]
       },
       {
@@ -229035,6 +229041,18 @@
       ],
       "joined": "+918655809497",
       "page": 1
+    },
+    {
+      "docKey": "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings",
+      "kind": "cross-line",
+      "column": 3,
+      "y": 299.24122073578593,
+      "parts": [
+        "73",
+        "250"
+      ],
+      "joined": "73250",
+      "page": 2
     }
   ]
 }

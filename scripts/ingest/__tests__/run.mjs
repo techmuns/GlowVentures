@@ -17,6 +17,8 @@ const SUITES = [
   { name: "parseNum", file: "parseNum.test.mjs", required: true },
   { name: "readStatus", file: "readStatus.test.mjs", required: true },
   { name: "checkReads", file: "checkReads.test.mjs", required: true },
+  // A scan is read only where the page checks it (lib/scan.mjs, providers/nsdlScan.mjs).
+  { name: "scanRead", file: "scanRead.test.mjs", required: true },
   { name: "layout",   file: "layout.test.mjs",   required: true },
   { name: "pipeline", file: "pipeline.test.mjs", required: true },
   { name: "altFund",  file: "altFund.test.mjs",  required: true },

@@ -42,6 +42,9 @@ import * as altFunds from "./providers/altFundStatements.mjs";
 import * as mutualFundFolio from "./providers/mutualFundFolio.mjs";
 import * as folioLedger from "./providers/folioLedger.mjs";
 import * as schemePortfolio from "./providers/schemePortfolio.mjs";
+import * as nsdlScan from "./providers/nsdlScan.mjs";
+import { openScan, scanOcrAvailable, SCAN_ENGINE } from "./lib/scan.mjs";
+import { isRemovalNotice } from "../../shared/statementBytes.mjs";
 import { reconcile, writeReports } from "./reconcile.mjs";
 import { pmsSiblingProvider } from "./lib/pmsSiblingProvider.mjs";
 import { settleStatus } from "./lib/readStatus.mjs";
@@ -302,15 +305,7 @@ function gridFromSpreadsheet(buf) {
    * spreadsheet format" sent the next person to debug a parser; the ask is for
    * LKP to re-send the workbook another way.
    */
-  if (buf.length < 4096 && /^[\x09\x0a\x0d\x20-\x7e]*$/.test(buf.toString("latin1"))
-    && /attachment\s+was\s+removed/i.test(buf.toString("latin1"))) {
-    return {
-      pages: [], sheets: null, numPages: 0, format: "text",
-      error: `not a workbook: the file is a mail server's removal notice in its place — "${buf.toString("latin1").trim()}" `
-        + "The statement itself never arrived and must be re-sent; there is nothing here to read.",
-      pdfError: null, encrypted: false, usedPassword: null,
-    };
-  }
+  if (isRemovalNotice(buf)) return removalNoticeGrid(buf);
   const wb = readSpreadsheet(buf);
   return {
     pages: wb.sheets.map((s, i) => ({
@@ -326,6 +321,16 @@ function gridFromSpreadsheet(buf) {
     pdfError: null,
     encrypted: false,
     usedPassword: null,
+  };
+}
+
+/** A removal notice, as a grid with nothing on it and the notice's own words. */
+function removalNoticeGrid(buf) {
+  const text = buf.toString("latin1").replace(/\s+/g, " ").trim();
+  return {
+    pages: [], sheets: null, numPages: 0, format: "text", removalNotice: true, noticeText: text, noticeBytes: buf.length,
+    error: `not a statement: a mail server's removal notice in its place — "${text}"`,
+    pdfError: null, encrypted: false, usedPassword: null,
   };
 }
 
@@ -367,6 +372,12 @@ function extractOne(file, grid, part = null, providerWitness = null) {
     stitches: grid.pages.flatMap((p) => p.stitches.map((s) => ({ ...s, page: p.page }))),
   };
 
+  if (grid.removalNotice) {
+    return makeDocument({ ...base, status: "failed", warnings: [{ code: "attachment-removed",
+      detail: `${fileName} NEVER ARRIVED: a mail server removed the attachment in transit and left this ${grid.noticeBytes}-byte `
+        + `notice under its name — "${grid.noticeText}". There is no statement here to read; ask the sender to re-send `
+        + "it another way (a download link, or zipped), and upload it on the Statement Library." }] });
+  }
   if (grid.error) {
     return makeDocument({ ...base, status: "failed", warnings: [{ code: "pdf-read-failed", detail: grid.error }] });
   }
@@ -474,20 +485,49 @@ function noTextLayer(grid) {
         + "fonts embedded (their PDF export setting is what did this), not a re-scan. " + closing,
     };
   }
+  /**
+   * A SCAN IS READ BY OCR NOW (`lib/scan.mjs`, the family's decision of
+   * 21 Oct 2026) — so reaching here means THIS RUN did not read it, and says why.
+   */
   return {
     code: "no-text-layer",
     detail: `the file is ${pp} of SCANNED IMAGE`
       + (grid?.inkKind?.images ? ` (${grid.inkKind.images} raster image(s))` : "")
-      + " and carries no text layer, so no reader can "
-      + "be written against it and nothing is extracted. This is not a missing reader: pdfjs returns zero text "
-      + "items on every page. " + closing,
+      + ` and carries no text layer, and this run did not read it by OCR (${grid?.scanError ?? "no reason recorded"}). `
+      + "Run `npm run extract` with OCR on (tesseract.js is a dev dependency; `GLOW_OCR` unset, or `new`) and the scan "
+      + "is read, every figure checked against the page itself.",
   };
 }
+
+  /**
+   * A SCAN IS READ ONLY BY A READER THAT CHECKS IT.
+   *
+   * Text OCR'd off a photograph (`lib/scan.mjs`) is good enough to classify a
+   * document and to archive as its page text, and NOT good enough for a reader
+   * written against a text layer, which would take every figure on it as
+   * printed. So a scanned document goes to a scan reader — one that publishes a
+   * row only where the page checks it (`providers/nsdlScan.mjs`) — or to none,
+   * and says which.
+   */
+  if (grid.textSource === "scan-ocr" && grid.scan?.layout !== nsdlScan.SCAN_LAYOUT) {
+    return makeDocument({
+      ...base,
+      status: "failed",
+      warnings: [{
+        code: "scan-no-reader",
+        detail: `this file is a SCAN, read by OCR (${grid.scanEngine}); its words are archived as its page text, but no reader `
+          + `yet checks this scanned layout's figures against the page${meta.provider ? ` (${meta.provider}, ${meta.reportType})` : ""}, `
+          + "and a figure read off a photograph is published only where the page itself confirms it. "
+          + "A scan reader for this layout (scripts/ingest/providers/nsdlScan.mjs is the pattern), or the issuer's text PDF, reads it.",
+      }, ...openedWarnings],
+    });
+  }
 
   // The reader is chosen by REPORT TYPE first, then by provider. The SEBI PMS
   // investor report is one prescribed layout that several managers issue, so it
   // has one reader; everything else is a house format and is keyed on the house.
-  const extractor = BY_REPORT_TYPE[meta.reportType]
+  const extractor = grid.textSource === "scan-ocr" ? nsdlScan
+    : BY_REPORT_TYPE[meta.reportType]
     ?? BY_PROVIDER_REPORT_TYPE[meta.provider]?.[meta.reportType]
     ?? (meta.provider ? EXTRACTORS[meta.provider] : null);
   if (!extractor) {
@@ -755,7 +795,10 @@ function backfillSecurityNames(docs) {
     set.add(r.security);
     byIsin.set(r.isin, set);
   };
+  // A scan's names are OCR'd and were settled by `nameScannedHoldings`: they
+  // neither rename another statement's holdings nor are renamed here.
   for (const d of docs) {
+    if (isScanned(d)) continue;
     for (const k of ["holdings", "capitalGains", "transactions", "income", "openLots"]) {
       for (const r of d[k] ?? []) record(r);
     }
@@ -827,6 +870,7 @@ function backfillSecurityNames(docs) {
 
   let renamed = 0;
   for (const d of docs) {
+    if (isScanned(d)) continue;
     for (const h of d.holdings ?? []) {
       if (!h.isin) continue;
       const fuller = [...(byIsin.get(h.isin) ?? [])].filter((n) =>
@@ -846,6 +890,84 @@ function backfillSecurityNames(docs) {
         code: "security-name-from-isin",
         detail: "this report clips security names to the column width; the fuller name printed against the same ISIN elsewhere in this drop is used for the key, and what this document printed is kept in `printedSecurity`.",
       });
+    }
+  }
+  return renamed;
+}
+
+/**
+ * A SCANNED ROW TAKES THE NAME ANOTHER STATEMENT PRINTS FOR ITS ISIN.
+ *
+ * A quantity read off a scan is checked by the page; a NAME is not — OCR spells
+ * `SANSHI TRUST FD I CL E` as `SANSHI TRUST FDICLE`, and the security key is
+ * derived from the name, so a scanned row would join to nothing. The ISIN is
+ * checked (its own check digit), so where a statement read from a TEXT LAYER
+ * prints the same ISIN, its name is used — one company only, by the rule
+ * `backfillSecurityNames` applies — and the OCR'd words stay in
+ * `printedSecurity`. A row no other statement names keeps the scan's own words,
+ * and the document lists which, so nobody mistakes them for a printed name.
+ *
+ * THE SAME DEPOSITORY'S NAME FIRST. A depository's security master names an
+ * ISIN one way on every participant's statement, and a fund's own statement
+ * names its class another — `SANSHI TRUST - FD I CL E - Restricted
+ * Transferability` on Ajay's ICICI NSDL statement, `Sanshi Fund-I — Class E` on
+ * a Motilal one. Both are the same ISIN under two keys, so "one company" found
+ * neither and the scanned row kept OCR's words (a bare `Restricted
+ * Transferability` for Sanshi). The scan prints the depository's own master
+ * name, so a statement of the same depository names it; any text-layer name
+ * stands only where every statement printing the ISIN agrees.
+ */
+const isScanned = (d) => (d.warnings ?? []).some((w) => w.code === "text-recovered-from-scan");
+const depositoryOf = (provider) => (/\(NSDL demat\)$/.test(provider ?? "") ? "NSDL" : null);
+function nameScannedHoldings(docs) {
+  const byIsin = new Map();
+  for (const d of docs) {
+    if (isScanned(d) || d.status === "failed") continue;
+    for (const k of ["holdings", "capitalGains", "transactions", "openLots"]) {
+      for (const r of d[k] ?? []) {
+        if (!r?.isin || !r.security) continue;
+        (byIsin.get(r.isin) ?? byIsin.set(r.isin, []).get(r.isin)).push({ name: r.security, depository: depositoryOf(d.provider) });
+      }
+    }
+  }
+  const oneCompany = (names) => {
+    if (!names.length || new Set(names.map((n) => securityKeyOf(n))).size !== 1) return null;
+    const cased = (c) => (/[a-z]/.test(c) ? 1 : 0);
+    return [...new Set(names)].sort((a, b) => cased(b) - cased(a) || b.length - a.length || (a < b ? -1 : a > b ? 1 : 0))[0];
+  };
+  let renamed = 0;
+  for (const d of docs.filter(isScanned)) {
+    const own = [], disputed = [];
+    let here = 0;
+    const depository = depositoryOf(d.provider);
+    for (const h of d.holdings ?? []) {
+      const named = (h.isin && byIsin.get(h.isin)) || [];
+      const same = depository ? named.filter((x) => x.depository === depository) : [];
+      const pick = oneCompany((same.length ? same : named).map((x) => x.name));
+      if (!pick) {
+        if (named.length) disputed.push(`${h.security} (${h.isin}: ${[...new Set(named.map((x) => x.name))].join(" / ")})`);
+        else own.push(`${h.security} (${h.isin})`);
+        continue;
+      }
+      h.printedSecurity ??= h.security;
+      h.security = pick;
+      h.securityKey = securityKeyOf(pick);
+      here++;
+    }
+    renamed += here;
+    if (here) {
+      d.securityNameSource = "isin";
+      d.warnings.push({ code: "security-name-from-isin",
+        detail: `a scan's security names are OCR'd and cannot be checked; ${here} holding(s) take the name a statement read from a text layer `
+          + `prints against the same (check-digit-verified) ISIN — ${depository ? `the ${depository} depository's own name where one of its statements prints it` : "one company only"} — `
+          + "and the scan's own words are kept in `printedSecurity`." });
+    }
+    if (own.length || disputed.length) {
+      d.warnings.push({ code: "security-name-from-scan",
+        detail: `${own.length + disputed.length} holding(s) carry the name as OCR read it`
+          + (own.length ? `; no other statement in this book prints the ISIN of ${own.join("; ")}` : "")
+          + (disputed.length ? `; the statements that print the ISIN name different companies for ${disputed.join("; ")}` : "")
+          + ". The ISIN and the quantity are checked; the spelling of the name is not." });
     }
   }
   return renamed;
@@ -1066,8 +1188,58 @@ function witnessDocument(file, grid, primary, pdfRel, pdfText) {
 const UNOPENED = [
   { lacks: (grid) => grid.encrypted && !!grid.error, opened: "pdf-encrypted", why: "encrypted, no password in this run" },
   { lacks: (grid) => !!grid.ocrError && grid.inkKind?.kind === "vector", opened: "text-recovered-by-rendering", why: "outlined text, no OCR tools in this run" },
+  { lacks: (grid) => !!grid.scanError && grid.inkKind?.kind === "raster", opened: "text-recovered-from-scan", why: "a scan, not OCR'd in this run" },
 ];
 const unopenedBy = (grid) => UNOPENED.find((u) => u.lacks(grid)) ?? null;
+
+/**
+ * A SCANNED STATEMENT, READ BY OCR (`lib/scan.mjs`) — when this run reads scans.
+ *
+ *   GLOW_OCR=off   never (CI): a scan the archive has read is carried forward
+ *                  from it, like a sealed statement without its password;
+ *   GLOW_OCR=new   only a scan the archive has NOT read (the statement intake),
+ *                  so every reading already published stands byte for byte;
+ *   unset          every scan.
+ *
+ * The OCR'd words become the grid's pages — the classifier reads them and the
+ * archive keeps them as the page text — and an NSDL Statement of Holdings is
+ * also read row by row and checked (`providers/nsdlScan.mjs`), the verified
+ * table riding on the grid to its reader. Nothing here decides a figure.
+ */
+let scanArchive = null;
+function archivedScanReading(file) {
+  if (!scanArchive) {
+    scanArchive = new Set();
+    try {
+      for (const e of JSON.parse(fs.readFileSync(path.join(CARRY_DIR, "manifest.json"), "utf8"))) {
+        try {
+          const doc = JSON.parse(fs.readFileSync(path.join(CARRY_DIR, e.docKey, "document.json"), "utf8"));
+          if ((doc.warnings ?? []).some((w) => w.code === "text-recovered-from-scan")) scanArchive.add(e.sourcePath);
+        } catch { /* a document folder that will not read carries nothing */ }
+      }
+    } catch { /* no archive yet */ }
+  }
+  return scanArchive.has(rel(file));
+}
+async function readScannedGrid(file, bytes, grid) {
+  const mode = process.env.GLOW_OCR ?? "";
+  const notRead = (why) => ({ ...grid, scanError: why });
+  if (mode === "off") return notRead("OCR is switched off for this run (GLOW_OCR=off)");
+  if (mode === "new" && archivedScanReading(file)) return notRead("its archived reading stands (GLOW_OCR=new)");
+  if (!(await scanOcrAvailable())) return notRead("tesseract.js is not installed — `npm ci` installs it");
+  let session = null;
+  try {
+    session = await openScan(bytes);
+    const text = session.grids().map((p) => p.text).join("\n");
+    const scan = nsdlScan.matchesScan(text) ? await nsdlScan.readScan(session) : null;
+    const pages = session.grids(scan?.pageOrder ?? session.pages.map((p) => p.number));
+    return { ...grid, pages, textSource: "scan-ocr", scanEngine: SCAN_ENGINE, scan, error: null };
+  } catch (e) {
+    return notRead(`the scan could not be read: ${e?.message ?? e}`);
+  } finally {
+    await session?.close();
+  }
+}
 
 let carryIndex = null;
 function carriedForward(file, how) {
@@ -1194,6 +1366,8 @@ function writeArchive(docs, grids) {
       sections: sheets.map((s) => s.key),
       status: doc.status,
       warnings: doc.warnings.length,
+      // WHY A DOCUMENT FAILED, for the Statement Library's status ("Never arrived").
+      ...(doc.status === "failed" ? { failedBecause: doc.warnings?.[0]?.code ?? null } : {}),
       // A file printing the same text as this document's (read once), and the
       // document an export witnesses — provenance, never a second source.
       twinOf: doc.twinOf,
@@ -1228,7 +1402,13 @@ async function main() {
   const byHash = new Map();
   const unique = [];
   for (const f of files) {
-    const h = crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+    const content = fs.readFileSync(f);
+    // A MAIL SERVER'S REMOVAL NOTICE IS NOT A COPY OF ANOTHER. Two stripped
+    // attachments leave byte-identical notices (LKP's October capital-gain and
+    // transaction workbooks) — and deduped as one, the second missing statement
+    // vanished. Each is its own document, named for the file it replaced.
+    if (isRemovalNotice(content)) { unique.push(f); continue; }
+    const h = crypto.createHash("sha256").update(content).digest("hex");
     const first = byHash.get(h);
     if (first) {
       // The same PDF can arrive as CURRENT PORTFOLIO.pdf and the engine's named
@@ -1293,10 +1473,12 @@ async function main() {
   for (const file of toRead) {
     process.stdout.write(`  reading ${rel(file)} … `);
     const bytes = fs.readFileSync(file);
-    const grid = SPREADSHEET.test(file)
+    let grid = isRemovalNotice(bytes) ? removalNoticeGrid(bytes)
+      : SPREADSHEET.test(file)
       ? gridFromSpreadsheet(bytes)
       // `GLOW_OCR=off` (CI): never re-OCR; outlined-text files are carried forward.
       : await extractLayout(new Uint8Array(bytes), { passwords, ocr: process.env.GLOW_OCR !== "off" });
+    if (grid.inkKind?.kind === "raster") grid = await readScannedGrid(file, bytes, grid);
     const how = unopenedBy(grid);
     const carried = how ? carriedForward(file, how) : [];
     if (carried.length) {
@@ -1335,6 +1517,8 @@ async function main() {
   backfillAccountNumbers(docs);
   backfillSoleAccount(docs);
   backfillOwners(docs);
+  const scanNamed = nameScannedHoldings(docs);
+  if (scanNamed) console.log(`  ${scanNamed} scanned holding(s) named as another statement prints their ISIN.`);
   const renamed = backfillSecurityNames(docs);
   if (renamed) console.log(`  ${renamed} clipped security name(s) resolved to their fuller form via ISIN.`);
   ensureUniqueDocKeys(docs);

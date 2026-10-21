@@ -836,6 +836,14 @@ const ISSUER_PROVIDER_RULES = [
    */
   [/HDFC\s+Bank\s+Depository\s+Holding\s+Details/i, "HDFC Bank (NSDL demat)"],
   /**
+   * …AND NSDL'S OWN STANDARD STATEMENT OF HOLDINGS, ISSUED THROUGH HDFC BANK.
+   * The depository's title, its name and the participant line `DP: HDFC BANK
+   * LIMITED [IN301151]` together — the participant line alone is what this
+   * statement prints about who issued it. Bharat's account 22025655 arrives as a
+   * scan of this layout, read by `providers/nsdlScan.mjs`.
+   */
+  [/STATEMENT\s+OF\s+HOLDINGS[\s\S]{0,600}?National\s+Securities\s+Depository[\s\S]{0,400}?DP\s*:\s*HDFC\s+BANK\s+LIMITED\s*\[\s*IN30\d{4}\s*\]/i, "HDFC Bank (NSDL demat)"],
+  /**
    * THE FUND'S OWN NAME BEATS THE STATIONERY IT ARRIVES ON.
    *
    * These six come FIRST because four of them print `Motilal Oswal` on the

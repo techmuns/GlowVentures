@@ -69,6 +69,15 @@ const brief = (w) => `${w.code}: ${String(w.detail ?? "").replace(/\s+/g, " ").s
 
 // ── 1 & 2. Every document read in full ────────────────────────────────────────
 const failedPaths = new Set();
+/**
+ * STATEMENTS THAT NEVER ARRIVED. A mail server's removal notice in place of an
+ * attachment (`attachment-removed`) carries nothing to read — every byte of it
+ * IS read — so it is not a read failure to fix in a reader, and it must not hold
+ * back the statements delivered beside it. It is the one thing a sender has to
+ * fix, so every run names each one, and the Statement Library shows it as
+ * "Never arrived".
+ */
+const neverArrived = [];
 for (const { e, d } of docs) {
   if (e.status === "partial") {
     problem("read gap", e.sourcePath, `${e.docKey} is PARTIAL — ${readGaps(d).map(brief).join(" · ") || "no warning names the gap"}`,
@@ -77,6 +86,7 @@ for (const { e, d } of docs) {
   } else if (e.status === "failed") {
     failedPaths.add(e.sourcePath);
     const heldOut = d.warnings.some((w) => w.code === "held-out-by-decision");
+    if (d.warnings.some((w) => w.code === "attachment-removed")) { neverArrived.push(e.sourcePath); continue; }
     if (heldOut || ACCEPTED_UNREAD[e.sourcePath]) continue;
     problem("not read", e.sourcePath, `${e.docKey} FAILED — ${d.warnings.map(brief).join(" · ")}`,
       "Write or extend the reader for this layout and `npm run extract`. Only if the FILE carries nothing to read "
@@ -207,13 +217,18 @@ for (const { acc, e, rows } of missing.values()) {
 // The statement intake (`scripts/ingest/intake-uploads.mjs`) asks for the
 // findings as data, so it can hold back exactly the uploaded file each names.
 if (process.env.GLOW_CHECK_READS_JSON) {
-  fs.writeFileSync(process.env.GLOW_CHECK_READS_JSON, JSON.stringify({ problems }, null, 1) + "\n");
+  fs.writeFileSync(process.env.GLOW_CHECK_READS_JSON, JSON.stringify({ problems, neverArrived }, null, 1) + "\n");
 }
 const counts = manifest.reduce((c, e) => ({ ...c, [e.status]: (c[e.status] ?? 0) + 1 }), {});
 const accepted = Object.keys(ACCEPTED_UNREAD).length;
 console.log(`check:reads — ${manifest.length} document(s): ${counts.ok ?? 0} read, ${counts.partial ?? 0} partial, `
-  + `${counts.failed ?? 0} failed (${accepted} accepted as unreadable, the rest held out by decision); `
+  + `${counts.failed ?? 0} failed (${neverArrived.length} never arrived, ${accepted} accepted as unreadable, the rest held out by decision); `
   + `${held.size} account(s) with read holdings against ${accounts.length} in the book.`);
+if (neverArrived.length) {
+  console.log(`\n! ${neverArrived.length} statement(s) NEVER ARRIVED — a mail server removed the attachment and left a notice. `
+    + "Ask the sender to re-send each another way (a link, or zipped) and upload it on the Statement Library:");
+  for (const f of neverArrived) console.log(`    ${f}`);
+}
 if (!problems.length) {
   console.log("✓ every statement is read in full and every account it holds is in the book at its newest date.");
   process.exit(0);

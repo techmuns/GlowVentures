@@ -4168,6 +4168,15 @@ function build(archived, archiveCount = archived.length) {
           ? `this custody account's statement of ${holdingsDoc.asOf} values nothing: it prints ${unvaluedHere.length} holding(s) as quantities, ${lastMoved.length} of them with the price of their last depository movement — a transaction price, not a valuation of the balance`
             + `${facePriced.length ? `; ${facePriced.length} at the face value they were allotted at` : ""}${bare ? `; ${bare} with no rate at all` : ""}. `
             + "The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
+          /**
+           * A CUSTODY STATEMENT WITH NO RATE COLUMN AT ALL — NSDL's Statement of
+           * Holdings prints a quantity and a balance per ISIN and nothing to
+           * price them by (Bharat's scanned HDFC statement, Stage 10gk). It is
+           * not a fund and owes no NAV, which is what the next branch would say.
+           */
+          : unvaluedHere.length && bare === unvaluedHere.length && CUSTODY_PROVIDERS.has(provider)
+          ? `this custody account's statement of ${holdingsDoc.asOf} values nothing: it prints ${unvaluedHere.length} holding(s) as quantities and carries no rate or value column at all. `
+            + "The units are in the archive. What values them on that date is a statement that marks the balance, such as the depository's Consolidated Account Statement"
           : unvaluedHere.length
           ? `this fund publishes no NAV: its statement of ${holdingsDoc.asOf} carries ${unvaluedHere.length} holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth`
           : holdingsDoc && (holdingsDoc.warnings ?? []).some((w) => w?.code === "portfolio-reported-nil")
@@ -4739,9 +4748,33 @@ function build(archived, archiveCount = archived.length) {
    * paired, because two statements drawn on different dates describe different
    * unit counts and neither may be assumed to contain the other.
    */
+  /**
+   * …AND A RING-FENCED ROW WITH NO VALUE IS STILL THE PROMOTER BLOCK. Bharat's
+   * HDFC Bank NSDL statement (a scan, read since 21 Oct 2026) prints 51,08,911
+   * Polycab shares and no value — a quantity-only custody row. Dropped here, it
+   * vanished from the book AND from the Polycab page; it moves into
+   * `BOOK_POLYCAB` instead, a Position with its share count and no value, which
+   * the page already totals with `sumOrNull` and names as unvalued.
+   */
   for (let i = unvaluedHoldings.length - 1; i >= 0; i--) {
-    if (RINGFENCED_SECURITY_KEYS.has(unvaluedHoldings[i].securityKey)) unvaluedHoldings.splice(i, 1);
+    const u = unvaluedHoldings[i];
+    if (!RINGFENCED_SECURITY_KEYS.has(u.securityKey)) continue;
+    const like = polycab[0] ?? null;
+    // A `PolycabHolding`: a Position whose value may be absent — the fields a
+    // quantity-only row has, each null where nothing measures it.
+    polycab.push({
+      ...(u.statementRecord ? { statementRecord: u.statementRecord } : {}),
+      securityKey: u.securityKey, security: u.security, symbol: like?.symbol ?? null, isin: u.isin ?? null,
+      accountId: u.accountId, memberId: null, sector: like?.sector ?? "Unclassified", providerSector: null,
+      assetClass: u.assetClass ?? like?.assetClass ?? "Equity", marketSide: like?.marketSide ?? "listed",
+      quantity: u.quantity, avgCost: null, currentPrice: null, costBasis: null, marketValue: null,
+      unrealizedPnL: null, realizedPnL: null, costOfUnitsSold: null, returnPct: null,
+      stCostBasis: null, ltCostBasis: null, daysToLT: null, heldSince: null, priceAsOf: null,
+      accruedIncome: null, dividendReceived: null, positionIrrPct: null,
+    });
+    unvaluedHoldings.splice(i, 1);
   }
+  polycab.sort((a, b) => a.accountId.localeCompare(b.accountId));
   // THE FAMILY'S KEEP-UNVALUED TABLE, CHECKED FOR DEAD ENTRIES. An entry that
   // reaches no row means its account or ISIN drifted, and the row it was about
   // went back to the statement's own reason without a word. Printed when every
@@ -5307,7 +5340,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
+  L.push("  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -5358,7 +5391,7 @@ function emit(book) {
   L.push(" * reader. See RINGFENCED_SECURITY_KEYS in scripts/build-book.mjs and");
   L.push(" * docs/BOOK-REPORT.md. Folding it back into the book is a one-line change.");
   L.push(" */");
-  L.push(`export const BOOK_POLYCAB: Position[] = ${j(book.polycab)};`);
+  L.push(`export const BOOK_POLYCAB: PolycabHolding[] = ${j(book.polycab)};`);
   L.push("");
   L.push("/**");
   L.push(" * THE CONSOLIDATED DATED NAV SERIES — one point per date on which any covered");

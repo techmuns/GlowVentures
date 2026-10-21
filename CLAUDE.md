@@ -216,7 +216,8 @@ One line per area; the history files explain each in depth.
   (SEBI category, `FAMILY_MARKET_SIDE`, `DECLARED_AIF_CATEGORY`), `owners`,
   `separateInvestments`, `keptUnvalued`, `reviewHolders`, `reviewPrivateJoin`,
   `sectors`, `securityKey`, `nameMatch`, `lotSettlement`, `corporateActions`,
-  `polycabSources`, `upstoxQuotes` / `upstoxInstruments`, `seriesReturns`. A new
+  `polycabSources`, `upstoxQuotes` / `upstoxInstruments`, `seriesReturns`,
+  `statementBytes` (an upload's bytes are the format they claim). A new
   one ships with its `.d.mts`.
 - `functions/api/*` — Cloudflare Pages Functions (see Live layer).
 - `scripts/ingest/*` — the statement intake (see Ingest).
@@ -229,8 +230,11 @@ folder per delivery (`source/README.md` has the rule for adding the next one).
 `npm run coverage:source` accounts for every leaf file and exits non-zero if any
 is unread; `docs/SOURCE-COVERAGE.md`, `docs/BOOK-REPORT.md` and
 `docs/EXTRACTION-REPORT.md` carry the counts — read them, never copy counts into
-prose. One document is unread by necessity: Bharat's HDFC NSDL statement in
-`august-2026-e/` is a scan (`no-text-layer`). The adviser's consolidated review
+prose. Bharat's HDFC NSDL statement in `august-2026-e/` is a photographed scan,
+read by OCR and published only because the page checks every row (Stage 10gk).
+Two LKP workbooks in `october-2026-c/` never arrived — the mail server replaced
+each with a removal notice — and stay listed as never arrived until LKP re-sends
+them. The adviser's consolidated review
 workbook and the family's investment register are read and **held out by
 decision** as statement sources. A monthly drop reissues the same filenames, so
 extraction mirrors each archive's own path under `source/`.
@@ -302,6 +306,7 @@ extraction mirrors each archive's own path under `source/`.
 | 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — every class redeemed to nil) |
 | ASK Absolute Return Fund | 9039917111 | Ajay Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
 | ASK Absolute Return Fund | 9039917144 | Ankita Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
+| HDFC Bank (NSDL demat) | 22025655 | Bharat Jaisinghani | 2026-03-31 | — (**quantity only** — the statement prints no rate or value, Stage 10gk; 12 of its lines are private and counted under the review, Stage 10dh) |
 | HDFC Bank (NSDL demat) | 67786137 | Bharat Jaisinghani Family Trust 3 | 2026-08-29 | — (**its private holding is counted under the review**, Stage 10dh) |
 | HDFC Bank (NSDL demat) | 67786547 | Bharat Jaisinghani Family Trust 2 | 2026-08-29 | — (**its private holding is counted under the review**, Stage 10dh) |
 | HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-10-05 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
@@ -409,7 +414,11 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   matches tables by HEADER TEXT, never column index; `lib/classify.mjs` — title
   rules before keyword rules, issuer by letterhead, never by a name a document
   merely mentions; `lib/ocr.mjs` only for outlined-text PDFs (needs `pdftoppm`
-  and `tesseract`), never for a scan.
+  and `tesseract`). A raster scan goes to `lib/scan.mjs` (tesseract.js: deskew,
+  page words, cleaned cell reads) and is published only by a reader that checks
+  the page — `providers/nsdlScan.mjs`: each row's two printed quantities agree and
+  every ISIN passes its check digit (`lib/isin.mjs`); one unchecked row refuses
+  the document. A scan of any other layout is `scan-no-reader` (Stage 10gk).
 - `providers/*` — one reader per document family; `lib/document.mjs`'s
   `assertNormalized` enforces the shape. Adding a provider: write the reader,
   register it in `EXTRACTORS`, and add its block to `precedence.mjs` (a provider
@@ -423,6 +432,8 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   FORWARD from the archive a run that could open it wrote (a failed one is
   re-read from its archived page text, kept only if it publishes more); with no
   password and no OCR it reproduces the committed archive byte for byte.
+  `GLOW_OCR=off` carries every scan forward (CI), `new` reads only scans the
+  archive has not read (the intake), unset reads them all.
   `guardAgainstShrinkingTheArchive` still refuses a smaller archive. The
   `replay:*` / `rekey:archive` scripts remain for their own narrow changes.
 - **`partial` means a read gap** — `lib/readStatus.mjs` splits warnings into
@@ -440,8 +451,12 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   withdrawal with no capital move in the book that day (Stage 10fj — a fully
   redeemed investment's history is data). Never silence it by widening the note
   list or the accepted list for a file a reader could read: write the reader.
+  A mail server's removal notice where a statement should be
+  (`attachment-removed`) is listed as NEVER ARRIVED, neither passed nor failed:
+  the fix is the sender re-sending it. The upload refuses one outright
+  (`shared/statementBytes.mjs`); inside a ZIP the intake lands the other files.
 - **Every file feeds the dashboard** (the family, 21 Oct 2026), except the held-
-  out review/register by decision and the two in `acceptedUnread.mjs`. Hope India
+  out review/register by decision; `acceptedUnread.mjs` is empty. Hope India
   Trust is its own entity in the book (`shared/owners.mjs`), not a person's.
 
 ## The live layer
@@ -528,6 +543,7 @@ And:
   it green.
 - `npm run dev` / `preview` — local server; checks expect a preview on :4173.
 - `npm run inventory` · `extract` (no options; `GLOW_PDF_PASSWORDS`;
+  `GLOW_OCR` off / new / unset for scans;
   `GLOW_SOURCE_DIR` / `GLOW_AUDIT_DIR` / `GLOW_DOCS_DIR` for a scratch tree,
   `GLOW_CARRY_DIR` for the archive a scratch run carries sealed files from) ·
   `report:extraction` (extraction report from the archive).

@@ -51,9 +51,10 @@ import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { listEntries, readEntry, isMacMetadata } from "./lib/unzip.mjs";
+import { checkStatementBytes } from "../../shared/statementBytes.mjs";
 import { verify as verifyPublication, readArchive, readBaseline } from "./verify-publication.mjs";
 import { digest, documentRevision, archiveRevision } from "./lib/publication.mjs";
-import { monitorPublication } from "./lib/intakePublication.mjs";
+import { monitorPublication, neverArrivedNote, withNotice } from "./lib/intakePublication.mjs";
 import {
   INBOX_DEFAULTS, STATEMENT_EXT, extOf, emptyLog, parseLog, serializeLog, applyUpdates, inboxPath,
 } from "../../shared/statementInbox.mjs";
@@ -227,6 +228,9 @@ function dedupe(item, known) {
   const ext = extOf(item.name);
   if (!STATEMENT_EXT.includes(ext)) return { result: held("unreadable", "Not a statement file — only PDF, Excel (xlsx/xls) or a ZIP of them is read.") };
   const buf = fs.readFileSync(item.file);
+  // The bytes, not the name — the upload refuses these too; this is the second door.
+  const what = checkStatementBytes(buf, item.name);
+  if (!what.ok) return { result: held("not-a-statement", what.why) };
   const h = md5(buf);
   if (known.has(h)) return { duplicate: known.get(h) };
   if (ext !== "zip") return { hashes: [h] };
@@ -351,9 +355,10 @@ function refreshSymbols() {
 /** inventory → extract → build-symbols → build-book. A step that crashes names itself. */
 function readEverything() {
   if (!npm("inventory").ok) return "`npm run inventory` failed";
-  // The same reading CI's statements job does, so every statement already here
-  // reads back byte for byte and the only change is what was uploaded.
-  if (!npm("extract", [], { GLOW_OCR: "off" }).ok) return "`npm run extract` failed";
+  // `new`: a scan nobody has read yet is read by OCR (`lib/scan.mjs`), every
+  // figure checked by the page; every statement already archived — a scan
+  // included — reads back byte for byte, so the only change is what was uploaded.
+  if (!npm("extract", [], { GLOW_OCR: "new" }).ok) return "`npm run extract` failed";
   refreshSymbols();
   if (!npm("build-book").ok) return "`npm run build-book` failed";
   return null;
@@ -393,11 +398,20 @@ function judge(live, baseline) {
         + "A reader for this layout is needed in scripts/ingest/providers/.");
     } else if (!entries.length) {
       v = held("unreadable", "Nothing in it could be read into the archive.");
+    } else if (entries.every((e) => e.failedBecause === "attachment-removed")) {
+      v = held("not-a-statement", `Every file in it is a mail server's removal notice, not a statement (${entries.map((e) => path.basename(e.sourcePath)).join(", ")}): `
+        + "the statements never arrived. Ask the sender to re-send them another way (a download link, or zipped).");
     } else {
+      // A ZIP of good statements lands even if a mail server stripped one of
+      // them — and says which never arrived, so somebody asks for it.
+      const read = entries.filter((e) => e.status !== "failed");
+      const missing = entries.filter((e) => e.failedBecause === "attachment-removed").map((e) => path.basename(e.sourcePath));
       v = {
-        status: "landed", hold: null, reason: null,
-        providers: [...new Set(entries.map((e) => e.provider || "(unidentified)"))].sort(),
-        docKeys: [...new Set(entries.map((e) => e.docKey))].sort(),
+        status: "landed", hold: null,
+        neverArrived: missing.length ? missing : null,
+        reason: neverArrivedNote(missing),
+        providers: [...new Set(read.map((e) => e.provider || "(unidentified)"))].sort(),
+        docKeys: [...new Set(read.map((e) => e.docKey))].sort(),
       };
     }
     verdicts.set(p, v);
@@ -494,7 +508,7 @@ function land(live, verdicts, already) {
   // Persist the handoff before PR creation/dispatch: a worker dying between
   // network calls resumes this branch rather than creating another delivery.
   commitInbox('Intake: verified publication branch prepared', () => ({ updates: live.map(p => ({ batch: p.item.batch, name: p.item.name,
-    ...verdicts.get(p), landedAs: [p.landing], ...metadata })) }));
+    ...verdicts.get(p), landedAs: [p.landing], ...metadata, reason: withNotice(metadata.reason, verdicts.get(p)) })) }));
   const existingPR = JSON.parse(gh(['pr', 'list', '--head', branch, '--state', 'all', '--json', 'url']));
   let url;
   try { url = existingPR[0]?.url ?? gh(['pr', 'create', '--base', MAIN, '--head', branch, '--title', `Publish ${live.length} verified statement upload(s)`, '--body-file', body]); }
@@ -572,7 +586,7 @@ async function intake(items) {
 
     const publication = land(live, verdicts, gate.already);
     if (publication) {
-      for (const p of live) results.set(keyOf(p.item), { ...verdicts.get(p), landedAs: [p.landing], ...publication });
+      for (const p of live) results.set(keyOf(p.item), { ...verdicts.get(p), landedAs: [p.landing], ...publication, reason: withNotice(publication.reason, verdicts.get(p)) });
       pending = [];
       break;
     }
