@@ -13,6 +13,8 @@ import { SearchInput } from "@/components/SearchInput";
 import { useViewParam } from "@/components/ViewToggle";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { CallCell, CallEditor } from "@/components/EnteredCalls";
+import { ProfileCellButton, ProfileEditor, profileTitle } from "@/components/EnteredProfiles";
+import { useEnteredProfiles, withEntered } from "@/lib/enteredProfiles";
 import {
   TREE_ROW, TREE_CELL, useExpanded, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
 } from "@/components/TreeTable";
@@ -41,7 +43,7 @@ import {
   type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type BrandFacts, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
 import { callTotals, callHistory } from "@/lib/capitalCalls";
-import { matchProfiles, profileSupplyNote, PROFILE_FIELDS, type InvestmentProfile, type ProfileFieldId } from "@/lib/investmentProfiles";
+import { matchProfiles, profileSupplyNote, combineProfiles, PROFILE_FIELDS, type InvestmentProfile, type ProfileFieldId } from "@/lib/investmentProfiles";
 import { useEnteredCalls, headlineCall, todayIso, CAUSE_WORD } from "@/lib/enteredCalls";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 import { fifoTotals, positionFifoReturn, atCostNote } from "@/lib/fifo";
@@ -467,6 +469,21 @@ export function PrivateMarket() {
   const entered = useEnteredCalls();
   const [openCall, setOpenCall] = useState<string | null>(null);
   const today = todayIso();
+  /**
+   * ── THE STRATEGY AND DESCRIPTION THE FAMILY TYPES (Stage 10ev) ───────────
+   *
+   * *"give the option to edit and write information in the strategy and
+   *  description cells just like the capital call cells."* The same shared
+   * store, keyed on the capital calls' own fund key, and the same editor-under-
+   * the-row. Typed text is laid over a supplied file's (`withEntered`), so every
+   * cell, sort and search below reads ONE resolution.
+   */
+  const typedProfiles = useEnteredProfiles();
+  const [openProfile, setOpenProfile] = useState<{ row: string; field: ProfileFieldId } | null>(null);
+  const typedList = typedProfiles.state.status === "ready" ? typedProfiles.state.profiles : [];
+  const profileKeyOf = (f: BookFolio) => callKeyOf(f.fundKey, f.securityKey);
+  const effFolio = (f: BookFolio): InvestmentProfile => withEntered(f.profile, typedList, profileKeyOf(f));
+  const effGroup = (g: BookGroup): InvestmentProfile => combineProfiles(g.folios.map(effFolio));
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   /**
@@ -1125,7 +1142,7 @@ export function PrivateMarket() {
   const grouping = book.grouping;
   const needle = q.trim().toLowerCase();
   const folioText = (f: BookFolio) => [f.owner, f.fundName, f.provider, f.accountNo,
-    ...PROFILE_FIELDS.filter((c) => bookView.order.includes(c)).map((c) => f.profile[c].value ?? "")].join(" ").toLowerCase();
+    ...PROFILE_FIELDS.filter((c) => bookView.order.includes(c)).map((c) => effFolio(f)[c].value ?? "")].join(" ").toLowerCase();
   /**
    * WHAT THE PROFILE COLUMNS' HEADINGS SAY about the supplied records — how many
    * files, and every record that matched no investment on this view, so a
@@ -1186,6 +1203,17 @@ export function PrivateMarket() {
         onToggle={() => setOpenCall((cur) => (cur === rowId ? null : rowId))} />
     </td>
   );
+  /** The strategy/description editor, under its row, like the call editor below. */
+  const profileEditorRow = (edit: { rowId: string; keys: string[]; name: string } | undefined, profile: InvestmentProfile) =>
+    edit && openProfile?.row === edit.rowId && (
+      <tr key={`${edit.rowId}-profile`} className="bg-ink-900/60" data-pm-profile-editor={edit.rowId}>
+        <td colSpan={bookView.order.length} className="px-3 pb-3 pt-1">
+          <ProfileEditor keys={edit.keys} name={edit.name} profile={profile} entered={typedList}
+            state={typedProfiles.state} focus={openProfile.field}
+            onSave={typedProfiles.save} onRemove={typedProfiles.remove} onClose={() => setOpenProfile(null)} />
+        </td>
+      </tr>
+    );
   /** The editor, as a row under the one that opened it — never a floating panel the table's scroll could clip. */
   const callEditorRow = (rowId: string, fund: string, fundName: string) => openCall === rowId && (
     <tr key={`${rowId}-editor`} className="bg-ink-900/60" data-pm-call-editor={fund}>
@@ -1443,6 +1471,12 @@ export function PrivateMarket() {
      * which main keeps to the counts a reader scans.
      */
     capAlso?: { id: string; title: string };
+    /**
+     * WHERE THE STRATEGY AND DESCRIPTION CELLS OPEN AN EDITOR: the row's id,
+     * the investments a save writes to, and the name the editor shows. Absent
+     * on a row that is not one investment (a family member), whose cells only read.
+     */
+    profileEdit?: { rowId: string; keys: string[]; name: string };
   }): Cells => {
     const p = pad(k);
     const t = tone(k);
@@ -1570,12 +1604,17 @@ export function PrivateMarket() {
     if (holdingRow && r.profile) {
       for (const col of PROFILE_COLS) {
         const c = r.profile[col];
+        const edit = ctx.profileEdit;
         out[col] = (
           <td key={col} data-col-cell={col} data-pm-profile={col} data-pm-profile-source={c.source ?? undefined}
             data-pm-profile-match={c.matchedOn ?? undefined} className={`${p} min-w-[14rem] max-w-[24rem] text-left ${k === "folio" ? "text-slate-400" : "text-slate-300"}`}>
-            {c.value != null
-              ? <span className="line-clamp-3" title={`${c.value}\n\nSupplied in ${c.source}; matched to this investment by ${c.matchedOn}.`}>{c.value}</span>
-              : <AbsentCell reason={c.reason} />}
+            {edit
+              ? <ProfileCellButton cell={c} field={col} rowName={edit.name} state={typedProfiles.state}
+                  open={openProfile?.row === edit.rowId}
+                  onOpen={() => setOpenProfile((cur) => (cur?.row === edit.rowId && cur.field === col ? null : { row: edit.rowId, field: col }))} />
+              : c.value != null
+                ? <span className="line-clamp-3 whitespace-pre-line" title={profileTitle(c, false)}>{c.value}</span>
+                : <AbsentCell reason={c.reason} />}
           </td>
         );
       }
@@ -1667,13 +1706,19 @@ export function PrivateMarket() {
     const kids = sortRows(
       g.folios.map((f) => ({
         f, label: grouping === "owner" ? f.fundName : f.owner,
-        fig: { ...folioFigures(f), callKey: folioCallOn(g, f), ret: folioRet(f), profile: f.profile },
+        fig: { ...folioFigures(f), callKey: folioCallOn(g, f), ret: folioRet(f), profile: effFolio(f) },
       })),
       bookView.sort,
       withReviewAccessors(Object.fromEntries(Object.entries(nameAcc).map(([c, a]) => [c, (x: { fig: RowFigures; label: string; f: BookFolio }) => a({ ...x.fig, label: x.label })])), (x) => folioReviewScope(x.f), memberScope.owners !== null),
     );
     const scheme = (f: BookFolio) => f.capital;
     const fundCall = groupCallKey(g);
+    // A FUND, LEGAL-NAME OR BRAND ROW IS ONE INVESTMENT'S (OR ONE COMPANY'S)
+    // TEXT, so its cells edit and a save writes to every fund line under it. A
+    // family member is not an investment: its folio lines edit instead.
+    const groupProfile = effGroup(g);
+    const groupEdit = g.kind === "owner" ? undefined
+      : { rowId: `fund:${g.key}`, keys: [...new Set(g.folios.map(profileKeyOf))], name: g.label };
     const rowSpansFunds = g.kind !== "owner" && spansFunds(g);
     const fundRowId = `fund:${g.key}`;
     return (
@@ -1703,7 +1748,8 @@ export function PrivateMarket() {
             </>}
             sub={groupSub(g)} />
           {inOrder({
-            ...figureCells({ ...g, ret: groupRet(g) }, "group", {
+            ...figureCells({ ...g, ret: groupRet(g), profile: groupProfile }, "group", {
+            profileEdit: groupEdit,
             noCapital: g.capitalAccounts === 0 ? noCapitalWhy(g.section, g.kind === "owner" ? "member" : "group") : undefined,
             noValue: valueWhy(g.status, g.folios[0]?.reason ?? null),
             nil: g.status === "redeemed" ? valueWhy("redeemed", null) : undefined,
@@ -1717,6 +1763,7 @@ export function PrivateMarket() {
           }, "group")}
         </Tr>
         {fundCall && callEditorRow(fundRowId, fundCall, g.label)}
+        {profileEditorRow(groupEdit, groupProfile)}
         {open && kids.map(({ f, fig }, i) => {
           const s = scheme(f);
           // BY OWNER the folio is the fund level, so the call cell is here — on
@@ -1724,6 +1771,8 @@ export function PrivateMarket() {
           // which would put a second editor for one fund under one member.
           const folioCall = folioCallOn(g, f);
           const folioRowId = `owner:${g.key}:${f.key}`;
+          const folioEdit = g.kind === "owner" && !f.viewOf
+            ? { rowId: `profile:${folioRowId}`, keys: [profileKeyOf(f)], name: f.fundName } : undefined;
           const viewOfLine = f.viewOf ? accName(f.viewOf) : null;
           return (
             <Fragment key={f.key}>
@@ -1775,6 +1824,7 @@ export function PrivateMarket() {
                 </>} />
               {inOrder({
                 ...figureCells(fig, "folio", {
+                profileEdit: folioEdit,
                 noCapital: s ? undefined
                   : viewOfLine ? "an income-only folio — its documents report earnings and distributions, and no commitment"
                     : noCapitalWhy(g.section, "folio"),
@@ -1804,6 +1854,7 @@ export function PrivateMarket() {
               }, "folio")}
             </Tr>
             {folioCall && callEditorRow(folioRowId, folioCall, f.fundName)}
+            {profileEditorRow(folioEdit, fig.profile)}
             </Fragment>
           );
         })}
@@ -1863,7 +1914,7 @@ export function PrivateMarket() {
     // EACH ROW CARRIES ITS OWN RETURN RESOLVER before it is sorted, so the
     // return columns order the rows on the figure each one prints.
     const shown = sortRows(
-      s.groups.filter(groupMatches).map((g) => ({ ...g, ret: groupRet(g) })),
+      s.groups.filter(groupMatches).map((g) => ({ ...g, ret: groupRet(g), profile: effGroup(g) })),
       bookView.sort, withReviewAccessors(nameAcc as Record<string, Accessor<BookGroup & { ret: (m: ReturnMeasure) => MeasuredReturn }>>, groupReviewScope, memberScope.owners !== null));
     // A held-at-cost row is an INVESTMENT — mostly a company — not a fund, and
     // "61 funds" over it is why the family did not recognise these as the
