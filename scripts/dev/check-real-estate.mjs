@@ -37,7 +37,7 @@ try {
   await fill("Owner 1", "Test owner A"); await fill("Total cost (₹)", "10000000"); await fill("Current value (₹)", "15000000");
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await visible("Add the valuation date for the current value.");
   await fill("Valuation date", "2026-10-01");
-  await page.getByRole("dialog").getByLabel(/^Status\b/).selectOption("Rented"); await fill("Monthly rent (₹)", "50000"); await fill("Monthly costs (₹)", "5000"); await fill("Loan outstanding (₹)", "3000000");
+  await page.getByRole("dialog").getByLabel(/^Status/).selectOption("Rented"); await fill("Monthly rent (₹)", "50000"); await fill("Monthly costs (₹)", "5000"); await fill("Loan outstanding (₹)", "3000000");
   await fill("Latitude", "19.076"); await fill("Longitude", "72.8777");
   failing = true;
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await visible("Test storage outage");
