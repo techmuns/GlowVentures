@@ -18,9 +18,10 @@ export async function findPropertyAddress(address: string): Promise<AddressMatch
   const wait = Math.max(0, nextSearchAt - Date.now());
   nextSearchAt = Date.now() + wait + 1100;
   if (wait) await new Promise(resolve => setTimeout(resolve, wait));
-  const response = await fetch("/api/property-geocode?" + new URLSearchParams({ address: key }), { signal: AbortSignal.timeout(15000) });
-  const reply = await response.json();
-  if (!response.ok || !Array.isArray(reply.matches)) throw new Error(reply.message || "Address search is unavailable. Try again or place the pin on the map.");
+  const message = "Address search is unavailable. Try again or place the pin on the map.";
+  const response = await fetch("/api/property-geocode?" + new URLSearchParams({ address: key }), { signal: AbortSignal.timeout(15000) }).catch(() => { throw new Error(message); });
+  const reply = await response.json().catch(() => { throw new Error(message); });
+  if (!response.ok || !Array.isArray(reply.matches)) throw new Error(reply.message || message);
   results.set(key, reply.matches);
   return reply.matches;
 }
