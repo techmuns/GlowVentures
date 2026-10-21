@@ -176,3 +176,27 @@ jobs:
 
       - name: Every statement is read in full and reaches the book
         run: npm run check:reads
+
+  upload-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Real drag-and-drop through extraction, publication and dashboard rows
+        run: CHROME="$(command -v google-chrome)" npm run test:statement-upload
+      - name: Preserve upload rehearsal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: statement-upload-e2e
+          path: |
+            .cache/build-copies/statement-upload-e2e/.cache/statement-upload-e2e/*.json
+            .cache/build-copies/statement-upload-e2e/.cache/statement-upload-e2e/*.log
+            .cache/build-copies/statement-upload-e2e/.cache/statement-upload-e2e/*.png
+            .cache/build-copies/statement-upload-e2e/.cache/investment-date-check/
+          if-no-files-found: ignore

@@ -224,7 +224,14 @@
 - Browser regressions check both menus, legacy links and local/shared saved layouts, including a layout containing only the retired card and conflicting local/shared preferences. The legacy measured-holdings bookmark keeps its independently verified calculation rather than depending on a removed card.
 - Review follow-up: an explicitly all-retired URL now selects defaults even when valid local/shared preferences exist. The older return-dialog and latest-record browser commands target the remaining history card and current coverage UI, and run in required CI.
 
-### Stage 10gp — HISTORICAL MARKET RETURNS FOR CURRENT HOLDINGS
+### Stage 10gp — UPLOAD REHEARSAL AND COMPLETE CUSTODY AUDIT DATES
+
+- Added a full local browser drop → real upload handler → Git inbox → actual intake/extraction/build → reviewed publication → version refresh rehearsal. Seven original source PDFs supply the two HDFC folios and three ICICI demat rows; financial facts are never fabricated for the test. GitHub/reviewer/deployment service boundaries are explicitly emulated locally.
+- A read-only production check found two ICICI custody rows without their reconciled dates and one transaction-derived balance absent from Data Audit. The audit now retains verified custody closing balances and their exact account/ISIN/unit/snapshot purchase evidence. Missing statement valuations stay absent and outside summary totals. Source links and the promoter ring fence are preserved.
+- Re-extraction preserves exact immutable delivery receipts, including carry history, so later builds retain upload-to-document provenance. Conflicting or unsafe receipt paths fail before archive replacement.
+- CI retains the complete upload evidence and checks every investment-date table family after publication. Added independent guards for owner, account, instrument, quantity, snapshot, duplicate rows and absent valuations. See `docs/STATEMENT-UPLOAD-E2E.md` for scope and external-service limits.
+
+### Stage 10gq — HISTORICAL MARKET RETURNS FOR CURRENT HOLDINGS
 
 - Returns now fetch full public adjusted stock-price history and exact-ISIN fund NAV history. The FYTD, MTD, YTD, 1Y, 2Y, 3Y and custom selectors calculate a current-value-weighted market return alongside recorded investment returns. Both aggregate amounts before annualising; short periods remain unannualised.
 - The market summary and every attribution grouping share actual published calculation dates and show covered holding counts/value. Their info buttons explain current weights, sources and exclusions, naming each holding and account. Historical price changes are never passed off as actual purchase/sale profit or past portfolio ownership. Private investments retain recorded figures where supported.

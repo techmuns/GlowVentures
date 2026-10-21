@@ -1,10 +1,13 @@
 import { fifoReturnPct } from './fifo.mjs';
-/** Exact identity and unit gate also protects quote-only depository rows. */
-export function applyRecoveredCost(position, records) {
-  if(position.costBasis!=null) return position;
-  const r=records.find((r)=>r.accountId===position.accountId&&r.isin===position.isin
+/** One exact identity/unit gate for valuation overlays and raw custody audit rows. */
+export function recoveredCostFor(position, records) {
+  return records.find((r)=>r.accountId===position.accountId&&r.isin===position.isin
     &&typeof position.quantity==='number'&&Math.abs(r.quantity-position.quantity)<=.0005
     &&Number.isFinite(r.costBasis)&&r.costBasis>0&&r.quantity>0);
+}
+export function applyRecoveredCost(position, records) {
+  if(position.costBasis!=null) return position;
+  const r=recoveredCostFor(position, records);
   if(!r) return position;
   const valued=position.marketValue>0;
   const realizedPnL=position.realizedPnL??r.realizedPnL;

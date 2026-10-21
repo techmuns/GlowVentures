@@ -1,11 +1,12 @@
 // One statement-basis projection of the canonical book and reconciled ledger.
 // Built with every deployment, never maintained as a second portfolio register.
 import { investedOnOf } from "./investedOn";
+import { custodyAuditRows } from "./custodyAudit";
 import template from "../data/consolidatedTemplate.json";
 import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_UNVALUED_HOLDINGS,
   BOOK_COMMITMENTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES,
-  BOOK_CAPITAL_FROM_INCEPTION, BOOK_REVIEW_FLOWS, BOOK_REVIEW_WRITTEN_OFF,
+  BOOK_CAPITAL_FROM_INCEPTION, BOOK_REVIEW_FLOWS, BOOK_REVIEW_WRITTEN_OFF, BOOK_SHARE_MOVEMENTS, BOOK_RECOVERED_COSTS, BOOK_POLYCAB,
 } from "../data/glowData";
 import { dedupedPositions, holdingBucket, bucketLabel, isMandateHeld } from "./analytics";
 import { basketKeyOf, familyClassKeyOf, BASKET_ORDER, FAMILY_CLASS_ORDER } from "./familyTaxonomy";
@@ -126,14 +127,22 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       alloc: counted ? ratio(p.marketValue, totalValue) : null, prevmv: null, stmt: p.priceAsOf ?? a?.asOf ?? null,
       src: notes, lotqty: tranche?.units ?? null, check, _source: source?.docKey ?? null, _counted: counted ? "Y" : "N" };
   });
-  // Keep all reported unvalued units, including quantities that live NAV/quotes
-  // can price elsewhere. Audit never substitutes today's price for a statement.
-  for (const u of BOOK_UNVALUED_HOLDINGS) {
-    if (positions.some(p => p.accountId === u.accountId && p.securityKey === u.securityKey)) continue;
-    const a = accountById.get(u.accountId);
+  // Raw custody rows share the account/ISIN/unit reconciliation used by the
+  // portfolio. Missing statement prices stay absent and never enter NAV totals.
+  const custody = custodyAuditRows({ accounts, positions, unvalued: BOOK_UNVALUED_HOLDINGS,
+    movements: BOOK_SHARE_MOVEMENTS, recoveredCosts: BOOK_RECOVERED_COSTS,
+    excludedSecurities: new Set(BOOK_POLYCAB.map(p => p.securityKey)) });
+  for (const u of custody) {
+    const a = accountById.get(u.accountId), cost = u.cost;
+    const evidence = cost?.evidence.map(e => `${e.path}, ${e.sheet}, rows ${e.rows.join(", ")}`).join("; ");
     holdings.push({ hid: `U${holdings.length + 1}`, acct: u.accountId, sec: u.securityKey, ent: ownerDisplayName(u.ownerId),
       adv: a?.provider ?? null, name: securityLabel(u.securityKey, u.security), qty: u.quantity, stmt: u.asOf,
-      src: u.reason, check: "Quantity only; no usable statement valuation", _counted: "N" });
+      first: cost?.heldPurchases?.first ?? null, last: cost?.heldPurchases?.last ?? null,
+      cost: cost?.costBasis ?? null, avg: cost ? cost.costBasis / cost.quantity : null,
+      rgain: cost?.realizedPnL ?? null, income: cost?.dividendReceived ?? null,
+      src: [u.reason, u.source, cost?.hprUnavailableReason, evidence ? `Verified supplementary purchase lots: ${evidence}` : null].filter(Boolean).join("; "),
+      check: cost ? "Reconciled custody units and purchase cost; no statement valuation" : "Quantity only; no usable statement valuation",
+      _source: u.source, _counted: "N" });
   }
   for (const w of BOOK_REVIEW_WRITTEN_OFF) holdings.push({ hid: `W${w.reviewRow}`, name: w.security,
     src: `${reviewNote}, Private Investments row ${w.reviewRow}: ${w.remark}`, check: "Written off in review; amounts not reported", _counted: "N" });
@@ -152,7 +161,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     defaultNote, r => ({ ...entityLinks(r), id: { sheet: "Holdings", where: { acct: String(r.id) } }, ent: { sheet: "Entities", where: { id: String(r.ent) } } }));
   const allSecurities = new Map<string, { name: string; isin: string | null }>();
   for (const p of positions) allSecurities.set(p.securityKey, { name: p.security, isin: p.isin ?? null });
-  for (const u of BOOK_UNVALUED_HOLDINGS) if (!allSecurities.has(u.securityKey)) allSecurities.set(u.securityKey, { name: u.security, isin: u.isin });
+  for (const u of custody) if (!allSecurities.has(u.securityKey)) allSecurities.set(u.securityKey, { name: u.security, isin: u.isin });
   for (const t of [...txns.txns, ...txns.ownAllotments]) if (!allSecurities.has(t.securityKey)) allSecurities.set(t.securityKey, { name: t.security, isin: t.isin });
   for (const l of realised.lots) if (!allSecurities.has(l.securityKey)) allSecurities.set(l.securityKey, { name: l.security, isin: null });
   for (const m of movements) if (m.securityKey && !allSecurities.has(m.securityKey)) allSecurities.set(m.securityKey, { name: m.security ?? m.securityKey, isin: null });

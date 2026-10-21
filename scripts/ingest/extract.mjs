@@ -48,6 +48,7 @@ import { isRemovalNotice } from "../../shared/statementBytes.mjs";
 import { reconcile, writeReports } from "./reconcile.mjs";
 import { pmsSiblingProvider } from "./lib/pmsSiblingProvider.mjs";
 import { settleStatus } from "./lib/readStatus.mjs";
+import { readDeliveryReceipts, writeDeliveryReceipts } from "./lib/deliveryReceipts.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 // Overridable so a test run can point at a scratch drop without touching the
@@ -1317,8 +1318,12 @@ function carriedForward(file, how) {
 }
 
 function writeArchive(docs, grids) {
+  // Read/validate before replacing anything; a carry archive can contain earlier
+  // deliveries even when this run writes to an initially empty candidate archive.
+  const receipts = readDeliveryReceipts([AUDIT_DIR, CARRY_DIR]);
   fs.rmSync(AUDIT_DIR, { recursive: true, force: true });
   fs.mkdirSync(AUDIT_DIR, { recursive: true });
+  writeDeliveryReceipts(AUDIT_DIR, receipts);
 
   // The manifest is an ARRAY of document entries. It carries the document
   // identity fields AND the fields the Data Audit browser reads (`fileKey`,

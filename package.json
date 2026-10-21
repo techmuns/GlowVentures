@@ -29,6 +29,7 @@
     "replay:dedupe": "node scripts/replay-dedupe.mjs",
     "coverage:source": "node scripts/source-coverage.mjs",
     "check:reads": "node scripts/check-reads.mjs",
+    "test:statement-upload": "node scripts/dev/run-statement-upload-e2e.mjs",
     "test:statements": "node --test scripts/ingest/__tests__/publication.test.mjs",
     "statements:verify": "node scripts/ingest/verify-publication.mjs",
     "statements:verify-book": "node scripts/ingest/verify-book.mjs",
