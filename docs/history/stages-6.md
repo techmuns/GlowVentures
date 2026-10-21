@@ -33,7 +33,12 @@
 - **Every surface reads it:** Monitor rows, account lines and mandate shares, the company page's XIRR line, the Excel export and the consolidated audit sheet (whose purchase-date columns now use `investedOnOf`). The XIRR column's hover and the measure hints say holdings can carry a rate. `data-capital="holding"` marks these rows. An unverified HPR refuses every measure on such a row.
 - **Checks:** `holdingFlows.test.ts` (test:family) ties the dividends to the holding's total, the lot cost to the statement cost, and the rule on all 111 dated holdings. The Excel and dated-capital suites move to the new rule and re-solve the 43 holding-level XIRR rows independently. `check:pages` gains `HOLDING_FLOWS_BOOK`, re-expressed off the book; the XIRR, CAGR and stock-page invariants read it; and new routes `monitor-xirr-security` / `monitor-cagr-security` put the PMS shares under the same claims.
 
-### Stage 10fx — ONE INVESTMENT DATE COLUMN, WITH SOURCE COVERAGE
+### Stage 10fx — REMOVE THE PORTFOLIO RETURN SUMMARY CARD
+
+- Removed the Portfolio return card, its window/coverage chips, calculation popup and five amount tiles from Morning CIO's Returns view. The toolbar now leads directly into Return attribution and Benchmarks. The benchmark portfolio comparison retains the same calculations and whole-account coverage gate.
+- Removed unused card-only presentation code. Existing browser checks now assert that the summary stays absent, the subtabs follow the toolbar, and benchmark window/return checks still use the comparison tile. The period/type selection matrix follows the remaining controls instead of the removed popup.
+
+### Stage 10fy — ONE INVESTMENT DATE COLUMN, WITH SOURCE COVERAGE
 
 - Portfolio Monitor had two date columns: the review product's range and Invested on. The latter omitted the original FIFO dates behind 44 recovered costs. Those source-backed acquisition dates now reach all holding layers. The merged Investment date / range column retains source precision; exact product-review context is visibly labelled review where current custody lots do not reconcile. Its saved placement, visibility and sorting migrate; Excel shares the same dates and qualifier.
 - The dated audit separates 446/474 costed account holdings from displayed-security date/HPR counts. It itemises the remaining direct and Cash date gaps and 165 undated non-cash PMS account/security lines. Known PMS funding dates do not date the manager's underlying shares. Client requests name original lots or unit/transfer bridges rather than requesting recorded costs again.
