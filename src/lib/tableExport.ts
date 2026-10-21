@@ -52,11 +52,11 @@ export function readTableExport(table: HTMLTableElement, title: string): TableEx
   return { title, url: window.location.href, rows: rows.map(row => ({
     kind: row.parentElement?.tagName === "THEAD" ? "header" : row.parentElement?.tagName === "TFOOT" ? "footer" : "body",
     cells: Array.from(row.cells).map(cell => {
-      const source = cell.hasAttribute("data-export-value") ? cell : cell.querySelector<HTMLElement>("[data-export-value]");
+      const source = cell.hasAttribute("data-export-value") ? cell : Array.from(cell.querySelectorAll<HTMLElement>("[data-export-value]")).find(element => element.closest("table") === table);
       const raw = source?.getAttribute("data-export-value");
       const value = raw != null ? source?.getAttribute("data-export-type") === "number" && raw !== "" && Number.isFinite(Number(raw)) ? Number(raw) : raw : undefined;
       const text = textOf(cell).replace(/[\t ]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
-      const link = cell.querySelector<HTMLAnchorElement>("a[href]");
+      const link = Array.from(cell.querySelectorAll<HTMLAnchorElement>("a[href]")).find(element => element.closest("table") === table);
       return { text, value, format: source?.getAttribute("data-export-format") ?? undefined,
         numeric: row.parentElement?.tagName !== "THEAD" && (cell.classList.contains("mono") || cell.classList.contains("text-right")),
         colSpan: cell.colSpan, rowSpan: cell.rowSpan, note: cell.title || undefined,
