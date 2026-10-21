@@ -11,6 +11,7 @@ import { isinValid, isinCandidates, resolveIsin } from "../lib/isin.mjs";
 import { quantityReadings } from "../lib/scan.mjs";
 import { extract, matchesScan, SCAN_LAYOUT } from "../providers/nsdlScan.mjs";
 import { isRemovalNotice, checkStatementBytes } from "../../../shared/statementBytes.mjs";
+import { nameScannedHoldings } from "../extract.mjs";
 
 let pass = 0, fail = 0;
 const ok = (label, cond, detail = "") => {
@@ -91,5 +92,18 @@ const scan = (extra = {}) => ({
   ok("archived page text alone publishes nothing — the archived reading stands", r.status === "failed" && r.holdings.length === 0);
 }
 
+{
+  const scan = { provider: "Test (NSDL demat)", warnings: [{ code: "text-recovered-from-scan", detail: "Test checked scan" }], holdings: [
+    { isin: "INE455K01017", security: "Test OCR name", securityKey: "test-ocr-name", quantity: 23, marketValue: null },
+    { isin: "INE07LN01014", security: "Test unmatched name", securityKey: "test-unmatched-name", quantity: 17, marketValue: null },
+  ] };
+  const documents = [scan, { provider: "Test (NSDL demat)", status: "ok", holdings: [{ isin: "INE455K01017", security: "Test printed name" }] }];
+  nameScannedHoldings(documents);
+  const archived = JSON.stringify(scan);
+  nameScannedHoldings(documents);
+  ok("carrying a scan through repeated extraction is byte-identical, including derived name notes", JSON.stringify(scan) === archived);
+  ok("scan carry keeps figures and original OCR wording unchanged", scan.holdings[0].quantity === 23 && scan.holdings[0].marketValue === null && scan.holdings[0].printedSecurity === "Test OCR name");
+  ok("a carried scan has one note for names from statements and one for names from OCR", scan.warnings.filter(w => w.code === "security-name-from-isin").length === 1 && scan.warnings.filter(w => w.code === "security-name-from-scan").length === 1);
+}
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
