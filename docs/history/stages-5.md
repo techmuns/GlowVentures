@@ -4727,3 +4727,26 @@ Follows Stage 10et. With `check:reads`' precedence filter removed, six more acco
 - **`check:reads`' staleness test counts any statement that values its holdings, whatever its report type.** A value-less fact sheet and a report with a row-less section are not counted. When the newer type is not in the rule, the message names the rule to change. `checkReads.test.mjs` adds three cases.
 - **SVAN 8710067's appraisal prints a `Cash Rec/Payable` of −₹24.8 L**, which makes that key net negative (−₹22.6 L) for the first time. `negligibleFloor.test.ts` asserted no such key existed; it now checks that a net-negative key survives the floor on the live book. `clubbedFigures.test.ts`' re-expression now leaves the average cost absent over a non-positive unit count, as `costedFigures` does. `datedCapital.test.ts` and `carriedCost.test.ts` take Buoyant's close from the 30 Sep account statement, and keep the snap as a witness on its own date.
 - Book: consolidated ₹836.60 Cr → **₹836.57 Cr**, 444 → 448 positions. Left alone: Kotak 4295974's ₹619 MATERIAL break on a liquid-fund line (Hope India Trust, excluded from the book as a separate taxpayer), and 0.01-point weight deltas on Carnelian's report, whose printed weights total 99.93%.
+
+### Stage 10ev — PRIVATE MARKET: STRATEGY AND DESCRIPTION, TYPED IN THE CELL
+
+*"give the option to edit and write information in the strategy and description
+cells just like the capital call cells."*
+
+- **Store:** `functions/api/investment-profiles.js` — the capital calls' store and
+  gate (`GLOW_STORE` KV, edge password, same-origin writes), one key per
+  investment and field (`investment-profile:<field>:<fund>`), keyed on the calls'
+  own `callKeyOf`. A save may name several investments: a legal-name or brand row
+  writes its text to every fund line under it. Up to 2,000 characters, line
+  breaks kept; a record too long for KV metadata is read from its value.
+- **Client:** `src/lib/enteredProfiles.ts` (same `StoreCause` / `CAUSE_WORD` /
+  `SWITCH_ON_STEPS` as the calls) and `components/EnteredProfiles.tsx`. Each cell
+  is a button: its text, "Add", or the store's cause in a word; it opens an
+  editor row under the row with both fields. A member row only reads; its folio
+  lines edit.
+- **Precedence:** typed text (`matchedOn: "entered"`) shows over a supplied
+  file's (`withEntered`); "Remove typed text" shows the file's again. Cells,
+  sort and search read the one resolution; the hover says which it is.
+- `enteredProfiles.test.ts` drives the Function on an in-memory KV and the
+  precedence. Checked in the browser with the store mocked: save, remove, the
+  four-line Waterwala row. `check:pages ONLY=private-market`: no new finding.
