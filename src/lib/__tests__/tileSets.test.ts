@@ -233,6 +233,15 @@ console.log("── which set a page opens on ──");
   const retired = chooseTileSet({ fromParam: [], local: local(["cash"], false), shared, sharedLoaded: true });
   ok("an all-retired URL selects defaults even with local/shared preferences, without saving", retired.ids === null && !retired.push);
 
+  const retiredLocal = chooseTileSet({ fromParam: null, local: local([], false), shared, sharedLoaded: true });
+  ok("an unsynced all-retired local layout selects defaults over an older shared layout", retiredLocal.ids === null && !retiredLocal.push);
+  const retiredShared = chooseTileSet({ fromParam: null, local: local(["cash"], true), shared: [], sharedLoaded: true });
+  ok("an all-retired shared layout selects defaults over a confirmed local cache", retiredShared.ids === null && !retiredShared.push);
+  const retiredOffline = chooseTileSet({ fromParam: null, local: local([], true), shared: null, sharedLoaded: false });
+  ok("an all-retired local layout offline selects defaults", retiredOffline.ids === null && !retiredOffline.push);
+  const newerShared = chooseTileSet({ fromParam: null, local: local([], true), shared, sharedLoaded: true });
+  ok("a confirmed retired local cache still yields to a newer valid shared layout", JSON.stringify(newerShared.ids) === JSON.stringify(shared) && !newerShared.push);
+
   const b = chooseTileSet({ fromParam: null, local: local(["cash", "gain"], false), shared, sharedLoaded: true });
   ok("an UNSYNCED change in this browser wins over an older shared layout", JSON.stringify(b.ids) === '["cash","gain"]');
   ok("…and is pushed once the store has answered", b.push);

@@ -162,6 +162,31 @@ try {
    } finally { await context.close(); }
   }
  }
+ for (const scenario of [
+  { local: { ids: ['mwr'], synced: false }, shared: ['value', 'gain'], expected: ['value', 'gain', 'annualised', 'fytd'] },
+  { local: { ids: ['value', 'gain'], synced: true }, shared: ['mwr'], expected: ['value', 'gain', 'annualised', 'fytd'] },
+  { local: { ids: ['mwr'], synced: true }, shared: ['value', 'gain'], expected: ['value', 'gain'] },
+ ]) {
+  const context = await browser.newContext();
+  try {
+   const saved = await context.newPage();
+   saved.on('pageerror', e => errors.push(e.message));
+   await saved.addInitScript(local => localStorage.setItem('glow:cioTiles:v1', JSON.stringify(local)), scenario.local);
+   await saved.route('**/api/**', r => r.fulfill({ status: 503, json: { status: 'unreachable' } }));
+   const writes = [];
+   await saved.route('**/api/tile-sets', r => {
+    if (r.request().method() !== 'GET') writes.push(r.request().method());
+    return r.fulfill({ json: { ok: true, sets: { cio: { ids: scenario.shared } } } });
+   });
+   await installReadModelRoutes(saved);
+   const loaded = saved.waitForResponse('**/api/tile-sets');
+   await saved.goto(base + '/cio?tab=returns');
+   await loaded;
+   await saved.locator('[data-segment-returns]').waitFor();
+   await saved.waitForFunction(expected => JSON.stringify([...document.querySelectorAll('[data-tile-slot]')].map(el => el.dataset.tileSlot)) === JSON.stringify(expected), scenario.expected);
+   assert.deepEqual(writes, [], 'retiring a saved metric must not write an empty shared layout');
+  } finally { await context.close(); }
+ }
  await page.goto(base + '/cio?tab=returns&tiles=mwr');
  await page.locator('[data-segment-returns]').waitFor();
  assert.ok(await page.locator('[data-tile-slot]').count() > 0);

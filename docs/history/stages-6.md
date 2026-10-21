@@ -221,5 +221,5 @@
 
 - Removed the dedicated money-weighted metric from Morning CIO, its tile menus and search. Existing saved layouts and old `tiles=mwr` links discard the retired metric; an all-retired layout falls back to the standard cards.
 - Remaining gain and return cards retain their available figures and coverage info. Their hover text uses plain “return” wording.
-- Browser regressions check both menus, legacy links and local/shared saved layouts, including a layout containing only the retired card. The legacy measured-holdings bookmark keeps its independently verified calculation rather than depending on a removed card.
+- Browser regressions check both menus, legacy links and local/shared saved layouts, including a layout containing only the retired card and conflicting local/shared preferences. The legacy measured-holdings bookmark keeps its independently verified calculation rather than depending on a removed card.
 - Review follow-up: an explicitly all-retired URL now selects defaults even when valid local/shared preferences exist. The older return-dialog and latest-record browser commands target the remaining history card and current coverage UI, and run in required CI.
