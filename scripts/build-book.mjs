@@ -2197,7 +2197,7 @@ function grossPaidCost(positions, positionTranches, notes) {
     if (isNum(p.avgCost) && p.quantity > 0) p.avgCost = Math.round((paid / p.quantity) * 1e4) / 1e4;
     if (isNum(p.marketValue)) {
       p.unrealizedPnL = r2(p.marketValue - paid);
-      p.returnPct = r2(fifoReturnPct(p.marketValue, paid, p.realizedPnL, p.costOfUnitsSold));
+      p.returnPct = r2(fifoReturnPct(p.marketValue, paid, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived));
     }
     notes.push(`cost of ${label} is what was paid in, ${inr(paid)}: the statement prints ${inr(p.printedCostBasis)} — what `
       + `bought units after ${inr(charges)} of the stamp duty and charges it prints against the same contributions — and `
@@ -3220,6 +3220,21 @@ function build(archived) {
         }
       }
     }
+    /**
+     * …AND A FUND'S OWN UNIT RECORD PRINTS ITS INCOME TOO (Stage 10ez). An IDCW
+     * reinvestment is income that bought units: FIFO books those units at the
+     * reinvested amount, so the gain on them is nil and, without this, the
+     * dividend is in no return at all — HDFC Liquid daily IDCW (₹20.7 Cr sold,
+     * ₹21.8 L reinvested) read 0.00%. A distribution the fund paid out is
+     * income the same way. Neither is a capital move; both are what the holding
+     * earned, so both go where a demat's cash dividends go.
+     */
+    for (const c of dated.cashFlows ?? []) {
+      if (!c.securityKey || !isNum(c.amount) || !(c.amount > 0)) continue;
+      const reinvested = c.kind === "allotment" && /\bIDCW\b|dividend/i.test(c.description ?? "");
+      if (!reinvested && c.kind !== "distribution") continue;
+      dividendByKey.set(c.securityKey, r2((dividendByKey.get(c.securityKey) ?? 0) + c.amount));
+    }
 
     /**
      * A HOLDING ITS FUND HAS NOT VALUED DOES NOT BECOME A POSITION.
@@ -3615,12 +3630,13 @@ function build(archived) {
         rolledForward: rollForwardOf(h, { costBasis, realizedPnL, costOfUnitsSold }) ?? undefined,
         /**
          * THE ONE RETURN FORMULA (`shared/fifo.mjs`): everything the holding
-         * produced — unrealised on what is held, realised on what was sold —
-         * over every rupee that bought a unit of it. Where nothing was sold it
-         * is the familiar unrealised ÷ cost, to the paisa.
+         * produced — unrealised on what is held, realised on what was sold,
+         * the dividends and distributions it paid — over every rupee that
+         * bought a unit of it. Where nothing was sold or paid it is the
+         * familiar unrealised ÷ cost, to the paisa.
          */
         returnPct: isNum(marketValue) && isNum(costBasis)
-          ? r2(fifoReturnPct(marketValue, costBasis, realizedPnL, costOfUnitsSold))
+          ? r2(fifoReturnPct(marketValue, costBasis, realizedPnL, costOfUnitsSold, dividendByKey.get(h.securityKey) ?? null))
           : h.pctGainLoss,
         stCostBasis,
         ltCostBasis,

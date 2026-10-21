@@ -63,6 +63,8 @@ export const returnFormula = (
    */
   fifo?: {
     realised?: number | null; costSold?: number | null; deployed?: number | null;
+    /** Dividends and distributions the holding paid (Stage 10ez) — in the gain, never in the cost. */
+    income?: number | null;
     /**
      * A WHOLE MANDATE'S CAPITAL BRIDGE (DL-7). Its return is (value + withdrawn
      * − paid in) ÷ paid in — a return on CAPITAL, because a mandate's lots are
@@ -83,21 +85,25 @@ export const returnFormula = (
     };
   }
   const realised = fifo?.realised ?? 0;
+  const income = fifo?.income ?? 0;
   const deployed = fifo?.deployed ?? (has(cost) ? (cost as number) + (fifo?.costSold ?? 0) : null);
   const sold = has(cost) && deployed !== null && Math.abs(deployed - (cost as number)) > 0.5;
-  const withRealised = realised !== 0 || sold;
+  const withRealised = realised !== 0 || sold || income !== 0;
+  const incomeTerm = income !== 0 ? ` + ${m(income, true)}` : "";
   return {
     title: "Return (FIFO)",
     excel: withRealised
-      ? "= (Market value − Cost held + Realised) ÷ (Cost held + Cost of units sold) × 100"
+      ? income !== 0
+        ? "= (Market value − Cost held + Realised + Dividends) ÷ (Cost held + Cost of units sold) × 100"
+        : "= (Market value − Cost held + Realised) ÷ (Cost held + Cost of units sold) × 100"
       : "= (Market value − Cost) ÷ Cost × 100",
     plain: !has(cost)
       ? "This holding's statement reports a market value and no cost — a depository holds shares, it does not record what they cost — so there is nothing to measure the gain against."
       : withRealised
-        ? "Everything the holding has produced — the gain still in the units held and the gain already taken on units sold, matched first-in, first-out — against every rupee that bought a unit of it."
+        ? "Everything the holding has produced — the gain still in the units held, the gain already taken on units sold, matched first-in, first-out, and the dividends it paid — against every rupee that bought a unit of it."
         : "How much the holding has gained or lost against what you paid, as a percentage. Nothing has been sold from it, so first-in, first-out has nothing to match.",
     worked: withRealised
-      ? `= (${m(mv)} − ${orDash(cost, (c) => m(c))} + ${m(realised, true)}) ÷ ${orDash(deployed, (c) => m(c))} × 100 = ${orDash(retPct, pct)}`
+      ? `= (${m(mv)} − ${orDash(cost, (c) => m(c))} + ${m(realised, true)}${incomeTerm}) ÷ ${orDash(deployed, (c) => m(c))} × 100 = ${orDash(retPct, pct)}`
       : `= (${m(mv)} − ${orDash(cost, (c) => m(c))}) ÷ ${orDash(cost, (c) => m(c))} × 100 = ${orDash(retPct, pct)}`,
   };
 };

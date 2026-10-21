@@ -4652,7 +4652,7 @@ export function PortfolioMonitor() {
                           const value = !res.shown
                             ? <AbsentCell reason={res.reason} />
                             : res.tag === "HPR" && !r.live
-                              ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed,
+                              ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed, income: r.fifo.income,
                                   capital: m && r.fifo.wholeMandates.length ? { value: r.fifo.marketValue, contributed: r.fifo.wholeContributed, withdrawn: r.fifo.wholeWithdrawn } : null } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
                               : <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>;
                           /**

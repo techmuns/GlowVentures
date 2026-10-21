@@ -264,7 +264,7 @@ console.log("\n── a holding redeemed to nil: all of its gain is realised ─
    * model carried a `cost > 0` guard from before the return was FIFO's, and a
    * holding redeemed to nil holds a cost of ₹0 — so the ASK Absolute Return
    * Fund and 3P's Class B3 read a dash beside a realised gain of crores. Struck
-   * here independently, Σ realised ÷ Σ cost of the units sold over the
+   * here independently, Σ (realised + income) ÷ Σ cost of the units sold over the
    * holding's own rows and never through `fifoTotals`, and the book must carry
    * such a holding or this passes over nothing.
    */
@@ -278,12 +278,13 @@ console.log("\n── a holding redeemed to nil: all of its gain is realised ─
   for (const key of keys) {
     const rs = dedupedPositions(rowsOf(key));
     const sold = sum(rs.map((p) => p.costOfUnitsSold ?? 0));
-    const realised = sum(rs.map((p) => p.realizedPnL ?? 0));
+    // …and the dividends it paid stay in it (Stage 10ez).
+    const realised = sum(rs.map((p) => (p.realizedPnL ?? 0) + (p.dividendReceived ?? 0)));
     const want = sold > 0 ? (realised / sold) * 100 : null;
     const got = measuredTotals(rowsOf(key)).costedReturn;
     if (!near(got, want, 1e-9)) fails.push(`${key}: ${got} vs ${want}`);
   }
-  ok("…and its page prints realised ÷ the cost of the units sold", fails.length === 0, fails.join("; ") || keys.map((k) => `${k} ${measuredTotals(rowsOf(k)).costedReturn?.toFixed(2)}%`).join(", "));
+  ok("…and its page prints (realised + income) ÷ the cost of the units sold", fails.length === 0, fails.join("; ") || keys.map((k) => `${k} ${measuredTotals(rowsOf(k)).costedReturn?.toFixed(2)}%`).join(", "));
 }
 
 console.log("\n── a company held ONLY inside funds ──");

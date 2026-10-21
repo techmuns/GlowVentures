@@ -12,10 +12,12 @@
  * them — one row, one category, one mandate, one owner, the whole book — into
  * one return, so no screen divides its own way.
  *
- *   return = (unrealised + realised) ÷ capital deployed
+ *   return = (unrealised + realised + income) ÷ capital deployed
  *
  * where, per holding, capital deployed is the cost of the units held plus the
- * cost of the units sold. It is the same formula `fifoReturnPct` strikes per
+ * cost of the units sold, and income is the dividends and distributions it paid
+ * (`Position.dividendReceived`; Stage 10ez — *"include realized gains/losses
+ * and dividends wherever we are showing returns"*). It is the same formula `fifoReturnPct` strikes per
  * holding, summed before it is divided — never an average of the holdings'
  * percentages, which would weight a ₹50,000 position like a ₹50 Cr one.
  *
@@ -73,6 +75,13 @@ export type FifoTotals = {
    * NULL where no holding in the set has a realised record at all.
    */
   realised: number | null;
+  /**
+   * Dividends and distributions the holdings paid, paid out or reinvested
+   * (Stage 10ez) — over the holdings struck holding by holding. A WHOLE
+   * mandate's income is already inside its capital bridge (`realised` above),
+   * so it is never added twice. NULL where no holding in the set records any.
+   */
+  income: number | null;
   /** The capital behind the return — cost held + cost sold, or a mandate's capital paid in. */
   deployed: number | null;
   /**
@@ -92,7 +101,7 @@ export type FifoTotals = {
   wholeCostHeld: number;
   wholeContributed: number;
   wholeWithdrawn: number;
-  /** unrealised + realised. */
+  /** unrealised + realised + income. */
   gain: number | null;
   /** gain ÷ deployed, in percent — NULL where cost does not cover the set. */
   returnPct: number | null;
@@ -193,6 +202,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
   let marketValue = 0, uncostedValue = 0, uncosted = 0, realisedCovered = 0, atCostValue = 0, atCost = 0;
   let costHeld: number | null = null, unrealised: number | null = null;
   let realised: number | null = null, deployed: number | null = null, invested: number | null = null;
+  let income: number | null = null;
   let wholeCostHeld = 0, wholeContributed = 0, wholeWithdrawn = 0;
   const add = (a: number | null, b: number) => (a ?? 0) + b;
 
@@ -230,6 +240,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     const sold = isNum(p.costOfUnitsSold) ? p.costOfUnitsSold : 0;
     deployed = add(deployed, c + sold);
     if (isNum(p.realizedPnL)) { realised = add(realised, p.realizedPnL); realisedCovered += 1; }
+    if (isNum(p.dividendReceived)) income = add(income, p.dividendReceived);
   }
   for (const acct of whole) {
     const cap = accountOf(accounts!, acct)!.capital!;
@@ -244,11 +255,12 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     wholeWithdrawn += cap.withdrawn;
   }
 
-  const gain = unrealised === null && realised === null ? null : (unrealised ?? 0) + (realised ?? 0);
+  const gain = unrealised === null && realised === null && income === null ? null
+    : (unrealised ?? 0) + (realised ?? 0) + (income ?? 0);
   const covers = costCoversSet(marketValue, uncostedValue + atCostValue) || (marketValue === 0 && isNum(deployed) && deployed > 0);
   const returnPct = covers && gain !== null && isNum(deployed) && deployed > 0 ? (gain / deployed) * 100 : null;
   return {
-    marketValue, costHeld, unrealised, realised, deployed, invested, gain, returnPct,
+    marketValue, costHeld, unrealised, realised, income, deployed, invested, gain, returnPct,
     wholeCostHeld, wholeContributed, wholeWithdrawn,
     uncostedValue, uncosted, atCostValue, atCost, realisedCovered, holdings: set.length, wholeMandates: [...whole].sort(),
   };
@@ -276,7 +288,8 @@ export function fifoBasisNote(t: FifoTotals, money: (n: number) => string): stri
       + ` · ${n === 1 ? "a whole mandate is" : `${n} whole mandates are`} struck on the capital since inception, so the gain carries every sale the manager made and the income less fees; its lots are not all on record`
       + (t.atCost > 0 ? ` · ${atCostNote(t, money)}` : "");
   }
-  const parts = [`FIFO: (unrealised ${money(t.unrealised ?? 0)} + realised ${money(t.realised ?? 0)}) ÷ capital deployed ${money(t.deployed)}`];
+  const parts = [`FIFO: (unrealised ${money(t.unrealised ?? 0)} + realised ${money(t.realised ?? 0)}`
+    + `${t.income !== null ? ` + dividends ${money(t.income)}` : ""}) ÷ capital deployed ${money(t.deployed)}`];
   if (n) {
     parts.push(`${n === 1 ? "1 whole mandate enters" : `${n} whole mandates enter`} on ${n === 1 ? "its" : "their"} capital since inception — value plus withdrawals less what was paid in — so ${n === 1 ? "its" : "their"} realised includes every sale since inception and the income less fees, and ${n === 1 ? "its" : "their"} capital deployed is the capital paid in`);
   }
@@ -439,4 +452,4 @@ export function realisedReason(p: Pick<Position, "realizedPnL" | "realizedLotsAf
 
 /** Convenience for one holding: its own FIFO return, recomputed from its fields. */
 export const positionFifoReturn = (p: Position): number | null =>
-  costed(p) && !atCostLine(p) ? fifoReturnPct(p.marketValue, p.costBasis, p.realizedPnL, p.costOfUnitsSold) : null;
+  costed(p) && !atCostLine(p) ? fifoReturnPct(p.marketValue, p.costBasis, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived) : null;

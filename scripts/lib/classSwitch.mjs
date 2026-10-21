@@ -18,6 +18,8 @@
 // this book does not happen to contain. `__tests__/classSwitch.test.mjs` does —
 // every gate below is broken there on constructed inputs and made to refuse.
 
+import { fifoReturnPct } from "../../shared/fifo.mjs";
+
 const isNum = (v) => typeof v === "number" && Number.isFinite(v);
 const sum = (xs) => xs.reduce((a, b) => a + b, 0);
 const r2 = (n) => (n === null || n === undefined ? null : Math.round(n * 100) / 100);
@@ -204,7 +206,9 @@ export function carryCostThroughSwitches(positions, positionTranches, reclassifi
     p.costBasisSource = "carried-through-switch";
     p.avgCost = Math.round((paid / p.quantity) * 1e4) / 1e4;
     p.unrealizedPnL = r2(p.marketValue - paid);
-    p.returnPct = r2(((p.marketValue - paid) / paid) * 100);
+    // FIFO's one return on the carried cost — what was already sold, and what
+    // the holding paid, stay in it (Stage 10ez).
+    p.returnPct = r2(fifoReturnPct(p.marketValue, paid, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived));
     notes.push(`cost carried through the class switch for ${label}: ${paid} was paid for these units, against the `
       + `${p.printedCostBasis} the statement's cost column prints, which restarts cost at the switch-day NAV. The `
       + `${gap} between them is gain the fund booked as realised when it moved the units — `

@@ -123,15 +123,17 @@ export function ReturnAnalysis() {
     /**
      * FIFO, HOLDING BY HOLDING — this page decomposes the return BY NAME, so
      * every figure on it is struck from each holding's own FIFO fields: the
-     * unrealised gain on what is held and the realised gain on units already
-     * sold, over the cost of both. A whole mandate's income, fees and the sales
+     * unrealised gain on what is held, the realised gain on units already
+     * sold and the dividends it paid (Stage 10ez), over the cost of both. A whole mandate's income, fees and the sales
      * before its capital-gain window belong to no name, so they are not here;
      * Morning CIO and each mandate's own page strike a whole mandate on its
      * capital. Summed before it is divided, so the names add to the total.
      */
     const realisedOf = (x: { realizedPnL?: number | null }) => (typeof x.realizedPnL === "number" ? x.realizedPnL : 0);
     const soldOf = (x: { costOfUnitsSold?: number | null }) => (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
+    const incomeOf = (x: { dividendReceived?: number | null }) => (typeof x.dividendReceived === "number" ? x.dividendReceived : 0);
     const realised = sum(priced.map(realisedOf));
+    const income = sum(priced.map(incomeOf));
     const deployed = cost + sum(priced.map(soldOf));
 
     // Distribution by VALUE, not by count: ten small losers and one large winner
@@ -142,7 +144,7 @@ export function ReturnAnalysis() {
     });
 
     // Contribution to return: each SECURITY's FIFO gain — unrealised plus
-    // realised — over the book's total deployed cost, so the parts add to the
+    // realised plus dividends — over the book's total deployed cost, so the parts add to the
     // embedded return exactly.
     //
     // ONE ROW PER SECURITY (XA-25). This mapped every POSITION, so Sanshi
@@ -153,7 +155,7 @@ export function ReturnAnalysis() {
     for (const x of priced) {
       const e = byKey.get(x.securityKey)
         ?? { key: x.securityKey, security: x.security, pnl: 0, cost: 0, sold: 0, accounts: new Set<string>() };
-      e.pnl += x.unrealizedPnL + realisedOf(x);
+      e.pnl += x.unrealizedPnL + realisedOf(x) + incomeOf(x);
       e.cost += x.costBasis;
       e.sold += soldOf(x);
       e.accounts.add(x.accountId);
@@ -203,7 +205,7 @@ export function ReturnAnalysis() {
       // other page, never the wrapper its statement typed it as.
       const secKey = byClass ? readerClassOf(x) : (companySectors.get(x.securityKey)?.sector || "Unclassified");
       const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass, deployed: 0, keys: new Set<string>() };
-      e.pnl += x.unrealizedPnL + realisedOf(x); e.cost += x.costBasis; e.mv += x.marketValue;
+      e.pnl += x.unrealizedPnL + realisedOf(x) + incomeOf(x); e.cost += x.costBasis; e.mv += x.marketValue;
       e.deployed += x.costBasis + soldOf(x);
       e.keys.add(x.securityKey);
       bySector.set(secKey, e);
@@ -296,8 +298,8 @@ export function ReturnAnalysis() {
     const winners = priced.filter((x) => x.returnPct > 0);
     return {
       priced, withoutCost, cost, pnl, dist, contrib, sectors, wrapperClasses, sectorSource, byAccount, winners: winners.length,
-      embeddedRet: deployed > 0 ? ((pnl + realised) / deployed) * 100 : null,
-      realised, deployed,
+      embeddedRet: deployed > 0 ? ((pnl + realised + income) / deployed) * 100 : null,
+      realised, income, deployed,
       hitRate: priced.length ? (winners.length / priced.length) * 100 : null,
       // Only across accounts that HAVE a return — an account without one is
       // named, never folded in as zero.
@@ -357,7 +359,7 @@ export function ReturnAnalysis() {
           ? `Where the book's return comes from, name by name and sector by sector. Point-in-time — on the statements' own marks, and on AMFI's published NAV of ${dateSpan(vb.nav, fmtDate)} for the ${vb.nav.schemes} scheme${vb.nav.schemes === 1 ? "" : "s"} it prices.`
           : "Where the book's return comes from, name by name and sector by sector. Point-in-time, on the statements' own marks."}
         right={<div className="flex items-center gap-2">
-          <BasisPill liveText="Live prices" hint="Returns are FIFO — unrealised gain on what is held plus realised gain on units already sold, over the cost of both — rebuilt from live prices where a quote exists; cost basis is as the statements report it." />
+          <BasisPill liveText="Live prices" hint="Returns are FIFO — unrealised gain on what is held plus realised gain on units already sold plus dividends received, over the cost of both — rebuilt from live prices where a quote exists; cost basis is as the statements report it." />
           {vb.nav.rows > 0 && (
             <Pill tone="info">
               <span data-xa="nav-basis" data-nav-from={vb.nav.from ?? ""} data-nav-to={vb.nav.to ?? ""}
@@ -376,8 +378,8 @@ export function ReturnAnalysis() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Return · FIFO, by holding"
           value={<span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet ?? 0, { sign: true })}</span>}
-          sub={<>{money(m.pnl, true)} unrealised + {money(m.realised, true)} realised on {money(m.deployed)} deployed</>}
-          title="Each holding's own FIFO figures, summed before they are divided: the unrealised gain on what is held plus the realised gain on units already sold, over the cost of both. A whole mandate's income, fees and earlier sales belong to no single name and are not here — Morning CIO strikes a whole mandate on its capital."
+          sub={<>{money(m.pnl, true)} unrealised + {money(m.realised, true)} realised + {money(m.income, true)} dividends on {money(m.deployed)} deployed</>}
+          title="Each holding's own FIFO figures, summed before they are divided: the unrealised gain on what is held plus the realised gain on units already sold plus the dividends each holding paid, over the cost of both. A whole mandate's fees and earlier sales belong to no single name and are not here — Morning CIO strikes a whole mandate on its capital."
           icon={<Percent className="h-4 w-4" />} />
 
         <StatTile label="Holdings showing a gain"
@@ -510,7 +512,7 @@ export function ReturnAnalysis() {
               <tfoot className="border-t-2 border-ink-600 font-semibold">
                 <TrFoot view={sectorView} className="px-2 py-2 text-slate-200" label={<>Total</>}
                   cells={{
-                    pnl: <td key="pnl" className={`px-2 py-2 text-right mono ${changeColor(m.pnl + m.realised)}`}>{money(m.pnl + m.realised, true)}</td>,
+                    pnl: <td key="pnl" className={`px-2 py-2 text-right mono ${changeColor(m.pnl + m.realised + m.income)}`}>{money(m.pnl + m.realised + m.income, true)}</td>,
                     return: <td key="return" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 1 })}</td>,
                     contrib: <td key="contrib" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 2 })}</td>,
                   }} />
@@ -613,13 +615,13 @@ export function ReturnAnalysis() {
       </Card>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
-        {/* The P&L is the FIFO gain — unrealised plus realised — which the
+        {/* The P&L is the FIFO gain — unrealised plus realised plus dividends — which the
             subtitle used to call "unrealised" after the column stopped being
             only that. */}
-        <Card title="Largest contributors" subtitle="By FIFO gain — unrealised plus realised, per security">
+        <Card title="Largest contributors" subtitle="By FIFO gain — unrealised plus realised plus dividends, per security">
           <ContribTable rows={m.contrib.slice(0, 10)} money={money} storageKey="returns-contributors" />
         </Card>
-        <Card title="Largest detractors" subtitle="By FIFO gain — unrealised plus realised, per security">
+        <Card title="Largest detractors" subtitle="By FIFO gain — unrealised plus realised plus dividends, per security">
           <ContribTable rows={[...m.contrib].reverse().slice(0, 10)} money={money} storageKey="returns-detractors" />
         </Card>
       </div>

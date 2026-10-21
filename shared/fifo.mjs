@@ -158,24 +158,31 @@ export function fifoForClass(ledger, cls) {
 /**
  * ── THE ONE RETURN FORMULA ─────────────────────────────────────────────────
  *
- *   return = (unrealised + realised) ÷ (cost of units held + cost of units sold)
+ *   return = (unrealised + realised + income) ÷ (cost of units held + cost of units sold)
  *
  * Everything the holding produced, over every rupee that bought a unit of it.
- * A holding nobody has sold from reduces to the familiar unrealised ÷ cost, so
- * the formula changes nothing where FIFO has nothing to say; where units WERE
- * sold, the gain on them stays in the return instead of silently leaving it.
+ * A holding nobody has sold from and that paid nothing reduces to the familiar
+ * unrealised ÷ cost; where units WERE sold, the gain on them stays in the
+ * return instead of silently leaving it.
+ *
+ * INCOME is what the holding paid the family (Stage 10ez): a demat's cash
+ * dividends (`Position.dividendReceived`), a fund's distributions, and an IDCW
+ * reinvestment — whose units FIFO books at the reinvested amount, so without
+ * the income term a daily-IDCW liquid fund reads 0.00% however much it paid.
+ * Never a capital move and never in the cost: what the holding earned.
  *
  * NULL wherever the cost is unknown or not positive — never 0, which would read
  * as break-even: a depository reports what shares are worth and not what they
  * cost, and `marketValue − 0` is the whole position booked as profit.
  */
-export function fifoReturnPct(marketValue, costHeld, realised, costSold) {
+export function fifoReturnPct(marketValue, costHeld, realised, costSold, income) {
   if (typeof costHeld !== "number" || !Number.isFinite(costHeld)) return null;
   const sold = typeof costSold === "number" && Number.isFinite(costSold) ? costSold : 0;
   const gainSold = typeof realised === "number" && Number.isFinite(realised) ? realised : 0;
+  const earned = typeof income === "number" && Number.isFinite(income) ? income : 0;
   const deployed = costHeld + sold;
   if (!(deployed > 0)) return null;
-  return ((marketValue - costHeld + gainSold) / deployed) * 100;
+  return ((marketValue - costHeld + gainSold + earned) / deployed) * 100;
 }
 
 const isNum = (v) => typeof v === "number" && Number.isFinite(v);
