@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Folder, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileSpreadsheet, UploadCloud, Trash2, Loader2 } from "lucide-react";
@@ -55,7 +56,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
       {/* Wide on a phone; the table scrolls inside its own container so the page
           body never scrolls sideways (CLAUDE.md, Conventions). */}
       <div className="overflow-x-auto rounded-lg border border-ink-700">
-        <table className="min-w-full text-sm"
+        <ExportableTable className="min-w-full text-sm"
           data-table-static="one file type inside a provider folder; the Data Audit viewer sorts the rows inside any one document">
           <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
             <tr>
@@ -90,7 +91,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ExportableTable>
       </div>
     </div>
   );
@@ -198,7 +199,7 @@ function DropBox({ provider }: { provider: string }) {
             <Pill tone="warn">{staged.length}</Pill>
           </div>
           <div className="overflow-x-auto rounded-lg border border-ink-700">
-            <table className="min-w-full text-sm" data-table-static="statements staged for this provider, newest first — they are read into the book at the next rebuild">
+            <ExportableTable className="min-w-full text-sm" data-table-static="statements staged for this provider, newest first — they are read into the book at the next rebuild">
               <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-2.5 font-medium">File</th>
@@ -230,7 +231,7 @@ function DropBox({ provider }: { provider: string }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ExportableTable>
           </div>
         </div>
       )}

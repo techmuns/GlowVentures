@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment } from "react";
 import { parseMarkdown, toSections, orderSections, inlineParts, type Block, type Section } from "@/lib/markdown";
 
@@ -27,7 +28,7 @@ function Table({ b }: { b: Extract<Block, { kind: "table" }> }) {
           Sorting the rows would scramble a document this app did not compose,
           and moving a period would break its sequence. Every table this app
           BUILDS is sortable and reorderable; this one is passed through. */}
-      <table className="min-w-full text-[12px]"
+      <ExportableTable className="min-w-full text-[12px]"
         data-table-static="an upstream financial document rendered as it was published — its rows are a statement's own line order and its columns are periods in sequence">
         {hasHead && (
           <thead className="bg-ink-800">
@@ -53,7 +54,7 @@ function Table({ b }: { b: Extract<Block, { kind: "table" }> }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </ExportableTable>
     </div>
   );
 }

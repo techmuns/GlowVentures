@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Children, ReactNode, isValidElement, useRef } from "react";
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical } from "lucide-react";
 import { useTableView, type TableView } from "@/lib/tableView";
@@ -269,5 +270,5 @@ export function SortableTable({ storageKey, columns, children, ...rest }: {
   children: (view: TableView) => ReactNode;
 } & Omit<React.TableHTMLAttributes<HTMLTableElement>, "children">) {
   const view = useTableView(storageKey, columns);
-  return <table {...rest}>{children(view)}</table>;
+  return <ExportableTable {...rest}>{children(view)}</ExportableTable>;
 }

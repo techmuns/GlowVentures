@@ -80,3 +80,16 @@
 - **Tests:** new suites `calcAudit` (ingest), plus display FX rate, day move,
   concentration and lot terms (family). The `check-pages` re-derivations follow
   each rule.
+
+### Stage 10ga — EXPORT EXCEL FROM EVERY TABLE
+
+- Every dashboard table, drilldown and document table uses the shared
+  `ExportableTable` control; existing full Portfolio Monitor and consolidated
+  workbook downloads remain available.
+- Exports include all matching scroll rows in the current sort and column
+  arrangement. The scroll batch, position, filters and open rows are preserved.
+- Saved Private Market Strategy/Description text is included without saving or
+  discarding drafts. Excel retains missing values, numeric currencies/percentages,
+  source precision where available, totals, links and multi-row headings.
+- Workbook round-trip and browser download checks cover full scroll collections,
+  saved profiles, source sheets and recovery after a failed download.

@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useMemo } from "react";
 import { CalendarClock, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Pill } from "@/components/Pill";
@@ -117,7 +118,7 @@ export function CashFlowPanel({
           <div className="overflow-x-auto">
             {/* Exempt, declared — see `ReturnsTable`: the columns are the
                   statement's own periods and the rows its own lines. */}
-              <table className="min-w-full whitespace-nowrap text-[12.5px]"
+              <ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]"
                 data-table-static="the columns are the periods of an upstream financial document and the rows are its own line items, in its own order — sorting the rows would scramble a statement and moving a period would break its chronology">
               <thead className="border-b border-ink-700">
                 <tr>
@@ -153,7 +154,7 @@ export function CashFlowPanel({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ExportableTable>
           </div>
           {/* ONE LINE, THE REST ITS HOVER (Stage 10cp). */}
           <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500"

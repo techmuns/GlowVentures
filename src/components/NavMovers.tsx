@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -294,7 +295,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
       </div>
 
       <div className="mt-4 overflow-auto lg:min-h-[160px] lg:flex-1" data-mover-scroll="nav">
-        <table className="w-full text-[12px]">
+        <ExportableTable className="w-full text-[12px]">
           <thead>
             <Tr view={view} className="border-b border-ink-700">
               <SortHeader col="scheme" view={view} align="left" pad="py-1.5 pr-2">Scheme</SortHeader>
@@ -342,7 +343,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
               </Tr>
             ))}
           </tbody>
-        </table>
+        </ExportableTable>
       </div>
 
       {/* WHAT THE STORE COULD NOT PRICE IS NAMED, with its own reason. A

@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
 import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { statementNoteForSet } from "@/lib/statementNotes";
@@ -3864,8 +3865,9 @@ export function PortfolioMonitor() {
                 so a check can wait for the store to settle without reading prose —
                 the card that used to carry its three states is rows now. Present
                 on the security axis only, the one axis the store is asked on. */}
-            <table className="min-w-full text-xs" data-monitor-table="holdings"
+            <ExportableTable exportName="Portfolio Monitor — Holdings" className="min-w-full text-xs" data-monitor-table="holdings"
               data-lookthrough={bySecurity ? rowExposure.status : undefined}>
+              {allRows => <>
               <thead className="sticky top-0 z-10 bg-ink-800">
                 <Tr view={holdView} className="border-b border-ink-700">
                   <SortHeader col="security" view={holdView} align="left" pad="px-2 py-1.5">Security</SortHeader>
@@ -3986,7 +3988,7 @@ export function PortfolioMonitor() {
                   // band). Where the table draws no band there is nothing to close.
                   const secKey = `${groupAxis}|${grp.key}`;
                   const secOpen = !showBucketSections || !closedSections.has(secKey);
-                  const visibleRows = secOpen ? sortRows(grp.rows, holdView.sort, holdAccessors).filter((r) => visibleHoldings.has(r)) : [];
+                  const visibleRows = secOpen ? sortRows(grp.rows, holdView.sort, holdAccessors).filter((r) => allRows || visibleHoldings.has(r)) : [];
                   if (secOpen && !visibleRows.length) return null;
                   return (
                   <Fragment key={grp.key}>
@@ -5349,7 +5351,8 @@ export function PortfolioMonitor() {
                   }} />
               </tfoot>
               )}
-            </table>
+              </>}
+            </ExportableTable>
           </div>
           {/* The cost-coverage caption that stood here — "Invested and Unrealised
               P&L are struck over the N of M positions that report a cost" — was

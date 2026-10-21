@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Check, ChevronRight } from "lucide-react";
@@ -1251,7 +1252,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                 /* Exempt, declared: this table is TRANSPOSED. Its rows are a fixed
                    list of metrics rather than records, so there is nothing to
                    sort, and its columns are the sectors the picker selected. */
-                <table className="min-w-full text-[12.5px]" data-sector-compare
+                <ExportableTable className="min-w-full text-[12.5px]" data-sector-compare
                   data-table-static="transposed — its rows are a fixed metric list rather than records, and its columns are the sectors the picker selected">
                   <thead>
                     <tr className="border-b border-ink-700">
@@ -1332,7 +1333,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                     }} />
                     <CompareRow label="Largest holding" keys={compare} plain render={(k) => directByKey.get(k)?.top ?? <AbsentCell reason="no own-account holding in this sector" />} />
                   </tbody>
-                </table>
+                </ExportableTable>
               )}
             </div>
           </Card>
@@ -1342,7 +1343,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
               ? "Click a sector for the issuers in it — what the statements report and what the funds disclose."
               : "Click a sector for its holdings."}>Sector breakdown{vs ? ` vs ${vs.bench.label}` : ""}</span>}>
             <div className="mt-3 min-h-0 flex-1 overflow-auto">
-              <table className="min-w-full text-[13px]" data-sector-table>
+              <ExportableTable className="min-w-full text-[13px]" data-sector-table>
                 <thead className="sticky top-0 z-10 bg-ink-800">
                   <Tr view={sectorView} className="border-b border-ink-700">
                     <SortHeader col="sector" view={sectorView} align="left" pad="px-3 py-2">Sector</SortHeader>
@@ -1513,7 +1514,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                         </td>
                                       );
                                       return (
-                                    <table className="min-w-full text-[12px]" data-sector-companies>
+                                    <ExportableTable className="min-w-full text-[12px]" data-sector-companies>
                                       <thead className="sticky top-0 bg-ink-800">
                                         <Tr view={companyView} className="border-b border-ink-700/70">
                                           <SortHeader col="company" view={companyView} align="left" pad="px-3 py-1.5">Issuer</SortHeader>
@@ -1572,11 +1573,11 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                             share: <td key="share" className={`${footCls} text-slate-400`} data-sector-foot="share">{s.mv > 0 ? ((footTotal / s.mv) * 100).toFixed(1) : "0.0"}%</td>,
                                           }} />
                                       </tfoot>
-                                    </table>
+                                    </ExportableTable>
                                       );
                                     })()
                                   ) : (
-                                    <table className="min-w-full text-[12px]">
+                                    <ExportableTable className="min-w-full text-[12px]">
                                       <thead className="sticky top-0 bg-ink-800">
                                         <Tr view={holdingView} className="border-b border-ink-700/70">
                                           <SortHeader col="security" view={holdingView} align="left" pad="px-3 py-1.5">Security</SortHeader>
@@ -1613,7 +1614,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                           </Tr>
                                         ))}
                                       </tbody>
-                                    </table>
+                                    </ExportableTable>
                                   )}
                                 </div>
                               </div>
@@ -1624,7 +1625,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                     );
                   })}
                 </tbody>
-              </table>
+              </ExportableTable>
             </div>
           </Card>
         )}

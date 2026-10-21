@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -597,7 +598,7 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
         </p>
       ) : (
         <div className="mt-2 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone}>
-        <table className="w-full text-[12px]">
+        <ExportableTable className="w-full text-[12px]">
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => (
               /* `data-mover-row` is the handle the sweep counts a RANKING by. A
@@ -623,7 +624,7 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
               </tr>
             ))}
           </tbody>
-        </table>
+        </ExportableTable>
         </div>
       )}
     </div>

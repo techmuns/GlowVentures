@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { History, ArrowUp, ArrowDown } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -169,7 +170,7 @@ export function UploadHistory() {
       ) : (
       <Card pad={false}>
         <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
+        <ExportableTable className="min-w-full text-sm">
           <thead className="border-b border-ink-700">
             <Tr view={view}>
               <SortHeader col="asOf" view={view} align="left" pad="px-5 py-3">As of</SortHeader>
@@ -249,7 +250,7 @@ export function UploadHistory() {
               </Tr>
             ))}
           </tbody>
-        </table>
+        </ExportableTable>
         </div>
       </Card>
       )}

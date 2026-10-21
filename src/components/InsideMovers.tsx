@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -421,7 +422,7 @@ function InsideList({ title, tone, rows, total, count, unknown, fmt, rank }: {
         </p>
       ) : (
         <div className="mt-3 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone}>
-        <table className="w-full text-[12px]">
+        <ExportableTable className="w-full text-[12px]">
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => {
               const funds = [...new Set(r.via.map((v) => fundLabel(v.fund)))];
@@ -465,7 +466,7 @@ function InsideList({ title, tone, rows, total, count, unknown, fmt, rank }: {
               );
             })}
           </tbody>
-        </table>
+        </ExportableTable>
         </div>
       )}
     </div>
@@ -507,7 +508,7 @@ function VehicleTable({ vehicles, exp, fmt }: {
         </div>
       )}
       <div className="overflow-x-auto">
-        <table className="w-full text-[12px]" data-inside-vehicles="" data-table-static="a ranked tree of mandates and funds, banded by how each move is measured">
+        <ExportableTable className="w-full text-[12px]" data-inside-vehicles="" data-table-static="a ranked tree of mandates and funds, banded by how each move is measured">
           <thead>
             <tr className="label-xs text-left">
               <th className="px-2 py-1.5">Mandate / fund</th>
@@ -522,7 +523,7 @@ function VehicleTable({ vehicles, exp, fmt }: {
               <VehicleSection key={s.id} section={s} exp={exp} fmt={fmt} />
             ))}
           </tbody>
-        </table>
+        </ExportableTable>
       </div>
     </div>
   );

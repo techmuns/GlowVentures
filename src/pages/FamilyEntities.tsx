@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState } from "react";
 import {
   BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie,
@@ -1118,7 +1119,7 @@ export function FamilyEntities() {
                 cards read as the pair they were meant to be and the page itself
                 stays still. */}
             <div className="max-h-[600px] overflow-auto" data-family-table>
-              <table className="min-w-full text-sm">
+              <ExportableTable className="min-w-full text-sm">
                 <thead className="border-b border-ink-700">
                   <Tr view={entityView}>
                     <SortHeader col="entity" view={entityView} align="left">Entity</SortHeader>
@@ -1375,7 +1376,7 @@ export function FamilyEntities() {
                     </td>
                   </tr>
                 </tfoot>
-              </table>
+              </ExportableTable>
             </div>
           </Card>
           {/*
@@ -1535,7 +1536,7 @@ export function FamilyEntities() {
             subtitle={`Grouped by how each holding came to be held — what ${scope} chose directly, what a discretionary manager chose under a mandate, and the fund vehicles and cash beside them.`}
             right={<SearchInput value={holdingsQ} onChange={setHoldingsQ} placeholder="Search this entity…" className="w-56" suggestions={Array.from(new Set(selRows.map((x) => x.security))).sort()} />}>
             <div className="max-h-[520px] overflow-auto">
-              <table className="min-w-full text-sm">
+              <ExportableTable className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
                   <Tr view={holdView}>
                     <SortHeader col="security" view={holdView} align="left">Security</SortHeader>
@@ -1662,7 +1663,7 @@ export function FamilyEntities() {
                       }} />
                   </tfoot>
                 )}
-              </table>
+              </ExportableTable>
             </div>
           </Card>
 
