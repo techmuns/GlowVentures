@@ -32,6 +32,9 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 900 } });
     await context.addInitScript(theme => localStorage.setItem('glow:theme', theme), theme);
     const page = await context.newPage();
+    // Test on the committed capture's own day. A current-day browser correctly
+    // rejects this archived quote snapshot as stale; do not loosen that guard.
+    await page.clock.setFixedTime(new Date(quotes.asOf));
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.route('**/api/**', route => route.fulfill({ status: 503, json: { status: 'unreachable' } }));
