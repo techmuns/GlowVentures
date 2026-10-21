@@ -19,15 +19,27 @@ export default function PropertyMap({ properties = [], onSelect, point, onPick }
   const tiles = useRef<L.TileLayer>();
   useEffect(() => {
     if (!root.current) return;
-    const map = L.map(root.current, { scrollWheelZoom: false }).setView([22.4, 79], 5);
+    // These maps are frequently removed when a dialog closes or a tab changes.
+    // Leaflet's delayed zoom transition can otherwise run after its pane is gone.
+    const map = L.map(root.current, { scrollWheelZoom: false, zoomAnimation: false,
+      fadeAnimation: false, markerZoomAnimation: false }).setView([22.4, 79], 5, { animate: false });
     instance.current = map;
     tiles.current = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
     }).on("tileerror", () => setTilesFailed(true)).addTo(map);
     pins.current = L.layerGroup().addTo(map);
     map.on("click", event => callbacks.current.onPick?.(event.latlng.lat, event.latlng.lng));
-    const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(root.current);
-    return () => { observer.disconnect(); map.remove(); instance.current = null; };
+    const observer = new ResizeObserver(() => {
+      if (instance.current === map && root.current?.isConnected) map.invalidateSize({ animate: false });
+    }); observer.observe(root.current);
+    return () => {
+      instance.current = null;
+      observer.disconnect();
+      map.stop();
+      map.remove();
+      pins.current = undefined;
+      tiles.current = undefined;
+    };
   }, []);
   useEffect(() => {
     const map = instance.current, layer = pins.current;
@@ -58,8 +70,8 @@ export default function PropertyMap({ properties = [], onSelect, point, onPick }
       L.marker(point, { icon: L.divIcon({ className: "property-pin-wrapper", iconSize: [30, 36], iconAnchor: [15, 34], html: '<span class="property-pin" style="background:#aa783b"></span>' }) }).addTo(layer);
       coordinates.push(point);
     }
-    if (coordinates.length) map.fitBounds(L.latLngBounds(coordinates), { padding: [45, 45], maxZoom: coordinates.length === 1 ? 17 : 14 });
-    else map.setView([22.4, 79], 5);
+    if (coordinates.length) map.fitBounds(L.latLngBounds(coordinates), { padding: [45, 45], maxZoom: coordinates.length === 1 ? 17 : 14, animate: false });
+    else map.setView([22.4, 79], 5, { animate: false });
   }, [properties, point]);
   return <div className="relative">
     <div ref={root} className={`property-map ${onPick ? "property-map-picker" : ""}`} aria-label={onPick ? "Click map to set property pin" : "Property locations"} />

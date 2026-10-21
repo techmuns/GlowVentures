@@ -14,7 +14,7 @@ let failing = false;
 const browser = await chromium.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true });
 const context = await browser.newContext({ viewport: { width: 1512, height: 982 } });
 const page = await context.newPage();
-const errors = []; page.on("pageerror", error => errors.push(error.message));
+const errors = []; page.on("pageerror", error => errors.push(error.stack || error.message));
 await page.route("**/api/**", async route => {
   const r = route.request();
   if (new URL(r.url()).pathname === "/api/real-estate") {
