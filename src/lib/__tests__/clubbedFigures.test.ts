@@ -123,11 +123,13 @@ console.log("\n── a section whose only costed lines are nil balances has no 
   const valued = cash.filter((p) => !reportsCost(p) && p.marketValue > 0);
   ok("the Cash section carries valued holdings that report no cost, so the constructed case is the book's own",
     valued.length > 0, `${valued.length} holdings`);
+  // Beside the section's UNCOSTED lines: since HDFC's folio cost is read the
+  // section also holds a costed, valued line, which is not the shape.
   const sleeve = { ...cash[0], securityKey: "cash", security: "Cash", assetClass: "Cash",
     costBasis: 0, costUnavailable: false, marketValue: 0, quantity: 0 } as Position;
-  const c = costedFigures([...cash, sleeve]);
+  const c = costedFigures([...valued, sleeve]);
   ok("a nil costed sleeve beside them gives a cost total that is absent, never ₹0",
-    vacuousShape([...cash, sleeve]) && c.vacuous && c.cost === null && c.unrealised === null,
+    vacuousShape([...valued, sleeve]) && c.vacuous && c.cost === null && c.unrealised === null,
     `₹${Math.round(c.uncosted.value).toLocaleString("en-IN")} uncosted`);
   // …and the book's own Cash section totals exactly what its lines report: no
   // cost where no line reports one, never a ₹0 standing in for that absence.
