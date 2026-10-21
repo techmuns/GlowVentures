@@ -1,6 +1,6 @@
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
-  Activity, Table2, Calculator, Gauge, Handshake, Cable, Library,
+  Activity, Table2, Calculator, Gauge, Handshake, Cable, Library, Building2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -36,6 +36,7 @@ export const NAV: readonly NavEntry[] = [
   { to: "/cio", label: "Morning CIO", icon: Sunrise, group: "Daily" },
   { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
   { to: "/private-market", label: "Private Market", icon: Handshake, group: "Daily" },
+  { to: "/real-estate", label: "Real Estate", icon: Building2, group: "Daily" },
   { to: "/polycab", label: "Polycab", icon: Cable, group: "Daily" },
   // EXPOSURE & IPS was REMOVED at the family's request. Its ALLOCATION group
   // survives with the other two entries, so — unlike MONITOR, KNOWLEDGE and

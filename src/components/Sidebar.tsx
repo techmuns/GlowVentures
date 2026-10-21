@@ -17,7 +17,7 @@ import { EXTRAS_GROUP, EXTRAS_PATHS, NAV } from "@/lib/nav";
 // down: a future session looking for the heading will not find one.
 // The Statement Library is where statements are UPLOADED, so it opens on an
 // empty book too — it is how a book stops being empty.
-const ALWAYS_ACCESSIBLE = new Set(["/upload", "/statements", "/audit", "/ledger"]);
+const ALWAYS_ACCESSIBLE = new Set(["/upload", "/statements", "/audit", "/ledger", "/real-estate"]);
 
 // Drag-to-resize bounds for the left nav (px). Default 224 (14rem) keeps the
 // Portfolio Monitor holdings table off a horizontal scrollbar at common laptop

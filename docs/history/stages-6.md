@@ -136,8 +136,15 @@
   schema and verify that visibility and scroll state stay intact; a collapsed
   Private Market section is exported without opening it on screen.
 
+### Stage 10gg — REAL ESTATE TABLE AND PROPERTY MAP
 
-### Stage 10gg — EXCEL EXPORTS IGNORE DISPLAY FILTERS
+- Real Estate sits directly below Private Market. The existing header, four configurable tiles, sortable/reorderable columns and column picker frame one register with Table and Map tabs. Both views share city/district, state, country, property type, status and search filters, and open the same property details and editor.
+- One record per property supports joint owners and their shares, Indian area units and area basis, acquisition cost, dated valuation, rental income and costs, loans, lease and title details. Displayed money follows recorded shares and the dashboard's member/currency selections. Unknown inputs remain absent; partial totals show coverage. These manually recorded assets do not enter the statement portfolio's totals.
+- `functions/api/real-estate.js` uses the existing authenticated GitHub dashboard store, one key per property, with bounded requests and same-origin writes. Saves are acknowledged after the store commits; a failed save retains the editor. Only confirmed coordinates are plotted. Co-located properties share a selectable pin; unpinned properties remain listed. Leaflet and attributed OpenStreetMap tiles need no paid API or new credentials.
+- `test:real-estate` covers ownership arithmetic, missing values, validation, CRUD and endpoint failure contracts. The localhost-only browser check uses the real handler and an in-memory store for creation, editing, persistence, filters, map/details parity, coincident pins, deletion, themes and mobile layout; CI runs it with the existing browser checks.
+
+
+### Stage 10gh — EXCEL EXPORTS IGNORE DISPLAY FILTERS
 
 - Excel snapshots read the complete family dataset and bypass table search,
   category, entity, side and date filters. Private Market includes funds and
@@ -147,5 +154,5 @@
   snapshot restores loaded row batches and scroll positions; scope-dependent
   look-through and lot records are prepared before the snapshot.
 - Regression checks compare complete workbooks under no-match search, member,
-  sector and Private Market type filters, and retain hidden-column, profile
+  sector, property location/type and Private Market type filters, and retain hidden-column, profile
   draft, scroll, retry and source-precision coverage.

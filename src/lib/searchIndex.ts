@@ -410,6 +410,7 @@ const PAGE_WORDS: Record<string, string[]> = {
   "/cio": ["home", "dashboard", "summary", "overview", "morning", "briefing", "today"],
   "/monitor": ["holdings", "portfolio", "positions", "all holdings", "stocks", "monitor"],
   "/private-market": ["private", "private equity", "pe", "venture", "vc", "drawdown funds", "capital accounts"],
+  "/real-estate": ["property", "properties", "real estate", "land", "apartment", "commercial", "rent", "locations"],
   "/polycab": ["promoter holding", "promoter"],
   "/family": ["family", "entities", "members", "people", "trusts", "custody"],
   "/sectors": ["sector", "sectors", "industry", "industries"],
@@ -424,6 +425,7 @@ const PAGE_WORDS: Record<string, string[]> = {
 
 /** Tabs and views INSIDE a page — each reachable by its own address. */
 const VIEWS: { id: string; label: string; href: string; words: string[]; detail: string }[] = [
+  { id: "view:property-map", label: "Property map", href: "/real-estate?view=map", words: ["map", "property locations", "real estate map"], detail: "Real Estate · property locations" },
   { id: "view:transactions", label: "Transactions", href: "/monitor?show=transactions",
     words: ["trades", "buys", "sells", "bought", "sold", "what i invested", "capital in", "redemptions", "contributions"],
     detail: "Portfolio Monitor · the dated buys, sells, contributions and redemptions the statements in this book carry, in the same sections as the holdings" },

@@ -1,0 +1,21 @@
+export type PropertyOwner = { ownerId: string | null; name: string; share: number };
+export type Property = {
+  id: string; name: string; type: string; address: string; city: string; state: string; country: string; pincode: string;
+  owners: PropertyOwner[]; area: number | null; areaUnit: string; areaBasis: string;
+  cost: number | null; value: number | null; monthlyRent: number | null; monthlyCosts: number | null; debt: number | null;
+  purchasedOn: string | null; valuationDate: string | null; leaseEnd: string | null;
+  status: string; tenant: string; titleStatus: string; notes: string;
+  latitude: number | null; longitude: number | null; updatedAt?: string;
+};
+export type PropertyFigures = { share: number; value: number | null; cost: number | null; debt: number | null; rent: number | null; costs: number | null; equity: number | null; netRent: number | null; yield: number | null; gain: number | null };
+export const PROPERTY_TYPES: string[];
+export const PROPERTY_STATUSES: string[];
+export const AREA_UNITS: string[];
+export const TITLE_STATUSES: string[];
+export const MONEY_FIELDS: string[];
+export const PROPERTY_ID: RegExp;
+export function validateProperty(raw: unknown): { property: Property; error?: undefined } | { error: string; property?: undefined };
+export function hasPin(p: Property): boolean;
+export function propertyShare(p: Property, owners?: ReadonlySet<string> | null): number;
+export function propertyFigures(p: Property, owners?: ReadonlySet<string> | null): PropertyFigures;
+export function propertyTotal(properties: readonly Property[], key: Exclude<keyof PropertyFigures, "share">, owners?: ReadonlySet<string> | null): { value: number | null; known: number; count: number };
